@@ -254,7 +254,7 @@ export class Package {
         let fixed = false;
         const buildScript = this.getScript("build");
         if (buildScript) {
-            if (buildScript.startsWith("echo ")) {
+            if (buildScript.startsWith("echo ") || buildScript === "npm run noop") {
                 return;
             }
             // These are script rules in the FluidFramework repo
