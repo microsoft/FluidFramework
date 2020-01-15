@@ -9,7 +9,7 @@ import {
     RequestParser,
     RuntimeRequestHandler,
 } from "@microsoft/fluid-container-runtime";
-import { IContainerService } from "@microsoft/fluid-framework-interfaces";
+import { IContainerServiceFactory } from "@microsoft/fluid-framework-interfaces";
 import { IHostRuntime, NamedComponentRegistryEntries } from "@microsoft/fluid-runtime-definitions";
 import { generateContainerServicesRequestHandler } from "./";
 
@@ -24,7 +24,7 @@ export class SimpleContainerRuntimeFactory {
         context: IContainerContext,
         chaincode: string,
         registryEntries: NamedComponentRegistryEntries,
-        services: IContainerService[] = [],
+        services: IContainerServiceFactory[] = [],
         requestHandlers: RuntimeRequestHandler[] = [],
     ): Promise<ContainerRuntime> {
         // Debug(`instantiateRuntime(chaincode=${chaincode},registry=${JSON.stringify(registry)})`);

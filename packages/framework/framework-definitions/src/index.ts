@@ -5,7 +5,7 @@
 
 export * from "./discover";
 export * from "./collection";
-export * from "./containerService";
+export * from "./containerServiceFactory";
 export * from "./layout";
 export * from "./clipboard";
 export * from "./componentDefaultFactoryName";

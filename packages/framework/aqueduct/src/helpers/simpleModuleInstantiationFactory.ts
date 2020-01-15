@@ -5,7 +5,7 @@
 
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
 import { ComponentRegistry } from "@microsoft/fluid-container-runtime";
-import { IComponentDefaultFactoryName, IContainerService } from "@microsoft/fluid-framework-interfaces";
+import { IComponentDefaultFactoryName, IContainerServiceFactory } from "@microsoft/fluid-framework-interfaces";
 import {
     IComponentRegistry,
     IProvideComponentRegistry,
@@ -31,7 +31,7 @@ export class SimpleModuleInstantiationFactory implements
     constructor(
         private readonly defaultComponentName: string,
         private readonly registryEntries: NamedComponentRegistryEntries,
-        private readonly services: IContainerService[] = []) {
+        private readonly services: IContainerServiceFactory[] = []) {
         this.registry = new ComponentRegistry(registryEntries);
     }
     public get IComponentRegistry() { return this.registry; }
