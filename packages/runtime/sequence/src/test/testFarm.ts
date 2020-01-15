@@ -2179,7 +2179,8 @@ if (clientServerTest) {
     const ppTest = true;
     const branch = false;
     const testPack = TestPack();
-    const filename = path.join(__dirname, "./literature", "pp.txt");
+    const baseDir = "../../../merge-tree/src/test/literature";
+    const filename = path.join(__dirname, baseDir, "pp.txt");
     if (ppTest) {
         if (branch) {
             testPack.clientServerBranch(filename, 100000);
