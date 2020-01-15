@@ -74,6 +74,6 @@
     "nyc": "^14.1.1",
     "rimraf": "^2.6.2",
     "sort-package-json": "1.31.0",
-    "typescript": "~3.4.5"
+    "typescript": "~3.7.4"
   }
 }
