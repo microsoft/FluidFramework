@@ -1169,7 +1169,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             loader,
             storage,
             (err) => this.raiseCriticalError(err),
-            (type, contents) => this.submitMessage(type, contents),
+            (type, contents, batch, metadata) => this.submitMessage(type, contents, batch, metadata),
             (message) => this.submitSignal(message),
             async (message) => this.snapshot(message),
             (reason?: string) => this.close(reason),
