@@ -1,70 +1,43 @@
-export const hello = "hello";
+import * as assert from "assert";
 
-// describe("Routerlicious", () => {
-//     describe("Map", () => {
-//         describe("Counter", () => {
-//             let runtime: MockRuntime;
-//             let testMap: map.ISharedMap;
-//             let testCounter: map.Counter;
+import { InstanceContainerService, SingletonContainerService } from "../";
+import { IComponentRouter, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import { IHostRuntime } from "@microsoft/fluid-runtime-definitions";
 
-//             beforeEach(async () => {
-//                 runtime = new MockRuntime();
-//                 const factory = new map.MapFactory();
-//                 testMap = factory.create(runtime, "test");
+class ExampleServiceMock implements IComponentRouter {
 
-//                 testCounter = testMap.
-//                     createValueType("defaultCounter", map.CounterValueType.Name, undefined).
-//                     get("defaultCounter");
-//             });
+    public get IComponentRouter() { return this; }
 
-//             describe(".constructor", () => {
-//                 it("Should be able to create a counter with default value", async () => {
-//                     assert.ok(testCounter);
-//                     assert.equal(testCounter.value, 0);
-//                 });
+    request(request: IRequest): Promise<IResponse> {
+        throw new Error("Method not implemented.");
+    }
+}
 
-//                 it("Should be able to create a counter with predefined value", async () => {
-//                     const counterWithValue = testMap.
-//                         createValueType("defaultCounter", map.CounterValueType.Name, 50).
-//                         get("defaultCounter");
-//                     assert.ok(counterWithValue);
+describe("Routerlicious", () => {
+    describe("Aqueduct", () => {
+        describe("SingletonContainerService", () => {
+            describe("getComponent", () => {
+                it("Two gets should return the same object", async () => {
+                    const service = new SingletonContainerService("id", () => new ExampleServiceMock());
 
-//                     /* tslint:disable:no-unsafe-any */
-//                     assert.equal(counterWithValue.value, 50);
-//                 });
-//             });
+                    const component1 = service.getComponent({} as IHostRuntime);
+                    const component2 = service.getComponent({} as IHostRuntime);
 
-//             describe(".increment", () => {
-//                 it("Should be able to increment a counter with positive and negative values", async () => {
-//                     testCounter.increment(20);
-//                     assert.equal(testCounter.value, 20);
-//                     testCounter.increment(-40);
-//                     assert.equal(testCounter.value, -20);
-//                 });
+                    assert(component1 === component2, "Component objects are the same");
+                });
+            });
+        });
+        describe("InstanceContainerService", () => {
+            describe("getComponent", () => {
+                it("Two gets should return different objects", async () => {
+                    const service = new InstanceContainerService("id", () => new ExampleServiceMock());
 
-//                 it("Should fire incremented listener callback after increment", () => {
-//                     let fired = false;
+                    const component1 = service.getComponent({} as IHostRuntime);
+                    const component2 = service.getComponent({} as IHostRuntime);
 
-//                     testCounter.on("incremented", (value: number) => {
-//                         fired = true;
-//                         assert.equal(value, 10);
-//                     });
-
-//                     testCounter.increment(10);
-//                     assert.ok(fired);
-//                 });
-
-//                 it("Should fire valueChanged listener callback on its container after increment", () => {
-//                     let fired = false;
-
-//                     testMap.on("valueChanged", () => {
-//                         fired = true;
-//                     });
-
-//                     testCounter.increment(10);
-//                     assert.ok(fired);
-//                 });
-//             });
-//         });
-//     });
-// });
+                    assert(component1 !== component2, "Component objects are different");
+                });
+            });
+        });
+    });
+});
