@@ -28,8 +28,9 @@ import {
 } from "@microsoft/fluid-server-test-utils";
 import * as assert from "assert";
 import { OrdererManager } from "../../alfred/runnerFactory";
-import { register, DefaultMetricClient } from "@microsoft/fluid-server-services-core";
+import { DefaultMetricClient } from "@microsoft/fluid-server-services-core";
 import { generateToken } from "@microsoft/fluid-server-services-client";
+import { configureWebSocketServices, DefaultServiceConfiguration } from "@microsoft/fluid-server-lambdas";
 
 describe("Routerlicious", () => {
     describe("Alfred", () => {
@@ -70,13 +71,13 @@ describe("Routerlicious", () => {
                     const kafkaOrderer = new KafkaOrdererFactory(
                         producer,
                         1024 * 1024,
-                        core.DefaultServiceConfiguration);
+                        DefaultServiceConfiguration);
                     testOrderer = new OrdererManager(url, testTenantManager, null, kafkaOrderer, null);
 
                     webSocketServer = new TestWebSocketServer();
                     contentCollection = new TestCollection([]);
 
-                    register(
+                    configureWebSocketServices(
                         webSocketServer,
                         testOrderer,
                         testTenantManager,
