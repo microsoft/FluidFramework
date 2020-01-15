@@ -5,15 +5,13 @@
 
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { Dom, Scheduler } from "@fluid-example/flow-util-lib";
+import { Dom, hasTagName, isTextNode, Scheduler, TagName } from "@fluid-example/flow-util-lib";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { ISegment, LocalReference, MergeTreeMaintenanceType } from "@microsoft/fluid-merge-tree";
 import { SequenceEvent } from "@microsoft/fluid-sequence";
-import { Tag } from "../";
 import { FlowDocument } from "../document";
 import { clamp, done, emptyObject, getSegmentRange } from "../util";
 import { extractRef, updateRef } from "../util/localref";
-import { hasTag } from "../util/tag";
 import { debug } from "./debug";
 import { BootstrapFormatter, Formatter, IFormatterState, RootFormatter } from "./formatter";
 
@@ -264,7 +262,7 @@ export class Layout extends EventEmitter {
         }
     }
 
-    public pushTag<T extends {}>(tag: Tag, props?: T) {
+    public pushTag<T extends {}>(tag: TagName, props?: T) {
         const element = this.elementForTag(tag);
         if (props) {
             Object.assign(element, props);
@@ -277,7 +275,7 @@ export class Layout extends EventEmitter {
         this.popNode(count);
     }
 
-    public emitTag<T extends {}>(tag: Tag, props?: T) {
+    public emitTag<T extends {}>(tag: TagName, props?: T) {
         const element = this.elementForTag(tag);
         if (props) {
             Object.assign(element, props);
@@ -290,7 +288,7 @@ export class Layout extends EventEmitter {
         // Note: Removing and inserting a new text node has the side-effect of reseting the caret blink.
         //       Because text nodes are always leaves, this is harmless.
         let existing = this.next;
-        if (existing && existing.nodeType === Node.TEXT_NODE && this.nodeToSegment(existing) === this.segment) {
+        if (!!existing && isTextNode(existing) && this.nodeToSegment(existing) === this.segment) {
             this.removeNode(existing);
         }
         existing = document.createTextNode(text);
@@ -410,11 +408,11 @@ export class Layout extends EventEmitter {
         }
     }
 
-    private elementForTag(tag: Tag) {
+    private elementForTag(tag: TagName) {
         const existing = this.next;
         // Reuse the existing element if possible, otherwise create a new one.  Note that
         // 'layout.pushNode(..)' will clean up the old node if needed.
-        return hasTag(existing, tag) && this.nodeToSegment(existing) === this.segment
+        return !!existing && hasTagName(existing, tag) && this.nodeToSegment(existing) === this.segment
             ? existing
             : document.createElement(tag);
     }
