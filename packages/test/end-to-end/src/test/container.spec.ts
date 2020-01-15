@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import * as API from "@fluid-internal/client-api";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
@@ -21,7 +22,6 @@ import {
     TestResolver,
 } from "@microsoft/fluid-local-test-server";
 import { MockDocumentDeltaConnection } from "@microsoft/fluid-test-loader-utils";
-import * as assert from "assert";
 import { ConnectionState } from "@microsoft/fluid-protocol-definitions";
 
 describe("Container", () => {
@@ -69,7 +69,7 @@ describe("Container", () => {
     it("Load container unsuccessfully", async () => {
         let success: boolean = true;
         try {
-            service.connectToStorage = (): Promise<IDocumentStorageService> => {
+            service.connectToStorage = async (): Promise<IDocumentStorageService> => {
                 return Promise.reject(false);
             };
             await Container.load(
@@ -122,9 +122,11 @@ describe("Container", () => {
             {},
             loader,
             testRequest);
-        assert.equal(container.connectionState, ConnectionState.Connecting, "Container should be in Connecting state");
+        assert.equal(container.connectionState, ConnectionState.Connecting,
+            "Container should be in Connecting state");
         deltaConnection.disconnect();
-        assert.equal(container.connectionState, ConnectionState.Disconnected, "Container should be in Disconnected state");
+        assert.equal(container.connectionState, ConnectionState.Disconnected,
+            "Container should be in Disconnected state");
         deltaConnection.removeAllListeners();
     });
 

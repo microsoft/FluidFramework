@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import * as api from "@fluid-internal/client-api";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import {
@@ -23,7 +24,6 @@ import {
     SharedString,
     SharedStringFactory,
 } from "@microsoft/fluid-sequence";
-import * as assert from "assert";
 
 const assertIntervalsHelper = (
     sharedString: SharedString,
