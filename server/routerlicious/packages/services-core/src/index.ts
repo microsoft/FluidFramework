@@ -3,12 +3,10 @@
  * Licensed under the MIT License.
  */
 
-export * from "./auth";
 export * from "./cache";
 export * from "./celaNames";
 export * from "./clientManager";
 export * from "./database";
-export * from "./dockerNames";
 export * from "./document";
 export * from "./http";
 export * from "./lambdas";

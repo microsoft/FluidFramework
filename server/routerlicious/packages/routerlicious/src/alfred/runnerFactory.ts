@@ -19,6 +19,7 @@ import { Provider } from "nconf";
 import * as redis from "redis";
 import * as winston from "winston";
 import * as ws from "ws";
+import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
 import { AlfredRunner } from "./runner";
 import { DefaultServiceConfiguration } from "./utils";
 
@@ -83,7 +84,7 @@ export class AlfredResources implements utils.IResources {
         public orderManager: core.IOrdererManager,
         public tenantManager: core.ITenantManager,
         public storage: core.IDocumentStorage,
-        public appTenants: core.IAlfredTenant[],
+        public appTenants: IAlfredTenant[],
         public mongoManager: core.MongoManager,
         public port: any,
         public documentsCollectionName: string,

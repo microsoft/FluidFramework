@@ -89,7 +89,6 @@ export class Quorum extends EventEmitter implements IQuorum {
 
         this.members = new Map(members);
         this.proposals = new Map(
-            // eslint-disable-next-line arrow-body-style
             proposals.map(([, proposal, rejections]) => {
                 return [
                     proposal.sequenceNumber,

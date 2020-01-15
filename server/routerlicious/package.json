@@ -19,6 +19,7 @@
     "clean:nyc": "rimraf nyc/**",
     "docker-build": "docker-compose build",
     "docker-clean": "docker-compose down --rmi local && docker volume prune --force",
+    "eslint:fix": "lerna run --no-sort --stream eslint:fix",
     "postinstall": "npm run postinstall:lerna && (npm run postinstall:fluid-build || true) && (npm run postinstall:r11s || true)",
     "policy-check": "cd ../../tools/repo-policy-check && npm install && npm run policy-check",
     "policy-check:full": "cd ../../tools/repo-policy-check && npm install && npm run policy-check",
@@ -66,13 +67,13 @@
   "dependencies": {},
   "devDependencies": {
     "@microsoft/api-documenter": "^7.4.6",
-    "@microsoft/api-extractor": "^7.4.4",
+    "@microsoft/api-extractor": "^7.7.2",
     "concurrently": "^4.1.0",
     "copyfiles": "^2.1.0",
     "lerna": "^3.14.1",
     "nyc": "^14.1.1",
     "rimraf": "^2.6.2",
     "sort-package-json": "1.31.0",
-    "typescript": "~3.4.5"
+    "typescript": "~3.7.4"
   }
 }

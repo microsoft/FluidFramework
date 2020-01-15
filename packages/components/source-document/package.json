@@ -20,8 +20,9 @@
     "dev": "npm run build:esnext -- --watch",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
-    "test": "mocha -r ts-node/register -r source-map-support/register -r ignore-styles --recursive test/**/*.spec.ts --exit -r make-promises-safe",
+    "test": "test:mocha",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml --exit",
+    "test:mocha": "mocha -r ts-node/register -r source-map-support/register -r ignore-styles --recursive test/**/*.spec.ts --exit -r make-promises-safe",
     "tsc": "tsc",
     "tslint": "npm run eslint"
   },
@@ -84,7 +85,7 @@
     "rimraf": "^2.6.2",
     "source-map-support": "^0.5.16",
     "ts-node": "^7.0.1",
-    "typescript": "~3.4.5"
+    "typescript": "~3.7.4"
   },
   "fluid": {
     "browser": {

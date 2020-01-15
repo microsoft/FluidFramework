@@ -19,6 +19,7 @@ interface ILayerInfo {
 interface ILayerGroupInfo {
     dot?: boolean;
     dotSameRank?: boolean;
+    dotGroup?: boolean;
     layers: { [key: string]: ILayerInfo }
 }
 
@@ -49,10 +50,12 @@ class LayerNode extends BaseNode {
     }
 
     private get dotSameRank() {
+        // default to false
         return this.layerInfo.dotSameRank === true;
     }
 
     public get isDev() {
+        // default to false
         return this.layerInfo.dev === true;
     }
 
@@ -111,11 +114,18 @@ class GroupNode extends BaseNode {
     }
 
     public get doDot() {
+        // default to true
         return this.groupInfo.dot !== false;
     }
     
     private get dotSameRank() {
+        // default to false
         return this.groupInfo.dotSameRank === true;
+    }
+
+    private get dotGroup() {
+        // default to true
+        return this.groupInfo.dotGroup !== false;
     }
 
     public createLayerNode(name: string, layerInfo: ILayerInfo) {
@@ -126,10 +136,14 @@ class GroupNode extends BaseNode {
 
     public generateDotSubgraph() {
         const sameRank = this.dotSameRank? "\n    rank=\"same\"": "";
+        const subGraphs = this.layerNodes.map(layerNode => layerNode.generateDotSubgraph()).join("");
+        if (!this.dotGroup) {
+            return subGraphs;
+        }
         return `
   subgraph cluster_group_${this.dotName} {
     label = "${this.dotName}"${sameRank}
-    ${this.layerNodes.map(layerNode => layerNode.generateDotSubgraph()).join("")}
+    ${subGraphs}
   }`;
     }
 };

@@ -3,19 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { CaretEventType, Direction, Dom, getDeltaX, getDeltaY, ICaretEvent } from "@fluid-example/flow-util-lib";
+import { CaretEventType, Direction, Dom, getDeltaX, getDeltaY, ICaretEvent, hasTagName, TagName } from "@fluid-example/flow-util-lib";
 import { LocalReference } from "@microsoft/fluid-merge-tree";
 import { DocSegmentKind, getDocSegmentKind } from "../document";
 import { clamp } from "../util";
 import { ownsNode } from "../util/event";
 import { updateRef } from "../util/localref";
-import { Tag } from "../util/tag";
+
 import { eotSegment, Layout } from "../view/layout";
 import { debug } from "./debug";
 import * as styles from "./index.css";
 
 export class Caret {
-
     private get doc() { return this.layout.doc; }
     public get position() { return clamp(0, this.doc.localRefToPosition(this.endRef), this.doc.length); }
     public get anchor() { return clamp(0, this.doc.localRefToPosition(this.startRef), this.doc.length); }
@@ -180,7 +179,7 @@ export class Caret {
         //
         // Note that empty paragraph/tag's markers emit a '<br>' tag to force the block to line height.
         // If the 'node' maps to the '<br>' tag, we are already inside the paragraph/tag's content.
-        return kind === DocSegmentKind.text || kind === DocSegmentKind.endOfText || "tagName" in node && node.tagName === Tag.br
+        return kind === DocSegmentKind.text || kind === DocSegmentKind.endOfText || hasTagName(node, TagName.br)
             ? position
             : position + 1;
     }

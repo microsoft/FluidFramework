@@ -3,17 +3,23 @@
  * Licensed under the MIT License.
  */
 
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { ICombiningOp, PropertySet } from "@microsoft/fluid-merge-tree";
-import { JsonablePrimitive } from "@microsoft/fluid-runtime-definitions";
+import {
+    Jsonable,
+    JsonablePrimitive,
+} from "@microsoft/fluid-runtime-definitions";
+
+export type TableDocumentItem = Jsonable<JsonablePrimitive | IComponentHandle>;
 
 export interface ITable {
     readonly numRows: number;
     readonly numCols: number;
 
-    getCellValue(row: number, col: number): JsonablePrimitive;
-    setCellValue(row: number, col: number, value: JsonablePrimitive);
-    evaluateFormula(formula: string): JsonablePrimitive;
-    evaluateCell(row: number, col: number): JsonablePrimitive;
+    getCellValue(row: number, col: number): TableDocumentItem;
+    setCellValue(row: number, col: number, value: TableDocumentItem);
+    evaluateFormula(formula: string): TableDocumentItem;
+    evaluateCell(row: number, col: number): TableDocumentItem;
     annotateRows(startRow: number, endRow: number, properties: PropertySet, op?: ICombiningOp);
     getRowProperties(row: number): PropertySet;
     annotateCols(startCol: number, endCol: number, properties: PropertySet, op?: ICombiningOp);

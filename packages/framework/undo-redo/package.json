@@ -21,8 +21,9 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
-    "test": "mocha --recursive dist/test --exit -r make-promises-safe",
+    "test": "test:mocha",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
+    "test:mocha": "mocha --recursive dist/test --exit -r make-promises-safe",
     "tsc": "tsc",
     "tslint": "npm run eslint"
   },
@@ -52,7 +53,7 @@
     "@microsoft/fluid-sequence": "^0.13.0"
   },
   "devDependencies": {
-    "@microsoft/api-extractor": "^7.4.4",
+    "@microsoft/api-extractor": "^7.7.2",
     "@microsoft/eslint-config-fluid": "^0.13.0",
     "@microsoft/fluid-build-common": "^0.13.0",
     "@microsoft/fluid-test-runtime-utils": "^0.13.0",
@@ -78,7 +79,7 @@
     "nyc": "^14.1.1",
     "random-js": "^1.0.8",
     "rimraf": "^2.6.2",
-    "typescript": "~3.4.5",
+    "typescript": "~3.7.4",
     "xmldoc": "^1.1.2"
   }
 }

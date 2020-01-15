@@ -2,8 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { isSystemType } from "@microsoft/fluid-core-utils";
+import { isSystemType } from "@microsoft/fluid-protocol-base";
 import {
     ConnectionMode,
     IClient,
@@ -86,7 +85,7 @@ export function register(
                 if (!existing) {
                     return true;
                 } else {
-                    // back-compat for old client and new server.
+                    // Back-compat for old client and new server.
                     return mode === undefined ? true : mode === "write";
                 }
             } else {
@@ -123,7 +122,7 @@ export function register(
                 socket.join(`${claims.tenantId}/${claims.documentId}`),
                 socket.join(`client#${clientId}`)]);
 
-            // todo: should all the client details come from the claims???
+            // Todo: should all the client details come from the claims???
             // we are still trusting the users permissions and type here.
             const messageClient: Partial<IClient> = message.client ? message.client : {};
             messageClient.user = claims.user;
@@ -180,7 +179,7 @@ export function register(
         }
 
         // Note connect is a reserved socket.io word so we use connect_document to represent the connect request
-        socket.on("connect_document", async (message: IConnect) => {
+        socket.on("connect_document", (message: IConnect) => {
             connectDocument(message).then(
                 (connectedMessage) => {
                     socket.emit("connect_document_success", connectedMessage);

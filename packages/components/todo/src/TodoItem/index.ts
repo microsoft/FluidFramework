@@ -5,4 +5,4 @@
 
 export * from "./TodoItem";
 export * from "./TodoItemView";
-export * from "./TodoItemInstantiationFactory";
+export * from "./todoItemInstantiationFactory";

@@ -59,13 +59,12 @@ export class Interval implements ISerializableInterval {
             seq = client.getCurrentSeq();
         }
 
-        /* tslint:disable:no-object-literal-type-assertion */
-        const serializedInterval = {
+        const serializedInterval: ISerializedInterval = {
             end: this.end,
             intervalType: 0,
             sequenceNumber: seq,
             start: this.start,
-        } as ISerializedInterval;
+        };
         if (this.properties) {
             serializedInterval.properties = this.properties;
         }
@@ -122,12 +121,12 @@ export class SequenceInterval implements ISerializableInterval {
     public serialize(client: MergeTree.Client) {
         const startPosition = this.start.toPosition();
         const endPosition = this.end.toPosition();
-        const serializedInterval = {
+        const serializedInterval: ISerializedInterval = {
             end: endPosition,
             intervalType: this.intervalType,
             sequenceNumber: client.getCurrentSeq(),
             start: startPosition,
-        } as ISerializedInterval;
+        };
         if (this.properties) {
             serializedInterval.properties = this.properties;
         }
