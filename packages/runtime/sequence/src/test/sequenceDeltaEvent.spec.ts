@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
+import { isNullOrUndefined } from "util";
 import {
     createAnnotateRangeOp,
     createInsertSegmentOp,
@@ -14,8 +16,6 @@ import {
 import {
     TestClient,
 } from "@microsoft/fluid-merge-tree/dist/test/";
-import * as assert from "assert";
-import { isNullOrUndefined } from "util";
 import { SequenceDeltaEvent } from "../sequenceDeltaEvent";
 
 interface IExpectedSegmentInfo {
@@ -143,8 +143,8 @@ describe("non-collab", () => {
 
             annotateText(2, 10, { foo: "bar" },
                 [{ offset: 2, numChar: 1, props: { foo: "bar", foo1: "bar1" }, propDeltas: { foo: null } },
-                { offset: 3, numChar: 4, props: { foo: "bar", foo2: "bar2" }, propDeltas: { foo: null } },
-                { offset: 7, numChar: 3, props: { foo: "bar", foo3: "bar3" }, propDeltas: { foo: null } },
+                    { offset: 3, numChar: 4, props: { foo: "bar", foo2: "bar2" }, propDeltas: { foo: null } },
+                    { offset: 7, numChar: 3, props: { foo: "bar", foo3: "bar3" }, propDeltas: { foo: null } },
                 ]);
         });
 
@@ -152,8 +152,8 @@ describe("non-collab", () => {
 
             annotateText(2, 10, { foo: undefined },
                 [{ offset: 2, numChar: 1, props: { foo: undefined, foo1: "bar1" }, propDeltas: { foo: "bar" } },
-                { offset: 3, numChar: 4, props: { foo: undefined, foo2: "bar2" }, propDeltas: { foo: "bar" } },
-                { offset: 7, numChar: 3, props: { foo: undefined, foo3: "bar3" }, propDeltas: { foo: "bar" } },
+                    { offset: 3, numChar: 4, props: { foo: undefined, foo2: "bar2" }, propDeltas: { foo: "bar" } },
+                    { offset: 7, numChar: 3, props: { foo: undefined, foo3: "bar3" }, propDeltas: { foo: "bar" } },
                 ]);
 
             annotateText(2, 3, { foo1: undefined },
@@ -173,8 +173,7 @@ describe("non-collab", () => {
             start: number,
             end: number,
             newProps: PropertySet,
-            expected: IExpectedSegmentInfo[])
-            : void {
+            expected: IExpectedSegmentInfo[]): void {
             let deltaArgs: IMergeTreeDeltaCallbackArgs;
             client.mergeTree.mergeTreeDeltaCallback = (opArgs, delta) => { deltaArgs = delta; };
             const op = client.annotateRangeLocal(start, end, newProps, undefined);
@@ -1912,8 +1911,8 @@ describe("collab", () => {
             isEmpty: boolean,
             start: number,
             end: number,
-            expected: IExpectedSegmentInfo[])
-            : void {
+            expected: IExpectedSegmentInfo[],
+        ): void {
 
             assert(event.isLocal === isLocal);
             assert(event.isEmpty === isEmpty);

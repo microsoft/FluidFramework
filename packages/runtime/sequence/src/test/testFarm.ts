@@ -976,7 +976,7 @@ export function TestPack(verbose = true) {
         }
 
         function randomSpateOfInserts(client: TestClient, server: TestServer,
-            charIndex: number) {
+                                      charIndex: number) {
             const textLen = randTextLength();
             const text = randomString(textLen, String.fromCharCode(zedCode + ((client.getCurrentSeq() + charIndex) % 50)));
             const preLen = client.getLength();
@@ -1400,7 +1400,7 @@ const editFlat = (source: string, s: number, dl: number, nt = "") => source.subs
 let accumTime = 0;
 
 function checkInsertMergeTree(mergeTree: MergeTree.MergeTree, pos: number, textSegment: MergeTree.TextSegment,
-    verbose = false) {
+                              verbose = false) {
     const helper = new MergeTreeTextHelper(mergeTree);
     let checkText = helper.getText(UniversalSequenceNumber, LocalClientId);
     checkText = editFlat(checkText, pos, 0, textSegment.text);
@@ -1912,7 +1912,7 @@ function insertElm(treeLabel: string, elm: Xmldoc.XmlElement, client: TestClient
             }
         }
     }
-    if (elm.val && /[^\s]/.test(elm.val)) {
+    if (elm.val && /\S/.test(elm.val)) {
         const pos = client.posFromRelativePos({ id: elmId });
         client.insertTextLocal(pos, elm.val);
     }

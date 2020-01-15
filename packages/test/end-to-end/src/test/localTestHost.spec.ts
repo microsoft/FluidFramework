@@ -51,7 +51,7 @@ export class TestComponent extends PrimedComponent {
 }
 
 // tslint:disable-next-line:mocha-no-side-effect-code
-const testComponents: ReadonlyArray<[string, Promise<IComponentFactory>]> = [
+const testComponents: readonly [string, Promise<IComponentFactory>][] = [
     [TestComponent.type, Promise.resolve(TestComponent.getFactory())],
 ];
 

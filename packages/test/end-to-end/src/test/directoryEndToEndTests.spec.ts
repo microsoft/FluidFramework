@@ -60,11 +60,11 @@ describe("Directory", () => {
     });
 
     function expectAllValues(msg, key, path, value1, value2, value3) {
-        const user1Value = root1Directory.getWorkingDirectory(path).get(key) as string;
+        const user1Value = root1Directory.getWorkingDirectory(path).get(key);
         assert.equal(user1Value, value1, `Incorrect value for ${key} in document 1 ${msg}`);
-        const user2Value = root2Directory.getWorkingDirectory(path).get(key) as string;
+        const user2Value = root2Directory.getWorkingDirectory(path).get(key);
         assert.equal(user2Value, value2, `Incorrect value for ${key} in document 2 ${msg}`);
-        const user3Value = root3Directory.getWorkingDirectory(path).get(key) as string;
+        const user3Value = root3Directory.getWorkingDirectory(path).get(key);
         assert.equal(user3Value, value3, `Incorrect value for ${key} in document 3 ${msg}`);
     }
     function expectAllBeforeValues(key, path, value1, value2, value3) {

@@ -146,9 +146,11 @@ describe("Container", () => {
             {},
             loader,
             testRequest);
-        assert.equal(container.connectionState, ConnectionState.Connecting, "Container should be in Connecting state");
+        assert.equal(container.connectionState, ConnectionState.Connecting,
+            "Container should be in Connecting state");
         deltaConnection.emitError("Test Error");
-        assert.equal(container.connectionState, ConnectionState.Disconnected, "Container should be in Disconnected state");
+        assert.equal(container.connectionState, ConnectionState.Disconnected,
+            "Container should be in Disconnected state");
         assert.equal(container.closed, false, "Container should not be closed");
         deltaConnection.removeAllListeners();
     });
@@ -172,13 +174,15 @@ describe("Container", () => {
         container.on("error", (error) => {
             errorRaised = true;
         });
-        assert.equal(container.connectionState, ConnectionState.Connecting, "Container should be in Connecting state");
+        assert.equal(container.connectionState, ConnectionState.Connecting,
+            "Container should be in Connecting state");
         const err = {
             message: "Test error",
             canRetry: false,
         };
         deltaConnection.emitError(err);
-        assert.equal(container.connectionState, ConnectionState.Disconnected, "Container should be in Disconnected state");
+        assert.equal(container.connectionState, ConnectionState.Disconnected,
+            "Container should be in Disconnected state");
         assert.equal(container.closed, true, "Container should be closed");
         assert.equal(errorRaised, true, "Error event should be raised.");
         deltaConnection.removeAllListeners();
@@ -202,9 +206,11 @@ describe("Container", () => {
         container.on("error", (error) => {
             assert.ok(false, "Error event should not be raised.");
         });
-        assert.equal(container.connectionState, ConnectionState.Connecting, "Container should be in Connecting state");
+        assert.equal(container.connectionState, ConnectionState.Connecting,
+            "Container should be in Connecting state");
         container.close();
-        assert.equal(container.connectionState, ConnectionState.Disconnected, "Container should be in Disconnected state");
+        assert.equal(container.connectionState, ConnectionState.Disconnected,
+            "Container should be in Disconnected state");
         assert.equal(container.closed, true, "Container should be closed");
         deltaConnection.removeAllListeners();
     });
