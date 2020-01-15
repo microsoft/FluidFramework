@@ -10,9 +10,9 @@ import {
     TableSliceType,
     TableSlice,
 } from "../src";
-import { TableDocumentItem } from "../src/document"
 import * as assert from "assert";
 import "mocha";
+import { TableDocumentItem } from "../src/table";
 
 describe("TableDocument", () => {
     let host: TestHost;
