@@ -69,6 +69,8 @@ describe("Container", () => {
     it("Load container unsuccessfully", async () => {
         let success: boolean = true;
         try {
+            // Issue typescript-eslint/typescript-eslint #1256
+            // eslint-disable-next-line @typescript-eslint/unbound-method
             service.connectToStorage = async (): Promise<IDocumentStorageService> => {
                 return Promise.reject(false);
             };
@@ -89,6 +91,8 @@ describe("Container", () => {
     it("Load container with error", async () => {
         let success: boolean = true;
         try {
+            // Issue typescript-eslint/typescript-eslint #1256
+            // eslint-disable-next-line @typescript-eslint/unbound-method
             service.connectToDeltaStorage = async (): Promise<IDocumentDeltaStorageService> => {
                 return Promise.reject(false);
             };
@@ -110,6 +114,8 @@ describe("Container", () => {
         deltaConnection = new MockDocumentDeltaConnection(
             "test",
         );
+        // Issue typescript-eslint/typescript-eslint #1256
+        // eslint-disable-next-line @typescript-eslint/unbound-method
         service.connectToDeltaStream = async (): Promise<IDocumentDeltaConnection> => {
             return deltaConnection;
         };
@@ -134,6 +140,8 @@ describe("Container", () => {
         deltaConnection = new MockDocumentDeltaConnection(
             "test",
         );
+        // Issue typescript-eslint/typescript-eslint #1256
+        // eslint-disable-next-line @typescript-eslint/unbound-method
         service.connectToDeltaStream = async (): Promise<IDocumentDeltaConnection> => {
             return deltaConnection;
         };
@@ -159,6 +167,8 @@ describe("Container", () => {
         deltaConnection = new MockDocumentDeltaConnection(
             "test",
         );
+        // Issue typescript-eslint/typescript-eslint #1256
+        // eslint-disable-next-line @typescript-eslint/unbound-method
         service.connectToDeltaStream = async (): Promise<IDocumentDeltaConnection> => {
             return deltaConnection;
         };
@@ -192,6 +202,8 @@ describe("Container", () => {
         deltaConnection = new MockDocumentDeltaConnection(
             "test",
         );
+        // Issue typescript-eslint/typescript-eslint #1256
+        // eslint-disable-next-line @typescript-eslint/unbound-method
         service.connectToDeltaStream = async (): Promise<IDocumentDeltaConnection> => {
             return deltaConnection;
         };
