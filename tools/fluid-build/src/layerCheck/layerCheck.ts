@@ -65,9 +65,9 @@ function parseOptions(argv: string[]) {
 
 function versionCheck() {
     const pkg = require(path.join(__dirname, "..", "..", "package.json"));
-    const builtVersion = "0.0.3";
+    const builtVersion = "0.0.4";
     if (pkg.version > builtVersion) {
-        console.warn(`WARNING: fluid-build is out of date, please rebuild (built: ${builtVersion}, package: ${pkg.version})\n`);
+        console.warn(`WARNING: layer-check is out of date, please rebuild (built: ${builtVersion}, package: ${pkg.version})\n`);
     }
 }
 
