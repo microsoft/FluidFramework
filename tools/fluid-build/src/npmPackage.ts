@@ -380,7 +380,7 @@ export class Package {
                     if (existsSync(symlinkPath)) {
                         const stat = await lstatAsync(symlinkPath);
                         if (!stat.isSymbolicLink || await realpathAsync(symlinkPath) !== depBuildPackage.directory) {
-                            if (stat.isDirectory) {
+                            if (stat.isDirectory()) {
                                 await rimrafWithErrorAsync(symlinkPath, this.nameColored);
                             } else {
                                 await unlinkAsync(symlinkPath);
