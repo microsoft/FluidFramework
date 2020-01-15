@@ -7,7 +7,7 @@ import * as assert from "assert";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import { IOdspResolvedUrl } from "./contracts";
-import { getHashedDocumentId } from "./OdspUtils";
+import { getHashedDocumentId } from "./odspUtils";
 
 function getSnapshotUrl(siteUrl: string, driveId: string, itemId: string) {
     const siteOrigin = new URL(siteUrl).origin;

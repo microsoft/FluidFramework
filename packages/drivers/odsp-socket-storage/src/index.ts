@@ -4,15 +4,15 @@
  */
 
 export * from "./fetchWrapper";
-export * from "./OdspDocumentServiceFactory";
-export * from "./OdspDeltaStorageService";
-export * from "./OdspDocumentService";
-export * from "./OdspDocumentStorageManager";
+export * from "./odspDocumentServiceFactory";
+export * from "./odspDeltaStorageService";
+export * from "./odspDocumentService";
+export * from "./odspDocumentStorageManager";
 export * from "./contracts";
-export * from "./OdspDriverUrlResolver";
+export * from "./odspDriverUrlResolver";
 export * from "./fetchSnapshot";
-export * from "./OdspUtils";
-export * from "./Vroom";
-export * from "./OdspDocumentServiceFactoryWithCodeSplit";
-export * from "./OdspDocumentDeltaConnection";
-export * from "./OdspCache";
+export * from "./odspUtils";
+export * from "./vroom";
+export * from "./odspDocumentServiceFactoryWithCodeSplit";
+export * from "./odspDocumentDeltaConnection";
+export * from "./odspCache";

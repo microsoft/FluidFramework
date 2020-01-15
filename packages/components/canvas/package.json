@@ -58,6 +58,7 @@
     "eslint-plugin-react": "^7.16.0",
     "eslint-plugin-unicorn": "^14.0.1",
     "jest": "^24.9.0",
+    "jest-junit": "^10.0.0",
     "jest-puppeteer": "^4.3.0",
     "less": "~3.9.0",
     "less-loader": "^4.1.0",
@@ -81,5 +82,9 @@
         "library": "main"
       }
     }
+  },
+  "jest-junit": {
+    "outputDirectory": "nyc",
+    "outputName": "jest-junit-report.xml"
   }
 }

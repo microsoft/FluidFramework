@@ -7,6 +7,10 @@ body {
     height: 100%;
     margin: 0;
 }
+
+#content {
+    height: 100%;
+}
 /* End assumptions of top-level */
 
 .ink-component-root {
@@ -18,14 +22,13 @@ body {
 .ink-surface {
     width: 100%;
     height: 100%;
-    display: flex;
-    flex-direction: column;
+    position: relative;
 }
 
 .ink-canvas {
     width: 100%;
-    flex-grow: 1;
-    position: relative;
+    height: calc(100% - 50px);
+    position: absolute;
     background-color: #000;
     touch-action: none;
 }
@@ -33,6 +36,8 @@ body {
 .ink-toolbar {
     width: 100%;
     height: 50px;
+    position: absolute;
+    bottom: 0;
     background-color: #222;
 }
 

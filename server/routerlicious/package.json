@@ -19,6 +19,7 @@
     "clean:nyc": "rimraf nyc/**",
     "docker-build": "docker-compose build",
     "docker-clean": "docker-compose down --rmi local && docker volume prune --force",
+    "eslint:fix": "lerna run --no-sort --stream eslint:fix",
     "postinstall": "npm run postinstall:lerna && (npm run postinstall:fluid-build || true) && (npm run postinstall:r11s || true)",
     "policy-check": "cd ../../tools/repo-policy-check && npm install && npm run policy-check",
     "policy-check:full": "cd ../../tools/repo-policy-check && npm install && npm run policy-check",
@@ -48,8 +49,7 @@
     "watch:esnext": "lerna run --parallel build:esnext -- -- --watch",
     "watch:tsc": "lerna run --parallel tsc -- -- --watch",
     "watch:webpack": "lerna run --parallel webpack -- -- --watch",
-    "webpack": "lerna run --no-sort webpack --stream",
-    "eslint:fix": "lerna run --no-sort --stream eslint:fix"
+    "webpack": "lerna run --no-sort webpack --stream"
   },
   "nyc": {
     "all": true,
@@ -74,6 +74,6 @@
     "nyc": "^14.1.1",
     "rimraf": "^2.6.2",
     "sort-package-json": "1.31.0",
-    "typescript": "~3.4.5"
+    "typescript": "~3.7.4"
   }
 }
