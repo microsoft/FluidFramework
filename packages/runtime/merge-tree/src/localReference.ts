@@ -186,13 +186,24 @@ export class LocalReferenceCollection {
     }
 
     public clear() {
-        for (const ref of this) {
-            ref.segment = undefined;
-        }
         this.refCount = 0;
         this.hierRefCount = 0;
+        const detachSegments = (refs: LocalReference[]) =>{
+            if(refs){
+                refs.forEach((r)=>{
+                    if(r.segment === this.segment){
+                        r.segment = undefined;
+                    }
+                });
+            }
+        };
         for (let i = 0; i < this.refsByOffset.length; i++) {
-            this.refsByOffset[i] = undefined;
+            if(this.refsByOffset[i]) {
+                detachSegments(this.refsByOffset[i].before);
+                detachSegments(this.refsByOffset[i].at);
+                detachSegments(this.refsByOffset[i].before);
+                this.refsByOffset[i] = undefined;
+            }
         }
     }
 
@@ -308,8 +319,6 @@ export class LocalReferenceCollection {
                         this.hierRefCount++;
                     }
                     this.refCount ++;
-                } else {
-                    lref.segment = undefined;
                 }
             }
         }
@@ -339,8 +348,6 @@ export class LocalReferenceCollection {
                         this.hierRefCount++;
                     }
                     this.refCount++;
-                } else {
-                    lref.segment = undefined;
                 }
             }
         }
