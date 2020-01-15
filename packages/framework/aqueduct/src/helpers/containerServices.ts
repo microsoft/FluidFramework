@@ -81,7 +81,7 @@ export const generateContainerServicesRequestHandler = (services: IContainerServ
                     subRequest = { url: "" };
                 }
 
-                responseP = service.getComponent(runtime).request({ url: "" });
+                responseP = service.getComponent(runtime).request(subRequest);
                 return;
             }
         });
