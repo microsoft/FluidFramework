@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/strict-boolean-expressions */
+/* eslint-disable no-null/no-null */
 /*!
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
@@ -12,13 +14,12 @@ import {
     IContentMessage,
     IDocumentMessage,
     IDocumentSystemMessage,
+    IServiceConfiguration,
     ISignalMessage,
     ITokenClaims,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
-import * as agent from "@microsoft/fluid-server-services";
 import { canSummarize, canWrite } from "@microsoft/fluid-server-services-client";
-import * as core from "@microsoft/fluid-server-services-core";
 import {
     createNackMessage,
     createRoomJoinMessage,
@@ -29,7 +30,19 @@ import {
 import * as jwt from "jsonwebtoken";
 import * as semver from "semver";
 import * as winston from "winston";
-import { DefaultServiceConfiguration } from "./utils";
+import * as core from "@microsoft/fluid-server-services-core";
+
+
+export const DefaultServiceConfiguration: IServiceConfiguration = {
+    blockSize: 64436,
+    maxMessageSize: 16 * 1024,
+    summary: {
+        idleTime: 5000,
+        maxOps: 1000,
+        maxTime: 5000 * 12,
+        maxAckWaitTime: 600000,
+    },
+};
 
 interface IRoom {
 
@@ -95,17 +108,15 @@ function selectProtocolVersion(connectVersions: string[]): string {
     }
 }
 
-export function register(
+export function configureWebSocketServices(
     webSocketServer: core.IWebSocketServer,
-    metricClientConfig: any,
     orderManager: core.IOrdererManager,
     tenantManager: core.ITenantManager,
     storage: core.IDocumentStorage,
     contentCollection: core.ICollection<any>,
-    clientManager: core.IClientManager) {
+    clientManager: core.IClientManager,
+    metricLogger: core.IMetricClient) {
 
-    // TODO register should take the metric client as a param
-    const metricLogger = agent.createMetricClient(metricClientConfig);
 
     webSocketServer.on("connection", (socket: core.IWebSocket) => {
         // Map from client IDs on this connection to the object ID and user info.
