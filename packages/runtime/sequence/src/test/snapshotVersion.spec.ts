@@ -47,6 +47,7 @@ describe("SharedString Snapshot Version", () => {
                 objectStorage: historian,
             };
             const sharedString = new SharedString(runtime, documentId);
+            // eslint-disable-next-line no-null/no-null
             await sharedString.load(null/*branchId*/, services);
             await sharedString.loaded;
 

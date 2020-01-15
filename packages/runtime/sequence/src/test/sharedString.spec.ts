@@ -75,6 +75,7 @@ describe("SharedString", () => {
             };
 
             const sharedString2 = new SharedString(runtime, documentId);
+            // eslint-disable-next-line no-null/no-null
             await sharedString2.load(null/*branchId*/, services);
             await sharedString2.loaded;
 
