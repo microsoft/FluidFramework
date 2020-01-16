@@ -298,7 +298,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         // Create logger for components to use
         // back-compat: 0.11 clientType
-        const clientType = this.client.details ? this.client.details.type : this.client.type;
+        const type = this.client.details ? this.client.details.type : this.client.type;
+        const interactive = this.client.details?.capabilities?.interactive ?? this.client.type === "browser";
+        const clientType = `${interactive ? "interactive" : "noninteractive"}${type ? `/${type}` : ""}`;
         this.subLogger = DebugLogger.mixinDebugLogger(
             "fluid:telemetry",
             logger,
