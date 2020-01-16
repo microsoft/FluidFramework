@@ -40,12 +40,11 @@ describe("Container", () => {
         testResolved = await testResolver.resolve(testRequest) as IFluidResolvedUrl;
         const serviceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
         service = await serviceFactory.createDocumentService(testResolved);
-        const host = { resolver: testResolver };
 
         codeLoader = new API.CodeLoader({ generateSummaries: false });
         const options = {};
 
-        loader = new Loader(host, serviceFactory, codeLoader, options, {}, new Map<string, IProxyLoaderFactory>());
+        loader = new Loader(testResolver, serviceFactory, codeLoader, options, {}, new Map<string, IProxyLoaderFactory>());
     });
 
     it("Load container successfully", async () => {

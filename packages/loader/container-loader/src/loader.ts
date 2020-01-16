@@ -13,7 +13,6 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import {
     ICodeLoader,
-    IHost,
     ILoader,
     IProxyLoaderFactory,
     LoaderHeader,
@@ -24,6 +23,7 @@ import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
     IResolvedUrl,
+    IUrlResolver,
 } from "@microsoft/fluid-driver-definitions";
 import { configurableUrlResolver } from "@microsoft/fluid-driver-utils";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
@@ -154,7 +154,7 @@ export class Loader extends EventEmitter implements ILoader {
     private readonly protocolToDocumentFactoryMap: Map<string, IDocumentServiceFactory>;
 
     constructor(
-        private readonly containerHost: IHost,
+        private readonly resolver: IUrlResolver,
         documentServiceFactories: IDocumentServiceFactory | IDocumentServiceFactory[],
         private readonly codeLoader: ICodeLoader,
         private readonly options: any,
@@ -164,8 +164,8 @@ export class Loader extends EventEmitter implements ILoader {
     ) {
         super();
 
-        if (!containerHost) {
-            throw new Error("An IContainerHost must be provided");
+        if (!resolver) {
+            throw new Error("An IUrlResolver must be provided");
         }
 
         if (!documentServiceFactories) {
@@ -243,10 +243,10 @@ export class Loader extends EventEmitter implements ILoader {
         }
 
         let toCache: IResolvedUrl | undefined;
-        if (Array.isArray(this.containerHost.resolver)) {
-            toCache = await configurableUrlResolver(this.containerHost.resolver, request);
+        if (Array.isArray(this.resolver)) {
+            toCache = await configurableUrlResolver(this.resolver, request);
         } else {
-            toCache = await this.containerHost.resolver.resolve(request);
+            toCache = await this.resolver.resolve(request);
         }
         if (!toCache) {
             return Promise.reject(`Invalid URL ${request.url}`);
