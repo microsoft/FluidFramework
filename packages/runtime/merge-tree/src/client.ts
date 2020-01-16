@@ -909,7 +909,7 @@ export class Client {
 
         // TODO: Remove options flag once new snapshot format is adopted as default.
         //       (See https://github.com/microsoft/FluidFramework/issues/84)
-        const snap = this.mergeTree.options.newMergeTreeSnapshotFormat
+        const snap = this.mergeTree.options?.newMergeTreeSnapshotFormat
             ? new Snapshot(this.mergeTree, this.logger)
             : new SnapshotLegacy(this.mergeTree, this.logger);
 
