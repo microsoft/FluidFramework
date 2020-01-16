@@ -319,6 +319,8 @@ export class LocalReferenceCollection {
                         this.hierRefCount++;
                     }
                     this.refCount ++;
+                } else {
+                    lref.segment = undefined;
                 }
             }
         }
@@ -348,6 +350,8 @@ export class LocalReferenceCollection {
                         this.hierRefCount++;
                     }
                     this.refCount++;
+                } else {
+                    lref.segment = undefined;
                 }
             }
         }
