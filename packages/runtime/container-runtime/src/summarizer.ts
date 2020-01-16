@@ -40,7 +40,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
     private readonly summaryCollection: SummaryCollection;
     private onBehalfOfClientId: string;
     private runningSummarizer?: RunningSummarizer;
-    private systemOpListener?: (op: ISequencedDocumentMessage) => void;
+    private systemOpListener?: (ops: ISequencedDocumentMessage[]) => void;
     private opListener?: (error: any, op: ISequencedDocumentMessage) => void;
 
     constructor(
@@ -54,7 +54,11 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         this.runCoordinator = new RunWhileConnectedCoordinator(runtime);
         this.summaryCollection = new SummaryCollection(this.runtime.deltaManager.initialSequenceNumber);
         this.runtime.deltaManager.inbound.on("op",
-            (op) => this.summaryCollection.handleOp(op as ISequencedDocumentMessage));
+            (ops: ISequencedDocumentMessage[]) => {
+                for (const op of ops) {
+                    this.summaryCollection.handleOp(op);
+                }
+            });
     }
 
     public async run(onBehalfOf: string): Promise<void> {
@@ -147,7 +151,11 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         });
 
         // Listen for ops
-        this.systemOpListener = (op: ISequencedDocumentMessage) => this.runningSummarizer.handleSystemOp(op);
+        this.systemOpListener = (ops: ISequencedDocumentMessage[]) => {
+            for (const op of ops) {
+                this.runningSummarizer.handleSystemOp(op);
+            }
+        };
         this.runtime.deltaManager.inbound.on("op", this.systemOpListener);
 
         this.opListener = (error: any, op: ISequencedDocumentMessage) => this.runningSummarizer.handleOp(error, op);

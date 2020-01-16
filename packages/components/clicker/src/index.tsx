@@ -110,7 +110,7 @@ class CounterReactView extends React.Component<CounterProps, CounterState> {
                     () => {
                         this.props.runtime.orderSequentially(() => {
                             batchCount++;
-                            for (let i = 0; i < 100; i++) {
+                            for (let i = 0; i < 200; i++) {
                                 this.props.sharedDirectory.set(`batch-${batchCount}`, i);
                             }
                         });

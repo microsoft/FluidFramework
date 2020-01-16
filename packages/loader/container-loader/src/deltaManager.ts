@@ -140,6 +140,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private opSendTime: number | undefined;
     private opNumberForRTT: number | undefined;
 
+    private batchHandler: ((message: ISequencedDocumentMessage) => boolean) | undefined;
+
     public get inbound(): IDeltaQueue<ISequencedDocumentMessage[]> {
         return this._inbound;
     }
@@ -308,6 +310,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 this.fetchMissingDeltas("DocumentOpen", sequenceNumber);
             }
         }
+    }
+
+    public attachBatchHandler(handler: (message: ISequencedDocumentMessage) => boolean) {
+        this.batchHandler = handler;
     }
 
     public updateQuorumJoin() {
@@ -950,7 +956,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     this.inboundMessageBuffer = { messages: [], ready: true };
                 }
 
-                this.emit("preparePush", message);
+                if (this.batchHandler !== undefined) {
+                    this.inboundMessageBuffer.ready = this.batchHandler(message);
+                }
 
                 this.inboundMessageBuffer.messages.push(message);
                 if (this.inboundMessageBuffer.ready) {

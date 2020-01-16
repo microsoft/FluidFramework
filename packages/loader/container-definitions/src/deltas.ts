@@ -122,7 +122,7 @@ export interface IDeltaManager<T, U> extends EventEmitter, IDeltaSender, IDispos
 
     submitSignal(content: any): void;
 
-    setInboundMessageBufferReady(ready: boolean): void;
+    attachBatchHandler(handler: (message: ISequencedDocumentMessage) => boolean);
 
     pushToInboundQueue(): void;
 }

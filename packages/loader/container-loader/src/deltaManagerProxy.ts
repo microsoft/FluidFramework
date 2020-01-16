@@ -142,8 +142,8 @@ export class DeltaManagerProxy
         this.inboundSignal = new DeltaQueueProxy(deltaManager.inboundSignal);
     }
 
-    public setInboundMessageBufferReady(ready: boolean) {
-        this.deltaManager.setInboundMessageBufferReady(ready);
+    public attachBatchHandler(handler: (message: ISequencedDocumentMessage) => boolean) {
+        this.deltaManager.attachBatchHandler(handler);
     }
 
     public pushToInboundQueue() {
