@@ -12,7 +12,7 @@
   },
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "concurrently npm:build:compile npm:tslint",
+    "build": "concurrently npm:build:compile npm:tslint npm:webpack",
     "build:compile": "npm run tsc",
     "build:compile:min": "npm run build:compile",
     "build:full": "npm run build",
@@ -23,7 +23,8 @@
     "test": "mocha --recursive dist/test -r make-promises-safe",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "tsc": "tsc",
-    "tslint": "npm run eslint"
+    "tslint": "npm run eslint",
+    "webpack": "webpack --color --config webpack.config.js"
   },
   "nyc": {
     "all": true,
@@ -88,6 +89,7 @@
     "mocha": "^5.2.0",
     "nyc": "^14.1.1",
     "rimraf": "^2.6.2",
-    "typescript": "~3.7.4"
+    "typescript": "~3.7.4",
+    "webpack": "^4.16.5"
   }
 }
