@@ -17,14 +17,14 @@
     "build:compile:min": "npm run build:compile",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
+    "build:webpack": "webpack --color --config webpack.config.js",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "test": "mocha --recursive dist/test -r make-promises-safe",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "tsc": "tsc",
-    "tslint": "npm run eslint",
-    "build:webpack": "webpack --color --config webpack.config.js"
+    "tslint": "npm run eslint"
   },
   "nyc": {
     "all": true,
