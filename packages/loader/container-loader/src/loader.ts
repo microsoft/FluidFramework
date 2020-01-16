@@ -155,7 +155,7 @@ export class Loader extends EventEmitter implements ILoader {
 
     constructor(
         private readonly containerHost: IHost,
-        private readonly documentServiceFactories: IDocumentServiceFactory | IDocumentServiceFactory[],
+        documentServiceFactories: IDocumentServiceFactory | IDocumentServiceFactory[],
         private readonly codeLoader: ICodeLoader,
         private readonly options: any,
         private readonly scope: IComponent,
@@ -168,7 +168,7 @@ export class Loader extends EventEmitter implements ILoader {
             throw new Error("An IContainerHost must be provided");
         }
 
-        if (!this.documentServiceFactories) {
+        if (!documentServiceFactories) {
             throw new Error("An IDocumentService must be provided");
         }
 
@@ -176,7 +176,7 @@ export class Loader extends EventEmitter implements ILoader {
             throw new Error("An ICodeLoader must be provided");
         }
 
-        this.protocolToDocumentFactoryMap = createProtocolToFactoryMapping(this.documentServiceFactories);
+        this.protocolToDocumentFactoryMap = createProtocolToFactoryMapping(documentServiceFactories);
     }
 
     public async resolve(request: IRequest): Promise<Container> {
