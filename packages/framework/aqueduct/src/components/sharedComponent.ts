@@ -20,7 +20,7 @@ import { ComponentHandle } from "@microsoft/fluid-component-runtime";
 import { serviceRoutePathRoot } from "../helpers";
 
 /**
- * This is as bare-bones base class that does basic setup and enables for factory on an initialize call.
+ * This is a bare-bones base class that does basic setup and enables for factory on an initialize call.
  * You probably don't want to inherit from this component directly unless you are creating another base component class
  */
 // eslint-disable-next-line max-len

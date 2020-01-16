@@ -118,22 +118,28 @@ export fluidExport = new SimpleModuleInstantiationFactory(
 
 Container Services allow developers to write Components that have the benefit of existing within the ecosystem but don't use Distributed Data Structures. These types of components are helpful when you want to share state among all the parts of a Container but you don't need to share the state outside the session. An example of this could be a local clipboard service that manages the clipboard across all the Distributed Components in the Container but not across users.
 
-The concept of Container Services is simple. We define a specific request route that when queried against returns IComponent objects. The Container Developer can then pass in ContainerServices that other components can query for. These IComponent objects are different from the Components we talked about before in the sense that they do not directly have a `ComponentRuntime` backing them so they can not have Distributed Data Structures. Because they don't contain Distributed State they only exist in memory and will be re-created either with every Container instantiation or on every call (depending on the type).
+The concept of Container Services is simple. We define a specific request route that when queried against returns IComponent objects. The Container Developer can then pass in Container Service that other components can query for. These IComponent objects are different from the Components we talked about before in the sense that they do not directly have a `ComponentRuntime` backing them so they can not have Distributed Data Structures. Because they don't contain Distributed State they only exist in memory and will be re-created either with every Container instantiation or on every call (depending on the type).
 
-Container Services can 
+Container Services have the benefit of being able to access the `IHostRuntime` object which allows them to interact directly with the Container if they choose.
 
-#### SingletonContainerService
+The Aqueduct framework provides two Container Service Factories as well as an optional base class for building Container Services.
 
-A `SingletonContainerService` provides a component with a one to one mapping with the Container.
+#### SingletonContainerServiceFactory
 
-#### InstanceContainerService
+A `SingletonContainerServiceFactory` provides a service with a one to one mapping with the Container.
 
-A `InstanceContainerService` provides a new instance of the component object on every call.`
+#### InstanceContainerServiceFactory
+
+A `InstanceContainerServiceFactory` provides a new instance of the service object on every call.
+
+#### BaseContainerService
+
+The `BaseContainerService` class provides the most basic implementation of a service with no additional functionality.
 
 ### Container Level Request Handlers
 
 You can provide custom Request Handlers to the Container. These request handlers are injected after system handlers but before the component get. Request Handlers allow you to intercept request made to the container and return custom responses.
 
-An example of this is if I want to have a random color generator. I could create a RequestHandler that when someone makes a request to the Container for `{url:"color"}` will intercept and return a custom `IResponse` of `{ status:200, type:"text/plain", value:"blue"}`.
+Consider a scenario where you want to create a random color generator. I could create a RequestHandler that when someone makes a request to the Container for `{url:"color"}` will intercept and return a custom `IResponse` of `{ status:200, type:"text/plain", value:"blue"}`.
 
 We use custom handlers to build the [Container Services](###Container-Service-Development) pattern.
