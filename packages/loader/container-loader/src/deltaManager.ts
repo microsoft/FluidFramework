@@ -256,19 +256,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this._inboundSignal.pause();
     }
 
-    public setInboundMessageBufferReady(ready: boolean) {
-        if (this.inboundMessageBuffer) {
-            this.inboundMessageBuffer.ready = ready;
-        }
-    }
-
-    public pushToInboundQueue() {
-        if (this.inboundMessageBuffer) {
-            this._inbound.push(this.inboundMessageBuffer.messages);
-            this.inboundMessageBuffer.messages = [];
-        }
-    }
-
     public dispose() {
         assert.fail("Not implemented.");
         this.isDisposed = true;
@@ -314,6 +301,13 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     public attachBatchHandler(handler: (message: ISequencedDocumentMessage) => boolean) {
         this.batchHandler = handler;
+    }
+
+    public pushToInboundQueue() {
+        if (this.inboundMessageBuffer) {
+            this._inbound.push(this.inboundMessageBuffer.messages);
+            this.inboundMessageBuffer.messages = [];
+        }
     }
 
     public updateQuorumJoin() {

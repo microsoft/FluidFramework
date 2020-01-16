@@ -255,10 +255,6 @@ class ScheduleManager {
     }
 
     private processBatch(message: ISequencedDocumentMessage): boolean {
-        const metadata = message.metadata as IRuntimeMessageMetadata | undefined;
-
-        let ready: boolean = false;
-
         // Protocol messages are never part of a runtime batch of messages
         if (!isRuntimeMessage(message)) {
             // If pauseClientId is not undefined, we were in the middle of receiving a batch and we received
@@ -269,34 +265,36 @@ class ScheduleManager {
                 // Log telemetry.
             }
             this.pauseClientId = undefined;
-            ready = true;
-        } else {
-            const batchMetadata = metadata ? metadata.batch : undefined;
+            return true;
+        }
 
-            // If the client ID changes then we can move the pause point. If it stayed the same then we need to check.
-            if (this.pauseClientId === message.clientId) {
-                if (batchMetadata !== undefined) {
-                    // If batchMetadata is false we've ended the current batch.
-                    // If batchMetadata is true, we've started a new batch while receiving the current batch which
-                    // should not happen. We treat this as part of the ongoing batch and log a telemetry event.
-                    if (batchMetadata === false) {
-                        this.pauseClientId = undefined;
-                        ready = true;
-                    } else {
-                        // Log telemetry.
-                    }
-                }
-            } else {
-                // If pauseClientId is not undefined, we were in the middle of receiving a batch and we started
-                // receiving messages from another client. Push the current batch into the queue (indicating that
-                // the batch is over) and log a telemetry event.
-                if (this.pauseClientId) {
-                    this.deltaManager.pushToInboundQueue();
+        let ready: boolean = false;
+        const metadata = message.metadata as IRuntimeMessageMetadata | undefined;
+        const batchMetadata = metadata ? metadata.batch : undefined;
+
+        // If the client ID changes then we can move the pause point. If it stayed the same then we need to check.
+        if (this.pauseClientId === message.clientId) {
+            if (batchMetadata !== undefined) {
+                // If batchMetadata is false we've ended the current batch.
+                // If batchMetadata is true, we've started a new batch while receiving the current batch which
+                // should not happen. We treat this as part of the ongoing batch and log a telemetry event.
+                if (batchMetadata === false) {
+                    this.pauseClientId = undefined;
+                    ready = true;
+                } else {
                     // Log telemetry.
                 }
-                this.pauseClientId = batchMetadata ? message.clientId : undefined;
-                ready = batchMetadata ? false : true;
             }
+        } else {
+            // If pauseClientId is not undefined, we were in the middle of receiving a batch and we started
+            // receiving messages from another client. Push the current batch into the queue (indicating that
+            // the batch is over) and log a telemetry event.
+            if (this.pauseClientId) {
+                this.deltaManager.pushToInboundQueue();
+                // Log telemetry.
+            }
+            this.pauseClientId = batchMetadata ? message.clientId : undefined;
+            ready = batchMetadata ? false : true;
         }
         return ready;
     }
