@@ -224,15 +224,15 @@ describe("SharedInterval", () => {
             const serviceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
             const resolver = new TestResolver();
             user1Document = await api.load(
-                id, { resolver }, {}, serviceFactory);
+                id, resolver, {}, serviceFactory);
             documentDeltaEventManager.registerDocuments(user1Document);
 
             user2Document = await api.load(
-                id, { resolver }, {}, serviceFactory);
+                id, resolver, {}, serviceFactory);
             documentDeltaEventManager.registerDocuments(user2Document);
 
             user3Document = await api.load(
-                id, { resolver }, {}, serviceFactory);
+                id, resolver, {}, serviceFactory);
             documentDeltaEventManager.registerDocuments(user3Document);
             root1 = user1Document.getRoot();
             root2 = user2Document.getRoot();
