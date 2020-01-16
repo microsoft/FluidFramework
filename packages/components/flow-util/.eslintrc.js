@@ -13,5 +13,8 @@ module.exports = {
         "no-inner-declarations": "off",
         "no-param-reassign": "off",
         "prefer-arrow/prefer-arrow-functions": "off"
+    },
+    "parserOptions": {
+        "project": [ "./tsconfig.json", "./tsconfig.eslint.json" ]
     }
 }

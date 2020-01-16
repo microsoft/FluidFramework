@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable:no-import-side-effect
 import * as assert from "assert";
+// eslint-disable-next-line import/no-unassigned-import
 import "mocha";
+// eslint-disable-next-line import/no-internal-modules
 import { lis } from "../src/lis";
 import { lis as patience } from "./patience";
 import { randomSequence } from "./sequence";
@@ -25,7 +26,8 @@ function isIS(seq: number[], sub: number[]) {
 
 function expectedLis(seq: number[]) {
     const expected = patience(seq);
-    assert(isIS(seq, expected), `expectedLis() must return a subsequence of ${JSON.stringify(seq)}, but got ${JSON.stringify(expected)}.`);
+    assert(isIS(seq, expected),
+        `expectedLis() must return a subsequence of ${JSON.stringify(seq)}, but got ${JSON.stringify(expected)}.`);
     return expected;
 }
 
@@ -34,16 +36,18 @@ function checkLis(seq: number[], sub: number[]) {
     const expectedLen = expected.length;
 
     assert.equal(sub.length, expectedLen,
+        // eslint-disable-next-line max-len
         `Subsequence ${JSON.stringify(sub)} of ${JSON.stringify(seq)} must have ${expectedLen} items (like ${JSON.stringify(expected)}), but has ${sub.length}.`);
 
-    assert(isIS(seq, expected), `lis() must return a subsequence of ${JSON.stringify(seq)}, but got ${JSON.stringify(expected)}.`);
+    assert(isIS(seq, expected),
+        `lis() must return a subsequence of ${JSON.stringify(seq)}, but got ${JSON.stringify(expected)}.`);
 }
 
 const tests = [
     { seq: [], lis: [] },
-    { seq: [ 4 ], lis: [ 4 ] },
-    { seq: [ 3, 3 ], lis: [ 3 ] },
-    { seq: [ 0, 8, 0 ], lis: [ 0, 8 ] },
+    { seq: [4], lis: [4] },
+    { seq: [3, 3], lis: [3] },
+    { seq: [0, 8, 0], lis: [0, 8] },
 ];
 
 describe("Longest increasing subsequence", () => {

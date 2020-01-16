@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable:no-import-side-effect
-// tslint:disable:no-bitwise
+/* eslint-disable no-bitwise */
 import * as assert from "assert";
+// eslint-disable-next-line import/no-unassigned-import
 import "mocha";
+// eslint-disable-next-line import/no-internal-modules
 import { Direction, getDeltaX, getDeltaY } from "../src/direction";
 
 // tslint:disable-next-line:mocha-no-side-effect-code
