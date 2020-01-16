@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
 import { ComponentRegistry } from "@microsoft/fluid-container-runtime";
-import { IComponentDefaultFactoryName, IContainerServiceFactory } from "@microsoft/fluid-framework-interfaces";
+import { IComponentDefaultFactoryName } from "@microsoft/fluid-framework-interfaces";
 import {
     IComponentRegistry,
+    IHostRuntime,
     IProvideComponentRegistry,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
@@ -31,7 +33,8 @@ export class SimpleModuleInstantiationFactory implements
     constructor(
         private readonly defaultComponentName: string,
         private readonly registryEntries: NamedComponentRegistryEntries,
-        private readonly services: IContainerServiceFactory[] = []) {
+        private readonly serviceRegistry: [string, (runtime: IHostRuntime) => Promise<IComponent>][] = [],
+    ) {
         this.registry = new ComponentRegistry(registryEntries);
     }
     public get IComponentRegistry() { return this.registry; }
@@ -45,7 +48,7 @@ export class SimpleModuleInstantiationFactory implements
             context,
             this.defaultComponentName,
             this.registryEntries,
-            this.services,
+            this.serviceRegistry,
         );
     }
 }
