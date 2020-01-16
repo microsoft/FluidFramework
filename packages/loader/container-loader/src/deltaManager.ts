@@ -119,7 +119,10 @@ class MessageProcessingDelegate {
             // from the same client.
             // If the clientId does not match inboundBatchClientId, we are either receiving a new
             // batch or it's a non-batch message.
-            if (this.inboundBatchClientId === message.clientId) {
+            if (this.inboundBatchClientId === undefined) {
+                this.inboundBatchClientId = batchMetadata ? message.clientId : undefined;
+                batch = batchMetadata ? true : false;
+            } else if (this.inboundBatchClientId === message.clientId) {
                 if (batchMetadata !== undefined) {
                     // If batchMetadata is false we've ended the current batch.
                     // If batchMetadata is true, we've started a new batch while receiving the current
@@ -140,18 +143,19 @@ class MessageProcessingDelegate {
                 // If inboundBatchClientId is not undefined, we were in the middle of receiving a batch and
                 // we started receiving messages from another client. Push the current batch into the queue
                 // (indicating that the batch is over) and log a telemetry event.
-                if (this.inboundBatchClientId) {
-                    if (this.inboundMessageBuffer.length !== 0) {
-                        this.inboundQueue.push(this.inboundMessageBuffer);
-                        this.inboundMessageBuffer = [];
-                    }
-                    this.logger.sendTelemetryEvent({
-                        previousBatchClientId: this.inboundBatchClientId,
-                        newBatchClientId: message.clientId,
-                        sequenceNumber: message.clientSequenceNumber,
-                        eventName: "IncompleteBatchReceived",
-                    });
+                if (this.inboundMessageBuffer.length !== 0) {
+                    // Add metadata indicating batch end since we are considering this as the end of the batch.
+                    //this.inboundMessageBuffer[this.inboundMessageBuffer.length - 1].metadata = { batch: false };
+                    this.inboundQueue.push(this.inboundMessageBuffer);
+                    this.inboundMessageBuffer = [];
                 }
+                this.logger.sendTelemetryEvent({
+                    previousBatchClientId: this.inboundBatchClientId,
+                    newBatchClientId: message.clientId,
+                    newSequenceNumber: message.clientSequenceNumber,
+                    eventName: "IncompleteBatchReceived",
+                });
+
                 this.inboundBatchClientId = batchMetadata ? message.clientId : undefined;
                 batch = batchMetadata ? true : false;
             }
@@ -226,7 +230,6 @@ class MessageProcessingDelegate {
     }
 
     private isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
-        /* eslint-disable @typescript-eslint/indent */
         switch (message.type) {
             case MessageType.ChunkedOp:
             case MessageType.Attach:
@@ -235,7 +238,6 @@ class MessageProcessingDelegate {
             default:
                 return false;
         }
-        /* eslint-enable @typescript-eslint/indent */
     }
 }
 
