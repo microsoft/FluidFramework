@@ -74,6 +74,18 @@ describe("Routerlicious", () => {
                 assert(response?.value === service1, "Returned expected service");
             });
 
+            it("Same service should be returned twice with two calls", async () => {
+                const requestHandler = generateContainerServicesRequestHandler([
+                    ["id1", async (r) => new ContainerServiceMock(r)],
+                ]);
+                const requestParser = new RequestParser({url:`/${serviceRoutePathRoot}/id1`});
+
+                const response1 = await requestHandler(requestParser, {} as IHostRuntime);
+                const response2 = await requestHandler(requestParser, {} as IHostRuntime);
+
+                assert(response1?.value === response2?.value, "Returned same service twice");
+            });
+
             it("Correct service should be returned with multiple services", async () => {
                 const service2 = new ContainerServiceMock({} as IHostRuntime);
                 const requestHandler = generateContainerServicesRequestHandler([

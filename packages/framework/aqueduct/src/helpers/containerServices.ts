@@ -30,12 +30,43 @@ export abstract class BaseContainerService implements IComponentRouter {
 }
 
 /**
+ * ContainerService Factory that will only create one instance of the service for the Container.
+ */
+class SingletonContainerServiceFactory {
+
+    private service: IComponent | undefined;
+
+    public get IContainerServiceFactory() { return this; }
+
+    public get id() { return this.serviceId; }
+
+    public constructor(
+        private readonly serviceId: string,
+        private readonly serviceFn: (runtime: IHostRuntime) => Promise<IComponent>,
+    ) {
+    }
+
+    public async getService(runtime: IHostRuntime): Promise<IComponent> {
+        if (!this.service) {
+            this.service =  await this.serviceFn(runtime);
+        }
+        return this.service;
+    }
+}
+
+/**
  * Given a collection of IContainerServices will produce a RequestHandler for them all
  * @param serviceRegistry - Collection of Container Services
  */
 export const generateContainerServicesRequestHandler =
-    (serviceRegistry: [string, (runtime: IHostRuntime) => Promise<IComponent>][]): RuntimeRequestHandler =>
-        async (request: RequestParser, runtime: IHostRuntime) => {
+    (serviceRegistry: [string, (runtime: IHostRuntime) => Promise<IComponent>][]): RuntimeRequestHandler => {
+
+        const factories: SingletonContainerServiceFactory[] = [];
+        serviceRegistry.forEach((entry) => {
+            factories.push(new SingletonContainerServiceFactory(entry[0], entry[1]));
+        });
+
+        return async (request: RequestParser, runtime: IHostRuntime) => {
             if (request.pathParts[0] !== serviceRoutePathRoot) {
                 // If the request is not for a service we return undefined so the next handler can use it
                 return undefined;
@@ -51,9 +82,9 @@ export const generateContainerServicesRequestHandler =
             }
 
             let serviceP: Promise<IComponent> | undefined;
-            serviceRegistry.some((registry) => {
-                if (request.pathParts[1] === registry[0]) {
-                    serviceP = registry[1](runtime);
+            factories.some((factory) => {
+                if (request.pathParts[1] === factory.id) {
+                    serviceP = factory.getService(runtime);
                     return true;
                 }
             });
@@ -87,4 +118,5 @@ export const generateContainerServicesRequestHandler =
                 value: service,
             };
         };
+    };
 
