@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IResponse, IComponent, IComponentRouter, IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerServiceFactory } from "@microsoft/fluid-framework-interfaces";
 import { IHostRuntime } from "@microsoft/fluid-runtime-definitions";
