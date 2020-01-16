@@ -30,7 +30,7 @@ import * as assert from "assert";
 import { OrdererManager } from "../../alfred/runnerFactory";
 import { DefaultMetricClient } from "@microsoft/fluid-server-services-core";
 import { generateToken } from "@microsoft/fluid-server-services-client";
-import { configureWebSocketServices, DefaultServiceConfiguration } from "@microsoft/fluid-server-lambdas";
+import { configureWebSocketServices, DefaultServiceConfiguration } from "@microsoft/fluid-server-lambdas/dist/alfred";
 
 describe("Routerlicious", () => {
     describe("Alfred", () => {
