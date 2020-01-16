@@ -12,7 +12,7 @@ TypeScript now emits `get/set` accessors in `.d.ts` files. TypeScript versions `
 "error TS1086: An accessor cannot be declared in an ambient context."
 ```
 
-Links about the changes:
+More about the changes:
 
 - [Class Field Mitigations](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#class-field-mitigations)  
 - [Full list of TypeScript changes](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html)
