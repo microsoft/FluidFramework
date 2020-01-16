@@ -20,7 +20,7 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
-    "test": "test:mocha",
+    "test": "npm test:mocha",
     "test:mocha": "mocha --recursive dist/test -r make-promises-safe",
     "tsc": "tsc",
     "tslint": "npm run eslint"
