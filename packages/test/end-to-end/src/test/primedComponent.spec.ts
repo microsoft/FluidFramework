@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { TestHost } from "@microsoft/fluid-local-test-server";
-import * as assert from "assert";
 
 const PrimedType = "@microsoft/fluid-primedComponent";
 

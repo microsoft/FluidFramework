@@ -5,6 +5,7 @@
 
 /* tslint:disable:no-unsafe-any */
 /* tslint:disable:no-backbone-get-set-outside-model  */
+import * as assert from "assert";
 import * as api from "@fluid-internal/client-api";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import {
@@ -16,7 +17,6 @@ import {
 } from "@microsoft/fluid-local-test-server";
 import { ISharedDirectory, ISharedMap, SharedDirectory, SharedMap } from "@microsoft/fluid-map";
 import { MessageType } from "@microsoft/fluid-protocol-definitions";
-import * as assert from "assert";
 
 describe("Directory", () => {
     const id = "fluid://test.com/test/test";
@@ -60,11 +60,11 @@ describe("Directory", () => {
     });
 
     function expectAllValues(msg, key, path, value1, value2, value3) {
-        const user1Value = root1Directory.getWorkingDirectory(path).get(key) as string;
+        const user1Value = root1Directory.getWorkingDirectory(path).get(key);
         assert.equal(user1Value, value1, `Incorrect value for ${key} in document 1 ${msg}`);
-        const user2Value = root2Directory.getWorkingDirectory(path).get(key) as string;
+        const user2Value = root2Directory.getWorkingDirectory(path).get(key);
         assert.equal(user2Value, value2, `Incorrect value for ${key} in document 2 ${msg}`);
-        const user3Value = root3Directory.getWorkingDirectory(path).get(key) as string;
+        const user3Value = root3Directory.getWorkingDirectory(path).get(key);
         assert.equal(user3Value, value3, `Incorrect value for ${key} in document 3 ${msg}`);
     }
     function expectAllBeforeValues(key, path, value1, value2, value3) {
