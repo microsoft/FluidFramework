@@ -90,7 +90,7 @@ export function create(store: nconf.Provider): Router {
                 if (useCache) {
                     response.setHeader("Cache-Control", "public, max-age=31536000");
                 }
-                response.status(200).write(new Buffer(blob.content, "base64"), () => response.end());
+                response.status(200).write(Buffer.from(blob.content, "base64"), () => response.end());
             },
             (error) => {
                 response.status(400).json(error);

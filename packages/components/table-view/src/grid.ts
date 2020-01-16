@@ -35,7 +35,7 @@ const headerTemplate = new Template({ tag: "th" });
 const cellTemplate = new Template({ tag: "td" });
 const cellInputTemplate = new Template({ tag: "input", props: { className: styles.inputBox } });
 
-const numberExp = /^[-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?$/;
+const numberExp = /^[+-]?\d*\.?\d+(?:[Ee][+-]?\d+)?$/;
 
 export class GridView {
 

@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import * as fs from "fs";
 import { DocumentStorage } from "@microsoft/fluid-server-services";
 import { MongoDatabaseManager, MongoManager } from "@microsoft/fluid-server-services-core";
 import * as utils from "@microsoft/fluid-server-services-utils";
 import * as bytes from "bytes";
-import * as fs from "fs";
 import * as git from "isomorphic-git";
 import { Provider } from "nconf";
 import * as socketIo from "socket.io";
@@ -22,7 +22,7 @@ import {
 
 export class TinyliciousResourcesFactory implements utils.IResourcesFactory<TinyliciousResources> {
     public async create(config: Provider): Promise<TinyliciousResources> {
-        // pull in the default port off the config
+        // Pull in the default port off the config
         const port = utils.normalizePort(process.env.PORT || "3000");
         const maxSendMessageSize = bytes.parse(config.get("alfred:maxMessageSize"));
         const collectionNames = config.get("mongo:collectionNames");

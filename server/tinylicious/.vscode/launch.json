@@ -18,5 +18,17 @@
             "protocol":"inspector",
             "trace": "sm"
         },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch Program",
+            "runtimeArgs": [
+                "-r",
+                "ts-node/register"
+            ],
+            "args": [
+                "${workspaceFolder}/src/index.ts"
+            ]
+        }
     ]
 }
