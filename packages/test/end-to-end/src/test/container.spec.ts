@@ -44,7 +44,14 @@ describe("Container", () => {
         codeLoader = new API.CodeLoader({ generateSummaries: false });
         const options = {};
 
-        loader = new Loader(testResolver, serviceFactory, codeLoader, options, {}, new Map<string, IProxyLoaderFactory>());
+        loader = new Loader(
+            testResolver,
+            serviceFactory,
+            codeLoader,
+            options,
+            {},
+            new Map<string, IProxyLoaderFactory>(),
+        );
     });
 
     it("Load container successfully", async () => {
