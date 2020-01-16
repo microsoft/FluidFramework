@@ -11,22 +11,11 @@ import { SharedMap } from "@microsoft/fluid-map";
 import { SharedObjectSequence } from "@microsoft/fluid-sequence";
 // eslint-disable-next-line import/no-internal-modules
 import { SharedColors } from "@uifabric/fluent-theme/lib/fluent/FluentColors";
-// eslint-disable-next-line import/no-internal-modules
-import { IIconProps } from "office-ui-fabric-react/lib/Icon";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+import { IBadgeType } from "./IBadgeType";
 import { BadgeView } from "./BadgeView";
-
-export interface IBadgeType {
-    key: string;
-    text: string;
-    iconProps: IIconProps;
-}
-
-export interface IHistory<T> {
-    value: T;
-    timestamp: Date;
-}
+import { IHistory } from "./IHistory";
 
 export class Badge extends PrimedComponent implements IComponentHTMLVisual, IComponentReactViewable {
     currentCell: SharedCell;
@@ -85,8 +74,10 @@ export class Badge extends PrimedComponent implements IComponentHTMLVisual, ICom
     ];
 
     /**
-     * This is only called once the first time your component is created. Anything that happens in create will happen
-     * before any other user will see the component.
+     * ComponentInitializingFirstTime is called only once, it is executed only by the first client to open the component
+     * and all work will resolve before the view is presented to any user.
+     *
+     * This method is used to perform component setup, which can include setting an initial schema or initial values.
      */
     protected async componentInitializingFirstTime() {
         // Create a cell to represent the Badge's current state

@@ -11,6 +11,7 @@ export * from "./document";
 export * from "./http";
 export * from "./lambdas";
 export * from "./messages";
+export * from "./metricClient";
 export * from "./mongo";
 export * from "./mongoDatabaseManager";
 export * from "./orderer";

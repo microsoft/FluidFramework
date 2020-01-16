@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { LeafTask } from "./leafTask";
 import { logVerbose } from "../../common/logging";
 import { readFileAsync, existsSync } from "../../common/utils";
@@ -37,6 +38,11 @@ export class TscTask extends LeafTask {
     }
 
     protected async checkLeafIsUpToDate() {
+        const tsBuildInfoFileFullPath = this.tsBuildInfoFileFullPath;
+        if (tsBuildInfoFileFullPath === undefined) { return false; }
+
+        const tsBuildInfoFileDirectory = path.dirname(tsBuildInfoFileFullPath);
+
         // Using tsc incremental information
         const tsBuildInfo = await this.readTsBuildInfo();
         if (tsBuildInfo === undefined) { return false; }
@@ -50,29 +56,55 @@ export class TscTask extends LeafTask {
         const fileInfos = tsBuildInfo.program.fileInfos;
         for (const key of Object.keys(fileInfos)) {
             try {
-                const hash = await this.node.buildContext.fileHashCache.getFileHash(key);
+                // Resolve relative path based on the directory of the tsBuildInfo file
+                const fullPath = path.resolve(tsBuildInfoFileDirectory, key);
+                const hash = await this.node.buildContext.fileHashCache.getFileHash(fullPath);
                 if (hash !== fileInfos[key].version) {
-                    logVerbose(`${this.node.pkg.nameColored}: version mismatch for ${key}, ${hash}, ${fileInfos[key].version}`)
+                    logVerbose(`${this.node.pkg.nameColored}: version mismatch for ${key}, ${hash}, ${fileInfos[key].version}`);
                     return false;
                 }
-            } catch {
-                logVerbose(`${this.node.pkg.nameColored}: exception generation hash for ${key}`)
+            } catch (e) {
+                logVerbose(`${this.node.pkg.nameColored}: exception generating hash for ${key}`);
+                logVerbose(e.stack);
                 return false;
             }
         }
 
         // Check tsconfig.json
-        return this.checkTsConfig(tsBuildInfo);
+        return this.checkTsConfig(tsBuildInfoFileDirectory, tsBuildInfo);
     }
 
-    private checkTsConfig(tsBuildInfo: ITsBuildInfo) {
+    private checkTsConfig(tsBuildInfoFileDirectory: string, tsBuildInfo: ITsBuildInfo) {
         const options = this.readTsConfig();
         if (!options) {
             return false;
         }
 
-        if (!isEqual(options.options, tsBuildInfo.program.options)) {
-            logVerbose(`${this.node.pkg.nameColored}: ts option changed ${this.configFileFullPath}`);
+        const configOptions = { ...options.options };
+        const tsBuildInfoOptions = { ...tsBuildInfo.program.options };
+        // Patch relative path based on tsBuildInfo file directory.
+        const pathKeys = ["configFilePath", "declarationDir", "outDir", "rootDir", "project"];
+        const patch = (object: any, keys: string[], dir: string) => {
+            for (const key of keys) {
+                const value = object[key];
+                if (value !== undefined) {
+                    object[key] = path.resolve(dir, value);
+                }
+            }
+        }
+
+        const configFileFullPath = this.configFileFullPath;
+        if (!configFileFullPath) { assert.fail(); };
+
+        patch(configOptions, pathKeys, path.dirname(configFileFullPath));
+        patch(tsBuildInfoOptions, pathKeys, tsBuildInfoFileDirectory);
+
+        if (!isEqual(configOptions, tsBuildInfoOptions)) {
+            logVerbose(`${this.node.pkg.nameColored}: ts option changed ${configFileFullPath}`);
+            logVerbose("Config:")
+            logVerbose(JSON.stringify(configOptions, undefined, 2));
+            logVerbose("BuildInfo:");
+            logVerbose(JSON.stringify(tsBuildInfoOptions, undefined, 2));
             return false;
         }
         return true;
@@ -82,13 +114,12 @@ export class TscTask extends LeafTask {
         if (this._tsConfig == undefined) {
             const args = this.command.split(" ");
 
-            const parsedCommand = ts.parseCommandLine(args);
-            if (parsedCommand.errors.length) {
-                logVerbose(`${this.node.pkg.nameColored}: ts fail to parse command line ${this.command}`);
-                return undefined;
-            }
-
+            const parsedCommand = this.parsedCommandLine;
+            if (!parsedCommand) { return undefined; }
+                
             const configFileFullPath = this.configFileFullPath;
+            if (!configFileFullPath) { return undefined; }
+
             const configFile = ts.readConfigFile(configFileFullPath, ts.sys.readFile);
             if (configFile.error) {
                 logVerbose(`${this.node.pkg.nameColored}: ts fail to parse ${configFileFullPath}`);
@@ -117,7 +148,9 @@ export class TscTask extends LeafTask {
             // TODO: parse the command line for real, split space for now.
             const args = this.command.split(" ");
 
-            const parsedCommand = ts.parseCommandLine(args);
+            const parsedCommand = this.parsedCommandLine;
+            if (!parsedCommand) { return undefined; }
+
             const project = parsedCommand.options.project;
             if (project !== undefined) {
                 this._tsConfigFullPath = path.resolve(this.node.pkg.directory, project);
@@ -133,8 +166,22 @@ export class TscTask extends LeafTask {
         return this._tsConfigFullPath;
     }
 
+    private get parsedCommandLine() {
+         // TODO: parse the command line for real, split space for now.
+         const args = this.command.split(" ");
+
+         const parsedCommand = ts.parseCommandLine(args);
+         if (parsedCommand.errors.length) {
+            logVerbose(`${this.node.pkg.nameColored}: ts fail to parse command line ${this.command}`);
+            return undefined;
+        }
+         return parsedCommand;
+    }
+
     private get tsBuildInfoFileName() {
         const configFileFullPath = this.configFileFullPath;
+        if (!configFileFullPath) { return undefined; }
+
         const configFileParsed = path.parse(configFileFullPath);
         if (configFileParsed.ext === ".json") {
             return `${configFileParsed.name}.tsbuildinfo`;
@@ -153,14 +200,20 @@ export class TscTask extends LeafTask {
             return `${outFile}.tsbuildinfo`;
         }
 
+        const configFileFullPath = this.configFileFullPath;
+        if (!configFileFullPath) { return undefined; }
+
+        const tsBuildInfoFileName = this.tsBuildInfoFileName;
+        if (!tsBuildInfoFileName) { return undefined; }
+
         if (options.options.outDir) {
             if (options.options.rootDir) {
-                const relative = path.relative(options.options.rootDir, path.parse(this.configFileFullPath).dir);
-                return path.join(options.options.outDir, relative, this.tsBuildInfoFileName);
+                const relative = path.relative(options.options.rootDir, path.parse(configFileFullPath).dir);
+                return path.join(options.options.outDir, relative, tsBuildInfoFileName);
             }
-            return path.join(options.options.outDir, this.tsBuildInfoFileName);
+            return path.join(options.options.outDir, tsBuildInfoFileName);
         }
-        return path.join(path.parse(this.configFileFullPath).dir, this.tsBuildInfoFileName);
+        return path.join(path.parse(configFileFullPath).dir, tsBuildInfoFileName);
     }
 
     private get tsBuildInfoFileFullPath() {

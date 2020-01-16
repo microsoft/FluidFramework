@@ -6,23 +6,21 @@
 import { TestHost } from "@microsoft/fluid-local-test-server";
 import {
     TableDocument,
-    TableDocumentItem,
     TableDocumentType,
     TableSliceType,
     TableSlice,
-} from "@fluid-example/table-document";
+} from "../src";
 import * as assert from "assert";
 import "mocha";
+import { TableDocumentItem } from "../src/table";
 
 describe("TableDocument", () => {
     let host: TestHost;
 
     before(() => {
         host = new TestHost([
-            [TableDocumentType, import("@fluid-example/table-document").then(
-                (m) => m.TableDocument.getFactory())],
-            [TableSliceType, import("@fluid-example/table-document").then(
-                (m) => m.TableSlice.getFactory())],
+            [TableDocumentType, Promise.resolve(TableDocument.getFactory())],
+            [TableSliceType, Promise.resolve(TableSlice.getFactory())],
         ]);
     });
 
