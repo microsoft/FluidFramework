@@ -20,7 +20,8 @@ import { Provider } from "nconf";
 import * as winston from "winston";
 import { createMetricClient } from "@microsoft/fluid-server-services";
 import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
-import { configureWebSocketServices } from "@microsoft/fluid-server-lambdas";
+// eslint-disable-next-line import/no-internal-modules
+import { configureWebSocketServices } from "@microsoft/fluid-server-lambdas/dist/alfred";
 import * as app from "./app";
 
 export class AlfredRunner implements utils.IRunner {

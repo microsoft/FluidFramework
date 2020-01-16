@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import * as api from "@fluid-internal/client-api";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import {
@@ -23,12 +24,11 @@ import {
     SharedString,
     SharedStringFactory,
 } from "@microsoft/fluid-sequence";
-import * as assert from "assert";
 
 const assertIntervalsHelper = (
     sharedString: SharedString,
     intervals: IntervalCollectionView<SequenceInterval>,
-    expected: ReadonlyArray<{start: number; end: number}>,
+    expected: readonly {start: number; end: number}[],
 ) => {
     const actual = intervals.findOverlappingIntervals(0, sharedString.getLength() - 1);
     assert.strictEqual(actual.length, expected.length,
@@ -58,7 +58,7 @@ describe("SharedInterval", () => {
         let sharedString: SharedString;
         let intervals: IntervalCollectionView<SequenceInterval>;
 
-        const assertIntervals = (expected: ReadonlyArray<{start: number; end: number}>) => {
+        const assertIntervals = (expected: readonly {start: number; end: number}[]) => {
             assertIntervalsHelper(sharedString, intervals, expected);
         };
 

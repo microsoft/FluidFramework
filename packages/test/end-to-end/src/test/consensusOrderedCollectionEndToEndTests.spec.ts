@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import * as api from "@fluid-internal/client-api";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import {
@@ -15,14 +16,11 @@ import {
 import { ISharedMap } from "@microsoft/fluid-map";
 import { ConsensusQueue, ConsensusStack, IConsensusOrderedCollection } from "@microsoft/fluid-ordered-collection";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
-import * as assert from "assert";
 
 interface ISharedObjectConstructor<T> {
     create(runtime: IComponentRuntime, id?: string): T;
 }
 
-generate("ConsensusQueue", ConsensusQueue, [1, 2, 3], [1, 2, 3]);
-generate("ConsensusStack", ConsensusStack, [1, 2, 3], [3, 2, 1]);
 function generate(
     name: string, ctor: ISharedObjectConstructor<IConsensusOrderedCollection>,
     input: any[], output: any[]) {
@@ -260,3 +258,6 @@ function generate(
         });
     });
 }
+
+generate("ConsensusQueue", ConsensusQueue, [1, 2, 3], [1, 2, 3]);
+generate("ConsensusStack", ConsensusStack, [1, 2, 3], [3, 2, 1]);

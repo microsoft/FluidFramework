@@ -68,9 +68,7 @@ describe("Loader", () => {
                     false,
                 );
                 deltaManager.attachOpHandler(0, 0, {
-                    process(message) {
-                        return intendedResult;
-                    },
+                    process: (message) => intendedResult,
                     processSignal() {},
                 }, true);
             });

@@ -209,7 +209,6 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     }
 
     constructor(document: IComponentRuntime, public id: string) {
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         super(document, id, SparseMatrixFactory.Attributes, SparseMatrixFactory.segmentFromSpec);
     }
 

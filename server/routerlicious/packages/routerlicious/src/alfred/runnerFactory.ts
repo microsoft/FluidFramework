@@ -20,7 +20,8 @@ import * as redis from "redis";
 import * as winston from "winston";
 import * as ws from "ws";
 import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
-import { DefaultServiceConfiguration } from "@microsoft/fluid-server-lambdas";
+// eslint-disable-next-line import/no-internal-modules
+import { DefaultServiceConfiguration } from "@microsoft/fluid-server-lambdas/dist/alfred";
 import { AlfredRunner } from "./runner";
 
 class NodeWebSocketServer implements core.IWebSocketServer {
@@ -59,7 +60,6 @@ export class OrdererManager implements core.IOrdererManager {
             return Promise.reject("Invalid ordering service endpoint");
         }
 
-        /* eslint-disable @typescript-eslint/indent */
         switch (tenant.orderer.type) {
             case "kafka":
                 return this.kafkaFactory.create(tenantId, documentId);
@@ -68,7 +68,6 @@ export class OrdererManager implements core.IOrdererManager {
             default:
                 return this.localOrderManager.get(tenantId, documentId);
         }
-        /* eslint-enable @typescript-eslint/indent */
     }
 }
 

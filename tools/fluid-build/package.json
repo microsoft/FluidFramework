@@ -1,6 +1,6 @@
 {
   "name": "fluid-build",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "private": true,
   "description": "Fluid Build tool",
   "license": "MIT",
@@ -22,7 +22,7 @@
     "lodash.isequal": "^4.5.0",
     "rimraf": "^2.6.2",
     "sort-package-json": "1.31.0",
-    "typescript": "^3.5.3"
+    "typescript": "^3.7.4"
   },
   "devDependencies": {
     "@types/async": "^2.4.1",

@@ -1,0 +1,7 @@
+{
+    "extends": [
+        "@microsoft/eslint-config-fluid/no-tslint"
+    ],
+    "rules": {
+    }
+}
