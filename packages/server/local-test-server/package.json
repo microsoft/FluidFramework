@@ -68,7 +68,8 @@
     "debug": "^4.1.1",
     "jsonwebtoken": "^8.4.0",
     "random-name": "^0.1.2",
-    "semver": "^6.3.0"
+    "semver": "^6.3.0",
+    "winston": "^3.1.0"
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.13.0",

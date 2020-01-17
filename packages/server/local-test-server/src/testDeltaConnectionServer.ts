@@ -28,7 +28,14 @@ import {
     TestClientManager,
 } from "@microsoft/fluid-server-test-utils";
 import { configureWebSocketServices} from "@microsoft/fluid-server-lambdas";
+import * as winston from "winston";
 import { TestReservationManager } from "./testReserverationManger";
+
+winston.configure({
+    transports: [
+        new winston.transports.Console(),
+    ],
+});
 
 /**
  * Items needed for handling deltas.
