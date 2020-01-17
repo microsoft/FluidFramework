@@ -4,7 +4,14 @@
  */
 
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { BaseSegment, createGroupOp, IJSONSegment, ISegment, PropertySet } from "@microsoft/fluid-merge-tree";
+import {
+    BaseSegment,
+    createGroupOp,
+    IJSONSegment,
+    ISegment,
+    PropertySet,
+    LocalReferenceCollection,
+} from "@microsoft/fluid-merge-tree";
 import {
     IChannelAttributes,
     IComponentRuntime,
@@ -65,7 +72,7 @@ export class PaddingSegment extends BaseSegment {
 
         // Note: Must call 'appendLocalRefs' before modifying this segment's length as
         //       'this.cachedLength' is used to adjust the offsets of the local refs.
-        this.appendLocalRefs(segment);
+        LocalReferenceCollection.append(this, segment);
 
         this.cachedLength += segment.cachedLength;
     }
@@ -202,7 +209,6 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     }
 
     constructor(document: IComponentRuntime, public id: string) {
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         super(document, id, SparseMatrixFactory.Attributes, SparseMatrixFactory.segmentFromSpec);
     }
 

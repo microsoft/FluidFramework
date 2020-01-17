@@ -362,8 +362,7 @@ export class Loader extends EventEmitter implements ILoader {
         };
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    private loadContainer(
+    private async loadContainer(
         id: string,
         documentService: IDocumentService,
         request: IRequest,

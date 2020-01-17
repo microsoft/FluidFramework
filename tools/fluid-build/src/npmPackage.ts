@@ -194,7 +194,7 @@ export class Package {
             if (options.fixScripts) {
                 if (!this.packageJson.scripts["test:mocha"]) {
                     this.packageJson.scripts["test:mocha"] = this.packageJson.scripts["test"];
-                    this.packageJson.scripts["test"] = "test:mocha";
+                    this.packageJson.scripts["test"] = "npm run test:mocha";
                     fixed = true;
                 } else {
                     console.warn(`${this.nameColored}: couldn't fix: "test" and "test:mocha" scripts both present`)
@@ -380,7 +380,7 @@ export class Package {
                     if (existsSync(symlinkPath)) {
                         const stat = await lstatAsync(symlinkPath);
                         if (!stat.isSymbolicLink || await realpathAsync(symlinkPath) !== depBuildPackage.directory) {
-                            if (stat.isDirectory) {
+                            if (stat.isDirectory()) {
                                 await rimrafWithErrorAsync(symlinkPath, this.nameColored);
                             } else {
                                 await unlinkAsync(symlinkPath);
