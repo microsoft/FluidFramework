@@ -8,7 +8,8 @@
   "sideEffects": false,
   "main": "dist/index.js",
   "browser": {
-    "winston": false
+    "winston": false,
+    "moniker": "@microsoft/fluid-server-services-client/dist/dockerNames.js"
   },
   "types": "dist/index.d.ts",
   "scripts": {
