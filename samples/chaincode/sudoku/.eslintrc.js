@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
- module.exports = {
-    extends: [
+module.exports = {
+    "extends": [
         "@microsoft/eslint-config-fluid",
+        "prettier/@typescript-eslint",
+        "plugin:prettier/recommended"
     ],
-    rules: {
-        "@typescript-eslint/consistent-type-assertions": "off",
+    "rules": {
         "@typescript-eslint/no-use-before-define": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",
-        "no-case-declarations": "off",
-        "no-null/no-null": "off"
+        "import/no-internal-modules": "off"
     }
 }

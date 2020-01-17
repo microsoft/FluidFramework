@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
- module.exports = {
-    extends: [
-        "@microsoft/eslint-config-fluid",
+module.exports = {
+    "extends": [
+        "@microsoft/eslint-config-fluid"
     ],
-    rules: {
-        "@typescript-eslint/consistent-type-assertions": "off",
-        "@typescript-eslint/no-use-before-define": "off",
+    "rules": {
+        "@typescript-eslint/no-non-null-assertion": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",
         "no-case-declarations": "off",
         "no-null/no-null": "off"
