@@ -27,7 +27,7 @@ import { ISpacesDataModel, SpacesDataModel } from "./dataModel";
 
 interface IEmbeddedComponentWrapperProps {
     id: string;
-    getComponent(id:string): Promise<IComponent>;
+    getComponent(id: string): Promise<IComponent>;
 }
 
 interface IEmbeddedComponentWrapperState {
@@ -156,8 +156,6 @@ class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceGridView
                                 <button onClick={async () => this.props.dataModel.addComponent("facepile", 2, 4)}>FacePile</button>
                                 <button onClick={async () => this.props.dataModel.addComponent("codemirror", 12, 8)}>CodeMirror</button>
                                 <button onClick={async () => this.props.dataModel.addComponent("prosemirror", 16, 12)}>ProseMirror</button>
-                                <button onClick={async () => this.props.dataModel.addComponent("todo", 6, 9)}>Todo</button>
-                                <button onClick={async () => this.props.dataModel.addComponent("birthday", 6, 6)}>Birthday</button>
                             </span>
                             <button onClick={() => { this.props.dataModel.saveLayout(); }}>Save Layout</button>
                         </React.Fragment>
@@ -170,7 +168,8 @@ class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceGridView
                         cols={36}
                         rowHeight={50}
                         width={1800}
-                        compactType={null}
+                        // eslint-disable-next-line no-null/no-null
+                        compactType={null} // null is required for the GridLayout
                         isDroppable={this.state.editable}
                         isDraggable={this.state.editable}
                         isResizable={this.state.editable}

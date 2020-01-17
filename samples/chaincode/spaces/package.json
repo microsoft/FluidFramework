@@ -32,7 +32,6 @@
     "@fluid-example/codemirror": "^0.13.0",
     "@fluid-example/prosemirror": "^0.13.0",
     "@fluid-example/shared-text": "^0.13.0",
-    "@fluid-example/todo": "^0.13.0",
     "@microsoft/fluid-aqueduct": "^0.13.0",
     "@microsoft/fluid-aqueduct-react": "^0.13.0",
     "@microsoft/fluid-build-common": "^0.13.0",

@@ -13,9 +13,7 @@ type supportedComponent =
     | "textbox"
     | "facepile"
     | "codemirror"
-    | "prosemirror"
-    | "todo"
-    | "birthday";
+    | "prosemirror";
 
 export interface ISpacesDataModel extends EventEmitter {
     componentList: Map<string, Layout>;
