@@ -20,8 +20,7 @@ import * as redis from "redis";
 import * as winston from "winston";
 import * as ws from "ws";
 import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
-// eslint-disable-next-line import/no-internal-modules
-import { DefaultServiceConfiguration } from "@microsoft/fluid-server-lambdas/dist/alfred";
+import { DefaultServiceConfiguration } from "@microsoft/fluid-server-lambdas";
 import { AlfredRunner } from "./runner";
 
 class NodeWebSocketServer implements core.IWebSocketServer {

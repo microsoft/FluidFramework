@@ -45,26 +45,3 @@ export function createLoadableComponentRuntimeRequestHandler(component: ICompone
         return createComponentResponse(component);
     };
 }
-
-export const serviceRoutePathRoot = "_services";
-export function createServiceRuntimeRequestHandler(
-    serviceId: string, component: IComponent): RuntimeRequestHandler {
-    return async (request: RequestParser, runtime: IHostRuntime) => {
-        if (request.pathParts.length >= 2
-            && request.pathParts[0] === serviceRoutePathRoot
-            && request.pathParts[1] === serviceId) {
-
-            if (request.pathParts.length === 2) {
-                return createComponentResponse(component);
-            }
-
-            if (component.IComponentRouter) {
-                return component.IComponentRouter.request(request.createSubRequest(2));
-            }
-
-            return { status: 400, mimeType: "text/plain", value: `${request.url} service is not a router` };
-        }
-
-        return undefined;
-    };
-}

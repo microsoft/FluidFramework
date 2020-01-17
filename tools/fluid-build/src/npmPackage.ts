@@ -194,7 +194,7 @@ export class Package {
             if (options.fixScripts) {
                 if (!this.packageJson.scripts["test:mocha"]) {
                     this.packageJson.scripts["test:mocha"] = this.packageJson.scripts["test"];
-                    this.packageJson.scripts["test"] = "test:mocha";
+                    this.packageJson.scripts["test"] = "npm run test:mocha";
                     fixed = true;
                 } else {
                     console.warn(`${this.nameColored}: couldn't fix: "test" and "test:mocha" scripts both present`)
