@@ -113,7 +113,7 @@ class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceGridView
 
         return (
             <div>
-                <div style={{ position: "fixed", bottom: 10, left: 10, zIndex: 1000 }}>
+                <div style={{ position: "absolute", bottom: 10, left: 10, zIndex: 1000 }}>
                     <button onClick={() => { this.setState({ editable: !this.state.editable }); }}>Edit = {this.state.editable.toString()}</button>
                     {this.state.editable &&
                         <React.Fragment>
