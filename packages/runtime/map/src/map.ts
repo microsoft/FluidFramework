@@ -278,18 +278,12 @@ export class SharedMap extends SharedObject implements ISharedMap {
 
         const data = this.kernel.getSerializedStorage();
 
-        // Remove it (make it true) to enable new format
-        const enableNewFormat = false;
-
-        // Remove this (make it 1) to enable formatting
-        const disableMultiplier = enableNewFormat ? 1 : 1024 * 1024;
-
         // If single property exceeds this size, it goes into its own blob
-        const MinValueSizeSeparateSnapshotBlob = 8 * 1024 * disableMultiplier;
+        const MinValueSizeSeparateSnapshotBlob = 8 * 1024;
 
         // Maximum blob size for multiple map properties
         // Should be bigger than MinValueSizeSeparateSnapshotBlob
-        const MaxSnapshotBlobSize = 16 * 1024 * disableMultiplier;
+        const MaxSnapshotBlobSize = 16 * 1024;
 
         // Partitioning algorithm:
         // 1) Split large (over MinValueSizeSeparateSnapshotBlob = 8K) properties into their own blobs.
@@ -336,18 +330,11 @@ export class SharedMap extends SharedObject implements ISharedMap {
             }
         }
 
-        if (enableNewFormat) {
-            const header: IMapSerializationFormat = {
-                blobs,
-                content: headerBlob,
-            };
-            addBlobToTree(tree, snapshotFileName, header);
-        } else {
-            // For now, new code is disabled. Once ability to load snapshots in new format is deployed
-            // and build is propagated to all users, we can enable new format.
-            assert(counter === 0);
-            addBlobToTree(tree, snapshotFileName, headerBlob);
-        }
+        const header: IMapSerializationFormat = {
+            blobs,
+            content: headerBlob,
+        };
+        addBlobToTree(tree, snapshotFileName, header);
 
         return tree;
     }
