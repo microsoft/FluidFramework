@@ -154,7 +154,7 @@ export class Loader extends EventEmitter implements ILoader {
     private readonly protocolToDocumentFactoryMap: Map<string, IDocumentServiceFactory>;
 
     constructor(
-        private readonly resolver: IUrlResolver,
+        private readonly resolver: IUrlResolver | IUrlResolver[],
         documentServiceFactories: IDocumentServiceFactory | IDocumentServiceFactory[],
         private readonly codeLoader: ICodeLoader,
         private readonly options: any,
