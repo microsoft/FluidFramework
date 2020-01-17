@@ -1,6 +1,7 @@
 # 0.13 Breaking Changes
 
 - [Fluid Packages Require Consumers on TypeScript `>=3.6`](##Fluid-Packages-Require-Consumers-on-TypeScript->=3.6)
+- [Top-level `type` on `IClient` removed](#Top-level-type-on-IClient-deprecated)
 
 ## Fluid Packages Require Consumers on TypeScript `>=3.6`
 
@@ -16,6 +17,10 @@ More about the changes:
 
 - [Class Field Mitigations](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#class-field-mitigations)  
 - [Full list of TypeScript changes](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html)
+
+## Top-level `type` on `IClient` removed
+
+The `type` field on `IClient` has been removed.
 
 # 0.12 Breaking Changes
 
