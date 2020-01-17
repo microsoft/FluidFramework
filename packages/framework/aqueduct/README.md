@@ -116,25 +116,19 @@ export fluidExport = new SimpleModuleInstantiationFactory(
 
 ### Container Service Development
 
-Container Services allow developers to write Components that have the benefit of existing within the ecosystem but don't use Distributed Data Structures. These types of components are helpful when you want to share state among all the parts of a Container but you don't need to share the state outside the session. An example of this could be a local clipboard service that manages the clipboard across all the Distributed Components in the Container but not across users.
+Container Services allow developers to write Components that don't use Distributed Data Structures. These types of Components are helpful when you want to share state among all the parts of a Container but you don't need to share the state outside the session. ContainerServices have the benefit of not being saved into the snapshot. This makes them lightweight compared to Runtime Components and easier to version.
 
-The concept of Container Services is simple. We define a specific request route that when queried against returns IComponent objects. The Container Developer can then pass in Container Service that other components can query for. These IComponent objects are different from the Components we talked about before in the sense that they do not directly have a `ComponentRuntime` backing them so they can not have Distributed Data Structures. Because they don't contain Distributed State they only exist in memory and will be re-created either with every Container instantiation or on every call (depending on the type).
+An example of this could be a local clipboard service that manages the clipboard across all the Distributed Components in the Container but not across users.
+
+The concept of Container Services is simple. We define a specific request route that when queried against returns and IComponent object. The Container Developer provides the list of Container Services that other Components can query for. These IComponent objects are different from the Components we talked about before in the sense that they do not directly have a `ComponentRuntime` backing them so they can not have Distributed Data Structures. Because they don't contain Distributed State they only exist in memory and will be re-created either with every Container instantiation or on every call (depending on the type).
 
 Container Services have the benefit of being able to access the `IHostRuntime` object which allows them to interact directly with the Container if they choose.
 
-The Aqueduct framework provides two Container Service Factories as well as an optional base class for building Container Services.
-
-#### SingletonContainerServiceFactory
-
-A `SingletonContainerServiceFactory` provides a service with a one to one mapping with the Container.
-
-#### InstanceContainerServiceFactory
-
-A `InstanceContainerServiceFactory` provides a new instance of the service object on every call.
+The Aqueduct provides an optional base class for building Container Services. Components that extend `SharedComponent` also have a helper function `getService(id:string)` which will return service objects.
 
 #### BaseContainerService
 
-The `BaseContainerService` class provides the most basic implementation of a service with no additional functionality.
+The `BaseContainerService` class provides a starting class with a basic implementation if `IComponentRouter`.
 
 ### Container Level Request Handlers
 
