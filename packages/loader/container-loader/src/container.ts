@@ -289,7 +289,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.canReconnect = !(originalRequest.headers && originalRequest.headers[LoaderHeader.reconnect] === false);
 
         // Create logger for components to use
-        const clientType = this.client.details.type;
+        const type = this.client.details.type;
+        const interactive = this.client.details.capabilities.interactive;
+        const clientType = `${interactive ? "interactive" : "noninteractive"}${type ? `/${type}` : ""}`;
         this.subLogger = DebugLogger.mixinDebugLogger(
             "fluid:telemetry",
             logger,
