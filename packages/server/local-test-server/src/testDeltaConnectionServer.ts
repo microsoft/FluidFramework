@@ -27,8 +27,7 @@ import {
     TestWebSocketServer,
     TestClientManager,
 } from "@microsoft/fluid-server-test-utils";
-// eslint-disable-next-line import/no-internal-modules
-import { configureWebSocketServices} from "@microsoft/fluid-server-lambdas/dist/alfred";
+import { configureWebSocketServices} from "@microsoft/fluid-server-lambdas";
 import { TestReservationManager } from "./testReserverationManger";
 
 /**
