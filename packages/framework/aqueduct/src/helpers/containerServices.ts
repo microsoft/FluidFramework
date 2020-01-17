@@ -39,10 +39,8 @@ class SingletonContainerServiceFactory {
     private service: IComponent | undefined;
 
     public constructor(
-        public readonly id: string,
         private readonly serviceFn: (runtime: IHostRuntime) => Promise<IComponent>,
-    ) {
-    }
+    ) { }
 
     public async getService(runtime: IHostRuntime): Promise<IComponent> {
         if (!this.service) {
@@ -58,9 +56,9 @@ class SingletonContainerServiceFactory {
  */
 export const generateContainerServicesRequestHandler =
     (serviceRegistry: ContainerServiceRegistryEntries): RuntimeRequestHandler => {
-        const factories: SingletonContainerServiceFactory[] = [];
+        const factories: Map<string, SingletonContainerServiceFactory> = new Map();
         new Map(serviceRegistry).forEach((fn, id) => {
-            factories.push(new SingletonContainerServiceFactory(id, fn));
+            factories.set(id, new SingletonContainerServiceFactory(fn));
         });
 
         return async (request: RequestParser, runtime: IHostRuntime) => {
@@ -78,16 +76,9 @@ export const generateContainerServicesRequestHandler =
                 };
             }
 
-            let serviceP: Promise<IComponent> | undefined;
-            factories.some((factory) => {
-                if (request.pathParts[1] === factory.id) {
-                    serviceP = factory.getService(runtime);
-                    return true;
-                }
-            });
-
-            // If we can't find a registry entry then return
-            if (!serviceP) {
+            const factory = factories.get(request.pathParts[1]);
+            if (!factory) {
+                // If we can't find a registry entry then return
                 return Promise.resolve({
                     status: 404,
                     mimeType: "text/plain",
@@ -95,7 +86,7 @@ export const generateContainerServicesRequestHandler =
                 });
             }
 
-            const service = await serviceP;
+            const service = await factory.getService(runtime);
             const router = service.IComponentRouter;
             let subRequest = request.createSubRequest(2);
             if (router) {
