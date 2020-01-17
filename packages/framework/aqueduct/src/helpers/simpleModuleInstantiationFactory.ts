@@ -31,7 +31,7 @@ export class SimpleModuleInstantiationFactory implements
     constructor(
         private readonly defaultComponentName: string,
         private readonly registryEntries: NamedComponentRegistryEntries,
-        private readonly serviceRegistry: ContainerServiceRegistryEntries,
+        private readonly serviceRegistry: ContainerServiceRegistryEntries = [],
     ) {
         this.registry = new ComponentRegistry(registryEntries);
     }
