@@ -3,4 +3,8 @@
  * Licensed under the MIT License.
  */
 
-module.exports = require("./no-tslint.js")
+module.exports = {
+    "extends": [
+        "@microsoft/eslint-config-fluid"
+    ]
+}

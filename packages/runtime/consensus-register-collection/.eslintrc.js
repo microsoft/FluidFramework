@@ -4,11 +4,10 @@
  */
 
 module.exports = {
-    extends: [
-        "@microsoft/eslint-config-fluid",
+    "extends": [
+        "@microsoft/eslint-config-fluid"
     ],
-    rules: {
-        "@typescript-eslint/no-use-before-define": "off",
+    "rules": {
         "@typescript-eslint/strict-boolean-expressions": "off",
         "no-case-declarations": "off"
     }
