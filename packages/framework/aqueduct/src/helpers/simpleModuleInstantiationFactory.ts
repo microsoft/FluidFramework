@@ -3,17 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
 import { ComponentRegistry } from "@microsoft/fluid-container-runtime";
 import { IComponentDefaultFactoryName } from "@microsoft/fluid-framework-interfaces";
 import {
     IComponentRegistry,
-    IHostRuntime,
     IProvideComponentRegistry,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
-import { SimpleContainerRuntimeFactory } from "./simpleContainerRuntimeFactory";
+import { ContainerServiceRegistryEntries, SimpleContainerRuntimeFactory } from "./";
 
 /**
  *  Simple Fluid Module instantiation library. This should be exposed as fluidExport off the entry point to your module
@@ -33,7 +31,7 @@ export class SimpleModuleInstantiationFactory implements
     constructor(
         private readonly defaultComponentName: string,
         private readonly registryEntries: NamedComponentRegistryEntries,
-        private readonly serviceRegistry: [string, (runtime: IHostRuntime) => Promise<IComponent>][] = [],
+        private readonly serviceRegistry: ContainerServiceRegistryEntries,
     ) {
         this.registry = new ComponentRegistry(registryEntries);
     }

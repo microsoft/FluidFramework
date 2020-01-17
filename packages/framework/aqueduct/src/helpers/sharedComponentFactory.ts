@@ -24,7 +24,7 @@ export class SharedComponentFactory implements IComponentFactory, Partial<IProvi
 
     constructor(
         private readonly ctor: new (runtime: IComponentRuntime, context: IComponentContext) => SharedComponent,
-        sharedObjects: readonly ISharedObjectFactory[] = [],
+        sharedObjects: readonly ISharedObjectFactory[],
         registryEntries?: NamedComponentRegistryEntries,
         private readonly onDemandInstantiation = true,
     ) {

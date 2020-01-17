@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+
 import { IContainerContext } from "@microsoft/fluid-container-definitions";
 import {
     componentRuntimeRequestHandler,
@@ -11,7 +11,7 @@ import {
     RuntimeRequestHandler,
 } from "@microsoft/fluid-container-runtime";
 import { IHostRuntime, NamedComponentRegistryEntries } from "@microsoft/fluid-runtime-definitions";
-import { generateContainerServicesRequestHandler } from "./";
+import { generateContainerServicesRequestHandler, ContainerServiceRegistryEntries } from "./";
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class SimpleContainerRuntimeFactory {
@@ -24,7 +24,7 @@ export class SimpleContainerRuntimeFactory {
         context: IContainerContext,
         chaincode: string,
         registryEntries: NamedComponentRegistryEntries,
-        serviceRegistry: [string, (runtime: IHostRuntime) => Promise<IComponent>][] = [],
+        serviceRegistry: ContainerServiceRegistryEntries,
         requestHandlers: RuntimeRequestHandler[] = [],
     ): Promise<ContainerRuntime> {
         // Debug(`instantiateRuntime(chaincode=${chaincode},registry=${JSON.stringify(registry)})`);

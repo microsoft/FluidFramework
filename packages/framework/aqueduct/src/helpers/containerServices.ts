@@ -10,6 +10,8 @@ import { RequestParser, RuntimeRequestHandler } from "@microsoft/fluid-container
 // TODO: should this just be "s"?
 export const serviceRoutePathRoot = "_services";
 
+export type ContainerServiceRegistryEntries = Iterable<[string, (runtime: IHostRuntime) => Promise<IComponent>]>;
+
 /**
  * This class is a simple starter class for building a Container Service. It simply provides routing
  */
@@ -36,12 +38,8 @@ class SingletonContainerServiceFactory {
 
     private service: IComponent | undefined;
 
-    public get IContainerServiceFactory() { return this; }
-
-    public get id() { return this.serviceId; }
-
     public constructor(
-        private readonly serviceId: string,
+        public readonly id: string,
         private readonly serviceFn: (runtime: IHostRuntime) => Promise<IComponent>,
     ) {
     }
@@ -59,11 +57,10 @@ class SingletonContainerServiceFactory {
  * @param serviceRegistry - Collection of Container Services
  */
 export const generateContainerServicesRequestHandler =
-    (serviceRegistry: [string, (runtime: IHostRuntime) => Promise<IComponent>][]): RuntimeRequestHandler => {
-
+    (serviceRegistry: ContainerServiceRegistryEntries): RuntimeRequestHandler => {
         const factories: SingletonContainerServiceFactory[] = [];
-        serviceRegistry.forEach((entry) => {
-            factories.push(new SingletonContainerServiceFactory(entry[0], entry[1]));
+        new Map(serviceRegistry).forEach((fn, id) => {
+            factories.push(new SingletonContainerServiceFactory(id, fn));
         });
 
         return async (request: RequestParser, runtime: IHostRuntime) => {
@@ -100,15 +97,22 @@ export const generateContainerServicesRequestHandler =
 
             const service = await serviceP;
             const router = service.IComponentRouter;
+            let subRequest = request.createSubRequest(2);
             if (router) {
                 // If the service is also a router then we will route to it
-                let subRequest = request.createSubRequest(2);
                 if (!subRequest) {
                     // If there is nothing left of the url we will request with empty path.
                     subRequest = { url: "" };
                 }
 
                 return router.request(subRequest);
+            } else if (!router && subRequest) {
+                // If there is not service to route but a sub-route was requested then we will fail.
+                return {
+                    status: 400,
+                    mimeType: "text/plain",
+                    value: `request sub-url: [${subRequest}] for service that doesn't support routing`,
+                };
             }
 
             // Otherwise we will just return the service
