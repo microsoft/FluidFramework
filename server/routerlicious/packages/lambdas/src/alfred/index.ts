@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/strict-boolean-expressions */
 /* eslint-disable no-null/no-null */
 /*!
  * Copyright (c) Microsoft Corporation. All rights reserved.
@@ -20,17 +19,18 @@ import {
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
 import { canSummarize, canWrite } from "@microsoft/fluid-server-services-client";
-import {
-    createNackMessage,
-    createRoomJoinMessage,
-    createRoomLeaveMessage,
-    generateClientId,
-    getRandomInt,
-} from "@microsoft/fluid-server-services-utils";
+
 import * as jwt from "jsonwebtoken";
 import * as semver from "semver";
 import * as winston from "winston";
 import * as core from "@microsoft/fluid-server-services-core";
+import {
+    createRoomJoinMessage,
+    createNackMessage,
+    createRoomLeaveMessage,
+    getRandomInt,
+    generateClientId,
+} from "../utils";
 
 
 export const DefaultServiceConfiguration: IServiceConfiguration = {
