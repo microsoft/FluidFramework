@@ -78,6 +78,7 @@ class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceGridView
                 editableStyle.border = "1px solid black";
                 editableStyle.backgroundColor = "#d3d3d3";
                 editableStyle.boxSizing = "border-box";
+                editableStyle.overflow = "visible";
                 embeddedComponentStyle.pointerEvents = "none";
                 embeddedComponentStyle.opacity = 0.5;
             }
@@ -115,20 +116,20 @@ class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceGridView
 
         return (
             <div>
-                <div style={{ position: "absolute", bottom: 10, left: 10, zIndex: 1000 }}>
+                <div style={{ position: "absolute", top: 10, left: 10, zIndex: 1000 }}>
                     <button onClick={() => { this.setState({ editable: !this.state.editable }); }}>Edit = {this.state.editable.toString()}</button>
                     {this.state.editable &&
                         <React.Fragment>
                             <span>
-                                <button onClick={async () => this.props.dataModel.addComponent("clicker")}>Clicker</button>
-                                <button onClick={async () => this.props.dataModel.addComponent("button")}>Button</button>
+                                <button onClick={async () => this.props.dataModel.addComponent("clicker", 1, 1)}>Clicker</button>
+                                <button onClick={async () => this.props.dataModel.addComponent("button", 4, 4)}>Button</button>
                                 <button onClick={async () => this.props.dataModel.addComponent("number")}>Number</button>
-                                <button onClick={async () => this.props.dataModel.addComponent("textbox", 2, 2)}>TextBox</button>
-                                <button onClick={async () => this.props.dataModel.addComponent("facepile", 1, 2)}>FacePile</button>
-                                <button onClick={async () => this.props.dataModel.addComponent("codemirror", 5, 3)}>CodeMirror</button>
-                                <button onClick={async () => this.props.dataModel.addComponent("prosemirror", 3, 2)}>ProseMirror</button>
-                                <button onClick={async () => this.props.dataModel.addComponent("todo", 1, 3)}>Todo</button>
-                                <button onClick={async () => this.props.dataModel.addComponent("birthday", 1, 1)}>Birthday</button>
+                                <button onClick={async () => this.props.dataModel.addComponent("textbox", 8, 8)}>TextBox</button>
+                                <button onClick={async () => this.props.dataModel.addComponent("facepile", 2, 4)}>FacePile</button>
+                                <button onClick={async () => this.props.dataModel.addComponent("codemirror", 16, 12)}>CodeMirror</button>
+                                <button onClick={async () => this.props.dataModel.addComponent("prosemirror", 16, 12)}>ProseMirror</button>
+                                <button onClick={async () => this.props.dataModel.addComponent("todo", 6, 9)}>Todo</button>
+                                <button onClick={async () => this.props.dataModel.addComponent("birthday", 6, 6)}>Birthday</button>
                             </span>
                             <button onClick={() => { this.props.dataModel.saveLayout(); }}>Save Layout</button>
                         </React.Fragment>
@@ -151,6 +152,7 @@ class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceGridView
                         isResizable={this.state.editable}
                         preventCollision={true}
                         isRearrangeable={false}
+                        verticalCompact= {false}
                         onResizeStop={this.onGridChangeEvent.bind(this)}
                         onDragStop={this.onGridChangeEvent.bind(this)}
                         layout={layouts}
