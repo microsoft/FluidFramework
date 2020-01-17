@@ -1,14 +1,7 @@
-# 0.14 Breaking Changes
-
-- [IHost interface removed, Loader constructor signature updated](#IHost-interface-removed-Loader-constructor-signature-updated)
-
-## IHost interface removed, Loader constructor signature updated
-
-The IHost interface has been removed.  This primarily impacts the signature of the `Loader` constructor, which now just takes the `IUrlResolver` directly in its place.
-
 # 0.13 Breaking Changes
 
 - [Fluid Packages Require Consumers on TypeScript `>=3.6`](##Fluid-Packages-Require-Consumers-on-TypeScript->=3.6)
+- [IHost interface removed, Loader constructor signature updated](#IHost-interface-removed-Loader-constructor-signature-updated)
 
 ## Fluid Packages Require Consumers on TypeScript `>=3.6`
 
@@ -24,6 +17,10 @@ More about the changes:
 
 - [Class Field Mitigations](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#class-field-mitigations)  
 - [Full list of TypeScript changes](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html)
+
+## IHost interface removed, Loader constructor signature updated
+
+The IHost interface has been removed.  This primarily impacts the signature of the `Loader` constructor, which now just takes the `IUrlResolver` directly in its place.
 
 # 0.12 Breaking Changes
 
