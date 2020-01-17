@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import * as webpack from "webpack";
+
 const path = require('path');
 
-module.exports = {
+const options: webpack.Configuration = {
   entry: {
-    'fluid-lambdas': path.resolve(__dirname, './src/index.ts'),
+    'fluid-lambdas': path.resolve(__dirname, '../index.ts'),
   },
   mode: 'development',
   devtool: 'inline-source-map',
@@ -38,3 +40,23 @@ module.exports = {
     fs: "empty",
   },
 };
+
+
+describe("Routerlicious.Lambdas", () => {
+
+    it("Webpack to ensure isomorphism", async () => {
+        let promiseResolve;
+        const promise = new Promise((resolve) => promiseResolve = resolve);
+        webpack(options, (err, stats) => {
+            if (err) {
+                throw err;
+            }
+            if (stats.hasErrors()) {
+                throw stats;
+            }
+            promiseResolve();
+        });
+        await promise;
+
+    }).timeout(30000);
+});
