@@ -1,7 +1,7 @@
 # 0.13 Breaking Changes
 
 - [Fluid Packages Require Consumers on TypeScript `>=3.6`](##Fluid-Packages-Require-Consumers-on-TypeScript->=3.6)
-- [Top-level `type` on `IClient` removed](#Top-level-type-on-IClient-deprecated)
+- [Top-level `type` on `IClient` removed](#Top-level-type-on-IClient-removed)
 
 ## Fluid Packages Require Consumers on TypeScript `>=3.6`
 
