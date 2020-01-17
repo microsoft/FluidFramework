@@ -87,7 +87,6 @@ export class Editor {
             return;
         }
 
-        /* eslint-disable @typescript-eslint/indent */
         switch (e.code) {
             case KeyCode.F4: {
                 console.clear();
@@ -123,7 +122,6 @@ export class Editor {
                 debug("Key: %s (%d)", e.key, e.keyCode);
             }
         }
-        /* eslint-enable @typescript-eslint/indent */
     };
 
     private readonly onPaste = (e: ClipboardEvent) => {
@@ -142,7 +140,6 @@ export class Editor {
 
         this.consume(e);
 
-        /* eslint-disable @typescript-eslint/indent */
         switch (e.code) {
             case KeyCode.enter: {
                 if (e.shiftKey) {
@@ -156,7 +153,6 @@ export class Editor {
                 this.insertText(e);
             }
         }
-        /* eslint-enable @typescript-eslint/indent */
     };
 
     private insertText(e: KeyboardEvent, text = e.key) {

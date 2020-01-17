@@ -20,11 +20,33 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "lint": "npm run eslint",
+    "lint:fix": "npm run eslint:fix",
     "test": "echo Tests reside in the `local-test-server-test` package.",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "tsc": "tsc",
     "tslint": "npm run eslint",
     "webpack": "webpack --config webpack.config.js"
+  },
+  "nyc": {
+    "all": true,
+    "cache-dir": "nyc/.cache",
+    "exclude": [
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "exclude-after-remap": false,
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "report-dir": "nyc/report",
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
     "@microsoft/fluid-aqueduct": "^0.13.0",
@@ -32,22 +54,18 @@
     "@microsoft/fluid-container-definitions": "^0.13.0",
     "@microsoft/fluid-container-loader": "^0.13.0",
     "@microsoft/fluid-driver-definitions": "^0.13.0",
-    "@microsoft/fluid-protocol-definitions": "^0.12.0",
+    "@microsoft/fluid-protocol-definitions": "^0.1001.0",
     "@microsoft/fluid-routerlicious-driver": "^0.13.0",
     "@microsoft/fluid-runtime-definitions": "^0.13.0",
-    "@microsoft/fluid-server-memory-orderer": "^0.12.0",
-    "@microsoft/fluid-server-services": "^0.12.0",
-    "@microsoft/fluid-server-services-client": "^0.12.0",
-    "@microsoft/fluid-server-services-core": "^0.12.0",
-    "@microsoft/fluid-server-test-utils": "^0.12.0",
+    "@microsoft/fluid-server-lambdas": "^0.1001.0",
+    "@microsoft/fluid-server-memory-orderer": "^0.1001.0",
+    "@microsoft/fluid-server-services-client": "^0.1001.0",
+    "@microsoft/fluid-server-services-core": "^0.1001.0",
+    "@microsoft/fluid-server-test-utils": "^0.1001.0",
     "@microsoft/fluid-shared-object-base": "^0.13.0",
     "@microsoft/fluid-test-driver": "^0.13.0",
-    "@types/jsonwebtoken": "^8.3.0",
-    "@types/semver": "^6.0.1",
     "debug": "^4.1.1",
-    "jsonwebtoken": "^8.4.0",
-    "random-name": "^0.1.2",
-    "semver": "^6.3.0"
+    "winston": "^3.1.0"
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.13.0",
@@ -55,7 +73,6 @@
     "@types/debug": "^0.0.31",
     "@types/mocha": "^5.2.5",
     "@types/nock": "^9.3.0",
-    "@types/node": "^10.14.6",
     "@typescript-eslint/eslint-plugin": "^2.9.0",
     "@typescript-eslint/parser": "^2.9.0",
     "concurrently": "^4.1.0",
@@ -73,28 +90,8 @@
     "nyc": "^14.1.1",
     "rimraf": "^2.6.2",
     "ts-loader": "^6.1.2",
-    "typescript": "~3.4.5",
+    "typescript": "~3.7.4",
     "webpack": "^4.16.5",
     "webpack-cli": "^3.1.2"
-  },
-  "nyc": {
-    "all": true,
-    "exclude": [
-      "src/test/**/*.ts",
-      "dist/test/**/*.js"
-    ],
-    "include": [
-      "src/**/*.ts",
-      "dist/**/*.js"
-    ],
-    "reporter": [
-      "cobertura",
-      "html",
-      "text"
-    ],
-    "temp-directory": "nyc/.nyc_output",
-    "cache-dir": "nyc/.cache",
-    "report-dir": "nyc/report",
-    "exclude-after-remap": false
   }
 }

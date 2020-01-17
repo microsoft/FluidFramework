@@ -3,13 +3,8 @@
   items:
     - name: "Routerlicious - Reference server"
       href: server/README.md
-      items:
-        - name: "Build machine set up"
-          href: server/build-machine.md
     - name: Components
       href: components/README.md
       items:
-        - name: Web Component Model
-          href: components/web-component-model.md
-        - name: Component Mechanism
-          href: components/component-mechanism.md
+        - name: Design principles
+          href: components/design-principles.md

@@ -106,7 +106,6 @@ export class DocumentStorageService implements IDocumentStorageService {
         submodule: { path: string; sha: string }[],
         path: string,
     ): Promise<string> {
-        /* eslint-disable @typescript-eslint/indent */
         switch (value.type) {
             case SummaryType.Blob:
                 const content = typeof value.content === "string" ? value.content : value.content.toString("base64");
@@ -161,12 +160,10 @@ export class DocumentStorageService implements IDocumentStorageService {
             default:
                 return Promise.reject();
         }
-        /* eslint-enable @typescript-eslint/indent */
     }
 
     private getGitMode(value: SummaryObject): string {
         const type = value.type === SummaryType.Handle ? value.handleType : value.type;
-        /* eslint-disable @typescript-eslint/indent */
         switch (type) {
             case SummaryType.Blob:
                 return FileMode.File;
@@ -177,13 +174,11 @@ export class DocumentStorageService implements IDocumentStorageService {
             default:
                 throw new Error();
         }
-        /* eslint-enable @typescript-eslint/indent */
     }
 
     private getGitType(value: SummaryObject): string {
         const type = value.type === SummaryType.Handle ? value.handleType : value.type;
 
-        /* eslint-disable @typescript-eslint/indent */
         switch (type) {
             case SummaryType.Blob:
                 return "blob";
@@ -194,6 +189,5 @@ export class DocumentStorageService implements IDocumentStorageService {
             default:
                 throw new Error();
         }
-        /* eslint-enable @typescript-eslint/indent */
     }
 }

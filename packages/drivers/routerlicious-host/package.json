@@ -20,6 +20,8 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "lint": "npm run eslint",
+    "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
     "tslint": "npm run eslint"
   },
@@ -47,6 +49,6 @@
     "eslint-plugin-unicorn": "^14.0.1",
     "mocha": "^5.2.0",
     "rimraf": "^2.6.2",
-    "typescript": "~3.4.5"
+    "typescript": "~3.7.4"
   }
 }

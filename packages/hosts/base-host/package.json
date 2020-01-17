@@ -20,6 +20,8 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "lint": "npm run eslint",
+    "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
     "tslint": "npm run eslint"
   },
@@ -31,7 +33,7 @@
     "@microsoft/fluid-web-code-loader": "^0.13.0"
   },
   "devDependencies": {
-    "@microsoft/api-extractor": "^7.4.4",
+    "@microsoft/api-extractor": "^7.7.2",
     "@microsoft/eslint-config-fluid": "^0.13.0",
     "@microsoft/fluid-build-common": "^0.13.0",
     "@types/node": "^10.14.6",
@@ -48,6 +50,6 @@
     "eslint-plugin-unicorn": "^14.0.1",
     "rimraf": "^2.6.2",
     "source-map-loader": "^0.2.4",
-    "typescript": "~3.4.5"
+    "typescript": "~3.7.4"
   }
 }

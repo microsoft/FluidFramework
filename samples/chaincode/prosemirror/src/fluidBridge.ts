@@ -133,7 +133,6 @@ export class ProseMirrorTransactionBuilder {
         }
 
         // Position's current value will tell us *where* in this.things[i] to begin inserting
-        /* eslint-disable @typescript-eslint/indent */
         switch (range.operation) {
             case MergeTreeDeltaType.REMOVE: {
                 // Walk the ether looking for the first ether element where position is found. Then split the ether
@@ -208,7 +207,6 @@ export class ProseMirrorTransactionBuilder {
             default:
                 break;
         }
-        /* eslint-enable @typescript-eslint/indent */
     }
 
     public addSequencedDelta(delta: SequenceDeltaEvent) {
@@ -524,7 +522,6 @@ function generateFragment(segments: ISegment[]) {
             top.content.push(nodeJson);
         } else if (Marker.is(segment)) {
             const nodeType = segment.properties[nodeTypeKey];
-            /* eslint-disable @typescript-eslint/indent */
             switch (segment.refType) {
                 case ReferenceType.NestBegin:
                     // Special case the open top
@@ -582,7 +579,6 @@ function generateFragment(segments: ISegment[]) {
                     // Throw for now when encountering something unknown
                     throw new Error("Unknown marker");
             }
-            /* eslint-enable @typescript-eslint/indent */
         }
     }
 

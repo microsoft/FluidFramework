@@ -21,15 +21,43 @@
     "dev": "npm run build:esnext -- --watch",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "lint": "npm run eslint",
+    "lint:fix": "npm run eslint:fix",
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
-    "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
     "start:docker": "webpack-dev-server --config webpack.config.js --package package.json --env.mode docker",
-    "test": "mocha -r ts-node/register -r source-map-support/register -r ignore-styles --recursive test/**/*.spec.ts --exit -r make-promises-safe",
+    "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
+    "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml --exit",
+    "test:mocha": "mocha -r ts-node/register -r source-map-support/register -r ignore-styles --recursive test/**/*.spec.ts --exit -r make-promises-safe",
     "tsc": "tsc",
     "tslint": "npm run eslint",
     "webpack": "webpack --env.production",
     "webpack:dev": "webpack --env.development"
+  },
+  "nyc": {
+    "all": true,
+    "cache-dir": "nyc/.cache",
+    "exclude": [
+      "**/*.d.ts",
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "exclude-after-remap": false,
+    "extension": [
+      ".ts",
+      ".tsx",
+      ".js",
+      ".jsx"
+    ],
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "report-dir": "nyc/report",
+    "require": [
+      "ts-node/register"
+    ],
+    "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
     "@fluid-example/flow-util-lib": "^0.13.0",
@@ -76,7 +104,7 @@
     "style-loader": "^1.0.0",
     "ts-loader": "^6.1.2",
     "ts-node": "^7.0.1",
-    "typescript": "~3.4.5",
+    "typescript": "~3.7.4",
     "url-loader": "^2.1.0",
     "webpack": "^4.16.5",
     "webpack-bundle-analyzer": "^2.13.1",
@@ -94,30 +122,5 @@
         "library": "main"
       }
     }
-  },
-  "nyc": {
-    "all": true,
-    "cache-dir": "nyc/.cache",
-    "exclude": [
-      "**/*.d.ts",
-      "src/test/**/*.ts",
-      "dist/test/**/*.js"
-    ],
-    "exclude-after-remap": false,
-    "extension": [
-      ".ts",
-      ".tsx",
-      ".js",
-      ".jsx"
-    ],
-    "include": [
-      "src/**/*.ts",
-      "dist/**/*.js"
-    ],
-    "report-dir": "nyc/report",
-    "require": [
-      "ts-node/register"
-    ],
-    "temp-directory": "nyc/.nyc_output"
   }
 }

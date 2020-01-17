@@ -54,7 +54,6 @@ async function fileToInclusion(file: File): Promise<IGenericBlob> {
         arrayBufferReader.readAsArrayBuffer(file);
     });
 
-    /* eslint-disable @typescript-eslint/indent */
     switch (baseInclusion.type) {
         case "image": {
             const blobP = imageHandler(file, baseInclusion);
@@ -115,7 +114,6 @@ async function fileToInclusion(file: File): Promise<IGenericBlob> {
                 });
         }
     }
-    /* eslint-enable @typescript-eslint/indent */
 }
 
 async function imageHandler(imageFile: File, incl: IImageBlob): Promise<IImageBlob> {

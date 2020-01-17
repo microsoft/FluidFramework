@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { MockStorage } from "@microsoft/fluid-test-runtime-utils";
-import * as assert from "assert";
-import { TestClient } from ".";
 import { SnapshotLegacy } from "../snapshotlegacy";
+import { TestClient } from ".";
 
 describe("snapshot", () => {
     it("header only", async () => {
@@ -36,8 +36,8 @@ describe("snapshot", () => {
         assert.equal(client2.getLength(), client1.getLength());
         assert.equal(client2.getText(), client1.getText());
     })
-    // tslint:disable-next-line: mocha-no-side-effect-code
-    .timeout(5000);
+        // tslint:disable-next-line: mocha-no-side-effect-code
+        .timeout(5000);
 
     it("header and body", async () => {
 
@@ -74,6 +74,6 @@ describe("snapshot", () => {
                 client1.getText(SnapshotLegacy.sizeOfFirstChunk - 1));
         }
     })
-    // tslint:disable-next-line: mocha-no-side-effect-code
-    .timeout(5000);
+        // tslint:disable-next-line: mocha-no-side-effect-code
+        .timeout(5000);
 });

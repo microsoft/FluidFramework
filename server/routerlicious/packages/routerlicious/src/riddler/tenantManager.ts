@@ -5,7 +5,6 @@
 
 import * as crypto from "crypto";
 import {
-    getRandomName,
     ITenantConfig,
     ITenantOrderer,
     ITenantStorage,
@@ -13,6 +12,7 @@ import {
 } from "@microsoft/fluid-server-services-core";
 import * as jwt from "jsonwebtoken";
 import * as _ from "lodash";
+import { getRandomName } from "@microsoft/fluid-server-services-client";
 
 /**
  * Tenant details stored to the document database

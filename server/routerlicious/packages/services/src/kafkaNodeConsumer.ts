@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 import * as util from "util";
-import { IConsumer, IPartition } from "@microsoft/fluid-server-services-core";
+import { IConsumer, IPartition, IQueuedMessage } from "@microsoft/fluid-server-services-core";
 import * as kafkaNode from "kafka-node";
 import { debug } from "./debug";
 
@@ -26,11 +26,12 @@ export class KafkaNodeConsumer implements IConsumer {
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public commitOffset(commitRequest: any[]): Promise<void> {
-        commitRequest.forEach((commit) => {
-            commit.topic = this.topic;
-            commit.offset = commit.offset as number + 1;
-        });
+    public commitCheckpoint(partitionId: number, queuedMessage: IQueuedMessage): Promise<void> {
+        const commitRequest = [{
+            offset: queuedMessage.offset + 1,
+            partition: partitionId,
+            topic: this.topic,
+        }];
         return new Promise<any>((resolve, reject) => {
             this.offset.commit(this.groupId, commitRequest, (err, data) => {
                 if (err) {
@@ -52,11 +53,11 @@ export class KafkaNodeConsumer implements IConsumer {
         return this;
     }
 
-    public pause() {
+    public async pause() {
         this.instance.pause();
     }
 
-    public resume() {
+    public async resume() {
         this.instance.resume();
     }
 

@@ -8,7 +8,7 @@ const path = require("path");
 const merge = require("webpack-merge");
 
 const pkg = require("./package.json");
-const chaincodeName = pkg.name.slice(1);
+const componentName = pkg.name.slice(1);
 
 module.exports = env => {
     const isProduction = env && env.production;
@@ -21,9 +21,9 @@ module.exports = env => {
             extensions: [".ts", ".tsx", ".js"],
         },
         module: {
-            rules: [{ 
+            rules: [{
                 test: /\.tsx?$/,
-                loader: "ts-loader"
+                loader: "ts-loader",
             }]
         },
         output: {
@@ -32,13 +32,13 @@ module.exports = env => {
             library: "[name]",
             // https://github.com/webpack/webpack/issues/5767
             // https://github.com/webpack/webpack/issues/7939
-            devtoolNamespace: chaincodeName,
-            libraryTarget: "umd"
+            devtoolNamespace: componentName,
+            libraryTarget: "umd",
         },
         devServer: {
             publicPath: '/dist',
             stats: "minimal",
-            before: fluidRoute.before,
+            before: (app, server) => fluidRoute.before(app, server),
             after: (app, server) => fluidRoute.after(app, server, __dirname, env),
         }
     }, isProduction

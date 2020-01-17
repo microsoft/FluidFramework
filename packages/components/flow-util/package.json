@@ -20,10 +20,38 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
-    "test": "ts-mocha --recursive test/**/*.spec.ts --exit -r make-promises-safe",
+    "lint": "npm run eslint",
+    "lint:fix": "npm run eslint:fix",
+    "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml --exit",
+    "test:mocha": "ts-mocha --recursive test/**/*.spec.ts --exit -r make-promises-safe",
     "tsc": "tsc",
     "tslint": "npm run eslint"
+  },
+  "nyc": {
+    "all": true,
+    "cache-dir": "nyc/.cache",
+    "exclude": [
+      "**/*.d.ts",
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "exclude-after-remap": false,
+    "extension": [
+      ".ts",
+      ".tsx",
+      ".js",
+      ".jsx"
+    ],
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "report-dir": "nyc/report",
+    "require": [
+      "ts-node/register"
+    ],
+    "temp-directory": "nyc/.nyc_output"
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.13.0",
@@ -54,31 +82,6 @@
     "rimraf": "^2.6.2",
     "ts-mocha": "^6.0.0",
     "ts-node": "^7.0.1",
-    "typescript": "~3.4.5"
-  },
-  "nyc": {
-    "all": true,
-    "cache-dir": "nyc/.cache",
-    "exclude": [
-      "**/*.d.ts",
-      "src/test/**/*.ts",
-      "dist/test/**/*.js"
-    ],
-    "exclude-after-remap": false,
-    "extension": [
-      ".ts",
-      ".tsx",
-      ".js",
-      ".jsx"
-    ],
-    "include": [
-      "src/**/*.ts",
-      "dist/**/*.js"
-    ],
-    "report-dir": "nyc/report",
-    "require": [
-      "ts-node/register"
-    ],
-    "temp-directory": "nyc/.nyc_output"
+    "typescript": "~3.7.4"
   }
 }

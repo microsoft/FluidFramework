@@ -7,7 +7,7 @@ import {
     extractBoxcar,
     ICollection,
     IContext,
-    IKafkaMessage,
+    IQueuedMessage,
     IPartitionLambda,
     IRawOperationMessage,
     IRawOperationMessageBatch,
@@ -16,7 +16,7 @@ import {
 export class CopierLambda implements IPartitionLambda {
     // Below, one job corresponds to the task of sending one batch to Mongo:
     private pendingJobs = new Map<string, IRawOperationMessageBatch[]>();
-    private pendingOffset: number;
+    private pendingOffset: IQueuedMessage;
     private currentJobs = new Map<string, IRawOperationMessageBatch[]>();
 
     constructor(
@@ -24,7 +24,7 @@ export class CopierLambda implements IPartitionLambda {
         protected context: IContext) {
     }
 
-    public handler(message: IKafkaMessage): void {
+    public handler(message: IQueuedMessage): void {
         // Extract batch of raw ops from Kafka message:
         const boxcar = extractBoxcar(message);
         const batch = boxcar.contents;
@@ -45,7 +45,7 @@ export class CopierLambda implements IPartitionLambda {
         this.pendingJobs.get(topic).push(submittedBatch);
 
         // Update current offset (will be tied to this batch):
-        this.pendingOffset = message.offset;
+        this.pendingOffset = message;
         this.sendPending();
     }
 

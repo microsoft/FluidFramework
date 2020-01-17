@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { ICombiningOp, IntervalType, LocalReference, PropertySet } from "@microsoft/fluid-merge-tree";
-import { IComponentContext, IComponentRuntime, JsonablePrimitive } from "@microsoft/fluid-runtime-definitions";
+import {
+    IComponentContext,
+    IComponentRuntime,
+} from "@microsoft/fluid-runtime-definitions";
 import {
     positionToRowCol,
     rowColToPosition,
@@ -16,25 +18,16 @@ import {
 } from "@microsoft/fluid-sequence";
 import { createSheetlet, ISheetlet } from "@tiny-calc/micro";
 import { CellRange } from "./cellrange";
-import { TableSliceType } from "./ComponentTypes";
+import { TableSliceType } from "./componentTypes";
 import { debug } from "./debug";
 import { TableSlice } from "./slice";
-import { ITable } from "./table";
-
-export const loadCellTextSym = Symbol("TableDocument.loadCellText");
-export const storeCellTextSym = Symbol("TableDocument.storeCellText");
-export const loadCellSym = Symbol("TableDocument.loadCell");
-export const storeCellSym = Symbol("TableDocument.storeCell");
-export const cellSym = Symbol("TableDocument.cell");
-
-export type TableDocumentItem = JsonablePrimitive;
+import { ITable, TableDocumentItem } from "./table";
 
 export class TableDocument extends PrimedComponent implements ITable {
     public static getFactory() { return TableDocument.factory; }
 
     private static readonly factory = new PrimedComponentFactory(
-        TableDocument,
-        [
+        TableDocument, [
             SparseMatrix.getFactory(),
             SharedNumberSequence.getFactory(),
         ],
@@ -43,7 +36,7 @@ export class TableDocument extends PrimedComponent implements ITable {
     public get numCols() { return this.maybeCols.getLength(); }
     public get numRows() { return this.matrix.numRows; }
 
-    private get matrix() { return this.maybeMatrix; }
+    private get matrix(): SparseMatrix { return this.maybeMatrix; }
     private get workbook() { return this.maybeWorkbook; }
 
     private maybeRows?: SharedNumberSequence;
@@ -55,7 +48,7 @@ export class TableDocument extends PrimedComponent implements ITable {
         super(runtime, context);
     }
 
-    public evaluateCell(row: number, col: number) {
+    public evaluateCell(row: number, col: number): TableDocumentItem {
         try {
             return this.workbook.evaluateCell(row, col);
         } catch (e) {
@@ -63,7 +56,7 @@ export class TableDocument extends PrimedComponent implements ITable {
         }
     }
 
-    public evaluateFormula(formula: string) {
+    public evaluateFormula(formula: string): TableDocumentItem {
         try {
             return this.workbook.evaluateFormula(formula);
         } catch (e) {
@@ -72,11 +65,12 @@ export class TableDocument extends PrimedComponent implements ITable {
     }
 
     public getCellValue(row: number, col: number): TableDocumentItem {
-        return this[loadCellTextSym](row, col);
+        return this.matrix.getItem(row, col);
     }
 
     public setCellValue(row: number, col: number, value: TableDocumentItem) {
-        this.workbook.setCellText(row, col, value);
+        this.matrix.setItems(row, col, [value]);
+        this.workbook.invalidate(row, col);
     }
 
     public async getRange(label: string) {
@@ -165,9 +159,12 @@ export class TableDocument extends PrimedComponent implements ITable {
 
         this.matrix.on("op", (op, local, target) => {
             if (!local) {
+                // Temporarily, we invalidate the entire matrix when we receive a remote op.
+                // This can be improved w/the new SparseMatrix, which makes it easier to decode
+                // the range of cells impacted by matrix ops.
                 for (let row = 0; row < this.numRows; row++) {
                     for (let col = 0; col < this.numCols; col++) {
-                        this.workbook.refreshFromModel(row, col);
+                        this.workbook.invalidate(row, col);
                     }
                 }
             }
@@ -178,37 +175,26 @@ export class TableDocument extends PrimedComponent implements ITable {
         this.maybeCols.on("op", (...args: any[]) => this.emit("op", ...args));
         this.maybeRows.on("op", (...args: any[]) => this.emit("op", ...args));
 
-        this.matrix.on("sequenceDelta", (e, t) => this.emit("sequenceDelta", e, t));
-        this.maybeCols.on("sequenceDelta", (e, t) => this.emit("sequenceDelta", e, t));
-        this.maybeRows.on("sequenceDelta", (e, t) => this.emit("sequenceDelta", e, t));
+        this.matrix.on("sequenceDelta", (...args: any[]) => this.emit("sequenceDelta", ...args));
+        this.maybeCols.on("sequenceDelta", (...args: any[]) => this.emit("sequenceDelta", ...args));
+        this.maybeRows.on("sequenceDelta", (...args: any[]) => this.emit("sequenceDelta", ...args));
 
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const table = this;
         this.maybeWorkbook = createSheetlet({
             get numRows() { return table.numRows; },
             get numCols() { return table.numCols; },
-            loadCellText: (row, col) => table[loadCellTextSym](row, col),
-            storeCellText(row, col, value) { table[storeCellTextSym](row, col, value); },
-            loadCellData: (row, col) => table[loadCellSym](row, col),
-            storeCellData(row, col, value) { table[storeCellSym](row, col, value); },
+            loadCellText: (row, col) => {
+                const raw = this.matrix.getItem(row, col);
+                return typeof raw === "object"
+                    ? undefined
+                    : raw;
+            },
+            loadCellData: (row, col) => this.matrix.getTag(row, col),
+            storeCellData: (row, col, value) => {
+                this.matrix.setTag(row, col, value);
+            },
         });
-    }
-
-    private [loadCellTextSym](row: number, col: number): TableDocumentItem {
-        return this.matrix.getItem(row, col) as TableDocumentItem;
-    }
-
-    private [storeCellTextSym](row: number, col: number, value: TableDocumentItem) {
-        this.matrix.setItems(row, col, [value]);
-    }
-
-    private [loadCellSym](row: number, col: number): object | undefined {
-        return this.matrix.getTag(row, col);
-    }
-
-    private [storeCellSym](row: number, col: number, cell: object | undefined) {
-        this.matrix.setTag(row, col, cell);
-        assert.strictEqual(this[loadCellSym](row, col), cell);
     }
 
     private readonly localRefToRowCol = (localRef: LocalReference) => {

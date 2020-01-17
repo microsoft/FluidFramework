@@ -13,6 +13,7 @@ export class Player {
         const frequency = Math.pow(2, (note.midiNumber - 69) / 12) * 440;
         const instrument = note.instrument;
 
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         let waveProperties = {
             frequency,
         } as WaveProperties;
@@ -87,60 +88,60 @@ export class Player {
 
     private playDrumsetNote(midiNumber: number, waveProperties: WaveProperties): any {
         switch (midiNumber) {
-        case 48: {
-            // Base
-            waveProperties = {
-                ...waveProperties,
-                frequency: 1,
-                amplitude: 10,
-                decay: -4,
-            };
-            this.playNoteCustomWave(0.5, waveProperties, this.bassWave);
-            break;
-        }
-        case 49: {
-            // Ride
-            waveProperties = {
-                ...waveProperties,
-                frequency: 1,
-                decay: -8,
-            };
-            this.playNoteCustomWave(0.5, waveProperties, this.rideWave);
-            break;
-        }
-        case 50: {
-            // Snare
-            waveProperties = {
-                ...waveProperties,
-                frequency: 1,
-                decay: -24,
-            };
-            this.playNoteCustomWave(0.5, waveProperties, this.snareWave);
-            break;
-        }
-        case 52: {
-            // Hi
-            waveProperties = {
-                ...waveProperties,
-                frequency: 1,
-                decay: -4,
-            };
-            this.playNoteCustomWave(0.4, waveProperties, this.hiWave);
-            break;
-        }
-        case 53: {
-            // Hat
-            waveProperties = {
-                ...waveProperties,
-                frequency: 1,
-                decay: -16,
-            };
-            this.playNoteCustomWave(0.5, waveProperties, this.hatWave);
-            break;
-        }
-        default: {
-            // Do nothing
-        }
+            case 48: {
+                // Base
+                waveProperties = {
+                    ...waveProperties,
+                    frequency: 1,
+                    amplitude: 10,
+                    decay: -4,
+                };
+                this.playNoteCustomWave(0.5, waveProperties, this.bassWave);
+                break;
+            }
+            case 49: {
+                // Ride
+                waveProperties = {
+                    ...waveProperties,
+                    frequency: 1,
+                    decay: -8,
+                };
+                this.playNoteCustomWave(0.5, waveProperties, this.rideWave);
+                break;
+            }
+            case 50: {
+                // Snare
+                waveProperties = {
+                    ...waveProperties,
+                    frequency: 1,
+                    decay: -24,
+                };
+                this.playNoteCustomWave(0.5, waveProperties, this.snareWave);
+                break;
+            }
+            case 52: {
+                // Hi
+                waveProperties = {
+                    ...waveProperties,
+                    frequency: 1,
+                    decay: -4,
+                };
+                this.playNoteCustomWave(0.4, waveProperties, this.hiWave);
+                break;
+            }
+            case 53: {
+                // Hat
+                waveProperties = {
+                    ...waveProperties,
+                    frequency: 1,
+                    decay: -16,
+                };
+                this.playNoteCustomWave(0.5, waveProperties, this.hatWave);
+                break;
+            }
+            default: {
+                // Do nothing
+            }
         }
     }
 

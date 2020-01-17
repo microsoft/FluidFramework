@@ -35,7 +35,7 @@ export async function getDeltaContents(
 
     // Query for the deltas and return a filtered version of just the operations field
     const db = await mongoManager.getDatabase();
-    const collection = await db.collection<any>(collectionName);
+    const collection = db.collection<any>(collectionName);
     const dbDeltas = await collection.find(query, { sequenceNumber: 1 });
 
     return dbDeltas;
@@ -65,7 +65,7 @@ export async function getDeltas(
 
     // Query for the deltas and return a filtered version of just the operations field
     const db = await mongoManager.getDatabase();
-    const collection = await db.collection<any>(collectionName);
+    const collection = db.collection<any>(collectionName);
     const dbDeltas = await collection.find(query, { "operation.sequenceNumber": 1 });
 
     return dbDeltas.map((delta) => delta.operation);

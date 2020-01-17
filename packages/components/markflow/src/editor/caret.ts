@@ -53,7 +53,6 @@ export class Caret {
                     let position = this.nodeOffsetToPosition(el, 0);
                     debug("  inclusion found @%d", position);
 
-                    /* eslint-disable @typescript-eslint/indent */
                     switch (detail.direction) {
                         case Direction.up:
                         case Direction.left:
@@ -61,7 +60,6 @@ export class Caret {
                         default:
                             position++;
                     }
-                    /* eslint-enable @typescript-eslint/indent */
 
                     // Defer setting the selection to avoid stealing focus and receiving the pending key event.
                     requestAnimationFrame(() => {

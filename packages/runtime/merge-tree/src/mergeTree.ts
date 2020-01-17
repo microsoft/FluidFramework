@@ -13,7 +13,7 @@ import {
     UnassignedSequenceNumber,
     UniversalSequenceNumber,
 } from "./constants";
-import { LocalReference } from "./localReference";
+import { LocalReference, LocalReferenceCollection } from "./localReference";
 import {
     IMergeTreeDeltaOpArgs,
     IMergeTreeSegmentDelta,
@@ -37,7 +37,6 @@ import { SegmentPropertiesManager } from "./segmentPropertiesManager";
 // tslint:disable:forin
 // tslint:disable:no-suspicious-comment
 // tslint:disable:no-angle-bracket-type-assertion
-// tslint:disable:object-literal-sort-keys
 // tslint:disable:member-access
 // tslint:disable:no-parameter-reassignment
 // tslint:disable:no-shadowed-variable
@@ -107,11 +106,9 @@ export interface ISegment extends IMergeNodeCommon, IRemovalInfo {
     propertyManager: SegmentPropertiesManager;
     seq?: number;  // If not present assumed to be previous to window min
     clientId?: number;
-    localRefs?: LocalReference[];
+    localRefs?: LocalReferenceCollection;
     removalsByBranch?: IRemovalInfo[];
     properties?: Properties.PropertySet;
-    addLocalRef(lref: LocalReference);
-    removeLocalRef(lref: LocalReference);
     addProperties(newProps: Properties.PropertySet, op?: ops.ICombiningOp, seq?: number, collabWindow?: CollaborationWindow): Properties.PropertySet;
     clone(): ISegment;
     canAppend(segment: ISegment): boolean;
@@ -309,8 +306,8 @@ function addNodeReferences(
                 }
             } else {
                 const baseSegment = node as BaseSegment;
-                if (baseSegment.localRefs && (baseSegment.hierRefCount !== undefined) &&
-                    (baseSegment.hierRefCount > 0)) {
+                if (baseSegment.localRefs && (baseSegment.localRefs.hierRefCount !== undefined) &&
+                    (baseSegment.localRefs.hierRefCount > 0)) {
                     for (const lref of baseSegment.localRefs) {
                         if (lref.refType & ops.ReferenceType.Tile) {
                             addTile(lref, rightmostTiles);
@@ -443,7 +440,6 @@ function nodeTotalLength(mergeTree: MergeTree, node: IMergeNode) {
 }
 
 export abstract class BaseSegment extends MergeNode implements ISegment {
-
     constructor() {
         super();
     }
@@ -459,94 +455,8 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(this);
     propertyManager: SegmentPropertiesManager;
     properties: Properties.PropertySet;
-    localRefs: LocalReference[];
-    hierRefCount?: number;
+    localRefs?: LocalReferenceCollection;
     abstract readonly type: string;
-
-    addLocalRef(lref: LocalReference) {
-        if ((this.hierRefCount === undefined) || (this.hierRefCount === 0)) {
-            if (lref.hasRangeLabels() || lref.hasTileLabels()) {
-                this.hierRefCount = 1;
-            }
-        }
-        if (!this.localRefs) {
-            this.localRefs = [lref];
-        } else {
-            let i = 0;
-            const len = this.localRefs.length;
-            for (; i < len; i++) {
-                if (this.localRefs[i].offset > lref.offset) {
-                    break;
-                }
-            }
-            if (i < len) {
-                for (let k = len; k > i; k--) {
-                    this.localRefs[k] = this.localRefs[k - 1];
-                }
-                this.localRefs[i] = lref;
-            } else {
-                this.localRefs.push(lref);
-            }
-        }
-    }
-
-    removeLocalRef(lref: LocalReference) {
-        if (this.localRefs) {
-            for (let i = 0, len = this.localRefs.length; i < len; i++) {
-                if (lref === this.localRefs[i]) {
-                    for (let j = i; j < (len - 1); j++) {
-                        this.localRefs[j] = this.localRefs[j + 1];
-                    }
-                    this.localRefs.length--;
-                    if (lref.hasRangeLabels() || lref.hasTileLabels()) {
-                        this.hierRefCount--;
-                    }
-                    return lref;
-                }
-            }
-        }
-    }
-
-    /**
-     * Called by 'append()' implementations to append local refs from the given 'other' segment to the
-     * end of 'this' segment.
-     *
-     * Note: This method should be invoked after the caller has ensured that segments can be merged,
-     *       but before 'this' segment's cachedLength has changed, or the adjustment to the local refs
-     *       will be incorrect.
-     */
-    protected appendLocalRefs(other: ISegment) {
-        if (!other.localRefs) {
-            return;
-        }
-
-        const leftLength = this.cachedLength;
-        for (const localRef of other.localRefs) {
-            localRef.offset += leftLength;
-            localRef.segment = this;
-        }
-
-        // Concat or adopt
-        this.localRefs = this.localRefs
-            ? this.localRefs.concat(other.localRefs)
-            : other.localRefs;
-    }
-
-    splitLocalRefs(pos: number, leafSegment: BaseSegment) {
-        const aRefs: LocalReference[] = [];
-        const bRefs: LocalReference[] = [];
-        for (const localRef of this.localRefs) {
-            if (localRef.offset < pos) {
-                aRefs.push(localRef);
-            } else {
-                localRef.segment = leafSegment;
-                localRef.offset -= pos;
-                bRefs.push(localRef);
-            }
-        }
-        this.localRefs = aRefs;
-        leafSegment.localRefs = bRefs;
-    }
 
     addProperties(newProps: Properties.PropertySet, op?: ops.ICombiningOp, seq?: number, collabWindow?: CollaborationWindow) {
         if (!this.propertyManager) {
@@ -590,7 +500,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
         const currentSegmentGroup = this.segmentGroups.dequeue();
         assert.equal(currentSegmentGroup, segmentGroup);
 
-        /* eslint-disable @typescript-eslint/indent */
         switch (opArgs.op.type) {
 
             case ops.MergeTreeDeltaType.ANNOTATE:
@@ -622,7 +531,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
             default:
                 assert.fail(`${opArgs.op.type} is in unrecognized operation type`);
         }
-        /* eslint-enable @typescript-eslint/indent */
     }
 
     public splitAt(pos: number): ISegment {
@@ -662,7 +570,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
                 this.segmentGroups.copyTo(leafSegment);
                 this.trackingCollection.copyTo(leafSegment);
                 if (this.localRefs) {
-                    this.splitLocalRefs(pos, leafSegment);
+                    this.localRefs.split(pos, leafSegment);
                 }
             }
             return leafSegment;
@@ -2439,7 +2347,7 @@ export class MergeTree {
     }
 
     // Visit segments starting from node's left siblings, then up to node's parent
-    leftExcursion<TClientData>(node: IMergeNode, leafAction: ISegmentAction<TClientData>) {
+    private leftExcursion<TClientData>(node: IMergeNode, leafAction: ISegmentAction<TClientData>) {
         const actions = { leaf: leafAction };
         let go = true;
         let startNode = node;
@@ -2472,7 +2380,7 @@ export class MergeTree {
     }
 
     // Visit segments starting from node's right siblings, then up to node's parent
-    rightExcursion<TClientData>(node: IMergeNode, leafAction: ISegmentAction<TClientData>) {
+    private rightExcursion<TClientData>(node: IMergeNode, leafAction: ISegmentAction<TClientData>) {
         const actions = { leaf: leafAction };
         let go = true;
         let startNode = node;
@@ -2774,7 +2682,7 @@ export class MergeTree {
         this.ensureIntervalBoundary(end, refSeq, clientId);
         let segmentGroup: SegmentGroup;
         const removedSegments: IMergeTreeSegmentDelta[] = [];
-        const savedLocalRefs: LocalReference[][] = [];
+        const savedLocalRefs: LocalReferenceCollection[] = [];
         const markRemoved = (segment: ISegment, pos: number, start: number, end: number) => {
             const branchId = this.getBranchId(clientId);
             const segBranchId = this.getBranchId(segment.clientId);
@@ -2798,12 +2706,10 @@ export class MergeTree {
                     removalInfo.removedClientId = clientId;
                     removalInfo.removedSeq = seq;
                     removedSegments.push({ segment });
-                    if (segment.localRefs && (brid === this.localBranchId)) {
-                        if (segment.localRefs.length > 0) {
-                            savedLocalRefs.push(segment.localRefs);
-                        }
-                        segment.localRefs = undefined;
+                    if (segment.localRefs && !segment.localRefs.empty && brid === this.localBranchId) {
+                        savedLocalRefs.push(segment.localRefs);
                     }
+                    segment.localRefs = undefined;
                 }
             }
             // Save segment so can assign removed sequence number when acked by server
@@ -2832,23 +2738,34 @@ export class MergeTree {
         // MergeTree.traceTraversal = true;
         this.mapRange({ leaf: markRemoved, post: afterMarkRemoved }, refSeq, clientId, undefined, start, end);
         if (savedLocalRefs.length > 0) {
-            const afterSegOff = this.getContainingSegment(start, refSeq, clientId);
-            const afterSeg = afterSegOff.segment;
-            for (const segSavedRefs of savedLocalRefs) {
-                for (const localRef of segSavedRefs) {
-                    // tslint:disable-next-line: strict-boolean-expressions
-                    if (afterSeg && localRef.refType && (localRef.refType & ops.ReferenceType.SlideOnRemove)) {
-                        localRef.segment = afterSeg;
-                        localRef.offset = 0;
-                        afterSeg.addLocalRef(localRef);
-                    } else {
-                        localRef.segment = undefined;
-                        localRef.offset = 0;
-                    }
+            const length = this.getLength(refSeq, clientId);
+            let refSegment: ISegment;
+            if (start < length) {
+                const afterSegOff = this.getContainingSegment(start, refSeq, clientId);
+                refSegment = afterSegOff.segment;
+                assert(refSegment);
+                if(!refSegment.localRefs){
+                    refSegment.localRefs = new LocalReferenceCollection(refSegment);
+                }
+                refSegment.localRefs.addBeforeTombstones(...savedLocalRefs);
+            } else if(length > 0) {
+                const beforeSegOff = this.getContainingSegment(length - 1, refSeq, clientId);
+                refSegment = beforeSegOff.segment;
+                assert(refSegment);
+                if(!refSegment.localRefs){
+                    refSegment.localRefs = new LocalReferenceCollection(refSegment);
+                }
+                refSegment.localRefs.addAfterTombstones(...savedLocalRefs);
+            } else {
+                // TODO: The tree is empty, so there isn't anywhere to put these
+                // they should be preserved somehow
+                for (const refsCollection of savedLocalRefs) {
+                    refsCollection.clear();
                 }
             }
-            if (afterSeg) {
-                this.blockUpdatePathLengths(afterSeg.parent, TreeMaintenanceSequenceNumber,
+
+            if (refSegment) {
+                this.blockUpdatePathLengths(refSegment.parent, TreeMaintenanceSequenceNumber,
                     LocalClientId);
             }
         }
@@ -2880,7 +2797,7 @@ export class MergeTree {
         }
     }
 
-    nodeRemoveRange(block: IMergeBlock, start: number, end: number, refSeq: number, clientId: number, removeInfo: RemoveRangeInfo) {
+    private nodeRemoveRange(block: IMergeBlock, start: number, end: number, refSeq: number, clientId: number, removeInfo: RemoveRangeInfo) {
         const children = block.children;
         let startIndex: number;
         if (start < 0) {
@@ -2949,16 +2866,21 @@ export class MergeTree {
     }
 
     removeLocalReference(segment: ISegment, lref: LocalReference) {
-        const removedRef = segment.removeLocalRef(lref);
-        if (removedRef) {
-            this.blockUpdatePathLengths(segment.parent, TreeMaintenanceSequenceNumber,
-                LocalClientId);
+        if(segment.localRefs){
+            const removedRef = segment.localRefs.removeLocalRef(lref);
+            if (removedRef) {
+                this.blockUpdatePathLengths(segment.parent, TreeMaintenanceSequenceNumber,
+                    LocalClientId);
+            }
         }
     }
 
     addLocalReference(lref: LocalReference) {
         const segment = lref.segment;
-        segment.addLocalRef(lref);
+        if(!segment.localRefs){
+            segment.localRefs = new LocalReferenceCollection(segment);
+        }
+        segment.localRefs.addLocalRef(lref);
         this.blockUpdatePathLengths(segment.parent, TreeMaintenanceSequenceNumber,
             LocalClientId);
     }
@@ -3051,7 +2973,6 @@ export class MergeTree {
         }
         if (this.collabWindow.collaborating) {
             strbuf += internedSpaces(indentCount);
-            // tslint:disable-next-line: prefer-template
             strbuf += `${block.partialLengths.toString((id) => glc(this, id), indentCount)}\n`;
         }
         const children = block.children;
@@ -3137,7 +3058,7 @@ export class MergeTree {
         }
     }
 
-    nodeMap<TClientData>(
+    private nodeMap<TClientData>(
         node: IMergeBlock, actions: SegmentActions<TClientData>, pos: number, refSeq: number,
         clientId: number, accum?: TClientData, start?: number, end?: number) {
         if (start === undefined) {
@@ -3220,7 +3141,7 @@ export class MergeTree {
     }
 
     // Straight call every segment; goes until leaf action returns false
-    nodeMapReverse<TClientData>(
+    private nodeMapReverse<TClientData>(
         block: IMergeBlock, actions: SegmentActions<TClientData>, pos: number, refSeq: number,
         clientId: number, accum?: TClientData) {
         let go = true;

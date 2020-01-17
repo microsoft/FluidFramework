@@ -175,7 +175,6 @@ export class TodoItem extends PrimedComponent
      */
     public async createInnerComponent(type: TodoItemSupportedComponents, props?: any): Promise<void> {
         let componentRuntime: IComponentRuntime;
-        /* eslint-disable @typescript-eslint/indent */
         switch (type) {
             case "todo":
                 componentRuntime = await this.context.createSubComponent(TodoItemName, props);
@@ -191,7 +190,6 @@ export class TodoItem extends PrimedComponent
                 break;
             default:
         }
-        /* eslint-enable @typescript-eslint/indent */
 
         await componentRuntime.request({ url: "/" });
         componentRuntime.attach();

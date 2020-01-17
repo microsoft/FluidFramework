@@ -216,7 +216,7 @@ export class DAW extends React.Component<DAWProps, DAWState> {
     public postPressKey(midiNumber: any) {
         this.recorder.postSaveNewNote(new Note(midiNumber, NoteType.quarter), this.state.tempo);
 
-        this.props.rootDir.set("playNote", {
+        this.props.rootDir.set<NoteProperties>("playNote", {
             length: 0.5,
             midiNumber,
             instrument: this.state.instrument,
@@ -226,7 +226,7 @@ export class DAW extends React.Component<DAWProps, DAWState> {
             overtone2: this.state.overtone2,
             overtone3: this.state.overtone3,
             overtone4: this.state.overtone4,
-        } as NoteProperties);
+        });
     }
 
     public postPlayNote(note: NoteProperties) {
@@ -235,7 +235,7 @@ export class DAW extends React.Component<DAWProps, DAWState> {
 
     public postSaveInstrument(event: any) {
         const savedInstruments = this.getSavedInstruments();
-        const waveProperties = {
+        const waveProperties: WaveProperties = {
             amplitude: 1,
             frequency: 0,
             modulation: this.state.customModulation,
@@ -244,8 +244,8 @@ export class DAW extends React.Component<DAWProps, DAWState> {
             overtone2: this.state.overtone2,
             overtone3: this.state.overtone3,
             overtone4: this.state.overtone4,
-        } as WaveProperties;
-        const instrumentProperty = { name: this.state.customInstrumentName, waveProperties } as InstrumentProperties;
+        };
+        const instrumentProperty: InstrumentProperties = { name: this.state.customInstrumentName, waveProperties };
 
         savedInstruments.push(instrumentProperty);
 

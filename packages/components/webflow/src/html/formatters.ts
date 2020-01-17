@@ -4,14 +4,14 @@
  */
 
 import * as assert from "assert";
-import { Caret as CaretUtil, Direction, Rect } from "@fluid-example/flow-util-lib";
+import { Caret as CaretUtil, Direction, Rect, TagName } from "@fluid-example/flow-util-lib";
 import { IComponent, IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
 import { Marker, TextSegment } from "@microsoft/fluid-merge-tree";
 import { DocSegmentKind, getComponentOptions, getCss, getDocSegmentKind } from "../document";
 import * as styles from "../editor/index.css";
 import { emptyObject } from "../util";
 import { getAttrs, syncAttrs } from "../util/attr";
-import { Tag } from "../util/tag";
+
 import { Formatter, IFormatterState, RootFormatter } from "../view/formatter";
 import { Layout } from "../view/layout";
 import { ICssProps, sameCss, syncCss } from "./css";
@@ -31,7 +31,6 @@ class HtmlFormatter extends RootFormatter<IFormatterState> {
         const segment = layout.segment;
         const kind = getDocSegmentKind(segment);
 
-        /* eslint-disable @typescript-eslint/indent */
         switch (kind) {
             case DocSegmentKind.text: {
                 layout.pushFormat(paragraphFormatter, emptyObject);
@@ -63,7 +62,6 @@ class HtmlFormatter extends RootFormatter<IFormatterState> {
             default:
                 assert.fail(`Unhandled DocSegmentKind '${kind}' @${layout.position}`);
         }
-        /* eslint-enable @typescript-eslint/indent */
     }
 
     public onChange() { }
@@ -84,18 +82,19 @@ export class InclusionFormatter extends Formatter<IInclusionState> {
         if (!state.root) {
             const marker = segment as Marker;
 
-            state.root = document.createElement(Tag.span);
+            state.root = document.createElement(TagName.span);
             state.root.contentEditable = "false";
 
             state.slot = document.createElement(
                 getComponentOptions(segment).display === "block"
-                    ? Tag.div
-                    : Tag.span);
+                    ? TagName.div
+                    : TagName.span);
 
             state.view = layout.doc.getComponentFromMarker(marker).then((component: IComponent) => {
                 const visual = component.IComponentHTMLVisual;
                 const view: IComponentHTMLView = visual.addView
                     ? visual.addView(layout.scope)
+                    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                     : {
                         IComponentHTMLVisual: visual,
                         render: visual.render.bind(visual),
@@ -126,8 +125,8 @@ export class InclusionFormatter extends Formatter<IInclusionState> {
     }
 }
 
-interface ITagsState extends IFormatterState { root?: HTMLElement; pTag: Tag; popCount: number; }
-interface ITagsProps { tags?: Tag[]; }
+interface ITagsState extends IFormatterState { root?: HTMLElement; pTag: TagName; popCount: number; }
+interface ITagsProps { tags?: TagName[]; }
 
 class TagsFormatter extends Formatter<ITagsState> {
     public begin(layout: Layout, init: Readonly<Partial<ITagsState>>, prevState: Readonly<ITagsState>) {
@@ -156,7 +155,6 @@ class TagsFormatter extends Formatter<ITagsState> {
         const segment = layout.segment;
         const kind = getDocSegmentKind(segment);
 
-        /* eslint-disable @typescript-eslint/indent */
         switch (kind) {
             case DocSegmentKind.text: {
                 layout.emitText((segment as TextSegment).text);
@@ -190,7 +188,6 @@ class TagsFormatter extends Formatter<ITagsState> {
                 layout.popFormat();
                 return { state, consumed: false };
         }
-        /* eslint-enable @typescript-eslint/indent */
     }
 
     public end(layout: Layout, state: Readonly<ITagsState>) {
@@ -203,7 +200,7 @@ class TagsFormatter extends Formatter<ITagsState> {
 interface IParagraphState extends IFormatterState { root?: HTMLElement; }
 
 class ParagraphFormatter extends Formatter<IParagraphState> {
-    constructor(private readonly defaultTag: Tag) { super(); }
+    constructor(private readonly defaultTag: TagName) { super(); }
 
     public begin(layout: Layout, init: IParagraphState, prevState: IParagraphState) {
         const state: Partial<IParagraphState> = prevState
@@ -222,7 +219,6 @@ class ParagraphFormatter extends Formatter<IParagraphState> {
         const segment = layout.segment;
         const kind = getDocSegmentKind(segment);
 
-        /* eslint-disable @typescript-eslint/indent */
         switch (kind) {
             case DocSegmentKind.text: {
                 layout.pushFormat(textFormatter, emptyObject);
@@ -255,11 +251,10 @@ class ParagraphFormatter extends Formatter<IParagraphState> {
                 layout.popFormat();
                 return { state, consumed: false };
         }
-        /* eslint-enable @typescript-eslint/indent */
     }
 
     public end(layout: Layout, state: Readonly<IParagraphState>) {
-        layout.emitTag(Tag.br);
+        layout.emitTag(TagName.br);
         layout.popNode();
     }
 }
@@ -271,7 +266,7 @@ class TextFormatter extends Formatter<ITextState> {
         const state: Partial<ITextState> = prevState
             ? { ...prevState }
             : {};
-        state.root = layout.pushTag(Tag.span);
+        state.root = layout.pushTag(TagName.span);
         state.css = getCss(layout.segment);
         syncCss(state.root, state.css, undefined);
         return state;
@@ -281,7 +276,6 @@ class TextFormatter extends Formatter<ITextState> {
         const segment = layout.segment;
         const kind = getDocSegmentKind(segment);
 
-        /* eslint-disable @typescript-eslint/indent */
         switch (kind) {
             case DocSegmentKind.text: {
                 if (!sameCss(segment, state.css)) {
@@ -297,7 +291,6 @@ class TextFormatter extends Formatter<ITextState> {
                 layout.popFormat();
                 return { state, consumed: false };
         }
-        /* eslint-enable @typescript-eslint/indent */
     }
 
     public end(layout: Layout, state: Readonly<ITextState>) {
@@ -307,6 +300,6 @@ class TextFormatter extends Formatter<ITextState> {
 
 export const htmlFormatter = Object.freeze(new HtmlFormatter());
 const inclusionFormatter = Object.freeze(new InclusionFormatter());
-const paragraphFormatter = Object.freeze(new ParagraphFormatter(Tag.p));
+const paragraphFormatter = Object.freeze(new ParagraphFormatter(TagName.p));
 const tagsFormatter = Object.freeze(new TagsFormatter());
 const textFormatter = Object.freeze(new TextFormatter());

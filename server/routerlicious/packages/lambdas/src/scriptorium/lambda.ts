@@ -7,7 +7,7 @@ import {
     extractBoxcar,
     ICollection,
     IContext,
-    IKafkaMessage,
+    IQueuedMessage,
     IPartitionLambda,
     ISequencedOperationMessage,
     SequencedOperationType,
@@ -15,7 +15,7 @@ import {
 
 export class ScriptoriumLambda implements IPartitionLambda {
     private pending = new Map<string, ISequencedOperationMessage[]>();
-    private pendingOffset: number;
+    private pendingOffset: IQueuedMessage;
     private current = new Map<string, ISequencedOperationMessage[]>();
 
     constructor(
@@ -24,7 +24,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
         protected context: IContext) {
     }
 
-    public handler(message: IKafkaMessage): void {
+    public handler(message: IQueuedMessage): void {
         const boxcar = extractBoxcar(message);
 
         for (const baseMessage of boxcar.contents) {
@@ -43,7 +43,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
             }
         }
 
-        this.pendingOffset = message.offset;
+        this.pendingOffset = message;
         this.sendPending();
     }
 

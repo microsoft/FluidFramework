@@ -119,7 +119,6 @@ export class ClientReplayTool {
         const mergeTreeMessages = new Array<IFullPathSequencedDocumentMessage>();
         for (const message of this.deltaStorageService.getFromWebSocket(0, this.args.to)) {
             const messagePathParts: string[] = [];
-            /* eslint-disable @typescript-eslint/indent */
             switch (message.type as MessageType) {
                 case MessageType.Operation:
                     let contents = message.contents as Partial<IMessageContents>;
@@ -167,7 +166,6 @@ export class ClientReplayTool {
                     break;
                 default:
             }
-            /* eslint-enable @typescript-eslint/indent */
         }
         if (mergeTreeAttachTrees.size > 0) {
             clients.set("readonly", new Map<string, TestClient>());
@@ -332,7 +330,6 @@ export class ClientReplayTool {
                 const treeEntries = (tree.value as ITree).entries;
                 if (treeEntries) {
                     for (const entry of treeEntries) {
-                        /* eslint-disable @typescript-eslint/indent */
                         switch (entry.type) {
                             case "Tree":
                                 const fullPathEntry: IFullPathTreeEntry = entry;
@@ -353,7 +350,6 @@ export class ClientReplayTool {
                                 }
                             default:
                         }
-                        /* eslint-enable @typescript-eslint/indent */
                     }
                 }
             }

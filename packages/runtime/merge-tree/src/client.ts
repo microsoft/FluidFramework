@@ -784,7 +784,6 @@ export class Client {
         const op = opArgs.op;
         const msg = opArgs.sequencedMessage;
         this.getOrAddShortClientId(msg.clientId);
-        /* eslint-disable @typescript-eslint/indent */
         switch (op.type) {
             case ops.MergeTreeDeltaType.INSERT:
                 this.applyInsertOp(opArgs);
@@ -808,14 +807,13 @@ export class Client {
             default:
                 break;
         }
-        /* eslint-enable @typescript-eslint/indent */
     }
 
     public applyMsg(msg: ISequencedDocumentMessage) {
         // Ensure client ID is registered
         // TODO support for more than two branch IDs
-        // The existance of msg.origin means we are a branch message - and so should be marked as 0
-        // The non-existance of msg.origin indicates we are local - and should inherit the collab mode ID
+        // The existence of msg.origin means we are a branch message - and so should be marked as 0
+        // The non-existence of msg.origin indicates we are local - and should inherit the collab mode ID
         const branchId = msg.origin ? 0 : this.mergeTree.localBranchId;
         this.getOrAddShortClientId(msg.clientId, branchId);
         // Apply if an operation message
@@ -951,7 +949,6 @@ export class Client {
                 op,
                 groupOp,
             };
-            /* eslint-disable @typescript-eslint/indent */
             switch (op.type) {
                 case ops.MergeTreeDeltaType.INSERT:
                     this.applyInsertOp(opArgs);
@@ -965,7 +962,6 @@ export class Client {
                 default:
                     break;
             }
-            /* eslint-enable @typescript-eslint/indent */
         }
     }
     updateConsensusProperty(op: ops.IMergeTreeAnnotateMsg, msg: ISequencedDocumentMessage) {

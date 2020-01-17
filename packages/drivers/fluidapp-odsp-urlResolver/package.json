@@ -20,7 +20,10 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
-    "test": "mocha --recursive dist/test -r make-promises-safe",
+    "lint": "npm run eslint",
+    "lint:fix": "npm run eslint:fix",
+    "test": "npm run test:mocha",
+    "test:mocha": "mocha --recursive dist/test -r make-promises-safe",
     "tsc": "tsc",
     "tslint": "npm run eslint"
   },
@@ -48,6 +51,6 @@
     "make-promises-safe": "^5.1.0",
     "mocha": "^5.2.0",
     "rimraf": "^2.6.2",
-    "typescript": "~3.4.5"
+    "typescript": "~3.7.4"
   }
 }

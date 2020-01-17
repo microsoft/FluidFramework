@@ -88,8 +88,8 @@ export class BlobManager implements IBlobManager {
     public async createBlob(blob: IGenericBlob): Promise<IGenericBlob> {
         const response = await this.storage.createBlob(blob.content);
 
-        /* tslint:disable:no-object-literal-type-assertion */
         // Remove blobContent
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         const blobMetaData = {
             fileName: blob.fileName,
             id: response.id,

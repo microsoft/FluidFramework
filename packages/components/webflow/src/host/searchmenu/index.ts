@@ -107,7 +107,6 @@ export class SearchMenuView extends View<ISearchMenuProps, ISearchMenuProps> {
     }
 
     private readonly onKeyDown = (e: KeyboardEvent) => {
-        /* eslint-disable @typescript-eslint/indent */
         switch (e.code) {
             case KeyCode.enter:
                 this.complete(e, true);
@@ -117,6 +116,5 @@ export class SearchMenuView extends View<ISearchMenuProps, ISearchMenuProps> {
                 break;
             default:
         }
-        /* eslint-enable @typescript-eslint/indent */
     };
 }

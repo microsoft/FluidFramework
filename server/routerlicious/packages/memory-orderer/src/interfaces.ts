@@ -10,9 +10,9 @@ import {
     IContext,
     IDocument,
     IDocumentDetails,
-    IKafkaMessage,
     IOrderer,
     ISequencedOperationMessage,
+    IQueuedMessage,
 } from "@microsoft/fluid-server-services-core";
 
 export interface IConcreteNode extends EventEmitter {
@@ -76,5 +76,5 @@ export interface ILocalOrdererSetup {
 export interface IKafkaSubscriber {
     readonly context: IContext;
 
-    process(message: IKafkaMessage): void;
+    process(message: IQueuedMessage): void;
 }

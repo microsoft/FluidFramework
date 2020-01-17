@@ -76,41 +76,42 @@ export class SummaryTreeConverter {
                 let value: SummaryObject;
 
                 switch (entry.type) {
-                case TreeEntry[TreeEntry.Blob]:
-                    const blob = entry.value as IBlob;
-                    let content: string | Buffer;
-                    if (blob.encoding === "base64") {
-                        content = Buffer.from(blob.contents, "base64");
-                        summaryStats.totalBlobSize += content.byteLength;
-                    } else {
-                        content = blob.contents;
-                        summaryStats.totalBlobSize += Buffer.byteLength(content);
-                    }
-                    value = {
-                        content,
-                        type: SummaryType.Blob,
-                    } as ISummaryBlob;
-                    summaryStats.blobNodeCount++;
-                    break;
+                    case TreeEntry[TreeEntry.Blob]:
+                        const blob = entry.value as IBlob;
+                        let content: string | Buffer;
+                        if (blob.encoding === "base64") {
+                            content = Buffer.from(blob.contents, "base64");
+                            summaryStats.totalBlobSize += content.byteLength;
+                        } else {
+                            content = blob.contents;
+                            summaryStats.totalBlobSize += Buffer.byteLength(content);
+                        }
+                        const summaryBlob: ISummaryBlob = {
+                            content,
+                            type: SummaryType.Blob,
+                        };
+                        value = summaryBlob;
+                        summaryStats.blobNodeCount++;
+                        break;
 
-                case TreeEntry[TreeEntry.Tree]:
-                    value = this.convertToSummaryTreeCore(
-                        entry.value as ITree,
-                        summaryStats,
-                        fullTree);
-                    break;
+                    case TreeEntry[TreeEntry.Tree]:
+                        value = this.convertToSummaryTreeCore(
+                            entry.value as ITree,
+                            summaryStats,
+                            fullTree);
+                        break;
 
-                case TreeEntry[TreeEntry.Commit]:
-                    // Probably should not reach this case and assert so,
-                    // when snapshotting the commits become strings not ITrees
-                    value = this.convertToSummaryTreeCore(
-                        entry.value as ITree,
-                        summaryStats,
-                        fullTree);
-                    break;
+                    case TreeEntry[TreeEntry.Commit]:
+                        // Probably should not reach this case and assert so,
+                        // when snapshotting the commits become strings not ITrees
+                        value = this.convertToSummaryTreeCore(
+                            entry.value as ITree,
+                            summaryStats,
+                            fullTree);
+                        break;
 
-                default:
-                    throw new Error("Unexpected TreeEntry type");
+                    default:
+                        throw new Error("Unexpected TreeEntry type");
                 }
 
                 summaryTree.tree[entry.path] = value;

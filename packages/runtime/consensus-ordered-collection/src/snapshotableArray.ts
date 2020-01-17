@@ -65,7 +65,6 @@ export class SnapshotableArray<T> extends Array {
             const values = JSON.parse(fromBase64ToUtf8(rawContent)) as IConsensusOrderedCollectionValue[];
 
             for (const item of values) {
-                /* eslint-disable @typescript-eslint/indent */
                 switch (item.type) {
                     case ValueType[ValueType.Plain]:
                         // Assuming type T
@@ -79,7 +78,6 @@ export class SnapshotableArray<T> extends Array {
                     default:
                         assert(false, "Invalid value type");
                 }
-                /* eslint-enable @typescript-eslint/indent */
             }
         }
     }

@@ -20,15 +20,18 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
-    "test": "mocha --recursive dist/test -r make-promises-safe",
+    "lint": "npm run eslint",
+    "lint:fix": "npm run eslint:fix",
+    "test": "npm run test:mocha",
+    "test:mocha": "mocha --recursive dist/test -r make-promises-safe",
     "tsc": "tsc",
     "tslint": "npm run eslint"
   },
   "dependencies": {
     "@microsoft/fluid-component-core-interfaces": "^0.13.0",
     "@microsoft/fluid-driver-definitions": "^0.13.0",
-    "@microsoft/fluid-protocol-definitions": "^0.12.0",
-    "@microsoft/fluid-server-services-core": "^0.12.0"
+    "@microsoft/fluid-protocol-definitions": "^0.1001.0",
+    "@microsoft/fluid-server-services-client": "^0.1001.0"
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.13.0",
@@ -48,6 +51,6 @@
     "make-promises-safe": "^5.1.0",
     "mocha": "^5.2.0",
     "rimraf": "^2.6.2",
-    "typescript": "~3.4.5"
+    "typescript": "~3.7.4"
   }
 }

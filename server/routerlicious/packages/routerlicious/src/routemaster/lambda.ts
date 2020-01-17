@@ -22,7 +22,7 @@ export class RouteMasterLambda extends SequencedLambda {
         super(context);
     }
 
-    protected async handlerCore(rawMessage: core.IKafkaMessage): Promise<void> {
+    protected async handlerCore(rawMessage: core.IQueuedMessage): Promise<void> {
         const boxcar = core.extractBoxcar(rawMessage);
 
         const boxcarProcessed: Promise<void>[] = [];
@@ -46,7 +46,7 @@ export class RouteMasterLambda extends SequencedLambda {
         // TODO can checkpoint here
         Promise.all(boxcarProcessed).then(
             () => {
-                this.context.checkpoint(rawMessage.offset);
+                this.context.checkpoint(rawMessage);
             },
             (error) => {
                 this.context.error(error, true);

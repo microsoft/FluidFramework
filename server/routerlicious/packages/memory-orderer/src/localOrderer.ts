@@ -30,6 +30,7 @@ import {
     ITenantManager,
     ITopic,
     IWebSocket,
+    IQueuedMessage,
 } from "@microsoft/fluid-server-services-core";
 import { ILocalOrdererSetup } from "./interfaces";
 import { LocalKafka } from "./localKafka";
@@ -142,11 +143,14 @@ class LocalSocketPublisher implements IPublisher {
             emit: (event: string, ...args: any[]) => this.publisher.publish(topic, event, ...args),
         };
     }
+
+    public async close() {
+    }
 }
 
 // Want a pure local orderer that can do all kinds of stuff
 class LocalContext implements IContext {
-    public checkpoint(offset: number) {
+    public checkpoint(queuedMessage: IQueuedMessage) {
         return;
     }
 
@@ -374,7 +378,7 @@ export class LocalOrderer implements IOrderer {
             setup.scribeMessagesP(),
         ]);
 
-        const scribe = this.details.value.scribe
+        const scribe: IScribe = this.details.value.scribe
             ? typeof this.details.value.scribe === "string" ?
                 JSON.parse(this.details.value.scribe) :
                 this.details.value.scribe
@@ -391,15 +395,14 @@ export class LocalOrderer implements IOrderer {
             lastState.proposals,
             lastState.values,
             () => -1,
-            // eslint-disable-next-line arrow-body-style
             () => { return; });
 
         return new ScribeLambda(
             context,
             documentCollection,
             scribeMessagesCollection,
-            scribe.tenantId,
-            scribe.documentId,
+            this.tenantId,
+            this.documentId,
             scribe,
             this.gitManager,
             this.rawDeltasKafka,

@@ -12,19 +12,3 @@ services:
             - login__microsoft__secret
             - login__accounts
         restart: always
-    gitrest:
-        image: prague.azurecr.io/gitrest:1038
-        restart: always
-    cobalt:
-        image: prague.azurecr.io/cobalt:1544
-        restart: always
-    redis:
-        image: redis:alpine
-    mongodb:
-        image: mongo:3.4.3
-    riddler:
-        image: prague.azurecr.io/prague:2302
-        command: node dist/riddler/www.js
-        environment:
-            - DEBUG=routerlicious:*
-        restart: always

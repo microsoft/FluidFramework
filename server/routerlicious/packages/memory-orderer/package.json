@@ -7,7 +7,7 @@
   "author": "Microsoft",
   "main": "dist/index.js",
   "browser": {
-    "moniker": "@microsoft/fluid-server-services-core/dist/dockerNames.js"
+    "moniker": "@microsoft/fluid-server-services-client/dist/dockerNames.js"
   },
   "types": "dist/index.d.ts",
   "scripts": {
@@ -20,6 +20,8 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "lint": "npm run eslint",
+    "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
     "tslint": "npm run eslint"
   },
@@ -59,6 +61,6 @@
     "eslint-plugin-react": "^7.16.0",
     "eslint-plugin-unicorn": "^14.0.1",
     "rimraf": "^2.6.2",
-    "typescript": "~3.4.5"
+    "typescript": "~3.7.4"
   }
 }

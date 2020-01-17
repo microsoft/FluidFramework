@@ -17,13 +17,15 @@
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "lint": "npm run eslint",
+    "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
     "tslint": "npm run eslint"
   },
   "dependencies": {
     "@microsoft/fluid-component-core-interfaces": "^0.13.0",
     "@microsoft/fluid-map": "^0.13.0",
-    "@microsoft/fluid-protocol-definitions": "^0.12.0",
+    "@microsoft/fluid-protocol-definitions": "^0.1001.0",
     "@microsoft/fluid-sequence": "^0.13.0",
     "request": "^2.88.0"
   },
@@ -44,6 +46,6 @@
     "eslint-plugin-react": "^7.16.0",
     "eslint-plugin-unicorn": "^14.0.1",
     "rimraf": "^2.6.2",
-    "typescript": "~3.4.5"
+    "typescript": "~3.7.4"
   }
 }
