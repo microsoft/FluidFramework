@@ -95,14 +95,7 @@ function checkContainerActivity(container: Container) {
             (window as IWindow).closeContainer();
         } else {
             for (const client of quorum.getMembers()) {
-                // back-compat: 0.11 clientType
-                if (client[1].client.type === "browser") {
-                    return;
-                }
-                if (!client[1].client || (
-                    client[1].client.details // back-compat: 0.11 clientType
-                    && !client[1].client.details.capabilities.interactive
-                )) {
+                if (!client[1].client || client[1].client.details.capabilities.interactive) {
                     return;
                 }
             }

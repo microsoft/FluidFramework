@@ -223,14 +223,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this._scopes;
     }
 
-    /**
-     * DEPRECATED: use clientDetails.type instead
-     * back-compat: 0.11 clientType
-     */
-    public get clientType(): string {
-        return this._deltaManager.clientType;
-    }
-
     public get clientDetails(): IClientDetails {
         return this._deltaManager.clientDetails;
     }
@@ -297,8 +289,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.canReconnect = !(originalRequest.headers && originalRequest.headers[LoaderHeader.reconnect] === false);
 
         // Create logger for components to use
-        // back-compat: 0.11 clientType
-        const clientType = this.client.details ? this.client.details.type : this.client.type;
+        const clientType = this.client.details.type;
         this.subLogger = DebugLogger.mixinDebugLogger(
             "fluid:telemetry",
             logger,
@@ -859,7 +850,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const client: IClient = this.options && this.options.client
             ? (this.options.client as IClient)
             : {
-                type: "browser", // Back-compat: 0.11 clientType
                 details: {
                     capabilities: { interactive: true },
                 },
@@ -876,11 +866,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             merge(client.details, headerClientDetails);
         }
 
-        // Back-compat: 0.11 clientType
-        const headerClientType = this.originalRequest.headers && this.originalRequest.headers[LoaderHeader.clientType];
-        if (headerClientType) {
-            client.type = headerClientType;
-        }
         return client;
     }
 

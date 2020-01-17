@@ -70,11 +70,6 @@ export enum LoaderHeader {
      */
     cache = "fluid-cache",
 
-    /**
-     * DEPRECATED use clientDetails instead
-     * back-compat: 0.11 clientType
-     */
-    clientType = "fluid-client-type",
     clientDetails = "fluid-client-details",
     executionContext = "execution-context",
 
@@ -95,12 +90,6 @@ export enum LoaderHeader {
 }
 export interface ILoaderHeader {
     [LoaderHeader.cache]: boolean;
-
-    /**
-     * DEPRECATED use clientDetails instead
-     * back-compat: 0.11 clientType
-     */
-    [LoaderHeader.clientType]: string;
     [LoaderHeader.clientDetails]: IClientDetails;
     [LoaderHeader.pause]: boolean;
     [LoaderHeader.executionContext]: string;

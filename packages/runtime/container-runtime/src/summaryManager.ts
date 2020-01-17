@@ -194,9 +194,7 @@ export class SummaryManager extends EventEmitter {
             return;
         }
 
-        // Back-compat: 0.11 clientType
-        const clientType = this.context.clientDetails ? this.context.clientDetails.type : this.context.clientType;
-        if (clientType === "summarizer") {
+        if (this.context.clientDetails.type === "summarizer") {
             // Make sure that the summarizer client does not load another summarizer.
             return;
         }
@@ -249,7 +247,6 @@ export class SummaryManager extends EventEmitter {
         const request: IRequest = {
             headers: {
                 [LoaderHeader.cache]: false,
-                [LoaderHeader.clientType]: "summarizer", // Back-compat: 0.11 clientType
                 [LoaderHeader.clientDetails]: {
                     capabilities: { interactive: false },
                     type: "summarizer",
