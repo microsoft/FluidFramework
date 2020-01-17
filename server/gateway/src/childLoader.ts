@@ -100,7 +100,7 @@ class KeyValueLoader {
         config.tokens = (result.data as IFluidResolvedUrl).tokens;
 
         const loader = new Loader(
-            { resolver: hostConf.urlResolver },
+            hostConf.urlResolver,
             hostConf.documentServiceFactory,
             new NodeCodeLoader(packageUrl, installLocation, waitTimeoutMS, new NodeWhiteList()),
             config,

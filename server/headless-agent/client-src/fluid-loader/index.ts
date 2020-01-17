@@ -65,7 +65,7 @@ export async function startLoading(
     const codeLoader = new WebCodeLoader(packageUrl);
 
     const loader = new Loader(
-        { resolver },
+        resolver,
         new RouterliciousDocumentServiceFactory(),
         codeLoader,
         { encrypted: undefined, blockUpdateMarkers: true, client: { type: loaderType } },
