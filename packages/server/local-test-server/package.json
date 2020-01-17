@@ -73,6 +73,7 @@
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.13.0",
     "@microsoft/fluid-build-common": "^0.13.0",
+    "@types/chance": "^1.0.8",
     "@types/debug": "^0.0.31",
     "@types/mocha": "^5.2.5",
     "@types/nock": "^9.3.0",
