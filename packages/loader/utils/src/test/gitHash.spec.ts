@@ -6,7 +6,7 @@
 import * as assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
-import { gitHashFile } from "..";
+import { gitHashFileAsync } from "..";
 
 async function getFileContents(p: string): Promise<Buffer> {
     return new Promise<Buffer>((resolve, reject) => {
@@ -26,12 +26,12 @@ const dataDir = "../../src/test";
 describe("Core-Utils", () => {
     // Expected hashes are from git hash-object file...
     // Make sure the hash is of the file and not of an LFS stub
-    describe("#gitHashFile", () => {
+    describe("#gitHashFileAsync", () => {
         it("SVG should Hash", async () => {
             const p = path.join(__dirname, `${dataDir}/images/bindy.svg`);
             const file = await getFileContents(p);
-            const expectedHash = "c741e46ae4a5f1ca19debf0ac609aabc5fe94add";
-            const hash = gitHashFile(file);
+            const expectedHash = "9b8abd0b90324ffce0b6a9630e5c4301972c364ed9aeb7e7329e424a4ae8a630";
+            const hash = await gitHashFileAsync(file);
 
             assert.equal(hash, expectedHash);
         });
@@ -39,8 +39,8 @@ describe("Core-Utils", () => {
         it("AKA PDF should Hash", async () => {
             const p = path.join(__dirname, `${dataDir}/images/aka.pdf`);
             const file = await getFileContents(p);
-            const expectedHash = "f3423703f542852aa7f3d1a13e73f0de0d8c9c0f";
-            const hash = gitHashFile(file);
+            const expectedHash = "40f421df86a3d53366ca8df868f0c0d2f30853baf9402ffa28d808ce52d88856";
+            const hash = await gitHashFileAsync(file);
 
             assert.equal(hash, expectedHash);
         });
@@ -48,8 +48,8 @@ describe("Core-Utils", () => {
         it("Grid GIF should Hash", async () => {
             const p = path.join(__dirname, `${dataDir}/images/grid.gif`);
             const file = await getFileContents(p);
-            const expectedHash = "a7d63376bbcb05d0a6fa749594048c8ce6be23fb";
-            const hash = gitHashFile(file);
+            const expectedHash = "40f421df86a3d53366ca8df868f0c0d2f30853baf9402ffa28d808ce52d88856";
+            const hash = await gitHashFileAsync(file);
 
             assert.equal(hash, expectedHash);
         });

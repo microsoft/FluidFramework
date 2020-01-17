@@ -5,7 +5,7 @@
 
 import * as api from "@fluid-internal/client-api";
 import { getFileBlobType, IGenericBlob, IImageBlob, IVideoBlob } from "@microsoft/fluid-container-definitions";
-import { gitHashFile } from "@microsoft/fluid-core-utils";
+import { gitHashFileAsync } from "@microsoft/fluid-core-utils";
 
 export async function blobUploadHandler(
     dragZone: HTMLDivElement,
@@ -58,47 +58,55 @@ async function fileToInclusion(file: File): Promise<IGenericBlob> {
     switch (baseInclusion.type) {
         case "image": {
             const blobP = imageHandler(file, baseInclusion);
-
-            return Promise.all([arrayBufferP, blobP])
-                .then(([arrayBuffer, blob]) => {
-                    const incl: IImageBlob = {
-                        content: arrayBuffer,
-                        fileName: file.name,
-                        height: blob.height,
-                        id: gitHashFile(arrayBuffer),
-                        size: arrayBuffer.byteLength,
-                        type: "image",
-                        url: blob.url,
-                        width: blob.width,
-                    };
-                    return incl;
+            return arrayBufferP
+                .then(async (arrayBuffer) => {
+                    const hashP = gitHashFileAsync(arrayBuffer);
+                    return Promise.all([blobP, hashP])
+                        .then(([blob, hash]) => {
+                            const incl: IImageBlob = {
+                                content: arrayBuffer,
+                                fileName: file.name,
+                                height: blob.height,
+                                id: hash,
+                                size: arrayBuffer.byteLength,
+                                type: "image",
+                                url: blob.url,
+                                width: blob.width,
+                            };
+                            return incl;
+                        });
                 });
         }
         case "video": {
             const blobP = videoHandler(file, baseInclusion);
-            return Promise.all([arrayBufferP, blobP])
-                .then(([arrayBuffer, blob]) => {
-                    const incl: IVideoBlob = {
-                        content: arrayBuffer,
-                        fileName: file.name,
-                        height: blob.height,
-                        id: gitHashFile(arrayBuffer),
-                        length: blob.length,
-                        size: arrayBuffer.byteLength,
-                        type: "video",
-                        url: blob.url,
-                        width: blob.width,
-                    };
-                    return incl;
+            return arrayBufferP
+                .then(async (arrayBuffer) => {
+                    const hashP = gitHashFileAsync(arrayBuffer);
+                    return Promise.all([blobP, hashP])
+                        .then(([blob, hash]) => {
+                            const incl: IVideoBlob = {
+                                content: arrayBuffer,
+                                fileName: file.name,
+                                height: blob.height,
+                                id: hash,
+                                length: blob.length,
+                                size: arrayBuffer.byteLength,
+                                type: "video",
+                                url: blob.url,
+                                width: blob.width,
+                            };
+                            return incl;
+                        });
                 });
         }
         default: {
-            return Promise.all([arrayBufferP])
-                .then(([arrayBuffer]) => {
+            return arrayBufferP
+                .then(async (arrayBuffer) => {
+                    const hash = await gitHashFileAsync(arrayBuffer);
                     const incl: IGenericBlob = {
                         content: arrayBuffer,
                         fileName: file.name,
-                        id: gitHashFile(arrayBuffer),
+                        id: hash,
                         size: arrayBuffer.byteLength,
                         type: "generic",
                         url: baseInclusion.url,

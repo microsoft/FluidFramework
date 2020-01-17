@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { gitHashFile } from "@microsoft/fluid-core-utils";
+import { gitHashFileAsync } from "@microsoft/fluid-core-utils";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import * as resources from "@microsoft/fluid-gitresources";
 import { buildHierarchy } from "@microsoft/fluid-protocol-base";
@@ -112,7 +112,7 @@ export class DocumentStorageService implements IDocumentStorageService {
                 const content = typeof value.content === "string" ? value.content : value.content.toString("base64");
                 const encoding = typeof value.content === "string" ? "utf-8" : "base64";
                 // The gitHashFile would return the same hash as returned by the server as blob.sha
-                const hash = gitHashFile(Buffer.from(content, encoding));
+                const hash = await gitHashFileAsync(Buffer.from(content, encoding));
                 if (!this.blobsShaCache.has(hash)) {
                     const blob = await this.manager.createBlob(content, encoding);
                     assert.strictEqual(hash, blob.sha, "Blob.sha and hash do not match!!");
