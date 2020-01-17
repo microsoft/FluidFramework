@@ -9,11 +9,11 @@ import {
     PrimedComponent,
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
-// import {
-//     EmbeddedComponent,
-// } from "@microsoft/fluid-aqueduct-react";
 import {
-    IComponentHTMLVisual,
+    EmbeddedComponent,
+} from "@microsoft/fluid-aqueduct-react";
+import {
+    IComponentHTMLVisual, IComponent,
 } from "@microsoft/fluid-component-core-interfaces";
 
 import * as React from "react";
@@ -24,6 +24,34 @@ import GridLayout, { Layout } from "react-grid-layout";
 import "../../../../node_modules/react-grid-layout/css/styles.css";
 import "../../../../node_modules/react-resizable/css/styles.css";
 import { ISpacesDataModel, SpacesDataModel } from "./dataModel";
+
+interface IEmbeddedComponentWrapperProps {
+    id: string;
+    getComponent(id:string): Promise<IComponent>;
+}
+
+interface IEmbeddedComponentWrapperState {
+    element: JSX.Element;
+}
+
+class EmbeddedComponentWrapper extends React.Component<IEmbeddedComponentWrapperProps, IEmbeddedComponentWrapperState>{
+    constructor(props){
+        super(props);
+        this.state = {
+            element: <span></span>,
+        };
+    }
+
+    async componentDidMount() {
+        const component = await this.props.getComponent(this.props.id);
+        const element = <EmbeddedComponent component={component} />;
+        this.setState({element});
+    }
+
+    public render() {
+        return this.state.element;
+    }
+}
 
 interface ISpaceGridViewProps {
     dataModel: ISpacesDataModel;
@@ -109,7 +137,7 @@ class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceGridView
                         </div>
                     }
                     <div style={embeddedComponentStyle}>
-                        <div>EmbeddedComponent</div>
+                        <EmbeddedComponentWrapper id={id} getComponent= {this.props.dataModel.getComponent}/>
                     </div>
                 </div>);
         });
@@ -121,12 +149,12 @@ class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceGridView
                     {this.state.editable &&
                         <React.Fragment>
                             <span>
-                                <button onClick={async () => this.props.dataModel.addComponent("clicker", 1, 1)}>Clicker</button>
-                                <button onClick={async () => this.props.dataModel.addComponent("button", 4, 4)}>Button</button>
-                                <button onClick={async () => this.props.dataModel.addComponent("number")}>Number</button>
-                                <button onClick={async () => this.props.dataModel.addComponent("textbox", 8, 8)}>TextBox</button>
+                                <button onClick={async () => this.props.dataModel.addComponent("clicker", 2, 2)}>Clicker</button>
+                                <button onClick={async () => this.props.dataModel.addComponent("button", 2, 2)}>Button</button>
+                                <button onClick={async () => this.props.dataModel.addComponent("number", 2, 2)}>Number</button>
+                                <button onClick={async () => this.props.dataModel.addComponent("textbox", 9, 6)}>TextBox</button>
                                 <button onClick={async () => this.props.dataModel.addComponent("facepile", 2, 4)}>FacePile</button>
-                                <button onClick={async () => this.props.dataModel.addComponent("codemirror", 16, 12)}>CodeMirror</button>
+                                <button onClick={async () => this.props.dataModel.addComponent("codemirror", 12, 8)}>CodeMirror</button>
                                 <button onClick={async () => this.props.dataModel.addComponent("prosemirror", 16, 12)}>ProseMirror</button>
                                 <button onClick={async () => this.props.dataModel.addComponent("todo", 6, 9)}>Todo</button>
                                 <button onClick={async () => this.props.dataModel.addComponent("birthday", 6, 6)}>Birthday</button>
@@ -136,23 +164,18 @@ class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceGridView
                     }
                 </div>
                 {
-                    this.state.componentMap.size === 0 &&
-                    <h1>Add Components Below</h1>
-                }
-                {
                     this.state.componentMap.size > 0 &&
                     <GridLayout
                         className="layout"
                         cols={36}
                         rowHeight={50}
                         width={1800}
-                        compactType={undefined}
+                        compactType={null}
                         isDroppable={this.state.editable}
                         isDraggable={this.state.editable}
                         isResizable={this.state.editable}
                         preventCollision={true}
                         isRearrangeable={false}
-                        verticalCompact= {false}
                         onResizeStop={this.onGridChangeEvent.bind(this)}
                         onDragStop={this.onGridChangeEvent.bind(this)}
                         layout={layouts}
@@ -221,6 +244,3 @@ export const SpacesInstantiationFactory = new PrimedComponentFactory(
     Spaces,
     [],
 );
-
-
-// <EmbeddedComponent component={this.props.dataModel.getComponent(componentId)} />
