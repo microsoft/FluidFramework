@@ -260,7 +260,6 @@ export class RunningSummarizer implements IDisposable {
     private summarizing = false;
     private summarizeCount: number = 0;
     private tryWhileSummarizing = false;
-    private unsafeNack = false;
     private readonly summarizeTimer: Timer;
     private readonly pendingAckTimer: PromiseTimer;
     private readonly heuristics: SummarizerHeuristics;
@@ -277,7 +276,7 @@ export class RunningSummarizer implements IDisposable {
     ) {
         this.heuristics = new SummarizerHeuristics(
             configuration,
-            (reason) => this.trySummarize(reason, false),
+            (reason) => this.trySummarize(reason),
             lastOpSeqNumber,
             firstAck);
 
@@ -339,7 +338,7 @@ export class RunningSummarizer implements IDisposable {
 
         // Check for ops requesting summary
         if (op.type === MessageType.Save) {
-            this.trySummarize(`;${op.clientId}: ${op.contents}`, false);
+            this.trySummarize(`;${op.clientId}: ${op.contents}`);
         } else {
             this.heuristics.run();
         }
@@ -363,7 +362,13 @@ export class RunningSummarizer implements IDisposable {
         }
     }
 
-    private trySummarize(reason: string, safe: boolean) {
+    private trySummarize(reason: string) {
+        this.trySummarizeCore(reason).catch((error) => {
+            this.logger.sendErrorEvent({ eventName: "UnexpectedSummarizeError" }, error);
+        });
+    }
+
+    private async trySummarizeCore(reason: string) {
         if (this.summarizing) {
             // We can't summarize if we are already
             this.tryWhileSummarizing = true;
@@ -373,31 +378,45 @@ export class RunningSummarizer implements IDisposable {
         // GenerateSummary could take some time
         // mark that we are currently summarizing to prevent concurrent summarizing
         this.summarizing = true;
-        this.summarizeTimer.start();
 
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.summarize(reason, safe).finally(() => {
+        try {
+            const result = await this.summarize(reason, false);
+            if (result === false) {
+                // On nack, try again in safe mode
+                await this.summarize(reason, true);
+            }
+        } finally {
             this.summarizing = false;
-            this.summarizeTimer.clear();
-            this.pendingAckTimer.clear();
-            if (this.unsafeNack) {
-                // try again with safe restriction
-                this.unsafeNack = false;
-                this.tryWhileSummarizing = false;
-                this.trySummarize(reason, true);
-            } else if (this.tryWhileSummarizing) {
+            if (this.tryWhileSummarizing) {
                 this.tryWhileSummarizing = false;
                 this.heuristics.run();
             }
-        });
+        }
     }
 
-    private async summarize(reason: string, safe: boolean) {
+    /**
+     * Generates summary and listens for broadcast and ack/nack.
+     * Returns true for ack, false for nack, and undefined for failure or timeout.
+     * @param reason - reason for summarizing
+     * @param safe - true to generate summary in safe mode
+     */
+    private async summarize(reason: string, safe: boolean): Promise<boolean | undefined> {
+        this.summarizeTimer.start();
+
+        try {
+            return this.summarizeCore(reason, safe);
+        } finally {
+            this.summarizeTimer.clear();
+            this.pendingAckTimer.clear();
+        }
+    }
+
+    private async summarizeCore(reason: string, safe: boolean): Promise<boolean | undefined> {
         // Wait to generate and send summary
         const summaryData = await this.generateSummaryWithLogging(reason, safe);
         if (!summaryData || !summaryData.submitted) {
             // Did not send the summary op
-            return;
+            return undefined;
         }
 
         this.heuristics.lastSent = {
@@ -411,7 +430,7 @@ export class RunningSummarizer implements IDisposable {
         // Wait for broadcast
         const summaryOp = await Promise.race([summary.waitBroadcast(), pendingTimeoutP]);
         if (!summaryOp) {
-            return;
+            return undefined;
         }
         this.heuristics.lastSent.summarySequenceNumber = summaryOp.sequenceNumber;
         this.logger.sendTelemetryEvent({
@@ -425,7 +444,7 @@ export class RunningSummarizer implements IDisposable {
         // Wait for ack/nack
         const ackNack = await Promise.race([summary.waitAckNack(), pendingTimeoutP]);
         if (!ackNack) {
-            return;
+            return undefined;
         }
         this.logger.sendTelemetryEvent({
             eventName: ackNack.type === MessageType.SummaryAck ? "SummaryAck" : "SummaryNack",
@@ -439,8 +458,9 @@ export class RunningSummarizer implements IDisposable {
         // Update for success
         if (ackNack.type === MessageType.SummaryAck) {
             this.heuristics.ackLastSent();
-        } else if (!safe) {
-            this.unsafeNack = true;
+            return true;
+        } else {
+            return false;
         }
     }
 
