@@ -1,9 +1,9 @@
-/* eslint-disable import/no-internal-modules */
-/* eslint-disable import/no-unassigned-import */
 /*!
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+/* eslint-disable import/no-internal-modules */
+/* eslint-disable import/no-unassigned-import */
 
 import {
     PrimedComponent,
@@ -75,7 +75,9 @@ class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceGridView
             const editableStyle: React.CSSProperties = { overflow: "hidden", padding: 2 };
             const embeddedComponentStyle: React.CSSProperties = {};
             if (this.state.editable) {
+                editableStyle.border = "1px solid black";
                 editableStyle.backgroundColor = "#d3d3d3";
+                editableStyle.boxSizing = "border-box";
                 embeddedComponentStyle.pointerEvents = "none";
                 embeddedComponentStyle.opacity = 0.5;
             }
@@ -140,10 +142,11 @@ class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceGridView
                     this.state.componentMap.size > 0 &&
                     <GridLayout
                         className="layout"
-                        cols={9}
-                        rowHeight={200}
+                        cols={36}
+                        rowHeight={50}
                         width={1800}
                         compactType={undefined}
+                        isDroppable={this.state.editable}
                         isDraggable={this.state.editable}
                         isResizable={this.state.editable}
                         preventCollision={true}
