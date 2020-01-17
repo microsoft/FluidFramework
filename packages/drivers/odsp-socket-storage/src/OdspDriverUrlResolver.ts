@@ -4,11 +4,11 @@
  */
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
+import { IFluidNewResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { getHashedDocumentId } from "./OdspUtils";
 
-function getSnapshotUrl(siteUrl: string, driveId: string, itemId: string) {
+export function getSnapshotUrl(siteUrl: string, driveId: string, itemId: string) {
   const siteOrigin = new URL(siteUrl).origin;
   return `${siteOrigin}/_api/v2.1/drives/${driveId}/items/${itemId}/opStream/snapshots`;
 }
@@ -41,7 +41,10 @@ function removeBeginningSlash(str: string): string {
 export class OdspDriverUrlResolver implements IUrlResolver {
   constructor() { }
 
-  public async resolve(request: IRequest): Promise<IResolvedUrl> {
+  public async resolve(request: IRequest): Promise<IOdspResolvedUrl | IFluidNewResolvedUrl> {
+    if (request.url === "NEW") {
+      return {type: "fluid-new"};
+    }
     const { siteUrl, driveId, itemId, path } = this.decodeOdspUrl(request.url);
     const hashedDocumentId = getHashedDocumentId(driveId, itemId);
 
@@ -55,18 +58,18 @@ export class OdspDriverUrlResolver implements IUrlResolver {
         documentUrl += searchParams;
       }
     }
-    const response: IOdspResolvedUrl = {
-      endpoints: { snapshotStorageUrl: getSnapshotUrl(siteUrl, driveId, itemId) },
-      tokens: {},
+    return {
       type: "fluid",
+      endpoints: {
+        snapshotStorageUrl: getSnapshotUrl(siteUrl, driveId, itemId),
+      },
+      tokens: {},
       url: documentUrl,
       hashedDocumentId,
       siteUrl,
       driveId,
       itemId,
     };
-
-    return response;
   }
 
   private decodeOdspUrl(url: string): { siteUrl: string; driveId: string; itemId: string; path: string } {
