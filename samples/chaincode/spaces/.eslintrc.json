@@ -4,6 +4,9 @@
     ],
     "rules": {
         "@typescript-eslint/unbound-method": "off",
-        "max-len": "off"
+        "max-len": "off",
+        "@typescript-eslint/strict-boolean-expressions": "off",
+        "eslint-disable import/no-unresolved": "off",
+        "eslint-disable import/no-unassigned-import": "off"
     }
 }
