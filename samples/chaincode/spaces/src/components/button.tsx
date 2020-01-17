@@ -15,6 +15,25 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { Manager } from "./manager";
 
+const buttonStyle: React.CSSProperties = {
+    WebkitUserSelect: "none", // Chrome-Safari
+    MozUserSelect: "none", // Firefox
+    msUserSelect: "none", //IE10+
+    textAlign:"center",
+    width: "100%",
+    height:"100%",
+    border:"1px solid black",
+    cursor: "pointer",
+};
+
+const textStyle: React.CSSProperties = {
+    WebkitUserSelect: "none", // Chrome-Safari
+    MozUserSelect: "none", // Firefox
+    msUserSelect: "none", //IE10+
+    display:"inline-block",
+    cursor: "pointer",
+};
+
 /**
  * Clicker example using view interfaces and stock component classes.
  */
@@ -33,8 +52,8 @@ export class Button extends PrimedComponent implements IComponentHTMLVisual {
      */
     public render(div: HTMLElement) {
         ReactDOM.render(
-            <div style={{textAlign:"center", width: "100%", height:"100%", border:"1px solid black" }} onClick={() => this.emit("click")}>
-                <h1 style={{display:"inline-block"}}>+</h1>
+            <div style={buttonStyle} onClick={() => this.emit("click")}>
+                <h1 style={textStyle}>+</h1>
             </div>,
             div);
     }
