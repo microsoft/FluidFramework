@@ -1393,11 +1393,12 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     private async refreshLatestSummaryAck(handle: string, referenceSequenceNumber: number) {
         if (referenceSequenceNumber < this.latestSummaryAck.referenceSequenceNumber) {
             return;
-        } else if (referenceSequenceNumber === this.latestSummaryAck.referenceSequenceNumber) {
-            if (!this.latestSummaryAck.handle) {
-                // When first loading we may not have the ack handle (version)
-                this.latestSummaryAck.handle = handle;
-            }
+        } else if (
+            referenceSequenceNumber === this.latestSummaryAck.referenceSequenceNumber
+            && !this.latestSummaryAck.handle
+        ) {
+            // When first loading we may not have the ack handle (version)
+            this.latestSummaryAck.handle = handle;
             return;
         }
 
