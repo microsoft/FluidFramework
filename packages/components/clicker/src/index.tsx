@@ -5,8 +5,8 @@
 
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
-import { Counter, CounterValueType, ISharedDirectory } from "@microsoft/fluid-map";
-import { ITask, IHostRuntime } from "@microsoft/fluid-runtime-definitions";
+import { Counter, CounterValueType } from "@microsoft/fluid-map";
+import { ITask } from "@microsoft/fluid-runtime-definitions";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { ClickerAgent } from "./agent";
@@ -14,9 +14,6 @@ import { ClickerAgent } from "./agent";
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
 export const ClickerName = pkg.name as string;
-
-let batchCount = 0;
-let opsCount = 0;
 
 /**
  * Basic Clicker example using new interfaces and stock component classes.
@@ -49,7 +46,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
     // Get our counter object that we set in initialize and pass it in to the view.
         const counter = this.root.get("clicks");
         ReactDOM.render(
-            <CounterReactView counter={counter} sharedDirectory={this.root} runtime={this.context.hostRuntime}/>,
+            <CounterReactView counter={counter} />,
             div,
         );
         return div;
@@ -76,8 +73,6 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
 
 interface CounterProps {
     counter: Counter;
-    sharedDirectory: ISharedDirectory;
-    runtime: IHostRuntime;
 }
 
 interface CounterState {
@@ -105,31 +100,7 @@ class CounterReactView extends React.Component<CounterProps, CounterState> {
                 <span className="clicker-value-class" id={`clicker-value-${Date.now().toString()}`}>
                     {this.state.value}
                 </span>
-                <br />
-                <button onClick={
-                    () => {
-                        this.props.runtime.orderSequentially(() => {
-                            batchCount++;
-                            for (let i = 0; i < 100; i++) {
-                                this.props.sharedDirectory.set(`batch-${batchCount}`, i);
-                            }
-                        });
-                    }
-                }>
-                    + (Batches)
-                </button>
-                <br />
-                <button onClick={
-                    () => {
-                        this.props.counter.increment(1);
-                        opsCount++;
-                        for (let i = 0; i < 10; i++) {
-                            this.props.sharedDirectory.set(`ops-${opsCount}`, i);
-                        }
-                    }
-                }>
-                    + (Ops)
-                </button>
+                <button onClick={() => { this.props.counter.increment(1); }}>+</button>
             </div>
         );
     }
