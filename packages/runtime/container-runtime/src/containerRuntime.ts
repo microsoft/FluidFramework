@@ -743,14 +743,14 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             }
         }
 
-        for (const [key, componentContext] of this.contexts) {
+        for (const [component, componentContext] of this.contexts) {
             try {
                 componentContext.changeConnectionState(value, clientId);
             } catch (error) {
                 this.logger.sendErrorEvent({
                     eventName: "ChangeConnectionStateError",
                     clientId,
-                    component: key,
+                    component,
                 }, error);
             }
         }
