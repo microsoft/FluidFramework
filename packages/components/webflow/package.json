@@ -30,7 +30,6 @@
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml --exit",
     "test:mocha": "mocha -r ts-node/register -r source-map-support/register -r ignore-styles --recursive test/**/*.spec.ts --exit -r make-promises-safe",
     "tsc": "tsc",
-    "tslint": "npm run eslint",
     "webpack": "webpack --env.production",
     "webpack:dev": "webpack --env.development"
   },

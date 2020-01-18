@@ -24,8 +24,7 @@
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
-    "tsc:watch": "tsc --watch",
-    "tslint": "npm run eslint"
+    "tsc:watch": "tsc --watch"
   },
   "dependencies": {
     "@microsoft/fluid-common-definitions": "^0.13.0",

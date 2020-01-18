@@ -19,8 +19,7 @@
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
-    "tsc": "tsc",
-    "tslint": "npm run eslint"
+    "tsc": "tsc"
   },
   "dependencies": {
     "@microsoft/fluid-container-runtime": "^0.13.0",

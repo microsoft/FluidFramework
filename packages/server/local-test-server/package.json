@@ -25,7 +25,6 @@
     "test": "echo Tests reside in the `local-test-server-test` package.",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "tsc": "tsc",
-    "tslint": "npm run eslint",
     "webpack": "webpack --config webpack.config.js"
   },
   "nyc": {
