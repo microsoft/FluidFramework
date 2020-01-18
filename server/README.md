@@ -36,17 +36,17 @@ We use Kubernetes (Mostly AKS and a self managed deployment in WUS2), we deploy 
 Historian, Bolshoi, and Gateway are models for how to do deployment
 1. Build Runtime Container
     * Builds and publishes docker container with the production code
-    * e.g. https://offnet.visualstudio.com/officenet/_apps/hub/ms.vss-ciworkflow.build-ci-hub?_a=edit-build-definition&id=99
+    * e.g. <https://offnet.visualstudio.com/officenet/_apps/hub/ms.vss-ciworkflow.build-ci-hub?_a=edit-build-definition&id=99>
 2. Build a chart container
     * Bundles **"Helm Charts"** via ```'helm package .' ```
     * Publishes this bundle for consumption
-    * e.g. https://offnet.visualstudio.com/officenet/_apps/hub/ms.vss-ciworkflow.build-ci-hub?_a=edit-build-definition&id=100
+    * e.g. <https://offnet.visualstudio.com/officenet/_apps/hub/ms.vss-ciworkflow.build-ci-hub?_a=edit-build-definition&id=100>
     * *Practical Concerns*
       * Keep track of where you publish this bundle to, it's created as artifact and is consumed by step 3.
 3. Deploy the package
     * Override the values.yaml file (one of the **"Helm Charts"** files)
     * Deploys via ```'helm upgrade ...'```
-    * e.g. https://offnet.visualstudio.com/officenet/_releaseDefinition?definitionId=22&_a=definition-tasks&environmentId=64
+    * e.g. <https://offnet.visualstudio.com/officenet/_releaseDefinition?definitionId=22&_a=definition-tasks&environmentId=64>
     * *Practical Concerns*
       * The container is picking up the artifact from step 2 via volume mount, so volumes and working dir both need to be correct
 
