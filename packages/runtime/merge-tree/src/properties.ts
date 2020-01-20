@@ -8,7 +8,6 @@
 import * as ops from "./ops";
 
 // tslint:disable:interface-name
-// tslint:disable:switch-final-break
 
 export interface MapLike<T> {
     [index: string]: T;
