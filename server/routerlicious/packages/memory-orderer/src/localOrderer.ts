@@ -306,7 +306,6 @@ export class LocalOrderer implements IOrderer {
         this.deltasKafka = new LocalKafka();
     }
 
-    // tslint:disable-next-line: max-func-body-length
     private setupLambdas() {
         this.scriptoriumLambda = new LocalLambdaController(
             this.deltasKafka,

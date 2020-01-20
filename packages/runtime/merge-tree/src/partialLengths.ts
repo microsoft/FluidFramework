@@ -84,7 +84,6 @@ export class PartialSequenceLengths {
      * has its partials up to date
      * @param collabWindow - segment window of the segment tree containing textSegmentBlock
      */
-    // tslint:disable-next-line: max-func-body-length
     private static combineBranch(
         mergeTree: MergeTree,
         block: IMergeBlock,

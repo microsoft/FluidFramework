@@ -49,7 +49,6 @@ import { Layout } from "../src/view/layout";
 //     assert.strictEqual(i, children.length);
 // }
 
-// tslint:disable:max-func-body-length
 describe("Markdown", () => {
     let host: TestHost;
     let doc: FlowDocument;

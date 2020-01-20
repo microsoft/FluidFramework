@@ -68,7 +68,6 @@ function processTests(tests: { markdown: string, html: string, section: string }
 //     assert.strictEqual(i, children.length);
 // }
 
-// tslint:disable:max-func-body-length
 describe("Markdown", () => {
     let host: TestHost;
     let doc: FlowDocument;

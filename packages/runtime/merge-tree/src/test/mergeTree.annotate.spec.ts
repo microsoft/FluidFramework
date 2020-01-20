@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable: no-object-literal-type-assertion max-func-body-length
+// tslint:disable: no-object-literal-type-assertion
 import * as assert from "assert";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { TextSegment } from "../";

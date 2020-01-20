@@ -2069,7 +2069,6 @@ export class MergeTree {
         }
     }
 
-    // tslint:disable-next-line: max-func-body-length
     public insertAtReferencePosition(referencePosition: ReferencePosition, insertSegment: ISegment, opArgs: IMergeTreeDeltaOpArgs): void {
 
         if (insertSegment.cachedLength === 0) {
@@ -2410,7 +2409,6 @@ export class MergeTree {
         }
     }
 
-    // tslint:disable-next-line: max-func-body-length
     private insertingWalk(
         block: IMergeBlock, pos: number, refSeq: number, clientId: number, seq: number,
         context: InsertContext) {
@@ -2674,7 +2672,6 @@ export class MergeTree {
         }
     }
 
-    // tslint:disable-next-line: max-func-body-length
     markRangeRemoved(start: number, end: number, refSeq: number, clientId: number, seq: number, overwrite = false, opArgs: IMergeTreeDeltaOpArgs) {
         this.ensureIntervalBoundary(start, refSeq, clientId);
         this.ensureIntervalBoundary(end, refSeq, clientId);
@@ -2742,15 +2739,15 @@ export class MergeTree {
                 const afterSegOff = this.getContainingSegment(start, refSeq, clientId);
                 refSegment = afterSegOff.segment;
                 assert(refSegment);
-                if(!refSegment.localRefs){
+                if (!refSegment.localRefs) {
                     refSegment.localRefs = new LocalReferenceCollection(refSegment);
                 }
                 refSegment.localRefs.addBeforeTombstones(...savedLocalRefs);
-            } else if(length > 0) {
+            } else if (length > 0) {
                 const beforeSegOff = this.getContainingSegment(length - 1, refSeq, clientId);
                 refSegment = beforeSegOff.segment;
                 assert(refSegment);
-                if(!refSegment.localRefs){
+                if (!refSegment.localRefs) {
                     refSegment.localRefs = new LocalReferenceCollection(refSegment);
                 }
                 refSegment.localRefs.addAfterTombstones(...savedLocalRefs);
@@ -2864,7 +2861,7 @@ export class MergeTree {
     }
 
     removeLocalReference(segment: ISegment, lref: LocalReference) {
-        if(segment.localRefs){
+        if (segment.localRefs) {
             const removedRef = segment.localRefs.removeLocalRef(lref);
             if (removedRef) {
                 this.blockUpdatePathLengths(segment.parent, TreeMaintenanceSequenceNumber,
@@ -2875,7 +2872,7 @@ export class MergeTree {
 
     addLocalReference(lref: LocalReference) {
         const segment = lref.segment;
-        if(!segment.localRefs){
+        if (!segment.localRefs) {
             segment.localRefs = new LocalReferenceCollection(segment);
         }
         segment.localRefs.addLocalRef(lref);
