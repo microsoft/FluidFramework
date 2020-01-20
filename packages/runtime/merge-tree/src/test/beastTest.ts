@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable eqeqeq, max-len, no-bitwise, no-shadow */
+/* eslint-disable @typescript-eslint/consistent-type-assertions, eqeqeq, max-len, no-bitwise, no-shadow */
 
 import * as assert from "assert";
 import * as fs from "fs";

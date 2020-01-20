@@ -64,7 +64,7 @@ export class SnapshotLegacy {
         approxSequenceLength: number,
         startIndex = 0): ops.MergeTreeChunk {
 
-        const segs = <ops.IJSONSegment[]>[];
+        const segs: ops.IJSONSegment[] = [];
         let sequenceLength = 0;
         let segCount = 0;
         while ((sequenceLength < approxSequenceLength) && ((startIndex + segCount) < allSegments.length)) {
@@ -158,7 +158,7 @@ export class SnapshotLegacy {
             seq: this.mergeTree.collabWindow.minSeq,
         };
 
-        const segs = <MergeTree.ISegment[]>[];
+        const segs: MergeTree.ISegment[] = [];
         let prev: MergeTree.ISegment | undefined;
         const extractSegment =
             // eslint-disable-next-line max-len

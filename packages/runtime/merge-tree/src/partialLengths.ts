@@ -376,7 +376,7 @@ export class PartialSequenceLengths {
             }
         }
         if (seqPartialLen === undefined) {
-            // tslint:disable-next-line: no-object-literal-type-assertion
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             seqPartialLen = {
                 clientId,
                 seglen: seqSeglen,

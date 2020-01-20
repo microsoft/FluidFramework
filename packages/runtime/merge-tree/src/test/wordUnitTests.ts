@@ -26,8 +26,8 @@ export function propertyCopy() {
     const propCount = 2000;
     const iterCount = 1000;
     const map = new Map<string, number>();
-    const a = <string[]>[];
-    const v = <number[]>[];
+    const a: string[] = [];
+    const v: number[] = [];
     for (let i = 0; i < propCount; i++) {
         a[i] = `prop${i}`;
         v[i] = i;
@@ -113,7 +113,7 @@ export function propertyCopy() {
 function makeBookmarks(client: TestClient, bookmarkCount: number) {
     const mt = random.engines.mt19937();
     mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
-    const bookmarks = <LocalReference[]>[];
+    const bookmarks: LocalReference[] = [];
     const len = client.getLength();
     for (let i = 0; i < bookmarkCount; i++) {
         const pos = random.integer(0, len - 1)(mt);

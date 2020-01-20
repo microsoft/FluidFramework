@@ -78,7 +78,8 @@ export class TestServer extends TestClient {
         msg.sequenceNumber = -1;
     }
     copyMsg(msg: ISequencedDocumentMessage) {
-        return <ISequencedDocumentMessage>{
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        return {
             clientId: msg.clientId,
             clientSequenceNumber: msg.clientSequenceNumber,
             contents: msg.contents,
@@ -86,7 +87,7 @@ export class TestServer extends TestClient {
             referenceSequenceNumber: msg.referenceSequenceNumber,
             sequenceNumber: msg.sequenceNumber,
             type: msg.type,
-        };
+        } as ISequencedDocumentMessage;
     }
 
     private minSeq = 0;

@@ -664,10 +664,10 @@ export class Client {
     }
     cloneFromSegments() {
         const clone = new Client(this.specToSegment, this.logger, this.mergeTree.options);
-        const segments = <ISegment[]>[];
+        const segments: ISegment[] = [];
         const newRoot = this.mergeTree.blockClone(this.mergeTree.root, segments);
         clone.mergeTree.root = newRoot;
-        let undoSeg = <IUndoInfo[]>[];
+        let undoSeg: IUndoInfo[] = [];
         for (const segment of segments) {
             if (segment.seq !== 0) {
                 undoSeg.push({

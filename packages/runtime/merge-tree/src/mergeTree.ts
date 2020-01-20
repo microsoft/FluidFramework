@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable max-len, no-bitwise, no-param-reassign, no-shadow */
+/* eslint-disable @typescript-eslint/consistent-type-assertions, max-len, no-bitwise, no-param-reassign, no-shadow */
 
 import * as assert from "assert";
 import * as Base from "./base";
@@ -32,9 +32,6 @@ import { SegmentPropertiesManager } from "./segmentPropertiesManager";
 
 // tslint:disable:interface-name
 // tslint:disable:no-suspicious-comment
-// tslint:disable:no-angle-bracket-type-assertion
-// tslint:disable:member-access
-// tslint:disable:no-object-literal-type-assertion
 
 export interface ReferencePosition {
     properties: Properties.PropertySet;
