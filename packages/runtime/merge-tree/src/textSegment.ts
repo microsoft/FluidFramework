@@ -245,7 +245,7 @@ export class MergeTreeTextHelper {
                 accumText.textSegment.text += segment.text;
             } else {
                 if (start < 0) {
-                    // tslint:disable-next-line: no-parameter-reassignment
+                    // eslint-disable-next-line no-param-reassign
                     start = 0;
                 }
                 if (end >= segment.text.length) {

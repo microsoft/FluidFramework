@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable no-param-reassign */
+
 import * as assert from "assert";
 import * as Base from "./base";
 import * as Collections from "./collections";
@@ -38,7 +40,6 @@ import { SegmentPropertiesManager } from "./segmentPropertiesManager";
 // tslint:disable:no-suspicious-comment
 // tslint:disable:no-angle-bracket-type-assertion
 // tslint:disable:member-access
-// tslint:disable:no-parameter-reassignment
 // tslint:disable:no-shadowed-variable
 // tslint:disable:whitespace
 // tslint:disable:align

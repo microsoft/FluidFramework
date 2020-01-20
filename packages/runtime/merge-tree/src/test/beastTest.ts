@@ -1635,8 +1635,10 @@ export class DocumentTree {
                 const pg = DocumentTree.generateParagraph();
                 items.push(pg);
             } else {
+                // eslint-disable-next-line no-param-reassign
                 rowProbability /= 2;
                 if (rowProbability < 0.08) {
+                    // eslint-disable-next-line no-param-reassign
                     rowProbability = 0;
                 }
                 const row = DocumentTree.generateRow(rowProbability);

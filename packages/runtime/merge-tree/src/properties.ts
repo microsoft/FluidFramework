@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable no-param-reassign */
+
 import * as ops from "./ops";
 
 // tslint:disable:interface-name
 // tslint:disable:no-for-in
 // tslint:disable:forin
 // tslint:disable:switch-default
-// tslint:disable:no-parameter-reassignment
 // tslint:disable:switch-final-break
 
 export interface MapLike<T> {

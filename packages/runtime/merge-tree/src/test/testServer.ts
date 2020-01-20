@@ -131,6 +131,7 @@ export class TestServer extends TestClient {
             else {
                 break;
             }
+            // eslint-disable-next-line no-param-reassign
             msgCount--;
         }
         return false;
