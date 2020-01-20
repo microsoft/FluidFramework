@@ -8,8 +8,6 @@
 import * as ops from "./ops";
 
 // tslint:disable:interface-name
-// tslint:disable:no-for-in
-// tslint:disable:forin
 // tslint:disable:switch-default
 // tslint:disable:switch-final-break
 

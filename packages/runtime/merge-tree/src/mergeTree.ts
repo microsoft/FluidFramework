@@ -34,8 +34,6 @@ import { SegmentPropertiesManager } from "./segmentPropertiesManager";
 // tslint:disable:member-ordering
 // tslint:disable:max-line-length
 // tslint:disable:callable-types
-// tslint:disable:no-for-in
-// tslint:disable:forin
 // tslint:disable:no-suspicious-comment
 // tslint:disable:no-angle-bracket-type-assertion
 // tslint:disable:member-access
