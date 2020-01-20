@@ -31,8 +31,6 @@ import { SegmentGroupCollection } from "./segmentGroupCollection";
 import { SegmentPropertiesManager } from "./segmentPropertiesManager";
 
 // tslint:disable:interface-name
-// tslint:disable:member-ordering
-// tslint:disable:callable-types
 // tslint:disable:no-suspicious-comment
 // tslint:disable:no-angle-bracket-type-assertion
 // tslint:disable:member-access
