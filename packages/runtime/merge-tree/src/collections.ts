@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable eqeqeq, object-shorthand, no-param-reassign */
+/* eslint-disable eqeqeq, object-shorthand, no-bitwise, no-param-reassign, no-shadow */
 
 import * as Base from "./base";
 import * as MergeTree from "./mergeTree";

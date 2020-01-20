@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable no-bitwise, no-shadow */
+
 import * as path from "path";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import * as random from "random-js";

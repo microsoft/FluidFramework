@@ -11,10 +11,8 @@ module.exports = {
         "@typescript-eslint/consistent-type-assertions": "off",
         "@typescript-eslint/no-use-before-define": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",
-        "no-bitwise": "off",
         "no-case-declarations": "off",
         "no-null/no-null": "off",
-        "no-shadow": "off",
         "max-len": "off",
         "prefer-arrow/prefer-arrow-functions": "off"
     }

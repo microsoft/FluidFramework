@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable no-param-reassign */
+/* eslint-disable no-bitwise, no-param-reassign, no-shadow */
 
 import * as assert from "assert";
 import * as Base from "./base";
@@ -34,13 +34,11 @@ import { SegmentPropertiesManager } from "./segmentPropertiesManager";
 // tslint:disable:member-ordering
 // tslint:disable:max-line-length
 // tslint:disable:callable-types
-// tslint:disable:no-bitwise
 // tslint:disable:no-for-in
 // tslint:disable:forin
 // tslint:disable:no-suspicious-comment
 // tslint:disable:no-angle-bracket-type-assertion
 // tslint:disable:member-access
-// tslint:disable:no-shadowed-variable
 // tslint:disable:whitespace
 // tslint:disable:align
 // tslint:disable:no-string-literal
