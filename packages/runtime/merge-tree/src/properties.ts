@@ -102,6 +102,7 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T>, combiningOp?:
         for (const key in extension) {
             const v = extension[key];
             if (v === null) {
+                // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
                 delete base[key];
             } else {
                 if (combiningOp && (combiningOp.name !== "rewrite")) {
@@ -162,7 +163,7 @@ export function createMap<T>(): MapLike<T> {
     // constantly changing shape.
     // eslint-disable-next-line dot-notation
     map["__"] = undefined;
-    // eslint-disable-next-line dot-notation
+    // eslint-disable-next-line dot-notation, @typescript-eslint/no-dynamic-delete
     delete map["__"];
 
     return map;
