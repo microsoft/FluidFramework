@@ -39,7 +39,6 @@ import { SegmentPropertiesManager } from "./segmentPropertiesManager";
 // tslint:disable:member-access
 // tslint:disable:whitespace
 // tslint:disable:align
-// tslint:disable:no-string-literal
 // tslint:disable:no-object-literal-type-assertion
 
 export interface ReferencePosition {
