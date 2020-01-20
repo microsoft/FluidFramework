@@ -96,7 +96,6 @@ describe("Markdown", () => {
         let renderResolver: () => void;
         layout.invalidatedCallback = () => {
             if (!renderResolver) {
-                // tslint:disable-next-line:promise-must-complete
                 rendered = new Promise((accept) => {
                     console.log("Render pending");
                     renderResolver = accept;

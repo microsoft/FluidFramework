@@ -35,7 +35,6 @@ describe("RestWrapper", () => {
         };
 
         axiosErrorMock = {
-            // tslint:disable-next-line:promise-must-complete
             request: async (options?) => new Promise<AxiosResponse>(
                 (resolve, reject) => {
                     requestOptions = options;
