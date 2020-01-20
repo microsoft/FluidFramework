@@ -112,9 +112,7 @@ describe("RestWrapper", () => {
             // assert
             // tslint:disable-next-line:max-line-length
             assert.equal(outputUrl, requestOptions.url.substring(0, outputUrl.length), "requestUrl should be the same");
-            // tslint:disable-next-line:no-unsafe-any
             assert.equal(defaultHeaders.h1, requestOptions.headers.h1 as string, "Header1 value should be correct");
-            // tslint:disable-next-line:no-unsafe-any
             assert.equal(defaultHeaders.h2, requestOptions.headers.h2 as string, "Header2 value should be correct");
         });
 
@@ -139,11 +137,8 @@ describe("RestWrapper", () => {
 
             // assert
             assert.equal(outputUrl, requestOptions.url.substring(0, outputUrl.length), "requestUrl should be the same");
-            // tslint:disable-next-line:no-unsafe-any
             assert.equal(requestHeaders.h1, requestOptions.headers.h1 as string, "Header1 value should be updated");
-            // tslint:disable-next-line:no-unsafe-any
             assert.equal(defaultHeaders.h2, requestOptions.headers.h2 as string, "Header2 value should be correct");
-            // tslint:disable-next-line:no-unsafe-any
             assert.equal(requestHeaders.h3, requestOptions.headers.h3 as string, "Header2 value should be added");
         });
     });
@@ -194,9 +189,7 @@ describe("RestWrapper", () => {
 
             // assert
             assert.equal(`${requestUrl}?q1=valueq1&q2=valueq2`, requestOptions.url, "requestUrl should be the same");
-            // tslint:disable-next-line:no-unsafe-any
             assert.equal(defaultHeaders.h1, requestOptions.headers.h1 as string, "Header1 value should be correct");
-            // tslint:disable-next-line:no-unsafe-any
             assert.equal(defaultHeaders.h2, requestOptions.headers.h2 as string, "Header2 value should be correct");
         });
 
@@ -224,11 +217,8 @@ describe("RestWrapper", () => {
                 requestOptions.url,
                 "requestUrl should be the same",
             );
-            // tslint:disable-next-line:no-unsafe-any
             assert.equal(requestHeaders.h1, requestOptions.headers.h1 as string, "Header1 value should be updated");
-            // tslint:disable-next-line:no-unsafe-any
             assert.equal(defaultHeaders.h2, requestOptions.headers.h2 as string, "Header2 value should be correct");
-            // tslint:disable-next-line:no-unsafe-any
             assert.equal(requestHeaders.h3, requestOptions.headers.h3 as string, "Header2 value should be added");
         });
     });
@@ -279,9 +269,7 @@ describe("RestWrapper", () => {
 
             // assert
             assert.equal(`${requestUrl}?q1=valueq1&q2=valueq2`, requestOptions.url, "requestUrl should be the same");
-            // tslint:disable-next-line:no-unsafe-any
             assert.equal(defaultHeaders.h1, requestOptions.headers.h1 as string, "Header1 value should be correct");
-            // tslint:disable-next-line:no-unsafe-any
             assert.equal(defaultHeaders.h2, requestOptions.headers.h2 as string, "Header2 value should be correct");
         });
 
@@ -309,11 +297,8 @@ describe("RestWrapper", () => {
                 requestOptions.url,
                 "requestUrl should be the same",
             );
-            // tslint:disable-next-line:no-unsafe-any
             assert.equal(requestHeaders.h1, requestOptions.headers.h1 as string, "Header1 value should be updated");
-            // tslint:disable-next-line:no-unsafe-any
             assert.equal(defaultHeaders.h2, requestOptions.headers.h2 as string, "Header2 value should be correct");
-            // tslint:disable-next-line:no-unsafe-any
             assert.equal(requestHeaders.h3, requestOptions.headers.h3 as string, "Header2 value should be added");
         });
     });
@@ -364,9 +349,7 @@ describe("RestWrapper", () => {
 
             // assert
             assert.equal(`${requestUrl}?q1=valueq1&q2=valueq2`, requestOptions.url, "requestUrl should be the same");
-            // tslint:disable-next-line:no-unsafe-any
             assert.equal(defaultHeaders.h1, requestOptions.headers.h1 as string, "Header1 value should be correct");
-            // tslint:disable-next-line:no-unsafe-any
             assert.equal(defaultHeaders.h2, requestOptions.headers.h2 as string, "Header2 value should be correct");
         });
 
@@ -394,11 +377,8 @@ describe("RestWrapper", () => {
                 requestOptions.url,
                 "requestUrl should be the same",
             );
-            // tslint:disable-next-line:no-unsafe-any
             assert.equal(requestHeaders.h1, requestOptions.headers.h1 as string, "Header1 value should be updated");
-            // tslint:disable-next-line:no-unsafe-any
             assert.equal(defaultHeaders.h2, requestOptions.headers.h2 as string, "Header2 value should be correct");
-            // tslint:disable-next-line:no-unsafe-any
             assert.equal(requestHeaders.h3, requestOptions.headers.h3 as string, "Header2 value should be added");
         });
     });

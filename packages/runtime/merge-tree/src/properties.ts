@@ -11,7 +11,6 @@ import * as ops from "./ops";
 // tslint:disable:switch-default
 // tslint:disable:no-parameter-reassignment
 // tslint:disable:switch-final-break
-// tslint:disable:no-unsafe-any
 
 export interface MapLike<T> {
     [index: string]: T;
@@ -165,6 +164,5 @@ export function createMap<T>(): MapLike<T> {
     // eslint-disable-next-line dot-notation
     delete map["__"];
 
-    // tslint:disable-next-line: no-unsafe-any
     return map;
 }

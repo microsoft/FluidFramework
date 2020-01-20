@@ -31,7 +31,6 @@ export class TextSegment extends BaseSegment {
     public static fromJSONObject(spec: any) {
         if (typeof spec === "string") {
             return new TextSegment(spec);
-        // tslint:disable-next-line: no-unsafe-any
         } else if (spec && typeof spec === "object" && "text" in spec) {
             const textSpec = spec as IJSONTextSegment;
             return TextSegment.make(textSpec.text, textSpec.props as Properties.PropertySet);

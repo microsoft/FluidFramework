@@ -51,7 +51,6 @@ export class TestClientLogger {
                 try {
                     preAction(c);
                 } catch (e) {
-                    // tslint:disable-next-line: no-unsafe-any
                     e.message += this.toString();
                     throw e;
                 }

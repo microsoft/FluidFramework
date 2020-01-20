@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable:import-name
 import { isBrowser } from "../isbrowser";
 import { Template } from "../template";
 import { View } from "../view";

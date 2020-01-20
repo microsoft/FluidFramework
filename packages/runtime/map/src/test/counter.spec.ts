@@ -38,7 +38,6 @@ describe("Routerlicious", () => {
                         get("defaultCounter");
                     assert.ok(counterWithValue);
 
-                    /* tslint:disable:no-unsafe-any */
                     assert.equal(counterWithValue.value, 50);
                 });
             });

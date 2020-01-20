@@ -110,7 +110,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     ) {
         super(id, document, attributes);
 
-        /* tslint:disable:no-unsafe-any */
         this.client = new MergeTree.Client(
             segmentFromSpec,
             ChildLogger.create(this.logger, "SharedSegmentSequence.MergeTreeClient"),

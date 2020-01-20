@@ -40,7 +40,6 @@ import { SegmentPropertiesManager } from "./segmentPropertiesManager";
 // tslint:disable:member-access
 // tslint:disable:no-parameter-reassignment
 // tslint:disable:no-shadowed-variable
-// tslint:disable:no-unsafe-any
 // tslint:disable:whitespace
 // tslint:disable:align
 // tslint:disable:no-string-literal
