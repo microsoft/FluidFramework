@@ -75,6 +75,7 @@ export class TestClient extends Client {
     public mergeTree: MergeTree;
 
     public readonly checkQ: Collections.List<string> = Collections.ListMakeHead<string>();
+    // eslint-disable-next-line max-len
     protected readonly q: Collections.List<ISequencedDocumentMessage> = Collections.ListMakeHead<ISequencedDocumentMessage>();
 
     private readonly textHelper: MergeTreeTextHelper;

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable eqeqeq, no-bitwise, no-shadow */
+/* eslint-disable eqeqeq, max-len, no-bitwise, no-shadow */
 
 import * as assert from "assert";
 import * as fs from "fs";

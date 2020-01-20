@@ -950,6 +950,7 @@ export class IntegerRangeTree implements IRBAugmentation<Base.IIntegerRange, Aug
                     red = "R ";
                 }
                 buf += MergeTree.internedSpaces(indentAmt);
+                // eslint-disable-next-line max-len
                 buf += `${red}key: ${integerRangeToString(node.key)} minmax: ${integerRangeToString(node.data.minmax)}\n`;
                 indentAmt += 2;
                 return true;

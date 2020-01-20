@@ -34,7 +34,7 @@ export class TestClientLogger {
         const client = msg ? msg.clientId : "";
         const op = msg ? msg.contents as IMergeTreeOp : undefined;
         const opType = op ? op.type.toString() : "";
-        // eslint-disable-next-line dot-notation
+        // eslint-disable-next-line dot-notation, max-len
         const opPos = op && op["pos1"] !== undefined ? `@${op["pos1"]}${op["pos2"] !== undefined ? `,${op["pos2"]}` : ""}` : "";
         const clientOp = ` ${client}${opType}${opPos}`;
         const ackedLine: string[] = [
@@ -81,6 +81,7 @@ export class TestClientLogger {
                     assert.equal(
                         c.getText(),
                         baseText,
+                        // eslint-disable-next-line max-len
                         `${this.toString()}\nClient ${c.longClientId} does not match client ${this.clients[0].longClientId}`);
                 }
             });

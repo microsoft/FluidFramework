@@ -227,7 +227,11 @@ export class Client {
             segment,
             opArgs);
 
-        this.completeAndLogOp(opArgs, this.getClientSequenceArgs(opArgs), { start: op.pos1, end: undefined }, clockStart);
+        this.completeAndLogOp(
+            opArgs,
+            this.getClientSequenceArgs(opArgs),
+            { start: op.pos1, end: undefined },
+            clockStart);
 
         return op;
     }
@@ -996,6 +1000,7 @@ export class Client {
     getPropertiesAtPosition(pos: number) {
         const segWindow = this.getCollabWindow();
         if (this.verboseOps) {
+            // eslint-disable-next-line max-len
             console.log(`getPropertiesAtPosition cli ${this.getLongClientId(segWindow.clientId)} ref seq ${segWindow.currentSeq}`);
         }
 
@@ -1010,6 +1015,7 @@ export class Client {
     getRangeExtentsOfPosition(pos: number) {
         const segWindow = this.getCollabWindow();
         if (this.verboseOps) {
+            // eslint-disable-next-line max-len
             console.log(`getRangeExtentsOfPosition cli ${this.getLongClientId(segWindow.clientId)} ref seq ${segWindow.currentSeq}`);
         }
 

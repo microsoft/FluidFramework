@@ -85,7 +85,8 @@ export function propertyCopy() {
     et = elapsedMicroseconds(clockStart);
     perIter = (et / iterCount).toFixed(3);
     perProp = (et / (iterCount * propCount)).toFixed(2);
-    console.log(`map to map foreach prop init time ${perIter} us per ${propCount} properties; ${perProp} us per property`);
+    console.log(
+        `map to map foreach prop init time ${perIter} us per ${propCount} properties; ${perProp} us per property`);
     const diffMap = new Map<string, number>();
     map.forEach((v, k) => {
         if (Math.random() < 0.5) {
@@ -160,6 +161,7 @@ function measureFetch(startFile: string, withBookmarks = false) {
         }
     }
     let et = elapsedMicroseconds(clockStart);
+    // eslint-disable-next-line max-len
     console.log(`fetch of ${count / reps} runs over ${client.getLength()} total chars took ${(et / count).toFixed(1)} microseconds per run`);
     // Bonus: measure clone
     clockStart = clock();

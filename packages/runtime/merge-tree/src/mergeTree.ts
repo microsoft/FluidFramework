@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable no-bitwise, no-param-reassign, no-shadow */
+/* eslint-disable max-len, no-bitwise, no-param-reassign, no-shadow */
 
 import * as assert from "assert";
 import * as Base from "./base";
@@ -32,12 +32,10 @@ import { SegmentPropertiesManager } from "./segmentPropertiesManager";
 
 // tslint:disable:interface-name
 // tslint:disable:member-ordering
-// tslint:disable:max-line-length
 // tslint:disable:callable-types
 // tslint:disable:no-suspicious-comment
 // tslint:disable:no-angle-bracket-type-assertion
 // tslint:disable:member-access
-// tslint:disable:whitespace
 // tslint:disable:align
 // tslint:disable:no-object-literal-type-assertion
 
