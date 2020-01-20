@@ -34,7 +34,6 @@ import { SegmentPropertiesManager } from "./segmentPropertiesManager";
 // tslint:disable:no-suspicious-comment
 // tslint:disable:no-angle-bracket-type-assertion
 // tslint:disable:member-access
-// tslint:disable:align
 // tslint:disable:no-object-literal-type-assertion
 
 export interface ReferencePosition {
