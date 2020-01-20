@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable:no-import-side-effect
 import * as assert from "assert";
+// eslint-disable-next-line import/no-unassigned-import
 import "mocha";
+// eslint-disable-next-line import/no-internal-modules
 import { bsearch } from "../src/bsearch";
 import { bsearch2Shim } from "./bsearch2Shim";
 
