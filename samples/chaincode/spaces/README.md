@@ -1,29 +1,7 @@
-# Badge component
+# Spaces
 
-**Badge** is a Fluid component that allows users to create an in-line badge within a document to represent the status
-of the overall document or a section of it.
+**Spaces** is a Fluid component that provides a grid layout for users to compose their own experiences by adding and re-arranging components. This is a beginner thought exercise at how document types could work.
 
-![Badge UI](./images/badge.png)
+## Template
 
-## Custom Status
-
-Badge includes four preset statuses: Drafting, Reviewing, Complete, and Archived.
-
-You can also set a custom status with any text or color.
-
-![Color picker and custom status UI](./images/color-picker.png)
-
-## History
-
-The history of the Badge is also shown on hover, so users can see how the status has evolved over time.
-
-![Status history UI](./images/history.png)
-
-## Data model
-
-Badge uses the following distributed data structures:
-
-- SharedDirectory - root
-- SharedMap - stores the status options for the Badge
-- SharedCell - represents the Badge's current state
-- SharedObjectSequence - stores the history of status changes
+Template allows you to save and re-use a layout. When you click the `Template` button it will save the current layout. If you want to create a new document with the same layout add the `?template` to the url when creating a new doc.
