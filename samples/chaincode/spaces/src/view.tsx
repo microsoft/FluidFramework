@@ -97,7 +97,9 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
 
             // Do some CSS stuff depending on if the user is editing or not
             const editableStyle: React.CSSProperties = { overflow: "hidden", padding: 2 };
-            const embeddedComponentStyle: React.CSSProperties = {};
+            const embeddedComponentStyle: React.CSSProperties = {
+                height: "100%",
+            };
             if (this.state.editable) {
                 editableStyle.border = "1px solid black";
                 editableStyle.backgroundColor = "#d3d3d3";
@@ -107,10 +109,8 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                 embeddedComponentStyle.opacity = 0.5;
             }
 
-            // using the complex key allows for the components to unmount/mount when changed from another client
-            const key = `${id}`; //_${layout.x}${layout.y}${layout.h}${layout.w}`;
-
-            // We use separate layout from array because of how updating works.
+            // We use separate layout from array because using GridLayout without passing in a new layout doesn't trigger a re-render.
+            const key = `${id}`;
             layout.i = key;
             layouts.push(layout);
 
@@ -121,14 +121,14 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                     {
                         this.state.editable &&
                         <div style={{ opacity: 1, backgroundColor: "none", position: "absolute", bottom: 0, left: 0 }}>
-                            <button onClick={() => this.props.dataModel.removeComponent(id)}>Delete</button>
+                            <button onClick={() => this.props.dataModel.removeComponent(id)}>❌</button>
                             <button onClick={() => {
                                 navigator.clipboard.writeText(componentUrl).then(() => {
                                     console.log("Async: Copying to clipboard was successful!");
                                 }, (err) => {
                                     console.error("Async: Could not copy text: ", err);
                                 });
-                            }}>📝</button>
+                            }}>📎</button>
                             <button onClick={() => window.open(componentUrl, "_blank")}>↗</button>
                         </div>
                     }
@@ -147,7 +147,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
         return (
             <div>
                 <div style={{ position: "absolute", top: 10, left: 10, zIndex: 1000 }}>
-                    <button onClick={() => { this.setState({ editable: !this.state.editable }); }}>Edit = {this.state.editable.toString()}</button>
+                    <button id="edit" onClick={() => { this.setState({ editable: !this.state.editable }); }}>Edit: {this.state.editable.toString()}</button>
                     {this.state.editable &&
                         <React.Fragment>
                             <span>
