@@ -43,7 +43,7 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
         client: IClient,
         mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
 
-        const deltaConnection = new FauxDocumentDeltaConnection();
+        const deltaConnection = new CreationDocumentDeltaConnection();
 
         deltaConnection.initialize(client, mode);
         return deltaConnection;
