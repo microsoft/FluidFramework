@@ -26,6 +26,9 @@ export interface ISpacesDataModel extends EventEmitter {
     setTemplate(): Promise<void>;
 }
 
+/**
+ * The Data Model is an abstraction layer so the React View doesn't need to interact directly with fluid.
+ */
 export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
     private readonly componentSubDirectory: IDirectory;
 

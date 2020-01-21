@@ -19,10 +19,16 @@ import { ISpacesDataModel, SpacesDataModel } from "./dataModel";
 import { SpacesGridView } from "./view";
 
 /**
- * Clicker example using view interfaces and stock component classes.
+ * Spaces is the Fluid
  */
 export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
     private dataModelInternal: ISpacesDataModel | undefined;
+
+    private static readonly factory = new PrimedComponentFactory(Spaces, []);
+
+    public static getFactory() {
+        return Spaces.factory;
+    }
 
     private get dataModel(): ISpacesDataModel {
         if (!this.dataModelInternal) {
@@ -58,11 +64,3 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
             div);
     }
 }
-
-/**
- * This is where you define all your Distributed Data Structures and Value Types
- */
-export const SpacesInstantiationFactory = new PrimedComponentFactory(
-    Spaces,
-    [],
-);

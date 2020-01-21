@@ -25,7 +25,8 @@ interface IEmbeddedComponentWrapperState {
 }
 
 /**
- * This wrapper handles the async-ness of loading a component.
+ * This wrapper handles the async-ness of loading a component. This ideally shouldn't be here but is here for now to unblock me
+ * not knowing how to use EmbeddedComponent
  */
 class EmbeddedComponentWrapper extends React.Component<IEmbeddedComponentWrapperProps, IEmbeddedComponentWrapperState>{
     constructor(props) {
@@ -55,6 +56,9 @@ interface ISpaceGridViewState {
     componentMap: Map<string, Layout>;
 }
 
+/**
+ * The view is a React Component that knows how to interact with a specific data model and doesn't have any dependencies on fluid.
+ */
 export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceGridViewState> {
     constructor(props) {
         super(props);

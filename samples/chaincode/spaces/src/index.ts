@@ -19,23 +19,19 @@ import {
 import {
     Manager,
 } from "./container-services";
-import { SpacesInstantiationFactory } from "./spaces";
+import { Spaces } from "./spaces";
 
 const chaincodeName = "spaces";
 
 /**
  * This does setup for the Container. The SimpleModuleInstantiationFactory also enables dynamic loading in the
  * EmbeddedComponentLoader.
- *
- * There are two important things here:
- * 1. Default Component name
- * 2. Map of string to factory for all components
  */
 export const fluidExport = new SimpleModuleInstantiationFactory(
     chaincodeName,
     new Map([
         [ClickerName, Promise.resolve(ClickerInstantiationFactory)],
-        [chaincodeName, Promise.resolve(SpacesInstantiationFactory)],
+        [chaincodeName, Promise.resolve(Spaces.getFactory())],
         ["button", Promise.resolve(ButtonInstantiationFactory)],
         ["number", Promise.resolve(NumberInstantiationFactory)],
         ["textbox", Promise.resolve(TextBoxInstantiationFactory)],
