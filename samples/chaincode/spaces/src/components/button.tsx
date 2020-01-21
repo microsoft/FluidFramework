@@ -13,7 +13,7 @@ import {
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { Manager } from "./manager";
+import { Manager } from "../container-services";
 
 const buttonStyle: React.CSSProperties = {
     WebkitUserSelect: "none", // Chrome-Safari

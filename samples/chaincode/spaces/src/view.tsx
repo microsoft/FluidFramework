@@ -5,25 +5,15 @@
 /* eslint-disable import/no-internal-modules */
 /* eslint-disable import/no-unassigned-import */
 
-import {
-    PrimedComponent,
-    PrimedComponentFactory,
-} from "@microsoft/fluid-aqueduct";
-import {
-    EmbeddedComponent,
-} from "@microsoft/fluid-aqueduct-react";
-import {
-    IComponentHTMLVisual, IComponent,
-} from "@microsoft/fluid-component-core-interfaces";
+import { EmbeddedComponent } from "@microsoft/fluid-aqueduct-react";
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 
 import * as React from "react";
-import * as ReactDOM from "react-dom";
-
 import GridLayout, { Layout } from "react-grid-layout";
 
 import "../../../../node_modules/react-grid-layout/css/styles.css";
 import "../../../../node_modules/react-resizable/css/styles.css";
-import { ISpacesDataModel, SpacesDataModel } from "./dataModel";
+import { ISpacesDataModel } from "./dataModel";
 
 interface IEmbeddedComponentWrapperProps {
     id: string;
@@ -62,7 +52,7 @@ interface ISpaceGridViewState {
     componentMap: Map<string, Layout>;
 }
 
-class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceGridViewState> {
+export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceGridViewState> {
     constructor(props) {
         super(props);
         this.state = {
@@ -186,57 +176,3 @@ class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceGridView
         );
     }
 }
-
-/**
- * Clicker example using view interfaces and stock component classes.
- */
-export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
-    private dataModelInternal: ISpacesDataModel | undefined;
-
-    private get dataModel(): ISpacesDataModel {
-        if (!this.dataModelInternal) {
-            throw new Error("The Spaces DataModel was not properly initialized.");
-        }
-
-        return this.dataModelInternal;
-    }
-
-    public get IComponentHTMLVisual() { return this; }
-
-    /**
-     * ComponentInitializingFirstTime is where you do setup for your component. This is only called once the first time your component
-     * is created. Anything that happens in componentInitializingFirstTime will happen before any other user will see the component.
-     */
-    protected async componentInitializingFirstTime(props?: any) {
-        this.root.createSubDirectory("component-list");
-        this.dataModelInternal = new SpacesDataModel(this.root, this.createAndAttachComponent.bind(this), this.getComponent.bind(this));
-
-        // this.dataModelInternal.setTemplate()
-
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has("template")) {
-            await this.dataModelInternal.setTemplate();
-        }
-    }
-
-    protected async componentInitializingFromExisting() {
-        this.dataModelInternal = new SpacesDataModel(this.root, this.createAndAttachComponent.bind(this), this.getComponent.bind(this));
-    }
-
-    /**
-     * Will return a new Clicker view
-     */
-    public render(div: HTMLElement) {
-        ReactDOM.render(
-            <SpacesGridView dataModel={this.dataModel}></SpacesGridView>,
-            div);
-    }
-}
-
-/**
- * This is where you define all your Distributed Data Structures and Value Types
- */
-export const SpacesInstantiationFactory = new PrimedComponentFactory(
-    Spaces,
-    [],
-);

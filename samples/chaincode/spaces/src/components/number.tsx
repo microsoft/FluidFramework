@@ -14,7 +14,7 @@ import { CounterValueType, Counter } from "@microsoft/fluid-map";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { Manager } from "./manager";
+import { Manager } from "../container-services";
 
 /**
  * Clicker example using view interfaces and stock component classes.

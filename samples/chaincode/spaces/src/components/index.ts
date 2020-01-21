@@ -5,6 +5,5 @@
 
 export * from "./button";
 export * from "./facePile";
-export * from "./manager";
 export * from "./number";
 export * from "./textBox";

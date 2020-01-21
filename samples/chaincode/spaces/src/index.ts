@@ -13,11 +13,13 @@ import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror
 import {
     ButtonInstantiationFactory ,
     NumberInstantiationFactory,
-    Manager,
     TextBoxInstantiationFactory,
     FacePileInstantiationFactory,
 } from "./components";
-import { SpacesInstantiationFactory  } from "./main";
+import {
+    Manager,
+} from "./container-services";
+import { SpacesInstantiationFactory } from "./spaces";
 
 const chaincodeName = "spaces";
 
