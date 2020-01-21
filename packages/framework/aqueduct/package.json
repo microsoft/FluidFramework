@@ -75,6 +75,7 @@
     "eslint-plugin-prefer-arrow": "^1.1.7",
     "eslint-plugin-react": "^7.16.0",
     "eslint-plugin-unicorn": "^14.0.1",
+    "make-promises-safe": "^5.1.0",
     "mocha": "^5.2.0",
     "mocha-junit-reporter": "^1.18.0",
     "nyc": "^14.1.1",

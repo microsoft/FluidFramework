@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable:no-import-side-effect
-// tslint:disable:no-relative-imports
-// tslint:disable:no-bitwise
+/* eslint-disable no-null/no-null */
+
 import * as assert from "assert";
+// eslint-disable-next-line import/no-unassigned-import
 import "mocha";
+// eslint-disable-next-line import/no-internal-modules
 import { areStringsEquivalent } from "../src/string";
 
 function test(left: string, right: string) {
