@@ -26,7 +26,8 @@ import {
 const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 
 /**
- * Represents a connection to a stream of delta updates. This also provides functionality to stamp ops and then emit them.
+ * Represents a connection to a stream of delta updates. This also provides functionality to stamp
+ * ops and then emit them.
  */
 export class FauxDocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
 
@@ -127,7 +128,6 @@ export class FauxDocumentDeltaConnection extends EventEmitter implements IDocume
             traces: message.traces || [],
             type: message.type,
             metadata: message.metadata,
-            origin: undefined,
         };
         return stampedMessage;
     }
@@ -298,7 +298,7 @@ export class FauxDocumentDeltaConnection extends EventEmitter implements IDocume
             documentId: "fauxdocid",
             scopes: client.scopes,
             tenantId: "fauxtenantid",
-            user: { id: "fauxuserid" },
+            user: { id: client.user.id },
         };
         const DefaultServiceConfiguration: IServiceConfiguration = {
             blockSize: 64436,

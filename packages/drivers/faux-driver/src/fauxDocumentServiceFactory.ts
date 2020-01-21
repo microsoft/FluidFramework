@@ -20,7 +20,7 @@ export class FauxDocumentServiceFactory implements IDocumentServiceFactory {
     constructor() {
     }
 
-    public async createDocumentService(fileURL: IResolvedUrl): Promise<IDocumentService> {
+    public async createDocumentService(url: IResolvedUrl): Promise<IDocumentService> {
         return new FauxDocumentService();
     }
 }
