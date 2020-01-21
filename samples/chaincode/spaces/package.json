@@ -35,7 +35,6 @@
     "@fluid-example/shared-text": "^0.13.0",
     "@microsoft/fluid-aqueduct": "^0.13.0",
     "@microsoft/fluid-aqueduct-react": "^0.13.0",
-    "@microsoft/fluid-build-common": "^0.13.0",
     "@microsoft/fluid-component-core-interfaces": "^0.13.0",
     "@microsoft/fluid-component-runtime": "^0.13.0",
     "@microsoft/fluid-container-definitions": "^0.13.0",
