@@ -25,6 +25,7 @@ export interface IFluidResolvedUrl extends IResolvedUrlBase {
 
 export interface IFluidNewResolvedUrl extends IResolvedUrlBase {
     type: "fluid-new";
+    url: string;
 }
 
 export interface IUrlResolver {

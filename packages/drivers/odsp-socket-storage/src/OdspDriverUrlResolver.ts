@@ -43,7 +43,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 
   public async resolve(request: IRequest): Promise<IOdspResolvedUrl | IFluidNewResolvedUrl> {
     if (request.url === "NEW") {
-      return {type: "fluid-new"};
+      return {type: "fluid-new", url: "fluid-odsp://NEW"};
     }
     const { siteUrl, driveId, itemId, path } = this.decodeOdspUrl(request.url);
     const hashedDocumentId = getHashedDocumentId(driveId, itemId);

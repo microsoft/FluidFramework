@@ -223,6 +223,11 @@ export class Loader extends EventEmitter implements ILoader {
     }
 
     private parseUrl(url: string): IParsedUrl | null {
+        // tslint:disable-next-line: max-line-length
+        // TODO: We have to figure out a way to replace those IDs with something that makes sense even if we don't have a file
+        if (url.endsWith("NEW")) {
+            return {id: "NEW", path: "/", version: null};
+        }
         const parsed = parse(url, true);
 
         const regex = /^\/([^/]*\/[^/]*)(\/?.*)$/;
@@ -249,6 +254,10 @@ export class Loader extends EventEmitter implements ILoader {
         }
         if (!toCache) {
             return Promise.reject(`Invalid URL ${request.url}`);
+        }
+        // don't cache new and just return it
+        if (toCache.type === "fluid-new") {
+            return toCache;
         }
         if (toCache.type !== "fluid") {
             return Promise.reject("Only Fluid components currently supported");
@@ -279,6 +288,8 @@ export class Loader extends EventEmitter implements ILoader {
         const factory: IDocumentServiceFactory =
             selectDocumentServiceFactoryForProtocol(resolvedAsFluid, this.protocolToDocumentFactoryMap);
 
+        // TODO: we need to figure out summaries since it does call another resolve, which creates a new file
+        // if we are using the delayed createNew path
         let container: Container;
         if (canCache) {
             const versionedId = request.headers[LoaderHeader.version]
