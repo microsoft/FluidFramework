@@ -6,13 +6,13 @@
 import * as assert from "assert";
 import { IDocumentDeltaConnection, IResolvedUrl } from "@microsoft/fluid-driver-definitions";
 import { IClient } from "@microsoft/fluid-protocol-definitions";
-import { FauxDocumentServiceFactory } from "../fauxDocumentServiceFactory";
+import { CreationDocumentServiceFactory } from "../creationDocumentServiceFactory";
 
-describe("Faux Driver", () => {
+describe("Creation Driver", () => {
 
     let documentDeltaConnection: IDocumentDeltaConnection;
     beforeEach(async () => {
-        const factory = new FauxDocumentServiceFactory();
+        const factory = new CreationDocumentServiceFactory();
         const resolved: IResolvedUrl = {endpoints: {}, type: "fluid", url: "", tokens: {}};
         const service = await factory.createDocumentService(resolved);
         const client: IClient = {

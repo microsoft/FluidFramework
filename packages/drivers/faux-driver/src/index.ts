@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-export * from "./fauxDeltaStorageService";
-export * from "./fauxDocumentService";
-export * from "./fauxDocumentServiceFactory";
-export * from "./fauxDocumentDeltaConnection";
-export * from "./fauxDocumentStorageService";
+export * from "./creationDeltaStorageService";
+export * from "./creationDocumentService";
+export * from "./creationDocumentServiceFactory";
+export * from "./creationDocumentDeltaConnection";
+export * from "./creationDocumentStorageService";

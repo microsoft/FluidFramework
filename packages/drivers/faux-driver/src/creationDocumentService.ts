@@ -5,23 +5,23 @@
 
 import * as api from "@microsoft/fluid-driver-definitions";
 import { ConnectionMode, IClient } from "@microsoft/fluid-protocol-definitions";
-import { FauxDeltaStorageService } from "./fauxDeltaStorageService";
-import { FauxDocumentDeltaConnection } from "./fauxDocumentDeltaConnection";
-import { FauxDocumentStorageService } from "./fauxDocumentStorageService";
+import { CreationDeltaStorageService } from "./creationDeltaStorageService";
+import { CreationDocumentDeltaConnection } from "./creationDocumentDeltaConnection";
+import { CreationDocumentStorageService } from "./creationDocumentStorageService";
 
 /**
  * The DocumentService connects to in memory endpoints for storage/socket for faux document service.
  */
-export class FauxDocumentService implements api.IDocumentService {
+export class CreationDocumentService implements api.IDocumentService {
     constructor() {
     }
 
     public async connectToStorage(): Promise<api.IDocumentStorageService> {
-        return new FauxDocumentStorageService();
+        return new CreationDocumentStorageService();
     }
 
     public async connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService> {
-        return new FauxDeltaStorageService();
+        return new CreationDeltaStorageService();
     }
 
     /**
@@ -32,7 +32,7 @@ export class FauxDocumentService implements api.IDocumentService {
     public async connectToDeltaStream(
         client: IClient,
         mode: ConnectionMode): Promise<api.IDocumentDeltaConnection> {
-        return FauxDocumentDeltaConnection.create(
+        return CreationDocumentDeltaConnection.create(
             client,
             mode);
     }

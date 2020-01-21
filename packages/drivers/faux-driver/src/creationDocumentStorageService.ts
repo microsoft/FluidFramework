@@ -9,7 +9,7 @@ import * as api from "@microsoft/fluid-protocol-definitions";
 /**
  * Document storage service for the faux driver.
  */
-export class FauxDocumentStorageService implements IDocumentStorageService {
+export class CreationDocumentStorageService implements IDocumentStorageService {
     repositoryUrl: string;
 
     constructor() {

@@ -1,5 +1,5 @@
 {
-  "name": "@microsoft/fluid-faux-driver",
+  "name": "@microsoft/fluid-creation-driver",
   "version": "0.13.0",
   "description": "A driver that imitates actual driver but stores everthing in memory.",
   "repository": "microsoft/FluidFramework",

@@ -9,7 +9,7 @@ import * as api from "@microsoft/fluid-protocol-definitions";
 /**
  * Provides access to the false delta storage.
  */
-export class FauxDeltaStorageService implements IDocumentDeltaStorageService {
+export class CreationDeltaStorageService implements IDocumentDeltaStorageService {
 
     constructor() {
     }

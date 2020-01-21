@@ -29,7 +29,7 @@ const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
  * Represents a connection to a stream of delta updates. This also provides functionality to stamp
  * ops and then emit them.
  */
-export class FauxDocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
+export class CreationDocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
 
     private sequenceNumber: number = 1;
 

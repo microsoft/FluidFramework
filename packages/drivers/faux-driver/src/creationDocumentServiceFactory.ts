@@ -8,19 +8,19 @@ import {
     IDocumentServiceFactory,
     IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
-import { FauxDocumentService } from "./fauxDocumentService";
+import { CreationDocumentService } from "./creationDocumentService";
 
 /**
  * Factory for creating the faux document service. Use this if you want to
  * lie to runtime that there is an actual connection to server.
  */
-export class FauxDocumentServiceFactory implements IDocumentServiceFactory {
+export class CreationDocumentServiceFactory implements IDocumentServiceFactory {
 
-    public readonly protocolName = "fluid-faux:";
+    public readonly protocolName = "fluid-creation:";
     constructor() {
     }
 
     public async createDocumentService(url: IResolvedUrl): Promise<IDocumentService> {
-        return new FauxDocumentService();
+        return new CreationDocumentService();
     }
 }
