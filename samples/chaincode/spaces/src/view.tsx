@@ -24,8 +24,11 @@ interface IEmbeddedComponentWrapperState {
     element: JSX.Element;
 }
 
+/**
+ * This wrapper handles the async-ness of loading a component.
+ */
 class EmbeddedComponentWrapper extends React.Component<IEmbeddedComponentWrapperProps, IEmbeddedComponentWrapperState>{
-    constructor(props){
+    constructor(props) {
         super(props);
         this.state = {
             element: <span></span>,
@@ -35,7 +38,7 @@ class EmbeddedComponentWrapper extends React.Component<IEmbeddedComponentWrapper
     async componentDidMount() {
         const component = await this.props.getComponent(this.props.id);
         const element = <EmbeddedComponent component={component} />;
-        this.setState({element});
+        this.setState({ element });
     }
 
     public render() {
@@ -59,6 +62,9 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
             editable: this.props.dataModel.componentList.size === 0,
             componentMap: this.props.dataModel.componentList,
         };
+
+        this.onGridChangeEvent = this.onGridChangeEvent.bind(this);
+        this.generateViewState = this.generateViewState.bind(this);
     }
 
     componentDidMount() {
@@ -84,7 +90,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
         this.props.dataModel.updateGridItem(id, newItem);
     }
 
-    render() {
+    generateViewState(): [any[], Layout[]] {
         const array = [];
         const layouts: Layout[] = [];
         this.state.componentMap.forEach((layout, id) => {
@@ -127,10 +133,16 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                         </div>
                     }
                     <div style={embeddedComponentStyle}>
-                        <EmbeddedComponentWrapper id={id} getComponent= {this.props.dataModel.getComponent}/>
+                        <EmbeddedComponentWrapper id={id} getComponent={this.props.dataModel.getComponent} />
                     </div>
                 </div>);
         });
+
+        return [array, layouts];
+    }
+
+    render() {
+        const [array, layouts] = this.generateViewState();
 
         return (
             <div>
@@ -165,8 +177,8 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                         isResizable={this.state.editable}
                         preventCollision={true}
                         isRearrangeable={false}
-                        onResizeStop={this.onGridChangeEvent.bind(this)}
-                        onDragStop={this.onGridChangeEvent.bind(this)}
+                        onResizeStop={this.onGridChangeEvent}
+                        onDragStop={this.onGridChangeEvent}
                         layout={layouts}
                     >
                         {array}
