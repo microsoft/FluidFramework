@@ -8,8 +8,6 @@
   "main": "index.js",
   "scripts": {
     "build": "npm run noop",
-    "eslint": "npm run noop",
-    "eslint:fix": "npm run noop",
     "noop": "echo Skipping @microsoft/eslint-config-fluid: No source steps necessary."
   },
   "dependencies": {
