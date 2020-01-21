@@ -43,7 +43,7 @@ export class Button extends PrimedComponent implements IComponentHTMLVisual {
 
     protected async componentHasInitialized() {
         // Register with our manager to say that we support clicks
-        const manager = await this.getComponent<Manager>("manager");
+        const manager = await this.getService<Manager>("manager");
         manager.registerProducer("click", this);
     }
 

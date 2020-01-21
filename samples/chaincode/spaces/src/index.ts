@@ -36,10 +36,10 @@ export const fluidExport = new SimpleModuleInstantiationFactory(
         [chaincodeName, Promise.resolve(SpacesInstantiationFactory)],
         ["button", Promise.resolve(ButtonInstantiationFactory)],
         ["number", Promise.resolve(NumberInstantiationFactory)],
-        ["manager", Promise.resolve(Manager.getFactory())],
         ["textbox", Promise.resolve(TextBoxInstantiationFactory)],
         ["facepile", Promise.resolve(FacePileInstantiationFactory)],
         ["codemirror", Promise.resolve(cmfe)],
         ["prosemirror", Promise.resolve(pmfe)],
     ]),
+    [["manager", async (r) => new Manager(r)]],
 );

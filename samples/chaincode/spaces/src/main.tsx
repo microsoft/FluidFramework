@@ -217,9 +217,6 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
         if (urlParams.has("template")) {
             await this.dataModelInternal.setTemplate();
         }
-
-        // this should actually happen on the container.
-        await this.createAndAttachComponent("manager", "manager");
     }
 
     protected async componentInitializingFromExisting() {

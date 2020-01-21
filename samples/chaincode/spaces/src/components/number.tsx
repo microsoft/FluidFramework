@@ -29,7 +29,7 @@ export class Number extends PrimedComponent implements IComponentHTMLVisual {
 
     protected async componentHasInitialized() {
         // Register with our manager to say that we support clicks
-        const manager = await this.getComponent<Manager>("manager");
+        const manager = await this.getService<Manager>("manager");
         manager.registerListener("click", () => {
             const counter = this.root.get<Counter>("clicker-count");
             counter.increment(1);

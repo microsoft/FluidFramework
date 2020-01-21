@@ -1,14 +1,11 @@
 import { EventEmitter } from "events";
-import { SharedComponent, SharedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { BaseContainerService } from "@microsoft/fluid-aqueduct";
 
 /**
  * The manager will be use as a container level provider/consumer manager
  */
-export class Manager extends SharedComponent {
-    private static readonly factory = new SharedComponentFactory(Manager, []);
+export class Manager extends BaseContainerService {
     private readonly registry: Map<string, (() => void)[]> = new Map();
-
-    public static getFactory() { return this.factory; }
 
     registerProducer(type: string, listener: EventEmitter) {
         listener.on(type, () => {
