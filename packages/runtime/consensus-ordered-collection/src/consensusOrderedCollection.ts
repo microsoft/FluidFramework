@@ -91,7 +91,6 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
         }
 
         let operationValue: IConsensusOrderedCollectionValue;
-        /* tslint:disable:no-unsafe-any */
 
         // TODO: Not all shared object will be derived from SharedObject
         if (SharedObject.is(value)) {

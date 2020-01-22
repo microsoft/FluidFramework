@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* tslint:disable:no-unsafe-any */
-/* tslint:disable:no-backbone-get-set-outside-model  */
 import * as assert from "assert";
 import * as api from "@fluid-internal/client-api";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
@@ -75,9 +73,11 @@ describe("Directory", () => {
     }
 
     function expectAllSize(size: number, path?: string) {
+        /* eslint-disable @typescript-eslint/strict-boolean-expressions */
         const dir1 = path ? root1Directory.getWorkingDirectory(path) : root1Directory;
         const dir2 = path ? root2Directory.getWorkingDirectory(path) : root2Directory;
         const dir3 = path ? root3Directory.getWorkingDirectory(path) : root3Directory;
+        /* eslint-enable @typescript-eslint/strict-boolean-expressions */
 
         const keys1 = Array.from(dir1.keys());
         assert.equal(keys1.length, size, "Incorrect number of Keys in document1");

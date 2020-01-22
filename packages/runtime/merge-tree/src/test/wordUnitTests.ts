@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable no-bitwise, no-shadow */
+
 import * as path from "path";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import * as random from "random-js";
@@ -24,8 +26,8 @@ export function propertyCopy() {
     const propCount = 2000;
     const iterCount = 1000;
     const map = new Map<string, number>();
-    const a = <string[]>[];
-    const v = <number[]>[];
+    const a: string[] = [];
+    const v: number[] = [];
     for (let i = 0; i < propCount; i++) {
         a[i] = `prop${i}`;
         v[i] = i;
@@ -83,7 +85,8 @@ export function propertyCopy() {
     et = elapsedMicroseconds(clockStart);
     perIter = (et / iterCount).toFixed(3);
     perProp = (et / (iterCount * propCount)).toFixed(2);
-    console.log(`map to map foreach prop init time ${perIter} us per ${propCount} properties; ${perProp} us per property`);
+    console.log(
+        `map to map foreach prop init time ${perIter} us per ${propCount} properties; ${perProp} us per property`);
     const diffMap = new Map<string, number>();
     map.forEach((v, k) => {
         if (Math.random() < 0.5) {
@@ -110,7 +113,7 @@ export function propertyCopy() {
 function makeBookmarks(client: TestClient, bookmarkCount: number) {
     const mt = random.engines.mt19937();
     mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
-    const bookmarks = <LocalReference[]>[];
+    const bookmarks: LocalReference[] = [];
     const len = client.getLength();
     for (let i = 0; i < bookmarkCount; i++) {
         const pos = random.integer(0, len - 1)(mt);
@@ -158,6 +161,7 @@ function measureFetch(startFile: string, withBookmarks = false) {
         }
     }
     let et = elapsedMicroseconds(clockStart);
+    // eslint-disable-next-line max-len
     console.log(`fetch of ${count / reps} runs over ${client.getLength()} total chars took ${(et / count).toFixed(1)} microseconds per run`);
     // Bonus: measure clone
     clockStart = clock();
