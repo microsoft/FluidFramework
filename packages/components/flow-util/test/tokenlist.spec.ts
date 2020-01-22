@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable:no-import-side-effect
 import * as assert from "assert";
+// eslint-disable-next-line import/no-unassigned-import
 import "mocha";
+// eslint-disable-next-line import/no-internal-modules
 import { findToken, TokenList } from "../src/tokenlist";
 
 describe("TokenList", () => {
@@ -125,18 +126,20 @@ describe("TokenList", () => {
     describe("computeToggle", () => {
         function test(testCase: string, tokens: string[], toToggle: string[]) {
             const tokenList = tokens.join(" ");
-            const expectedAdd = toToggle.filter((token) => tokens.indexOf(token) < 0);
-            const expectedRemove = toToggle.filter((token) => tokens.indexOf(token) >= 0);
+            const expectedAdd = toToggle.filter((token) => !tokens.includes(token));
+            const expectedRemove = toToggle.filter((token) => tokens.includes(token));
 
-            it(`${testCase}: [${tokenList}] ^ [${toToggle.join(" ")}] -> +[${expectedAdd.join(" ")}] -[${expectedRemove.join(" ")}]`, () => {
-                const actualAdd = toToggle;
-                const actualRemove = new Set<string>();
+            // eslint-disable-next-line max-len
+            it(`${testCase}: [${tokenList}] ^ [${toToggle.join(" ")}] -> +[${expectedAdd.join(" ")}] -[${expectedRemove.join(" ")}]`,
+                () => {
+                    const actualAdd = toToggle;
+                    const actualRemove = new Set<string>();
 
-                TokenList.computeToggle(tokenList, actualAdd, actualRemove);
+                    TokenList.computeToggle(tokenList, actualAdd, actualRemove);
 
-                assert.deepEqual(actualAdd, expectedAdd);
-                assert.deepEqual([...actualRemove], expectedRemove);
-            });
+                    assert.deepEqual(actualAdd, expectedAdd);
+                    assert.deepEqual([...actualRemove], expectedRemove);
+                });
         }
 
         test("empty", [], []);

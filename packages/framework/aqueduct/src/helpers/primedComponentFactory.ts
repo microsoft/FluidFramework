@@ -10,14 +10,13 @@ import {
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-// eslint-disable-next-line import/no-internal-modules
-import { SharedComponent } from "../components/sharedComponent";
+import { SharedComponent } from "../components";
 import { SharedComponentFactory } from "./sharedComponentFactory";
 
 export class PrimedComponentFactory extends SharedComponentFactory {
     constructor(
         ctor: new (runtime: IComponentRuntime, context: IComponentContext) => SharedComponent,
-        sharedObjects: readonly ISharedObjectFactory[],
+        sharedObjects: readonly ISharedObjectFactory[] = [],
         registryEntries?: NamedComponentRegistryEntries,
         onDemandInstantiation = true,
     ) {
