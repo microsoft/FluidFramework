@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ReplayArgs, ReplayTool } from "@microsoft/fluid-replay-tool";
 import * as fs from "fs";
+import { ReplayArgs, ReplayTool } from "@microsoft/fluid-replay-tool";
 
 const fileLocation: string = "content/snapshotTestContent";
 
 export enum Mode {
-    Write,   // write out files
-    Compare, // compare to files stored on disk
+    Write,   // Write out files
+    Compare, // Compare to files stored on disk
     Stress,  // Do stress testing without writing or comparing out files.
 }
 
@@ -19,8 +19,6 @@ export interface IWorkerArgs {
     mode: Mode;
     snapFreq: number;
 }
-
-// tslint:disable:non-literal-fs-path
 
 export async function processOneFile(args: IWorkerArgs) {
     const replayArgs = new ReplayArgs();
@@ -35,7 +33,7 @@ export async function processOneFile(args: IWorkerArgs) {
     // Make it easier to see problems in stress tests
     replayArgs.expandFiles = args.mode === Mode.Stress;
 
-    // This will speed up test duration by ~17%, at the expense of loosing  a bit on coverage.
+    // This will speed up test duration by ~17%, at the expense of losing a bit on coverage.
     // replayArgs.overlappingContainers = 1;
 
     const res = await new ReplayTool(replayArgs).Go();
@@ -45,7 +43,6 @@ export async function processOneFile(args: IWorkerArgs) {
 }
 
 export async function processContent(mode: Mode, concurrently = true) {
-    // tslint:disable-next-line:prefer-array-literal
     const promises: Promise<unknown>[] = [];
 
     // "worker_threads" does not resolve without --experimental-worker flag on command line
@@ -56,7 +53,7 @@ export async function processContent(mode: Mode, concurrently = true) {
     } catch (err) {
     }
 
-    for (const node of fs.readdirSync(fileLocation, { withFileTypes : true })) {
+    for (const node of fs.readdirSync(fileLocation, { withFileTypes: true })) {
         if (!node.isDirectory()) {
             continue;
         }
@@ -67,7 +64,7 @@ export async function processContent(mode: Mode, concurrently = true) {
             continue;
         }
 
-        // snapFreq is the most interesting options to tweak
+        // SnapFreq is the most interesting options to tweak
         // On one hand we want to generate snapshots often, ideally every 50 ops
         // This allows us to exercise more cases and increases chances of finding bugs.
         // At the same time that generates more files in repository, and adds to the size of it
@@ -92,7 +89,7 @@ export async function processContent(mode: Mode, concurrently = true) {
 
             worker.on("message", (error: string) => {
                 if (mode === Mode.Compare) {
-                    // tslint:disable-next-line: max-line-length
+                    // eslint-disable-next-line max-len
                     const extra = "If you changed snapshot representation and validated new format is backward compatible, you can run `npm run test:generate` to regenerate baseline snapshots";
                     reject(new Error(`${error}\n${extra}`));
                 } else {

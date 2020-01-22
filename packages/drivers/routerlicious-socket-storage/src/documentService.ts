@@ -6,7 +6,7 @@
 import { fromUtf8ToBase64 } from "@microsoft/fluid-core-utils";
 import { DocumentDeltaConnection } from "@microsoft/fluid-driver-base";
 import * as api from "@microsoft/fluid-driver-definitions";
-import { ConnectionMode, IClient, IErrorTrackingService} from "@microsoft/fluid-protocol-definitions";
+import { ConnectionMode, IClient, IErrorTrackingService } from "@microsoft/fluid-protocol-definitions";
 import { GitManager, Historian, ICredentials, IGitCache } from "@microsoft/fluid-server-services-client";
 import Axios from "axios";
 import * as io from "socket.io-client";
@@ -115,12 +115,12 @@ export class DocumentService implements api.IDocumentService {
     }
 
     public async branch(): Promise<string> {
-        let headers: {Authorization: string} | null = null;
+        let headers: { Authorization: string } | null = null;
         headers = {
             Authorization: `Basic ${fromUtf8ToBase64(`${this.tenantId}:${this.tokenProvider.token}`)}`,
         };
 
-        // tslint:disable-next-line:max-line-length
+        // eslint-disable-next-line max-len
         const result = await Axios.post<string>(`${this.ordererUrl}/documents/${this.tenantId}/${this.documentId}/forks`, { headers });
         return result.data;
     }

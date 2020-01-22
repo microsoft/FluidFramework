@@ -19,30 +19,30 @@ export class Scheduler {
 
     public readonly onTurnEnd = (callback: TaskCallback) => {
         if (this.turnTasks.push(callback) === 1) {
-            // tslint:disable-next-line:no-floating-promises
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             Scheduler.done.then(this.processTurnTasks);
         }
-    }
+    };
 
     public readonly onLayout = (callback: TaskCallback) => {
         this.layoutTasks.push(callback);
         if (this.layoutQueueLength === 1) {
             requestAnimationFrame(this.processLayoutTasks);
         }
-    }
+    };
 
     public readonly onPostLayout = (callback: TaskCallback) => {
         this.postLayoutTasks.push(callback);
         if (this.layoutQueueLength === 1) {
             requestAnimationFrame(this.processLayoutTasks);
         }
-    }
+    };
 
     public readonly onIdle = (callback: TaskCallback) => {
         if (this.idleTasks.push(callback) === 1) {
             this.scheduleIdleTasks(this.idleDueMS(Date.now()));
         }
-    }
+    };
 
     private get layoutQueueLength() {
         return this.layoutTasks.length + this.postLayoutTasks.length;
@@ -85,13 +85,13 @@ export class Scheduler {
     private readonly processTurnTasks = () => {
         this.dispatch(this.turnTasks);
         this.lastDispatchMS = Date.now();
-    }
+    };
 
     private readonly processLayoutTasks = () => {
         this.dispatch(this.layoutTasks);
         this.dispatch(this.postLayoutTasks);
         this.lastDispatchMS = Date.now();
-    }
+    };
 
     private scheduleIdleTasks(dueMS: number) {
         setTimeout(this.processIdleTasks, dueMS);
@@ -122,5 +122,5 @@ export class Scheduler {
         }
 
         tasks.length = 0;
-    }
+    };
 }

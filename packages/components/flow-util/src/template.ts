@@ -10,12 +10,15 @@ interface ICursorTransition {
 }
 
 class Cursor {
+    /* eslint-disable max-len */
     private static readonly first    = { suffix: "f", property: "firstElementChild",       fn: (element: Element) => element.firstElementChild };
     private static readonly last     = { suffix: "l", property: "lastElementChild",        fn: (element: Element) => element.lastElementChild };
     private static readonly next     = { suffix: "n", property: "nextElementSibling",      fn: (element: Element) => element.nextElementSibling };
     private static readonly previous = { suffix: "p", property: "previousElementSibling",  fn: (element: Element) => element.previousElementSibling };
+    /* eslint-enable max-len */
 
     public readonly pathFns = new Map<string, (element: Element) => Element>();
+    // eslint-disable-next-line no-null/no-null
     private element: Element | null = null;
     private path: string = "";
     private pathName: string = "";
@@ -51,7 +54,7 @@ class Cursor {
     public end() {
         let pathFn = this.pathFns.get(this.pathName);
         if (!pathFn) {
-            // tslint:disable-next-line:function-constructor
+            // eslint-disable-next-line no-new-func
             pathFn = new Function("root", this.path) as (element: Element) => Element;
             this.pathFns.set(this.pathName, pathFn);
         }

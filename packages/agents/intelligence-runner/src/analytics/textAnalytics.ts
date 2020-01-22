@@ -63,6 +63,7 @@ class TextAnalyticsIntelligentService implements IIntelligentService {
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     private invokeRequest(service: string, data: any): Promise<any> {
         return new Promise<any>((resolve, reject) => {
             request.post(

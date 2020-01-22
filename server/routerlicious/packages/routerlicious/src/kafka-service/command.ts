@@ -10,7 +10,7 @@ import * as commander from "commander";
 export function execute(
     factoryFn: (name: string, lambda: string) => utils.IResourcesFactory<IKafkaResources>,
     configFile: string) {
-    // tslint:disable-next-line:no-var-requires
+    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
     const packageDetails = require("../../package.json");
 
     let action = false;

@@ -23,8 +23,6 @@ import { extractDetails, IResolvedPackage } from "@microsoft/fluid-web-code-load
 import { v4 } from "uuid";
 import { IOdspTokenApi, IRouterliciousTokenApi, ITokenApis } from "./utils";
 
-/* eslint-disable capitalized-comments */
-
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const packageJson = require("../package.json");
 

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionMode,
@@ -15,7 +16,6 @@ import {
     ISignalMessage,
     ITokenClaims,
 } from "@microsoft/fluid-protocol-definitions";
-import { EventEmitter } from "events";
 import { debug } from "./debug";
 import { FileDeltaStorageService } from "./fileDeltaStorageService";
 
@@ -105,7 +105,7 @@ export class ReplayFileDeltaConnection extends EventEmitter implements IDocument
      * @returns Document delta connection.
      */
     public static async create(
-            documentDeltaStorageService: FileDeltaStorageService): Promise<ReplayFileDeltaConnection> {
+        documentDeltaStorageService: FileDeltaStorageService): Promise<ReplayFileDeltaConnection> {
         const mode: ConnectionMode = "write";
         const connection = {
             claims: Claims,

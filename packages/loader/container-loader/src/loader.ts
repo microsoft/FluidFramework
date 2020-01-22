@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
+import { parse } from "url";
 import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
 import {
     IComponent,
@@ -25,18 +27,17 @@ import {
 } from "@microsoft/fluid-driver-definitions";
 import { configurableUrlResolver } from "@microsoft/fluid-driver-utils";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { EventEmitter } from "events";
-// tslint:disable-next-line:no-var-requires
-const now = require("performance-now") as () => number;
-import { parse } from "url";
 import { Container } from "./container";
 import { debug } from "./debug";
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const now = require("performance-now") as () => number;
 
 interface IParsedUrl {
     id: string;
     path: string;
     /**
-     * null means do not use snapshots, undefined means load latest snapshot
+     * Null means do not use snapshots, undefined means load latest snapshot
      * otherwise it's version ID passed to IDocumentStorageService.getVersions() to figure out what snapshot to use.
      * If needed, can add undefined which is treated by Container.load() as load latest snapshot.
      */
@@ -50,7 +51,7 @@ export class RelativeLoader extends EventEmitter implements ILoader {
     private readonly containerDeferred = new Deferred<Container>();
 
     /**
-     * baseRequest is the original request that triggered the load. This URL is used in case credentials need
+     * BaseRequest is the original request that triggered the load. This URL is used in case credentials need
      * to be fetched again.
      */
     constructor(private readonly loader: Loader, private readonly baseRequest: IRequest) {
@@ -271,7 +272,6 @@ export class Loader extends EventEmitter implements ILoader {
             return Promise.reject(`Invalid URL ${resolvedAsFluid.url}`);
         }
 
-        // eslint-disable-next-line require-atomic-updates
         request.headers = request.headers ? request.headers : {};
         const { canCache, fromSequenceNumber } = this.parseHeader(parsed, request);
 
@@ -349,10 +349,10 @@ export class Loader extends EventEmitter implements ILoader {
             fromSequenceNumber = headerSeqNum;
         }
 
-        // if set in both query string and headers, use query string
+        // If set in both query string and headers, use query string
         request.headers[LoaderHeader.version] = parsed.version || request.headers[LoaderHeader.version];
 
-        // version === null means not use any snapshot.
+        // Version === null means not use any snapshot.
         if (request.headers[LoaderHeader.version] === "null") {
             request.headers[LoaderHeader.version] = null;
         }
@@ -362,7 +362,7 @@ export class Loader extends EventEmitter implements ILoader {
         };
     }
 
-    private loadContainer(
+    private async loadContainer(
         id: string,
         documentService: IDocumentService,
         request: IRequest,

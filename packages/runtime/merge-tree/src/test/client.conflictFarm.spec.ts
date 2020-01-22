@@ -21,7 +21,7 @@ interface IConflictFarmConfig extends IMergeTreeOperationRunnerConfig {
     clients: IConfigRange;
 }
 
-const allOpertaions: ReadonlyArray<TestOperation> = [
+const allOpertaions: TestOperation[] = [
     removeRange,
     annotateRange,
     insertAtRefPos,
@@ -106,6 +106,6 @@ describe("MergeTree.Client", () => {
             }
         })
         // tslint:disable-next-line: mocha-no-side-effect-code
-        .timeout(30 * 1000);
+            .timeout(30 * 1000);
     });
 });

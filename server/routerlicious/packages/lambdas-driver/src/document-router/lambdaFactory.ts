@@ -3,13 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
+import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
 import { Provider } from "nconf";
 import { DocumentLambda } from "./documentLambda";
 
 export class DocumentLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
-    constructor(private documentLambdaFactory: IPartitionLambdaFactory) {
+    constructor(
+        private readonly documentLambdaFactory: IPartitionLambdaFactory,
+        private readonly activityTimeout?: number,
+    ) {
         super();
 
         // Forward on any factory errors
@@ -19,7 +22,7 @@ export class DocumentLambdaFactory extends EventEmitter implements IPartitionLam
     }
 
     public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
-        const lambda = new DocumentLambda(this.documentLambdaFactory, config, context);
+        const lambda = new DocumentLambda(this.documentLambdaFactory, config, context, this.activityTimeout);
         return lambda;
     }
 

@@ -14,15 +14,15 @@ import { DocumentManager } from "./documentManager";
 
 export class RouteMasterLambda extends SequencedLambda {
     constructor(
-        private document: DocumentManager,
-        private producer: core.IProducer,
+        private readonly document: DocumentManager,
+        private readonly producer: core.IProducer,
         context: core.IContext,
         protected tenantId: string,
         protected documentId: string) {
         super(context);
     }
 
-    protected async handlerCore(rawMessage: core.IKafkaMessage): Promise<void> {
+    protected async handlerCore(rawMessage: core.IQueuedMessage): Promise<void> {
         const boxcar = core.extractBoxcar(rawMessage);
 
         const boxcarProcessed: Promise<void>[] = [];
@@ -46,7 +46,7 @@ export class RouteMasterLambda extends SequencedLambda {
         // TODO can checkpoint here
         Promise.all(boxcarProcessed).then(
             () => {
-                this.context.checkpoint(rawMessage.offset);
+                this.context.checkpoint(rawMessage);
             },
             (error) => {
                 this.context.error(error, true);
@@ -101,6 +101,7 @@ export class RouteMasterLambda extends SequencedLambda {
     /**
      * Routes the provided messages to deli
      */
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     private routeToDeli(forkId: string, message: core.ISequencedOperationMessage): Promise<void> {
         // Create the integration message that sends a sequenced operation from an upstream branch to
         // the downstream branch

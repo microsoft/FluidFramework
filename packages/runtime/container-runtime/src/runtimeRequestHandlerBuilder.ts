@@ -8,7 +8,7 @@ import { IHostRuntime } from "@microsoft/fluid-runtime-definitions";
 import { RuntimeRequestHandler } from "./requestHandlers";
 import { RequestParser } from "./requestParser";
 
- /**
+/**
   * The RuntimeRequestHandlerBuilder creates a runtime request handler based on request handlers.
   * The provided handlers sequentially applied until one is able to statify the request.
   */

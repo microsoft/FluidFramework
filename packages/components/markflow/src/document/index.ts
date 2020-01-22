@@ -71,7 +71,6 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
         return DocSegmentKind.text;
     } else if (Marker.is(segment)) {
         const markerType = segment.refType;
-        /* eslint-disable @typescript-eslint/indent */
         switch (markerType) {
             case ReferenceType.Tile:
             case ReferenceType.Tile | ReferenceType.NestBegin:
@@ -259,6 +258,7 @@ export class FlowDocument extends PrimedComponent {
                     break;
                 }
                 default:
+                    break;
             }
             return true;
         }, start, end);

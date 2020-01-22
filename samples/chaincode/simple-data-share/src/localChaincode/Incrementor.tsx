@@ -6,6 +6,7 @@
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { Counter } from "@microsoft/fluid-map";
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../../package.json");
 const chaincodeName = pkg.name;
 
@@ -17,31 +18,31 @@ const chaincodeName = pkg.name;
  * This logic is valuable as a component when you could imagining using it with multiple other components.
  */
 export class Incrementor extends PrimedComponent {
-  public static readonly chaincodeName = chaincodeName + "/incrementor";
-  public counter: Counter;
+    public static readonly chaincodeName = `${chaincodeName}/incrementor`;
+    public counter: Counter;
 
-  protected async componentInitializingFirstTime() {
-    this.setupTimer();
-  }
-
-  private setupTimer() {
-    // random number between 1-10
-    const incrementCallback = () => {
-      const randomNumber = Math.floor((Math.random() * 10) + 1);
-      // this.counter should be set by the root component. If it isn't defined yet, just return
-      if (this.counter) {
-        this.counter.increment(randomNumber);
-      } else {
-        console.log('counter undefined; skipping this increment')
-      }
+    protected async componentInitializingFirstTime() {
+        this.setupTimer();
     }
 
-    // Set a timer to call the above callback every 5 seconds
-    setInterval(incrementCallback, 5000);
-  }
+    private setupTimer() {
+        // Random number between 1-10
+        const incrementCallback = () => {
+            const randomNumber = Math.floor((Math.random() * 10) + 1);
+            // This.counter should be set by the root component. If it isn't defined yet, just return
+            if (this.counter) {
+                this.counter.increment(randomNumber);
+            } else {
+                console.log("counter undefined; skipping this increment");
+            }
+        };
+
+        // Set a timer to call the above callback every 5 seconds
+        setInterval(incrementCallback, 5000);
+    }
 }
 
 export const IncrementorInstantiationFactory = new PrimedComponentFactory(
-  Incrementor,
-  [],
+    Incrementor,
+    [],
 );

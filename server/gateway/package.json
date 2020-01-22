@@ -35,6 +35,26 @@
     "webpack:min": "parallel-webpack --config webpack.config.js -- --env.target production",
     "webpack:watch": "npm run webpack:dev -- --watch"
   },
+  "nyc": {
+    "all": true,
+    "cache-dir": "nyc/.cache",
+    "exclude": [
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "exclude-after-remap": false,
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "report-dir": "nyc/report",
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output"
+  },
   "dependencies": {
     "@fluid-example/tiny-web-host": "0.13.17588",
     "@microsoft/fluid-base-host": "0.13.17588",
@@ -118,13 +138,13 @@
     "@types/split": "^0.3.28",
     "@types/uuid": "^3.4.4",
     "@types/ws": "^6.0.1",
-    "@typescript-eslint/eslint-plugin": "^2.9.0",
-    "@typescript-eslint/eslint-plugin-tslint": "^2.9.0",
-    "@typescript-eslint/parser": "^2.9.0",
+    "@typescript-eslint/eslint-plugin": "~2.17.0",
+    "@typescript-eslint/eslint-plugin-tslint": "~2.16.0",
+    "@typescript-eslint/parser": "~2.17.0",
     "cache-loader": "^1.2.2",
     "concurrently": "^4.1.0",
     "css-loader": "^1.0.0",
-    "eslint": "^6.7.1",
+    "eslint": "~6.8.0",
     "file-loader": "^3.0.1",
     "fork-ts-checker-webpack-plugin": "^0.4.9",
     "html-loader": "^0.5.5",
@@ -154,25 +174,5 @@
     "webpack-merge": "^4.1.4",
     "ws": "^6.1.2",
     "xhr": "^2.5.0"
-  },
-  "nyc": {
-    "all": true,
-    "cache-dir": "nyc/.cache",
-    "exclude": [
-      "src/test/**/*.ts",
-      "dist/test/**/*.js"
-    ],
-    "exclude-after-remap": false,
-    "include": [
-      "src/**/*.ts",
-      "dist/**/*.js"
-    ],
-    "report-dir": "nyc/report",
-    "reporter": [
-      "cobertura",
-      "html",
-      "text"
-    ],
-    "temp-directory": "nyc/.nyc_output"
   }
 }

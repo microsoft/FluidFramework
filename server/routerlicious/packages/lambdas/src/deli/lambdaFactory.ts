@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import {
     ICollection,
     IContext,
@@ -12,7 +13,6 @@ import {
     IProducer,
     MongoManager,
 } from "@microsoft/fluid-server-services-core";
-import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import { NoOpLambda } from "../utils";
 import { DeliLambda } from "./lambda";
@@ -28,10 +28,10 @@ export const NoopConsolidationTimeout = 250;
 
 export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     constructor(
-        private mongoManager: MongoManager,
-        private collection: ICollection<IDocument>,
-        private forwardProducer: IProducer,
-        private reverseProducer: IProducer) {
+        private readonly mongoManager: MongoManager,
+        private readonly collection: ICollection<IDocument>,
+        private readonly forwardProducer: IProducer,
+        private readonly reverseProducer: IProducer) {
         super();
     }
 
@@ -66,6 +66,6 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         const mongoClosedP = this.mongoManager.close();
         const forwardProducerClosedP = this.forwardProducer.close();
         const reverseProducerClosedP = this.reverseProducer.close();
-        await Promise.all([mongoClosedP,  forwardProducerClosedP, reverseProducerClosedP]);
+        await Promise.all([mongoClosedP, forwardProducerClosedP, reverseProducerClosedP]);
     }
 }

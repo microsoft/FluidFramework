@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import {
     IComponentLoadable,
     IComponentRouter,
@@ -18,8 +19,7 @@ import { SharedDirectory, IDirectory } from "@microsoft/fluid-map";
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-import { initializeIcons } from '@uifabric/icons';
-import { EventEmitter } from "events";
+import { initializeIcons } from "@uifabric/icons";
 import { PersonaView } from "./personaView";
 
 export class Persona extends EventEmitter implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual {
@@ -30,7 +30,7 @@ export class Persona extends EventEmitter implements IComponentLoadable, ICompon
         return collection;
     }
 
-    private static subDirectory = "persona";
+    private static readonly subDirectory = "persona";
 
     public get IComponentLoadable() { return this; }
     public get IComponentRouter() { return this; }
@@ -38,9 +38,9 @@ export class Persona extends EventEmitter implements IComponentLoadable, ICompon
 
     public url: string;
     private details: IDirectory;
-    private views = new Set<PersonaView>();
+    private readonly views = new Set<PersonaView>();
 
-    constructor(private runtime: IComponentRuntime, private readonly context: IComponentContext) {
+    constructor(private readonly runtime: IComponentRuntime, private readonly context: IComponentContext) {
         super();
 
         this.url = context.id;
@@ -60,6 +60,7 @@ export class Persona extends EventEmitter implements IComponentLoadable, ICompon
             const graph = (this.context.scope as any).IMicrosoftGraph;
             const me = graph ? await graph.me() : {};
 
+            // eslint-disable-next-line no-shadow
             const root = SharedDirectory.create(this.runtime, "root");
             const subdirectory = root.createSubDirectory(Persona.subDirectory);
             this.updateMe(me, subdirectory);
@@ -71,6 +72,7 @@ export class Persona extends EventEmitter implements IComponentLoadable, ICompon
 
         // If existing we do an update check
         if (this.runtime.existing) {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.fetchAndUpdateMe();
         }
     }

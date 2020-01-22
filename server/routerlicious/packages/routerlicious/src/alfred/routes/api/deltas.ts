@@ -5,13 +5,13 @@
 
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import {
-    IAlfredTenant,
     IRawOperationMessage,
     IRawOperationMessageBatch,
     MongoManager,
 } from "@microsoft/fluid-server-services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
+import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
 import { getParam } from "../../utils";
 
 const sequenceNumber = "sequenceNumber";
@@ -40,6 +40,7 @@ export async function getDeltaContents(
 
     // Query for the deltas and return a filtered version of just the operations field
     const db = await mongoManager.getDatabase();
+    // eslint-disable-next-line @typescript-eslint/await-thenable
     const collection = await db.collection<any>(collectionName);
     const dbDeltas = await collection.find(query, { sequenceNumber: 1 });
 
@@ -70,8 +71,9 @@ export async function getDeltas(
 
     // Query for the deltas and return a filtered version of just the operations field
     const db = await mongoManager.getDatabase();
+    // eslint-disable-next-line @typescript-eslint/await-thenable
     const collection = await db.collection<any>(collectionName);
-    const dbDeltas = await collection.find(query, { "operation.sequenceNumber" : 1 });
+    const dbDeltas = await collection.find(query, { "operation.sequenceNumber": 1 });
 
     return dbDeltas.map((delta) => delta.operation);
 }
@@ -87,9 +89,10 @@ export async function getRawDeltas(
 
     // Query for the raw batches and sort by the index:
     const db = await mongoManager.getDatabase();
+    // eslint-disable-next-line @typescript-eslint/await-thenable
     const collection = await db.collection<any>(collectionName);
     const dbDump: IRawOperationMessageBatch[] =
-        await collection.find(query, { index : 1 });
+        await collection.find(query, { index: 1 });
 
     // Strip "combined" ops down to their essence as arrays of individual ops:
     const arrayOfArrays: IRawOperationMessage[][] =
@@ -101,9 +104,10 @@ export async function getRawDeltas(
     return allDeltas;
 }
 
-export function create(config: Provider,
-                       mongoManager: MongoManager,
-                       appTenants: IAlfredTenant[]): Router {
+export function create(
+    config: Provider,
+    mongoManager: MongoManager,
+    appTenants: IAlfredTenant[]): Router {
     const deltasCollectionName = config.get("mongo:collectionNames:deltas");
     const rawDeltasCollectionName = config.get("mongo:collectionNames:rawdeltas");
     const router: Router = Router();

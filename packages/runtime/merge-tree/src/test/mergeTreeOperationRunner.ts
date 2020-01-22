@@ -2,8 +2,9 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
+import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+// eslint-disable-next-line import/no-extraneous-dependencies
 import * as random from "random-js";
 import { LocalReference } from "../localReference";
 import { IMergeTreeOp } from "../ops";
@@ -49,19 +50,20 @@ export interface IMergeTreeOperationRunnerConfig {
     readonly rounds: number;
     readonly opsPerRoundRange: IConfigRange;
     readonly incrementalLog?: boolean;
-    readonly operations: ReadonlyArray<TestOperation>;
+    readonly operations: readonly TestOperation[];
     growthFunc(input: number): number;
 }
 
 export function runMergeTreeOperationRunner(
     mt: random.Engine,
     startingSeq: number,
-    clients: ReadonlyArray<TestClient>,
+    clients: readonly TestClient[],
     minLength: number,
     config: IMergeTreeOperationRunnerConfig) {
 
     let seq = startingSeq;
 
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     doOverRange(config.opsPerRoundRange, config.growthFunc, (opsPerRound) => {
         if (config.incrementalLog) {
             // tslint:disable-next-line: max-line-length

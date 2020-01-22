@@ -4,7 +4,7 @@
  */
 
 import { createInsertSegmentOp, createRemoveRangeOp, PropertySet } from "@microsoft/fluid-merge-tree";
-// tslint:disable-next-line: no-submodule-imports
+// eslint-disable-next-line import/no-internal-modules
 import { TestClient } from "@microsoft/fluid-merge-tree/dist/test";
 import { SubSequence } from "../sharedSequence";
 
@@ -14,7 +14,7 @@ const verbose = true;
 class SubSequenceTestClient extends TestClient {
     constructor() {
         super(undefined,
-            (spec) =>  SubSequence.fromJSONObject(spec));
+            (spec) => SubSequence.fromJSONObject(spec));
     }
 
     public insertItemsRemote<T>(

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentDeltaStorageService } from "@microsoft/fluid-driver-definitions";
-import * as api from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
 import * as fs from "fs";
+import { IDocumentDeltaStorageService } from "@microsoft/fluid-driver-definitions";
+import * as api from "@microsoft/fluid-protocol-definitions";
 
 /**
  * Provides access to the underlying delta storage on the local file storage for file driver.
@@ -36,8 +36,8 @@ export class FileDeltaStorageService implements IDocumentDeltaStorageService {
      * @param to - Last op to be fetched. This is exclusive.
      */
     public getFromWebSocket(from: number, to: number): api.ISequencedDocumentMessage[] {
-        const readFrom = Math.max(from, 0); // inclusive
-        const readTo = Math.min(to, this.messages.length); // exclusive
+        const readFrom = Math.max(from, 0); // Inclusive
+        const readTo = Math.min(to, this.messages.length); // Exclusive
 
         if (readFrom >= this.messages.length || readTo <= 0) {
             return [];

@@ -10,7 +10,7 @@ export enum CellState {
     empty = "empty",
     fixed = "fixed",
     wrong = "wrong",
-    correct = "correct"
+    correct = "correct",
 }
 
 /**

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { gitHashFile } from "@microsoft/fluid-core-utils";
 import * as git from "@microsoft/fluid-gitresources";
 import {
@@ -13,7 +14,6 @@ import {
     ITreeEntry,
     TreeEntry,
 } from "@microsoft/fluid-protocol-definitions";
-import * as assert from "assert";
 
 /**
  * Create a flatten view of an array of ITreeEntry
@@ -43,7 +43,6 @@ function flattenCore(path: string, treeEntries: ITreeEntry[], blobMap: Map<strin
             blobMap.set(sha, buffer.toString("base64"));
 
             const entry: git.ITreeEntry = {
-                // tslint:disable-next-line: no-unsafe-any
                 mode: FileMode[treeEntry.mode],
                 path: subPath,
                 sha,
@@ -54,7 +53,6 @@ function flattenCore(path: string, treeEntries: ITreeEntry[], blobMap: Map<strin
             entries.push(entry);
         } else if (treeEntry.type === TreeEntry[TreeEntry.Commit]) {
             const entry: git.ITreeEntry = {
-                // tslint:disable-next-line: no-unsafe-any
                 mode: FileMode[treeEntry.mode],
                 path: subPath,
                 sha: treeEntry.value as string,
@@ -67,7 +65,6 @@ function flattenCore(path: string, treeEntries: ITreeEntry[], blobMap: Map<strin
             assert(treeEntry.type === TreeEntry[TreeEntry.Tree]);
             const t = treeEntry.value as ITree;
             const entry: git.ITreeEntry = {
-                // tslint:disable-next-line: no-unsafe-any
                 mode: FileMode[treeEntry.mode],
                 path: subPath,
                 sha: "",
@@ -77,8 +74,7 @@ function flattenCore(path: string, treeEntries: ITreeEntry[], blobMap: Map<strin
             };
             entries.push(entry);
 
-            // tslint:disable-next-line: prefer-template
-            const subTreeEntries = flattenCore(subPath + "/", t.entries, blobMap);
+            const subTreeEntries = flattenCore(`${subPath}/`, t.entries, blobMap);
             entries.push(...subTreeEntries);
         }
     }

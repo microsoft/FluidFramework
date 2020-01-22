@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { GitManager } from "@microsoft/fluid-server-services-client";
-import * as mocks from "@microsoft/fluid-test-runtime-utils";
 import * as assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
+import * as mocks from "@microsoft/fluid-test-runtime-utils";
+import { GitManager } from "@microsoft/fluid-server-services-client";
 import { SharedString } from "../sharedString";
 import { generateStrings } from "./generateSharedStrings";
 
@@ -47,6 +47,7 @@ describe("SharedString Snapshot Version", () => {
                 objectStorage: historian,
             };
             const sharedString = new SharedString(runtime, documentId);
+            // eslint-disable-next-line no-null/no-null
             await sharedString.load(null/*branchId*/, services);
             await sharedString.loaded;
 
@@ -87,7 +88,6 @@ describe("SharedString Snapshot Version", () => {
             }
         });
     }
-    // tslint:disable-next-line:mocha-no-side-effect-code
     generateSnapshotRebuildTests();
 
     function generateSnapshotDiffTest(testString: SharedString, i: number) {
@@ -111,7 +111,6 @@ describe("SharedString Snapshot Version", () => {
             }
         });
     }
-    // tslint:disable-next-line:mocha-no-side-effect-code
     generateSnapshotDiffTests();
 
     function diff(s1: string, s2: string): string {

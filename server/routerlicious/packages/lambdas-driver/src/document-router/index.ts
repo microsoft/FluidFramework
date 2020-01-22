@@ -9,7 +9,7 @@ import { DocumentLambdaFactory } from "./lambdaFactory";
 
 export async function create(config: Provider): Promise<IPartitionLambdaFactory> {
     const pluginConfig = config.get("documentLambda") as string | object;
-    // tslint:disable-next-line:non-literal-require
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const plugin = (typeof pluginConfig === "object" ? pluginConfig : require(pluginConfig)) as IPlugin;
 
     // Factory used to create document lambda processors

@@ -82,7 +82,4 @@ interface IReactProps {
 /**
  * Embeds a Fluid Component that supports IComponentReactViewable
  */
-// tslint:disable-next-line:function-name
-function ReactEmbeddedComponent(props: IReactProps) {
-    return props.component.createJSXElement();
-}
+const ReactEmbeddedComponent = (props: IReactProps) => props.component.createJSXElement();

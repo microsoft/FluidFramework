@@ -11,6 +11,7 @@ module.exports = {
     },
     "extends": [
         "eslint:recommended",
+        "plugin:eslint-comments/recommended",
         "plugin:react/recommended",
         "plugin:@typescript-eslint/eslint-recommended",
         "plugin:@typescript-eslint/recommended",
@@ -33,28 +34,42 @@ module.exports = {
         "project": "./tsconfig.json"
     },
     "plugins": [
+        "@typescript-eslint",
+        "no-null",
+        "optimize-regex",
+        "prefer-arrow",
         "react",
         "unicorn",
-        "no-null",
-        "prefer-arrow",
-        "@typescript-eslint",
     ],
     "reportUnusedDisableDirectives": true,
     "rules": {
+        // Please keep entried alphabetized within a group
+
+        // @typescript-eslint
         "@typescript-eslint/adjacent-overload-signatures": "error",
         "@typescript-eslint/array-type": "error",
         "@typescript-eslint/await-thenable": "error",
         "@typescript-eslint/ban-types": "error",
+        "@typescript-eslint/camelcase": [
+            "error",
+            {
+                "properties": "never",
+                "allow": [
+                    "^[A-Za-z][a-zA-Za-z]+_[A-Za-z]+$",
+                    "__webpack_public_path__"
+                ]
+            }
+        ],
         "@typescript-eslint/class-name-casing": "error",
-        "@typescript-eslint/consistent-type-assertions": "error",
+        "@typescript-eslint/consistent-type-assertions": [
+            "error",
+            {
+                "assertionStyle": "as",
+                "objectLiteralTypeAssertions": "never"
+            }
+        ],
         "@typescript-eslint/consistent-type-definitions": "error",
         "@typescript-eslint/explicit-function-return-type": "off",
-        // "@typescript-eslint/explicit-member-accessibility": [
-        //     "error",
-        //     {
-        //         "accessibility": "explicit"
-        //     }
-        // ],
         "@typescript-eslint/indent": [
             "error",
             4,
@@ -64,12 +79,12 @@ module.exports = {
                 },
                 "FunctionExpression": {
                     "parameters": "first"
-                }
+                },
+                "SwitchCase": 1
             }
         ],
         "@typescript-eslint/interface-name-prefix": "off",
         "@typescript-eslint/member-delimiter-style": "off",
-        // "@typescript-eslint/member-ordering": "error",
         "@typescript-eslint/no-empty-function": "off",
         "@typescript-eslint/no-empty-interface": "error",
         "@typescript-eslint/no-explicit-any": "off",
@@ -80,11 +95,9 @@ module.exports = {
         "@typescript-eslint/no-misused-new": "error",
         "@typescript-eslint/no-namespace": "off",
         "@typescript-eslint/no-non-null-assertion": "error",
-        "no-param-reassign": "error",
         "@typescript-eslint/no-parameter-properties": "off",
         "@typescript-eslint/no-require-imports": "error",
         "@typescript-eslint/no-this-alias": "error",
-        "no-unused-vars": "off",
         "@typescript-eslint/no-unused-vars": [
             "error",
             {
@@ -99,6 +112,7 @@ module.exports = {
         "@typescript-eslint/prefer-for-of": "error",
         "@typescript-eslint/prefer-function-type": "error",
         "@typescript-eslint/prefer-namespace-keyword": "error",
+        "@typescript-eslint/prefer-readonly": "error",
         "@typescript-eslint/promise-function-async": "error",
         "@typescript-eslint/quotes": [
             "error",
@@ -108,7 +122,7 @@ module.exports = {
                 "avoidEscape": true
             }
         ],
-        "@typescript-eslint/restrict-plus-operands": "warn",
+        "@typescript-eslint/restrict-plus-operands": "error",
         "@typescript-eslint/require-await": "off",
         "@typescript-eslint/semi": [
             "error",
@@ -119,30 +133,81 @@ module.exports = {
             "never"
         ],
         "@typescript-eslint/strict-boolean-expressions": [
-            "warn",
+            "error",
             {
                 "allowNullable": true
             }
         ],
         "@typescript-eslint/triple-slash-reference": "error",
-        "@typescript-eslint/type-annotation-spacing": "error",
+        "@typescript-eslint/type-annotation-spacing": "error", 
+        "@typescript-eslint/unbound-method": [
+            "error",
+            {
+                "ignoreStatic": true
+            }
+        ],
         "@typescript-eslint/unified-signatures": "error",
-        "arrow-body-style": "error",
+
+        // eslint-plugin-eslint-comments
+        "eslint-comments/disable-enable-pair": [
+            "error",
+            {
+                "allowWholeFile": true
+            }
+        ],
+
+        // eslint-plugin-import
+        "import/no-default-export": "error",
+        "import/no-deprecated": "off",
+        "import/no-extraneous-dependencies": [
+            "error",
+            {
+                "devDependencies": ["**/*.spec.ts"]
+            }
+        ],
+        "import/no-internal-modules": "error",
+        "import/no-unassigned-import": "error",
+        "import/no-unresolved": [
+            "error",
+            {
+                "caseSensitive": true
+            }
+        ],
+        "import/order": "error",
+
+        // eslint-plugin-no-null
+        "no-null/no-null": "error",
+
+        // eslint-plugin-prefer-arrow
+        "prefer-arrow/prefer-arrow-functions": [
+            "error",
+            {
+                "disallowPrototype": false,
+                "singleReturnOnly": true,
+                "classPropertiesAllowed": false
+            }
+        ],
+
+        // eslint-plugin-unicorn
+        "unicorn/filename-case": [
+            "error",
+            {
+                "cases": {
+                    "camelCase": true,
+                    "pascalCase": true
+                }
+            }
+        ],
+        "unicorn/no-new-buffer": "error",
+
+        // eslint
+        "arrow-body-style": "off",
         "arrow-parens": [
             "error",
             "always"
         ],
-        "camelcase": "off",
-        "@typescript-eslint/camelcase": "off",
-        "capitalized-comments": [
-            "warn",
-            "always",
-            {
-                "ignoreConsecutiveComments": true,
-                "ignoreInlineComments": true,
-                "ignorePattern": "tslint:| start | end "
-            }
-        ],
+        "camelcase": "off", // Superseded by @typescript-eslint/camelcase
+        "capitalized-comments": "off",
         "comma-dangle": [
             "error",
             "always-multiline"
@@ -158,30 +223,7 @@ module.exports = {
             "smart"
         ],
         "guard-for-in": "error",
-        // "id-blacklist": [
-        //     "error",
-        //     "any",
-        //     "Number",
-        //     "number",
-        //     "String",
-        //     "string",
-        //     "Boolean",
-        //     "boolean",
-        //     "Undefined",
-        //     "undefined"
-        // ],
         "id-match": "error",
-        "import/no-default-export": "error",
-        "import/no-deprecated": "off",
-        "import/no-extraneous-dependencies": [
-            "error",
-            {
-                "devDependencies": false
-            }
-        ],
-        "import/no-internal-modules": "error",
-        "import/no-unassigned-import": "error",
-        "import/order": "error",
         "linebreak-style": "off",
         "max-classes-per-file": "off",
         "max-len": [
@@ -198,37 +240,6 @@ module.exports = {
         "no-bitwise": "error",
         "no-caller": "error",
         "no-cond-assign": "error",
-        // "no-console": [
-        //     "error",
-        //     {
-        //         "allow": [
-        //             "debug",
-        //             "info",
-        //             "dirxml",
-        //             "dir",
-        //             "time",
-        //             "timeEnd",
-        //             "timeLog",
-        //             "trace",
-        //             "assert",
-        //             "clear",
-        //             "count",
-        //             "countReset",
-        //             "group",
-        //             "groupCollapsed",
-        //             "groupEnd",
-        //             "table",
-        //             "Console",
-        //             "markTimeline",
-        //             "profile",
-        //             "profileEnd",
-        //             "timeline",
-        //             "timelineEnd",
-        //             "timeStamp",
-        //             "context"
-        //         ]
-        //     }
-        // ],
         "no-constant-condition": "error",
         "no-control-regex": "error",
         "no-debugger": "off",
@@ -244,11 +255,12 @@ module.exports = {
         "no-magic-numbers": "off",
         "no-multi-str": "off",
         "no-multiple-empty-lines": "error",
+        "no-nested-ternary": "off", // Superseded by unicorn/no-nested-ternary
         "no-new-func": "error",
         "no-new-wrappers": "error",
-        "no-null/no-null": "error",
         "no-octal": "error",
         "no-octal-escape": "error",
+        "no-param-reassign": "error",
         "no-redeclare": "error",
         "no-regex-spaces": "error",
         "no-restricted-syntax": [
@@ -272,6 +284,7 @@ module.exports = {
         "no-unsafe-finally": "error",
         "no-unused-expressions": "error",
         "no-unused-labels": "error",
+        "no-unused-vars": "off",
         "no-var": "error",
         "no-void": "off",
         "object-shorthand": "error",
@@ -279,6 +292,7 @@ module.exports = {
             "error",
             "never"
         ],
+        "optimize-regex/optimize-regex": "error",
         "padding-line-between-statements": [
             "off",
             "error",
@@ -288,17 +302,8 @@ module.exports = {
                 "next": "return"
             }
         ],
-        "prefer-arrow/prefer-arrow-functions": [
-            "warn",
-            {
-                "disallowPrototype": false,
-                "singleReturnOnly": true,
-                "classPropertiesAllowed": false
-            }
-        ],
         "prefer-const": "error",
         "prefer-object-spread": "error",
-        "@typescript-eslint/prefer-readonly": "error",
         "prefer-template": "error",
         "quote-props": [
             "error",
@@ -310,19 +315,7 @@ module.exports = {
             {
                 "anonymous": "never",
                 "asyncArrow": "always",
-                // "constructor": "never",
-                // "method": "never",
                 "named": "never"
-            }
-        ],
-        // "spaced-comment": "error",
-        "unicorn/filename-case": [
-            "error",
-            {
-                "cases": {
-                    "camelCase": true,
-                    "pascalCase": true
-                }
             }
         ],
         "use-isnan": "error",

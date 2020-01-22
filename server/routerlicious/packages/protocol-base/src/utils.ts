@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ConnectionState, MessageType } from "@microsoft/fluid-protocol-definitions";
 import { EventEmitter } from "events";
+import { ConnectionState, MessageType } from "@microsoft/fluid-protocol-definitions";
 
 /**
  * Check if the string is a system message type, which includes
@@ -14,14 +14,12 @@ import { EventEmitter } from "events";
  * @param type - the type to check
  * @returns true if it is a system message type
  */
-export function isSystemType(type: string) {
-    return (
-        type === MessageType.RemoteHelp ||
+export const isSystemType = (type: string) => (
+    type === MessageType.RemoteHelp ||
         type === MessageType.Integrate ||
         type === MessageType.ClientJoin ||
         type === MessageType.ClientLeave ||
         type === MessageType.Fork);
-}
 
 export function raiseConnectedEvent(emitter: EventEmitter, state: ConnectionState, clientId: string) {
     if (state === ConnectionState.Connected) {

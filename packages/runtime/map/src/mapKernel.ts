@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { makeHandlesSerializable, parseHandles, ValueType } from "@microsoft/fluid-shared-object-base";
-import { EventEmitter } from "events";
 import {
     ISerializableValue,
     ISerializedValue,
@@ -208,8 +208,7 @@ export class MapKernel {
                 if (nextVal.done) {
                     return { value: undefined, done: true };
                 } else {
-                    // unpack the stored value
-                    // tslint:disable-next-line: no-unsafe-any
+                    // Unpack the stored value
                     return { value: [nextVal.value[0], nextVal.value[1].value], done: false };
                 }
             },
@@ -232,8 +231,7 @@ export class MapKernel {
                 if (nextVal.done) {
                     return { value: undefined, done: true };
                 } else {
-                    // unpack the stored value
-                    // tslint:disable-next-line: no-unsafe-any
+                    // Unpack the stored value
                     return { value: nextVal.value.value, done: false };
                 }
             },
@@ -455,7 +453,6 @@ export class MapKernel {
      * @returns True if the operation was submitted, false otherwise.
      */
     public trySubmitMessage(op: any): boolean {
-        // tslint:disable-next-line:no-unsafe-any
         const type: string = op.type;
         if (this.messageHandlers.has(type)) {
             this.messageHandlers.get(type).submit(op as IMapOperation);

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
     IComponent,
@@ -33,9 +34,8 @@ import {
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
 
-import { EventEmitter } from "events";
-import { IChannel } from ".";
 import { IProvideComponentRegistry } from "./componentRegistry";
+import { IChannel } from ".";
 
 /**
  * Represents the runtime for the component. Contains helper functions/state of the component.

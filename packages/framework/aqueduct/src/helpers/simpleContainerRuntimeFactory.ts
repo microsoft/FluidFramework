@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { IContainerContext } from "@microsoft/fluid-container-definitions";
 import {
     componentRuntimeRequestHandler,
@@ -10,7 +11,9 @@ import {
     RuntimeRequestHandler,
 } from "@microsoft/fluid-container-runtime";
 import { IHostRuntime, NamedComponentRegistryEntries } from "@microsoft/fluid-runtime-definitions";
+import { generateContainerServicesRequestHandler, ContainerServiceRegistryEntries } from "./";
 
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class SimpleContainerRuntimeFactory {
     public static readonly defaultComponentId = "default";
 
@@ -21,26 +24,28 @@ export class SimpleContainerRuntimeFactory {
         context: IContainerContext,
         chaincode: string,
         registryEntries: NamedComponentRegistryEntries,
-        generateSummaries: boolean = true,
+        serviceRegistry: ContainerServiceRegistryEntries = [],
         requestHandlers: RuntimeRequestHandler[] = [],
     ): Promise<ContainerRuntime> {
-        // debug(`instantiateRuntime(chaincode=${chaincode},registry=${JSON.stringify(registry)})`);
+        // Debug(`instantiateRuntime(chaincode=${chaincode},registry=${JSON.stringify(registry)})`);
         const runtime = await ContainerRuntime.load(
             context,
             registryEntries,
             [
+                // eslint-disable-next-line @typescript-eslint/no-use-before-define
                 defaultComponentRuntimeRequestHandler,
+                generateContainerServicesRequestHandler(serviceRegistry),
                 ...requestHandlers,
                 componentRuntimeRequestHandler,
-            ],
-            { generateSummaries });
-        // debug("runtime loaded.");
+            ]);
+        // Debug("runtime loaded.");
 
         // On first boot create the base component
         if (!runtime.existing) {
-            // debug(`createAndAttachComponent(chaincode=${chaincode})`);
-            // tslint:disable-next-line: no-floating-promises
-            SimpleContainerRuntimeFactory.createAndAttachComponent(runtime, SimpleContainerRuntimeFactory.defaultComponentId, chaincode);
+            // Debug(`createAndAttachComponent(chaincode=${chaincode})`);
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            SimpleContainerRuntimeFactory.createAndAttachComponent(
+                runtime, SimpleContainerRuntimeFactory.defaultComponentId, chaincode);
         }
 
         return runtime;

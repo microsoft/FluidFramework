@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { BaseSegment, IJSONSegment, ISegment, PropertySet } from "@microsoft/fluid-merge-tree";
+import {
+    BaseSegment, IJSONSegment, ISegment, PropertySet, LocalReferenceCollection } from "@microsoft/fluid-merge-tree";
 import { IChannelAttributes, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedSegmentSequence } from "./sequence";
 
@@ -19,7 +20,6 @@ export class SubSequence<T> extends BaseSegment {
         return segment.type === SubSequence.typeString;
     }
     public static fromJSONObject(spec: any) {
-        // tslint:disable: no-unsafe-any
         if (spec && typeof spec === "object" && "items" in spec) {
             const segment = new SubSequence<any>(spec.items);
             if (spec.props) {
@@ -66,7 +66,7 @@ export class SubSequence<T> extends BaseSegment {
 
         // Note: Must call 'appendLocalRefs' before modifying this segment's length as
         //       'this.cachedLength' is used to adjust the offsets of the local refs.
-        this.appendLocalRefs(segment);
+        LocalReferenceCollection.append(this, segment);
 
         this.items = this.items.concat(segment.items);
         this.cachedLength = this.items.length;

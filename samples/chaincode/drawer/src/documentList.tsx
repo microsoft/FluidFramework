@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as React from 'react';
-import { DocumentCardBasicExample } from './card';
-import { ISharedMap } from '@microsoft/fluid-map';
+import * as React from "react";
+import { ISharedMap } from "@microsoft/fluid-map";
+import { DocumentCardBasicExample } from "./card";
 
 export interface IDocumentListProps {
     values: ISharedMap;
@@ -47,23 +47,21 @@ export class DocumentList extends React.Component<IDocumentListProps, IDocumentL
                         date={value.date}
                         user={value.user}
                     />
-                </div>
-            
+                </div>;
+
             return result;
         });
 
         return (
             <div style={ { display: "flex", flexWrap: "wrap" }}>
-                {cards}                
+                {cards}
             </div>
         );
     }
 
     private updateState() {
         this.setState({
-            values: Array.from(this.props.values.keys()).map((key) => {
-                return { ...this.props.values.get(key), url: key };
-            }),
+            values: Array.from(this.props.values.keys()).map((key) => ({ ...this.props.values.get(key), url: key })),
         });
     }
 }

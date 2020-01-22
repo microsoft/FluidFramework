@@ -6,6 +6,7 @@
 import { ITaskMessage, ITaskMessageSender } from "@microsoft/fluid-server-services-core";
 
 export class TestTaskMessageSender implements ITaskMessageSender {
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public initialize(): Promise<void> {
         return Promise.resolve();
     }
@@ -18,6 +19,7 @@ export class TestTaskMessageSender implements ITaskMessageSender {
         return this;
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public close(): Promise<void> {
         return Promise.resolve();
     }

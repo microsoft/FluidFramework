@@ -4,7 +4,6 @@
  */
 
 import {
-    IAlfredTenant,
     IDocumentStorage,
     IProducer,
     ITenantManager,
@@ -12,6 +11,7 @@ import {
 } from "@microsoft/fluid-server-services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
+import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
 import * as agent from "./agent";
 import * as api from "./api";
 
@@ -20,6 +20,7 @@ export interface IRoutes {
     api: Router;
 }
 
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function create(
     config: Provider,
     tenantManager: ITenantManager,

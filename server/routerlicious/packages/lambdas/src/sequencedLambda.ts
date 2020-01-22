@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IContext, IKafkaMessage, IPartitionLambda } from "@microsoft/fluid-server-services-core";
+import { IContext, IQueuedMessage, IPartitionLambda } from "@microsoft/fluid-server-services-core";
 import { AsyncQueue, queue } from "async";
 
 /**
@@ -13,10 +13,10 @@ export abstract class SequencedLambda implements IPartitionLambda {
     protected tenantId: string;
     protected documentId: string;
 
-    private q: AsyncQueue<IKafkaMessage>;
+    private readonly q: AsyncQueue<IQueuedMessage>;
 
     constructor(protected context: IContext) {
-        this.q = queue((message: IKafkaMessage, callback) => {
+        this.q = queue((message: IQueuedMessage, callback) => {
             this.handlerCore(message).then(
                 () => {
                     callback();
@@ -26,6 +26,7 @@ export abstract class SequencedLambda implements IPartitionLambda {
                 });
         }, 1);
 
+        // eslint-disable-next-line @typescript-eslint/unbound-method
         this.q.error = (error) => {
             const documentError = {
                 documentId: this.documentId,
@@ -36,7 +37,7 @@ export abstract class SequencedLambda implements IPartitionLambda {
         };
     }
 
-    public handler(message: IKafkaMessage): void {
+    public handler(message: IQueuedMessage): void {
         this.q.push(message);
     }
 
@@ -48,5 +49,5 @@ export abstract class SequencedLambda implements IPartitionLambda {
      * Derived classes override this method to do per message processing. The sequenced lambda will only move on
      * to the next message once the returned promise is resolved.
      */
-    protected abstract handlerCore(message: IKafkaMessage): Promise<void>;
+    protected abstract handlerCore(message: IQueuedMessage): Promise<void>;
 }

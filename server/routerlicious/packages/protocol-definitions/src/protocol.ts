@@ -102,7 +102,7 @@ export interface IDocumentMessage {
     clientSequenceNumber: number;
 
     // The reference sequence number the message was sent relative to
-    referenceSequenceNumber: number | undefined;
+    referenceSequenceNumber: number;
 
     // The type of document message being sent
     type: string;
@@ -199,7 +199,7 @@ export interface ISignalMessage {
 }
 
 export interface ISummaryContent {
-    // handle reference to the summary data
+    // Handle reference to the summary data
     handle: string;
 
     // Message included as part of the summary

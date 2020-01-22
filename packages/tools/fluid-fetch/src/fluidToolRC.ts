@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { IODSPTokens } from "@microsoft/fluid-odsp-utils";
+/* eslint-disable unicorn/filename-case */
+
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import * as util from "util";
+import { IODSPTokens } from "@microsoft/fluid-odsp-utils";
 
 interface IResources {
     tokens?: { [key: string]: IODSPTokens };
 }
 
-function getRCFileName() {
-    return path.join(os.homedir(), ".fluidtoolrc");
-}
+const getRCFileName = () => path.join(os.homedir(), ".fluidtoolrc");
 
 export async function loadRC(): Promise<IResources> {
     const readFile = util.promisify(fs.readFile);

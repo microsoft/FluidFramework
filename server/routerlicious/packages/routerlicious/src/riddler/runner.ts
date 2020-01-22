@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import * as http from "http";
 import { Deferred } from "@microsoft/fluid-core-utils";
 import { MongoManager } from "@microsoft/fluid-server-services-core";
 import * as utils from "@microsoft/fluid-server-services-utils";
-import * as http from "http";
 import * as winston from "winston";
 import * as app from "./app";
 
@@ -15,13 +15,14 @@ export class RiddlerRunner implements utils.IRunner {
     private runningDeferred: Deferred<void>;
 
     constructor(
-        private collectionName: string,
-        private port: string | number,
-        private mongoManager: MongoManager,
-        private loggerFormat: string,
-        private baseOrdererUrl: string) {
+        private readonly collectionName: string,
+        private readonly port: string | number,
+        private readonly mongoManager: MongoManager,
+        private readonly loggerFormat: string,
+        private readonly baseOrdererUrl: string) {
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public start(): Promise<void> {
         this.runningDeferred = new Deferred<void>();
 
@@ -38,11 +39,12 @@ export class RiddlerRunner implements utils.IRunner {
         return this.runningDeferred.promise;
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public stop(): Promise<void> {
         // Close the underlying server and then resolve the runner once closed
         this.server.close(() => {
-                this.runningDeferred.resolve();
-            });
+            this.runningDeferred.resolve();
+        });
         return this.runningDeferred.promise;
     }
 
@@ -55,10 +57,10 @@ export class RiddlerRunner implements utils.IRunner {
         }
 
         const bind = typeof this.port === "string"
-            ? "Pipe " + this.port
-            : "Port " + this.port;
+            ? `Pipe ${this.port}`
+            : `Port ${this.port}`;
 
-        // handle specific listen errors with friendly messages
+        // Handle specific listen errors with friendly messages
         switch (error.code) {
             case "EACCES":
                 this.runningDeferred.reject(`${bind} requires elevated privileges`);
@@ -77,8 +79,8 @@ export class RiddlerRunner implements utils.IRunner {
     private onListening() {
         const addr = this.server.address();
         const bind = typeof addr === "string"
-            ? "pipe " + addr
-            : "port " + addr.port;
-        winston.info("Listening on " + bind);
+            ? `pipe ${addr}`
+            : `port ${addr.port}`;
+        winston.info(`Listening on ${bind}`);
     }
 }

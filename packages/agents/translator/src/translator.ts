@@ -25,6 +25,7 @@ function createRequestUri(from: string, to: string[]): string {
     return uri.concat(fromLanguage, toLanguages);
 }
 
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 function createRequestBody(texts: string[]): ITranslatorInput[] {
     return texts.map((text: string) => {
         const input: ITranslatorInput = { Text: text };

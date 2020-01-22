@@ -3,18 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { APP_BASE_HREF } from '@angular/common';
-import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
+import { parse } from "url";
+import { APP_BASE_HREF } from "@angular/common";
+import { platformBrowserDynamic } from "@angular/platform-browser-dynamic";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
 import { IComponentHTMLVisual, IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
-import { IComponentContext, IComponentFactory, IComponentRegistry, ComponentRegistryEntry } from '@microsoft/fluid-runtime-definitions';
+import {
+    IComponentContext,
+    IComponentFactory,
+    IComponentRegistry,
+    ComponentRegistryEntry,
+} from "@microsoft/fluid-runtime-definitions";
 import * as GraphiQL from "graphiql";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { parse } from "url";
-import { AppModule } from './app/app.module';
+import { AppModule } from "./app/app.module";
 import { PRAGUE_PATH, PRAGUE_ROOT } from "./app/tokens";
 import { GraphQLService } from "./app/hero.service";
 
@@ -26,16 +31,16 @@ export class TourOfHeroes extends PrimedComponent implements IComponentHTMLVisua
     // (only called when document is initially created).
     protected async componentInitializingFirstTime() {
         const defaultHeroes = [
-            { id: 11, name: 'Mr. Nice' },
-            { id: 12, name: 'Narco' },
-            { id: 13, name: 'Bombasto' },
-            { id: 14, name: 'Celeritas' },
-            { id: 15, name: 'Magneta' },
-            { id: 16, name: 'RubberMan' },
-            { id: 17, name: 'Dynama' },
-            { id: 18, name: 'Dr IQ' },
-            { id: 19, name: 'Magma' },
-            { id: 20, name: 'Tornado' }
+            { id: 11, name: "Mr. Nice" },
+            { id: 12, name: "Narco" },
+            { id: 13, name: "Bombasto" },
+            { id: 14, name: "Celeritas" },
+            { id: 15, name: "Magneta" },
+            { id: 16, name: "RubberMan" },
+            { id: 17, name: "Dynama" },
+            { id: 18, name: "Dr IQ" },
+            { id: 19, name: "Magma" },
+            { id: 20, name: "Tornado" },
         ];
 
         // Seed the map with some heroes
@@ -52,16 +57,18 @@ export class TourOfHeroes extends PrimedComponent implements IComponentHTMLVisua
         const ngRoot = document.createElement("app-root");
         maybeDiv.appendChild(ngRoot);
 
-        const pathname = parse(window.location.href).pathname
+        const pathname = parse(window.location.href).pathname;
 
         // And then bootstrap
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         platformBrowserDynamic(
             [
                 { provide: APP_BASE_HREF, useValue: pathname },
+                // eslint-disable-next-line no-null/no-null
                 { provide: PRAGUE_PATH, useValue: null },
                 { provide: PRAGUE_ROOT, useValue: this.root },
             ])
-            .bootstrapModule(AppModule)
+            .bootstrapModule(AppModule);
     }
 }
 
@@ -72,7 +79,7 @@ class TourOfHeroesComponentView implements IComponentHTMLVisual {
         return this.path;
     }
 
-    constructor(private realComponent: TourOfHeroes, private path: string) {
+    constructor(private readonly realComponent: TourOfHeroes, private readonly path: string) {
     }
 
     public render(elm: HTMLElement) {
@@ -85,13 +92,14 @@ class TourOfHeroesComponentView implements IComponentHTMLVisual {
         const pathname = parse(window.location.href).pathname.replace(this.path, "");
 
         // And then bootstrap
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         platformBrowserDynamic(
             [
                 { provide: APP_BASE_HREF, useValue: pathname },
                 { provide: PRAGUE_PATH, useValue: this.path },
                 { provide: PRAGUE_ROOT, useValue: this.realComponent.root },
             ])
-            .bootstrapModule(AppModule)
+            .bootstrapModule(AppModule);
     }
 }
 
@@ -102,7 +110,7 @@ class GraphIQLView implements IComponentHTMLVisual {
 
     public readonly id = "graphiql";
 
-    constructor(private realComponent: TourOfHeroes) {
+    constructor(private readonly realComponent: TourOfHeroes) {
     }
 
     public render(elm: HTMLElement) {
@@ -111,6 +119,7 @@ class GraphIQLView implements IComponentHTMLVisual {
         maybeDiv.style.width = "100vw";
         maybeDiv.style.height = "100vh";
 
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
         const css = require("graphiql/graphiql.css");
         const styleTag = document.createElement("style");
         styleTag.innerText = css;
@@ -118,14 +127,13 @@ class GraphIQLView implements IComponentHTMLVisual {
 
         const graphQLServer = new GraphQLService(this.realComponent.root);
 
-        function graphQLFetcher(graphQLParams) {
-            return graphQLServer.runQuery(graphQLParams.query, graphQLParams.variables);
-        }
+        // eslint-disable-next-line @typescript-eslint/promise-function-async
+        const graphQLFetcher = (graphQLParams) => graphQLServer.runQuery(graphQLParams.query, graphQLParams.variables);
 
         ReactDOM.render(
             React.createElement(
                 GraphiQL,
-                { fetcher: graphQLFetcher }
+                { fetcher: graphQLFetcher },
             ),
             maybeDiv,
         );
@@ -141,6 +149,7 @@ class TourOfHeroesContainerInstantiationFactory implements IRuntimeFactory, ICom
     public get IComponentRegistry() { return this; }
     public get IRuntimeFactory() { return this; }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public get(name: string): Promise<ComponentRegistryEntry> | undefined {
         if (name === TourOfHeroesType) {
             return Promise.resolve(TourOfHeroesInstantiationFactory);
@@ -155,7 +164,6 @@ class TourOfHeroesContainerInstantiationFactory implements IRuntimeFactory, ICom
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const runtime = await ContainerRuntime.load(context,
             [[TourOfHeroesType, Promise.resolve(TourOfHeroesInstantiationFactory)]],
-            // eslint-disable-next-line @typescript-eslint/unbound-method
             [TourOfHeroesContainerInstantiationFactory.containerRequestHandler],
             { generateSummaries: true });
 

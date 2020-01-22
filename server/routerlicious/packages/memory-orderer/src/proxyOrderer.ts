@@ -14,7 +14,7 @@ export interface IOrdererConnectionFactory {
  * Proxies ordering to an external service which does the actual ordering
  */
 export class ProxyOrderer implements IOrderer {
-    constructor(private factory: IOrdererConnectionFactory) {
+    constructor(private readonly factory: IOrdererConnectionFactory) {
     }
 
     public async connect(
@@ -26,6 +26,7 @@ export class ProxyOrderer implements IOrderer {
         return proxiedSocket;
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public close() {
         return Promise.resolve();
     }

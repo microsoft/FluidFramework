@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable:non-literal-fs-path
-
 import * as fs from "fs";
 import { URL } from "url";
 
@@ -114,7 +112,6 @@ export function parseArguments() {
                         paramURL = arg;
                         break;
                     }
-                    // tslint:disable-next-line: no-http-string
                     if (url.protocol === "http:" && url.hostname === "localhost") {
                         paramURL = arg;
                         break;

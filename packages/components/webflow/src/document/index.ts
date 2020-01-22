@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { randomId, TokenList } from "@fluid-example/flow-util-lib";
+import { randomId, TokenList, TagName } from "@fluid-example/flow-util-lib";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { IComponent, IComponentHandle, IComponentHTMLOptions } from "@microsoft/fluid-component-core-interfaces";
 import {
@@ -33,7 +33,7 @@ import {
 } from "@microsoft/fluid-sequence";
 import { clamp, emptyArray } from "../util";
 import { IHTMLAttributes } from "../util/attr";
-import { Tag } from "../util/tag";
+
 import { debug } from "./debug";
 import { SegmentSpan } from "./segmentspan";
 
@@ -70,7 +70,6 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
         return DocSegmentKind.text;
     } else if (Marker.is(segment)) {
         const markerType = segment.refType;
-        /* eslint-disable @typescript-eslint/indent */
         switch (markerType) {
             case ReferenceType.Tile:
             case ReferenceType.Tile | ReferenceType.NestBegin:
@@ -88,7 +87,6 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
                 assert.strictEqual(segment.getRangeLabels()[0], DocSegmentKind.beginTags, `Unknown refType '${markerType}'.`);
                 return DocSegmentKind.endTags;
         }
-        /* eslint-disable @typescript-eslint/indent */
     }
 };
 
@@ -134,7 +132,7 @@ export class FlowDocument extends PrimedComponent {
         return this.sharedString.getLength();
     }
 
-    private static readonly paragraphProperties = Object.freeze({ [reservedTileLabelsKey]: [DocSegmentKind.paragraph, DocTile.checkpoint], tag: Tag.p });
+    private static readonly paragraphProperties = Object.freeze({ [reservedTileLabelsKey]: [DocSegmentKind.paragraph, DocTile.checkpoint], tag: TagName.p });
     private static readonly lineBreakProperties = Object.freeze({ [reservedTileLabelsKey]: [DocSegmentKind.lineBreak, DocTile.checkpoint] });
     private static readonly inclusionProperties = Object.freeze({ [reservedTileLabelsKey]: [DocSegmentKind.inclusion, DocTile.checkpoint] });
     private static readonly tagsProperties = Object.freeze({
@@ -254,6 +252,7 @@ export class FlowDocument extends PrimedComponent {
                     break;
                 }
                 default:
+                    break;
             }
             return true;
         }, start, end);
@@ -272,7 +271,7 @@ export class FlowDocument extends PrimedComponent {
         });
     }
 
-    public insertParagraph(position: number, tag?: Tag) {
+    public insertParagraph(position: number, tag?: TagName) {
         debug(`insertParagraph(${position})`);
         this.sharedString.insertMarker(position, ReferenceType.Tile, Object.freeze({ ...FlowDocument.paragraphProperties, tag }));
     }
@@ -289,7 +288,7 @@ export class FlowDocument extends PrimedComponent {
         }));
     }
 
-    public setFormat(position: number, tag: Tag) {
+    public setFormat(position: number, tag: TagName) {
         const { start } = this.findParagraph(position);
 
         // If inside an existing paragraph marker, update it with the new formatting tag.
@@ -306,7 +305,7 @@ export class FlowDocument extends PrimedComponent {
         this.insertParagraph(start, tag);
     }
 
-    public insertTags(tags: Tag[], start: number, end = start) {
+    public insertTags(tags: TagName[], start: number, end = start) {
         const ops = [];
         const id = randomId();
 
@@ -432,7 +431,6 @@ export class FlowDocument extends PrimedComponent {
         const s: string[] = [];
         this.visitRange((position, segment) => {
             const kind = getDocSegmentKind(segment);
-            /* eslint-disable @typescript-eslint/indent */
             switch (kind) {
                 case DocSegmentKind.text:
                     s.push((segment as TextSegment).text);
@@ -452,7 +450,6 @@ export class FlowDocument extends PrimedComponent {
                 default:
                     s.push(kind);
             }
-            /* eslint-enable @typescript-eslint/indent */
             return true;
         });
         return s.join("");

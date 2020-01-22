@@ -54,7 +54,7 @@ export class BrowserContainerHost {
 
         // Trigger initial resize due to attach
         this.resize();
-        this.resize(); // have to resize twice because we get a weird bounding rect the first time, not sure why
+        this.resize(); // Have to resize twice because we get a weird bounding rect the first time, not sure why
     }
 
     private resize() {
@@ -63,11 +63,10 @@ export class BrowserContainerHost {
         if (this.parent) {
             clientRect = this.parent.getBoundingClientRect();
             newSize = Rectangle.fromClientRect(clientRect);
-            // assume parent div is containing block and we want to render at its top-leftmost
+            // Assume parent div is containing block and we want to render at its top-leftmost
             newSize.x = 0;
             newSize.y = 0;
 
-            // tslint:disable: strict-boolean-expressions
             const borderWidth = (parseFloat(this.parent.style.borderLeftWidth) || 0)
                 + (parseFloat(this.parent.style.borderRightWidth) || 0);
             const borderHeight = (parseFloat(this.parent.style.borderTopWidth) || 0)
@@ -83,7 +82,7 @@ export class BrowserContainerHost {
     }
 }
 
-// export default class BackBoard extends ui.Component {
+// Export default class BackBoard extends ui.Component {
 //     public myNameIs: string = "BackBoard Instance";
 //     public pointerId: number = -1;
 //     private gesture: MSGesture;
@@ -91,10 +90,8 @@ export class BrowserContainerHost {
 //     constructor(element: HTMLDivElement, private appObject: Canvas, htmlId: string) {
 //       super(element);
 
-//       // tslint:disable-next-line:no-string-literal
 //       this.element["sysObject"] = this;
 
-//       // tslint:disable-next-line:no-string-literal
 //       if (window["MSGesture"]) {
 //         this.gesture = new MSGesture();
 //         this.gesture.target = this.element;
@@ -107,7 +104,6 @@ export class BrowserContainerHost {
 //     }
 
 //     public eventListener(evt) {
-//       // tslint:disable-next-line:no-string-literal
 //       let so = this["sysObject"];
 //       if (so === undefined) {
 //         // how did we get here?

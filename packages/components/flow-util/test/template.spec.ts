@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable:no-import-side-effect
-// tslint:disable:no-submodule-imports
-// tslint:disable:object-literal-sort-keys
+/* eslint-disable import/no-unassigned-import, import/no-internal-modules */
 import "jsdom-global/register";
 import "mocha";
 import { Template } from "../src/template";
@@ -16,10 +14,10 @@ describe("", () => {
             tag: "span",
             props: { textContent: "0" },
             children: [
-                { tag: "span", ref: "0", props: { textContent: "00" }},
-                { tag: "span", ref: "1", props: { textContent: "01" }},
-                { tag: "span", ref: "2", props: { textContent: "02" }},
-                { tag: "span", ref: "3", props: { textContent: "03" }},
+                { tag: "span", ref: "0", props: { textContent: "00" } },
+                { tag: "span", ref: "1", props: { textContent: "01" } },
+                { tag: "span", ref: "2", props: { textContent: "02" } },
+                { tag: "span", ref: "3", props: { textContent: "03" } },
             ],
         });
 

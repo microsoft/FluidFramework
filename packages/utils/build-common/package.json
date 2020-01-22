@@ -7,15 +7,25 @@
   "author": "Microsoft",
   "sideEffects": "false",
   "scripts": {
-    "build": "echo Skipping @microsoft/fluid-build-common: No build steps necessary."
+    "build": "npm run noop",
+    "eslint": "npm run noop",
+    "eslint:fix": "npm run noop",
+    "noop": "echo Skipping @microsoft/fluid-build-common: No source steps necessary."
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^2.9.0",
-    "@typescript-eslint/eslint-plugin-tslint": "^2.9.0",
-    "@typescript-eslint/parser": "^2.9.0",
-    "eslint": "^6.7.1",
+    "@typescript-eslint/eslint-plugin": "~2.17.0",
+    "@typescript-eslint/eslint-plugin-tslint": "~2.16.0",
+    "@typescript-eslint/parser": "~2.17.0",
+    "eslint": "~6.8.0",
+    "eslint-plugin-eslint-comments": "~3.1.2",
+    "eslint-plugin-import": "~2.20.0",
+    "eslint-plugin-no-null": "~1.0.2",
+    "eslint-plugin-optimize-regex": "~1.1.7",
+    "eslint-plugin-prefer-arrow": "~1.1.7",
+    "eslint-plugin-react": "~7.18.0",
+    "eslint-plugin-unicorn": "~15.0.1",
     "tslint": "^5.20.0",
     "tslint-microsoft-contrib": "^6.0.0",
-    "typescript": "~3.4.5"
+    "typescript": "~3.7.4"
   }
 }

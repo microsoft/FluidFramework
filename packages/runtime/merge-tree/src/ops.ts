@@ -3,22 +3,20 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable:no-bitwise
-// tslint:disable:ban-types
 export enum ReferenceType {
-    Simple =        0x0,
-    Tile =          0x1,
-    NestBegin =     0x2,
-    NestEnd =       0x4,
-    RangeBegin =    0x10,
-    RangeEnd =      0x20,
+    Simple = 0x0,
+    Tile = 0x1,
+    NestBegin = 0x2,
+    NestEnd = 0x4,
+    RangeBegin = 0x10,
+    RangeEnd = 0x20,
     SlideOnRemove = 0x40,
-    Transient =     0x100,
+    Transient = 0x100,
 }
 
 export enum IntervalType {
     Simple = 0x0,
-    Nest =    0x1,
+    Nest = 0x1,
     SlideOnRemove = 0x2,
     Transient = 0x4,
 }
@@ -33,10 +31,10 @@ export interface IComponentDef {
 
 // Note: Assigned positive integers to avoid clashing with MergeTreeMaintenanceType
 export const enum MergeTreeDeltaType {
-    INSERT      = 0,
-    REMOVE      = 1,
-    ANNOTATE    = 2,
-    GROUP       = 3,
+    INSERT = 0,
+    REMOVE = 1,
+    ANNOTATE = 2,
+    GROUP = 3,
 }
 
 export interface IMergeTreeDelta {
@@ -98,7 +96,7 @@ export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
     relativePos1?: IRelativePosition;
     pos2?: number;
     relativePos2?: IRelativePosition;
-    props: Object;
+    props: Record<string, any>;
     combiningOp?: ICombiningOp;
 }
 
@@ -108,7 +106,7 @@ export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
 }
 
 export interface IJSONSegment {
-    props?: Object;
+    props?: Record<string, any>;
 }
 
 /**
@@ -138,13 +136,13 @@ export type IMergeTreeOp = IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMergeTre
 export interface MergeTreeChunk {
     chunkStartSegmentIndex: number;
     chunkSegmentCount: number;
-    // back-compat name: change to chunkSequenceLength
+    // Back-compat name: change to chunkSequenceLength
     chunkLengthChars: number;
-    // back-compat name: change to totalSequenceLength
+    // Back-compat name: change to totalSequenceLength
     totalLengthChars: number;
     totalSegmentCount: number;
     chunkSequenceNumber: number;
     chunkMinSequenceNumber?: number;
-    // back-compat name: change to segments
+    // Back-compat name: change to segments
     segmentTexts: (IJSONSegment | IJSONSegmentWithMergeInfo)[];
 }

@@ -33,14 +33,14 @@ import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 //         : [];
 
 //     const blobManager = new BlobManager(storage);
-//     // tslint:disable-next-line:no-floating-promises
+//     // eslint-disable-next-line @typescript-eslint/no-floating-promises
 //     blobManager.loadBlobMetadata(blobs);
 
 //     return blobManager;
 // }
 
 // case MessageType.BlobUploaded:
-//     // tslint:disable-next-line:no-floating-promises
+//     // eslint-disable-next-line @typescript-eslint/no-floating-promises
 //     this.blobManager!.addBlob(message.contents);
 //     this.emit(MessageType.BlobUploaded, message.contents);
 //     break;
@@ -64,9 +64,7 @@ export class BlobManager implements IBlobManager {
 
     public getBlobMetadata(): IGenericBlob[] {
         const blobs = [... this.blobs.values()];
-        return blobs.map((value) => {
-            return value;
-        });
+        return blobs.map((value) => value);
     }
 
     public async getBlob(blobId: string): Promise<IGenericBlob | undefined> {
@@ -90,8 +88,8 @@ export class BlobManager implements IBlobManager {
     public async createBlob(blob: IGenericBlob): Promise<IGenericBlob> {
         const response = await this.storage.createBlob(blob.content);
 
-        /* tslint:disable:no-object-literal-type-assertion */
         // Remove blobContent
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         const blobMetaData = {
             fileName: blob.fileName,
             id: response.id,
@@ -105,6 +103,7 @@ export class BlobManager implements IBlobManager {
 
     public async updateBlob(blob: IGenericBlob): Promise<void | null> {
         // TODO: Issue-2170 Implement updateBlob and removeBlob
+        // eslint-disable-next-line no-null/no-null
         return null;
     }
 
@@ -129,8 +128,9 @@ export function instantiateComponent(context: IComponentContext): void {
         context,
         modules,
         (runtime) => {
-            runtime.registerRequestHandler(async (request: IRequest) => {
-                return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
-            });
+            runtime.registerRequestHandler(
+                async (request: IRequest) => (
+                    { status: 404, mimeType: "text/plain", value: `${request.url} not found` }
+                ));
         });
 }

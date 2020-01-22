@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import {
     IComponent,
     IComponentHandle,
@@ -13,14 +14,16 @@ import {
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
-import { EventEmitter } from "events";
 
 import { ComponentHandle } from "@microsoft/fluid-component-runtime";
 
+import { serviceRoutePathRoot } from "../helpers";
+
 /**
- * This is as bare-bones base class that does basic setup and enables for factory on an initialize call.
+ * This is a bare-bones base class that does basic setup and enables for factory on an initialize call.
  * You probably don't want to inherit from this component directly unless you are creating another base component class
  */
+// eslint-disable-next-line max-len
 export abstract class SharedComponent extends EventEmitter implements IComponentLoadable, IComponentRouter, IProvideComponentHandle {
     private initializeP: Promise<void> | undefined;
     private readonly innerHandle: IComponentHandle;
@@ -101,11 +104,11 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     }
 
     /**
-     * Internal initialize implementation. Overwriting this will change the flow of the SharedComponent and should generally
-     * not be done.
+     * Internal initialize implementation. Overwriting this will change the flow of the SharedComponent and should
+     * generally not be done.
      *
-     * Calls componentInitializingFirstTime, componentInitializingFromExisting, and componentHasInitialized.
-     * Caller is responsible for ensuring this is only invoked once.
+     * Calls componentInitializingFirstTime, componentInitializingFromExisting, and componentHasInitialized. Caller is
+     * responsible for ensuring this is only invoked once.
      */
     protected async initializeInternal(props?: any): Promise<void> {
         if (!this.runtime.existing) {
@@ -144,6 +147,18 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
         const request = {
             headers: [[wait]],
             url: `/${id}`,
+        };
+
+        return this.asComponent(this.context.hostRuntime.request(request));
+    }
+
+    /**
+     * Gets the service at a given id.
+     * @param id - service id
+     */
+    protected async getService<T>(id: string): Promise<T> {
+        const request = {
+            url:`/${serviceRoutePathRoot}/${id}`,
         };
 
         return this.asComponent(this.context.hostRuntime.request(request));

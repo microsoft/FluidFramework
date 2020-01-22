@@ -20,7 +20,7 @@ export class RateLimiter {
     }
 
     /**
-     * filter out the messages that had already been requested within the time window
+     * Filter out the messages that had already been requested within the time window
      *
      * @param clientId - the clientId who want to send the message
      * @param messages - the message we want to send

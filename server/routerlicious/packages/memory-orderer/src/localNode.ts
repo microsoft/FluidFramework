@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
+import { EventEmitter } from "events";
 import { IDocumentMessage, IServiceConfiguration } from "@microsoft/fluid-protocol-definitions";
 import {
     IDatabaseManager,
@@ -14,11 +16,9 @@ import {
     ITenantManager,
     IWebSocketServer,
 } from "@microsoft/fluid-server-services-core";
-import * as assert from "assert";
-import { EventEmitter } from "events";
 import * as _ from "lodash";
 import * as moniker from "moniker";
-// tslint:disable-next-line:no-submodule-imports
+// eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
 import { debug } from "./debug";
 import { IConcreteNode, IConnectedMessage, IConnectMessage, INodeMessage, IOpMessage } from "./interfaces";
@@ -30,7 +30,7 @@ import { Socket } from "./socket";
 
 const DefaultServiceConfiguration: IServiceConfiguration = {
     blockSize: 64436,
-    maxMessageSize:  16 * 1024,
+    maxMessageSize: 16 * 1024,
     summary: {
         idleTime: 5000,
         maxOps: 1000,
@@ -147,20 +147,20 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         return true;
     }
 
-    private webSocketServer: IWebSocketServer;
-    private orderMap = new Map<string, LocalOrderer>();
-    private connectionMap = new Map<number, IOrdererConnection>();
+    private readonly webSocketServer: IWebSocketServer;
+    private readonly orderMap = new Map<string, LocalOrderer>();
+    private readonly connectionMap = new Map<number, IOrdererConnection>();
 
     private constructor(
-        private webSocketServerFactory: () => IWebSocketServer,
+        private readonly webSocketServerFactory: () => IWebSocketServer,
         private node: INode,
-        private storage: IDocumentStorage,
-        private databaseManager: IDatabaseManager,
-        private timeoutLength: number,
-        private taskMessageSender: ITaskMessageSender,
-        private tenantManager: ITenantManager,
-        private permission: any,
-        private maxMessageSize: number) {
+        private readonly storage: IDocumentStorage,
+        private readonly databaseManager: IDatabaseManager,
+        private readonly timeoutLength: number,
+        private readonly taskMessageSender: ITaskMessageSender,
+        private readonly tenantManager: ITenantManager,
+        private readonly permission: any,
+        private readonly maxMessageSize: number) {
         super();
 
         // Schedule the first heartbeat to update the reservation
@@ -194,7 +194,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
                         // on receiving a message
                         this.connectionMap.set(message.cid, connection);
 
-                        // emit connected message
+                        // Emit connected message
                         const connected: IConnectedMessage = {
                             clientId: connection.clientId,
                             existing: connection.existing,
@@ -223,6 +223,9 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
                         connection.order([orderMessage]);
                         break;
                     }
+
+                    default:
+                        break;
                 }
             });
         });
@@ -274,7 +277,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
                         this.timeoutLength);
                     updateP.then(
                         (newNode) => {
-                            // debug(`Successfully renewed expiration for ${this.node._id}`);
+                            // Debug(`Successfully renewed expiration for ${this.node._id}`);
                             this.node = newNode;
                             this.scheduleHeartbeat();
                         },

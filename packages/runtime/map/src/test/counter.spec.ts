@@ -5,8 +5,8 @@
 
 // tslint:disable: newline-per-chained-call
 // tslint:disable: no-backbone-get-set-outside-model
-import { MockRuntime } from "@microsoft/fluid-test-runtime-utils";
 import * as assert from "assert";
+import { MockRuntime } from "@microsoft/fluid-test-runtime-utils";
 import * as map from "../";
 
 describe("Routerlicious", () => {

@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import * as childProcess from "child_process";
+import * as path from "path";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { ILoader } from "@microsoft/fluid-container-definitions";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { ISharedString } from "@microsoft/fluid-sequence";
-import * as childProcess from "child_process";
-import * as path from "path";
 import * as author from "./author";
 
 function setParagraphs(chunks: string[], sharedString: ISharedString) {
@@ -67,6 +67,7 @@ async function conductor(
     });
 
     if (processes === 1) {
+        // eslint-disable-next-line no-return-await
         return await author.typeFile(
             loader,
             url,
@@ -81,7 +82,7 @@ async function conductor(
 
     const interval = setInterval(() => {
         const args = [docId, intervalTime, chunks.length, process];
-        childProcess.fork(__dirname + path.sep + "author.js", args);
+        childProcess.fork(`${__dirname + path.sep}author.js`, args);
         if (process >= processes) {
             clearInterval(interval);
         }
