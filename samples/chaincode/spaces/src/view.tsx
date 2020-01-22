@@ -2,8 +2,6 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable import/no-internal-modules */
-/* eslint-disable import/no-unassigned-import */
 
 import { EmbeddedComponent } from "@microsoft/fluid-aqueduct-react";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
@@ -25,8 +23,8 @@ interface IEmbeddedComponentWrapperState {
 }
 
 /**
- * This wrapper handles the async-ness of loading a component. This ideally shouldn't be here but is here for now to unblock me
- * not knowing how to use EmbeddedComponent
+ * This wrapper handles the async-ness of loading a component.
+ * This ideally shouldn't be here but is here for now to unblock me not knowing how to use EmbeddedComponent.
  */
 class EmbeddedComponentWrapper extends React.Component<IEmbeddedComponentWrapperProps, IEmbeddedComponentWrapperState>{
     constructor(props) {
@@ -57,7 +55,8 @@ interface ISpaceGridViewState {
 }
 
 /**
- * The view is a React Component that knows how to interact with a specific data model and doesn't have any dependencies on fluid.
+ * The view is a React Component that knows how to interact with a
+ * specific data model and doesn't have any dependencies on fluid.
  */
 export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceGridViewState> {
     constructor(props) {
@@ -89,7 +88,14 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
         return false;
     }
 
-    onGridChangeEvent(layout: Layout[], oldItem: Layout, newItem: Layout, placeholder: Layout, event: MouseEvent, element: HTMLElement) {
+    onGridChangeEvent(
+        layout: Layout[],
+        oldItem: Layout,
+        newItem: Layout,
+        placeholder: Layout,
+        event: MouseEvent,
+        element: HTMLElement,
+    ) {
         const id = newItem.i.split("_")[0];
         this.props.dataModel.updateGridItem(id, newItem);
     }
@@ -113,7 +119,8 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                 embeddedComponentStyle.opacity = 0.5;
             }
 
-            // We use separate layout from array because using GridLayout without passing in a new layout doesn't trigger a re-render.
+            // We use separate layout from array because using GridLayout
+            // without passing in a new layout doesn't trigger a re-render.
             const key = `${id}`;
             layout.i = key;
             layouts.push(layout);
@@ -151,17 +158,36 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
         return (
             <div>
                 <div style={{ position: "absolute", top: 10, left: 10, zIndex: 1000 }}>
-                    <button id="edit" onClick={() => { this.setState({ editable: !this.state.editable }); }}>Edit: {this.state.editable.toString()}</button>
+                    <button
+                        id="edit"
+                        onClick={() => { this.setState({ editable: !this.state.editable }); }}
+                    >
+                        Edit: {this.state.editable.toString()}
+                    </button>
                     {this.state.editable &&
                         <React.Fragment>
                             <span>
-                                <button onClick={async () => this.props.dataModel.addComponent("clicker", 2, 2)}>Clicker</button>
-                                <button onClick={async () => this.props.dataModel.addComponent("button", 2, 2)}>Button</button>
-                                <button onClick={async () => this.props.dataModel.addComponent("number", 2, 2)}>Number</button>
-                                <button onClick={async () => this.props.dataModel.addComponent("textbox", 9, 6)}>TextBox</button>
-                                <button onClick={async () => this.props.dataModel.addComponent("facepile", 2, 4)}>FacePile</button>
-                                <button onClick={async () => this.props.dataModel.addComponent("codemirror", 12, 8)}>CodeMirror</button>
-                                <button onClick={async () => this.props.dataModel.addComponent("prosemirror", 16, 12)}>ProseMirror</button>
+                                <button onClick={async () => this.props.dataModel.addComponent("clicker", 2, 2)}>
+                                    Clicker
+                                </button>
+                                <button onClick={async () => this.props.dataModel.addComponent("button", 2, 2)}>
+                                    Button
+                                </button>
+                                <button onClick={async () => this.props.dataModel.addComponent("number", 2, 2)}>
+                                    Number
+                                </button>
+                                <button onClick={async () => this.props.dataModel.addComponent("textbox", 9, 6)}>
+                                    TextBox
+                                </button>
+                                <button onClick={async () => this.props.dataModel.addComponent("facepile", 2, 4)}>
+                                    FacePile
+                                </button>
+                                <button onClick={async () => this.props.dataModel.addComponent("codemirror", 12, 8)}>
+                                    CodeMirror
+                                </button>
+                                <button onClick={async () => this.props.dataModel.addComponent("prosemirror", 16, 12)}>
+                                    ProseMirror
+                                </button>
                             </span>
                             <button onClick={() => { this.props.dataModel.saveLayout(); }}>Save Layout</button>
                         </React.Fragment>

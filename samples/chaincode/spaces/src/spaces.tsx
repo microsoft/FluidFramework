@@ -42,7 +42,8 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
 
     protected async componentInitializingFirstTime(props?: any) {
         this.root.createSubDirectory("component-list");
-        this.dataModelInternal = new SpacesDataModel(this.root, this.createAndAttachComponent.bind(this), this.getComponent.bind(this));
+        this.dataModelInternal =
+            new SpacesDataModel(this.root, this.createAndAttachComponent.bind(this), this.getComponent.bind(this));
 
         // Set the saved template if there is a template query param
         const urlParams = new URLSearchParams(window.location.search);
@@ -52,7 +53,8 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
     }
 
     protected async componentInitializingFromExisting() {
-        this.dataModelInternal = new SpacesDataModel(this.root, this.createAndAttachComponent.bind(this), this.getComponent.bind(this));
+        this.dataModelInternal =
+            new SpacesDataModel(this.root, this.createAndAttachComponent.bind(this), this.getComponent.bind(this));
     }
 
     /**
