@@ -5,6 +5,7 @@
 
 import { readFileAsync } from "./common/utils";
 import { Package } from "./npmPackage";
+import { logVerbose } from "./common/logging";
 
 interface DepCheckRecord {
     name: string,
@@ -65,6 +66,7 @@ export class NpmDepChecker {
                     continue;
                 }
                 if (!record.import.test(content) && !record.declare.test(content)) {
+                    logVerbose(`${this.pkg.nameColored}: ${record.name} found in ${tsFile}`);
                     continue;
                 }
                 record.found = true;

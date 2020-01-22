@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IContext, IKafkaMessage, IPartitionLambda } from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
+import { IContext, IQueuedMessage, IPartitionLambda } from "@microsoft/fluid-server-services-core";
 import { IKafkaSubscriber, ILocalOrdererSetup } from "./interfaces";
 import { LocalKafka } from "./localKafka";
 
@@ -38,15 +38,16 @@ export class LocalLambdaController extends EventEmitter implements IKafkaSubscri
             this.emit("started", this.lambda);
 
             if (this.closed) {
-                // close was probably called while starting
+                // Close was probably called while starting
                 this.close();
             }
 
         } catch (ex) {
-            // in the event a lambda fails to start, retry it
+            // In the event a lambda fails to start, retry it
             this.context.error(ex, true);
 
             this.startTimer = setTimeout(() => {
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 this.start();
             }, 5000);
         }
@@ -68,7 +69,7 @@ export class LocalLambdaController extends EventEmitter implements IKafkaSubscri
         this.removeAllListeners();
     }
 
-    public process(message: IKafkaMessage): void {
+    public process(message: IQueuedMessage): void {
         if (!this.lambda) {
             throw new Error("The lambda has not started yet");
         }

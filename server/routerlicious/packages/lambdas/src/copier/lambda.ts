@@ -7,7 +7,7 @@ import {
     extractBoxcar,
     ICollection,
     IContext,
-    IKafkaMessage,
+    IQueuedMessage,
     IPartitionLambda,
     IRawOperationMessage,
     IRawOperationMessageBatch,
@@ -16,15 +16,15 @@ import {
 export class CopierLambda implements IPartitionLambda {
     // Below, one job corresponds to the task of sending one batch to Mongo:
     private pendingJobs = new Map<string, IRawOperationMessageBatch[]>();
-    private pendingOffset: number;
+    private pendingOffset: IQueuedMessage;
     private currentJobs = new Map<string, IRawOperationMessageBatch[]>();
 
     constructor(
-        private rawOpCollection: ICollection<any>,
+        private readonly rawOpCollection: ICollection<any>,
         protected context: IContext) {
     }
 
-    public handler(message: IKafkaMessage): void {
+    public handler(message: IQueuedMessage): void {
         // Extract batch of raw ops from Kafka message:
         const boxcar = extractBoxcar(message);
         const batch = boxcar.contents;
@@ -45,7 +45,7 @@ export class CopierLambda implements IPartitionLambda {
         this.pendingJobs.get(topic).push(submittedBatch);
 
         // Update current offset (will be tied to this batch):
-        this.pendingOffset = message.offset;
+        this.pendingOffset = message;
         this.sendPending();
     }
 
@@ -90,6 +90,7 @@ export class CopierLambda implements IPartitionLambda {
     private async processMongoCore(kafkaBatches: IRawOperationMessageBatch[]): Promise<void> {
         await this.rawOpCollection
             .insertMany(kafkaBatches, false)
+            // eslint-disable-next-line @typescript-eslint/promise-function-async
             .catch((error) => {
                 // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.
                 // All other errors result in a rejected promise.
@@ -97,6 +98,6 @@ export class CopierLambda implements IPartitionLambda {
                     // Needs to be a full rejection here
                     return Promise.reject(error);
                 }
-        });
+            });
     }
 }

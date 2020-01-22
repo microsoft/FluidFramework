@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { ChildLogger, Deferred, fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import { IValueChanged, MapKernel } from "@microsoft/fluid-map";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
@@ -15,7 +16,6 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import { IChannelAttributes, IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
 import { makeHandlesSerializable, parseHandles, SharedObject } from "@microsoft/fluid-shared-object-base";
-import * as assert from "assert";
 import { debug } from "./debug";
 import {
     IntervalCollection,
@@ -24,7 +24,8 @@ import {
 } from "./intervalCollection";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
 import { ISharedIntervalCollection } from "./sharedIntervalCollection";
-// tslint:disable-next-line: no-var-requires no-require-imports no-submodule-imports
+// eslint-disable-next-line max-len
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, import/no-internal-modules
 const cloneDeep = require("lodash/cloneDeep");
 
 const snapshotFileName = "header";
@@ -34,7 +35,7 @@ class ContentObjectStorage implements IObjectStorageService {
     constructor(private readonly storage: IObjectStorageService) {
     }
 
-    /* tslint:disable:promise-function-async */
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public read(path: string): Promise<string> {
         return this.storage.read(`${contentPath}/${path}`);
     }
@@ -57,6 +58,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                     const props = {};
                     for (const key of Object.keys(r.propertyDeltas)) {
                         props[key] =
+                            // eslint-disable-next-line no-null/no-null
                             r.segment.properties[key] === undefined ? null : r.segment.properties[key];
                     }
                     if (lastAnnotate && lastAnnotate.pos2 === r.position &&
@@ -146,6 +148,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                     }
                     break;
                 default:
+                    break;
             }
         });
 
@@ -164,7 +167,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         event: "pre-op" | "op",
         listener: (op: ISequencedDocumentMessage, local: boolean, target: this) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this;
-    // tslint:disable-next-line:no-unnecessary-override
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
     }
@@ -417,19 +419,38 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                 },
 
             ],
+            // eslint-disable-next-line no-null/no-null
             id: null,
         };
 
         return tree;
     }
 
+    /**
+     * Replace the range specified from start to end with the provided segment
+     * This is done by inserting the segment at the end of the range, followed
+     * by removing the contents of the range
+     * For a zero range (start == end), insert at end do not remove anything
+     * For a reverse range (start \> end), insert the segment at the greater of
+     * start/end and allow Client to attempt to remove the range
+     *
+     * @param start - The start of the range to replace
+     * @param end - The end of the range to replace
+     * @param segment - The segment that will replace the range
+     */
     protected replaceRange(start: number, end: number, segment: MergeTree.ISegment) {
-        // insert first, so local references can slide to the inserted seg
-        // if any
-        const insert = this.client.insertSegmentLocal(end, segment);
+        // Insert at the max end of the range when start > end, but still remove the range later
+        const insertIndex: number = Math.max(start, end);
+
+        // Insert first, so local references can slide to the inserted seg if any
+        const insert = this.client.insertSegmentLocal(insertIndex, segment);
         if (insert) {
-            const remove = this.client.removeRangeLocal(start, end);
-            this.submitSequenceMessage(MergeTree.createGroupOp(insert, remove));
+            if (start !== end) {
+                const remove = this.client.removeRangeLocal(start, end);
+                this.submitSequenceMessage(MergeTree.createGroupOp(insert, remove));
+            } else {
+                this.submitSequenceMessage(insert);
+            }
         }
     }
 
@@ -463,11 +484,11 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         const data: string = header ? fromBase64ToUtf8(header) : undefined;
         this.intervalMapKernel.populate(data);
 
-        const loader = this.client.createSnapshotLoader(this.runtime);
         try {
-            const msgs = await loader.initialize(
-                branchId,
-                new ContentObjectStorage(storage));
+            const msgs = await this.client.load(
+                this.runtime,
+                new ContentObjectStorage(storage),
+                branchId);
             msgs.forEach((m) => this.processMergeTreeMsg(m));
             this.loadFinished();
         } catch (error) {
@@ -505,30 +526,17 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         // Are we fully loaded? If not, things will go south
         assert(this.isLoaded);
 
-        const minSeq = this.runtime.deltaManager ? this.runtime.deltaManager.minimumSequenceNumber : 0;
+        const minSeq = this.runtime.deltaManager
+            ? this.runtime.deltaManager.minimumSequenceNumber
+            : 0;
 
-        // Catch up to latest MSN, if we have not had a chance to do it.
-        // Required for case where ComponentRuntime.attachChannel() generates snapshot right after loading component.
-        // Note that we mock runtime in tests and mock does not have deltamanager implementation.
         if (this.runtime.deltaManager) {
             this.processMinSequenceNumberChanged(minSeq);
-            this.client.updateSeqNumbers(minSeq, this.runtime.deltaManager.referenceSequenceNumber);
-
-            // One of the snapshots (from SPO) I observed to have chunk.chunkSequenceNumber > minSeq!
-            // Not sure why - need to catch it sooner
-            assert(this.client.getCollabWindow().minSeq === minSeq);
         }
 
-        const snap = this.client.createSnapshotter();
-        snap.extractSync();
         this.messagesSinceMSNChange.forEach((m) => m.minimumSequenceNumber = minSeq);
-        const mtSnap = snap.emit(
-            this.messagesSinceMSNChange,
-            this.runtime.IComponentSerializer,
-            this.runtime.IComponentHandleContext,
-            this.handle);
 
-        return mtSnap;
+        return this.client.snapshot(this.runtime, this.handle, this.messagesSinceMSNChange);
     }
 
     private processMergeTreeMsg(rawMessage: ISequencedDocumentMessage) {
@@ -539,7 +547,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 
         const ops: MergeTree.IMergeTreeOp[] = [];
         function transfromOps(event: SequenceDeltaEvent) {
-            ops.push(... SharedSegmentSequence.createOpsFromDelta(event));
+            ops.push(...SharedSegmentSequence.createOpsFromDelta(event));
         }
         const needsTransformation = message.referenceSequenceNumber !== message.sequenceNumber - 1;
         let stashMessage = message;
@@ -583,10 +591,10 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     }
 
     private loadFinished(error?: any) {
-        // initialize the interval collections
+        // Initialize the interval collections
         this.initializeIntervalCollections();
         if (error) {
-            this.logger.sendErrorEvent({eventName: "SequenceLoadFailed" }, error);
+            this.logger.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);
             this.loadedDeferred.reject(error);
         } else {
             this.isLoaded = true;

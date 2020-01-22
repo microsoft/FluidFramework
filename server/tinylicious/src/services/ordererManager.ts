@@ -3,8 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { IDocumentAttributes } from "@microsoft/fluid-protocol-definitions";
 import { ILocalOrdererSetup, IPubSub, ISubscriber, LocalOrderer } from "@microsoft/fluid-server-memory-orderer";
-import { IGitManager } from "@microsoft/fluid-server-services-client";
+import {
+    GitManager,
+    Historian,
+    IGitManager,
+} from "@microsoft/fluid-server-services-client";
 import {
     ICollection,
     IDocument,
@@ -12,14 +17,14 @@ import {
     IOrderer,
     IOrdererManager,
     ISequencedOperationMessage,
-} from "@microsoft/fluid-server-services-core";
-import {
+
     IDatabaseManager,
     IDocumentStorage,
     ITaskMessageSender,
     ITenantManager,
 } from "@microsoft/fluid-server-services-core";
-import { IDocumentAttributes } from "@microsoft/fluid-protocol-definitions";
+
+import { normalizePort } from "@microsoft/fluid-server-services-utils";
 import { Server } from "socket.io";
 
 export class LocalOrdererSetup implements ILocalOrdererSetup {
@@ -74,7 +79,7 @@ export class LocalOrdererSetup implements ILocalOrdererSetup {
 }
 
 class LocalPubSub implements IPubSub {
-    constructor(private io: Server) {
+    constructor(private readonly io: Server) {
     }
 
     public subscribe(topic: string, subscriber: ISubscriber) {
@@ -90,16 +95,16 @@ class LocalPubSub implements IPubSub {
 }
 
 export class OrdererManager implements IOrdererManager {
-    private map = new Map<string, Promise<IOrderer>>();
+    private readonly map = new Map<string, Promise<IOrderer>>();
 
     constructor(
-        private storage: IDocumentStorage,
-        private databaseManager: IDatabaseManager,
-        private tenantManager: ITenantManager,
-        private taskMessageSender: ITaskMessageSender,
-        private permission: any, // can probably remove
-        private maxMessageSize: number,
-        private io: Server,
+        private readonly storage: IDocumentStorage,
+        private readonly databaseManager: IDatabaseManager,
+        private readonly tenantManager: ITenantManager,
+        private readonly taskMessageSender: ITaskMessageSender,
+        private readonly permission: any, // Can probably remove
+        private readonly maxMessageSize: number,
+        private readonly io: Server,
     ) {
     }
 
@@ -115,6 +120,19 @@ export class OrdererManager implements IOrdererManager {
     }
 
     private async createLocalOrderer(tenantId: string, documentId: string): Promise<IOrderer> {
+        const port = normalizePort(process.env.PORT || "3000");
+        const url = `http://localhost:${port}/repos/${encodeURIComponent(tenantId)}`;
+
+        const historian = new Historian(url, false, false);
+        const gitManager = new GitManager(historian);
+
+        const localOrdererSetup = new LocalOrdererSetup(
+            tenantId,
+            documentId,
+            this.storage,
+            this.databaseManager,
+            gitManager);
+
         const orderer = await LocalOrderer.load(
             this.storage,
             this.databaseManager,
@@ -124,8 +142,8 @@ export class OrdererManager implements IOrdererManager {
             this.tenantManager,
             this.permission,
             this.maxMessageSize,
-            undefined,
-            new LocalOrdererSetup(tenantId, documentId, this.storage, this.databaseManager, undefined),
+            gitManager,
+            localOrdererSetup,
             new LocalPubSub(this.io));
 
         // This is a temporary hack to work around promise bugs in the LocalOrderer load. The LocalOrderer does not

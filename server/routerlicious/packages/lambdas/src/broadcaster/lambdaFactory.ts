@@ -3,27 +3,31 @@
  * Licensed under the MIT License.
  */
 
-import * as services from "@microsoft/fluid-server-services";
-import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
+import {
+    IContext,
+    IPublisher,
+    IPartitionLambda,
+    IPartitionLambdaFactory,
+} from "@microsoft/fluid-server-services-core";
 import { Provider } from "nconf";
 import { BroadcasterLambda } from "./lambda";
 
 export class BroadcasterLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
-    constructor(private io: services.SocketIoRedisPublisher) {
+    constructor(private readonly publisher: IPublisher) {
         super();
 
-        this.io.on("error", (error) => {
+        this.publisher.on("error", (error) => {
             // After an IO error we need to recreate the lambda
             this.emit("error", error);
         });
     }
 
     public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
-        return new BroadcasterLambda(this.io, context);
+        return new BroadcasterLambda(this.publisher, context);
     }
 
     public async dispose(): Promise<void> {
-        await this.io.close();
+        await this.publisher.close();
     }
 }

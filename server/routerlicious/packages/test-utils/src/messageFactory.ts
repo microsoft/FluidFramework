@@ -14,36 +14,35 @@ import {
 import {
     BoxcarType,
     IBoxcarMessage,
-    IKafkaMessage,
+    IQueuedMessage,
     IRawOperationMessage,
     ISequencedOperationMessage,
     RawOperationType,
     SequencedOperationType,
 } from "@microsoft/fluid-server-services-core";
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 import hash = require("string-hash");
 
 export class KafkaMessageFactory {
-    private offsets: number[] = [];
+    private readonly offsets: number[] = [];
 
     constructor(
         public topic = "test",
         partitions = 1,
-        private stringify = true,
-        private tenantId: string = null,
-        private documentId: string = null) {
+        private readonly stringify = true,
+        private readonly tenantId: string = null,
+        private readonly documentId: string = null) {
         for (let i = 0; i < partitions; i++) {
             this.offsets.push(0);
         }
     }
 
-    public sequenceMessage(value: any, key: string): IKafkaMessage {
+    public sequenceMessage(value: any, key: string): IQueuedMessage {
         const partition = this.getPartition(key);
         const offset = this.offsets[partition]++;
 
-        const kafkaMessage: IKafkaMessage = {
-            highWaterOffset: offset,
-            key,
+        const message: IQueuedMessage = {
             offset,
             partition,
             topic: this.topic,
@@ -57,7 +56,7 @@ export class KafkaMessageFactory {
                 } as IBoxcarMessage),
         };
 
-        return kafkaMessage;
+        return message;
     }
 
     public getHeadOffset(key: string) {
@@ -73,7 +72,7 @@ export class MessageFactory {
     private clientSequenceNumber = 0;
     private sequenceNumber = 0;
 
-    constructor(private documentId, private clientId, private tenantId = "test") {
+    constructor(private readonly documentId, private readonly clientId, private readonly tenantId = "test") {
     }
 
     public createDocumentMessage(referenceSequenceNumber = 0): IDocumentMessage {
@@ -99,7 +98,7 @@ export class MessageFactory {
             detail: {
                 permission: [],
                 scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
-                type: "browser", // back-compat: 0.11 clientType
+                type: "browser", // Back-compat: 0.11 clientType
                 details: {
                     capabilities: { interactive: true },
                 },

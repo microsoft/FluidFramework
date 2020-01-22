@@ -9,9 +9,8 @@ import Axios from "axios";
 export async function getOrCreateRepository(endpoint: string, owner: string, repository: string): Promise<void> {
     console.log(`Get Repo: ${endpoint}/${owner}/${repository}`);
 
-    /* tslint:disable:promise-function-async */
-    /* tslint:disable:no-unsafe-any */
     const details = await Axios.get(`${endpoint}/repos/${owner}/${repository}`)
+        // eslint-disable-next-line @typescript-eslint/promise-function-async, no-null/no-null
         .catch((error) => error.response && error.response.status === 400 ? null : Promise.reject(error));
 
     if (!details) {

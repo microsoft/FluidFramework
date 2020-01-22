@@ -11,9 +11,9 @@ import { ReplayDocumentService } from "./replayDocumentService";
 export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
 
     public static create(
-            from: number,
-            to: number,
-            documentServiceFactory: IDocumentServiceFactory) {
+        from: number,
+        to: number,
+        documentServiceFactory: IDocumentServiceFactory) {
         return new ReplayDocumentServiceFactory(
             documentServiceFactory,
             new ReplayControllerStatic(from, to),
@@ -25,8 +25,8 @@ export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
     public constructor(
         private readonly documentServiceFactory: IDocumentServiceFactory,
         private readonly controller: ReplayController) {
-            this.protocolName = documentServiceFactory.protocolName;
-        }
+        this.protocolName = documentServiceFactory.protocolName;
+    }
 
     /**
      * Creates a replay document service which uses the document service of provided

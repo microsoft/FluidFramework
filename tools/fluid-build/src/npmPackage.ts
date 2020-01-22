@@ -7,6 +7,7 @@ import { queue } from "async";
 import * as chalk from "chalk";
 import * as fs from "fs";
 import * as path from "path";
+import { sortPackageJson } from "sort-package-json";
 import { logStatus, logVerbose } from "./common/logging";
 import { globFn, copyFileAsync, execWithErrorAsync, existsSync, lstatAsync, mkdirAsync, realpathAsync, rimrafWithErrorAsync, unlinkAsync, symlinkAsync, writeFileAsync, ExecAsyncResult } from "./common/utils"
 import { NpmDepChecker } from "./npmDepChecker";
@@ -45,6 +46,7 @@ interface IPackage {
     engines: { node: string; npm: string };
     os: string[];
     cpu: string[];
+    [key: string]: any;
 };
 
 export class Package {
@@ -107,7 +109,7 @@ export class Package {
     }
 
     public get dependencies() {
-        return this.packageJson.dependencies? Object.keys(this.packageJson.dependencies) : [];
+        return this.packageJson.dependencies ? Object.keys(this.packageJson.dependencies) : [];
     }
 
     public get combinedDependencies() {
@@ -126,14 +128,133 @@ export class Package {
         return path.dirname(this.packageJsonFileName);
     }
 
+    private get color() {
+        return Package.chalkColor[this.packageId % Package.chalkColor.length];
+    }
+
     public getScript(name: string): string | undefined {
         return this.packageJson.scripts[name];
     }
 
+    public async cleanNodeModules() {
+        return rimrafWithErrorAsync(path.join(this.directory, "node_modules"), this.nameColored);
+    }
+
+    private async savePackageJson() {
+        return writeFileAsync(this.packageJsonFileName, `${JSON.stringify(sortPackageJson(this.packageJson), undefined, 2)}\n`);
+    }
+
     public async checkScripts() {
+        // Fluid specific
+        const fixed = [this.checkBuildScripts(), this.checkTestCoverageScripts(), this.checkTestSafePromiseRequire(), this.checkMochaTestScripts(), this.checkJestJunitTestEntry()];
+
+        if (fixed.some((bool) => bool)) {
+            await this.savePackageJson();
+        }
+    }
+
+    /**
+     * Verify that all packages with 'test' scripts require the 'make-promises-safe' package, which will cause unhandled
+     * promise rejections to throw errors
+     */
+    public checkTestSafePromiseRequire() {
+        let fixed = false;
+        const pkgstring = "make-promises-safe";
+        const pkgversion = "^5.1.0";
+        const testScript = options.server ? "test" : "test:mocha";
+        if (this.packageJson.scripts && this.packageJson.scripts[testScript] && /(ts-)?mocha/.test(this.packageJson.scripts[testScript]!)) {
+            if (this.packageJson.devDependencies && !this.packageJson.devDependencies[pkgstring]) {
+                console.warn(`${this.nameColored}: warning: missing ${pkgstring} dependency`);
+                if (options.fixScripts) {
+                    this.packageJson.devDependencies[pkgstring] = pkgversion;
+                    fixed = true;
+                }
+            }
+            if (!this.packageJson.scripts[testScript]!.includes(pkgstring)) {
+                if (/(ts-)?mocha/.test(this.packageJson.scripts[testScript]!)) {
+                    console.warn(`${this.nameColored}: warning: no ${pkgstring} require in test script`);
+                    if (options.fixScripts) {
+                        this.packageJson.scripts[testScript] += " -r " + pkgstring;
+                        fixed = true;
+                    }
+                }
+            }
+        }
+
+        return fixed;
+    }
+
+    /**
+     * mocha tests in packages/ should be in a "test:mocha" script so they can be run separately from jest tests
+     */
+    public checkMochaTestScripts() {
+        let fixed = false;
+        if (!options.server && this.packageJson.scripts && this.packageJson.scripts.test && /^(ts-)?mocha/.test(this.packageJson.scripts.test)) {
+            console.warn(`${this.nameColored}: warning: "mocha" in "test" script instead of "test:mocha" script`)
+            if (options.fixScripts) {
+                if (!this.packageJson.scripts["test:mocha"]) {
+                    this.packageJson.scripts["test:mocha"] = this.packageJson.scripts["test"];
+                    this.packageJson.scripts["test"] = "npm run test:mocha";
+                    fixed = true;
+                } else {
+                    console.warn(`${this.nameColored}: couldn't fix: "test" and "test:mocha" scripts both present`)
+                }
+            }
+        }
+
+        return fixed;
+    }
+
+    public checkJestJunitTestEntry() {
+        let fixed = false;
+        const pkgstring = "jest-junit";
+        const pkgversion = "^10.0.0";
+        if (this.packageJson.scripts && this.packageJson.scripts["test:jest"]) {
+            if (!this.packageJson.devDependencies[pkgstring]) {
+                console.warn(`${this.nameColored}: warning: missing ${pkgstring} dependency`);
+                if (options.fixScripts) {
+                    this.packageJson.devDependencies[pkgstring] = pkgversion;
+                    fixed = true;
+                }
+            }
+            if (!this.packageJson["jest-junit"]) {
+                console.warn(`${this.nameColored} warning: no jest-junit entry for jest test`);
+            }
+        }
+
+        return fixed;
+    }
+
+    public checkTestCoverageScripts() {
+        let fixed = false;
+        // Fluid specific
+        const testCoverageScript = this.getScript("test:coverage");
+        if (testCoverageScript && testCoverageScript.startsWith("nyc")) {
+            if (!this.packageJson.devDependencies.nyc) {
+                console.warn(`${this.nameColored}: warning: missing nyc dependency`);
+            }
+            if (this.packageJson.nyc) {
+                if (this.packageJson.nyc["exclude-after-remap"] !== false) {
+                    console.warn(`${this.nameColored}: warning: nyc.exclude-after-remap need to be false`);
+                    if (options.fixScripts) {
+                        this.packageJson.nyc["exclude-after-remap"] = false;
+                        fixed = true;
+                    }
+                }
+            } else {
+                console.warn(`${this.nameColored}: warning: missing nyc configuration`);
+            }
+        }
+
+        return fixed;
+    }
+
+    public checkBuildScripts() {
+        // Fluid specific
+        let fixed = false;
         const buildScript = this.getScript("build");
         if (buildScript) {
-            if (buildScript.startsWith("echo ")) {
+            if (buildScript.startsWith("echo ") || buildScript === "npm run noop") {
                 return;
             }
             // These are script rules in the FluidFramework repo
@@ -192,7 +313,6 @@ export class Package {
                 return;
             }
 
-            let fixed = false;
             const check = (scriptName: string, parts: string[], prefix = "") => {
                 const expected = prefix +
                     (parts.length > 1 ? `concurrently npm:${parts.join(" npm:")}` : `npm run ${parts[0]}`);
@@ -215,13 +335,12 @@ export class Package {
             if (!this.getScript("clean")) {
                 console.warn(`${this.nameColored}: warning: package has "build" script without "clean" script`);
             }
-
-            if (fixed) {
-                await this.savePackageJson();
-            }
         }
+        return fixed;
     }
+
     public async depcheck() {
+        // Fluid specific
         let checkFiles: string[];
         if (this.packageJson.dependencies) {
             const tsFiles = await globFn(`${this.directory}/**/*.ts`, { ignore: `${this.directory}/node_modules` });
@@ -237,19 +356,8 @@ export class Package {
         }
     }
 
-    private async savePackageJson() {
-        return writeFileAsync(this.packageJsonFileName, `${JSON.stringify(this.packageJson, undefined, 2)}\n`);
-    }
-
-    private get color() {
-        return Package.chalkColor[this.packageId % Package.chalkColor.length];
-    }
-
-    public async cleanNodeModules() {
-        return rimrafWithErrorAsync(path.join(this.directory, "node_modules"), this.nameColored);
-    }
-
     public async noHoistInstall(repoRoot: string) {
+        // Fluid specific
         const rootNpmRC = path.join(repoRoot, ".npmrc")
         const npmRC = path.join(this.directory, ".npmrc");
         const npmCommand = "npm i --no-package-lock --no-shrinkwrap";
@@ -262,6 +370,7 @@ export class Package {
     }
 
     public async symlink(buildPackages: Map<string, Package>) {
+        // Fluid specific
         for (const dep of this.combinedDependencies) {
             const depBuildPackage = buildPackages.get(dep);
             if (depBuildPackage) {
@@ -271,7 +380,7 @@ export class Package {
                     if (existsSync(symlinkPath)) {
                         const stat = await lstatAsync(symlinkPath);
                         if (!stat.isSymbolicLink || await realpathAsync(symlinkPath) !== depBuildPackage.directory) {
-                            if (stat.isDirectory) {
+                            if (stat.isDirectory()) {
                                 await rimrafWithErrorAsync(symlinkPath, this.nameColored);
                             } else {
                                 await unlinkAsync(symlinkPath);
@@ -295,10 +404,30 @@ export class Package {
     }
 };
 
-interface PackageTaskExec<T> {
-    pkg: Package;
-    resolve: (result: T) => void;
+interface TaskExec<TItem, TResult> {
+    item: TItem;
+    resolve: (result: TResult) => void;
 };
+
+async function queueExec<TItem, TResult>(items: Iterable<TItem>, exec: (item: TItem) => Promise<TResult>, messageCallback?: (item: TItem) => string) {
+    let numDone = 0;
+    const timedExec = messageCallback ? async (item: TItem) => {
+        const startTime = Date.now();
+        const result = await exec(item);
+        const elapsedTime = (Date.now() - startTime) / 1000;
+        logStatus(`[${++numDone}/${p.length}] ${messageCallback(item)} - ${elapsedTime.toFixed(3)}s`);
+        return result;
+    } : exec;
+    const q = queue(async (taskExec: TaskExec<TItem, TResult>, callback) => {
+        taskExec.resolve(await timedExec(taskExec.item));
+        callback();
+    }, options.concurrency);
+    const p: Promise<TResult>[] = [];
+    for (const item of items) {
+        p.push(new Promise<TResult>(resolve => q.push({ item, resolve })));
+    }
+    return Promise.all(p);
+}
 
 export class Packages {
 
@@ -351,20 +480,8 @@ export class Packages {
     }
 
     private async queueExecOnAllPackageCore<TResult>(exec: (pkg: Package) => Promise<TResult>, message?: string) {
-        let numDone = 0;
-        const timedExec = message ? async (pkg: Package) => {
-            const startTime = Date.now();
-            const result = await exec(pkg);
-            const elapsedTime = (Date.now() - startTime) / 1000;
-            logStatus(`[${++numDone}/${p.length}] ${pkg.nameColored}: ${message} - ${elapsedTime.toFixed(3)}s`);
-            return result;
-        } : exec;
-        const q = queue(async (taskExec: PackageTaskExec<TResult>, callback) => {
-            taskExec.resolve(await timedExec(taskExec.pkg));
-            callback();
-        }, options.concurrency);
-        const p = this.packages.map(pkg => new Promise<TResult>(resolve => q.push({ pkg, resolve })));
-        return Promise.all(p);
+        const messageCallback = message ? (pkg: Package) => ` ${pkg.nameColored}: ${message}` : undefined;
+        return queueExec(this.packages, exec, messageCallback);
     }
 
     private async queueExecOnAllPackage(exec: (pkg: Package) => Promise<ExecAsyncResult>, message?: string) {

@@ -3,25 +3,22 @@
  * Licensed under the MIT License.
  */
 
+import * as fs from "fs";
 import {
     ISequencedDocumentMessage,
 } from "@microsoft/fluid-protocol-definitions";
-import * as fs from "fs";
-
-// tslint:disable:non-literal-fs-path
 
 function printUsage() {
     console.log("Usage:");
     console.log("   Sanitize <input>");
     console.log("Where");
-    console.log ("  <input> - file path to message.json - file downloaded by FluidFetch tool");
+    console.log("  <input> - file path to message.json - file downloaded by FluidFetch tool");
     process.exit(-1);
 }
 
 function replaceTextCore(len: number): string {
     let str = "";
     while (str.length < len) {
-        // tslint:disable-next-line:insecure-random
         str = str + Math.random().toString(36).substring(2);
     }
     return str.substr(0, len);
@@ -48,7 +45,6 @@ function replaceName(input?: string): string {
     return replaceTextCore(15);
 }
 
-// tslint:disable:no-unsafe-any
 function fixContents(messageContents: any) {
     if (!messageContents ||
         !messageContents.contents ||
@@ -81,7 +77,7 @@ function fixContents(messageContents: any) {
 }
 
 function DoStuff() {
-    const input = fs.readFileSync(process.argv[2], {encoding : "utf-8"});
+    const input = fs.readFileSync(process.argv[2], { encoding: "utf-8" });
     const messages = JSON.parse(input) as ISequencedDocumentMessage[];
 
     let seq = 0;

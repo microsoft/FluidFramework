@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { AxiosError, AxiosInstance, AxiosRequestConfig, default as Axios } from "axios";
 import * as querystring from "querystring";
+import { AxiosError, AxiosInstance, AxiosRequestConfig, default as Axios } from "axios";
 import { debug } from "./debug";
 
 export class RestWrapper {
     constructor(
-        private baseurl?: string,
-        private defaultHeaders?: {},
-        private defaultQueryString?: {},
-        private cacheBust = false,
-        private maxContentLength = 1000 * 1024 * 1024,
-        private axios: AxiosInstance = Axios) {
+        private readonly baseurl?: string,
+        private readonly defaultHeaders?: {},
+        private readonly defaultQueryString?: {},
+        private readonly cacheBust = false,
+        private readonly maxContentLength = 1000 * 1024 * 1024,
+        private readonly axios: AxiosInstance = Axios) {
     }
 
     public async get<T>(url: string, queryString?: {}, headers?: {}): Promise<T> {
@@ -71,7 +71,7 @@ export class RestWrapper {
         const response = await this.axios.request<T>(options)
             .catch(async (error: AxiosError) => {
                 if (error && error.config) {
-                    // tslint:disable-next-line:max-line-length
+                    // eslint-disable-next-line max-len
                     debug(`[${error.config.method}] request to [${error.config.url}] failed with [${error.code}] [${error.message}]`);
                 } else {
                     debug(`request to ${options.url} failed ${error ? error.message : ""}`);

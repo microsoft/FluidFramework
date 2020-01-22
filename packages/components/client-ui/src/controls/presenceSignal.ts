@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentRuntime, IInboundSignalMessage } from "@microsoft/fluid-runtime-definitions";
 import { EventEmitter } from "events";
+import { IComponentRuntime, IInboundSignalMessage } from "@microsoft/fluid-runtime-definitions";
 
 const presenceKey = "presence";
 
 export class PresenceSignal extends EventEmitter {
-    constructor(private runtime: IComponentRuntime) {
+    constructor(private readonly runtime: IComponentRuntime) {
         super();
         this.listenForPresence();
     }

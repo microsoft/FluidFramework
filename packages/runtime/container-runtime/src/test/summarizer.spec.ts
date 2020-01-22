@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { Deferred, TelemetryNullLogger} from "@microsoft/fluid-core-utils";
 import {
     ISequencedDocumentMessage,
@@ -11,7 +12,6 @@ import {
     ISummaryProposal,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
-import * as assert from "assert";
 import * as sinon from "sinon";
 import { RunningSummarizer } from "../summarizer";
 import { SummaryCollection } from "../summaryCollection";
@@ -98,6 +98,7 @@ describe("Runtime", () => {
                 }
 
                 function emitBroadcast() {
+                    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                     summaryCollection.handleOp({
                         type: MessageType.Summarize,
                         clientId: summarizerClientId,
@@ -118,6 +119,7 @@ describe("Runtime", () => {
                         handle: "test-ack-handle",
                         summaryProposal,
                     };
+                    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                     summaryCollection.handleOp({ contents, type } as ISequencedDocumentMessage);
 
                     await flushPromises(); // let summarize run

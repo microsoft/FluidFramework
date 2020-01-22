@@ -14,11 +14,11 @@ import { INode } from "./orderer";
  */
 export class MongoDatabaseManager implements IDatabaseManager {
     constructor(
-        private mongoManager: MongoManager,
-        private nodeCollectionName: string,
-        private documentsCollectionName: string,
-        private deltasCollectionName: string,
-        private scribeDeltasCollectionName: string) {
+        private readonly mongoManager: MongoManager,
+        private readonly nodeCollectionName: string,
+        private readonly documentsCollectionName: string,
+        private readonly deltasCollectionName: string,
+        private readonly scribeDeltasCollectionName: string) {
     }
 
     public async getNodeCollection(): Promise<ICollection<INode>> {

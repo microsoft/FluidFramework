@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable:no-this-assignment
-
 interface IListenerRegistration {
     target: EventTarget;
     type: string;
@@ -57,16 +55,18 @@ export abstract class View<TInit extends TProps, TProps = {} | undefined> implem
     protected abstract onUpdate(props: Readonly<TProps>): void;
     protected abstract onDetach(): void;
 
+    // eslint-disable-next-line max-len
     protected onDom<K extends keyof HTMLElementEventMap>(target: EventTarget, type: K | string, listener: (ev: HTMLElementEventMap[K]) => any) {
-        const registration: IListenerRegistration = { target, type, listener };
+        const eventListener = listener as EventListener;
+        const registration: IListenerRegistration = { target, type, listener: eventListener };
         const listeners = this.listeners;
 
         if (listeners === undefined) {
-            this.listeners = [ registration ];
+            this.listeners = [registration];
         } else {
             listeners.push(registration);
         }
 
-        target.addEventListener(type, listener);
+        target.addEventListener(type, eventListener);
     }
 }

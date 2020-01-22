@@ -3,160 +3,161 @@
  * Licensed under the MIT License.
  */
 
-import * as React from 'react';
-import { IFacepileProps, Facepile, OverflowButtonType , IFacepilePersona } from 'office-ui-fabric-react/lib/Facepile';
-import { Dropdown, IDropdownOption } from 'office-ui-fabric-react/lib/Dropdown';
-import { Slider } from 'office-ui-fabric-react/lib/Slider';
-
-import { PersonaInitialsColor } from 'office-ui-fabric-react/lib/Persona';
+import * as React from "react";
+/* eslint-disable import/no-internal-modules */
+import { IFacepileProps, Facepile, OverflowButtonType, IFacepilePersona } from "office-ui-fabric-react/lib/Facepile";
+import { Dropdown, IDropdownOption } from "office-ui-fabric-react/lib/Dropdown";
+import { Slider } from "office-ui-fabric-react/lib/Slider";
+import { PersonaInitialsColor } from "office-ui-fabric-react/lib/Persona";
+/* eslint-enable import/no-internal-modules */
 
 export const facepilePersonas: IFacepilePersona[] = [
     {
         imageUrl: "https://static2.sharepointonline.com/files/fabric/office-ui-fabric-react-assets/persona-female.png",
-        personaName: 'Annie Lindqvist',
-        data: '50%'
+        personaName: "Annie Lindqvist",
+        data: "50%",
     },
     {
         imageUrl: "https://static2.sharepointonline.com/files/fabric/office-ui-fabric-react-assets/persona-female.png",
-        personaName: 'Aaron Reid',
-        data: '$1,000'
+        personaName: "Aaron Reid",
+        data: "$1,000",
     },
     {
-        personaName: 'Alex Lundberg',
-        data: '75%',
+        personaName: "Alex Lundberg",
+        data: "75%",
         onClick: (ev: React.MouseEvent<HTMLElement>, persona: IFacepilePersona) =>
-            alert('You clicked on ' + persona.personaName + '. Extra data: ' + persona.data)
+            alert(`You clicked on ${persona.personaName}. Extra data: ${persona.data}`),
     },
     {
-        personaName: 'Roko Kolar',
-        data: '4 hrs'
+        personaName: "Roko Kolar",
+        data: "4 hrs",
     },
     {
-        imageInitials: 'CB',
-        personaName: 'Christian Bergqvist',
+        imageInitials: "CB",
+        personaName: "Christian Bergqvist",
         initialsColor: PersonaInitialsColor.green,
-        data: '25%'
+        data: "25%",
     },
     {
         imageUrl: "https://static2.sharepointonline.com/files/fabric/office-ui-fabric-react-assets/persona-female.png",
-        imageInitials: 'VL',
-        personaName: 'Valentina Lovric',
+        imageInitials: "VL",
+        personaName: "Valentina Lovric",
         initialsColor: PersonaInitialsColor.lightBlue,
-        data: 'Emp1234',
+        data: "Emp1234",
         onClick: (ev: React.MouseEvent<HTMLElement>, persona: IFacepilePersona) =>
-            alert('You clicked on ' + persona.personaName + '. Extra data: ' + persona.data)
+            alert(`You clicked on ${persona.personaName}. Extra data: ${persona.data}`),
     },
     {
         imageUrl: "https://static2.sharepointonline.com/files/fabric/office-ui-fabric-react-assets/persona-male.png",
-        imageInitials: 'MS',
-        personaName: 'Maor Sharett',
-        initialsColor: PersonaInitialsColor.lightGreen
+        imageInitials: "MS",
+        personaName: "Maor Sharett",
+        initialsColor: PersonaInitialsColor.lightGreen,
     },
     {
         imageUrl: "https://static2.sharepointonline.com/files/fabric/office-ui-fabric-react-assets/persona-female.png",
-        imageInitials: 'PV',
-        personaName: 'Annie Lindqvist2',
-        initialsColor: PersonaInitialsColor.lightPink
+        imageInitials: "PV",
+        personaName: "Annie Lindqvist2",
+        initialsColor: PersonaInitialsColor.lightPink,
     },
     {
         imageUrl: "https://static2.sharepointonline.com/files/fabric/office-ui-fabric-react-assets/persona-male.png",
-        imageInitials: 'AR',
-        personaName: 'Aaron Reid2',
+        imageInitials: "AR",
+        personaName: "Aaron Reid2",
         initialsColor: PersonaInitialsColor.magenta,
-        data: 'Emp1234',
+        data: "Emp1234",
         onClick: (ev: React.MouseEvent<HTMLElement>, persona: IFacepilePersona) =>
-            alert('You clicked on ' + persona.personaName + '. Extra data: ' + persona.data)
+            alert(`You clicked on ${persona.personaName}. Extra data: ${persona.data}`),
     },
     {
         imageUrl: "https://static2.sharepointonline.com/files/fabric/office-ui-fabric-react-assets/persona-male.png",
-        imageInitials: 'AL',
-        personaName: 'Alex Lundberg2',
-        initialsColor: PersonaInitialsColor.orange
+        imageInitials: "AL",
+        personaName: "Alex Lundberg2",
+        initialsColor: PersonaInitialsColor.orange,
     },
     {
         imageUrl: "https://static2.sharepointonline.com/files/fabric/office-ui-fabric-react-assets/persona-male.png",
-        imageInitials: 'RK',
-        personaName: 'Roko Kolar2',
-        initialsColor: PersonaInitialsColor.pink
+        imageInitials: "RK",
+        personaName: "Roko Kolar2",
+        initialsColor: PersonaInitialsColor.pink,
     },
     {
         imageUrl: "https://static2.sharepointonline.com/files/fabric/office-ui-fabric-react-assets/persona-male.png",
-        imageInitials: 'CB',
-        personaName: 'Christian Bergqvist2',
-        initialsColor: PersonaInitialsColor.purple
+        imageInitials: "CB",
+        personaName: "Christian Bergqvist2",
+        initialsColor: PersonaInitialsColor.purple,
     },
     {
         imageUrl: "https://static2.sharepointonline.com/files/fabric/office-ui-fabric-react-assets/persona-female.png",
-        imageInitials: 'VL',
-        personaName: 'Valentina Lovric2',
-        initialsColor: PersonaInitialsColor.red
+        imageInitials: "VL",
+        personaName: "Valentina Lovric2",
+        initialsColor: PersonaInitialsColor.red,
     },
     {
         imageUrl: "https://static2.sharepointonline.com/files/fabric/office-ui-fabric-react-assets/persona-male.png",
-        imageInitials: 'MS',
-        personaName: 'Maor Sharett2',
-        initialsColor: PersonaInitialsColor.teal
+        imageInitials: "MS",
+        personaName: "Maor Sharett2",
+        initialsColor: PersonaInitialsColor.teal,
     },
     {
         imageUrl: "https://static2.sharepointonline.com/files/fabric/office-ui-fabric-react-assets/persona-female.png",
-        imageInitials: 'VL',
-        personaName: 'Another A Name',
-        initialsColor: PersonaInitialsColor.blue
+        imageInitials: "VL",
+        personaName: "Another A Name",
+        initialsColor: PersonaInitialsColor.blue,
     },
     {
         imageUrl: "https://static2.sharepointonline.com/files/fabric/office-ui-fabric-react-assets/persona-male.png",
-        imageInitials: 'MS',
-        personaName: 'Another A Name (So Many A names!)',
-        initialsColor: PersonaInitialsColor.darkBlue
+        imageInitials: "MS",
+        personaName: "Another A Name (So Many A names!)",
+        initialsColor: PersonaInitialsColor.darkBlue,
     },
     {
         imageUrl: "https://static2.sharepointonline.com/files/fabric/office-ui-fabric-react-assets/persona-female.png",
-        imageInitials: 'VL',
-        personaName: 'Another Anecdotal A Name',
-        initialsColor: PersonaInitialsColor.darkGreen
+        imageInitials: "VL",
+        personaName: "Another Anecdotal A Name",
+        initialsColor: PersonaInitialsColor.darkGreen,
     },
     {
         imageUrl: "https://static2.sharepointonline.com/files/fabric/office-ui-fabric-react-assets/persona-male.png",
-        imageInitials: 'MS',
-        personaName: 'Anerobic A Name',
-        initialsColor: PersonaInitialsColor.darkRed
+        imageInitials: "MS",
+        personaName: "Anerobic A Name",
+        initialsColor: PersonaInitialsColor.darkRed,
     },
     {
         imageUrl: "https://static2.sharepointonline.com/files/fabric/office-ui-fabric-react-assets/persona-female.png",
-        imageInitials: 'VL',
-        personaName: 'Aerobic A Name',
-        initialsColor: PersonaInitialsColor.green
+        imageInitials: "VL",
+        personaName: "Aerobic A Name",
+        initialsColor: PersonaInitialsColor.green,
     },
     {
         imageUrl: "https://static2.sharepointonline.com/files/fabric/office-ui-fabric-react-assets/persona-male.png",
-        imageInitials: 'MS',
-        personaName: 'Maor Sharett2',
-        initialsColor: PersonaInitialsColor.lightBlue
+        imageInitials: "MS",
+        personaName: "Maor Sharett2",
+        initialsColor: PersonaInitialsColor.lightBlue,
     },
     {
         imageUrl: "https://static2.sharepointonline.com/files/fabric/office-ui-fabric-react-assets/persona-female.png",
-        imageInitials: 'VL',
-        personaName: 'Valentina Lovric2',
-        initialsColor: PersonaInitialsColor.lightGreen
+        imageInitials: "VL",
+        personaName: "Valentina Lovric2",
+        initialsColor: PersonaInitialsColor.lightGreen,
     },
     {
         imageUrl: "https://static2.sharepointonline.com/files/fabric/office-ui-fabric-react-assets/persona-male.png",
-        imageInitials: 'MS',
-        personaName: 'Maor Sharett2',
-        initialsColor: PersonaInitialsColor.lightPink
+        imageInitials: "MS",
+        personaName: "Maor Sharett2",
+        initialsColor: PersonaInitialsColor.lightPink,
     },
     {
         imageUrl: "https://static2.sharepointonline.com/files/fabric/office-ui-fabric-react-assets/persona-female.png",
-        imageInitials: 'VL',
-        personaName: 'Valentina Lovric2',
-        initialsColor: PersonaInitialsColor.magenta
+        imageInitials: "VL",
+        personaName: "Valentina Lovric2",
+        initialsColor: PersonaInitialsColor.magenta,
     },
     {
         imageUrl: "https://static2.sharepointonline.com/files/fabric/office-ui-fabric-react-assets/persona-male.png",
-        imageInitials: 'MS',
-        personaName: 'Maor Sharett2',
-        initialsColor: PersonaInitialsColor.orange
-    }
+        imageInitials: "MS",
+        personaName: "Maor Sharett2",
+        initialsColor: PersonaInitialsColor.orange,
+    },
 ];
 
 const facepileProps: IFacepileProps = {
@@ -164,10 +165,10 @@ const facepileProps: IFacepileProps = {
     maxDisplayablePersonas: 5,
     overflowButtonType: OverflowButtonType.downArrow,
     overflowButtonProps: {
-        ariaLabel: 'More users',
-        onClick: (ev: React.MouseEvent<HTMLButtonElement>) => alert('overflow icon clicked')
+        ariaLabel: "More users",
+        onClick: (ev: React.MouseEvent<HTMLButtonElement>) => alert("overflow icon clicked"),
     },
-    ariaDescription: 'To move through the items use left and right arrow keys.'
+    ariaDescription: "To move through the items use left and right arrow keys.",
 };
 
 export interface IFacepileOverflowExampleState {
@@ -181,7 +182,7 @@ export class FacepileOverflowExample extends React.Component<{}, IFacepileOverfl
 
         this.state = {
             displayedPersonas: 5,
-            overflowButtonType: OverflowButtonType.none
+            overflowButtonType: OverflowButtonType.none,
         };
     }
 
@@ -191,9 +192,9 @@ export class FacepileOverflowExample extends React.Component<{}, IFacepileOverfl
         facepileProps.overflowButtonType = overflowButtonType;
 
         return (
-            <div className={'ms-FacepileExample'}>
+            <div className={"ms-FacepileExample"}>
                 <Facepile {...facepileProps} />
-                <div className={'control'}>
+                <div className={"control"}>
                     <Slider
                         label="Number of Personas:"
                         min={1}
@@ -208,9 +209,11 @@ export class FacepileOverflowExample extends React.Component<{}, IFacepileOverfl
                         selectedKey={this.state.overflowButtonType}
                         options={[
                             { key: OverflowButtonType.none, text: OverflowButtonType[OverflowButtonType.none] },
+                            // eslint-disable-next-line max-len
                             { key: OverflowButtonType.descriptive, text: OverflowButtonType[OverflowButtonType.descriptive] },
+                            // eslint-disable-next-line max-len
                             { key: OverflowButtonType.downArrow, text: OverflowButtonType[OverflowButtonType.downArrow] },
-                            { key: OverflowButtonType.more, text: OverflowButtonType[OverflowButtonType.more] }
+                            { key: OverflowButtonType.more, text: OverflowButtonType[OverflowButtonType.more] },
                         ]}
                         onChange={this._onChangeType}
                     />
@@ -219,21 +222,21 @@ export class FacepileOverflowExample extends React.Component<{}, IFacepileOverfl
         );
     }
 
-    private _onChangePersonaNumber = (value: number): void => {
+    private readonly _onChangePersonaNumber = (value: number): void => {
         this.setState(
             (prevState: IFacepileOverflowExampleState): IFacepileOverflowExampleState => {
                 prevState.displayedPersonas = value;
                 return prevState;
-            }
+            },
         );
     };
 
-    private _onChangeType = (event: React.FormEvent<HTMLDivElement>, value: IDropdownOption): void => {
+    private readonly _onChangeType = (event: React.FormEvent<HTMLDivElement>, value: IDropdownOption): void => {
         this.setState(
             (prevState: IFacepileOverflowExampleState): IFacepileOverflowExampleState => {
                 prevState.overflowButtonType = value.key as OverflowButtonType;
                 return prevState;
-            }
+            },
         );
     };
 }

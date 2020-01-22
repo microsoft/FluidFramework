@@ -69,6 +69,7 @@ export class InsecureUrlResolver implements IUrlResolver {
             return response;
         } else {
             const maybeResolvedUrl = this.cache.get(request.url);
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
             if (maybeResolvedUrl) {
                 return maybeResolvedUrl;
             }

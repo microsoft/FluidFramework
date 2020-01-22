@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable:binary-expression-operand-order
 import { ISegment } from "@microsoft/fluid-merge-tree";
 
 export class SegmentSpan {
-    public get segments(): ReadonlyArray<ISegment> { return this._segments; }
+    public get segments(): readonly ISegment[] { return this._segments; }
     public get startOffset() { return this._startOffset; }
     public get startPosition() { return this.firstPosition + this._startOffset; }
     public get endPosition() { return this.lastPosition + Math.min(this._endOffset, this.lastSegment.cachedLength); }
@@ -30,6 +29,7 @@ export class SegmentSpan {
         }
     }
 
+    // eslint-disable-next-line max-len
     public forEach(callback: (position: number, segment: ISegment, startOffset: number, endOffset: number) => boolean | undefined) {
         let startOffset = this._startOffset;
         let position = this.firstPosition;

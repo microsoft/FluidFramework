@@ -10,7 +10,7 @@ import { ISize, Rectangle } from "./geometry";
 
 export abstract class Component {
     protected size = new Rectangle(0, 0, 0, 0);
-    private events = new EventEmitter();
+    private readonly events = new EventEmitter();
     private children: Component[] = [];
 
     constructor(public element: HTMLDivElement) {

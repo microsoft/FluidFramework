@@ -5,109 +5,48 @@
 
 import { Packages } from "./npmPackage";
 import { parseOptions, options } from "./options";
+import { commonOptions } from "./common/commonOptions";
 import { BuildGraph, BuildResult } from "./buildGraph";
-import { LayerGraph } from "./layerGraph";
 import { Timer } from "./common/timer";
 import { logStatus } from "./common/logging";
-import { existsSync, readFileAsync, rimrafWithErrorAsync, execWithErrorAsync } from "./common/utils";
+import { getResolvedFluidRoot } from "./common/fluidUtils";
+import { existsSync, rimrafWithErrorAsync, execWithErrorAsync } from "./common/utils";
 import * as path from "path";
 import chalk from "chalk";
 
-parseOptions(process.argv);
-
-async function isFluidRootLerna(dir: string) {
-    const filename = path.join(dir, "lerna.json");
-    if (!existsSync(filename)) {
-        return false;
-    }
-
-    const content = await readFileAsync(filename, "utf-8");
-    const parsed = JSON.parse(content);
-    if (Array.isArray(parsed.packages) && parsed.packages.length == 1 && parsed.packages[0] === "packages/**") {
-        return true;
-    }
-    return false;
-}
-
-async function isFluidRootPackage(dir: string) {
-    const filename = path.join(dir, "package.json");
-    if (!existsSync(filename)) {
-        return false;
-    }
-
-    const content = await readFileAsync(filename, "utf-8");
-    const parsed = JSON.parse(content);
-    if (parsed.name === "root" && parsed.private === true) {
-        return true;
-    }
-    return false;
-}
-
-async function inferRoot() {
-    let curr = process.cwd();
-    while (true) {
-        try {
-            if (await isFluidRootLerna(curr) && await isFluidRootPackage(curr)) {
-                console.log(`Build fluid repo @ ${curr}`)
-                return curr;
-            }
-        } catch {
-        }
-
-        const up = path.resolve(curr, "..");
-        if (up === curr) {
-            break;
-        }
-        curr = up;
-    }
-    return undefined;
-}
-
 function versionCheck() {
     const pkg = require(path.join(__dirname, "..", "package.json"));
-    const builtVersion = "0.0.2";
+    const builtVersion = "0.0.4";
     if (pkg.version > builtVersion) {
         console.warn(`WARNING: fluid-build is out of date, please rebuild (built: ${builtVersion}, package: ${pkg.version})\n`);
     }
 }
 
+parseOptions(process.argv);
+
 async function main() {
-    const timer = new Timer(options.timer);
+    const timer = new Timer(commonOptions.timer);
 
     versionCheck();
 
-    if (!options.root) {
-        options.root = await inferRoot();
-    }
+    const resolvedFluidRoot = await getResolvedFluidRoot();
+    const resolvedRoot = options.server? path.join(resolvedFluidRoot, "server/routerlicious") : resolvedFluidRoot;
 
-    const root = options.root;
-    if (!root) {
-        console.error(`ERROR: Unknown repo root. Specify it with --root or environment variable _FLUID_ROOT_`);
-        process.exit(-2);
-        return;
-    }
-    const resolvedRoot = path.resolve(root);
-    if (!existsSync(resolvedRoot)) {
-        console.error(`ERROR: Repo root '${resolvedRoot}' not exist.`);
-        process.exit(-3);
-        return;
-    }
+    logStatus(`Processing ${resolvedRoot}`);
 
     // TODO: Should read lerna.json to determine
     const baseDirectories = [ path.join(resolvedRoot, "packages")];
-    const samplesDirectory = path.join(resolvedRoot, "samples/chaincode");
-    if (options.samples && existsSync(samplesDirectory)) {
-        baseDirectories.push(samplesDirectory);
+    if (!options.server) {
+        const samplesDirectory = path.join(resolvedRoot, "samples/chaincode");
+        if (options.samples && existsSync(samplesDirectory)) {
+            baseDirectories.push(samplesDirectory);
+        }
     }
 
     // Load the package
     const packages = Packages.load(baseDirectories);
     timer.time("Package scan completed");
 
-    if (options.layerCheck) {
-        LayerGraph.check(resolvedRoot, packages);
-        timer.time("Layer check completed");
-    }
     // Check scripts
     await packages.checkScripts();
     timer.time("Check scripts completed");
@@ -150,14 +89,14 @@ async function main() {
                 console.error(`ERROR: Delete node_module failed`);
                 process.exit(-8);
             }
-            timer.time("Delete node_modules completed");
+            timer.time("Delete node_modules completed", true);
         }
 
         if (options.depcheck) {
             for (const pkg of packages.packages) {
                 await pkg.depcheck();
             }
-            timer.time("Dependencies check completed")
+            timer.time("Dependencies check completed", true)
         }
 
         if (options.install) {
@@ -174,7 +113,7 @@ async function main() {
                     process.exit(-5);
                 }
             }
-            timer.time("Install completed");
+            timer.time("Install completed", true);
         }
 
         if (options.symlink) {
@@ -182,33 +121,35 @@ async function main() {
                 console.error(`ERROR: Symlink failed`);
                 process.exit(-7);
             }
-            timer.time("Symlink completed");
+            timer.time("Symlink completed", true);
         }
 
-        // build the graph
-        const buildGraph = new BuildGraph(packages.packages, options.buildScript);
-        timer.time("Build graph creation completed");
+        if (options.clean || options.build !== false) {
+            // build the graph
+            const buildGraph = new BuildGraph(packages.packages, options.buildScript);
+            timer.time("Build graph creation completed");
 
-        if (options.clean) {
-            if (!await buildGraph.clean()) {
-                console.error(`ERROR: Clean failed`);
-                process.exit(-9);
+            if (options.clean) {
+                if (!await buildGraph.clean()) {
+                    console.error(`ERROR: Clean failed`);
+                    process.exit(-9);
+                }
+                timer.time("Clean completed");
             }
-            timer.time("Clean completed");
-        }
 
-        if (options.build !== false) {
-            // Run the build
-            const buildResult = await buildGraph.build(timer);
-            const buildStatus = buildResultString(buildResult);
-            const elapsedTime = timer.time();
-            const totalElapsedTime = buildGraph.totalElapsedTime;
-            const concurrency = buildGraph.totalElapsedTime / elapsedTime;
-            if (options.timer) {
-                logStatus(`Execution time: ${totalElapsedTime.toFixed(3)}s, Concurrency: ${concurrency.toFixed(3)}`);
-                logStatus(`Build ${buildStatus} - ${elapsedTime.toFixed(3)}s`);
-            } else {
-                logStatus(`Build ${buildStatus}`);
+            if (options.build !== false) {
+                // Run the build
+                const buildResult = await buildGraph.build(timer);
+                const buildStatus = buildResultString(buildResult);
+                const elapsedTime = timer.time();
+                const totalElapsedTime = buildGraph.totalElapsedTime;
+                const concurrency = buildGraph.totalElapsedTime / elapsedTime;
+                if (commonOptions.timer) {
+                    logStatus(`Execution time: ${totalElapsedTime.toFixed(3)}s, Concurrency: ${concurrency.toFixed(3)}`);
+                    logStatus(`Build ${buildStatus} - ${elapsedTime.toFixed(3)}s`);
+                } else {
+                    logStatus(`Build ${buildStatus}`);
+                }
             }
         }
 

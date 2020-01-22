@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IKafkaMessage, IProducer } from "@microsoft/fluid-server-services-core";
+import { IQueuedMessage, IProducer } from "@microsoft/fluid-server-services-core";
 import * as Deque from "double-ended-queue";
 import { IKafkaSubscriber } from "./interfaces";
 import { LocalKafkaSubscription } from "./localKafkaSubscription";
@@ -18,7 +18,7 @@ export class LocalKafka implements IProducer {
 
     private readonly subscriptions: LocalKafkaSubscription[] = [];
 
-    private readonly qeueue = new Deque<IKafkaMessage>();
+    private readonly qeueue = new Deque<IQueuedMessage>();
 
     private minimumQueueOffset = 0;
 
@@ -32,7 +32,7 @@ export class LocalKafka implements IProducer {
                 return;
             }
 
-            // check if this queueOffset is the min
+            // Check if this queueOffset is the min
             for (const subscription of this.subscriptions) {
                 if (subscription.queueOffset < queueOffset) {
                     return;
@@ -42,12 +42,12 @@ export class LocalKafka implements IProducer {
             const diff = queueOffset - this.minimumQueueOffset;
             this.minimumQueueOffset = queueOffset;
 
-            // remove items before min queue offset
+            // Remove items before min queue offset
             for (let i = 0; i < diff; i++) {
                 this.qeueue.shift();
             }
 
-            // update offsets in each subscription to account for the queue index changing
+            // Update offsets in each subscription to account for the queue index changing
             for (const subscription of this.subscriptions) {
                 subscription.queueOffset -= diff;
             }
@@ -58,9 +58,7 @@ export class LocalKafka implements IProducer {
 
     public async send(messages: object[], topic: string): Promise<any> {
         for (const message of messages) {
-            const kafkaMessage: IKafkaMessage = {
-                highWaterOffset: this.messageOffset,
-                key: topic,
+            const queuedMessage: IQueuedMessage = {
                 offset: this.messageOffset,
                 partition: 0,
                 topic,
@@ -69,7 +67,7 @@ export class LocalKafka implements IProducer {
 
             this.messageOffset++;
 
-            this.qeueue.push(kafkaMessage);
+            this.qeueue.push(queuedMessage);
         }
 
         for (const subscription of this.subscriptions) {

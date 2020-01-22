@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { randomId, TokenList } from "@fluid-example/flow-util-lib";
+import * as assert from "assert";
+import { randomId, TokenList, TagName } from "@fluid-example/flow-util-lib";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { IComponent, IComponentHandle, IComponentHTMLOptions } from "@microsoft/fluid-component-core-interfaces";
 import {
@@ -30,28 +31,27 @@ import {
     SharedStringFactory,
     SharedStringSegment,
 } from "@microsoft/fluid-sequence";
-import * as assert from "assert";
 import { clamp, emptyArray } from "../util";
 import { IHTMLAttributes } from "../util/attr";
-import { Tag } from "../util/tag";
+
 import { debug } from "./debug";
 import { SegmentSpan } from "./segmentspan";
 
 export { SegmentSpan };
 
 export const enum DocSegmentKind {
-    text        = "text",
-    paragraph   = "<p>",
-    lineBreak   = "<br>",
-    beginTags   = "<t>",
-    inclusion   = "<?>",
-    endTags     = "</>",
+    text = "text",
+    paragraph = "<p>",
+    lineBreak = "<br>",
+    beginTags = "<t>",
+    inclusion = "<?>",
+    endTags = "</>",
 
     // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
-    endOfText   = "eot",
+    endOfText = "eot",
 }
 
-const tilesAndRanges = new Set([ DocSegmentKind.paragraph, DocSegmentKind.lineBreak, DocSegmentKind.beginTags, DocSegmentKind.inclusion ]);
+const tilesAndRanges = new Set([DocSegmentKind.paragraph, DocSegmentKind.lineBreak, DocSegmentKind.beginTags, DocSegmentKind.inclusion]);
 
 const enum Workaround { checkpoint = "*" }
 
@@ -60,7 +60,6 @@ export const enum DocTile {
     checkpoint = Workaround.checkpoint,
 }
 
-// tslint:disable:no-bitwise
 export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
     // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
     if (segment === endOfTextSegment) {
@@ -93,13 +92,9 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
 
 const empty = Object.freeze({});
 
-export function getCss(segment: ISegment): Readonly<{ style?: string, classList?: string }> {
-    return segment.properties || empty;
-}
+export const getCss = (segment: ISegment): Readonly<{ style?: string, classList?: string }> => segment.properties || empty;
 
-export function getComponentOptions(segment: ISegment): IComponentHTMLOptions | undefined {
-    return (segment.properties && segment.properties.componentOptions) || empty;
-}
+export const getComponentOptions = (segment: ISegment): IComponentHTMLOptions | undefined => (segment.properties && segment.properties.componentOptions) || empty;
 
 type LeafAction = (position: number, segment: ISegment, startOffset: number, endOffset: number) => boolean;
 
@@ -109,14 +104,14 @@ type LeafAction = (position: number, segment: ISegment, startOffset: number, end
  * avoiding unnecessary allocation to wrap the given 'callback'.
  */
 const accumAsLeafAction = (
-        segment: ISegment,
-        position: number,
-        refSeq: number,
-        clientId: number,
-        startOffset: number,
-        endOffset: number,
-        accum?: LeafAction,
-    ) => (accum as LeafAction)(position, segment, startOffset, endOffset);
+    segment: ISegment,
+    position: number,
+    refSeq: number,
+    clientId: number,
+    startOffset: number,
+    endOffset: number,
+    accum?: LeafAction,
+) => (accum)(position, segment, startOffset, endOffset);
 
 // TODO: We need the ability to create LocalReferences to the end of the document. Our
 //       workaround creates a LocalReference with an 'undefined' segment that is never
@@ -137,10 +132,10 @@ export class FlowDocument extends PrimedComponent {
         return this.sharedString.getLength();
     }
 
-    private static readonly paragraphProperties = Object.freeze({ [reservedTileLabelsKey]: [DocSegmentKind.paragraph, DocTile.checkpoint], tag: Tag.p });
+    private static readonly paragraphProperties = Object.freeze({ [reservedTileLabelsKey]: [DocSegmentKind.paragraph, DocTile.checkpoint], tag: TagName.p });
     private static readonly lineBreakProperties = Object.freeze({ [reservedTileLabelsKey]: [DocSegmentKind.lineBreak, DocTile.checkpoint] });
     private static readonly inclusionProperties = Object.freeze({ [reservedTileLabelsKey]: [DocSegmentKind.inclusion, DocTile.checkpoint] });
-    private static readonly tagsProperties      = Object.freeze({
+    private static readonly tagsProperties = Object.freeze({
         [reservedTileLabelsKey]: [DocSegmentKind.inclusion, DocTile.checkpoint],
         [reservedRangeLabelsKey]: [DocSegmentKind.beginTags],
     });
@@ -257,6 +252,7 @@ export class FlowDocument extends PrimedComponent {
                     break;
                 }
                 default:
+                    break;
             }
             return true;
         }, start, end);
@@ -275,7 +271,7 @@ export class FlowDocument extends PrimedComponent {
         });
     }
 
-    public insertParagraph(position: number, tag?: Tag) {
+    public insertParagraph(position: number, tag?: TagName) {
         debug(`insertParagraph(${position})`);
         this.sharedString.insertMarker(position, ReferenceType.Tile, Object.freeze({ ...FlowDocument.paragraphProperties, tag }));
     }
@@ -286,11 +282,13 @@ export class FlowDocument extends PrimedComponent {
     }
 
     public insertComponent(position: number, url: string, componentOptions: object, style?: string, classList?: string[]) {
-        this.sharedString.insertMarker(position, ReferenceType.Tile, Object.freeze({ ...FlowDocument.inclusionProperties,
-            componentOptions, url, style, classList: classList && classList.join(" ") }));
+        this.sharedString.insertMarker(position, ReferenceType.Tile, Object.freeze({
+            ...FlowDocument.inclusionProperties,
+            componentOptions, url, style, classList: classList && classList.join(" "),
+        }));
     }
 
-    public setFormat(position: number, tag: Tag) {
+    public setFormat(position: number, tag: TagName) {
         const { start } = this.findParagraph(position);
 
         // If inside an existing paragraph marker, update it with the new formatting tag.
@@ -307,7 +305,7 @@ export class FlowDocument extends PrimedComponent {
         this.insertParagraph(start, tag);
     }
 
-    public insertTags(tags: Tag[], start: number, end = start) {
+    public insertTags(tags: TagName[], start: number, end = start) {
         const ops = [];
         const id = randomId();
 
@@ -460,7 +458,7 @@ export class FlowDocument extends PrimedComponent {
     protected async componentInitializingFirstTime() {
         // For 'findTile(..)', we must enable tracking of left/rightmost tiles:
         // (See: https://github.com/Microsoft/Prague/pull/1118)
-        Object.assign(this.runtime, { options: {...(this.runtime.options || {}),  blockUpdateMarkers: true} });
+        Object.assign(this.runtime, { options: { ...(this.runtime.options || {}), blockUpdateMarkers: true } });
 
         const text = SharedString.create(this.runtime, "text");
         this.root.set("text", text.handle);
@@ -476,7 +474,7 @@ export class FlowDocument extends PrimedComponent {
     }
 
     private updateCssClassList(start: number, end: number, callback: (classList: string) => string) {
-        const updates: {span: SegmentSpan, classList: string}[] = [];
+        const updates: { span: SegmentSpan, classList: string }[] = [];
 
         this.visitRange((position, segment, startOffset, endOffset) => {
             const oldList = getCss(segment).classList;

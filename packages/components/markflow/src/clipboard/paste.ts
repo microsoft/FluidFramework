@@ -15,14 +15,14 @@ export const enum ClipboardFormat {
 export function paste(doc: FlowDocument, data: DataTransfer, position: number) {
     let content: string;
 
-    // tslint:disable-next-line:no-conditional-assignment
+    // eslint-disable-next-line no-cond-assign
     if (content = data.getData(ClipboardFormat.html)) {
         debug("paste('text/html'): %s", content);
         const root = document.createElement("span");
-        // tslint:disable-next-line:no-inner-html
         root.innerHTML = content;
+        // eslint-disable-next-line @typescript-eslint/no-use-before-define
         pasteChildren(doc, root, position);
-    // tslint:disable-next-line:no-conditional-assignment
+        // eslint-disable-next-line no-cond-assign
     } else if (content = data.getData(ClipboardFormat.text)) {
         debug("paste('text/plain'): %s", content);
         doc.insertText(position, content);
@@ -45,9 +45,9 @@ function pasteChildren(doc: FlowDocument, root: Node, position: number) {
             case document.ELEMENT_NODE: {
                 const el = child as HTMLElement;
                 const tag = el.tagName as Tag;
-                const emitTag = ignoredTags.indexOf(tag) < 0;
+                const emitTag = !ignoredTags.includes(tag);
                 if (emitTag) {
-                    doc.insertTags([tag as Tag], position);
+                    doc.insertTags([tag], position);
                     doc.setAttr(position, position + 1,
                         [...el.attributes].reduce(
                             (accumulator, value) => {

@@ -22,8 +22,8 @@ import { IRevertable, UndoRedoStackManager } from "./undoRedoStackManager";
  */
 export class SharedSegmentSequenceUndoRedoHandler {
 
-    private readonly sequences =
-        new Map<SharedSegmentSequence<ISegment>, SharedSegmentSequenceRevertable | undefined>();
+    // eslint-disable-next-line max-len
+    private readonly sequences = new Map<SharedSegmentSequence<ISegment>, SharedSegmentSequenceRevertable | undefined>();
 
     constructor(private readonly stackManager: UndoRedoStackManager) {
         this.stackManager.on("changePushed", () => this.sequences.clear());
@@ -47,7 +47,7 @@ export class SharedSegmentSequenceUndoRedoHandler {
             }
             revertable.add(event);
         }
-    }
+    };
 }
 
 interface ITrackedSharedSegmentSequenceRevertable {
@@ -81,10 +81,10 @@ export class SharedSegmentSequenceRevertable implements IRevertable {
                     const tg = new TrackingGroup();
                     tg.link(range.segment);
                     current = {
-                            trackingGroup: tg,
-                            propertyDelta: range.propertyDeltas,
-                            operation: event.deltaOperation as MergeTreeDeltaOperationType,
-                        };
+                        trackingGroup: tg,
+                        propertyDelta: range.propertyDeltas,
+                        operation: event.deltaOperation,
+                    };
                     this.tracking.push(current);
                 }
             }

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { ProtocolOpHandler } from "@microsoft/fluid-protocol-base";
 import { IClient, IServiceConfiguration } from "@microsoft/fluid-protocol-definitions";
 import {
@@ -29,8 +30,8 @@ import {
     ITenantManager,
     ITopic,
     IWebSocket,
+    IQueuedMessage,
 } from "@microsoft/fluid-server-services-core";
-import * as assert from "assert";
 import { ILocalOrdererSetup } from "./interfaces";
 import { LocalKafka } from "./localKafka";
 import { LocalLambdaController } from "./localLambdaController";
@@ -86,7 +87,7 @@ export interface IPubSub {
 }
 
 class PubSub implements IPubSub {
-    private topics = new Map<string, Map<string, { subscriber: ISubscriber, count: number }>>();
+    private readonly topics = new Map<string, Map<string, { subscriber: ISubscriber, count: number }>>();
 
     public publish(topic: string, ...args: any[]): void {
         const subscriptions = this.topics.get(topic);
@@ -130,7 +131,7 @@ class PubSub implements IPubSub {
 }
 
 class LocalSocketPublisher implements IPublisher {
-    constructor(private publisher: IPubSub) {
+    constructor(private readonly publisher: IPubSub) {
     }
 
     public on(event: string, listener: (...args: any[]) => void) {
@@ -142,11 +143,14 @@ class LocalSocketPublisher implements IPublisher {
             emit: (event: string, ...args: any[]) => this.publisher.publish(topic, event, ...args),
         };
     }
+
+    public async close() {
+    }
 }
 
 // Want a pure local orderer that can do all kinds of stuff
 class LocalContext implements IContext {
-    public checkpoint(offset: number) {
+    public checkpoint(queuedMessage: IQueuedMessage) {
         return;
     }
 
@@ -217,7 +221,7 @@ export class LocalOrderer implements IOrderer {
     public deliLambda: LocalLambdaController | undefined;
     public broadcasterLambda: LocalLambdaController | undefined;
 
-    private socketPublisher: LocalSocketPublisher;
+    private readonly socketPublisher: LocalSocketPublisher;
     private existing: boolean;
 
     constructor(
@@ -228,17 +232,17 @@ export class LocalOrderer implements IOrderer {
         private readonly taskMessageSender: ITaskMessageSender,
         private readonly tenantManager: ITenantManager,
         private readonly gitManager: IGitManager | undefined,
-        private permission: any,
-        private maxMessageSize: number,
-        private pubSub: IPubSub,
-        private broadcasterContext: IContext,
-        private scriptoriumContext: IContext,
-        private foremanContext: IContext,
-        private scribeContext: IContext,
-        private deliContext: IContext,
-        private clientTimeout: number,
-        private serviceConfiguration: IServiceConfiguration,
-        private scribeNackOnSummarizeException: boolean,
+        private readonly permission: any,
+        private readonly maxMessageSize: number,
+        private readonly pubSub: IPubSub,
+        private readonly broadcasterContext: IContext,
+        private readonly scriptoriumContext: IContext,
+        private readonly foremanContext: IContext,
+        private readonly scribeContext: IContext,
+        private readonly deliContext: IContext,
+        private readonly clientTimeout: number,
+        private readonly serviceConfiguration: IServiceConfiguration,
+        private readonly scribeNackOnSummarizeException: boolean,
     ) {
         this.existing = details.existing;
         this.socketPublisher = new LocalSocketPublisher(this.pubSub);
@@ -278,7 +282,7 @@ export class LocalOrderer implements IOrderer {
             this.maxMessageSize,
             this.serviceConfiguration);
 
-        // document is now existing regardless of the original value
+        // Document is now existing regardless of the original value
         this.existing = true;
 
         return connection;
@@ -336,6 +340,7 @@ export class LocalOrderer implements IOrderer {
                 this.deltasKafka,
                 this.setup,
                 this.scribeContext,
+                // eslint-disable-next-line @typescript-eslint/promise-function-async
                 (lambdaSetup, context) => this.startScribeLambda(lambdaSetup, context));
         }
 
@@ -373,7 +378,7 @@ export class LocalOrderer implements IOrderer {
             setup.scribeMessagesP(),
         ]);
 
-        const scribe = this.details.value.scribe
+        const scribe: IScribe = this.details.value.scribe
             ? typeof this.details.value.scribe === "string" ?
                 JSON.parse(this.details.value.scribe) :
                 this.details.value.scribe
@@ -396,8 +401,8 @@ export class LocalOrderer implements IOrderer {
             context,
             documentCollection,
             scribeMessagesCollection,
-            scribe.tenantId,
-            scribe.documentId,
+            this.tenantId,
+            this.documentId,
             scribe,
             this.gitManager,
             this.rawDeltasKafka,
@@ -409,22 +414,27 @@ export class LocalOrderer implements IOrderer {
 
     private startLambdas() {
         if (this.deliLambda) {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.deliLambda.start();
         }
 
         if (this.scriptoriumLambda) {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.scriptoriumLambda.start();
         }
 
         if (this.foremanLambda) {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.foremanLambda.start();
         }
 
         if (this.scribeLambda) {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.scribeLambda.start();
         }
 
         if (this.broadcasterLambda) {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.broadcasterLambda.start();
         }
     }

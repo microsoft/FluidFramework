@@ -1,8 +1,0 @@
-{
-    "extends": [
-        "@microsoft/eslint-config-fluid"
-    ],
-    "rules": {
-        "no-constant-condition": "off"
-    }
-}

@@ -5,13 +5,10 @@
 
 import { ITrace } from "@microsoft/fluid-protocol-definitions";
 import * as telegraf from "telegrafjs";
-
-export interface IMetricClient {
-    writeLatencyMetric(series: string, traces: ITrace[]): Promise<void>;
-}
+import {DefaultMetricClient, IMetricClient} from  "@microsoft/fluid-server-services-core";
 
 class TelegrafClient implements IMetricClient {
-    private telegrafClient: any;
+    private readonly telegrafClient: any;
     private connected: boolean = false;
 
     constructor(config: any) {
@@ -24,6 +21,7 @@ class TelegrafClient implements IMetricClient {
         });
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public writeLatencyMetric(series: string, traces: ITrace[]): Promise<void> {
         if (!this.connected || !traces || traces.length === 0) {
             return Promise.resolve();
@@ -37,12 +35,13 @@ class TelegrafClient implements IMetricClient {
         const Float = telegraf.Float;
         for (const trace of traces) {
             // tslint:disable prefer-template
-            const column = `${trace.service}${trace.action ? "-" + trace.action : ""}`;
+            const column = `${trace.service}${trace.action ? `-${trace.action}` : ""}`;
             row[column] = new Float(trace.timestamp);
         }
         return row;
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     private writeToTelegraf(series: string, row: any): Promise<void> {
         const Measurement = telegraf.Measurement;
 
@@ -54,15 +53,8 @@ class TelegrafClient implements IMetricClient {
     }
 }
 
-// Default client for loca run.
-class DefaultClient implements IMetricClient {
-
-    public writeLatencyMetric(series: string, traces: ITrace[]): Promise<void> {
-        return Promise.resolve();
-    }
-}
 
 export function createMetricClient(config: any): IMetricClient {
-    // tslint:disable-next-line:max-line-length
-    return (config !== undefined && config.client === "telegraf") ? new TelegrafClient(config.telegraf) : new DefaultClient();
+    // eslint-disable-next-line max-len
+    return (config !== undefined && config.client === "telegraf") ? new TelegrafClient(config.telegraf) : new DefaultMetricClient();
 }

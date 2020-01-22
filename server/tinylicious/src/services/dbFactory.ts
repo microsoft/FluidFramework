@@ -7,7 +7,7 @@ import { IDb, IDbFactory } from "@microsoft/fluid-server-services-core";
 import { DB } from "./db";
 
 export class DbFactory implements IDbFactory {
-    private db = new DB();
+    private readonly db = new DB();
 
     public async connect(): Promise<IDb> {
         return this.db;

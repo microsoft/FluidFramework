@@ -4,8 +4,8 @@
  */
 
 import { AssertionError } from "assert";
+import { inspect } from "util";
 import * as nconf from "nconf";
-import { inspect } from "util" ;
 import * as winston from "winston";
 import { NodeErrorTrackingService } from "./errorTrackingService";
 import { configureLogging } from "./logger";
@@ -75,6 +75,7 @@ export async function run<T extends IResources>(
     // Start the runner and then listen for the message to stop it
     const runningP = runner.start();
     process.on("SIGTERM", () => {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         runner.stop();
     });
 
@@ -95,7 +96,7 @@ export function runService<T extends IResources>(
     group: string,
     configFile: string) {
 
-    const config = nconf.argv().env({separator: "__", parseValues: true}).file(configFile).use("memory");
+    const config = nconf.argv().env({ separator: "__", parseValues: true }).file(configFile).use("memory");
     configureLogging(config.get("logger"));
 
     const errorTrackingConfig = config.get("error") as IErrorTrackingConfig;

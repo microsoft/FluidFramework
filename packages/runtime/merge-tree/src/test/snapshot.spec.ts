@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { ISequencedDocumentMessage, ITree } from "@microsoft/fluid-protocol-definitions";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { MockStorage } from "@microsoft/fluid-test-runtime-utils";
-import * as assert from "assert";
-import { TestClient } from ".";
 import { IMergeTreeOp } from "../ops";
 import { Snapshot } from "../snapshot";
+import { TestClient } from ".";
 
 // Reconstitutes a MergeTree client from a snapshot
 async function loadSnapshot(tree: ITree) {
@@ -19,8 +19,8 @@ async function loadSnapshot(tree: ITree) {
         logger: client2.logger,
         clientId: "1",
     };
-    const loader = client2.createSnapshotLoader(runtime as IComponentRuntime);
-    await loader.initialize(undefined, services);
+
+    await client2.load(runtime as IComponentRuntime, services);
     return client2;
 }
 

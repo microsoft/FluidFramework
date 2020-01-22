@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SummaryTracker } from "@microsoft/fluid-core-utils";
+import * as assert from "assert";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionState,
@@ -13,7 +13,7 @@ import {
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
 import { IChannel, IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
-import * as assert from "assert";
+import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ISharedObjectRegistry } from "./componentRuntime";
@@ -72,6 +72,7 @@ export class LocalChannelContext implements IChannelContext {
 
     public async snapshot(fullTree: boolean = false): Promise<ITree> {
         const baseId = this.summaryTracker.getBaseId();
+        // eslint-disable-next-line no-null/no-null
         if (baseId !== null && !fullTree) {
             return { id: baseId, entries: [] };
         }

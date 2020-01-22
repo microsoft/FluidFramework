@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IServiceConfiguration } from "@microsoft/fluid-protocol-definitions";
 import { ITenantManager } from "@microsoft/fluid-server-services-core";
 // In this case we want @types/express-serve-static-core, not express-serve-static-core, and so disable the lint rule
-// tslint:disable-next-line:no-implicit-dependencies
+// eslint-disable-next-line import/no-unresolved
 import { Params } from "express-serve-static-core";
 import * as _ from "lodash";
 
@@ -40,17 +39,7 @@ export async function getConfig(
     return JSON.stringify(updatedConfig);
 }
 
-export const DefaultServiceConfiguration: IServiceConfiguration = {
-    blockSize: 64436,
-    maxMessageSize:  16 * 1024,
-    summary: {
-        idleTime: 5000,
-        maxOps: 1000,
-        maxTime: 5000 * 12,
-        maxAckWaitTime: 600000,
-    },
-};
-
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function getParam(params: Params, key: string) {
     return Array.isArray(params) ? undefined : params[key];
 }

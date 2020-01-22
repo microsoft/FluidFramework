@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { ProtocolOpHandler } from "@microsoft/fluid-protocol-base";
 import { IDocumentAttributes } from "@microsoft/fluid-protocol-definitions";
 import { GitManager, Historian } from "@microsoft/fluid-server-services-client";
@@ -17,7 +18,6 @@ import {
     ISequencedOperationMessage,
     MongoManager,
 } from "@microsoft/fluid-server-services-core";
-import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { NoOpLambda } from "../utils";
@@ -32,11 +32,11 @@ const DefaultScribe: IScribe = {
 
 export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     constructor(
-        private mongoManager: MongoManager,
-        private documentCollection: ICollection<IDocument>,
-        private messageCollection: ICollection<ISequencedOperationMessage>,
-        private historianEndpoint: string,
-        private producer: IProducer,
+        private readonly mongoManager: MongoManager,
+        private readonly documentCollection: ICollection<IDocument>,
+        private readonly messageCollection: ICollection<ISequencedOperationMessage>,
+        private readonly historianEndpoint: string,
+        private readonly producer: IProducer,
     ) {
         super();
     }
@@ -54,7 +54,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
         const [protocolHead, document, messages] = await Promise.all([
             this.fetchLatestSummaryState(gitManager, documentId),
             this.documentCollection.findOne({ documentId, tenantId }),
-            this.messageCollection.find({ documentId, tenantId }, { "operation.sequenceNumber": 1}),
+            this.messageCollection.find({ documentId, tenantId }, { "operation.sequenceNumber": 1 }),
         ]);
 
         // If the document doesn't exist then we trivially accept every message
@@ -65,7 +65,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 
         // Check of scribe being a non-string included for back compat when we would store as JSON. We now store
         // as a string given Mongo has issues with certain JSON values. Will be removed in 0.8.
-        const scribe = document.scribe
+        const scribe: IScribe = document.scribe
             ? typeof document.scribe === "string" ? JSON.parse(document.scribe) : document.scribe
             : DefaultScribe;
         if (!scribe.protocolState) {

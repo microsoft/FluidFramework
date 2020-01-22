@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionMode,
@@ -14,13 +15,19 @@ import {
     ISignalMessage,
     ITokenClaims,
 } from "@microsoft/fluid-protocol-definitions";
-import { EventEmitter } from "events";
 
 /**
  * Mock Document Delta Connection for testing
  */
 export class MockDocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
-    public claims: ITokenClaims;
+    public claims: ITokenClaims = {
+        documentId: "documentId",
+        scopes: [ "doc:read", "doc:write", "summary:write" ],
+        tenantId: "tenantId",
+        user: {
+            id: "mockid",
+        },
+    };
     public mode: ConnectionMode;
     public existing: boolean;
     public parentBranch: string;
@@ -56,7 +63,7 @@ export class MockDocumentDeltaConnection extends EventEmitter implements IDocume
         this.emit("disconnect", reason || "mock disconnect called");
     }
 
-    // mock methods for raising events
+    // Mock methods for raising events
     public emitOp(documentId: string, messages: Partial<ISequencedDocumentMessage>[]) {
         this.emit("op", documentId, messages);
     }

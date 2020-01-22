@@ -7,7 +7,7 @@ import { PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@micro
 import { Ink } from "@microsoft/fluid-ink";
 import { Canvas } from "./canvas";
 
-// tslint:disable-next-line: no-var-requires no-require-imports
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
 export const CanvasName = pkg.name as string;
 
@@ -16,7 +16,7 @@ export const CanvasInstantiationFactory = new PrimedComponentFactory(
     [
         Ink.getFactory(),
     ],
-  );
+);
 
 export const fluidExport = new SimpleModuleInstantiationFactory(
     CanvasName,

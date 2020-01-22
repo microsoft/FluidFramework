@@ -228,10 +228,9 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
     public buildAligned(mathLines: string[], checks: boolean[]) {
         let mathBuffer = "\\begin{darray}{rcllcr} \n";
         let count = 1;
-        // tslint:disable-next-line:prefer-for-of
         for (let i = 0; i < mathLines.length; i++) {
             let line = mathLines[i];
-            if (line.indexOf("=") >= 0) {
+            if (line.includes("=")) {
                 line = line.replace("=", "& = &");
             } else {
                 line = `& ${line} &`;
@@ -316,9 +315,8 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
             }
         }
         if (this.cursorActive) {
-            const cursorElement = ClientUI.controls.findFirstMatch(rootElement, (cursor: HTMLElement) => {
-                return cursor.style && (cursor.style.color === MathExpr.cursorColor);
-            });
+            const cursorElement = ClientUI.controls.findFirstMatch(rootElement,
+                (cursor: HTMLElement) => cursor.style && (cursor.style.color === MathExpr.cursorColor));
             if (cursorElement) {
                 this.cursorElement = cursorElement;
                 cursorElement.classList.add("blinking");
@@ -527,7 +525,7 @@ function getPosition(sharedString: Sequence.SharedString, segment: MergeTree.ISe
 
 const endIdPrefix = "end-";
 
-// tslint:disable-next-line:no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IMathOptions extends IComponentHTMLOptions { }
 
 export class MathCollection implements IComponentLoadable, IComponentCollection, IComponentRouter {
@@ -606,7 +604,7 @@ export class MathCollection implements IComponentLoadable, IComponentCollection,
     public async request(request: IRequest): Promise<IResponse> {
         const instanceId = request.url
             .substr(1)
-            .substr(0, request.url.indexOf("/", 1) === -1 ? request.url.length : request.url.indexOf("/"));
+            .substr(0, !request.url.includes("/", 1) ? request.url.length : request.url.indexOf("/"));
 
         if (!instanceId) {
             return {
@@ -701,8 +699,9 @@ export class MathFactoryComponent implements IComponentFactory {
     public get IComponentFactory() { return this; }
 
     public instantiateComponent(context: IComponentContext): void {
-        // tslint:disable:no-require-imports no-submodule-imports
+        // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-internal-modules, import/no-unassigned-import
         require("katex/dist/katex.min.css");
+        // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-unassigned-import
         require("./index.css");
         const mapFactory = SharedMap.getFactory();
         const sharedStringFactory = Sequence.SharedString.getFactory();

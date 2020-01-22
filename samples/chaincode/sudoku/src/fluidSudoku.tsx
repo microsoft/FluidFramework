@@ -12,6 +12,7 @@ import * as ReactDOM from "react-dom";
 import { loadPuzzle } from "./helpers/puzzles";
 import { SudokuView } from "./react/sudokuView";
 
+// eslint-disable-next-line import/no-unassigned-import
 import "./helpers/styles.css";
 
 export const FluidSudokuName = "FluidSudoku";
@@ -83,7 +84,7 @@ export class FluidSudoku extends PrimedComponent
         // value in our map changes. Recall that distributed data structures can be changed by both local and remote
         // clients, so if we don't call render here, then our UI will not update when remote clients change data.
         this.puzzle.on("valueChanged", (changed, local, op) => {
-            this.rerender();
+            this.render();
         });
 
         this.clientPresence = await this.root
@@ -91,7 +92,7 @@ export class FluidSudoku extends PrimedComponent
             .get<ISharedMap>();
 
         this.clientPresence.on("valueChanged", (changed, local, op) => {
-            this.rerender();
+            this.render();
         });
     }
 
@@ -110,15 +111,13 @@ export class FluidSudoku extends PrimedComponent
         }
     }
 
-    private rerender(): void {
+    public render(element?: HTMLElement): void {
+        if (element) {
+            this.domElement = element;
+        }
         if (this.domElement) {
             ReactDOM.render(this.createJSXElement(), this.domElement);
         }
-    }
-
-    public render(element: HTMLElement): void {
-        this.domElement = element;
-        this.rerender();
     }
 
     /**

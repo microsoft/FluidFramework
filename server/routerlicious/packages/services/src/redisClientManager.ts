@@ -3,19 +3,22 @@
  * Licensed under the MIT License.
  */
 
+import * as util from "util";
 import { IClient, ISignalClient } from "@microsoft/fluid-protocol-definitions";
 import { IClientManager } from "@microsoft/fluid-server-services-core";
 import { RedisClient } from "redis";
-import * as util from "util";
 
 // Manages the set of connected clients in redis hashes with an expiry of 'expireAfterSeconds'.
 export class ClientManager implements IClientManager {
-    private addAsync: any;
-    private removeAsync: any;
-    private findAllAsync: any;
-    private expire: any;
+    private readonly addAsync: any;
+    private readonly removeAsync: any;
+    private readonly findAllAsync: any;
+    private readonly expire: any;
 
-    constructor(client: RedisClient, private expireAfterSeconds = 60 * 60 * 24,  private prefix = "client") {
+    constructor(
+        client: RedisClient,
+        private readonly expireAfterSeconds = 60 * 60 * 24,
+        private readonly prefix = "client") {
         this.addAsync = util.promisify(client.hmset.bind(client));
         this.removeAsync = util.promisify(client.hdel.bind(client));
         this.findAllAsync = util.promisify(client.hgetall.bind(client));

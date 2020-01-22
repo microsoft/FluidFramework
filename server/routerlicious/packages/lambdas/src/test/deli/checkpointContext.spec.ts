@@ -21,6 +21,12 @@ describe("Routerlicious", () => {
                     clients: null,
                     logOffset,
                     sequenceNumber,
+                    queuedMessage: {
+                        offset: logOffset,
+                        partition: 1,
+                        topic: "topic",
+                        value: "",
+                    },
                 };
             }
 

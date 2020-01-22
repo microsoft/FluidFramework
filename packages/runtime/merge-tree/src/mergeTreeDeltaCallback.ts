@@ -4,16 +4,23 @@
  */
 
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { IMergeTreeOp, ISegment, MergeTreeDeltaType } from "./";
-import { MergeTree } from "./mergeTree";
 import { IMergeTreeGroupMsg } from "./ops";
 import { PropertySet } from "./properties";
+import { IMergeTreeOp, ISegment, MergeTreeDeltaType } from "./";
 
 export type MergeTreeDeltaOperationType =
     MergeTreeDeltaType.ANNOTATE | MergeTreeDeltaType.INSERT | MergeTreeDeltaType.REMOVE;
 
-export interface IMergeTreeDeltaCallbackArgs {
-    readonly operation: MergeTreeDeltaOperationType;
+// Note: Assigned negative integers to avoid clashing with MergeTreeDeltaType
+export const enum MergeTreeMaintenanceType {
+    APPEND  = -1,
+    SPLIT   = -2,
+}
+
+export type MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType | MergeTreeMaintenanceType;
+
+export interface IMergeTreeDeltaCallbackArgs<TOperationType extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType> {
+    readonly operation: TOperationType;
     readonly deltaSegments: IMergeTreeSegmentDelta[];
 }
 
@@ -48,17 +55,8 @@ export interface IMergeTreeClientSequenceArgs {
 export type MergeTreeDeltaCallback =
     (opArgs: IMergeTreeDeltaOpArgs, deltaArgs: IMergeTreeDeltaCallbackArgs) => void;
 
-// Note: Assigned negative integers to avoid clashing with MergeTreeDeltaType
-export const enum MergeTreeMaintenanceType {
-    APPEND  = -1,
-    SPLIT   = -2,
-}
-
-export interface IMergeTreeMaintenanceCallbackArgs {
-    readonly mergeTree: MergeTree;
-    readonly operation: MergeTreeMaintenanceType;
-    readonly deltaSegments: IMergeTreeSegmentDelta[];
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface IMergeTreeMaintenanceCallbackArgs extends IMergeTreeDeltaCallbackArgs<MergeTreeMaintenanceType> { }
 
 export type MergeTreeMaintenanceCallback =
     (MaintenanceArgs: IMergeTreeMaintenanceCallbackArgs) => void;

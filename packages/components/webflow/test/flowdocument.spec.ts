@@ -3,16 +3,13 @@
 * Licensed under the MIT License.
 */
 
-import { randomId } from "@fluid-example/flow-util-lib";
+import { randomId, TagName } from "@fluid-example/flow-util-lib";
 import { Marker, ReferenceType } from "@microsoft/fluid-merge-tree";
-// tslint:disable:binary-expression-operand-order
 import { TestHost } from "@microsoft/fluid-local-test-server";
 import * as assert from "assert";
-// tslint:disable-next-line:no-import-side-effect
 import "mocha";
 import { FlowDocument, flowDocumentFactory } from "../src/document";
 import { FlowDocumentType } from "../src/runtime";
-import { Tag } from "../src/util/tag";
 
 describe("FlowDocument", () => {
     let host: TestHost;
@@ -39,7 +36,6 @@ describe("FlowDocument", () => {
     function expectTags(start: number, end = start + 1, ...expected: string[][]) {
         for (let i = start; i < end; i++) {
             const actual = doc.getTags(i).map((marker) => {
-                // tslint:disable-next-line:no-bitwise
                 assert.strictEqual(marker.refType, ReferenceType.NestBegin | ReferenceType.Tile);
                 return marker.properties.tags;
             });
@@ -56,7 +52,7 @@ describe("FlowDocument", () => {
     }
 
     function insertTags(tags: string[], start: number, end?: number) {
-        doc.insertTags(tags as Tag[], start, end);
+        doc.insertTags(tags as TagName[], start, end);
     }
 
     describe("tags", () => {

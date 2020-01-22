@@ -2,9 +2,9 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+import { EventEmitter } from "events";
 import { ICollection, IDb } from "@microsoft/fluid-server-services-core";
 import { ITestDbFactory } from "@microsoft/fluid-server-test-utils";
-import { EventEmitter } from "events";
 import * as uuid from "uuid";
 
 /**
@@ -14,7 +14,7 @@ export class SessionStorageDbFactory implements ITestDbFactory {
     public readonly testDatabase: IDb;
     constructor(namespace: string) {
         this.testDatabase = new SessionStorageDb(namespace);
-     }
+    }
     public async connect(): Promise<IDb> {
         return Promise.resolve(this.testDatabase);
     }
@@ -28,7 +28,7 @@ class SessionStorageDb extends EventEmitter implements IDb {
     private readonly collections = new Map<string, SessionStorageCollection<any>>();
     constructor(private readonly namespace) {
         super();
-     }
+    }
     public async close(): Promise<void> {
         return Promise.resolve();
     }
@@ -39,8 +39,6 @@ class SessionStorageDb extends EventEmitter implements IDb {
         return this.collections.get(name) as SessionStorageCollection<T>;
     }
 }
-
-// tslint:disable: no-unsafe-any
 
 /**
  * A collection for testing that store data in the browsers session storage
@@ -56,7 +54,7 @@ class SessionStorageCollection<T> implements ICollection<T> {
             const keys = key.split(".");
             let value = propertyBag;
             keys.forEach((splitKey) => {
-               value = value[splitKey];
+                value = value[splitKey];
             });
             return value;
         }
@@ -80,13 +78,14 @@ class SessionStorageCollection<T> implements ICollection<T> {
         });
 
         if (sort && Object.keys(sort).length === 1) {
+            // eslint-disable-next-line no-inner-declarations
             function compare(a, b) {
                 const sortKey = Object.keys(sort)[0];
                 if (sort[sortKey] === 1) {
-                    // a goes before b, sorting in ascending order
+                    // A goes before b, sorting in ascending order
                     return getValueByKey(a, sortKey) - getValueByKey(b, sortKey);
                 } else {
-                    // b goes before a, sorting in descending order
+                    // B goes before a, sorting in descending order
                     return getValueByKey(b, sortKey) - getValueByKey(a, sortKey);
                 }
             }
@@ -146,7 +145,7 @@ class SessionStorageCollection<T> implements ICollection<T> {
     }
 
     public async insertMany(values: any[], ordered: boolean): Promise<void> {
-        this.insertInternal(... values);
+        this.insertInternal(...values);
     }
 
     public async deleteOne(filter: any): Promise<any> {
@@ -172,7 +171,7 @@ class SessionStorageCollection<T> implements ICollection<T> {
         return values;
     }
 
-    private insertInternal(... values: any[]) {
+    private insertInternal(...values: any[]) {
         for (const value of values) {
             if (value) {
                 if (!value._id) {
@@ -183,7 +182,7 @@ class SessionStorageCollection<T> implements ICollection<T> {
         }
     }
 
-    private findOneInternal(query: any): any  {
+    private findOneInternal(query: any): any {
         if (query._id) {
             const json = sessionStorage.getItem(`${this.collectionName}-${query._id}`);
             if (json) {
@@ -205,7 +204,7 @@ class SessionStorageCollection<T> implements ICollection<T> {
                 return value;
             }
         }
-        // tslint:disable-next-line: no-null-keyword
+        // eslint-disable-next-line no-null/no-null
         return null;
     }
 }

@@ -43,7 +43,6 @@ export class CollaborativeCheckbox extends React.Component<IProps, IState> {
     }
 
     public render() {
-        // tslint:disable:react-a11y-input-elements
         return(
             <input
                 type="checkbox"
@@ -59,7 +58,7 @@ export class CollaborativeCheckbox extends React.Component<IProps, IState> {
     }
 
     private isChecked(): boolean {
-        // odd is true, even is false
+        // Odd is true, even is false
         return this.props.counter.value % 2 !== 0;
     }
 }

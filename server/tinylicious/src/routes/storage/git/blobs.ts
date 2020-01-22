@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as git from "@microsoft/fluid-gitresources";
+import { IBlob, ICreateBlobParams, ICreateBlobResponse } from "@microsoft/fluid-gitresources";
 import { Router } from "express";
+import * as git from "isomorphic-git";
 import * as nconf from "nconf";
 import * as utils from "../utils";
 
@@ -14,9 +15,20 @@ export function create(store: nconf.Provider): Router {
     async function createBlob(
         tenantId: string,
         authorization: string,
-        body: git.ICreateBlobParams,
-    ): Promise<git.ICreateBlobResponse> {
-        throw new Error("Not implemented");
+        body: ICreateBlobParams,
+    ): Promise<ICreateBlobResponse> {
+        const buffer = Buffer.from(body.content, body.encoding);
+
+        const sha = await git.writeObject({
+            dir: utils.getGitDir(store, tenantId),
+            type: "blob",
+            object: buffer,
+        });
+
+        return {
+            sha,
+            url: "",
+        };
     }
 
     async function getBlob(
@@ -24,8 +36,19 @@ export function create(store: nconf.Provider): Router {
         authorization: string,
         sha: string,
         useCache: boolean,
-    ): Promise<git.IBlob> {
-        throw new Error("Not implemented");
+    ): Promise<IBlob> {
+        const gitObj = await git.readObject({ dir: utils.getGitDir(store, tenantId), oid: sha });
+        const buffer = gitObj.object as Buffer;
+
+        const result: IBlob = {
+            url: "",
+            sha,
+            size: buffer.length,
+            content: buffer.toString("base64"),
+            encoding: "base64",
+        };
+
+        return result;
     }
 
     router.post(
@@ -67,7 +90,7 @@ export function create(store: nconf.Provider): Router {
                 if (useCache) {
                     response.setHeader("Cache-Control", "public, max-age=31536000");
                 }
-                response.status(200).write(new Buffer(blob.content, "base64"), () => response.end());
+                response.status(200).write(Buffer.from(blob.content, "base64"), () => response.end());
             },
             (error) => {
                 response.status(400).json(error);

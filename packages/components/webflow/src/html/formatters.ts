@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { Caret as CaretUtil, Direction, Rect } from "@fluid-example/flow-util-lib";
+import * as assert from "assert";
+import { Caret as CaretUtil, Direction, Rect, TagName } from "@fluid-example/flow-util-lib";
 import { IComponent, IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
 import { Marker, TextSegment } from "@microsoft/fluid-merge-tree";
-import * as assert from "assert";
 import { DocSegmentKind, getComponentOptions, getCss, getDocSegmentKind } from "../document";
 import * as styles from "../editor/index.css";
 import { emptyObject } from "../util";
 import { getAttrs, syncAttrs } from "../util/attr";
-import { Tag } from "../util/tag";
+
 import { Formatter, IFormatterState, RootFormatter } from "../view/formatter";
 import { Layout } from "../view/layout";
 import { ICssProps, sameCss, syncCss } from "./css";
@@ -82,19 +82,19 @@ export class InclusionFormatter extends Formatter<IInclusionState> {
         if (!state.root) {
             const marker = segment as Marker;
 
-            state.root = document.createElement(Tag.span);
+            state.root = document.createElement(TagName.span);
             state.root.contentEditable = "false";
 
             state.slot = document.createElement(
                 getComponentOptions(segment).display === "block"
-                    ? Tag.div
-                    : Tag.span);
+                    ? TagName.div
+                    : TagName.span);
 
             state.view = layout.doc.getComponentFromMarker(marker).then((component: IComponent) => {
                 const visual = component.IComponentHTMLVisual;
                 const view: IComponentHTMLView = visual.addView
                     ? visual.addView(layout.scope)
-                    // tslint:disable-next-line:no-object-literal-type-assertion
+                    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                     : {
                         IComponentHTMLVisual: visual,
                         render: visual.render.bind(visual),
@@ -125,13 +125,13 @@ export class InclusionFormatter extends Formatter<IInclusionState> {
     }
 }
 
-interface ITagsState extends IFormatterState { root?: HTMLElement; pTag: Tag; popCount: number; }
-interface ITagsProps { tags?: Tag[]; }
+interface ITagsState extends IFormatterState { root?: HTMLElement; pTag: TagName; popCount: number; }
+interface ITagsProps { tags?: TagName[]; }
 
 class TagsFormatter extends Formatter<ITagsState> {
     public begin(layout: Layout, init: Readonly<Partial<ITagsState>>, prevState: Readonly<ITagsState>) {
         const state: Partial<ITagsState> = prevState
-            ? {...prevState}
+            ? { ...prevState }
             : {};
 
         const segment = layout.segment;
@@ -164,7 +164,7 @@ class TagsFormatter extends Formatter<ITagsState> {
             case DocSegmentKind.paragraph: {
                 layout.popNode();
                 const pg = layout.pushTag(state.pTag);
-                syncCss(pg as HTMLElement, getCss(segment), undefined);
+                syncCss(pg, getCss(segment), undefined);
                 return { state, consumed: true };
             }
 
@@ -200,7 +200,7 @@ class TagsFormatter extends Formatter<ITagsState> {
 interface IParagraphState extends IFormatterState { root?: HTMLElement; }
 
 class ParagraphFormatter extends Formatter<IParagraphState> {
-    constructor(private readonly defaultTag: Tag) { super(); }
+    constructor(private readonly defaultTag: TagName) { super(); }
 
     public begin(layout: Layout, init: IParagraphState, prevState: IParagraphState) {
         const state: Partial<IParagraphState> = prevState
@@ -208,7 +208,6 @@ class ParagraphFormatter extends Formatter<IParagraphState> {
             : {};
 
         const segment = layout.segment;
-        // tslint:disable-next-line:strict-boolean-expressions
         const tag = (segment.properties && segment.properties.tag) || this.defaultTag;
         state.root = layout.pushTag(tag);
         syncCss(state.root, getCss(segment), undefined);
@@ -255,7 +254,7 @@ class ParagraphFormatter extends Formatter<IParagraphState> {
     }
 
     public end(layout: Layout, state: Readonly<IParagraphState>) {
-        layout.emitTag(Tag.br);
+        layout.emitTag(TagName.br);
         layout.popNode();
     }
 }
@@ -267,7 +266,7 @@ class TextFormatter extends Formatter<ITextState> {
         const state: Partial<ITextState> = prevState
             ? { ...prevState }
             : {};
-        state.root = layout.pushTag(Tag.span);
+        state.root = layout.pushTag(TagName.span);
         state.css = getCss(layout.segment);
         syncCss(state.root, state.css, undefined);
         return state;
@@ -301,6 +300,6 @@ class TextFormatter extends Formatter<ITextState> {
 
 export const htmlFormatter = Object.freeze(new HtmlFormatter());
 const inclusionFormatter = Object.freeze(new InclusionFormatter());
-const paragraphFormatter = Object.freeze(new ParagraphFormatter(Tag.p));
+const paragraphFormatter = Object.freeze(new ParagraphFormatter(TagName.p));
 const tagsFormatter = Object.freeze(new TagsFormatter());
 const textFormatter = Object.freeze(new TextFormatter());

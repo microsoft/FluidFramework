@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
+import { EventEmitter } from "events";
 import { Deferred } from "@microsoft/fluid-core-utils";
 import { IClient, IDocumentMessage, IServiceConfiguration } from "@microsoft/fluid-protocol-definitions";
 import { INode, IOrderer, IOrdererConnection, IWebSocket, MongoManager } from "@microsoft/fluid-server-services-core";
-import * as assert from "assert";
-import { EventEmitter } from "events";
 import { debug } from "./debug";
 import { IConcreteNode, IConnectedMessage, IConnectMessage, INodeMessage, IOpMessage } from "./interfaces";
 import { IOrdererConnectionFactory, ProxyOrderer } from "./proxyOrderer";
@@ -37,10 +37,10 @@ class ProxySocketConnection implements IOrdererConnection {
     constructor(
         public readonly tenantId: string,
         public readonly documentId: string,
-        private socket: IWebSocket,
-        private node: RemoteNode,
-        private cid: number,
-        private details: IConnectedMessage) {
+        private readonly socket: IWebSocket,
+        private readonly node: RemoteNode,
+        private readonly cid: number,
+        private readonly details: IConnectedMessage) {
     }
 
     public order(messages: IDocumentMessage[]): void {
@@ -61,8 +61,11 @@ class ProxySocketConnection implements IOrdererConnection {
 }
 
 class ProxySocketThing implements IOrdererConnectionFactory {
-    constructor(private node: RemoteNode, private tenantId: string, private documentId: string) {
-        // return;
+    constructor(
+        private readonly node: RemoteNode,
+        private readonly tenantId: string,
+        private readonly documentId: string) {
+        // Return;
     }
 
     public async connect(
@@ -110,9 +113,9 @@ export class RemoteNode extends EventEmitter implements IConcreteNode {
         return this.socket !== null;
     }
 
-    private connectMap = new Map<number, IPendingConnection>();
-    private orderers = new Map<string, ProxyOrderer>();
-    private topicMap = new Map<string, ProxySocketConnection[]>();
+    private readonly connectMap = new Map<number, IPendingConnection>();
+    private readonly orderers = new Map<string, ProxyOrderer>();
+    private readonly topicMap = new Map<string, ProxySocketConnection[]>();
     private cid = 0;
 
     // TODO establish some kind of connection to the node from here?
@@ -120,7 +123,7 @@ export class RemoteNode extends EventEmitter implements IConcreteNode {
     // I can probably assume it's all good so long as it tells me things are good. And then I avoid the update loop.
     // Expired nodes I can track separately.
 
-    private constructor(private _id: string, private socket: Socket<INodeMessage>) {
+    private constructor(private readonly _id: string, private readonly socket: Socket<INodeMessage>) {
         super();
 
         this.socket.on(
@@ -132,10 +135,12 @@ export class RemoteNode extends EventEmitter implements IConcreteNode {
                         break;
 
                     case "connected":
+                        // eslint-disable-next-line no-case-declarations
                         const pendingConnect = this.connectMap.get(message.cid);
                         assert(pendingConnect);
                         this.connectMap.delete(message.cid);
 
+                        // eslint-disable-next-line no-case-declarations
                         const socketConnection = new ProxySocketConnection(
                             pendingConnect.tenantId,
                             pendingConnect.documentId,
@@ -146,6 +151,7 @@ export class RemoteNode extends EventEmitter implements IConcreteNode {
 
                         // Add new connection to routing tables
                         this.topicMap.set(`client#${socketConnection.clientId}`, [socketConnection]);
+                        // eslint-disable-next-line no-case-declarations
                         const fullId = `${pendingConnect.tenantId}/${pendingConnect.documentId}`;
                         if (!this.topicMap.has(fullId)) {
                             this.topicMap.set(fullId, []);
@@ -153,6 +159,8 @@ export class RemoteNode extends EventEmitter implements IConcreteNode {
                         this.topicMap.get(fullId).push(socketConnection);
 
                         pendingConnect.deferred.resolve(socketConnection);
+                        break;
+                    default:
                         break;
                 }
             });

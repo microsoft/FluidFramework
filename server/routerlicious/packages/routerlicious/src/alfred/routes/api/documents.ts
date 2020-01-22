@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IAlfredTenant, IDocumentStorage } from "@microsoft/fluid-server-services-core";
+import { IDocumentStorage } from "@microsoft/fluid-server-services-core";
 import { Router } from "express";
+import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
 import { getParam } from "../../utils";
 
 export function create(storage: IDocumentStorage, appTenants: IAlfredTenant[]): Router {

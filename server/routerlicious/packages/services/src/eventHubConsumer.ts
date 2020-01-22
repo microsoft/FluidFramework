@@ -3,23 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { EventData, EventProcessorHost, PartitionContext } from "@azure/event-processor-host";
+import { EventEmitter } from "events";
+import { EventData, EventProcessorHost, PartitionContext, FromTokenProviderOptions } from "@azure/event-processor-host";
 import {
     BoxcarType,
     IBoxcarMessage,
     IConsumer,
-    IKafkaMessage,
+    IQueuedMessage,
     IPartition,
 } from "@microsoft/fluid-server-services-core";
-import { EventEmitter } from "events";
 import { debug } from "./debug";
 
-const emit = true;
+interface IEventHubMessage extends IQueuedMessage {
+    context: PartitionContext;
+    data: EventData;
+}
 
 export class EventHubConsumer implements IConsumer {
-    private events = new EventEmitter();
-    private eventHost: EventProcessorHost;
-    private partitions = new Set<string>();
+    private readonly events = new EventEmitter();
+    private readonly eventHost: EventProcessorHost;
+    private readonly partitions = new Set<string>();
 
     constructor(
         endpoint: string,
@@ -29,9 +32,8 @@ export class EventHubConsumer implements IConsumer {
         autoCommit: boolean,
         storageEndpoint: string,
         storageContainerName: string,
+        additionalOptions?: FromTokenProviderOptions,
     ) {
-        console.log("Starting Event Hub");
-
         // Create the Event Processor Host
         this.eventHost = EventProcessorHost.createFromConnectionString(
             clientId,
@@ -41,6 +43,7 @@ export class EventHubConsumer implements IConsumer {
             {
                 consumerGroup: groupId,
                 eventHubPath: topic,
+                ...additionalOptions,
             });
 
         const startP = this.eventHost.start(
@@ -54,9 +57,14 @@ export class EventHubConsumer implements IConsumer {
         });
     }
 
-    public async commitOffset(data: any[]): Promise<void> {
-        // const commitP = this.consumer.commitOffset([{ offset, partition: this.id }]);
-        // TODO handle checkpointing
+    public async commitCheckpoint(partitionId: number, queuedMessage: IQueuedMessage): Promise<void> {
+        const eventHubMessage = queuedMessage as IEventHubMessage;
+        if (eventHubMessage && eventHubMessage.context && eventHubMessage.data) {
+            await eventHubMessage.context.checkpointFromEventData(eventHubMessage.data);
+
+        } else {
+            debug("Invalid message metadata");
+        }
     }
 
     public on(event: string, listener: (...args: any[]) => void): this {
@@ -64,16 +72,16 @@ export class EventHubConsumer implements IConsumer {
         return this;
     }
 
-    public close(): Promise<void> {
-        return this.eventHost.stop();
+    public async close() {
+        await this.eventHost.stop();
     }
 
-    public pause() {
-        this.eventHost.stop();
+    public async pause() {
+        await this.eventHost.stop();
     }
 
-    public resume() {
-        throw new Error("Is this used?");
+    public async resume() {
+        throw new Error("Not implemented");
     }
 
     private getPartitions(partitionIds: string[]): IPartition[] {
@@ -90,11 +98,15 @@ export class EventHubConsumer implements IConsumer {
     }
 
     private updatePartitions() {
-        let changed = false;
-        for (const partition of this.eventHost.receivingFromPartitions) {
-            if (!this.partitions.has(partition)) {
-                changed = true;
-                break;
+        const receivingFromPartitions = this.eventHost.receivingFromPartitions;
+
+        let changed = receivingFromPartitions.length !== this.partitions.size;
+        if (!changed) {
+            for (const partition of receivingFromPartitions) {
+                if (!this.partitions.has(partition)) {
+                    changed = true;
+                    break;
+                }
             }
         }
 
@@ -104,11 +116,11 @@ export class EventHubConsumer implements IConsumer {
 
         const existing = this.getPartitions(Array.from(this.partitions));
         this.events.emit("rebalancing", existing);
-        const newPartitions = this.getPartitions(this.eventHost.receivingFromPartitions);
+        const newPartitions = this.getPartitions(receivingFromPartitions);
         this.events.emit("rebalanced", newPartitions);
 
         this.partitions.clear();
-        for (const partition of this.eventHost.receivingFromPartitions) {
+        for (const partition of receivingFromPartitions) {
             this.partitions.add(partition);
         }
     }
@@ -123,20 +135,16 @@ export class EventHubConsumer implements IConsumer {
             type: BoxcarType,
         };
 
-        const kafkaMessage: IKafkaMessage = {
-            highWaterOffset: data.sequenceNumber,
-            key: data.partitionKey,
+        const eventHubMessage: IEventHubMessage = {
+            context,
+            data,
             offset: data.sequenceNumber,
             partition: parseInt(context.partitionId, 10),
             topic: context.eventhubPath,
             value: boxcarMessage,
         };
 
-        // TODO handle checkpointing
-        context.checkpoint();
-        if (emit) {
-            this.events.emit("data", kafkaMessage);
-        }
+        this.events.emit("data", eventHubMessage);
     }
 
     private error(error) {

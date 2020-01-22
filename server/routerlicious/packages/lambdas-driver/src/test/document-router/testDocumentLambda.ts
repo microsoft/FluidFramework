@@ -3,30 +3,30 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
+import { EventEmitter } from "events";
 import {
     IContext,
-    IKafkaMessage,
+    IQueuedMessage,
     IPartitionLambda,
     IPartitionLambdaFactory,
     ISequencedOperationMessage,
 } from "@microsoft/fluid-server-services-core";
-import * as assert from "assert";
-import { EventEmitter } from "events";
 import { Provider } from "nconf";
 
 export class TestLambda implements IPartitionLambda {
     public handleCalls = 0;
 
-    private documentId: string;
+    private readonly documentId: string;
     private failHandler = false;
     private throwHandler = false;
 
-    constructor(config: Provider, private context: IContext) {
+    constructor(config: Provider, private readonly context: IContext) {
         this.documentId = config.get("documentId");
         assert(this.documentId);
     }
 
-    public handler(message: IKafkaMessage): void {
+    public handler(message: IQueuedMessage): void {
         this.handleCalls++;
         const sequencedMessage = message.value as ISequencedOperationMessage;
         assert.equal(this.documentId, sequencedMessage.documentId);
@@ -36,7 +36,7 @@ export class TestLambda implements IPartitionLambda {
         } else if (this.throwHandler) {
             throw new Error("Test Error");
         } else {
-            this.context.checkpoint(message.offset);
+            this.context.checkpoint(message);
         }
     }
 
@@ -94,9 +94,7 @@ export class TestLambdaFactory extends EventEmitter implements IPartitionLambdaF
     }
 }
 
-export function create(config: Provider): IPartitionLambdaFactory {
-    return new TestLambdaFactory();
-}
+export const create = (config: Provider): IPartitionLambdaFactory => new TestLambdaFactory();
 
 export interface ITestLambdaModule {
     create: () => TestLambdaFactory;

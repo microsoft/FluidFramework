@@ -35,6 +35,7 @@ export class InnerDocumentServiceFactory implements IDocumentServiceFactory {
     }
 
     private async createOuterProxy(): Promise<IDocumentServiceFactoryProxy> {
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises, no-async-promise-executor
         return new Promise<IDocumentServiceFactoryProxy>(async (resolve, reject) => {
             const create = async () => {
 
@@ -54,6 +55,7 @@ export class InnerDocumentServiceFactory implements IDocumentServiceFactory {
                 await create();
             };
 
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
             window.addEventListener("message", evtListener, { once: true });
 
             // Attempt to connect, does not connect if innerDocumentServiceFactory
@@ -62,6 +64,7 @@ export class InnerDocumentServiceFactory implements IDocumentServiceFactory {
 
             // Remove eventListener if the create returns, the trigger was sent before inner was created
             // Leaving the eventListener will eat events.
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
             window.removeEventListener("message", evtListener);
         });
 

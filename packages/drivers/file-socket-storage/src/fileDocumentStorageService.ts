@@ -3,21 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { buildHierarchy, flatten, fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
-import * as api from "@microsoft/fluid-protocol-definitions";
-import { IFileSnapshot, ReadDocumentStorageServiceBase } from "@microsoft/fluid-replay-driver";
 import * as assert from "assert";
 import * as fs from "fs";
+import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+import { buildSnapshotTree } from "@microsoft/fluid-protocol-base";
+import * as api from "@microsoft/fluid-protocol-definitions";
+import { IFileSnapshot, ReadDocumentStorageServiceBase } from "@microsoft/fluid-replay-driver";
 
 // This ID is used by replay tool as Document Id.
 // We leverage it to figure out when container is asking for root document tree.
-export const FileStorageDocumentName = "FileStorageDocId"; // some unique document name
+export const FileStorageDocumentName = "FileStorageDocId"; // Some unique document name
 
 // Tree ID use to communicate between getVersions() & getSnapshotTree() that IVersion is ours.
 const FileStorageVersionTreeId = "FileStorageTreeId";
 
-// this ID should not show up anywhere, as it's internal only ID that no public API should accept.
+// This ID should not show up anywhere, as it's internal only ID that no public API should accept.
 const FileStorageVersionTreeIdUnused = "baad";
 
 /**
@@ -73,7 +74,7 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
     public async getVersions(versionId: string, count: number): Promise<api.IVersion[]> {
         if (versionId === FileStorageDocumentName) {
             if (this.docTree || this.versionName !== undefined) {
-                return [{id: "latest", treeId: FileStorageVersionTreeId}];
+                return [{ id: "latest", treeId: FileStorageVersionTreeId }];
             }
             // Started with ops - return empty set.
             return [];
@@ -111,12 +112,11 @@ export interface ISnapshotWriterStorage extends IDocumentStorageService {
 }
 
 export type ReaderConstructor = new (...args: any[]) => IDocumentStorageService;
-// tslint:disable-next-line:max-func-body-length
 export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(Base: TBase) {
     return class extends Base implements ISnapshotWriterStorage {
         // Note: if variable name has same name as in base class, it overrides it!
         public blobsWriter = new Map<string, string>();
-        public commitsWriter: {[key: string]: api.ITree} = {};
+        public commitsWriter: { [key: string]: api.ITree } = {};
         public latestWriterTree?: api.ISnapshotTree;
         public docId?: string;
 
@@ -152,14 +152,14 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
                 this.docId = versionId;
             }
             if (this.latestWriterTree && (this.docId === versionId || versionId === undefined)) {
-                return [{id: "latest", treeId: FileStorageVersionTreeId}];
+                return [{ id: "latest", treeId: FileStorageVersionTreeId }];
             }
 
             if (this.commitsWriter[versionId] !== undefined) {
                 // PrefetchDocumentStorageService likes to prefetch everything!
                 // Skip, as Container does not really need it.
                 throw new Error("Not supporting commit loading");
-                // return [{id: versionId, treeId: FileStorageVersionTreeId}];
+                // Return [{id: versionId, treeId: FileStorageVersionTreeId}];
             }
             return super.getVersions(versionId, count);
         }
@@ -169,19 +169,17 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
                 return this.latestWriterTree;
             }
             if (version && this.commitsWriter[version.id] !== undefined) {
-                const flattened = flatten(this.commitsWriter[version.id].entries, this.blobsWriter);
-                return buildHierarchy(flattened);
+                return buildSnapshotTree(this.commitsWriter[version.id].entries, this.blobsWriter);
             }
             return super.getSnapshotTree(version);
         }
 
         public async write(
-                tree: api.ITree,
-                parents: string[],
-                message: string,
-                ref: string): Promise<api.IVersion> {
+            tree: api.ITree,
+            parents: string[],
+            message: string,
+            ref: string): Promise<api.IVersion> {
             let componentName = ref ? ref : "container";
-            // tslint:disable-next-line:strict-boolean-expressions
             if (tree && tree.entries) {
                 tree.entries.forEach((entry) => {
                     if (entry.path === ".component" && entry.type === api.TreeEntry[api.TreeEntry.Blob]) {
@@ -201,6 +199,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
 
             // Remove tree IDs for easier comparison of snapshots
             delete tree.id;
+            // eslint-disable-next-line @typescript-eslint/no-use-before-define
             removeNullTreIds(tree);
 
             if (ref) {
@@ -212,8 +211,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
 
                 // Prep for the future - refresh latest tree, as it's requests on next snapshot generation.
                 // Do not care about blobs (at least for now), as blobs are not written out (need follow up)
-                const flattened = flatten(tree.entries, this.blobsWriter);
-                this.latestWriterTree = buildHierarchy(flattened);
+                this.latestWriterTree = buildSnapshotTree(tree.entries, this.blobsWriter);
 
                 // Do not reset this.commitsWriter - runtime will reference same commits in future snapshots
                 // if component did not change in between two snapshots.
@@ -229,7 +227,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
         }
 
         public async writeOutFullSnapshot(tree: api.ITree) {
-            const commits: {[key: string]: api.ITree} = {};
+            const commits: { [key: string]: api.ITree } = {};
             for (const entry of tree.entries) {
                 if (entry.type === api.TreeEntry[api.TreeEntry.Commit]) {
                     const commitId = entry.value as string;
@@ -255,19 +253,17 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
 
             // Sort keys. This does not guarantees that JSON.stringify() would produce sorted result,
             // but in practice it does.
-            const commitsSorted: {[key: string]: api.ITree} = {};
+            const commitsSorted: { [key: string]: api.ITree } = {};
             for (const key of Object.keys(commits).sort()) {
                 commitsSorted[key] = commits[key];
             }
 
-            const fileSnapshot: IFileSnapshot = {tree, commits: commitsSorted};
+            const fileSnapshot: IFileSnapshot = { tree, commits: commitsSorted };
             this.onSnapshotHandler(fileSnapshot);
         }
 
         public sortTree(tree: api.ITree) {
-            tree.entries.sort((a, b) => {
-                return a.path.localeCompare(b.path);
-            });
+            tree.entries.sort((a, b) => a.path.localeCompare(b.path));
             tree.entries.map((entry) => {
                 if (entry.type === api.TreeEntry[api.TreeEntry.Tree]) {
                     this.sortTree(entry.value as api.ITree);
@@ -276,7 +272,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
         }
 
         public async buildTree(snapshotTree: api.ISnapshotTree): Promise<api.ITree> {
-            const tree: api.ITree = {id: snapshotTree.id, entries: []};
+            const tree: api.ITree = { id: snapshotTree.id, entries: [] };
 
             for (const subTreeId of Object.keys(snapshotTree.trees)) {
                 const subTree = await this.buildTree(snapshotTree.trees[subTreeId]);
@@ -291,7 +287,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
             for (const blobName of Object.keys(snapshotTree.blobs)) {
                 const contents = await this.read(snapshotTree.blobs[blobName]);
                 const blob: api.IBlob = {
-                    contents: fromBase64ToUtf8(contents), // decode for readability
+                    contents: fromBase64ToUtf8(contents), // Decode for readability
                     encoding: "utf-8",
                 };
                 tree.entries.push({

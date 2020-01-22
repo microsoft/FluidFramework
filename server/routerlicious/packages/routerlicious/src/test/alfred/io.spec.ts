@@ -27,9 +27,10 @@ import {
     TestWebSocketServer,
 } from "@microsoft/fluid-server-test-utils";
 import * as assert from "assert";
-import * as io from "../../alfred/io";
 import { OrdererManager } from "../../alfred/runnerFactory";
-import { DefaultServiceConfiguration } from "../../alfred/utils";
+import { DefaultMetricClient } from "@microsoft/fluid-server-services-core";
+import { generateToken } from "@microsoft/fluid-server-services-client";
+import { configureWebSocketServices, DefaultServiceConfiguration } from "@microsoft/fluid-server-lambdas";
 
 describe("Routerlicious", () => {
     describe("Alfred", () => {
@@ -49,7 +50,6 @@ describe("Routerlicious", () => {
 
                 beforeEach(() => {
                     const collectionNames = "test";
-                    const metricClientConfig = {};
                     const testData: { [key: string]: any[] } = {};
 
                     deliKafka = new TestKafka();
@@ -77,14 +77,14 @@ describe("Routerlicious", () => {
                     webSocketServer = new TestWebSocketServer();
                     contentCollection = new TestCollection([]);
 
-                    io.register(
+                    configureWebSocketServices(
                         webSocketServer,
-                        metricClientConfig,
                         testOrderer,
                         testTenantManager,
                         testStorage,
                         contentCollection,
-                        testClientManager);
+                        testClientManager,
+                        new DefaultMetricClient());
                 });
 
                 function connectToServer(
@@ -93,7 +93,7 @@ describe("Routerlicious", () => {
                     secret: string,
                     socket: TestWebSocket): Promise<IConnected> {
                     const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
-                    const token = core.generateToken(tenantId, id, secret, scopes);
+                    const token = generateToken(tenantId, id, secret, scopes);
 
                     const connectMessage: IConnect = {
                         client: undefined,

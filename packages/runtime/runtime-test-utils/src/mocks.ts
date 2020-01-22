@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
+import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
     IComponentHandle,
@@ -17,7 +19,6 @@ import {
     ILoader,
 } from "@microsoft/fluid-container-definitions";
 import {
-    ComponentSerializer,
     DebugLogger,
     Deferred,
     fromUtf8ToBase64,
@@ -42,10 +43,9 @@ import {
     IObjectStorageService,
     ISharedObjectServices,
 } from "@microsoft/fluid-runtime-definitions";
+import { ComponentSerializer } from "@microsoft/fluid-runtime-utils";
 import { IHistorian } from "@microsoft/fluid-server-services-client";
-import * as assert from "assert";
-import { EventEmitter } from "events";
-// tslint:disable-next-line: no-submodule-imports
+// eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
 
 /**
@@ -57,6 +57,7 @@ export class MockDeltaConnectionFactory {
     private readonly messages: ISequencedDocumentMessage[] = [];
     private readonly deltaConnections: MockDeltaConnection[] = [];
     public createDeltaConnection(runtime: MockRuntime): IDeltaConnection {
+        // eslint-disable-next-line @typescript-eslint/no-use-before-define
         const delta = new MockDeltaConnection(this, runtime);
         this.deltaConnections.push(delta);
         return delta;
@@ -70,7 +71,6 @@ export class MockDeltaConnectionFactory {
     }
 
     public clearMessages() {
-        // eslint-disable-next-line no-empty
         while (this.messages.shift()) { }
     }
 
@@ -116,13 +116,14 @@ class MockDeltaConnection implements IDeltaConnection {
                     this.runtime.clientId = this.pendingClientId;
                     this.pendingClientId = undefined;
                 }
-            // intentional fallthrough
+            // Intentional fallthrough
             case ConnectionState.Connecting:
                 this.pendingClientId = uuid();
                 break;
             case ConnectionState.Disconnected:
             default:
         }
+
         this.connectionState = state;
         this.handlers.forEach((h) => {
             h.setConnectionState(this.state);
@@ -186,7 +187,7 @@ export class MockRuntime extends EventEmitter
     public readonly existing: boolean;
     public readonly options: any = {};
     public clientId: string = uuid();
-    public readonly clientType: string = "browser"; // back-compat: 0.11 clientType
+    public readonly clientType: string = "browser"; // Back-compat: 0.11 clientType
     public readonly parentBranch: string;
     public readonly path = "";
     public readonly connected: boolean;
@@ -326,7 +327,6 @@ export class MockHistorian implements IHistorian {
         return fromUtf8ToBase64(content);
     }
 
-    // eslint-disable-next-line @typescript-eslint/camelcase
     public async read_r(path: string, baseBlob: git.ITree | git.ICreateTreeParams): Promise<string> {
         if (!path.includes("/")) {
             for (const blob of baseBlob.tree) {

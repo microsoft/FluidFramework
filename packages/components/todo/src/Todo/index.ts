@@ -4,4 +4,4 @@
  */
 
 export * from "./Todo";
-export * from "./TodoInstantiationFactory";
+export * from "./todoInstantiationFactory";

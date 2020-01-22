@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import { Char, randomId } from "@fluid-example/flow-util-lib";
 import { MapLike, TextSegment } from "@microsoft/fluid-merge-tree";
-import { strict as assert } from "assert";
 import { FlowDocument, getDocSegmentKind } from "../document";
 import { PlainTextFormatter } from "../plaintext/formatter";
 import { emptyArray } from "../util";
@@ -35,28 +35,28 @@ interface IMarkdownRenderInfo {
 const undefinedRenderInfo = { tag: Tag.span, className: undefined };
 
 const tokenToRenderInfo: { [index: string]: IMarkdownRenderInfo } = Object.freeze({
-    [MarkdownToken.break]:          { tag: Tag.span,           className: styles.break          },
-    [MarkdownToken.code]:           { tag: Tag.span,           className: styles.code           },
-    [MarkdownToken.emphasis]:       { tag: Tag.span,           className: styles.emphasis       },
-    [MarkdownToken.blockquote]:     { tag: Tag.span,           className: styles.blockquote     },
-    [MarkdownToken.heading1]:       { tag: Tag.span,           className: styles.heading1       },
-    [MarkdownToken.heading2]:       { tag: Tag.span,           className: styles.heading2       },
-    [MarkdownToken.heading3]:       { tag: Tag.span,           className: styles.heading3       },
-    [MarkdownToken.heading4]:       { tag: Tag.span,           className: styles.heading4       },
-    [MarkdownToken.heading5]:       { tag: Tag.span,           className: styles.heading5       },
-    [MarkdownToken.heading6]:       { tag: Tag.span,           className: styles.heading6       },
-    [MarkdownToken.image]:          { tag: Tag.span,           className: styles.image          },
-    [MarkdownToken.inlineCode]:     { tag: Tag.span,           className: styles.inlineCode     },
-    [MarkdownToken.link]:           { tag: Tag.span,           className: styles.link           },
-    [MarkdownToken.listItem]:       { tag: Tag.span,           className: styles.listItem       },
-    [MarkdownToken.orderedlist]:    { tag: Tag.span,           className: styles.orderedlist    },
-    [MarkdownToken.paragraph]:      { tag: Tag.span,           className: styles.paragraph      },
-    [MarkdownToken.strong]:         { tag: Tag.span,           className: styles.strong         },
-    [MarkdownToken.table]:          { tag: Tag.span,           className: styles.table          },
-    [MarkdownToken.tableCell]:      { tag: Tag.span,           className: styles.tableCell      },
-    [MarkdownToken.tableRow]:       { tag: Tag.span,           className: styles.tableRow       },
-    [MarkdownToken.text]:           { tag: Tag.span,           className: styles.text           },
-    [MarkdownToken.unorderedlist]:  { tag: Tag.span,           className: styles.unorderedlist  },
+    [MarkdownToken.break]: { tag: Tag.span, className: styles.break },
+    [MarkdownToken.code]: { tag: Tag.span, className: styles.code },
+    [MarkdownToken.emphasis]: { tag: Tag.span, className: styles.emphasis },
+    [MarkdownToken.blockquote]: { tag: Tag.span, className: styles.blockquote },
+    [MarkdownToken.heading1]: { tag: Tag.span, className: styles.heading1 },
+    [MarkdownToken.heading2]: { tag: Tag.span, className: styles.heading2 },
+    [MarkdownToken.heading3]: { tag: Tag.span, className: styles.heading3 },
+    [MarkdownToken.heading4]: { tag: Tag.span, className: styles.heading4 },
+    [MarkdownToken.heading5]: { tag: Tag.span, className: styles.heading5 },
+    [MarkdownToken.heading6]: { tag: Tag.span, className: styles.heading6 },
+    [MarkdownToken.image]: { tag: Tag.span, className: styles.image },
+    [MarkdownToken.inlineCode]: { tag: Tag.span, className: styles.inlineCode },
+    [MarkdownToken.link]: { tag: Tag.span, className: styles.link },
+    [MarkdownToken.listItem]: { tag: Tag.span, className: styles.listItem },
+    [MarkdownToken.orderedlist]: { tag: Tag.span, className: styles.orderedlist },
+    [MarkdownToken.paragraph]: { tag: Tag.span, className: styles.paragraph },
+    [MarkdownToken.strong]: { tag: Tag.span, className: styles.strong },
+    [MarkdownToken.table]: { tag: Tag.span, className: styles.table },
+    [MarkdownToken.tableCell]: { tag: Tag.span, className: styles.tableCell },
+    [MarkdownToken.tableRow]: { tag: Tag.span, className: styles.tableRow },
+    [MarkdownToken.text]: { tag: Tag.span, className: styles.text },
+    [MarkdownToken.unorderedlist]: { tag: Tag.span, className: styles.unorderedlist },
 });
 
 class MarkdownHighlightFormatter extends PlainTextFormatter<IMarkdownState> {
@@ -133,7 +133,6 @@ class MarkdownHighlightFormatter extends PlainTextFormatter<IMarkdownState> {
     private leave(doc: FlowDocument, position: number) {
         if (position < doc.length) {
             const md = this.getEnsuredParserAnnotation(doc, position);
-            // tslint:disable-next-line:no-bitwise
             md.pop = (md.pop | 0) + 1;        // Coerce 'undefined' to 0
         }
     }

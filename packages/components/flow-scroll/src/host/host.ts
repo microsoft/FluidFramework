@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { KeyCode, randomId, Template } from "@fluid-example/flow-util-lib";
+import { KeyCode, randomId, Template, TagName } from "@fluid-example/flow-util-lib";
 import * as SearchMenu from "@fluid-example/search-menu";
 import { tableViewType } from "@fluid-example/table-view";
-import { Editor, FlowDocument, htmlFormatter, Tag } from "@fluid-example/webflow";
+import { Editor, FlowDocument, htmlFormatter } from "@fluid-example/webflow";
 import {
     IComponent,
     IComponentHTMLView,
@@ -19,13 +19,19 @@ import { TST } from "@microsoft/fluid-merge-tree";
 import * as styles from "./index.css";
 
 const template = new Template(
-    { tag: "div", props: { className: styles.host }, children: [
-        { tag: "div", ref: "viewport", props: { className: styles.viewport }, children: [
-            { tag: "div", props: { className: styles.padding }, children: [
-                { tag: "p", ref: "slot", props: { className: styles.slot } },
-            ]},
-        ]},
-    ]});
+    {
+        tag: "div", props: { className: styles.host }, children: [
+            {
+                tag: "div", ref: "viewport", props: { className: styles.viewport }, children: [
+                    {
+                        tag: "div", props: { className: styles.padding }, children: [
+                            { tag: "p", ref: "slot", props: { className: styles.slot } },
+                        ],
+                    },
+                ],
+            },
+        ],
+    });
 
 export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost {
     public get ISearchMenuHost() { return this; }
@@ -44,7 +50,7 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
         private readonly imagesP: Promise<IComponentCollection>,
         private readonly intelViewer: IComponentHTMLVisual,
         private readonly root: ISharedDirectory,
-    ) {}
+    ) { }
 
     // #region IComponentHTMLView
     public remove(): void {
@@ -70,6 +76,7 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
 
         this.viewport = template.clone() as HTMLElement;
 
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         Promise.all([this.docP, this.mathP, this.videosP, this.imagesP]).then(([doc, math, videos, images]) => {
             const slot = template.get(this.viewport, "slot") as HTMLElement;
             const editor = new Editor(doc, slot, htmlFormatter, this);
@@ -84,22 +91,25 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
             const insertComponent = (type: string, componentOptions: object, style?: string, classList?: string[]) => {
                 const position = editor.selection.end;
                 const url = randomId();
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 this.createSubComponent(url, type);
                 doc.insertComponent(position, `/${this.root.get(url)}`, componentOptions, style, classList);
             };
 
-            const insertComponentFromCollection = (factory: IComponentCollection, componentOptions: object, style?: string, classList?: string[]) => {
-                const position = editor.selection.end;
-                const instance = factory.createCollectionItem(componentOptions) as IComponentLoadable;
-                doc.insertComponent(position, `/${instance.url}`, componentOptions, style, classList);
-            };
+            const insertComponentFromCollection =
+                (factory: IComponentCollection, componentOptions: object, style?: string, classList?: string[]) => {
+                    const position = editor.selection.end;
+                    const instance = factory.createCollectionItem(componentOptions) as IComponentLoadable;
+                    doc.insertComponent(position, `/${instance.url}`, componentOptions, style, classList);
 
-            const insertTags = (tags: Tag[]) => {
+                };
+
+            const insertTags = (tags: TagName[]) => {
                 const selection = editor.selection;
                 doc.insertTags(tags, selection.start, selection.end);
             };
 
-            const setFormat = (tag: Tag) => {
+            const setFormat = (tag: TagName) => {
                 const { end } = editor.selection;
 
                 // Note that calling 'setFormat(..)' with the position of a paragraph marker will change the block
@@ -118,25 +128,28 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
                 doc.setCssStyle(start, end, style);
             };
 
+            /* eslint-disable max-len */
             const commands: SearchMenu.ISearchMenuCommand<HostView>[] = [
-                { key: "blockquote",    enabled: always,        exec: () => { setFormat(Tag.blockquote); } },
-                { key: "bold",          enabled: hasSelection,  exec: () => toggleSelection(styles.bold) },
-                { key: "h1",            enabled: always,        exec: () => { setFormat(Tag.h1); } },
-                { key: "h2",            enabled: always,        exec: () => { setFormat(Tag.h2); } },
-                { key: "h3",            enabled: always,        exec: () => { setFormat(Tag.h3); } },
-                { key: "h4",            enabled: always,        exec: () => { setFormat(Tag.h4); } },
-                { key: "h5",            enabled: always,        exec: () => { setFormat(Tag.h5); } },
-                { key: "h6",            enabled: always,        exec: () => { setFormat(Tag.h6); } },
-                { key: "ol",            enabled: always,        exec: () => { insertTags([Tag.ol, Tag.li]); } },
-                { key: "p",             enabled: always,        exec: () => { setFormat(Tag.p); } },
-                { key: "ul",            enabled: always,        exec: () => { insertTags([Tag.ul, Tag.li]); } },
-                { key: "red",           enabled: always,        exec: () => { setStyle("color:red"); } },
-                { key: "math inline",   enabled: always,        exec: () => insertComponentFromCollection(math, { display: "inline"}) },
-                { key: "math block",    enabled: always,        exec: () => insertComponentFromCollection(math, { display: "block"}) },
-                { key: "morton",        enabled: always,        exec: () => insertComponentFromCollection(videos, {}, "display:block;width:61%;--aspect-ratio:calc(16/9)") },
-                { key: "image",         enabled: always,        exec: () => insertComponentFromCollection(images, {}, "display:inline-block;float:left;resize:both;overflow:hidden") },
-                { key: "table",         enabled: always,        exec: () => insertComponent(tableViewType, {}) },
+                { key: "blockquote", enabled: always, exec: () => { setFormat(TagName.blockquote); } },
+                { key: "bold", enabled: hasSelection, exec: () => toggleSelection(styles.bold) },
+                { key: "h1", enabled: always, exec: () => { setFormat(TagName.h1); } },
+                { key: "h2", enabled: always, exec: () => { setFormat(TagName.h2); } },
+                { key: "h3", enabled: always, exec: () => { setFormat(TagName.h3); } },
+                { key: "h4", enabled: always, exec: () => { setFormat(TagName.h4); } },
+                { key: "h5", enabled: always, exec: () => { setFormat(TagName.h5); } },
+                { key: "h6", enabled: always, exec: () => { setFormat(TagName.h6); } },
+                { key: "ol", enabled: always, exec: () => { insertTags([TagName.ol, TagName.li]); } },
+                { key: "p", enabled: always, exec: () => { setFormat(TagName.p); } },
+                { key: "ul", enabled: always, exec: () => { insertTags([TagName.ul, TagName.li]); } },
+                { key: "red", enabled: always, exec: () => { setStyle("color:red"); } },
+                { key: "math inline", enabled: always, exec: () => insertComponentFromCollection(math, { display: "inline" }) },
+                { key: "math block", enabled: always, exec: () => insertComponentFromCollection(math, { display: "block" }) },
+                { key: "morton", enabled: always, exec: () => insertComponentFromCollection(videos, {}, "display:block;width:61%;--aspect-ratio:calc(16/9)") },
+                { key: "image", enabled: always, exec: () => insertComponentFromCollection(images, {}, "display:inline-block;float:left;resize:both;overflow:hidden") },
+                { key: "table", enabled: always, exec: () => insertComponent(tableViewType, {}) },
             ];
+            /* eslint-enable max-len */
+
 
             const baseSearchCommands = new TST<SearchMenu.ISearchMenuCommand<HostView>>();
             for (const command of commands) {
@@ -145,8 +158,8 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
 
             const onKeyDown = (e: KeyboardEvent) => {
                 if (e.ctrlKey && e.code === KeyCode.keyM) {
-                    // Because the search menu is not yet attached to the DOM at the time this event is propagating,
-                    // we should consume the event on the search menu's behalf.
+                    // Because the search menu is not yet attached to the DOM at the time this event is propagating, we
+                    // should consume the event on the search menu's behalf.
                     e.preventDefault();
                     this.hostSearchMenu(baseSearchCommands, this.viewport, false, this.onComplete);
                 }
@@ -163,8 +176,10 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
     // #endregion IComponentHTMLView
 
     public showSearchMenu(
-        commands: TST<SearchMenu.ISearchMenuCommand>, foldCase: boolean,
-        showAllInitially: boolean, cmdParser?: (searchString: string, cmd?: SearchMenu.ISearchMenuCommand) => void): boolean {
+        commands: TST<SearchMenu.ISearchMenuCommand>,
+        foldCase: boolean,
+        showAllInitially: boolean,
+        cmdParser?: (searchString: string, cmd?: SearchMenu.ISearchMenuCommand) => void): boolean {
         this.hostSearchMenu(commands, this.viewport, foldCase, this.onComplete, cmdParser);
         if (showAllInitially) {
             this.activeSearchBox.showAllItems();
@@ -176,9 +191,11 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
         this.onComplete();
     }
 
-    protected hostSearchMenu(commands: TST<SearchMenu.ISearchMenuCommand>,
-                             containerElm: HTMLElement, foldCase = false, onComplete?: () => void,
-                             cmdParser?: (searchString: string, cmd?: SearchMenu.ISearchMenuCommand) => void) {
+    protected hostSearchMenu(
+        commands: TST<SearchMenu.ISearchMenuCommand>,
+        containerElm: HTMLElement,
+        foldCase = false, onComplete?: () => void,
+        cmdParser?: (searchString: string, cmd?: SearchMenu.ISearchMenuCommand) => void) {
         this.previouslyFocused = document.activeElement as unknown as HTMLOrSVGElement;
         this.activeSearchBox = SearchMenu.searchBoxCreate(this, containerElm,
             commands, foldCase, cmdParser);
@@ -191,5 +208,5 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
         this.previouslyFocused = undefined;
         this.activeSearchBox.dismiss();
         this.activeSearchBox = undefined;
-    }
+    };
 }

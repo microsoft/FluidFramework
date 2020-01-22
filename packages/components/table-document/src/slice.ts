@@ -5,11 +5,11 @@
 
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { ICombiningOp, PropertySet } from "@microsoft/fluid-merge-tree";
-import { IComponentContext, IComponentRuntime, JsonablePrimitive } from "@microsoft/fluid-runtime-definitions";
+import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { CellRange } from "./cellrange";
 import { ConfigKey } from "./configKey";
 import { TableDocument } from "./document";
-import { ITable } from "./table";
+import { ITable, TableDocumentItem } from "./table";
 
 export interface ITableSliceConfig {
     docId: string;
@@ -43,21 +43,21 @@ export class TableSlice extends PrimedComponent implements ITable {
         super(runtime, context);
     }
 
-    public evaluateCell(row: number, col: number) {
+    public evaluateCell(row: number, col: number): TableDocumentItem {
         this.validateInSlice(row, col);
         return this.doc.evaluateCell(row, col);
     }
 
-    public evaluateFormula(formula: string) {
+    public evaluateFormula(formula: string): TableDocumentItem {
         return this.doc.evaluateFormula(formula);
     }
 
-    public getCellValue(row: number, col: number): JsonablePrimitive {
+    public getCellValue(row: number, col: number): TableDocumentItem {
         this.validateInSlice(row, col);
         return this.doc.getCellValue(row, col);
     }
 
-    public setCellValue(row: number, col: number, value: JsonablePrimitive) {
+    public setCellValue(row: number, col: number, value: TableDocumentItem) {
         this.validateInSlice(row, col);
         this.doc.setCellValue(row, col, value);
     }
@@ -151,5 +151,5 @@ export class TableSlice extends PrimedComponent implements ITable {
 
     private readonly emitOp = (...args: any[]) => {
         this.emit("op", ...args);
-    }
+    };
 }

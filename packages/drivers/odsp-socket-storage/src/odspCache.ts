@@ -28,13 +28,13 @@ export class OdspCache {
         assert(!this.odspCache.has(key), "Insertion rejected because cache already has that key!!");
         this.odspCache.set(key, value);
         if (expiryTime) {
-            // tslint:disable-next-line: no-floating-promises
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.gc(key, expiryTime);
         }
     }
 
     private async gc(key: string, expiryTime: number) {
-        // tslint:disable-next-line: no-string-based-set-timeout
+        // eslint-disable-next-line @typescript-eslint/promise-function-async
         const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
         await delay(expiryTime);
         if (this.odspCache.has(key)) {

@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
+import * as url from "url";
 import { BatchManager } from "@microsoft/fluid-core-utils";
 import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
 import {
@@ -18,9 +20,7 @@ import {
     ISignalMessage,
     ITokenClaims,
 } from "@microsoft/fluid-protocol-definitions";
-import { EventEmitter } from "events";
 import * as ws from "isomorphic-ws";
-import * as url from "url";
 
 const protocolVersion = "^0.1.0";
 
@@ -39,6 +39,7 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
      * @param urlStr - url to connect to delta stream.
      * @returns Delta connection to the stream.
      */
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public static create(
         tenantId: string,
         id: string,
@@ -52,6 +53,7 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
 
             const resolveHandler = () => {
                 resolve(connection);
+                // eslint-disable-next-line @typescript-eslint/no-use-before-define
                 connection.removeListener("disconnected", rejectHandler);
             };
 
@@ -181,7 +183,6 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
     /**
      * Submits a new signal to the server
      */
-    // tslint:disable no-unsafe-any
     public submitSignal(message: any): void {
         this.submitManager.add("submitSignal", message);
     }
@@ -205,7 +206,6 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
 
     private handleMessage(data: ws.Data) {
         const args = JSON.parse(data as string) as any[];
-        // tslint:disable-next-line:no-unsafe-any
         this.emit(args[0], ...args.slice(1));
     }
 

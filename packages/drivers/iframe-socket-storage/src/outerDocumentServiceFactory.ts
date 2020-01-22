@@ -4,7 +4,6 @@
  */
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IHost } from "@microsoft/fluid-container-definitions";
 import { Deferred } from "@microsoft/fluid-core-utils";
 import {
     IDocumentDeltaConnection,
@@ -59,25 +58,30 @@ export interface IDocumentServiceFactoryProxy {
  */
 export class IFrameDocumentServiceProxyFactory {
 
-    public static async create(documentServiceFactory: IDocumentServiceFactory,
-                               frame: HTMLIFrameElement,
-                               options: any,
-                               containerHost: IHost) {
-        return new IFrameDocumentServiceProxyFactory(documentServiceFactory, frame, options, containerHost);
+    public static async create(
+        documentServiceFactory: IDocumentServiceFactory,
+        frame: HTMLIFrameElement,
+        options: any,
+        urlResolver: IUrlResolver | IUrlResolver[],
+    ) {
+        return new IFrameDocumentServiceProxyFactory(documentServiceFactory, frame, options, urlResolver);
     }
 
     public readonly protocolName = "fluid-outer:";
     private documentServiceProxy: DocumentServiceFactoryProxy | undefined;
 
-    constructor(private readonly documentServiceFactory: IDocumentServiceFactory,
-                private readonly frame: HTMLIFrameElement,
-                private readonly options: any,
-                private readonly containerHost: IHost) {
+    constructor(
+        private readonly documentServiceFactory: IDocumentServiceFactory,
+        private readonly frame: HTMLIFrameElement,
+        private readonly options: any,
+        private readonly urlResolver: IUrlResolver | IUrlResolver[],
+    ) {
 
     }
 
     public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<void> {
 
+        // eslint-disable-next-line @typescript-eslint/no-use-before-define
         this.documentServiceProxy = new DocumentServiceFactoryProxy(
             this.documentServiceFactory,
             this.options,
@@ -90,12 +94,11 @@ export class IFrameDocumentServiceProxyFactory {
     public async createDocumentServiceFromRequest(request: IRequest): Promise<void> {
         // Simplify this with either https://github.com/microsoft/FluidFramework/pull/448
         // or https://github.com/microsoft/FluidFramework/issues/447
-        const resolvers: IUrlResolver[] = new Array();
-        if (!(Array.isArray(this.containerHost.resolver as IUrlResolver[]))) {
-            resolvers.push(this.containerHost.resolver as IUrlResolver);
-
+        const resolvers: IUrlResolver[] = [];
+        if (!(Array.isArray(this.urlResolver))) {
+            resolvers.push(this.urlResolver);
         } else {
-            resolvers.push(... (this.containerHost.resolver as IUrlResolver[]));
+            resolvers.push(... this.urlResolver);
         }
 
         const resolvedUrl = await configurableUrlResolver(resolvers, request);
@@ -109,9 +112,11 @@ export class IFrameDocumentServiceProxyFactory {
     private async createProxy() {
 
         // Host guarantees that frame and contentWindow are both loaded
-        const iframeContentWindow = this.frame!.contentWindow!;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const iframeContentWindow = this.frame.contentWindow!;
 
         iframeContentWindow.window.postMessage("EndpointExposed", "*");
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         Comlink.expose(this.documentServiceProxy!.getProxy(), Comlink.windowEndpoint(iframeContentWindow));
     }
 }
@@ -120,20 +125,24 @@ export class IFrameDocumentServiceProxyFactory {
  * Proxy of the Document Service Factory that gets sent to the innerFrame
  */
 export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy {
-    public clients: { [clientId: string]: {
-        clientId: string;
-        stream: IOuterDocumentDeltaConnectionProxy;
-        deltaStorage: IDocumentDeltaStorageService;
-        storage: IDocumentStorageService;
-    }};
+    public clients: {
+        [clientId: string]: {
+            clientId: string;
+            stream: IOuterDocumentDeltaConnectionProxy;
+            deltaStorage: IDocumentDeltaStorageService;
+            storage: IDocumentStorageService;
+        },
+    };
 
     private readonly tokens: {
         [name: string]: string;
     };
 
-    constructor(private readonly documentServiceFactory: IDocumentServiceFactory,
-                private readonly options: any,
-                private readonly resolvedUrl: IFluidResolvedUrl) {
+    constructor(
+        private readonly documentServiceFactory: IDocumentServiceFactory,
+        private readonly options: any,
+        private readonly resolvedUrl: IFluidResolvedUrl,
+    ) {
 
         this.tokens = this.resolvedUrl.tokens;
         this.clients = {};
@@ -150,6 +159,7 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
         const mode: ConnectionMode = "write";
 
         const [deltaStream, deltaStorage, storage] = await Promise.all([
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             connectedDocumentService.connectToDeltaStream(clientDetails!, mode),
             connectedDocumentService.connectToDeltaStorage(),
             connectedDocumentService.connectToStorage(),
@@ -175,9 +185,11 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
 
     public getProxy(): IDocumentServiceFactoryProxy {
         return {
+            // eslint-disable-next-line @typescript-eslint/unbound-method
             connected: this.connected,
             clients: this.clients,
             // Continue investigation of scope after feature check in
+            // eslint-disable-next-line @typescript-eslint/promise-function-async
             createDocumentService: (resolvedUrl: IFluidResolvedUrl) => this.createDocumentService(resolvedUrl),
         };
     }
@@ -216,9 +228,7 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
     }
 
     private getDeltaStorage(deltaStorage: IDocumentDeltaStorageService): IDocumentDeltaStorageService {
-        const get = async (from?: number, to?: number) => {
-            return deltaStorage.get(from, to);
-        };
+        const get = async (from?: number, to?: number) => deltaStorage.get(from, to);
 
         return {
             get,
@@ -227,9 +237,10 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
 
     private getOuterDocumentDeltaConnection(deltaStream: IDocumentDeltaConnection) {
 
-        const pendingOps: { type: string, args: any[] }[] = new Array();
+        const pendingOps: { type: string, args: any[] }[] = [];
 
         for (const event of socketIOEvents) {
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
             deltaStream.on(event, async (...args: any[]) => pendingOps.push({ type: event, args }));
         }
 
@@ -249,9 +260,7 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
             supportedVersions: ["^0.3.0", "^0.2.0", "^0.1.0"],
         };
 
-        const getDetails = async () => {
-            return connection;
-        };
+        const getDetails = async () => connection;
 
         const submit = async (messages: IDocumentMessage[]) => {
             deltaStream.submit(messages);
@@ -262,17 +271,18 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
         };
 
         const handshake = new Deferred<any>();
-        // tslint:disable-next-line: no-floating-promises
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         handshake.promise
             .then((innerProxy: { forwardEvent(event: string, args: any[]): Promise<void> }) => {
                 for (const op of pendingOps) {
-                    // tslint:disable-next-line: no-floating-promises
+                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
                     innerProxy.forwardEvent(op.type, op.args);
                 }
 
                 deltaStream.removeAllListeners();
 
                 for (const event of socketIOEvents) {
+                    // eslint-disable-next-line @typescript-eslint/no-misused-promises
                     deltaStream.on(event, async (...args: any[]) => { await innerProxy.forwardEvent(event, args); });
                 }
             });

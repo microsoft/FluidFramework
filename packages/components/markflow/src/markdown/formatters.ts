@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import { Char, KeyCode, randomId } from "@fluid-example/flow-util-lib";
 import { ISegment, MapLike, TextSegment } from "@microsoft/fluid-merge-tree";
-import { strict as assert } from "assert";
 import { FlowDocument, getDocSegmentKind } from "../document";
 import { Caret } from "../editor/caret";
 import { PlainTextFormatter } from "../plaintext/formatter";
@@ -32,28 +32,28 @@ interface IMarkdownRenderInfo {
 const undefinedRenderInfo = { tags: emptyArray, emitText: false };
 
 const tokenToRenderInfo: { [index: string]: IMarkdownRenderInfo } = Object.freeze({
-    [MarkdownToken.break]:          { tags: [ Tag.br ],             emitText: true },
-    [MarkdownToken.code]:           { tags: [ Tag.pre, Tag.code ],  emitText: true },
-    [MarkdownToken.emphasis]:       { tags: [ Tag.em ],             emitText: true },
-    [MarkdownToken.blockquote]:     { tags: [ Tag.blockquote ],     emitText: true },
-    [MarkdownToken.heading1]:       { tags: [ Tag.h1 ],             emitText: true },
-    [MarkdownToken.heading2]:       { tags: [ Tag.h2 ],             emitText: true },
-    [MarkdownToken.heading3]:       { tags: [ Tag.h3 ],             emitText: true },
-    [MarkdownToken.heading4]:       { tags: [ Tag.h4 ],             emitText: true },
-    [MarkdownToken.heading5]:       { tags: [ Tag.h5 ],             emitText: true },
-    [MarkdownToken.heading6]:       { tags: [ Tag.h6 ],             emitText: true },
-    [MarkdownToken.image]:          { tags: [ Tag.img ],            emitText: true },
-    [MarkdownToken.inlineCode]:     { tags: [ Tag.code ],           emitText: true },
-    [MarkdownToken.link]:           { tags: [ Tag.a ],              emitText: true },
-    [MarkdownToken.listItem]:       { tags: [ Tag.li ],             emitText: false },
-    [MarkdownToken.orderedlist]:    { tags: [ Tag.ol ],             emitText: true },
-    [MarkdownToken.paragraph]:      { tags: [ Tag.p ],              emitText: true },
-    [MarkdownToken.strong]:         { tags: [ Tag.strong ],         emitText: true },
-    [MarkdownToken.table]:          { tags: [ Tag.table ],          emitText: true },
-    [MarkdownToken.tableCell]:      { tags: [ Tag.td ],             emitText: true },
-    [MarkdownToken.tableRow]:       { tags: [ Tag.tr ],             emitText: true },
-    [MarkdownToken.text]:           { tags: emptyArray,             emitText: true },
-    [MarkdownToken.unorderedlist]:  { tags: [ Tag.ul ],             emitText: true },
+    [MarkdownToken.break]: { tags: [Tag.br], emitText: true },
+    [MarkdownToken.code]: { tags: [Tag.pre, Tag.code], emitText: true },
+    [MarkdownToken.emphasis]: { tags: [Tag.em], emitText: true },
+    [MarkdownToken.blockquote]: { tags: [Tag.blockquote], emitText: true },
+    [MarkdownToken.heading1]: { tags: [Tag.h1], emitText: true },
+    [MarkdownToken.heading2]: { tags: [Tag.h2], emitText: true },
+    [MarkdownToken.heading3]: { tags: [Tag.h3], emitText: true },
+    [MarkdownToken.heading4]: { tags: [Tag.h4], emitText: true },
+    [MarkdownToken.heading5]: { tags: [Tag.h5], emitText: true },
+    [MarkdownToken.heading6]: { tags: [Tag.h6], emitText: true },
+    [MarkdownToken.image]: { tags: [Tag.img], emitText: true },
+    [MarkdownToken.inlineCode]: { tags: [Tag.code], emitText: true },
+    [MarkdownToken.link]: { tags: [Tag.a], emitText: true },
+    [MarkdownToken.listItem]: { tags: [Tag.li], emitText: false },
+    [MarkdownToken.orderedlist]: { tags: [Tag.ol], emitText: true },
+    [MarkdownToken.paragraph]: { tags: [Tag.p], emitText: true },
+    [MarkdownToken.strong]: { tags: [Tag.strong], emitText: true },
+    [MarkdownToken.table]: { tags: [Tag.table], emitText: true },
+    [MarkdownToken.tableCell]: { tags: [Tag.td], emitText: true },
+    [MarkdownToken.tableRow]: { tags: [Tag.tr], emitText: true },
+    [MarkdownToken.text]: { tags: emptyArray, emitText: true },
+    [MarkdownToken.unorderedlist]: { tags: [Tag.ul], emitText: true },
 });
 
 interface IMarkdownState extends IFormatterState {
@@ -186,11 +186,11 @@ class MarkdownFormatter extends PlainTextFormatter<IMarkdownState> {
                 return;
             } else if (mode === MarkdownToken.listItem) {
                 if (!this.matchLinePrecedingChars(doc, position, /^\s*(\*\s*)?$/)) {
-                    this.insertText(layout, caret, `\n* `);
+                    this.insertText(layout, caret, "\n* ");
                     return;
                 }
             } else {
-                this.insertText(layout, caret, `\n`);
+                this.insertText(layout, caret, "\n");
                 return;
             }
         } else if (e.key === KeyCode.space) {
@@ -204,7 +204,7 @@ class MarkdownFormatter extends PlainTextFormatter<IMarkdownState> {
         }
 
         const preceding = this.getLinePrecedingChars(doc, position);
-        const isPlaceholder = preceding.charAt(preceding.length - 1) === Char.zeroWidthSpace;
+        const isPlaceholder = preceding.endsWith(Char.zeroWidthSpace);
         if (isPlaceholder) {
             doc.remove(position - 1, position);
         }
@@ -264,7 +264,6 @@ class MarkdownFormatter extends PlainTextFormatter<IMarkdownState> {
     private leave(doc: FlowDocument, position: number) {
         if (position < doc.length) {
             const md = this.getEnsuredParserAnnotation(doc, position);
-            // tslint:disable-next-line:no-bitwise
             md.pop = (md.pop | 0) + 1;        // Coerce 'undefined' to 0
         }
     }

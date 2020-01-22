@@ -5,7 +5,6 @@
 
 import { Deferred } from "@microsoft/fluid-core-utils";
 import {
-    IAlfredTenant,
     IClientManager,
     ICollection,
     IDocumentStorage,
@@ -19,28 +18,31 @@ import {
 import * as utils from "@microsoft/fluid-server-services-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
+import { createMetricClient } from "@microsoft/fluid-server-services";
+import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
+import { configureWebSocketServices } from "@microsoft/fluid-server-lambdas";
 import * as app from "./app";
-import * as io from "./io";
 
 export class AlfredRunner implements utils.IRunner {
     private server: IWebServer;
     private runningDeferred: Deferred<void>;
 
     constructor(
-        private serverFactory: IWebServerFactory,
-        private config: Provider,
-        private port: string | number,
-        private orderManager: IOrdererManager,
-        private tenantManager: ITenantManager,
-        private storage: IDocumentStorage,
-        private clientManager: IClientManager,
-        private appTenants: IAlfredTenant[],
-        private mongoManager: MongoManager,
-        private producer: IProducer,
-        private metricClientConfig: any,
-        private contentCollection: ICollection<any>) {
+        private readonly serverFactory: IWebServerFactory,
+        private readonly config: Provider,
+        private readonly port: string | number,
+        private readonly orderManager: IOrdererManager,
+        private readonly tenantManager: ITenantManager,
+        private readonly storage: IDocumentStorage,
+        private readonly clientManager: IClientManager,
+        private readonly appTenants: IAlfredTenant[],
+        private readonly mongoManager: MongoManager,
+        private readonly producer: IProducer,
+        private readonly metricClientConfig: any,
+        private readonly contentCollection: ICollection<any>) {
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public start(): Promise<void> {
         this.runningDeferred = new Deferred<void>();
 
@@ -59,14 +61,14 @@ export class AlfredRunner implements utils.IRunner {
         const httpServer = this.server.httpServer;
 
         // Register all the socket.io stuff
-        io.register(
+        configureWebSocketServices(
             this.server.webSocketServer,
-            this.metricClientConfig,
             this.orderManager,
             this.tenantManager,
             this.storage,
             this.contentCollection,
-            this.clientManager);
+            this.clientManager,
+            createMetricClient(this.metricClientConfig));
 
         // Listen on provided port, on all network interfaces.
         httpServer.listen(this.port);
@@ -76,6 +78,7 @@ export class AlfredRunner implements utils.IRunner {
         return this.runningDeferred.promise;
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public stop(): Promise<void> {
         // Close the underlying server and then resolve the runner once closed
         this.server.close().then(
@@ -98,10 +101,10 @@ export class AlfredRunner implements utils.IRunner {
         }
 
         const bind = typeof this.port === "string"
-            ? "Pipe " + this.port
-            : "Port " + this.port;
+            ? `Pipe ${this.port}`
+            : `Port ${this.port}`;
 
-        // handle specific listen errors with friendly messages
+        // Handle specific listen errors with friendly messages
         switch (error.code) {
             case "EACCES":
                 this.runningDeferred.reject(`${bind} requires elevated privileges`);
@@ -120,8 +123,8 @@ export class AlfredRunner implements utils.IRunner {
     private onListening() {
         const addr = this.server.httpServer.address();
         const bind = typeof addr === "string"
-            ? "pipe " + addr
-            : "port " + addr.port;
-        winston.info("Listening on " + bind);
+            ? `pipe ${addr}`
+            : `port ${addr.port}`;
+        winston.info(`Listening on ${bind}`);
     }
 }

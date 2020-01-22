@@ -24,13 +24,17 @@ export interface IDbFactory {
 export class MongoManager {
     private databaseP: Promise<IDb>;
 
-    constructor(private factory: IDbFactory, private shouldReconnect = true, private reconnectDelayMs = 1000) {
+    constructor(
+        private readonly factory: IDbFactory,
+        private shouldReconnect = true,
+        private readonly reconnectDelayMs = 1000) {
         this.databaseP = this.connect();
     }
 
     /**
      * Retrieves the MongoDB database
      */
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public getDatabase(): Promise<IDb> {
         return this.databaseP;
     }
@@ -47,6 +51,7 @@ export class MongoManager {
     /**
      * Creates a connection to the MongoDB database
      */
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     private connect(): Promise<IDb> {
         const databaseP = this.factory.connect()
             .then((db) => {

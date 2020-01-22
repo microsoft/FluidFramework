@@ -8,7 +8,7 @@
     "build:ci": "npm run build:genver && lerna run build:compile:min --stream",
     "build:compile": "lerna run build:compile --stream",
     "build:docs": "npm run clean:docs && lerna run build:docs --stream --parallel && npm run build:gendocs",
-    "build:fast": "node ../../tools/fluid-build/dist/fluidBuild.js --root .",
+    "build:fast": "node ../../tools/fluid-build/dist/fluidBuild.js --root ../.. --server",
     "build:full": "npm run build:genver && npm run build:full:compile && npm run tslint && npm run build:docs",
     "build:full:compile": "lerna run build:full:compile --stream",
     "build:gendocs": "api-documenter yaml -i _api-extractor-temp/doc-models -o docs/api",
@@ -19,8 +19,10 @@
     "clean:nyc": "rimraf nyc/**",
     "docker-build": "docker-compose build",
     "docker-clean": "docker-compose down --rmi local && docker volume prune --force",
+    "lint": "lerna run lint --no-sort --stream",
+    "lint:fix": "lerna run lint:fix --no-sort --stream",
     "postinstall": "npm run postinstall:lerna && (npm run postinstall:fluid-build || true) && (npm run postinstall:r11s || true)",
-    "policy-check": "cd ../../tools/repo-policy-check && npm run policy-check",
+    "policy-check": "cd ../../tools/repo-policy-check && npm install && npm run policy-check",
     "policy-check:full": "cd ../../tools/repo-policy-check && npm install && npm run policy-check",
     "postinstall:fluid-build": "cd ../../tools/fluid-build && npm i && npm run build",
     "postinstall:lerna": "lerna bootstrap --hoist --nohoist tslint-microsoft-contrib",
@@ -32,7 +34,6 @@
     "start": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up",
     "start:debug": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.debug.yml up",
     "start:rdkafka": "docker-compose -f docker-compose.rdkafka.yml -f docker-compose.dev.yml up",
-    "start:standalone": "docker-compose -f docker-compose.standalone.yml up",
     "stop": "docker-compose down",
     "stop:full": "docker-compose down && docker volume prune --force",
     "test": "lerna run test --stream --no-bail --no-sort",
@@ -51,29 +52,29 @@
     "watch:webpack": "lerna run --parallel webpack -- -- --watch",
     "webpack": "lerna run --no-sort webpack --stream"
   },
-  "dependencies": {},
-  "devDependencies": {
-    "@microsoft/api-documenter": "^7.4.6",
-    "@microsoft/api-extractor": "^7.4.4",
-    "concurrently": "^4.1.0",
-    "copyfiles": "^2.1.0",
-    "lerna": "^3.14.1",
-    "nyc": "^14.1.1",
-    "rimraf": "^2.6.2",
-    "sort-package-json": "^1.22.1",
-    "typescript": "~3.4.5"
-  },
   "nyc": {
     "all": true,
+    "cache-dir": "nyc/.cache",
     "exclude": [],
     "include": [],
+    "report-dir": "nyc/report",
     "reporter": [
       "cobertura",
       "html",
       "text"
     ],
-    "temp-directory": "nyc/.nyc_output",
-    "cache-dir": "nyc/.cache",
-    "report-dir": "nyc/report"
+    "temp-directory": "nyc/.nyc_output"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@microsoft/api-documenter": "^7.4.6",
+    "@microsoft/api-extractor": "^7.7.2",
+    "concurrently": "^4.1.0",
+    "copyfiles": "^2.1.0",
+    "lerna": "^3.14.1",
+    "nyc": "^14.1.1",
+    "rimraf": "^2.6.2",
+    "sort-package-json": "1.31.0",
+    "typescript": "~3.7.4"
   }
 }

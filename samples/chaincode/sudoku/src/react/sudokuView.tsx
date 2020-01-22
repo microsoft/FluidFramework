@@ -42,7 +42,6 @@ export function SudokuView(props: ISudokuViewProps): JSX.Element {
         loadPuzzle(1, props.puzzle);
     };
 
-    // tslint:disable: react-a11y-no-onchange
     return (
         <div className={`sudoku ${theme}`}>
             <div className="sudoku-wrapper">
@@ -83,13 +82,11 @@ export function SudokuView(props: ISudokuViewProps): JSX.Element {
     }
 }
 
-// tslint:disable-next-line: max-func-body-length
 function SimpleTable(props: ISudokuViewProps) {
     const coordinateDataAttributeName = "cellcoordinate";
 
-    const getCellInputElement = (coord: CoordinateString): HTMLInputElement => {
-        return document.getElementById(`${props.clientId}-${coord}`) as HTMLInputElement;
-    };
+    const getCellInputElement = (coord: CoordinateString): HTMLInputElement =>
+        document.getElementById(`${props.clientId}-${coord}`) as HTMLInputElement;
 
     const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
         const coord = e.target.dataset[coordinateDataAttributeName];
@@ -122,8 +119,7 @@ function SimpleTable(props: ISudokuViewProps) {
             case "Del":
             case "0":
                 keyString = "0";
-            // intentional fall-through
-            // eslint-disable no-fallthrough
+            // Intentional fall-through
             case "1":
             case "2":
             case "3":
@@ -217,7 +213,7 @@ function SimpleTable(props: ISudokuViewProps) {
                         inputClasses += " presence";
                     }
                 }
-                // const disabled = currentCell.fixed === true;
+                // Const disabled = currentCell.fixed === true;
                 return (
                     <td className="sudoku-cell" key={coord} style={getCellBorderStyles(coord)}>
                         <input
@@ -230,7 +226,7 @@ function SimpleTable(props: ISudokuViewProps) {
                             onKeyDown={handleKeyDown}
                             value={SudokuCell.getDisplayString(currentCell)}
                             max={1}
-                            // disabled={disabled}
+                            // Disabled={disabled}
                             data-cellcoordinate={coord}
                         />
                     </td>
@@ -275,7 +271,7 @@ function getCellBorderStyles(coord: CoordinateString): React.CSSProperties {
             styles.borderBottom = borderStyle;
             styles.paddingBottom = 4;
             break;
-        default: // nothing
+        default: // Nothing
     }
 
     switch (col) {
@@ -291,7 +287,7 @@ function getCellBorderStyles(coord: CoordinateString): React.CSSProperties {
             styles.borderRight = borderStyle;
             styles.paddingRight = 4;
             break;
-        default: // nothing
+        default: // Nothing
     }
     return styles;
 }

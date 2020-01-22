@@ -7,6 +7,7 @@ import { IIntegerRange } from "./base";
 import { BaseSegment, glc, ISegment, Marker, MergeTree } from "./mergeTree";
 import * as ops from "./ops";
 import * as Properties from "./properties";
+import { LocalReferenceCollection } from "./localReference";
 
 export interface IJSONTextSegment extends ops.IJSONSegment {
     text: string;
@@ -61,7 +62,7 @@ export class TextSegment extends BaseSegment {
     }
 
     public canAppend(segment: ISegment) {
-        return this.text.charAt(this.text.length - 1) !== "\n"
+        return !this.text.endsWith("\n")
             && TextSegment.is(segment)
             && (this.cachedLength <= MergeTree.TextSegmentGranularity ||
                 segment.cachedLength <= MergeTree.TextSegmentGranularity);
@@ -75,7 +76,7 @@ export class TextSegment extends BaseSegment {
         if (TextSegment.is(segment)) {
             // Note: Must call 'appendLocalRefs' before modifying this segment's length as
             // 'this.cachedLength' is used to adjust the offsets of the local refs.
-            this.appendLocalRefs(segment);
+            LocalReferenceCollection.append(this, segment);
 
             this.text += segment.text;
             this.cachedLength = this.text.length;
@@ -212,13 +213,13 @@ export class MergeTreeTextHelper {
                 const remTags =  [] as string[];
                 if (tags.length > 0) {
                     for (const tag of tags) {
-                        if (accumText.tagsInProgress.indexOf(tag) < 0) {
+                        if (!accumText.tagsInProgress.includes(tag)) {
                             beginTags += `<${tag}>`;
                             initTags.push(tag);
                         }
                     }
                     for (const accumTag of accumText.tagsInProgress) {
-                        if (tags.indexOf(accumTag) < 0) {
+                        if (!tags.includes(accumTag)) {
                             endTags += `</${accumTag}>`;
                             remTags.push(accumTag);
                         }
@@ -276,5 +277,5 @@ export class MergeTreeTextHelper {
         }
 
         return true;
-    }
+    };
 }

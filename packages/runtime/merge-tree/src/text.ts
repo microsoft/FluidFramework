@@ -11,10 +11,10 @@ export function loadSegments(content: string, segLimit: number, markers: boolean
     // tslint:disable-next-line:no-parameter-reassignment
     content = content.replace(/^\uFEFF/, "");
 
-    const paragraphs = content.split("\r\n");
+    const paragraphs = content.split(/\r?\n/);
     for (let i = 0, len = paragraphs.length; i < len; i++) {
         paragraphs[i] = paragraphs[i]
-            .replace(/\r\n/g, " ")
+            .replace(/\r?\n/g, " ")
             .replace(/\u201c|\u201d/g, '"')
             .replace(/\u2019/g, "'");
         if (!markers && i !== paragraphs.length - 1) {
@@ -30,7 +30,7 @@ export function loadSegments(content: string, segLimit: number, markers: boolean
                 { [MergeTree.reservedTileLabelsKey]: ["pg"] });
         }
         if (withProps) {
-            if ((paragraph.indexOf("Chapter") >= 0) || (paragraph.indexOf("PRIDE AND PREJ") >= 0)) {
+            if ((paragraph.includes("Chapter")) || (paragraph.includes("PRIDE AND PREJ"))) {
                 if (markers) {
                     pgMarker.addProperties({ header: 2 });
                     segments.push(new TextSegment(paragraph));

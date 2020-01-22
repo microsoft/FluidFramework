@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { TagName } from "@fluid-example/flow-util-lib";
 import { FlowDocument } from "../document";
-import { Tag } from "../util/tag";
 import { debug } from "./debug";
 
 const enum ClipboardFormat {
@@ -15,23 +15,22 @@ const enum ClipboardFormat {
 export function paste(doc: FlowDocument, data: DataTransfer, position: number) {
     let content: string;
 
-    // tslint:disable-next-line:no-conditional-assignment
+    /* eslint-disable no-cond-assign */
     if (content = data.getData(ClipboardFormat.html)) {
         debug("paste('text/html'): %s", content);
         const root = document.createElement("span");
-        // tslint:disable-next-line:no-inner-html
         root.innerHTML = content;
         pasteChildren(doc, root, position);
-    // tslint:disable-next-line:no-conditional-assignment
     } else if (content = data.getData(ClipboardFormat.html)) {
         debug("paste('text/plain'): %s", content);
         doc.insertText(position, content);
     } else {
         debug("paste(%o): Unhandled clipboard type", data.types);
     }
+    /* eslint-enable no-cond-assign */
 }
 
-const ignoredTags = [Tag.meta];
+const ignoredTags = [TagName.meta];
 
 function pasteChildren(doc: FlowDocument, root: Node, position: number) {
     for (let child: Node | null = root.firstChild; child !== null; child = child.nextSibling) {
@@ -44,10 +43,10 @@ function pasteChildren(doc: FlowDocument, root: Node, position: number) {
             }
             case document.ELEMENT_NODE: {
                 const el = child as HTMLElement;
-                const tag = el.tagName as Tag;
-                const emitTag = ignoredTags.indexOf(tag) < 0;
+                const tag = el.tagName as TagName;
+                const emitTag = !ignoredTags.includes(tag);
                 if (emitTag) {
-                    doc.insertTags([tag as Tag], position);
+                    doc.insertTags([tag], position);
                     doc.setAttr(position, position + 1,
                         [...el.attributes].reduce(
                             (accumulator, value) => {
@@ -66,5 +65,6 @@ function pasteChildren(doc: FlowDocument, root: Node, position: number) {
             default:
         }
     }
+
     return position;
 }

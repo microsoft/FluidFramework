@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import {
     IClientJoin,
     ICommittedProposal,
@@ -17,7 +18,6 @@ import {
     MessageType,
     SummaryType,
 } from "@microsoft/fluid-protocol-definitions";
-import { EventEmitter } from "events";
 import { Quorum } from "./quorum";
 
 export interface IScribeProtocolState {
@@ -45,7 +45,7 @@ export function isSystemMessage(message: ISequencedDocumentMessage) {
 }
 
 /**
- * Handles protocol specifig ops.
+ * Handles protocol specific ops.
  */
 export class ProtocolOpHandler extends EventEmitter {
     public readonly quorum: Quorum;
@@ -188,7 +188,6 @@ export class ProtocolOpHandler extends EventEmitter {
 
     public on(event: "Summary", listener: (message: ISequencedDocumentMessage) => void): this;
 
-    /* tslint:disable:no-unnecessary-override */
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
     }

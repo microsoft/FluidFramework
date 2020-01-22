@@ -4,7 +4,6 @@
  */
 
 declare global {
-    // tslint:disable-next-line:interface-name
     interface Window {
         onYouTubeIframeAPIReady?: () => void;
         YT: any;
@@ -54,7 +53,7 @@ export function youtubeIdParser(url: string): string {
 }
 
 export class YouTubeWrapper {
-    private player: any;
+    private readonly player: any;
 
     constructor(private videoId: string, divId: string, onPlayerLoad: (event) => void, onStateChange: (event) => void) {
 
@@ -69,7 +68,7 @@ export class YouTubeWrapper {
 
                     // Takes the video player out of a frozen state
                     if (playerState === PlayerState.unstarted) {
-                        // this.player.playVideo();
+                        // This.player.playVideo();
                     } else {
                         onStateChange(playerState);
                     }

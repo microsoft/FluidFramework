@@ -7,15 +7,14 @@ import { INack, ISequencedDocumentMessage } from "@microsoft/fluid-protocol-defi
 import {
     extractBoxcar,
     IContext,
-    IKafkaMessage,
     INackMessage,
     IPartitionLambda,
     IPublisher,
     ISequencedOperationMessage,
     NackOperationType,
     SequencedOperationType,
+    IQueuedMessage,
 } from "@microsoft/fluid-server-services-core";
-import * as _ from "lodash";
 
 class BroadcasterBatch {
     public messages: (ISequencedDocumentMessage | INack)[] = [];
@@ -29,13 +28,13 @@ class BroadcasterBatch {
 
 export class BroadcasterLambda implements IPartitionLambda {
     private pending = new Map<string, BroadcasterBatch>();
-    private pendingOffset: number;
+    private pendingOffset: IQueuedMessage;
     private current = new Map<string, BroadcasterBatch>();
 
-    constructor(private io: IPublisher, protected context: IContext) {
+    constructor(private readonly publisher: IPublisher, protected context: IContext) {
     }
 
-    public handler(message: IKafkaMessage): void {
+    public handler(message: IQueuedMessage): void {
         const boxcar = extractBoxcar(message);
 
         for (const baseMessage of boxcar.contents) {
@@ -63,7 +62,7 @@ export class BroadcasterLambda implements IPartitionLambda {
             }
         }
 
-        this.pendingOffset = message.offset;
+        this.pendingOffset = message;
         this.sendPending();
     }
 
@@ -92,8 +91,9 @@ export class BroadcasterLambda implements IPartitionLambda {
 
         // Process all the batches + checkpoint
         this.current.forEach((batch, topic) => {
-            this.io.to(topic).emit(batch.event, batch.documentId, batch.messages);
+            this.publisher.to(topic).emit(batch.event, batch.documentId, batch.messages);
         });
+
         this.context.checkpoint(batchOffset);
 
         // Invoke the next send after a setImmediate to give IO time to create more batches

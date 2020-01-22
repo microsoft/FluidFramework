@@ -4,16 +4,16 @@
  */
 
 .presence-cursor {
-  display: inline;
-  position: relative;
+    display: inline;
+    position: relative;
 }
 
 .presence-cursor::after {
-  content: " ";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 1.1px;
-  background-color: inherit;
-  height: 1em;
+    content: " ";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1.1px;
+    background-color: inherit;
+    height: 1em;
 }

@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable:no-bitwise
-
 /**
  * Interface for a comparere
  */

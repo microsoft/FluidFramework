@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
+import { EventEmitter } from "events";
 import { IComponent, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
     IAudience,
@@ -11,14 +13,10 @@ import {
     IGenericBlob,
     ILoader,
 } from "@microsoft/fluid-container-definitions";
-import {
-    BlobTreeEntry,
-    Deferred,
-    raiseConnectedEvent,
-    SummaryTracker,
-} from "@microsoft/fluid-core-utils";
+import { Deferred } from "@microsoft/fluid-core-utils";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import { readAndParse } from "@microsoft/fluid-driver-utils";
+import { BlobTreeEntry, raiseConnectedEvent } from "@microsoft/fluid-protocol-base";
 import {
     ConnectionState,
     IDocumentMessage,
@@ -38,9 +36,8 @@ import {
     IHostRuntime,
     IInboundSignalMessage,
 } from "@microsoft/fluid-runtime-definitions";
-import * as assert from "assert";
-import { EventEmitter } from "events";
-// tslint:disable-next-line:no-submodule-imports
+import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
+// eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
 import { ContainerRuntime } from "./containerRuntime";
 
@@ -74,7 +71,6 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this._hostRuntime.parentBranch;
     }
 
-    // tslint:disable-next-line:no-unsafe-any
     public get options(): any {
         return this._hostRuntime.options;
     }
@@ -140,7 +136,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     }
 
     public get baseSnapshot(): ISnapshotTree {
-        return this.summaryTracker.baseTree;
+        return this._baseSnapshot;
     }
 
     protected componentRuntime: IComponentRuntime;
@@ -149,6 +145,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     private loaded = false;
     private pending: ISequencedDocumentMessage[] = [];
     private componentRuntimeDeferred: Deferred<IComponentRuntime>;
+    private _baseSnapshot: ISnapshotTree;
 
     constructor(
         private readonly _hostRuntime: ContainerRuntime,
@@ -184,14 +181,10 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         if (!this.componentRuntimeDeferred) {
             this.componentRuntimeDeferred = new Deferred<IComponentRuntime>();
             const details = await this.getInitialSnapshotDetails();
-            if (details.snapshot && !this.summaryTracker.baseTree) {
-                // do not overwrite if refreshed!
-                // local - will always give undefined tree, so never enter here
-                // remote - will give the tree at the time of construction (initial),
-                // which may be older than the refreshed one, but never newer than
-                // the refreshed or one set at constructor (in case of summarizer)
-                this.summaryTracker.setBaseTree(details.snapshot);
-            }
+            // Base snapshot is the baseline where pending ops are applied to.
+            // It is important that this be in sync with the pending ops, and also
+            // that it is set here, before bindRuntime is called.
+            this._baseSnapshot = details.snapshot;
             const packages = details.pkg;
             let entry: ComponentRegistryEntry;
             let registry = this._hostRuntime.IComponentRegistry;
@@ -216,6 +209,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this.componentRuntimeDeferred.promise;
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public getComponentRuntime(id: string, wait: boolean): Promise<IComponentRuntime> {
         return this._hostRuntime.getComponentRuntime(id, wait);
     }
@@ -242,7 +236,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     public process(message: ISequencedDocumentMessage, local: boolean): void {
         this.verifyNotClosed();
 
-        // component has been modified and will need to regenerate its snapshot
+        // Component has been modified and will need to regenerate its snapshot
         this.summaryTracker.invalidate();
 
         if (this.loaded) {
@@ -278,6 +272,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this.blobManager.getBlobMetadata();
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public stop(): Promise<ITree> {
         this.verifyNotClosed();
 
@@ -294,7 +289,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
      * Notifies the object to take snapshot of a component.
      */
     public async snapshot(fullTree: boolean = false): Promise<ITree> {
-        // base ID still being set means previous snapshot is still valid
+        // Base ID still being set means previous snapshot is still valid
         const baseId = this.summaryTracker.getBaseId();
         if (baseId && !fullTree) {
             return { id: baseId, entries: [] };
@@ -368,7 +363,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         }
 
         if (this.pending.length > 0) {
-            // component has been modified and will need to regenerate its snapshot
+            // Component has been modified and will need to regenerate its snapshot
             this.summaryTracker.invalidate();
 
             // Apply all pending ops
@@ -379,7 +374,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
         this.pending = undefined;
 
-        // and now mark the runtime active
+        // And now mark the runtime active
         this.loaded = true;
         this.componentRuntime = componentRuntime;
 
@@ -391,7 +386,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
     public refreshBaseSummary(snapshot: ISnapshotTree) {
         this.summaryTracker.setBaseTree(snapshot);
-        // need to notify runtime of the update
+        // Need to notify runtime of the update
         this.emit("refreshBaseSummary", snapshot);
     }
 
@@ -436,20 +431,12 @@ export class RemotedComponentContext extends ComponentContext {
             () => {
                 throw new Error("Already attached");
             });
-
-        if (initSnapshotValue && typeof initSnapshotValue !== "string") {
-            // This will allow the summarizer to avoid calling realize if there
-            // are no changes to the component.  If the initSnapshotValue is a
-            // string, the summarizer cannot avoid calling realize.
-            this.summaryTracker.setBaseTree(initSnapshotValue);
-        }
     }
 
     public generateAttachMessage(): IAttachMessage {
         throw new Error("Cannot attach remote component");
     }
 
-    // Only refers to the initial snapshot value, not necessarily the baseSnapshot.
     // This should only be called during realize to get the baseSnapshot,
     // or it can be called at any time to get the pkg, but that assumes the
     // pkg can never change for a component.
@@ -523,7 +510,7 @@ export class LocalComponentContext extends ComponentContext {
 
         snapshot.entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));
 
-        // base ID still being set means previous snapshot is still valid
+        // Base ID still being set means previous snapshot is still valid
         snapshot.id = this.summaryTracker.getBaseId();
 
         const message: IAttachMessage = {

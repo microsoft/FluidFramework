@@ -13,7 +13,7 @@ import { IFluidResolvedUrl, IResolvedUrl } from "@microsoft/fluid-driver-definit
 import { IResolvedPackage, WebCodeLoader } from "@microsoft/fluid-web-code-loader";
 import { IBaseHostConfig } from "./hostConfig";
 
-async function attach(loader: Loader, url: string, div: HTMLDivElement) {
+async function getComponentAndRender(loader: Loader, url: string, div: HTMLDivElement) {
     const response = await loader.request({ url });
 
     if (response.status !== 200 ||
@@ -37,17 +37,16 @@ async function attach(loader: Loader, url: string, div: HTMLDivElement) {
     }
 }
 
-async function initializeChaincode(document: Container, pkg?: IFluidCodeDetails): Promise<void> {
+async function initializeChaincode(container: Container, pkg?: IFluidCodeDetails): Promise<void> {
     if (!pkg) {
         return;
     }
 
-    const quorum = document.getQuorum();
+    const quorum = container.getQuorum();
 
     // Wait for connection so that proposals can be sent
-    if (!document.connected) {
-        // tslint:disable-next-line: no-unnecessary-callback-wrapper
-        await new Promise<void>((resolve) => document.on("connected", () => resolve()));
+    if (!container.connected) {
+        await new Promise<void>((resolve) => container.on("connected", () => resolve()));
     }
 
     // And then make the proposal if a code proposal has not yet been made
@@ -56,13 +55,6 @@ async function initializeChaincode(document: Container, pkg?: IFluidCodeDetails)
     }
 
     console.log(`Code is ${quorum.get("code")}`);
-}
-
-async function registerAttach(loader: Loader, container: Container, uri: string, div: HTMLDivElement) {
-    container.on("contextChanged", async (value) => {
-        await attach(loader, uri, div);
-    });
-    await attach(loader, uri, div);
 }
 
 /**
@@ -82,8 +74,7 @@ async function createWebLoader(
     // Create the web loader and prefetch the chaincode we will need
     const codeLoader = new WebCodeLoader(hostConfig.whiteList);
     if (pkg) {
-        // tslint:disable-next-line: strict-boolean-expressions
-        if (pkg.pkg) { // this is an IFluidPackage
+        if (pkg.pkg) { // This is an IFluidPackage
             await codeLoader.seed({
                 package: pkg.pkg,
                 config: pkg.details.config,
@@ -100,11 +91,9 @@ async function createWebLoader(
 
     const config = hostConfig.config ? hostConfig.config : {};
 
-    // we need to extend options, otherwise we nest properties, like client, too deeply
+    // We need to extend options, otherwise we nest properties, like client, too deeply
     //
-    // tslint:disable-next-line: no-unsafe-any
     config.blockUpdateMarkers = true;
-    // tslint:disable-next-line: no-unsafe-any
     config.tokens = (resolved as IFluidResolvedUrl).tokens;
 
     const scope = hostConfig.scope ? hostConfig.scope : {};
@@ -165,15 +154,14 @@ export class BaseHost {
     public async loadAndRender(url: string, div: HTMLDivElement, pkg?: IFluidCodeDetails) {
         const loader = await this.getLoader();
         const container = await loader.resolve({ url });
-        await registerAttach(
-            loader,
-            container,
-            url,
-            div);
+
+        container.on("contextChanged", (value) => {
+            getComponentAndRender(loader, url, div).catch(() => { });
+        });
+        await getComponentAndRender(loader, url, div);
 
         // If this is a new document we will go and instantiate the chaincode. For old documents we assume a legacy
         // package.
-        // tslint:disable-next-line: strict-boolean-expressions
         if (!container.existing) {
             await initializeChaincode(container, pkg)
                 .catch((error) => console.error("chaincode error", error));
