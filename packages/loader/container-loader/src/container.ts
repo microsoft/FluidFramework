@@ -323,12 +323,17 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this._deltaManager = this.createDeltaManager();
 
         // keep track of last time page was visible for telemetry
-        // eslint-disable-next-line no-unused-expressions
-        typeof document === "object" && document.addEventListener("visibilitychange", () => {
-            if(!document.hidden) {
-                this.lastVisible = performanceNow();
-            }
-        });
+        if (typeof document === "object") {
+            this.lastVisible = document.hidden ? performanceNow() : undefined;
+            document.addEventListener("visibilitychange", () => {
+                if (document.hidden) {
+                    this.lastVisible = performanceNow();
+                } else {
+                    // settimeout so this will hopefully fire after disconnect event if being hidden caused it
+                    setTimeout(() => this.lastVisible = undefined, 0);
+                }
+            });
+        }
     }
 
     /**
@@ -1013,8 +1018,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             connectionMode,
             autoReconnect,
             online: OnlineStatus[isOnline()],
-            visibility: typeof document === "object" ? document.visibilityState : undefined,
-            lastVisible: this.lastVisible,
+            lastVisible: this.lastVisible ? performanceNow() - this.lastVisible : undefined,
         });
 
         if (value === ConnectionState.Connected) {
