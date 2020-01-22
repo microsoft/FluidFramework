@@ -234,18 +234,19 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
                 maxAckWaitTime: 600000,
             },
         };
-        const clientId: string = "random-random";
+        const clientId: string = this.serverMessagesHandler.createClientId();
         const clientDetail: IClientJoin = {
             clientId,
             detail: client,
         };
         const joinMessage = this.serverMessagesHandler.createClientJoinMessage(clientDetail);
         this.serverMessagesHandler.queuedMessages.push(joinMessage);
-        if (this.isWriter(client.scopes, false, mode)) {
+        const existing = this.serverMessagesHandler.isDocExisting();
+        if (this.isWriter(client.scopes, existing, mode)) {
             this._details = {
                 claims,
                 clientId,
-                existing: false,
+                existing,
                 maxMessageSize: 16 * 1024,
                 mode: "write",
                 parentBranch: null,
@@ -259,7 +260,7 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
             this._details = {
                 claims,
                 clientId,
-                existing: false,
+                existing,
                 maxMessageSize: 1024, // Readonly client can't send ops.
                 mode: "read",
                 parentBranch: null,

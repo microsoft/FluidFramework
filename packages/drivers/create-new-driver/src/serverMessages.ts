@@ -19,7 +19,7 @@ interface IAugmentedDocumentMessage {
 }
 
 /**
- * Provides access to the false delta storage.
+ * Server implementation used by Creation driver.
  */
 export class CreationServerMessagesHandler {
 
@@ -27,6 +27,7 @@ export class CreationServerMessagesHandler {
 
     private sequenceNumber: number = 1;
     private minSequenceNumber: number = 0;
+    private static totalClients: number = 0;
 
     public readonly opSubmitManager: BatchManager<IAugmentedDocumentMessage[]>;
 
@@ -61,11 +62,25 @@ export class CreationServerMessagesHandler {
         }
 
         if (connection) {
+            CreationServerMessagesHandler.totalClients += 1;
             this.connections.push(connection);
         }
         return CreationServerMessagesHandler.instance;
     }
 
+    public createClientId() {
+        return `random-random${CreationServerMessagesHandler.totalClients}`;
+    }
+
+    public isDocExisting() {
+        return CreationServerMessagesHandler.totalClients === 0 ? false : true;
+    }
+
+    /**
+     * Messages to be processed by the server.
+     * @param messages - List of messages to be stamped.
+     * @param clientId - client id of the client sending the messages.
+     */
     public submitMessage(messages: IDocumentMessage[], clientId: string) {
         for (const message of messages) {
             const augMessage: IAugmentedDocumentMessage = {
@@ -99,6 +114,10 @@ export class CreationServerMessagesHandler {
         return stampedMessage;
     }
 
+    /**
+     * Creates the client join message.
+     * @param clientDetail - Client details
+     */
     public createClientJoinMessage(clientDetail: IClientJoin): ISequencedDocumentMessage {
         const joinMessage: ISequencedDocumentSystemMessage = {
             clientId: clientDetail.clientId,
