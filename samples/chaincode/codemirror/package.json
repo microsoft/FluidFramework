@@ -9,7 +9,8 @@
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "concurrently npm:build:compile npm:tslint",
+    "css-copy": "node resourcesCopy.js",
+    "build": "concurrently npm:build:compile npm:tslint npm:css-copy",
     "build:compile": "npm run tsc",
     "build:compile:min": "npm run build:compile",
     "build:full": "concurrently npm:build npm:webpack",
