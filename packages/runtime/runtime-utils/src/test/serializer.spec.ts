@@ -4,7 +4,6 @@
  */
 
 // tslint:disable:completed-docs
-// tslint:disable:no-unsafe-any
 // tslint:disable:mocha-no-side-effect-code
 
 import { strict as assert } from "assert";

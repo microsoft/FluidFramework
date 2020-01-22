@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* tslint:disable:no-unsafe-any */
-/* tslint:disable:no-backbone-get-set-outside-model  */
 import * as assert from "assert";
 import * as api from "@fluid-internal/client-api";
 import {

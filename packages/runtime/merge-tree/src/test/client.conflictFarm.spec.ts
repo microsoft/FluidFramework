@@ -114,7 +114,7 @@ describe("MergeTree.Client", () => {
 
                 doOverRange(opts.opsPerRound, opts.growthFunc, (opsPerRound) => {
                     if (opts.incrementalLog) {
-                        // tslint:disable-next-line: max-line-length
+                        // eslint-disable-next-line max-len
                         console.log(`MinLength: ${minLength} Clients: ${clients.length} Ops: ${opsPerRound} Seq: ${seq}`);
                     }
                     for (let round = 0; round < opts.rounds; round++) {
