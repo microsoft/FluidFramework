@@ -48,7 +48,6 @@ export async function processContent(mode: Mode, concurrently = true) {
     // "worker_threads" does not resolve without --experimental-worker flag on command line
     let threads: typeof import("worker_threads");
     try {
-        // eslint-disable-next-line import/no-unresolved
         threads = await import("worker_threads");
         threads.Worker.EventEmitter.defaultMaxListeners = 20;
     } catch (err) {
