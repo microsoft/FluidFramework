@@ -76,6 +76,7 @@ describe("MergeTree.Client", () => {
     addClientNames("a", 26);
     addClientNames("0", 17);
 
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     doOverRange(opts.minLength, opts.growthFunc, (minLength) => {
         // tslint:enable: mocha-no-side-effect-code
         it(`ConflictFarm_${minLength}`, async () => {
