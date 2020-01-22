@@ -8,12 +8,10 @@ import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionState,
     ISequencedDocumentMessage,
-    ISnapshotTree,
     ITree,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
 import { IChannel, IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
-import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ISharedObjectRegistry } from "./componentRuntime";
@@ -25,7 +23,6 @@ export class LocalChannelContext implements IChannelContext {
     public readonly channel: IChannel;
     private attached = false;
     private connection: ChannelDeltaConnection | undefined;
-    private readonly summaryTracker = new SummaryTracker();
 
     constructor(
         id: string,
@@ -64,25 +61,17 @@ export class LocalChannelContext implements IChannelContext {
 
     public processOp(message: ISequencedDocumentMessage, local: boolean): void {
         assert(this.attached);
-        this.summaryTracker.invalidate();
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.connection!.process(message, local);
     }
 
     public async snapshot(fullTree: boolean = false): Promise<ITree> {
-        const baseId = this.summaryTracker.getBaseId();
-        // eslint-disable-next-line no-null/no-null
-        if (baseId !== null && !fullTree) {
-            return { id: baseId, entries: [] };
-        }
-        this.summaryTracker.reset();
-
         return this.getAttachSnapshot();
     }
 
     public getAttachSnapshot(): ITree {
-        return snapshotChannel(this.channel, this.summaryTracker.getBaseId());
+        return snapshotChannel(this.channel);
     }
 
     public attach(): void {
@@ -99,9 +88,5 @@ export class LocalChannelContext implements IChannelContext {
         this.channel.connect(services);
 
         this.attached = true;
-    }
-
-    public refreshBaseSummary(snapshot: ISnapshotTree) {
-        this.summaryTracker.setBaseTree(snapshot);
     }
 }

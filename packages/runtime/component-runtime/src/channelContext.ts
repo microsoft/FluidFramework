@@ -26,8 +26,6 @@ export interface IChannelContext {
     snapshot(fullTree?: boolean): Promise<ITree>;
 
     isRegistered(): boolean;
-
-    refreshBaseSummary(snapshot: ISnapshotTree);
 }
 
 export function createServiceEndpoints(
@@ -53,15 +51,12 @@ export function createServiceEndpoints(
     };
 }
 
-export function snapshotChannel(channel: IChannel, baseId: string | null) {
+export function snapshotChannel(channel: IChannel) {
     const snapshot = channel.snapshot();
 
     // Add in the object attributes to the returned tree
     const objectAttributes = channel.attributes;
     snapshot.entries.push(new BlobTreeEntry(".attributes", JSON.stringify(objectAttributes)));
-
-    // If baseId exists then the previous snapshot is still valid
-    snapshot.id = baseId;
 
     return snapshot;
 }

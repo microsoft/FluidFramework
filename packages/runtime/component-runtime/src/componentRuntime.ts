@@ -34,7 +34,6 @@ import {
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
-    ISnapshotTree,
     ITreeEntry,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
@@ -195,6 +194,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                     this.sharedObjectRegistry,
                     new Map(),
                     componentContext.branch,
+                    this.deltaManager.referenceSequenceNumber,
+                    this.componentContext.summaryTracker.createOrGetChild(path),
                     undefined);
                 const deferred = new Deferred<IChannelContext>();
                 deferred.resolve(channelContext);
@@ -457,6 +458,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                         this.sharedObjectRegistry,
                         flatBlobs,
                         origin,
+                        message.sequenceNumber,
+                        this.componentContext.summaryTracker.createOrGetChild(attachMessage.id),
                         { type: attachMessage.type });
 
                     this.contexts.set(attachMessage.id, remoteChannelContext);
@@ -616,18 +619,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         this.componentContext.on("notleader", (clientId: string) => {
             this.emit("notleader", clientId);
         });
-        this.componentContext.on("refreshBaseSummary",
-            (snapshot: ISnapshotTree) => this.refreshBaseSummary(snapshot));
-    }
-
-    private refreshBaseSummary(snapshot: ISnapshotTree) {
-        // Propogate updated tree to all channels
-        for (const key of Object.keys(snapshot.trees)) {
-            const channel = this.contexts.get(key);
-            if (channel) {
-                channel.refreshBaseSummary(snapshot.trees[key]);
-            }
-        }
     }
 
     private verifyNotClosed() {

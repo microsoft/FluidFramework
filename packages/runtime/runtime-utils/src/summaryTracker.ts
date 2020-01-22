@@ -4,76 +4,53 @@
  */
 
 import { ISnapshotTree } from "@microsoft/fluid-protocol-definitions";
+import { ISummaryTracker } from "@microsoft/fluid-runtime-definitions";
 
 /**
- * Initial - this is the initial state of the tracker, which means that
- * no changes have come in, but the base summary has not been set yet.
- * Invalid - when a change comes in, the baseId cannot be used.
- * Valid - no changes have come in since the last reset, and the
- * base summary has been set.
+ * SummaryTracker is a tree node which allows for deferred
+ * snapshot tree access and tracks the latest acked summary
+ * reference sequence number.
  */
-export enum SummaryTrackerState {
-    Initial = 0,
-    Invalid = -1,
-    Valid = 1,
-}
+export class SummaryTracker implements ISummaryTracker {
+    public get referenceSequenceNumber() {
+        return this._referenceSequenceNumber;
+    }
 
-/**
- * Responsible for tracking changes related to base summary tree usage.
- * It basically tracks 2 things: whether there have been any changes since
- * the base summary, and whether the base summary has been refreshed.
- * Only if both things are true can the baseId be reused during summarization.
- * This is represented by 3 states in the SummaryTrackerState enum.
- */
-export class SummaryTracker {
-    public get state() { return this._state; }
-    public get baseTree() { return this._baseSnapshotTree; }
+    public async getSnapshotTree(): Promise<ISnapshotTree | undefined> {
+        return this._getSnapshotTree();
+    }
 
-    private _state: SummaryTrackerState = SummaryTrackerState.Initial;
-    // eslint-disable-next-line no-null/no-null
-    private _baseSnapshotTree: ISnapshotTree | null = null;
+    private readonly children = new Map<string, SummaryTracker>();
 
-    /**
-     * Gets the baseId if it can be reused during summarization;
-     * returns null otherwise
-     */
-    public getBaseId(): string | null {
-        if (this._state === SummaryTrackerState.Valid && this._baseSnapshotTree && this._baseSnapshotTree.id) {
-            return this._baseSnapshotTree.id;
-        } else {
-            // eslint-disable-next-line no-null/no-null
-            return null;
+    public refreshLatestSummary(
+        referenceSequenceNumber: number,
+        getSnapshot: () => Promise<ISnapshotTree | undefined>,
+    ) {
+        this._referenceSequenceNumber = referenceSequenceNumber;
+        this._getSnapshotTree = getSnapshot;
+
+        // Propagate update to all child nodes
+        for (const [key, value] of this.children.entries()) {
+            value.refreshLatestSummary(referenceSequenceNumber, this.formChildGetSnapshotTree(key));
         }
     }
 
-    /**
-     * Indicate that a change has occurred since the base.
-     * Set state to invalid.
-     */
-    public invalidate() {
-        if (this._state !== SummaryTrackerState.Invalid) {
-            this._state = SummaryTrackerState.Invalid;
+    public createOrGetChild(key: string): ISummaryTracker {
+        const existingTracker = this.children.get(key);
+        if (existingTracker) {
+            return existingTracker;
         }
+
+        const node = new SummaryTracker(this._referenceSequenceNumber, this.formChildGetSnapshotTree(key));
+        this.children.set(key, node);
+        return node;
     }
 
-    /**
-     * Resets state to initial.
-     */
-    public reset() {
-        if (this._state !== SummaryTrackerState.Initial) {
-            this._state = SummaryTrackerState.Initial;
-        }
-    }
+    public constructor(
+        private _referenceSequenceNumber: number,
+        private _getSnapshotTree: () => Promise<ISnapshotTree | undefined>) {}
 
-    /**
-     * Sets the base summary tree.
-     * Set state to valid if not invalid.
-     * @param snapshot - base summary to set
-     */
-    public setBaseTree(snapshot: ISnapshotTree | null) {
-        this._baseSnapshotTree = snapshot;
-        if (this._state === SummaryTrackerState.Initial) {
-            this._state = SummaryTrackerState.Valid;
-        }
+    private formChildGetSnapshotTree(key: string): () => Promise<ISnapshotTree | undefined> {
+        return async () => (await this._getSnapshotTree())?.trees[key];
     }
 }

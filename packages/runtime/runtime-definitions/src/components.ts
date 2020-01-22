@@ -194,6 +194,12 @@ export interface IComponentRuntime extends EventEmitter, IComponentRouter, Parti
     error(err: any): void;
 }
 
+export interface ISummaryTracker {
+    readonly referenceSequenceNumber: number;
+    getSnapshotTree(): Promise<ISnapshotTree | undefined>;
+    createOrGetChild(key: string): ISummaryTracker;
+}
+
 /**
  * Represents the context for the component. This context is passed to the component runtime.
  */
@@ -227,6 +233,8 @@ export interface IComponentContext extends EventEmitter {
      * Ambient services provided with the context
      */
     readonly scope: IComponent;
+
+    readonly summaryTracker: ISummaryTracker;
 
     /**
      * Returns the current quorum.

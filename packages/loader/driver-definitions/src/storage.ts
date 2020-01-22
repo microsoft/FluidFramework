@@ -22,6 +22,9 @@ import {
     ITokenProvider,
     ITree,
     IVersion,
+    SummaryType,
+    ISummaryAuthor,
+    ISummaryBlob,
 } from "@microsoft/fluid-protocol-definitions";
 import { IResolvedUrl } from "./urlResolver";
 
@@ -96,6 +99,12 @@ export interface IDocumentStorageService {
      * is returned as a result of this call.
      */
     uploadSummary(commit: ISummaryTree): Promise<ISummaryHandle>;
+
+    /**
+     * Uploads a summary tree to storage using the given context for handle reference.
+     * Returns the uploaded summary handle.
+     */
+    uploadSummaryWithContext?(summary: IUploadSummaryTree, context: ISummaryContext): Promise<string>;
 
     /**
      * Retrieves the commit that matches the packfile handle. If the packfile has already been committed and the
@@ -236,3 +245,48 @@ export interface INetworkError {
     readonly retryAfterSeconds?: number;
     readonly online: string;
 }
+
+/**
+ * Context for uploading a summary to storage.
+ * Indicates the previously acked summary.
+ */
+export interface ISummaryContext {
+    /**
+     * Parent summary proposed handle (from summary op)
+     */
+    readonly proposalHandle: string | undefined;
+
+    /**
+     * Parent summary acked handle (from summary ack)
+     */
+    readonly ackHandle: string | undefined;
+}
+
+export interface IUploadSummaryTree {
+    type: SummaryType.Tree;
+    tree: { [path: string]: UploadSummaryObject };
+}
+
+export interface IUploadSummaryHandle {
+    type: SummaryType.Handle;
+    handleType: SummaryType;
+    path: string;
+}
+
+export interface IUploadSummaryCommit {
+    type: SummaryType.Commit;
+
+    author: ISummaryAuthor;
+
+    committer: ISummaryAuthor;
+
+    message: string;
+
+    // Tree referenced by the commit
+    tree: IUploadSummaryTree | IUploadSummaryHandle;
+
+    // Previous parents to the commit.
+    parents: string[];
+}
+
+export type UploadSummaryObject = IUploadSummaryTree | IUploadSummaryHandle | ISummaryBlob | IUploadSummaryCommit;

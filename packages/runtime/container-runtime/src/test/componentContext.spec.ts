@@ -14,6 +14,7 @@ import {
     IComponentRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 import { MockRuntime } from "@microsoft/fluid-test-runtime-utils";
+import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
 import { IComponentAttributes, LocalComponentContext, RemotedComponentContext } from "../componentContext";
 import { ContainerRuntime } from "../containerRuntime";
 import { DocumentStorageServiceProxy } from "../documentStorageServiceProxy";
@@ -42,8 +43,15 @@ describe("Component Context Tests", () => {
         });
 
         it("Check LocalComponent Attributes", () => {
-            localComponentContext =
-                new LocalComponentContext("Test1", ["TestComponent1"], containerRuntime, storage, scope, attachCb);
+            localComponentContext = new LocalComponentContext(
+                "Test1",
+                ["TestComponent1"],
+                containerRuntime,
+                storage,
+                scope,
+                1,
+                new SummaryTracker(1, async () => undefined),
+                attachCb);
 
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             localComponentContext.realize();
@@ -68,8 +76,15 @@ describe("Component Context Tests", () => {
 
         it("Supplying array of packages in LocalComponentContext should create exception", async () => {
             let exception = false;
-            localComponentContext =
-                new LocalComponentContext("Test1", ["TestComp", "SubComp"], containerRuntime, storage, scope, attachCb);
+            localComponentContext = new LocalComponentContext(
+                "Test1",
+                ["TestComp", "SubComp"],
+                containerRuntime,
+                storage,
+                scope,
+                1,
+                new SummaryTracker(1, async () => undefined),
+                attachCb);
 
             await localComponentContext.realize()
                 .catch((error) => {
@@ -87,8 +102,15 @@ describe("Component Context Tests", () => {
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = { IComponentRegistry: registryWithSubRegistries } as ContainerRuntime;
-            localComponentContext =
-                new LocalComponentContext("Test1", ["TestComp", "SubComp"], containerRuntime, storage, scope, attachCb);
+            localComponentContext = new LocalComponentContext(
+                "Test1",
+                ["TestComp", "SubComp"],
+                containerRuntime,
+                storage,
+                scope,
+                1,
+                new SummaryTracker(1, async () => undefined),
+                attachCb);
 
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             localComponentContext.realize();
@@ -149,8 +171,10 @@ describe("Component Context Tests", () => {
                 snapshotTree,
                 containerRuntime,
                 new DocumentStorageServiceProxy(storage, blobCache),
-                scope);
-            const snapshot = await remotedComponentContext.snapshot(true);
+                scope,
+                1,
+                new SummaryTracker(1, async () => undefined));
+            const snapshot = await remotedComponentContext.snapshot(true, true);
             const blob = snapshot.entries[0].value as IBlob;
 
             const contents = JSON.parse(blob.contents) as IComponentAttributes;
@@ -179,8 +203,10 @@ describe("Component Context Tests", () => {
                 snapshotTree,
                 containerRuntime,
                 new DocumentStorageServiceProxy(storage, blobCache),
-                scope);
-            const snapshot = await remotedComponentContext.snapshot(true);
+                scope,
+                1,
+                new SummaryTracker(1, async () => undefined));
+            const snapshot = await remotedComponentContext.snapshot(true, true);
             const blob = snapshot.entries[0].value as IBlob;
 
             const contents = JSON.parse(blob.contents) as IComponentAttributes;
