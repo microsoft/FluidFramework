@@ -63,7 +63,7 @@ export class TestClient extends Client {
 
         const client2 = new TestClient(undefined, specToSeg);
         await client2.load(
-            // tslint:disable-next-line: no-object-literal-type-assertion
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             {
                 logger: client2.logger,
                 clientId: newLongClientId,
@@ -75,6 +75,7 @@ export class TestClient extends Client {
     public mergeTree: MergeTree;
 
     public readonly checkQ: Collections.List<string> = Collections.ListMakeHead<string>();
+    // eslint-disable-next-line max-len
     protected readonly q: Collections.List<ISequencedDocumentMessage> = Collections.ListMakeHead<ISequencedDocumentMessage>();
 
     private readonly textHelper: MergeTreeTextHelper;

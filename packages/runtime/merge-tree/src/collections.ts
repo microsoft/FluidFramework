@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable eqeqeq, object-shorthand */
+/* eslint-disable @typescript-eslint/consistent-type-assertions, eqeqeq, object-shorthand */
+/* eslint-disable no-bitwise, no-param-reassign, no-shadow */
 
 import * as Base from "./base";
 import * as MergeTree from "./mergeTree";
@@ -950,6 +951,7 @@ export class IntegerRangeTree implements IRBAugmentation<Base.IIntegerRange, Aug
                     red = "R ";
                 }
                 buf += MergeTree.internedSpaces(indentAmt);
+                // eslint-disable-next-line max-len
                 buf += `${red}key: ${integerRangeToString(node.key)} minmax: ${integerRangeToString(node.data.minmax)}\n`;
                 indentAmt += 2;
                 return true;

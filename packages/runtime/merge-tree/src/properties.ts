@@ -3,15 +3,11 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable no-param-reassign */
+
 import * as ops from "./ops";
 
 // tslint:disable:interface-name
-// tslint:disable:no-for-in
-// tslint:disable:forin
-// tslint:disable:switch-default
-// tslint:disable:no-parameter-reassignment
-// tslint:disable:switch-final-break
-// tslint:disable:no-unsafe-any
 
 export interface MapLike<T> {
     [index: string]: T;
@@ -102,6 +98,7 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T>, combiningOp?:
         for (const key in extension) {
             const v = extension[key];
             if (v === null) {
+                // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
                 delete base[key];
             } else {
                 if (combiningOp && (combiningOp.name !== "rewrite")) {
@@ -162,9 +159,8 @@ export function createMap<T>(): MapLike<T> {
     // constantly changing shape.
     // eslint-disable-next-line dot-notation
     map["__"] = undefined;
-    // eslint-disable-next-line dot-notation
+    // eslint-disable-next-line dot-notation, @typescript-eslint/no-dynamic-delete
     delete map["__"];
 
-    // tslint:disable-next-line: no-unsafe-any
     return map;
 }
