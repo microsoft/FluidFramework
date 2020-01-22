@@ -269,22 +269,18 @@ export class ClientReplayTool {
         const mergeTreeTypes = [
             {
                 type: SharedStringFactory.Type,
-                // eslint-disable-next-line @typescript-eslint/unbound-method
                 specToSeg: SharedStringFactory.segmentFromSpec,
             },
             {
                 type: SparseMatrixFactory.Type,
-                // eslint-disable-next-line @typescript-eslint/unbound-method
                 specToSeg: SparseMatrixFactory.segmentFromSpec,
             },
             {
                 type: SharedObjectSequenceFactory.Type,
-                // eslint-disable-next-line @typescript-eslint/unbound-method
                 specToSeg: SharedObjectSequenceFactory.segmentFromSpec,
             },
             {
                 type: SharedNumberSequenceFactory.Type,
-                // eslint-disable-next-line @typescript-eslint/unbound-method
                 specToSeg: SharedNumberSequenceFactory.segmentFromSpec,
             },
         ];
