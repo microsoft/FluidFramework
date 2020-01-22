@@ -24,7 +24,6 @@
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
-    "tslint": "npm run eslint",
     "webpack": "webpack --env=\"production\"",
     "webpack:dev": "webpack --env=\"development\""
   },

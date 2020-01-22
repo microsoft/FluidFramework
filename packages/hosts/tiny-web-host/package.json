@@ -24,7 +24,6 @@
     "lint:fix": "npm run eslint:fix",
     "start": "webpack-dev-server",
     "tsc": "tsc",
-    "tslint": "npm run eslint",
     "webpack": "webpack  --env build"
   },
   "dependencies": {

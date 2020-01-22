@@ -26,7 +26,6 @@
     "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
     "start:local": "webpack-dev-server --config webpack.config.js --package package.json --env.mode local",
     "tsc": "tsc",
-    "tslint": "npm run eslint",
     "webpack": "webpack --env.production",
     "webpack:dev": "webpack --env.development"
   },

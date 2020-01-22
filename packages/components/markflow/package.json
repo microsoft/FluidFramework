@@ -29,7 +29,6 @@
     "test:coverage:disabled": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml --exit",
     "test:disabled": "mocha -r ts-node/register -r ignore-styles --recursive test/**/*.spec.ts --exit",
     "tsc": "tsc",
-    "tslint": "npm run eslint",
     "webpack": "webpack --env.production",
     "webpack:dev": "webpack --env.development"
   },

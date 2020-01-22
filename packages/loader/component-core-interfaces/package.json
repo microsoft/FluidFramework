@@ -23,8 +23,7 @@
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
-    "tsc:watch": "tsc --watch",
-    "tslint": "npm run eslint"
+    "tsc:watch": "tsc --watch"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",
