@@ -117,6 +117,7 @@ COPY samples/chaincode/prosemirror/package*.json samples/chaincode/prosemirror/
 COPY samples/chaincode/simple-component-embed/package*.json samples/chaincode/simple-component-embed/	
 COPY samples/chaincode/simple-data-share/package*.json samples/chaincode/simple-data-share/
 COPY samples/chaincode/smde/package*.json samples/chaincode/smde/
+COPY samples/chaincode/spaces/package*.json samples/chaincode/spaces/
 COPY samples/chaincode/sudoku/package*.json  samples/chaincode/sudoku/
 COPY samples/chaincode/textarea-noreact/package*.json samples/chaincode/textarea-noreact/
 COPY samples/chaincode/tourofheroes/package*.json samples/chaincode/tourofheroes/

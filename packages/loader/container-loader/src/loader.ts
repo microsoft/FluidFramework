@@ -345,7 +345,6 @@ export class Loader extends EventEmitter implements ILoader {
 
         const headerSeqNum = request.headers[LoaderHeader.sequenceNumber];
         if (headerSeqNum) {
-            // tslint:disable-next-line no-unsafe-any
             fromSequenceNumber = headerSeqNum;
         }
 

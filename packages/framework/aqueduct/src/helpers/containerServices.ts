@@ -36,7 +36,7 @@ export abstract class BaseContainerService implements IComponentRouter {
  */
 class SingletonContainerServiceFactory {
 
-    private service: IComponent | undefined;
+    private service: Promise<IComponent> | undefined;
 
     public constructor(
         private readonly serviceFn: (runtime: IHostRuntime) => Promise<IComponent>,
@@ -44,7 +44,7 @@ class SingletonContainerServiceFactory {
 
     public async getService(runtime: IHostRuntime): Promise<IComponent> {
         if (!this.service) {
-            this.service =  await this.serviceFn(runtime);
+            this.service =  this.serviceFn(runtime);
         }
         return this.service;
     }

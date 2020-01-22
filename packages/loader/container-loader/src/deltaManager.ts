@@ -859,7 +859,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     private getRetryDelayFromError(error): number | undefined {
-        // tslint:disable-next-line: no-unsafe-any
         return error !== null && typeof error === "object" && error.retryAfterSeconds ? error.retryAfterSeconds
             : undefined;
     }
@@ -1114,7 +1113,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     private stopSequenceNumberUpdate(): void {
         if (this.updateSequenceNumberTimer) {
-            // tslint:disable-next-line: no-unsafe-any
             clearTimeout(this.updateSequenceNumberTimer);
         }
         this.updateSequenceNumberTimer = undefined;

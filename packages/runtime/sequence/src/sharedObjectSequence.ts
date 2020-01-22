@@ -29,7 +29,6 @@ export class SharedObjectSequence<T> extends SharedSequence<T> {
     }
 
     constructor(document: IComponentRuntime, public id: string) {
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         super(document, id, SharedObjectSequenceFactory.Attributes, SharedObjectSequenceFactory.segmentFromSpec);
     }
 
