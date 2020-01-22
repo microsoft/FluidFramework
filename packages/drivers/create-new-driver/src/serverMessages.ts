@@ -13,6 +13,11 @@ import {
 import { BatchManager } from "@microsoft/fluid-core-utils";
 import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
 
+interface IAugmentedDocumentMessage {
+    clientId: string,
+    message: IDocumentMessage,
+}
+
 /**
  * Provides access to the false delta storage.
  */
@@ -22,7 +27,8 @@ export class CreationServerMessagesHandler {
 
     private sequenceNumber: number = 1;
     private minSequenceNumber: number = 0;
-    public readonly opSubmitManager: BatchManager<IDocumentMessage[]>;
+
+    public readonly opSubmitManager: BatchManager<IAugmentedDocumentMessage[]>;
 
     private static readonly connections: IDocumentDeltaConnection[]= [];
 
@@ -30,31 +36,44 @@ export class CreationServerMessagesHandler {
     // an actual connection is created.
     public readonly queuedMessages: ISequencedDocumentMessage[] = [];
 
-    private constructor() {
-        this.opSubmitManager = new BatchManager<IDocumentMessage[]>(
-            (submitType, work, clientId?: string, documentId?: string) => {
-                assert.ok(clientId !== undefined, "Client id should be provided.");
-                assert.ok(documentId !== undefined, "documentId should be provided.");
+    private constructor(private readonly documentId: string) {
+        this.opSubmitManager = new BatchManager<IAugmentedDocumentMessage[]>(
+            (submitType, work) => {
                 for (const singleWork of work) {
                     for (const message of singleWork) {
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        const stampedMessage = this.stampMessage(message, clientId!);
+                        const stampedMessage = this.stampMessage(message.message, message.clientId);
                         this.queuedMessages.push(stampedMessage);
                         for (const connection of CreationServerMessagesHandler.connections) {
-                            connection.emit("op", documentId, stampedMessage);
+                            connection.emit("op", this.documentId, stampedMessage);
                         }
                     }
                 }
             }, Number.MAX_VALUE);
     }
 
-    public static getInstance(connection: IDocumentDeltaConnection): CreationServerMessagesHandler {
-        if (CreationServerMessagesHandler.instance !== undefined) {
-            CreationServerMessagesHandler.instance = new CreationServerMessagesHandler();
+    public static getInstance(
+        documentId?: string,
+        connection?: IDocumentDeltaConnection): CreationServerMessagesHandler {
+        if (CreationServerMessagesHandler.instance === undefined) {
+            if (documentId) {
+                CreationServerMessagesHandler.instance = new CreationServerMessagesHandler(documentId);
+            }
         }
 
-        this.connections.push(connection);
+        if (connection) {
+            this.connections.push(connection);
+        }
         return CreationServerMessagesHandler.instance;
+    }
+
+    public submitMessage(messages: IDocumentMessage[], clientId: string) {
+        for (const message of messages) {
+            const augMessage: IAugmentedDocumentMessage = {
+                clientId,
+                message,
+            };
+            this.opSubmitManager.add("submitOp", [augMessage]);
+        }
     }
 
     /**
@@ -83,7 +102,7 @@ export class CreationServerMessagesHandler {
     public createClientJoinMessage(clientDetail: IClientJoin): ISequencedDocumentMessage {
         const joinMessage: ISequencedDocumentSystemMessage = {
             clientId: clientDetail.clientId,
-            clientSequenceNumber: -1,
+            clientSequenceNumber: 0,
             contents: null,
             minimumSequenceNumber: this.minSequenceNumber,
             referenceSequenceNumber: -1,

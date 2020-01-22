@@ -34,11 +34,7 @@ export class CreationDocumentService implements api.IDocumentService {
     public async connectToDeltaStream(
         client: IClient,
         mode: ConnectionMode): Promise<api.IDocumentDeltaConnection> {
-        return CreationDocumentDeltaConnection.create(
-            client,
-            mode,
-            this.documentId,
-            this.tenantId);
+        return new CreationDocumentDeltaConnection(client, mode, this.documentId, this.tenantId);
     }
 
     public async branch(): Promise<string> {

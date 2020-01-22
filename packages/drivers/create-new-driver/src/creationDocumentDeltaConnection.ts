@@ -31,23 +31,6 @@ const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 export class CreationDocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
 
     private readonly serverMessagesHandler: CreationServerMessagesHandler;
-    /**
-     * Create a DocumentDeltaConnection
-     *
-     * @param client - information about the client
-     * @param mode - connection mode
-     */
-    public static async create(
-        client: IClient,
-        mode: ConnectionMode,
-        documentId: string,
-        tenantId: string): Promise<IDocumentDeltaConnection> {
-
-        const deltaConnection = new CreationDocumentDeltaConnection(documentId, tenantId);
-
-        deltaConnection.initialize(client, mode);
-        return deltaConnection;
-    }
 
     private _details: IConnected | undefined;
 
@@ -58,11 +41,15 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
         return this._details;
     }
 
-    protected constructor(
+    constructor(
+        client: IClient,
+        mode: ConnectionMode,
         private readonly documentId: string,
         private readonly tenantId: string) {
         super();
-        this.serverMessagesHandler = CreationServerMessagesHandler.getInstance(this);
+
+        this.serverMessagesHandler = CreationServerMessagesHandler.getInstance(documentId, this);
+        this.initialize(client, mode);
     }
 
     /**
@@ -189,7 +176,7 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
      * @param message - delta operation to submit
      */
     public submit(messages: IDocumentMessage[]): void {
-        this.serverMessagesHandler.opSubmitManager.add("submitOp", messages);
+        this.serverMessagesHandler.submitMessage(messages, this.clientId);
     }
 
     /**
@@ -199,7 +186,7 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
      */
     public async submitAsync(messages: IDocumentMessage[]): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            this.serverMessagesHandler.opSubmitManager.add("submitOp", messages);
+            this.serverMessagesHandler.submitMessage(messages, this.clientId);
             resolve();
         });
     }
