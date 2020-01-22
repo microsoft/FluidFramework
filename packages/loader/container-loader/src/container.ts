@@ -323,7 +323,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this._deltaManager = this.createDeltaManager();
 
         // keep track of last time page was visible for telemetry
-        document.addEventListener("visibilitychange", () => {
+        // eslint-disable-next-line no-unused-expressions
+        typeof document === "object" && document.addEventListener("visibilitychange", () => {
             if(!document.hidden) {
                 this.lastVisible = performanceNow();
             }
@@ -1012,7 +1013,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             connectionMode,
             autoReconnect,
             online: OnlineStatus[isOnline()],
-            visibility: document.visibilityState,
+            visibility: typeof document === "object" ? document.visibilityState : undefined,
             lastVisible: this.lastVisible,
         });
 
