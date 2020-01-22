@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { IDocumentDeltaStorageService } from "@microsoft/fluid-driver-definitions";
 import * as api from "@microsoft/fluid-protocol-definitions";
 
@@ -18,7 +19,8 @@ export class CreationDeltaStorageService implements IDocumentDeltaStorageService
         from?: number,
         to?: number,
     ): Promise<api.ISequencedDocumentMessage[]> {
-        // Do not allow container move forward
+        // This driver is for new file creation and so there should be no delta ops.
+        assert.ok(false, "Flow should not reach in CreationDeltaStorageService.get().");
         return [];
     }
 }

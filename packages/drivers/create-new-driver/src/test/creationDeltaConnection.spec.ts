@@ -12,7 +12,7 @@ describe("Creation Driver", () => {
 
     let documentDeltaConnection: IDocumentDeltaConnection;
     beforeEach(async () => {
-        const factory = new CreationDocumentServiceFactory();
+        const factory = new CreationDocumentServiceFactory("docId", "tenantId");
         const resolved: IResolvedUrl = {endpoints: {}, type: "fluid", url: "", tokens: {}};
         const service = await factory.createDocumentService(resolved);
         const client: IClient = {

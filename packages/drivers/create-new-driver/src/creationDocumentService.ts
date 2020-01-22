@@ -13,7 +13,9 @@ import { CreationDocumentStorageService } from "./creationDocumentStorageService
  * The DocumentService connects to in memory endpoints for storage/socket for faux document service.
  */
 export class CreationDocumentService implements api.IDocumentService {
-    constructor() {
+    constructor(
+        private readonly documentId: string,
+        private readonly tenantId: string) {
     }
 
     public async connectToStorage(): Promise<api.IDocumentStorageService> {
@@ -34,7 +36,9 @@ export class CreationDocumentService implements api.IDocumentService {
         mode: ConnectionMode): Promise<api.IDocumentDeltaConnection> {
         return CreationDocumentDeltaConnection.create(
             client,
-            mode);
+            mode,
+            this.documentId,
+            this.tenantId);
     }
 
     public async branch(): Promise<string> {

@@ -8,3 +8,4 @@ export * from "./creationDocumentService";
 export * from "./creationDocumentServiceFactory";
 export * from "./creationDocumentDeltaConnection";
 export * from "./creationDocumentStorageService";
+export * from "./serverMessages";

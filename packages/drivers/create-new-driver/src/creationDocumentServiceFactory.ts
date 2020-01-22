@@ -17,10 +17,12 @@ import { CreationDocumentService } from "./creationDocumentService";
 export class CreationDocumentServiceFactory implements IDocumentServiceFactory {
 
     public readonly protocolName = "fluid-creation:";
-    constructor() {
+    constructor(
+        private readonly documentId: string,
+        private readonly tenantId: string) {
     }
 
     public async createDocumentService(url: IResolvedUrl): Promise<IDocumentService> {
-        return new CreationDocumentService();
+        return new CreationDocumentService(this.documentId, this.tenantId);
     }
 }

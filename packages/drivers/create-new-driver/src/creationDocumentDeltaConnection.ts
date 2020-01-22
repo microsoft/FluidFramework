@@ -5,7 +5,6 @@
 
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { BatchManager } from "@microsoft/fluid-core-utils";
 import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionMode,
@@ -20,8 +19,8 @@ import {
     ITokenClaims,
     ScopeType,
     IClientJoin,
-    ISequencedDocumentSystemMessage,
 } from "@microsoft/fluid-protocol-definitions";
+import { CreationServerMessagesHandler } from "./serverMessages";
 
 const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 
@@ -31,8 +30,7 @@ const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
  */
 export class CreationDocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
 
-    private sequenceNumber: number = 1;
-
+    private readonly serverMessagesHandler: CreationServerMessagesHandler;
     /**
      * Create a DocumentDeltaConnection
      *
@@ -41,95 +39,30 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
      */
     public static async create(
         client: IClient,
-        mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
+        mode: ConnectionMode,
+        documentId: string,
+        tenantId: string): Promise<IDocumentDeltaConnection> {
 
-        const deltaConnection = new CreationDocumentDeltaConnection();
+        const deltaConnection = new CreationDocumentDeltaConnection(documentId, tenantId);
 
         deltaConnection.initialize(client, mode);
         return deltaConnection;
     }
 
-    // These are the queues for messages, signals, contents that will be pushed to server when
-    // an actual connection is created.
-    private readonly queuedMessages: ISequencedDocumentMessage[] = [];
-    private readonly queuedContents: IContentMessage[] = [];
-    private readonly queuedSignals: ISignalMessage[] = [];
-
-    private readonly opSubmitManager: BatchManager<IDocumentMessage[]>;
-    private readonly signalSubmitManager: BatchManager<IDocumentMessage[]>;
-    private readonly contentSubmitManager: BatchManager<IDocumentMessage[]>;
-
     private _details: IConnected | undefined;
 
     private get details(): IConnected {
-        if (!this._details) {
+        if (this._details === undefined) {
             throw new Error("Internal error: calling method before _details is initialized!");
         }
         return this._details;
     }
 
-    protected constructor() {
+    protected constructor(
+        private readonly documentId: string,
+        private readonly tenantId: string) {
         super();
-
-        this.opSubmitManager = new BatchManager<IDocumentMessage[]>(
-            (submitType, work) => {
-                for (const singleWork of work) {
-                    for (const message of singleWork) {
-                        const stampedMessage = this.stampMessage(message);
-                        this.queuedMessages.push(stampedMessage);
-                        this.emit("op", this.details.claims.documentId, stampedMessage);
-                    }
-                }
-            });
-
-        this.signalSubmitManager = new BatchManager<IDocumentMessage[]>(
-            (submitType, work) => {
-                for (const singleWork of work) {
-                    for (const signal of singleWork) {
-                        const signalMessage: ISignalMessage = {
-                            clientId: this.clientId,
-                            content: signal,
-                        };
-                        this.queuedSignals.push(signalMessage);
-                        this.emit("signal", signalMessage);
-                    }
-                }
-            });
-
-        this.contentSubmitManager = new BatchManager<IDocumentMessage[]>(
-            (submitType, work) => {
-                for (const singleWork of work) {
-                    for (const message of singleWork) {
-                        const contentMessage: IContentMessage = {
-                            clientId: this.clientId,
-                            clientSequenceNumber: message.clientSequenceNumber,
-                            contents: message.contents,
-                        };
-                        this.queuedContents.push(contentMessage);
-                        this.emit("op-content", contentMessage);
-                    }
-                }
-            });
-    }
-
-    /**
-     * Stamps the messages like a server.
-     * @param message - Message to be stamped.
-     */
-    private stampMessage(message: IDocumentMessage): ISequencedDocumentMessage {
-        const stampedMessage: ISequencedDocumentMessage = {
-            clientId: this.clientId,
-            clientSequenceNumber: message.clientSequenceNumber,
-            contents: message.contents,
-            minimumSequenceNumber: message.referenceSequenceNumber,
-            referenceSequenceNumber: message.referenceSequenceNumber,
-            sequenceNumber: this.sequenceNumber++,
-            timestamp: Date.now(),
-            traces: message.traces || [],
-            type: message.type,
-            metadata: message.metadata,
-        };
-        return stampedMessage;
+        this.serverMessagesHandler = CreationServerMessagesHandler.getInstance(this);
     }
 
     /**
@@ -206,7 +139,7 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
      * @returns messages sent during the connection
      */
     public get initialMessages(): ISequencedDocumentMessage[] | undefined {
-        return this.details.initialMessages ? this.details.initialMessages : [];
+        return this.details.initialMessages !== undefined ? this.details.initialMessages : [];
     }
 
     /**
@@ -215,7 +148,7 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
      * @returns contents sent during the connection
      */
     public get initialContents(): IContentMessage[] | undefined {
-        return this.details.initialContents ? this.details.initialContents : [];
+        return this.details.initialContents !== undefined ? this.details.initialContents : [];
     }
 
     /**
@@ -224,7 +157,7 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
      * @returns signals sent during the connection
      */
     public get initialSignals(): ISignalMessage[] | undefined {
-        return this.details.initialSignals ? this.details.initialSignals : [];
+        return this.details.initialSignals !== undefined ? this.details.initialSignals : [];
     }
 
     /**
@@ -233,7 +166,7 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
      * @returns initial client list sent during the connection
      */
     public get initialClients(): ISignalClient[] {
-        return this.details.initialClients ? this.details.initialClients : [];
+        return this.details.initialClients !== undefined ? this.details.initialClients : [];
     }
 
     /**
@@ -256,7 +189,7 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
      * @param message - delta operation to submit
      */
     public submit(messages: IDocumentMessage[]): void {
-        this.opSubmitManager.add("submitOp", messages);
+        this.serverMessagesHandler.opSubmitManager.add("submitOp", messages);
     }
 
     /**
@@ -266,7 +199,7 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
      */
     public async submitAsync(messages: IDocumentMessage[]): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            this.contentSubmitManager.add("submitContent", messages);
+            this.serverMessagesHandler.opSubmitManager.add("submitOp", messages);
             resolve();
         });
     }
@@ -277,7 +210,11 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
      * @param message - signal to submit
      */
     public submitSignal(message: IDocumentMessage): void {
-        this.signalSubmitManager.add("submitSignal", [message]);
+        const signalMessage: ISignalMessage = {
+            clientId: this.clientId,
+            content: message,
+        };
+        this.emit("signal", signalMessage);
     }
 
     /**
@@ -295,9 +232,9 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
      */
     private initialize(client: IClient, mode: ConnectionMode) {
         const claims: ITokenClaims = {
-            documentId: "fauxdocid",
+            documentId: this.documentId,
             scopes: client.scopes,
-            tenantId: "fauxtenantid",
+            tenantId: this.tenantId,
             user: { id: client.user.id },
         };
         const DefaultServiceConfiguration: IServiceConfiguration = {
@@ -315,8 +252,8 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
             clientId,
             detail: client,
         };
-        const joinMessage = this.createClientJoinMessage(clientDetail);
-        this.queuedMessages.push(joinMessage);
+        const joinMessage = this.serverMessagesHandler.createClientJoinMessage(clientDetail);
+        this.serverMessagesHandler.queuedMessages.push(joinMessage);
         if (this.isWriter(client.scopes, false, mode)) {
             this._details = {
                 claims,
@@ -338,7 +275,7 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
                 existing: false,
                 maxMessageSize: 1024, // Readonly client can't send ops.
                 mode: "read",
-                parentBranch: null, // Does not matter for now.
+                parentBranch: null,
                 serviceConfiguration: DefaultServiceConfiguration,
                 initialClients: [{ clientId, client }],
                 initialMessages: [joinMessage],
@@ -346,22 +283,6 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
                 version: "fauxVersion",
             };
         }
-    }
-
-    private createClientJoinMessage(clientDetail: IClientJoin): ISequencedDocumentMessage {
-        const joinMessage: ISequencedDocumentSystemMessage = {
-            clientId: clientDetail.clientId,
-            clientSequenceNumber: -1,
-            contents: null,
-            minimumSequenceNumber: 0,
-            referenceSequenceNumber: -1,
-            sequenceNumber: this.sequenceNumber++,
-            timestamp: Date.now(),
-            traces: [],
-            data: JSON.stringify(clientDetail),
-            type: "join",
-        };
-        return joinMessage;
     }
 
     private isWriter(scopes: string[], existing: boolean, mode: ConnectionMode): boolean {
@@ -382,27 +303,11 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
         }
     }
 
-    private calculateScope(scopes: string[]) {
-        if (scopes === undefined || scopes.length === 0) {
-            return undefined;
-        }
-        const read = scopes.includes(ScopeType.DocRead);
-        const write = scopes.includes(ScopeType.DocWrite);
-        const summarize = scopes.includes(ScopeType.SummaryWrite);
-        return {
-            read,
-            summarize,
-            write,
-        };
-    }
-
     private canWrite(scopes: string[]): boolean {
-        const clientScope = this.calculateScope(scopes);
-        return clientScope === undefined ? true : clientScope.write;
+        return scopes.length === 0 || scopes.includes(ScopeType.DocWrite) ? true : false;
     }
 
     private canSummarize(scopes: string[]): boolean {
-        const clientScope = this.calculateScope(scopes);
-        return clientScope === undefined ? true : clientScope.summarize;
+        return scopes.length === 0 || scopes.includes(ScopeType.SummaryWrite) ? true : false;
     }
 }
