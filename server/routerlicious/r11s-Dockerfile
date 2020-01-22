@@ -22,7 +22,9 @@ WORKDIR /usr/src/server
 # Copy over the package and package-lock and install prior to the other code to optimize Docker's file system cache on rebuilds
 COPY LICENSE.txt .
 COPY server/routerlicious/package*.json server/routerlicious/
-COPY server/routerlicious/lerna-docker.json server/routerlicious/lerna.json
+
+# Why don't we use the same lerna file?
+COPY server/routerlicious/lerna.json server/routerlicious/lerna.json
 COPY server/routerlicious/.npmrc server/routerlicious/
 COPY tools/build-server-resources/build-version.js server/routerlicious/tools/build-server-resources/
 
