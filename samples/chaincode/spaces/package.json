@@ -1,7 +1,7 @@
 {
   "name": "@fluid-example/spaces",
   "version": "0.13.0",
-  "description": "Badge Fluid example component",
+  "description": "Spaces is a grid layout component",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",
