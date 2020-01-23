@@ -72,6 +72,6 @@ export async function initialize(
         selectDocumentServiceFactoryForProtocol(resolved, factoryMap),
         document.getElementById("ifr") as HTMLIFrameElement,
         options,
-        { resolver },
+        resolver,
     )).createDocumentServiceFromRequest({ url });
 }
