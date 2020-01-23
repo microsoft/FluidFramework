@@ -345,7 +345,6 @@ export class Loader extends EventEmitter implements ILoader {
 
         const headerSeqNum = request.headers[LoaderHeader.sequenceNumber];
         if (headerSeqNum) {
-            // tslint:disable-next-line no-unsafe-any
             fromSequenceNumber = headerSeqNum;
         }
 
@@ -362,8 +361,7 @@ export class Loader extends EventEmitter implements ILoader {
         };
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    private loadContainer(
+    private async loadContainer(
         id: string,
         documentService: IDocumentService,
         request: IRequest,

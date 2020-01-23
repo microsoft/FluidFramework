@@ -262,7 +262,6 @@ export class OdspDocumentService implements IDocumentService {
      * @param url - websocket URL
      * @param url2 - alternate websocket URL
      */
-    // tslint:disable-next-line: max-func-body-length
     private async connectToDeltaStreamWithRetry(
         tenantId: string,
         websocketId: string,

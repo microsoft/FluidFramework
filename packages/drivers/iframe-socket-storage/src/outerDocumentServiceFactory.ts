@@ -154,7 +154,6 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
         const connectedDocumentService: IDocumentService =
             await this.documentServiceFactory.createDocumentService(resolvedUrl);
 
-        // tslint:disable-next-line: no-unsafe-any
         const clientDetails = this.options ? (this.options.client as IClient) : null;
         const mode: ConnectionMode = "write";
 

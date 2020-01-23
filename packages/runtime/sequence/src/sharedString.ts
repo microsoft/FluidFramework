@@ -61,7 +61,6 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     private readonly mergeTreeTextHelper: MergeTree.MergeTreeTextHelper;
 
     constructor(document: IComponentRuntime, public id: string) {
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         super(document, id, SharedStringFactory.Attributes, SharedStringFactory.segmentFromSpec);
         this.mergeTreeTextHelper = this.client.createTextHelper();
     }

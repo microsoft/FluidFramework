@@ -215,17 +215,17 @@ describe("Cell", () => {
             return handle.get<ISharedCell>();
         }
 
-        // tslint:disable:no-unsafe-any
         verifyCellValue(await getCellComponent(getCellComponent(Promise.resolve(root2Cell))), cellValue, 2);
         verifyCellValue(await getCellComponent(getCellComponent(Promise.resolve(root3Cell))), cellValue, 3);
     });
 
     afterEach(async () => {
-        // tslint:disable-next-line: array-type
         const closeP: Promise<void>[] = [];
+        /* eslint-disable @typescript-eslint/strict-boolean-expressions */
         if (user1Document) { closeP.push(user1Document.close()); }
         if (user2Document) { closeP.push(user2Document.close()); }
         if (user3Document) { closeP.push(user3Document.close()); }
+        /* eslint-enable @typescript-eslint/strict-boolean-expressions */
         await Promise.all(closeP);
         await testDeltaConnectionServer.webSocketServer.close();
     });

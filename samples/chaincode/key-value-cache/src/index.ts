@@ -150,7 +150,6 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFact
         const runtime = await ContainerRuntime.load(
             context,
             new Map([[ComponentName, Promise.resolve(this)]]),
-            // eslint-disable-next-line @typescript-eslint/unbound-method
             [KeyValueFactoryComponent.containerRequestHandler],
         );
 

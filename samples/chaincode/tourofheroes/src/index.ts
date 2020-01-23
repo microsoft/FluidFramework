@@ -164,7 +164,6 @@ class TourOfHeroesContainerInstantiationFactory implements IRuntimeFactory, ICom
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const runtime = await ContainerRuntime.load(context,
             [[TourOfHeroesType, Promise.resolve(TourOfHeroesInstantiationFactory)]],
-            // eslint-disable-next-line @typescript-eslint/unbound-method
             [TourOfHeroesContainerInstantiationFactory.containerRequestHandler],
             { generateSummaries: true });
 

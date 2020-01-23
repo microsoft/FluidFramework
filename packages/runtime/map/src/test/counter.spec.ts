@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable: newline-per-chained-call
-// tslint:disable: no-backbone-get-set-outside-model
 import * as assert from "assert";
 import { MockRuntime } from "@microsoft/fluid-test-runtime-utils";
 import * as map from "../";
@@ -38,7 +36,6 @@ describe("Routerlicious", () => {
                         get("defaultCounter");
                     assert.ok(counterWithValue);
 
-                    /* tslint:disable:no-unsafe-any */
                     assert.equal(counterWithValue.value, 50);
                 });
             });

@@ -131,7 +131,6 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
                     Promise.resolve(new MyRegistry(context, "https://pragueauspkn-3873244262.azureedge.net")),
                 ],
             ],
-            // eslint-disable-next-line @typescript-eslint/unbound-method
             [SharedTextFactoryComponent.containerRequestHandler]);
 
         // On first boot create the base component

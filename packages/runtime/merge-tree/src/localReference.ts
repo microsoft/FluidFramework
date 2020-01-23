@@ -310,7 +310,7 @@ export class LocalReferenceCollection {
 
         for (const iterable of refs) {
             for (const lref of iterable) {
-                // tslint:disable-next-line: no-bitwise
+                // eslint-disable-next-line no-bitwise
                 if (lref.refType & ReferenceType.SlideOnRemove) {
                     beforeRefs.push(lref);
                     lref.segment = this.segment;
@@ -341,7 +341,7 @@ export class LocalReferenceCollection {
 
         for (const iterable of refs) {
             for (const lref of iterable) {
-                // tslint:disable-next-line: no-bitwise
+                // eslint-disable-next-line no-bitwise
                 if (lref.refType & ReferenceType.SlideOnRemove) {
                     afterRefs.push(lref);
                     lref.segment = this.segment;
