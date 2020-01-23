@@ -7,7 +7,5 @@ module.exports = {
     "extends": [
         "@microsoft/eslint-config-fluid"
     ],
-    "rules": {
-        "@typescript-eslint/prefer-string-starts-ends-with":"off"
-    }
+    "rules": { }
 }

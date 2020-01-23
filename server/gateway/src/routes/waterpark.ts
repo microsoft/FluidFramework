@@ -103,7 +103,7 @@ export function create(
                     (script, index) => {
                         return {
                             id: `${pkg.parsed.name}-${index}`,
-                            url: script.indexOf("http") === 0 ? script : `${pkg.packageUrl}/${script}`,
+                            url: script.startsWith("http") ? script : `${pkg.packageUrl}/${script}`,
                         };
                     }),
             };
