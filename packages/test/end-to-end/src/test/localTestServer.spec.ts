@@ -33,14 +33,14 @@ describe("LocalTestServer", () => {
         const resolver = new TestResolver();
         const serviceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
         user1Document = await api.load(
-            id, { resolver }, {}, serviceFactory);
+            id, resolver, {}, serviceFactory);
         let root = user1Document.getRoot();
         user1SharedString = user1Document.createString();
         root.set("SharedString", user1SharedString.handle);
         documentDeltaEventManager.registerDocuments(user1Document);
 
         user2Document = await api.load(
-            id, { resolver }, {}, serviceFactory);
+            id, resolver, {}, serviceFactory);
         root = user2Document.getRoot();
         const handle = await root.wait<IComponentHandle>("SharedString");
         user2SharedString = await handle.get<SharedString>();

@@ -145,6 +145,7 @@ class KeyValueLoader {
 let cache: IKeyValue;
 
 // TODO (mdaumi): Move this to comlink.
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
 process.on("message", async (message: IIncomingMessage) => {
     if (message.type === "init") {
         const keyValueLoaderP = promiseTimeout(cacheLoadTimeoutMS, KeyValueLoader.load(message.param));

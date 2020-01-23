@@ -27,6 +27,7 @@ export class DocumentFactory implements IDocumentFactory {
     }
 
     public async create(chaincode: IFluidCodeDetails): Promise<string> {
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises, no-async-promise-executor
         const monikerP = new Promise(async (resolve) => {
             if (this.moniker) {
                 resolve(this.moniker);

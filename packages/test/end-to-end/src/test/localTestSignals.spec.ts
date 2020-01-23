@@ -29,10 +29,10 @@ describe("TestSignals", () => {
         const resolver = new TestResolver();
         const serviceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
         user1Document = await load(
-            id, { resolver }, {}, serviceFactory);
+            id, resolver, {}, serviceFactory);
 
         user2Document = await load(
-            id, { resolver }, {}, serviceFactory);
+            id, resolver, {}, serviceFactory);
         documentDeltaEventManager.registerDocuments(user1Document, user2Document);
     });
 
