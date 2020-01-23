@@ -227,7 +227,7 @@ export class OdspDocumentService implements IDocumentService {
             const storageToken = await this.getStorageToken(newFileInfo.siteUrl, false);
             const file = await createNewFluidFile(newFileInfo, storageToken);
             if (newFileInfo.callback) {
-                newFileInfo.callback(file.itemId);
+                newFileInfo.callback(file.itemId, file.filename);
             }
             const url = createOdspUrl(file.siteUrl, file.driveId, file.itemId, "/");
             const resolver = new OdspDriverUrlResolver();

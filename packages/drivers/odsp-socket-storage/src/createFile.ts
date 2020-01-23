@@ -1,4 +1,3 @@
-
 /*!
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
@@ -10,7 +9,7 @@ export interface INewFileInfo {
     filename: string;
     filePath: string;
     // TODO: this callback should probably take a full 'file' representation not jus the itemid
-    callback?(itemId: string): void;
+    callback?(itemId: string, filename: string): void;
 }
 
 const isInvalidFileName = (fileName: string): boolean => {
@@ -24,7 +23,7 @@ const isInvalidFileName = (fileName: string): boolean => {
 export async function createNewFluidFile(
     newFileInfo: INewFileInfo,
     storageToken: string | null,
-): Promise<{driveId: string, itemId: string, siteUrl: string}> {
+): Promise<{driveId: string, itemId: string, siteUrl: string, filename: string}> {
     // Check for valid filename
     // Adding invalid filename check here for another sanity pass before the request to create file is actually made
     if (isInvalidFileName(newFileInfo.filename)) {
@@ -56,5 +55,5 @@ export async function createNewFluidFile(
         throw new Error("Could not parse drive item from Vroom response");
     }
 
-    return {itemId: item.id, siteUrl: newFileInfo.siteUrl, driveId: newFileInfo.driveId};
+    return {itemId: item.id, siteUrl: newFileInfo.siteUrl, driveId: newFileInfo.driveId, filename: item.name};
 }
