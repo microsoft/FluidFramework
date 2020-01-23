@@ -137,7 +137,7 @@ describe("Component Context Tests", () => {
 
         let remotedComponentContext: RemotedComponentContext;
         let componentAttributes: IComponentAttributes;
-        let storage: IDocumentStorageService;
+        const storage: Partial<IDocumentStorageService> = {};
         let scope: IComponent;
         let containerRuntime: ContainerRuntime;
         beforeEach(async () => {
@@ -170,7 +170,7 @@ describe("Component Context Tests", () => {
                 "Test1",
                 snapshotTree,
                 containerRuntime,
-                new DocumentStorageServiceProxy(storage, blobCache),
+                new DocumentStorageServiceProxy(storage as IDocumentStorageService, blobCache),
                 scope,
                 1,
                 new SummaryTracker(false, 1, async () => undefined));
@@ -202,7 +202,7 @@ describe("Component Context Tests", () => {
                 "Test1",
                 snapshotTree,
                 containerRuntime,
-                new DocumentStorageServiceProxy(storage, blobCache),
+                new DocumentStorageServiceProxy(storage as IDocumentStorageService, blobCache),
                 scope,
                 1,
                 new SummaryTracker(false, 1, async () => undefined));
