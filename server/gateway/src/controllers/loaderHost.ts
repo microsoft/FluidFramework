@@ -65,7 +65,7 @@ export async function initialize(
     const options = {
         blockUpdateMarkers: true,
         config,
-        tokens: (resolved).tokens,
+        tokens: resolved.tokens,
     };
 
     (await IFrameDocumentServiceProxyFactory.create(
