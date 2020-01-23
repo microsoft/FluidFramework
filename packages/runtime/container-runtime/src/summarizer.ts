@@ -459,6 +459,8 @@ export class RunningSummarizer implements IDisposable {
             handle: ackNack.type === MessageType.SummaryAck ? ackNack.contents.handle : undefined,
         });
 
+        this.pendingAckTimer.clear();
+
         // Update for success
         if (ackNack.type === MessageType.SummaryAck) {
             this.heuristics.ackLastSent();
