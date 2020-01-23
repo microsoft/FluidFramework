@@ -108,7 +108,7 @@ export async function testFluidService(config: Provider): Promise<void> {
         new Map([[documentUrl, resolved]]));
 
     const loader = new Loader(
-        resolver,
+        { resolver },
         new RouterliciousDocumentServiceFactory(),
         new NullCodeLoader(),
         null);
