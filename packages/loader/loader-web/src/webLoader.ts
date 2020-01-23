@@ -105,7 +105,6 @@ class ScriptManager {
                     script.async = false;
 
                     // Call signatures don't match and so need to wrap the method
-                    // tslint:disable-next-line:no-unnecessary-callback-wrapper
                     script.onload = () => resolve();
                     script.onerror = () =>
                         reject(new Error(`Failed to download the script at url: ${scriptUrl}`));
@@ -255,7 +254,6 @@ class FluidPackage {
 
         await Promise.all(this.scriptManager.loadScripts(umdDetails, this.details.packageUrl));
 
-        // tslint:disable-next-line:no-unsafe-any
         return this.scriptManager.isBrowser ? window[umdDetails.library] : self[umdDetails.library];
     }
 }

@@ -58,6 +58,7 @@ COPY packages/drivers/odsp-urlResolver/package*.json packages/drivers/odsp-urlRe
 COPY packages/drivers/fluidapp-odsp-urlResolver/package*.json packages/drivers/fluidapp-odsp-urlResolver/
 COPY packages/drivers/routerlicious-urlResolver/package*.json packages/drivers/routerlicious-urlResolver/
 COPY packages/drivers/test-driver/package*.json packages/drivers/test-driver/
+COPY packages/drivers/create-new-driver/package*.json packages/drivers/create-new-driver/
 COPY packages/framework/aqueduct/package*.json packages/framework/aqueduct/
 COPY packages/framework/aqueduct-react/package*.json packages/framework/aqueduct-react/
 COPY packages/framework/framework-definitions/package*.json packages/framework/framework-definitions/
@@ -117,6 +118,7 @@ COPY samples/chaincode/prosemirror/package*.json samples/chaincode/prosemirror/
 COPY samples/chaincode/simple-component-embed/package*.json samples/chaincode/simple-component-embed/	
 COPY samples/chaincode/simple-data-share/package*.json samples/chaincode/simple-data-share/
 COPY samples/chaincode/smde/package*.json samples/chaincode/smde/
+COPY samples/chaincode/spaces/package*.json samples/chaincode/spaces/
 COPY samples/chaincode/sudoku/package*.json  samples/chaincode/sudoku/
 COPY samples/chaincode/textarea-noreact/package*.json samples/chaincode/textarea-noreact/
 COPY samples/chaincode/tourofheroes/package*.json samples/chaincode/tourofheroes/

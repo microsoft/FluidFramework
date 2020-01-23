@@ -59,7 +59,7 @@ export async function loadFluidContainer(
 
     let resolved: IResolvedUrl;
 
-    const resolvedPackge = pkg === undefined ? parseUrlToResolvedPackage(url) : pkg;
+    const resolvedPackage = pkg === undefined ? parseUrlToResolvedPackage(url) : pkg;
 
     if (isRouterliciousUrl(url)) {
         const routerliciousApiConfig = tokenApiConfig as IRouterliciousTokenApi;
@@ -90,7 +90,7 @@ export async function loadFluidContainer(
         div,
         clientId,
         clientSecret,
-        resolvedPackge,
+        resolvedPackage,
         scriptIds);
     return containerP;
 }

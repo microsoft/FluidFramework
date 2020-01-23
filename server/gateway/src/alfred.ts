@@ -15,7 +15,7 @@ export class Alfred implements IAlfred {
     private tenants = new Map<string, GitManager>();
 
     constructor(
-        tenants: { id: string, key: string }[],
+        tenants: { id: string; key: string }[],
         private ordererUrl: string,
         private historianUrl: string,
         private riddlerUrl: string,
@@ -40,7 +40,7 @@ export class Alfred implements IAlfred {
     public async getFullTree(
         tenantId: string,
         documentId: string,
-    ): Promise<{ cache: IGitCache, code: string | IFluidCodeDetails }> {
+    ): Promise<{ cache: IGitCache; code: string | IFluidCodeDetails }> {
         const gitManager = this.getGitManager(tenantId);
         const versions = await gitManager.getCommits(documentId, 1);
         if (versions.length === 0) {

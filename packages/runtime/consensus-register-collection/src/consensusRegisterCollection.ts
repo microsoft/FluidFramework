@@ -177,7 +177,6 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
             // We don't support deletion. So there should be at least one value.
             assert(versions.length > 0, "Value should be undefined or non empty");
 
-            /* tslint:disable:no-unsafe-any */
             return versions[versions.length - 1];
         }
     }
@@ -343,8 +342,6 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
 
     private async submit(message: IRegisterOperation): Promise<void> {
         const clientSequenceNumber = this.submitLocalMessage(message);
-        // False positive - tslint couldn't track that the promise is stored in promiseResolveQueue and resolved later
-        // tslint:disable:promise-must-complete
         return new Promise((resolve, reject) => {
             // Note that clientSequenceNumber and key is only used for asserts and isn't strictly necessary.
             this.promiseResolveQueue.push({ resolve, reject, clientSequenceNumber, key: message.key });

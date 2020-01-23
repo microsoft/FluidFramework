@@ -98,6 +98,8 @@ The Aqueduct provides the [`SimpleModuleInstantiationFactory`](./src/helpers/sim
 
 - Define the registry of Component Objects that can be created
 - Declare the Default Component
+- Declare [Container Services](###Container-Service-Development)
+- Declare Container Level [Request Handlers](###Container-Level-Request-Handlers)
 
 ### Container Object Example
 
@@ -107,5 +109,31 @@ In the below example we will write a Container that exposes the above [`Clicker`
 export fluidExport = new SimpleModuleInstantiationFactory(
   "clicker", // Default Component Type
   ["clicker", Promise.resolve(ClickerInstantiationFactory)], // Component Registry
+  [], // Container Services
+  [], // Request Handler Routes
 );
 ```
+
+### Container Service Development
+
+Container Services allow developers to write Components that don't use Distributed Data Structures. These types of Components are helpful when you want to share state among all the parts of a Container but you don't need to share the state outside the session. ContainerServices have the benefit of not being saved into the snapshot. This makes them lightweight compared to Runtime Components and easier to version.
+
+An example of this could be a local clipboard service that manages the clipboard across all the Distributed Components in the Container but not across users.
+
+The concept of Container Services is simple. We define a specific request route that when queried against returns and IComponent object. The Container Developer provides the list of Container Services that other Components can query for. These IComponent objects are different from the Components we talked about before in the sense that they do not directly have a `ComponentRuntime` backing them so they can not have Distributed Data Structures. Because they don't contain Distributed State they only exist in memory and will be re-created either with every Container instantiation or on every call (depending on the type).
+
+Container Services have the benefit of being able to access the `IHostRuntime` object which allows them to interact directly with the Container if they choose.
+
+The Aqueduct provides an optional base class for building Container Services. Components that extend `SharedComponent` also have a helper function `getService(id:string)` which will return service objects.
+
+#### BaseContainerService
+
+The `BaseContainerService` class provides a starting class with a basic implementation if `IComponentRouter`.
+
+### Container Level Request Handlers
+
+You can provide custom Request Handlers to the Container. These request handlers are injected after system handlers but before the component get. Request Handlers allow you to intercept request made to the container and return custom responses.
+
+Consider a scenario where you want to create a random color generator. I could create a RequestHandler that when someone makes a request to the Container for `{url:"color"}` will intercept and return a custom `IResponse` of `{ status:200, type:"text/plain", value:"blue"}`.
+
+We use custom handlers to build the [Container Services](###Container-Service-Development) pattern.

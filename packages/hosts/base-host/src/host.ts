@@ -101,7 +101,7 @@ async function createWebLoader(
         hostConfig.proxyLoaderFactories : new Map<string, IProxyLoaderFactory>();
 
     return new Loader(
-        { resolver: hostConfig.urlResolver },
+        hostConfig.urlResolver,
         hostConfig.documentServiceFactory,
         codeLoader,
         config,

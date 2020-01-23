@@ -9,13 +9,12 @@ import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import {
     IDeltaManager,
     IGenericBlob,
-    IHost,
     IProxyLoaderFactory,
 } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { IContainerRuntimeOptions } from "@microsoft/fluid-container-runtime";
 import { Deferred } from "@microsoft/fluid-core-utils";
-import { IDocumentServiceFactory } from "@microsoft/fluid-driver-definitions";
+import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import * as ink from "@microsoft/fluid-ink";
 import { ISharedDirectory, ISharedMap, SharedDirectory, SharedMap } from "@microsoft/fluid-map";
 import {
@@ -265,7 +264,7 @@ async function requestDocument(loader: Loader, container: Container, uri: string
  */
 export async function load(
     url: string,
-    host: IHost,
+    resolver: IUrlResolver,
     options: any = {},
     serviceFactory: IDocumentServiceFactory = defaultDocumentServiceFactory,
     runtimeOptions: IContainerRuntimeOptions = { generateSummaries: false },
@@ -274,7 +273,14 @@ export async function load(
 
     // Load the Fluid document
     // For legacy purposes we currently fill in a default domain
-    const loader = new Loader(host, serviceFactory, codeLoader, options, {}, new Map<string, IProxyLoaderFactory>());
+    const loader = new Loader(
+        resolver,
+        serviceFactory,
+        codeLoader,
+        options,
+        {},
+        new Map<string, IProxyLoaderFactory>(),
+    );
     const container = await loader.resolve({ url });
 
     if (!container.existing) {
