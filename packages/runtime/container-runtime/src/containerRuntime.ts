@@ -557,6 +557,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         this.latestSummaryAck = { proposalHandle: undefined, ackHandle: undefined };
         this.summaryTracker = new SummaryTracker(
+            this.storage.uploadSummaryWithContext !== undefined,
             this.deltaManager.initialSequenceNumber,
             async () => undefined);
 
@@ -983,7 +984,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         // Iterate over each component and ask it to snapshot
         await Promise.all(Array.from(this.contexts).map(async ([key, value]) => {
-            const snapshot = await value.snapshot(true, fullTree);
+            const snapshot = await value.snapshot(fullTree);
             const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(snapshot, fullTree);
             summaryTree.tree[key] = treeWithStats.summaryTree;
             summaryStats = this.summaryTreeConverter.mergeStats(summaryStats, treeWithStats.summaryStats);
@@ -1009,7 +1010,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         // Iterate over each component and ask it to snapshot
         await Promise.all(Array.from(this.contexts).map(async ([key, value]) => {
-            const snapshot = await value.snapshot(false, fullTree);
+            const snapshot = await value.snapshot(fullTree);
             const treeWithStats = this.summaryTreeConverter.convertToUploadSummaryTree(snapshot, fullTree);
             summaryTree.tree[key] = treeWithStats.summaryTree;
             summaryStats = this.summaryTreeConverter.mergeStats(summaryStats, treeWithStats.summaryStats);
@@ -1157,7 +1158,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             }
 
             const trace = Trace.start();
-            const useContext = this.context.storage.uploadSummaryWithContext !== undefined;
             let summarizeResult: {
                 useContext: true,
                 treeWithStats: ISummaryTreeWithStats<IUploadSummaryTree>,
@@ -1166,14 +1166,14 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 treeWithStats: ISummaryTreeWithStats<ISummaryTree>,
             };
 
-            if (useContext === true) {
+            if (this.summaryTracker.useContext === true) {
                 summarizeResult = {
-                    useContext,
+                    useContext: true,
                     treeWithStats: await this.summarizeWithContext(fullTree || safe),
                 };
             } else {
                 summarizeResult = {
-                    useContext,
+                    useContext: false,
                     treeWithStats: await this.summarize(fullTree || safe),
                 };
             }

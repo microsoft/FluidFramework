@@ -196,6 +196,7 @@ export interface IComponentRuntime extends EventEmitter, IComponentRouter, Parti
 
 export interface ISummaryTracker {
     readonly referenceSequenceNumber: number;
+    getId(): Promise<string | null>;
     getSnapshotTree(): Promise<ISnapshotTree | undefined>;
     createOrGetChild(key: string): ISummaryTracker;
 }

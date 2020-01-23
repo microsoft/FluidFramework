@@ -86,10 +86,11 @@ export class RemoteChannelContext implements IChannelContext {
         }
     }
 
-    public async snapshot(fetchId: boolean, fullTree: boolean = false): Promise<ITree> {
+    public async snapshot(fullTree: boolean = false): Promise<ITree> {
         if (!fullTree && this.latestSequenceNumber <= this.summaryTracker.referenceSequenceNumber) {
-            const id = fetchId ? (await this.summaryTracker.getSnapshotTree())?.id : "";
-            if (id !== undefined) {
+            const id = await this.summaryTracker.getId();
+            // eslint-disable-next-line no-null/no-null
+            if (id !== null) {
                 return { id, entries: [] };
             }
         }

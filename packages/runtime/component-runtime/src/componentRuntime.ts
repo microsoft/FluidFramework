@@ -423,7 +423,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
 
         this.closed = true;
 
-        return this.snapshotInternal();
+        return this.snapshotInternal(true);
     }
 
     public async close(): Promise<void> {

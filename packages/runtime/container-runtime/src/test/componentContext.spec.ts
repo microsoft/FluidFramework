@@ -50,7 +50,7 @@ describe("Component Context Tests", () => {
                 storage,
                 scope,
                 1,
-                new SummaryTracker(1, async () => undefined),
+                new SummaryTracker(false, 1, async () => undefined),
                 attachCb);
 
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -83,7 +83,7 @@ describe("Component Context Tests", () => {
                 storage,
                 scope,
                 1,
-                new SummaryTracker(1, async () => undefined),
+                new SummaryTracker(false, 1, async () => undefined),
                 attachCb);
 
             await localComponentContext.realize()
@@ -109,7 +109,7 @@ describe("Component Context Tests", () => {
                 storage,
                 scope,
                 1,
-                new SummaryTracker(1, async () => undefined),
+                new SummaryTracker(false, 1, async () => undefined),
                 attachCb);
 
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -173,8 +173,8 @@ describe("Component Context Tests", () => {
                 new DocumentStorageServiceProxy(storage, blobCache),
                 scope,
                 1,
-                new SummaryTracker(1, async () => undefined));
-            const snapshot = await remotedComponentContext.snapshot(true, true);
+                new SummaryTracker(false, 1, async () => undefined));
+            const snapshot = await remotedComponentContext.snapshot(true);
             const blob = snapshot.entries[0].value as IBlob;
 
             const contents = JSON.parse(blob.contents) as IComponentAttributes;
@@ -205,8 +205,8 @@ describe("Component Context Tests", () => {
                 new DocumentStorageServiceProxy(storage, blobCache),
                 scope,
                 1,
-                new SummaryTracker(1, async () => undefined));
-            const snapshot = await remotedComponentContext.snapshot(true, true);
+                new SummaryTracker(false, 1, async () => undefined));
+            const snapshot = await remotedComponentContext.snapshot(true);
             const blob = snapshot.entries[0].value as IBlob;
 
             const contents = JSON.parse(blob.contents) as IComponentAttributes;

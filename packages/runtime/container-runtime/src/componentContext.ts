@@ -288,10 +288,10 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     /**
      * Notifies the object to take snapshot of a component.
      */
-    public async snapshot(fetchId: boolean, fullTree: boolean = false): Promise<ITree> {
+    public async snapshot(fullTree: boolean = false): Promise<ITree> {
         if (!fullTree && this.latestSequenceNumber <= this.summaryTracker.referenceSequenceNumber) {
-            const id = fetchId ? (await this.summaryTracker.getSnapshotTree())?.id : "";
-            if (id !== undefined) {
+            const id = await this.summaryTracker.getId();
+            if (id !== null) {
                 return { id, entries: [] };
             }
         }

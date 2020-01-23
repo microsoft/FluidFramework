@@ -20,6 +20,18 @@ export class SummaryTracker implements ISummaryTracker {
         return this._getSnapshotTree();
     }
 
+    public async getId(): Promise<string | null> {
+        if (this.useContext === true) {
+            return ""; // placeholder
+        } else {
+            const tree = await this.getSnapshotTree();
+            if (tree === undefined) {
+                throw Error("Expected to find parent snapshot tree");
+            }
+            return tree.id;
+        }
+    }
+
     private readonly children = new Map<string, SummaryTracker>();
 
     public refreshLatestSummary(
@@ -36,17 +48,22 @@ export class SummaryTracker implements ISummaryTracker {
     }
 
     public createOrGetChild(key: string): ISummaryTracker {
-        const existingTracker = this.children.get(key);
-        if (existingTracker) {
-            return existingTracker;
+        const existingChild = this.children.get(key);
+        if (existingChild) {
+            return existingChild;
         }
 
-        const node = new SummaryTracker(this._referenceSequenceNumber, this.formChildGetSnapshotTree(key));
-        this.children.set(key, node);
-        return node;
+        const newChild = new SummaryTracker(
+            this.useContext,
+            this._referenceSequenceNumber,
+            this.formChildGetSnapshotTree(key));
+
+        this.children.set(key, newChild);
+        return newChild;
     }
 
     public constructor(
+        public readonly useContext: boolean,
         private _referenceSequenceNumber: number,
         private _getSnapshotTree: () => Promise<ISnapshotTree | undefined>) {}
 
