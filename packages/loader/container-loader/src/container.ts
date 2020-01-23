@@ -32,7 +32,7 @@ import {
     IDocumentService,
     IDocumentStorageService,
 } from "@microsoft/fluid-driver-definitions";
-import { readAndParse } from "@microsoft/fluid-driver-utils";
+import { readAndParse, OnlineStatus, isOnline } from "@microsoft/fluid-driver-utils";
 import {
     buildSnapshotTree,
     isSystemMessage,
@@ -177,6 +177,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private readonly connectionTransitionTimes: number[] = [];
     private messageCountAfterDisconnection: number = 0;
 
+    private lastVisible: number | undefined;
+
     private _closed = false;
 
     public get closed(): boolean {
@@ -319,6 +321,19 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         });
 
         this._deltaManager = this.createDeltaManager();
+
+        // keep track of last time page was visible for telemetry
+        if (typeof document === "object" && document) {
+            this.lastVisible = document.hidden ? performanceNow() : undefined;
+            document.addEventListener("visibilitychange", () => {
+                if (document.hidden) {
+                    this.lastVisible = performanceNow();
+                } else {
+                    // settimeout so this will hopefully fire after disconnect event if being hidden caused it
+                    setTimeout(() => this.lastVisible = undefined, 0);
+                }
+            });
+        }
     }
 
     /**
@@ -1002,6 +1017,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             clientId: this.clientId,
             connectionMode,
             autoReconnect,
+            online: OnlineStatus[isOnline()],
+            lastVisible: this.lastVisible ? performanceNow() - this.lastVisible : undefined,
         });
 
         if (value === ConnectionState.Connected) {
