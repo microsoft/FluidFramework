@@ -10,7 +10,6 @@ import { extractDetails, WebCodeLoader, WhiteList } from "@microsoft/fluid-web-c
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
 import * as jwt from "jsonwebtoken";
-import * as _ from "lodash";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
 import * as winston from "winston";
@@ -104,7 +103,7 @@ export function create(
                     (script, index) => {
                         return {
                             id: `${pkg.parsed.name}-${index}`,
-                            url: script.indexOf("http") === 0 ? script : `${pkg.packageUrl}/${script}`,
+                            url: script.startsWith("http") ? script : `${pkg.packageUrl}/${script}`,
                         };
                     }),
             };

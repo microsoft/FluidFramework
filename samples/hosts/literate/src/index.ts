@@ -60,7 +60,7 @@ export async function start(url: string, code: string): Promise<void> {
 
     // Finally with all the above objects created we can fully construct the loader
     const loader = new Loader(
-        { resolver: insecureResolver },
+        insecureResolver,
         documentServicesFactory,
         codeLoader,
         { blockUpdateMarkers: true },

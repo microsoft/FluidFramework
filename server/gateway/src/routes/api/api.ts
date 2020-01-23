@@ -56,9 +56,12 @@ async function getInternalComponent(
     appTenants: core.IAlfredTenant[],
     scopes: ScopeType[],
 ): Promise<IResolvedUrl> {
+    /* eslint-disable no-useless-escape */
     const regex = url.protocol === "fluid:"
         ? /^\/([^\/]*)\/([^\/]*)(\/?.*)$/
         : /^\/loader\/([^\/]*)\/([^\/]*)(\/?.*)$/;
+    /* eslint-enable no-useless-escape */
+    // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
     const match = url.path.match(regex);
 
     if (!match) {
@@ -100,7 +103,7 @@ async function getInternalComponent(
 
 // Checks whether the url belongs to other Fluid endpoints.
 function isExternalComponent(url: string, endpoints: string[]) {
-    return endpoints.indexOf(url) !== -1;
+    return endpoints.includes(url);
 }
 
 export function create(
