@@ -51,7 +51,7 @@ Creating a loader is a simple process
 import { Loader } from "@microsoft/fluid-container-loader";
 
 const loader = new Loader(
-    { resolver: insecureResolver },
+    insecureResolver,
     documentServicesFactory,
     codeLoader,
     { blockUpdateMarkers: true });

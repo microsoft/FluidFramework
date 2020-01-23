@@ -44,15 +44,15 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
             const documentService = new TestDocumentServiceFactory(testDeltaConnectionServer);
             const resolver = new TestResolver();
             user1Document = await api.load(
-                id, { resolver }, {}, documentService);
+                id, resolver, {}, documentService);
             documentDeltaEventManager.registerDocuments(user1Document);
 
             user2Document = await api.load(
-                id, { resolver }, {}, documentService);
+                id, resolver, {}, documentService);
             documentDeltaEventManager.registerDocuments(user2Document);
 
             user3Document = await api.load(
-                id, { resolver }, {}, documentService);
+                id, resolver, {}, documentService);
             documentDeltaEventManager.registerDocuments(user3Document);
             root1 = user1Document.getRoot();
             root2 = user2Document.getRoot();
