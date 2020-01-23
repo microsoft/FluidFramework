@@ -305,9 +305,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                                 this.blobsCachePendingHashes.add(hashP);
                                 hashP.then((hash) => {
                                     this.blobsShaToPathCache.set(hash, path);
-                                    this.blobsCachePendingHashes.delete(hashP);
-                                },
-                                (reason) => {
+                                }).finally(() => {
                                     this.blobsCachePendingHashes.delete(hashP);
                                 });
                             }, 0);

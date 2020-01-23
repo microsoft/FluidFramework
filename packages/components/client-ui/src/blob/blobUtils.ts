@@ -5,7 +5,6 @@
 
 import * as api from "@fluid-internal/client-api";
 import { getFileBlobType, IGenericBlob, IImageBlob, IVideoBlob } from "@microsoft/fluid-container-definitions";
-import { gitHashFileAsync } from "@microsoft/fluid-core-utils";
 
 export async function blobUploadHandler(
     dragZone: HTMLDivElement,
@@ -21,7 +20,7 @@ export async function blobUploadHandler(
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         fileToInclusion(files[0])
             .then(async (blob) => {
-                await document.uploadBlob(blob);
+                blob = await document.uploadBlob(blob);
                 blobDisplayCB(blob);
             });
     };
@@ -57,55 +56,46 @@ async function fileToInclusion(file: File): Promise<IGenericBlob> {
     switch (baseInclusion.type) {
         case "image": {
             const blobP = imageHandler(file, baseInclusion);
-            return arrayBufferP
-                .then(async (arrayBuffer) => {
-                    const hashP = gitHashFileAsync(arrayBuffer);
-                    return Promise.all([blobP, hashP])
-                        .then(([blob, hash]) => {
-                            const incl: IImageBlob = {
-                                content: arrayBuffer,
-                                fileName: file.name,
-                                height: blob.height,
-                                id: hash,
-                                size: arrayBuffer.byteLength,
-                                type: "image",
-                                url: blob.url,
-                                width: blob.width,
-                            };
-                            return incl;
-                        });
+            return Promise.all([arrayBufferP, blobP])
+                .then(([arrayBuffer, blob]) => {
+                    const incl: IImageBlob = {
+                        content: arrayBuffer,
+                        fileName: file.name,
+                        height: blob.height,
+                        id: undefined,
+                        size: arrayBuffer.byteLength,
+                        type: "image",
+                        url: blob.url,
+                        width: blob.width,
+                    };
+                    return incl;
                 });
         }
         case "video": {
             const blobP = videoHandler(file, baseInclusion);
-            return arrayBufferP
-                .then(async (arrayBuffer) => {
-                    const hashP = gitHashFileAsync(arrayBuffer);
-                    return Promise.all([blobP, hashP])
-                        .then(([blob, hash]) => {
-                            const incl: IVideoBlob = {
-                                content: arrayBuffer,
-                                fileName: file.name,
-                                height: blob.height,
-                                id: hash,
-                                length: blob.length,
-                                size: arrayBuffer.byteLength,
-                                type: "video",
-                                url: blob.url,
-                                width: blob.width,
-                            };
-                            return incl;
-                        });
+            return Promise.all([arrayBufferP, blobP])
+                .then(([arrayBuffer, blob]) => {
+                    const incl: IVideoBlob = {
+                        content: arrayBuffer,
+                        fileName: file.name,
+                        height: blob.height,
+                        id: undefined,
+                        length: blob.length,
+                        size: arrayBuffer.byteLength,
+                        type: "video",
+                        url: blob.url,
+                        width: blob.width,
+                    };
+                    return incl;
                 });
         }
         default: {
-            return arrayBufferP
-                .then(async (arrayBuffer) => {
-                    const hash = await gitHashFileAsync(arrayBuffer);
+            return Promise.all([arrayBufferP])
+                .then(([arrayBuffer]) => {
                     const incl: IGenericBlob = {
                         content: arrayBuffer,
                         fileName: file.name,
-                        id: hash,
+                        id: undefined,
                         size: arrayBuffer.byteLength,
                         type: "generic",
                         url: baseInclusion.url,

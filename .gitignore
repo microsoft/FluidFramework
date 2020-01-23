@@ -3,7 +3,6 @@ node_modules
 dist
 nyc
 *.log
-.DS_Store
 
 # Rush: Temporary files
 common/temp
