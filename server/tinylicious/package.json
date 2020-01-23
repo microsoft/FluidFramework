@@ -19,10 +19,10 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "lint": "npm run eslint",
     "start": "node dist/index.js",
     "start:debug": "node --inspect=0.0.0.0:9229 dist/index.js",
-    "tsc": "tsc",
-    "tslint": "npm run eslint"
+    "tsc": "tsc"
   },
   "dependencies": {
     "@microsoft/fluid-core-utils": "0.13.17538",
