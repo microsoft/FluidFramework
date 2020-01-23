@@ -56,7 +56,6 @@ async function getInternalComponent(
     appTenants: core.IAlfredTenant[],
     scopes: ScopeType[],
 ): Promise<IResolvedUrl> {
-    // tslint:disable no-single-line-block-comment
     /* eslint-disable no-useless-escape */
     const regex = url.protocol === "fluid:"
         ? /^\/([^\/]*)\/([^\/]*)(\/?.*)$/
