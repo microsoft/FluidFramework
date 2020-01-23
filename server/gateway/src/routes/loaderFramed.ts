@@ -10,7 +10,6 @@ import { extractDetails, WebCodeLoader, WhiteList } from "@microsoft/fluid-web-c
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
 import * as jwt from "jsonwebtoken";
-import * as _ from "lodash";
 import { Provider } from "nconf";
 import { parse } from "url";
 import { v4 } from "uuid";
@@ -67,7 +66,7 @@ export function create(
                     },
                     jwtKey);
 
-                const rawPath = request.params[0] as string;
+                const rawPath = request.params[0];
                 const slash = rawPath.indexOf("/");
                 const documentId = rawPath.substring(0, slash !== -1 ? slash : rawPath.length);
                 const path = rawPath.substring(slash !== -1 ? slash : rawPath.length);

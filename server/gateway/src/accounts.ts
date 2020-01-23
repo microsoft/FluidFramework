@@ -4,15 +4,16 @@
  */
 
 import { ICollection, MongoManager } from "@microsoft/fluid-server-services-core";
-import * as _ from "lodash";
 import * as moment from "moment";
 
 /**
- * User interface
+ * Interface representing information about a logged in user
  */
 export interface IUser {
     id: string;
     details: IUserDetails;
+    user: IUser;
+    accounts: IAccount[];
 }
 
 /**
@@ -47,14 +48,6 @@ export interface IAccount {
 
     // The id of the user the account is associated with
     userId: string;
-}
-
-/**
- * Interface representing information about a logged in user
- */
-export interface IUser {
-    user: IUser;
-    accounts: IAccount[];
 }
 
 /**

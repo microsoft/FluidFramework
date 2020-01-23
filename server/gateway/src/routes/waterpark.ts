@@ -10,7 +10,6 @@ import { extractDetails, WebCodeLoader, WhiteList } from "@microsoft/fluid-web-c
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
 import * as jwt from "jsonwebtoken";
-import * as _ from "lodash";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
 import * as winston from "winston";

@@ -36,6 +36,7 @@ export class GatewayResourcesFactory implements utils.IResourcesFactory<GatewayR
     public async create(config: Provider): Promise<GatewayResources> {
         // Producer used to publish messages
         const redisConfig = config.get("redis");
+        // eslint-disable-next-line @typescript-eslint/camelcase
         const options: redis.ClientOpts = { auth_pass: redisConfig.pass };
         if (redisConfig.tls) {
             options.tls = {
@@ -63,7 +64,7 @@ export class GatewayResourcesFactory implements utils.IResourcesFactory<GatewayR
         const redisCache = new services.RedisCache(redisClient);
 
         // Tenants attached to the apps this service exposes
-        const appTenants = config.get("gateway:tenants") as { id: string, key: string }[];
+        const appTenants = config.get("gateway:tenants") as { id: string; key: string }[];
 
         // This wanst to create stuff
         const port = utils.normalizePort(process.env.PORT || "3000");

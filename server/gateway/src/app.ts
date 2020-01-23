@@ -122,6 +122,7 @@ export function create(
         const redisHost = config.get("redis:host");
         const redisPort = config.get("redis:port");
         const redisPass = config.get("redis:pass");
+        // eslint-disable-next-line @typescript-eslint/camelcase
         const options: redis.ClientOpts = { auth_pass: redisPass };
         if (config.get("redis:tls")) {
             options.tls = {
@@ -206,7 +207,7 @@ export function create(
     }));
 
     // Get local accounts - used primarily for automated testing
-    const localAccounts = config.get("login:accounts") as { username: string, password: string }[];
+    const localAccounts = config.get("login:accounts") as { username: string; password: string }[];
     passport.use(new passportLocal.Strategy(
         (username, password, done) => {
             for (const localAccount of localAccounts) {
