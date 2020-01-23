@@ -10,13 +10,15 @@ import {
     IDocumentDeltaStorageService,
     IDocumentService,
     IDocumentStorageService,
+    IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionMode,
     IClient,
     IErrorTrackingService,
 } from "@microsoft/fluid-protocol-definitions";
-import { ISocketStorageDiscovery } from "./contracts";
+import { IOdspResolvedUrl, ISocketStorageDiscovery } from "./contracts";
+import { createNewFluidFile, INewFileInfo } from "./createFile";
 import { debug } from "./debug";
 import { IFetchWrapper } from "./fetchWrapper";
 import { OdspCache } from "./odspCache";
@@ -24,6 +26,7 @@ import { OdspDeltaStorageService } from "./OdspDeltaStorageService";
 import { OdspDocumentDeltaConnection } from "./OdspDocumentDeltaConnection";
 import { OdspDocumentStorageManager } from "./OdspDocumentStorageManager";
 import { OdspDocumentStorageService } from "./OdspDocumentStorageService";
+import { createOdspUrl, OdspDriverUrlResolver } from "./OdspDriverUrlResolver";
 import { getWithRetryForTokenRefresh, isLocalStorageAvailable } from "./OdspUtils";
 import { getSocketStorageDiscovery } from "./Vroom";
 
@@ -41,14 +44,13 @@ export class OdspDocumentService implements IDocumentService {
     private storageManager?: OdspDocumentStorageManager;
     private joinSessionP: Promise<ISocketStorageDiscovery> | undefined;
 
-    private readonly logger: TelemetryLogger;
-
-    private readonly getStorageToken: (refresh: boolean) => Promise<string | null>;
+    private logger: TelemetryLogger;
 
     private readonly localStorageAvailable: boolean;
 
-    private readonly joinSessionKey: string;
+    private odspResolvedUrl: Promise<IOdspResolvedUrl> | undefined;
 
+    // TODO: fix jsdoc
     /**
      * @param appId - app id used for telemetry for network requests
      * @param hashedDocumentId - A unique identifer for the document. The "hashed" here implies that the contents of this string
@@ -68,46 +70,21 @@ export class OdspDocumentService implements IDocumentService {
      */
     constructor(
         private readonly appId: string,
-        private readonly hashedDocumentId: string,
-        private readonly siteUrl: string,
-        private readonly driveId: string,
-        private readonly itemId: string,
-        private readonly snapshotStorageUrl: string,
-        getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
+        private readonly resolvedUrl: IResolvedUrl,
+        private readonly getToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
         readonly getWebsocketToken: (refresh) => Promise<string | null>,
         logger: ITelemetryBaseLogger,
         private readonly storageFetchWrapper: IFetchWrapper,
         private readonly deltasFetchWrapper: IFetchWrapper,
         private readonly socketIOClientP: Promise<SocketIOClientStatic>,
         private readonly odspCache: OdspCache,
+        private readonly newFileInfoPromise: Promise<INewFileInfo> | undefined,
     ) {
+        if (resolvedUrl.type === "fluid") {
+            this.odspResolvedUrl = Promise.resolve(resolvedUrl as IOdspResolvedUrl);
+        }
 
-        this.joinSessionKey = `${this.hashedDocumentId}/joinsession`;
-
-        this.logger = DebugLogger.mixinDebugLogger(
-            "fluid:telemetry:OdspDriver",
-            logger,
-            { docId: hashedDocumentId });
-
-        this.getStorageToken = (refresh: boolean, name?: string) => {
-            if (refresh) {
-                // Potential perf issue:
-                // Host should optimize and provide non-expired tokens on all critical paths.
-                // Exceptions: race conditions around expiration, revoked tokens, host that does not care (fluid-fetcher)
-                this.logger.sendTelemetryEvent({ eventName: "StorageTokenRefresh" });
-            }
-            const event = PerformanceEvent.start(this.logger, { eventName: `${name || "OdspDocumentService"}_GetToken` });
-            let token: Promise<string | null>;
-            try {
-                token = getStorageToken(this.siteUrl, refresh);
-            } catch (error) {
-                event.cancel({}, error);
-                throw error;
-            }
-            event.end();
-
-            return token;
-        };
+        this.logger = DebugLogger.mixinDebugLogger("fluid:telemetry:OdspDriver", logger);
 
         this.localStorageAvailable = isLocalStorageAvailable();
     }
@@ -118,15 +95,17 @@ export class OdspDocumentService implements IDocumentService {
      * @returns returns the document storage service for sharepoint driver.
      */
     public async connectToStorage(): Promise<IDocumentStorageService> {
+        const resolvedUrl = await this.getOdspResolvedUrl();
+
         const latestSha: string | null | undefined = undefined;
 
         this.storageManager = new OdspDocumentStorageManager(
             { app_id: this.appId },
-            this.hashedDocumentId,
-            this.snapshotStorageUrl,
+            resolvedUrl.hashedDocumentId,
+            resolvedUrl.endpoints.snapshotStorageUrl,
             latestSha,
             this.storageFetchWrapper,
-            this.getStorageToken,
+            (refresh) => this.getStorageToken(resolvedUrl.siteUrl, refresh),
             this.logger,
             true,
             this.odspCache,
@@ -141,8 +120,10 @@ export class OdspDocumentService implements IDocumentService {
      * @returns returns the document delta storage service for sharepoint driver.
      */
     public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
+        const resolvedUrl = await this.getOdspResolvedUrl();
+
         const urlProvider = async () => {
-            const websocketEndpoint = await this.joinSession();
+            const websocketEndpoint = await this.joinSession(resolvedUrl);
             return websocketEndpoint.deltaStorageUrl;
         };
 
@@ -151,7 +132,7 @@ export class OdspDocumentService implements IDocumentService {
             urlProvider,
             this.deltasFetchWrapper,
             this.storageManager ? this.storageManager.ops : undefined,
-            this.getStorageToken,
+            (refresh) => this.getStorageToken(resolvedUrl.siteUrl, refresh),
             this.logger,
         );
     }
@@ -162,9 +143,11 @@ export class OdspDocumentService implements IDocumentService {
      * @returns returns the document delta stream service for sharepoint driver.
      */
     public async connectToDeltaStream(client: IClient, mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
+        const resolvedUrl = await this.getOdspResolvedUrl();
+
         // Attempt to connect twice, in case we used expired token.
         return getWithRetryForTokenRefresh<IDocumentDeltaConnection>(async (refresh: boolean) => {
-            const [websocketEndpoint, webSocketToken, io] = await Promise.all([this.joinSession(), this.getWebsocketToken(refresh), this.socketIOClientP]);
+            const [websocketEndpoint, webSocketToken, io] = await Promise.all([this.joinSession(resolvedUrl), this.getWebsocketToken(refresh), this.socketIOClientP]);
 
             return this.connectToDeltaStreamWithRetry(
                 websocketEndpoint.tenantId,
@@ -177,7 +160,7 @@ export class OdspDocumentService implements IDocumentService {
                 websocketEndpoint.deltaStreamSocketUrl,
                 websocketEndpoint.deltaStreamSocketUrl2,
             ).catch((error) => {
-                this.odspCache.remove(this.joinSessionKey);
+                this.odspCache.remove(this.getJoinSessionKey(resolvedUrl));
                 throw error;
             });
         });
@@ -191,7 +174,77 @@ export class OdspDocumentService implements IDocumentService {
         return { track: () => null };
     }
 
-    private async joinSession(): Promise<ISocketStorageDiscovery> {
+    private async getStorageToken(siteUrl: string, refresh: boolean, name?: string) {
+        if (refresh) {
+            // Potential perf issue:
+            // Host should optimize and provide non-expired tokens on all critical paths.
+            // Exceptions: race conditions around expiration, revoked tokens, host that does not care (fluid-fetcher)
+            this.logger.sendTelemetryEvent({ eventName: "StorageTokenRefresh" });
+        }
+
+        const event = PerformanceEvent.start(this.logger, { eventName: `${name || "OdspDocumentService"}_GetToken` });
+        let token: Promise<string | null>;
+        try {
+            token = this.getToken(siteUrl, refresh);
+        } catch (error) {
+            event.cancel({}, error);
+            throw error;
+        }
+        event.end();
+
+        return token;
+    }
+
+    private async getOdspResolvedUrl(): Promise<IOdspResolvedUrl> {
+        if (!this.odspResolvedUrl) {
+            this.odspResolvedUrl = this.createFileIfNeeded(this.resolvedUrl).catch((error) => {
+                this.logger.sendErrorEvent({
+                    eventName: "FailedCreateFile",
+                }, error);
+                throw error;
+            });
+            const resolvedUrl = await this.odspResolvedUrl;
+            this.logger = DebugLogger.mixinDebugLogger(
+                "fluid:telemetry:OdspDriver",
+                this.logger,
+                { docId: resolvedUrl.hashedDocumentId });
+        }
+        return this.odspResolvedUrl;
+    }
+
+    // TODO: For now we assume that the file will be created before we create the document service. This will be changed
+    // when we have the ability to boot without a file
+    /**
+     * Checks if the resolveUrl we are getting is fluid-new and creates a new file before returning a real resolved url
+     */
+    private async createFileIfNeeded(resolvedUrl: IResolvedUrl): Promise<IOdspResolvedUrl> {
+        if (this.resolvedUrl.type === "fluid-new") {
+            if (!this.newFileInfoPromise) {
+                throw new Error ("Odsp driver needs to create a new file but no newFileInfo supplied");
+            }
+            const newFileInfo = await this.newFileInfoPromise;
+            // TODO: this.newFileInfoPromise.catch() should be used to cleanup any dangling references
+            const storageToken = await this.getStorageToken(newFileInfo.siteUrl, false);
+            const file = await createNewFluidFile(newFileInfo, storageToken);
+            if (newFileInfo.callback) {
+                newFileInfo.callback(file.itemId);
+            }
+            const url = createOdspUrl(file.siteUrl, file.driveId, file.itemId, "/");
+            const resolver = new OdspDriverUrlResolver();
+            const resolved = await resolver.resolve({url});
+            if (resolved.type === "fluid-new") {
+                throw new Error("Failed to resolve URL after creating new file");
+            }
+            return resolved;
+        }
+        return resolvedUrl as IOdspResolvedUrl;
+    }
+
+    private getJoinSessionKey(resolvedUrl: IOdspResolvedUrl): string {
+        return `${resolvedUrl.hashedDocumentId}/joinsession`;
+    }
+
+    private async joinSession(resolvedUrl: IOdspResolvedUrl): Promise<ISocketStorageDiscovery> {
         // Implement "locking" - only one outstanding join session call at a time.
         // Note - we need it for perf. But also OdspCache.put() validates cache is not  overwritten by second call.
         if (this.joinSessionP !== undefined) {
@@ -200,13 +253,13 @@ export class OdspDocumentService implements IDocumentService {
 
         this.joinSessionP = getSocketStorageDiscovery(
             this.appId,
-            this.driveId,
-            this.itemId,
-            this.siteUrl,
+            resolvedUrl.driveId,
+            resolvedUrl.itemId,
+            resolvedUrl.siteUrl,
             this.logger,
-            this.getStorageToken,
+            (refresh) => this.getStorageToken(resolvedUrl.siteUrl, refresh),
             this.odspCache,
-            this.joinSessionKey);
+            this.getJoinSessionKey(resolvedUrl));
 
         try {
             const joinSession = await this.joinSessionP;

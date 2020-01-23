@@ -4,7 +4,14 @@
  * Licensed under the MIT License.
  */
 
-import { INewFileInfo } from "./OdspDocumentServiceFactoryWithCodeSplit";
+export interface INewFileInfo {
+    siteUrl: string;
+    driveId: string;
+    filename: string;
+    filePath: string;
+    // TODO: this callback should probably take a full 'file' representation not jus the itemid
+    callback?(itemId: string): void;
+}
 
 const isInvalidFileName = (fileName: string): boolean => {
     const invalidCharsRegex = /["*/:<>?\\|]+/g;
@@ -16,7 +23,7 @@ const isInvalidFileName = (fileName: string): boolean => {
  */
 export async function createNewFluidFile(
     newFileInfo: INewFileInfo,
-    storageToken: string,
+    storageToken: string | null,
 ): Promise<{driveId: string, itemId: string, siteUrl: string}> {
     // Check for valid filename
     // Adding invalid filename check here for another sanity pass before the request to create file is actually made
@@ -24,18 +31,15 @@ export async function createNewFluidFile(
         throw new Error("Invalid filename. Please try again.");
     }
 
-    const token = storageToken;
-    if (!token) {
-        throw new Error("Failed to acquire Storage token");
-    }
     const encodedFilename = encodeURIComponent(`${newFileInfo.filename}.fluid`);
 
     const url = `${newFileInfo.siteUrl}/_api/v2.1/drives/${newFileInfo.driveId}/items/root:/${encodeURIComponent(
         newFileInfo.filePath,
     )}/${encodedFilename}:/content?@name.conflictBehavior=rename&select=id,name,parentReference`;
+    const headers = storageToken ? { Authorization: `Bearer ${storageToken}` } : undefined;
     const fetchResponse = await fetch(url, {
         method: "PUT",
-        headers: { Authorization: `Bearer ${token}` },
+        headers,
     });
 
     if (fetchResponse.status !== 201) {

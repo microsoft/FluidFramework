@@ -9,7 +9,7 @@ import {
   IDocumentServiceFactory,
   IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
-import { IOdspResolvedUrl } from "./contracts";
+import { INewFileInfo } from "./createFile";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import { getSocketIo } from "./getSocketIo";
 import { OdspCache } from "./odspCache";
@@ -36,20 +36,16 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
     private readonly getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
     private readonly getWebsocketToken: (refresh: boolean) => Promise<string | null>,
     private readonly logger: ITelemetryBaseLogger,
+    private readonly newFileInfoPromise?: Promise<INewFileInfo> | undefined,
     private readonly storageFetchWrapper: IFetchWrapper = new FetchWrapper(),
     private readonly deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),
     private readonly odspCache: OdspCache = new OdspCache(),
   ) { }
 
   public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
-    const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
     return new OdspDocumentService(
       this.appId,
-      odspResolvedUrl.hashedDocumentId,
-      odspResolvedUrl.siteUrl,
-      odspResolvedUrl.driveId,
-      odspResolvedUrl.itemId,
-      odspResolvedUrl.endpoints.snapshotStorageUrl,
+      resolvedUrl,
       this.getStorageToken,
       this.getWebsocketToken,
       this.logger,
@@ -57,6 +53,7 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
       this.deltasFetchWrapper,
       Promise.resolve(getSocketIo()),
       this.odspCache,
+      this.newFileInfoPromise,
     );
   }
 }
