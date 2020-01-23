@@ -132,6 +132,10 @@ describe("Runtime", () => {
                                 entries: [
                                     new BlobTreeEntry("bu8", "test-u8"),
                                     new BlobTreeEntry("b64", base64Content, "base64"),
+                                    new TreeTreeEntry("subtree", {
+                                        id: "subtree-handle",
+                                        entries: [],
+                                    }),
                                 ],
                             }),
                             new BlobTreeEntry("b", "test-blob"),
@@ -161,12 +165,16 @@ describe("Runtime", () => {
                     assert.strictEqual(subBlobUtf8.content, "test-u8");
                     const subBlobBase64 = assertSummaryBlob(subTree.tree.b64);
                     assert.strictEqual(subBlobBase64.content.toString("utf-8"), "test-b64");
+
+                    const subTreeHandle = assertSummaryHandle<IUploadSummaryHandle>(subTree.tree.subtree);
+                    assert.strictEqual(subTreeHandle.handleType, SummaryType.Tree);
+                    assert.strictEqual(subTreeHandle.path, "/t/subtree");
                 });
 
                 it("Should calculate summary data correctly", () => {
                     // nodes should count
                     assert.strictEqual(summaryResults.summaryStats.blobNodeCount, 3);
-                    assert.strictEqual(summaryResults.summaryStats.handleNodeCount, 1);
+                    assert.strictEqual(summaryResults.summaryStats.handleNodeCount, 2);
                     assert.strictEqual(summaryResults.summaryStats.treeNodeCount, 2);
                     assert.strictEqual(summaryResults.summaryStats.totalBlobSize,
                         bufferLength + Buffer.byteLength("test-blob") + Buffer.byteLength("test-u8"));
