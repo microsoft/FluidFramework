@@ -145,7 +145,7 @@ export class SummaryTreeConverter {
         fullTree: boolean = false,
         path: string,
     ): IUploadSummaryTree | IUploadSummaryHandle {
-        if (snapshot.id !== undefined && !fullTree) {
+        if (snapshot.id !== null && snapshot.id !== undefined && !fullTree) {
             summaryStats.handleNodeCount++;
             return {
                 path,
