@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { Document, load } from "@fluid-internal/client-api";
 import {
     DocumentDeltaEventManager,
@@ -12,7 +13,6 @@ import {
     TestResolver,
 } from "@microsoft/fluid-local-test-server";
 import { IInboundSignalMessage } from "@microsoft/fluid-runtime-definitions";
-import * as assert from "assert";
 
 describe("TestSignals", () => {
     const id = "fluid-test://test.com/test/test";
@@ -29,10 +29,10 @@ describe("TestSignals", () => {
         const resolver = new TestResolver();
         const serviceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
         user1Document = await load(
-            id, { resolver }, {}, serviceFactory);
+            id, resolver, {}, serviceFactory);
 
         user2Document = await load(
-            id, { resolver }, {}, serviceFactory);
+            id, resolver, {}, serviceFactory);
         documentDeltaEventManager.registerDocuments(user1Document, user2Document);
     });
 

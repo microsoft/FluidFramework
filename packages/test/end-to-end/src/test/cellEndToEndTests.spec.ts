@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import * as api from "@fluid-internal/client-api";
 import { ISharedCell } from "@microsoft/fluid-cell";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
@@ -14,7 +15,6 @@ import {
     TestResolver,
 } from "@microsoft/fluid-local-test-server";
 import { ISharedMap } from "@microsoft/fluid-map";
-import * as assert from "assert";
 
 describe("Cell", () => {
     const id = "fluid://test.com/test/test";
@@ -41,15 +41,15 @@ describe("Cell", () => {
         const resolver = new TestResolver();
 
         user1Document = await api.load(
-            id, { resolver }, {}, serviceFactory);
+            id, resolver, {}, serviceFactory);
         documentDeltaEventManager.registerDocuments(user1Document);
 
         user2Document = await api.load(
-            id, { resolver }, {}, serviceFactory);
+            id, resolver, {}, serviceFactory);
         documentDeltaEventManager.registerDocuments(user2Document);
 
         user3Document = await api.load(
-            id, { resolver }, {}, serviceFactory);
+            id, resolver, {}, serviceFactory);
         documentDeltaEventManager.registerDocuments(user3Document);
 
         root1 = user1Document.getRoot();
@@ -215,17 +215,17 @@ describe("Cell", () => {
             return handle.get<ISharedCell>();
         }
 
-        // tslint:disable:no-unsafe-any
         verifyCellValue(await getCellComponent(getCellComponent(Promise.resolve(root2Cell))), cellValue, 2);
         verifyCellValue(await getCellComponent(getCellComponent(Promise.resolve(root3Cell))), cellValue, 3);
     });
 
     afterEach(async () => {
-        // tslint:disable-next-line: array-type
         const closeP: Promise<void>[] = [];
+        /* eslint-disable @typescript-eslint/strict-boolean-expressions */
         if (user1Document) { closeP.push(user1Document.close()); }
         if (user2Document) { closeP.push(user2Document.close()); }
         if (user3Document) { closeP.push(user3Document.close()); }
+        /* eslint-enable @typescript-eslint/strict-boolean-expressions */
         await Promise.all(closeP);
         await testDeltaConnectionServer.webSocketServer.close();
     });

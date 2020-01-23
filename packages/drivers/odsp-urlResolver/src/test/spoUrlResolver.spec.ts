@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IOdspResolvedUrl } from "@microsoft/fluid-odsp-driver";
 import * as assert from "assert";
+import { IOdspResolvedUrl } from "@microsoft/fluid-odsp-driver";
 import { OdspUrlResolver } from "../urlResolver";
 
 describe("Spo Url Resolver", () => {
@@ -19,7 +19,7 @@ describe("Spo Url Resolver", () => {
         assert.equal(resolved.endpoints.snapshotStorageUrl,
             `${url}/opStream/snapshots`, "SnashotStorageUrl does not match");
         assert.equal(resolved.url,
-            // tslint:disable-next-line: max-line-length
+            // eslint-disable-next-line max-len
             `fluid-odsp://placeholder/placeholder/${resolved.hashedDocumentId}/?driveId=${resolved.driveId}&itemId=${resolved.itemId}&path=`, "fluid url does not match");
     });
 
@@ -33,7 +33,7 @@ describe("Spo Url Resolver", () => {
         assert.equal(resolved.endpoints.snapshotStorageUrl,
             `${url}/opStream/snapshots`, "SnashotStorageUrl does not match");
         assert.equal(resolved.url,
-            // tslint:disable-next-line: max-line-length
+            // eslint-disable-next-line max-len
             `fluid-odsp://placeholder/placeholder/${resolved.hashedDocumentId}/?driveId=${resolved.driveId}&itemId=${resolved.itemId}&path=`, "fluid url does not match");
     });
 });

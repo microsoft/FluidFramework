@@ -7,6 +7,7 @@ import { IIntegerRange } from "./base";
 import { BaseSegment, glc, ISegment, Marker, MergeTree } from "./mergeTree";
 import * as ops from "./ops";
 import * as Properties from "./properties";
+import { LocalReferenceCollection } from "./localReference";
 
 export interface IJSONTextSegment extends ops.IJSONSegment {
     text: string;
@@ -30,7 +31,6 @@ export class TextSegment extends BaseSegment {
     public static fromJSONObject(spec: any) {
         if (typeof spec === "string") {
             return new TextSegment(spec);
-        // tslint:disable-next-line: no-unsafe-any
         } else if (spec && typeof spec === "object" && "text" in spec) {
             const textSpec = spec as IJSONTextSegment;
             return TextSegment.make(textSpec.text, textSpec.props as Properties.PropertySet);
@@ -75,7 +75,7 @@ export class TextSegment extends BaseSegment {
         if (TextSegment.is(segment)) {
             // Note: Must call 'appendLocalRefs' before modifying this segment's length as
             // 'this.cachedLength' is used to adjust the offsets of the local refs.
-            this.appendLocalRefs(segment);
+            LocalReferenceCollection.append(this, segment);
 
             this.text += segment.text;
             this.cachedLength = this.text.length;
@@ -245,7 +245,7 @@ export class MergeTreeTextHelper {
                 accumText.textSegment.text += segment.text;
             } else {
                 if (start < 0) {
-                    // tslint:disable-next-line: no-parameter-reassignment
+                    // eslint-disable-next-line no-param-reassign
                     start = 0;
                 }
                 if (end >= segment.text.length) {

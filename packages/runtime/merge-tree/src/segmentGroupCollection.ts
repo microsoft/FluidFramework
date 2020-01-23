@@ -27,7 +27,6 @@ export class SegmentGroupCollection {
     }
 
     public dequeue(): SegmentGroup {
-        // tslint:disable-next-line:no-unsafe-any
         return this.segmentGroups.dequeue();
     }
 

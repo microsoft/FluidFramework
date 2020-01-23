@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { ITree } from "@microsoft/fluid-protocol-definitions";
 import { ISharedObjectServices } from "@microsoft/fluid-runtime-definitions";
 import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
-import * as assert from "assert";
 import { SharedString } from "../sharedString";
 
 describe("SharedString", () => {
@@ -75,6 +75,7 @@ describe("SharedString", () => {
             };
 
             const sharedString2 = new SharedString(runtime, documentId);
+            // eslint-disable-next-line no-null/no-null
             await sharedString2.load(null/*branchId*/, services);
             await sharedString2.loaded;
 
@@ -84,7 +85,7 @@ describe("SharedString", () => {
         it("replace zero range", async () => {
             sharedString.insertText(0, "123");
             sharedString.replaceText(1, 1, "\u00e4\u00c4");
-            assert.equal(sharedString.getText(), "1\u00e4\u00c423")
+            assert.equal(sharedString.getText(), "1\u00e4\u00c423");
         });
 
         it("replace negative range", async () => {
@@ -92,7 +93,7 @@ describe("SharedString", () => {
             sharedString.replaceText(2, 1, "aaa");
             // This assert relies on the behvaior that replacement for a reversed range
             // will insert at the max end of the range but not delete the range
-            assert.equal(sharedString.getText(), "12aaa3")
-        })
+            assert.equal(sharedString.getText(), "12aaa3");
+        });
     });
 });

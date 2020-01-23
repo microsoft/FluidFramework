@@ -41,7 +41,7 @@ export class TestDataStore {
 
         const resolver = this.resolver;
         const loader = new Loader(
-            { resolver },
+            resolver,
             this.documentServiceFactory,
             this.codeLoader,
             { blockUpdateMarkers: true },

@@ -132,7 +132,6 @@ export class ChaincodeFactory implements IRuntimeFactory {
                 ["@fluid-internal/client-api", Promise.resolve(chaincode)],
                 ...this.registries,
             ],
-            // eslint-disable-next-line @typescript-eslint/unbound-method
             [ChaincodeFactory.containerRequestHandler],
             this.runtimeOptions);
 

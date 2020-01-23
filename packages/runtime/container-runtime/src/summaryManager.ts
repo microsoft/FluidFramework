@@ -134,7 +134,7 @@ export class SummaryManager extends EventEmitter {
         if (!this.connected) {
             return "parentNotConnected";
         } else if (this.clientId !== this.summarizer) {
-            return `parentShouldNotSummarize:${this.summarizer}`;
+            return "parentShouldNotSummarize";
         } else {
             return undefined;
         }

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { KeyCode, randomId, Template } from "@fluid-example/flow-util-lib";
+import { KeyCode, randomId, Template, TagName } from "@fluid-example/flow-util-lib";
 import * as SearchMenu from "@fluid-example/search-menu";
 import { tableViewType } from "@fluid-example/table-view";
-import { Editor, FlowDocument, htmlFormatter, Tag } from "@fluid-example/webflow";
+import { Editor, FlowDocument, htmlFormatter } from "@fluid-example/webflow";
 import {
     IComponent,
     IComponentHTMLView,
@@ -60,7 +60,6 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
         }
     }
 
-    // tslint:disable-next-line:max-func-body-length
     public render(elm: HTMLElement): void {
         const flowDiv = document.createElement("div");
         const insightsDiv = document.createElement("div");
@@ -104,12 +103,12 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
 
                 };
 
-            const insertTags = (tags: Tag[]) => {
+            const insertTags = (tags: TagName[]) => {
                 const selection = editor.selection;
                 doc.insertTags(tags, selection.start, selection.end);
             };
 
-            const setFormat = (tag: Tag) => {
+            const setFormat = (tag: TagName) => {
                 const { end } = editor.selection;
 
                 // Note that calling 'setFormat(..)' with the position of a paragraph marker will change the block
@@ -130,17 +129,17 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
 
             /* eslint-disable max-len */
             const commands: SearchMenu.ISearchMenuCommand<HostView>[] = [
-                { key: "blockquote", enabled: always, exec: () => { setFormat(Tag.blockquote); } },
+                { key: "blockquote", enabled: always, exec: () => { setFormat(TagName.blockquote); } },
                 { key: "bold", enabled: hasSelection, exec: () => toggleSelection(styles.bold) },
-                { key: "h1", enabled: always, exec: () => { setFormat(Tag.h1); } },
-                { key: "h2", enabled: always, exec: () => { setFormat(Tag.h2); } },
-                { key: "h3", enabled: always, exec: () => { setFormat(Tag.h3); } },
-                { key: "h4", enabled: always, exec: () => { setFormat(Tag.h4); } },
-                { key: "h5", enabled: always, exec: () => { setFormat(Tag.h5); } },
-                { key: "h6", enabled: always, exec: () => { setFormat(Tag.h6); } },
-                { key: "ol", enabled: always, exec: () => { insertTags([Tag.ol, Tag.li]); } },
-                { key: "p", enabled: always, exec: () => { setFormat(Tag.p); } },
-                { key: "ul", enabled: always, exec: () => { insertTags([Tag.ul, Tag.li]); } },
+                { key: "h1", enabled: always, exec: () => { setFormat(TagName.h1); } },
+                { key: "h2", enabled: always, exec: () => { setFormat(TagName.h2); } },
+                { key: "h3", enabled: always, exec: () => { setFormat(TagName.h3); } },
+                { key: "h4", enabled: always, exec: () => { setFormat(TagName.h4); } },
+                { key: "h5", enabled: always, exec: () => { setFormat(TagName.h5); } },
+                { key: "h6", enabled: always, exec: () => { setFormat(TagName.h6); } },
+                { key: "ol", enabled: always, exec: () => { insertTags([TagName.ol, TagName.li]); } },
+                { key: "p", enabled: always, exec: () => { setFormat(TagName.p); } },
+                { key: "ul", enabled: always, exec: () => { insertTags([TagName.ul, TagName.li]); } },
                 { key: "red", enabled: always, exec: () => { setStyle("color:red"); } },
                 { key: "math inline", enabled: always, exec: () => insertComponentFromCollection(math, { display: "inline" }) },
                 { key: "math block", enabled: always, exec: () => insertComponentFromCollection(math, { display: "block" }) },

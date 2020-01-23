@@ -192,7 +192,6 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         return hierarchicalTree;
     }
 
-    // tslint:disable-next-line: max-func-body-length
     public async getVersions(blobid: string | null, count: number): Promise<api.IVersion[]> {
         // Regular load workflow uses blobId === documentID to indicate "latest".
         if (blobid === this.documentId) {

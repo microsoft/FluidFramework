@@ -115,3 +115,254 @@ export class LocalReference implements ReferencePosition {
         return this.properties;
     }
 }
+
+interface IRefsAtOffest {
+    before?: LocalReference[];
+    at?: LocalReference[];
+    after?: LocalReference[];
+}
+
+export class LocalReferenceCollection {
+
+    public static append(seg1: ISegment, seg2: ISegment){
+        if(seg2.localRefs && !seg2.localRefs.empty){
+            if(!seg1.localRefs){
+                seg1.localRefs = new LocalReferenceCollection(seg1);
+            }
+            seg1.localRefs.append(seg2.localRefs);
+        }
+    }
+
+    public hierRefCount: number = 0;
+    private readonly refsByOffset: IRefsAtOffest[];
+    private refCount: number = 0;
+
+    constructor(
+        private readonly segment: ISegment,
+        initialRefsByfOffset =  new Array<IRefsAtOffest>(segment.cachedLength)) {
+        // Since javascript arrays are sparse the above won't populate any of the
+        // indicies, but it will ensure the length property of the array matches
+        // the length of the segment.
+        this.refsByOffset = initialRefsByfOffset;
+    }
+
+    public [Symbol.iterator]() {
+
+        const subiterators: IterableIterator<LocalReference>[] = [];
+        for (const refs of this.refsByOffset) {
+            if (refs) {
+                if (refs.before) {
+                    subiterators.push(refs.before[Symbol.iterator]());
+                }
+                if (refs.at) {
+                    subiterators.push(refs.at[Symbol.iterator]());
+                }
+                if (refs.after) {
+                    subiterators.push(refs.after[Symbol.iterator]());
+                }
+            }
+        }
+
+        const iterator = {
+            next(): IteratorResult<LocalReference> {
+
+                while (subiterators.length > 0) {
+                    const next = subiterators[0].next();
+                    if (next.done === true) {
+                        subiterators.shift();
+                    } else {
+                        return next;
+                    }
+                }
+
+                return { value: undefined, done: true };
+
+            },
+            [Symbol.iterator]() {
+                return this;
+            },
+        };
+        return iterator;
+    }
+
+    public clear() {
+        this.refCount = 0;
+        this.hierRefCount = 0;
+        const detachSegments = (refs: LocalReference[]) =>{
+            if(refs){
+                refs.forEach((r)=>{
+                    if(r.segment === this.segment){
+                        r.segment = undefined;
+                    }
+                });
+            }
+        };
+        for (let i = 0; i < this.refsByOffset.length; i++) {
+            if(this.refsByOffset[i]) {
+                detachSegments(this.refsByOffset[i].before);
+                detachSegments(this.refsByOffset[i].at);
+                detachSegments(this.refsByOffset[i].before);
+                this.refsByOffset[i] = undefined;
+            }
+        }
+    }
+
+    public get empty() {
+        return this.refCount === 0;
+    }
+
+    public addLocalRef(lref: LocalReference) {
+        if (this.refsByOffset[lref.offset] === undefined) {
+            this.refsByOffset[lref.offset] = {
+                at: [lref],
+            };
+        } else {
+            this.refsByOffset[lref.offset].at.push(lref);
+        }
+
+        if (lref.hasRangeLabels() || lref.hasTileLabels()) {
+            this.hierRefCount++;
+        }
+        this.refCount++;
+    }
+
+    public removeLocalRef(lref: LocalReference) {
+
+        const tryRemoveRef = (refs: LocalReference[]) => {
+            if (refs) {
+                const index = refs.indexOf(lref);
+                if (index >= 0) {
+                    refs.splice(index, 1);
+                    if (lref.hasRangeLabels() || lref.hasTileLabels()) {
+                        this.hierRefCount--;
+                    }
+                    this.refCount--;
+                    return lref;
+                }
+            }
+        };
+        const refAtOffset = this.refsByOffset[lref.offset];
+        if (refAtOffset !== undefined) {
+            let ref = tryRemoveRef(refAtOffset.before);
+            if (ref) {
+                return ref;
+            }
+
+            ref = tryRemoveRef(refAtOffset.at);
+            if (ref) {
+                return ref;
+            }
+
+            ref = tryRemoveRef(refAtOffset.after);
+            if (ref) {
+                return ref;
+            }
+        }
+    }
+
+    /**
+     * Called by 'append()' implementations to append local refs from the given 'other' segment to the
+     * end of 'this' segment.
+     *
+     * Note: This method should be invoked after the caller has ensured that segments can be merged,
+     *       but before 'this' segment's cachedLength has changed, or the adjustment to the local refs
+     *       will be incorrect.
+     */
+    public append(other: LocalReferenceCollection) {
+        if (!other || other.empty) {
+            return;
+        }
+        this.hierRefCount += other.hierRefCount;
+        this.refCount += other.refCount;
+        other.hierRefCount = 0;
+        for (const lref of other) {
+            lref.segment = this.segment;
+            lref.offset += this.refsByOffset.length;
+        }
+
+        this.refsByOffset.push(... other.refsByOffset);
+    }
+
+    public split(offset: number, splitSeg: ISegment) {
+
+        if (!this.empty) {
+            splitSeg.localRefs =
+            new LocalReferenceCollection(
+                splitSeg,
+                this.refsByOffset.splice(offset, this.refsByOffset.length - offset));
+
+            for (const lref of splitSeg.localRefs) {
+                lref.segment = splitSeg;
+                lref.offset -= offset;
+                if (lref.hasRangeLabels() || lref.hasTileLabels()) {
+                    this.hierRefCount--;
+                    splitSeg.localRefs.hierRefCount++;
+                }
+                this.refCount --;
+                splitSeg.localRefs.refCount++;
+            }
+        }
+    }
+
+    public addBeforeTombstones(...refs: Iterable<LocalReference>[]) {
+
+        const beforeRefs = [];
+
+        for (const iterable of refs) {
+            for (const lref of iterable) {
+                // eslint-disable-next-line no-bitwise
+                if (lref.refType & ReferenceType.SlideOnRemove) {
+                    beforeRefs.push(lref);
+                    lref.segment = this.segment;
+                    lref.offset = 0;
+                    if (lref.hasRangeLabels() || lref.hasTileLabels()) {
+                        this.hierRefCount++;
+                    }
+                    this.refCount ++;
+                } else {
+                    lref.segment = undefined;
+                }
+            }
+        }
+        if (beforeRefs.length > 0) {
+            if (this.refsByOffset[0] === undefined) {
+                this.refsByOffset[0] = { before: beforeRefs };
+            } else if (this.refsByOffset[0].before === undefined) {
+                this.refsByOffset[0].before = beforeRefs;
+            } else {
+                this.refsByOffset[0].before.unshift(...beforeRefs);
+            }
+        }
+    }
+
+    public addAfterTombstones(...refs: Iterable<LocalReference>[]) {
+
+        const afterRefs = [];
+
+        for (const iterable of refs) {
+            for (const lref of iterable) {
+                // eslint-disable-next-line no-bitwise
+                if (lref.refType & ReferenceType.SlideOnRemove) {
+                    afterRefs.push(lref);
+                    lref.segment = this.segment;
+                    lref.offset = this.segment.cachedLength - 1;
+                    if (lref.hasRangeLabels() || lref.hasTileLabels()) {
+                        this.hierRefCount++;
+                    }
+                    this.refCount++;
+                } else {
+                    lref.segment = undefined;
+                }
+            }
+        }
+        if (afterRefs.length > 0) {
+            if (this.refsByOffset[this.segment.cachedLength - 1] === undefined) {
+                this.refsByOffset[this.segment.cachedLength - 1] = { after: afterRefs };
+            } else if (this.refsByOffset[this.segment.cachedLength - 1].after === undefined) {
+                this.refsByOffset[this.segment.cachedLength - 1].after = afterRefs;
+            } else {
+                this.refsByOffset[this.segment.cachedLength - 1].after.push(...afterRefs);
+            }
+        }
+    }
+}

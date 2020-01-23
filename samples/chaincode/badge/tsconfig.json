@@ -1,4 +1,4 @@
-{    
+{
     "exclude": [
         "dist",
         "node_modules"
@@ -12,8 +12,8 @@
         "outDir": "dist",
         "sourceMap": true,
         "inlineSources": true,
-        "jsx": "react",
         "incremental": true,
+        "jsx": "react",
         "types": []
     },
     "include": [

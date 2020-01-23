@@ -36,14 +36,6 @@ export class Canvas extends PrimedComponent implements IComponentHTMLVisual {
     private inkColorPicker: HTMLDivElement;
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
-        // Reset styles on #content div
-        elm.style.width = "";
-        elm.style.minHeight = "";
-        elm.style.display = "";
-        elm.style.position = "";
-        // Set height to 100% on assumption we are top-level
-        elm.style.height = "100%";
-
         this.inkComponentRoot = this.createCanvasDom();
         elm.appendChild(this.inkComponentRoot);
         this.sizeCanvas();

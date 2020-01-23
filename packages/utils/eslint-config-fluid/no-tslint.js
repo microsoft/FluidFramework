@@ -85,6 +85,7 @@ module.exports = {
         ],
         "@typescript-eslint/interface-name-prefix": "off",
         "@typescript-eslint/member-delimiter-style": "off",
+        "@typescript-eslint/no-dynamic-delete": "error",
         "@typescript-eslint/no-empty-function": "off",
         "@typescript-eslint/no-empty-interface": "error",
         "@typescript-eslint/no-explicit-any": "off",
@@ -122,7 +123,7 @@ module.exports = {
                 "avoidEscape": true
             }
         ],
-        "@typescript-eslint/restrict-plus-operands": "warn",
+        "@typescript-eslint/restrict-plus-operands": "error",
         "@typescript-eslint/require-await": "off",
         "@typescript-eslint/semi": [
             "error",
@@ -133,13 +134,19 @@ module.exports = {
             "never"
         ],
         "@typescript-eslint/strict-boolean-expressions": [
-            "warn",
+            "error",
             {
                 "allowNullable": true
             }
         ],
         "@typescript-eslint/triple-slash-reference": "error",
-        "@typescript-eslint/type-annotation-spacing": "error",
+        "@typescript-eslint/type-annotation-spacing": "error", 
+        "@typescript-eslint/unbound-method": [
+            "error",
+            {
+                "ignoreStatic": true
+            }
+        ],
         "@typescript-eslint/unified-signatures": "error",
 
         // eslint-plugin-eslint-comments
@@ -174,7 +181,7 @@ module.exports = {
 
         // eslint-plugin-prefer-arrow
         "prefer-arrow/prefer-arrow-functions": [
-            "warn",
+            "error",
             {
                 "disallowPrototype": false,
                 "singleReturnOnly": true,
@@ -286,7 +293,7 @@ module.exports = {
             "error",
             "never"
         ],
-        "optimize-regex/optimize-regex": "warn",
+        "optimize-regex/optimize-regex": "error",
         "padding-line-between-statements": [
             "off",
             "error",
