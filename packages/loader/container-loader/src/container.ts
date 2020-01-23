@@ -323,7 +323,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this._deltaManager = this.createDeltaManager();
 
         // keep track of last time page was visible for telemetry
-        if (typeof document === "object") {
+        if (typeof document === "object" && document) {
             this.lastVisible = document.hidden ? performanceNow() : undefined;
             document.addEventListener("visibilitychange", () => {
                 if (document.hidden) {
