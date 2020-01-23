@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+import {
+    IDocumentStorageService,
+    IUploadSummaryTree,
+    ISummaryContext,
+    UploadSummaryWithContextType,
+} from "@microsoft/fluid-driver-definitions";
 import {
     ICreateBlobResponse,
     ISnapshotTree,
@@ -17,11 +22,21 @@ import {
  * Document access to underlying storage for routerlicious driver.
  */
 export class InnerDocumentStorageService implements IDocumentStorageService {
+    public readonly uploadSummaryWithContext: UploadSummaryWithContextType | undefined;
+
     public get repositoryUrl(): string {
         return this.outerStorageService.repositoryUrl;
     }
 
     constructor(private readonly outerStorageService: IDocumentStorageService) {
+        if (this.outerStorageService.uploadSummaryWithContext !== undefined) {
+            this.uploadSummaryWithContext = async (summary: IUploadSummaryTree, context: ISummaryContext) => {
+                if (this.outerStorageService.uploadSummaryWithContext === undefined) {
+                    throw Error("Expected uploadSummaryWithContext in storage.");
+                }
+                return this.outerStorageService.uploadSummaryWithContext(summary, context);
+            };
+        }
     }
 
     public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {

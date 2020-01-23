@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+import {
+    IDocumentStorageService,
+    IUploadSummaryTree,
+    ISummaryContext,
+    UploadSummaryWithContextType,
+} from "@microsoft/fluid-driver-definitions";
 import {
     ICreateBlobResponse,
     ISnapshotTree,
@@ -18,6 +23,8 @@ import {
  * This is specifically used for AttachComponent with Snapshot.
  */
 export class DocumentStorageServiceProxy implements IDocumentStorageService {
+    public readonly uploadSummaryWithContext: UploadSummaryWithContextType | undefined;
+
     public get repositoryUrl(): string {
         return this.storage.repositoryUrl;
     }
@@ -26,6 +33,14 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
         private readonly storage: IDocumentStorageService,
         private readonly blobCache: Map<string, string>,
     ) {
+        if (this.storage.uploadSummaryWithContext !== undefined) {
+            this.uploadSummaryWithContext = async (summary: IUploadSummaryTree, context: ISummaryContext) => {
+                if (this.storage.uploadSummaryWithContext === undefined) {
+                    throw Error("Expected uploadSummaryWithContext in storage.");
+                }
+                return this.storage.uploadSummaryWithContext(summary, context);
+            };
+        }
     }
 
     /* eslint-disable @typescript-eslint/promise-function-async */

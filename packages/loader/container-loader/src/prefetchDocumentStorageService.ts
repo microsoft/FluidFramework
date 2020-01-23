@@ -3,8 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import {
+    IDocumentStorageService,
+    IUploadSummaryTree,
+    ISummaryContext,
+    UploadSummaryWithContextType,
+} from "@microsoft/fluid-driver-definitions";import {
     ICreateBlobResponse,
     ISnapshotTree,
     ISummaryHandle,
@@ -15,11 +19,21 @@ import {
 import { debug } from "./debug";
 
 export class PrefetchDocumentStorageService implements IDocumentStorageService {
+    public readonly uploadSummaryWithContext: UploadSummaryWithContextType | undefined;
+
     // BlobId -> blob prefetchCache cache
     private readonly prefetchCache = new Map<string, Promise<string>>();
     private prefetchEnabled = true;
 
     constructor(private readonly storage: IDocumentStorageService) {
+        if (this.storage.uploadSummaryWithContext !== undefined) {
+            this.uploadSummaryWithContext = async (summary: IUploadSummaryTree, context: ISummaryContext) => {
+                if (this.storage.uploadSummaryWithContext === undefined) {
+                    throw Error("Expected uploadSummaryWithContext in storage.");
+                }
+                return this.storage.uploadSummaryWithContext(summary, context);
+            };
+        }
     }
 
     public get repositoryUrl(): string {

@@ -221,6 +221,14 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
             uploadSummary: async (commit) => {
                 return storage.uploadSummary(commit);
             },
+            uploadSummaryWithContext: storage.uploadSummaryWithContext !== undefined
+                ? async (summary, context) => {
+                    if (storage.uploadSummaryWithContext === undefined) {
+                        throw Error("Expected uploadSummaryWithContext in storage.");
+                    }
+                    return storage.uploadSummaryWithContext(summary, context);
+                }
+                : undefined,
             downloadSummary: async (handle) => {
                 return storage.downloadSummary(handle);
             },

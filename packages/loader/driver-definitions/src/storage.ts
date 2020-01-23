@@ -53,6 +53,8 @@ export interface IDocumentDeltaStorageService {
     get(from?: number, to?: number): Promise<ISequencedDocumentMessage[]>;
 }
 
+export type UploadSummaryWithContextType = (summary: IUploadSummaryTree, context: ISummaryContext) => Promise<string>;
+
 /**
  * Interface to provide access to snapshots saved for a shared object
  */
@@ -104,7 +106,7 @@ export interface IDocumentStorageService {
      * Uploads a summary tree to storage using the given context for handle reference.
      * Returns the uploaded summary handle.
      */
-    uploadSummaryWithContext?(summary: IUploadSummaryTree, context: ISummaryContext): Promise<string>;
+    readonly uploadSummaryWithContext: UploadSummaryWithContextType | undefined;
 
     /**
      * Retrieves the commit that matches the packfile handle. If the packfile has already been committed and the

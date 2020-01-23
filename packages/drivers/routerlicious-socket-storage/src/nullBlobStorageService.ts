@@ -11,6 +11,8 @@ import * as api from "@microsoft/fluid-protocol-definitions";
  * Does not read/write anything.
  */
 export class NullBlobStorageService implements IDocumentStorageService {
+    public readonly uploadSummaryWithContext = undefined;
+
     public get repositoryUrl(): string {
         throw new Error("Invalid operation");
     }

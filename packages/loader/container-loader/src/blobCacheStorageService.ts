@@ -5,7 +5,12 @@
 
 /* eslint-disable @typescript-eslint/promise-function-async */
 
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+import {
+    IDocumentStorageService,
+    IUploadSummaryTree,
+    ISummaryContext,
+    UploadSummaryWithContextType,
+} from "@microsoft/fluid-driver-definitions";
 import {
     ICreateBlobResponse,
     ISnapshotTree,
@@ -19,11 +24,21 @@ import {
  * IDocumentStorageService adapter with pre-cached blobs.
  */
 export class BlobCacheStorageService implements IDocumentStorageService {
+    public readonly uploadSummaryWithContext: UploadSummaryWithContextType | undefined;
+
     public get repositoryUrl(): string {
         return this.storageService.repositoryUrl;
     }
 
     constructor(private readonly storageService: IDocumentStorageService, private readonly blobs: Map<string, string>) {
+        if (this.storageService.uploadSummaryWithContext !== undefined) {
+            this.uploadSummaryWithContext = async (summary: IUploadSummaryTree, context: ISummaryContext) => {
+                if (this.storageService.uploadSummaryWithContext === undefined) {
+                    throw Error("Expected uploadSummaryWithContext in storage.");
+                }
+                return this.storageService.uploadSummaryWithContext(summary, context);
+            };
+        }
     }
 
     // TODO Will a subcomponent ever need this? Or we can probably restrict the ref to itself

@@ -10,6 +10,8 @@ import * as api from "@microsoft/fluid-protocol-definitions";
  * Partial implementation of IDocumentStorageService
  */
 export abstract class ReadDocumentStorageServiceBase implements IDocumentStorageService {
+    public readonly uploadSummaryWithContext = undefined;
+
     public abstract getVersions(versionId: string, count: number): Promise<api.IVersion[]>;
     public abstract getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null>;
     public abstract read(blobId: string): Promise<string>;

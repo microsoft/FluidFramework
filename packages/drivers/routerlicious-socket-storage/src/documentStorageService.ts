@@ -25,6 +25,7 @@ import * as gitStorage from "@microsoft/fluid-server-services-client";
  * Document access to underlying storage for routerlicious driver.
  */
 export class DocumentStorageService implements IDocumentStorageService {
+    public readonly uploadSummaryWithContext = undefined;
 
     // The values of this cache is useless. We only need the keys. So we are always putting
     // empty strings as values.
