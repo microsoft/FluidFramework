@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
 import { EventEmitter } from "events";
 import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
 import {
@@ -29,8 +28,6 @@ const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
  */
 export class CreationDocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
 
-    private readonly serverMessagesHandler: CreationServerMessagesHandler;
-
     private _details: IConnected | undefined;
 
     private get details(): IConnected {
@@ -44,10 +41,10 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
         client: IClient,
         mode: ConnectionMode,
         private readonly documentId: string,
-        private readonly tenantId: string) {
+        private readonly tenantId: string,
+        private readonly serverMessagesHandler: CreationServerMessagesHandler) {
         super();
 
-        this.serverMessagesHandler = CreationServerMessagesHandler.getInstance();
         this.initialize(client, mode);
     }
 
@@ -156,20 +153,6 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
     }
 
     /**
-     * Subscribe to events emitted by the document
-     *
-     * @param event - event emitted by the document to listen to
-     * @param listener - listener for the event
-     */
-    public on(event: string, listener: (...args: any[]) => void): this {
-        assert(this.listeners(event).length === 0, "re-registration of events is not implemented");
-
-        super.on(event, listener);
-
-        return this;
-    }
-
-    /**
      * Submits a new delta operation to the server
      *
      * @param message - delta operation to submit
@@ -196,11 +179,7 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
      * @param message - signal to submit
      */
     public submitSignal(message: IDocumentMessage): void {
-        const signalMessage: ISignalMessage = {
-            clientId: this.clientId,
-            content: message,
-        };
-        this.emit("signal", signalMessage);
+        this.serverMessagesHandler.submitSignal(message, this.clientId);
     }
 
     /**
@@ -209,6 +188,7 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
      *  (not on Fluid protocol level)
      */
     public disconnect(socketProtocolError: boolean = false) {
+        throw new Error("Not implemented.");
     }
 
     /**

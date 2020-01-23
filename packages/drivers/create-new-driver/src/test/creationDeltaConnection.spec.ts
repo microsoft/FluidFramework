@@ -16,7 +16,7 @@ describe("Creation Driver", () => {
     let documentDeltaConnection1: IDocumentDeltaConnection;
     let documentDeltaConnection2: IDocumentDeltaConnection;
     beforeEach(async () => {
-        const factory = new CreationDocumentServiceFactory("docId", "tenantId");
+        const factory = new CreationDocumentServiceFactory();
         const resolved: IResolvedUrl = {endpoints: {}, type: "fluid", url: "", tokens: {}};
         service = await factory.createDocumentService(resolved);
         client = {
@@ -37,6 +37,7 @@ describe("Creation Driver", () => {
         assert.equal(documentDeltaConnection1.existing, false, "Document should not be existing.");
         assert.equal(documentDeltaConnection2.existing, true, "Document should be existing for second connection.");
         assert.equal(documentDeltaConnection1.initialMessages?.length, 1, "Join message should be fired.");
+        assert.equal(documentDeltaConnection2.initialMessages?.length, 1, "Join message should be fired.");
     });
 
     it("Server messages test", async () => {

@@ -16,6 +16,7 @@ import {
     IConnected,
     IConnect,
     MessageType,
+    ISignalMessage,
 } from "@microsoft/fluid-protocol-definitions";
 import { BatchManager } from "@microsoft/fluid-core-utils";
 import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
@@ -35,7 +36,6 @@ export class CreationServerMessagesHandler {
     private sequenceNumber: number = 1;
     private minSequenceNumber: number = 0;
     private totalClients: number = 0;
-    private documentId: string | undefined;
 
     private readonly opSubmitManager: BatchManager<IAugmentedDocumentMessage[]>;
 
@@ -45,7 +45,8 @@ export class CreationServerMessagesHandler {
     // an actual connection is created.
     public readonly queuedMessages: ISequencedDocumentMessage[] = [];
 
-    private constructor() {
+    private constructor(private readonly documentId: string) {
+        // We supply maxBatchSize as infinity here because we do not want all messages to be processed synchronously.
         this.opSubmitManager = new BatchManager<IAugmentedDocumentMessage[]>(
             (submitType, work) => {
                 for (const singleWork of work) {
@@ -60,19 +61,15 @@ export class CreationServerMessagesHandler {
             }, Number.MAX_VALUE);
     }
 
-    public static getInstance(): CreationServerMessagesHandler {
-        if (CreationServerMessagesHandler.instance === undefined) {
-            CreationServerMessagesHandler.instance = new CreationServerMessagesHandler();
+    public static getInstance(documentId?: string): CreationServerMessagesHandler {
+        if (CreationServerMessagesHandler.instance === undefined && documentId !== undefined) {
+            CreationServerMessagesHandler.instance = new CreationServerMessagesHandler(documentId);
         }
         return CreationServerMessagesHandler.instance;
     }
 
     private createClientId() {
-        return `random-random${this.totalClients}`;
-    }
-
-    private isDocExisting() {
-        return this.totalClients === 0 ? false : true;
+        return `newFileCreationClient${this.totalClients}`;
     }
 
     /**
@@ -91,13 +88,24 @@ export class CreationServerMessagesHandler {
     }
 
     /**
+     * Signals to be processed by the server.
+     * @param signal - Signal to be broadcasted.
+     */
+    public submitSignal(signal: IDocumentMessage, clientId: string) {
+        const signalMessage: ISignalMessage = {
+            clientId,
+            content: signal,
+        };
+        for (const connection of this.connections) {
+            connection.emit("signal", signalMessage);
+        }
+    }
+
+    /**
      * Initialize the details for the connction and send the join op.
      * @param connectMessage - Connection details received from the client.
      */
     public createClient(connectMessage: IConnect, connection: IDocumentDeltaConnection): IConnected {
-        if (this.documentId === undefined) {
-            this.documentId = connectMessage.id;
-        }
         assert.equal(this.documentId, connectMessage.id, "docId for all messages should be same");
         const claims: ITokenClaims = {
             documentId: connectMessage.id,
@@ -106,7 +114,7 @@ export class CreationServerMessagesHandler {
             user: { id: connectMessage.client.user.id },
         };
         const DefaultServiceConfiguration: IServiceConfiguration = {
-            blockSize: 64436,
+            blockSize: 65536,
             maxMessageSize: 16 * 1024,
             summary: {
                 idleTime: 5000,
@@ -122,36 +130,23 @@ export class CreationServerMessagesHandler {
         };
         const joinMessage = this.createClientJoinMessage(clientDetail);
         this.queuedMessages.push(joinMessage);
-        const existing = this.isDocExisting();
-        let details: IConnected;
+        const existing = this.totalClients === 0 ? false : true;
+        const details: IConnected = {
+            claims,
+            clientId,
+            existing,
+            maxMessageSize: 1024, // Readonly client can't send ops.
+            mode: "read",
+            parentBranch: null,
+            serviceConfiguration: DefaultServiceConfiguration,
+            initialClients: [{ clientId, client: connectMessage.client }],
+            initialMessages: [joinMessage],
+            supportedVersions: connectMessage.versions,
+            version: connectMessage.versions[connectMessage.versions.length - 1],
+        };
         if (this.isWriter(connectMessage.client.scopes, existing, connectMessage.mode)) {
-            details = {
-                claims,
-                clientId,
-                existing,
-                maxMessageSize: 16 * 1024,
-                mode: "write",
-                parentBranch: null,
-                serviceConfiguration: DefaultServiceConfiguration,
-                initialClients: [{ clientId, client: connectMessage.client }],
-                initialMessages: [joinMessage],
-                supportedVersions: connectMessage.versions,
-                version: connectMessage.versions[connectMessage.versions.length - 1],
-            };
-        } else {
-            details = {
-                claims,
-                clientId,
-                existing,
-                maxMessageSize: 1024, // Readonly client can't send ops.
-                mode: "read",
-                parentBranch: null,
-                serviceConfiguration: DefaultServiceConfiguration,
-                initialClients: [{ clientId, client: connectMessage.client }],
-                initialMessages: [joinMessage],
-                supportedVersions: connectMessage.versions,
-                version: connectMessage.versions[connectMessage.versions.length - 1],
-            };
+            details.maxMessageSize = 16 * 1024;
+            details.mode = "write";
         }
         this.totalClients += 1;
         assert.ok(this.totalClients <= 2, "Clients should never be more than 2");

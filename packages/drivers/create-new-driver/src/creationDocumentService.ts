@@ -8,6 +8,7 @@ import { ConnectionMode, IClient } from "@microsoft/fluid-protocol-definitions";
 import { CreationDeltaStorageService } from "./creationDeltaStorageService";
 import { CreationDocumentDeltaConnection } from "./creationDocumentDeltaConnection";
 import { CreationDocumentStorageService } from "./creationDocumentStorageService";
+import { CreationServerMessagesHandler } from "./creationDriverServer";
 
 /**
  * The DocumentService connects to in memory endpoints for storage/socket for faux document service.
@@ -34,7 +35,8 @@ export class CreationDocumentService implements api.IDocumentService {
     public async connectToDeltaStream(
         client: IClient,
         mode: ConnectionMode): Promise<api.IDocumentDeltaConnection> {
-        return new CreationDocumentDeltaConnection(client, mode, this.documentId, this.tenantId);
+        const creationServer = CreationServerMessagesHandler.getInstance(this.documentId);
+        return new CreationDocumentDeltaConnection(client, mode, this.documentId, this.tenantId, creationServer);
     }
 
     public async branch(): Promise<string> {
