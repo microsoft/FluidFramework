@@ -47,5 +47,6 @@ export async function initialize(
         config.url);
 
     documentFactory.resolveLoader(loader);
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     await baseHost.loadAndRender(url, div, pkg ? pkg.details : undefined);
 }

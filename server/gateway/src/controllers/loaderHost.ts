@@ -42,8 +42,8 @@ export async function initialize(
     // TODO: need to be support refresh token
     documentServiceFactories.push(new OdspDocumentServiceFactory(
         clientId,
-        (siteUrl: string) => Promise.resolve(resolved.tokens.storageToken),
-        () => Promise.resolve(resolved.tokens.socketToken),
+        async (siteUrl: string) => Promise.resolve(resolved.tokens.storageToken),
+        async () => Promise.resolve(resolved.tokens.socketToken),
         new BaseTelemetryNullLogger()));
 
     documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
@@ -68,6 +68,7 @@ export async function initialize(
         tokens: resolved.tokens,
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     (await IFrameDocumentServiceProxyFactory.create(
         selectDocumentServiceFactoryForProtocol(resolved, factoryMap),
         document.getElementById("ifr") as HTMLIFrameElement,
