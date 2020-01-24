@@ -45,6 +45,7 @@ export function create(
      * Loading of a specific fluid document.
      */
     router.get("/:docId?", spoEnsureLoggedIn(), ensureLoggedIn(), async (request, response) => {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         const docId = getParam(request.params, "docId") || await getDocId();
         winston.info(`Loading FrontPage from ${docId}`);
         if (docId === undefined) {
@@ -68,6 +69,7 @@ export function create(
                 response.render(
                     "frontpage",
                     {
+                        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                         cache: fullTree ? JSON.stringify(fullTree.cache) : undefined,
                         config: workerConfig,
                         jwt: jwtToken,
