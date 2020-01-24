@@ -10,7 +10,7 @@ import { IAlfredUser, IConfig, RouterliciousUrlResolver } from "@microsoft/fluid
 import { chooseCelaName, IAlfredTenant } from "@microsoft/fluid-server-services-core";
 import { Request } from "express";
 import { Provider } from "nconf";
-// tslint:disable-next-line:no-submodule-imports
+// eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
 import { IAlfred } from "./interfaces";
 
@@ -38,6 +38,7 @@ export function resolveUrl(
         if ("cela" in request.query) {
             const celaName = chooseCelaName();
             user = { id: uuid(), name: celaName, displayName: celaName };
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         } else if (request.user) {
             user = {
                 displayName: request.user.name,
