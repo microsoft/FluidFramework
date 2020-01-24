@@ -13,8 +13,6 @@ import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import { OdspCache } from "./odspCache";
 import { OdspDocumentService } from "./OdspDocumentService";
 
-// TODO: port the changes here to OdspDocumentServiceFactory
-
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
  * use the sharepoint implementation.

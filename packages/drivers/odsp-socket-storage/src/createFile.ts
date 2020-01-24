@@ -8,7 +8,6 @@ export interface INewFileInfo {
     driveId: string;
     filename: string;
     filePath: string;
-    // TODO: this callback should probably take a full 'file' representation not jus the itemid
     callback?(itemId: string, filename: string): void;
 }
 

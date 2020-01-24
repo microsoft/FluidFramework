@@ -50,15 +50,9 @@ export class OdspDocumentService implements IDocumentService {
 
     private odspResolvedUrl: Promise<IOdspResolvedUrl> | undefined;
 
-    // TODO: fix jsdoc
     /**
      * @param appId - app id used for telemetry for network requests
-     * @param hashedDocumentId - A unique identifer for the document. The "hashed" here implies that the contents of this string
-     * contains no end user identifiable information.
-     * @param siteUrl - the url of the site that hosts this container
-     * @param driveId - the id of the drive that hosts this container
-     * @param itemId - the id of the container within the drive
-     * @param snapshotStorageUrl - the URL where snapshots should be obtained from
+     * @param resolvedUrl - resolved URL containing all the pieces required to connect to Odsp
      * @param getStorageToken - function that can provide the storage token for a given site. This is
      * is also referred to as the "VROOM" token in SPO.
      * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also
@@ -67,6 +61,8 @@ export class OdspDocumentService implements IDocumentService {
      * @param storageFetchWrapper - if not provided FetchWrapper will be used
      * @param deltasFetchWrapper - if not provided FetchWrapper will be used
      * @param socketIOClientP - promise to the socket io library required by the driver
+     * @param newFileInfoPromise - Promise with information necessary to create a new file.
+     *                             a new file is not created until this promise resolves
      */
     constructor(
         private readonly appId: string,
