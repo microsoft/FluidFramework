@@ -1,0 +1,24 @@
+{
+  "name": "fluid-docs",
+  "version": "0.13.0",
+  "description": "",
+  "scripts": {
+    "build": "vuepress build --dest ./dist",
+    "build:ci": "node buildDocs.js && npm run build",
+    "lint": "vuepress check-md",
+    "start": "vuepress dev",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "firstline": "^2.0.2",
+    "fs-extra": "^8.1.0",
+    "markdown-it-deflist": "^2.0.3",
+    "markdown-it-include": "^1.1.0",
+    "vue-tabs-component": "^1.5.0",
+    "vuepress": "1.2.0",
+    "vuepress-plugin-check-md": "0.0.2",
+    "vuepress-plugin-code-copy": "^1.0.4",
+    "vuepress-plugin-container": "^2.1.2",
+    "vuepress-plugin-tabs": "^0.3.0"
+  }
+}

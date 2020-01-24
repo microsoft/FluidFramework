@@ -15,7 +15,7 @@ a Hyper-V VM. If setting up inside of a VM make sure to allocate enough vCPUs.
 
 Then run the following command after getting a VSTS token:
 
-```text
+```
 docker run \
   -d \
   --restart unless-stopped \
