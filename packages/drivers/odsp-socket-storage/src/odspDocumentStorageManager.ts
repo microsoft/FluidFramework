@@ -8,7 +8,7 @@ import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
     fromBase64ToUtf8,
     fromUtf8ToBase64,
-    gitHashFileAsync,
+    hashFile,
     PerformanceEvent,
     TelemetryLogger,
 } from "@microsoft/fluid-core-utils";
@@ -241,9 +241,11 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             this.firstVersionCall = false;
 
             return getWithRetryForTokenRefresh(async (refresh) => {
+                let isSummarizingContainer = true;
                 const odspCacheKey: string = `${this.documentId}/getlatest`;
                 let odspSnapshot: IOdspSnapshot = this.odspCache.get(odspCacheKey);
                 if (!odspSnapshot) {
+                    isSummarizingContainer = false;
                     const storageToken = await this.getStorageToken(refresh);
 
                     // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
@@ -297,18 +299,17 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     // Populate the cache with paths from id-to-path mapping.
                     for (const blob of this.blobCache.values()) {
                         const path = blobsIdToPathMap.get(blob.sha);
-                        if (path) {
+                        if (isSummarizingContainer && path) {
                             // Schedule the hashes for later, but keep track of the tasks
                             // to ensure they finish before they might be used
-                            setTimeout(() => {
-                                const hashP = gitHashFileAsync(Buffer.from(blob.content, blob.encoding));
-                                this.blobsCachePendingHashes.add(hashP);
-                                hashP.then((hash) => {
-                                    this.blobsShaToPathCache.set(hash, path);
-                                }).finally(() => {
-                                    this.blobsCachePendingHashes.delete(hashP);
-                                });
-                            }, 0);
+                            const hashP = hashFile(Buffer.from(blob.content, blob.encoding));
+                            this.blobsCachePendingHashes.add(hashP);
+                            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                            hashP.then((hash: string) => {
+                                this.blobsShaToPathCache.set(hash, path);
+                            }).finally(() => {
+                                this.blobsCachePendingHashes.delete(hashP);
+                            });
                         }
                     }
                 }
@@ -559,7 +560,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     const content = typeof summaryObject.content === "string" ? summaryObject.content : summaryObject.content.toString("base64");
                     const encoding = typeof summaryObject.content === "string" ? "utf-8" : "base64";
 
-                    const hash = await gitHashFileAsync(Buffer.from(content, encoding));
+                    const hash = await hashFile(Buffer.from(content, encoding));
                     await Promise.all(this.blobsCachePendingHashes.values());
                     let completePath = this.blobsShaToPathCache.get(hash);
                     // If the cache has the hash of the blob and handle of last summary is also present, then use that
