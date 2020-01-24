@@ -415,7 +415,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
     }
 
-    public resume() {
+    private async resume() {
         assert(this.loaded);
         // Resume processing ops
         this._deltaManager.inbound.resume();
@@ -423,8 +423,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this._deltaManager.inboundSignal.resume();
 
         // Ensure connection to web socket
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.connectToDeltaStream();
+        return this.connectToDeltaStream();
     }
 
     public raiseCriticalError(error: any) {
@@ -446,7 +445,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         if (this._connectionState === ConnectionState.Disconnected) {
             this.manualReconnectInProgress = true;
         }
-        return this._deltaManager.connect().catch(() => { });
+        return this.resume().catch(() => { });
     }
 
     private async reloadContextCore(): Promise<void> {
@@ -676,7 +675,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         });
 
         if (!pause) {
-            this.resume();
+            await this.resume();
         }
     }
 

@@ -15,12 +15,15 @@ TypeScript now emits `get/set` accessors in `.d.ts` files. TypeScript versions `
 
 More about the changes:
 
-- [Class Field Mitigations](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#class-field-mitigations)  
+- [Class Field Mitigations](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#class-field-mitigations)
 - [Full list of TypeScript changes](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html)
 
 ## IHost interface removed, Loader constructor signature updated
 
 The IHost interface has been removed.  This primarily impacts the signature of the `Loader` constructor, which now just takes the `IUrlResolver` directly in its place.
+
+## Replace Container.resume with Container.reconnect
+`container.resume();` becomes `container.reconnect();`
 
 # 0.12 Breaking Changes
 
