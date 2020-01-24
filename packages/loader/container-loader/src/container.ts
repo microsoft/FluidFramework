@@ -675,7 +675,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         });
 
         if (!pause) {
-            await this.resume();
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            this.resume();
         }
     }
 
