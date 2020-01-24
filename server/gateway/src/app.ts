@@ -25,7 +25,7 @@ import * as expiry from "static-expiry";
 import { v4 } from "uuid";
 import * as winston from "winston";
 import { AccountManager } from "./accounts";
-import { saveSpoTokens } from "./gateway-odsp-utils";
+import { saveSpoTokens } from "./gatewayOdspUtils";
 import { IAlfred } from "./interfaces";
 import * as gatewayRoutes from "./routes";
 

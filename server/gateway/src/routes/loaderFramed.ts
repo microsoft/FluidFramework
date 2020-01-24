@@ -14,8 +14,8 @@ import * as jwt from "jsonwebtoken";
 import { Provider } from "nconf";
 import { v4 } from "uuid";
 import * as winston from "winston";
-import { spoEnsureLoggedIn } from "../gateway-odsp-utils";
-import { resolveUrl } from "../gateway-urlresolver";
+import { spoEnsureLoggedIn } from "../gatewayOdspUtils";
+import { resolveUrl } from "../gatewayUrlResolver";
 import { IAlfred, IKeyValueWrapper } from "../interfaces";
 import { getConfig, getParam, getUserDetails } from "../utils";
 
