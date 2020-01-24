@@ -49,21 +49,19 @@ export function getConfig(
     return JSON.stringify(updatedConfig);
 }
 
-export function getParam(params: Params, key: string) {
-    return Array.isArray(params) ? undefined : params[key];
-}
+export const getParam = (params: Params, key: string) => Array.isArray(params) ? undefined : params[key];
 
 /**
  * Helper function to return a relative range (if local) or the specific chaincode package version
  */
 export function getVersion() {
-    const version = require("../package.json").version;
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const version = require("../package.json").version as string;
     return `${version.endsWith(".0") ? "^" : ""}${version}`;
 }
 
-function getUser(request: Request) {
-    return request.user ? request.user : request.session.guest;
-}
+// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+const getUser = (request: Request) => request.user ? request.user : request.session.guest;
 
 export function getJWTClaims(request: Request): IJWTClaims {
     const user = getUser(request);
@@ -77,6 +75,4 @@ export function getJWTClaims(request: Request): IJWTClaims {
     };
 }
 
-export function getUserDetails(request: Request): string {
-    return JSON.stringify(getUser(request));
-}
+export const getUserDetails = (request: Request) => JSON.stringify(getUser(request));
