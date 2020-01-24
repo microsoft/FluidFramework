@@ -4,6 +4,7 @@
  */
 
 import * as services from "@microsoft/fluid-server-services";
+import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
 import * as core from "@microsoft/fluid-server-services-core";
 import * as utils from "@microsoft/fluid-server-services-utils";
 import { Provider } from "nconf";
@@ -21,7 +22,7 @@ export class GatewayResources implements utils.IResources {
         public cache: core.ICache,
         public mongoManager: core.MongoManager,
         public accountsCollectionName: string,
-        public appTenants: core.IAlfredTenant[],
+        public appTenants: IAlfredTenant[],
         public port: any,
     ) {
         this.webServerFactory = new services.SocketIoWebServerFactory(this.redisConfig);

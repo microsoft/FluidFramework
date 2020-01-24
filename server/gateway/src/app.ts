@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { getRandomName, IAlfredTenant, ICache, MongoManager } from "@microsoft/fluid-server-services-core";
+import { getRandomName, IAlfredTenant } from "@microsoft/fluid-server-services-client";
+import { ICache, MongoManager } from "@microsoft/fluid-server-services-core";
 import * as bodyParser from "body-parser";
 import * as compression from "compression";
 import * as connectRedis from "connect-redis";

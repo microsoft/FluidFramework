@@ -7,7 +7,8 @@ import { isSpoTenant, resolveFluidUrl, spoGetResolvedUrl } from "@fluid-example/
 import { IClientConfig } from "@microsoft/fluid-odsp-utils";
 import { ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { IAlfredUser, IConfig, RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlresolver";
-import { chooseCelaName, IAlfredTenant } from "@microsoft/fluid-server-services-core";
+import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
+import { chooseCelaName } from "@microsoft/fluid-server-services-core";
 import { Request } from "express";
 import { Provider } from "nconf";
 // tslint:disable-next-line:no-submodule-imports

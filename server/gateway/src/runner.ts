@@ -4,8 +4,8 @@
  */
 
 import { Deferred } from "@microsoft/fluid-core-utils";
+import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
 import {
-    IAlfredTenant,
     ICache,
     IWebServer,
     IWebServerFactory,
