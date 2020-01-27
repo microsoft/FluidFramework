@@ -1,16 +1,20 @@
 ---
 uid: yo-fluid-details
+sidebarDepth: 2
 ---
 
 # Yo Fluid Breakdown
 
-Congratulations, you've used <xref:yo-fluid> to create your first component! If you haven't done this yet, head over to <xref:yo-fluid>.
+Congratulations, you've used [yo fluid](../guide/yo-fluid.md) to create your first component! If you haven't done this
+yet, head over to [yo fluid](../guide/yo-fluid.md).
+
+[[toc]]
 
 ## Creation options
 
-<xref:yo-fluid> allows you to create a Fluid component either using React or just vanilla JavaScript.
+[yo fluid](../guide/yo-fluid.md) allows you to create a Fluid component either using React or just vanilla JavaScript.
 
-```text
+```
 ? Which experience would you like to start with?
 > react
   vanillaJS
@@ -19,7 +23,7 @@ Congratulations, you've used <xref:yo-fluid> to create your first component! If 
 You'll also get the option to customize your container. If this is your first time building a component, we recommend
 choosing "no" for this option (we'll explain this option further below).
 
-```text
+```
 ? Do you want to customize your container (advanced)?
 > no
   yes
@@ -36,9 +40,10 @@ Below we will walk through both the vanillaJS and the React examples.
 
 First we will declare all our imports. Here is a quick description and use cases for each is discussed further below.
 
-`PrimedComponent` and `PrimedComponentFactory` from <xref:@microsoft/fluid-aqueduct!> provide helper functionality.
-`IComponentHTMLVisual` from <xref:@microsoft/fluid-component-core-interfaces!> provides the interface for enabling
-rendering. `React` and `ReactDOM` are _only for React_ and enable React use.
+`PrimedComponent` and `PrimedComponentFactory` from [@microsoft/fluid-aqueduct](../api/fluid-aqueduct.md) provide helper
+functionality. `IComponentHTMLVisual` from
+[@microsoft/fluid-component-core-interfaces](../api/fluid-component-core-interfaces.md) provides the interface for
+enabling rendering. `React` and `ReactDOM` are _only for React_ and enable React use.
 
 ```typescript
 import {
@@ -57,12 +62,12 @@ Below we define our component class `ExampleFluidComponent`.
 
 #### PrimedComponent
 
-Extending <xref:@microsoft/fluid-aqueduct!PrimedComponent:class> sets up our component with required default behavior as
-well as additional helpers to make component development easier.
+Extending [PrimedComponent](../api/fluid-aqueduct.PrimedComponent.md) sets up our component with required default
+behavior as well as additional helpers to make component development easier.
 
-#### Key benefits
+##### Key benefits
 
-1. Setup a `root` <xref:@microsoft/fluid-map!SharedDirectory:class> (a Distributed Data Structure) that we can use to
+1. Setup a `root` [SharedDirectory](../api/fluid-map.SharedDirectory.md) (a Distributed Data Structure) that we can use to
    store collaborative content and other distributed data structures.
 2. Provide `this.createAndAttachComponent(...)` and `this.getComponent(...)` functions for easier creation and access
    to other components.
@@ -73,10 +78,10 @@ well as additional helpers to make component development easier.
 
 #### IComponentHTMLVisual
 
-Implementing the <xref:@microsoft/fluid-component-core-interfaces!IComponentHTMLVisual:interface> interface denotes that
-our component can render an HTML view. Throughout the Fluid Framework we define interfaces as a way to state our
-behavior. Whoever is attempting to use this component can know we support this interface and therefore it will have a
-`render(...)` function. View rendering is explained more below.
+Implementing the [IComponentHTMLVisual](../api/fluid-component-core-interfaces.IComponentHTMLVisual.md) interface
+denotes that our component can render an HTML view. Throughout the Fluid Framework we define interfaces as a way to
+state our behavior. Whoever is attempting to use this component can know we support this interface and therefore it will
+have a `render(...)` function. View rendering is explained more below.
 
 #### Code
 
@@ -112,11 +117,14 @@ protected async componentInitializingFirstTime() {
 `render(div: HTMLElement)` is the implementation of `IComponentHTMLVisual`. The caller provides an `HTMLElement` that the
 Component can use to render into. Every time `render(...)` is called we should produce a new view.
 
-> [!NOTE]
-> This is the point where React and vanillaJS differ.
+::: note
 
-#### [React Implementation](#tab/tabid-1)
+This is the point where React and VanillaJS differ.
 
+:::
+
+:::: tabs
+::: tab React
 We create a `rerender` function that will display our content into the provided `HTMLElement`.
 To get the dice value we use the `get` method on the root, using the same key (`diceValue`) that
 we created in `componentInitializingFirstTime()`. Because we are using React we will call
@@ -151,8 +159,8 @@ this.root.on("valueChanged", () => {
 });
 ```
 
-#### [VanillaJS Implementation](#tab/tabid-2)
-
+:::
+::: tab VanillaJS
 The VanillaJS implementation is similar in many ways to the React version.
 
 We create our component's DOM structure in `this.createComponentDom(div);` which creates the span that
@@ -187,7 +195,8 @@ this.root.on("valueChanged", () => {
 });
 ```
 
-***
+:::
+::::
 
 To set the value of the dice after rolling, we use the `set` method on the root, using the same
 key `diceValue` as before.  The helper functions used look like this:
@@ -211,9 +220,9 @@ new instance. We require having an instantiation factory because it's required t
 distributed data structures up front. Defining all the DDSs up front allows for the Fluid Framework to load
 from a snapshot without worrying that something might exist in the snapshot that the framework can't understand.
 
-In the example below we use the <xref:@microsoft/fluid-aqueduct!PrimedComponentFactory:class> as a helper to create our
-instantiation factory. As properties we pass in our supported distributed data structures. In this scenario we don't use
-any additional distributed data structures, so we pass an empty array.
+In the example below we use the [PrimedComponentFactory](../api/fluid-aqueduct.PrimedComponentFactory.md) as a helper to
+create our instantiation factory. As properties we pass in our supported distributed data structures. In this scenario
+we don't use any additional distributed data structures, so we pass an empty array.
 
 ```typescript
 [],
@@ -242,7 +251,7 @@ If you instead chose to customize your container during the `yo fluid` setup, a 
 ### Factory export
 
 Instead of exporting the `PrimedComponentFactory` directly as the `fluidExport`, we'll instead export this factory
-for use in the container we're customizing (in [index.ts](#index.ts)).
+for use in the container we're customizing (in [index.ts](#index-ts)).
 
 ```typescript
 export const ExampleFluidComponentInstantiationFactory = new PrimedComponentFactory(
@@ -250,8 +259,6 @@ export const ExampleFluidComponentInstantiationFactory = new PrimedComponentFact
   []
 );
 ```
-
-<a name="index.ts" />
 
 ### `index.ts`
 
@@ -275,7 +282,8 @@ const componentName = pkg.name as string;
 
 Finally we use `SimpleModuleInstantiationFactory` to create the `fluidExport`. The factory takes a default component
 name `componentName` that is used to load the default component. It also takes the registry of components pointing to
-the creation factory. In our case just our one component (`[componentName, Promise.resolve(ExampleFluidComponentInstantiationFactory)]`).
+the creation factory. In our case just our one component
+(`[componentName, Promise.resolve(ExampleFluidComponentInstantiationFactory)]`).
 
 ```typescript
 export const fluidExport = new SimpleModuleInstantiationFactory(

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { parse } from "url";
 import { IFluidResolvedUrl } from "@microsoft/fluid-driver-definitions";
 import { ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { getR11sToken, IAlfredUser } from "@microsoft/fluid-routerlicious-urlresolver";
@@ -12,7 +13,6 @@ import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
 import * as jwt from "jsonwebtoken";
 import { Provider } from "nconf";
-import { parse } from "url";
 import * as winston from "winston";
 import { getConfig, getParam, getUserDetails } from "../utils";
 import { defaultPartials } from "./partials";
@@ -73,6 +73,7 @@ export function create(
         const tenantId = getParam(request.params, "tenantId");
         const chaincode = request.query.chaincode;
 
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         const user: IAlfredUser = (request.user) ? {
             displayName: request.user.name,
             id: request.user.oid,
@@ -82,21 +83,22 @@ export function create(
         const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
         const token = getR11sToken(tenantId, documentId, appTenants, scopes, user);
 
-        const fluidUrl = "fluid://" +
-        `${parse(config.get("worker:serverUrl")).host}/` +
-        `${encodeURIComponent(tenantId)}/` +
-        `${encodeURIComponent(documentId)}` +
-        path;
+        const fluidUrl =
+            `fluid://\
+            ${parse(config.get("worker:serverUrl")).host}\
+            /${encodeURIComponent(tenantId)}\
+            /${encodeURIComponent(documentId)}\
+            ${path}`;
 
         const deltaStorageUrl =
-            config.get("worker:serverUrl") +
-            "/deltas" +
-            `/${encodeURIComponent(tenantId)}/${encodeURIComponent(documentId)}`;
+            `${config.get("worker:serverUrl")}\
+            /deltas/\
+            ${encodeURIComponent(tenantId)}/${encodeURIComponent(documentId)}`;
 
         const storageUrl =
-            config.get("worker:blobStorageUrl").replace("historian:3000", "localhost:3001") +
-            "/repos" +
-            `/${encodeURIComponent(tenantId)}`;
+            `${config.get("worker:blobStorageUrl").replace("historian:3000", "localhost:3001")}\
+            /repos/\
+            ${encodeURIComponent(tenantId)}`;
 
         const resolved: IFluidResolvedUrl = {
             endpoints: {
@@ -112,6 +114,7 @@ export function create(
         const emptyCache = {
             blobs: [],
             commits: [],
+            // eslint-disable-next-line no-null/no-null
             refs: { [documentId]: null },
             trees: [],
         };
@@ -126,6 +129,7 @@ export function create(
         const cachedPageP = cache.get(pageKey);
         cachedPageP.then(
             (page) => {
+                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                 if (page) {
                     const loaderUrl = urlResolver(`/public/scripts/dist/loader.js`);
                     winston.info(`Sending page ${pageKey} with ${loaderUrl}`);
@@ -138,21 +142,23 @@ export function create(
                         [],
                         packageUrl,
                         jwtToken,
-                        );
+                    );
                     const pageWithCode = page.concat(scriptCode);
                     response.send(pageWithCode);
                 } else {
                     response.render(
                         "loader",
                         {
-                            cache: JSON.stringify(null),
+                            cache: "null",
+                            // eslint-disable-next-line no-null/no-null
                             chaincode: null,
                             config: workerConfig,
                             jwt: jwtToken,
                             partials: defaultPartials,
+                            // eslint-disable-next-line no-null/no-null
                             pkg: null,
-                            resolved: JSON.stringify(null),
-                            timings: JSON.stringify(null),
+                            resolved: "null",
+                            timings: "null",
                             title: documentId,
                             user: getUserDetails(request),
                             token,

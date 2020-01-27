@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { Router } from "express";
 import * as fs from "fs";
-import * as moniker from "moniker";
-import { Provider } from "nconf";
 import * as path from "path";
 import { promisify } from "util";
+import { Router } from "express";
+import * as moniker from "moniker";
+import { Provider } from "nconf";
 import { getUserDetails, getVersion } from "../utils";
 import { defaultPartials } from "./partials";
 
@@ -23,7 +23,9 @@ interface ITemplate {
 async function getTemplates(): Promise<ITemplate[]> {
     // Empty template for starting with a blank document
     const result: ITemplate[] = [{
+        // eslint-disable-next-line no-null/no-null
         ext: null,
+        // eslint-disable-next-line no-null/no-null
         full: null,
         name: "empty",
     }];

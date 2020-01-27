@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidResolvedUrl, IResolvedUrl, IWebResolvedUrl } from "@microsoft/fluid-driver-definitions";
+import { parse, UrlWithStringQuery } from "url";
+import { IResolvedUrl, IWebResolvedUrl } from "@microsoft/fluid-driver-definitions";
 import { ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { getR11sToken, IAlfredUser } from "@microsoft/fluid-routerlicious-urlresolver";
 import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
@@ -13,7 +14,6 @@ import * as safeStringify from "json-stringify-safe";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
 import * as passport from "passport";
-import { parse, UrlWithStringQuery } from "url";
 import * as winston from "winston";
 import { IJWTClaims } from "../../utils";
 
@@ -24,7 +24,7 @@ async function getWebComponent(url: UrlWithStringQuery): Promise<IWebResolvedUrl
     return {
         data: result.data,
         type: "web",
-    } as IWebResolvedUrl;
+    };
 }
 
 // Resolves from other Fluid endpoints.
@@ -56,14 +56,13 @@ async function getInternalComponent(
     appTenants: IAlfredTenant[],
     scopes: ScopeType[],
 ): Promise<IResolvedUrl> {
-    /* eslint-disable no-useless-escape */
     const regex = url.protocol === "fluid:"
-        ? /^\/([^\/]*)\/([^\/]*)(\/?.*)$/
-        : /^\/loader\/([^\/]*)\/([^\/]*)(\/?.*)$/;
-    /* eslint-enable no-useless-escape */
+        ? /^\/([^/]*)\/([^/]*)(\/?.*)$/
+        : /^\/loader\/([^/]*)\/([^/]*)(\/?.*)$/;
     // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
     const match = url.path.match(regex);
 
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     if (!match) {
         return getWebComponent(url);
     }
@@ -77,17 +76,18 @@ async function getInternalComponent(
     const user: IAlfredUser = (request.user as IJWTClaims).user;
 
     const token = getR11sToken(tenantId, documentId, appTenants, scopes, user);
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     const fluidUrl = `fluid://${url.host}/${tenantId}/${documentId}${path}${url.hash ? url.hash : ""}`;
 
     const deltaStorageUrl =
-        config.get("worker:serverUrl") +
-        "/deltas" +
-        `/${encodeURIComponent(tenantId)}/${encodeURIComponent(documentId)}`;
+        `${config.get("worker:serverUrl")}\
+        /deltas\
+        /${encodeURIComponent(tenantId)}/${encodeURIComponent(documentId)}`;
 
     const storageUrl =
-        config.get("worker:blobStorageUrl").replace("historian:3000", "localhost:3001") +
-        "/repos" +
-        `/${encodeURIComponent(tenantId)}`;
+        `${config.get("worker:blobStorageUrl").replace("historian:3000", "localhost:3001")}\
+        /repos\
+        /${encodeURIComponent(tenantId)}`;
 
     return {
         endpoints: {
@@ -98,13 +98,11 @@ async function getInternalComponent(
         tokens: { jwt: token },
         type: "fluid",
         url: fluidUrl,
-    } as IFluidResolvedUrl;
+    };
 }
 
 // Checks whether the url belongs to other Fluid endpoints.
-function isExternalComponent(url: string, endpoints: string[]) {
-    return endpoints.includes(url);
-}
+const isExternalComponent = (url: string, endpoints: string[]) => endpoints.includes(url);
 
 export function create(
     config: Provider,
@@ -120,6 +118,7 @@ export function create(
         const url = parse(request.body.url);
         const urlPrefix = `${url.protocol}//${url.host}`;
         let scopes: ScopeType[];
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (request.body.scopes) {
             scopes = request.body.scopes;
         } else {
@@ -129,8 +128,8 @@ export function create(
         const resultP = (alfred.host === url.host || gateway.host === url.host)
             ? getInternalComponent(request, config, url, appTenants, scopes)
             : isExternalComponent(urlPrefix, federatedEndpoints)
-            ? getExternalComponent(request, `${urlPrefix}/api/v1/load`, request.body.url as string, scopes)
-            : getWebComponent(url);
+                ? getExternalComponent(request, `${urlPrefix}/api/v1/load`, request.body.url as string, scopes)
+                : getWebComponent(url);
 
         resultP.then(
             (result) => response.status(200).json(result),
