@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { throwOdspNetworkError } from "./OdspUtils";
+
 export interface INewFileInfo {
     siteUrl: string;
     driveId: string;
@@ -43,15 +45,15 @@ export async function createNewFluidFile(
     if (fetchResponse.status !== 201) {
         // We encounter status=-1 if url path including filename length exceeds 400 characters.
         if (fetchResponse.status === -1) {
-            throw new Error("File path length exceeds 400 characters. Please use shorter filename.");
+            throwOdspNetworkError("Unknown Error. File path length exceeding 400 characters could cause this error", fetchResponse.status, false);
         }
 
-        throw new Error(`${fetchResponse.status} Failed to create file`);
+        throwOdspNetworkError("Failed to create file", fetchResponse.status, true);
     }
 
     const item = await fetchResponse.json();
     if (!item || !item.id) {
-        throw new Error("Could not parse drive item from Vroom response");
+        throwOdspNetworkError("Could not parse drive item from Vroom response", fetchResponse.status, false);
     }
 
     return {itemId: item.id, siteUrl: newFileInfo.siteUrl, driveId: newFileInfo.driveId, filename: item.name};
