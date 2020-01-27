@@ -85,6 +85,9 @@ import { SummaryManager } from "./summaryManager";
 import { ISummaryStats, SummaryTreeConverter } from "./summaryTreeConverter";
 import { analyzeTasks } from "./taskAnalyzer";
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const performanceNow = require("performance-now") as (() => number);
+
 interface ISummaryTreeWithStats {
     summaryStats: ISummaryStats;
     summaryTree: ISummaryTree;
@@ -145,7 +148,17 @@ interface IRuntimeMessageMetadata {
     batch?: boolean;
 }
 
-class ScheduleManager {
+/**
+ * The time for processing ops in a single turn.
+ */
+const opProcessingTime = 20;
+
+/**
+ * The increase in time for processing ops after each turn.
+ */
+const opProcessingTimeIncrement = 10;
+
+export class ScheduleManager {
     private readonly messageScheduler: IMessageScheduler | undefined;
     private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     private pauseSequenceNumber: number | undefined;
@@ -154,6 +167,9 @@ class ScheduleManager {
     private paused = false;
     private localPaused = false;
     private batchClientId: string;
+
+    private processingStartTime: number | undefined;
+    private totalProcessingTime: number = opProcessingTime;
 
     constructor(
         messageScheduler: IMessageScheduler | undefined,
@@ -199,6 +215,16 @@ class ScheduleManager {
                 this.updatePauseState(message.sequenceNumber);
             });
 
+        // Listen for idle event and reset the processing timer.
+        this.deltaManager.inbound.on(
+            "idle",
+            () => {
+                if (this.processingStartTime) {
+                    this.processingStartTime = undefined;
+                    this.totalProcessingTime = opProcessingTime;
+                }
+            });
+
         const allPending = this.deltaManager.inbound.toArray();
         for (const pending of allPending) {
             this.trackPending(pending);
@@ -211,7 +237,7 @@ class ScheduleManager {
     public beginOperation(message: ISequencedDocumentMessage) {
         // If in legacy mode every operation is a batch
         if (!this.messageScheduler) {
-            this.emitter.emit("batchBegin", message);
+            this.batchBegin(message);
             return;
         }
 
@@ -219,7 +245,7 @@ class ScheduleManager {
             // If there is no metadata, and no client ID set, then this is an individual batch. Otherwise it's a
             // message in the middle of a batch
             if (!this.batchClientId) {
-                this.emitter.emit("batchBegin", message);
+                this.batchBegin(message);
             }
 
             return;
@@ -229,14 +255,14 @@ class ScheduleManager {
         const metadata = message.metadata as IRuntimeMessageMetadata;
         if (metadata.batch === true) {
             this.batchClientId = message.clientId;
-            this.emitter.emit("batchBegin", message);
+            this.batchBegin(message);
         }
     }
 
     public endOperation(error: any | undefined, message: ISequencedDocumentMessage) {
         if (!this.messageScheduler || error) {
             this.batchClientId = undefined;
-            this.emitter.emit("batchEnd", error, message);
+            this.batchEnd(error, message);
             return;
         }
 
@@ -244,14 +270,14 @@ class ScheduleManager {
 
         // If no batchClientId has been set then we're in an individual batch
         if (!this.batchClientId) {
-            this.emitter.emit("batchEnd", undefined, message);
+            this.batchEnd(undefined, message);
             return;
         }
 
         // As a back stop for any bugs marking the end of a batch - if the client ID flipped we consider the batch over
         if (this.batchClientId !== message.clientId) {
-            this.emitter.emit("batchEnd", undefined, message);
             this.batchClientId = undefined;
+            this.batchEnd(undefined, message);
             return;
         }
 
@@ -259,7 +285,7 @@ class ScheduleManager {
         const batch = message.metadata ? (message.metadata as IRuntimeMessageMetadata).batch : undefined;
         if (batch === false) {
             this.batchClientId = undefined;
-            this.emitter.emit("batchEnd", undefined, message);
+            this.batchEnd(undefined, message);
         }
     }
 
@@ -273,6 +299,40 @@ class ScheduleManager {
         this.paused = false;
         if (!this.localPaused) {
             this.deltaManager.inbound.systemResume();
+        }
+    }
+
+    private batchBegin(message: ISequencedDocumentMessage) {
+        this.emitter.emit("batchBegin", message);
+        if (this.deltaManager.inbound.length > 0 && !this.processingStartTime) {
+            // Start the timer that keeps track of how long we have processed ops in the delta queue
+            // in this call.
+            this.processingStartTime = performanceNow();
+        }
+    }
+
+    private batchEnd(error: any | undefined, message: ISequencedDocumentMessage) {
+        this.emitter.emit("batchEnd", error, message);
+
+        // If we have processed ops for more than the total processing time, we pause the
+        // queue, yield the thread and schedule a resume. This ensures that we don't block
+        // the JS threads for a long time (for example, when catching up ops right after
+        // boot or catching up ops / delayed reaziling components by summarizer).
+        //
+        // We keep increasing the total processing time after each turn until all the ops have been
+        // processed. This way we keep the responsiveness at the beginning while also making sure
+        // that all the ops process fairly quickly.
+        if (this.processingStartTime && this.deltaManager.inbound.length > 0) {
+            if (performanceNow() - this.processingStartTime > this.totalProcessingTime) {
+                this.setPaused(true);
+
+                setTimeout(() => {
+                    this.setPaused(false);
+                });
+
+                this.processingStartTime = undefined;
+                this.totalProcessingTime += opProcessingTimeIncrement;
+            }
         }
     }
 
