@@ -40,10 +40,15 @@ export async function fetchJoinSession(
 ): Promise<IOdspResponse<ISocketStorageDiscovery>> {
     return getWithRetryForTokenRefresh(async (refresh: boolean) => {
         const tokenEvent = PerformanceEvent.start(logger, { eventName: "JoinSessionToken" });
-        const token = await getVroomToken(refresh);
-        if (!token) {
-            tokenEvent.cancel();
-            throwOdspNetworkError("Failed to acquire Vroom token", 400, true);
+        let token: string | undefined | null;
+        try {
+            token = await getVroomToken(refresh);
+            if (!token) {
+                throwOdspNetworkError("Failed to acquire Vroom token", 400, true);
+            }
+        } catch (error) {
+            tokenEvent.cancel({}, error);
+            throw error;
         }
         tokenEvent.end();
 
