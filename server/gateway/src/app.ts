@@ -5,7 +5,9 @@
 
 import * as fs from "fs";
 import * as path from "path";
-import { getRandomName, IAlfredTenant, ICache, MongoManager } from "@microsoft/fluid-server-services-core";
+// tslint:disable-next-line: ordered-imports
+import { getRandomName, IAlfredTenant } from "@microsoft/fluid-server-services-client";
+import { ICache, MongoManager } from "@microsoft/fluid-server-services-core";
 import * as bodyParser from "body-parser";
 import * as compression from "compression";
 import * as connectRedis from "connect-redis";

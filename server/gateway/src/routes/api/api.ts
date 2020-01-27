@@ -7,7 +7,7 @@ import { parse, UrlWithStringQuery } from "url";
 import { IResolvedUrl, IWebResolvedUrl } from "@microsoft/fluid-driver-definitions";
 import { ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { getR11sToken, IAlfredUser } from "@microsoft/fluid-routerlicious-urlresolver";
-import * as core from "@microsoft/fluid-server-services-core";
+import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
 import Axios from "axios";
 import { Request, Router } from "express";
 import * as safeStringify from "json-stringify-safe";
@@ -53,7 +53,7 @@ async function getInternalComponent(
     request: Request,
     config: Provider,
     url: UrlWithStringQuery,
-    appTenants: core.IAlfredTenant[],
+    appTenants: IAlfredTenant[],
     scopes: ScopeType[],
 ): Promise<IResolvedUrl> {
     const regex = url.protocol === "fluid:"
@@ -106,7 +106,7 @@ const isExternalComponent = (url: string, endpoints: string[]) => endpoints.incl
 
 export function create(
     config: Provider,
-    appTenants: core.IAlfredTenant[],
+    appTenants: IAlfredTenant[],
 ): Router {
     const router: Router = Router();
 
