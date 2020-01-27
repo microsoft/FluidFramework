@@ -6,7 +6,7 @@
 import * as assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
-import { gitHashFileAsync } from "..";
+import { gitHashFile, gitHashFileAsync } from "..";
 
 async function getFileContents(p: string): Promise<Buffer> {
     return new Promise<Buffer>((resolve, reject) => {
@@ -52,6 +52,35 @@ describe("Core-Utils", () => {
             const hash = await gitHashFileAsync(file);
 
             assert.equal(hash, expectedHash);
+        });
+
+        it("Hash is consistent", async () => {
+            const p = path.join(__dirname, `${dataDir}/images/bindy.svg`);
+            const file = await getFileContents(p);
+            const hash1 = await gitHashFileAsync(file);
+            const hash2 = await gitHashFileAsync(file);
+
+            assert.equal(hash1, hash2);
+        });
+    });
+
+    describe("#gitHashFile", () => {
+        it("File should Hash", async () => {
+            const p = path.join(__dirname, `${dataDir}/images/bindy.svg`);
+            const file = await getFileContents(p);
+            const expectedHash = "c741e46ae4a5f1ca19debf0ac609aabc5fe94add";
+            const hash = await gitHashFile(file);
+
+            assert.equal(hash, expectedHash);
+        });
+
+        it("Hash should match async version", async () => {
+            const p = path.join(__dirname, `${dataDir}/images/aka.pdf`);
+            const file = await getFileContents(p);
+            const hashSync = gitHashFile(file);
+            const hashAsync = await gitHashFileAsync(file);
+
+            assert.equal(hashSync, hashAsync);
         });
     });
 });

@@ -17,15 +17,15 @@ export async function hashFile(file: Buffer): Promise<string> {
     // Use the browser native Web Crypto API when available for perf
     // Node doesn't support this API and doesn't appear to have any interest in doing so:
     // https://github.com/nodejs/node/issues/2833
-    if (typeof crypto == "undefined") {
+    if (typeof crypto !== "object" || crypto === null) {
         const engine = new sha1();
         return engine.update(file).digest("hex");
     }
 
     const hash = await crypto.subtle.digest("SHA-1", file);
-    const hashArray = Array.from(new Uint8Array(hash));
-    const hashHex = hashArray.map((b) => {
-        return b.toString(16).padStart(2, "0");
+    const hashArray = new Uint8Array(hash);
+    const hashHex = Array.prototype.map.call(hashArray, function(byte) {
+        return byte.toString(16).padStart(2, "0");
     }).join("");
 
     return hashHex;
@@ -58,7 +58,7 @@ export async function gitHashFileAsync(file: Buffer): Promise<string> {
     // for the git prefix, but the perf gains from native code offset that
     // Node doesn't support this API and doesn't appear to have any interest in doing so:
     // https://github.com/nodejs/node/issues/2833
-    if (typeof crypto == "undefined") {
+    if (typeof crypto !== "object" || crypto === null) {
         return gitHashFile(file);
     }
 

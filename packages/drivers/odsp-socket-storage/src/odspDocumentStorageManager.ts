@@ -43,7 +43,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     // This cache is associated with mapping sha to path for previous summary which belongs to last summary handle.
     private blobsShaToPathCache: Map<string, string> = new Map();
     // A set of pending blob hashes that will be inserted into blobsShaToPathCache
-    private readonly blobsCachePendingHashes: Set<Promise<string>> = new Set();
+    private readonly blobsCachePendingHashes: Set<Promise<void>> = new Set();
     private readonly blobCache: Map<string, resources.IBlob> = new Map();
     private readonly treesCache: Map<string, resources.ITree> = new Map();
 
@@ -77,6 +77,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         private readonly logger: ITelemetryLogger,
         private readonly fetchFullSnapshot: boolean,
         private readonly odspCache: OdspCache,
+        private readonly isFirstContainerForService: boolean,
     ) {
         this.queryString = getQueryString(queryParams);
         this.appId = queryParams.app_id;
@@ -241,11 +242,9 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             this.firstVersionCall = false;
 
             return getWithRetryForTokenRefresh(async (refresh) => {
-                let isSummarizingContainer = true;
                 const odspCacheKey: string = `${this.documentId}/getlatest`;
                 let odspSnapshot: IOdspSnapshot = this.odspCache.get(odspCacheKey);
                 if (!odspSnapshot) {
-                    isSummarizingContainer = false;
                     const storageToken = await this.getStorageToken(refresh);
 
                     // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
@@ -299,15 +298,18 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     // Populate the cache with paths from id-to-path mapping.
                     for (const blob of this.blobCache.values()) {
                         const path = blobsIdToPathMap.get(blob.sha);
-                        if (isSummarizingContainer && path) {
+                        // If this is the first container that was created for the service, it cannot be
+                        // the summarizing container (becauase the summarizing container is always created
+                        // after the main container). In this case, we do not need to do any hashing
+                        if (!this.isFirstContainerForService && path) {
                             // Schedule the hashes for later, but keep track of the tasks
                             // to ensure they finish before they might be used
-                            const hashP = hashFile(Buffer.from(blob.content, blob.encoding));
+                            const hashP = hashFile(Buffer.from(blob.content, blob.encoding)).then((hash: string) => {
+                                this.blobsShaToPathCache.set(hash, path);
+                            });
                             this.blobsCachePendingHashes.add(hashP);
                             // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                            hashP.then((hash: string) => {
-                                this.blobsShaToPathCache.set(hash, path);
-                            }).finally(() => {
+                            hashP.finally(() => {
                                 this.blobsCachePendingHashes.delete(hashP);
                             });
                         }
