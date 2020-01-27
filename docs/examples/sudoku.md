@@ -250,7 +250,7 @@ component.
 
 :::
 
-```typescript
+```typescript{2-6,9}
 const numericInput = (keyString: string, coord: string) => {
     let valueToSet = Number(keyString);
     valueToSet = Number.isNaN(valueToSet) ? 0 : valueToSet;
@@ -273,7 +273,7 @@ const numericInput = (keyString: string, coord: string) => {
 };
 ```
 
-Lines 2-7 ensure we only accept single-digit numeric values. In line 9, we retrieve the coordinate of the cell from a DOM
+Lines 2-6 ensure we only accept single-digit numeric values. In line 9, we retrieve the coordinate of the cell from a DOM
 attribute that we added during render. Once we have the coordinate, which is a key in the `SharedMap` storing our Sudoku
 data, we retrieve the cell data by calling `.get<SudokuCell>(coord)`. We then update the cell's value and set whether it
 is correct. Finally, we call `.set(key, toSet)` to update the data in the `SharedMap`.
@@ -327,7 +327,7 @@ First, you need to create a `SharedMap` for your presence data.
     this.root.set(this.presenceMapKey, clientPresence.handle);
     ```
 
-   Notice that the Fluid runtime is exposed via the `this.runtime` property provided by [PrimedComponents][].
+   Notice that the Fluid runtime is exposed via the `this.runtime` property provided by [PrimedComponent][].
 
 1. Inside the `componentHasInitialized` method, add the following code to the bottom of the method to retrieve the
    presence map when the component initializes:

@@ -14,4 +14,3 @@ package-deps.json
 
 # Temporary api-extractor build artifacts
 packages/_api-extractor-temp/**
-.docz

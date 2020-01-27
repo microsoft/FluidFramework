@@ -6,11 +6,12 @@
   "author": "Microsoft",
   "scripts": {
     "build": "npm run build:vuepress",
-    "build:ci": "npm run build:copy && node buildDocs.js && npm run build",
+    "build:ci": "npm run build:copy && node buildDocs.js && npm run build:vuepress",
     "build:copy": "copyfiles -f \"api-pages/**\" api/",
     "build:vuepress": "vuepress build --dest ./dist",
+    "clean": "rimraf api",
     "lint": "vuepress check-md",
-    "start": "vuepress dev",
+    "start": "npm run build:copy && node buildDocs.js && vuepress dev",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
@@ -25,5 +26,8 @@
     "vuepress-plugin-code-copy": "^1.0.4",
     "vuepress-plugin-container": "^2.1.2",
     "vuepress-plugin-tabs": "^0.3.0"
+  },
+  "devDependencies": {
+    "rimraf": "^2.6.2"
   }
 }
