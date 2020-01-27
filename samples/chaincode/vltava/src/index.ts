@@ -4,24 +4,12 @@
  */
 /* eslint-disable import/no-internal-modules */
 
+import {ClickerName, ClickerInstantiationFactory} from "@fluid-example/clicker";
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 
-import {ClickerName, ClickerInstantiationFactory} from "@fluid-example/clicker";
-import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
-import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
+import { Vltava } from "./vltava";
 
-import {
-    ButtonInstantiationFactory ,
-    NumberInstantiationFactory,
-    TextBoxInstantiationFactory,
-    FacePileInstantiationFactory,
-} from "./components";
-import {
-    Manager,
-} from "./container-services";
-import { Spaces } from "./spaces";
-
-const chaincodeName = "spaces";
+const chaincodeName = "vltava";
 
 /**
  * This does setup for the Container. The SimpleModuleInstantiationFactory also enables dynamic loading in the
@@ -30,14 +18,7 @@ const chaincodeName = "spaces";
 export const fluidExport = new SimpleModuleInstantiationFactory(
     chaincodeName,
     new Map([
+        [chaincodeName, Promise.resolve(Vltava.getFactory())],
         [ClickerName, Promise.resolve(ClickerInstantiationFactory)],
-        [chaincodeName, Promise.resolve(Spaces.getFactory())],
-        ["button", Promise.resolve(ButtonInstantiationFactory)],
-        ["number", Promise.resolve(NumberInstantiationFactory)],
-        ["textbox", Promise.resolve(TextBoxInstantiationFactory)],
-        ["facepile", Promise.resolve(FacePileInstantiationFactory)],
-        ["codemirror", Promise.resolve(cmfe)],
-        ["prosemirror", Promise.resolve(pmfe)],
     ]),
-    [["manager", async (r) => new Manager(r)]],
 );

@@ -5,7 +5,7 @@
 
 import { globals } from "../jest.config";
 
-describe("spaces", () => {
+describe("vltava", () => {
 
     beforeEach(async () => {
       await page.goto(globals.PATH, { waitUntil: "load" });

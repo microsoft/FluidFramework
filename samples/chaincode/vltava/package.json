@@ -28,11 +28,7 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluid-example/badge": "^0.13.0",
     "@fluid-example/clicker": "^0.13.0",
-    "@fluid-example/codemirror": "^0.13.0",
-    "@fluid-example/prosemirror": "^0.13.0",
-    "@fluid-example/shared-text": "^0.13.0",
     "@microsoft/fluid-aqueduct": "^0.13.0",
     "@microsoft/fluid-aqueduct-react": "^0.13.0",
     "@microsoft/fluid-component-core-interfaces": "^0.13.0",
