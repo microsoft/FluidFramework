@@ -5,13 +5,16 @@
   "license": "MIT",
   "author": "Microsoft",
   "scripts": {
-    "build": "vuepress build --dest ./dist",
-    "build:ci": "node buildDocs.js && npm run build",
+    "build": "npm run build:vuepress",
+    "build:ci": "npm run build:copy && node buildDocs.js && npm run build",
+    "build:copy": "copyfiles -f \"api-pages/**\" api/",
+    "build:vuepress": "vuepress build --dest ./dist",
     "lint": "vuepress check-md",
     "start": "vuepress dev",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "copyfiles": "^2.1.0",
     "firstline": "^2.0.2",
     "fs-extra": "^8.1.0",
     "markdown-it-deflist": "^2.0.3",

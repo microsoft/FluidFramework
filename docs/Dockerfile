@@ -36,4 +36,4 @@ RUN rsync docs/dist/ praguedocs/ -rv --exclude '.git'
 WORKDIR /praguedocs
 RUN git add .
 RUN git diff --quiet && git diff --staged --quiet || git commit -am 'Automated build'
-# RUN git push
+RUN git push
