@@ -27,6 +27,7 @@ export function create(
     appTenants: IAlfredTenant[],
     urlResolver: (id: string) => string,
 ) {
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     const ensureLoggedIn = config.get("login:enabled")
         ? ensureAuth.ensureLoggedIn
         : () => {

@@ -12,6 +12,7 @@ import {
 } from "@fluid-example/tiny-web-host";
 
 export function saveSpoTokens(req, params, accessToken: string, refreshToken: string) {
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     if (!req.session.tokens) {
         req.session.tokens = {};
     }
@@ -26,24 +27,31 @@ export function saveSpoTokens(req, params, accessToken: string, refreshToken: st
     }
 }
 
-export function spoEnsureLoggedIn() {
+export const spoEnsureLoggedIn = () => {
     return (req, res, next) => {
         const tenantId = req.params.tenantId;
         if (isSpoTenant(tenantId)) {
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (!req.session
+                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                 || !req.session.tokens
+                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                 || !req.session.tokens[getSpoServer(tenantId)]
+                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                 || !req.session.tokens[getSpoServer(tenantId)].accessToken) {
 
+                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                 req.session.returnTo = req.originalUrl || req.url;
                 return res.redirect(`/login_${req.params.tenantId}`);
             }
 
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (!req.session.tokens[getSpoPushServer()]) {
+                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                 req.session.returnTo = req.originalUrl || req.url;
                 return res.redirect(`/login_pushsrv`);
             }
         }
         next();
     };
-}
+};
