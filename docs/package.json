@@ -1,7 +1,9 @@
 {
   "name": "fluid-docs",
   "version": "0.13.0",
-  "description": "",
+  "description": "Documentation for the Fluid Framework",
+  "license": "MIT",
+  "author": "Microsoft",
   "scripts": {
     "build": "vuepress build --dest ./dist",
     "build:ci": "node buildDocs.js && npm run build",
