@@ -1,0 +1,33 @@
+{
+  "name": "fluid-docs",
+  "version": "0.13.0",
+  "description": "Documentation for the Fluid Framework",
+  "license": "MIT",
+  "author": "Microsoft",
+  "scripts": {
+    "build": "npm run build:vuepress",
+    "build:ci": "npm run build:copy && node buildDocs.js && npm run build:vuepress",
+    "build:copy": "copyfiles -f \"api-pages/**\" api/",
+    "build:vuepress": "vuepress build --dest ./dist",
+    "clean": "rimraf api",
+    "lint": "vuepress check-md",
+    "start": "npm run build:copy && node buildDocs.js && vuepress dev",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "copyfiles": "^2.1.0",
+    "firstline": "^2.0.2",
+    "fs-extra": "^8.1.0",
+    "markdown-it-deflist": "^2.0.3",
+    "markdown-it-include": "^1.1.0",
+    "vue-tabs-component": "^1.5.0",
+    "vuepress": "1.2.0",
+    "vuepress-plugin-check-md": "0.0.2",
+    "vuepress-plugin-code-copy": "^1.0.4",
+    "vuepress-plugin-container": "^2.1.2",
+    "vuepress-plugin-tabs": "^0.3.0"
+  },
+  "devDependencies": {
+    "rimraf": "^2.6.2"
+  }
+}

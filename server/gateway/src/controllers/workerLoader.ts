@@ -66,8 +66,7 @@ class WorkerLoader implements ILoader, IComponentRunnable {
             request,
             new BaseTelemetryNullLogger());
 
-        // tslint:disable no-non-null-assertion
-        if (this.container.deltaManager!.referenceSequenceNumber <= this.fromSequenceNumber) {
+        if (this.container.deltaManager.referenceSequenceNumber <= this.fromSequenceNumber) {
             await new Promise((resolve, reject) => {
                 const opHandler = (message: ISequencedDocumentMessage) => {
                     if (message.sequenceNumber > this.fromSequenceNumber) {

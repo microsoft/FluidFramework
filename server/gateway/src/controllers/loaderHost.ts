@@ -65,11 +65,11 @@ export async function initialize(
     const options = {
         blockUpdateMarkers: true,
         config,
-        tokens: (resolved as IFluidResolvedUrl).tokens,
+        tokens: resolved.tokens,
     };
 
     (await IFrameDocumentServiceProxyFactory.create(
-        selectDocumentServiceFactoryForProtocol(resolved as IFluidResolvedUrl, factoryMap),
+        selectDocumentServiceFactoryForProtocol(resolved, factoryMap),
         document.getElementById("ifr") as HTMLIFrameElement,
         options,
         { resolver },

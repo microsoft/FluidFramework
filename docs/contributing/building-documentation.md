@@ -10,39 +10,17 @@ npm run build
 npm run build:docs
 ```
 
-This will create many YAML files under `docs/api/`.
+This will create many Markdown files under `docs/api/`. These files should *not* be committed to git.
 
-> [!IMPORTANT]
-> Due to <https://github.com/Microsoft/web-build-tools/issues/1229>, `api-documenter` outputs a
-> `toc.yaml` file like this:
->
-> ```yaml
-> items:
->   - name: SharePoint Framework reference
->     href: ~/overview/sharepoint.md
->     items:
->       - name: sequence
->         uid: sequence
->         items:
->           - name: Interval
->             uid: sequence.Interval
-> ```
->
-> You need to manually remove the first 3 lines, so you end up with something like this:
->
-> ```yaml
-> items:
->   - name: sequence
->     uid: sequence
->     items:
->       - name: Interval
->         uid: sequence.Interval
-> ```
+## Building documentation site with Vuepress
 
-## Building documentation site with DocFX
+To build the docs themselves, you'll need to switch to the `docs/` folder, install the dependencies, and then build the
+site.
 
-Finally, to build the docs themselves, you'll need [DocFX](https://dotnet.github.io/docfx/).
-Run `docfx build` from the docs directory. The built docs are put in `docs/_site`.
+```bash
+cd docs
+npm install
+npm start
+```
 
-You can also serve the docs from http://localhost:8080/ by adding `--serve` to the command.
-I.e. `docfx build --serve`
+`npm start` will serve the local documentation from http://localhost:8080/.

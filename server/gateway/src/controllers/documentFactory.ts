@@ -27,6 +27,7 @@ export class DocumentFactory implements IDocumentFactory {
     }
 
     public async create(chaincode: IFluidCodeDetails): Promise<string> {
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises, no-async-promise-executor
         const monikerP = new Promise(async (resolve) => {
             if (this.moniker) {
                 resolve(this.moniker);
@@ -38,7 +39,7 @@ export class DocumentFactory implements IDocumentFactory {
         const [loader, moniker] = await Promise.all([
             this.loaderDeferred.promise,
             monikerP,
-        ]);
+        ]) as [ILoader, unknown];
 
         // generate a moniker to use as part of creating the new document
         const url = this.url ? this.url : `${window.location.origin}/loader/${this.tenantId}/${moniker}`;
