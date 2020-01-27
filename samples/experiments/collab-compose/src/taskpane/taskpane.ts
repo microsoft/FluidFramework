@@ -100,9 +100,7 @@ function start(info) {
   const resolver = new ContainerUrlResolver(host, jwtToken);
   const codeLoader = new WebCodeLoader();
   const loader = new Loader(
-    {
-      resolver
-    },
+    resolver,
     documentServiceFactories,
     codeLoader,
     {},

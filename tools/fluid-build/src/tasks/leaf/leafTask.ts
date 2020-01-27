@@ -28,8 +28,8 @@ export abstract class LeafTask extends Task {
     public get isLeaf(): boolean { return true; }
 
     public get isDisabled() {
-        return (options.nolint && this.executable === "tslint")
-            || (options.lintonly && this.executable !== "tslint");
+        return (options.nolint && this.executable === "eslint")
+            || (options.lintonly && this.executable !== "eslint");
     }
 
     public get executable() {
@@ -71,7 +71,7 @@ export abstract class LeafTask extends Task {
             console.error(`${this.node.pkg.nameColored}: error during command ${this.command}`)
             console.error(this.getExecErrors(ret));
             return this.execDone(startTime, BuildResult.Failed);
-        } 
+        }
         if (ret.stderr) {
             // no error code but still error messages, treat them is non fatal warnings
             console.warn(`${this.node.pkg.nameColored}: warning during command ${this.command}`);
@@ -192,7 +192,7 @@ export abstract class LeafTask extends Task {
             const seen = new Set<LeafTask>();
             while (true) {
                 const leafTask = pending.pop();
-                if (!leafTask) { 
+                if (!leafTask) {
                     return;
                 }
                 if (seen.has(leafTask)) {
@@ -249,7 +249,7 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
         const leafIsUpToDate = await super.checkIsUpToDate();
         if (!leafIsUpToDate && !this.recheckLeafIsUpToDate) {
             // Delete the done file so that even if we get interrupted, we will rebuild the next time.
-            // Unless recheck is enable, which means the task has the ability to determine whether it 
+            // Unless recheck is enable, which means the task has the ability to determine whether it
             // needs to be rebuilt even the initial check failed
             const doneFileFullPath = this.doneFileFullPath;
             try {
@@ -309,7 +309,7 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 
 export class UnknownLeafTask extends LeafTask {
     protected addDependentTasks(dependentTasks: LeafTask[]) {
-        // Because we don't know, we need to depends on all the task in the dependent packages  
+        // Because we don't know, we need to depends on all the task in the dependent packages
         for (const child of this.node.dependentPackages) {
             if (child.task) {
                 child.task.collectLeafTasks(dependentTasks);
