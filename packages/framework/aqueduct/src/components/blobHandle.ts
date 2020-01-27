@@ -16,7 +16,7 @@ import { ISharedDirectory } from "@microsoft/fluid-map";
  * This class represents blob (long string)
  * This object is used only when creating (writing) new blob and serialization purposes.
  * De-serialization process goes through ComponentHandle and request flow:
- * PrimedComponent.request() recognizes requests in the form of '/blobs/<id>'
+ * PrimedComponent.request() recognizes requests in the form of `/blobs/<id>`
  * and loads blob.
  */
 export class BlobHandle implements IComponentHandle {

@@ -1,10 +1,15 @@
 Get a cert from //ssladmin for the uri you want.
-Turn your pfx into a pem. Turn your cert into a .key and .crt file. A private and public key.
+Turn your pfx into a pem. Turn your cert into a .key (private key) and .crt (public key) file.
 
 ```bash
 openssl pkcs12 -in eu2_cert.pfx -out eu2-cert.pem -nodes
 openssl rsa -in eu2-cert.pem -out tls.key
 openssl x509 -in eu2-cert.pem -out tls.crt
+```
+
+If the .crt file does not include full certificate chain, run the following command to generate intermediate certificates.
+```bash
+openssl crl2pkcs7 -nocrl -certfile eu2-cert.pem.pem | openssl pkcs7 -print_certs -out tls.crt
 ```
 
 Optionally generate dhparams. Or, much quicker, just take already generated ones from another of our servers

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-const MaxBatchSize = 100;
 /**
  * Manages a queue of work to be batch processed at next javascript turn of execution
  */
@@ -16,7 +15,8 @@ export class BatchManager<T> {
      * @param process - callback to process the work
      */
     constructor(
-        private readonly process: (id: string, work: T[]) => void) {
+        private readonly process: (id: string, work: T[]) => void,
+        private readonly maxBatchSize: number = 100) {
     }
 
     /**
@@ -33,7 +33,7 @@ export class BatchManager<T> {
         this.pendingWork.get(id)!
             .push(work);
 
-        if (this.pendingWork.get(id)!.length >= MaxBatchSize) {
+        if (this.pendingWork.get(id)!.length >= this.maxBatchSize) {
             if (this.pendingTimer !== undefined) {
                 clearTimeout(this.pendingTimer);
             }

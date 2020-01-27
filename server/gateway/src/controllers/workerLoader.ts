@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { parse } from "url";
 import {
     IComponentRunnable,
     IRequest,
@@ -21,7 +22,6 @@ import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { WebCodeLoader } from "@microsoft/fluid-web-code-loader";
 import * as Comlink from "comlink";
-import { parse } from "url";
 
 // Loader class to load a container and proxy component interfaces from within a web worker.
 // Only supports IComponentRunnable for now.
@@ -47,12 +47,13 @@ class WorkerLoader implements ILoader, IComponentRunnable {
                 new DefaultErrorTracking(),
                 false,
                 true,
+                // eslint-disable-next-line no-null/no-null
                 null);
         } else {
             factory = new OdspDocumentServiceFactory(
                 "", // figure this out
-                (siteUrl: string) => Promise.resolve(this.resolved.tokens.storageToken),
-                () => Promise.resolve(this.resolved.tokens.socketToken),
+                async (siteUrl: string) => Promise.resolve(this.resolved.tokens.storageToken),
+                async () => Promise.resolve(this.resolved.tokens.socketToken),
                 new BaseTelemetryNullLogger());
         }
         const documentService: IDocumentService = await factory.createDocumentService(this.resolved);
@@ -66,8 +67,7 @@ class WorkerLoader implements ILoader, IComponentRunnable {
             request,
             new BaseTelemetryNullLogger());
 
-        // tslint:disable no-non-null-assertion
-        if (this.container.deltaManager!.referenceSequenceNumber <= this.fromSequenceNumber) {
+        if (this.container.deltaManager.referenceSequenceNumber <= this.fromSequenceNumber) {
             await new Promise((resolve, reject) => {
                 const opHandler = (message: ISequencedDocumentMessage) => {
                     if (message.sequenceNumber > this.fromSequenceNumber) {
