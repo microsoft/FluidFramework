@@ -96,7 +96,7 @@ export class OdspDocumentService implements IDocumentService {
                 // Exceptions: race conditions around expiration, revoked tokens, host that does not care (fluid-fetcher)
                 this.logger.sendTelemetryEvent({ eventName: "StorageTokenRefresh" });
             }
-            const event = PerformanceEvent.start(this.logger, { eventName: `${name || "OdspDocumentService"}GetToken` });
+            const event = PerformanceEvent.start(this.logger, { eventName: `${name || "OdspDocumentService"}_GetToken` });
             let token: Promise<string | null>;
             try {
                 token = getStorageToken(this.siteUrl, refresh);
