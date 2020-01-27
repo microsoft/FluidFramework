@@ -8,6 +8,7 @@ import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aquedu
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+import uuid from "uuid/v4";
 
 import { IVltavaDataModel, VltavaDataModel } from "./dataModel";
 import { VltavaView } from "./view";
@@ -33,6 +34,12 @@ export class Vltava extends PrimedComponent implements IComponentHTMLVisual {
     }
 
     public get IComponentHTMLVisual() { return this; }
+
+    protected async componentInitializingFirstTime(props: any) {
+        const defaultComponentId = uuid();
+        await this.createAndAttachComponent(defaultComponentId, "clicker");
+        this.root.set("default-component-id", defaultComponentId);
+    }
 
     protected async componentHasInitialized() {
         this.dataModelInternal =

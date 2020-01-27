@@ -4,7 +4,7 @@
  */
 /* eslint-disable import/no-internal-modules */
 
-import {ClickerName, ClickerInstantiationFactory} from "@fluid-example/clicker";
+import { ClickerInstantiationFactory } from "@fluid-example/clicker";
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 
 import { Vltava } from "./vltava";
@@ -19,6 +19,6 @@ export const fluidExport = new SimpleModuleInstantiationFactory(
     chaincodeName,
     new Map([
         [chaincodeName, Promise.resolve(Vltava.getFactory())],
-        [ClickerName, Promise.resolve(ClickerInstantiationFactory)],
+        ["clicker", Promise.resolve(ClickerInstantiationFactory)],
     ]),
 );
