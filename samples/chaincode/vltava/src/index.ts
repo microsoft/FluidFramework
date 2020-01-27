@@ -7,6 +7,7 @@
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 
+import { Tabs } from "./components";
 import { Vltava } from "./vltava";
 
 const chaincodeName = "vltava";
@@ -20,5 +21,6 @@ export const fluidExport = new SimpleModuleInstantiationFactory(
     new Map([
         [chaincodeName, Promise.resolve(Vltava.getFactory())],
         ["clicker", Promise.resolve(ClickerInstantiationFactory)],
+        ["tabs", Promise.resolve(Tabs.getFactory())],
     ]),
 );

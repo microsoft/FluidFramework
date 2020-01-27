@@ -14,7 +14,7 @@ import { IVltavaDataModel, VltavaDataModel } from "./dataModel";
 import { VltavaView } from "./view";
 
 /**
- * Vltava is a defualt component manager
+ * Vltava is a default component manager
  */
 export class Vltava extends PrimedComponent implements IComponentHTMLVisual {
     private dataModelInternal: IVltavaDataModel | undefined;
@@ -37,7 +37,7 @@ export class Vltava extends PrimedComponent implements IComponentHTMLVisual {
 
     protected async componentInitializingFirstTime(props: any) {
         const defaultComponentId = uuid();
-        await this.createAndAttachComponent(defaultComponentId, "clicker");
+        await this.createAndAttachComponent(defaultComponentId, "tabs");
         this.root.set("default-component-id", defaultComponentId);
     }
 
