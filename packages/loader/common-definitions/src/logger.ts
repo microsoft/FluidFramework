@@ -4,7 +4,7 @@
  */
 
 // Examples of known categories, however category can be any string for extensibility
-export type TelemetryEventCategory = "generic" | "error" | "activity";
+export type TelemetryEventCategory = "generic" | "error" | "performance";
 
 // Logging entire objects is considered extremely dangerous from a telemetry point of view because people
 // can easily add fields to objects that shouldn't be logged and not realize it's going to be logged.
