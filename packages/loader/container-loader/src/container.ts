@@ -672,7 +672,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         perfEvent.end({
             existing: this._existing,
             sequenceNumber: attributes.sequenceNumber,
-            version: maybeSnapshotTree ? maybeSnapshotTree.id : undefined,
+            version: maybeSnapshotTree && maybeSnapshotTree.id !== null ? maybeSnapshotTree.id : undefined,
         });
 
         if (!pause) {
@@ -739,7 +739,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 case MessageType.Summarize:
                     protocolLogger.sendTelemetryEvent({
                         eventName: "Summarize",
-                        message: message.contents as ISummaryContent,
+                        message: (message.contents as ISummaryContent).toString(),
                         summarySequenceNumber: message.sequenceNumber,
                         refSequenceNumber: message.referenceSequenceNumber,
                     });
