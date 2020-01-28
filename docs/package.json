@@ -11,7 +11,9 @@
     "build:vuepress": "vuepress build --dest ./dist",
     "clean": "rimraf api",
     "lint": "vuepress check-md",
-    "start": "npm run build:copy && node buildDocs.js && vuepress dev",
+    "start": "npm run build:copy && node buildDocs.js && npm run start:vuepress",
+    "start:docker": "npm run build:copy && node buildDocs.js && npm run start:vuepress",
+    "start:vuepress": "vuepress dev --port 8080 --no-clear-screen",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
