@@ -4,13 +4,13 @@
  */
 
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
-
 import * as React from "react";
 
 import "react-tabs/style/react-tabs.css";
 
 import { EmbeddedComponentWrapper } from "../../lib";
-import { ITabsDataModel } from "./dataModel";
+import { ITabsDataModel, TabComponents } from "./dataModel";
+import { NewTabButton } from "./newTabButton";
 
 export interface ITabsViewProps {
     dataModel: ITabsDataModel;
@@ -21,11 +21,12 @@ export interface ITabsViewState {
     tabIndex: number;
 }
 
+
 export class TabsView extends React.Component<ITabsViewProps, ITabsViewState> {
     constructor(props: ITabsViewProps) {
         super(props);
 
-        const ids=props.dataModel.getTabIds();
+        const ids = props.dataModel.getTabIds();
         this.state = {
             ids,
             tabIndex: 0,
@@ -53,11 +54,11 @@ export class TabsView extends React.Component<ITabsViewProps, ITabsViewState> {
         Array.from(this.state.ids).forEach((id) => {
             tabs.push(
                 <Tab key={id}>
-                    {id.substring(0,3)}
+                    {id.substring(0, 3)}
                 </Tab>);
             tabPanel.push(
                 <TabPanel key={id}>
-                    <EmbeddedComponentWrapper id={id} getComponent={this.props.dataModel.getComponent}/>
+                    <EmbeddedComponentWrapper id={id} getComponent={this.props.dataModel.getComponent} />
                 </TabPanel>);
         });
 
@@ -67,17 +68,17 @@ export class TabsView extends React.Component<ITabsViewProps, ITabsViewState> {
                 onSelect={(tabIndex) => this.setState({ tabIndex })}>
                 <TabList>
                     {tabs}
-                    <li
-                        className="react-tabs__tab"
-                        onClick={this.createNewTab}>➕</li>
+                    <li className="react-tabs__tab">
+                        <NewTabButton createTab={this.createNewTab}/>
+                    </li>
                 </TabList>
                 {tabPanel}
             </Tabs>
         );
     }
 
-    private async createNewTab() {
-        await this.props.dataModel.createTab();
+    private async createNewTab(type: TabComponents) {
+        await this.props.dataModel.createTab(type);
     }
 }
 

@@ -13,10 +13,12 @@ import {
 import uuid from "uuid/v4";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 
+export type TabComponents = "clicker";
+
 export interface ITabsDataModel extends EventEmitter{
     getComponent(id: string): Promise<IComponent>;
     getTabIds(): string[];
-    createTab(): Promise<string>;
+    createTab(type: TabComponents): Promise<string>;
 }
 
 export class TabsDataModel extends EventEmitter implements ITabsDataModel {
@@ -50,9 +52,9 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
         return Array.from(this.tabs.keys());
     }
 
-    public async createTab(): Promise<string> {
+    public async createTab(type: TabComponents): Promise<string> {
         const newId = uuid();
-        const component = await this.createAndAttachComponent(newId, "clicker");
+        const component = await this.createAndAttachComponent(newId, type);
         this.tabs.set(newId, component.IComponentHandle);
         this.emit("newTab", true);
         return newId;
