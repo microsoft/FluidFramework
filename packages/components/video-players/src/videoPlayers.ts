@@ -14,7 +14,8 @@ import {
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentHandle, ComponentRuntime } from "@microsoft/fluid-component-runtime";
-import { IComponentCollection, IComponentLayout } from "@microsoft/fluid-framework-interfaces";
+import { IComponentLayout } from "@microsoft/fluid-framework-experimental";
+import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";

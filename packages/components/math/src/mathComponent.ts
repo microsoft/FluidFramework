@@ -19,10 +19,12 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentHandle, ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import {
-    ComponentCursorDirection,
-    IComponentCollection,
-    IComponentCursor,
     IComponentLayout,
+    ComponentCursorDirection,
+    IComponentCursor,
+} from "@microsoft/fluid-framework-experimental";
+import {
+    IComponentCollection,
 } from "@microsoft/fluid-framework-interfaces";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
