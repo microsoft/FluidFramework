@@ -54,10 +54,12 @@ describe("TestSignals", () => {
             });
 
             user1Document.runtime.submitSignal("TestSignal", true);
+            await documentDeltaEventManager.process();
             assert.equal(user1SignalReceivedCount, 1, "client 1 did not received signal");
             assert.equal(user2SignalReceivedCount, 1, "client 2 did not received signal");
 
             user2Document.runtime.submitSignal("TestSignal", true);
+            await documentDeltaEventManager.process();
             assert.equal(user1SignalReceivedCount, 2, "client 1 did not received signal");
             assert.equal(user2SignalReceivedCount, 2, "client 2 did not received signal");
 

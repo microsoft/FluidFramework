@@ -127,7 +127,7 @@ describe("Runtime", () => {
                     emitter.on("batchBegin", () => {
                         // When we receive a "batchBegin" event, we should not have any outstanding
                         // events, i.e., batchBegin and batchEnd should be equal.
-                        assert.strictEqual(batchBegin, batchEnd);
+                        assert.strictEqual(batchBegin, batchEnd, "Received batchBegin before batchEnd for previous batch");
                         batchBegin++;
                     });
 
@@ -135,14 +135,14 @@ describe("Runtime", () => {
                         batchEnd++;
                         // Every "batchEnd" event should correspond to a "batchBegin" event, i.e.,
                         // batchBegin and batchEnd should be equal.
-                        assert.strictEqual(batchBegin, batchEnd);
+                        assert.strictEqual(batchBegin, batchEnd, "Received batcEnd without corresponding batchBegin");
                     });
                 });
 
                 afterEach(() => {
                     batchBegin = 0;
                     batchEnd = 0;
-                });
+                })
 
                 it("Single non-batch message", () => {
                     const clientId: string = "test-client";
@@ -156,8 +156,8 @@ describe("Runtime", () => {
                     scheduleManager.beginOperation(message as ISequencedDocumentMessage);
                     scheduleManager.endOperation(undefined, message as ISequencedDocumentMessage);
 
-                    assert.strictEqual(1, batchBegin);
-                    assert.strictEqual(1, batchEnd);
+                    assert.strictEqual(1, batchBegin, "Did not receive correct batchBegin events");
+                    assert.strictEqual(1, batchEnd, "Did not receive correct batchEnd events");
                 });
 
                 it("Multiple non-batch messages", () => {
@@ -184,8 +184,8 @@ describe("Runtime", () => {
                     scheduleManager.beginOperation(message as ISequencedDocumentMessage);
                     scheduleManager.endOperation(undefined, message as ISequencedDocumentMessage);
 
-                    assert.strictEqual(5, batchBegin);
-                    assert.strictEqual(5, batchEnd);
+                    assert.strictEqual(5, batchBegin, "Did not receive correct batchBegin events");
+                    assert.strictEqual(5, batchEnd, "Did not receive correct batchEnd events");
                 });
 
                 it("Messages in a single batch", () => {
@@ -224,8 +224,8 @@ describe("Runtime", () => {
                     scheduleManager.endOperation(undefined, batchEndMessage as ISequencedDocumentMessage);
 
                     // We should have only received one "batchBegin" and one "batchEnd" for the batch.
-                    assert.strictEqual(1, batchBegin);
-                    assert.strictEqual(1, batchEnd);
+                    assert.strictEqual(1, batchBegin, "Did not receive correct batchBegin event for the batch");
+                    assert.strictEqual(1, batchEnd, "Did not receive correct batchEnd event for the batch");
                 });
             });
         });
