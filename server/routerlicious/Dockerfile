@@ -61,6 +61,7 @@ COPY packages/drivers/test-driver/package*.json packages/drivers/test-driver/
 COPY packages/drivers/create-new-driver/package*.json packages/drivers/create-new-driver/
 COPY packages/framework/aqueduct/package*.json packages/framework/aqueduct/
 COPY packages/framework/aqueduct-react/package*.json packages/framework/aqueduct-react/
+COPY packages/framework/experimental/package*.json packages/framework/experimental/
 COPY packages/framework/framework-definitions/package*.json packages/framework/framework-definitions/
 COPY packages/framework/undo-redo/package*.json packages/framework/undo-redo/
 COPY packages/loader/common-definitions/package*.json packages/loader/common-definitions/
@@ -115,7 +116,7 @@ COPY samples/chaincode/musica/package*.json samples/chaincode/musica/
 COPY samples/chaincode/persona/package*.json samples/chaincode/persona/
 COPY samples/chaincode/pollster/package*.json samples/chaincode/pollster/
 COPY samples/chaincode/prosemirror/package*.json samples/chaincode/prosemirror/
-COPY samples/chaincode/simple-component-embed/package*.json samples/chaincode/simple-component-embed/	
+COPY samples/chaincode/simple-component-embed/package*.json samples/chaincode/simple-component-embed/
 COPY samples/chaincode/simple-data-share/package*.json samples/chaincode/simple-data-share/
 COPY samples/chaincode/smde/package*.json samples/chaincode/smde/
 COPY samples/chaincode/spaces/package*.json samples/chaincode/spaces/
