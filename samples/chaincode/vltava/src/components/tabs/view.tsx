@@ -9,7 +9,7 @@ import {
     Route,
     Link,
 } from "react-router-dom";
-import { Tab, Tabs, TabList } from "react-tabs";
+import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 
 import * as React from "react";
 
@@ -21,32 +21,55 @@ export interface ITabsViewProps {
     dataModel: ITabsDataModel;
 }
 
-// export interface ITabsViewState {
+export interface ITabsViewState {
+    ids: Iterable<string>;
+    tabIndex: number;
+}
 
-// }
+export class TabsView extends React.Component<ITabsViewProps, ITabsViewState> {
+    constructor(props: ITabsViewProps) {
+        super(props);
 
-export class TabsView extends React.Component<ITabsViewProps> {
+        this.state = {
+            ids: props.dataModel.getTabIds(),
+            tabIndex: 0,
+        };
+
+        props.dataModel.on("newTab", () => this.setState({ids: props.dataModel.getTabIds()}));
+
+        this.onTabSelected = this.onTabSelected.bind(this);
+    }
+
+    private onTabSelected(tabIndex: number, tabsCount: number) {
+        if (tabIndex === tabsCount) {
+            this.props.dataModel.createTab();
+        }
+
+        this.setState({ tabIndex });
+    }
+
     render() {
+        const tabs = [];
+        tabs.push(<Tab>Tab 1</Tab>);
+
+        Array.from(this.state.ids).forEach((id) => {
+            tabs.push(
+                <Tab>
+                    <Link to={id}>
+                        {id}
+                    </Link>
+                </Tab>);
+        });
+
         return (
             <Router>
-                <Tabs>
+                <Tabs selectedIndex={this.state.tabIndex} onSelect={(index) => this.onTabSelected(index, tabs.length)}>
                     <TabList>
-                        <Tab>
-                            <Link to="/">
-                                Home
-                            </Link>
-                        </Tab>
-                        <Tab>
-                            <Link to="/about">
-                                About
-                            </Link>
-                        </Tab>
-                        <Tab>
-                            <Link to="/users">
-                                Users
-                            </Link>
-                        </Tab>
+                        {tabs}
+                        <Tab>➕</Tab>
                     </TabList>
+                    <TabPanel/>
+                    <TabPanel/>
                     <Switch>
                         <Route path="/about">
                             <div>about</div>

@@ -31,6 +31,11 @@ export class TabsComponent extends PrimedComponent implements IComponentHTMLVisu
 
     public get IComponentHTMLVisual() { return this; }
 
+    protected async componentInitializingFirstTime(props: any) {
+        // create the tabs directory
+        this.root.createSubDirectory("tab-ids");
+    }
+
     protected async componentHasInitialized() {
         this.dataModelInternal =
             new TabsDataModel(this.root, this.createAndAttachComponent.bind(this), this.getComponent.bind(this));
