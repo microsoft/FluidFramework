@@ -1,8 +1,3 @@
-/* eslint-disable @typescript-eslint/quotes */
-/* eslint-disable react/jsx-no-target-blank */
-/* eslint-disable react/no-unescaped-entities */
-/* eslint-disable max-len */
-/* eslint-disable @typescript-eslint/indent */
 /*!
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
@@ -14,22 +9,43 @@ import {
     Route,
     Link,
 } from "react-router-dom";
-import { Tab, Tabs, TabList } from 'react-tabs';
-
+import { Tab, Tabs, TabList } from "react-tabs";
 
 import * as React from "react";
-import 'react-tabs/style/react-tabs.css';
 
-export const tabsView = () => {
-    return (
-        <React.Fragment>
+import "react-tabs/style/react-tabs.css";
+
+import { ITabsDataModel } from "./dataModel";
+
+export interface ITabsViewProps {
+    dataModel: ITabsDataModel;
+}
+
+// export interface ITabsViewState {
+
+// }
+
+export class TabsView extends React.Component<ITabsViewProps> {
+    render() {
+        return (
             <Router>
                 <Tabs>
                     <TabList>
-                        <Tab><Link to="/">Home</Link></Tab>
-                        <Tab><Link to="/about">About</Link></Tab>
-                        <Tab><Link to="/users">Users</Link></Tab>
-                        <Link to="/users"><Tab>Users</Tab></Link>
+                        <Tab>
+                            <Link to="/">
+                                Home
+                            </Link>
+                        </Tab>
+                        <Tab>
+                            <Link to="/about">
+                                About
+                            </Link>
+                        </Tab>
+                        <Tab>
+                            <Link to="/users">
+                                Users
+                            </Link>
+                        </Tab>
                     </TabList>
                     <Switch>
                         <Route path="/about">
@@ -44,6 +60,6 @@ export const tabsView = () => {
                     </Switch>
                 </Tabs>
             </Router>
-        </React.Fragment >
-    );
-};
+        );
+    }
+}
