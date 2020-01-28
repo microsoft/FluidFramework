@@ -30,17 +30,23 @@ export class TabsView extends React.Component<ITabsViewProps, ITabsViewState> {
             tabIndex: 0,
         };
 
-        props.dataModel.on("newTab", () => this.setState({ids: props.dataModel.getTabIds()}));
+        props.dataModel.on("newTab", (local) => {
+            if (local) {
+                this.setState({
+                    ids: props.dataModel.getTabIds(),
+                    tabIndex: this.state.ids.length,
+                });
+            } else {
+                this.setState({
+                    ids: props.dataModel.getTabIds(),
+                });
+            }
+        });
 
         this.createNewTab = this.createNewTab.bind(this);
     }
 
-    createNewTab() {
-        this.props.dataModel.createTab();
-        this.setState({tabIndex: this.state.ids.length});
-    }
-
-    render() {
+    public render() {
         const tabs: JSX.Element[] = [];
         const tabPanel: JSX.Element[] = [];
         Array.from(this.state.ids).forEach((id) => {
@@ -67,6 +73,10 @@ export class TabsView extends React.Component<ITabsViewProps, ITabsViewState> {
                 {tabPanel}
             </Tabs>
         );
+    }
+
+    private async createNewTab() {
+        await this.props.dataModel.createTab();
     }
 }
 

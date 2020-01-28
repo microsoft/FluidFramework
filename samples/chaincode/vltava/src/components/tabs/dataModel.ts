@@ -16,7 +16,7 @@ import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions
 export interface ITabsDataModel extends EventEmitter{
     getComponent(id: string): Promise<IComponent>;
     getTabIds(): string[];
-    createTab(): string;
+    createTab(): Promise<string>;
 }
 
 export class TabsDataModel extends EventEmitter implements ITabsDataModel {
@@ -25,7 +25,7 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
 
     constructor(
         root: ISharedDirectory,
-        public readonly createAndAttachComponent: (id: string, pkg: string, props?: any) => Promise<IComponent>,
+        private readonly createAndAttachComponent: (id: string, pkg: string, props?: any) => Promise<IComponent>,
         public getComponent: (id: string) => Promise<IComponent>,
     ) {
         super();
@@ -40,8 +40,8 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
                 op: ISequencedDocumentMessage,
                 target: ISharedDirectory,
             ) => {
-                if (changed.path === this.tabs.absolutePath) {
-                    this.emit("newTab");
+                if (changed.path === this.tabs.absolutePath && !local) {
+                    this.emit("newTab", local);
                 }
             });
     }
@@ -50,9 +50,12 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
         return Array.from(this.tabs.keys());
     }
 
-    public createTab(): string {
+    public async createTab(): Promise<string> {
         const newId = uuid();
-        this.tabs.set(newId, "");
+
+        const component = await this.createAndAttachComponent("newId", "clicker");
+        this.tabs.set(newId, component.IComponentHandle);
+        this.emit("newTab", true);
         return newId;
     }
 }
