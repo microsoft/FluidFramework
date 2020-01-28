@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
-import { DebugLogger, TelemetryLogger, TelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import { DebugLogger, PerformanceEvent, TelemetryLogger, TelemetryNullLogger } from "@microsoft/fluid-core-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -89,14 +89,24 @@ export class OdspDocumentService implements IDocumentService {
             logger,
             { docId: hashedDocumentId });
 
-        this.getStorageToken = (refresh: boolean) => {
+        this.getStorageToken = (refresh: boolean, name?: string) => {
             if (refresh) {
                 // Potential perf issue:
                 // Host should optimize and provide non-expired tokens on all critical paths.
                 // Exceptions: race conditions around expiration, revoked tokens, host that does not care (fluid-fetcher)
                 this.logger.sendTelemetryEvent({ eventName: "StorageTokenRefresh" });
             }
-            return getStorageToken(this.siteUrl, refresh);
+            const event = PerformanceEvent.start(this.logger, { eventName: `${name || "OdspDocumentService"}_GetToken` });
+            let token: Promise<string | null>;
+            try {
+                token = getStorageToken(this.siteUrl, refresh);
+            } catch (error) {
+                event.cancel({}, error);
+                throw error;
+            }
+            event.end();
+
+            return token;
         };
 
         this.localStorageAvailable = isLocalStorageAvailable();
