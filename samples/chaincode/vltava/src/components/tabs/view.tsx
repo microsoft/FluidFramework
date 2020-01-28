@@ -51,7 +51,7 @@ export class TabsView extends React.Component<ITabsViewProps, ITabsViewState> {
                     {id}
                 </Tab>);
             tabPanel.push(
-                <TabPanel>
+                <TabPanel key={id}>
                     <div>{id}</div>
                 </TabPanel>);
         });
@@ -60,10 +60,13 @@ export class TabsView extends React.Component<ITabsViewProps, ITabsViewState> {
             <Tabs selectedIndex={this.state.tabIndex} onSelect={(tabIndex) => this.setState({ tabIndex })}>
                 <TabList>
                     {tabs}
+                    <Tab>foo</Tab>
+                    <Tab>bar</Tab>
                     <button onClick={() => this.props.dataModel.createTab()}>➕</button>
                 </TabList>
                 {tabPanel}
-                <TabPanel/>
+                <TabPanel>foo</TabPanel>
+                <TabPanel>bar</TabPanel>
             </Tabs>
         );
     }
