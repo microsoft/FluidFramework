@@ -27,4 +27,4 @@ RUN npm install
 FROM docs AS docpublish
 
 EXPOSE 8080
-CMD ["npm", "run", "daemon off;"]
+CMD ["npm", "run", "start:docker"]
