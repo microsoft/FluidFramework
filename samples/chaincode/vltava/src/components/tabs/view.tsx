@@ -31,6 +31,13 @@ export class TabsView extends React.Component<ITabsViewProps, ITabsViewState> {
         };
 
         props.dataModel.on("newTab", () => this.setState({ids: props.dataModel.getTabIds()}));
+
+        this.createNewTab = this.createNewTab.bind(this);
+    }
+
+    createNewTab() {
+        this.props.dataModel.createTab();
+        this.setState({tabIndex: this.state.ids.length});
     }
 
     render() {
@@ -55,7 +62,7 @@ export class TabsView extends React.Component<ITabsViewProps, ITabsViewState> {
                     {tabs}
                     <span
                         style={{paddingLeft:"5px", cursor:"pointer"}}
-                        onClick={() => this.props.dataModel.createTab()}>➕</span>
+                        onClick={this.createNewTab}>➕</span>
                 </TabList>
                 {tabPanel}
             </Tabs>
