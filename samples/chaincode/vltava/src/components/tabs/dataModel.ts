@@ -53,7 +53,6 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
     public createTab(): string {
         const newId = uuid();
         this.tabs.set(newId, "");
-        this.emit("newTab", newId);
-        return uuid();
+        return newId;
     }
 }

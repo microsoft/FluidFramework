@@ -3,12 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import {
-    BrowserRouter as Router,
-    Switch,
-    Route,
-    Link,
-} from "react-router-dom";
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 
 import * as React from "react";
@@ -49,40 +43,28 @@ export class TabsView extends React.Component<ITabsViewProps, ITabsViewState> {
     }
 
     render() {
-        const tabs = [];
-        tabs.push(<Tab>Tab 1</Tab>);
-
+        const tabs: JSX.Element[] = [];
+        const tabPanel: JSX.Element[] = [];
         Array.from(this.state.ids).forEach((id) => {
             tabs.push(
-                <Tab>
-                    <Link to={id}>
-                        {id}
-                    </Link>
+                <Tab key={id}>
+                    {id}
                 </Tab>);
+            tabPanel.push(
+                <TabPanel>
+                    <div>{id}</div>
+                </TabPanel>);
         });
 
         return (
-            <Router>
-                <Tabs selectedIndex={this.state.tabIndex} onSelect={(index) => this.onTabSelected(index, tabs.length)}>
-                    <TabList>
-                        {tabs}
-                        <Tab>➕</Tab>
-                    </TabList>
-                    <TabPanel/>
-                    <TabPanel/>
-                    <Switch>
-                        <Route path="/about">
-                            <div>about</div>
-                        </Route>
-                        <Route path="/users">
-                            <div>users</div>
-                        </Route>
-                        <Route path="/">
-                            <div>home</div>
-                        </Route>
-                    </Switch>
-                </Tabs>
-            </Router>
+            <Tabs selectedIndex={this.state.tabIndex} onSelect={(tabIndex) => this.setState({ tabIndex })}>
+                <TabList>
+                    {tabs}
+                    <button onClick={() => this.props.dataModel.createTab()}>➕</button>
+                </TabList>
+                {tabPanel}
+                <TabPanel/>
+            </Tabs>
         );
     }
 }
