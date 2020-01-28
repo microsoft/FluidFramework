@@ -15,7 +15,7 @@ import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions
 
 export interface ITabsDataModel extends EventEmitter{
     getComponent(id: string): Promise<IComponent>;
-    getTabIds(): Iterable<string>;
+    getTabIds(): string[];
     createTab(): string;
 }
 
@@ -46,8 +46,8 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
             });
     }
 
-    public getTabIds(): Iterable<string>{
-        return this.tabs.keys();
+    public getTabIds(): string[] {
+        return Array.from(this.tabs.keys());
     }
 
     public createTab(): string {

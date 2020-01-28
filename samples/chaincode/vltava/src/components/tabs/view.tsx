@@ -16,7 +16,7 @@ export interface ITabsViewProps {
 }
 
 export interface ITabsViewState {
-    ids: Iterable<string>;
+    ids: string[];
     tabIndex: number;
 }
 
@@ -24,22 +24,13 @@ export class TabsView extends React.Component<ITabsViewProps, ITabsViewState> {
     constructor(props: ITabsViewProps) {
         super(props);
 
+        const ids=props.dataModel.getTabIds();
         this.state = {
-            ids: props.dataModel.getTabIds(),
+            ids,
             tabIndex: 0,
         };
 
         props.dataModel.on("newTab", () => this.setState({ids: props.dataModel.getTabIds()}));
-
-        this.onTabSelected = this.onTabSelected.bind(this);
-    }
-
-    private onTabSelected(tabIndex: number, tabsCount: number) {
-        if (tabIndex === tabsCount) {
-            this.props.dataModel.createTab();
-        }
-
-        this.setState({ tabIndex });
     }
 
     render() {
@@ -48,7 +39,7 @@ export class TabsView extends React.Component<ITabsViewProps, ITabsViewState> {
         Array.from(this.state.ids).forEach((id) => {
             tabs.push(
                 <Tab key={id}>
-                    {id}
+                    {id.substring(0,3)}
                 </Tab>);
             tabPanel.push(
                 <TabPanel key={id}>
@@ -57,17 +48,18 @@ export class TabsView extends React.Component<ITabsViewProps, ITabsViewState> {
         });
 
         return (
-            <Tabs selectedIndex={this.state.tabIndex} onSelect={(tabIndex) => this.setState({ tabIndex })}>
+            <Tabs
+                selectedIndex={this.state.tabIndex}
+                onSelect={(tabIndex) => this.setState({ tabIndex })}>
                 <TabList>
                     {tabs}
-                    <Tab>foo</Tab>
-                    <Tab>bar</Tab>
-                    <button onClick={() => this.props.dataModel.createTab()}>➕</button>
+                    <span
+                        style={{paddingLeft:"5px", cursor:"pointer"}}
+                        onClick={() => this.props.dataModel.createTab()}>➕</span>
                 </TabList>
                 {tabPanel}
-                <TabPanel>foo</TabPanel>
-                <TabPanel>bar</TabPanel>
             </Tabs>
         );
     }
 }
+
