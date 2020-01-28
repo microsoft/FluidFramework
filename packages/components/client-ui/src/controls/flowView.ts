@@ -14,10 +14,12 @@ import {
 import { IGenericBlob } from "@microsoft/fluid-container-definitions";
 import {
     ComponentCursorDirection,
-    IComponentCollection,
     IComponentCursor,
     IComponentKeyHandlers,
     IComponentLayout,
+} from "@microsoft/fluid-framework-experimental";
+import {
+    IComponentCollection,
 } from "@microsoft/fluid-framework-interfaces";
 import * as types from "@microsoft/fluid-map";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
