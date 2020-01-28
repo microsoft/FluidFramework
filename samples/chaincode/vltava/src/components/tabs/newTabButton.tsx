@@ -28,6 +28,7 @@ const customSplitButtonStyles: IButtonStyles = {
         selectors: {
             [HighContrastSelector]: { border: "none" },
         },
+        height: 22,
     },
 };
 
