@@ -18,7 +18,6 @@
     "clean:docs": "rimraf packages/_api-extractor-temp docs/api/*/**",
     "clean:nyc": "rimraf nyc/**",
     "clean:r11s": "cd server/routerlicious && npm run clean",
-    "lint": "npm run tslint",
     "postinstall": "npm run postinstall:lerna && (npm run postinstall:fluid-build || true)",
     "layer-check": "cd tools/fluid-build && npm run layer-check",
     "layer-check:full": "cd tools/fluid-build && npm install && npm run build && npm run layer-check",
