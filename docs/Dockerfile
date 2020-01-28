@@ -19,8 +19,25 @@ FROM r11s AS docs
 WORKDIR /docs
 RUN npm install
 
+# Build
+RUN npm run build:ci
+
 #############################
 FROM docs AS docpublish
 
-EXPOSE 8080
-CMD ["npm", "run", "start:docker"]
+WORKDIR /
+
+RUN git config --global user.email "fluidrtdev@microsoft.com"
+RUN git config --global user.name "Fluid build server"
+
+ARG DOCSGITPASSWORD
+RUN git clone https://%24praguedocs:$DOCSGITPASSWORD@praguedocs.scm.azurewebsites.net:443/praguedocs.git praguedocs
+WORKDIR /praguedocs
+RUN git pull
+WORKDIR /
+RUN rsync docs/dist/ praguedocs/ -rv --exclude '.git'
+
+WORKDIR /praguedocs
+RUN git add .
+RUN git diff --quiet && git diff --staged --quiet || git commit -am 'Automated build'
+RUN git push

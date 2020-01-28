@@ -604,10 +604,14 @@ export class MathCollection implements IComponentLoadable, IComponentCollection,
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        const instanceId = request.url
-            .substr(1)
-            .substr(0, !request.url.includes("/", 1) ? request.url.length : request.url.indexOf("/"));
+        // Trim leading slash, if it exists
+        const trimmedUrl = request.url.startsWith("/") ? request.url.substr(1) : request.url;
 
+        // Next segment is math instance id, if it exists
+        const instanceId = trimmedUrl
+            .substr(0, !trimmedUrl.includes("/", 1) ? trimmedUrl.length : trimmedUrl.indexOf("/"));
+
+        // If no instance is requested, then the collection itself is being requested
         if (!instanceId) {
             return {
                 mimeType: "fluid/component",
