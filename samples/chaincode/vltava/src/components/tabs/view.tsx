@@ -9,6 +9,7 @@ import * as React from "react";
 
 import "react-tabs/style/react-tabs.css";
 
+import { EmbeddedComponentWrapper } from "../../lib";
 import { ITabsDataModel } from "./dataModel";
 
 export interface ITabsViewProps {
@@ -56,7 +57,7 @@ export class TabsView extends React.Component<ITabsViewProps, ITabsViewState> {
                 </Tab>);
             tabPanel.push(
                 <TabPanel key={id}>
-                    <div>{id}</div>
+                    <EmbeddedComponentWrapper id={id} getComponent={this.props.dataModel.getComponent}/>
                 </TabPanel>);
         });
 

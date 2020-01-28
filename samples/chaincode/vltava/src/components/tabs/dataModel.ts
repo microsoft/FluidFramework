@@ -52,8 +52,7 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
 
     public async createTab(): Promise<string> {
         const newId = uuid();
-
-        const component = await this.createAndAttachComponent("newId", "clicker");
+        const component = await this.createAndAttachComponent(newId, "clicker");
         this.tabs.set(newId, component.IComponentHandle);
         this.emit("newTab", true);
         return newId;
