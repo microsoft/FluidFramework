@@ -2,7 +2,7 @@
 
 This package contains experimental portions of the framework, primarily interface definitions for the framework's component model.
 
-Everything in this package should support scenarios that it is the goal of the framework to support. However, things in the package may not be fully realized, and need additional honing before they can be promoted to the framework itself.
+Everything in this package should support scenarios that it is the goal of the framework to support. Please file github issues, and work with contributors to determine this before submitting a pull request. However, things in this package may not be fully realized, and need additional honing before they can be promoted to the framework itself.
 
 Consumers of this package should be aware and prepared for both minor and major changes to occur as the code in this package is iterated upon.
 
