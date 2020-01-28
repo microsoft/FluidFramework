@@ -60,9 +60,9 @@ export class TabsView extends React.Component<ITabsViewProps, ITabsViewState> {
                 onSelect={(tabIndex) => this.setState({ tabIndex })}>
                 <TabList>
                     {tabs}
-                    <span
-                        style={{paddingLeft:"5px", cursor:"pointer"}}
-                        onClick={this.createNewTab}>➕</span>
+                    <li
+                        className="react-tabs__tab"
+                        onClick={this.createNewTab}>➕</li>
                 </TabList>
                 {tabPanel}
             </Tabs>
