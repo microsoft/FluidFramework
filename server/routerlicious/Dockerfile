@@ -61,8 +61,8 @@ COPY packages/drivers/test-driver/package*.json packages/drivers/test-driver/
 COPY packages/drivers/create-new-driver/package*.json packages/drivers/create-new-driver/
 COPY packages/framework/aqueduct/package*.json packages/framework/aqueduct/
 COPY packages/framework/aqueduct-react/package*.json packages/framework/aqueduct-react/
+COPY packages/framework/experimental/package*.json packages/framework/experimental/
 COPY packages/framework/framework-definitions/package*.json packages/framework/framework-definitions/
-COPY packages/framework/framework-experimental/package*.json packages/framework/framework-experimental/
 COPY packages/framework/undo-redo/package*.json packages/framework/undo-redo/
 COPY packages/loader/common-definitions/package*.json packages/loader/common-definitions/
 COPY packages/loader/component-core-interfaces/package*.json packages/loader/component-core-interfaces/
