@@ -4,11 +4,11 @@
  */
 
 import { IDocumentAttributes } from "@microsoft/fluid-protocol-definitions";
-import { ILocalOrdererSetup, IPubSub, ISubscriber, LocalOrderer } from "@microsoft/fluid-server-memory-orderer";
+import { ILocalOrdererSetup, LocalOrderer } from "@microsoft/fluid-server-memory-orderer";
 import {
     GitManager,
-    Historian,
     IGitManager,
+    IHistorian,
 } from "@microsoft/fluid-server-services-client";
 import {
     ICollection,
@@ -17,15 +17,11 @@ import {
     IOrderer,
     IOrdererManager,
     ISequencedOperationMessage,
-
     IDatabaseManager,
     IDocumentStorage,
     ITaskMessageSender,
     ITenantManager,
 } from "@microsoft/fluid-server-services-core";
-
-import { normalizePort } from "@microsoft/fluid-server-services-utils";
-import { Server } from "socket.io";
 
 export class LocalOrdererSetup implements ILocalOrdererSetup {
     constructor(
@@ -78,22 +74,6 @@ export class LocalOrdererSetup implements ILocalOrdererSetup {
     }
 }
 
-class LocalPubSub implements IPubSub {
-    constructor(private readonly io: Server) {
-    }
-
-    public subscribe(topic: string, subscriber: ISubscriber) {
-    }
-
-    public unsubscribe(topic: string, subscriber: ISubscriber) {
-    }
-
-    public publish(topic: string, ...args: any[]): void {
-        const event = args.shift();
-        this.io.to(topic).emit(event, ...args);
-    }
-}
-
 export class OrdererManager implements IOrdererManager {
     private readonly map = new Map<string, Promise<IOrderer>>();
 
@@ -104,7 +84,7 @@ export class OrdererManager implements IOrdererManager {
         private readonly taskMessageSender: ITaskMessageSender,
         private readonly permission: any, // Can probably remove
         private readonly maxMessageSize: number,
-        private readonly io: Server,
+        private readonly createHistorian: (tenant: string) => Promise<IHistorian>,
     ) {
     }
 
@@ -120,10 +100,7 @@ export class OrdererManager implements IOrdererManager {
     }
 
     private async createLocalOrderer(tenantId: string, documentId: string): Promise<IOrderer> {
-        const port = normalizePort(process.env.PORT || "3000");
-        const url = `http://localhost:${port}/repos/${encodeURIComponent(tenantId)}`;
-
-        const historian = new Historian(url, false, false);
+        const historian = await this.createHistorian(tenantId);
         const gitManager = new GitManager(historian);
 
         const localOrdererSetup = new LocalOrdererSetup(
@@ -143,8 +120,7 @@ export class OrdererManager implements IOrdererManager {
             this.permission,
             this.maxMessageSize,
             gitManager,
-            localOrdererSetup,
-            new LocalPubSub(this.io));
+            localOrdererSetup);
 
         // This is a temporary hack to work around promise bugs in the LocalOrderer load. The LocalOrderer does not
         // wait on dependant promises in lambda startup. So we give it time to prepare these before actually resolving
