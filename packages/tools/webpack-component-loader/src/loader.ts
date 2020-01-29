@@ -136,7 +136,7 @@ async function getResolvedPackage(
     };
 }
 
-function getUrlResolver(options: IRouteOptions): IUrlResolver {
+function getUrlResolver(documentId: string, options: IRouteOptions): IUrlResolver {
     switch (options.mode) {
         case "docker":
             return new InsecureUrlResolver(
@@ -169,7 +169,7 @@ function getUrlResolver(options: IRouteOptions): IUrlResolver {
                 options.bearerSecret);
 
         default: // Local
-            return new TestResolver();
+            return new TestResolver(documentId);
     }
 }
 
@@ -204,7 +204,7 @@ export async function start(
         url,
     };
 
-    const urlResolver = getUrlResolver(options);
+    const urlResolver = getUrlResolver(documentId, options);
 
     let documentServiceFactory: IDocumentServiceFactory;
     let deltaConn: ITestDeltaConnectionServer;
