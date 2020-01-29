@@ -17,12 +17,14 @@ IServiceError | ISummarizingError;
 export interface IGeneralError {
     readonly errorType: ErrorType.generalError;
     error: any;
+    critical?: boolean;
 }
 
 export interface IThrottlingError {
     readonly errorType: ErrorType.throttlingError;
     readonly message: string;
     readonly retryAfterSeconds: number;
+    critical?: boolean;
 }
 
 export interface IConnectionError {
@@ -31,12 +33,15 @@ export interface IConnectionError {
     readonly canRetry?: boolean;
     readonly statusCode?: number;
     readonly online: string;
+    critical?: boolean;
 }
 
 export interface IServiceError {
     readonly errorType: ErrorType.serviceError;
+    critical?: boolean;
 }
 
 export interface ISummarizingError {
     readonly errorType: ErrorType.summarizingError;
+    critical?: boolean;
 }

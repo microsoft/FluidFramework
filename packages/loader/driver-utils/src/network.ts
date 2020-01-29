@@ -20,11 +20,7 @@ export class NetworkError extends Error implements IConnectionError {
 
     // Return all properties
     public getCustomProperties(): object {
-        const prop = {};
-        for (const key of Object.getOwnPropertyNames(this)) {
-            prop[key] = this[key];
-        }
-        return prop;
+        return copyObjectProps(this);
     }
 }
 
@@ -41,12 +37,17 @@ export class ThrottlingError extends Error implements IThrottlingError {
     }
 
     public getCustomProperties() {
-        const prop = {};
-        for (const key of Object.getOwnPropertyNames(this)) {
-            prop[key] = this[key];
-        }
-        return prop;
+        return copyObjectProps(this);
     }
+}
+
+export function copyObjectProps(obj: object) {
+    const prop = {};
+    // Could not use {...obj} because it does not return properties of base class.
+    for (const key of Object.getOwnPropertyNames(obj)) {
+        prop[key] = obj[key];
+    }
+    return prop;
 }
 
 export enum OnlineStatus {
