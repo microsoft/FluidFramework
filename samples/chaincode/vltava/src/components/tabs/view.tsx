@@ -3,6 +3,11 @@
  * Licensed under the MIT License.
  */
 
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import * as React from "react";
 
@@ -57,13 +62,14 @@ export class TabsView extends React.Component<ITabsViewProps, ITabsViewState> {
                     {id.substring(0, 3)}
                 </Tab>);
             tabPanel.push(
-                <TabPanel key={id}>
+                <TabPanel key={id} style={{height:"100%"}}>
                     <EmbeddedComponentWrapper id={id} getComponent={this.props.dataModel.getComponent} />
                 </TabPanel>);
         });
 
         return (
             <Tabs
+                style={{ height: "100%"}}
                 selectedIndex={this.state.tabIndex}
                 onSelect={(tabIndex) => this.setState({ tabIndex })}>
                 <TabList>
@@ -72,7 +78,9 @@ export class TabsView extends React.Component<ITabsViewProps, ITabsViewState> {
                         <NewTabButton createTab={this.createNewTab}/>
                     </li>
                 </TabList>
-                {tabPanel}
+                <div style={{position: "relative", overflow:"hidden", height: "100%"}}>
+                    {tabPanel}
+                </div>
             </Tabs>
         );
     }

@@ -4,7 +4,8 @@
  */
 /* eslint-disable import/no-internal-modules */
 
-import { ClickerInstantiationFactory } from "@fluid-example/clicker";
+import { ClickerName, ClickerInstantiationFactory } from "@fluid-example/clicker";
+import { Spaces } from "@fluid-example/spaces/dist/spaces";
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 
 import { TabsComponent } from "./components";
@@ -20,7 +21,8 @@ export const fluidExport = new SimpleModuleInstantiationFactory(
     chaincodeName,
     new Map([
         [chaincodeName, Promise.resolve(Vltava.getFactory())],
-        ["clicker", Promise.resolve(ClickerInstantiationFactory)],
+        [ClickerName, Promise.resolve(ClickerInstantiationFactory)],
         ["tabs", Promise.resolve(TabsComponent.getFactory())],
+        ["spaces", Promise.resolve(Spaces.getFactory())],
     ]),
 );

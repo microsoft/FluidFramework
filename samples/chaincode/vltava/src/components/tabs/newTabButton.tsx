@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as React from "react";
 import {
     IButtonStyles,
@@ -45,6 +50,22 @@ export const NewTabButton: React.FunctionComponent<IButtonExampleProps> =
                     iconProps: { iconName: "NumberField" },
                     onClick: () => {
                         props.createTab("clicker");
+                    },
+                },
+                {
+                    key: "new-tabs",
+                    text: "Tabs",
+                    iconProps: { iconName: "BrowserTab" },
+                    onClick: () => {
+                        props.createTab("tabs");
+                    },
+                },
+                {
+                    key: "new-spaces",
+                    text: "Spaces",
+                    iconProps: { iconName: "SnapToGrid" },
+                    onClick: () => {
+                        props.createTab("spaces");
                     },
                 },
             ],

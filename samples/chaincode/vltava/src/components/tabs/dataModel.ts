@@ -12,8 +12,9 @@ import {
 
 import uuid from "uuid/v4";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import { ClickerName } from "@fluid-example/clicker";
 
-export type TabComponents = "clicker";
+export type TabComponents = "clicker" | "tabs" | "spaces";
 
 export interface ITabsDataModel extends EventEmitter{
     getComponent(id: string): Promise<IComponent>;
@@ -54,7 +55,7 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
 
     public async createTab(type: TabComponents): Promise<string> {
         const newId = uuid();
-        const component = await this.createAndAttachComponent(newId, type);
+        const component = await this.createAndAttachComponent(newId, type === "clicker" ? ClickerName : type);
         this.tabs.set(newId, component.IComponentHandle);
         this.emit("newTab", true);
         return newId;
