@@ -69,7 +69,7 @@ describe("Core-Utils", () => {
             const p = path.join(__dirname, `${dataDir}/images/bindy.svg`);
             const file = await getFileContents(p);
             const expectedHash = "c741e46ae4a5f1ca19debf0ac609aabc5fe94add";
-            const hash = await gitHashFile(file);
+            const hash = gitHashFile(file);
 
             assert.equal(hash, expectedHash);
         });

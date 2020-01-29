@@ -564,6 +564,8 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
                     const hash = await hashFile(Buffer.from(content, encoding));
                     await Promise.all(this.blobsCachePendingHashes.values());
+                    // Promises in blobsCachePendingHashes should get removed as they resolve
+                    assert(this.blobsCachePendingHashes.size === 0);
                     let completePath = this.blobsShaToPathCache.get(hash);
                     // If the cache has the hash of the blob and handle of last summary is also present, then use that
                     // to generate complete path for the given blob.

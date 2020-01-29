@@ -20,6 +20,7 @@ export async function blobUploadHandler(
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         fileToInclusion(files[0])
             .then(async (blob) => {
+                // uploadBlob fills in the blob's id value if it wasn't set initially
                 blob = await document.uploadBlob(blob);
                 blobDisplayCB(blob);
             });
