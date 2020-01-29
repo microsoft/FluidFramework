@@ -25,7 +25,7 @@ const r11sServers = [
 export class RouterliciousUrlResolver implements IUrlResolver {
 
     constructor(
-        private readonly config: { provider: Provider, tenantId: string, documentId: string} | undefined,
+        private readonly config: { provider: Provider, tenantId: string, documentId: string } | undefined,
         private readonly getToken: (() => Promise<string>) | undefined,
         private readonly appTenants: IAlfredTenant[],
         private readonly scopes?: ScopeType[],
@@ -46,93 +46,95 @@ export class RouterliciousUrlResolver implements IUrlResolver {
         const reqUrl = new URL(requestedUrl);
         const server = reqUrl.hostname.toLowerCase();
 
-        // What situation is this checking for?
-        if (r11sServers.includes(server) || (server === "localhost" && reqUrl.port === "3000") || this.config) {
-            const path = reqUrl.pathname.split("/");
-            let tenantId: string;
-            let documentId: string;
-            let provider: Provider | undefined;
-            if (this.config) {
-                tenantId = this.config.tenantId;
-                documentId = this.config.documentId;
-                provider = this.config.provider;
-            } else if (path.length >= 4) {
-                tenantId = path[2];
-                documentId = path[3];
-            } else {
-                tenantId = "fluid";
-                documentId = path[2];
-            }
-
-            let token: string;
-            if (!this.getToken) {
-                // eslint-disable-next-line @typescript-eslint/no-use-before-define
-                token = getR11sToken(tenantId, documentId, this.appTenants, this.scopes, this.user);
-            } else {
-                token = await this.getToken();
-            }
-
-            const isLocalHost = server === "localhost";
-            const isInternalRequest = server.includes("gateway");
-
-            const serverSuffix = isLocalHost ? `${server}:3003` : server.substring(4);
-
-            let fluidUrl = "fluid://" +
-                `${this.config ? parse(this.config.provider.get("worker:serverUrl")).host : serverSuffix}/` +
-                `${encodeURIComponent(tenantId)}/` +
-                `${encodeURIComponent(documentId)}`;
-
-            if (reqUrl.search) {
-                // In case of any additional parameters add them back to the url
-                const searchParams = reqUrl.search;
-                if (searchParams) {
-                    fluidUrl += searchParams;
-                }
-            }
-
-            let storageUrl = "";
-            let ordererUrl = "";
-            let deltaStorageUrl = "";
-
-            if (provider && isInternalRequest) {
-                storageUrl = provider.get("worker:internalBlobStorageUrl");
-                ordererUrl = provider.get("worker:alfredUrl");
-                deltaStorageUrl =
-                    // eslint-disable-next-line max-len
-                    `${provider.get("worker:alfredUrl")}/deltas/${encodeURIComponent(tenantId)}/${encodeURIComponent(documentId)}`;
-            } else if (provider) {
-                // this storageUrl seems incorrect when deployed, perhaps specifically to handle the localhost case?
-                storageUrl = provider.get("worker:blobStorageUrl").replace("historian:3000", "localhost:3001");
-                ordererUrl = provider.get("worker:serverUrl");
-                deltaStorageUrl =
-                    `${ordererUrl}/deltas/${encodeURIComponent(tenantId)}/${encodeURIComponent(documentId)}`;
-            } else if (isLocalHost) {
-                storageUrl = `http://localhost:3001`;
-                ordererUrl = `http://localhost:3003`;
-                deltaStorageUrl = `http://localhost:3003/deltas/${tenantId}/${documentId}`;
-            } else {
-                storageUrl = `https://historian.${serverSuffix}`;
-                ordererUrl = `https://alfred.${serverSuffix}`;
-                deltaStorageUrl = `https://alfred.${serverSuffix}/deltas/${tenantId}/${documentId}`;
-            }
-
-            storageUrl += `/repos/${tenantId}`;
-            ordererUrl += ``;
-            deltaStorageUrl += ``;
-
-            const resolved: IFluidResolvedUrl = {
-                endpoints: {
-                    storageUrl,
-                    deltaStorageUrl,
-                    ordererUrl,
-                },
-                tokens: { jwt: token },
-                type: "fluid",
-                url: fluidUrl,
-            };
-            return resolved;
+        // If we don't have a valid server or a prescriptive config, we cannot resolve the URL
+        if (!(r11sServers.includes(server) || (server === "localhost" && reqUrl.port === "3000") || this.config)) {
+            return undefined;
         }
-        return undefined;
+
+        const path = reqUrl.pathname.split("/");
+        let tenantId: string;
+        let documentId: string;
+        let provider: Provider | undefined;
+        if (this.config) {
+            tenantId = this.config.tenantId;
+            documentId = this.config.documentId;
+            provider = this.config.provider;
+        } else if (path.length >= 4) {
+            tenantId = path[2];
+            documentId = path[3];
+        } else {
+            tenantId = "fluid";
+            documentId = path[2];
+        }
+
+        let token: string;
+        if (!this.getToken) {
+            // eslint-disable-next-line @typescript-eslint/no-use-before-define
+            token = getR11sToken(tenantId, documentId, this.appTenants, this.scopes, this.user);
+        } else {
+            token = await this.getToken();
+        }
+
+        const isLocalHost = server === "localhost";
+        const isInternalRequest = server.includes("gateway"); // e.g. gateway:3000 || fierce-dog-gateway:3000
+
+        const serverSuffix = isLocalHost ? `${server}:3003` : server.substring(4);
+
+        let fluidUrl = "fluid://" +
+            `${this.config ? parse(this.config.provider.get("worker:serverUrl")).host : serverSuffix}/` +
+            `${encodeURIComponent(tenantId)}/` +
+            `${encodeURIComponent(documentId)}`;
+
+
+        // In case of any additional parameters add them back to the url
+        if (reqUrl.search) {
+            const searchParams = reqUrl.search;
+            if (searchParams) {
+                fluidUrl += searchParams;
+            }
+        }
+
+        let storageUrl = "";
+        let ordererUrl = "";
+        let deltaStorageUrl = "";
+
+        // There is no provider when using debugging tooling and tiny-web-host
+        if (provider && isInternalRequest) {
+            storageUrl = provider.get("worker:internalBlobStorageUrl");
+            ordererUrl = provider.get("worker:alfredUrl");
+            deltaStorageUrl =
+                // eslint-disable-next-line max-len
+                `${provider.get("worker:alfredUrl")}/deltas/${encodeURIComponent(tenantId)}/${encodeURIComponent(documentId)}`;
+        } else if (provider) {
+            storageUrl = provider.get("worker:blobStorageUrl").replace("historian:3000", "localhost:3001");
+            ordererUrl = provider.get("worker:serverUrl");
+            deltaStorageUrl =
+                `${ordererUrl}/deltas/${encodeURIComponent(tenantId)}/${encodeURIComponent(documentId)}`;
+        } else if (isLocalHost) {
+            storageUrl = `http://localhost:3001`;
+            ordererUrl = `http://localhost:3003`;
+            deltaStorageUrl = `http://localhost:3003/deltas/${tenantId}/${documentId}`;
+        } else {
+            storageUrl = `https://historian.${serverSuffix}`;
+            ordererUrl = `https://alfred.${serverSuffix}`;
+            deltaStorageUrl = `https://alfred.${serverSuffix}/deltas/${tenantId}/${documentId}`;
+        }
+
+        storageUrl += `/repos/${tenantId}`;
+        ordererUrl += ``;
+        deltaStorageUrl += ``;
+
+        const resolved: IFluidResolvedUrl = {
+            endpoints: {
+                storageUrl,
+                deltaStorageUrl,
+                ordererUrl,
+            },
+            tokens: { jwt: token },
+            type: "fluid",
+            url: fluidUrl,
+        };
+        return resolved;
     }
 }
 
