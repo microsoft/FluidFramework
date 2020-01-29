@@ -31,13 +31,21 @@ export class RouterliciousUrlResolver implements IUrlResolver {
         private readonly user?: IAlfredUser) {
     }
 
+    /**
+     * Handles a request and returns the relevant endpoints for the environment
+     */
     public async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
         let requestedUrl = request.url;
+
+        // If we know the original hostname, reinsert it
         if (this.config && request.url.startsWith("/")) {
-            requestedUrl = `http://dummy:3000${request.url}`;
+            requestedUrl = `http://${(request.hostname ? request.hostname : "dummy")}:3000${request.url}`;
         }
+
         const reqUrl = new URL(requestedUrl);
         const server = reqUrl.hostname.toLowerCase();
+
+        // What situation is this checking for?
         if (r11sServers.includes(server) || (server === "localhost" && reqUrl.port === "3000") || this.config) {
             const path = reqUrl.pathname.split("/");
             let tenantId: string;
@@ -61,8 +69,11 @@ export class RouterliciousUrlResolver implements IUrlResolver {
                 token = await this.getToken();
             }
 
-            const isLocalHost = server === "localhost" ? true : false;
+            const isLocalHost = server === "localhost";
+            const isInternalRequest = server.includes("gateway");
 
+            // if isLocalhost, serverSuffix = dummy:3000
+            // What is this server object?
             const serverSuffix = isLocalHost ? `${server}:3003` : server.substring(4);
 
             let fluidUrl = "fluid://" +
@@ -77,6 +88,51 @@ export class RouterliciousUrlResolver implements IUrlResolver {
                     fluidUrl += searchParams;
                 }
             }
+            let storageUrl2 = "";
+            let ordererUrl2 = "";
+            let deltaStorageUrl2 = "";
+
+            /* eslint-disable max-len */
+            // tslint-disable: max-length
+
+            // Local deployment + Not a request from tiny-web-host || FluidFetchInit
+            // Also Kube Deployments have a config.json
+            if (this.config) {
+                // this storageUrl seems incorrect, perhaps specifically to handle, w
+                storageUrl2 = this.config.blobStorageUrl.replace("historian:3000", "localhost:3001");
+                ordererUrl2 = this.config.serverUrl;
+                deltaStorageUrl2 = `${this.config.serverUrl}/deltas/${encodeURIComponent(tenantId)}/${encodeURIComponent(documentId)}`;
+            } else if (isInternalRequest) {
+                
+            // Not sure when this would happen...
+            } else if (isLocalHost) {
+                storageUrl2 = `localhost:3001`;
+                ordererUrl2 = `http://localhost:3003`;
+                deltaStorageUrl2 = `http://localhost:3003/deltas/${tenantId}/${documentId}`;
+
+            // Live server situation
+            } else {
+                storageUrl2 = `https://historian.${serverSuffix}`;
+                ordererUrl2 = `https://alfred.${serverSuffix}`;
+                deltaStorageUrl2 = `https://alfred.${serverSuffix}/deltas/${tenantId}/${documentId}`;
+            }
+            storageUrl2 += `/repos/${tenantId}`;
+            ordererUrl2 += ``;
+            deltaStorageUrl2 += ``;
+            console.log(`${storageUrl2}... ${ordererUrl2}... ${deltaStorageUrl2}`);
+
+            // const resolvedReturn = {
+            //     endpoints:{
+            //         storageUrl:"https://historian.wu2-ppe.prague.office-int.com/repos/fluid",
+            //         deltaStorageUrl:"https://alfred.wu2-ppe.prague.office-int.com/deltas/fluid/Cantisfvl",
+            //         ordererUrl:"https://alfred.wu2-ppe.prague.office-int.com"
+            //     },
+            //     tokens: {
+            //         jwt: "",
+            //     },
+            //     type: "fluid",
+            //     url: "fluid://alfred.wu2-ppe.prague.office-int.com/fluid/Cantisfvl?chaincode=@fluid-example/prosemirror@^0.10.0?chaincode=@fluid-example/prosemirror@^0.10.0"};
+            /* eslint-enable max-len */
 
             const storageUrl =
                 `${(this.config ? this.config.blobStorageUrl.replace("historian:3000", "localhost:3001")
@@ -84,7 +140,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
                         ? `http://localhost:3001` : `https://historian.${serverSuffix}`)}/repos/${tenantId}`;
             const ordererUrl = this.config ? this.config.serverUrl :
                 isLocalHost ?
-                    `http://localhost:3003/` : `https://alfred.${serverSuffix}`;
+                    `http://localhost:3003` : `https://alfred.${serverSuffix}`;
             const deltaStorageUrl = this.config ?
                 `${this.config.serverUrl}/deltas/${encodeURIComponent(tenantId)}/${encodeURIComponent(documentId)}`
                 : isLocalHost ?

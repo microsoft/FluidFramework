@@ -53,6 +53,7 @@ export function create(
      * Loading of a specific fluid document.
      */
     router.get("/:tenantId/*", spoEnsureLoggedIn(), ensureLoggedIn(), (request, response) => {
+
         const start = Date.now();
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         const chaincode: string = request.query.chaincode ? request.query.chaincode : "";

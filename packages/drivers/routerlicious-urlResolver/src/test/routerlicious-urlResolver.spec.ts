@@ -7,7 +7,8 @@
 
 import * as assert from "assert";
 import { IFluidResolvedUrl } from "@microsoft/fluid-driver-definitions";
-import { RouterliciousUrlResolver } from "../urlResolver";
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { RouterliciousUrlResolver, IConfig } from "../urlResolver";
 
 describe("Routerlicious Url Resolver", () => {
 
@@ -30,7 +31,99 @@ describe("Routerlicious Url Resolver", () => {
         assert.equal(resolved.tokens.jwt, token, "Token does not match");
         assert.equal(resolved.endpoints.storageUrl, "http://localhost:3001/repos/fluid", "Storage url does not match");
         assert.equal(resolved.endpoints.deltaStorageUrl, "http://localhost:3003/deltas/fluid/damp-competition", "Delta storage url does not match");
-        assert.equal(resolved.endpoints.ordererUrl, "http://localhost:3003/", "Orderer url does not match");
+        assert.equal(resolved.endpoints.ordererUrl, "http://localhost:3003", "Orderer url does not match");
         assert.equal(resolved.url, "fluid://localhost:3003/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0", "FluidUrl does not match");
+    });
+
+    it("Should handle hostname in local External request", async () => {
+        const request: IRequest = {
+            url: "/loader/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0",
+            hostname: "localhost",
+        };
+
+        const config: IConfig = {
+            serverUrl: "http://localhost:3003",
+            blobStorageUrl: "http://historian:3000",
+            tenantId: "fluid",
+            documentId: "damp-competition",
+        };
+        const urlResolver = new RouterliciousUrlResolver(config, async () => Promise.resolve(token), []);
+
+
+        const {endpoints, url} = (await urlResolver.resolve(request)) as IFluidResolvedUrl;
+
+        assert.equal(endpoints.storageUrl, "http://localhost:3001/repos/fluid", "Improperly Formed storageUrl");
+        assert.equal(endpoints.deltaStorageUrl, "http://localhost:3003/deltas/fluid/damp-competition", "Improperly Formed deltaStorageUrl");
+        assert.equal(endpoints.ordererUrl, "http://localhost:3003", "Improperly Formed OrdererUrl");
+        assert.equal(url, "fluid://localhost:3003/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0", "Improperly formed FluidURL");
+    });
+
+    it("Should handle hostname in local Internal request", async () => {
+        const request: IRequest = {
+            url: "/loader/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0",
+            hostname: "gateway",
+        };
+
+        const config: IConfig = {
+            serverUrl: "http://localhost:3003",
+            blobStorageUrl: "http://historian:3000",
+            tenantId: "fluid",
+            documentId: "damp-competition",
+        };
+
+        const urlResolver = new RouterliciousUrlResolver(config, async () => Promise.resolve(token), []);
+        const {endpoints, url} = (await urlResolver.resolve(request)) as IFluidResolvedUrl;
+
+        assert.equal(endpoints.storageUrl, "http://historian:3000/repos/fluid", "Improperly Formed storageUrl");
+        assert.equal(endpoints.deltaStorageUrl, "http://alfred:3000/deltas/fluid/damp-competition", "Improperly Formed deltaStorageUrl");
+        assert.equal(endpoints.ordererUrl, "http://alfred:3000", "Improperly Formed OrdererUrl");
+        assert.equal(url, "fluid://localhost:3003/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0", "Improperly formed FluidURL");
+    });
+
+    // ------------------------------
+
+    it("Should handle hostname in Deployed Internal request", async () => {
+        const request: IRequest = {
+            url: "/loader/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0",
+            hostname: "gateway",
+        };
+
+        const config: IConfig = {
+            serverUrl: "http://localhost:3003",
+            blobStorageUrl: "http://historian:3000",
+            tenantId: "fluid",
+            documentId: "damp-competition",
+        };
+
+        const urlResolver = new RouterliciousUrlResolver(config, async () => Promise.resolve(token), []);
+        const {endpoints, url} = (await urlResolver.resolve(request)) as IFluidResolvedUrl;
+
+        assert.equal(endpoints.storageUrl, "http://historian:3000/repos/fluid", "Improperly Formed storageUrl");
+        assert.equal(endpoints.deltaStorageUrl, "http://alfred:3000/deltas/fluid/damp-competition", "Improperly Formed deltaStorageUrl");
+        assert.equal(endpoints.ordererUrl, "http://alfred:3000", "Improperly Formed OrdererUrl");
+        assert.equal(url, "fluid://localhost:3003/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0", "Improperly formed FluidURL");
+    });
+
+
+    it("Should handle hostname in deployed External request", async () => {
+        const request: IRequest = {
+            url: "/loader/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0",
+            hostname: "www.wu2-ppe.prague.office-int",
+        };
+
+        const config: IConfig = {
+            serverUrl: "https://alfred.wu2-ppe.prague.office-int.com",
+            blobStorageUrl: "https://historian.wu2-ppe.prague.office-int.com",
+            tenantId: "fluid",
+            documentId: "damp-competition",
+        };
+
+        const urlResolver = new RouterliciousUrlResolver(config, async () => Promise.resolve(token), []);
+        const {endpoints, url} = (await urlResolver.resolve(request)) as IFluidResolvedUrl;
+
+        assert.equal(endpoints.storageUrl, "https://historian.wu2-ppe.prague.office-int.com/repos/fluid", "Storage url does not match");
+        assert.equal(endpoints.deltaStorageUrl, "https://alfred.wu2-ppe.prague.office-int.com/deltas/fluid/damp-competition", "Delta storage url does not match");
+        assert.equal(endpoints.ordererUrl, "https://alfred.wu2-ppe.prague.office-int.com", "Orderer url does not match");
+        assert.equal(url, "fluid://alfred.wu2-ppe.prague.office-int.com/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0", "FluidUrl does not match");
     });
 });

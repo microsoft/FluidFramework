@@ -34,6 +34,7 @@ login:
 
 gateway:
   externalUrl: https://www.wu2.prague.office-int.com
+  internalUrl: http://fierce-dog-gateway
   host: www.wu2.prague.office-int.com
   cert: wu2-tls-certificate
   keyValueUrl: https://www.wu2.prague.office-int.com/loader/fluid/kv-cache-00018
@@ -45,6 +46,7 @@ packageManager:
 
 historian:
   externalUrl: https://historian.wu2.prague.office-int.com
+  internalUrl: http://prodding-lightningbug-historian
 
 mongodb:
   url: mongodb://quieting-guppy-mongodb:27017
