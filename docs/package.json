@@ -8,15 +8,16 @@
     "build": "npm run build:vuepress",
     "build:ci": "npm run build:copy && node buildDocs.js && npm run build:vuepress",
     "build:copy": "copyfiles -f \"api-pages/**\" api/",
-    "build:vuepress": "vuepress build --dest ./dist",
+    "build:vuepress": "cross-env NODE_OPTIONS=\"--max-old-space-size=8192\" vuepress build --dest ./dist --cache .cache",
     "clean": "rimraf api",
     "lint": "vuepress check-md",
     "start": "npm run build:copy && node buildDocs.js && npm run start:vuepress",
     "start:docker": "npm run build:copy && node buildDocs.js && npm run start:vuepress",
-    "start:vuepress": "vuepress dev --port 8080 --no-clear-screen",
+    "start:vuepress": "vuepress dev --port 8080 --no-clear-screen --cache .cache",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "@vuepress/plugin-pwa": "^1.2.0",
     "copyfiles": "^2.1.0",
     "firstline": "^2.0.2",
     "fs-extra": "^8.1.0",
@@ -30,6 +31,7 @@
     "vuepress-plugin-tabs": "^0.3.0"
   },
   "devDependencies": {
+    "cross-env": "^7.0.0",
     "rimraf": "^2.6.2"
   }
 }
