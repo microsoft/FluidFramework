@@ -68,6 +68,22 @@ export const NewTabButton: React.FunctionComponent<IButtonExampleProps> =
                         props.createTab("spaces");
                     },
                 },
+                {
+                    key: "new-spaces",
+                    text: "CodeMirror",
+                    iconProps: { iconName: "Code" },
+                    onClick: () => {
+                        props.createTab("codemirror");
+                    },
+                },
+                {
+                    key: "new-spaces",
+                    text: "Prosemirror",
+                    iconProps: { iconName: "Edit" },
+                    onClick: () => {
+                        props.createTab("prosemirror");
+                    },
+                },
             ],
         };
         return (
@@ -79,7 +95,7 @@ export const NewTabButton: React.FunctionComponent<IButtonExampleProps> =
                 styles={customSplitButtonStyles}
                 menuProps={menuProps}
                 ariaLabel="New item"
-                onClick={() => props.createTab("clicker")} // default create a clicker
+                onClick={() => props.createTab("prosemirror")} // default create a prosemirror
                 disabled={disabled}
                 checked={checked}
             />

@@ -14,7 +14,7 @@ import uuid from "uuid/v4";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { ClickerName } from "@fluid-example/clicker";
 
-export type TabComponents = "clicker" | "tabs" | "spaces";
+export type TabComponents = "clicker" | "tabs" | "spaces" | "codemirror" | "prosemirror";
 
 export interface ITabsDataModel extends EventEmitter{
     getComponent(id: string): Promise<IComponent>;

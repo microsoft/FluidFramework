@@ -62,14 +62,14 @@ export class TabsView extends React.Component<ITabsViewProps, ITabsViewState> {
                     {id.substring(0, 3)}
                 </Tab>);
             tabPanel.push(
-                <TabPanel key={id} style={{height:"100%"}}>
+                <TabPanel key={id}  >
                     <EmbeddedComponentWrapper id={id} getComponent={this.props.dataModel.getComponent} />
                 </TabPanel>);
         });
 
         return (
             <Tabs
-                style={{ height: "100%"}}
+                style={{ display: "flex", flexDirection: "column"}}
                 selectedIndex={this.state.tabIndex}
                 onSelect={(tabIndex) => this.setState({ tabIndex })}>
                 <TabList>
@@ -78,7 +78,7 @@ export class TabsView extends React.Component<ITabsViewProps, ITabsViewState> {
                         <NewTabButton createTab={this.createNewTab}/>
                     </li>
                 </TabList>
-                <div style={{position: "relative", overflow:"hidden", height: "100%"}}>
+                <div style={{position: "relative"}}>
                     {tabPanel}
                 </div>
             </Tabs>
