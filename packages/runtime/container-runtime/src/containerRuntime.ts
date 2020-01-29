@@ -28,6 +28,7 @@ import {
 import {
     Deferred,
     Trace,
+    ChildLogger,
 } from "@microsoft/fluid-core-utils";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import { readAndParse, createIError } from "@microsoft/fluid-driver-utils";
@@ -158,6 +159,14 @@ const opProcessingTime = 20;
  */
 const opProcessingTimeIncrement = 10;
 
+/**
+ * The number of times inbound queue has been processed when there is more than one op in the
+ * queue. This is used to log the time taken to process large number of ops.
+ * For example, when catching up ops right after boot or catching up ops / delayed reaziling
+ * components by summarizer.
+ */
+let inboundQueueProcessingCount = -1;
+
 export class ScheduleManager {
     private readonly messageScheduler: IMessageScheduler | undefined;
     private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
@@ -171,10 +180,17 @@ export class ScheduleManager {
     private processingStartTime: number | undefined;
     private totalProcessingTime: number = opProcessingTime;
 
+    private opProcessingLog: {
+        numberOfOps: number;
+        numberOfBatches: number;
+        totalProcessingTime: number;
+    } | undefined;
+
     constructor(
         messageScheduler: IMessageScheduler | undefined,
         private readonly emitter: EventEmitter,
         legacyDeltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+        private readonly logger: ITelemetryLogger,
     ) {
         if (!messageScheduler || !("toArray" in messageScheduler.deltaManager.inbound as any)) {
             this.deltaManager = legacyDeltaManager;
@@ -220,6 +236,24 @@ export class ScheduleManager {
             "idle",
             () => {
                 if (this.processingStartTime) {
+                    // Log telemetry for the time taken to process ops in the inbound queue every 2000th time
+                    // we process more than one op.
+                    if (inboundQueueProcessingCount % 2000 === 0) {
+                        // Add the time taken for processing the final ops to the total processing time in the
+                        // telemetry log object.
+                        this.opProcessingLog.totalProcessingTime += performanceNow() - this.processingStartTime;
+
+                        this.logger.sendTelemetryEvent({
+                            eventName: "InboundOpsProcessingTime",
+                            numberOfOps: this.opProcessingLog.numberOfOps,
+                            numberOfBatches: this.opProcessingLog.numberOfBatches,
+                            processingTime: this.opProcessingLog.totalProcessingTime,
+                            count: inboundQueueProcessingCount,
+                        });
+
+                        this.opProcessingLog = undefined;
+                    }
+
                     this.processingStartTime = undefined;
                     this.totalProcessingTime = opProcessingTime;
                 }
@@ -308,6 +342,16 @@ export class ScheduleManager {
             // Start the timer that keeps track of how long we have processed ops in the delta queue
             // in this call.
             this.processingStartTime = performanceNow();
+
+            // Initialize the object that will be used to log the time taken to process the ops.
+            if (this.opProcessingLog === undefined) {
+                inboundQueueProcessingCount++;
+                this.opProcessingLog = {
+                    numberOfOps: this.deltaManager.inbound.length,
+                    numberOfBatches: 1,
+                    totalProcessingTime: 0,
+                };
+            }
         }
     }
 
@@ -323,7 +367,8 @@ export class ScheduleManager {
         // processed. This way we keep the responsiveness at the beginning while also making sure
         // that all the ops process fairly quickly.
         if (this.processingStartTime && this.deltaManager.inbound.length > 0) {
-            if (performanceNow() - this.processingStartTime > this.totalProcessingTime) {
+            const elaspedTime = performanceNow() - this.processingStartTime;
+            if (elaspedTime > this.totalProcessingTime) {
                 this.setPaused(true);
 
                 setTimeout(() => {
@@ -332,6 +377,10 @@ export class ScheduleManager {
 
                 this.processingStartTime = undefined;
                 this.totalProcessingTime += opProcessingTimeIncrement;
+
+                // Update the telemetry log object since.
+                this.opProcessingLog.numberOfBatches++;
+                this.opProcessingLog.totalProcessingTime += elaspedTime;
             }
         }
     }
@@ -640,10 +689,16 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.contextsDeferred.set(key, deferred);
         }
 
-        this.scheduleManager = new ScheduleManager(context.IMessageScheduler, this, context.deltaManager);
-        this.deltaSender = this.deltaManager;
-
         this.logger = context.logger;
+
+        this.scheduleManager = new ScheduleManager(
+            context.IMessageScheduler,
+            this,
+            context.deltaManager,
+            ChildLogger.create(this.logger, "ScheduleManager"),
+        );
+
+        this.deltaSender = this.deltaManager;
 
         this.deltaManager.on("allSentOpsAckd", () => {
             this.updateDocumentDirtyState(false);

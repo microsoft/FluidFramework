@@ -5,6 +5,7 @@
 
 import * as assert from "assert";
 import { EventEmitter } from "events";
+import { DebugLogger } from "@microsoft/fluid-core-utils";
 import { BlobTreeEntry, TreeTreeEntry } from "@microsoft/fluid-protocol-base";
 import {
     ISummaryBlob,
@@ -122,12 +123,17 @@ describe("Runtime", () => {
                     emitter = new EventEmitter();
                     deltaManager = new MockDeltaManager();
                     messageScheduler = new MockMessageScheduler(deltaManager);
-                    scheduleManager = new ScheduleManager(messageScheduler, emitter, deltaManager);
+                    scheduleManager = new ScheduleManager(
+                        messageScheduler,
+                        emitter,
+                        deltaManager,
+                        DebugLogger.create("fluid:testScheduleManager"),
+                    );
 
                     emitter.on("batchBegin", () => {
                         // When we receive a "batchBegin" event, we should not have any outstanding
                         // events, i.e., batchBegin and batchEnd should be equal.
-                        assert.strictEqual(batchBegin, batchEnd, "Received batchBegin before batchEnd for previous batch");
+                        assert.strictEqual(batchBegin, batchEnd, "Received batchBegin before previous batchEnd");
                         batchBegin++;
                     });
 
@@ -142,7 +148,7 @@ describe("Runtime", () => {
                 afterEach(() => {
                     batchBegin = 0;
                     batchEnd = 0;
-                })
+                });
 
                 it("Single non-batch message", () => {
                     const clientId: string = "test-client";
