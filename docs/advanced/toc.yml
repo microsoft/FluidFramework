@@ -1,6 +1,0 @@
-- name: Advanced Topics
-  href: README.md
-- name: "Anatomy of a Distributed Data Structure"
-  href: dds-anatomy.md
-- name: Fluid Loading Deep Dive
-  href: loading-deep-dive.md

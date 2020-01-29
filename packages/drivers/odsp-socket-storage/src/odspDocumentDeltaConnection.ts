@@ -133,8 +133,6 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
 
         // Verify the socket is healthy before reusing it
         if (socketReference && (!socketReference.socket || !socketReference.socket.connected)) {
-            // We should not get here with active users.
-            assert(socketReference.references === 0);
             // The socket is in a bad state. fully remove the reference
             OdspDocumentDeltaConnection.removeSocketIoReference(key, true, "socket is closed");
 

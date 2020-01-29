@@ -10,6 +10,7 @@ import * as safeStringify from "json-stringify-safe";
 import * as jwt from "jsonwebtoken";
 import { IAlfred } from "../interfaces";
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 import passport = require("passport");
 interface ISummaryTokenRequest {
     actorClientId: string;

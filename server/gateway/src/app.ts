@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { getRandomName, IAlfredTenant, ICache, MongoManager } from "@microsoft/fluid-server-services-core";
+import * as fs from "fs";
+import * as path from "path";
+// tslint:disable-next-line: ordered-imports
+import { getRandomName, IAlfredTenant } from "@microsoft/fluid-server-services-client";
+import { ICache, MongoManager } from "@microsoft/fluid-server-services-core";
 import * as bodyParser from "body-parser";
 import * as compression from "compression";
 import * as connectRedis from "connect-redis";
@@ -11,25 +15,23 @@ import * as cookieParser from "cookie-parser";
 import * as cors from "cors";
 import * as express from "express";
 import * as expressSession from "express-session";
-import * as fs from "fs";
 import * as morgan from "morgan";
 import { Provider } from "nconf";
 import * as passport from "passport";
 import * as passportJWT from "passport-jwt";
 import * as passportLocal from "passport-local";
 import * as passportOpenIdConnect from "passport-openidconnect";
-import * as path from "path";
 import * as redis from "redis";
 import * as favicon from "serve-favicon";
 import * as expiry from "static-expiry";
 import { v4 } from "uuid";
 import * as winston from "winston";
 import { AccountManager } from "./accounts";
-import { saveSpoTokens } from "./gateway-odsp-utils";
+import { saveSpoTokens } from "./gatewayOdspUtils";
 import { IAlfred } from "./interfaces";
 import * as gatewayRoutes from "./routes";
 
-// tslint:disable-next-line:no-var-requires
+// eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
 const split = require("split");
 // Base endpoint to expose static files at
 const staticFilesEndpoint = "/public";
@@ -93,14 +95,16 @@ function connectAccount(
     const expiration = accountManager.getTokenExpiration(expires);
     const userP = accountManager
         .linkAccount(provider, providerId, accessToken, expiration, refreshToken, user.sub)
-        .then(() => refreshUser(user, accountManager));
+        .then(async () => refreshUser(user, accountManager));
 
     userP.then(
         (newUser) => {
+            // eslint-disable-next-line no-null/no-null
             done(null, newUser);
         },
         (error) => {
             console.log(error);
+            // eslint-disable-next-line no-null/no-null
             done(error, null);
         });
 }
@@ -123,6 +127,7 @@ export function create(
         const redisPort = config.get("redis:port");
         const redisPass = config.get("redis:pass");
         const options: redis.ClientOpts = { auth_pass: redisPass };
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (config.get("redis:tls")) {
             options.tls = {
                 servername: redisHost,
@@ -170,10 +175,12 @@ export function create(
     );
 
     const msaConfiguration = config.get("login:linkedAccounts:msa");
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     if (msaConfiguration) {
         passport.use(
             "msa",
-            new passportOpenIdConnect.Strategy({
+            new passportOpenIdConnect.Strategy(
+                {
                     // I believe consumers should make sure we pull the right thing
                     authorizationURL: "https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize",
                     callbackURL: "/connect/microsoft/callback",
@@ -194,7 +201,9 @@ export function create(
                         params.expires_in,
                         refreshToken,
                         done);
-                }));
+                },
+            ),
+        );
     }
 
     const opts = {
@@ -202,11 +211,12 @@ export function create(
         secretOrKey: config.get("gateway:key"),
     };
     passport.use(new passportJWT.Strategy(opts, (payload, done) => {
+        // eslint-disable-next-line no-null/no-null
         return done(null, payload);
     }));
 
     // Get local accounts - used primarily for automated testing
-    const localAccounts = config.get("login:accounts") as { username: string, password: string }[];
+    const localAccounts = config.get("login:accounts") as { username: string; password: string }[];
     passport.use(new passportLocal.Strategy(
         (username, password, done) => {
             for (const localAccount of localAccounts) {
@@ -214,6 +224,7 @@ export function create(
                 if (localAccount.username === username && localAccount.password === password) {
                     const name = getRandomName(" ", true);
                     return done(
+                        // eslint-disable-next-line no-null/no-null
                         null,
                         {
                             displayName: name,
@@ -223,6 +234,7 @@ export function create(
                 }
             }
 
+            // eslint-disable-next-line no-null/no-null
             return done(null, false);
         },
     ));
@@ -230,10 +242,12 @@ export function create(
     // Right now we simply pass through the entire stored user object to the session storage for that user.
     // Ideally we should just serialize the oid and retrieve user info back from DB on deserialization.
     passport.serializeUser((user: any, done) => {
+        // eslint-disable-next-line no-null/no-null
         done(null, user);
     });
 
     passport.deserializeUser((user: any, done) => {
+        // eslint-disable-next-line no-null/no-null
         done(null, user);
     });
 
@@ -278,6 +292,7 @@ export function create(
     // The below is to check to make sure the session is available (redis could have gone down for instance) and if
     // not return an error
     app.use((request, response, next) => {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (!request.session) {
             return next(new Error("Session not available"));
         } else {
@@ -290,7 +305,7 @@ export function create(
         if (!(local in staticMinCache)) {
             return requestUrl;
         } else {
-            return staticFilesEndpoint + app.locals.furl(staticMinCache[local]);
+            return `${staticFilesEndpoint}${app.locals.furl(staticMinCache[local])}`;
         }
     }
 
@@ -298,6 +313,7 @@ export function create(
     const routes = gatewayRoutes.create(config, cache, alfred, tenants, getFingerprintUrl);
 
     app.use((request, response, next) => {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (!request.session.guest) {
             const name = getRandomName(" ", true);
             request.session.guest = {
@@ -336,6 +352,7 @@ export function create(
     // will print stacktrace
     if (app.get("env") === "development") {
         app.use((err, req, res, next) => {
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             res.status(err.status || 500);
             res.render("error", {
                 error: err,
@@ -347,6 +364,7 @@ export function create(
     // production error handler
     // no stacktraces leaked to user
     app.use((err, req, res, next) => {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         res.status(err.status || 500);
         res.render("error", {
             error: {},

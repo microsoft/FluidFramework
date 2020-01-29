@@ -11,7 +11,7 @@ import { ITenantManager } from "@microsoft/fluid-server-services-core";
 export interface IAlfred {
     createFork(tenantId: string, id: string): Promise<string>;
 
-    getFullTree(tenantId: string, documentId: string): Promise<{ cache: IGitCache, code: string | IFluidCodeDetails }>;
+    getFullTree(tenantId: string, documentId: string): Promise<{ cache: IGitCache; code: string | IFluidCodeDetails }>;
 
     getVersions(tenantId: string, documentId: string, count: number): Promise<ICommitDetails[]>;
 
