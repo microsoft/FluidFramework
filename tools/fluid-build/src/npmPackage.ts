@@ -259,7 +259,7 @@ export class Package {
             }
             // These are script rules in the FluidFramework repo
 
-            // Default build script, tsc + tslint (with optional build:webpack)
+            // Default build script, tsc + eslint (with optional build:webpack)
             const build: string[] = ["build:compile"];
 
             // all build tasks, but optional build:webpack
@@ -285,8 +285,8 @@ export class Package {
                 buildCompile.push("build:copy");
             }
 
-            if (this.getScript("tslint")) {
-                build.push("tslint");
+            if (this.getScript("lint")) {
+                build.push("lint");
             }
 
             if (this.getScript("less")) {

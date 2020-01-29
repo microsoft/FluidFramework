@@ -4,6 +4,7 @@
  */
 
 import * as services from "@microsoft/fluid-server-services";
+import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
 import * as core from "@microsoft/fluid-server-services-core";
 import * as utils from "@microsoft/fluid-server-services-utils";
 import { Provider } from "nconf";
@@ -21,7 +22,7 @@ export class GatewayResources implements utils.IResources {
         public cache: core.ICache,
         public mongoManager: core.MongoManager,
         public accountsCollectionName: string,
-        public appTenants: core.IAlfredTenant[],
+        public appTenants: IAlfredTenant[],
         public port: any,
     ) {
         this.webServerFactory = new services.SocketIoWebServerFactory(this.redisConfig);
@@ -37,6 +38,7 @@ export class GatewayResourcesFactory implements utils.IResourcesFactory<GatewayR
         // Producer used to publish messages
         const redisConfig = config.get("redis");
         const options: redis.ClientOpts = { auth_pass: redisConfig.pass };
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (redisConfig.tls) {
             options.tls = {
                 servername: redisConfig.host,
@@ -63,9 +65,10 @@ export class GatewayResourcesFactory implements utils.IResourcesFactory<GatewayR
         const redisCache = new services.RedisCache(redisClient);
 
         // Tenants attached to the apps this service exposes
-        const appTenants = config.get("gateway:tenants") as { id: string, key: string }[];
+        const appTenants = config.get("gateway:tenants") as { id: string; key: string }[];
 
-        // This wanst to create stuff
+        // This wants to create stuff
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         const port = utils.normalizePort(process.env.PORT || "3000");
 
         const alfred = new Alfred(

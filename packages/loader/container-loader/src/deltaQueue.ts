@@ -14,16 +14,15 @@ import * as Deque from "double-ended-queue";
 const performanceNow = require("performance-now") as (() => number);
 
 /**
- * The maximum time allowed for processing ops in a single iteration when processing ops
- * asynchronously.
+ * The initial time for processing ops in a single iteration.
  */
-const MaxAsyncProcessingTime = 20;
+const asyncProcessingStartTime = 20;
 
 /**
  * The increase in time allowed for processing ops after each iteration when processing ops
  * asynchronously.
  */
-const AsyncProcessingTimeIncrease = 10;
+const asyncProcessingTimeIncrease = 10;
 
 /**
  * The number of times ops have been processed asyncronously when there is more than one
@@ -31,7 +30,7 @@ const AsyncProcessingTimeIncrease = 10;
  * For example, when catching up ops right after boot or catching up ops / delayed reaziling
  * components by summarizer.
  */
-let AsyncProcessingCount = -1;
+let asyncProcessingCount = -1;
 
 export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     private isDisposed: boolean = false;
@@ -178,7 +177,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
                 // We want to catch any unexpected behavior when process large amount of ops such as when
                 // catching up ops right after boot.
                 if (this.q.length > 1) {
-                    AsyncProcessingCount++;
+                    asyncProcessingCount++;
                     this.asyncProcessingLog = {
                         numberOfOps: this.q.length,
                         numberOfBatches: 0,
@@ -227,21 +226,21 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 
     /**
      * Executes the delta processing loop until a stop condition is reached. It processes
-     * ops for an allowed amount of time (20ms by default) and then schedules the rest of
-     * the ops to be processed aynschronously. This ensures that we don't block the JS
-     * threads for a long time (for example, when catching up ops right after boot or
-     * catching up ops / delayed reaziling components by summarizer).
+     * ops for an allowed amount of time (asyncProcessingStartTime by default) and then
+     * schedules the rest of the ops to be processed aynschronously. This ensures that we
+     * don't block the JS threads for a long time (for example, when catching up ops right
+     * after boot or catching up ops / delayed reaziling components by summarizer).
      *
      * We increase the allowed processing time in each iteration until all the ops have been
      * processed. This way we keep the responsiveness at the beginning while also making sure
      * that all the ops process fairly quickly.
      */
-    private processDeltasAsync(allowedProcessingTime = MaxAsyncProcessingTime) {
+    private processDeltasAsync(processingTime = asyncProcessingStartTime) {
         const startTime = performanceNow();
         let elaspedTime = 0;
         // Loop over the local messages until no messages to process, we have become paused, we hit an error
-        // or the allowed time has elasped.
-        while (!(this.q.length === 0 || this.paused || this.error || elaspedTime >= allowedProcessingTime)) {
+        // or the processing time has elasped.
+        while (!(this.q.length === 0 || this.paused || this.error || elaspedTime >= processingTime)) {
             // Get the next message in the queue
             const next = this.q.shift();
 
@@ -263,7 +262,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
         }
 
         if (this.q.length === 0 || this.paused || this.error) {
-            if (AsyncProcessingCount % 2000 === 0 && this.asyncProcessingLog) {
+            if (asyncProcessingCount % 2000 === 0 && this.asyncProcessingLog) {
                 this.logger.sendTelemetryEvent({
                     eventName: "AsyncDeltaProcessingComplete",
                     numberOfOps: this.asyncProcessingLog.numberOfOps,
@@ -278,8 +277,8 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
             }
         } else {
             // Increase the allowed processing time by asyncProcessingTimeIncrease for the next iteration.
-            setImmediate(() => {
-                this.processDeltasAsync(allowedProcessingTime + AsyncProcessingTimeIncrease);
+            setTimeout(() => {
+                this.processDeltasAsync(processingTime + asyncProcessingTimeIncrease);
             });
         }
     }
