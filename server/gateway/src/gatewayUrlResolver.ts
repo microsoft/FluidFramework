@@ -50,8 +50,10 @@ export function resolveUrl(
 
         // Why redo this IConfig thing?
         const endPointConfig: IConfig = {
-            blobStorageUrl: config.get("worker:blobStorageUrl"),
-            serverUrl: config.get("worker:serverUrl"),
+            config,
+            // blobStorageUrl: config.get("worker:blobStorageUrl"),
+            // internalBlobStorageUrl: config.get("worker:internalBlobStorageUrl"),
+            // serverUrl: config.get("worker:serverUrl"),
             tenantId,
             documentId,
         };

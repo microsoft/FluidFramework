@@ -8,7 +8,8 @@
 import * as assert from "assert";
 import { IFluidResolvedUrl } from "@microsoft/fluid-driver-definitions";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { RouterliciousUrlResolver, IConfig } from "../urlResolver";
+import { Provider } from "nconf";
+import { RouterliciousUrlResolver } from "../urlResolver";
 
 describe("Routerlicious Url Resolver", () => {
 
@@ -41,14 +42,22 @@ describe("Routerlicious Url Resolver", () => {
             hostname: "localhost",
         };
 
-        const config: IConfig = {
-            serverUrl: "http://localhost:3003",
-            blobStorageUrl: "http://historian:3000",
+        const provider = new Provider({}).defaults({
+            a: "hell",
+            worker: {
+                serverUrl: "http://localhost:3003",
+                alfredUrl: "http://alfred:3000",
+                blobStorageUrl: "http://historian:3000",
+                internalBlobStorageUrl: "http://historian:3000",
+            },
+        }).use("memory");
+
+        const config = {
+            provider,
             tenantId: "fluid",
             documentId: "damp-competition",
         };
         const urlResolver = new RouterliciousUrlResolver(config, async () => Promise.resolve(token), []);
-
 
         const {endpoints, url} = (await urlResolver.resolve(request)) as IFluidResolvedUrl;
 
@@ -64,9 +73,17 @@ describe("Routerlicious Url Resolver", () => {
             hostname: "gateway",
         };
 
-        const config: IConfig = {
-            serverUrl: "http://localhost:3003",
-            blobStorageUrl: "http://historian:3000",
+        const provider = new Provider({}).defaults({
+            worker: {
+                serverUrl: "http://localhost:3003",
+                alfredUrl: "http://alfred:3000",
+                blobStorageUrl: "http://historian:3000",
+                internalBlobStorageUrl: "http://historian:3000",
+            },
+        }).use("memory");
+
+        const config = {
+            provider,
             tenantId: "fluid",
             documentId: "damp-competition",
         };
@@ -80,17 +97,22 @@ describe("Routerlicious Url Resolver", () => {
         assert.equal(url, "fluid://localhost:3003/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0", "Improperly formed FluidURL");
     });
 
-    // ------------------------------
-
     it("Should handle hostname in Deployed Internal request", async () => {
         const request: IRequest = {
             url: "/loader/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0",
             hostname: "gateway",
         };
+        const provider = new Provider({}).defaults({
+            worker: {
+                serverUrl: "http://localhost:3003",
+                alfredUrl: "http://wiggly-wombat-alfred:3000",
+                blobStorageUrl: "http://historian:3000",
+                internalBlobStorageUrl: "http://smelly-wolf-historian:3000",
+            },
+        }).use("memory");
 
-        const config: IConfig = {
-            serverUrl: "http://localhost:3003",
-            blobStorageUrl: "http://historian:3000",
+        const config = {
+            provider,
             tenantId: "fluid",
             documentId: "damp-competition",
         };
@@ -98,9 +120,9 @@ describe("Routerlicious Url Resolver", () => {
         const urlResolver = new RouterliciousUrlResolver(config, async () => Promise.resolve(token), []);
         const {endpoints, url} = (await urlResolver.resolve(request)) as IFluidResolvedUrl;
 
-        assert.equal(endpoints.storageUrl, "http://historian:3000/repos/fluid", "Improperly Formed storageUrl");
-        assert.equal(endpoints.deltaStorageUrl, "http://alfred:3000/deltas/fluid/damp-competition", "Improperly Formed deltaStorageUrl");
-        assert.equal(endpoints.ordererUrl, "http://alfred:3000", "Improperly Formed OrdererUrl");
+        assert.equal(endpoints.storageUrl, "http://smelly-wolf-historian:3000/repos/fluid", "Improperly Formed storageUrl");
+        assert.equal(endpoints.deltaStorageUrl, "http://wiggly-wombat-alfred:3000/deltas/fluid/damp-competition", "Improperly Formed deltaStorageUrl");
+        assert.equal(endpoints.ordererUrl, "http://wiggly-wombat-alfred:3000", "Improperly Formed OrdererUrl");
         assert.equal(url, "fluid://localhost:3003/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0", "Improperly formed FluidURL");
     });
 
@@ -111,9 +133,17 @@ describe("Routerlicious Url Resolver", () => {
             hostname: "www.wu2-ppe.prague.office-int",
         };
 
-        const config: IConfig = {
-            serverUrl: "https://alfred.wu2-ppe.prague.office-int.com",
-            blobStorageUrl: "https://historian.wu2-ppe.prague.office-int.com",
+        const provider = new Provider({}).defaults({
+            worker: {
+                serverUrl: "https://alfred.wu2-ppe.prague.office-int.com",
+                alfredUrl: "http://wiggly-wombat-alfred",
+                blobStorageUrl: "https://historian.wu2-ppe.prague.office-int.com",
+                internalBlobStorageUrl: "http://smelly-wolf-historian",
+            },
+        }).use("memory");
+
+        const config = {
+            provider,
             tenantId: "fluid",
             documentId: "damp-competition",
         };
