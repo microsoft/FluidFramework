@@ -24,7 +24,7 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "request": "^2.88.0"
+    "axios": "^0.18.0"
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.14.0",

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as request from "request";
+import Axios, { AxiosResponse, AxiosRequestConfig } from "axios";
 
 export interface IODSPTokens {
     accessToken: string;
@@ -24,20 +24,27 @@ export interface IODSPDriveItem {
 }
 
 interface IRequestResult {
-    href: string;
+    href: string | undefined;
     status: number;
     data: any;
 }
 
-function createRequestResult(response: request.Response, body: any): IRequestResult {
+function createRequestResult(response: AxiosResponse): IRequestResult {
     // console.log(JSON.stringify(response, undefined, 2));
     // console.log(JSON.stringify(body, undefined, 2));
-    return { href: response.request.uri.href, status: response.statusCode, data: body };
+    return { href: response.config.url, status: response.status, data: response.data };
 }
 
-function createRequestError(msg: string, requestResult: IRequestResult) {
-    const error = new Error(msg);
-    (error as any).requestResult = requestResult;
+function createRequestError(msg: string, requestResult?: IRequestResult, response?: any) {
+    const error: any = new Error(msg);
+    if (requestResult) {
+        error.requestResult = requestResult;
+    }
+    if (response?.response) {
+        error.href = response.response.config.url;
+        error.status = response.response.status;
+        error.data = response.response.data;
+    }
     return error;
 }
 
@@ -50,9 +57,8 @@ function getRefreshAccessTokenBody(server: string, clientConfig: IClientConfig, 
 }
 
 async function processTokenBody(requestResult: IRequestResult): Promise<IODSPTokens> {
-    const parsed = JSON.parse(requestResult.data);
-    const accessToken = parsed.access_token;
-    const refreshToken = parsed.refresh_token;
+    const accessToken = requestResult.data.access_token;
+    const refreshToken = requestResult.data.refresh_token;
     if (accessToken === undefined || refreshToken === undefined) {
         return Promise.reject(createRequestError("Unable to refresh access token", requestResult));
     }
@@ -72,18 +78,16 @@ export function getSharepointTenant(server: string) {
 }
 
 export async function postTokenRequest(server: string, postBody: string): Promise<IODSPTokens> {
-    return new Promise((resolve, reject) => {
-        const tokenUrl = `https://login.microsoftonline.com/${getSharepointTenant(server)}/oauth2/v2.0/token`;
+    const tokenUrl = `https://login.microsoftonline.com/${getSharepointTenant(server)}/oauth2/v2.0/token`;
 
-        request.post({ url: tokenUrl, body: postBody },
-            (error, response, body) => {
-                if (error) {
-                    reject(createRequestError("Error getting the token", error));
-                    return;
-                }
-                resolve(processTokenBody(createRequestResult(response, body)));
-            });
-    });
+    let response: AxiosResponse;
+    try {
+        response = await Axios.post(tokenUrl, postBody);
+    } catch (error) {
+        throw createRequestError("Error getting the token", undefined, error);
+    }
+
+    return processTokenBody(createRequestResult(response));
 }
 
 async function requestWithRefresh(
@@ -111,15 +115,22 @@ export async function refreshAccessToken(server: string, clientConfig: IClientCo
     return odspTokens;
 }
 
-function getRequestHandler(resolve, reject) {
-    return (error, response, body) => {
-        if (error) {
-            // console.error(`ERROR: request error\n${JSON.stringify(error, undefined, 2)}`);
-            reject(createRequestError("request error", error));
-            return;
+async function axiosRequest(
+    request: (config: AxiosRequestConfig) => Promise<AxiosResponse>,
+    token: string,
+): Promise<IRequestResult> {
+    let response: AxiosResponse;
+    try {
+        const config = { headers: { ...Headers, Authorization: `Bearer ${token}` } };
+        response = await request(config);
+    } catch (error) {
+        if (error?.response && error.response.status) {
+            response = error.response;
+        } else {
+            throw createRequestError("request error", undefined, error);
         }
-        resolve(createRequestResult(response, body));
-    };
+    }
+    return createRequestResult(response);
 }
 
 async function getAsync(
@@ -130,10 +141,8 @@ async function getAsync(
     headers?: any): Promise<IRequestResult> {
 
     return requestWithRefresh(server, clientConfig, tokens, async (token: string) => {
-        return new Promise((resolve, reject) => {
-            // console.log(`GET: ${url}`);
-            request.get({ url, headers, auth: { bearer: token } }, getRequestHandler(resolve, reject));
-        });
+        // console.log(`GET: ${url}`);
+        return axiosRequest(async (config) => Axios.get(url, config), token);
     });
 }
 
@@ -145,10 +154,8 @@ async function putAsync(
     headers?: any): Promise<IRequestResult> {
 
     return requestWithRefresh(server, clientConfig, tokens, async (token: string) => {
-        return new Promise((resolve, reject) => {
-            // console.log(`PUT: ${url}`);
-            request.put({ url, headers, auth: { bearer: token } }, getRequestHandler(resolve, reject));
-        });
+        // console.log(`PUT: ${url}`);
+        return axiosRequest(async (config) => Axios.put(url, config), token);
     });
 }
 
@@ -198,8 +205,7 @@ async function getDrives(server: string, account: string, clientConfig: IClientC
     if (getDriveResult.status !== 200) {
         return Promise.reject(getDriveResult);
     }
-    const parsedBody = JSON.parse(getDriveResult.data);
-    return parsedBody.value as IODSPDriveInfo[];
+    return getDriveResult.data as IODSPDriveInfo[];
 }
 
 async function getDriveId(
@@ -309,8 +315,7 @@ async function getDriveItem(
             return Promise.reject(createRequestError("Unable to get drive/item id from path", getDriveItemResult));
         }
     }
-    const parsedDriveItemBody = JSON.parse(getDriveItemResult.data);
-    return toIODSPDriveItem(parsedDriveItemBody);
+    return toIODSPDriveItem(getDriveItemResult.data);
 }
 
 export async function getChildrenByDriveItem(
@@ -327,9 +332,8 @@ export async function getChildrenByDriveItem(
         if (getChildrenResult.status !== 200) {
             return Promise.reject(createRequestError("Unable to get children", getChildrenResult));
         }
-        const parsedChildrenBody = JSON.parse(getChildrenResult.data);
-        children = children.concat(parsedChildrenBody.value);
-        getChildrenUrl = parsedChildrenBody["@odata.nextLink"];
+        children = children.concat(getChildrenResult.data.value);
+        getChildrenUrl = getChildrenResult.data["@odata.nextLink"];
     } while (getChildrenUrl);
     return children.map(toIODSPDriveItem);
 }
