@@ -4,4 +4,3 @@
  */
 
 export * from "./tabs";
-// export * from "./face-pile";

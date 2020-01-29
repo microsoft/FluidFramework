@@ -37,7 +37,14 @@ export class VltavaView extends React.Component<IVltavaViewProps,IVltavaViewStat
     render() {
         return (
             <div>
-                <div style={{width: "100%", height: "50px", textAlign: "center", borderBottom:"1px solid lightgray", boxSizing:"border-box"}}>
+                <div
+                    style={{
+                        width: "100%",
+                        height: "50px",
+                        textAlign: "center",
+                        borderBottom:"1px solid lightgray",
+                        boxSizing:"border-box"}}
+                >
                     <h2 style={{paddingTop:"10px"}}>
                         {this.props.dataModel.getTitle()}
                     </h2>
