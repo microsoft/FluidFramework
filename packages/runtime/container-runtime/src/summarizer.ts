@@ -502,7 +502,7 @@ export class RunningSummarizer implements IDisposable {
         if (summaryData.submitted) {
             summarizingEvent.end(telemetryProps);
         } else {
-            summarizingEvent.cancel({ ...telemetryProps, category: "error" });
+            summarizingEvent.cancel(telemetryProps);
         }
 
         return summaryData;
