@@ -45,19 +45,11 @@ export const NewTabButton: React.FunctionComponent<IButtonExampleProps> =
         const menuProps: IContextualMenuProps = {
             items: [
                 {
-                    key: "new-clicker",
-                    text: "Clicker",
-                    iconProps: { iconName: "NumberField" },
+                    key: "new-spaces",
+                    text: "Prosemirror (default)",
+                    iconProps: { iconName: "Edit" },
                     onClick: () => {
-                        props.createTab("clicker");
-                    },
-                },
-                {
-                    key: "new-tabs",
-                    text: "Tabs",
-                    iconProps: { iconName: "BrowserTab" },
-                    onClick: () => {
-                        props.createTab("tabs");
+                        props.createTab("prosemirror");
                     },
                 },
                 {
@@ -77,11 +69,19 @@ export const NewTabButton: React.FunctionComponent<IButtonExampleProps> =
                     },
                 },
                 {
-                    key: "new-spaces",
-                    text: "Prosemirror",
-                    iconProps: { iconName: "Edit" },
+                    key: "new-tabs",
+                    text: "Tabs",
+                    iconProps: { iconName: "BrowserTab" },
                     onClick: () => {
-                        props.createTab("prosemirror");
+                        props.createTab("tabs");
+                    },
+                },
+                {
+                    key: "new-clicker",
+                    text: "Clicker",
+                    iconProps: { iconName: "NumberField" },
+                    onClick: () => {
+                        props.createTab("clicker");
                     },
                 },
             ],
