@@ -11,7 +11,7 @@ describe("vltava", () => {
       await page.goto(globals.PATH, { waitUntil: "load" });
     });
 
-    it("There's a button to be clicked", async () => {
-        await expect(page).toClick("button", { text: "Edit: true" });
-    }, 10000);
+    it("There's text on the page", async () => {
+      await expect(page).toMatch("➕");
+    });
   });

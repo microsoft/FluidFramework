@@ -6,22 +6,22 @@
 import { EventEmitter } from "events";
 
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 import {
     ISharedDirectory,
-    // IDirectory,
-    // IDirectoryValueChanged,
 } from "@microsoft/fluid-map";
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IVltavaDataModel {
     getDefaultComponent(): Promise<IComponent>;
+    getTitle(): string;
 }
 
 export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
     constructor(
         public readonly root: ISharedDirectory,
+        private readonly context: IComponentContext,
         public readonly createAndAttachComponent: (id: string, pkg: string, props?: any) => Promise<IComponent>,
-        public getComponent: (id: string) => Promise<IComponent>,
+        private readonly getComponent: (id: string) => Promise<IComponent>,
     ) {
         super();
     }
@@ -29,5 +29,9 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
     public async getDefaultComponent(): Promise<IComponent> {
         const defaultComponentId = this.root.get<string>("default-component-id");
         return this.getComponent(defaultComponentId);
+    }
+
+    public getTitle(): string {
+        return this.context.documentId;
     }
 }

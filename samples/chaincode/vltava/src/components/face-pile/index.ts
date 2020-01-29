@@ -3,5 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export * from "./tabs";
-// export * from "./face-pile";
+// export * from "./facePile";
