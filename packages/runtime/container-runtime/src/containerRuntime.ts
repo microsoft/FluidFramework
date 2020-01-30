@@ -85,9 +85,7 @@ import { Summarizer } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
 import { ISummaryStats, SummaryTreeConverter } from "./summaryTreeConverter";
 import { analyzeTasks } from "./taskAnalyzer";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const performanceNow = require("performance-now") as (() => number);
+import { DeltaScheduler } from "./deltaScheduler";
 
 interface ISummaryTreeWithStats {
     summaryStats: ISummaryStats;
@@ -149,42 +147,16 @@ interface IRuntimeMessageMetadata {
     batch?: boolean;
 }
 
-/**
- * The time for processing ops in a single turn.
- */
-const opProcessingTime = 20;
-
-/**
- * The increase in time for processing ops after each turn.
- */
-const opProcessingTimeIncrement = 10;
-
-/**
- * The number of times inbound queue has been processed when there is more than one op in the
- * queue. This is used to log the time taken to process large number of ops.
- * For example, when catching up ops right after boot or catching up ops / delayed reaziling
- * components by summarizer.
- */
-let inboundQueueProcessingCount = -1;
-
 export class ScheduleManager {
     private readonly messageScheduler: IMessageScheduler | undefined;
     private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    private readonly deltaScheduler: DeltaScheduler;
     private pauseSequenceNumber: number | undefined;
     private pauseClientId: string | undefined;
 
     private paused = false;
     private localPaused = false;
     private batchClientId: string;
-
-    private processingStartTime: number | undefined;
-    private totalProcessingTime: number = opProcessingTime;
-
-    private opProcessingLog: {
-        numberOfOps: number;
-        numberOfBatches: number;
-        totalProcessingTime: number;
-    } | undefined;
 
     constructor(
         messageScheduler: IMessageScheduler | undefined,
@@ -199,6 +171,10 @@ export class ScheduleManager {
 
         this.messageScheduler = messageScheduler;
         this.deltaManager = this.messageScheduler.deltaManager;
+        this.deltaScheduler = new DeltaScheduler(
+            this.deltaManager,
+            ChildLogger.create(this.logger, "DeltaScheduler"),
+        );
 
         // Listen for delta manager sends and add batch metadata to messages
         this.deltaManager.on("prepareSend", (messages: IDocumentMessage[]) => {
@@ -231,34 +207,6 @@ export class ScheduleManager {
                 this.updatePauseState(message.sequenceNumber);
             });
 
-        // Listen for idle event and reset the processing timer.
-        this.deltaManager.inbound.on(
-            "idle",
-            () => {
-                if (this.processingStartTime) {
-                    // Log telemetry for the time taken to process ops in the inbound queue every 2000th time
-                    // we process more than one op.
-                    if (inboundQueueProcessingCount % 2000 === 0) {
-                        // Add the time taken for processing the final ops to the total processing time in the
-                        // telemetry log object.
-                        this.opProcessingLog.totalProcessingTime += performanceNow() - this.processingStartTime;
-
-                        this.logger.sendTelemetryEvent({
-                            eventName: "InboundOpsProcessingTime",
-                            numberOfOps: this.opProcessingLog.numberOfOps,
-                            numberOfBatches: this.opProcessingLog.numberOfBatches,
-                            processingTime: this.opProcessingLog.totalProcessingTime,
-                            count: inboundQueueProcessingCount,
-                        });
-
-                        this.opProcessingLog = undefined;
-                    }
-
-                    this.processingStartTime = undefined;
-                    this.totalProcessingTime = opProcessingTime;
-                }
-            });
-
         const allPending = this.deltaManager.inbound.toArray();
         for (const pending of allPending) {
             this.trackPending(pending);
@@ -271,7 +219,8 @@ export class ScheduleManager {
     public beginOperation(message: ISequencedDocumentMessage) {
         // If in legacy mode every operation is a batch
         if (!this.messageScheduler) {
-            this.batchBegin(message);
+            this.emitter.emit("batchBegin", message);
+            this.deltaScheduler.batchBegin(message);
             return;
         }
 
@@ -279,7 +228,8 @@ export class ScheduleManager {
             // If there is no metadata, and no client ID set, then this is an individual batch. Otherwise it's a
             // message in the middle of a batch
             if (!this.batchClientId) {
-                this.batchBegin(message);
+                this.emitter.emit("batchBegin", message);
+                this.deltaScheduler.batchBegin(message);
             }
 
             return;
@@ -289,14 +239,16 @@ export class ScheduleManager {
         const metadata = message.metadata as IRuntimeMessageMetadata;
         if (metadata.batch === true) {
             this.batchClientId = message.clientId;
-            this.batchBegin(message);
+            this.emitter.emit("batchBegin", message);
+            this.deltaScheduler.batchBegin(message);
         }
     }
 
     public endOperation(error: any | undefined, message: ISequencedDocumentMessage) {
         if (!this.messageScheduler || error) {
             this.batchClientId = undefined;
-            this.batchEnd(error, message);
+            this.emitter.emit("batchEnd", error, message);
+            this.deltaScheduler.batchEnd(message);
             return;
         }
 
@@ -304,14 +256,16 @@ export class ScheduleManager {
 
         // If no batchClientId has been set then we're in an individual batch
         if (!this.batchClientId) {
-            this.batchEnd(undefined, message);
+            this.emitter.emit("batchEnd", undefined, message);
+            this.deltaScheduler.batchEnd(message);
             return;
         }
 
         // As a back stop for any bugs marking the end of a batch - if the client ID flipped we consider the batch over
         if (this.batchClientId !== message.clientId) {
             this.batchClientId = undefined;
-            this.batchEnd(undefined, message);
+            this.emitter.emit("batchEnd", undefined, message);
+            this.deltaScheduler.batchEnd(message);
             return;
         }
 
@@ -319,7 +273,8 @@ export class ScheduleManager {
         const batch = message.metadata ? (message.metadata as IRuntimeMessageMetadata).batch : undefined;
         if (batch === false) {
             this.batchClientId = undefined;
-            this.batchEnd(undefined, message);
+            this.emitter.emit("batchEnd", undefined, message);
+            this.deltaScheduler.batchEnd(message);
         }
     }
 
@@ -333,55 +288,6 @@ export class ScheduleManager {
         this.paused = false;
         if (!this.localPaused) {
             this.deltaManager.inbound.systemResume();
-        }
-    }
-
-    private batchBegin(message: ISequencedDocumentMessage) {
-        this.emitter.emit("batchBegin", message);
-        if (this.deltaManager.inbound.length > 0 && !this.processingStartTime) {
-            // Start the timer that keeps track of how long we have processed ops in the delta queue
-            // in this call.
-            this.processingStartTime = performanceNow();
-
-            // Initialize the object that will be used to log the time taken to process the ops.
-            if (this.opProcessingLog === undefined) {
-                inboundQueueProcessingCount++;
-                this.opProcessingLog = {
-                    numberOfOps: this.deltaManager.inbound.length,
-                    numberOfBatches: 1,
-                    totalProcessingTime: 0,
-                };
-            }
-        }
-    }
-
-    private batchEnd(error: any | undefined, message: ISequencedDocumentMessage) {
-        this.emitter.emit("batchEnd", error, message);
-
-        // If we have processed ops for more than the total processing time, we pause the
-        // queue, yield the thread and schedule a resume. This ensures that we don't block
-        // the JS threads for a long time (for example, when catching up ops right after
-        // boot or catching up ops / delayed reaziling components by summarizer).
-        //
-        // We keep increasing the total processing time after each turn until all the ops have been
-        // processed. This way we keep the responsiveness at the beginning while also making sure
-        // that all the ops process fairly quickly.
-        if (this.processingStartTime && this.deltaManager.inbound.length > 0) {
-            const elaspedTime = performanceNow() - this.processingStartTime;
-            if (elaspedTime > this.totalProcessingTime) {
-                this.setPaused(true);
-
-                setTimeout(() => {
-                    this.setPaused(false);
-                });
-
-                this.processingStartTime = undefined;
-                this.totalProcessingTime += opProcessingTimeIncrement;
-
-                // Update the telemetry log object since.
-                this.opProcessingLog.numberOfBatches++;
-                this.opProcessingLog.totalProcessingTime += elaspedTime;
-            }
         }
     }
 
