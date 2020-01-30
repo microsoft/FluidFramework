@@ -7,9 +7,6 @@ import { EventEmitter } from "events";
 import * as puppeteer from "puppeteer";
 import * as winston from "winston";
 import { ICache } from "../redisCache";
-// import { generateLoaderHTML } from "./htmlGenerator";
-// tslint:disable-next-line: no-var-keyword prefer-const
-var test = false;
 
 export interface ICloseEvent {
     documentId: string;
@@ -19,7 +16,7 @@ export interface ICloseEvent {
 
 export class PuppetMaster extends EventEmitter {
 
-    public static async launch(
+    public static async create(
         documentId: string,
         tenantId: string,
         gatewayUrl: string,
@@ -86,36 +83,37 @@ export class PuppetMaster extends EventEmitter {
         await this.attachEndOfLife();
 
         const gatewayBase = this.gatewayUrl;
-        const gatewayUrl = `${gatewayBase}/loader/fluid/${encodeURIComponent(this.documentId)}`;
+        const gatewayUrl =
+            `${gatewayBase}/loader/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(this.documentId)}`;
         this.page.goto(gatewayUrl);
 
-        this.upsertPageCache();
+        if (this.agentType === "search") {
+            this.upsertPageCache();
+        }
     }
 
     // Code running inside Browser will invoke closeContainer. In response,
     // Puppeteer will close the tab and browser window.
     private async attachEndOfLife() {
-        if (test === true) {
-            await this.page.exposeFunction("closeContainer", async () => {
-                winston.info(`Closing browser for ${this.tenantId}/${this.documentId}/${this.agentType}`);
-                this.page.removeAllListeners();
-                if (this.cachingTimer) {
-                    clearInterval(this.cachingTimer);
-                    this.cachingTimer = undefined;
-                }
-                // Close the tab and browser.
-                await this.page.close();
-                await this.browser.close();
+        await this.page.exposeFunction("closeContainer", async () => {
+            winston.info(`Closing browser for ${this.tenantId}/${this.documentId}/${this.agentType}`);
+            this.page.removeAllListeners();
+            if (this.cachingTimer) {
+                clearInterval(this.cachingTimer);
+                this.cachingTimer = undefined;
+            }
+            // Close the tab and browser.
+            await this.page.close();
+            await this.browser.close();
 
-                // Emit an event to notify the caller.
-                const closeEvent: ICloseEvent = {
-                    documentId: this.documentId,
-                    task: this.agentType,
-                    tenantId: this.tenantId,
-                };
-                this.emit("close", closeEvent);
-            });
-        }
+            // Emit an event to notify the caller.
+            const closeEvent: ICloseEvent = {
+                documentId: this.documentId,
+                task: this.agentType,
+                tenantId: this.tenantId,
+            };
+            this.emit("close", closeEvent);
+        });
     }
 
     /**
@@ -123,17 +121,15 @@ export class PuppetMaster extends EventEmitter {
      * Puppeteer caches this HTML to redis
      */
     private async upsertPageCache() {
-        if (test === true) {
-            await this.page.exposeFunction("cachePage", async (pageHTML: string) => {
-                winston.info(`Caching page for ${this.tenantId}/${this.documentId}/${this.agentType}`);
-                if (this.cache) {
-                    this.cache.set(`${this.tenantId}-${this.documentId}`, pageHTML).then(() => {
-                        winston.info(`Updated page cache for ${this.tenantId}/${this.documentId}`);
-                    }, (err) => {
-                        winston.error(err);
-                    });
-                }
-            });
-        }
+        await this.page.exposeFunction("cachePage", async (pageHTML: string) => {
+            winston.info(`Caching page for ${this.tenantId}/${this.documentId}/${this.agentType}`);
+            if (this.cache) {
+                this.cache.set(`${this.tenantId}-${this.documentId}`, pageHTML).then(() => {
+                    winston.info(`Updated page cache for ${this.tenantId}/${this.documentId}`);
+                }, (err) => {
+                    winston.error(err);
+                });
+            }
+        });
     }
 }

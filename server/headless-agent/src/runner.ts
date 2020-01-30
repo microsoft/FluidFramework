@@ -64,7 +64,7 @@ export class HeadlessRunner implements utils.IRunner {
     }
 
     private launchPuppetMaster(requestMessage: IQueueMessage, task: string) {
-        PuppetMaster.launch(
+        PuppetMaster.create(
             requestMessage.documentId,
             requestMessage.tenantId,
             this.workerConfig.internalGatewayUrl,

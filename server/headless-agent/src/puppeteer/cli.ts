@@ -22,7 +22,7 @@ async function launchPuppeteer(documentId: string, agentType: string, gatewayUrl
         timestamp: true,
     });
 
-    const puppetMaster = await PuppetMaster.launch(
+    const puppetMaster = await PuppetMaster.create(
         documentId,
         tenantId,
         gatewayUrl,
