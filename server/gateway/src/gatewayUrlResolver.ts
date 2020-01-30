@@ -47,7 +47,6 @@ export function resolveUrl(
                 name: request.user.name,
             };
         }
-
         const endPointConfig: IConfig = {
             blobStorageUrl: config.get("worker:blobStorageUrl"),
             serverUrl: config.get("worker:serverUrl"),
