@@ -52,9 +52,9 @@ export class TinyliciousResourcesFactory implements utils.IResourcesFactory<Tiny
             taskMessageSender,
             config.get("foreman:permissions"),
             maxSendMessageSize,
-            (tenantId: string) => {
+            async (tenantId: string) => {
                 const url = `http://localhost:${port}/repos/${encodeURIComponent(tenantId)}`;
-                return Promise.resolve(new Historian(url, false, false));
+                return new Historian(url, false, false);
             });
 
         // TODO would be nicer to just pass the mongoManager down
