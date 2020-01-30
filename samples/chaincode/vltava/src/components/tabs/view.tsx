@@ -13,7 +13,7 @@ import * as React from "react";
 
 import "react-tabs/style/react-tabs.css";
 
-import { EmbeddedComponentWrapper } from "../lib";
+import { EmbeddedComponentWrapper } from "../library";
 import { ITabsDataModel, TabComponents } from "./dataModel";
 import { NewTabButton } from "./newTabButton";
 
