@@ -48,14 +48,14 @@ export function resolveUrl(
             };
         }
 
-        const endPointConfig = {
-            config,
+        const endPointConfig: IConfig = {
+            blobStorageUrl: config.get("worker:blobStorageUrl"),
+            serverUrl: config.get("worker:serverUrl"),
             tenantId,
             documentId,
         };
-
         const resolverList = [new RouterliciousUrlResolver(endPointConfig, undefined, appTenants, scopes, user)];
-        const resolvedP = resolveFluidUrl({ url: request.originalUrl, hostname: request.hostname }, resolverList);
+        const resolvedP = resolveFluidUrl(request.originalUrl, resolverList);
         const fullTreeP = alfred.getFullTree(tenantId, documentId);
         return [resolvedP, fullTreeP];
     }
