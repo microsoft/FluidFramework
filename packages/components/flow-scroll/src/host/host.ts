@@ -104,6 +104,9 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
             ) => {
                 const position = editor.selection.end;
                 const instance = factory.createCollectionItem(componentOptions) as IComponentLoadable;
+                // The strategy here is to route directly to a view component that should be rendered at the
+                // marker position (in this case, something we can call .render() on).  We need a matching request
+                // handler for whatever viewRoute we insert that will give us that view component.
                 const url = `${viewRoute !== undefined ? viewRoute : ""}/${instance.url}`;
                 doc.insertComponent(position, url, componentOptions, style, classList);
             };
@@ -146,6 +149,8 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
                 { key: "p", enabled: always, exec: () => { setFormat(TagName.p); } },
                 { key: "ul", enabled: always, exec: () => { insertTags([TagName.ul, TagName.li]); } },
                 { key: "red", enabled: always, exec: () => { setStyle("color:red"); } },
+                // Math is the only component from this set with view/model separation,
+                // so it's the only one with a view route.  The rest can already be rendered directly.
                 { key: "math inline", enabled: always, exec: () => insertComponentFromCollection(math, { display: "inline" }, `/MathView`) },
                 { key: "math block", enabled: always, exec: () => insertComponentFromCollection(math, { display: "block" }, `/MathView`) },
                 { key: "morton", enabled: always, exec: () => insertComponentFromCollection(videos, {}, undefined, "display:block;width:61%;--aspect-ratio:calc(16/9)") },
