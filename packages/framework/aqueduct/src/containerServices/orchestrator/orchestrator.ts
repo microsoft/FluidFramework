@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { BaseContainerService, serviceRoutePathRoot } from "@microsoft/fluid-aqueduct";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import {
     IComponentInterfacesRegistry,
@@ -13,6 +12,8 @@ import {
     IComponentDiscoverableInterfaces,
 } from "@microsoft/fluid-framework-interfaces";
 import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
+
+import { BaseContainerService, serviceRoutePathRoot } from "../";
 
 export const OrchestratorContainerServiceId = "orchestrator";
 
@@ -124,6 +125,10 @@ export class Orchestrator extends BaseContainerService implements IComponentInte
 
             // Add the component the interface map
             const existingInterfaces = this.discoverInterfacesMap.get(interfaceName);
+            if (!existingInterfaces) {
+                throw new Error("existingInterfaces should always exist");
+            }
+
             existingInterfaces.push(discover);
             this.discoverInterfacesMap.set(interfaceName, existingInterfaces);
 
@@ -146,6 +151,10 @@ export class Orchestrator extends BaseContainerService implements IComponentInte
 
             // Add the component the interface map
             const existingInterfaces = this.discoverableInterfacesMap.get(interfaceName);
+            if (!existingInterfaces) {
+                throw new Error("existingInterfaces should always exist");
+            }
+
             existingInterfaces.push(discoverable);
             this.discoverableInterfacesMap.set(interfaceName, existingInterfaces);
 
