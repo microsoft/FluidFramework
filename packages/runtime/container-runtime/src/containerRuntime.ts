@@ -966,6 +966,17 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.dirtyDocument;
     }
 
+    /**
+     * Submits the signal to be sent to other clients.
+     * @param type - Type of the signal.
+     * @param content - Content of the signal.
+     */
+    public submitSignal(type: string, content: any) {
+        this.verifyNotClosed();
+        const envelope: IEnvelope = { address: undefined, contents: {type, content} };
+        return this.context.submitSignalFn(envelope);
+    }
+
     private refreshBaseSummary(snapshot: ISnapshotTree) {
         // Currently only is called from summaries
         this.loadedFromSummary = true;
