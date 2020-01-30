@@ -10,7 +10,6 @@ export interface IRequestHeader {
 export interface IRequest {
     url: string;
     headers?: IRequestHeader;
-    hostname?: string;
 }
 
 export interface IResponse {

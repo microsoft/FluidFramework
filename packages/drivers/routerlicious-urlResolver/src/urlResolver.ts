@@ -40,7 +40,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
 
         // If we know the original hostname, reinsert it
         if (this.config && request.url.startsWith("/")) {
-            requestedUrl = `http://${(request.hostname ? request.hostname : "dummy")}:3000${request.url}`;
+            requestedUrl = `http://dummy:3000${request.url}`;
         }
 
         const reqUrl = new URL(requestedUrl);

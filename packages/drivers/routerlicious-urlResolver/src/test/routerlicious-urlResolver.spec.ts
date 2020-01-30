@@ -36,10 +36,9 @@ describe("Routerlicious Url Resolver", () => {
         assert.equal(resolved.url, "fluid://localhost:3003/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0", "FluidUrl does not match");
     });
 
-    it("Should handle hostname in local External request", async () => {
+    it("Should handle local External request", async () => {
         const request: IRequest = {
             url: "/loader/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0",
-            hostname: "localhost",
         };
 
         const provider = new Provider({}).defaults({
@@ -67,10 +66,9 @@ describe("Routerlicious Url Resolver", () => {
         assert.equal(url, "fluid://localhost:3003/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0", "Improperly formed FluidURL");
     });
 
-    it("Should handle hostname in local Internal request", async () => {
+    it("Should handle local Internal request", async () => {
         const request: IRequest = {
-            url: "/loader/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0",
-            hostname: "gateway",
+            url: "http://gateway:3000/loader/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0",
         };
 
         const provider = new Provider({}).defaults({
@@ -97,10 +95,9 @@ describe("Routerlicious Url Resolver", () => {
         assert.equal(url, "fluid://localhost:3003/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0", "Improperly formed FluidURL");
     });
 
-    it("Should handle hostname in Deployed Internal request", async () => {
+    it("Should handle Deployed Internal request", async () => {
         const request: IRequest = {
-            url: "/loader/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0",
-            hostname: "gateway",
+            url: "http://angry-dog-gateway:3000/loader/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0",
         };
         const provider = new Provider({}).defaults({
             worker: {
@@ -127,10 +124,9 @@ describe("Routerlicious Url Resolver", () => {
     });
 
 
-    it("Should handle hostname in deployed External request", async () => {
+    it("Should handle deployed External request", async () => {
         const request: IRequest = {
             url: "/loader/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0",
-            hostname: "www.wu2-ppe.prague.office-int",
         };
 
         const provider = new Provider({}).defaults({
