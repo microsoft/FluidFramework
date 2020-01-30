@@ -8,6 +8,10 @@ import * as jwt from "jsonwebtoken";
 import { configureLogging } from "./cliLogger";
 import { PuppetMaster } from "./puppetMaster";
 
+/**
+ * This is for testing puppeteer from within the docker container (?)
+ */
+
 const routerlicious = "https://alfred.wu2-ppe.prague.office-int.com";
 const historian = "https://historian.wu2-ppe.prague.office-int.com";
 const tenantId = "fluid";
@@ -36,7 +40,7 @@ async function launchPuppeteer(documentId: string, loaderType: string) {
         },
         secret);
 
-    const puppetMaster = new PuppetMaster(
+    const puppetMaster = await PuppetMaster.launch(
         documentId,
         routerlicious,
         historian,
@@ -46,7 +50,7 @@ async function launchPuppeteer(documentId: string, loaderType: string) {
         packageUrl,
         loaderType);
 
-    return puppetMaster.launch();
+    return puppetMaster;
 }
 
 commander
