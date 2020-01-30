@@ -10,7 +10,7 @@
     "build:full": "npm run build",
     "docker:build": "docker build --build-arg NPM_TOKEN=$(echo $NPM_TOKEN) -t headless-agent .",
     "docker:start": "docker run --rm -t --cap-add=SYS_ADMIN --network routerlicious_default headless-agent",
-    "lint": "tslint 'src/**/*.ts",
+    "lint": "tslint 'src/**/*.ts'",
     "tsc": "tsc",
     "start": "docker-compose up",
     "start:debug": "docker-compose -f docker-compose.yml -f docker-compose.debug.yml up"

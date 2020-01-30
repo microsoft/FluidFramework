@@ -1,12 +1,7 @@
 {
-    "extends": "@microsoft/fluid-build-common/ts-common-config.json",    
-    "exclude": [
-        "dist",
-        "node_modules"
-    ],
+    "extends": "@microsoft/fluid-build-common/ts-common-config.json",
     "compilerOptions": {
         "target": "es6",
-        "declaration": false,
         "moduleResolution": "node",
         "module": "commonjs",
         "noImplicitAny": true,
