@@ -5,7 +5,7 @@
 
 import { IPackage } from "@microsoft/fluid-container-definitions";
 import { ScopeType } from "@microsoft/fluid-protocol-definitions";
-import { IAlfredTenant } from "@microsoft/fluid-server-services-core";
+import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
 import { extractDetails, WebCodeLoader, WhiteList } from "@microsoft/fluid-web-code-loader";
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";

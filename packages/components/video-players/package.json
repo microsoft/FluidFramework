@@ -28,6 +28,7 @@
   "dependencies": {
     "@microsoft/fluid-component-core-interfaces": "^0.13.0",
     "@microsoft/fluid-component-runtime": "^0.13.0",
+    "@microsoft/fluid-framework-experimental": "^0.13.0",
     "@microsoft/fluid-framework-interfaces": "^0.13.0",
     "@microsoft/fluid-map": "^0.13.0",
     "@microsoft/fluid-runtime-definitions": "^0.13.0",

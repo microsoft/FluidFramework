@@ -19,6 +19,8 @@ import {
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
+    IThrottlingError,
+    ErrorType,
 } from "@microsoft/fluid-driver-definitions";
 import { isSystemType } from "@microsoft/fluid-protocol-base";
 import {
@@ -34,6 +36,7 @@ import {
     ITrace,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
+import { createIError } from "@microsoft/fluid-driver-utils";
 import { ContentCache } from "./contentCache";
 import { debug } from "./debug";
 import { DeltaConnection } from "./deltaConnection";
@@ -55,7 +58,7 @@ const ImmediateNoOpResponse = "";
 
 const DefaultContentBufferSize = 10;
 
-// Test if we deal with INetworkError / NetworkError object and if it has enough information to make a call.
+// Test if we deal with NetworkError object and if it has enough information to make a call.
 // If in doubt, allow retries.
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 function canRetryOnError(error: any) {
@@ -214,7 +217,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         );
 
         this._inbound.on("error", (error) => {
-            this.emit("error", error);
+            this.emit("error", createIError(error));
         });
 
         // Outbound message queue. The outbound queue is represented as a queue of an array of ops. Ops contained
@@ -227,7 +230,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         );
 
         this._outbound.on("error", (error) => {
-            this.emit("error", error);
+            this.emit("error", createIError(error));
         });
 
         // Inbound signal queue
@@ -241,7 +244,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         );
 
         this._inboundSignal.on("error", (error) => {
-            this.emit("error", error);
+            this.emit("error", createIError(error));
         });
 
         // Require the user to start the processing
@@ -355,7 +358,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                         retryDelayFromError :
                         Math.min(delay * 2, MaxReconnectDelay);
 
-                    this.emitDelayInfo(retryFor.DELTASTREAM, delay);
+                    if (retryDelayFromError) {
+                        this.emitDelayInfo(retryFor.DELTASTREAM, retryDelayFromError);
+                    }
                     await waitForConnectedState(delay);
                 }
             }
@@ -587,7 +592,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 success,
             });
 
-            this.emitDelayInfo(retryFor.DELTASTORAGE, delay);
+            if (retryAfter && retryAfter >= 0) {
+                // Emit throttling info only if we get it from error.
+                this.emitDelayInfo(retryFor.DELTASTORAGE, delay);
+            }
             await waitForConnectedState(delay);
         }
 
@@ -608,7 +616,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         // Note: "disconnect" & "nack" do not have error object
         if (raiseContainerError && error !== undefined) {
-            this.emit("error", error);
+            this.emit("error", createIError(error, true));
         }
 
         this.logger.sendTelemetryEvent({ eventName: "ContainerClose" }, error);
@@ -677,7 +685,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         if (this.deltaStreamDelay && this.deltaStorageDelay) {
             const delayTime = Math.max(this.deltaStorageDelay, this.deltaStreamDelay);
             if (delayTime >= 0) {
-                this.emit("connectionDelay", delayTime);
+                const throttlingError: IThrottlingError = {
+                    errorType: ErrorType.throttlingError,
+                    message: "Service busy/throttled.",
+                    retryAfterSeconds: delayTime,
+                };
+                this.emit("error", throttlingError);
             }
         }
     }

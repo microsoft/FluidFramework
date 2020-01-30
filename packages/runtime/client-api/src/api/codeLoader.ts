@@ -25,6 +25,7 @@ import {
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import * as sequence from "@microsoft/fluid-sequence";
+import { createIError } from "@microsoft/fluid-driver-utils";
 import { Document } from "./document";
 
 const rootMapId = "root";
@@ -140,8 +141,8 @@ export class ChaincodeFactory implements IRuntimeFactory {
                 .then((componentRuntime) => {
                     componentRuntime.attach();
                 })
-                .catch((error) => {
-                    context.error(error);
+                .catch((error: any) => {
+                    context.error(createIError(error));
                 });
         }
 

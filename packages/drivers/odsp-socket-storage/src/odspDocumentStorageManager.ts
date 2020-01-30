@@ -73,7 +73,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         private readonly snapshotUrl: string | undefined,
         private latestSha: string | null | undefined,
         private readonly fetchWrapper: IFetchWrapper,
-        private readonly getStorageToken: (refresh: boolean) => Promise<string | null>,
+        private readonly getStorageToken: (refresh: boolean, name?: string) => Promise<string | null>,
         private readonly logger: ITelemetryLogger,
         private readonly fetchFullSnapshot: boolean,
         private readonly odspCache: OdspCache,
@@ -97,7 +97,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             this.checkSnapshotUrl();
 
             const response = await getWithRetryForTokenRefresh(async (refresh: boolean) => {
-                const storageToken = await this.getStorageToken(refresh);
+                const storageToken = await this.getStorageToken(refresh, "GetBlob");
 
                 const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/blobs/${blobid}${this.queryString}`, storageToken);
 
@@ -123,7 +123,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         this.checkSnapshotUrl();
 
         return getWithRetryForTokenRefresh(async (refresh: boolean) => {
-            const storageToken = await this.getStorageToken(refresh);
+            const storageToken = await this.getStorageToken(refresh, "GetContent");
 
             const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/contents${getQueryString({ ref: version.id, path })}`, storageToken);
 
@@ -245,7 +245,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                 const odspCacheKey: string = `${this.documentId}/getlatest`;
                 let odspSnapshot: IOdspSnapshot = this.odspCache.get(odspCacheKey);
                 if (!odspSnapshot) {
-                    const storageToken = await this.getStorageToken(refresh);
+                    const storageToken = await this.getStorageToken(refresh, "GetVersions");
 
                     // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
                     // snapshot code path. We should leverage the fact that these deltas are returned to speed up the deltas fetch.
@@ -322,7 +322,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         }
 
         return getWithRetryForTokenRefresh(async (refresh) => {
-            const storageToken = await this.getStorageToken(refresh);
+            const storageToken = await this.getStorageToken(refresh, "GetVersions");
             const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/versions?count=${count}`, storageToken);
 
             // Fetch the latest snapshot versions for the document
@@ -417,7 +417,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         let tree = this.treesCache.get(id);
         if (!tree) {
             tree = await getWithRetryForTokenRefresh(async (refresh: boolean) => {
-                const storageToken = await this.getStorageToken(refresh);
+                const storageToken = await this.getStorageToken(refresh, "ReadTree");
 
                 const response = await fetchSnapshot(this.snapshotUrl!, storageToken, this.appId, this.fetchWrapper, id, this.fetchFullSnapshot);
                 const odspSnapshot: IOdspSnapshot = response.content;
@@ -525,7 +525,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         };
 
         return getWithRetryForTokenRefresh(async (refresh: boolean) => {
-            const storageToken = await this.getStorageToken(refresh);
+            const storageToken = await this.getStorageToken(refresh, "WriteSummaryTree");
 
             const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/snapshot${this.queryString}`, storageToken);
             headers["Content-Type"] = "application/json";

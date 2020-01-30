@@ -61,9 +61,9 @@ COPY packages/drivers/test-driver/package*.json packages/drivers/test-driver/
 COPY packages/drivers/create-new-driver/package*.json packages/drivers/create-new-driver/
 COPY packages/framework/aqueduct/package*.json packages/framework/aqueduct/
 COPY packages/framework/aqueduct-react/package*.json packages/framework/aqueduct-react/
+COPY packages/framework/experimental/package*.json packages/framework/experimental/
 COPY packages/framework/framework-definitions/package*.json packages/framework/framework-definitions/
 COPY packages/framework/undo-redo/package*.json packages/framework/undo-redo/
-COPY packages/loader/common-definitions/package*.json packages/loader/common-definitions/
 COPY packages/loader/component-core-interfaces/package*.json packages/loader/component-core-interfaces/
 COPY packages/loader/container-definitions/package*.json packages/loader/container-definitions/
 COPY packages/loader/container-loader/package*.json packages/loader/container-loader/
@@ -71,7 +71,6 @@ COPY packages/loader/driver-definitions/package*.json packages/loader/driver-def
 COPY packages/loader/driver-utils/package*.json packages/loader/driver-utils/
 COPY packages/loader/execution-context-loader/package*.json packages/loader/execution-context-loader/
 COPY packages/loader/loader-web/package*.json packages/loader/loader-web/
-COPY packages/loader/utils/package*.json packages/loader/utils/
 COPY packages/loader/test-loader-utils/package*.json packages/loader/test-loader-utils/
 COPY packages/hosts/base-host/package*.json packages/hosts/base-host/
 COPY packages/hosts/host-service-interfaces/package*.json packages/hosts/host-service-interfaces/
@@ -115,7 +114,7 @@ COPY samples/chaincode/musica/package*.json samples/chaincode/musica/
 COPY samples/chaincode/persona/package*.json samples/chaincode/persona/
 COPY samples/chaincode/pollster/package*.json samples/chaincode/pollster/
 COPY samples/chaincode/prosemirror/package*.json samples/chaincode/prosemirror/
-COPY samples/chaincode/simple-component-embed/package*.json samples/chaincode/simple-component-embed/	
+COPY samples/chaincode/simple-component-embed/package*.json samples/chaincode/simple-component-embed/
 COPY samples/chaincode/simple-data-share/package*.json samples/chaincode/simple-data-share/
 COPY samples/chaincode/smde/package*.json samples/chaincode/smde/
 COPY samples/chaincode/spaces/package*.json samples/chaincode/spaces/

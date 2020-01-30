@@ -3,6 +3,9 @@
 - [Fluid Packages Require Consumers on TypeScript `>=3.6`](##Fluid-Packages-Require-Consumers-on-TypeScript->=3.6)
 - [IHost interface removed, Loader constructor signature updated](#IHost-interface-removed-Loader-constructor-signature-updated)
 
+New error types are added in 0.13. So whenever any error is emitted from container it will be of type IError which will have the property errorType which will tell the app, what type of error it is.
+It will also contain the property critical which will tell the app that the error is critical if it is true. Different errorTypes are defined in loader/driver-definitions/src/error.ts.
+
 ## Fluid Packages Require Consumers on TypeScript `>=3.6`
 
 Fluid now requires consumers of our packages to use a TypeScript compiler version `>=3.6`. The Fluid `./packages` repo has upgraded to TypeScript `3.7.4`. TypeScript 3.7 has a breaking change to the `.d.ts` format having to do with getters and setters and is part of an effort to do [Class Field Mitigations](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#class-field-mitigations).
