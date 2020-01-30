@@ -4,7 +4,7 @@
  */
 
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
-import { ComponentRegistry } from "@microsoft/fluid-container-runtime";
+import { ComponentRegistry, RuntimeRequestHandler } from "@microsoft/fluid-container-runtime";
 import { IComponentDefaultFactoryName } from "@microsoft/fluid-framework-interfaces";
 import {
     IComponentRegistry,
@@ -32,6 +32,7 @@ export class SimpleModuleInstantiationFactory implements
         private readonly defaultComponentName: string,
         private readonly registryEntries: NamedComponentRegistryEntries,
         private readonly serviceRegistry: ContainerServiceRegistryEntries = [],
+        private readonly requestHandlers: RuntimeRequestHandler[] = [],
     ) {
         this.registry = new ComponentRegistry(registryEntries);
     }
@@ -47,6 +48,7 @@ export class SimpleModuleInstantiationFactory implements
             this.defaultComponentName,
             this.registryEntries,
             this.serviceRegistry,
+            this.requestHandlers,
         );
     }
 }
