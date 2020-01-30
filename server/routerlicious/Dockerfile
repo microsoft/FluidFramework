@@ -60,6 +60,7 @@ COPY packages/drivers/fluidapp-odsp-urlResolver/package*.json packages/drivers/f
 COPY packages/drivers/routerlicious-urlResolver/package*.json packages/drivers/routerlicious-urlResolver/
 COPY packages/drivers/execution-context-loader/package*.json packages/drivers/execution-context-loader/
 COPY packages/drivers/test-driver/package*.json packages/drivers/test-driver/
+COPY packages/drivers/create-new-driver/package*.json packages/drivers/create-new-driver/
 COPY packages/framework/aqueduct/package*.json packages/framework/aqueduct/
 COPY packages/framework/aqueduct-react/package*.json packages/framework/aqueduct-react/
 COPY packages/framework/framework-definitions/package*.json packages/framework/framework-definitions/
