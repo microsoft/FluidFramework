@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/eslint-config-fluid",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "description": "Shareable ESLint config for the Fluid Framework",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -10,7 +10,7 @@
     "build": "echo Skipping @microsoft/eslint-config-fluid: No source steps necessary."
   },
   "dependencies": {
-    "@microsoft/fluid-build-common": "^0.1001.0",
+    "@microsoft/fluid-build-common": "^0.14.0",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",
     "eslint": "~6.8.0",
