@@ -122,6 +122,7 @@ COPY samples/chaincode/sudoku/package*.json  samples/chaincode/sudoku/
 COPY samples/chaincode/textarea-noreact/package*.json samples/chaincode/textarea-noreact/
 COPY samples/chaincode/tourofheroes/package*.json samples/chaincode/tourofheroes/
 COPY samples/chaincode/type-race/package*.json samples/chaincode/type-race/
+COPY samples/chaincode/vltava/package*.json samples/chaincode/vltava/
 
 FROM node:10.16.0-slim AS base
 
