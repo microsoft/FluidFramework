@@ -21,12 +21,8 @@ export class PuppetMaster extends EventEmitter {
 
     public static async launch(
         documentId: string,
-        routerlicious: string,
-        historian: string,
         tenantId: string,
-        token: string,
-        key: string,
-        packageUrl: string,
+        gatewayUrl: string,
         agentType: string,
         cache?: ICache): Promise<PuppetMaster> {
 
@@ -34,12 +30,8 @@ export class PuppetMaster extends EventEmitter {
         const page = await browser.newPage();
 
         const puppetMaster = new PuppetMaster(documentId,
-            routerlicious,
-            historian,
             tenantId,
-            token,
-            key,
-            packageUrl,
+            gatewayUrl,
             agentType,
             browser,
             page,
@@ -53,12 +45,8 @@ export class PuppetMaster extends EventEmitter {
 
     constructor(
         private documentId: string,
-        public routerlicious: string,
-        public historian: string,
         private tenantId: string,
-        public token: string,
-        public key: string,
-        public packageUrl: string,
+        private gatewayUrl: string,
         private agentType: string,
         private browser: puppeteer.Browser,
         private page: puppeteer.Page,
@@ -97,28 +85,10 @@ export class PuppetMaster extends EventEmitter {
 
         await this.attachEndOfLife();
 
-        const gatewayBase = `http://gateway:3000`;
+        const gatewayBase = this.gatewayUrl;
         const gatewayUrl = `${gatewayBase}/loader/fluid/${encodeURIComponent(this.documentId)}`;
         this.page.goto(gatewayUrl);
 
-        // await this.page.addScriptTag({ path: "client/fluid-loader.bundle.js" });
-        // const htmlToRender = generateLoaderHTML(
-        //     this.documentId,
-        //     this.routerlicious,
-        //     this.historian,
-        //     this.tenantId,
-        //     this.token,
-        //     this.key,
-        //     this.packageUrl,
-        //     this.agentType,
-        //     "search");
-        // await this.page.setContent(htmlToRender);
-        // this.page.waitForSelector(".editor")
-        //     .then((element) => {
-        //         console.log(`
-        //         This is big! We got the .editor class.
-        //         `);
-        //     });
         this.upsertPageCache();
     }
 
