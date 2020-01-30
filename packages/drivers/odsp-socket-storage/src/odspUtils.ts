@@ -145,12 +145,12 @@ export function fetchHelper(
         }
 
         // .json() can fail and message (that goes into telemetry) would container full request URI, including tokens...
-        // It tails for me with "Unexpected end of JSON input" quite often - an attempt to download big file (many ops)
+        // It fails for me with "Unexpected end of JSON input" quite often - an attempt to download big file (many ops)
         // almost always ends up with this error - I'd guess 1% of op request end up here... It always succeeds on
         // retry.
         try {
             const res = {
-                headers: response.headers,
+                headers: new Headers({ ...response.headers, "body-size": (await response.clone().text()).length }),
                 content: await response.json(),
             };
             return res;
