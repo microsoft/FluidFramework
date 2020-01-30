@@ -11,8 +11,9 @@ import {
     IProvideComponentRegistry,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
-import { SimpleContainerRuntimeFactory } from "./";
+
 import { ContainerServiceRegistryEntries } from "../containerServices";
+import { SimpleContainerRuntimeFactory } from "./";
 
 /**
  *  Simple Fluid Module instantiation library. This should be exposed as fluidExport off the entry point to your module
