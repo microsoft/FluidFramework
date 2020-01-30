@@ -24,6 +24,8 @@ describe("Loader", () => {
             let intendedResult: IProcessMessageResult;
             const docId = "docId";
             const submitEvent = "test-submit";
+            // Stash the real setTimeout because sinon fake timers will hijack it.
+            const realSetTimeout = setTimeout;
 
             async function startDeltaManager() {
                 await deltaManager.connect();
@@ -84,6 +86,13 @@ describe("Loader", () => {
             describe("Update Minimum Sequence Number", () => {
                 const expectedTimeout = 100;
 
+                // function to yield control in the Javascript event loop.
+                async function yieldEventLoop(): Promise<void> {
+                    await new Promise<void>((resolve) => {
+                        realSetTimeout(resolve, 0);
+                    });
+                }
+
                 // helper function asserting that there is exactly one well-formed no-op
                 function assertOneValidNoOp(messages: IDocumentMessage[], immediate: boolean = false) {
                     assert.strictEqual(1, messages.length);
@@ -100,10 +109,14 @@ describe("Loader", () => {
                     });
 
                     emitSequentialOp();
+                    await yieldEventLoop();
+
                     clock.tick(expectedTimeout - 1);
+                    await yieldEventLoop();
                     assert.strictEqual(runCount, 0);
 
                     clock.tick(1);
+                    await yieldEventLoop();
                     assert.strictEqual(runCount, 1);
                 });
 
@@ -120,21 +133,27 @@ describe("Loader", () => {
 
                     // initial op
                     emitSequentialOp();
+                    await yieldEventLoop();
 
                     for (let i = 0; i < numberOfSuccessiveOps; i++) {
                         clock.tick(1);
+                        await yieldEventLoop();
                         emitSequentialOp();
+                        await yieldEventLoop();
                     }
                     // should not run until timeout
                     clock.tick(expectedTimeout - numberOfSuccessiveOps - 1);
+                    await yieldEventLoop();
                     assert.strictEqual(runCount, 0);
 
                     // should run after timeout
                     clock.tick(1);
+                    await yieldEventLoop();
                     assert.strictEqual(runCount, 1);
 
                     // should not run again (make sure no additional timeouts created)
                     clock.tick(expectedTimeout);
+                    await yieldEventLoop();
                     assert.strictEqual(runCount, 1);
                 });
 
@@ -146,6 +165,7 @@ describe("Loader", () => {
                     });
 
                     emitSequentialOp(MessageType.NoOp);
+                    await yieldEventLoop();
                     clock.tick(expectedTimeout);
                 });
 
@@ -160,6 +180,7 @@ describe("Loader", () => {
                     });
 
                     emitSequentialOp(MessageType.NoOp);
+                    await yieldEventLoop();
                     assert.strictEqual(runCount, 1);
                 });
 
@@ -185,12 +206,16 @@ describe("Loader", () => {
                     });
 
                     emitSequentialOp();
+                    await yieldEventLoop();
                     clock.tick(expectedTimeout - 1);
+                    await yieldEventLoop();
                     deltaManager.submit(MessageType.Operation, ignoreContent);
                     clock.tick(1);
+                    await yieldEventLoop();
 
                     // make extra sure
                     clock.tick(expectedTimeout);
+                    await yieldEventLoop();
                 });
             });
         });
