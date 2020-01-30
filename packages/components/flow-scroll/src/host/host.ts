@@ -95,13 +95,18 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
                 doc.insertComponent(position, `/${this.root.get(url)}`, componentOptions, style, classList);
             };
 
-            const insertComponentFromCollection =
-                (factory: IComponentCollection, componentOptions: object, style?: string, classList?: string[]) => {
-                    const position = editor.selection.end;
-                    const instance = factory.createCollectionItem(componentOptions) as IComponentLoadable;
-                    doc.insertComponent(position, `/${instance.url}`, componentOptions, style, classList);
-
-                };
+            const insertComponentFromCollection = (
+                factory: IComponentCollection,
+                componentOptions: object,
+                viewRoute?: string,
+                style?: string,
+                classList?: string[],
+            ) => {
+                const position = editor.selection.end;
+                const instance = factory.createCollectionItem(componentOptions) as IComponentLoadable;
+                const url = `${viewRoute !== undefined ? viewRoute : ""}/${instance.url}`;
+                doc.insertComponent(position, url, componentOptions, style, classList);
+            };
 
             const insertTags = (tags: TagName[]) => {
                 const selection = editor.selection;
@@ -141,10 +146,10 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
                 { key: "p", enabled: always, exec: () => { setFormat(TagName.p); } },
                 { key: "ul", enabled: always, exec: () => { insertTags([TagName.ul, TagName.li]); } },
                 { key: "red", enabled: always, exec: () => { setStyle("color:red"); } },
-                { key: "math inline", enabled: always, exec: () => insertComponentFromCollection(math, { display: "inline" }) },
-                { key: "math block", enabled: always, exec: () => insertComponentFromCollection(math, { display: "block" }) },
-                { key: "morton", enabled: always, exec: () => insertComponentFromCollection(videos, {}, "display:block;width:61%;--aspect-ratio:calc(16/9)") },
-                { key: "image", enabled: always, exec: () => insertComponentFromCollection(images, {}, "display:inline-block;float:left;resize:both;overflow:hidden") },
+                { key: "math inline", enabled: always, exec: () => insertComponentFromCollection(math, { display: "inline" }, `/MathView`) },
+                { key: "math block", enabled: always, exec: () => insertComponentFromCollection(math, { display: "block" }, `/MathView`) },
+                { key: "morton", enabled: always, exec: () => insertComponentFromCollection(videos, {}, undefined, "display:block;width:61%;--aspect-ratio:calc(16/9)") },
+                { key: "image", enabled: always, exec: () => insertComponentFromCollection(images, {}, undefined, "display:inline-block;float:left;resize:both;overflow:hidden") },
                 { key: "table", enabled: always, exec: () => insertComponent(tableViewType, {}) },
             ];
             /* eslint-enable max-len */

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { mathViewRequestHandler } from "@fluid-example/math";
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { WebFlowHost, webFlowHostFactory } from "./host";
 
@@ -11,4 +12,6 @@ export const fluidExport = new SimpleModuleInstantiationFactory(
     new Map([
         [WebFlowHost.type, Promise.resolve(webFlowHostFactory)],
     ]),
+    undefined, // serviceRegistry
+    [ mathViewRequestHandler ],
 );
