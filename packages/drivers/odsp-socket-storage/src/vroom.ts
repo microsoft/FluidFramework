@@ -34,16 +34,13 @@ export async function fetchJoinSession(
     additionalParams: string,
     method: string,
     logger: ITelemetryLogger,
-    getVroomToken: (refresh: boolean) => Promise<string | undefined | null>,
+    getVroomToken: (refresh: boolean, name?: string) => Promise<string | undefined | null>,
 ): Promise<IOdspResponse<ISocketStorageDiscovery>> {
     return getWithRetryForTokenRefresh(async (refresh: boolean) => {
-        const tokenEvent = PerformanceEvent.start(logger, { eventName: "JoinSessionToken" });
-        const token = await getVroomToken(refresh);
+        const token = await getVroomToken(refresh, "JoinSession");
         if (!token) {
-            tokenEvent.cancel();
             throwOdspNetworkError("Failed to acquire Vroom token", 400, true);
         }
-        tokenEvent.end();
 
         const joinSessionEvent = PerformanceEvent.start(logger, { eventName: "JoinSession" });
         let response: IOdspResponse<ISocketStorageDiscovery>;
@@ -89,7 +86,7 @@ export async function getSocketStorageDiscovery(
     itemId: string,
     siteUrl: string,
     logger: ITelemetryLogger,
-    getVroomToken: (refresh: boolean) => Promise<string | undefined | null>,
+    getVroomToken: (refresh: boolean, name?: string) => Promise<string | undefined | null>,
     odspCache: OdspCache,
     joinSessionKey: string,
 ): Promise<ISocketStorageDiscovery> {

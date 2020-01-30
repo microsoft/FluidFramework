@@ -518,7 +518,7 @@ export class Client {
                     currentSeq: this.getCurrentSeq(),
                     end,
                     eventName: "InvalidOpRange",
-                    invalidPositions,
+                    invalidPositions: invalidPositions.toString(),
                     length,
                     opPos1: op.pos1,
                     opPos1Relative: op.relativePos1 !== undefined,
@@ -913,7 +913,7 @@ export class Client {
 
         // TODO: Remove options flag once new snapshot format is adopted as default.
         //       (See https://github.com/microsoft/FluidFramework/issues/84)
-        const snap = this.mergeTree.options.newMergeTreeSnapshotFormat
+        const snap = this.mergeTree.options && this.mergeTree.options.newMergeTreeSnapshotFormat
             ? new Snapshot(this.mergeTree, this.logger)
             : new SnapshotLegacy(this.mergeTree, this.logger);
 
