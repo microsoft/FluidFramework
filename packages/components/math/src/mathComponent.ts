@@ -15,6 +15,7 @@ import {
     IComponentHTMLVisual,
     IComponentLoadable,
     IComponentRouter,
+    IComponentTakesScope,
     IRequest,
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
@@ -51,7 +52,8 @@ const cursorDirectionToDirection = {
 
 type IMathMarkerInst = MathExpr.IMathMarker;
 
-export class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout {
+export class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout, IComponentTakesScope {
+    public get IComponentTakesScope() { return this; }
     public get IComponentHTMLView() { return this; }
 
     public get IComponentCursor() { return this; }
@@ -74,12 +76,16 @@ export class MathView implements IComponentHTMLView, IComponentCursor, IComponen
     public options?: IComponentHTMLOptions;
     public rootElement: HTMLElement;
 
-    constructor(public instance: MathInstance, public scope?: IComponent) {
+    constructor(public instance: MathInstance, scope?: IComponent) {
         if (scope) {
             this.searchMenuHost = scope.ISearchMenuHost;
         }
         this.options = this.instance.options;
         this.instance.on("remoteEdit", this.remoteEdit);
+    }
+
+    public setScope(scope: IComponent) {
+        this.searchMenuHost = scope.ISearchMenuHost;
     }
 
     // IComponentHTMLView

@@ -105,8 +105,10 @@ export class InclusionFormatter extends Formatter<IInclusionState> {
                         } as IComponentHTMLView;
                     }
                 } else {
+                    if (component.IComponentTakesScope) {
+                        component.IComponentTakesScope.setScope(layout.scope);
+                    }
                     view = component as IComponentHTMLView;
-                    // need to set scope here
                 }
 
                 view.render(state.slot);
