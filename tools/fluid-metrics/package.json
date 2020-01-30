@@ -9,7 +9,7 @@
     "build": "npm run tslint && npm run tsc",
     "start": "node dist/index.js",
     "tsc": "tsc",
-    "tslint": "tslint 'src/**/*.ts'"
+    "lint": "tslint 'src/**/*.ts'"
   },
   "dependencies": {
     "@microsoft/fluid-server-routerlicious": "^0.1.2544",

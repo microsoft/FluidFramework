@@ -14,7 +14,7 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "tsc": "tsc",
-    "tslint": "tslint --project tsconfig.json --format verbose"
+    "lint": "tslint --project tsconfig.json --format verbose"
   },
   "dependencies": {
     "@microsoft/fluid-core-utils": "^0.10.13634",
