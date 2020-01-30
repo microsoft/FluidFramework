@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import {
     IComponentInterfacesRegistry,
@@ -78,14 +79,25 @@ export class Orchestrator extends BaseContainerService implements IComponentInte
     public registerComponentInterfaces(
         component: IProvideComponentDiscoverInterfaces | IProvideComponentDiscoverableInterfaces,
     ) {
-        const discoverable = (component as IProvideComponentDiscoverableInterfaces).IComponentDiscoverableInterfaces;
-        if (discoverable){
-            this.registerDiscoverableInterfaces(discoverable);
-        }
-
+        // Discover needs to go first to ensure we don't alert the component registering of itself.
         const discover = (component as IProvideComponentDiscoverInterfaces).IComponentDiscoverInterfaces;
         if (discover){
             this.registerDiscoverInterfaces(discover);
+        }
+
+        const discoverable = (component as IProvideComponentDiscoverableInterfaces).IComponentDiscoverableInterfaces;
+        if (discoverable){
+            // The below code is some crazy typescript magic that checks to see that the interface the component
+            // is declaring as discoverable is implemented by the component itself. We can do this because
+            // `keyof IComponent` allows us to iterate though to check if the component also implements a getter
+            // with the same name.
+            discoverable.discoverableInterfaces.forEach((interfaceName) => {
+                assert(
+                    component[interfaceName],
+                    `Component registering discoverable interface: [${interfaceName}] but does not implement it.`,
+                );
+            });
+            this.registerDiscoverableInterfaces(discoverable);
         }
     }
 
@@ -141,9 +153,9 @@ export class Orchestrator extends BaseContainerService implements IComponentInte
         });
     }
 
-    private registerDiscoverableInterfaces(discoverable: IComponentDiscoverableInterfaces) {
+    private registerDiscoverableInterfaces(discoverableComponent: IComponentDiscoverableInterfaces) {
         // For each discover interface we will add it to the map
-        discoverable.discoverableInterfaces.forEach((interfaceName) => {
+        discoverableComponent.discoverableInterfaces.forEach((interfaceName) => {
             // If it's the first interface of its type add it to the the map
             if (!this.discoverableInterfacesMap.has(interfaceName)){
                 this.discoverableInterfacesMap.set(interfaceName, []);
@@ -155,15 +167,17 @@ export class Orchestrator extends BaseContainerService implements IComponentInte
                 throw new Error("existingInterfaces should always exist");
             }
 
-            existingInterfaces.push(discoverable);
+            existingInterfaces.push(discoverableComponent);
             this.discoverableInterfacesMap.set(interfaceName, existingInterfaces);
 
             // Since we are adding a new discoverable component we need to notify existing discover components
-            // that there is a new discoverable components that.
+            // that there is a new discoverable component.
             const discoverComponents = this.discoverInterfacesMap.get(interfaceName);
             if (discoverComponents) {
                 discoverComponents.forEach((component) => {
-                    component.notifyComponentsDiscovered(interfaceName, [component]);
+                    if (component !== (discoverableComponent as IComponent)) {
+                        component.notifyComponentsDiscovered(interfaceName, [discoverableComponent]);
+                    }
                 });
             }
         });
