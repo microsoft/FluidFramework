@@ -19,6 +19,7 @@ import {
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentHandle, ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { RequestParser } from "@microsoft/fluid-container-runtime";
 import {
     ComponentCursorDirection,
     IComponentCollection,
@@ -27,7 +28,7 @@ import {
 } from "@microsoft/fluid-framework-interfaces";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
-import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IComponentContext, IComponentFactory, IComponentRuntime, IHostRuntime } from "@microsoft/fluid-runtime-definitions";
 import * as Sequence from "@microsoft/fluid-sequence";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import * as Katex from "katex";
@@ -50,6 +51,20 @@ const cursorDirectionToDirection = {
 };
 
 type IMathMarkerInst = MathExpr.IMathMarker;
+
+export async function mathViewRequestHandler(request: IRequest, runtime: IHostRuntime) {
+    const requestParser = new RequestParser(request);
+    const pathParts = requestParser.pathParts;
+    if (pathParts[0] !== "MathView") {
+        return undefined;
+    }
+
+    const modelRequest = requestParser.createSubRequest(1);
+    const mathModel = (await runtime.request(modelRequest)).value as MathInstance;
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+    const mathView = new MathView(mathModel);
+    return { status: 200, mimeType: "fluid/component", value: mathView };
+}
 
 class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout {
 
