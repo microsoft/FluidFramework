@@ -797,6 +797,19 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
     public processSignal(message: ISignalMessage, local: boolean) {
         const envelope = message.content as IEnvelope;
+        const innerContent = envelope.contents as { content: any; type: string };
+        const transformed: IInboundSignalMessage = {
+            clientId: message.clientId,
+            content: innerContent.content,
+            type: innerContent.type,
+        };
+
+        if (envelope.address === undefined) {
+            // No address indicates a container signal message.
+            this.emit("signal", transformed, local);
+            return;
+        }
+
         const context = this.contexts.get(envelope.address);
         if (!context) {
             // Attach message may not have been processed yet
@@ -804,13 +817,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.logger.sendTelemetryEvent({ eventName: "SignalComponentNotFound", componentId: envelope.address });
             return;
         }
-
-        const innerContent = envelope.contents as { content: any; type: string };
-        const transformed: IInboundSignalMessage = {
-            clientId: message.clientId,
-            content: innerContent.content,
-            type: innerContent.type,
-        };
 
         context.processSignal(transformed, local);
     }
