@@ -9,7 +9,7 @@
     "build": "tsc && npm run tslint",
     "start": "webpack-dev-server --config webpack.config.js",
     "tsc": "tsc",
-    "tslint": "tslint 'src/**/*.ts'",
+    "lint": "tslint 'src/**/*.ts'",
     "webpack": "webpack --config webpack.config.js"
   },
   "dependencies": {

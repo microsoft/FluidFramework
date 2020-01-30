@@ -10,7 +10,7 @@
     "start": "node dist/www.js",
     "test": "nyc --all -x dist/test/**/* mocha dist/test",
     "tsc": "tsc",
-    "tslint": "tslint 'src/**/*.ts'"
+    "lint": "tslint 'src/**/*.ts'"
   },
   "dependencies": {
     "@microsoft/fluid-gitresources": "^0.10.0",
