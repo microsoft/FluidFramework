@@ -27,6 +27,51 @@ This directory contains our reference server implementation. [Routerlicious](./r
 
 (First Pass Primer)
 
+## Names (1/30/2020 - Subject to Change)
+
+
+
+### WUS & WUS-PPE - praguekubewestus2
+#### WUS
+Gateway
+* pesky-cat-gateway
+  * "www.wu2.prague.office-int.com"
+  * New deployment
+* pesky-platypus-gateway
+  *  "www.wu2.prague.office-int.com"
+  *  Seems like this is from when gateway was part of prague-server
+  *  Should be removed
+
+Alfred - wiggly-wombat-alfred - "alfred.wu2-ppe.prague.office-int.com"
+Historian - smelly-wolf-historian - "historian.wu2.prague.office-int.com"
+
+
+#### WUS-PPE
+Gateway - wiggly-cat-gateway -"www.wu2-ppe.prague.office-int.com"
+Alfred - pesky-platypus-alfred - "alfred.wu2.prague.office-int.com"
+Historian - terrific-otter-historian - "historian.wu2-ppe.prague.office-int.com"
+
+### eus - PragueKubeEastUS
+Broken
+
+### - PragueKubeWestEurope
+Gateway - fierce-dog-gateway - "www.we.prague.office-int.com"
+Alfred - fierce-cat-alfred - "alfred.we.prague.office-int.com"
+Historian - littering-rattlesnake-historian - "historian.we.prague.office-int.com"
+
+### - PragueKubeWestUS2-2 (Azure Functions?)
+Gateway - angry-cat-gateway - "www.wu2-2.prague.office-int.com"
+Historian - pilfering-lizzard-historian - "historian.wu2-2.prague.office-int.com"
+Alfred - angry-dog-alfred - "alfred.wu2-2.prague.office-int.com"
+Functional Gateway - ideal-termite-gateway - gatewayfn.wu2-2.prague.office-int.com
+Functional Alfred - ideal-termite-alfred - "alfredfn.wu2-2.prague.office-int.com"
+
+### - praguekubeeastus2
+Gateway - broken-cat-gateway - "www.eu2.prague.office-int.com"
+Alfred - broken-molly-alfred - "alfred.eu2.prague.office-int.com"
+Historian - prodding-lightningbug-historian - "historian.eu2.prague.office-int.com"
+
+
 ## Tools
 
 We use Kubernetes (Mostly AKS and a self managed deployment in WUS2), we deploy via Helm Charts. Resource acquisition is through az (Azure CLI) and portal.azure.com
@@ -123,4 +168,4 @@ Helm
 Before we understood helm/offnet fully, we deployed using a generateCharts.js script. This isn't necessary and should be removed.
 
 ## Gotchas
-* We have different version of kubernetes on our deployments. kubectl and helm CLIs must be within one version of the service, so may need to download executables for each environment
+* We have different versions of kubernetes on our deployments. kubectl and helm CLIs must be within one version of the service, so you may need to download executables for each environment
