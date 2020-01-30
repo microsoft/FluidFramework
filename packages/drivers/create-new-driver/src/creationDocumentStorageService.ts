@@ -10,10 +10,12 @@ import * as api from "@microsoft/fluid-protocol-definitions";
  * Document storage service for the faux driver.
  */
 export class CreationDocumentStorageService implements IDocumentStorageService {
-    repositoryUrl: string;
 
     constructor() {
-        this.repositoryUrl = "";
+    }
+
+    public get repositoryUrl(): string {
+        return "";
     }
 
     public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {

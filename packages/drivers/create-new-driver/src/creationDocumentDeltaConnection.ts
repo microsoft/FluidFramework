@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionMode,
     IClient,
+    IConnect,
     IConnected,
     IContentMessage,
     IDocumentMessage,
@@ -16,8 +16,8 @@ import {
     ISignalClient,
     ISignalMessage,
     ITokenClaims,
-    IConnect,
 } from "@microsoft/fluid-protocol-definitions";
+import { EventEmitter } from "events";
 import { CreationServerMessagesHandler } from "./creationDriverServer";
 
 const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];

@@ -3,27 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import { BatchManager } from "@microsoft/fluid-core-utils";
+import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
 import {
+    ConnectionMode,
+    IClientJoin,
+    IConnect,
+    IConnected,
     IDocumentMessage,
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
-    IClientJoin,
-    ScopeType,
-    ConnectionMode,
-    ITokenClaims,
     IServiceConfiguration,
-    IConnected,
-    IConnect,
-    MessageType,
     ISignalMessage,
+    ITokenClaims,
+    MessageType,
+    ScopeType,
 } from "@microsoft/fluid-protocol-definitions";
-import { BatchManager } from "@microsoft/fluid-core-utils";
-import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
+import * as assert from "assert";
 
 interface IAugmentedDocumentMessage {
-    clientId: string,
-    message: IDocumentMessage,
+    clientId: string;
+    message: IDocumentMessage;
 }
 
 /**
@@ -31,7 +31,18 @@ interface IAugmentedDocumentMessage {
  */
 export class CreationServerMessagesHandler {
 
+    public static getInstance(documentId?: string): CreationServerMessagesHandler {
+        if (CreationServerMessagesHandler.instance === undefined && documentId !== undefined) {
+            CreationServerMessagesHandler.instance = new CreationServerMessagesHandler(documentId);
+        }
+        return CreationServerMessagesHandler.instance;
+    }
+
     private static instance: CreationServerMessagesHandler;
+
+    // These are the queues for messages, signals, contents that will be pushed to server when
+    // an actual connection is created.
+    public readonly queuedMessages: ISequencedDocumentMessage[] = [];
 
     private sequenceNumber: number = 1;
     private minSequenceNumber: number = 0;
@@ -39,11 +50,7 @@ export class CreationServerMessagesHandler {
 
     private readonly opSubmitManager: BatchManager<IAugmentedDocumentMessage[]>;
 
-    private readonly connections: IDocumentDeltaConnection[]= [];
-
-    // These are the queues for messages, signals, contents that will be pushed to server when
-    // an actual connection is created.
-    public readonly queuedMessages: ISequencedDocumentMessage[] = [];
+    private readonly connections: IDocumentDeltaConnection[] = [];
 
     private constructor(private readonly documentId: string) {
         // We supply maxBatchSize as infinity here because we do not want all messages to be processed synchronously.
@@ -59,17 +66,6 @@ export class CreationServerMessagesHandler {
                     }
                 }
             }, Number.MAX_VALUE);
-    }
-
-    public static getInstance(documentId?: string): CreationServerMessagesHandler {
-        if (CreationServerMessagesHandler.instance === undefined && documentId !== undefined) {
-            CreationServerMessagesHandler.instance = new CreationServerMessagesHandler(documentId);
-        }
-        return CreationServerMessagesHandler.instance;
-    }
-
-    private createClientId() {
-        return `newFileCreationClient${this.totalClients}`;
     }
 
     /**
@@ -154,6 +150,10 @@ export class CreationServerMessagesHandler {
         return details;
     }
 
+    private createClientId() {
+        return `newFileCreationClient${this.totalClients}`;
+    }
+
     private isWriter(scopes: string[], existing: boolean, mode: ConnectionMode): boolean {
         if (this.canWrite(scopes) || this.canSummarize(scopes)) {
             // New document needs a writer to boot.
@@ -189,8 +189,8 @@ export class CreationServerMessagesHandler {
             clientId,
             clientSequenceNumber: message.clientSequenceNumber,
             contents: message.contents,
-            minimumSequenceNumber: message.referenceSequenceNumber,
-            referenceSequenceNumber: message.referenceSequenceNumber,
+            minimumSequenceNumber: message.referenceSequenceNumber!,
+            referenceSequenceNumber: message.referenceSequenceNumber!,
             sequenceNumber: this.sequenceNumber++,
             timestamp: Date.now(),
             traces: message.traces !== undefined ? message.traces : [],

@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { IDocumentDeltaConnection, IDocumentService, IResolvedUrl } from "@microsoft/fluid-driver-definitions";
+import { IClient, IDocumentMessage, MessageType, ScopeType } from "@microsoft/fluid-protocol-definitions";
 import * as assert from "assert";
-import { IDocumentDeltaConnection, IResolvedUrl, IDocumentService } from "@microsoft/fluid-driver-definitions";
-import { IClient, ScopeType, IDocumentMessage, MessageType } from "@microsoft/fluid-protocol-definitions";
-import { CreationDocumentServiceFactory } from "../creationDocumentServiceFactory";
 import { CreationServerMessagesHandler } from "..";
+import { CreationDocumentServiceFactory } from "../creationDocumentServiceFactory";
 
 describe("Creation Driver", () => {
 
@@ -28,6 +28,7 @@ describe("Creation Driver", () => {
         };
     });
 
+    // tslint:disable-next-line: no-string-based-set-timeout
     const delay = async (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
     it("Initial driver connection details", async () => {
@@ -36,8 +37,8 @@ describe("Creation Driver", () => {
         assert.equal(documentDeltaConnection1.mode, "write", "Connection mode should be write.");
         assert.equal(documentDeltaConnection1.existing, false, "Document should not be existing.");
         assert.equal(documentDeltaConnection2.existing, true, "Document should be existing for second connection.");
-        assert.equal(documentDeltaConnection1.initialMessages?.length, 1, "Join message should be fired.");
-        assert.equal(documentDeltaConnection2.initialMessages?.length, 1, "Join message should be fired.");
+        assert.equal(documentDeltaConnection1.initialMessages!.length, 1, "Join message should be fired.");
+        assert.equal(documentDeltaConnection2.initialMessages!.length, 1, "Join message should be fired.");
     });
 
     it("Server messages test", async () => {
