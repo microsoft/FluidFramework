@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-common-definitions",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "description": "Fluid common definitions",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -17,6 +17,7 @@
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
+    "bump-version": "lerna version minor --no-push --no-git-tag-version",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
