@@ -49,6 +49,10 @@
             {
                 "id": "local",
                 "key": "43cfc3fbf04a97c0921fd23ff10f9e4b"
+            },
+            {
+                "id": "test",
+                "key": "changeme"
             }
         ]
     },
@@ -224,6 +228,15 @@
             "orderer": {
                 "type": "memory",
                 "url": "http://localhost:3003"
+            }
+        },
+        {
+            "_id": "test",
+            "key": "changeme",
+            "storage": {
+                "url": "http://gitrest:3000",
+                "owner": "test",
+                "repository": "test"
             }
         }
     ],

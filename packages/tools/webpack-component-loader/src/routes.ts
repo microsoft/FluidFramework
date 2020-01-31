@@ -16,14 +16,16 @@ export const before = (app: express.Application, server: WebpackDevServer) => {
 };
 
 export const after = (app: express.Application, server: WebpackDevServer, baseDir: string, env: IRouteOptions) => {
-    const options: IRouteOptions = env ? env : { mode: "local" };
-    options.mode = options.mode ? options.mode : "local";
+    const options: IRouteOptions = env ?? { mode: "local" };
+    options.mode = options.mode ?? "local";
+
+    // look for config values in this order: cli -> env -> config file -> default values, if any
     const config: nconf.Provider = nconf.env("__").file(path.join(baseDir, "config.json"));
-    options.fluidHost = options.fluidHost ? options.fluidHost : config.get("fluid:webpack:fluidHost");
-    options.tenantId = options.tenantId ? options.tenantId : config.get("fluid:webpack:tenantId");
-    options.tenantSecret = options.tenantSecret ? options.tenantSecret : config.get("fluid:webpack:tenantSecret");
-    options.bearerSecret = options.bearerSecret ? options.bearerSecret : config.get("fluid:webpack:bearerSecret");
-    options.npm = options.npm ? options.npm : config.get("fluid:webpack:npm");
+    options.fluidHost = options.fluidHost ?? config.get("fluid:webpack:fluidHost");
+    options.tenantId = options.tenantId ?? config.get("fluid:webpack:tenantId") ?? "test";
+    options.tenantSecret = options.tenantSecret ?? config.get("fluid:webpack:tenantSecret") ?? "changeme";
+    options.bearerSecret = options.bearerSecret ?? config.get("fluid:webpack:bearerSecret");
+    options.npm = options.npm ?? config.get("fluid:webpack:npm");
 
     console.log(options);
 
