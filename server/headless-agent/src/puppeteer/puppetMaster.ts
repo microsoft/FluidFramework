@@ -87,7 +87,7 @@ export class PuppetMaster extends EventEmitter {
             `${gatewayBase}/loader/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(this.documentId)}`;
         this.page.goto(gatewayUrl);
 
-        if (this.agentType === "search") {
+        if (this.agentType === "cache") {
             this.upsertPageCache();
         }
     }
