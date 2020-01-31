@@ -5,6 +5,7 @@
 
 import * as http from "http";
 import { IOdspTokens, IClientConfig, getSharepointTenant, fetchOdspTokens } from "@microsoft/fluid-odsp-utils";
+import { IAsyncCache } from "./fluidToolRC";
 
 const odspAuthRedirectPort = 7000;
 const odspAuthRedirectOrigin = `http://localhost:${odspAuthRedirectPort}`;
@@ -40,11 +41,6 @@ export const getMicrosoftConfiguration = (): IClientConfig => ({
         return process.env.login__microsoft__secret;
     },
 });
-
-export interface IAsyncCache<K, T> {
-    get(key: K): Promise<T | undefined>;
-    save(key: K, value: T): Promise<void>;
-}
 
 export class OdspTokenManager {
     constructor(private readonly tokenCache?: IAsyncCache<string, IOdspTokens>) {}

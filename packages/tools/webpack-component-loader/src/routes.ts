@@ -9,9 +9,9 @@ import * as express from "express";
 import * as moniker from "moniker";
 import * as nconf from "nconf";
 import WebpackDevServer from "webpack-dev-server";
-import { IOdspTokens } from "@microsoft/fluid-odsp-utils";
+import { IOdspTokens, getServer } from "@microsoft/fluid-odsp-utils";
+import { getMicrosoftConfiguration, OdspTokenManager, odspTokensCache } from "@microsoft/fluid-tool-utils";
 import { IRouteOptions } from "./loader";
-import { OdspTokenManager, createRedirector } from "./odspTokenManager";
 import { OdspUrlResolver } from "./odspUrlResolver";
 
 export const before = (app: express.Application, server: WebpackDevServer) => {
@@ -53,9 +53,9 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
                 return true;
             }
 
-            const tokenManager = new OdspTokenManager(createRedirector(res));
-            options.odspServer = tokenManager.getServer("spo-df"); // could forward options.mode
-            options.odspClientConfig = tokenManager.getMicrosoftConfiguration();
+            const tokenManager = new OdspTokenManager(odspTokensCache);
+            options.odspServer = getServer("spo-df"); // could forward options.mode
+            options.odspClientConfig = getMicrosoftConfiguration();
 
             const redirectUriCallback = async (tokens: IOdspTokens) => {
                 options.odspAccessToken = tokens.accessToken;
@@ -65,6 +65,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
                 options.odspServer,
                 options.odspClientConfig,
                 true,
+                (url: string) => res.redirect(url),
                 redirectUriCallback,
             );
             return false;

@@ -11,6 +11,11 @@ import * as path from "path";
 import * as util from "util";
 import { IOdspTokens } from "@microsoft/fluid-odsp-utils";
 
+export interface IAsyncCache<K, T> {
+    get(key: K): Promise<T | undefined>;
+    save(key: K, value: T): Promise<void>;
+}
+
 interface IResources {
     tokens?: { [key: string]: IOdspTokens };
 }
@@ -37,3 +42,28 @@ export async function saveRC(rc: IResources) {
     const content = JSON.stringify(rc, undefined, 2);
     return writeFile(getRCFileName(), Buffer.from(content, "utf8"));
 }
+
+export const odspTokensCache: IAsyncCache<string, IOdspTokens> = {
+    async get(server: string): Promise<IOdspTokens | undefined> {
+        const rc = await loadRC();
+        const tokens = rc.tokens;
+        if (!tokens) {
+            return undefined;
+        }
+        const odspTokens = tokens[server];
+        if (!odspTokens) {
+            return undefined;
+        }
+        return odspTokens;
+    },
+    async save(server: string, tokens: IOdspTokens): Promise<void> {
+        const rc = await loadRC();
+        let prevTokens = rc.tokens;
+        if (!prevTokens) {
+            prevTokens = {};
+            rc.tokens = prevTokens;
+        }
+        prevTokens[server] = tokens;
+        return saveRC(rc);
+    },
+};

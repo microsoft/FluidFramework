@@ -10,7 +10,8 @@ import {
     IOdspDriveItem,
     IOdspTokens,
 } from "@microsoft/fluid-odsp-utils";
-import { getClientConfig, getODSPTokens, saveAccessToken } from "./fluidFetchODSPTokens";
+import { getMicrosoftConfiguration, OdspTokenManager, odspTokensCache } from "@microsoft/fluid-tool-utils";
+import { fluidFetchWebNavigator } from "./fluidFetchInit";
 
 async function resolveWrapper<T>(
     callback: (tokens: IOdspTokens) => Promise<T>,
@@ -19,16 +20,15 @@ async function resolveWrapper<T>(
     forceTokenReauth = false,
 ): Promise<T> {
     try {
-        const odspTokens = await getODSPTokens(server, clientConfig, forceTokenReauth);
-        const oldAccessToken = odspTokens.accessToken;
-        try {
-            const driveItem = await callback(odspTokens);
-            return driveItem;
-        } finally {
-            if (oldAccessToken !== odspTokens.accessToken) {
-                await saveAccessToken(server, odspTokens);
-            }
-        }
+        const odspTokenManager = new OdspTokenManager(odspTokensCache);
+        const odspTokens = await odspTokenManager.getOdspTokens(
+            server,
+            clientConfig,
+            forceTokenReauth,
+            fluidFetchWebNavigator,
+        );
+        const driveItem = await callback(odspTokens);
+        return driveItem;
     } catch (e) {
         if (e.requestResultError) {
             const parsedBody = JSON.parse(e.requestResult.data);
@@ -69,7 +69,7 @@ async function resolveChildrenByDriveItem(
 }
 
 export async function getSharepointFiles(server: string, serverRelativePath: string, recurse: boolean) {
-    const clientConfig = getClientConfig();
+    const clientConfig = getMicrosoftConfiguration();
 
     const fileInfo = await resolveDriveItemByServerRelativePath(server, serverRelativePath, clientConfig);
     const pendingFolder: { path: string, folder: IOdspDriveItem }[] = [];

@@ -3,4 +3,5 @@
  * Licensed under the MIT License.
  */
 
+export * from "./fluidToolRC";
 export * from "./odspTokenManager";
