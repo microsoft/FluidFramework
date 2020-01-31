@@ -8,9 +8,6 @@ import {
     TestDocumentServiceFactory,
     TestResolver,
 } from "@microsoft/fluid-local-test-server";
-import { IUser } from "@microsoft/fluid-protocol-definitions";
-import { getRandomName } from "@microsoft/fluid-server-services-client";
-import * as jwt from "jsonwebtoken";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
 import {
@@ -19,25 +16,16 @@ import {
     IProvideRuntimeFactory,
     IFluidModule,
 } from "@microsoft/fluid-container-definitions";
-import {  Loader } from "@microsoft/fluid-container-loader";
+import {  Loader, Container } from "@microsoft/fluid-container-loader";
 import { IProvideComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 
-export interface IDevServerUser extends IUser {
-    name: string;
-}
 
-const getUser = (): IDevServerUser => ({
-    id: uuid(),
-    name: getRandomName(),
-});
-
-
-export async function start(
+export async function createContainer(
     entryPoint: Partial<IProvideRuntimeFactory & IProvideComponentFactory & IFluidModule>,
     div: HTMLDivElement,
-): Promise<void> {
+): Promise<Container> {
 
     const documentId = uuid();
 
@@ -72,6 +60,10 @@ export async function start(
 
     await new Promise((resolve) => container.once("contextChanged", () => resolve()));
 
+    return container;
+}
+
+export async function renderDefaultComponent(container: Container, div: HTMLElement) {
     const response = await container.request({ url:"" });
 
     if (response.status !== 200 ||
@@ -94,11 +86,4 @@ export async function start(
         renderable.render(div, { display: "block" });
         return;
     }
-
-}
-
-export function getUserToken(bearerSecret: string) {
-    const user = getUser();
-
-    return jwt.sign({ user }, bearerSecret);
 }
