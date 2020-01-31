@@ -137,8 +137,3 @@ You can provide custom Request Handlers to the Container. These request handlers
 Consider a scenario where you want to create a random color generator. I could create a RequestHandler that when someone makes a request to the Container for `{url:"color"}` will intercept and return a custom `IResponse` of `{ status:200, type:"text/plain", value:"blue"}`.
 
 We use custom handlers to build the [Container Services](###Container-Service-Development) pattern.
-
-## Container Services
-
-### Orchestrator
-Orchestrator is designed to be a Container Service that allows loaded components 
