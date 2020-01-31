@@ -30,7 +30,7 @@ import {
     Trace,
 } from "@microsoft/fluid-core-utils";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
-import { readAndParse } from "@microsoft/fluid-driver-utils";
+import { readAndParse, createIError } from "@microsoft/fluid-driver-utils";
 import {
     BlobTreeEntry,
     buildSnapshotTree,
@@ -797,6 +797,19 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
     public processSignal(message: ISignalMessage, local: boolean) {
         const envelope = message.content as IEnvelope;
+        const innerContent = envelope.contents as { content: any; type: string };
+        const transformed: IInboundSignalMessage = {
+            clientId: message.clientId,
+            content: innerContent.content,
+            type: innerContent.type,
+        };
+
+        if (envelope.address === undefined) {
+            // No address indicates a container signal message.
+            this.emit("signal", transformed, local);
+            return;
+        }
+
         const context = this.contexts.get(envelope.address);
         if (!context) {
             // Attach message may not have been processed yet
@@ -804,13 +817,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.logger.sendTelemetryEvent({ eventName: "SignalComponentNotFound", componentId: envelope.address });
             return;
         }
-
-        const innerContent = envelope.contents as { content: any; type: string };
-        const transformed: IInboundSignalMessage = {
-            clientId: message.clientId,
-            content: innerContent.content,
-            type: innerContent.type,
-        };
 
         context.processSignal(transformed, local);
     }
@@ -922,7 +928,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     public error(error: any) {
-        this.context.error(error);
+        this.context.error(createIError(error));
     }
 
     /**
@@ -958,6 +964,17 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
      */
     public isDocumentDirty(): boolean {
         return this.dirtyDocument;
+    }
+
+    /**
+     * Submits the signal to be sent to other clients.
+     * @param type - Type of the signal.
+     * @param content - Content of the signal.
+     */
+    public submitSignal(type: string, content: any) {
+        this.verifyNotClosed();
+        const envelope: IEnvelope = { address: undefined, contents: {type, content} };
+        return this.context.submitSignalFn(envelope);
     }
 
     private refreshBaseSummary(snapshot: ISnapshotTree) {

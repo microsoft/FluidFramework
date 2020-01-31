@@ -31,8 +31,9 @@ import {
 import {
     IDocumentService,
     IDocumentStorageService,
+    IError,
 } from "@microsoft/fluid-driver-definitions";
-import { readAndParse, OnlineStatus, isOnline } from "@microsoft/fluid-driver-utils";
+import { createIError, readAndParse, OnlineStatus, isOnline } from "@microsoft/fluid-driver-utils";
 import {
     buildSnapshotTree,
     isSystemMessage,
@@ -137,10 +138,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     res(container);
                 })
                 .catch((error) => {
+                    const err = createIError(error, true);
                     if (!alreadyRaisedError) {
-                        container.logCriticalError(error);
+                        container.logCriticalError(err);
                     }
-                    onError(error);
+                    onError(err);
                 });
         });
     }
@@ -427,13 +429,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.connectToDeltaStream();
     }
 
-    public raiseCriticalError(error: any) {
+    public raiseCriticalError(error: IError) {
         this.emit("error", error);
     }
 
     public async reloadContext(): Promise<void> {
         return this.reloadContextCore().catch((error) => {
-            this.raiseCriticalError(error);
+            this.raiseCriticalError(createIError(error, true));
             throw error;
         });
     }
@@ -942,7 +944,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.setConnectionState(ConnectionState.Disconnected, reason);
         });
 
-        deltaManager.on("error", (error) => {
+        deltaManager.on("error", (error: IError) => {
             this.raiseCriticalError(error);
         });
 
@@ -1187,7 +1189,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             new QuorumProxy(this.protocolHandler!.quorum),
             loader,
             storage,
-            (err) => this.raiseCriticalError(err),
+            (err: IError) => this.raiseCriticalError(err),
             (type, contents, batch, metadata) => this.submitMessage(type, contents, batch, metadata),
             (message) => this.submitSignal(message),
             async (message) => this.snapshot(message),

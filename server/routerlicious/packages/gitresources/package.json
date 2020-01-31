@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-gitresources",
-  "version": "0.1001.0",
+  "version": "0.1002.0",
   "description": "Git resource definitions",
   "license": "MIT",
   "author": "Microsoft",
@@ -20,8 +20,8 @@
     "tsc": "tsc"
   },
   "devDependencies": {
-    "@microsoft/eslint-config-fluid": "^0.13.0",
-    "@microsoft/fluid-build-common": "^0.13.0",
+    "@microsoft/eslint-config-fluid": "^0.14.0",
+    "@microsoft/fluid-build-common": "^0.14.0",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",
     "concurrently": "^4.1.0",
