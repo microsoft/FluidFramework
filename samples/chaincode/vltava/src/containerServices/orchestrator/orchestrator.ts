@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
+import { BaseContainerService, serviceRoutePathRoot } from "@microsoft/fluid-aqueduct";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import {
     IComponentInterfacesRegistry,
@@ -13,8 +14,6 @@ import {
     IComponentDiscoverableInterfaces,
 } from "@microsoft/fluid-framework-interfaces";
 import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
-
-import { BaseContainerService, serviceRoutePathRoot } from "../";
 
 export const OrchestratorContainerServiceId = "orchestrator";
 

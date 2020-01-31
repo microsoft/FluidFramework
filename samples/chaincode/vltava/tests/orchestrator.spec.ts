@@ -4,7 +4,7 @@
  */
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 
-import * as assert from "assert";
+import assert from "assert";
 import { EventEmitter } from "events";
 
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
@@ -14,7 +14,7 @@ import {
 } from "@microsoft/fluid-framework-interfaces";
 import { IHostRuntime } from "@microsoft/fluid-runtime-definitions";
 
-import { Orchestrator } from "../containerServices";
+import { Orchestrator } from "../src/containerServices";
 
 class MockComponentDiscoverProvider extends EventEmitter implements IComponentDiscoverInterfaces {
     public get IComponentDiscoverInterfaces() { return this; }
