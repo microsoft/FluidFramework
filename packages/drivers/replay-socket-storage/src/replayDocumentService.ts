@@ -15,12 +15,17 @@ import { ReplayDocumentDeltaConnection } from "./replayDocumentDeltaConnection";
  * and emitting them with a pre determined delay
  */
 export class ReplayDocumentService implements api.IDocumentService {
+    private static initStorageP: Promise<boolean> | undefined;
+
     public static async create(
         documentService: api.IDocumentService,
         controller: ReplayController): Promise<api.IDocumentService> {
-        const storage = await documentService.connectToStorage();
+        if (!this.initStorageP) {
+            const storage = await documentService.connectToStorage();
+            this.initStorageP = controller.initStorage(storage);
+        }
 
-        const useController = await controller.initStorage(storage);
+        const useController = await this.initStorageP;
         if (!useController) {
             return documentService;
         }
