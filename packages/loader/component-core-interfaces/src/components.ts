@@ -10,7 +10,6 @@ import {
 } from "./componentLoadable";
 import { IProvideComponentHTMLVisual } from "./componentRender";
 import { IProvideComponentRouter } from "./componentRouter";
-import { IProvideComponentTakesScope } from "./componentScope";
 import { IProvideComponentHandle, IProvideComponentHandleContext } from "./handles";
 import { IProvideComponentSerializer } from "./serializer";
 
@@ -18,7 +17,6 @@ import { IProvideComponentSerializer } from "./serializer";
 export interface IComponent extends
     Readonly<Partial<
         IProvideComponentHTMLVisual
-        & IProvideComponentTakesScope
         & IProvideComponentLoadable
         & IProvideComponentRunnable
         & IProvideComponentRouter

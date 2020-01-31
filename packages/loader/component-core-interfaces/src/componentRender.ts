@@ -24,6 +24,7 @@ export interface IComponentHTMLOptions {
 
 export interface IComponentHTMLView extends IComponentHTMLRender {
     remove(): void;
+    setScope?(scope: IComponent): void;
 }
 
 export interface IProvideComponentHTMLVisual {

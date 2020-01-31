@@ -15,7 +15,6 @@ import {
     IComponentHTMLVisual,
     IComponentLoadable,
     IComponentRouter,
-    IComponentTakesScope,
     IRequest,
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
@@ -54,8 +53,7 @@ const cursorDirectionToDirection = {
 
 type IMathMarkerInst = MathExpr.IMathMarker;
 
-export class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout, IComponentTakesScope {
-    public get IComponentTakesScope() { return this; }
+export class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout {
     public get IComponentHTMLView() { return this; }
 
     public get IComponentCursor() { return this; }

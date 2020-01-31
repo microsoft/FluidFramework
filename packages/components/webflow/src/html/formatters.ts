@@ -107,10 +107,10 @@ export class InclusionFormatter extends Formatter<IInclusionState> {
                 } else {
                     // We're assuming the marker routes straight to a view, if it's not a visual.
                     // Would be better to check before casting, but currently this is just Math.
-                    if (component.IComponentTakesScope) {
-                        component.IComponentTakesScope.setScope(layout.scope);
-                    }
                     view = component as IComponentHTMLView;
+                    if (view.setScope) {
+                        view.setScope(layout.scope);
+                    }
                 }
 
                 view.render(state.slot);
