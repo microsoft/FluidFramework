@@ -74,7 +74,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
 
     protected storage?: ReadDocumentStorageServiceBase;
 
-    // Member to prevent repeated initialization in initStorage(...), which also 
+    // Member to prevent repeated initialization in initStorage(...), which also
     // returns if this controller should be used or function as a passthrough
     private shouldUseController: boolean | undefined;
 
