@@ -9,7 +9,7 @@
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "concurrently npm:build:compile npm:tslint",
+    "build": "npm run build:compile",
     "build:compile": "npm run tsc",
     "build:compile:min": "npm run build:compile",
     "build:full": "concurrently npm:build npm:webpack",

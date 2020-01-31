@@ -15,23 +15,23 @@ import {
 } from "@microsoft/fluid-framework-interfaces";
 import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 
-export const OrchestratorContainerServiceId = "orchestrator";
+export const OrchestratorContainerServiceId = "matchMaker";
 
 const getOrchestrator = async (context: IComponentContext): Promise<IComponentInterfacesRegistry> => {
     const response = await context.request({url:`/${serviceRoutePathRoot}/${OrchestratorContainerServiceId}`});
     if (response.status === 200 && response.mimeType === "fluid/component") {
         const value = response.value as IComponent;
-        const orchestrator = value.IComponentInterfacesRegistry;
-        if (orchestrator) {
-            return orchestrator;
+        const matchMaker = value.IComponentInterfacesRegistry;
+        if (matchMaker) {
+            return matchMaker;
         }
     }
 
-    throw new Error("Orchestrator Container Service not registered");
+    throw new Error("MatchMaker Container Service not registered");
 };
 
 /**
- * Helper function for registering with the Orchestrator. Manages getting the Orchestrator from the Container before
+ * Helper function for registering with the MatchMaker. Manages getting the MatchMaker from the Container before
  * registering interfaces.
  *
  * @param context - Component Context
@@ -41,12 +41,12 @@ export const registerWithOrchestrator = async (
     context: IComponentContext,
     component: IProvideComponentDiscoverInterfaces | IProvideComponentDiscoverableInterfaces,
 ): Promise<void> => {
-    const orchestrator = await getOrchestrator(context);
-    orchestrator.registerComponentInterfaces(component);
+    const matchMaker = await getOrchestrator(context);
+    matchMaker.registerComponentInterfaces(component);
 };
 
 /**
- * Helper function for unregistering with the Orchestrator. Manages getting the Orchestrator from the Container before
+ * Helper function for unregistering with the MatchMaker. Manages getting the MatchMaker from the Container before
  * unregistering interfaces.
  *
  * @param context - Component Context
@@ -56,18 +56,18 @@ export const unregisterWithOrchestrator = async (
     context: IComponentContext,
     component: IProvideComponentDiscoverInterfaces | IProvideComponentDiscoverableInterfaces,
 ): Promise<void> => {
-    const orchestrator = await getOrchestrator(context);
-    orchestrator.unregisterComponentInterfaces(component);
+    const matchMaker = await getOrchestrator(context);
+    matchMaker.unregisterComponentInterfaces(component);
 };
 
 /**
- * The Orchestrator is a Container Service that provides Components the ability to register based on capabilities.
+ * The MatchMaker is a Container Service that provides Components the ability to register based on capabilities.
  * It's an implementation of the Discover interfaces {@link @microsoft/fluid-framework-interfaces}
  *
- * The Orchestrator is not meant to be used directly but to be used through the two provided
+ * The MatchMaker is not meant to be used directly but to be used through the two provided
  * registerWithOrchestrator and unregisterWithOrchestrator functions.
  */
-export class Orchestrator extends BaseContainerService implements IComponentInterfacesRegistry {
+export class MatchMaker extends BaseContainerService implements IComponentInterfacesRegistry {
 
     private readonly discoverableInterfacesMap: Map<keyof IComponent, IComponentDiscoverableInterfaces[]> = new Map();
 

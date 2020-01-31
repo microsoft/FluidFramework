@@ -14,7 +14,7 @@ import {
 } from "@microsoft/fluid-framework-interfaces";
 import { IHostRuntime } from "@microsoft/fluid-runtime-definitions";
 
-import { Orchestrator } from "../src/containerServices";
+import { MatchMaker } from "../src/containerServices";
 
 class MockComponentDiscoverProvider extends EventEmitter implements IComponentDiscoverInterfaces {
     public get IComponentDiscoverInterfaces() { return this; }
@@ -60,27 +60,27 @@ class MockComponentDiscoverableAndDiscoverInterfaces
 
 describe("Routerlicious", () => {
     describe("Aqueduct", () => {
-        describe("Orchestrator", () => {
-            it(`Orchestrator register discoverable after discover`, async () => {
-                const orchestrator = new Orchestrator({} as IHostRuntime);
+        describe("MatchMaker", () => {
+            it(`MatchMaker register discoverable after discover`, async () => {
+                const matchMaker = new MatchMaker({} as IHostRuntime);
                 const discoverProvider = new MockComponentDiscoverProvider(["IComponentLoadable"]);
                 let discovered = false;
                 discoverProvider.on("discovered", () => {
                     discovered = true;
                 });
 
-                orchestrator.registerComponentInterfaces(discoverProvider);
+                matchMaker.registerComponentInterfaces(discoverProvider);
 
                 const discoverableProvider = new MockComponentDiscoverableInterfaces(["IComponentLoadable"]);
-                orchestrator.registerComponentInterfaces(discoverableProvider);
+                matchMaker.registerComponentInterfaces(discoverableProvider);
                 assert(discovered, "discovered");
             });
 
-            it(`Orchestrator register discover after discoverable`, async () => {
-                const orchestrator = new Orchestrator({} as IHostRuntime);
+            it(`MatchMaker register discover after discoverable`, async () => {
+                const matchMaker = new MatchMaker({} as IHostRuntime);
 
                 const discoverableProvider = new MockComponentDiscoverableInterfaces(["IComponentLoadable"]);
-                orchestrator.registerComponentInterfaces(discoverableProvider);
+                matchMaker.registerComponentInterfaces(discoverableProvider);
 
                 const discoverProvider = new MockComponentDiscoverProvider(["IComponentLoadable"]);
                 let discovered = false;
@@ -90,19 +90,19 @@ describe("Routerlicious", () => {
                     }
                 });
 
-                orchestrator.registerComponentInterfaces(discoverProvider);
+                matchMaker.registerComponentInterfaces(discoverProvider);
 
                 assert(discovered, "discovered");
             });
 
-            it(`Orchestrator register multiple discoverable`, async () => {
-                const orchestrator = new Orchestrator({} as IHostRuntime);
+            it(`MatchMaker register multiple discoverable`, async () => {
+                const matchMaker = new MatchMaker({} as IHostRuntime);
 
                 const discoverableProvider1 = new MockComponentDiscoverableInterfaces(["IComponentLoadable"]);
-                orchestrator.registerComponentInterfaces(discoverableProvider1);
+                matchMaker.registerComponentInterfaces(discoverableProvider1);
 
                 const discoverableProvider2 = new MockComponentDiscoverableInterfaces(["IComponentLoadable"]);
-                orchestrator.registerComponentInterfaces(discoverableProvider2);
+                matchMaker.registerComponentInterfaces(discoverableProvider2);
 
                 const discoverProvider = new MockComponentDiscoverProvider(["IComponentLoadable"]);
                 let discovered = 0;
@@ -110,17 +110,17 @@ describe("Routerlicious", () => {
                     discovered = components.length;
                 });
 
-                orchestrator.registerComponentInterfaces(discoverProvider);
+                matchMaker.registerComponentInterfaces(discoverProvider);
 
                 assert(discovered === 2, "discovered");
             });
 
-            it(`Orchestrator register discover after discoverable multiple interfaces`, async () => {
-                const orchestrator = new Orchestrator({} as IHostRuntime);
+            it(`MatchMaker register discover after discoverable multiple interfaces`, async () => {
+                const matchMaker = new MatchMaker({} as IHostRuntime);
 
                 const discoverableProvider =
                     new MockComponentDiscoverableInterfaces(["IComponentLoadable", "IComponentHandle"]);
-                orchestrator.registerComponentInterfaces(discoverableProvider);
+                matchMaker.registerComponentInterfaces(discoverableProvider);
 
                 const discoverProvider = new MockComponentDiscoverProvider(["IComponentLoadable", "IComponentHandle"]);
 
@@ -134,26 +134,26 @@ describe("Routerlicious", () => {
                     }
                 });
 
-                orchestrator.registerComponentInterfaces(discoverProvider);
+                matchMaker.registerComponentInterfaces(discoverProvider);
 
                 assert(discoveredLoadable, "discovered IComponentLoadable");
                 assert(discoveredHandle, "discovered IComponentHandle");
             });
 
             it(`Registering interface without implementing throws`, async () => {
-                const orchestrator = new Orchestrator({} as IHostRuntime);
+                const matchMaker = new MatchMaker({} as IHostRuntime);
 
                 const discoverableProvider =
                     new MockComponentDiscoverableInterfaces(["IComponentRegistry"]);
 
-                assert.throws(() => orchestrator.registerComponentInterfaces(discoverableProvider), "assert thrown");
+                assert.throws(() => matchMaker.registerComponentInterfaces(discoverableProvider), "assert thrown");
             });
 
             it(`Can register for both Discover and Discoverable`, async () => {
-                const orchestrator = new Orchestrator({} as IHostRuntime);
+                const matchMaker = new MatchMaker({} as IHostRuntime);
 
                 const discoverableProvider = new MockComponentDiscoverableInterfaces(["IComponentHandle"]);
-                orchestrator.registerComponentInterfaces(discoverableProvider);
+                matchMaker.registerComponentInterfaces(discoverableProvider);
 
                 const discoverableAndDiscoverProvider =
                     new MockComponentDiscoverableAndDiscoverInterfaces(
@@ -168,7 +168,7 @@ describe("Routerlicious", () => {
                     }
                 });
 
-                orchestrator.registerComponentInterfaces(discoverableAndDiscoverProvider);
+                matchMaker.registerComponentInterfaces(discoverableAndDiscoverProvider);
 
                 const discoverProvider = new MockComponentDiscoverProvider(["IComponentLoadable"]);
                 let discovered2 = false;
@@ -178,14 +178,14 @@ describe("Routerlicious", () => {
                     }
                 });
 
-                orchestrator.registerComponentInterfaces(discoverProvider);
+                matchMaker.registerComponentInterfaces(discoverProvider);
 
                 assert(discovered1, "discoverableIComponentHandle");
                 assert(discovered2, "discoverableIComponentLoadable");
             });
 
             it(`When registering for Discover and Discoverable does not alert discover of itself`, async () => {
-                const orchestrator = new Orchestrator({} as IHostRuntime);
+                const matchMaker = new MatchMaker({} as IHostRuntime);
 
                 const discoverableAndDiscoverProvider =
                     new MockComponentDiscoverableAndDiscoverInterfaces(
@@ -198,7 +198,7 @@ describe("Routerlicious", () => {
                     discovered = true;
                 });
 
-                orchestrator.registerComponentInterfaces(discoverableAndDiscoverProvider);
+                matchMaker.registerComponentInterfaces(discoverableAndDiscoverProvider);
 
                 assert(!discovered, "shouldn't be discovered");
             });

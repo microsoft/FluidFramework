@@ -3,5 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export * from "./containerServices";
-export * from "./orchestrator";
+export * from "./match-maker";
