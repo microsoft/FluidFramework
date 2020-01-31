@@ -15,10 +15,12 @@ import {
 } from "@microsoft/fluid-framework-interfaces";
 import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 
-export const OrchestratorContainerServiceId = "matchMaker";
+export const MatchMakerContainerServiceId = "matchMaker";
 
-const getOrchestrator = async (context: IComponentContext): Promise<IComponentInterfacesRegistry> => {
-    const response = await context.request({url:`/${serviceRoutePathRoot}/${OrchestratorContainerServiceId}`});
+const getMatchMakerContainerService = async (context: IComponentContext): Promise<IComponentInterfacesRegistry> => {
+    const response = await context.hostRuntime.request({
+        url:`/${serviceRoutePathRoot}/${MatchMakerContainerServiceId}`,
+    });
     if (response.status === 200 && response.mimeType === "fluid/component") {
         const value = response.value as IComponent;
         const matchMaker = value.IComponentInterfacesRegistry;
@@ -37,11 +39,11 @@ const getOrchestrator = async (context: IComponentContext): Promise<IComponentIn
  * @param context - Component Context
  * @param component - Discover/Discoverable instance
  */
-export const registerWithOrchestrator = async (
+export const registerWithMatchMaker = async (
     context: IComponentContext,
     component: IProvideComponentDiscoverInterfaces | IProvideComponentDiscoverableInterfaces,
 ): Promise<void> => {
-    const matchMaker = await getOrchestrator(context);
+    const matchMaker = await getMatchMakerContainerService(context);
     matchMaker.registerComponentInterfaces(component);
 };
 
@@ -52,11 +54,11 @@ export const registerWithOrchestrator = async (
  * @param context - Component Context
  * @param component - Discover/Discoverable instance
  */
-export const unregisterWithOrchestrator = async (
+export const unregisterWithMatchMaker = async (
     context: IComponentContext,
     component: IProvideComponentDiscoverInterfaces | IProvideComponentDiscoverableInterfaces,
 ): Promise<void> => {
-    const matchMaker = await getOrchestrator(context);
+    const matchMaker = await getMatchMakerContainerService(context);
     matchMaker.unregisterComponentInterfaces(component);
 };
 
@@ -65,7 +67,7 @@ export const unregisterWithOrchestrator = async (
  * It's an implementation of the Discover interfaces {@link @microsoft/fluid-framework-interfaces}
  *
  * The MatchMaker is not meant to be used directly but to be used through the two provided
- * registerWithOrchestrator and unregisterWithOrchestrator functions.
+ * registerWithMatchMaker and unregisterWithMatchMaker functions.
  */
 export class MatchMaker extends BaseContainerService implements IComponentInterfacesRegistry {
 
@@ -136,12 +138,8 @@ export class MatchMaker extends BaseContainerService implements IComponentInterf
 
             // Add the component the interface map
             const existingInterfaces = this.discoverInterfacesMap.get(interfaceName);
-            if (!existingInterfaces) {
-                throw new Error("existingInterfaces should always exist");
-            }
-
+            assert(existingInterfaces);
             existingInterfaces.push(discover);
-            this.discoverInterfacesMap.set(interfaceName, existingInterfaces);
 
             // Since we are adding a new discover component we need to notify that component if there are existing
             // discoverable components that match it's interface key.
@@ -162,12 +160,8 @@ export class MatchMaker extends BaseContainerService implements IComponentInterf
 
             // Add the component the interface map
             const existingInterfaces = this.discoverableInterfacesMap.get(interfaceName);
-            if (!existingInterfaces) {
-                throw new Error("existingInterfaces should always exist");
-            }
-
+            assert(existingInterfaces);
             existingInterfaces.push(discoverableComponent);
-            this.discoverableInterfacesMap.set(interfaceName, existingInterfaces);
 
             // Since we are adding a new discoverable component we need to notify existing discover components
             // that there is a new discoverable component.
