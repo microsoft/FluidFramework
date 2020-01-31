@@ -6,6 +6,9 @@
   "license": "MIT",
   "author": "Microsoft",
   "sideEffects": "false",
+  "bin": {
+    "gen-version": "bin/gen-version"
+  },
   "scripts": {
     "build": "npm run noop",
     "eslint": "npm run noop",

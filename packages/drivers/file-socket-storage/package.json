@@ -16,7 +16,7 @@
     "build:docs": "api-extractor run --local",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "build:genver": "node node_modules/@microsoft/fluid-build-common/gen_version.js",
+    "build:genver": "gen-version",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
