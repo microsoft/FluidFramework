@@ -220,7 +220,7 @@ const getGuideSidebar = () => {
             title: "Advanced",
             collapsable: false,
             children: [
-                "dds-anatomy",
+                // "dds-anatomy",
                 "container-and-component-loading",
             ]
         },
@@ -349,12 +349,6 @@ module.exports = {
         ["code-switcher"],
         ["tabs"],
         ["vuepress-plugin-check-md"],
-        // [
-        //     "vuepress-plugin-code-copy",
-        //     {
-        //         color: "#999",
-        //     }
-        // ],
         // [
         //     "@vuepress/pwa",
         //     {

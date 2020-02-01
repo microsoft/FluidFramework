@@ -1,3 +1,0 @@
-# Bots
-
-## NOT YET WRITTEN

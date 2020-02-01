@@ -17,12 +17,12 @@ Next, you need to deploy the package that was generated to the app catalog.
 1. Go to your site's app catalog.
 1. Upload or drag and drop your component `.sppkg` to the app catalog.
 
-   <!-- ![Upload solution to app catalog](./upload-solution-app-catalog.png) -->
+   ![Upload solution to app catalog](./upload-solution-app-catalog.png)
 
    This deploys the client-side solution package. Because Fluid components are full trust client-side solutions,
    SharePoint displays a dialog and asks you to trust the client-side solution to deploy.
 
-   <!-- ![Trust client-side solution deployment](./sp-app-deploy-trust.png) -->
+   ![Trust client-side solution deployment](./sp-app-deploy-trust.png)
 
    ::: danger IMPORTANT
 
