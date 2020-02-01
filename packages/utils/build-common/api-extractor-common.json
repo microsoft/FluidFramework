@@ -22,8 +22,8 @@
   "apiReport": {
     "enabled": false,
     "reportFileName": "<unscopedPackageName>.api.md",
-    "reportFolder": "<projectFolder>/../../_api-review/",
-    "reportTempFolder": "<projectFolder>/../../_api-extractor-temp/"
+    "reportFolder": "<projectFolder>/_api-review/",
+    "reportTempFolder": "<projectFolder>/_api-extractor-temp/"
   },
 
   /**
@@ -31,7 +31,7 @@
    */
   "docModel": {
     "enabled": true,
-    "apiJsonFilePath": "<projectFolder>/../../_api-extractor-temp/doc-models/<unscopedPackageName>.api.json"
+    "apiJsonFilePath": "<projectFolder>/_api-extractor-temp/doc-models/<unscopedPackageName>.api.json"
   },
 
   /**
