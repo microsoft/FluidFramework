@@ -19,9 +19,16 @@ const serverListenAndHandle = async <T>(handler: OnceListenerHandler<T>): OnceLi
     new Promise((outerResolve, outerReject) => {
         const innerP = new Promise<T>((innerResolve, innerReject) => {
             const httpServer = http.createServer((req, res) => {
-                innerResolve(handler(req, res).finally(() => {
-                    httpServer.close();
-                }));
+                // ignore favicon
+                if (req.url === "/favicon.ico") {
+                    res.writeHead(200, { "Content-Type": "image/x-icon" });
+                    res.end();
+                    return;
+                }
+                handler(req, res).finally(() => httpServer.close()).then(
+                    (result) => innerResolve(result),
+                    (error) => innerReject(error),
+                );
             }).listen(odspAuthRedirectPort);
             outerResolve(async () => innerP);
         });
