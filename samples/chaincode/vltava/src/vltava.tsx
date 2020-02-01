@@ -12,6 +12,7 @@ import uuid from "uuid/v4";
 
 import { IVltavaDataModel, VltavaDataModel } from "./dataModel";
 import { VltavaView } from "./view";
+import { InternalRegistry } from "./";
 
 /**
  * Vltava is a default component manager
@@ -48,6 +49,11 @@ export class Vltava extends PrimedComponent implements IComponentHTMLVisual {
                 this.context,
                 this.createAndAttachComponent.bind(this),
                 this.getComponent.bind(this));
+
+        const Foo = (await this.context.hostRuntime.IComponentRegistry.get("")) as InternalRegistry;
+        console.log(Foo.keys);
+        console.log(Foo.containerComponentArray);
+
     }
 
     /**
