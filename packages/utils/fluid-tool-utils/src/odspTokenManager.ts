@@ -66,7 +66,13 @@ export class OdspTokenManager {
             }
         }
 
-        const tokens = await this.acquireTokens(server, clientConfig, initialNavigator, redirectUriCallback);
+        const authUrl = `https://login.microsoftonline.com/${getSharepointTenant(server)}/oauth2/v2.0/authorize?`
+            + `client_id=${clientConfig.clientId}`
+            + `&scope=https://${server}/AllSites.Write`
+            + `&response_type=code`
+            + `&redirect_uri=${odspAuthRedirectUri}`;
+
+        const tokens = await this.acquireTokens(authUrl, server, clientConfig, initialNavigator, redirectUriCallback);
 
         if (this.tokenCache) {
             await this.tokenCache.save(server, tokens);
@@ -76,17 +82,12 @@ export class OdspTokenManager {
     }
 
     private async acquireTokens(
+        authUrl: string,
         server: string,
         clientConfig: IClientConfig,
         initialNavigator: (url: string) => void,
         redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>,
     ): Promise<IOdspTokens> {
-        const authUrl = `https://login.microsoftonline.com/${getSharepointTenant(server)}/oauth2/v2.0/authorize?`
-            + `client_id=${clientConfig.clientId}`
-            + `&scope=https://${server}/AllSites.Write`
-            + `&response_type=code`
-            + `&redirect_uri=${odspAuthRedirectUri}`;
-
         const tokenGetter = await serverListenAndHandle(async (req, res) => {
             // get auth code
             const code = this.getAuthorizationCode(req.url);
