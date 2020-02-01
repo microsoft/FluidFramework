@@ -11,9 +11,8 @@ import {
     initializeIcons,
     IContextualMenuProps,
     IIconProps,
+    IContextualMenuItem,
 } from "office-ui-fabric-react";
-
-import { TabComponents } from "./dataModel";
 
 // setup fabric icons
 initializeIcons();
@@ -22,7 +21,8 @@ export interface IButtonExampleProps {
     // These are set based on the toggles shown above the examples (not needed in real code)
     disabled?: boolean;
     checked?: boolean;
-    createTab: (type: TabComponents) => void;
+    createTab: (type: string) => void;
+    components: [string, string, string][];
 }
 
 const customSplitButtonStyles: IButtonStyles = {
@@ -42,50 +42,20 @@ const addIcon: IIconProps = { iconName: "Add" };
 export const NewTabButton: React.FunctionComponent<IButtonExampleProps> =
     (props: IButtonExampleProps) => {
         const { disabled, checked } = props;
-        const menuProps: IContextualMenuProps = {
-            items: [
+        const items: IContextualMenuItem[] = [];
+        props.components.forEach((component) => {
+            items.push(
                 {
-                    key: "new-spaces",
-                    text: "Prosemirror (default)",
-                    iconProps: { iconName: "Edit" },
+                    key: component[0],
+                    text: component[1],
+                    iconProps: { iconName: component[2] },
                     onClick: () => {
-                        props.createTab("prosemirror");
+                        props.createTab(component[0]);
                     },
                 },
-                {
-                    key: "new-spaces",
-                    text: "Spaces",
-                    iconProps: { iconName: "SnapToGrid" },
-                    onClick: () => {
-                        props.createTab("spaces");
-                    },
-                },
-                {
-                    key: "new-spaces",
-                    text: "CodeMirror",
-                    iconProps: { iconName: "Code" },
-                    onClick: () => {
-                        props.createTab("codemirror");
-                    },
-                },
-                {
-                    key: "new-tabs",
-                    text: "Tabs",
-                    iconProps: { iconName: "BrowserTab" },
-                    onClick: () => {
-                        props.createTab("tabs");
-                    },
-                },
-                {
-                    key: "new-clicker",
-                    text: "Clicker",
-                    iconProps: { iconName: "NumberField" },
-                    onClick: () => {
-                        props.createTab("clicker");
-                    },
-                },
-            ],
-        };
+            );
+        });
+        const menuProps: IContextualMenuProps = {items};
         return (
             <IconButton
                 split

@@ -9,8 +9,10 @@ import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
+import { InternalRegistry } from "../..";
 import { TabsDataModel, ITabsDataModel } from "./dataModel";
 import { TabsView } from "./view";
+
 
 export class TabsComponent extends PrimedComponent implements IComponentHTMLVisual {
     private dataModelInternal: ITabsDataModel | undefined;
@@ -37,8 +39,14 @@ export class TabsComponent extends PrimedComponent implements IComponentHTMLVisu
     }
 
     protected async componentHasInitialized() {
+        const internalRegistry = (await this.context.hostRuntime.IComponentRegistry.get("")) as InternalRegistry;
         this.dataModelInternal =
-            new TabsDataModel(this.root, this.createAndAttachComponent.bind(this), this.getComponent.bind(this));
+            new TabsDataModel(
+                this.root,
+                internalRegistry,
+                this.createAndAttachComponent.bind(this),
+                this.getComponent.bind(this),
+            );
     }
 
     public render(div: HTMLElement) {

@@ -12,14 +12,14 @@ import {
 
 import uuid from "uuid/v4";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { ClickerName } from "@fluid-example/clicker";
 
-export type TabComponents = "clicker" | "tabs" | "spaces" | "codemirror" | "prosemirror";
+import { InternalRegistry } from "../..";
 
 export interface ITabsDataModel extends EventEmitter{
     getComponent(id: string): Promise<IComponent>;
     getTabIds(): string[];
-    createTab(type: TabComponents): Promise<string>;
+    createTab(type: string): Promise<string>;
+    getNewTabTypes(): [string, string, string][];
 }
 
 export class TabsDataModel extends EventEmitter implements ITabsDataModel {
@@ -28,6 +28,7 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
 
     constructor(
         root: ISharedDirectory,
+        private readonly internalRegistry: InternalRegistry,
         private readonly createAndAttachComponent: (id: string, pkg: string, props?: any) => Promise<IComponent>,
         public getComponent: (id: string) => Promise<IComponent>,
     ) {
@@ -53,11 +54,19 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
         return Array.from(this.tabs.keys());
     }
 
-    public async createTab(type: TabComponents): Promise<string> {
+    public async createTab(type: string): Promise<string> {
         const newId = uuid();
-        const component = await this.createAndAttachComponent(newId, type === "clicker" ? ClickerName : type);
+        const component = await this.createAndAttachComponent(newId, type);
         this.tabs.set(newId, component.IComponentHandle);
         this.emit("newTab", true);
         return newId;
+    }
+
+    public getNewTabTypes(): [string, string, string][] {
+        const response: [string, string, string][] = [];
+        this.internalRegistry.containerComponentArray.forEach((e) => {
+            response.push([e.type, e.friendlyName, e.fabricIconName]);
+        });
+        return response;
     }
 }
