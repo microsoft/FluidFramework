@@ -66,13 +66,6 @@ interface IContainerComponent {
 
 const containerComponentsDefinition: IContainerComponent[] = [
     {
-        type: chaincodeName,
-        factory: Promise.resolve(Vltava.getFactory()),
-        capabilities: ["IComponentHTMLVisual"],
-        friendlyName: "Vltava",
-        fabricIconName: "",
-    },
-    {
         type: ClickerName,
         factory: Promise.resolve(ClickerInstantiationFactory),
         capabilities: ["IComponentHTMLVisual"],
@@ -114,6 +107,9 @@ const generateFactory = () => {
     containerComponentsDefinition.forEach((value) => {
         containerComponents.push([value.type, value.factory]);
     });
+
+    // We don't want to include the default wrapper component in our list of available components
+    containerComponents.push([ chaincodeName, Promise.resolve(Vltava.getFactory())]);
 
     const containerRegistries: NamedComponentRegistryEntries = [
         ["", Promise.resolve(new InternalRegistry(containerComponentsDefinition))],
