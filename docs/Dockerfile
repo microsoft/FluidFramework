@@ -15,6 +15,7 @@ COPY . .
 
 # Convert the json to markdown
 WORKDIR /
+RUN npm install -g @microsoft/api-documenter@^7.4.6
 RUN npm run build:gendocs
 
 #############################
