@@ -168,7 +168,6 @@ module.exports = {
                     children: [
                         "client-api",
                         "fluid-common-definitions",
-                        "fluid-creation-driver",
                         "fluid-driver-utils",
                         "fluid-host-service-interfaces",
                         "fluid-runtime-utils",
