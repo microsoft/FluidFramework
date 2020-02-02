@@ -26,6 +26,7 @@
     "vuepress": "1.2.0",
     "vuepress-plugin-check-md": "0.0.2",
     "vuepress-plugin-code-copy": "^1.0.4",
+    "vuepress-plugin-code-switcher": "^1.0.3",
     "vuepress-plugin-container": "^2.1.2",
     "vuepress-plugin-tabs": "^0.3.0"
   },

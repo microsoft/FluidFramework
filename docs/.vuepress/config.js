@@ -8,8 +8,9 @@ module.exports = {
     description: "State that flows",
     evergreen: true,
     plugins: [
-        ["vuepress-plugin-check-md"],
+        ["code-switcher"],
         ["tabs"],
+        ["vuepress-plugin-check-md"],
         // [
         //     "vuepress-plugin-code-copy",
         //     {
