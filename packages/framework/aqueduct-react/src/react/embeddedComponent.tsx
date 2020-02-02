@@ -9,6 +9,7 @@ import { IComponentReactViewable } from "./interfaces";
 
 export interface IEmbeddedComponentProps {
     component: IComponent;
+    style?: React.CSSProperties;
 }
 
 /**
@@ -45,18 +46,19 @@ export class EmbeddedComponent extends React.Component<IEmbeddedComponentProps> 
 
 interface IHTMLProps {
     component: IComponentHTMLVisual;
+    style?: React.CSSProperties;
 }
 
 /**
  * Embeds a Fluid Component that supports IComponentHTMLVisual
  */
 class HTMLEmbeddedComponent extends React.Component<IHTMLProps, { }> {
-    private readonly ref: React.RefObject<HTMLDivElement>;
+    private readonly ref: React.RefObject<HTMLSpanElement>;
 
     constructor(props: IHTMLProps) {
         super(props);
 
-        this.ref = React.createRef<HTMLDivElement>();
+        this.ref = React.createRef<HTMLSpanElement>();
     }
 
     public async componentDidMount() {
@@ -71,7 +73,7 @@ class HTMLEmbeddedComponent extends React.Component<IHTMLProps, { }> {
     }
 
     public render() {
-        return <div ref={this.ref}></div>;
+        return <span style={this.props.style} ref={this.ref}></span>;
     }
 }
 
