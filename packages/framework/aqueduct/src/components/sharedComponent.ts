@@ -17,7 +17,7 @@ import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-d
 
 import { ComponentHandle } from "@microsoft/fluid-component-runtime";
 
-import { serviceRoutePathRoot } from "../helpers";
+import { serviceRoutePathRoot } from "../containerServices";
 
 /**
  * This is a bare-bones base class that does basic setup and enables for factory on an initialize call.
