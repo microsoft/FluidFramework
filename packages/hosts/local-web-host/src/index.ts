@@ -23,9 +23,7 @@ import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 
 
 export async function createContainer(
-    entryPoint: Partial<IProvideRuntimeFactory & IProvideComponentFactory & IFluidModule>,
-    div: HTMLDivElement,
-): Promise<Container> {
+    entryPoint: Partial<IProvideRuntimeFactory & IProvideComponentFactory & IFluidModule>): Promise<Container> {
 
     const documentId = uuid();
 
@@ -33,6 +31,8 @@ export async function createContainer(
 
     const deltaConn = TestDeltaConnectionServer.create();
     const documentServiceFactory = new TestDocumentServiceFactory(deltaConn);
+
+
     const factory: Partial<IProvideRuntimeFactory & IProvideComponentFactory> =
         entryPoint.fluidExport ? entryPoint.fluidExport : entryPoint;
 
@@ -42,7 +42,7 @@ export async function createContainer(
             new SimpleModuleInstantiationFactory("default", [["default", Promise.resolve(factory.IComponentFactory)]]);
 
     const codeLoader: ICodeLoader = {
-        load: async  <T>() => ({fluidExport: runtimeFactory} as unknown as T) ,
+        load: async <T>() => ({fluidExport: runtimeFactory} as unknown as T),
     };
 
     const loader =  new Loader(

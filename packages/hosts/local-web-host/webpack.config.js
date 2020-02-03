@@ -6,18 +6,6 @@
 const path = require('path');
 
 module.exports = env => {
-    const devServerSettings = {
-        host: '0.0.0.0', // This makes the server public so that others can test by http://hostname ...
-        disableHostCheck: true,
-        port: 3030,
-        public: 'localhost:' + 3030,
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "*",
-            "Access-Control-Allow-Headers": "*"
-          }
-    };
-
     return {
         mode: "development",
         entry: "./src/index.ts",

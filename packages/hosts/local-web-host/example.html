@@ -20,16 +20,16 @@ this will place the localLoader entrypoint on the page
 
     <script>
         localLoader.createContainer(main)
-        .then((container)=>{
+            .then((container)=>{
 
-            localLoader.renderDefaultComponent(
-                container,
-                document.getElementById("content1"))
+                localLoader.renderDefaultComponent(
+                    container,
+                    document.getElementById("content1"))
 
-            localLoader.renderDefaultComponent(
-                container,
-                document.getElementById("content2"))
-        });
+                localLoader.renderDefaultComponent(
+                    container,
+                    document.getElementById("content2"))
+            });
     </script>
 </body>
 
