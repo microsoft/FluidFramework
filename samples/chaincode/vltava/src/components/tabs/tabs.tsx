@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { InternalRegistry } from "../..";
 import { TabsDataModel, ITabsDataModel } from "./dataModel";
 import { TabsView } from "./view";
 
+import { IComponentHTMLVisual, IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -39,11 +38,12 @@ export class TabsComponent extends PrimedComponent implements IComponentHTMLVisu
     }
 
     protected async componentHasInitialized() {
-        const internalRegistry = (await this.context.hostRuntime.IComponentRegistry.get("")) as InternalRegistry;
+        const registry = await this.context.hostRuntime.IComponentRegistry.get("");
+        const registryDetails = (registry as IComponent).IComponentRegistryDetails;
         this.dataModelInternal =
             new TabsDataModel(
                 this.root,
-                internalRegistry,
+                registryDetails,
                 this.createAndAttachComponent.bind(this),
                 this.getComponent.bind(this),
             );

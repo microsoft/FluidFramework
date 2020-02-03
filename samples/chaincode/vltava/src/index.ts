@@ -4,6 +4,10 @@
  */
 
 import { TabsComponent } from "./components";
+import {
+    IComponentRegistryDetails,
+    IContainerComponent,
+} from "./interfaces";
 import { Vltava } from "./vltava";
 
 import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
@@ -11,7 +15,6 @@ import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror
 import { ClickerName, ClickerInstantiationFactory } from "@fluid-example/clicker";
 import { Spaces } from "@fluid-example/spaces/dist/spaces";
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import {
     IComponentRegistry,
     IProvideComponentFactory,
@@ -20,8 +23,9 @@ import {
 
 const chaincodeName = "vltava";
 
-export class InternalRegistry implements IComponentRegistry {
+export class InternalRegistry implements IComponentRegistry, IComponentRegistryDetails {
     public get IComponentRegistry() { return this; }
+    public get IComponentRegistryDetails() { return this; }
 
     constructor(
         public readonly containerComponentArray: IContainerComponent[],
@@ -40,30 +44,6 @@ export class InternalRegistry implements IComponentRegistry {
         return undefined;
     }
 
-    public get keys(): string[] {
-        const keys: string[] = [];
-        this.containerComponentArray.forEach((v) => keys.push(v.type));
-        return keys;
-    }
-
-    public friendlyName(type: string): string | undefined {
-        const index = this.containerComponentArray.findIndex(
-            (containerComponent) => type === containerComponent.type,
-        );
-        if (index >= 0){
-            return this.containerComponentArray[index].friendlyName;
-        }
-
-        return undefined;
-    }
-}
-
-interface IContainerComponent {
-    type: string;
-    factory: Promise<IProvideComponentFactory>;
-    capabilities: (keyof IComponent)[];
-    friendlyName: string;
-    fabricIconName: string;
 }
 
 const generateFactory = () => {

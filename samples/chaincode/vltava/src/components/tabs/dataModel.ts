@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 
-import { InternalRegistry } from "../..";
+import { IComponentRegistryDetails } from "../../interfaces";
 
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import {
@@ -30,7 +30,7 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
 
     constructor(
         root: ISharedDirectory,
-        private readonly internalRegistry: InternalRegistry,
+        private readonly internalRegistry: IComponentRegistryDetails,
         private readonly createAndAttachComponent: (id: string, pkg: string, props?: any) => Promise<IComponent>,
         public getComponent: (id: string) => Promise<IComponent>,
     ) {
