@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable import/no-internal-modules */
 
 import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
 import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
@@ -29,10 +28,11 @@ export class InternalRegistry implements IComponentRegistry {
     ) {
     }
 
-    // Note people really shouldn't be requesting things of this probably
     public async get(name: string): Promise<Readonly<IProvideComponentFactory>>
     {
-        const index = this.containerComponentArray.findIndex((v) => name === v.type);
+        const index = this.containerComponentArray.findIndex(
+            (containerComponent) => name === containerComponent.type,
+        );
         if (index >= 0){
             return this.containerComponentArray[index].factory;
         }
@@ -47,7 +47,9 @@ export class InternalRegistry implements IComponentRegistry {
     }
 
     public friendlyName(type: string): string | undefined {
-        const index = this.containerComponentArray.findIndex((v) => name === v.type);
+        const index = this.containerComponentArray.findIndex(
+            (containerComponent) => type === containerComponent.type,
+        );
         if (index >= 0){
             return this.containerComponentArray[index].friendlyName;
         }
@@ -64,45 +66,45 @@ interface IContainerComponent {
     fabricIconName: string;
 }
 
-const containerComponentsDefinition: IContainerComponent[] = [
-    {
-        type: ClickerName,
-        factory: Promise.resolve(ClickerInstantiationFactory),
-        capabilities: ["IComponentHTMLVisual"],
-        friendlyName: "Clicker",
-        fabricIconName: "NumberField",
-    },
-    {
-        type: "tabs",
-        factory: Promise.resolve(TabsComponent.getFactory()),
-        capabilities: ["IComponentHTMLVisual"],
-        friendlyName: "Tabs",
-        fabricIconName: "BrowserTab",
-    },
-    {
-        type: "spaces",
-        factory: Promise.resolve(Spaces.getFactory()),
-        capabilities: ["IComponentHTMLVisual"],
-        friendlyName: "Spaces",
-        fabricIconName: "SnapToGrid",
-    },
-    {
-        type: "codemirror",
-        factory: Promise.resolve(cmfe),
-        capabilities: ["IComponentHTMLVisual"],
-        friendlyName: "Codemirror",
-        fabricIconName: "Code",
-    },
-    {
-        type: "prosemirror",
-        factory: Promise.resolve(pmfe),
-        capabilities: ["IComponentHTMLVisual"],
-        friendlyName: "Prosemirror",
-        fabricIconName: "Edit",
-    },
-];
-
 const generateFactory = () => {
+    const containerComponentsDefinition: IContainerComponent[] = [
+        {
+            type: ClickerName,
+            factory: Promise.resolve(ClickerInstantiationFactory),
+            capabilities: ["IComponentHTMLVisual"],
+            friendlyName: "Clicker",
+            fabricIconName: "NumberField",
+        },
+        {
+            type: "tabs",
+            factory: Promise.resolve(TabsComponent.getFactory()),
+            capabilities: ["IComponentHTMLVisual"],
+            friendlyName: "Tabs",
+            fabricIconName: "BrowserTab",
+        },
+        {
+            type: "spaces",
+            factory: Promise.resolve(Spaces.getFactory()),
+            capabilities: ["IComponentHTMLVisual"],
+            friendlyName: "Spaces",
+            fabricIconName: "SnapToGrid",
+        },
+        {
+            type: "codemirror",
+            factory: Promise.resolve(cmfe),
+            capabilities: ["IComponentHTMLVisual"],
+            friendlyName: "Codemirror",
+            fabricIconName: "Code",
+        },
+        {
+            type: "prosemirror",
+            factory: Promise.resolve(pmfe),
+            capabilities: ["IComponentHTMLVisual"],
+            friendlyName: "Prosemirror",
+            fabricIconName: "Edit",
+        },
+    ];
+
     const containerComponents: [string, Promise<IProvideComponentFactory>][] = [];
     containerComponentsDefinition.forEach((value) => {
         containerComponents.push([value.type, value.factory]);

@@ -7,6 +7,7 @@ import * as React from "react";
 
 import { EmbeddedComponent } from "@microsoft/fluid-aqueduct-react";
 import { IVltavaDataModel } from "./dataModel";
+import { FacepileOverflowExample } from "./facePile";
 
 interface IVltavaViewProps {
     dataModel: IVltavaDataModel;
@@ -45,9 +46,12 @@ export class VltavaView extends React.Component<IVltavaViewProps,IVltavaViewStat
                         borderBottom:"1px solid lightgray",
                         boxSizing:"border-box"}}
                 >
-                    <h2 style={{paddingTop:"10px"}}>
-                        {this.props.dataModel.getTitle()}
-                    </h2>
+                    <div>
+                        <h2>
+                            {this.props.dataModel.getTitle()}
+                        </h2>
+                    </div>
+                    <FacepileOverflowExample/>
                 </div>
                 {this.state.view}
             </div>
