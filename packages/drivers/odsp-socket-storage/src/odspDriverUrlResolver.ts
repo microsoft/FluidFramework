@@ -11,11 +11,20 @@ import { getHashedDocumentId } from "./odspUtils";
 
 export function getSnapshotUrl(siteUrl: string, driveId: string, itemId: string) {
     const siteOrigin = new URL(siteUrl).origin;
-    return `${siteOrigin}/_api/v2.1/drives/${driveId}/items/${itemId}/opStream/snapshots`;
+    
+    // TODO This will only support ODC using api.onedrive.com, update to handle the future (share links etc)
+    let prefix;
+    if (origin.toLowerCase().indexOf('.onedrive.com') !== -1) {
+        prefix = "v1.0";
+    } else {
+        prefix = "_api/v2.1";
+    }
+
+    return `${siteOrigin}/${prefix}/drives/${driveId}/items/${itemId}/opStream/snapshots`;
 }
 
 /**
- * Encodes SPO information into a URL format that can be handled by the Loader
+ * Encodes ODC/SPO information into a URL format that can be handled by the Loader
  * @param siteUrl - The site where the container is hosted
  * @param driveId - The id of the drive with the container
  * @param itemId - The id of the container
