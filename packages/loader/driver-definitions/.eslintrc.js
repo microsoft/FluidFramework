@@ -7,5 +7,7 @@ module.exports = {
     "extends": [
         "@microsoft/eslint-config-fluid"
     ],
-    "rules": {}
+    "rules": {
+        "import/order": "off",
+    }
 }
