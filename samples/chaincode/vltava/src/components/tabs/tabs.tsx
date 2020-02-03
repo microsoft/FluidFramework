@@ -3,15 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { TabsDataModel, ITabsDataModel } from "./dataModel";
-import { TabsView } from "./view";
-
 import { IComponentHTMLVisual, IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
+import { TabsDataModel, ITabsDataModel } from "./dataModel";
+import { TabsView } from "./view";
 
 export class TabsComponent extends PrimedComponent implements IComponentHTMLVisual {
     private dataModelInternal: ITabsDataModel | undefined;

@@ -3,13 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { TabsComponent } from "./components";
-import {
-    IComponentRegistryDetails,
-    IContainerComponent,
-} from "./interfaces";
-import { Vltava } from "./vltava";
-
 import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
 import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
 import { ClickerName, ClickerInstantiationFactory } from "@fluid-example/clicker";
@@ -20,6 +13,13 @@ import {
     IProvideComponentFactory,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
+
+import { TabsComponent } from "./components";
+import {
+    IComponentRegistryDetails,
+    IContainerComponent,
+} from "./interfaces";
+import { Vltava } from "./vltava";
 
 const chaincodeName = "vltava";
 

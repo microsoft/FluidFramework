@@ -5,8 +5,6 @@
 
 import { EventEmitter } from "events";
 
-import { IComponentRegistryDetails } from "../../interfaces";
-
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import {
     ISharedDirectory,
@@ -16,6 +14,8 @@ import {
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 
 import uuid from "uuid/v4";
+
+import { IComponentRegistryDetails } from "../../interfaces";
 
 export interface ITabsDataModel extends EventEmitter{
     getComponent(id: string): Promise<IComponent>;

@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { IVltavaDataModel, VltavaDataModel } from "./dataModel";
-import { VltavaView } from "./view";
-
 import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import uuid from "uuid/v4";
+
+import { IVltavaDataModel, VltavaDataModel } from "./dataModel";
+import { VltavaView } from "./view";
 
 /**
  * Vltava is a default component manager

@@ -8,12 +8,12 @@
  * Licensed under the MIT License.
  */
 
+import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
+import * as React from "react";
+
 import { EmbeddedComponentWrapper } from "../library";
 import { ITabsDataModel } from "./dataModel";
 import { NewTabButton } from "./newTabButton";
-
-import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
-import * as React from "react";
 
 import "react-tabs/style/react-tabs.css";
 
