@@ -1,5 +1,5 @@
 {
-  "name": "@fluid-example/local-web-host",
+  "name": "@microsoft/fluid-local-web-host",
   "version": "0.13.0",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
