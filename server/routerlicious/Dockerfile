@@ -74,6 +74,7 @@ COPY packages/loader/loader-web/package*.json packages/loader/loader-web/
 COPY packages/loader/test-loader-utils/package*.json packages/loader/test-loader-utils/
 COPY packages/hosts/base-host/package*.json packages/hosts/base-host/
 COPY packages/hosts/host-service-interfaces/package*.json packages/hosts/host-service-interfaces/
+COPY packages/hosts/local-web-host/package*.json packages/hosts/local-web-host/
 COPY packages/hosts/tiny-web-host/package*.json packages/hosts/tiny-web-host/
 COPY packages/hosts/react-web-host/package*.json packages/hosts/react-web-host/
 COPY packages/runtime/shared-object-common/package*.json packages/runtime/shared-object-common/
