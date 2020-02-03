@@ -262,6 +262,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                             sprequestguid: response.headers.get("sprequestguid"),
                             sprequestduration: TelemetryLogger.numberFromString(response.headers.get("sprequestduration")),
                             contentsize: TelemetryLogger.numberFromString(response.headers.get("content-length")),
+                            bodysize: TelemetryLogger.numberFromString(response.headers.get("body-size")),
                         };
                         event.end(props);
                     } catch (error) {

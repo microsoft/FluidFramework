@@ -74,6 +74,7 @@ COPY packages/loader/loader-web/package*.json packages/loader/loader-web/
 COPY packages/loader/test-loader-utils/package*.json packages/loader/test-loader-utils/
 COPY packages/hosts/base-host/package*.json packages/hosts/base-host/
 COPY packages/hosts/host-service-interfaces/package*.json packages/hosts/host-service-interfaces/
+COPY packages/hosts/local-web-host/package*.json packages/hosts/local-web-host/
 COPY packages/hosts/tiny-web-host/package*.json packages/hosts/tiny-web-host/
 COPY packages/hosts/react-web-host/package*.json packages/hosts/react-web-host/
 COPY packages/runtime/shared-object-common/package*.json packages/runtime/shared-object-common/
@@ -92,8 +93,6 @@ COPY packages/runtime/runtime-test-utils/package*.json packages/runtime/runtime-
 COPY packages/runtime/sequence/package*.json packages/runtime/sequence/
 COPY packages/server/local-test-server/package*.json packages/server/local-test-server/
 COPY packages/utils/odsp-utils/package*.json packages/utils/odsp-utils/
-COPY packages/utils/build-common/package*.json packages/utils/build-common/
-COPY packages/utils/eslint-config-fluid/package*.json packages/utils/eslint-config-fluid/
 COPY packages/server/tools-core/package*.json packages/server/tools-core/
 COPY packages/test/snapshots/package*.json packages/test/snapshots/
 COPY packages/tools/fluid-fetch/package*.json packages/tools/fluid-fetch/
