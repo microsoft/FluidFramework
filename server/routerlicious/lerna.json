@@ -1,7 +1,5 @@
 {
   "packages": [
-    "../../packages/utils/build-common/**",
-    "../../packages/utils/eslint-config-fluid/**",
     "packages/**"
   ],
   "version": "0.1002.0"
