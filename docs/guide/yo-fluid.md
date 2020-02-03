@@ -10,20 +10,32 @@ First, [clone the Fluid Framework repo locally](./README.md#clone-the-fluid-repo
 
 Once you've cloned the repo, you can set up the `yo fluid` bootstrapper:
 
-```
+<CodeSwitcher :languages="{win:'Windows',mac:'macOS/Linux'}">
+<template v-slot:win>
+
+```win
 npm install -g yo
-cd /FluidFramework/tools/generator-fluid
+cd .\FluidFramework\tools\generator-fluid
 npm install
 npm link
 ```
 
+</template>
+<template v-slot:mac>
+
+```mac
+npm install -g yo
+cd ./FluidFramework/tools/generator-fluid
+npm install
+npm link
+```
+
+</template>
+</CodeSwitcher>
+
 This will install yo fluid along with its dependency, [Yeoman](https://yeoman.io/).
 
-Yo fluid is now ready. Use it to scaffold a new component by typing `yo fluid` and following the instructions.
-
-::: tip
-If you get an error when running `yo fluid` saying that a generator cannot be found, try using `yo @microsoft/fluid` instead.
-:::
+Yo fluid is now ready. Use it to scaffold a new component by typing `yo @microsoft/fluid` and following the instructions.
 
 ::: tip
 For yo fluid setup issues see [this question on Microsoft Stack
