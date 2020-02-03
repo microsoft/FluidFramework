@@ -26,7 +26,6 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
     private readonly quorum: IQuorum;
 
     public on(event: "membersChanged", listener: (users: Map<string, ISequencedClient>) => void): this;
-    
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
     }

@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import * as React from "react";
-
-import { EmbeddedComponent } from "@microsoft/fluid-aqueduct-react";
 import { IVltavaDataModel } from "./dataModel";
 import { VltavaFacepile } from "./facePile";
+
+import { EmbeddedComponent } from "@microsoft/fluid-aqueduct-react";
+import * as React from "react";
 
 interface IVltavaViewProps {
     dataModel: IVltavaDataModel;

@@ -5,15 +5,17 @@
 
 import { EventEmitter } from "events";
 
+import { InternalRegistry } from "../..";
+
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import {
-    ISharedDirectory, IDirectory, IDirectoryValueChanged,
+    ISharedDirectory,
+    IDirectory,
+    IDirectoryValueChanged,
 } from "@microsoft/fluid-map";
-
-import uuid from "uuid/v4";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 
-import { InternalRegistry } from "../..";
+import uuid from "uuid/v4";
 
 export interface ITabsDataModel extends EventEmitter{
     getComponent(id: string): Promise<IComponent>;

@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import * as React from 'react';
+import * as React from "react";
 import {
     IFacepileProps,
     Facepile,
     OverflowButtonType,
     IFacepilePersona,
-} from 'office-ui-fabric-react/lib/Facepile';
-import { PersonaInitialsColor } from 'office-ui-fabric-react';
+} from "office-ui-fabric-react/lib/Facepile";
+import { PersonaInitialsColor } from "office-ui-fabric-react";
 
 const facepileStyle: React.CSSProperties = {
     position: "absolute",
@@ -27,10 +27,12 @@ export const VltavaFacepile = (props: IVltavaFacepileProps) => {
     const facepilePersonas: IFacepilePersona[] = [];
     let count = 0;
     props.users.forEach((personaName) => {
-        // apparently name is not there but it's actually there
         const imageInitials = `${personaName.substring(0,1)}${personaName.split(" ")[1].substring(0,1)}`;
         // This is just a way to iterate through all colors in PersonaInitialColor in order
-        const initialsColor = PersonaInitialsColor[PersonaInitialsColor[count++ % Object.keys(PersonaInitialsColor).length]];
+        const initialsColor =
+            PersonaInitialsColor[
+                PersonaInitialsColor[count++ % Object.keys(PersonaInitialsColor).length]
+            ];
         const persona: IFacepilePersona = {
             imageInitials,
             personaName,
@@ -45,11 +47,11 @@ export const VltavaFacepile = (props: IVltavaFacepileProps) => {
         maxDisplayablePersonas: 3,
         overflowButtonType: OverflowButtonType.descriptive,
         overflowButtonProps: {
-            ariaLabel: 'More users',
-            onClick: (ev: React.MouseEvent<HTMLButtonElement>) => alert('Todo: Implement This')
+            ariaLabel: "More users",
+            onClick: (ev: React.MouseEvent<HTMLButtonElement>) => alert("Todo: Implement This"),
         },
-        ariaDescription: 'To move through the items use left and right arrow keys.',
-        ariaLabel: 'Example list of Facepile personas',
+        ariaDescription: "To move through the items use left and right arrow keys.",
+        ariaLabel: "Example list of Facepile personas",
     };
 
     return (
@@ -57,4 +59,4 @@ export const VltavaFacepile = (props: IVltavaFacepileProps) => {
             <Facepile {...facepileProps} />
         </div>
     );
-}
+};
