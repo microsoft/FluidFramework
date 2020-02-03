@@ -6,6 +6,7 @@
 import {
     IDocumentService,
     IDocumentServiceFactory,
+    IFluidResolvedUrl,
     IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
 import { CreationDocumentService } from "./creationDocumentService";
@@ -16,11 +17,14 @@ import { CreationDocumentService } from "./creationDocumentService";
  */
 export class CreationDocumentServiceFactory implements IDocumentServiceFactory {
 
-    public readonly protocolName = "fluid-creation:";
+    public readonly protocolName = "fluid-odsp:";
     constructor() {
     }
 
     public async createDocumentService(url: IResolvedUrl): Promise<IDocumentService> {
-        return new CreationDocumentService("createNewFileDoc", "createNewFileDocTenant");
+        return new CreationDocumentService(
+            (url as IFluidResolvedUrl).url,
+            "createNewFileDoc",
+            "createNewFileDocTenant");
     }
 }
