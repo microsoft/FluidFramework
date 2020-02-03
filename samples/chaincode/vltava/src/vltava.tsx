@@ -47,6 +47,7 @@ export class Vltava extends PrimedComponent implements IComponentHTMLVisual {
             new VltavaDataModel(
                 this.root,
                 this.context,
+                this.runtime,
                 this.createAndAttachComponent.bind(this),
                 this.getComponent.bind(this));
 

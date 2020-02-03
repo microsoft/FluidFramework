@@ -7,13 +7,14 @@ import * as React from "react";
 
 import { EmbeddedComponent } from "@microsoft/fluid-aqueduct-react";
 import { IVltavaDataModel } from "./dataModel";
-import { FacepileOverflowExample } from "./facePile";
+import { VltavaFacepile } from "./facePile";
 
 interface IVltavaViewProps {
     dataModel: IVltavaDataModel;
 }
 
 interface IVltavaViewState {
+    users: string[];
     view: JSX.Element;
 }
 
@@ -23,8 +24,13 @@ export class VltavaView extends React.Component<IVltavaViewProps,IVltavaViewStat
         super(props);
 
         this.state = {
+            users: props.dataModel.getUsers(),
             view: <div/>,
         };
+
+        props.dataModel.on("membersChanged", (users) => {
+            this.setState({users});
+        });
     }
 
     async componentDidMount() {
@@ -51,7 +57,7 @@ export class VltavaView extends React.Component<IVltavaViewProps,IVltavaViewStat
                             {this.props.dataModel.getTitle()}
                         </h2>
                     </div>
-                    <FacepileOverflowExample/>
+                    <VltavaFacepile users={this.state.users}/>
                 </div>
                 {this.state.view}
             </div>
