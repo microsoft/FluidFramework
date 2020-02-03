@@ -5,7 +5,6 @@
 
 import { IVltavaDataModel, VltavaDataModel } from "./dataModel";
 import { VltavaView } from "./view";
-import { InternalRegistry } from "./";
 
 import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
@@ -50,11 +49,6 @@ export class Vltava extends PrimedComponent implements IComponentHTMLVisual {
                 this.runtime,
                 this.createAndAttachComponent.bind(this),
                 this.getComponent.bind(this));
-
-        const Foo = (await this.context.hostRuntime.IComponentRegistry.get("")) as InternalRegistry;
-        console.log(Foo.keys);
-        console.log(Foo.containerComponentArray);
-
     }
 
     /**
