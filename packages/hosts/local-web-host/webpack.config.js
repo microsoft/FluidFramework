@@ -41,6 +41,5 @@ module.exports = env => {
             tls: "empty"
         },
         stats: 'minimal',
-        devServer: devServerSettings,
     }
 };

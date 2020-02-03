@@ -65,9 +65,6 @@
     "source-map-loader": "^0.2.4",
     "ts-loader": "^6.1.2",
     "typescript": "~3.7.4",
-    "webpack": "^4.16.5",
-    "webpack-cli": "^3.1.2",
-    "webpack-dev-server": "^3.8.0",
-    "webpack-merge": "^4.1.4"
+    "webpack": "^4.16.5"
   }
 }
