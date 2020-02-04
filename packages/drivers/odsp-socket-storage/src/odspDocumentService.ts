@@ -96,7 +96,7 @@ export class OdspDocumentService implements IDocumentService {
                 // (fluid-fetcher)
                 this.logger.sendTelemetryEvent({ eventName: "StorageTokenRefresh" });
             }
-            const event = PerformanceEvent.start(this.logger, 
+            const event = PerformanceEvent.start(this.logger,
                 { eventName: `${name || "OdspDocumentService"}_GetToken` });
             let token: string | null;
             try {
@@ -165,7 +165,22 @@ export class OdspDocumentService implements IDocumentService {
     public async connectToDeltaStream(client: IClient, mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
         // Attempt to connect twice, in case we used expired token.
         return getWithRetryForTokenRefresh<IDocumentDeltaConnection>(async (refresh: boolean) => {
-            const [websocketEndpoint, webSocketToken, io] = await Promise.all([this.joinSession(), this.getWebsocketToken(refresh), this.socketIOClientP]);
+            const [websocketEndpoint, webSocketToken, io] =
+                await Promise.all([this.joinSession(), this.getWebsocketToken(refresh), this.socketIOClientP]);
+
+            // This check exists because of a typescript bug.
+            // Issue: https://github.com/microsoft/TypeScript/issues/33752
+            // The TS team has plans to fix this in the 3.8 release
+            if (!websocketEndpoint) {
+                throw new Error("websocket endpoint should be defined");
+            }
+
+            // This check exists because of a typescript bug.
+            // Issue: https://github.com/microsoft/TypeScript/issues/33752
+            // The TS team has plans to fix this in the 3.8 release
+            if (!io) {
+                throw new Error("websocket endpoint should be defined");
+            }
 
             return this.connectToDeltaStreamWithRetry(
                 websocketEndpoint.tenantId,
@@ -236,7 +251,7 @@ export class OdspDocumentService implements IDocumentService {
     }
 
     /**
-     * Test if we deal with INetworkError / NetworkError object and if it has enough information to make a call
+     * Test if we deal with NetworkError object and if it has enough information to make a call
      * If in doubt, allow retries
      *
      * @param error - error object
@@ -258,7 +273,6 @@ export class OdspDocumentService implements IDocumentService {
      * @param url - websocket URL
      * @param url2 - alternate websocket URL
      */
-    // tslint:disable-next-line: max-func-body-length
     private async connectToDeltaStreamWithRetry(
         tenantId: string,
         websocketId: string,
@@ -303,7 +317,6 @@ export class OdspDocumentService implements IDocumentService {
                 io,
                 client,
                 mode,
-                // tslint:disable-next-line: no-non-null-assertion
                 url2!,
                 20000,
                 this.logger,
@@ -314,11 +327,13 @@ export class OdspDocumentService implements IDocumentService {
                 });
 
                 return connection;
+                // eslint-disable-next-line @typescript-eslint/promise-function-async
             }).catch((connectionError) => {
                 const endAfd = performanceNow();
                 localStorage.removeItem(lastAfdConnectionTimeMsKey);
                 // Retry on non-AFD URL
                 if (this.canRetryOnError(connectionError)) {
+                    // eslint-disable-next-line max-len
                     debug(`Socket connection error on AFD URL (cached). Error was [${connectionError}]. Retry on non-AFD URL: ${url}`);
 
                     return OdspDocumentDeltaConnection.create(
@@ -368,9 +383,11 @@ export class OdspDocumentService implements IDocumentService {
         ).then((connection) => {
             logger.sendTelemetryEvent({ eventName: "UsedNonAfdUrl" });
             return connection;
+            // eslint-disable-next-line @typescript-eslint/promise-function-async
         }).catch((connectionError) => {
             const endNonAfd = performanceNow();
             if (hasUrl2 && this.canRetryOnError(connectionError)) {
+                // eslint-disable-next-line max-len
                 debug(`Socket connection error on non-AFD URL. Error was [${connectionError}]. Retry on AFD URL: ${url2}`);
 
                 return OdspDocumentDeltaConnection.create(
@@ -380,7 +397,6 @@ export class OdspDocumentService implements IDocumentService {
                     io,
                     client,
                     mode,
-                    // tslint:disable-next-line: no-non-null-assertion
                     url2!,
                     20000,
                     this.logger,
@@ -388,6 +404,7 @@ export class OdspDocumentService implements IDocumentService {
                     // Refresh AFD cache
                     const cacheResult = this.writeLocalStorage(lastAfdConnectionTimeMsKey, Date.now().toString());
                     if (cacheResult) {
+                        // eslint-disable-next-line max-len
                         debug(`Cached AFD connection time. Expiring in ${new Date(Number(localStorage.getItem(lastAfdConnectionTimeMsKey)) + afdUrlConnectExpirationMs)}`);
                     }
                     logger.sendPerformanceEvent({
