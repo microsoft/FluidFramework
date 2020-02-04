@@ -19,7 +19,7 @@ import {
 import { TabsComponent } from "./components";
 import {
     IComponentRegistryDetails,
-    IContainerComponent as IContainerComponentDetails,
+    IContainerComponentDetails,
 } from "./interfaces";
 import { Vltava } from "./vltava";
 
@@ -103,7 +103,7 @@ const generateFactory = () => {
     ];
 
     // TODO: You should be able to specify the default registry instead of just a list of components
-    // and the default registry is already determined
+    // and the default registry is already determined Issue:#1138
     return new SimpleModuleInstantiationFactory(
         chaincodeName,
         [

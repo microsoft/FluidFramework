@@ -16,10 +16,10 @@ export interface IProvideComponentRegistryDetails {
 }
 
 export interface IComponentRegistryDetails extends IProvideComponentRegistryDetails {
-    getFromCapabilities(type: keyof IComponent): IContainerComponent[];
+    getFromCapabilities(type: keyof IComponent): IContainerComponentDetails[];
 }
 
-export interface IContainerComponent {
+export interface IContainerComponentDetails {
     type: string;
     factory: Promise<IProvideComponentFactory>;
     capabilities: (keyof IComponent)[];
