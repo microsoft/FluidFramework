@@ -11,38 +11,43 @@ import * as nconf from "nconf";
 import WebpackDevServer from "webpack-dev-server";
 import { IOdspTokens, getServer } from "@microsoft/fluid-odsp-utils";
 import { getMicrosoftConfiguration, OdspTokenManager, odspTokensCache } from "@microsoft/fluid-tool-utils";
-import { IRouteOptions } from "./loader";
+import { RouteOptions } from "./loader";
 import { OdspUrlResolver } from "./odspUrlResolver";
 
 const tokenManager = new OdspTokenManager(odspTokensCache);
 let odspAuthStage = 0;
 
-const getThisOrigin = (options: IRouteOptions): string => `http://localhost:${options.port}`;
+const getThisOrigin = (options: RouteOptions): string => `http://localhost:${options.port}`;
 
 export const before = (app: express.Application, server: WebpackDevServer) => {
     app.get("/", (req, res) => res.redirect(`/${moniker.choose()}`));
 };
 
-export const after = (app: express.Application, server: WebpackDevServer, baseDir: string, env: IRouteOptions) => {
-    const options: IRouteOptions = { mode: "local", ...env, ...{ port: server.options.port } };
+export const after = (app: express.Application, server: WebpackDevServer, baseDir: string, env: RouteOptions) => {
+    const options: RouteOptions = { mode: "local", ...env, ...{ port: server.options.port } };
     const config: nconf.Provider = nconf.env("__").file(path.join(baseDir, "config.json"));
-    options.fluidHost = options.fluidHost ? options.fluidHost : config.get("fluid:webpack:fluidHost");
-    options.tenantId = options.tenantId ? options.tenantId : config.get("fluid:webpack:tenantId");
-    options.tenantSecret = options.tenantSecret ? options.tenantSecret : config.get("fluid:webpack:tenantSecret");
-    options.bearerSecret = options.bearerSecret ? options.bearerSecret : config.get("fluid:webpack:bearerSecret");
-    options.npm = options.npm ? options.npm : config.get("fluid:webpack:npm");
+    if (options.mode === "docker" || options.mode === "r11s" || options.mode === "tinylicious") {
+        options.bearerSecret = options.bearerSecret || config.get("fluid:webpack:bearerSecret");
+        if (options.mode !== "tinylicious") {
+            options.tenantId = options.tenantId || config.get("fluid:webpack:tenantId");
+            options.tenantSecret = options.tenantSecret || config.get("fluid:webpack:tenantSecret");
+            if (options.mode === "r11s") {
+                options.fluidHost = options.fluidHost || config.get("fluid:webpack:fluidHost");
+            }
+        }
+    }
+
+    options.npm = options.npm || config.get("fluid:webpack:npm");
 
     console.log(options);
 
     if (options.mode === "r11s" && !(options.tenantId && options.tenantSecret)) {
         throw new Error("You must provide a tenantId and tenantSecret to connect to a live routerlicious server");
-    } else if ((options.tenantId || options.tenantSecret) && !(options.tenantId && options.tenantSecret)) {
-        throw new Error("tenantId and tenantSecret must be provided together");
     }
 
     let readyP: ((req: express.Request, res: express.Response) => Promise<boolean>) | undefined;
     if (options.mode === "spo-df") {
-        if (!options.odspForceReauth && options.odspAccessToken) {
+        if (!options.forceReauth && options.odspAccessToken) {
             odspAuthStage = options.pushAccessToken ? 2 : 1;
         }
         readyP = async (req: express.Request, res: express.Response) => {
@@ -57,21 +62,21 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
                 }
                 // force creation of file if not already exists
                 const odspUrlResolver = new OdspUrlResolver(
-                    options.odspServer,
-                    options.odspClientConfig,
+                    options.server,
+                    options.clientConfig,
                     options.odspAccessToken);
                 await odspUrlResolver.resolve({ url: originalUrl });
                 return true;
             }
 
-            options.odspServer = getServer("spo-df"); // could forward options.mode
-            options.odspClientConfig = getMicrosoftConfiguration();
+            options.server = getServer("spo-df"); // could forward options.mode
+            options.clientConfig = getMicrosoftConfiguration();
 
             if (odspAuthStage === 0) {
                 await tokenManager.getOdspTokens(
-                    options.odspServer,
-                    options.odspClientConfig,
-                    options.odspForceReauth,
+                    options.server,
+                    options.clientConfig,
+                    options.forceReauth,
                     (url: string) => res.redirect(url),
                     async (tokens: IOdspTokens) => {
                         options.odspAccessToken = tokens.accessToken;
@@ -82,9 +87,9 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
                 return false;
             }
             await tokenManager.getPushTokens(
-                options.odspServer,
-                options.odspClientConfig,
-                options.odspForceReauth,
+                options.server,
+                options.clientConfig,
+                options.forceReauth,
                 (url: string) => res.redirect(url),
                 async (tokens: IOdspTokens) => {
                     options.pushAccessToken = tokens.accessToken;
@@ -97,9 +102,14 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
     }
 
     app.get("/odspLogin", async (req, res) => {
+        if (options.mode !== "spo-df") {
+            res.write("Mode must be spo-df to login to ODSP.");
+            res.end();
+            return;
+        }
         await tokenManager.getOdspTokens(
-            options.odspServer,
-            options.odspClientConfig,
+            options.server,
+            options.clientConfig,
             true,
             (url: string) => res.redirect(url),
             async (tokens: IOdspTokens) => {
@@ -109,9 +119,14 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
         );
     });
     app.get("/pushLogin", async (req, res) => {
+        if (options.mode !== "spo-df") {
+            res.write("Mode must be spo-df to login to Push.");
+            res.end();
+            return;
+        }
         options.pushAccessToken = (await tokenManager.getPushTokens(
-            options.odspServer,
-            options.odspClientConfig,
+            options.server,
+            options.clientConfig,
             true,
             (url: string) => res.redirect(url),
         )).accessToken;
@@ -143,7 +158,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
     });
 };
 
-const fluid = (req: express.Request, res: express.Response, baseDir: string, options: IRouteOptions) => {
+const fluid = (req: express.Request, res: express.Response, baseDir: string, options: RouteOptions) => {
 
     const documentId = req.params.id;
     // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires

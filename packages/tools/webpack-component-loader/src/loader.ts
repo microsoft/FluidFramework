@@ -36,21 +36,51 @@ export interface IDevServerUser extends IUser {
     name: string;
 }
 
-export interface IRouteOptions {
-    mode: "local" | "docker" | "r11s" | "tinylicious" | "spo-df"
+export interface IBaseRouteOptions {
     port: number;
+    npm?: string;
+}
+
+export interface ILocalRouteOptions extends IBaseRouteOptions {
+    mode: "local";
+    single?: boolean;
+}
+
+export interface IDockerRouteOptions extends IBaseRouteOptions {
+    mode: "docker";
+    tenantId?: string;
+    tenantSecret?: string;
+    bearerSecret?: string;
+}
+
+export interface IRouterliciousRouteOptions extends IBaseRouteOptions {
+    mode: "r11s";
     fluidHost?: string;
     tenantId?: string;
     tenantSecret?: string;
     bearerSecret?: string;
-    npm?: string;
-    single?: boolean;
-    odspForceReauth?: boolean;
-    odspServer?: string;
-    odspClientConfig?: IClientConfig;
+}
+
+export interface ITinyliciousRouteOptions extends IBaseRouteOptions {
+    mode: "tinylicious";
+    bearerSecret?: string;
+}
+
+export interface IOdspRouteOptions extends IBaseRouteOptions {
+    mode: "spo-df";
+    server?: string;
+    clientConfig?: IClientConfig;
     odspAccessToken?: string;
     pushAccessToken?: string;
+    forceReauth?: boolean;
 }
+
+export type RouteOptions =
+    | ILocalRouteOptions
+    | IDockerRouteOptions
+    | IRouterliciousRouteOptions
+    | ITinyliciousRouteOptions
+    | IOdspRouteOptions;
 
 const getUser = (): IDevServerUser => ({
     id: uuid(),
@@ -145,7 +175,7 @@ async function getResolvedPackage(
     };
 }
 
-function getUrlResolver(documentId: string, options: IRouteOptions): IUrlResolver {
+function getUrlResolver(documentId: string, options: RouteOptions): IUrlResolver {
     switch (options.mode) {
         case "docker":
             return new InsecureUrlResolver(
@@ -179,8 +209,8 @@ function getUrlResolver(documentId: string, options: IRouteOptions): IUrlResolve
 
         case "spo-df":
             return new OdspUrlResolver(
-                options.odspServer,
-                options.odspClientConfig,
+                options.server,
+                options.clientConfig,
                 options.odspAccessToken);
 
         default: // Local
@@ -205,7 +235,7 @@ function makeSideBySideDiv(divId?: string) {
 export async function start(
     documentId: string,
     packageJson: IPackage,
-    options: IRouteOptions,
+    options: RouteOptions,
     div: HTMLDivElement,
 ): Promise<void> {
     const url = window.location.href;
