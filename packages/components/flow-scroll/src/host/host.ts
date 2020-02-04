@@ -78,7 +78,8 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         Promise.all([this.docP, this.mathP, this.videosP, this.imagesP]).then(([doc, math, videos, images]) => {
-            // TODO set view registry on the doc here?
+            // This view registry will match up the strings we put in the markers below against
+            // the view classes they correspond with.
             doc.setViewRegistry(new Map([["MathView", MathView]]));
             const slot = template.get(this.viewport, "slot") as HTMLElement;
             const editor = new Editor(doc, slot, htmlFormatter, this);
@@ -107,9 +108,6 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
             ) => {
                 const position = editor.selection.end;
                 const instance = factory.createCollectionItem(componentOptions) as IComponentLoadable;
-                // The strategy here is to route directly to a view component that should be rendered at the
-                // marker position (in this case, something we can call .render() on).  We need a matching request
-                // handler for whatever viewRoute we insert that will give us that view component.
                 doc.insertComponent(position, `/${instance.url}`, componentOptions, style, classList, view);
             };
 
@@ -152,7 +150,7 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
                 { key: "ul", enabled: always, exec: () => { insertTags([TagName.ul, TagName.li]); } },
                 { key: "red", enabled: always, exec: () => { setStyle("color:red"); } },
                 // Math is the only component from this set with view/model separation,
-                // so it's the only one with a view route.  The rest can already be rendered directly.
+                // so it's the only one with a specified view.  The rest can already be rendered directly.
                 { key: "math inline", enabled: always, exec: () => insertComponentFromCollection(math, { display: "inline" }, `MathView`) },
                 { key: "math block", enabled: always, exec: () => insertComponentFromCollection(math, { display: "block" }, `MathView`) },
                 { key: "morton", enabled: always, exec: () => insertComponentFromCollection(videos, {}, undefined, "display:block;width:61%;--aspect-ratio:calc(16/9)") },

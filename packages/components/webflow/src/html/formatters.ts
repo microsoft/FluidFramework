@@ -95,7 +95,7 @@ export class InclusionFormatter extends Formatter<IInclusionState> {
                 let view: IComponentHTMLView;
 
                 if (viewClass) {
-                    console.log("getting from the view class");
+                    // We found a view class registered for this marker's view type
                     view = new viewClass(component, layout.scope);
                 } else {
                     const visual = component.IComponentHTMLVisual;

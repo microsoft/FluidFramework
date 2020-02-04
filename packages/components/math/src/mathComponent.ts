@@ -78,10 +78,6 @@ export class MathView implements IComponentHTMLView, IComponentCursor, IComponen
         this.instance.on("remoteEdit", this.remoteEdit);
     }
 
-    public setScope(scope: IComponent) {
-        this.searchMenuHost = scope.ISearchMenuHost;
-    }
-
     // IComponentHTMLView
     public render(containerElement: HTMLElement, options?: IComponentHTMLOptions) {
         if (options) {
@@ -453,6 +449,7 @@ export class MathInstance extends EventEmitter implements IComponentLoadable, IC
     }
 
     public addView(scope?: IComponent) {
+        console.warn("Instead of using {mathView = mathInstance.addView(scope)}, consider using {mathView = new MathView(mathInstance, scope)}");
         return new MathView(this, scope);
     }
 
