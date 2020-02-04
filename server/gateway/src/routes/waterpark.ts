@@ -38,7 +38,7 @@ export function create(
         let redirect = `${request.baseUrl}/${moniker.choose()}`;
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (request.query.component) {
-            redirect += `?component=${request.query.component}`;
+            redirect += `?chaincode=${request.query.component}`;
         }
         return response.status(302).redirect(redirect);
     });
@@ -128,7 +128,7 @@ export function create(
                 if (!pkg) {
                     resolved.url += `${path}`;
                 } else {
-                    resolved.url += `?component=${component}`;
+                    resolved.url += `?chaincode=${component}`;
                 }
                 winston.info(`render ${tenantId}/${documentId} +${Date.now() - start}`);
 

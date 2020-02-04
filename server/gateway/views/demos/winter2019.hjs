@@ -18,7 +18,7 @@
 
     <h3>Data, Code, Components Bindings</h3>
     <p>Open the link below and add in a Monaco and Chart Component</p>
-    <li class="list-unstyled"><a href="/loader/fluid/{{chartMonacoMoniker}}?component=@fluid-example/shared-text@{{version}}" target="_blank">Data +
+    <li class="list-unstyled"><a href="/loader/fluid/{{chartMonacoMoniker}}?chaincode=@fluid-example/shared-text@{{version}}" target="_blank">Data +
             Code Bindings</a></li>
 
     <h3>Yo Fluid - Bootstrapper</h3>
@@ -28,9 +28,9 @@
     <h3>Non-Office</h3>
     <p>Open the link below and add in a WSJ journal Pinpoint Map.</p>
     <ul class="list-unstyled">
-        <li><a href="/loader/fluid/{{pinpointMoniker}}?component=@container/pinpoint-editor@0.3.6527#/maps/new"
+        <li><a href="/loader/fluid/{{pinpointMoniker}}?chaincode=@container/pinpoint-editor@0.3.6527#/maps/new"
                 target="_blank">Pin Point Map</a></li>
-        <li><a href="/loader/fluid/{{newsMoniker}}?component=@component/shared-text@0.3.6672"
+        <li><a href="/loader/fluid/{{newsMoniker}}?chaincode=@component/shared-text@0.3.6672"
                 target="_blank">Prague Text Editor</a></li>
         <li><a href="/loader/fluid/counterDemo" target="_blank">Counter</a></li>
     </ul>
@@ -47,7 +47,7 @@
     <ul class="list-unstyled">
         <li><a href="https://docs.google.com/document/d/1Ed3_Bgmfj4L1tvjjh8geSHNZMbh_X6SaRd1uZGSQSio/edit"
                 target="_blank">Google Docs Pride and Prejudice</a></li>
-        <li><a href="/loader/fluid/{{sharedTextMoniker}}?component=@fluid-example/shared-text@{{version}}&template=pp.txt" target="_blank">Prague Pride and Prejudice</a></li>
+        <li><a href="/loader/fluid/{{sharedTextMoniker}}?chaincode=@fluid-example/shared-text@{{version}}&template=pp.txt" target="_blank">Prague Pride and Prejudice</a></li>
     </ul>
 
     <h2>Augmentation Loop</h2>
@@ -60,7 +60,7 @@
         otherwise the browser may stop it from running JavaScript which will pause the demo.
     </p>
     <ul class="list-unstyled">
-        <li><a href="/loader/fluid/{{scribeMoniker}}?component=@fluid-example/scribe@{{version}}&speed=10&text=/public/literature/resume.txt" target="_blank">Scribe</a></li>
+        <li><a href="/loader/fluid/{{scribeMoniker}}?chaincode=@fluid-example/scribe@{{version}}&speed=10&text=/public/literature/resume.txt" target="_blank">Scribe</a></li>
     </ul>
 
     <h3>Augmentation</h3>
@@ -69,25 +69,25 @@
         underline.
     </p>
     <ul class="list-unstyled">
-        <li><a href="/loader/fluid/{{translateMoniker}}?component=@fluid-example/shared-text@{{version}}&languageFrom=en&languageTo=el"
+        <li><a href="/loader/fluid/{{translateMoniker}}?chaincode=@fluid-example/shared-text@{{version}}&languageFrom=en&languageTo=el"
                 target="_blank">Greek</a></li>
-        <li><a href="/loader/fluid/{{translateMoniker}}?component=@fluid-example/shared-text@{{version}}&languageFrom=en&languageTo=es"
+        <li><a href="/loader/fluid/{{translateMoniker}}?chaincode=@fluid-example/shared-text@{{version}}&languageFrom=en&languageTo=es"
                 target="_blank">Spanish</a></li>
     </ul>
 
     <h2>Performance</h2>
 
     <h3>Inking Canvas</h3>
-    <li class="list-unstyled"><a href="/loader/fluid/{{inkMoniker}}?component=@fluid-example/canvas@{{version}}"
+    <li class="list-unstyled"><a href="/loader/fluid/{{inkMoniker}}?chaincode=@fluid-example/canvas@{{version}}"
             target="_blank">Canvas Component</a></li>
 
     <h3>Fast Load</h3>
     <p>
         Open a copy of each link and load each on refresh.
         <ul class="list-unstyled">
-            <li><a href="https://www.wu2-ppe.prague.office-int.com/loader/fluid/ste-0314-002?component=@component/shared-text-2@0.3.91"
+            <li><a href="https://www.wu2-ppe.prague.office-int.com/loader/fluid/ste-0314-002?chaincode=@component/shared-text-2@0.3.91"
                     target="_blank">Loader</a></li>
-            <li><a href="https://www.wu2-ppe.prague.office-int.com/fastloader/fluid/ste-0314-002?component=@component/shared-text-2@0.3.91"
+            <li><a href="https://www.wu2-ppe.prague.office-int.com/fastloader/fluid/ste-0314-002?chaincode=@component/shared-text-2@0.3.91"
                     target="_blank">Augmented Loader</a></li>
         </ul>
     </p>

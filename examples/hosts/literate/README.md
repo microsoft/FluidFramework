@@ -30,7 +30,7 @@ Then navigate to http://localhost:8080. This will redirect you to http://localho
 'example' to any string you'd like and a new document will be created under that name. By default a new Flow View
 will be created but by specifying the component query parameter any of the packages on
 https://packages.wu2.prague.office-int.com can be loaded - i.e.
-http://localhost:8080/new-document?component=@component/tourofheroes@0.0.5918.
+http://localhost:8080/new-document?chaincode=@component/tourofheroes@0.0.5918.
 
 ## The Code
 
