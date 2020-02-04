@@ -69,6 +69,7 @@ export class HeadlessRunner implements utils.IRunner {
             requestMessage.tenantId,
             this.workerConfig.internalGatewayUrl,
             task,
+            this.workerConfig.key,
             this.cache)
             .then((puppet) => {
 
@@ -77,6 +78,7 @@ export class HeadlessRunner implements utils.IRunner {
                         requestMessage.tenantId,
                         requestMessage.documentId,
                         task);
+
                     this.puppetCache.set(cacheKey, puppet);
                     winston.info(`Launched for ${cacheKey}`);
                     puppet.on("close", (ev: ICloseEvent) => {

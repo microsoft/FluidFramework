@@ -12,6 +12,7 @@ import { PuppetMaster } from "./puppetMaster";
  */
 
 const tenantId = "fluid";
+const authSecret = "VBQyoGpEYrTn3XQPtXW3K8fFDd";
 
 async function launchPuppeteer(documentId: string, agentType: string, gatewayUrl: string) {
     configureLogging({
@@ -26,7 +27,8 @@ async function launchPuppeteer(documentId: string, agentType: string, gatewayUrl
         documentId,
         tenantId,
         gatewayUrl,
-        agentType);
+        agentType,
+        authSecret);
 
     return puppetMaster;
 }

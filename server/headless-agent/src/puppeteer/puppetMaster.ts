@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { IResolvedUrl } from "@microsoft/fluid-driver-definitions";
 import { EventEmitter } from "events";
+import * as jwt from "jsonwebtoken";
 import * as puppeteer from "puppeteer";
+import * as request from "request";
 import * as winston from "winston";
 import { ICache } from "../redisCache";
 
@@ -21,10 +24,25 @@ export class PuppetMaster extends EventEmitter {
         tenantId: string,
         gatewayUrl: string,
         agentType: string,
+        jwtKey: string,
         cache?: ICache): Promise<PuppetMaster> {
 
-        const browser = await puppeteer.launch();
+        const browser = await puppeteer.launch({
+            headless: true, // headless: false launches a browser window
+        });
+
         const page = await browser.newPage();
+        const token = jwt.sign(
+            {
+                documentId,
+                scopes: ["doc:read", "doc:write", "summary:write"],
+                tenantId,
+                user: {
+                    id: "headless-chrome",
+                    name: "Arnold Wesker",
+                },
+            },
+            jwtKey);
 
         const puppetMaster = new PuppetMaster(documentId,
             tenantId,
@@ -32,12 +50,12 @@ export class PuppetMaster extends EventEmitter {
             agentType,
             browser,
             page,
+            token,
             cache);
         await puppetMaster.launch();
 
         return puppetMaster;
     }
-
     private cachingTimer: any;
 
     constructor(
@@ -47,6 +65,7 @@ export class PuppetMaster extends EventEmitter {
         private agentType: string,
         private browser: puppeteer.Browser,
         private page: puppeteer.Page,
+        private token: string,
         private cache?: ICache,
     ) {
         super();
@@ -66,8 +85,10 @@ export class PuppetMaster extends EventEmitter {
         };
 
         this.page.on("console", consoleFn);
+
+        const resolvedUrl = await this.getResolvedUrl();
+
         this.page.on("load", (e, args) => {
-            console.log("Loaded - PuppetMaster");
             this.emit("load", args);
         });
 
@@ -79,13 +100,18 @@ export class PuppetMaster extends EventEmitter {
                 window.setTimeout(callback, 0);
             };
         });
-
         await this.attachEndOfLife();
 
-        const gatewayBase = this.gatewayUrl;
-        const gatewayUrl =
-            `${gatewayBase}/loader/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(this.documentId)}`;
-        this.page.goto(gatewayUrl);
+        // Joining the gateway hostname to allow for localstorage
+        await this.page.goto(`${this.gatewayUrl}/public/images/`);
+        await this.page.addScriptTag({path: "client/fluid-loader.bundle.js"});
+        this.page.evaluate((resolvedUrlString) => {
+            const resolvedUrlInternal = JSON.parse(resolvedUrlString) as IResolvedUrl;
+            document.body.innerHTML = `
+            <div id="content" style="flex: 1 1 auto; position: relative"></div>
+            `;
+            (window as any).loader.startLoading(resolvedUrlInternal);
+            }, JSON.stringify(resolvedUrl));
 
         if (this.agentType === "cache") {
             this.upsertPageCache();
@@ -130,6 +156,33 @@ export class PuppetMaster extends EventEmitter {
                     winston.error(err);
                 });
             }
+        });
+    }
+
+    private async getResolvedUrl() {
+        // Doesn't work
+        const path =
+        `${this.gatewayUrl}/loader/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(this.documentId)}`;
+        const options = {
+            form: {
+                url: path,
+            },
+            headers: {
+                "Authorization": `Bearer ${this.token}`,
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            method: "POST",
+            url: `${this.gatewayUrl}/api/v1/load`,
+        };
+
+        return new Promise<IResolvedUrl>((resolve, reject) => {
+            request(options, (err, response, body) => {
+                if (err) {
+                    reject(err);
+                }
+                const resolvedUrl = JSON.parse(body) as IResolvedUrl;
+                resolve(resolvedUrl);
+            });
         });
     }
 }
