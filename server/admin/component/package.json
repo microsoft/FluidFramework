@@ -1,7 +1,7 @@
 {
-  "name": "chaincode-loader",
+  "name": "component-loader",
   "version": "0.0.1",
-  "description": "Headless chaincode loader",
+  "description": "Headless component loader",
   "main": "index.js",
   "author": "Microsoft",
   "license": "MIT"

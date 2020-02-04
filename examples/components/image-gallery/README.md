@@ -1,6 +1,6 @@
-# Welcome to your first Chaincode
+# Welcome to your first Component
 
-A simple Chaincode example that demonstrates wrapping an existing React Image Gallery control
+A simple Component example that demonstrates wrapping an existing React Image Gallery control
 
 ## Getting Started
 You can try the following commands
@@ -15,7 +15,7 @@ You can try the following commands
 
 
     npm deploy
-       Publishes the chaincode to https://packages.wu2.prague.office-int.com/#/
+       Publishes the component to https://packages.wu2.prague.office-int.com/#/
 ````
 
 We suggest you start by typing:
@@ -30,7 +30,7 @@ Uncomment the commented code in index.tsx to add a title to your component.
 
 ## Deploy
 
-To deploy and make your chaincode "Live" you'll have to deploy it to verdaccio, our private NPM repository.
+To deploy and make your component "Live" you'll have to deploy it to verdaccio, our private NPM repository.
 
 Go to https://packages.wu2.prague.office-int.com
 
@@ -46,9 +46,9 @@ To deploy, use
     npm run deploy
 
 
-To view your chaincode, you can go to the URL
+To view your component, you can go to the URL
 
-    https://www.wu2-ppe.prague.office-int.com/loader/stupefied-kilby/prague/{random container name}?chaincode={pkg.name}@{pkg.version};
+    https://www.wu2-ppe.prague.office-int.com/loader/stupefied-kilby/prague/{random container name}?component={pkg.name}@{pkg.version};
 
 This link is then shareable and, in an expanding list of components, embeddable!
 

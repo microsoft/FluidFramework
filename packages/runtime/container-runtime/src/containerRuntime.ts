@@ -506,7 +506,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
     private tasks: string[] = [];
 
-    // Back-compat: version decides between loading document and chaincode.
+    // Back-compat: version decides between loading document and component.
     private version: string;
 
     private _flushMode = FlushMode.Automatic;

@@ -1,9 +1,14 @@
 # 0.14 Breaking Changes
 - [Samples and chaincode have been renamed to examples and components respectively](##Samples-and-chaincode-have-been-renamed-to-examples-and-components-respectively)
+- [Remove all references to the name chaincode] (##Remove-all-references-to-the-term-chaincode)
 
 ## Samples and chaincode have been renamed to examples and components respectively
 The directories themselves have been renamed.
 All path references in the dockerfile and json manifests have been updated along with variables assigned using path constants in code
+
+## Remove all references to the term chaincode
+Any references to the internal name of "chaincode" have been removed, they have been replaced with "component"
+All packages starting with @chaincode now start with @component
 
 # 0.13 Breaking Changes
 

@@ -25,12 +25,12 @@ export class SimpleContainerRuntimeFactory {
      */
     public static async instantiateRuntime(
         context: IContainerContext,
-        chaincode: string,
+        component: string,
         registryEntries: NamedComponentRegistryEntries,
         serviceRegistry: ContainerServiceRegistryEntries = [],
         requestHandlers: RuntimeRequestHandler[] = [],
     ): Promise<ContainerRuntime> {
-        // Debug(`instantiateRuntime(chaincode=${chaincode},registry=${JSON.stringify(registry)})`);
+        // Debug(`instantiateRuntime(component=${component},registry=${JSON.stringify(registry)})`);
         const runtime = await ContainerRuntime.load(
             context,
             registryEntries,
@@ -45,10 +45,10 @@ export class SimpleContainerRuntimeFactory {
 
         // On first boot create the base component
         if (!runtime.existing) {
-            // Debug(`createAndAttachComponent(chaincode=${chaincode})`);
+            // Debug(`createAndAttachComponent(component=${component})`);
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             SimpleContainerRuntimeFactory.createAndAttachComponent(
-                runtime, SimpleContainerRuntimeFactory.defaultComponentId, chaincode);
+                runtime, SimpleContainerRuntimeFactory.defaultComponentId, component);
         }
 
         return runtime;

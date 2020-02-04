@@ -45,12 +45,12 @@ export function registerDocumentServiceFactory(service: IDocumentServiceFactory)
 
 export const getDefaultDocumentServiceFactory = (): IDocumentServiceFactory => defaultDocumentServiceFactory;
 
-let chaincodeRepo: string;
-export function registerChaincodeRepo(repo: string) {
-    chaincodeRepo = repo;
+let componentRepo: string;
+export function registerComponentRepo(repo: string) {
+    componentRepo = repo;
 }
 
-export const getChaincodeRepo = (): string => chaincodeRepo;
+export const getComponentRepo = (): string => componentRepo;
 // End temporary calls
 
 /**
@@ -211,7 +211,7 @@ export class Document extends EventEmitter {
     }
 }
 
-async function initializeChaincode(container: Container, pkg: string): Promise<void> {
+async function initializeComponent(container: Container, pkg: string): Promise<void> {
     const quorum = container.getQuorum();
 
     // Wait for connection so that proposals can be sent
@@ -284,7 +284,7 @@ export async function load(
     const container = await loader.resolve({ url });
 
     if (!container.existing) {
-        await initializeChaincode(container, `@fluid-internal/client-api@${apiVersion}`);
+        await initializeComponent(container, `@fluid-internal/client-api@${apiVersion}`);
     }
 
     return requestDocument(loader, container, url);

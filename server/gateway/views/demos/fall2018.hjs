@@ -16,7 +16,7 @@
             </p>
             <h3>Demo</h3>
             <ul class="list-unstyled">
-                <li><a href="/loader/fluid/{{componentsMoniker}}?chaincode=@fluid-example/shared-text@{{version}}&template=pp.txt" target="_blank">Prague Pride and Prejudice</a></li>
+                <li><a href="/loader/fluid/{{componentsMoniker}}?component=@fluid-example/shared-text@{{version}}&template=pp.txt" target="_blank">Prague Pride and Prejudice</a></li>
             </ul>
 
             <p>
@@ -42,7 +42,7 @@
                 represents the document each Prague document also stores the code that is used to process document
                 operations and do things like run the UI. Combining the two together brings about a frictionless
                 deployment of a Prague document which makes it simple to load them or embed them
-                in other documents. If you view a Prague document as a block chain the code becomes the chaincode that
+                in other documents. If you view a Prague document as a block chain the code becomes the component that
                 runs on top of the chain.
             </p>
             <p>
@@ -56,8 +56,8 @@
             <h4>Pinpoint Maps</h4>
             <ul class="list-unstyled">
                 <li><a href="https://www.wsj.com/articles/when-napoleon-met-his-waterloo-he-was-out-of-town-1433894903" target="_blank">WSJ Article</a></li>
-                <li><a href="/loader/fluid/{{napoleonMoniker}}?chaincode=@fluid-example/shared-text@{{version}}&template=napoleon.txt" target="_blank">Prague Starter Article</a></li>
-                <li><a href="/loader/fluid/{{pinpointMoniker}}?chaincode=@chaincode/pinpoint-editor@0.6.15" target="_blank">Pinpoint Editor</a></li>
+                <li><a href="/loader/fluid/{{napoleonMoniker}}?component=@fluid-example/shared-text@{{version}}&template=napoleon.txt" target="_blank">Prague Starter Article</a></li>
+                <li><a href="/loader/fluid/{{pinpointMoniker}}?component=@component/pinpoint-editor@0.6.15" target="_blank">Pinpoint Editor</a></li>
             </ul>
             <p>
                 A first example of a Prague component is the pinpoint map editor. This component was created by the Wall
@@ -87,18 +87,18 @@
             <p>
                 Clients of a Prague document establish a quorum that defines the code to be included with the document.
                 NPM is used to store these code packages. We make use of a private NPM repository to store our document
-                code - which we refer to as chaincode - which can be found via the link below.
+                code - which we refer to as component - which can be found via the link below.
             </p>
             <p>
                 <a href="https://packages.wu2.prague.office-int.com" target="_blank">https://packages.wu2.prague.office-int.com</a>
             </p>
             <p>
-                Any package that begins with @chaincode can be installed in a Prague document. To do so simply navigate
+                Any package that begins with @component can be installed in a Prague document. To do so simply navigate
                 to the loader route, choose a unique document ID, and then
-                append <i>?chaincode=&lt;package-name&gt;@&lt;version&gt;</i>. As an easy example simply append a number to
+                append <i>?component=&lt;package-name&gt;@&lt;version&gt;</i>. As an easy example simply append a number to
                 the random name this page created for the pinpoint map
                 
-                /loader/{{pinpointMoniker}}2?chaincode=@chaincode/praguesteroids@0.10.0 (DEPRECATED)
+                /loader/{{pinpointMoniker}}2?component=@component/praguesteroids@0.10.0 (DEPRECATED)
             </p>
 
             <h4>Embedded charts and polls</h4>
@@ -134,7 +134,7 @@
                 The Monaco code editor is also available as a Prague document.
             </p>
             <ul class="list-unstyled">
-                <li><a href="/loader/fluid/{{monacoMoniker}}?chaincode=@fluid-example/monaco@{{version}}" target="_blank">Monaco</a></li>
+                <li><a href="/loader/fluid/{{monacoMoniker}}?component=@fluid-example/monaco@{{version}}" target="_blank">Monaco</a></li>
             </ul>
 
             <h2>SharePoint (DEPRECATED)</h2>
@@ -157,9 +157,9 @@
             </p>
             <p>
                 You can also load any of the Prague components. To do so bring up the dev tools (F12) and type
-                <i>USE_LOADER = true; CHAINCODE = "@chaincode/shared-text@0.1.6"</i>. Or choose any other of the
-                chaincode packages. Then choose New -> Prague Document and when you open it it will load a document
-                with the specified chaincode.
+                <i>USE_LOADER = true; CHAINCODE = "@component/shared-text@0.1.6"</i>. Or choose any other of the
+                component packages. Then choose New -> Prague Document and when you open it it will load a document
+                with the specified component.
             </p>
             <p>
                 For opening in a new tab to work you may need to edit your browser preferences to allow popups for

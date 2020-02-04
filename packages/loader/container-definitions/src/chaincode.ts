@@ -229,7 +229,7 @@ export interface IProvideRuntimeFactory {
  */
 export interface IRuntimeFactory extends IProvideRuntimeFactory {
     /**
-     * Instantiates a new chaincode container
+     * Instantiates a new component container
      */
     instantiateRuntime(context: IContainerContext): Promise<IRuntime>;
 }

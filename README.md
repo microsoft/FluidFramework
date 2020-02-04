@@ -4,7 +4,7 @@
 
 Fluid enables distributed, collaborative applications by providing developers with eventually consistent [Distributed
 Data Structures](https://praguedocs.azurewebsites.net/get-started/dds.html), a flexible component and app model
-("Chaincode"), and a reference server implementation with minimal COGS ("Routerlicious.")
+("Component"), and a reference server implementation with minimal COGS ("Routerlicious.")
 
 Teams are using Fluid for low latency collaboration, zero setup data persistance, and on-by-default cross app
 compatibility. Among other projects, our partner teams are building components for text editing, gaming, command line
@@ -90,7 +90,7 @@ the [Fluid](https://stackoverflow.microsoft.com/questions/tagged/fluid) tag.
 
 ## Source Code Overview
 
-[Examples/Components](./examples/components) contains our latest component and chaincode demos. This is the right place to get started checking out the world of Fluid.
+[Examples/Components](./examples/components) contains our latest component demos. This is the right place to get started checking out the world of Fluid.
 
 [Packages](./packages) contains the core Fluid runtime
 

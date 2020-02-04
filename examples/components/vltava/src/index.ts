@@ -13,16 +13,16 @@ import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { TabsComponent } from "./components";
 import { Vltava } from "./vltava";
 
-const chaincodeName = "vltava";
+const componentName = "vltava";
 
 /**
  * This does setup for the Container. The SimpleModuleInstantiationFactory also enables dynamic loading in the
  * EmbeddedComponentLoader.
  */
 export const fluidExport = new SimpleModuleInstantiationFactory(
-    chaincodeName,
+    componentName,
     new Map([
-        [chaincodeName, Promise.resolve(Vltava.getFactory())],
+        [componentName, Promise.resolve(Vltava.getFactory())],
         [ClickerName, Promise.resolve(ClickerInstantiationFactory)],
         ["tabs", Promise.resolve(TabsComponent.getFactory())],
         ["spaces", Promise.resolve(Spaces.getFactory())],

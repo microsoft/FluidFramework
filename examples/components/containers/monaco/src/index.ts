@@ -38,7 +38,7 @@ async function getMonacoFluidExport() {
 }
 
 /**
- * Instantiates a new chaincode host
+ * Instantiates a new component host
  */
 export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
     const registry = new Map<string, Promise<IComponentFactory>>([["@fluid-example/monaco", getMonacoFluidExport()]]);

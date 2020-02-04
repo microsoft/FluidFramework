@@ -9,13 +9,13 @@ import { IUser } from "@microsoft/fluid-protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { extractDetails, WebCodeLoader, WhiteList } from "@microsoft/fluid-web-code-loader";
 import { InsecureUrlResolver } from "./urlResolver";
-import { attach, initializeChaincode, parsePackageName } from "./utils";
+import { attach, initializeComponent, parsePackageName } from "./utils";
 
 // Base service configuration.
 const ordererUrl = "http://localhost:3000";
 const storageUrl = "http://localhost:3000";
 const npm = "https://pragueauspkn-3873244262.azureedge.net";
-const defaultPackage = "@chaincode/smde@0.10.13378";
+const defaultPackage = "@component/smde@0.10.13378";
 
 // You'll likely want to create your own tenant at https://admin.wu2.prague.office-int.com and then change the
 // tenantId and tenantKey values.
@@ -88,8 +88,8 @@ export async function start(url: string, code: string): Promise<void> {
             package: code,
         };
 
-        await initializeChaincode(fluidDocument, details)
-            .catch((error) => console.error("chaincode error", error));
+        await initializeComponent(fluidDocument, details)
+            .catch((error) => console.error("component error", error));
     }
 }
 

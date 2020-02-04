@@ -45,7 +45,7 @@ const appTenants = [
  * @param getToken - A function that either returns an SPO token, or a Routerlicious tenant token
  * @param clientId - The SPO clientId
  * @param clientSecret - The SPO clientSecret
- * @param scriptIds - the script tags the chaincode are attached to the view with
+ * @param scriptIds - the script tags the component are attached to the view with
  */
 export async function loadFluidContainer(
     url: string,
@@ -100,23 +100,23 @@ export function parseUrlToResolvedPackage(url: string): IResolvedPackage {
 
     const urlRequest = new URL(url);
     const searchParams = urlRequest.searchParams;
-    const chaincode = searchParams.get("chaincode");
+    const component = searchParams.get("component");
 
     const cdn = searchParams.get("cdn") ?
         searchParams.get("cdn") : "https://pragueauspkn-3873244262.azureedge.net";
     const entryPoint = searchParams.get("entrypoint");
     let codeDetails: IFluidCodeDetails;
 
-    if (chaincode.startsWith("http")) {
+    if (component.startsWith("http")) {
         codeDetails = {
             config: {
-                [`@gateway:cdn`]: chaincode,
+                [`@gateway:cdn`]: component,
             },
             package: {
                 fluid: {
                     browser: {
                         umd: {
-                            files: [chaincode],
+                            files: [component],
                             library: entryPoint,
                         },
                     },
@@ -126,12 +126,12 @@ export function parseUrlToResolvedPackage(url: string): IResolvedPackage {
             },
         };
     } else {
-        const details = extractDetails(chaincode);
+        const details = extractDetails(component);
         codeDetails = {
             config: {
                 [`@${details.scope}:cdn`]: cdn,
             },
-            package: chaincode,
+            package: component,
         };
     }
     pkg.details = codeDetails;

@@ -71,7 +71,7 @@ export function create(
         const path = rawPath.substring(slash !== -1 ? slash : rawPath.length);
 
         const tenantId = getParam(request.params, "tenantId");
-        const chaincode = request.query.chaincode;
+        const component = request.query.component;
 
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         const user: IAlfredUser = (request.user) ? {
@@ -138,7 +138,7 @@ export function create(
                         resolved,
                         emptyCache,
                         workerConfig,
-                        chaincode,
+                        component,
                         [],
                         packageUrl,
                         jwtToken,
@@ -151,7 +151,7 @@ export function create(
                         {
                             cache: "null",
                             // eslint-disable-next-line no-null/no-null
-                            chaincode: null,
+                            component: null,
                             config: workerConfig,
                             jwt: jwtToken,
                             partials: defaultPartials,
