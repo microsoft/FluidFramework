@@ -1,6 +1,6 @@
 # 0.14 Breaking Changes
 - [Samples and chaincode have been renamed to examples and components respectively](##Samples-and-chaincode-have-been-renamed-to-examples-and-components-respectively)
-- [Remove all references to the name chaincode] (##Remove-all-references-to-the-term-chaincode)
+- [Remove all references to the name chaincode](##Remove-all-references-to-the-term-chaincode)
 
 ## Samples and chaincode have been renamed to examples and components respectively
 The directories themselves have been renamed.
