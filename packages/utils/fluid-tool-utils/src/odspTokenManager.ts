@@ -3,56 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import * as http from "http";
-import { Socket } from "net";
 import { IOdspTokens, IClientConfig, fetchTokens, getOdspScope, pushScope } from "@microsoft/fluid-odsp-utils";
-import { IAsyncCache } from "./fluidToolRC";
+import { IAsyncCache, loadRC, saveRC } from "./fluidToolRC";
+import { serverListenAndHandle, endResponse } from "./httpHelpers";
 
 const odspAuthRedirectPort = 7000;
 const odspAuthRedirectOrigin = `http://localhost:${odspAuthRedirectPort}`;
 const odspAuthRedirectPath = "/auth/callback";
 const odspAuthRedirectUri = `${odspAuthRedirectOrigin}${odspAuthRedirectPath}`;
-
-// Helpers for http
-interface ITrackedHttpServer {
-    readonly server: http.Server;
-    readonly sockets: Set<Socket>;
-    fullyClose(): void;
-}
-function createTrackedServer(port: number, requestListener: http.RequestListener): ITrackedHttpServer {
-    const server = http.createServer(requestListener).listen(port);
-    const sockets = new Set<Socket>();
-
-    server.on("connection", (socket) => {
-        sockets.add(socket);
-        socket.on("close", () => sockets.delete(socket));
-    });
-
-    return { server, sockets, fullyClose() {
-        server.close();
-        sockets.forEach((socket) => socket.destroy());
-    }};
-}
-type OnceListenerHandler<T> = (req: http.IncomingMessage, res: http.ServerResponse) => Promise<T>;
-type OnceListenerResult<T> = Promise<() => Promise<T>>;
-const serverListenAndHandle = async <T>(handler: OnceListenerHandler<T>): OnceListenerResult<T> =>
-    new Promise((outerResolve, outerReject) => {
-        const innerP = new Promise<T>((innerResolve, innerReject) => {
-            const httpServer = createTrackedServer(odspAuthRedirectPort, (req, res) => {
-                // ignore favicon
-                if (req.url === "/favicon.ico") {
-                    res.writeHead(200, { "Content-Type": "image/x-icon" });
-                    res.end();
-                    return;
-                }
-                handler(req, res).finally(() => httpServer.fullyClose()).then(
-                    (result) => innerResolve(result),
-                    (error) => innerReject(error),
-                );
-            });
-            outerResolve(async () => innerP);
-        });
-    });
 
 export const getMicrosoftConfiguration = (): IClientConfig => ({
     get clientId() {
@@ -69,8 +27,14 @@ export const getMicrosoftConfiguration = (): IClientConfig => ({
     },
 });
 
+export interface IPushCacheKey { isPush: true }
+export interface IOdspCacheKey { isPush: false; server: string }
+export type OdspTokenManagerCacheKey = IPushCacheKey | IOdspCacheKey;
+
 export class OdspTokenManager {
-    constructor(private readonly tokenCache?: IAsyncCache<string, IOdspTokens>) {}
+    constructor(
+        private readonly tokenCache?: IAsyncCache<OdspTokenManagerCacheKey, IOdspTokens>,
+    ) {}
 
     public async getOdspTokens(
         server: string,
@@ -80,7 +44,7 @@ export class OdspTokenManager {
         redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>,
     ): Promise<IOdspTokens> {
         return this.getTokensCore(
-            getOdspScope(server),
+            false,
             server,
             clientConfig,
             forceReauth,
@@ -97,7 +61,7 @@ export class OdspTokenManager {
         redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>,
     ): Promise<IOdspTokens> {
         return this.getTokensCore(
-            pushScope,
+            true,
             server,
             clientConfig,
             forceReauth,
@@ -107,16 +71,21 @@ export class OdspTokenManager {
     }
 
     private async getTokensCore(
-        scope: string,
+        isPush: boolean,
         server: string,
         clientConfig: IClientConfig,
         forceReauth = false,
         initialNavigator: (url: string) => void,
         redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>,
     ): Promise<IOdspTokens> {
+        const scope = isPush ? pushScope : getOdspScope(server);
+        const cacheKey: OdspTokenManagerCacheKey = isPush ? { isPush } : { isPush, server };
         if (!forceReauth && this.tokenCache) {
-            const tokensFromCache = await this.tokenCache.get(server);
+            const tokensFromCache = await this.tokenCache.get(cacheKey);
             if (tokensFromCache?.refreshToken) {
+                if (redirectUriCallback) {
+                    initialNavigator(await redirectUriCallback(tokensFromCache));
+                }
                 return tokensFromCache;
             }
         }
@@ -137,7 +106,7 @@ export class OdspTokenManager {
         );
 
         if (this.tokenCache) {
-            await this.tokenCache.save(server, tokens);
+            await this.tokenCache.save(cacheKey, tokens);
         }
 
         return tokens;
@@ -151,7 +120,7 @@ export class OdspTokenManager {
         initialNavigator: (url: string) => void,
         redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>,
     ): Promise<IOdspTokens> {
-        const tokenGetter = await serverListenAndHandle(async (req, res) => {
+        const tokenGetter = await serverListenAndHandle(odspAuthRedirectPort, async (req, res) => {
             // get auth code
             const code = this.getAuthorizationCode(req.url);
 
@@ -161,10 +130,10 @@ export class OdspTokenManager {
             // redirect
             if (redirectUriCallback) {
                 res.writeHead(301, { Location: await redirectUriCallback(tokens) });
-                res.end();
+                await endResponse(res);
             } else {
                 res.write("Please close the window");
-                res.end();
+                await endResponse(res);
             }
 
             return tokens;
@@ -188,3 +157,28 @@ export class OdspTokenManager {
         return code;
     }
 }
+
+export const odspTokensCache: IAsyncCache<OdspTokenManagerCacheKey, IOdspTokens> = {
+    async get(key: OdspTokenManagerCacheKey): Promise<IOdspTokens | undefined> {
+        const rc = await loadRC();
+        if (key.isPush) {
+            return rc.pushTokens;
+        } else {
+            return rc.tokens && rc.tokens[key.server];
+        }
+    },
+    async save(key: OdspTokenManagerCacheKey, tokens: IOdspTokens): Promise<void> {
+        const rc = await loadRC();
+        if (key.isPush) {
+            rc.pushTokens = tokens;
+        } else {
+            let prevTokens = rc.tokens;
+            if (!prevTokens) {
+                prevTokens = {};
+                rc.tokens = prevTokens;
+            }
+            prevTokens[key.server] = tokens;
+        }
+        return saveRC(rc);
+    },
+};

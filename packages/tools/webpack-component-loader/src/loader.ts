@@ -45,6 +45,7 @@ export interface IRouteOptions {
     bearerSecret?: string;
     npm?: string;
     single?: boolean;
+    odspForceReauth?: boolean;
     odspServer?: string;
     odspClientConfig?: IClientConfig;
     odspAccessToken?: string;

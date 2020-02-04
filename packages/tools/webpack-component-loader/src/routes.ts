@@ -14,6 +14,11 @@ import { getMicrosoftConfiguration, OdspTokenManager, odspTokensCache } from "@m
 import { IRouteOptions } from "./loader";
 import { OdspUrlResolver } from "./odspUrlResolver";
 
+const tokenManager = new OdspTokenManager(odspTokensCache);
+let odspAuthStage = 0;
+
+const getThisOrigin = (options: IRouteOptions): string => `http://localhost:${options.port}`;
+
 export const before = (app: express.Application, server: WebpackDevServer) => {
     app.get("/", (req, res) => res.redirect(`/${moniker.choose()}`));
 };
@@ -36,14 +41,20 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
     }
 
     let readyP: ((req: express.Request, res: express.Response) => Promise<boolean>) | undefined;
-    if (options.mode === "spo-df" && (!options.odspAccessToken || !options.pushAccessToken)) {
+    if (options.mode === "spo-df") {
+        if (!options.odspForceReauth && options.odspAccessToken) {
+            odspAuthStage = options.pushAccessToken ? 2 : 1;
+        }
         readyP = async (req: express.Request, res: express.Response) => {
             if (req.url === "/favicon.ico") {
                 // ignore these
                 return false;
             }
-            const originalUrl = `http://localhost:${options.port}${req.url}`;
-            if (options.odspAccessToken && options.pushAccessToken) {
+            const originalUrl = `${getThisOrigin(options)}${req.url}`;
+            if (odspAuthStage >= 2) {
+                if (!options.odspAccessToken || !options.pushAccessToken) {
+                    throw Error("Failed to authenticate.");
+                }
                 // force creation of file if not already exists
                 const odspUrlResolver = new OdspUrlResolver(
                     options.odspServer,
@@ -53,44 +64,63 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
                 return true;
             }
 
-            const tokenManager = new OdspTokenManager(odspTokensCache);
             options.odspServer = getServer("spo-df"); // could forward options.mode
             options.odspClientConfig = getMicrosoftConfiguration();
 
-            if (!options.odspAccessToken) {
+            if (odspAuthStage === 0) {
                 await tokenManager.getOdspTokens(
                     options.odspServer,
                     options.odspClientConfig,
-                    false,
+                    options.odspForceReauth,
                     (url: string) => res.redirect(url),
                     async (tokens: IOdspTokens) => {
                         options.odspAccessToken = tokens.accessToken;
                         return originalUrl;
                     },
                 );
+                odspAuthStage = 1;
                 return false;
             }
             await tokenManager.getPushTokens(
                 options.odspServer,
                 options.odspClientConfig,
-                false,
+                options.odspForceReauth,
                 (url: string) => res.redirect(url),
                 async (tokens: IOdspTokens) => {
                     options.pushAccessToken = tokens.accessToken;
                     return originalUrl;
                 },
             );
+            odspAuthStage = 2;
             return false;
         };
     }
 
+    app.get("/odspLogin", async (req, res) => {
+        await tokenManager.getOdspTokens(
+            options.odspServer,
+            options.odspClientConfig,
+            true,
+            (url: string) => res.redirect(url),
+            async (tokens: IOdspTokens) => {
+                options.odspAccessToken = tokens.accessToken;
+                return `${getThisOrigin(options)}/pushLogin`;
+            },
+        );
+    });
+    app.get("/pushLogin", async (req, res) => {
+        options.pushAccessToken = (await tokenManager.getPushTokens(
+            options.odspServer,
+            options.odspClientConfig,
+            true,
+            (url: string) => res.redirect(url),
+        )).accessToken;
+    });
     app.get("/file*", (req, res) => {
         const buffer = fs.readFileSync(req.params[0].substr(1));
         res.end(buffer);
     });
     app.get("/:id*", async (req, res) => {
-        const tokensCount = (options.odspAccessToken ? 1 : 0) + (options.pushAccessToken ? 1 : 0);
-        console.log(`handling "${req.url}" (tokens ${tokensCount}/2)`);
         if (readyP !== undefined) {
             let canContinue = false;
             try {
@@ -103,6 +133,9 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
                 console.log(toLog);
             }
             if (!canContinue) {
+                if (!res.finished) {
+                    res.end();
+                }
                 return;
             }
         }

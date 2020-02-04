@@ -21,7 +21,7 @@ The following environment variables can be defined when running webpack-dev-serv
 | `r11s`   | Use remote routerlicious server for ordering, etc. |
 | `local`  | Load component in two side-by-side divs using local-test-server (default option) |
 | `tinylicous` | Run against a local instance of tinylicious |
-| `spo-df` | Use SharePoint server with your personal OneDrive for storage |
+| `spo-df` | Use SharePoint DogFood server with your personal OneDrive for storage |
 
 To connect to a remote server, a host, tenant ID, tenant secret, and npm registry must be provided. These can be at the command line:
 ```
@@ -50,3 +50,8 @@ or in an optional `config.json` file in the `baseDir` passed into `webpack-compo
 }
 
 ```
+
+## SharePoint
+To use a SharePoint server, the Microsoft login clientId and secret environment variables must be set.  This can be done by running the getkeys tool.
+
+Sometimes the cached tokens are out of date or incorrect, and it will not automatically refresh them.  They can be manually refreshed by going navigating to http://localhost:8080/odspLogin (port may vary).  To force reauth on start, the env variable `odspForceReauth` can be set.  This can also be done by adding `--env.mode odspForceReauth true` to the end of the command.  For example: `npm run start:spo-df -- --env.mode odspForceReauth true`.
