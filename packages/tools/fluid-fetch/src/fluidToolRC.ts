@@ -9,10 +9,10 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import * as util from "util";
-import { IODSPTokens } from "@microsoft/fluid-odsp-utils";
+import { IOdspTokens } from "@microsoft/fluid-odsp-utils";
 
 interface IResources {
-    tokens?: { [key: string]: IODSPTokens };
+    tokens?: { [key: string]: IOdspTokens };
 }
 
 const getRCFileName = () => path.join(os.homedir(), ".fluidtoolrc");

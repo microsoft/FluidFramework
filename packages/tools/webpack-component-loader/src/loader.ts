@@ -226,18 +226,17 @@ export async function start(
         case "local": {
             deltaConn = TestDeltaConnectionServer.create(new SessionStorageDbFactory(documentId));
             documentServiceFactory = new TestDocumentServiceFactory(deltaConn);
+            break;
         }
         case "spo-df": {
-            // TODO
+            // TODO: web socket token
             documentServiceFactory = new OdspDocumentServiceFactory(
-                "appId",
-                async (siteUrl, refresh) => "", // getStorageToken
+                "webpack-component-loader",
+                async (siteUrl, refresh) => { return options.odspAccessToken; },
                 async (refresh) => "", // getWebsocketToken
                 { send: (event) => { return; } },
-                undefined, // storageFetchWrapper
-                undefined, // deltasFetchWrapper
-                undefined, // odspCche
             );
+            break;
         }
         default: {
             documentServiceFactory = new RouterliciousDocumentServiceFactory(

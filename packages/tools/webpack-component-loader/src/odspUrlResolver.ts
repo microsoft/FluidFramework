@@ -9,17 +9,27 @@ import { createOdspUrl, OdspDriverUrlResolver } from "@microsoft/fluid-odsp-driv
 import {
     getDriveItemByRootFileName,
     IClientConfig,
-    IODSPTokens,
+    IOdspAuthInfo,
 } from "@microsoft/fluid-odsp-utils";
 
 export class OdspUrlResolver implements IUrlResolver {
     private readonly driverUrlResolver = new OdspDriverUrlResolver();
+    private readonly authInfo: IOdspAuthInfo;
 
     constructor(
-        private readonly server: string,
-        private readonly clientConfig: IClientConfig,
-        private readonly accessToken: string,
-    ) {}
+        server: string,
+        clientConfig: IClientConfig,
+        accessToken: string,
+    ) {
+        this.authInfo = {
+            server,
+            clientConfig,
+            tokens: {
+                accessToken,
+                refreshToken: "", // not allowed
+            },
+        };
+    }
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
         const url = new URL(request.url);
@@ -27,21 +37,14 @@ export class OdspUrlResolver implements IUrlResolver {
         const documentId = url.pathname.substr(1).split("/")[0];
         const filePath = this.formFilePath(documentId);
 
-        const odspTokens: IODSPTokens = {
-            accessToken: this.accessToken,
-            refreshToken: "", // do not allow
-        };
-
         const { drive, item } = await getDriveItemByRootFileName(
-            this.server,
             "",
             filePath,
-            this.clientConfig,
-            odspTokens,
+            this.authInfo,
             true);
 
         const odspUrl = createOdspUrl(
-            this.server,
+            `https://${this.authInfo.server}`,
             drive,
             item,
             "");

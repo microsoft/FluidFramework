@@ -4,18 +4,12 @@
  */
 
 import * as http from "http";
-import * as express from "express";
-import { IOdspTokens, IClientConfig, getSharepointTenant } from "@microsoft/fluid-odsp-utils";
-import { loadRC, saveRC } from "./fluidToolRC";
+import { IOdspTokens, IClientConfig, getSharepointTenant, fetchOdspTokens } from "@microsoft/fluid-odsp-utils";
 
 const odspAuthRedirectPort = 7000;
 const odspAuthRedirectOrigin = `http://localhost:${odspAuthRedirectPort}`;
 const odspAuthRedirectPath = "/auth/callback";
 const odspAuthRedirectUri = `${odspAuthRedirectOrigin}${odspAuthRedirectPath}`;
-
-// Helper for express
-export const createRedirector = (response: express.Response): (url: string) => void =>
-    (url: string) => response.redirect(url);
 
 // Helper for http
 type OnceListenerHandler<T> = (req: http.IncomingMessage, res: http.ServerResponse) => Promise<T>;
@@ -32,66 +26,56 @@ const serverListenAndHandle = async <T>(handler: OnceListenerHandler<T>): OnceLi
         });
     });
 
-export class OdspTokenManager {
-    constructor(
-        private readonly redirector: (url: string) => void,
-    ) {}
+export const getMicrosoftConfiguration = (): IClientConfig => ({
+    get clientId() {
+        if (!process.env.login__microsoft__clientId) {
+            throw new Error("Client ID environment variable not set: login__microsoft__clientId.");
+        }
+        return process.env.login__microsoft__clientId;
+    },
+    get clientSecret() {
+        if (!process.env.login__microsoft__secret) {
+            throw new Error("Client Secret environment variable not set: login__microsoft__secret.");
+        }
+        return process.env.login__microsoft__secret;
+    },
+});
 
-    // Unrelated to token management.
-    public getMicrosoftConfiguration(): IClientConfig {
-        const clientId = process.env.login__microsoft__clientId;
-        if (!clientId) {
-            throw Error("Client ID environment variable not set: login__microsoft__clientId.");
-        }
-        const clientSecret = process.env.login__microsoft__secret;
-        if (!clientSecret) {
-            throw Error("Client Secret environment variable not set: login__microsoft__secret.");
-        }
-        return { clientId, clientSecret };
-    }
+export interface IAsyncCache<K, T> {
+    get(key: K): Promise<T | undefined>;
+    save(key: K, value: T): Promise<void>;
+}
+
+export class OdspTokenManager {
+    constructor(private readonly tokenCache?: IAsyncCache<string, IOdspTokens>) {}
 
     public async getOdspTokens(
         server: string,
         clientConfig: IClientConfig,
-        forceTokenReauth: boolean,
+        forceReauth = false,
+        initialNavigator: (url: string) => void,
         redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>,
     ): Promise<IOdspTokens> {
-        if (!forceTokenReauth) {
-            const odspTokens = await this.loadCachedOdspTokens(server);
-            if (odspTokens?.refreshToken !== undefined) {
-                return odspTokens;
+        if (!forceReauth && this.tokenCache) {
+            const tokensFromCache = await this.tokenCache.get(server);
+            if (tokensFromCache?.refreshToken) {
+                return tokensFromCache;
             }
         }
-        return this.acquireOdspTokens(server, clientConfig, redirectUriCallback);
+
+        const tokens = await this.acquireTokens(server, clientConfig, initialNavigator, redirectUriCallback);
+
+        if (this.tokenCache) {
+            await this.tokenCache.save(server, tokens);
+        }
+
+        return tokens;
     }
 
-    private async loadCachedOdspTokens(server: string): Promise<IOdspTokens | undefined> {
-        const rc = await loadRC();
-        const tokens = rc.tokens;
-        if (!tokens) {
-            return undefined;
-        }
-        const odspTokens = tokens[server];
-        if (!odspTokens) {
-            return undefined;
-        }
-        return odspTokens;
-    }
-
-    private async saveOdspTokensToCache(server: string, odspTokens: IOdspTokens) {
-        const rc = await loadRC();
-        let tokens = rc.tokens;
-        if (!tokens) {
-            tokens = {};
-            rc.tokens = tokens;
-        }
-        tokens[server] = odspTokens;
-        return saveRC(rc);
-    }
-
-    private async acquireOdspTokens(
+    private async acquireTokens(
         server: string,
         clientConfig: IClientConfig,
+        initialNavigator: (url: string) => void,
         redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>,
     ): Promise<IOdspTokens> {
         const authUrl = `https://login.microsoftonline.com/${getSharepointTenant(server)}/oauth2/v2.0/authorize?`
@@ -105,27 +89,23 @@ export class OdspTokenManager {
             const code = this.getAuthorizationCode(req.url);
 
             // get tokens
-            const postBody = `scope=offline_access https://${server}/AllSites.Write`
-                + `&client_id=${clientConfig.clientId}`
-                + `&client_secret=${clientConfig.clientSecret}`
-                + `&grant_type=authorization_code`
-                + `&code=${code}`
-                + `&redirect_uri=${odspAuthRedirectUri}`;
-            const tokens = await postTokenRequest(server, postBody);
+            const tokens = await fetchOdspTokens(server, clientConfig, code, odspAuthRedirectUri);
 
             // redirect
             if (redirectUriCallback) {
                 res.writeHead(301, { Location: await redirectUriCallback(tokens) });
+                res.end();
+            } else {
+                res.write("Please close the window");
                 res.end();
             }
 
             return tokens;
         });
 
-        this.redirector(authUrl);
+        initialNavigator(authUrl);
 
         const odspTokens = await tokenGetter();
-        await this.saveOdspTokensToCache(server, odspTokens);
         return odspTokens;
     }
 

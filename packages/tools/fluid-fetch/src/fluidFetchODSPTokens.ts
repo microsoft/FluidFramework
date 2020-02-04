@@ -11,8 +11,8 @@ import { URL } from "url";
 import {
     getSharepointTenant,
     IClientConfig,
-    IODSPTokens,
-    postTokenRequest,
+    IOdspTokens,
+    fetchOdspTokens,
 } from "@microsoft/fluid-odsp-utils";
 import { paramForceTokenReauth } from "./fluidFetchArgs";
 import { loadRC, saveRC } from "./fluidToolRC";
@@ -53,7 +53,7 @@ async function getAuthorizationCode(server: string, clientConfig: IClientConfig)
     });
 }
 
-async function loadODSPTokens(server: string): Promise<IODSPTokens | undefined> {
+async function loadODSPTokens(server: string): Promise<IOdspTokens | undefined> {
     const rc = await loadRC();
     const tokens = rc.tokens;
     if (!tokens) {
@@ -66,7 +66,7 @@ async function loadODSPTokens(server: string): Promise<IODSPTokens | undefined> 
     return odspTokens;
 }
 
-export async function saveAccessToken(server: string, odspTokens: IODSPTokens) {
+export async function saveAccessToken(server: string, odspTokens: IOdspTokens) {
     const rc = await loadRC();
     let tokens = rc.tokens;
     if (!tokens) {
@@ -77,17 +77,10 @@ export async function saveAccessToken(server: string, odspTokens: IODSPTokens) {
     return saveRC(rc);
 }
 
-const getRequestAccessTokenBody = async (server: string, clientConfig: IClientConfig) =>
-    `scope=offline_access https://${server}/AllSites.Write`
-    + `&client_id=${clientConfig.clientId}`
-    + `&client_secret=${clientConfig.clientSecret}`
-    + `&grant_type=authorization_code`
-    + `&code=${await getAuthorizationCode(server, clientConfig)}`
-    + `&redirect_uri=${redirectUri}`;
-
-async function acquireTokens(server: string, clientConfig: IClientConfig): Promise<IODSPTokens> {
+async function acquireTokens(server: string, clientConfig: IClientConfig): Promise<IOdspTokens> {
     console.log("Acquiring tokens");
-    const tokens = await postTokenRequest(server, await getRequestAccessTokenBody(server, clientConfig));
+    const authorizationCode = await getAuthorizationCode(server, clientConfig);
+    const tokens = await fetchOdspTokens(server, clientConfig, authorizationCode, redirectUri);
     await saveAccessToken(server, tokens);
     return tokens;
 }
@@ -95,7 +88,7 @@ async function acquireTokens(server: string, clientConfig: IClientConfig): Promi
 export async function getODSPTokens(
     server: string,
     clientConfig: IClientConfig,
-    forceTokenReauth: boolean): Promise<IODSPTokens> {
+    forceTokenReauth: boolean): Promise<IOdspTokens> {
 
     if (!forceTokenReauth && !paramForceTokenReauth) {
         const odspTokens = await loadODSPTokens(server);

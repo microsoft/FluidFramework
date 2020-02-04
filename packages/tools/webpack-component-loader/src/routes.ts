@@ -9,15 +9,17 @@ import * as express from "express";
 import * as moniker from "moniker";
 import * as nconf from "nconf";
 import WebpackDevServer from "webpack-dev-server";
+import { IOdspTokens } from "@microsoft/fluid-odsp-utils";
 import { IRouteOptions } from "./loader";
-import { OdspTokenManager } from "./odspTokenManager";
+import { OdspTokenManager, createRedirector } from "./odspTokenManager";
+import { OdspUrlResolver } from "./odspUrlResolver";
 
 export const before = (app: express.Application, server: WebpackDevServer) => {
     app.get("/", (req, res) => res.redirect(`/${moniker.choose()}`));
 };
 
 export const after = (app: express.Application, server: WebpackDevServer, baseDir: string, env: IRouteOptions) => {
-    const options: IRouteOptions = { mode: "local", ...env, port: server.port };
+    const options: IRouteOptions = { mode: "local", ...env, ...{ port: server.options.port } };
     const config: nconf.Provider = nconf.env("__").file(path.join(baseDir, "config.json"));
     options.fluidHost = options.fluidHost ? options.fluidHost : config.get("fluid:webpack:fluidHost");
     options.tenantId = options.tenantId ? options.tenantId : config.get("fluid:webpack:tenantId");
@@ -33,13 +35,40 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
         throw new Error("tenantId and tenantSecret must be provided together");
     }
 
-    let readyP: Promise<void> | undefined;
-    if (options.mode === "spo-df") {
-        const tokenManager = new OdspTokenManager();
-        options.odspServer = tokenManager.getServer("spo-df"); // could forward options.mode
-        options.odspClientConfig = tokenManager.getMicrosoftConfiguration();
-        readyP = tokenManager.getOdspTokens(options.odspServer, options.odspClientConfig, false)
-            .then((tokens) => { options.odspAccessToken = tokens.accessToken; });
+    let readyP: ((req: express.Request, res: express.Response) => Promise<boolean>) | undefined;
+    if (options.mode === "spo-df" && !options.odspAccessToken) {
+        readyP = async (req: express.Request, res: express.Response) => {
+            if (req.url === "/favicon.ico") {
+                // ignore these
+                return false;
+            }
+            const originalUrl = `http://localhost:${options.port}${req.url}`;
+            if (options.odspAccessToken) {
+                // force creation of file if not already exists
+                const odspUrlResolver = new OdspUrlResolver(
+                    options.odspServer,
+                    options.odspClientConfig,
+                    options.odspAccessToken);
+                await odspUrlResolver.resolve({ url: originalUrl });
+                return true;
+            }
+
+            const tokenManager = new OdspTokenManager(createRedirector(res));
+            options.odspServer = tokenManager.getServer("spo-df"); // could forward options.mode
+            options.odspClientConfig = tokenManager.getMicrosoftConfiguration();
+
+            const redirectUriCallback = async (tokens: IOdspTokens) => {
+                options.odspAccessToken = tokens.accessToken;
+                return originalUrl;
+            };
+            await tokenManager.getOdspTokens(
+                options.odspServer,
+                options.odspClientConfig,
+                true,
+                redirectUriCallback,
+            );
+            return false;
+        };
     }
 
     app.get("/file*", (req, res) => {
@@ -47,8 +76,21 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
         res.end(buffer);
     });
     app.get("/:id*", async (req, res) => {
+        console.log(`entering corneria city "${req.url}" with${options.odspAccessToken ? "" : "out"} token`);
         if (readyP !== undefined) {
-            await readyP;
+            let canContinue = false;
+            try {
+                canContinue = await readyP(req, res);
+            } catch (error) {
+                let toLog = error;
+                try {
+                    toLog = JSON.stringify(error);
+                } catch {}
+                console.log(toLog);
+            }
+            if (!canContinue) {
+                return;
+            }
         }
         fluid(req, res, baseDir, options);
     });

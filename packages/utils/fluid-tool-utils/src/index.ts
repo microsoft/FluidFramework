@@ -3,6 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export * from "./odspUtils";
-export * from "./odspRequest";
-export * from "./odspDrives";
+export * from "./odspTokenManager";

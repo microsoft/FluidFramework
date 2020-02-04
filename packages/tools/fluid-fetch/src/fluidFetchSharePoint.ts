@@ -7,13 +7,13 @@ import {
     getChildrenByDriveItem,
     getDriveItemByServerRelativePath,
     IClientConfig,
-    IODSPDriveItem,
-    IODSPTokens,
+    IOdspDriveItem,
+    IOdspTokens,
 } from "@microsoft/fluid-odsp-utils";
 import { getClientConfig, getODSPTokens, saveAccessToken } from "./fluidFetchODSPTokens";
 
 async function resolveWrapper<T>(
-    callback: (tokens: IODSPTokens) => Promise<T>,
+    callback: (tokens: IOdspTokens) => Promise<T>,
     server: string,
     clientConfig: IClientConfig,
     forceTokenReauth = false,
@@ -51,20 +51,20 @@ export async function resolveDriveItemByServerRelativePath(
     serverRelativePath: string,
     clientConfig: IClientConfig,
 ) {
-    return resolveWrapper<IODSPDriveItem>(
+    return resolveWrapper<IOdspDriveItem>(
         // eslint-disable-next-line @typescript-eslint/promise-function-async
-        (tokens) => getDriveItemByServerRelativePath(server, serverRelativePath, clientConfig, tokens),
+        (tokens) => getDriveItemByServerRelativePath(serverRelativePath, { server, clientConfig, tokens }, false),
         server, clientConfig);
 }
 
 async function resolveChildrenByDriveItem(
     server: string,
-    folderDriveItem: IODSPDriveItem,
+    folderDriveItem: IOdspDriveItem,
     clientConfig: IClientConfig,
 ) {
-    return resolveWrapper<IODSPDriveItem[]>(
+    return resolveWrapper<IOdspDriveItem[]>(
         // eslint-disable-next-line @typescript-eslint/promise-function-async
-        (tokens) => getChildrenByDriveItem(server, folderDriveItem, clientConfig, tokens),
+        (tokens) => getChildrenByDriveItem(folderDriveItem, { server, clientConfig, tokens }),
         server, clientConfig);
 }
 
@@ -72,8 +72,8 @@ export async function getSharepointFiles(server: string, serverRelativePath: str
     const clientConfig = getClientConfig();
 
     const fileInfo = await resolveDriveItemByServerRelativePath(server, serverRelativePath, clientConfig);
-    const pendingFolder: { path: string, folder: IODSPDriveItem }[] = [];
-    const files: IODSPDriveItem[] = [];
+    const pendingFolder: { path: string, folder: IOdspDriveItem }[] = [];
+    const files: IOdspDriveItem[] = [];
     if (fileInfo.isFolder) {
         pendingFolder.push({ path: serverRelativePath, folder: fileInfo });
     } else {

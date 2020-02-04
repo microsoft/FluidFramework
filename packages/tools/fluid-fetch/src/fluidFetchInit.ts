@@ -49,7 +49,7 @@ async function initializeODSPCore(
         const tokens = await getODSPTokens(server, clientConfig, false);
         if (refresh || !tokens.accessToken) {
             // TODO: might want to handle if refresh failed and we want to reauth here.
-            await refreshAccessToken(server, clientConfig, tokens);
+            await refreshAccessToken({ server, clientConfig, tokens });
             await saveAccessToken(server, tokens);
         }
         return tokens.accessToken;
