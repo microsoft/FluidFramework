@@ -89,7 +89,7 @@ export class OdspDocumentService implements IDocumentService {
             logger,
             { docId: hashedDocumentId });
 
-        this.getStorageToken = (refresh: boolean, name?: string) => {
+        this.getStorageToken = async (refresh: boolean, name?: string) => {
             if (refresh) {
                 // Potential perf issue:
                 // Host should optimize and provide non-expired tokens on all critical paths.
@@ -97,9 +97,9 @@ export class OdspDocumentService implements IDocumentService {
                 this.logger.sendTelemetryEvent({ eventName: "StorageTokenRefresh" });
             }
             const event = PerformanceEvent.start(this.logger, { eventName: `${name || "OdspDocumentService"}_GetToken` });
-            let token: Promise<string | null>;
+            let token: string | null;
             try {
-                token = getStorageToken(this.siteUrl, refresh);
+                token = await getStorageToken(this.siteUrl, refresh);
             } catch (error) {
                 event.cancel({}, error);
                 throw error;
