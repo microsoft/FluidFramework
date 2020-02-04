@@ -25,8 +25,8 @@ export interface IFluidResolvedUrl extends IResolvedUrlBase {
 }
 
 export enum FileMode {
-    CREATE_NEW,
-    OPEN_EXISTING,
+    CreateNew,
+    OpenExisting,
 }
 
 export interface IUrlResolver {

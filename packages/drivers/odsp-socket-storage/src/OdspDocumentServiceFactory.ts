@@ -5,12 +5,13 @@
 
 import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
 import {
+  FileMode,
   IDocumentService,
   IDocumentServiceFactory,
   IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
 import { IOdspResolvedUrl } from "./contracts";
-import { getOdspResolvedUrl, INewFileInfo } from "./createFile";
+import { createNewFluidFile, INewFileInfo } from "./createFile";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import { getSocketIo } from "./getSocketIo";
 import { OdspCache } from "./odspCache";
@@ -48,10 +49,20 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
   ) { }
 
   public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
-    const url: IOdspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
+    let odspResolvedUrl: IOdspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
+    if (odspResolvedUrl.mode === FileMode.CreateNew) {
+      odspResolvedUrl = await createNewFluidFile(
+        this.getStorageToken,
+        this.newFileInfoPromise,
+        this.fileInfoToCreateNewResponseCache);
+    }
     return new OdspDocumentService(
       this.appId,
-      getOdspResolvedUrl(url, this.getStorageToken, this.newFileInfoPromise, this.fileInfoToCreateNewResponseCache),
+      odspResolvedUrl.hashedDocumentId,
+      odspResolvedUrl.siteUrl,
+      odspResolvedUrl.driveId,
+      odspResolvedUrl.itemId,
+      odspResolvedUrl.endpoints.snapshotStorageUrl,
       this.getStorageToken,
       this.getWebsocketToken,
       this.logger,

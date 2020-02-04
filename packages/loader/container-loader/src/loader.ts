@@ -18,7 +18,6 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import { Deferred } from "@microsoft/fluid-core-utils";
 import {
-    FileMode,
     IDocumentService,
     IDocumentServiceFactory,
     IFluidResolvedUrl,
@@ -253,11 +252,6 @@ export class Loader extends EventEmitter implements ILoader {
         }
         if (toCache.type !== "fluid") {
             return Promise.reject("Only Fluid components currently supported");
-        } else {
-            // don't cache new and just return it
-            if (toCache.mode === FileMode.CREATE_NEW) {
-                return toCache;
-            }
         }
         this.resolveCache.set(request.url, toCache);
 
@@ -285,8 +279,6 @@ export class Loader extends EventEmitter implements ILoader {
         const factory: IDocumentServiceFactory =
             selectDocumentServiceFactoryForProtocol(resolvedAsFluid, this.protocolToDocumentFactoryMap);
 
-        // TODO: we need to figure out summaries since it does call another resolve, which creates a new file
-        // if we are using the delayed createNew path
         let container: Container;
         if (canCache) {
             const versionedId = request.headers[LoaderHeader.version]

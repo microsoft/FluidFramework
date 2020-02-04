@@ -42,13 +42,13 @@ export class OdspDriverUrlResolver implements IUrlResolver {
   constructor() { }
 
   public async resolve(request: IRequest): Promise<IOdspResolvedUrl> {
-    if (request.url === "NEW") {
+    if (request.headers && request.headers.mode === FileMode.CreateNew) {
       return {
         type: "fluid",
         endpoints: {
           snapshotStorageUrl: "",
         },
-        mode: FileMode.CREATE_NEW,
+        mode: FileMode.CreateNew,
         tokens: {},
         url: "fluid-odsp:///NEW//?version=null",
         hashedDocumentId: "",
