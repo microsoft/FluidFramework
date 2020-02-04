@@ -8,27 +8,31 @@ import {
     getDriveItemByServerRelativePath,
     IClientConfig,
     IOdspDriveItem,
-    IOdspTokens,
+    getOdspRefreshTokenFn,
+    IOdspAuthRequestInfo,
 } from "@microsoft/fluid-odsp-utils";
 import { getMicrosoftConfiguration, OdspTokenManager, odspTokensCache } from "@microsoft/fluid-tool-utils";
 import { fluidFetchWebNavigator } from "./fluidFetchInit";
 
 async function resolveWrapper<T>(
-    callback: (tokens: IOdspTokens) => Promise<T>,
+    callback: (authRequestInfo: IOdspAuthRequestInfo) => Promise<T>,
     server: string,
     clientConfig: IClientConfig,
     forceTokenReauth = false,
 ): Promise<T> {
     try {
         const odspTokenManager = new OdspTokenManager(odspTokensCache);
-        const odspTokens = await odspTokenManager.getOdspTokens(
+        const tokens = await odspTokenManager.getOdspTokens(
             server,
             clientConfig,
             forceTokenReauth,
             fluidFetchWebNavigator,
         );
-        const driveItem = await callback(odspTokens);
-        return driveItem;
+
+        return callback({
+            accessToken: tokens.accessToken,
+            refreshTokenFn: getOdspRefreshTokenFn(server, clientConfig, tokens),
+        });
     } catch (e) {
         if (e.requestResultError) {
             const parsedBody = JSON.parse(e.requestResult.data);
@@ -53,7 +57,12 @@ export async function resolveDriveItemByServerRelativePath(
 ) {
     return resolveWrapper<IOdspDriveItem>(
         // eslint-disable-next-line @typescript-eslint/promise-function-async
-        (tokens) => getDriveItemByServerRelativePath(serverRelativePath, { server, clientConfig, tokens }, false),
+        (authRequestInfo) => getDriveItemByServerRelativePath(
+            server,
+            serverRelativePath,
+            authRequestInfo,
+            false,
+        ),
         server, clientConfig);
 }
 
@@ -64,7 +73,7 @@ async function resolveChildrenByDriveItem(
 ) {
     return resolveWrapper<IOdspDriveItem[]>(
         // eslint-disable-next-line @typescript-eslint/promise-function-async
-        (tokens) => getChildrenByDriveItem(folderDriveItem, { server, clientConfig, tokens }),
+        (authRequestInfo) => getChildrenByDriveItem(folderDriveItem, server, authRequestInfo),
         server, clientConfig);
 }
 

@@ -27,7 +27,6 @@ import * as jwt from "jsonwebtoken";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
 import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
-import { IClientConfig } from "@microsoft/fluid-odsp-utils";
 import { InsecureUrlResolver } from "./insecureUrlResolver";
 import { SessionStorageDbFactory } from "./sessionStorageTestDb";
 import { OdspUrlResolver } from "./odspUrlResolver";
@@ -69,7 +68,6 @@ export interface ITinyliciousRouteOptions extends IBaseRouteOptions {
 export interface IOdspRouteOptions extends IBaseRouteOptions {
     mode: "spo-df";
     server?: string;
-    clientConfig?: IClientConfig;
     odspAccessToken?: string;
     pushAccessToken?: string;
     forceReauth?: boolean;
@@ -210,8 +208,7 @@ function getUrlResolver(documentId: string, options: RouteOptions): IUrlResolver
         case "spo-df":
             return new OdspUrlResolver(
                 options.server,
-                options.clientConfig,
-                options.odspAccessToken);
+                { accessToken: options.odspAccessToken });
 
         default: // Local
             return new TestResolver(documentId);

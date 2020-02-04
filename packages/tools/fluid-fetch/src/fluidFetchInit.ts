@@ -65,7 +65,7 @@ async function initializeODSPCore(
         );
         if (refresh || !tokens.accessToken) {
             // TODO: might want to handle if refresh failed and we want to reauth here.
-            await refreshAccessToken(getOdspScope(server), { server, clientConfig, tokens });
+            await refreshAccessToken(getOdspScope(server), server, clientConfig, tokens);
         }
         return tokens.accessToken;
     };

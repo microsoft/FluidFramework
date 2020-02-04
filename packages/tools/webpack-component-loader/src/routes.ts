@@ -63,19 +63,17 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
                 // force creation of file if not already exists
                 const odspUrlResolver = new OdspUrlResolver(
                     options.server,
-                    options.clientConfig,
-                    options.odspAccessToken);
+                    { accessToken: options.odspAccessToken });
                 await odspUrlResolver.resolve({ url: originalUrl });
                 return true;
             }
 
             options.server = getServer("spo-df"); // could forward options.mode
-            options.clientConfig = getMicrosoftConfiguration();
 
             if (odspAuthStage === 0) {
                 await tokenManager.getOdspTokens(
                     options.server,
-                    options.clientConfig,
+                    getMicrosoftConfiguration(),
                     options.forceReauth,
                     (url: string) => res.redirect(url),
                     async (tokens: IOdspTokens) => {
@@ -88,7 +86,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
             }
             await tokenManager.getPushTokens(
                 options.server,
-                options.clientConfig,
+                getMicrosoftConfiguration(),
                 options.forceReauth,
                 (url: string) => res.redirect(url),
                 async (tokens: IOdspTokens) => {
@@ -109,7 +107,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
         }
         await tokenManager.getOdspTokens(
             options.server,
-            options.clientConfig,
+            getMicrosoftConfiguration(),
             true,
             (url: string) => res.redirect(url),
             async (tokens: IOdspTokens) => {
@@ -126,7 +124,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
         }
         options.pushAccessToken = (await tokenManager.getPushTokens(
             options.server,
-            options.clientConfig,
+            getMicrosoftConfiguration(),
             true,
             (url: string) => res.redirect(url),
         )).accessToken;
