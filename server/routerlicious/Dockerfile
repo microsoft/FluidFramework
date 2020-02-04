@@ -122,6 +122,11 @@ COPY samples/chaincode/textarea-noreact/package*.json samples/chaincode/textarea
 COPY samples/chaincode/tourofheroes/package*.json samples/chaincode/tourofheroes/
 COPY samples/chaincode/type-race/package*.json samples/chaincode/type-race/
 COPY samples/chaincode/vltava/package*.json samples/chaincode/vltava/
+COPY samples/chaincode/sudoku/package*.json samples/chaincode/sudoku/
+COPY samples/experiments/collab-compose/package*.json samples/experiments/collab-compose/
+COPY samples/experiments/collab-slide/package*.json samples/experiments/collab-slide/
+COPY samples/hosts/electron-host/package*.json samples/hosts/electron-host/
+COPY samples/hosts/literate/package*.json samples/hosts/literate/
 
 FROM node:10.16.0-slim AS base
 

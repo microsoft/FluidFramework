@@ -46,7 +46,7 @@ if (program.path) {
 const copyrightText = "Copyright (c) Microsoft Corporation. All rights reserved." + newline + "Licensed under the MIT License.";
 const licenseId = 'MIT';
 const author = 'Microsoft';
-const r11sDockerfilePath = "server/routerlicious/Dockerfile";
+const clientDockerfilePath = "server/routerlicious/Dockerfile";
 function getDockerfileCopyText(packageFilePath) {
     const packageDir = packageFilePath.split("/").slice(0, -1).join("/");
     return `COPY ${packageDir}/package*.json ${packageDir}/`;
@@ -168,13 +168,13 @@ const handlers = [
     },
     {
         name: "dockerfile-packages",
-        match: /^packages\/.*\/package\.json/i,
+        match: /^(packages|samples)\/.*\/package\.json/i,
         handler: file => {
             const dockerfileCopyText = getDockerfileCopyText(file);
 
             const dockerfileContents = getOrAddLocalMap(
                 "dockerfileContents",
-                () => fs.readFileSync(r11sDockerfilePath),
+                () => fs.readFileSync(clientDockerfilePath),
             );
 
             if (dockerfileContents.indexOf(dockerfileCopyText) === -1) {
@@ -185,19 +185,20 @@ const handlers = [
             const dockerfileCopyText = getDockerfileCopyText(file);
 
             // add to Dockerfile
-            let dockerfileContents = readFile(r11sDockerfilePath);
+            let dockerfileContents = readFile(clientDockerfilePath);
 
             if (dockerfileContents.indexOf(dockerfileCopyText) === -1) {
                 // regex basically find the last of 3 or more consecutive COPY package lines
-                const endOfCopyLinesRegex = /(COPY\s+packages\/.*\/package\*\.json\s+packages\/.*\/\s*\n){3,}\s*(\r?\n)+/gi;
+                const endOfCopyLinesRegex = /(COPY\s+(?<firstFolder>packages|samples)\/.*\/package\*\.json\s+\k<firstFolder>\/.*\/\s*\n){3,}[^\S\r]*(?<newline>\r?\n)+/gi;
                 const regexMatch = endOfCopyLinesRegex.exec(dockerfileContents);
-                const insertIndex = regexMatch.index + regexMatch[0].length - newline.length;
+                const localNewline = regexMatch.groups.newline;
+                let insertIndex = regexMatch.index + regexMatch[0].length - localNewline.length;
 
                 dockerfileContents = dockerfileContents.substring(0, insertIndex)
-                    + dockerfileCopyText + newline
+                    + dockerfileCopyText + localNewline
                     + dockerfileContents.substring(insertIndex, dockerfileContents.length);
 
-                writeFile(r11sDockerfilePath, dockerfileContents);
+                writeFile(clientDockerfilePath, dockerfileContents);
             }
 
             return { resolved: true };
