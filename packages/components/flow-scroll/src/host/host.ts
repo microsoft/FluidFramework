@@ -34,6 +34,10 @@ const template = new Template(
         ],
     });
 
+const viewRegistry = new Map([
+    ["MathView", MathView],
+]);
+
 export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost {
     public get ISearchMenuHost() { return this; }
 
@@ -80,7 +84,7 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
         Promise.all([this.docP, this.mathP, this.videosP, this.imagesP]).then(([doc, math, videos, images]) => {
             // This view registry will match up the strings we put in the markers below against
             // the view classes they correspond with.
-            doc.setViewRegistry(new Map([["MathView", MathView]]));
+            doc.setViewRegistry(viewRegistry);
             const slot = template.get(this.viewport, "slot") as HTMLElement;
             const editor = new Editor(doc, slot, htmlFormatter, this);
 
@@ -151,8 +155,8 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
                 { key: "red", enabled: always, exec: () => { setStyle("color:red"); } },
                 // Math is the only component from this set with view/model separation,
                 // so it's the only one with a specified view.  The rest can already be rendered directly.
-                { key: "math inline", enabled: always, exec: () => insertComponentFromCollection(math, { display: "inline" }, `MathView`) },
-                { key: "math block", enabled: always, exec: () => insertComponentFromCollection(math, { display: "block" }, `MathView`) },
+                { key: "math inline", enabled: always, exec: () => insertComponentFromCollection(math, { display: "inline" }, "MathView") },
+                { key: "math block", enabled: always, exec: () => insertComponentFromCollection(math, { display: "block" }, "MathView") },
                 { key: "morton", enabled: always, exec: () => insertComponentFromCollection(videos, {}, undefined, "display:block;width:61%;--aspect-ratio:calc(16/9)") },
                 { key: "image", enabled: always, exec: () => insertComponentFromCollection(images, {}, undefined, "display:inline-block;float:left;resize:both;overflow:hidden") },
                 { key: "table", enabled: always, exec: () => insertComponent(tableViewType, {}) },
