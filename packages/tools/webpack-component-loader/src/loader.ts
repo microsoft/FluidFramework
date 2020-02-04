@@ -26,21 +26,28 @@ import { extractDetails, IResolvedPackage } from "@microsoft/fluid-web-code-load
 import * as jwt from "jsonwebtoken";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
+import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
+import { IClientConfig } from "@microsoft/fluid-odsp-utils";
 import { InsecureUrlResolver } from "./insecureUrlResolver";
 import { SessionStorageDbFactory } from "./sessionStorageTestDb";
+import { OdspUrlResolver } from "./odspUrlResolver";
 
 export interface IDevServerUser extends IUser {
     name: string;
 }
 
 export interface IRouteOptions {
-    mode: "local" | "docker" | "live" | "tinylicious";
+    mode: "local" | "docker" | "r11s" | "tinylicious" | "spo-df"
+    port: number;
     fluidHost?: string;
     tenantId?: string;
     tenantSecret?: string;
     bearerSecret?: string;
     npm?: string;
     single?: boolean;
+    odspServer?: string;
+    odspClientConfig?: IClientConfig;
+    odspAccessToken?: string;
 }
 
 const getUser = (): IDevServerUser => ({
@@ -148,7 +155,7 @@ function getUrlResolver(documentId: string, options: IRouteOptions): IUrlResolve
                 getUser(),
                 options.bearerSecret);
 
-        case "live":
+        case "r11s":
             return new InsecureUrlResolver(
                 options.fluidHost,
                 options.fluidHost.replace("www", "alfred"),
@@ -167,6 +174,12 @@ function getUrlResolver(documentId: string, options: IRouteOptions): IUrlResolve
                 "12345",
                 getUser(),
                 options.bearerSecret);
+
+        case "spo-df":
+            return new OdspUrlResolver(
+                options.odspServer,
+                options.odspClientConfig,
+                options.odspAccessToken);
 
         default: // Local
             return new TestResolver(documentId);
@@ -208,18 +221,35 @@ export async function start(
 
     let documentServiceFactory: IDocumentServiceFactory;
     let deltaConn: ITestDeltaConnectionServer;
-    if (options.mode !== "local") {
-        documentServiceFactory = new RouterliciousDocumentServiceFactory(
-            false,
-            new DefaultErrorTracking(),
-            false,
-            true,
-            undefined,
-        );
-    } else {
-        deltaConn = TestDeltaConnectionServer.create(new SessionStorageDbFactory(documentId));
-        documentServiceFactory = new TestDocumentServiceFactory(deltaConn);
+
+    switch (options.mode) {
+        case "local": {
+            deltaConn = TestDeltaConnectionServer.create(new SessionStorageDbFactory(documentId));
+            documentServiceFactory = new TestDocumentServiceFactory(deltaConn);
+        }
+        case "spo-df": {
+            // TODO
+            documentServiceFactory = new OdspDocumentServiceFactory(
+                "appId",
+                async (siteUrl, refresh) => "", // getStorageToken
+                async (refresh) => "", // getWebsocketToken
+                { send: (event) => { return; } },
+                undefined, // storageFetchWrapper
+                undefined, // deltasFetchWrapper
+                undefined, // odspCche
+            );
+        }
+        default: {
+            documentServiceFactory = new RouterliciousDocumentServiceFactory(
+                false,
+                new DefaultErrorTracking(),
+                false,
+                true,
+                undefined,
+            );
+        }
     }
+
     const hostConf: IBaseHostConfig = { documentServiceFactory, urlResolver };
 
     const double = (options.mode === "local") && !options.single;

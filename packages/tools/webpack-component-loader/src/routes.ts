@@ -10,14 +10,14 @@ import * as moniker from "moniker";
 import * as nconf from "nconf";
 import WebpackDevServer from "webpack-dev-server";
 import { IRouteOptions } from "./loader";
+import { OdspTokenManager } from "./odspTokenManager";
 
 export const before = (app: express.Application, server: WebpackDevServer) => {
     app.get("/", (req, res) => res.redirect(`/${moniker.choose()}`));
 };
 
 export const after = (app: express.Application, server: WebpackDevServer, baseDir: string, env: IRouteOptions) => {
-    const options: IRouteOptions = env ? env : { mode: "local" };
-    options.mode = options.mode ? options.mode : "local";
+    const options: IRouteOptions = { mode: "local", ...env, port: server.port };
     const config: nconf.Provider = nconf.env("__").file(path.join(baseDir, "config.json"));
     options.fluidHost = options.fluidHost ? options.fluidHost : config.get("fluid:webpack:fluidHost");
     options.tenantId = options.tenantId ? options.tenantId : config.get("fluid:webpack:tenantId");
@@ -27,17 +27,31 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
 
     console.log(options);
 
-    if (options.mode === "live" && !(options.tenantId && options.tenantSecret)) {
-        throw new Error("You must provide a tenantId and tenantSecret to connect to a live server");
+    if (options.mode === "r11s" && !(options.tenantId && options.tenantSecret)) {
+        throw new Error("You must provide a tenantId and tenantSecret to connect to a live routerlicious server");
     } else if ((options.tenantId || options.tenantSecret) && !(options.tenantId && options.tenantSecret)) {
         throw new Error("tenantId and tenantSecret must be provided together");
+    }
+
+    let readyP: Promise<void> | undefined;
+    if (options.mode === "spo-df") {
+        const tokenManager = new OdspTokenManager();
+        options.odspServer = tokenManager.getServer("spo-df"); // could forward options.mode
+        options.odspClientConfig = tokenManager.getMicrosoftConfiguration();
+        readyP = tokenManager.getOdspTokens(options.odspServer, options.odspClientConfig, false)
+            .then((tokens) => { options.odspAccessToken = tokens.accessToken; });
     }
 
     app.get("/file*", (req, res) => {
         const buffer = fs.readFileSync(req.params[0].substr(1));
         res.end(buffer);
     });
-    app.get("/:id*", (req, res) => fluid(req, res, baseDir, options));
+    app.get("/:id*", async (req, res) => {
+        if (readyP !== undefined) {
+            await readyP;
+        }
+        fluid(req, res, baseDir, options);
+    });
 };
 
 const fluid = (req: express.Request, res: express.Response, baseDir: string, options: IRouteOptions) => {

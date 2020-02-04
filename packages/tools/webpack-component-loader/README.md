@@ -18,9 +18,10 @@ The following environment variables can be defined when running webpack-dev-serv
 | modes | description |
 | ---------| ----------- |
 | `docker` | Use docker running routerlicious server for ordering, etc. |
-| `live`   | Use remote routerlicious server for ordering, etc. (default option) |
-| `local`  | Load component in two side-by-side divs using local-test-server |
+| `r11s`   | Use remote routerlicious server for ordering, etc. |
+| `local`  | Load component in two side-by-side divs using local-test-server (default option) |
 | `tinylicous` | Run against a local instance of tinylicious |
+| `spo-df` | Use SharePoint server with your personal OneDrive for storage |
 
 To connect to a remote server, a host, tenant ID, tenant secret, and npm registry must be provided. These can be at the command line:
 ```
