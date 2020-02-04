@@ -14,6 +14,7 @@
     "start": "webpack-dev-server --config webpack.config.js --package package.json --env.mode local",
     "start:r11s": "webpack-dev-server --config webpack.config.js --package package.json --env.mode r11s",
     "start:spo-df": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo-df",
+    "start:spo": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo",
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
     "tsc": "tsc",
     "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
