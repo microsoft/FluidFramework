@@ -144,7 +144,7 @@ Previously, attempting to set `undefined` as a key on a SharedMap or SharedDirec
 
 ## SharedComponent extends IComponentHandles
 
-You can now store SharedComponent components as handles on SharedMap and SharedDirectory. The `@fluid-example/pond` in our component samples shows how to create and store components as handles. This makes storing SharedComponents the same as storing SharedObjects.
+You can now store SharedComponent components as handles on SharedMap and SharedDirectory. The `@fluid-example/pond` in our component examples shows how to create and store components as handles. This makes storing SharedComponents the same as storing SharedObjects.
 
 Component handles that are stored on a SharedObject will become attached when the SharedObject is attached. If the SharedObject is already attached it will become attached right away.
 
