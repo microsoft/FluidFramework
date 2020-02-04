@@ -17,11 +17,17 @@ import uuid from "uuid/v4";
 
 import { IComponentRegistryDetails } from "../../interfaces";
 
+export interface ITabsTypes {
+    type: string;
+    friendlyName: string;
+    fabricIconName: string;
+}
+
 export interface ITabsDataModel extends EventEmitter{
     getComponent(id: string): Promise<IComponent>;
     getTabIds(): string[];
     createTab(type: string): Promise<string>;
-    getNewTabTypes(): [string, string, string][];
+    getNewTabTypes(): ITabsTypes[];
 }
 
 export class TabsDataModel extends EventEmitter implements ITabsDataModel {
@@ -64,10 +70,14 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
         return newId;
     }
 
-    public getNewTabTypes(): [string, string, string][] {
-        const response: [string, string, string][] = [];
-        this.internalRegistry.containerComponentArray.forEach((e) => {
-            response.push([e.type, e.friendlyName, e.fabricIconName]);
+    public getNewTabTypes(): ITabsTypes[] {
+        const response: ITabsTypes[] = [];
+        this.internalRegistry.getFromCapabilities("IComponentHTMLVisual").forEach((e) => {
+            response.push({
+                type: e.type,
+                friendlyName: e.friendlyName,
+                fabricIconName: e.fabricIconName,
+            });
         });
         return response;
     }

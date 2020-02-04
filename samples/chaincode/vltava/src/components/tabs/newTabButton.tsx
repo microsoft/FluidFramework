@@ -14,6 +14,8 @@ import {
     IContextualMenuItem,
 } from "office-ui-fabric-react";
 
+import { ITabsTypes } from "./dataModel";
+
 // setup fabric icons
 initializeIcons();
 
@@ -22,13 +24,12 @@ export interface IButtonExampleProps {
     disabled?: boolean;
     checked?: boolean;
     createTab: (type: string) => void;
-    components: [string, string, string][];
+    components: ITabsTypes[];
 }
 
 const customSplitButtonStyles: IButtonStyles = {
     splitButtonMenuButton: { backgroundColor: "white", width: 15, border: "none" },
     splitButtonMenuIcon: { fontSize: "7px" },
-    // splitButtonDivider: { backgroundColor: "#c8c8c8", width: 1, right: 26, position: "absolute", top: 4, bottom: 4 },
     splitButtonContainer: {
         selectors: {
             [HighContrastSelector]: { border: "none" },
@@ -46,11 +47,11 @@ export const NewTabButton: React.FunctionComponent<IButtonExampleProps> =
         props.components.forEach((component) => {
             items.push(
                 {
-                    key: component[0],
-                    text: component[1],
-                    iconProps: { iconName: component[2] },
+                    key: component.type,
+                    text: component.friendlyName,
+                    iconProps: { iconName: component.fabricIconName },
                     onClick: () => {
-                        props.createTab(component[0]);
+                        props.createTab(component.type);
                     },
                 },
             );
@@ -65,9 +66,10 @@ export const NewTabButton: React.FunctionComponent<IButtonExampleProps> =
                 styles={customSplitButtonStyles}
                 menuProps={menuProps}
                 ariaLabel="New item"
-                onClick={() => props.createTab("prosemirror")} // default create a prosemirror
+                onClick={() => props.createTab("prosemirror")} // this should be taken from the list
                 disabled={disabled}
                 checked={checked}
+                text="hello"
             />
         );
     };

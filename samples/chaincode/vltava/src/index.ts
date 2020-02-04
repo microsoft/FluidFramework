@@ -7,7 +7,9 @@ import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
 import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
 import { ClickerName, ClickerInstantiationFactory } from "@fluid-example/clicker";
 import { Spaces } from "@fluid-example/spaces/dist/spaces";
+
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import {
     IComponentRegistry,
     IProvideComponentFactory,
@@ -17,7 +19,7 @@ import {
 import { TabsComponent } from "./components";
 import {
     IComponentRegistryDetails,
-    IContainerComponent,
+    IContainerComponent as IContainerComponentDetails,
 } from "./interfaces";
 import { Vltava } from "./vltava";
 
@@ -28,7 +30,7 @@ export class InternalRegistry implements IComponentRegistry, IComponentRegistryD
     public get IComponentRegistryDetails() { return this; }
 
     constructor(
-        public readonly containerComponentArray: IContainerComponent[],
+        private readonly containerComponentArray: IContainerComponentDetails[],
     ) {
     }
 
@@ -44,10 +46,13 @@ export class InternalRegistry implements IComponentRegistry, IComponentRegistryD
         return undefined;
     }
 
+    public getFromCapabilities(type: keyof IComponent): IContainerComponentDetails[] {
+        return this.containerComponentArray.filter((componentDetails) => componentDetails.capabilities.includes(type));
+    }
 }
 
 const generateFactory = () => {
-    const containerComponentsDefinition: IContainerComponent[] = [
+    const containerComponentsDefinition: IContainerComponentDetails[] = [
         {
             type: ClickerName,
             factory: Promise.resolve(ClickerInstantiationFactory),
