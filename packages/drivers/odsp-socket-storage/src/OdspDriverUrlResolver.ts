@@ -4,7 +4,7 @@
  */
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IFluidNewResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
+import { FileMode, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { getHashedDocumentId } from "./OdspUtils";
 
@@ -41,9 +41,21 @@ function removeBeginningSlash(str: string): string {
 export class OdspDriverUrlResolver implements IUrlResolver {
   constructor() { }
 
-  public async resolve(request: IRequest): Promise<IOdspResolvedUrl | IFluidNewResolvedUrl> {
+  public async resolve(request: IRequest): Promise<IOdspResolvedUrl> {
     if (request.url === "NEW") {
-      return {type: "fluid-new", url: "fluid-odsp://NEW"};
+      return {
+        type: "fluid",
+        endpoints: {
+          snapshotStorageUrl: "",
+        },
+        mode: FileMode.CREATE_NEW,
+        tokens: {},
+        url: "fluid-odsp:///NEW//?version=null",
+        hashedDocumentId: "",
+        siteUrl: "",
+        driveId: "",
+        itemId: "",
+      };
     }
     const { siteUrl, driveId, itemId, path } = this.decodeOdspUrl(request.url);
     const hashedDocumentId = getHashedDocumentId(driveId, itemId);

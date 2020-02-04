@@ -5,7 +5,7 @@
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 
-export type IResolvedUrl = IWebResolvedUrl | IFluidResolvedUrl | IFluidNewResolvedUrl;
+export type IResolvedUrl = IWebResolvedUrl | IFluidResolvedUrl;
 
 export interface IResolvedUrlBase {
     type: string;
@@ -21,11 +21,12 @@ export interface IFluidResolvedUrl extends IResolvedUrlBase {
     url: string;
     tokens: { [name: string]: string };
     endpoints: { [name: string]: string };
+    mode?: FileMode;
 }
 
-export interface IFluidNewResolvedUrl extends IResolvedUrlBase {
-    type: "fluid-new";
-    url: string;
+export enum FileMode {
+    CREATE_NEW,
+    OPEN_EXISTING,
 }
 
 export interface IUrlResolver {

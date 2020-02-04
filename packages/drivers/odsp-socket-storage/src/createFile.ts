@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { FileMode } from "@microsoft/fluid-driver-definitions";
+import { IOdspResolvedUrl } from "./contracts";
+import { OdspCache } from "./odspCache";
+import { createOdspUrl, OdspDriverUrlResolver } from "./OdspDriverUrlResolver";
 import { throwOdspNetworkError } from "./OdspUtils";
 
 export interface INewFileInfo {
@@ -18,13 +22,69 @@ const isInvalidFileName = (fileName: string): boolean => {
     return !!fileName.match(invalidCharsRegex);
 };
 
+export function getKeyFromFileInfo(fileInfo: INewFileInfo): string {
+    return `${fileInfo.siteUrl}${fileInfo.driveId}${fileInfo.filePath}${fileInfo.filename}`;
+}
+
+export async function getOdspResolvedUrl(
+    url: IOdspResolvedUrl,
+    getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
+    newFileInfoPromise: Promise<INewFileInfo> | undefined,
+    fileInfoToCreateNewResponseCache: OdspCache): Promise<IOdspResolvedUrl> {
+    if (url.mode !== FileMode.CREATE_NEW) {
+        return Promise.resolve(url);
+    }
+    const resolvedUrl: IOdspResolvedUrl = await createFileIfNeeded(url, getStorageToken, newFileInfoPromise, fileInfoToCreateNewResponseCache).catch((error) => {
+        throw error;
+    });
+    return resolvedUrl;
+}
+
+// TODO: For now we assume that the file will be created before we create the document service. This will be changed
+// when we have the ability to boot without a file
+/**
+ * Checks if the resolveUrl we are getting is fluid-new and creates a new file before returning a real resolved url
+ */
+async function createFileIfNeeded(
+    url: IOdspResolvedUrl,
+    getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
+    newFileInfoPromise: Promise<INewFileInfo> | undefined,
+    fileInfoToCreateNewResponseCache: OdspCache): Promise<IOdspResolvedUrl> {
+    if (url.mode === FileMode.CREATE_NEW) {
+        if (!newFileInfoPromise) {
+            throw new Error ("Odsp driver needs to create a new file but no newFileInfo supplied");
+        }
+        const newFileInfo = await newFileInfoPromise;
+        const storageToken = await getStorageToken(newFileInfo.siteUrl, false);
+        const file = await createNewFluidFile(newFileInfo, storageToken, fileInfoToCreateNewResponseCache);
+        if (newFileInfo.callback) {
+            newFileInfo.callback(file.itemId, file.filename);
+        }
+        const odspUrl = createOdspUrl(file.siteUrl, file.driveId, file.itemId, "/");
+        const resolver = new OdspDriverUrlResolver();
+        const resolvedUrl = await resolver.resolve({url: odspUrl});
+        if (resolvedUrl.mode === FileMode.CREATE_NEW) {
+            throw new Error("Failed to resolve URL after creating new file");
+        }
+        return resolvedUrl;
+    }
+    return url;
+}
+
 /**
  * Creates a new fluid file. '.fluid' is appended to the filename
  */
 export async function createNewFluidFile(
     newFileInfo: INewFileInfo,
     storageToken: string | null,
+    fileInfoToCreateNewResponseCache: OdspCache,
 ): Promise<{driveId: string, itemId: string, siteUrl: string, filename: string}> {
+
+    const key = getKeyFromFileInfo(newFileInfo);
+    const response = fileInfoToCreateNewResponseCache.get(key);
+    if (response !== undefined) {
+        return {itemId: response.id, siteUrl: newFileInfo.siteUrl, driveId: newFileInfo.driveId, filename: response.name};
+    }
     // Check for valid filename
     // Adding invalid filename check here for another sanity pass before the request to create file is actually made
     if (isInvalidFileName(newFileInfo.filename)) {
@@ -56,5 +116,6 @@ export async function createNewFluidFile(
         throwOdspNetworkError("Could not parse drive item from Vroom response", fetchResponse.status, false);
     }
 
+    fileInfoToCreateNewResponseCache.put(key, item);
     return {itemId: item.id, siteUrl: newFileInfo.siteUrl, driveId: newFileInfo.driveId, filename: item.name};
 }

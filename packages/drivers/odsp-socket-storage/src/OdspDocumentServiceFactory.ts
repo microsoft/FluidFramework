@@ -9,7 +9,8 @@ import {
   IDocumentServiceFactory,
   IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
-import { INewFileInfo } from "./createFile";
+import { IOdspResolvedUrl } from "./contracts";
+import { getOdspResolvedUrl, INewFileInfo } from "./createFile";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import { getSocketIo } from "./getSocketIo";
 import { OdspCache } from "./odspCache";
@@ -40,12 +41,14 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
     private readonly storageFetchWrapper: IFetchWrapper = new FetchWrapper(),
     private readonly deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),
     private readonly odspCache: OdspCache = new OdspCache(),
+    private readonly fileInfoToCreateNewResponseCache = new OdspCache(),
   ) { }
 
   public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
+    const url: IOdspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
     return new OdspDocumentService(
       this.appId,
-      resolvedUrl,
+      getOdspResolvedUrl(url, this.getStorageToken, this.newFileInfoPromise, this.fileInfoToCreateNewResponseCache),
       this.getStorageToken,
       this.getWebsocketToken,
       this.logger,
@@ -53,7 +56,6 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
       this.deltasFetchWrapper,
       Promise.resolve(getSocketIo()),
       this.odspCache,
-      this.newFileInfoPromise,
     );
   }
 }

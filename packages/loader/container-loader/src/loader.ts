@@ -18,6 +18,7 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import { Deferred } from "@microsoft/fluid-core-utils";
 import {
+    FileMode,
     IDocumentService,
     IDocumentServiceFactory,
     IFluidResolvedUrl,
@@ -223,11 +224,6 @@ export class Loader extends EventEmitter implements ILoader {
     }
 
     private parseUrl(url: string): IParsedUrl | null {
-        // tslint:disable-next-line: max-line-length
-        // TODO: We have to figure out a way to replace those IDs with something that makes sense even if we don't have a file
-        if (url.endsWith("NEW")) {
-            return {id: "NEW", path: "/", version: null};
-        }
         const parsed = parse(url, true);
 
         const regex = /^\/([^/]*\/[^/]*)(\/?.*)$/;
@@ -255,12 +251,13 @@ export class Loader extends EventEmitter implements ILoader {
         if (!toCache) {
             return Promise.reject(`Invalid URL ${request.url}`);
         }
-        // don't cache new and just return it
-        if (toCache.type === "fluid-new") {
-            return toCache;
-        }
         if (toCache.type !== "fluid") {
             return Promise.reject("Only Fluid components currently supported");
+        } else {
+            // don't cache new and just return it
+            if (toCache.mode === FileMode.CREATE_NEW) {
+                return toCache;
+            }
         }
         this.resolveCache.set(request.url, toCache);
 
