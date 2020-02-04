@@ -46,7 +46,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
     }
 
     let readyP: ((req: express.Request, res: express.Response) => Promise<boolean>) | undefined;
-    if (options.mode === "spo-df") {
+    if (options.mode === "spo-df" || options.mode === "spo") {
         if (!options.forceReauth && options.odspAccessToken) {
             odspAuthStage = options.pushAccessToken ? 2 : 1;
         }
@@ -68,7 +68,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
                 return true;
             }
 
-            options.server = getServer("spo-df"); // could forward options.mode
+            options.server = getServer(options.mode);
 
             if (odspAuthStage === 0) {
                 await tokenManager.getOdspTokens(
@@ -100,8 +100,8 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
     }
 
     app.get("/odspLogin", async (req, res) => {
-        if (options.mode !== "spo-df") {
-            res.write("Mode must be spo-df to login to ODSP.");
+        if (options.mode !== "spo-df" && options.mode !== "spo") {
+            res.write("Mode must be spo or spo-df to login to ODSP.");
             res.end();
             return;
         }
@@ -117,8 +117,8 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
         );
     });
     app.get("/pushLogin", async (req, res) => {
-        if (options.mode !== "spo-df") {
-            res.write("Mode must be spo-df to login to Push.");
+        if (options.mode !== "spo-df" && options.mode !== "spo") {
+            res.write("Mode must be spo or spo-df to login to Push.");
             res.end();
             return;
         }

@@ -66,7 +66,7 @@ export interface ITinyliciousRouteOptions extends IBaseRouteOptions {
 }
 
 export interface IOdspRouteOptions extends IBaseRouteOptions {
-    mode: "spo-df";
+    mode: "spo" | "spo-df";
     server?: string;
     odspAccessToken?: string;
     pushAccessToken?: string;
@@ -205,6 +205,7 @@ function getUrlResolver(documentId: string, options: RouteOptions): IUrlResolver
                 getUser(),
                 options.bearerSecret);
 
+        case "spo":
         case "spo-df":
             return new OdspUrlResolver(
                 options.server,
@@ -257,6 +258,7 @@ export async function start(
             documentServiceFactory = new TestDocumentServiceFactory(deltaConn);
             break;
         }
+        case "spo":
         case "spo-df": {
             // TODO: web socket token
             documentServiceFactory = new OdspDocumentServiceFactory(
