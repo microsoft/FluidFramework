@@ -1,3 +1,10 @@
+# 0.14 Breaking Changes
+- [Samples and chaincode have been renamed to examples and components respectively](##Samples-and-chaincode-have-been-renamed-to-examples-and-components-respectively)
+
+## Samples and chaincode have been renamed to examples and components respectively
+The directories themselves have been renamed.
+All path references in the dockerfile and json manifests have been updated along with variables assigned using path constants in code
+
 # 0.13 Breaking Changes
 
 - [Fluid Packages Require Consumers on TypeScript `>=3.6`](##Fluid-Packages-Require-Consumers-on-TypeScript->=3.6)
@@ -144,7 +151,7 @@ Previously, attempting to set `undefined` as a key on a SharedMap or SharedDirec
 
 ## SharedComponent extends IComponentHandles
 
-You can now store SharedComponent components as handles on SharedMap and SharedDirectory. The `@fluid-example/pond` in our component examples shows how to create and store components as handles. This makes storing SharedComponents the same as storing SharedObjects.
+You can now store SharedComponent components as handles on SharedMap and SharedDirectory. The `@fluid-example/pond` in our component samples shows how to create and store components as handles. This makes storing SharedComponents the same as storing SharedObjects.
 
 Component handles that are stored on a SharedObject will become attached when the SharedObject is attached. If the SharedObject is already attached it will become attached right away.
 
