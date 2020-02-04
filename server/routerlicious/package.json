@@ -17,6 +17,7 @@
     "clean": "lerna run clean --stream --parallel && npm run clean:docs && npm run clean:nyc",
     "clean:docs": "rimraf _api-extractor-temp docs/api/*/**",
     "clean:nyc": "rimraf nyc/**",
+    "lint": "npm run tslint",
     "docker-build": "docker-compose build",
     "docker-clean": "docker-compose down --rmi local && docker volume prune --force",
     "postinstall": "npm run postinstall:lerna && (npm run postinstall:fluid-build || true) && (npm run postinstall:r11s || true)",

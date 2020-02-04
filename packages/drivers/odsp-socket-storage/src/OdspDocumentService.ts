@@ -80,10 +80,10 @@ export class OdspDocumentService implements IDocumentService {
                 this.logger.sendTelemetryEvent({ eventName: "StorageTokenRefresh" });
             }
             const event = PerformanceEvent.start(this.logger, { eventName: `${name || "OdspDocumentService"}_GetToken` });
-            let token: Promise<string | null>;
+            let token: string | null;
             try {
                 const resolvedOdspUrl = await this.resolvedUrl;
-                token = getStorageToken(resolvedOdspUrl.siteUrl, refresh);
+                token = await getStorageToken(resolvedOdspUrl.siteUrl, refresh);
             } catch (error) {
                 event.cancel({}, error);
                 throw error;
