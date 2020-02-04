@@ -36,14 +36,14 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
     }
 
     let readyP: ((req: express.Request, res: express.Response) => Promise<boolean>) | undefined;
-    if (options.mode === "spo-df" && !options.odspAccessToken) {
+    if (options.mode === "spo-df" && (!options.odspAccessToken || !options.pushAccessToken)) {
         readyP = async (req: express.Request, res: express.Response) => {
             if (req.url === "/favicon.ico") {
                 // ignore these
                 return false;
             }
             const originalUrl = `http://localhost:${options.port}${req.url}`;
-            if (options.odspAccessToken) {
+            if (options.odspAccessToken && options.pushAccessToken) {
                 // force creation of file if not already exists
                 const odspUrlResolver = new OdspUrlResolver(
                     options.odspServer,
@@ -57,16 +57,28 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
             options.odspServer = getServer("spo-df"); // could forward options.mode
             options.odspClientConfig = getMicrosoftConfiguration();
 
-            const redirectUriCallback = async (tokens: IOdspTokens) => {
-                options.odspAccessToken = tokens.accessToken;
-                return originalUrl;
-            };
-            await tokenManager.getOdspTokens(
+            if (!options.odspAccessToken) {
+                await tokenManager.getOdspTokens(
+                    options.odspServer,
+                    options.odspClientConfig,
+                    false,
+                    (url: string) => res.redirect(url),
+                    async (tokens: IOdspTokens) => {
+                        options.odspAccessToken = tokens.accessToken;
+                        return originalUrl;
+                    },
+                );
+                return false;
+            }
+            await tokenManager.getPushTokens(
                 options.odspServer,
                 options.odspClientConfig,
-                true,
+                false,
                 (url: string) => res.redirect(url),
-                redirectUriCallback,
+                async (tokens: IOdspTokens) => {
+                    options.pushAccessToken = tokens.accessToken;
+                    return originalUrl;
+                },
             );
             return false;
         };
@@ -77,7 +89,8 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
         res.end(buffer);
     });
     app.get("/:id*", async (req, res) => {
-        console.log(`entering corneria city "${req.url}" with${options.odspAccessToken ? "" : "out"} token`);
+        const tokensCount = (options.odspAccessToken ? 1 : 0) + (options.pushAccessToken ? 1 : 0);
+        console.log(`handling "${req.url}" (tokens ${tokensCount}/2)`);
         if (readyP !== undefined) {
             let canContinue = false;
             try {

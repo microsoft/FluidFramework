@@ -31,21 +31,51 @@ export interface IClientConfig {
 
 export type RequestResultError = Error & { requestResult?: IRequestResult };
 
-export async function getAsync(url: string, authInfo: IOdspAuthInfo, attemptRefresh = true): Promise<IRequestResult> {
-    return authRequest(authInfo, async (config) => Axios.get(url, config), attemptRefresh);
+export const getOdspScope = (server: string) => `offline_access https://${server}/AllSites.Write`;
+export const pushScope = "offline_access https://pushchannel.1drv.ms/PushChannel.ReadWrite.All";
+
+export async function getAsync(url: string, authInfo: IOdspAuthInfo, refreshScope?: string): Promise<IRequestResult> {
+    return authRequest(authInfo, async (config) => Axios.get(url, config), refreshScope);
 }
 
-export async function putAsync(url: string, authInfo: IOdspAuthInfo, attemptRefresh = true): Promise<IRequestResult> {
-    return authRequest(authInfo, async (config) => Axios.put(url, undefined, config), attemptRefresh);
+export async function putAsync(url: string, authInfo: IOdspAuthInfo, refreshScope?: string): Promise<IRequestResult> {
+    return authRequest(authInfo, async (config) => Axios.put(url, undefined, config), refreshScope);
 }
 
 export async function postAsync(
     url: string,
     body: any,
     authInfo: IOdspAuthInfo,
-    attemptRefresh = true,
+    refreshScope?: string,
 ): Promise<IRequestResult> {
-    return authRequest(authInfo, async (config) => Axios.post(url, body, config), attemptRefresh);
+    return authRequest(authInfo, async (config) => Axios.post(url, body, config), refreshScope);
+}
+
+export async function fetchTokens(
+    server: string,
+    clientConfig: IClientConfig,
+    scope: string,
+    authorizationCode: string,
+    redirectUri: string,
+): Promise<IOdspTokens> {
+    const result = await unauthPostAsync(
+        getFetchTokenUrl(server),
+        getFetchTokenBody(server, clientConfig, scope, authorizationCode, redirectUri),
+    );
+    return getTokensFromResponse(result);
+}
+
+export async function refreshAccessToken(scope: string, authInfo: IOdspAuthInfo): Promise<void> {
+    authInfo.tokens.accessToken = "";
+
+    const result = await unauthPostAsync(
+        getFetchTokenUrl(authInfo.server),
+        getRefreshTokenBody(scope, authInfo),
+    );
+    const newTokens = getTokensFromResponse(result);
+
+    authInfo.tokens.accessToken = newTokens.accessToken;
+    authInfo.tokens.refreshToken = newTokens.refreshToken;
 }
 
 async function unauthPostAsync(url: string, body: any): Promise<IRequestResult> {
@@ -55,7 +85,7 @@ async function unauthPostAsync(url: string, body: any): Promise<IRequestResult> 
 async function authRequest(
     authInfo: IOdspAuthInfo,
     requestCallback: (config: AxiosRequestConfig) => Promise<any>,
-    attemptRefresh,
+    refreshScope?: string,
 ): Promise<IRequestResult> {
     const request = async (token: string) => {
         const config: AxiosRequestConfig = { headers: { Authorization: `Bearer ${token}` } };
@@ -64,12 +94,12 @@ async function authRequest(
 
     const result = await request(authInfo.tokens.accessToken);
 
-    if (!attemptRefresh || (result.status !== 401 && result.status !== 403)) {
+    if (!refreshScope || (result.status !== 401 && result.status !== 403)) {
         return result;
     }
 
     // Unauthorized, try to refresh the token
-    await refreshAccessToken(authInfo);
+    await refreshAccessToken(refreshScope, authInfo);
 
     return request(authInfo.tokens.accessToken);
 }
@@ -88,32 +118,6 @@ async function safeRequestCore(requestCallback: () => Promise<AxiosResponse>): P
     return { href: response.config.url, status: response.status, data: response.data };
 }
 
-export async function refreshAccessToken(authInfo: IOdspAuthInfo): Promise<void> {
-    authInfo.tokens.accessToken = "";
-
-    const result = await unauthPostAsync(
-        getFetchTokenUrl(authInfo.server),
-        getRefreshTokenBody(authInfo),
-    );
-    const newTokens = getTokensFromResponse(result);
-
-    authInfo.tokens.accessToken = newTokens.accessToken;
-    authInfo.tokens.refreshToken = newTokens.refreshToken;
-}
-
-export async function fetchOdspTokens(
-    server: string,
-    clientConfig: IClientConfig,
-    authorizationCode: string,
-    redirectUri: string,
-): Promise<IOdspTokens> {
-    const result = await unauthPostAsync(
-        getFetchTokenUrl(server),
-        getFetchTokenBody(server,clientConfig, authorizationCode, redirectUri),
-    );
-    return getTokensFromResponse(result);
-}
-
 function getFetchTokenUrl(server: string): string {
     return `https://login.microsoftonline.com/${getSharepointTenant(server)}/oauth2/v2.0/token`;
 }
@@ -121,10 +125,11 @@ function getFetchTokenUrl(server: string): string {
 function getFetchTokenBody(
     server: string,
     clientConfig: IClientConfig,
+    scope: string,
     authorizationCode: string,
     redirectUri: string,
 ): string {
-    return `scope=offline_access https://${server}/AllSites.Write`
+    return `scope=${scope}`
         + `&client_id=${clientConfig.clientId}`
         + `&client_secret=${clientConfig.clientSecret}`
         + `&grant_type=authorization_code`
@@ -132,8 +137,8 @@ function getFetchTokenBody(
         + `&redirect_uri=${redirectUri}`;
 }
 
-function getRefreshTokenBody(authInfo: IOdspAuthInfo): string {
-    return `scope=offline_access https://${authInfo.server}/AllSites.Write`
+function getRefreshTokenBody(scope: string, authInfo: IOdspAuthInfo): string {
+    return `scope=${scope}`
         + `&client_id=${authInfo.clientConfig.clientId}`
         + `&client_secret=${authInfo.clientConfig.clientSecret}`
         + `&grant_type=refresh_token`

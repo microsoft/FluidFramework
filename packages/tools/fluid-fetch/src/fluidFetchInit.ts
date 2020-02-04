@@ -11,7 +11,7 @@ import { configurableUrlResolver } from "@microsoft/fluid-driver-utils";
 import { FluidAppOdspUrlResolver } from "@microsoft/fluid-fluidapp-odsp-urlresolver";
 import * as odsp from "@microsoft/fluid-odsp-driver";
 import { OdspUrlResolver } from "@microsoft/fluid-odsp-urlresolver";
-import { IClientConfig, refreshAccessToken } from "@microsoft/fluid-odsp-utils";
+import { IClientConfig, refreshAccessToken, getOdspScope } from "@microsoft/fluid-odsp-utils";
 import * as r11s from "@microsoft/fluid-routerlicious-driver";
 import { RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlresolver";
 import { OdspTokenManager, odspTokensCache, getMicrosoftConfiguration } from "@microsoft/fluid-tool-utils";
@@ -65,7 +65,7 @@ async function initializeODSPCore(
         );
         if (refresh || !tokens.accessToken) {
             // TODO: might want to handle if refresh failed and we want to reauth here.
-            await refreshAccessToken({ server, clientConfig, tokens });
+            await refreshAccessToken(getOdspScope(server), { server, clientConfig, tokens });
         }
         return tokens.accessToken;
     };

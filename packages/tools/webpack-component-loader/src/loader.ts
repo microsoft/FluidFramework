@@ -48,6 +48,7 @@ export interface IRouteOptions {
     odspServer?: string;
     odspClientConfig?: IClientConfig;
     odspAccessToken?: string;
+    pushAccessToken?: string;
 }
 
 const getUser = (): IDevServerUser => ({
@@ -233,7 +234,7 @@ export async function start(
             documentServiceFactory = new OdspDocumentServiceFactory(
                 "webpack-component-loader",
                 async (siteUrl, refresh) => { return options.odspAccessToken; },
-                async (refresh) => "", // getWebsocketToken
+                async (refresh) => { return options.pushAccessToken; },
                 { send: (event) => { return; } },
             );
             break;
