@@ -4,6 +4,7 @@
  */
 
 import { KeyCode, randomId, Template, TagName } from "@fluid-example/flow-util-lib";
+import { MathView } from "@fluid-example/math";
 import * as SearchMenu from "@fluid-example/search-menu";
 import { tableViewType } from "@fluid-example/table-view";
 import { Editor, FlowDocument, htmlFormatter } from "@fluid-example/webflow";
@@ -77,6 +78,8 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         Promise.all([this.docP, this.mathP, this.videosP, this.imagesP]).then(([doc, math, videos, images]) => {
+            // TODO set view registry on the doc here?
+            doc.setViewRegistry(new Map([["MathView", MathView]]));
             const slot = template.get(this.viewport, "slot") as HTMLElement;
             const editor = new Editor(doc, slot, htmlFormatter, this);
 

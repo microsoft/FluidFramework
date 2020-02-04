@@ -90,26 +90,27 @@ export class InclusionFormatter extends Formatter<IInclusionState> {
                     ? TagName.div
                     : TagName.span);
 
+            const viewClass = layout.doc.getViewFromMarker(marker);
             state.view = layout.doc.getComponentFromMarker(marker).then((component: IComponent) => {
-                const visual = component.IComponentHTMLVisual;
                 let view: IComponentHTMLView;
-                if (visual) {
-                    if (visual.addView) {
-                        view = visual.addView(layout.scope);
-                    } else {
-                        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                        view = {
-                            IComponentHTMLVisual: visual,
-                            render: visual.render.bind(visual),
-                            remove: state.slot.remove.bind(state.slot),
-                        } as IComponentHTMLView;
-                    }
+
+                if (viewClass) {
+                    console.log("getting from the view class");
+                    view = new viewClass(component, layout.scope);
                 } else {
-                    // We're assuming the marker routes straight to a view, if it's not a visual.
-                    // Would be better to check before casting, but currently this is just Math.
-                    view = component as IComponentHTMLView;
-                    if (view.setScope) {
-                        view.setScope(layout.scope);
+                    const visual = component.IComponentHTMLVisual;
+
+                    if (visual) {
+                        if (visual.addView) {
+                            view = visual.addView(layout.scope);
+                        } else {
+                            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                            view = {
+                                IComponentHTMLVisual: visual,
+                                render: visual.render.bind(visual),
+                                remove: state.slot.remove.bind(state.slot),
+                            } as IComponentHTMLView;
+                        }
                     }
                 }
 

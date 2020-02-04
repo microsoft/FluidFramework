@@ -142,8 +142,18 @@ export class FlowDocument extends PrimedComponent {
 
     private maybeSharedString?: SharedString;
 
+    private viewRegistry: Map<string, any>;
+
     constructor(runtime: IComponentRuntime, context: IComponentContext) {
         super(runtime, context);
+    }
+
+    public getViewFromMarker(marker: Marker) {
+        return this.viewRegistry.get(marker.properties.view);
+    }
+
+    public setViewRegistry(registry: Map<string, any>) {
+        this.viewRegistry = registry;
     }
 
     public async getComponentFromMarker(marker: Marker) {
