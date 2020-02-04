@@ -29,8 +29,11 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
    * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also
    * referred to as the "Push" token in SPO.
    * @param logger - a logger that can capture performance and diagnostic information
+   * @param newFileInfoPromise - Promise with information necessary to create a new file. New file is not created until this promise resolves.
    * @param storageFetchWrapper - if not provided FetchWrapper will be used
    * @param deltasFetchWrapper - if not provided FetchWrapper will be used
+   * @param odspCache - This caches response for joinSession.
+   * @param fileInfoToCreateNewResponseCache - This caches response of new file creation.
    */
   constructor(
     private readonly appId: string,

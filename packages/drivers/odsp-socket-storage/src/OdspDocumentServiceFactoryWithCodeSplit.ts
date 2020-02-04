@@ -33,6 +33,8 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
    * @param newFileInfoPromise - promise to supply info needed to create a new file. New file is not created until this promise resolves.
    * @param storageFetchWrapper - if not provided FetchWrapper will be used
    * @param deltasFetchWrapper - if not provided FetchWrapper will be used
+   * @param odspCache - This caches response for joinSession.
+   * @param fileInfoToCreateNewResponseCache - This caches response of new file creation.
    */
   constructor(
     private readonly appId: string,

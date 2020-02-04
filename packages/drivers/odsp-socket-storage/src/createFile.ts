@@ -26,6 +26,12 @@ export function getKeyFromFileInfo(fileInfo: INewFileInfo): string {
     return `${fileInfo.siteUrl}${fileInfo.driveId}${fileInfo.filePath}${fileInfo.filename}`;
 }
 
+/**
+ * @param url - Url to be rtesolved based on mode flag.
+ * @param getStorageToken - Api to generate storage token.
+ * @param newFileInfoPromise - Promise with information necessary to create a new file. New file is not created until this promise resolves.
+ * @param fileInfoToCreateNewResponseCache - This caches response of new file creation.
+ */
 export async function getOdspResolvedUrl(
     url: IOdspResolvedUrl,
     getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
