@@ -29,7 +29,7 @@ import {
 } from "@microsoft/fluid-framework-interfaces";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
-import { IComponentContext, IComponentFactory, IComponentRuntime, IHostRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import * as Sequence from "@microsoft/fluid-sequence";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import * as Katex from "katex";
@@ -58,12 +58,6 @@ export class MathView implements IComponentHTMLView, IComponentCursor, IComponen
 
     public get IComponentCursor() { return this; }
     public get IComponentLayout() { return this; }
-
-    public static async request(request: IRequest, runtime: IHostRuntime) {
-        const mathModel = (await runtime.request(request)).value as MathInstance;
-        const mathView = new MathView(mathModel);
-        return { status: 200, mimeType: "fluid/component", value: mathView };
-    }
 
     public cursorActive = false;
     public cursorElement: HTMLElement;
