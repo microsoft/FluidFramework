@@ -220,17 +220,16 @@ export class ScheduleManager {
         // If in legacy mode every operation is a batch
         if (!this.messageScheduler) {
             this.emitter.emit("batchBegin", message);
-            this.deltaScheduler.batchBegin(message);
+            this.deltaScheduler.batchBegin();
             return;
         }
 
-        const batch = (message?.metadata as IRuntimeMessageMetadata)?.batch;
         if (this.batchClientId !== message.clientId) {
             // As a back stop for any bugs marking the end of a batch - if the client ID flipped, we
             // consider the previous batch over.
             if (this.batchClientId) {
                 this.emitter.emit("batchEnd", undefined, undefined);
-                this.deltaScheduler.batchEnd(message);
+                this.deltaScheduler.batchEnd();
 
                 this.logger.sendTelemetryEvent({
                     eventName: "BatchEndNotReceived",
@@ -241,7 +240,9 @@ export class ScheduleManager {
 
             // This could be the beginning of a new batch or an invidual message.
             this.emitter.emit("batchBegin", message);
-            this.deltaScheduler.batchBegin(message);
+            this.deltaScheduler.batchBegin();
+
+            const batch = (message?.metadata as IRuntimeMessageMetadata)?.batch;
             if (batch) {
                 this.batchClientId = message.clientId;
             } else {
@@ -254,7 +255,7 @@ export class ScheduleManager {
         if (!this.messageScheduler || error) {
             this.batchClientId = undefined;
             this.emitter.emit("batchEnd", error, message);
-            this.deltaScheduler.batchEnd(message);
+            this.deltaScheduler.batchEnd();
             return;
         }
 
@@ -266,7 +267,7 @@ export class ScheduleManager {
         if (!this.batchClientId || batch === false) {
             this.batchClientId = undefined;
             this.emitter.emit("batchEnd", undefined, message);
-            this.deltaScheduler.batchEnd(message);
+            this.deltaScheduler.batchEnd();
             return;
         }
     }
