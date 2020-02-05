@@ -31,8 +31,9 @@ import {
 import {
     IDocumentService,
     IDocumentStorageService,
+    IError,
 } from "@microsoft/fluid-driver-definitions";
-import { readAndParse } from "@microsoft/fluid-driver-utils";
+import { createIError, readAndParse, OnlineStatus, isOnline } from "@microsoft/fluid-driver-utils";
 import {
     buildSnapshotTree,
     isSystemMessage,
@@ -137,10 +138,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     res(container);
                 })
                 .catch((error) => {
+                    const err = createIError(error, true);
                     if (!alreadyRaisedError) {
-                        container.logCriticalError(error);
+                        container.logCriticalError(err);
                     }
-                    onError(error);
+                    onError(err);
                 });
         });
     }
@@ -176,6 +178,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private manualReconnectInProgress = false;
     private readonly connectionTransitionTimes: number[] = [];
     private messageCountAfterDisconnection: number = 0;
+
+    private lastVisible: number | undefined;
 
     private _closed = false;
 
@@ -310,6 +314,19 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         });
 
         this._deltaManager = this.createDeltaManager();
+
+        // keep track of last time page was visible for telemetry
+        if (typeof document === "object" && document) {
+            this.lastVisible = document.hidden ? performanceNow() : undefined;
+            document.addEventListener("visibilitychange", () => {
+                if (document.hidden) {
+                    this.lastVisible = performanceNow();
+                } else {
+                    // settimeout so this will hopefully fire after disconnect event if being hidden caused it
+                    setTimeout(() => this.lastVisible = undefined, 0);
+                }
+            });
+        }
     }
 
     /**
@@ -403,13 +420,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.connectToDeltaStream();
     }
 
-    public raiseCriticalError(error: any) {
+    public raiseCriticalError(error: IError) {
         this.emit("error", error);
     }
 
     public async reloadContext(): Promise<void> {
         return this.reloadContextCore().catch((error) => {
-            this.raiseCriticalError(error);
+            this.raiseCriticalError(createIError(error, true));
             throw error;
         });
     }
@@ -648,7 +665,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         perfEvent.end({
             existing: this._existing,
             sequenceNumber: attributes.sequenceNumber,
-            version: maybeSnapshotTree ? maybeSnapshotTree.id : undefined,
+            version: maybeSnapshotTree && maybeSnapshotTree.id !== null ? maybeSnapshotTree.id : undefined,
         });
 
         if (!pause) {
@@ -715,7 +732,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 case MessageType.Summarize:
                     protocolLogger.sendTelemetryEvent({
                         eventName: "Summarize",
-                        message: message.contents as ISummaryContent,
+                        message: (message.contents as ISummaryContent).toString(),
                         summarySequenceNumber: message.sequenceNumber,
                         refSequenceNumber: message.referenceSequenceNumber,
                     });
@@ -912,7 +929,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.setConnectionState(ConnectionState.Disconnected, reason);
         });
 
-        deltaManager.on("error", (error) => {
+        deltaManager.on("error", (error: IError) => {
             this.raiseCriticalError(error);
         });
 
@@ -987,6 +1004,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             clientId: this.clientId,
             connectionMode,
             autoReconnect,
+            online: OnlineStatus[isOnline()],
+            lastVisible: this.lastVisible ? performanceNow() - this.lastVisible : undefined,
         });
 
         if (value === ConnectionState.Connected) {
@@ -1155,7 +1174,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             new QuorumProxy(this.protocolHandler!.quorum),
             loader,
             storage,
-            (err) => this.raiseCriticalError(err),
+            (err: IError) => this.raiseCriticalError(err),
             (type, contents, batch, metadata) => this.submitMessage(type, contents, batch, metadata),
             (message) => this.submitSignal(message),
             async (message) => this.snapshot(message),

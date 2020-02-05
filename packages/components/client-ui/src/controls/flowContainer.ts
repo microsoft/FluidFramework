@@ -259,6 +259,7 @@ export class FlowContainer extends ui.Component {
         for (const layerId in this.activeLayers) {
             if (!this.activeLayers[layerId].active) {
                 const layer = this.activeLayers[layerId];
+                // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
                 delete this.activeLayers[layerId];
                 this.overlayCanvas.removeLayer(layer.layer);
             }

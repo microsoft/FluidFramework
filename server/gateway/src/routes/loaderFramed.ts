@@ -3,20 +3,19 @@
  * Licensed under the MIT License.
  */
 
+import { parse } from "url";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import { ScopeType } from "@microsoft/fluid-protocol-definitions";
-import { IAlfredTenant } from "@microsoft/fluid-server-services-core";
+import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
 import { extractDetails, WebCodeLoader, WhiteList } from "@microsoft/fluid-web-code-loader";
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
 import * as jwt from "jsonwebtoken";
-import * as _ from "lodash";
 import { Provider } from "nconf";
-import { parse } from "url";
 import { v4 } from "uuid";
 import * as winston from "winston";
-import { spoEnsureLoggedIn } from "../gateway-odsp-utils";
-import { resolveUrl } from "../gateway-urlresolver";
+import { spoEnsureLoggedIn } from "../gatewayOdspUtils";
+import { resolveUrl } from "../gatewayUrlResolver";
 import { IAlfred, IKeyValueWrapper } from "../interfaces";
 import { getConfig, getParam, getUserDetails } from "../utils";
 
@@ -34,7 +33,7 @@ export function create(
     /**
      * Looks up the version of a chaincode in the cache.
      */
-    async function getUrlWithVersion(chaincode: string): Promise<string> {
+    const getUrlWithVersion = async (chaincode: string) => {
         return new Promise<string>((resolve) => {
             if (chaincode !== "" && chaincode.indexOf("@") === chaincode.lastIndexOf("@")) {
                 cache.get(chaincode).then((value) => {
@@ -47,15 +46,18 @@ export function create(
                 resolve(undefined);
             }
         });
-    }
+    };
 
     /**
      * Loading of a specific fluid document.
      */
     router.get("/:tenantId/*", spoEnsureLoggedIn(), ensureLoggedIn(), (request, response) => {
         const start = Date.now();
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         const chaincode: string = request.query.chaincode ? request.query.chaincode : "";
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         getUrlWithVersion(chaincode).then((version: string) => {
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (version) {
                 const redirectUrl = `${request.originalUrl}@${version}`;
                 winston.info(`Redirecting to ${redirectUrl}`);
@@ -67,7 +69,7 @@ export function create(
                     },
                     jwtKey);
 
-                const rawPath = request.params[0] as string;
+                const rawPath = request.params[0];
                 const slash = rawPath.indexOf("/");
                 const documentId = rawPath.substring(0, slash !== -1 ? slash : rawPath.length);
                 const path = rawPath.substring(slash !== -1 ? slash : rawPath.length);
@@ -84,20 +86,24 @@ export function create(
                     tenantId,
                     config.get("error:track"));
 
+                // eslint-disable-next-line @typescript-eslint/promise-function-async
                 const pkgP = fullTreeP.then((fullTree) => {
+                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     if (fullTree && fullTree.code) {
                         return webLoader.resolve(fullTree.code);
                     }
 
+                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     if (!request.query.chaincode) {
                         return;
                     }
 
+                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     const cdn = request.query.cdn ? request.query.cdn : config.get("worker:npm");
                     const entryPoint = request.query.entrypoint;
 
                     let codeDetails: IFluidCodeDetails;
-                    if (chaincode.indexOf("http") === 0) {
+                    if (chaincode.startsWith("http")) {
                         codeDetails = {
                             config: {
                                 [`@gateway:cdn`]: chaincode,
@@ -129,11 +135,14 @@ export function create(
                 });
 
                 const scriptsP = pkgP.then((pkg) => {
+                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     if (!pkg) {
                         return [];
                     }
 
+                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     const umd = pkg.pkg.fluid && pkg.pkg.fluid.browser && pkg.pkg.fluid.browser.umd;
+                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     if (!umd) {
                         return [];
                     }
@@ -144,7 +153,7 @@ export function create(
                             (script, index) => {
                                 return {
                                     id: `${pkg.parsed.name}-${index}`,
-                                    url: script.indexOf("http") === 0 ? script : `${pkg.packageUrl}/${script}`,
+                                    url: script.startsWith("http") ? script : `${pkg.packageUrl}/${script}`,
                                 };
                             }),
                     };
@@ -157,35 +166,37 @@ export function create(
 
                 Promise.all([resolvedP, fullTreeP, pkgP, scriptsP, timingsP])
                     .then(([resolved, fullTree, pkg, scripts, timings]) => {
-                    resolved.url += path + (search ? search : "");
-                    winston.info(`render ${tenantId}/${documentId} +${Date.now() - start}`);
+                        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+                        resolved.url += path + (search ? search : "");
+                        winston.info(`render ${tenantId}/${documentId} +${Date.now() - start}`);
 
-                    timings.push(Date.now() - start);
+                        timings.push(Date.now() - start);
 
-                    response.render(
-                        "loaderHost",
-                        {
-                            cache: fullTree ? JSON.stringify(fullTree.cache) : undefined,
-                            chaincode: JSON.stringify(pkg),
-                            clientId: config.get("login:microsoft").clientId,
-                            config: workerConfig,
-                            jwt: jwtToken,
-                            npm: config.get("worker:npm"),
-                            partials: {
-                                layoutFramed: "layoutFramed",
-                                loaderFramed: "loaderFramed",
-                            },
-                            resolved: JSON.stringify(resolved),
-                            scripts,
-                            timings: JSON.stringify(timings),
-                            title: documentId,
-                            user: getUserDetails(request),
-                        });
-                }, (error) => {
-                    response.status(400).end(`ERROR: ${error.stack}\n${safeStringify(error, undefined, 2)}`);
-                }).catch((error) => {
-                    response.status(500).end(`ERROR: ${error.stack}\n${safeStringify(error, undefined, 2)}`);
-                });
+                        response.render(
+                            "loaderHost",
+                            {
+                                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+                                cache: fullTree ? JSON.stringify(fullTree.cache) : undefined,
+                                chaincode: JSON.stringify(pkg),
+                                clientId: config.get("login:microsoft").clientId,
+                                config: workerConfig,
+                                jwt: jwtToken,
+                                npm: config.get("worker:npm"),
+                                partials: {
+                                    layoutFramed: "layoutFramed",
+                                    loaderFramed: "loaderFramed",
+                                },
+                                resolved: JSON.stringify(resolved),
+                                scripts,
+                                timings: JSON.stringify(timings),
+                                title: documentId,
+                                user: getUserDetails(request),
+                            });
+                    }, (error) => {
+                        response.status(400).end(`ERROR: ${error.stack}\n${safeStringify(error, undefined, 2)}`);
+                    }).catch((error) => {
+                        response.status(500).end(`ERROR: ${error.stack}\n${safeStringify(error, undefined, 2)}`);
+                    });
             }
         });
 

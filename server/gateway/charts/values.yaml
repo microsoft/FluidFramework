@@ -1,0 +1,80 @@
+replicaCount: 1
+image: prague.azurecr.io/gateway:18309
+
+imagePullPolicy: IfNotPresent
+
+name: gateway
+
+alfred:
+  externalUrl: https://alfred.we.prague.office-int.com
+  tenants:
+  - id: zen-brar
+    key: 
+  - id: fluid
+    key: 
+  - id: prague
+    key:
+  - id: github
+    key:
+  - id: cobalt
+    key:
+  - id: local
+    key:
+  url: http://fierce-cat-alfred
+  key:
+
+login:
+  microsoft:
+    clientId: ""
+    secret: ""
+  accounts:
+    username: ""
+    password: ""
+  linkedAccounts: {}
+
+gateway:
+  externalUrl: https://www.wu2.prague.office-int.com
+  host: www.wu2.prague.office-int.com
+  cert: wu2-tls-certificate
+  keyValueUrl: https://www.wu2.prague.office-int.com/loader/fluid/kv-cache-00018
+
+packageManager:
+  endpoint: https://packages.wu2.prague.office-int.com
+  username: prague
+  password:
+
+historian:
+  externalUrl: https://historian.wu2.prague.office-int.com
+  internalUrl: http://prodding-lightningbug-historian
+
+mongodb:
+  url: mongodb://quieting-guppy-mongodb:27017
+
+redis:
+  url: winsome-wombat-redis
+  port: 6379
+  tls: false
+
+riddler:
+  url: http://pesky-platypus-riddler
+
+ingress:
+  class: nginx-prod
+
+error:
+  track: true
+  endpoint: ""
+
+worker:
+  intelligence:
+    textAnalytics:
+      key: ""
+    translation:
+      key: ""
+  clusterNpm: ""
+  npm: ""
+
+
+express:
+  session:
+    secret: ""

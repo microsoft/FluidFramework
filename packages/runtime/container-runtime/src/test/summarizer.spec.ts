@@ -87,14 +87,13 @@ describe("Runtime", () => {
                 });
 
                 async function emitNextOp(increment: number = 1) {
-                    await flushPromises();
                     lastRefSeq += increment;
                     const op: Partial<ISequencedDocumentMessage> = {
                         sequenceNumber: lastRefSeq,
                         timestamp: Date.now(),
                     };
                     summarizer.handleOp(undefined, op as ISequencedDocumentMessage);
-                    await Promise.resolve();
+                    await flushPromises();
                 }
 
                 function emitBroadcast() {
@@ -131,6 +130,11 @@ describe("Runtime", () => {
                     return p;
                 }
 
+                async function tickAndFlushPromises(ms: number) {
+                    clock.tick(ms);
+                    await flushPromises();
+                }
+
                 it("Should summarize after configured number of ops when not pending", async () => {
                     await emitNextOp();
 
@@ -156,25 +160,22 @@ describe("Runtime", () => {
                     await emitNextOp();
 
                     // too early, should not run yet
-                    clock.tick(summaryConfig.idleTime - 1);
-                    await flushPromises();
+                    await tickAndFlushPromises(summaryConfig.idleTime - 1);
                     assert.strictEqual(runCount, 0);
 
                     // now should run
-                    clock.tick(1);
-                    await flushPromises();
+                    await tickAndFlushPromises(1);
                     assert.strictEqual(runCount, 1);
 
                     // should not run, because our summary hasnt been acked/nacked yet
                     await emitNextOp();
-                    clock.tick(summaryConfig.idleTime);
-                    await flushPromises();
+                    await tickAndFlushPromises(summaryConfig.idleTime);
                     assert.strictEqual(runCount, 1);
 
                     // should run, because another op has come in, and our summary has been acked
                     await emitAck();
                     await emitNextOp();
-                    clock.tick(summaryConfig.idleTime);
+                    await tickAndFlushPromises(summaryConfig.idleTime);
                     assert.strictEqual(runCount, 2);
                 });
 
@@ -186,25 +187,25 @@ describe("Runtime", () => {
                     // too early should not run yet
                     for (let i = 0; i < idlesPerActive; i++) {
                         // prevent idle from triggering with periodic ops
-                        clock.tick(summaryConfig.idleTime - 1);
+                        await tickAndFlushPromises(summaryConfig.idleTime - 1);
                         await emitNextOp();
                     }
-                    clock.tick(remainingTime - 1);
+                    await tickAndFlushPromises(remainingTime - 1);
                     await emitNextOp();
                     assert.strictEqual(runCount, 0);
 
                     // now should run
-                    clock.tick(1);
+                    await tickAndFlushPromises(1);
                     await emitNextOp();
                     assert.strictEqual(runCount, 1);
 
                     // should not run because our summary hasnt been acked/nacked yet
                     for (let i = 0; i < idlesPerActive; i++) {
                         // prevent idle from triggering with periodic ops
-                        clock.tick(summaryConfig.idleTime - 1);
+                        await tickAndFlushPromises(summaryConfig.idleTime - 1);
                         await emitNextOp();
                     }
-                    clock.tick(remainingTime);
+                    await tickAndFlushPromises(remainingTime);
                     await emitNextOp();
                     assert.strictEqual(runCount, 1);
 
@@ -220,12 +221,12 @@ describe("Runtime", () => {
                     assert.strictEqual(runCount, 1);
 
                     // should not run because still pending
-                    clock.tick(summaryConfig.maxAckWaitTime - 1);
+                    await tickAndFlushPromises(summaryConfig.maxAckWaitTime - 1);
                     await emitNextOp(summaryConfig.maxOps + 1);
                     assert.strictEqual(runCount, 1);
 
                     // should run because pending timeout
-                    clock.tick(1);
+                    await tickAndFlushPromises(1);
                     await emitNextOp();
                     assert.strictEqual(runCount, 2);
 
@@ -248,13 +249,13 @@ describe("Runtime", () => {
                     await emitAck();
 
                     // pass time that should not count towards the next max ack wait time
-                    clock.tick(summaryConfig.maxAckWaitTime);
+                    await tickAndFlushPromises(summaryConfig.maxAckWaitTime);
 
                     // subsequent summary should not cancel pending!
                     await emitNextOp(summaryConfig.maxOps + 1);
                     assert.strictEqual(runCount, 2);
                     await emitNextOp(); // fine
-                    clock.tick(1); // next op will exceed maxAckWaitTime from first summary
+                    await tickAndFlushPromises(1); // next op will exceed maxAckWaitTime from first summary
                     await emitNextOp(); // not fine, nay cancel pending too soon
                     deferGenerateSummary.resolve();
 

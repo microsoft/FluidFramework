@@ -28,9 +28,10 @@ import {
 import {
     Deferred,
     Trace,
+    ChildLogger,
 } from "@microsoft/fluid-core-utils";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
-import { readAndParse } from "@microsoft/fluid-driver-utils";
+import { readAndParse, createIError } from "@microsoft/fluid-driver-utils";
 import {
     BlobTreeEntry,
     buildSnapshotTree,
@@ -84,6 +85,7 @@ import { Summarizer } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
 import { ISummaryStats, SummaryTreeConverter } from "./summaryTreeConverter";
 import { analyzeTasks } from "./taskAnalyzer";
+import { DeltaScheduler } from "./deltaScheduler";
 
 interface ISummaryTreeWithStats {
     summaryStats: ISummaryStats;
@@ -145,9 +147,10 @@ interface IRuntimeMessageMetadata {
     batch?: boolean;
 }
 
-class ScheduleManager {
+export class ScheduleManager {
     private readonly messageScheduler: IMessageScheduler | undefined;
     private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    private readonly deltaScheduler: DeltaScheduler;
     private pauseSequenceNumber: number | undefined;
     private pauseClientId: string | undefined;
 
@@ -159,6 +162,7 @@ class ScheduleManager {
         messageScheduler: IMessageScheduler | undefined,
         private readonly emitter: EventEmitter,
         legacyDeltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+        private readonly logger: ITelemetryLogger,
     ) {
         if (!messageScheduler || !("toArray" in messageScheduler.deltaManager.inbound as any)) {
             this.deltaManager = legacyDeltaManager;
@@ -167,6 +171,10 @@ class ScheduleManager {
 
         this.messageScheduler = messageScheduler;
         this.deltaManager = this.messageScheduler.deltaManager;
+        this.deltaScheduler = new DeltaScheduler(
+            this.deltaManager,
+            ChildLogger.create(this.logger, "DeltaScheduler"),
+        );
 
         // Listen for delta manager sends and add batch metadata to messages
         this.deltaManager.on("prepareSend", (messages: IDocumentMessage[]) => {
@@ -212,6 +220,7 @@ class ScheduleManager {
         // If in legacy mode every operation is a batch
         if (!this.messageScheduler) {
             this.emitter.emit("batchBegin", message);
+            this.deltaScheduler.batchBegin(message);
             return;
         }
 
@@ -220,6 +229,7 @@ class ScheduleManager {
             // message in the middle of a batch
             if (!this.batchClientId) {
                 this.emitter.emit("batchBegin", message);
+                this.deltaScheduler.batchBegin(message);
             }
 
             return;
@@ -230,6 +240,7 @@ class ScheduleManager {
         if (metadata.batch === true) {
             this.batchClientId = message.clientId;
             this.emitter.emit("batchBegin", message);
+            this.deltaScheduler.batchBegin(message);
         }
     }
 
@@ -237,6 +248,7 @@ class ScheduleManager {
         if (!this.messageScheduler || error) {
             this.batchClientId = undefined;
             this.emitter.emit("batchEnd", error, message);
+            this.deltaScheduler.batchEnd(message);
             return;
         }
 
@@ -245,13 +257,15 @@ class ScheduleManager {
         // If no batchClientId has been set then we're in an individual batch
         if (!this.batchClientId) {
             this.emitter.emit("batchEnd", undefined, message);
+            this.deltaScheduler.batchEnd(message);
             return;
         }
 
         // As a back stop for any bugs marking the end of a batch - if the client ID flipped we consider the batch over
         if (this.batchClientId !== message.clientId) {
-            this.emitter.emit("batchEnd", undefined, message);
             this.batchClientId = undefined;
+            this.emitter.emit("batchEnd", undefined, message);
+            this.deltaScheduler.batchEnd(message);
             return;
         }
 
@@ -260,6 +274,7 @@ class ScheduleManager {
         if (batch === false) {
             this.batchClientId = undefined;
             this.emitter.emit("batchEnd", undefined, message);
+            this.deltaScheduler.batchEnd(message);
         }
     }
 
@@ -572,10 +587,16 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.contextsDeferred.set(key, deferred);
         }
 
-        this.scheduleManager = new ScheduleManager(context.IMessageScheduler, this, context.deltaManager);
-        this.deltaSender = this.deltaManager;
-
         this.logger = context.logger;
+
+        this.scheduleManager = new ScheduleManager(
+            context.IMessageScheduler,
+            this,
+            context.deltaManager,
+            ChildLogger.create(this.logger, "ScheduleManager"),
+        );
+
+        this.deltaSender = this.deltaManager;
 
         this.deltaManager.on("allSentOpsAckd", () => {
             this.updateDocumentDirtyState(false);
@@ -603,10 +624,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             "/_summarizer",
             this,
             () => this.summaryConfiguration,
-            // eslint-disable-next-line @typescript-eslint/promise-function-async
-            () => this.generateSummary(!this.loadedFromSummary),
-            // eslint-disable-next-line @typescript-eslint/promise-function-async
-            (handle, refSeq) => this.refreshLatestSummaryAck(handle, refSeq));
+            async (safe: boolean) => this.generateSummary(!this.loadedFromSummary, safe),
+            async (handle, refSeq) => this.refreshLatestSummaryAck(handle, refSeq));
 
         // Create the SummaryManager and mark the initial state
         this.summaryManager = new SummaryManager(
@@ -733,14 +752,25 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             for (const [, message] of this.pendingAttach) {
                 this.submit(MessageType.Attach, message);
             }
-
         }
 
-        for (const [, componentContext] of this.contexts) {
-            componentContext.changeConnectionState(value, clientId);
+        for (const [component, componentContext] of this.contexts) {
+            try {
+                componentContext.changeConnectionState(value, clientId);
+            } catch (error) {
+                this.logger.sendErrorEvent({
+                    eventName: "ChangeConnectionStateError",
+                    clientId,
+                    component,
+                }, error);
+            }
         }
 
-        raiseConnectedEvent(this, value, clientId);
+        try {
+            raiseConnectedEvent(this, value, clientId);
+        } catch (error) {
+            this.logger.sendErrorEvent({ eventName: "RaiseConnectedEventError", clientId }, error);
+        }
 
         if (value === ConnectionState.Connected) {
             this.summaryManager.setConnected(clientId);
@@ -780,6 +810,19 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
     public processSignal(message: ISignalMessage, local: boolean) {
         const envelope = message.content as IEnvelope;
+        const innerContent = envelope.contents as { content: any; type: string };
+        const transformed: IInboundSignalMessage = {
+            clientId: message.clientId,
+            content: innerContent.content,
+            type: innerContent.type,
+        };
+
+        if (envelope.address === undefined) {
+            // No address indicates a container signal message.
+            this.emit("signal", transformed, local);
+            return;
+        }
+
         const context = this.contexts.get(envelope.address);
         if (!context) {
             // Attach message may not have been processed yet
@@ -787,13 +830,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.logger.sendTelemetryEvent({ eventName: "SignalComponentNotFound", componentId: envelope.address });
             return;
         }
-
-        const innerContent = envelope.contents as { content: any; type: string };
-        const transformed: IInboundSignalMessage = {
-            clientId: message.clientId,
-            content: innerContent.content,
-            type: innerContent.type,
-        };
 
         context.processSignal(transformed, local);
     }
@@ -905,7 +941,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     public error(error: any) {
-        this.context.error(error);
+        this.context.error(createIError(error));
     }
 
     /**
@@ -941,6 +977,17 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
      */
     public isDocumentDirty(): boolean {
         return this.dirtyDocument;
+    }
+
+    /**
+     * Submits the signal to be sent to other clients.
+     * @param type - Type of the signal.
+     * @param content - Content of the signal.
+     */
+    public submitSignal(type: string, content: any) {
+        this.verifyNotClosed();
+        const envelope: IEnvelope = { address: undefined, contents: {type, content} };
+        return this.context.submitSignalFn(envelope);
     }
 
     private refreshBaseSummary(snapshot: ISnapshotTree) {
@@ -1083,7 +1130,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         deferred.resolve(context);
     }
 
-    private async generateSummary(fullTree: boolean = false): Promise<GenerateSummaryData> {
+    private async generateSummary(fullTree: boolean = false, safe: boolean = false): Promise<GenerateSummaryData> {
         const message =
             `Summary @${this.deltaManager.referenceSequenceNumber}:${this.deltaManager.minimumSequenceNumber}`;
 
@@ -1115,7 +1162,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             }
 
             const trace = Trace.start();
-            const treeWithStats = await this.summarize(fullTree);
+            const treeWithStats = await this.summarize(fullTree || safe);
             const generateData: IGeneratedSummaryData = {
                 summaryStats: treeWithStats.summaryStats,
                 generateDuration: trace.trace().duration,
@@ -1126,6 +1173,14 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             }
 
             const handle = await this.context.storage.uploadSummary(treeWithStats.summaryTree);
+
+            // safe mode refreshes the latest summary ack
+            if (safe) {
+                const versions = await this.storage.getVersions(this.id, 1);
+                const parents = versions.map((version) => version.id);
+                await this.refreshLatestSummaryAck(parents[0], this.deltaManager.referenceSequenceNumber);
+            }
+
             const parent = this.latestSummaryAck.handle;
             const summaryMessage: ISummaryContent = {
                 handle: handle.handle,
@@ -1375,11 +1430,12 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     private async refreshLatestSummaryAck(handle: string, referenceSequenceNumber: number) {
         if (referenceSequenceNumber < this.latestSummaryAck.referenceSequenceNumber) {
             return;
-        } else if (referenceSequenceNumber === this.latestSummaryAck.referenceSequenceNumber) {
-            if (!this.latestSummaryAck.handle) {
-                // When first loading we may not have the ack handle (version)
-                this.latestSummaryAck.handle = handle;
-            }
+        } else if (
+            referenceSequenceNumber === this.latestSummaryAck.referenceSequenceNumber
+            && !this.latestSummaryAck.handle
+        ) {
+            // When first loading we may not have the ack handle (version)
+            this.latestSummaryAck.handle = handle;
             return;
         }
 

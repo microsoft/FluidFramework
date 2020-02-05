@@ -21,7 +21,7 @@ pets](https://cloudscaling.com/blog/cloud-computing/the-history-of-pets-vs-cattl
 
 ## Architecture
 
-![Routerlicious architecture diagram](./SystemArchitecture.JPG "System Diagram")
+![Routerlicious architecture diagram](./SystemArchitecture.jpg "System Diagram")
 
 ### Microservices
 
@@ -78,13 +78,13 @@ this interface are then able to plug into the system as a whole. Currently we ha
 
 ## Distributed data structures
 
-See <xref:dds>
+See [distributed data structures](../../guide/dds.md)
 
 ## Building and Running
 
 Note that we also provide an npm package of our client side API which allows you to program against the production
-Routerlicious service. See the [API documentation](xref:build-a-component) for more details. You only need to follow the
-below steps if you'd like to run a local version of the service or need to make changes to it.
+Routerlicious service. See the [API documentation](../../guide/build-a-component.md) for more details. You only need to
+follow the below steps if you'd like to run a local version of the service or need to make changes to it.
 
 ### Prerequisities
 
@@ -148,12 +148,13 @@ Docker Compose is used to run the service locally. To start up an instance of th
 * `docker-compose build`
 * `docker-compose up`
 
-> [!TIP]
-> The standalone app is meant to be run in a Linux container. If when running either of the above commands you get an
-> error mentioning `no matching manifest for windows/amd64 in the manifest list entries`, check that your Docker
-> installation is configured to run Linux containers. If you are using Docker for Windows, you can check this by
-> right-clicking on the Docker icon in your taskbar. If you see the option `Switch to Linux containers...`, click this.
-> If you see the option `Switch to Windows containers...`, you are already configured to run Linux containers.
+::: tip
+The standalone app is meant to be run in a Linux container. If when running either of the above commands you get an
+error mentioning `no matching manifest for windows/amd64 in the manifest list entries`, check that your Docker
+installation is configured to run Linux containers. If you are using Docker for Windows, you can check this by
+right-clicking on the Docker icon in your taskbar. If you see the option `Switch to Linux containers...`, click this.
+If you see the option `Switch to Windows containers...`, you are already configured to run Linux containers.
+:::
 
 ### Testing
 
@@ -216,7 +217,7 @@ exploration (i.e. branching, forking, merging documents).
 
 To view the git stored snapshots simply run
 
-```text
+```
 git clone ssh://git@localhost:3022/home/git/fluid/fluid
 cd fluid/fluid
 git checkout <document id>
@@ -267,11 +268,11 @@ grafana up and running.
 
 ## Authentication model
 
-Routerlicious uses a token based authentication model. Tenants are registered to routerlicious first and a secret key is
-generated for each tenant. Apps are expected to pass <secret-key>, <tenant-id>, and <user-info> as a signed token to
-routerlicious. Tenants are given a symmetric-key beforehand to sign the token.
+Routerlicious uses a token based authentication model. Tenants are registered to Routerlicious first and a secret key is
+generated for each tenant. Apps are expected to pass `<secret-key>`, `<tenant-id>`, and `<user-info>` as a signed token
+to Routerlicious. Tenants are given a symmetric-key beforehand to sign the token.
 
-When a user from a tenant wants to create/access a document in routerlicious, it passes the signed token in api load
+When a user from a tenant wants to create/access a document in Routerlicious, it passes the signed token in api load
 call. Routerlicious verifies the token, matches the secret-key for the tenant and on a successful verification, grants
 the user access to the document. The access token is valid for the entire websocket session. User is expected to pass in
 another signed token for any subsequent api load call.

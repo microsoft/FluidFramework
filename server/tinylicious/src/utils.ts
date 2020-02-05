@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { generateToken, IAlfredTenant, ITenantManager } from "@microsoft/fluid-server-services-core";
-import { IServiceConfiguration, IUser, ScopeType } from "@microsoft/fluid-protocol-definitions";
+import { ITenantManager } from "@microsoft/fluid-server-services-core";
+import { IUser, ScopeType } from "@microsoft/fluid-protocol-definitions";
 // In this case we want @types/express-serve-static-core, not express-serve-static-core, and so disable the lint rule
 // eslint-disable-next-line import/no-unresolved
 import { Params } from "express-serve-static-core";
 import * as _ from "lodash";
+import { IAlfredTenant, generateToken } from "@microsoft/fluid-server-services-client";
 
 /**
  * Helper function to return tenant specific configuration
@@ -55,17 +56,6 @@ export interface IAlfredUser extends IUser {
     displayName: string;
     name: string;
 }
-
-export const DefaultServiceConfiguration: IServiceConfiguration = {
-    blockSize: 64436,
-    maxMessageSize:  16 * 1024,
-    summary: {
-        idleTime: 5000,
-        maxOps: 1000,
-        maxTime: 5000 * 12,
-        maxAckWaitTime: 600000,
-    },
-};
 
 export function getParam(params: Params, key: string) {
     return Array.isArray(params) ? undefined : params[key];

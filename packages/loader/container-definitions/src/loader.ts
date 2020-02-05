@@ -5,7 +5,6 @@
 
 import { EventEmitter } from "events";
 import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
-import { IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import {
     IClientDetails,
     IDocumentMessage,
@@ -30,13 +29,6 @@ export interface ICodeLoader {
  */
 export interface ICodeWhiteList {
     testSource(source: IFluidCodeDetails): Promise<boolean>;
-}
-
-/**
- * Host provider interfaces
- */
-export interface IHost {
-    resolver: IUrlResolver | IUrlResolver[];
 }
 
 export interface IContainer extends EventEmitter {

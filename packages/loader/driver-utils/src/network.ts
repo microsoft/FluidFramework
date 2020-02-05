@@ -2,26 +2,52 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { INetworkError } from "@microsoft/fluid-driver-definitions";
+import { IConnectionError, IThrottlingError, ErrorType } from "@microsoft/fluid-driver-definitions";
 
 /**
  * Network error error class - used to communicate all  network errors
  */
-export class NetworkError extends Error implements INetworkError {
+export class NetworkError extends Error implements IConnectionError {
 
     constructor(
         errorMessage: string,
-        readonly statusCode: number | undefined,
-        readonly canRetry: boolean,
-        readonly retryAfterSeconds?: number,
-        readonly online = OnlineStatus[isOnline()]) {
+        readonly statusCode?: number,
+        readonly canRetry?: boolean,
+        readonly online = OnlineStatus[isOnline()],
+        readonly errorType: ErrorType.connectionError = ErrorType.connectionError) {
         super(errorMessage);
     }
 
-    // Return all enumerable properties (i.e. exclude stack, message)
+    // Return all properties
     public getCustomProperties(): object {
-        return this;
+        return copyObjectProps(this);
     }
+}
+
+/**
+ * Throttling error class - used to communicate all throttling errors
+ */
+export class ThrottlingError extends Error implements IThrottlingError {
+
+    constructor(
+        errorMessage: string,
+        readonly retryAfterSeconds: number,
+        readonly errorType: ErrorType.throttlingError = ErrorType.throttlingError) {
+        super(errorMessage);
+    }
+
+    public getCustomProperties() {
+        return copyObjectProps(this);
+    }
+}
+
+export function copyObjectProps(obj: object) {
+    const prop = {};
+    // Could not use {...obj} because it does not return properties of base class.
+    for (const key of Object.getOwnPropertyNames(obj)) {
+        prop[key] = obj[key];
+    }
+    return prop;
 }
 
 export enum OnlineStatus {

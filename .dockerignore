@@ -1,6 +1,7 @@
 *
 !*.json
 !.npmrc
+!_api-extractor-temp/**
 !LICENSE.txt
 !packages/**
 !samples/chaincode/**
@@ -11,3 +12,4 @@
 **/dist
 **/lib
 **/nyc
+**/*.tsbuildinfo

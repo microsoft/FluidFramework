@@ -1,7 +1,18 @@
+# 0.14 Breaking Changes
+
+- [Top-level `type` on `IClient` removed](#Top-level-type-on-IClient-removed)
+
+## Top-level `type` on `IClient` removed
+
+The `type` field on `IClient` has been removed.
+
 # 0.13 Breaking Changes
 
 - [Fluid Packages Require Consumers on TypeScript `>=3.6`](##Fluid-Packages-Require-Consumers-on-TypeScript->=3.6)
-- [Top-level `type` on `IClient` removed](#Top-level-type-on-IClient-removed)
+- [IHost interface removed, Loader constructor signature updated](#IHost-interface-removed-Loader-constructor-signature-updated)
+
+New error types are added in 0.13. So whenever any error is emitted from container it will be of type IError which will have the property errorType which will tell the app, what type of error it is.
+It will also contain the property critical which will tell the app that the error is critical if it is true. Different errorTypes are defined in loader/driver-definitions/src/error.ts.
 
 ## Fluid Packages Require Consumers on TypeScript `>=3.6`
 
@@ -18,9 +29,9 @@ More about the changes:
 - [Class Field Mitigations](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#class-field-mitigations)  
 - [Full list of TypeScript changes](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html)
 
-## Top-level `type` on `IClient` removed
+## IHost interface removed, Loader constructor signature updated
 
-The `type` field on `IClient` has been removed.
+The IHost interface has been removed.  This primarily impacts the signature of the `Loader` constructor, which now just takes the `IUrlResolver` directly in its place.
 
 # 0.12 Breaking Changes
 

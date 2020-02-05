@@ -1,8 +1,0 @@
-- name: Tools
-  topicUid: tools
-- name: Debugging
-  href: ../../packages/drivers/fluid-debugger/README.md
-- name: Fluid Fetch
-  href: ../../packages/tools/fluid-fetch/README.md
-- name: Replay Tool
-  href: ../../packages/tools/replay-tool/README.md

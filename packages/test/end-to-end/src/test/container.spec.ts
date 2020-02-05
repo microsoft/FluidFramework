@@ -13,7 +13,9 @@ import {
     IDocumentService,
     IDocumentStorageService,
     IFluidResolvedUrl,
+    IGeneralError,
     IDocumentDeltaConnection,
+    ErrorType,
 } from "@microsoft/fluid-driver-definitions";
 import {
     ITestDeltaConnectionServer,
@@ -40,12 +42,18 @@ describe("Container", () => {
         testResolved = await testResolver.resolve(testRequest) as IFluidResolvedUrl;
         const serviceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
         service = await serviceFactory.createDocumentService(testResolved);
-        const host = { resolver: testResolver };
 
         codeLoader = new API.CodeLoader({ generateSummaries: false });
         const options = {};
 
-        loader = new Loader(host, serviceFactory, codeLoader, options, {}, new Map<string, IProxyLoaderFactory>());
+        loader = new Loader(
+            testResolver,
+            serviceFactory,
+            codeLoader,
+            options,
+            {},
+            new Map<string, IProxyLoaderFactory>(),
+        );
     });
 
     it("Load container successfully", async () => {
@@ -83,7 +91,8 @@ describe("Container", () => {
                 loader,
                 testRequest);
         } catch (error) {
-            success = error as boolean;
+            const err = error as IGeneralError;
+            success = err.error as boolean;
         }
         assert.equal(success, false);
     });
@@ -105,7 +114,9 @@ describe("Container", () => {
                 loader,
                 testRequest);
         } catch (error) {
-            success = error as boolean;
+            assert.equal(error.errorType, ErrorType.generalError, "Error is not a general error");
+            const generalError = error as IGeneralError;
+            success = generalError.error as boolean;
         }
         assert.equal(success, false);
     });

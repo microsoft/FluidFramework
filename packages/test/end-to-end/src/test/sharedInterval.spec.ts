@@ -224,15 +224,15 @@ describe("SharedInterval", () => {
             const serviceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
             const resolver = new TestResolver();
             user1Document = await api.load(
-                id, { resolver }, {}, serviceFactory);
+                id, resolver, {}, serviceFactory);
             documentDeltaEventManager.registerDocuments(user1Document);
 
             user2Document = await api.load(
-                id, { resolver }, {}, serviceFactory);
+                id, resolver, {}, serviceFactory);
             documentDeltaEventManager.registerDocuments(user2Document);
 
             user3Document = await api.load(
-                id, { resolver }, {}, serviceFactory);
+                id, resolver, {}, serviceFactory);
             documentDeltaEventManager.registerDocuments(user3Document);
             root1 = user1Document.getRoot();
             root2 = user2Document.getRoot();
@@ -295,7 +295,6 @@ describe("SharedInterval", () => {
             const parsedSnapshot = JSON.parse(snapshotBlob.contents);
             // LocalIntervalCollection serializes as an array of ISerializedInterval, let's get the first comment
             const serializedInterval1FromSnapshot =
-                // tslint:disable-next-line: no-unsafe-any
                 (parsedSnapshot["intervalCollections/comments"].value as ISerializedInterval[])[0];
             // The "story" is the ILocalValue of the handle pointing to the SharedString
             const handleLocalValueFromSnapshot = serializedInterval1FromSnapshot.properties.story as { type: string };

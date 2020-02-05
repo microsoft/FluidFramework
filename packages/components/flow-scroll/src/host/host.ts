@@ -60,7 +60,6 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
         }
     }
 
-    // tslint:disable-next-line:max-func-body-length
     public render(elm: HTMLElement): void {
         const flowDiv = document.createElement("div");
         const insightsDiv = document.createElement("div");
