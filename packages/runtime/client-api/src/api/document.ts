@@ -8,6 +8,7 @@ import * as cell from "@microsoft/fluid-cell";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import {
     IDeltaManager,
+    IFluidCodeDetails,
     IGenericBlob,
     IProxyLoaderFactory,
 } from "@microsoft/fluid-container-definitions";
@@ -211,7 +212,7 @@ export class Document extends EventEmitter {
     }
 }
 
-async function initializeChaincode(container: Container, pkg: string): Promise<void> {
+async function initializeChaincode(container: Container, pkg: IFluidCodeDetails): Promise<void> {
     const quorum = container.getQuorum();
 
     // Wait for connection so that proposals can be sent
@@ -290,8 +291,14 @@ export async function load(
     );
     const container = await loader.resolve({ url });
 
+    // The client-api CodeLoader doesn't actually read the proposed code details, so this doesn't really matter.
+    const codeDetails: IFluidCodeDetails = {
+        package: `@fluid-internal/client-api@${apiVersion}`,
+        config: {},
+    };
+
     if (!container.existing) {
-        await initializeChaincode(container, `@fluid-internal/client-api@${apiVersion}`);
+        await initializeChaincode(container, codeDetails);
     }
 
     return requestDocument(loader, container, url);
