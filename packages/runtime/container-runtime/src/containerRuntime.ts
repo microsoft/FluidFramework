@@ -491,6 +491,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this._flushMode;
     }
 
+    public get scope(): IComponent {
+        return this.context.scope;
+    }
+
     public get IComponentRegistry(): IComponentRegistry {
         return this.registry;
     }
