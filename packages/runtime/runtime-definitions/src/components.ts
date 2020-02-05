@@ -332,6 +332,7 @@ export interface IHostRuntime extends
     readonly submitSignalFn: (contents: any) => void;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly closeFn: () => void;
+    readonly scope: IComponent;
 
     /**
      * Returns the runtime of the component.
