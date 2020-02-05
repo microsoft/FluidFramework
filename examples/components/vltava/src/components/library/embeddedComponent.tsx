@@ -24,7 +24,7 @@ interface IEmbeddedComponentWrapperState {
 export class EmbeddedComponentWrapper
     extends React.Component<IEmbeddedComponentWrapperProps, IEmbeddedComponentWrapperState>
 {
-    constructor(props) {
+    constructor(props: IEmbeddedComponentWrapperProps) {
         super(props);
         this.state = {
             element: <span></span>,

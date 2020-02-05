@@ -11,11 +11,11 @@
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import * as React from "react";
 
-import "react-tabs/style/react-tabs.css";
-
 import { EmbeddedComponentWrapper } from "../library";
-import { ITabsDataModel, TabComponents } from "./dataModel";
+import { ITabsDataModel } from "./dataModel";
 import { NewTabButton } from "./newTabButton";
+
+import "react-tabs/style/react-tabs.css";
 
 export interface ITabsViewProps {
     dataModel: ITabsDataModel;
@@ -75,7 +75,7 @@ export class TabsView extends React.Component<ITabsViewProps, ITabsViewState> {
                 <TabList>
                     {tabs}
                     <li className="react-tabs__tab">
-                        <NewTabButton createTab={this.createNewTab}/>
+                        <NewTabButton createTab={this.createNewTab} components={this.props.dataModel.getNewTabTypes()}/>
                     </li>
                 </TabList>
                 <div style={{position: "relative"}}>
@@ -85,7 +85,7 @@ export class TabsView extends React.Component<ITabsViewProps, ITabsViewState> {
         );
     }
 
-    private async createNewTab(type: TabComponents) {
+    private async createNewTab(type: string) {
         await this.props.dataModel.createTab(type);
     }
 }
