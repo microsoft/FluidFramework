@@ -31,12 +31,12 @@ interface IAugmentedDocumentMessage {
  */
 export class CreationServerMessagesHandler {
 
-    public static getInstance(documentId: string, url: string): CreationServerMessagesHandler {
-        if (CreationServerMessagesHandler.urlMap.has(url)) {
-            return CreationServerMessagesHandler.urlMap.get(url)!;
+    public static getInstance(documentId: string): CreationServerMessagesHandler {
+        if (CreationServerMessagesHandler.urlMap.has(documentId)) {
+            return CreationServerMessagesHandler.urlMap.get(documentId)!;
         } else {
             const instance = new CreationServerMessagesHandler(documentId);
-            CreationServerMessagesHandler.urlMap.set(url, instance);
+            CreationServerMessagesHandler.urlMap.set(documentId, instance);
             return instance;
         }
     }

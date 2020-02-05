@@ -17,10 +17,9 @@ export class CreationDocumentService implements api.IDocumentService {
 
     private readonly creationServer: CreationServerMessagesHandler;
     constructor(
-        private readonly url: string,
         private readonly documentId: string,
         private readonly tenantId: string) {
-        this.creationServer = CreationServerMessagesHandler.getInstance(this.documentId, this.url);
+        this.creationServer = CreationServerMessagesHandler.getInstance(this.documentId);
     }
 
     public async connectToStorage(): Promise<api.IDocumentStorageService> {
