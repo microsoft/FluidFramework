@@ -77,7 +77,7 @@ function getRandomValues(length: number): number[] {
 </pre>
     <h3>Fluid Math</h3>
     <ul class="list-unstyled">
-        <li><a href="/loader/fluid/{{mathMoniker}}?chaincode=@component/math@0.0.7" target="_blank">Fluid Math Component</a></li>
+        <li><a href="/loader/fluid/{{mathMoniker}}?chaincode=@chaincode/math@0.0.7" target="_blank">Fluid Math Component</a></li>
     </ul>
 
     <h2>OWA + Bohemia</h2>
@@ -112,7 +112,7 @@ function getRandomValues(length: number): number[] {
 
 
     <h3>Inking Canvas</h3>
-    <li class="list-unstyled"><a href="/loader/fluid/{{inkMoniker}}?chaincode=@fluid-example/canvas@{{version}}" target="_blank">Canvas Component</a></li>
+    <li class="list-unstyled"><a href="/loader/fluid/{{inkMoniker}}?chaincode=@fluid-example/canvas@{{version}}" target="_blank">Canvas Chaincode</a></li>
 </div>
 
 {{/content}}

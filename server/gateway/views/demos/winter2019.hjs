@@ -30,7 +30,7 @@
     <ul class="list-unstyled">
         <li><a href="/loader/fluid/{{pinpointMoniker}}?chaincode=@container/pinpoint-editor@0.3.6527#/maps/new"
                 target="_blank">Pin Point Map</a></li>
-        <li><a href="/loader/fluid/{{newsMoniker}}?chaincode=@component/shared-text@0.3.6672"
+        <li><a href="/loader/fluid/{{newsMoniker}}?chaincode=@chaincode/shared-text@0.3.6672"
                 target="_blank">Prague Text Editor</a></li>
         <li><a href="/loader/fluid/counterDemo" target="_blank">Counter</a></li>
     </ul>
@@ -79,15 +79,15 @@
 
     <h3>Inking Canvas</h3>
     <li class="list-unstyled"><a href="/loader/fluid/{{inkMoniker}}?chaincode=@fluid-example/canvas@{{version}}"
-            target="_blank">Canvas Component</a></li>
+            target="_blank">Canvas Chaincode</a></li>
 
     <h3>Fast Load</h3>
     <p>
         Open a copy of each link and load each on refresh.
         <ul class="list-unstyled">
-            <li><a href="https://www.wu2-ppe.prague.office-int.com/loader/fluid/ste-0314-002?chaincode=@component/shared-text-2@0.3.91"
+            <li><a href="https://www.wu2-ppe.prague.office-int.com/loader/fluid/ste-0314-002?chaincode=@chaincode/shared-text-2@0.3.91"
                     target="_blank">Loader</a></li>
-            <li><a href="https://www.wu2-ppe.prague.office-int.com/fastloader/fluid/ste-0314-002?chaincode=@component/shared-text-2@0.3.91"
+            <li><a href="https://www.wu2-ppe.prague.office-int.com/fastloader/fluid/ste-0314-002?chaincode=@chaincode/shared-text-2@0.3.91"
                     target="_blank">Augmented Loader</a></li>
         </ul>
     </p>
