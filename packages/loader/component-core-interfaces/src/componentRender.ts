@@ -14,15 +14,13 @@ import { IComponent } from "./components";
  * If elm has an empty client rect, then it is assumed that it will expand to hold the
  * rendered component.
  */
-export interface IComponentHTMLRender {
-    render(elm: HTMLElement, options?: IComponentHTMLOptions): void;
-}
 
 export interface IComponentHTMLOptions {
     display?: "block" | "inline";
 }
 
-export interface IComponentHTMLView extends IComponentHTMLRender {
+export interface IComponentHTMLView {
+    render(elm: HTMLElement, options?: IComponentHTMLOptions): void;
     remove(): void;
 }
 
@@ -30,6 +28,7 @@ export interface IProvideComponentHTMLVisual {
     readonly IComponentHTMLVisual: IComponentHTMLVisual;
 }
 
-export interface IComponentHTMLVisual extends IComponentHTMLRender, IProvideComponentHTMLVisual {
+export interface IComponentHTMLVisual extends IProvideComponentHTMLVisual {
+    render(elm: HTMLElement, options?: IComponentHTMLOptions): void;
     addView?(scope?: IComponent): IComponentHTMLView;
 }
