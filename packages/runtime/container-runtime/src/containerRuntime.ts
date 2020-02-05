@@ -438,14 +438,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.context.clientId;
     }
 
-    /**
-     * DEPRECATED use clientDetails.type instead
-     * back-compat: 0.11 clientType
-     */
-    public get clientType(): string {
-        return this.context.clientType;
-    }
-
     public get clientDetails(): IClientDetails {
         return this.context.clientDetails;
     }
@@ -489,6 +481,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
     public get flushMode(): FlushMode {
         return this._flushMode;
+    }
+
+    public get scope(): IComponent {
+        return this.context.scope;
     }
 
     public get IComponentRegistry(): IComponentRegistry {
@@ -1357,11 +1353,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     private subscribeToLeadership() {
-        // Back-compat: 0.11 clientType
-        const interactive = this.context.clientType === "browser"
-            || (this.context.clientDetails && this.context.clientDetails.capabilities.interactive);
-
-        if (interactive) {
+        if (this.context.clientDetails.capabilities.interactive) {
             this.getScheduler().then((scheduler) => {
                 if (scheduler.leader) {
                     this.updateLeader(true);

@@ -59,9 +59,6 @@ import {
     ISignalClient,
     ISignalMessage,
     ISnapshotTree,
-    ISummaryAck,
-    ISummaryContent,
-    ISummaryNack,
     ITokenClaims,
     ITree,
     ITreeEntry,
@@ -227,14 +224,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this._scopes;
     }
 
-    /**
-     * DEPRECATED: use clientDetails.type instead
-     * back-compat: 0.11 clientType
-     */
-    public get clientType(): string {
-        return this._deltaManager.clientType;
-    }
-
     public get clientDetails(): IClientDetails {
         return this._deltaManager.clientDetails;
     }
@@ -301,9 +290,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.canReconnect = !(originalRequest.headers && originalRequest.headers[LoaderHeader.reconnect] === false);
 
         // Create logger for components to use
-        // back-compat: 0.11 clientType
-        const type = this.client.details ? this.client.details.type : this.client.type;
-        const interactive = this.client.details?.capabilities?.interactive ?? this.client.type === "browser";
+        const type = this.client.details.type;
+        const interactive = this.client.details.capabilities.interactive;
         const clientType = `${interactive ? "interactive" : "noninteractive"}${type ? `/${type}` : ""}`;
         this.subLogger = DebugLogger.mixinDebugLogger(
             "fluid:telemetry",
@@ -736,38 +724,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         const protocolLogger = ChildLogger.create(this.subLogger, "ProtocolHandler");
 
-        protocol.on("Summary", (message) => {
-            switch (message.type) {
-                case MessageType.Summarize:
-                    protocolLogger.sendTelemetryEvent({
-                        eventName: "Summarize",
-                        message: (message.contents as ISummaryContent).toString(),
-                        summarySequenceNumber: message.sequenceNumber,
-                        refSequenceNumber: message.referenceSequenceNumber,
-                    });
-                    break;
-                case MessageType.SummaryAck:
-                    const ack = message.contents as ISummaryAck;
-                    protocolLogger.sendTelemetryEvent({
-                        eventName: "SummaryAck",
-                        handle: ack.handle,
-                        sequenceNumber: message.sequenceNumber,
-                        summarySequenceNumber: ack.summaryProposal.summarySequenceNumber,
-                    });
-                    break;
-                case MessageType.SummaryNack:
-                    const nack = message.contents as ISummaryNack;
-                    protocolLogger.sendTelemetryEvent({
-                        eventName: "SummaryNack",
-                        error: nack.errorMessage,
-                        sequenceNumber: message.sequenceNumber,
-                        summarySequenceNumber: nack.summaryProposal.summarySequenceNumber,
-                    });
-                    break;
-                default:
-            }
-        });
-
         protocol.quorum.on("error", (error) => {
             protocolLogger.sendErrorEvent(error);
         });
@@ -878,7 +834,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const client: IClient = this.options && this.options.client
             ? (this.options.client as IClient)
             : {
-                type: "browser", // Back-compat: 0.11 clientType
                 details: {
                     capabilities: { interactive: true },
                 },
@@ -895,11 +850,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             merge(client.details, headerClientDetails);
         }
 
-        // Back-compat: 0.11 clientType
-        const headerClientType = this.originalRequest.headers && this.originalRequest.headers[LoaderHeader.clientType];
-        if (headerClientType) {
-            client.type = headerClientType;
-        }
         return client;
     }
 
