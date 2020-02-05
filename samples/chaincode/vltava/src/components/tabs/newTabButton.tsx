@@ -11,9 +11,10 @@ import {
     initializeIcons,
     IContextualMenuProps,
     IIconProps,
+    IContextualMenuItem,
 } from "office-ui-fabric-react";
 
-import { TabComponents } from "./dataModel";
+import { ITabsTypes } from "./dataModel";
 
 // setup fabric icons
 initializeIcons();
@@ -22,13 +23,13 @@ export interface IButtonExampleProps {
     // These are set based on the toggles shown above the examples (not needed in real code)
     disabled?: boolean;
     checked?: boolean;
-    createTab: (type: TabComponents) => void;
+    createTab: (type: string) => void;
+    components: ITabsTypes[];
 }
 
 const customSplitButtonStyles: IButtonStyles = {
     splitButtonMenuButton: { backgroundColor: "white", width: 15, border: "none" },
     splitButtonMenuIcon: { fontSize: "7px" },
-    // splitButtonDivider: { backgroundColor: "#c8c8c8", width: 1, right: 26, position: "absolute", top: 4, bottom: 4 },
     splitButtonContainer: {
         selectors: {
             [HighContrastSelector]: { border: "none" },
@@ -42,50 +43,20 @@ const addIcon: IIconProps = { iconName: "Add" };
 export const NewTabButton: React.FunctionComponent<IButtonExampleProps> =
     (props: IButtonExampleProps) => {
         const { disabled, checked } = props;
-        const menuProps: IContextualMenuProps = {
-            items: [
+        const items: IContextualMenuItem[] = [];
+        props.components.forEach((component) => {
+            items.push(
                 {
-                    key: "new-spaces",
-                    text: "Prosemirror (default)",
-                    iconProps: { iconName: "Edit" },
+                    key: component.type,
+                    text: component.friendlyName,
+                    iconProps: { iconName: component.fabricIconName },
                     onClick: () => {
-                        props.createTab("prosemirror");
+                        props.createTab(component.type);
                     },
                 },
-                {
-                    key: "new-spaces",
-                    text: "Spaces",
-                    iconProps: { iconName: "SnapToGrid" },
-                    onClick: () => {
-                        props.createTab("spaces");
-                    },
-                },
-                {
-                    key: "new-spaces",
-                    text: "CodeMirror",
-                    iconProps: { iconName: "Code" },
-                    onClick: () => {
-                        props.createTab("codemirror");
-                    },
-                },
-                {
-                    key: "new-tabs",
-                    text: "Tabs",
-                    iconProps: { iconName: "BrowserTab" },
-                    onClick: () => {
-                        props.createTab("tabs");
-                    },
-                },
-                {
-                    key: "new-clicker",
-                    text: "Clicker",
-                    iconProps: { iconName: "NumberField" },
-                    onClick: () => {
-                        props.createTab("clicker");
-                    },
-                },
-            ],
-        };
+            );
+        });
+        const menuProps: IContextualMenuProps = {items};
         return (
             <IconButton
                 split
@@ -95,9 +66,10 @@ export const NewTabButton: React.FunctionComponent<IButtonExampleProps> =
                 styles={customSplitButtonStyles}
                 menuProps={menuProps}
                 ariaLabel="New item"
-                onClick={() => props.createTab("prosemirror")} // default create a prosemirror
+                onClick={() => props.createTab("prosemirror")} // this should be taken from the list
                 disabled={disabled}
                 checked={checked}
+                text="hello"
             />
         );
     };
