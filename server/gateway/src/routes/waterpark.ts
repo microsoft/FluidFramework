@@ -38,6 +38,7 @@ export function create(
         let redirect = `${request.baseUrl}/${moniker.choose()}`;
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (request.query.component) {
+            // TODO #1148 - remove usage of 'chaincode' below
             redirect += `?chaincode=${request.query.component}`;
         }
         return response.status(302).redirect(redirect);
