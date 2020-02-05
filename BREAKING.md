@@ -6,7 +6,7 @@
 
 ## Samples and chaincode have been renamed to examples and components respectively
 
-The directories themselves have been renamed.
+The directories themselves have been renamed.   
 All path references in the dockerfile and json manifests have been updated along with variables assigned using path constants in code
 
 ## Remove all references to the term chaincode
