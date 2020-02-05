@@ -90,13 +90,13 @@ export class InclusionFormatter extends Formatter<IInclusionState> {
                     ? TagName.div
                     : TagName.span);
 
-            const ViewClass = layout.doc.getViewFromMarker(marker);
+            const viewFactory = layout.doc.getViewFactoryFromMarker(marker);
             state.view = layout.doc.getComponentFromMarker(marker).then((component: IComponent) => {
                 let view: IComponentHTMLView;
 
-                if (ViewClass) {
+                if (viewFactory) {
                     // We found a view class registered for this marker's view type
-                    view = new ViewClass(component, layout.scope);
+                    view = viewFactory.createView(component, layout.scope);
                 } else {
                     const visual = component.IComponentHTMLVisual;
 

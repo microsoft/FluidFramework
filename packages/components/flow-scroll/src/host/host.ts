@@ -4,7 +4,7 @@
  */
 
 import { KeyCode, randomId, Template, TagName } from "@fluid-example/flow-util-lib";
-import { MathView } from "@fluid-example/math";
+import { MathViewFactory } from "@fluid-example/math";
 import * as SearchMenu from "@fluid-example/search-menu";
 import { tableViewType } from "@fluid-example/table-view";
 import { Editor, FlowDocument, htmlFormatter } from "@fluid-example/webflow";
@@ -35,7 +35,7 @@ const template = new Template(
     });
 
 const viewRegistry = new Map([
-    ["MathView", MathView],
+    ["MathView", new MathViewFactory()],
 ]);
 
 export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost {
@@ -84,7 +84,7 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
         Promise.all([this.docP, this.mathP, this.videosP, this.imagesP]).then(([doc, math, videos, images]) => {
             // This view registry will match up the strings we put in the markers below against
             // the view classes they correspond with.
-            doc.setViewRegistry(viewRegistry);
+            doc.setViewFactoryRegistry(viewRegistry);
             const slot = template.get(this.viewport, "slot") as HTMLElement;
             const editor = new Editor(doc, slot, htmlFormatter, this);
 

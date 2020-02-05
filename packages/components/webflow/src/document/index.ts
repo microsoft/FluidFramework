@@ -6,7 +6,7 @@
 import * as assert from "assert";
 import { randomId, TokenList, TagName } from "@fluid-example/flow-util-lib";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { IComponent, IComponentHandle, IComponentHTMLOptions } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IComponentHandle, IComponentHTMLOptions, IComponentHTMLViewFactory } from "@microsoft/fluid-component-core-interfaces";
 import {
     createInsertSegmentOp,
     createRemoveRangeOp,
@@ -142,18 +142,18 @@ export class FlowDocument extends PrimedComponent {
 
     private maybeSharedString?: SharedString;
 
-    private viewRegistry: Map<string, any>;
+    private viewFactoryRegistry: Map<string, IComponentHTMLViewFactory>;
 
     constructor(runtime: IComponentRuntime, context: IComponentContext) {
         super(runtime, context);
     }
 
-    public getViewFromMarker(marker: Marker) {
-        return this.viewRegistry.get(marker.properties.view);
+    public getViewFactoryFromMarker(marker: Marker) {
+        return this.viewFactoryRegistry.get(marker.properties.view);
     }
 
-    public setViewRegistry(registry: Map<string, any>) {
-        this.viewRegistry = registry;
+    public setViewFactoryRegistry(registry: Map<string, IComponentHTMLViewFactory>) {
+        this.viewFactoryRegistry = registry;
     }
 
     public async getComponentFromMarker(marker: Marker) {
