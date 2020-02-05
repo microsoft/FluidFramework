@@ -3,6 +3,38 @@
  * Licensed under the MIT License.
  */
 
+const fs = require("fs");
+const path = require("path");
+const fm = require("front-matter")
+// const getConfig = require("vuepress-bar");
+// const barConfig = getConfig(`../`);
+// console.log(`${barConfig.sidebar}`);
+
+const getBlogSidebar = () => {
+    const directoryPath = path.join(__dirname, "../blog");
+    const files = fs.readdirSync(directoryPath);
+    files.sort().reverse();
+
+    let toReturn = [];
+    // let first = true;
+    for (let file of files) {
+        let content = fs.readFileSync(path.join(directoryPath, file), { encoding: "utf8" }).toString();
+        let matter = fm(content);
+        file = path.basename(file, ".md");
+        toReturn.push({
+            title: matter.attributes.title,
+            path: file, // first ? "" : file,
+            sidebarDepth: 2,
+        });
+        // first = false;
+    }
+    console.log(toReturn);
+    return toReturn;
+};
+
+const sidebar = getBlogSidebar();
+sidebar[0].sidebarDepth = 0;
+
 module.exports = {
     title: "Fluid Framework",
     description: "State that flows",
@@ -69,7 +101,7 @@ module.exports = {
         }
     },
     themeConfig: {
-        docsDir: "docs",
+        // docsDir: "docs",
         editLinks: false,
         lastUpdated: false, // "Last Updated",
         repo: "microsoft/FluidFramework",
@@ -79,7 +111,7 @@ module.exports = {
             { text: "What is Fluid?", link: "/what-is-fluid" },
             { text: "Guide", link: "/guide/" },
             { text: "Tutorials", link: "/examples/" },
-            // { text: "Data Structures", link: "/dds/" },
+            { text: "Blog", link: `/blog/${sidebar[0].path}` },
             { text: "API", link: "/api/overview" },
             {
                 text: "🤿 Dive Deeper",
@@ -95,11 +127,13 @@ module.exports = {
                             { text: "Building documentation locally", link: "/contributing/building-documentation" },
                             { text: "Routerlicious build machine", link: "/contributing/r11s-build-machine" },
                         ]
-                    }
+                    },
+                    { text: "Team", link: "/team/" }
                 ]
             },
         ],
         sidebar: {
+            "/blog/": sidebar,
             "/api/": [
                 {
                     title: "API Overview",
