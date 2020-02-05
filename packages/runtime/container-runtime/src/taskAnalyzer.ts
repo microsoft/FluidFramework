@@ -42,8 +42,5 @@ export function analyzeTasks(
 }
 
 function isRobot(client: ISequencedClient): boolean {
-    return client.client
-        && client.client.details
-        && client.client.details.capabilities
-        && !client.client.details.capabilities.interactive;
+    return !(client.client?.details?.capabilities?.interactive ?? true);
 }
