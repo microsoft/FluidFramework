@@ -23,7 +23,6 @@ export class Badge extends PrimedComponent implements IComponentHTMLVisual, ICom
     historySequence: SharedObjectSequence<IHistory<IBadgeType>>;
 
     public get IComponentHTMLVisual() { return this; }
-    public get IComponentHTMLRender() { return this; }
     public get IComponentReactViewable() { return this; }
 
     private readonly currentId: string = "value";

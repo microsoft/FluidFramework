@@ -10,7 +10,6 @@ import {
 import {
     IComponentHTMLVisual,
     IComponentHandle,
-    IComponentHTMLRender,
 } from "@microsoft/fluid-component-core-interfaces";
 import {
     IComponentContext,
@@ -37,9 +36,8 @@ import/no-unassigned-import */
 
 export class GithubComment
     extends TextareaNoReact
-    implements IComponentHTMLVisual, IComponentHTMLRender {
+    implements IComponentHTMLVisual {
     public get IComponentHTMLVisual() { return this; }
-    public get IComponentHTMLRender() { return this; }
 
     /**
    * Extension of the parent class function that also forces the innerHTML of

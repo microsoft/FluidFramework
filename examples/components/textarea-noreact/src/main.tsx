@@ -18,7 +18,6 @@ import {
 import {
     IComponentHTMLVisual,
     IComponentHandle,
-    IComponentHTMLRender,
 } from "@microsoft/fluid-component-core-interfaces";
 import {
     IComponentContext,
@@ -49,9 +48,8 @@ interface ITextareaState {
  */
 export class TextareaNoReact
     extends PrimedComponent
-    implements IComponentHTMLVisual, IComponentHTMLRender {
+    implements IComponentHTMLVisual {
     public get IComponentHTMLVisual() { return this; }
-    public get IComponentHTMLRender() { return this; }
 
     protected textareaState: ITextareaState;
     protected textareaRootKey: string;
