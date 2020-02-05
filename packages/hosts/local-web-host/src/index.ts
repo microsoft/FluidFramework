@@ -22,8 +22,9 @@ import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 
 
-export async function createContainer(
-    entryPoint: Partial<IProvideRuntimeFactory & IProvideComponentFactory & IFluidModule>): Promise<Container> {
+export async function createLocalContainerFactory(
+    entryPoint: Partial<IProvideRuntimeFactory & IProvideComponentFactory & IFluidModule>,
+): Promise<() => Promise<Container>> {
 
     const documentId = uuid();
 
@@ -53,14 +54,28 @@ export async function createContainer(
         {},
         new Map<string, IProxyLoaderFactory>());
 
-    const container = await loader.resolve({ url: documentId });
+    return async () => {
 
-    const quorum = container.getQuorum();
-    await quorum.propose("code", {});
+        const container = await loader.resolve({ url: documentId });
 
-    await new Promise((resolve) => container.once("contextChanged", () => resolve()));
+        const quorum = container.getQuorum();
 
-    return container;
+        const maybeContextChangedP = new Promise((resolve) => {
+            if (!quorum.has("code")) {
+                container.once("contextChanged", () => resolve());
+            } else {
+                resolve();
+            }
+        });
+
+        if (!container.existing) {
+            await quorum.propose("code", {});
+        }
+
+        await maybeContextChangedP;
+
+        return container;
+    };
 }
 
 export async function renderDefaultComponent(container: Container, div: HTMLElement) {
