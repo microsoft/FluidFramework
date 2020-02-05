@@ -42,20 +42,21 @@ export class OdspDriverUrlResolver implements IUrlResolver {
   constructor() { }
 
   public async resolve(request: IRequest): Promise<IOdspResolvedUrl> {
-    if (request.headers && request.headers.openMode === OpenMode.CreateNew) {
-      return {
-        type: "fluid",
-        endpoints: {
-          snapshotStorageUrl: "",
-        },
-        openMode: OpenMode.CreateNew,
-        tokens: {},
-        url: request.url,
-        hashedDocumentId: "",
-        siteUrl: "",
-        driveId: "",
-        itemId: "",
-      };
+    if (request.headers && request.headers.openMode === OpenMode.CreateNew && request.headers.newFileInfoPromise) {
+        return {
+          type: "fluid",
+          endpoints: {
+            snapshotStorageUrl: "",
+          },
+          openMode: OpenMode.CreateNew,
+          newFileInfoPromise: request.headers.newFileInfoPromise,
+          tokens: {},
+          url: request.url,
+          hashedDocumentId: "",
+          siteUrl: "",
+          driveId: "",
+          itemId: "",
+        };
     }
     const { siteUrl, driveId, itemId, path } = this.decodeOdspUrl(request.url);
     const hashedDocumentId = getHashedDocumentId(driveId, itemId);

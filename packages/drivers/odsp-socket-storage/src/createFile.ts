@@ -31,7 +31,7 @@ const isInvalidFileName = (fileName: string): boolean => {
 };
 
 export function getKeyFromFileInfo(fileInfo: INewFileInfo): string {
-    return `${fileInfo.siteUrl}${fileInfo.driveId}${fileInfo.filePath}${fileInfo.filename}`;
+    return `${fileInfo.siteUrl}:${fileInfo.driveId}:${fileInfo.filePath}:${fileInfo.filename}`;
 }
 
 /**

@@ -6,6 +6,7 @@
 import { IResolvedUrlBase, OpenMode } from "@microsoft/fluid-driver-definitions";
 import * as resources from "@microsoft/fluid-gitresources";
 import * as api from "@microsoft/fluid-protocol-definitions";
+import { INewFileInfo } from "./createFile";
 
 export interface IOdspResolvedUrl extends IResolvedUrlBase {
     type: "fluid";
@@ -14,6 +15,8 @@ export interface IOdspResolvedUrl extends IResolvedUrlBase {
     url: string;
 
     openMode?: OpenMode;
+
+    newFileInfoPromise?: Promise<INewFileInfo>;
 
     // A hashed identifier that is unique to this document
     hashedDocumentId: string;

@@ -19,7 +19,7 @@ import {
     IErrorTrackingService,
 } from "@microsoft/fluid-protocol-definitions";
 import { IOdspResolvedUrl, ISocketStorageDiscovery } from "./contracts";
-import { createNewFluidFile, INewFileInfo } from "./createFile";
+import { createNewFluidFile } from "./createFile";
 import { debug } from "./debug";
 import { IFetchWrapper } from "./fetchWrapper";
 import { OdspCache } from "./odspCache";
@@ -66,14 +66,13 @@ export class OdspDocumentService implements IDocumentService {
         deltasFetchWrapper: IFetchWrapper,
         socketIOClientP: Promise<SocketIOClientStatic>,
         odspCache: OdspCache,
-        newFileInfoPromise?: Promise<INewFileInfo> | undefined,
         fileInfoToCreateNewResponseCache = new OdspCache(),
     ): Promise<IDocumentService> {
         let odspResolvedUrl: IOdspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
-        if (odspResolvedUrl.openMode === OpenMode.CreateNew) {
+        if (odspResolvedUrl.openMode === OpenMode.CreateNew && odspResolvedUrl.newFileInfoPromise) {
           odspResolvedUrl = await createNewFluidFile(
             getStorageToken,
-            newFileInfoPromise,
+            odspResolvedUrl.newFileInfoPromise,
             fileInfoToCreateNewResponseCache);
         }
         return new OdspDocumentService(

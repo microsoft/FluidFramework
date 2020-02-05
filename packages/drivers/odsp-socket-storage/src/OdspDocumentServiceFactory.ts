@@ -9,7 +9,6 @@ import {
   IDocumentServiceFactory,
   IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
-import { INewFileInfo } from "./createFile";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import { getSocketIo } from "./getSocketIo";
 import { OdspCache } from "./odspCache";
@@ -28,7 +27,6 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
    * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also
    * referred to as the "Push" token in SPO.
    * @param logger - a logger that can capture performance and diagnostic information
-   * @param newFileInfoPromise - Promise with information necessary to create a new file. New file is not created until this promise resolves.
    * @param storageFetchWrapper - if not provided FetchWrapper will be used
    * @param deltasFetchWrapper - if not provided FetchWrapper will be used
    * @param odspCache - This caches response for joinSession.
@@ -39,7 +37,6 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
     private readonly getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
     private readonly getWebsocketToken: (refresh: boolean) => Promise<string | null>,
     private readonly logger: ITelemetryBaseLogger,
-    private readonly newFileInfoPromise?: Promise<INewFileInfo> | undefined,
     private readonly storageFetchWrapper: IFetchWrapper = new FetchWrapper(),
     private readonly deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),
     private readonly odspCache: OdspCache = new OdspCache(),
@@ -57,7 +54,6 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
       this.deltasFetchWrapper,
       Promise.resolve(getSocketIo()),
       this.odspCache,
-      this.newFileInfoPromise,
       this.fileInfoToCreateNewResponseCache,
     );
   }
