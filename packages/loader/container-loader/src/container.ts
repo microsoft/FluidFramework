@@ -169,7 +169,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private readonly _audience: Audience;
 
     private context: ContainerContext | undefined;
-    private pkg: string | IFluidCodeDetails | undefined;
+    private pkg: IFluidCodeDetails | undefined;
     private protocolHandler: ProtocolOpHandler | undefined;
 
     private firstConnection = true;
@@ -237,7 +237,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this._deltaManager.clientDetails;
     }
 
-    public get chaincodePackage(): string | IFluidCodeDetails | undefined {
+    public get chaincodePackage(): IFluidCodeDetails | undefined {
         return this.pkg;
     }
 
