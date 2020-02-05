@@ -11,6 +11,7 @@ import { Editor, FlowDocument, htmlFormatter } from "@fluid-example/webflow";
 import {
     IComponent,
     IComponentHTMLView,
+    IComponentHTMLViewFactory,
     IComponentHTMLVisual,
     IComponentLoadable,
 } from "@microsoft/fluid-component-core-interfaces";
@@ -34,8 +35,15 @@ const template = new Template(
         ],
     });
 
-const viewRegistry = new Map([
-    ["MathView", new MathViewFactory()],
+class ThickViewFactory implements IComponentHTMLViewFactory {
+    public createView(model: IComponent, scope?: IComponent) {
+        return model as IComponentHTMLView;
+    }
+}
+
+const viewRegistry: Map<string, IComponentHTMLViewFactory> = new Map([
+    ["MathView", new MathViewFactory() as IComponentHTMLViewFactory],
+    ["ThickView", new ThickViewFactory() as IComponentHTMLViewFactory],
 ]);
 
 export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost {
@@ -157,9 +165,9 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
                 // so it's the only one with a specified view.  The rest can already be rendered directly.
                 { key: "math inline", enabled: always, exec: () => insertComponentFromCollection(math, { display: "inline" }, "MathView") },
                 { key: "math block", enabled: always, exec: () => insertComponentFromCollection(math, { display: "block" }, "MathView") },
-                { key: "morton", enabled: always, exec: () => insertComponentFromCollection(videos, {}, undefined, "display:block;width:61%;--aspect-ratio:calc(16/9)") },
-                { key: "image", enabled: always, exec: () => insertComponentFromCollection(images, {}, undefined, "display:inline-block;float:left;resize:both;overflow:hidden") },
-                { key: "table", enabled: always, exec: () => insertComponent(tableViewType, {}) },
+                { key: "morton", enabled: always, exec: () => insertComponentFromCollection(videos, {}, "ThickView", "display:block;width:61%;--aspect-ratio:calc(16/9)") },
+                { key: "image", enabled: always, exec: () => insertComponentFromCollection(images, {}, "ThickView", "display:inline-block;float:left;resize:both;overflow:hidden") },
+                { key: "table", enabled: always, exec: () => insertComponent(tableViewType, {}, "ThickView") },
             ];
             /* eslint-enable max-len */
 
