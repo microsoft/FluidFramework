@@ -29,6 +29,7 @@
   "dependencies": {
     "@microsoft/fluid-core-utils": "^0.12.0",
     "@microsoft/fluid-driver-definitions": "^0.12.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.12.0",
     "@microsoft/fluid-protocol-definitions": "^0.1000.0"
   },
   "devDependencies": {
