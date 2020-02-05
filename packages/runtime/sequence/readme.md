@@ -124,9 +124,9 @@ Both markers and text are stored as segments in the Shared String. Text segments
   - packages\components\client-ui\src\controls\flowView.ts
 
 - Integrations with Open Source Rich Text Editors
-  - samples\chaincode\prosemirror\
-  - samples\chaincode\smde\src\
-  - samples\chaincode\draft-js\
+  - examples\components\prosemirror\
+  - examples\components\smde\src\
+  - examples\components\draft-js\
 
 - Plain Text Editor Implementations
   - packages\framework\aqueduct-react\src\react\collaborativeTextArea.tsx
