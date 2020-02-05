@@ -103,12 +103,18 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
 
             const always = () => true;
 
-            const insertComponent = (type: string, componentOptions: object, style?: string, classList?: string[]) => {
+            const insertComponent = (
+                type: string,
+                componentOptions: object,
+                view?: string,
+                style?: string,
+                classList?: string[],
+            ) => {
                 const position = editor.selection.end;
                 const url = randomId();
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 this.createSubComponent(url, type);
-                doc.insertComponent(position, `/${this.root.get(url)}`, componentOptions, style, classList);
+                doc.insertComponent(position, `/${this.root.get(url)}`, componentOptions, style, classList, view);
             };
 
             const insertComponentFromCollection = (

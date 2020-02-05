@@ -92,32 +92,14 @@ export class InclusionFormatter extends Formatter<IInclusionState> {
 
             const viewFactory = layout.doc.getViewFactoryFromMarker(marker);
             state.view = layout.doc.getComponentFromMarker(marker).then((component: IComponent) => {
-                let view: IComponentHTMLView;
-
                 if (viewFactory) {
                     // We found a view class registered for this marker's view type
-                    view = viewFactory.createView(component, layout.scope);
-                } else {
-                    const visual = component.IComponentHTMLVisual;
-
-                    if (visual) {
-                        if (visual.addView) {
-                            view = visual.addView(layout.scope);
-                        } else {
-                            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                            view = {
-                                IComponentHTMLVisual: visual,
-                                render: visual.render.bind(visual),
-                                remove: state.slot.remove.bind(state.slot),
-                            } as IComponentHTMLView;
-                        }
-                    }
+                    const view = viewFactory.createView(component, layout.scope);
+                    view.render(state.slot);
+                    CaretUtil.caretEnter(state.slot, Direction.right, Rect.empty);
+                    state.slot.focus();
+                    return view;
                 }
-
-                view.render(state.slot);
-                CaretUtil.caretEnter(state.slot, Direction.right, Rect.empty);
-                state.slot.focus();
-                return view;
             });
         }
 
