@@ -11,16 +11,14 @@ import { getHashedDocumentId } from "./odspUtils";
 
 export function getSnapshotUrl(siteUrl: string, driveId: string, itemId: string) {
     const siteOrigin = new URL(siteUrl).origin;
-    
+
     // TODO This will only support ODC using api.onedrive.com, update to handle the future (share links etc)
-    let prefix;
-    if (origin.toLowerCase().indexOf('.onedrive.com') !== -1) {
-        prefix = "v1.0";
-    } else {
-        prefix = "_api/v2.1";
+    let prefix = "_api/";
+    if (siteOrigin.toLowerCase().includes(".onedrive.com")) {
+        prefix = "";
     }
 
-    return `${siteOrigin}/${prefix}/drives/${driveId}/items/${itemId}/opStream/snapshots`;
+    return `${siteOrigin}/${prefix}v2.1/drives/${driveId}/items/${itemId}/opStream/snapshots`;
 }
 
 /**
