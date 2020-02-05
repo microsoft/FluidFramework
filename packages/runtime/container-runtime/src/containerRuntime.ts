@@ -228,7 +228,7 @@ export class ScheduleManager {
             // As a back stop for any bugs marking the end of a batch - if the client ID flipped, we
             // consider the previous batch over.
             if (this.batchClientId) {
-                this.emitter.emit("batchEnd", undefined, undefined);
+                this.emitter.emit("batchEnd", "Did not receive real batchEnd message", undefined);
                 this.deltaScheduler.batchEnd();
 
                 this.logger.sendTelemetryEvent({
