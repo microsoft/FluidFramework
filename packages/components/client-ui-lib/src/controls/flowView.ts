@@ -4530,11 +4530,11 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    public insertComponentNew(prefix: string, chaincode: string, inline = false) {
+    public insertComponentNew(prefix: string, component: string, inline = false) {
         const id = `${prefix}-${Date.now()}`;
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.collabDocument.runtime.createAndAttachComponent(id, chaincode);
+        this.collabDocument.runtime.createAndAttachComponent(id, component);
 
         const props = {
             crefTest: {

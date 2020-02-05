@@ -32,12 +32,12 @@ export function create(
     const webLoader = new WebCodeLoader(new WhiteList());
 
     /**
-     * Looks up the version of a chaincode in the cache.
+     * Looks up the version of a component in the cache.
      */
-    const getUrlWithVersion = async (chaincode: string) => {
+    const getUrlWithVersion = async (component: string) => {
         return new Promise<string>((resolve) => {
-            if (chaincode !== "" && chaincode.indexOf("@") === chaincode.lastIndexOf("@")) {
-                cache.get(chaincode).then((value) => {
+            if (component !== "" && component.indexOf("@") === component.lastIndexOf("@")) {
+                cache.get(component).then((value) => {
                     resolve(value as string);
                 }, (err) => {
                     winston.error(err);
@@ -55,9 +55,9 @@ export function create(
     router.get("/:tenantId/*", spoEnsureLoggedIn(), ensureLoggedIn(), (request, response) => {
         const start = Date.now();
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        const chaincode: string = request.query.chaincode ? request.query.chaincode : "";
+        const component: string = request.query.component ? request.query.component : "";
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        getUrlWithVersion(chaincode).then((version: string) => {
+        getUrlWithVersion(component).then((version: string) => {
             // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (version) {
                 const redirectUrl = `${request.originalUrl}@${version}`;
@@ -92,7 +92,7 @@ export function create(
                     }
 
                     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-                    if (!request.query.chaincode) {
+                    if (!request.query.component) {
                         return;
                     }
 
@@ -101,16 +101,16 @@ export function create(
                     const entryPoint = request.query.entrypoint;
 
                     let codeDetails: IFluidCodeDetails;
-                    if (chaincode.startsWith("http")) {
+                    if (component.startsWith("http")) {
                         codeDetails = {
                             config: {
-                                [`@gateway:cdn`]: chaincode,
+                                [`@gateway:cdn`]: component,
                             },
                             package: {
                                 fluid: {
                                     browser: {
                                         umd: {
-                                            files: [chaincode],
+                                            files: [component],
                                             library: entryPoint,
                                         },
                                     },
@@ -120,12 +120,12 @@ export function create(
                             },
                         };
                     } else {
-                        const details = extractDetails(chaincode);
+                        const details = extractDetails(component);
                         codeDetails = {
                             config: {
                                 [`@${details.scope}:cdn`]: cdn,
                             },
-                            package: chaincode,
+                            package: component,
                         };
                     }
 
@@ -175,7 +175,7 @@ export function create(
                             {
                                 // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                                 cache: fullTree ? JSON.stringify(fullTree.cache) : undefined,
-                                chaincode: JSON.stringify(pkg),
+                                component: JSON.stringify(pkg),
                                 clientId: config.get("login:microsoft").clientId,
                                 config: workerConfig,
                                 jwt: jwtToken,

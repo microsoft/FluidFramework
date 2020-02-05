@@ -1,7 +1,7 @@
 {
   "name": "@fluid-example/monaco-container",
   "version": "0.14.0",
-  "description": "Monaco chaincode container",
+  "description": "Monaco component container",
   "license": "MIT",
   "author": "Microsoft",
   "sideEffects": [

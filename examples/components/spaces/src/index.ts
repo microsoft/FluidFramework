@@ -21,17 +21,17 @@ import {
 } from "./container-services";
 import { Spaces } from "./spaces";
 
-const chaincodeName = "spaces";
+const componentName = "spaces";
 
 /**
  * This does setup for the Container. The SimpleModuleInstantiationFactory also enables dynamic loading in the
  * EmbeddedComponentLoader.
  */
 export const fluidExport = new SimpleModuleInstantiationFactory(
-    chaincodeName,
+    componentName,
     new Map([
         [ClickerName, Promise.resolve(ClickerInstantiationFactory)],
-        [chaincodeName, Promise.resolve(Spaces.getFactory())],
+        [componentName, Promise.resolve(Spaces.getFactory())],
         ["button", Promise.resolve(ButtonInstantiationFactory)],
         ["number", Promise.resolve(NumberInstantiationFactory)],
         ["textbox", Promise.resolve(TextBoxInstantiationFactory)],

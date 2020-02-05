@@ -25,12 +25,12 @@
 
     var cache = {{{ cache }}};
     var timings = "{{ timings }}";
-    {{#chaincode}}
-    var chaincode = {{{ chaincode }}};
-    {{/chaincode}}
-    {{^chaincode}}
-    var chaincode;
-    {{/chaincode}}
+    {{#component}}
+    var component = {{{ component }}};
+    {{/component}}
+    {{^component}}
+    var component;
+    {{/component}}
     var url = "{{ url }}";
     var resolved = {{{ resolved }}};
     var config = {{{ config }}};
@@ -39,7 +39,7 @@
     loaderFramed.initialize(
         window.location.href,
         resolved,
-        chaincode,
+        component,
         scriptIds,
         config,
         clientId,

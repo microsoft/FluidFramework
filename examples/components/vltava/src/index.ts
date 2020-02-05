@@ -23,7 +23,7 @@ import {
 } from "./interfaces";
 import { Vltava } from "./vltava";
 
-const chaincodeName = "vltava";
+const componentName = "vltava";
 
 export class InternalRegistry implements IComponentRegistry, IComponentRegistryDetails {
     public get IComponentRegistry() { return this; }
@@ -96,7 +96,7 @@ const generateFactory = () => {
     });
 
     // We don't want to include the default wrapper component in our list of available components
-    containerComponents.push([ chaincodeName, Promise.resolve(Vltava.getFactory())]);
+    containerComponents.push([ componentName, Promise.resolve(Vltava.getFactory())]);
 
     const containerRegistries: NamedComponentRegistryEntries = [
         ["", Promise.resolve(new InternalRegistry(containerComponentsDefinition))],
@@ -105,7 +105,7 @@ const generateFactory = () => {
     // TODO: You should be able to specify the default registry instead of just a list of components
     // and the default registry is already determined Issue:#1138
     return new SimpleModuleInstantiationFactory(
-        chaincodeName,
+        componentName,
         [
             ...containerComponents,
             ...containerRegistries,

@@ -43,7 +43,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         container: Container,
         scope: IComponent,
         codeLoader: ICodeLoader,
-        chaincode: IRuntimeFactory,
+        component: IRuntimeFactory,
         baseSnapshot: ISnapshotTree | null,
         attributes: IDocumentAttributes,
         blobManager: BlobManager | undefined,
@@ -62,7 +62,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
             container,
             scope,
             codeLoader,
-            chaincode,
+            component,
             baseSnapshot,
             attributes,
             blobManager,
@@ -153,7 +153,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         private readonly container: Container,
         public readonly scope: IComponent,
         public readonly codeLoader: ICodeLoader,
-        public readonly chaincode: IRuntimeFactory,
+        public readonly component: IRuntimeFactory,
         private _baseSnapshot: ISnapshotTree | null,
         private readonly attributes: IDocumentAttributes,
         public readonly blobManager: BlobManager | undefined,
@@ -238,6 +238,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
     }
 
     private async load() {
-        this.runtime = await this.chaincode.instantiateRuntime(this);
+        this.runtime = await this.component.instantiateRuntime(this);
     }
 }

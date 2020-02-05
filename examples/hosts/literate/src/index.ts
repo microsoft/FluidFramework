@@ -9,7 +9,7 @@ import { IUser } from "@microsoft/fluid-protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { extractDetails, WebCodeLoader, WhiteList } from "@microsoft/fluid-web-code-loader";
 import { InsecureUrlResolver } from "./urlResolver";
-import { attach, initializeChaincode, parsePackageName } from "./utils";
+import { attach, initializeComponent, parsePackageName } from "./utils";
 
 // Base service configuration.
 const ordererUrl = "http://localhost:3000";
@@ -88,8 +88,8 @@ export async function start(url: string, code: string): Promise<void> {
             package: code,
         };
 
-        await initializeChaincode(fluidDocument, details)
-            .catch((error) => console.error("chaincode error", error));
+        await initializeComponent(fluidDocument, details)
+            .catch((error) => console.error("component error", error));
     }
 }
 

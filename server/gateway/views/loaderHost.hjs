@@ -14,12 +14,12 @@
     <script>
         var cache = {{{ cache }}};
         var timings = "{{ timings }}";
-        {{#chaincode}}
-        var chaincode = {{{ chaincode }}};
-        {{/chaincode}}
-        {{^chaincode}}
-        var chaincode;
-        {{/chaincode}}
+        {{#component}}
+        var component = {{{ component }}};
+        {{/component}}
+        {{^component}}
+        var component;
+        {{/component}}
         var url = "{{ url }}";
         var resolved = {{{ resolved }}};
         var jwt = "{{ jwt }}";

@@ -9,15 +9,15 @@ import { Counter, CounterValueType } from "@microsoft/fluid-map";
 
 // Import our local components
 // eslint-disable-next-line import/no-internal-modules
-import { Button, ButtonInstantiationFactory } from "./localChaincode/Button";
+import { Button, ButtonInstantiationFactory } from "./localComponent/Button";
 // eslint-disable-next-line import/no-internal-modules
-import { TextDisplay, TextDisplayInstantiationFactory } from "./localChaincode/TextDisplay";
+import { TextDisplay, TextDisplayInstantiationFactory } from "./localComponent/TextDisplay";
 // eslint-disable-next-line import/no-internal-modules
-import { Incrementor, IncrementorInstantiationFactory } from "./localChaincode/Incrementor";
+import { Incrementor, IncrementorInstantiationFactory } from "./localComponent/Incrementor";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
-const chaincodeName = pkg.name;
+const componentName = pkg.name;
 
 /**
  * Simple example of sharing content across components
@@ -51,11 +51,11 @@ export class SimpleDataSharing extends PrimedComponent implements IComponentHTML
 
         // Create a button, textDisplay, and incrementor component
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.createAndAttachComponent(this.buttonId, Button.chaincodeName);
+        this.createAndAttachComponent(this.buttonId, Button.componentName);
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.createAndAttachComponent(this.textDisplayId, TextDisplay.chaincodeName);
+        this.createAndAttachComponent(this.textDisplayId, TextDisplay.componentName);
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.createAndAttachComponent(this.incrementorId, Incrementor.chaincodeName);
+        this.createAndAttachComponent(this.incrementorId, Incrementor.componentName);
     }
 
     protected async componentHasInitialized() {
@@ -92,11 +92,11 @@ export const SimpleDataSharingInstantiationFactory = new PrimedComponentFactory(
 );
 
 export const fluidExport = new SimpleModuleInstantiationFactory(
-    chaincodeName,
+    componentName,
     new Map([
-        [chaincodeName, Promise.resolve(SimpleDataSharingInstantiationFactory)],
-        [Button.chaincodeName, Promise.resolve(ButtonInstantiationFactory)],
-        [TextDisplay.chaincodeName, Promise.resolve(TextDisplayInstantiationFactory)],
-        [Incrementor.chaincodeName, Promise.resolve(IncrementorInstantiationFactory)],
+        [componentName, Promise.resolve(SimpleDataSharingInstantiationFactory)],
+        [Button.componentName, Promise.resolve(ButtonInstantiationFactory)],
+        [TextDisplay.componentName, Promise.resolve(TextDisplayInstantiationFactory)],
+        [Incrementor.componentName, Promise.resolve(IncrementorInstantiationFactory)],
     ]),
 );

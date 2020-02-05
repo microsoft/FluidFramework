@@ -8,7 +8,7 @@ import { Counter } from "@microsoft/fluid-map";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../../package.json");
-const chaincodeName = pkg.name;
+const componentName = pkg.name;
 
 /**
  * Not all components need to have ui.
@@ -18,7 +18,7 @@ const chaincodeName = pkg.name;
  * This logic is valuable as a component when you could imagining using it with multiple other components.
  */
 export class Incrementor extends PrimedComponent {
-    public static readonly chaincodeName = `${chaincodeName}/incrementor`;
+    public static readonly componentName = `${componentName}/incrementor`;
     public counter: Counter;
 
     protected async componentInitializingFirstTime() {

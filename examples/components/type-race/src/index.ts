@@ -8,7 +8,7 @@ import { TyperaceInstantiationFactory as ComponentInstantiationFactory } from ".
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
-const chaincodeName = pkg.name as string;
+const componentName = pkg.name as string;
 
 /**
  * This does setup for the Container. The SimpleModuleInstantiationFactory also enables dynamic loading in the
@@ -19,8 +19,8 @@ const chaincodeName = pkg.name as string;
  * 2. Map of string to factory for all components
  */
 export const fluidExport = new SimpleModuleInstantiationFactory(
-    chaincodeName,
+    componentName,
     new Map([
-        [chaincodeName, Promise.resolve(ComponentInstantiationFactory)],
+        [componentName, Promise.resolve(ComponentInstantiationFactory)],
     ]),
 );
