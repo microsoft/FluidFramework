@@ -25,23 +25,6 @@ import { Vltava } from "./vltava";
 
 const componentName = "vltava";
 
-<<<<<<< HEAD:examples/components/vltava/src/index.ts
-/**
- * This does setup for the Container. The SimpleModuleInstantiationFactory also enables dynamic loading in the
- * EmbeddedComponentLoader.
- */
-export const fluidExport = new SimpleModuleInstantiationFactory(
-    componentName,
-    new Map([
-        [componentName, Promise.resolve(Vltava.getFactory())],
-        [ClickerName, Promise.resolve(ClickerInstantiationFactory)],
-        ["tabs", Promise.resolve(TabsComponent.getFactory())],
-        ["spaces", Promise.resolve(Spaces.getFactory())],
-        ["codemirror", Promise.resolve(cmfe)],
-        ["prosemirror", Promise.resolve(pmfe)],
-    ]),
-);
-=======
 export class InternalRegistry implements IComponentRegistry, IComponentRegistryDetails {
     public get IComponentRegistry() { return this; }
     public get IComponentRegistryDetails() { return this; }
@@ -113,7 +96,7 @@ const generateFactory = () => {
     });
 
     // We don't want to include the default wrapper component in our list of available components
-    containerComponents.push([ chaincodeName, Promise.resolve(Vltava.getFactory())]);
+    containerComponents.push([ componentName, Promise.resolve(Vltava.getFactory())]);
 
     const containerRegistries: NamedComponentRegistryEntries = [
         ["", Promise.resolve(new InternalRegistry(containerComponentsDefinition))],
@@ -122,7 +105,7 @@ const generateFactory = () => {
     // TODO: You should be able to specify the default registry instead of just a list of components
     // and the default registry is already determined Issue:#1138
     return new SimpleModuleInstantiationFactory(
-        chaincodeName,
+        componentName,
         [
             ...containerComponents,
             ...containerRegistries,
@@ -131,4 +114,3 @@ const generateFactory = () => {
 };
 
 export const fluidExport = generateFactory();
->>>>>>> abdb2aa8444aa3620a94585b1333f1de5ed4b791:samples/chaincode/vltava/src/index.ts
