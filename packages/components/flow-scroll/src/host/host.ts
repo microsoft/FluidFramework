@@ -110,8 +110,8 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
 
             const insertComponent = (
                 type: string,
+                view: string,
                 componentOptions: object,
-                view?: string,
                 style?: string,
                 classList?: string[],
             ) => {
@@ -119,19 +119,19 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
                 const url = randomId();
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 this.createSubComponent(url, type);
-                doc.insertComponent(position, `/${this.root.get(url)}`, componentOptions, style, classList, view);
+                doc.insertComponent(position, `/${this.root.get(url)}`, view, componentOptions, style, classList);
             };
 
             const insertComponentFromCollection = (
                 factory: IComponentCollection,
+                view: string,
                 componentOptions: object,
-                view?: string,
                 style?: string,
                 classList?: string[],
             ) => {
                 const position = editor.selection.end;
                 const instance = factory.createCollectionItem(componentOptions) as IComponentLoadable;
-                doc.insertComponent(position, `/${instance.url}`, componentOptions, style, classList, view);
+                doc.insertComponent(position, `/${instance.url}`, view, componentOptions, style, classList);
             };
 
             const insertTags = (tags: TagName[]) => {
@@ -173,12 +173,12 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
                 { key: "ul", enabled: always, exec: () => { insertTags([TagName.ul, TagName.li]); } },
                 { key: "red", enabled: always, exec: () => { setStyle("color:red"); } },
                 // Math is the only component from this set with view/model separation,
-                // so it's the only one with a specified view.  The rest can already be rendered directly.
-                { key: "math inline", enabled: always, exec: () => insertComponentFromCollection(math, { display: "inline" }, "MathView") },
-                { key: "math block", enabled: always, exec: () => insertComponentFromCollection(math, { display: "block" }, "MathView") },
-                { key: "morton", enabled: always, exec: () => insertComponentFromCollection(videos, {}, "ThickView", "display:block;width:61%;--aspect-ratio:calc(16/9)") },
-                { key: "image", enabled: always, exec: () => insertComponentFromCollection(images, {}, "ThickView", "display:inline-block;float:left;resize:both;overflow:hidden") },
-                { key: "table", enabled: always, exec: () => insertComponent(tableViewType, {}, "ThickView") },
+                // so it's the only one with a different view factory.  The rest can already be rendered directly.
+                { key: "math inline", enabled: always, exec: () => insertComponentFromCollection(math, "MathView", { display: "inline" }) },
+                { key: "math block", enabled: always, exec: () => insertComponentFromCollection(math, "MathView", { display: "block" }) },
+                { key: "morton", enabled: always, exec: () => insertComponentFromCollection(videos, "ThickView", {}, "display:block;width:61%;--aspect-ratio:calc(16/9)") },
+                { key: "image", enabled: always, exec: () => insertComponentFromCollection(images, "ThickView", {}, "display:inline-block;float:left;resize:both;overflow:hidden") },
+                { key: "table", enabled: always, exec: () => insertComponent(tableViewType, "ThickView", {}) },
             ];
             /* eslint-enable max-len */
 
