@@ -5,28 +5,21 @@
 
 const fs = require("fs");
 const path = require("path");
-const fm = require("front-matter")
 
-/**
- * This function dynamically creates and orders sidebar links in the blog section based on the file names.
- */
-const getBlogSidebar = () => {
-    const directoryPath = path.join(__dirname, "../blog");
-    const files = fs.readdirSync(directoryPath);
-    files.sort().reverse();
-
-    let blogSidebar = [];
+const listPages = (dirPath, includeIndex = false) => {
+    dirPath = path.join(__dirname, dirPath);
+    const files = fs.readdirSync(dirPath);
+    let pages = [];
     for (let file of files) {
-        let content = fs.readFileSync(path.join(directoryPath, file), { encoding: "utf8" }).toString();
-        let matter = fm(content);
+        if (file === "README.md" || file == "index.md") {
+            if (!includeIndex) {
+                continue;
+            }
+        }
         file = path.basename(file, ".md");
-        blogSidebar.push({
-            title: matter.attributes.title,
-            path: file,
-            sidebarDepth: 2,
-        });
+        pages.push(file);
     }
-    return blogSidebar;
+    return pages;
 };
 
 /**
@@ -77,90 +70,87 @@ const getApiSidebar = () => {
     if (files.includes("fluid-component-runtime.md")) {
         apiSidebar.push({
             title: "Runtime",
-                children: [
-                    "fluid-component-runtime",
-                    "fluid-container-runtime",
-                    "fluid-runtime-definitions",
-                ]
+            children: [
+                "fluid-component-runtime",
+                "fluid-container-runtime",
+                "fluid-runtime-definitions",
+            ]
         });
     }
 
     if (files.includes("fluid-container-loader.md")) {
         apiSidebar.push({
             title: "Loader",
-                children: [
-                    "fluid-container-definitions",
-                    "fluid-container-loader",
-                    "fluid-execution-context-loader",
-                    "fluid-web-code-loader",
-                ]
+            children: [
+                "fluid-container-definitions",
+                "fluid-container-loader",
+                "fluid-execution-context-loader",
+                "fluid-web-code-loader",
+            ]
         });
     }
 
     if (files.includes("fluid-driver-base.md")) {
         apiSidebar.push({
             title: "Driver",
-                children: [
-                    "fluid-driver-base",
-                    "fluid-driver-definitions",
-                    "fluid-file-driver",
-                    "fluid-iframe-driver",
-                    "fluid-odsp-driver",
-                    "fluid-replay-driver",
-                    "fluid-routerlicious-driver",
-                ]
+            children: [
+                "fluid-driver-base",
+                "fluid-driver-definitions",
+                "fluid-file-driver",
+                "fluid-iframe-driver",
+                "fluid-odsp-driver",
+                "fluid-replay-driver",
+                "fluid-routerlicious-driver",
+            ]
         });
     }
 
     if (files.includes("fluid-base-host.md")) {
         apiSidebar.push({
             title: "Sample Hosts",
-                children: [
-                    "fluid-base-host",
-                    "react-web-host",
-                    "tiny-web-host",
-                ]
+            children: [
+                "fluid-base-host",
+                "react-web-host",
+                "tiny-web-host",
+            ]
         });
     }
 
     if (files.includes("fluid-debugger.md")) {
         apiSidebar.push({
             title: "Tools",
-                children: [
-                    "fluid-debugger",
-                    "fluid-merge-tree-client-replay",
-                    "fluid-replay-tool",
-                ]
+            children: [
+                "fluid-debugger",
+                "fluid-merge-tree-client-replay",
+                "fluid-replay-tool",
+            ]
         });
     }
 
     if (files.includes("fluid-core-utils.md")) {
         apiSidebar.push({
             title: "Miscellaneous",
-                children: [
-                    "fluid-core-utils",
-                ]
+            children: [
+                "fluid-core-utils",
+            ]
         });
     }
 
     if (files.includes("fluid-common-definitions.md")) {
         apiSidebar.push({
             title: "Internal/Deprecated",
-                children: [
-                    "client-api",
-                    "fluid-common-definitions",
-                    "fluid-driver-utils",
-                    "fluid-host-service-interfaces",
-                    "fluid-runtime-utils",
-                ]
+            children: [
+                "client-api",
+                "fluid-common-definitions",
+                "fluid-driver-utils",
+                "fluid-host-service-interfaces",
+                "fluid-runtime-utils",
+            ]
         });
     }
 
     return apiSidebar;
 };
-
-const blogSidebar = getBlogSidebar();
-blogSidebar[0].sidebarDepth = 0;
 
 module.exports = {
     title: "Fluid Framework",
@@ -228,7 +218,6 @@ module.exports = {
         }
     },
     themeConfig: {
-        // docsDir: "docs",
         editLinks: false,
         lastUpdated: false, // "Last Updated",
         repo: "microsoft/FluidFramework",
@@ -238,7 +227,6 @@ module.exports = {
             { text: "What is Fluid?", link: "/what-is-fluid" },
             { text: "Guide", link: "/guide/" },
             { text: "Tutorials", link: "/examples/" },
-            { text: "Blog", link: `/blog/${blogSidebar[0].path}` },
             { text: "API", link: "/api/overview" },
             {
                 text: "🤿 Dive Deeper",
@@ -260,7 +248,20 @@ module.exports = {
             },
         ],
         sidebar: {
-            "/blog/": blogSidebar,
+            "/team/": [
+                {
+                    title: "Team",
+                    collapsable: false,
+                    children: [
+                        ""
+                    ]
+                },
+                {
+                    title: "Updates",
+                    collapsable: false,
+                    children: listPages("../team/")
+                },
+            ],
             "/api/": getApiSidebar(),
             "/guide/": [
                 {
