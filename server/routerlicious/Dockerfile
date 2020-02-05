@@ -23,7 +23,7 @@ COPY packages/components/agent-scheduler/package*.json packages/components/agent
 COPY packages/components/blob-manager/package*.json packages/components/blob-manager/
 COPY packages/components/canvas/package*.json packages/components/canvas/
 COPY packages/components/clicker/package*.json packages/components/clicker/
-COPY packages/components/client-ui/package*.json packages/components/client-ui/
+COPY packages/components/client-ui-lib/package*.json packages/components/client-ui-lib/
 COPY packages/components/dice-roller/package*.json packages/components/dice-roller/
 COPY packages/components/external-component-loader/package*.json packages/components/external-component-loader/
 COPY packages/components/image-collection/package*.json packages/components/image-collection/
@@ -32,7 +32,7 @@ COPY packages/components/progress-bars/package*.json packages/components/progres
 COPY packages/components/shared-map-visualizer/package*.json packages/components/shared-map-visualizer/
 COPY packages/components/video-players/package*.json packages/components/video-players/
 COPY packages/components/flow-scroll/package*.json packages/components/flow-scroll/
-COPY packages/components/flow-util/package*.json packages/components/flow-util/
+COPY packages/components/flow-util-lib/package*.json packages/components/flow-util-lib/
 COPY packages/components/markflow/package*.json packages/components/markflow/
 COPY packages/components/math/package*.json packages/components/math/
 COPY packages/components/monaco/package*.json packages/components/monaco/
