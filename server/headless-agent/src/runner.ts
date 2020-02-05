@@ -4,7 +4,7 @@
  */
 
 import { Deferred } from "@microsoft/fluid-core-utils";
-import { IQueueMessage } from "@microsoft/fluid-runtime-definitions";
+import { IQueueMessage } from "@microsoft/fluid-protocol-definitions";
 import * as core from "@microsoft/fluid-server-services-core";
 import * as utils from "@microsoft/fluid-server-services-utils";
 import * as winston from "winston";
@@ -20,7 +20,7 @@ export class HeadlessRunner implements utils.IRunner {
         private workerConfig: any,
         private messageReceiver: core.ITaskMessageReceiver,
         private cache: ICache) {
-            this.permission = new Set(workerConfig.permission as string[]);
+        this.permission = new Set(workerConfig.permission as string[]);
     }
 
     public async start(): Promise<void> {
@@ -64,30 +64,31 @@ export class HeadlessRunner implements utils.IRunner {
     }
 
     private launchPuppetMaster(requestMessage: IQueueMessage, task: string) {
-        const puppet = new PuppetMaster(
+        PuppetMaster.create(
             requestMessage.documentId,
-            this.workerConfig.alfredUrl,
-            this.workerConfig.blobStorageUrl,
             requestMessage.tenantId,
-            requestMessage.token,
-            this.workerConfig.key,
-            this.workerConfig.packageUrl,
+            this.workerConfig.internalGatewayUrl,
             task,
-            this.cache);
-        puppet.launch().then(() => {
-            const cacheKey = this.createKey(
-                requestMessage.tenantId,
-                requestMessage.documentId,
-                task);
-            this.puppetCache.set(cacheKey, puppet);
-            winston.info(`Launched for ${cacheKey}`);
-            puppet.on("close", (ev: ICloseEvent) => {
-                this.closePuppet(ev);
-                winston.info(`Closed for ${cacheKey}`);
+            this.workerConfig.key,
+            this.cache)
+            .then((puppet) => {
+
+                puppet.launch().then(() => {
+                    const cacheKey = this.createKey(
+                        requestMessage.tenantId,
+                        requestMessage.documentId,
+                        task);
+
+                    this.puppetCache.set(cacheKey, puppet);
+                    winston.info(`Launched for ${cacheKey}`);
+                    puppet.on("close", (ev: ICloseEvent) => {
+                        this.closePuppet(ev);
+                        winston.info(`Closed for ${cacheKey}`);
+                    });
+                }, (err) => {
+                    winston.error(err);
+                });
             });
-        }, (err) => {
-            winston.error(err);
-        });
     }
 
     private closePuppet(ev: ICloseEvent) {

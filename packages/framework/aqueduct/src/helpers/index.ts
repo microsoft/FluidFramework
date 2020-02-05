@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export * from "./containerServices";
 export * from "./primedComponentFactory";
 export * from "./simpleContainerRuntimeFactory";
 export * from "./simpleModuleInstantiationFactory";

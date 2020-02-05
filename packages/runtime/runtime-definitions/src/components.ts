@@ -426,4 +426,11 @@ export interface IHostRuntime extends
      * Executes a request against the runtime
      */
     request(request: IRequest): Promise<IResponse>;
+
+    /**
+     * Submits the signal to be sent to other clients.
+     * @param type - Type of the signal.
+     * @param content - Content of the signal.
+     */
+    submitSignal(type: string, content: any): void;
 }

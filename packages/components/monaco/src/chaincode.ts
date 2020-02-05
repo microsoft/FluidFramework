@@ -10,7 +10,7 @@ import {
     IComponentHTMLOptions,
     IComponentHTMLVisual,
 } from "@microsoft/fluid-component-core-interfaces";
-import { IComponentLayout } from "@microsoft/fluid-framework-interfaces";
+import { IComponentLayout } from "@microsoft/fluid-framework-experimental";
 import {
     IMergeTreeGroupMsg,
     IMergeTreeInsertMsg,

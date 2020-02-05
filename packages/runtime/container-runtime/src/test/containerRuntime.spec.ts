@@ -4,6 +4,8 @@
  */
 
 import * as assert from "assert";
+import { EventEmitter } from "events";
+import { DebugLogger } from "@microsoft/fluid-core-utils";
 import { BlobTreeEntry, TreeTreeEntry } from "@microsoft/fluid-protocol-base";
 import {
     ISummaryBlob,
@@ -12,17 +14,23 @@ import {
     ITree,
     SummaryObject,
     SummaryType,
+    IDocumentMessage,
+    ISequencedDocumentMessage,
+    MessageType,
 } from "@microsoft/fluid-protocol-definitions";
 import {
     UploadSummaryObject,
     IUploadSummaryTree,
     IUploadSummaryHandle,
 } from "@microsoft/fluid-driver-definitions";
+import { IDeltaManager, IMessageScheduler } from "@microsoft/fluid-container-definitions";
+import { MockDeltaManager, MockMessageScheduler } from "@microsoft/fluid-test-runtime-utils";
 import {
     IConvertedSummaryResults,
     SummaryTreeConverter,
     IConvertedUploadSummaryResults,
 } from "../summaryTreeConverter";
+import { ScheduleManager } from "../containerRuntime";
 
 type AllSummaryObject = SummaryObject | UploadSummaryObject;
 
@@ -178,6 +186,132 @@ describe("Runtime", () => {
                     assert.strictEqual(summaryResults.summaryStats.treeNodeCount, 2);
                     assert.strictEqual(summaryResults.summaryStats.totalBlobSize,
                         bufferLength + Buffer.byteLength("test-blob") + Buffer.byteLength("test-u8"));
+                });
+            });
+        });
+
+        describe("ScheduleManager", () => {
+            describe("Batch processing events", () => {
+                let batchBegin: number = 0;
+                let batchEnd: number = 0;
+                let emitter: EventEmitter;
+                let deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+                let messageScheduler: IMessageScheduler;
+                let scheduleManager: ScheduleManager;
+
+                beforeEach(() => {
+                    emitter = new EventEmitter();
+                    deltaManager = new MockDeltaManager();
+                    messageScheduler = new MockMessageScheduler(deltaManager);
+                    scheduleManager = new ScheduleManager(
+                        messageScheduler,
+                        emitter,
+                        deltaManager,
+                        DebugLogger.create("fluid:testScheduleManager"),
+                    );
+
+                    emitter.on("batchBegin", () => {
+                        // When we receive a "batchBegin" event, we should not have any outstanding
+                        // events, i.e., batchBegin and batchEnd should be equal.
+                        assert.strictEqual(batchBegin, batchEnd, "Received batchBegin before previous batchEnd");
+                        batchBegin++;
+                    });
+
+                    emitter.on("batchEnd", () => {
+                        batchEnd++;
+                        // Every "batchEnd" event should correspond to a "batchBegin" event, i.e.,
+                        // batchBegin and batchEnd should be equal.
+                        assert.strictEqual(batchBegin, batchEnd, "Received batcEnd without corresponding batchBegin");
+                    });
+                });
+
+                afterEach(() => {
+                    batchBegin = 0;
+                    batchEnd = 0;
+                });
+
+                it("Single non-batch message", () => {
+                    const clientId: string = "test-client";
+                    const message: Partial<ISequencedDocumentMessage> = {
+                        clientId,
+                        sequenceNumber: 0,
+                        type: MessageType.Operation,
+                    };
+
+                    // Send a non-batch message.
+                    scheduleManager.beginOperation(message as ISequencedDocumentMessage);
+                    scheduleManager.endOperation(undefined, message as ISequencedDocumentMessage);
+
+                    assert.strictEqual(1, batchBegin, "Did not receive correct batchBegin events");
+                    assert.strictEqual(1, batchEnd, "Did not receive correct batchEnd events");
+                });
+
+                it("Multiple non-batch messages", () => {
+                    const clientId: string = "test-client";
+                    const message: Partial<ISequencedDocumentMessage> = {
+                        clientId,
+                        sequenceNumber: 0,
+                        type: MessageType.Operation,
+                    };
+
+                    // Sent 5 non-batch messages.
+                    scheduleManager.beginOperation(message as ISequencedDocumentMessage);
+                    scheduleManager.endOperation(undefined, message as ISequencedDocumentMessage);
+
+                    scheduleManager.beginOperation(message as ISequencedDocumentMessage);
+                    scheduleManager.endOperation(undefined, message as ISequencedDocumentMessage);
+
+                    scheduleManager.beginOperation(message as ISequencedDocumentMessage);
+                    scheduleManager.endOperation(undefined, message as ISequencedDocumentMessage);
+
+                    scheduleManager.beginOperation(message as ISequencedDocumentMessage);
+                    scheduleManager.endOperation(undefined, message as ISequencedDocumentMessage);
+
+                    scheduleManager.beginOperation(message as ISequencedDocumentMessage);
+                    scheduleManager.endOperation(undefined, message as ISequencedDocumentMessage);
+
+                    assert.strictEqual(5, batchBegin, "Did not receive correct batchBegin events");
+                    assert.strictEqual(5, batchEnd, "Did not receive correct batchEnd events");
+                });
+
+                it("Messages in a single batch", () => {
+                    const clientId: string = "test-client";
+                    const batchBeginMessage: Partial<ISequencedDocumentMessage> = {
+                        clientId,
+                        sequenceNumber: 0,
+                        type: MessageType.Operation,
+                        metadata: { batch: true },
+                    };
+
+                    const batchMessage: Partial<ISequencedDocumentMessage> = {
+                        clientId,
+                        sequenceNumber: 0,
+                        type: MessageType.Operation,
+                    };
+
+                    const batchEndMessage: Partial<ISequencedDocumentMessage> = {
+                        clientId,
+                        sequenceNumber: 0,
+                        type: MessageType.Operation,
+                        metadata: { batch: false },
+                    };
+
+                    // Send a batch with 4 messages.
+                    scheduleManager.beginOperation(batchBeginMessage as ISequencedDocumentMessage);
+                    scheduleManager.endOperation(undefined, batchBeginMessage as ISequencedDocumentMessage);
+
+                    scheduleManager.beginOperation(batchMessage as ISequencedDocumentMessage);
+                    scheduleManager.endOperation(undefined, batchMessage as ISequencedDocumentMessage);
+
+                    scheduleManager.beginOperation(batchMessage as ISequencedDocumentMessage);
+                    scheduleManager.endOperation(undefined, batchMessage as ISequencedDocumentMessage);
+
+                    scheduleManager.beginOperation(batchEndMessage as ISequencedDocumentMessage);
+                    scheduleManager.endOperation(undefined, batchEndMessage as ISequencedDocumentMessage);
+
+                    // We should have only received one "batchBegin" and one "batchEnd" for the batch.
+                    assert.strictEqual(1, batchBegin, "Did not receive correct batchBegin event for the batch");
+                    assert.strictEqual(1, batchEnd, "Did not receive correct batchEnd event for the batch");
                 });
             });
         });

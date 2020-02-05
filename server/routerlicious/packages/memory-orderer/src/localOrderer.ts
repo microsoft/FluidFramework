@@ -10,6 +10,7 @@ import {
     ActivityCheckingTimeout,
     BroadcasterLambda,
     ClientSequenceTimeout,
+    DefaultServiceConfiguration,
     DeliLambda,
     ForemanLambda,
     NoopConsolidationTimeout,
@@ -49,17 +50,6 @@ const DefaultScribe: IScribe = {
     minimumSequenceNumber: -1,
     protocolState: undefined,
     sequenceNumber: -1,
-};
-
-const DefaultServiceConfiguration: IServiceConfiguration = {
-    blockSize: 64436,
-    maxMessageSize: 16 * 1024,
-    summary: {
-        idleTime: 5000,
-        maxOps: 1000,
-        maxTime: 5000 * 12,
-        maxAckWaitTime: 600000,
-    },
 };
 
 class WebSocketSubscriber implements ISubscriber {

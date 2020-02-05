@@ -88,6 +88,7 @@ export class AccountManager {
             userId,
         };
 
+        // eslint-disable-next-line no-null/no-null
         await collection.upsert({ _id: id}, account, null);
     }
 

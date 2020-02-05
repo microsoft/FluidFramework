@@ -1,7 +1,8 @@
 # Build Server
 
-> [!TIP]
-> This topic is only relevant to core Fluid contributors.
+::: important
+This topic is only relevant to core Fluid contributors.
+:::
 
 Install Docker Community Edition in order to run the following
 <https://docs.docker.com/install/linux/docker-ce/ubuntu/#set-up-the-repository>
@@ -15,7 +16,7 @@ a Hyper-V VM. If setting up inside of a VM make sure to allocate enough vCPUs.
 
 Then run the following command after getting a VSTS token:
 
-```text
+```
 docker run \
   -d \
   --restart unless-stopped \

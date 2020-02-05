@@ -81,6 +81,7 @@ async function main() {
     const resolvedRoot = await getResolvedFluidRoot();
 
     const baseDirectories = [
+        path.join(resolvedRoot, "common"),
         path.join(resolvedRoot, "packages"),
         path.join(resolvedRoot, "samples/chaincode"),
         path.join(resolvedRoot, "server/routerlicious/packages")

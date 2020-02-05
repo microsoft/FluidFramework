@@ -45,6 +45,7 @@ packageManager:
 
 historian:
   externalUrl: https://historian.wu2.prague.office-int.com
+  internalUrl: http://prodding-lightningbug-historian
 
 mongodb:
   url: mongodb://quieting-guppy-mongodb:27017
