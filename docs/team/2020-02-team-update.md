@@ -43,7 +43,7 @@ and create multiple surfaces. These surfaces are each Components and should be a
 as global services and components. This "Experience" will be a test ground for trying out component model patterns.
 
 
-### Component interaction model
+### Framework interfaces
 
 <Badge text="Matt Rakow" vertical="middle" />
 
@@ -51,34 +51,12 @@ as global services and components. This "Experience" will be a test ground for t
 * [Framework interfaces GitHub project](https://github.com/microsoft/FluidFramework/projects/16)
 
 As partners start to build components, we need to establish interfaces and conventions for component to component
-interaction and communication, in order for them to work well together.We are working to standardize a set of interfaces
-designed to support scenarios requiring cooperation between distinct components, or between components and the app.
-Fluid can be used without these interfaces (as it is today), but these interfaces will serve as the public API contract
-that Microsoft apps and components will follow, establishing an ecosystem of apps and components that know how to work
-with one another. This ecosystem adds value for component and app developers, who will be able to achieve these
-cooperative scenarios with a broad catalog of other components and apps.
-
-
-### Render/view
-
-<Badge text="Matt Rakow" vertical="middle" />
-
-* [Design](https://github.com/microsoft/FluidFramework/issues/1042)
-* [GitHub project](https://github.com/microsoft/FluidFramework/projects/14)
-
-We are re-thinking how rendering and views are handled within the Framework. See the [design
-discussion](https://github.com/microsoft/FluidFramework/issues/1042) for more information about the plans.
-
-
-### Data interactivity
-
-<Badge text="Vlad Sudzilouski" vertical="middle" />
-
-* [GitHub project](https://github.com/microsoft/FluidFramework/projects/18)
-
-Data interactivity is where the Fluid Framework excels (e.g. table/chart instantaneous updates), so we are pushing to
-finalize the interface and patterns that facilitate data exchange between components and establish a default data-model
-component that developers can reuse (e.g. table-document).
+interaction and communication, in order for them to work well together. We are working to standardize a set of
+interfaces designed to support scenarios requiring cooperation between distinct components, or between components and
+the app. Fluid can be used without these interfaces (as it is today), but these interfaces will serve as the public API
+contract that Microsoft apps and components will follow, establishing an ecosystem of apps and components that know how
+to work with one another. We are working closely with Bohemia experts to bring some interfaces pioneered in Bohemia into
+the Fluid core.
 
 
 ### Creation Flow / Singletons
@@ -90,6 +68,45 @@ component that developers can reuse (e.g. table-document).
 Today, it’s tempting to initialize container by having singleton components with well-defined names / IDs, relying on
 being connected through initialization process and be the only one online client on the wire. That’s the easiest but not
 correct (robust to failure) way of initialization. We're working on better patterns to address these needs.
+
+
+### Render / view interfaces
+
+<Badge text="Matt Rakow" vertical="middle" />
+
+* [Design](https://github.com/microsoft/FluidFramework/issues/1042)
+* [GitHub project](https://github.com/microsoft/FluidFramework/projects/14)
+
+We are re-thinking how rendering and views are handled within the Framework based. See the [design
+discussion](https://github.com/microsoft/FluidFramework/issues/1042) for more information about the plans.
+
+
+### Data interactivity
+
+<Badge text="Vlad Sudzilouski" vertical="middle" />
+
+* [GitHub project](https://github.com/microsoft/FluidFramework/projects/18)
+
+We are working with our colleagues in **Teams** and **Noida** to finalize the interfaces and patterns that facilitate data
+exchange between components as well as establish `table-document` as a default data-model component that developers can
+reuse.
+
+
+### Documentation
+
+<Badge text="Tyler Butler" vertical="middle" />
+
+Excellent documentation is key to a self-service model for Fluid development. We continue to invest in improved
+documentation and examples and we are removing outdated information. If anyone asks you where to learn about Fluid,
+please point them to <https://aka.ms/fluid>.
+
+
+### Initializing the private partner program
+
+<Badge text="Skyler Jokiel / Tyler Butler" vertical="middle" />
+
+We are working closely with the SPFx team to get the private partner program up and running. We're aiming to onboard our
+first partner by the end of February.
 
 
 ### Version migration
@@ -108,20 +125,3 @@ clients of that document will reload with the newer code.
 <Badge text="Tony Murphy" vertical="middle" />
 
 * [GitHub project](https://github.com/microsoft/FluidFramework/projects/15)
-
-
-### Documentation
-
-<Badge text="Tyler Butler" vertical="middle" />
-
-Excellent documentation is key to a self-service model for Fluid development. We continue to invest in improved
-documentation and examples and we are removing outdated information. If anyone asks you where to learn about Fluid,
-please point them to <https://aka.ms/fluid>.
-
-
-### Initializing the private partner program
-
-<Badge text="Skyler Jokiel / Tyler Butler" vertical="middle" />
-
-We are working with the SPFx team to get the private partner program up and running. We're aiming to onboard our first
-partner by the end of February.
