@@ -21,12 +21,12 @@ export interface IFluidResolvedUrl extends IResolvedUrlBase {
     url: string;
     tokens: { [name: string]: string };
     endpoints: { [name: string]: string };
-    mode?: FileMode;
+    openMode?: OpenMode;
 }
 
-export enum FileMode {
-    CreateNew,
-    OpenExisting,
+export enum OpenMode {
+    "CreateNew",
+    "OpenExisting",
 }
 
 export interface IUrlResolver {

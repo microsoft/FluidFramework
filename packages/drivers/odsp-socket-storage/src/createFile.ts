@@ -51,23 +51,28 @@ export async function createNewFluidFile(
     const responseP: Promise<IOdspResolvedUrl> = fileInfoToCreateNewResponseCache.get(key);
     let resolvedUrl: IOdspResolvedUrl;
     if (responseP !== undefined) {
-        resolvedUrl = await responseP;
-        return resolvedUrl;
+        return responseP;
     }
     // Check for valid filename before the request to create file is actually made.
     if (isInvalidFileName(newFileInfo.filename)) {
         throw new Error("Invalid filename. Please try again.");
     }
+    // We don't want to create a new file for different instances of a driver. So we cache the
+    // response of previous create request as a deferred promise because this is async and we don't
+    // know the order of execution of this code by driver instances.
     const odspResolvedUrlDeferred = new Deferred<IOdspResolvedUrl>();
     fileInfoToCreateNewResponseCache.put(key, odspResolvedUrlDeferred.promise);
-    const fileResponse: IFileCreateResponse = await createNewFluidFileHelper(newFileInfo, getStorageToken).catch((error) => {
+    let fileResponse: IFileCreateResponse;
+    try {
+        fileResponse = await createNewFluidFileHelper(newFileInfo, getStorageToken);
+        const odspUrl = createOdspUrl(fileResponse.siteUrl, fileResponse.driveId, fileResponse.itemId, "/");
+        const resolver = new OdspDriverUrlResolver();
+        resolvedUrl = await resolver.resolve({url: odspUrl});
+    } catch (error) {
         odspResolvedUrlDeferred.reject(error);
         fileInfoToCreateNewResponseCache.remove(key);
         throw error;
-    });
-    const odspUrl = createOdspUrl(fileResponse.siteUrl, fileResponse.driveId, fileResponse.itemId, "/");
-    const resolver = new OdspDriverUrlResolver();
-    resolvedUrl = await resolver.resolve({url: odspUrl});
+    }
     odspResolvedUrlDeferred.resolve(resolvedUrl);
     if (newFileInfo.callback) {
         newFileInfo.callback(fileResponse.itemId, fileResponse.filename);
@@ -83,7 +88,7 @@ async function createNewFluidFileHelper(
     getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
 ): Promise<IFileCreateResponse> {
     const fileResponse = await getWithRetryForTokenRefresh(async (refresh: boolean) => {
-        const storageToken = await getStorageToken(newFileInfo.siteUrl, false);
+        const storageToken = await getStorageToken(newFileInfo.siteUrl, refresh);
 
         const encodedFilename = encodeURIComponent(`${newFileInfo.filename}.fluid`);
 
@@ -93,7 +98,7 @@ async function createNewFluidFileHelper(
         const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
 
         const fetchResponse = await fetch(url, {
-            method: "POST",
+            method: "PUT",
             headers,
         });
 

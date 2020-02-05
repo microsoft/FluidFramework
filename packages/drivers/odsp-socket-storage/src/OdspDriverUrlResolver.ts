@@ -4,7 +4,7 @@
  */
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { FileMode, IUrlResolver } from "@microsoft/fluid-driver-definitions";
+import { IUrlResolver, OpenMode } from "@microsoft/fluid-driver-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { getHashedDocumentId } from "./OdspUtils";
 
@@ -42,15 +42,15 @@ export class OdspDriverUrlResolver implements IUrlResolver {
   constructor() { }
 
   public async resolve(request: IRequest): Promise<IOdspResolvedUrl> {
-    if (request.headers && request.headers.mode === FileMode.CreateNew) {
+    if (request.headers && request.headers.openMode === OpenMode.CreateNew) {
       return {
         type: "fluid",
         endpoints: {
           snapshotStorageUrl: "",
         },
-        mode: FileMode.CreateNew,
+        openMode: OpenMode.CreateNew,
         tokens: {},
-        url: "fluid-odsp:///NEW//?version=null",
+        url: request.url,
         hashedDocumentId: "",
         siteUrl: "",
         driveId: "",

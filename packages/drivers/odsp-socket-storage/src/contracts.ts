@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FileMode, IResolvedUrlBase } from "@microsoft/fluid-driver-definitions";
+import { IResolvedUrlBase, OpenMode } from "@microsoft/fluid-driver-definitions";
 import * as resources from "@microsoft/fluid-gitresources";
 import * as api from "@microsoft/fluid-protocol-definitions";
 
@@ -13,7 +13,7 @@ export interface IOdspResolvedUrl extends IResolvedUrlBase {
     // URL to send to fluid, contains the documentId and the path
     url: string;
 
-    mode?: FileMode;
+    openMode?: OpenMode;
 
     // A hashed identifier that is unique to this document
     hashedDocumentId: string;
