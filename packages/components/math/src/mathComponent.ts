@@ -455,7 +455,7 @@ export class MathInstance extends EventEmitter implements IComponentLoadable, IC
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions) {
         if (!this.defaultView) {
-            this.defaultView = this.addView();
+            this.defaultView = new MathView(this);
         }
         let localOptions = this.options;
         if (options) {

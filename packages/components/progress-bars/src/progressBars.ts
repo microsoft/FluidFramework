@@ -105,7 +105,7 @@ export class ProgressBar extends EventEmitter implements IComponentLoadable, ICo
         this.defaultView.render(elm);
     }
 
-    public addView(host: IComponent) {
+    public addView(scope?: IComponent) {
         return new ProgressBarView(this);
     }
 

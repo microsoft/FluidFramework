@@ -61,7 +61,16 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
     }
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
-        this.addView().render(elm, options);
+        const view = new HostView(
+            // eslint-disable-next-line @typescript-eslint/promise-function-async
+            (rootkey: string, pkg: string, props?: any) => this.createSubComponent(rootkey, pkg, props),
+            this.getComponent<FlowDocument>(this.root.get(this.docId)),
+            this.openCollection("math"),
+            this.openCollection("video-players"),
+            this.openCollection("images"),
+            this.intelViewer,
+            this.root);
+        view.render(elm, options);
     }
 
     protected async componentInitializingFirstTime() {

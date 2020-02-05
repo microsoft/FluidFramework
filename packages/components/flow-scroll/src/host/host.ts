@@ -10,6 +10,7 @@ import { tableViewType } from "@fluid-example/table-view";
 import { Editor, FlowDocument, htmlFormatter, IComponentHTMLViewFactory } from "@fluid-example/webflow";
 import {
     IComponent,
+    IComponentHTMLOptions,
     IComponentHTMLView,
     IComponentHTMLVisual,
     IComponentLoadable,
@@ -73,7 +74,7 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
         }
     }
 
-    public render(elm: HTMLElement): void {
+    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
         const flowDiv = document.createElement("div");
         const insightsDiv = document.createElement("div");
         elm.style.display = "flex";
