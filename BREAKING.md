@@ -1,3 +1,10 @@
+# 0.14 Breaking Changes
+- [Samples and chaincode have been renamed to examples and components respectively](##Samples-and-chaincode-have-been-renamed-to-examples-and-components-respectively)
+
+## Samples and chaincode have been renamed to examples and components respectively
+The directories themselves have been renamed.
+All path references in the dockerfile and json manifests have been updated along with variables assigned using path constants in code
+
 # 0.13 Breaking Changes
 
 - [Fluid Packages Require Consumers on TypeScript `>=3.6`](##Fluid-Packages-Require-Consumers-on-TypeScript->=3.6)
