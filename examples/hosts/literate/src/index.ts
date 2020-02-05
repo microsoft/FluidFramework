@@ -15,7 +15,7 @@ import { attach, initializeComponent, parsePackageName } from "./utils";
 const ordererUrl = "http://localhost:3000";
 const storageUrl = "http://localhost:3000";
 const npm = "https://pragueauspkn-3873244262.azureedge.net";
-const defaultPackage = "@component/smde@0.10.13378";
+const defaultPackage = "@chaincode/smde@0.10.13378";
 
 // You'll likely want to create your own tenant at https://admin.wu2.prague.office-int.com and then change the
 // tenantId and tenantKey values.
