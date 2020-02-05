@@ -49,6 +49,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         private readonly configurationGetter: () => ISummaryConfiguration,
         private readonly generateSummaryCore: (safe: boolean) => Promise<GenerateSummaryData>,
         private readonly refreshLatestAck: (handle: string, referenceSequenceNumber: number) => Promise<void>,
+        private immediateSummary: boolean,
     ) {
         this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");
         this.runCoordinator = new RunWhileConnectedCoordinator(runtime);
@@ -137,7 +138,10 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
             async (safe: boolean) => this.generateSummary(safe),
             this.runtime.deltaManager.referenceSequenceNumber,
             initialAttempt,
+            this.immediateSummary,
         );
+
+        this.immediateSummary = false;
 
         // Handle summary acks
         this.handleSummaryAcks().catch((error) => {
@@ -236,6 +240,7 @@ export class RunningSummarizer implements IDisposable {
         generateSummary: (safe: boolean) => Promise<GenerateSummaryData | undefined>,
         lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
+        immediateSummary: boolean,
     ): Promise<RunningSummarizer> {
         const summarizer = new RunningSummarizer(
             clientId,
@@ -245,7 +250,8 @@ export class RunningSummarizer implements IDisposable {
             configuration,
             generateSummary,
             lastOpSeqNumber,
-            firstAck);
+            firstAck,
+            immediateSummary);
 
         await summarizer.waitStart();
 
@@ -273,12 +279,14 @@ export class RunningSummarizer implements IDisposable {
         private readonly generateSummary: (safe: boolean) => Promise<GenerateSummaryData | undefined>,
         lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
+        immediateSummary: boolean,
     ) {
         this.heuristics = new SummarizerHeuristics(
             configuration,
             (reason) => this.trySummarize(reason),
             lastOpSeqNumber,
-            firstAck);
+            firstAck,
+            immediateSummary);
 
         this.summarizeTimer = new Timer(
             maxSummarizeTimeoutTime,
@@ -549,6 +557,7 @@ class SummarizerHeuristics {
          */
         public lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
+        private readonly immediateSummary: boolean,
     ) {
         this.lastSent = firstAck;
         this._lastAcked = firstAck;
@@ -572,7 +581,9 @@ class SummarizerHeuristics {
         const timeSinceLastSummary = Date.now() - this.lastAcked.summaryTime;
         const opCountSinceLastSummary = this.lastOpSeqNumber - this.lastAcked.refSequenceNumber;
 
-        if (timeSinceLastSummary > this.configuration.maxTime) {
+        if (this.immediateSummary) {
+            this.trySummarize("immediate");
+        } else if (timeSinceLastSummary > this.configuration.maxTime) {
             this.trySummarize("maxTime");
         } else if (opCountSinceLastSummary > this.configuration.maxOps) {
             this.trySummarize("maxOps");

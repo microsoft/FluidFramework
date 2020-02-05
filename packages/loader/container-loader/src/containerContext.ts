@@ -57,6 +57,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         snapshotFn: (message: string) => Promise<void>,
         closeFn: (reason?: string) => void,
         version: string,
+        immediateSummary: boolean,
     ): Promise<ContainerContext> {
         const context = new ContainerContext(
             container,
@@ -75,7 +76,8 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
             submitSignalFn,
             snapshotFn,
             closeFn,
-            version);
+            version,
+            immediateSummary);
         await context.load();
 
         return context;
@@ -175,6 +177,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         public readonly snapshotFn: (message: string) => Promise<void>,
         public readonly closeFn: () => void,
         public readonly version: string,
+        public immediateSummary,
     ) {
         super();
         this.logger = container.subLogger;

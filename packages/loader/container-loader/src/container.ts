@@ -471,7 +471,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             sequenceNumber: this._deltaManager.referenceSequenceNumber,
         };
 
-        await this.loadContext(attributes, storage, snapshot);
+        await this.loadContext(attributes, storage, snapshot, true);
 
         this.deltaManager.inbound.systemResume();
         this.deltaManager.inboundSignal.systemResume();
@@ -1134,6 +1134,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         attributes: IDocumentAttributes,
         storage: IDocumentStorageService,
         snapshot?: ISnapshotTree,
+        immediateSummary: boolean = false,
     ) {
         const chaincode = await this.loadCodeFromQuorum(this.protocolHandler!.quorum);
         this.pkg = chaincode.pkg;
@@ -1160,6 +1161,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             async (message) => this.snapshot(message),
             (reason?: string) => this.close(reason),
             Container.version,
+            immediateSummary,
         );
 
         loader.resolveContainer(this);

@@ -198,6 +198,8 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
     readonly serviceConfiguration: IServiceConfiguration | undefined;
     readonly version: string;
 
+    immediateSummary: boolean;
+
     /**
      * Ambient services provided with the context
      */
