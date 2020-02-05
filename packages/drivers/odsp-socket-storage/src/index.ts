@@ -18,3 +18,4 @@ export * from "./OdspDocumentServiceFactoryWithCodeSplit";
 export * from "./OdspDocumentService";
 export * from "./OdspDocumentDeltaConnection";
 export * from "./odspCache";
+export * from "./createFile";
