@@ -206,7 +206,9 @@ export class SummaryManager extends EventEmitter {
             return;
         }
 
-        const delayMs = (attempt - 1) * 20; // delay by 20ms, 40ms, 60ms etc.
+        // Back-off delay for subsequent retry starting.  The delay increase is linear,
+        // increasing by 20ms each time: 0ms, 20ms, 40ms, 60ms, etc.
+        const delayMs = (attempt - 1) * 20;
         this.createSummarizer(delayMs).then((summarizer) => {
             if (summarizer === undefined) {
                 if (this.shouldSummarize) {
