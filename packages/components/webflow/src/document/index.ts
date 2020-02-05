@@ -6,7 +6,7 @@
 import * as assert from "assert";
 import { randomId, TokenList, TagName } from "@fluid-example/flow-util-lib";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { IComponent, IComponentHandle, IComponentHTMLOptions, IComponentHTMLViewFactory } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IComponentHandle, IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
 import {
     createInsertSegmentOp,
     createRemoveRangeOp,
@@ -49,6 +49,10 @@ export const enum DocSegmentKind {
 
     // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
     endOfText = "eot",
+}
+
+export interface IComponentHTMLViewFactory {
+    createView(model: IComponent, scope?: IComponent): IComponentHTMLView;
 }
 
 const tilesAndRanges = new Set([DocSegmentKind.paragraph, DocSegmentKind.lineBreak, DocSegmentKind.beginTags, DocSegmentKind.inclusion]);
@@ -149,7 +153,9 @@ export class FlowDocument extends PrimedComponent {
     }
 
     public getViewFactoryFromMarker(marker: Marker) {
-        return this.viewFactoryRegistry.get(marker.properties.view);
+        if (this.viewFactoryRegistry) {
+            return this.viewFactoryRegistry.get(marker.properties.view);
+        }
     }
 
     public setViewFactoryRegistry(registry: Map<string, IComponentHTMLViewFactory>) {

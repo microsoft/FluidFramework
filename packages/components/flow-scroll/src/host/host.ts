@@ -4,14 +4,13 @@
  */
 
 import { KeyCode, randomId, Template, TagName } from "@fluid-example/flow-util-lib";
-import { MathViewFactory } from "@fluid-example/math";
+import { MathInstance, MathView } from "@fluid-example/math";
 import * as SearchMenu from "@fluid-example/search-menu";
 import { tableViewType } from "@fluid-example/table-view";
-import { Editor, FlowDocument, htmlFormatter } from "@fluid-example/webflow";
+import { Editor, FlowDocument, htmlFormatter, IComponentHTMLViewFactory } from "@fluid-example/webflow";
 import {
     IComponent,
     IComponentHTMLView,
-    IComponentHTMLViewFactory,
     IComponentHTMLVisual,
     IComponentLoadable,
 } from "@microsoft/fluid-component-core-interfaces";
@@ -34,6 +33,12 @@ const template = new Template(
             },
         ],
     });
+
+class MathViewFactory implements IComponentHTMLViewFactory {
+    public createView(model: MathInstance, scope?: IComponent) {
+        return new MathView(model, scope);
+    }
+}
 
 class ThickViewFactory implements IComponentHTMLViewFactory {
     public createView(model: IComponent, scope?: IComponent) {

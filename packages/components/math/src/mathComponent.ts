@@ -12,7 +12,6 @@ import {
     IComponentHandleContext,
     IComponentHTMLOptions,
     IComponentHTMLView,
-    IComponentHTMLViewFactory,
     IComponentHTMLVisual,
     IComponentLoadable,
     IComponentRouter,
@@ -54,13 +53,7 @@ const cursorDirectionToDirection = {
 
 type IMathMarkerInst = MathExpr.IMathMarker;
 
-export class MathViewFactory implements IComponentHTMLViewFactory {
-    public createView(model: MathInstance, scope?: IComponent) {
-        return new MathView(model, scope);
-    }
-}
-
-class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout {
+export class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout {
     public get IComponentHTMLView() { return this; }
 
     public get IComponentCursor() { return this; }
