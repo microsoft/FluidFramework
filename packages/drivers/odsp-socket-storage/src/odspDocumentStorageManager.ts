@@ -569,7 +569,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             entries: [],
         }!;
 
-        const keys = Object.keys(summary.tree);
+        const keys = Object.keys(summary.tree.tree);
         for (const key of keys) {
             const summaryObject = summary.tree.tree[key];
 
@@ -619,7 +619,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                         if (!summary.parentHandle) {
                             throw Error("Parent summary does not exist to reference by handle.");
                         }
-                        id = `${summary.parentHandle}${(summaryObject as IUploadSummaryHandle).path}`;
+                        id = `${summary.parentHandle}/${(summaryObject as IUploadSummaryHandle).path}`;
                     } else {
                         id = (summaryObject as api.ISummaryHandle).handle;
                     }
