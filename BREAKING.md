@@ -1,9 +1,14 @@
 # 0.14 Breaking Changes
 - [Samples and chaincode have been renamed to examples and components respectively](##Samples-and-chaincode-have-been-renamed-to-examples-and-components-respectively)
+- [Top-level `type` on `IClient` removed](#Top-level-type-on-IClient-removed)
 
 ## Samples and chaincode have been renamed to examples and components respectively
 The directories themselves have been renamed.
 All path references in the dockerfile and json manifests have been updated along with variables assigned using path constants in code
+
+## Top-level `type` on `IClient` removed
+
+The `type` field on `IClient` has been removed.
 
 # 0.13 Breaking Changes
 
