@@ -23,7 +23,7 @@ COPY packages/components/agent-scheduler/package*.json packages/components/agent
 COPY packages/components/blob-manager/package*.json packages/components/blob-manager/
 COPY packages/components/canvas/package*.json packages/components/canvas/
 COPY packages/components/clicker/package*.json packages/components/clicker/
-COPY packages/components/client-ui/package*.json packages/components/client-ui/
+COPY packages/components/client-ui-lib/package*.json packages/components/client-ui-lib/
 COPY packages/components/dice-roller/package*.json packages/components/dice-roller/
 COPY packages/components/external-component-loader/package*.json packages/components/external-component-loader/
 COPY packages/components/image-collection/package*.json packages/components/image-collection/
@@ -32,7 +32,7 @@ COPY packages/components/progress-bars/package*.json packages/components/progres
 COPY packages/components/shared-map-visualizer/package*.json packages/components/shared-map-visualizer/
 COPY packages/components/video-players/package*.json packages/components/video-players/
 COPY packages/components/flow-scroll/package*.json packages/components/flow-scroll/
-COPY packages/components/flow-util/package*.json packages/components/flow-util/
+COPY packages/components/flow-util-lib/package*.json packages/components/flow-util-lib/
 COPY packages/components/markflow/package*.json packages/components/markflow/
 COPY packages/components/math/package*.json packages/components/math/
 COPY packages/components/monaco/package*.json packages/components/monaco/
@@ -100,28 +100,28 @@ COPY packages/tools/replay-tool/package*.json packages/tools/replay-tool/
 COPY packages/tools/webpack-component-loader/package*.json packages/tools/webpack-component-loader/
 COPY packages/tools/merge-tree-client-replay/package*.json packages/tools/merge-tree-client-replay/
 COPY packages/test/end-to-end/package*.json packages/test/end-to-end/
-COPY samples/chaincode/badge/package*.json samples/chaincode/badge/
-COPY samples/chaincode/chat/package*.json samples/chaincode/chat/
-COPY samples/chaincode/codemirror/package*.json samples/chaincode/codemirror/
-COPY samples/chaincode/containers/monaco/package*.json samples/chaincode/containers/monaco/
-COPY samples/chaincode/draft-js/package*.json samples/chaincode/draft-js/
-COPY samples/chaincode/drawer/package*.json samples/chaincode/drawer/
-COPY samples/chaincode/github-comment/package*.json samples/chaincode/github-comment/
-COPY samples/chaincode/image-gallery/package*.json samples/chaincode/image-gallery/
-COPY samples/chaincode/key-value-cache/package*.json samples/chaincode/key-value-cache/
-COPY samples/chaincode/musica/package*.json samples/chaincode/musica/
-COPY samples/chaincode/persona/package*.json samples/chaincode/persona/
-COPY samples/chaincode/pollster/package*.json samples/chaincode/pollster/
-COPY samples/chaincode/prosemirror/package*.json samples/chaincode/prosemirror/
-COPY samples/chaincode/simple-component-embed/package*.json samples/chaincode/simple-component-embed/
-COPY samples/chaincode/simple-data-share/package*.json samples/chaincode/simple-data-share/
-COPY samples/chaincode/smde/package*.json samples/chaincode/smde/
-COPY samples/chaincode/spaces/package*.json samples/chaincode/spaces/
-COPY samples/chaincode/sudoku/package*.json  samples/chaincode/sudoku/
-COPY samples/chaincode/textarea-noreact/package*.json samples/chaincode/textarea-noreact/
-COPY samples/chaincode/tourofheroes/package*.json samples/chaincode/tourofheroes/
-COPY samples/chaincode/type-race/package*.json samples/chaincode/type-race/
-COPY samples/chaincode/vltava/package*.json samples/chaincode/vltava/
+COPY examples/components/badge/package*.json examples/components/badge/
+COPY examples/components/chat/package*.json examples/components/chat/
+COPY examples/components/codemirror/package*.json examples/components/codemirror/
+COPY examples/components/containers/monaco/package*.json examples/components/containers/monaco/
+COPY examples/components/draft-js/package*.json examples/components/draft-js/
+COPY examples/components/drawer/package*.json examples/components/drawer/
+COPY examples/components/github-comment/package*.json examples/components/github-comment/
+COPY examples/components/image-gallery/package*.json examples/components/image-gallery/
+COPY examples/components/key-value-cache/package*.json examples/components/key-value-cache/
+COPY examples/components/musica/package*.json examples/components/musica/
+COPY examples/components/persona/package*.json examples/components/persona/
+COPY examples/components/pollster/package*.json examples/components/pollster/
+COPY examples/components/prosemirror/package*.json examples/components/prosemirror/
+COPY examples/components/simple-component-embed/package*.json examples/components/simple-component-embed/
+COPY examples/components/simple-data-share/package*.json examples/components/simple-data-share/
+COPY examples/components/smde/package*.json examples/components/smde/
+COPY examples/components/spaces/package*.json examples/components/spaces/
+COPY examples/components/sudoku/package*.json  examples/components/sudoku/
+COPY examples/components/textarea-noreact/package*.json examples/components/textarea-noreact/
+COPY examples/components/tourofheroes/package*.json examples/components/tourofheroes/
+COPY examples/components/type-race/package*.json examples/components/type-race/
+COPY examples/components/vltava/package*.json examples/components/vltava/
 
 FROM node:10.16.0-slim AS base
 
@@ -170,7 +170,7 @@ RUN npm install --unsafe-perm
 
 # And now copy over our actual code and build
 COPY packages/ packages/
-COPY samples/chaincode/ samples/chaincode/
+COPY examples/components/ examples/components/
 
 # Set the version number
 ARG VERSION_BUILDNUMBER=0
