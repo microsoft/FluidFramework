@@ -7,7 +7,7 @@ import { EmbeddedComponent } from "@microsoft/fluid-aqueduct-react";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 
 import * as React from "react";
-import GridLayout, { Layout } from "react-grid-layout";
+import  GridLayout, { Layout } from "react-grid-layout";
 
 import "../../../../node_modules/react-grid-layout/css/styles.css";
 import "../../../../node_modules/react-resizable/css/styles.css";
@@ -47,6 +47,7 @@ class EmbeddedComponentWrapper extends React.Component<IEmbeddedComponentWrapper
 
 interface ISpaceGridViewProps {
     dataModel: ISpacesDataModel;
+    adderComponentId: string;
 }
 
 interface ISpaceGridViewState {
@@ -74,6 +75,10 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
         this.props.dataModel.on("componentListChanged", (newMap: Map<string, Layout>) => {
             this.setState({ componentMap: newMap });
         });
+        this.props.dataModel.on("editableUpdated", (editable: boolean) => {
+            alert("event received" + editable);
+            this.setState({editable});
+        })
     }
 
     // This is kinda hacky. Is there a better way?
@@ -100,17 +105,19 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
         this.props.dataModel.updateGridItem(id, newItem);
     }
 
-    generateViewState(): [any[], Layout[]] {
+    generateViewState(): [JSX.Element, any[], Layout[]] {
         const array = [];
         const layouts: Layout[] = [];
+        let adder: JSX.Element | undefined;
         this.state.componentMap.forEach((layout, id) => {
-
+            const editable = this.state.editable && id !== this.props.adderComponentId;
+            
             // Do some CSS stuff depending on if the user is editing or not
             const editableStyle: React.CSSProperties = { overflow: "hidden", padding: 2 };
             const embeddedComponentStyle: React.CSSProperties = {
                 height: "100%",
             };
-            if (this.state.editable) {
+            if (editable) {
                 editableStyle.border = "1px solid black";
                 editableStyle.backgroundColor = "#d3d3d3";
                 editableStyle.boxSizing = "border-box";
@@ -126,11 +133,10 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
             layouts.push(layout);
 
             const componentUrl = `${window.location.href}/${id}`;
-
-            array.push(
+            const element = 
                 <div className="text" key={key} style={editableStyle} >
                     {
-                        this.state.editable &&
+                        editable &&
                         <div style={{ opacity: 1, backgroundColor: "none", position: "absolute", bottom: 0, left: 0 }}>
                             <button onClick={() => this.props.dataModel.removeComponent(id)}>❌</button>
                             <button onClick={() => {
@@ -146,53 +152,23 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                     <div style={embeddedComponentStyle}>
                         <EmbeddedComponentWrapper id={id} getComponent={this.props.dataModel.getComponent} />
                     </div>
-                </div>);
+                </div>
+            if (id !== this.props.adderComponentId) {
+                array.push(element);
+            } else {
+                adder = element;
+            }
+           
         });
 
-        return [array, layouts];
+        return [adder, array, layouts];
     }
 
     render() {
-        const [array, layouts] = this.generateViewState();
-
+        const [adder, array, layouts] = this.generateViewState();
         return (
             <div>
-                <div style={{ position: "absolute", top: 10, left: 10, zIndex: 1000 }}>
-                    <button
-                        id="edit"
-                        onClick={() => { this.setState({ editable: !this.state.editable }); }}
-                    >
-                        Edit: {this.state.editable.toString()}
-                    </button>
-                    {this.state.editable &&
-                        <React.Fragment>
-                            <span>
-                                <button onClick={async () => this.props.dataModel.addComponent("clicker", 2, 2)}>
-                                    Clicker
-                                </button>
-                                <button onClick={async () => this.props.dataModel.addComponent("button", 2, 2)}>
-                                    Button
-                                </button>
-                                <button onClick={async () => this.props.dataModel.addComponent("number", 2, 2)}>
-                                    Number
-                                </button>
-                                <button onClick={async () => this.props.dataModel.addComponent("textbox", 9, 6)}>
-                                    TextBox
-                                </button>
-                                <button onClick={async () => this.props.dataModel.addComponent("facepile", 2, 4)}>
-                                    FacePile
-                                </button>
-                                <button onClick={async () => this.props.dataModel.addComponent("codemirror", 12, 8)}>
-                                    CodeMirror
-                                </button>
-                                <button onClick={async () => this.props.dataModel.addComponent("prosemirror", 16, 12)}>
-                                    ProseMirror
-                                </button>
-                            </span>
-                            <button onClick={() => { this.props.dataModel.saveLayout(); }}>Save Layout</button>
-                        </React.Fragment>
-                    }
-                </div>
+                {adder}
                 {
                     this.state.componentMap.size > 0 &&
                     <GridLayout

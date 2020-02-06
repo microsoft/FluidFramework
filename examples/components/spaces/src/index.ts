@@ -11,7 +11,8 @@ import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
 import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
 
 import {
-    ButtonInstantiationFactory ,
+    AdderInstantiationFactory,
+    ButtonInstantiationFactory,
     NumberInstantiationFactory,
     TextBoxInstantiationFactory,
     FacePileInstantiationFactory,
@@ -38,6 +39,7 @@ export const fluidExport = new SimpleModuleInstantiationFactory(
         ["facepile", Promise.resolve(FacePileInstantiationFactory)],
         ["codemirror", Promise.resolve(cmfe)],
         ["prosemirror", Promise.resolve(pmfe)],
+        ["adder", Promise.resolve(AdderInstantiationFactory)]
     ]),
     [["manager", async (r) => new Manager(r)]],
 );
