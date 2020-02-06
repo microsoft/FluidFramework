@@ -220,27 +220,34 @@ export class ScheduleManager {
         // If in legacy mode every operation is a batch
         if (!this.messageScheduler) {
             this.emitter.emit("batchBegin", message);
-            this.deltaScheduler.batchBegin(message);
+            this.deltaScheduler.batchBegin();
             return;
         }
 
-        if (message.metadata === undefined) {
-            // If there is no metadata, and no client ID set, then this is an individual batch. Otherwise it's a
-            // message in the middle of a batch
-            if (!this.batchClientId) {
-                this.emitter.emit("batchBegin", message);
-                this.deltaScheduler.batchBegin(message);
+        if (this.batchClientId !== message.clientId) {
+            // As a back stop for any bugs marking the end of a batch - if the client ID flipped, we
+            // consider the previous batch over.
+            if (this.batchClientId) {
+                this.emitter.emit("batchEnd", "Did not receive real batchEnd message", undefined);
+                this.deltaScheduler.batchEnd();
+
+                this.logger.sendTelemetryEvent({
+                    eventName: "BatchEndNotReceived",
+                    clientId: this.batchClientId,
+                    sequenceNumber: message.sequenceNumber,
+                });
             }
 
-            return;
-        }
-
-        // Otherwise we need to check for the metadata flag
-        const metadata = message.metadata as IRuntimeMessageMetadata;
-        if (metadata.batch === true) {
-            this.batchClientId = message.clientId;
+            // This could be the beginning of a new batch or an invidual message.
             this.emitter.emit("batchBegin", message);
-            this.deltaScheduler.batchBegin(message);
+            this.deltaScheduler.batchBegin();
+
+            const batch = (message?.metadata as IRuntimeMessageMetadata)?.batch;
+            if (batch) {
+                this.batchClientId = message.clientId;
+            } else {
+                this.batchClientId = undefined;
+            }
         }
     }
 
@@ -248,33 +255,20 @@ export class ScheduleManager {
         if (!this.messageScheduler || error) {
             this.batchClientId = undefined;
             this.emitter.emit("batchEnd", error, message);
-            this.deltaScheduler.batchEnd(message);
+            this.deltaScheduler.batchEnd();
             return;
         }
 
         this.updatePauseState(message.sequenceNumber);
 
-        // If no batchClientId has been set then we're in an individual batch
-        if (!this.batchClientId) {
-            this.emitter.emit("batchEnd", undefined, message);
-            this.deltaScheduler.batchEnd(message);
-            return;
-        }
-
-        // As a back stop for any bugs marking the end of a batch - if the client ID flipped we consider the batch over
-        if (this.batchClientId !== message.clientId) {
+        const batch = (message?.metadata as IRuntimeMessageMetadata)?.batch;
+        // If no batchClientId has been set then we're in an individual batch. Else, if we get
+        // batch end metadata, this is end of the current batch.
+        if (!this.batchClientId || batch === false) {
             this.batchClientId = undefined;
             this.emitter.emit("batchEnd", undefined, message);
-            this.deltaScheduler.batchEnd(message);
+            this.deltaScheduler.batchEnd();
             return;
-        }
-
-        // Otherwise need to check the metadata flag
-        const batch = message.metadata ? (message.metadata as IRuntimeMessageMetadata).batch : undefined;
-        if (batch === false) {
-            this.batchClientId = undefined;
-            this.emitter.emit("batchEnd", undefined, message);
-            this.deltaScheduler.batchEnd(message);
         }
     }
 
