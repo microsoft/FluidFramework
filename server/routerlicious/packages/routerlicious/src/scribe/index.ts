@@ -5,7 +5,7 @@
 
 import { ScribeLambdaFactory } from "@microsoft/fluid-server-lambdas";
 import { create as createDocumentRouter } from "@microsoft/fluid-server-lambdas-driver";
-import { createProducer, MongoDbFactory } from "@microsoft/fluid-server-services";
+import { createProducer, MongoDbFactory, TenantManager } from "@microsoft/fluid-server-services";
 import {
     IDocument,
     IPartitionLambdaFactory,
@@ -20,13 +20,15 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
     const mongoUrl = config.get("mongo:endpoint") as string;
     const documentsCollectionName = config.get("mongo:collectionNames:documents");
     const messagesCollectionName = config.get("mongo:collectionNames:scribeDeltas");
-    const internalHistorianUrl = config.get("worker:internalBlobStorageUrl") as string;
-    const historianUrl = internalHistorianUrl || config.get("worker:blobStorageUrl") as string;
     const kafkaEndpoint = config.get("kafka:lib:endpoint");
     const kafkaLibrary = config.get("kafka:lib:name");
     const maxMessageSize = bytes.parse(config.get("kafka:maxMessageSize"));
     const sendTopic = config.get("lambdas:deli:topic");
     const kafkaClientId = config.get("scribe:kafkaClientId");
+
+    // Generate tenant manager which abstracts access to the underlying storage provider
+    const authEndpoint = config.get("auth:endpoint");
+    const tenantManager = new TenantManager(authEndpoint);
 
     // Access Mongo storage for pending summaries
     const mongoFactory = new MongoDbFactory(mongoUrl);
@@ -55,7 +57,12 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
         sendTopic,
         maxMessageSize);
 
-    return new ScribeLambdaFactory(mongoManager, collection, scribeDeltas, historianUrl, producer);
+    return new ScribeLambdaFactory(
+        mongoManager,
+        collection,
+        scribeDeltas,
+        producer,
+        tenantManager);
 }
 
 export async function create(config: Provider): Promise<IPartitionLambdaFactory> {
