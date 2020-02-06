@@ -3,16 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { IPragueResolvedUrl } from "@microsoft/fluid-container-definitions";
+/* eslint-disable prefer-template */
+import * as url from "url";
+import { BaseHost, IBaseHostConfig } from "@microsoft/fluid-base-host";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
+import { IFluidResolvedUrl } from "@microsoft/fluid-driver-definitions";
 import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import { RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import * as jwt from "jsonwebtoken";
 import { Provider } from "nconf";
-import * as url from "url";
 import * as uuid from "uuid/v4";
 import * as winston from "winston";
-import { NullCodeLoader } from "./nullCodeLoader";
 
 interface ILoadParams {
     jwtKey: string;
@@ -91,7 +92,7 @@ export async function testFluidService(config: Provider): Promise<void> {
         "/repos" +
         `/${encodeURIComponent(params.tenant)}`;
 
-    const resolved: IPragueResolvedUrl = {
+    const resolved: IFluidResolvedUrl = {
         endpoints: {
             deltaStorageUrl,
             ordererUrl: params.orderer,
@@ -107,11 +108,17 @@ export async function testFluidService(config: Provider): Promise<void> {
         hostToken,
         new Map([[documentUrl, resolved]]));
 
-    const loader = new Loader(
-        { resolver },
-        new RouterliciousDocumentServiceFactory(),
-        new NullCodeLoader(),
-        null);
+    const hostConfig: IBaseHostConfig = {
+        documentServiceFactory: new RouterliciousDocumentServiceFactory(),
+        urlResolver: resolver,
+        config,
+        scope: null,
+        proxyLoaderFactories: new Map<string, any>(),
+    };
+
+    const baseHost = new BaseHost(hostConfig, resolved, null, []);
+
+    const loader = await baseHost.getLoader();
 
     return run(loader, documentUrl, params.waitMSec);
 }
