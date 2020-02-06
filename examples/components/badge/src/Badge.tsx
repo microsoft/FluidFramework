@@ -6,7 +6,11 @@
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
 import { IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
 import { SharedCell } from "@microsoft/fluid-cell";
-import { IComponentHandle, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import {
+    IComponentHandle,
+    IComponentHTMLView,
+    IComponentHTMLVisual,
+} from "@microsoft/fluid-component-core-interfaces";
 import { SharedMap } from "@microsoft/fluid-map";
 import { SharedObjectSequence } from "@microsoft/fluid-sequence";
 // eslint-disable-next-line import/no-internal-modules
@@ -17,7 +21,10 @@ import { IBadgeType } from "./IBadgeType";
 import { BadgeView } from "./BadgeView";
 import { IHistory } from "./IHistory";
 
-export class Badge extends PrimedComponent implements IComponentHTMLVisual, IComponentReactViewable {
+export class Badge extends PrimedComponent implements
+    IComponentHTMLView,
+    IComponentHTMLVisual,
+    IComponentReactViewable {
     currentCell: SharedCell;
     optionsMap: SharedMap;
     historySequence: SharedObjectSequence<IHistory<IBadgeType>>;

@@ -17,7 +17,7 @@ import { FlowDocumentType } from "../runtime";
 import { WebflowView } from "./host";
 import { importDoc } from "./import";
 
-export class WebFlow extends PrimedComponent implements IComponentHTMLVisual {
+export class WebFlow extends PrimedComponent implements IComponentHTMLView, IComponentHTMLVisual {
     public constructor(runtime: IComponentRuntime, context: IComponentContext) {
         super(runtime, context);
     }
@@ -28,12 +28,14 @@ export class WebFlow extends PrimedComponent implements IComponentHTMLVisual {
     public addView(scope?: IComponent): IComponentHTMLView {
         return new WebflowView(this.getComponent<FlowDocument>(this.docId));
     }
+    // #endregion IComponentHTMLVisual
 
+    // #region IComponentHTMLView
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
         const view = new WebflowView(this.getComponent<FlowDocument>(this.docId));
         view.render(elm, options);
     }
-    // #endregion IComponentHTMLVisual
+    // #endregion IComponentHTMLView
 
     protected async componentInitializingFirstTime() {
         const componentRuntime: IComponentRuntime = await this.context.createComponent(FlowDocumentType);

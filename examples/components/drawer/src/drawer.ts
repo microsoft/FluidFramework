@@ -25,7 +25,11 @@ import { initializeIcons } from "@uifabric/icons";
 import * as semver from "semver";
 import { DrawerView } from "./drawerView";
 
-export class Drawer extends EventEmitter implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual {
+export class Drawer extends EventEmitter implements
+    IComponentLoadable,
+    IComponentRouter,
+    IComponentHTMLView,
+    IComponentHTMLVisual {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new Drawer(runtime, context);
         await collection.initialize();

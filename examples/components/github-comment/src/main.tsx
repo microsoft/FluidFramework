@@ -8,6 +8,7 @@ import {
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import {
+    IComponentHTMLView,
     IComponentHTMLVisual,
     IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
@@ -36,7 +37,7 @@ import/no-unassigned-import */
 
 export class GithubComment
     extends TextareaNoReact
-    implements IComponentHTMLVisual {
+    implements IComponentHTMLView, IComponentHTMLVisual {
     public get IComponentHTMLVisual() { return this; }
 
     /**

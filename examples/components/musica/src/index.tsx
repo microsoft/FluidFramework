@@ -5,7 +5,7 @@
 
 // Fluid
 import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
-import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 
 // React
 import * as React from "react";
@@ -19,7 +19,7 @@ import { DAW } from "./daw";
 // TODO: Is this right?
 const audioContext = new AudioContext();
 
-export class Musica extends PrimedComponent implements IComponentHTMLVisual {
+export class Musica extends PrimedComponent implements IComponentHTMLView, IComponentHTMLVisual {
     public get IComponentHTMLVisual() { return this; }
 
     protected async componentHasInitialized() {

@@ -4,7 +4,7 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
-import { IComponentHTMLVisual, IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHTMLView, IComponentHTMLVisual, IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -16,7 +16,7 @@ import { Poll } from "./view/Poll";
 const pkg = require("../package.json");
 const chaincodeName = pkg.name;
 
-export class Pollster extends PrimedComponent implements IComponentHTMLVisual {
+export class Pollster extends PrimedComponent implements IComponentHTMLView, IComponentHTMLVisual {
     public get IComponentHTMLVisual() { return this; }
 
     protected async componentInitializingFirstTime() {

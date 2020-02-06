@@ -22,7 +22,11 @@ import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { initializeIcons } from "@uifabric/icons";
 import { PersonaView } from "./personaView";
 
-export class Persona extends EventEmitter implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual {
+export class Persona extends EventEmitter implements
+    IComponentLoadable,
+    IComponentRouter,
+    IComponentHTMLView,
+    IComponentHTMLVisual {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new Persona(runtime, context);
         await collection.initialize();

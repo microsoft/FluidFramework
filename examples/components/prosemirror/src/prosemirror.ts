@@ -101,7 +101,7 @@ class ProseMirrorView implements IComponentHTMLView {
 }
 
 export class ProseMirror extends EventEmitter
-    implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual, IProvideRichTextEditor {
+    implements IComponentLoadable, IComponentRouter, IComponentHTMLView, IComponentHTMLVisual, IProvideRichTextEditor {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new ProseMirror(runtime, context);
         await collection.initialize();
