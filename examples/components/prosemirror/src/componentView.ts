@@ -64,7 +64,7 @@ export class ComponentView implements NodeView {
                 }
 
                 const component = result.value as IComponent;
-                if (!component.IComponentHTMLVisual) {
+                if (!component.IComponentHTMLView && !component.IComponentHTMLVisual) {
                     return Promise.reject<IComponent>();
                 }
 
@@ -81,9 +81,16 @@ export class ComponentView implements NodeView {
                     this.visual.remove();
                 }
 
-                const visual = component.IComponentHTMLVisual;
-                this.visual = visual.addView ? visual.addView() : visual;
-                this.visual.render(this.dom);
+                // First try to get it as a view
+                this.visual = component.IComponentHTMLView;
+                if (!this.visual) {
+                    // Otherwise get the visual, which will either be a view factory or a view
+                    const visual = component.IComponentHTMLVisual;
+                    this.visual = visual.addView ? visual.addView() : visual;
+                }
+                if (this.visual) {
+                    this.visual.render(this.dom);
+                }
             },
             (error) => {
                 // Fall back to URL if can't load

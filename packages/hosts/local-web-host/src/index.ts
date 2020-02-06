@@ -92,13 +92,14 @@ export async function renderDefaultComponent(container: Container, div: HTMLElem
 
     // Check if the component is viewable
     const component = response.value as IComponent;
-    const viewable = component.IComponentHTMLVisual;
-
-    if (viewable) {
-        const renderable =
-            viewable.addView ? viewable.addView() : viewable;
-
+    // First try to get it as a view
+    let renderable = component.IComponentHTMLView;
+    if (!renderable) {
+        // Otherwise get the visual, which will either be a view factory or a view
+        const visual = component.IComponentHTMLVisual;
+        renderable = visual.addView ? visual.addView() : visual;
+    }
+    if (renderable) {
         renderable.render(div, { display: "block" });
-        return;
     }
 }

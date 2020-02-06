@@ -36,8 +36,8 @@ export class Pond extends PrimedComponent implements IComponentHTMLView, ICompon
     private readonly clickerKey = "clicker";
     private readonly clickerWithInitialValueKey = "clicker-with-initial-value";
 
-    public clicker2Render: IComponentHTMLVisual | undefined;
-    public clicker3Render: IComponentHTMLVisual | undefined;
+    public clicker2Render: IComponentHTMLView | IComponentHTMLVisual | undefined;
+    public clicker3Render: IComponentHTMLView | IComponentHTMLVisual | undefined;
 
     public get IComponentHTMLVisual() { return this; }
 
@@ -63,10 +63,14 @@ export class Pond extends PrimedComponent implements IComponentHTMLView, ICompon
 
     protected async componentHasInitialized() {
         const clicker2 = await this.root.get<IComponentHandle>(this.clickerKey).get<IComponent>();
-        this.clicker2Render = clicker2.IComponentHTMLVisual;
+        this.clicker2Render = clicker2.IComponentHTMLView ?
+            clicker2.IComponentHTMLView :
+            clicker2.IComponentHTMLVisual;
 
         const clicker3 = await this.root.get<IComponentHandle>(this.clickerWithInitialValueKey).get<IComponent>();
-        this.clicker3Render = clicker3.IComponentHTMLVisual;
+        this.clicker3Render = clicker3.IComponentHTMLView ?
+            clicker3.IComponentHTMLView :
+            clicker3.IComponentHTMLVisual;
     }
 
     // start IComponentHTMLView
