@@ -1,10 +1,9 @@
 ---
-title: Feb 2020 Fluid Runtime team update
-date: 2020-02-04
+title: February 2020
 sidebarDepth: 2
 ---
 
-# Feb 2020 Fluid Runtime team update
+# February 2020
 
 Welcome to 2020! The Fluid Runtime team has hit the ground running this year, and with our first sprint closing down and
 another about to start, it's a great time to take stock of where we are and what's next. But first, if you're wondering
