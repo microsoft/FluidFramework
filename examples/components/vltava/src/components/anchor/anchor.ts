@@ -1,61 +1,47 @@
-// /*!
-//  * Copyright (c) Microsoft Corporation. All rights reserved.
-//  * Licensed under the MIT License.
-//  */
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
 
-// import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
-// import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import {
+    IComponent,
+    IComponentHandle,
+    IComponentHTMLVisual,
+    IProvideComponentHTMLVisual,
+} from "@microsoft/fluid-component-core-interfaces";
+import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 
-// import * as ReactDOM from "react-dom";
-// import uuid from "uuid/v4";
+import uuid from "uuid/v4";
 
-// import { IVltavaDataModel, VltavaDataModel } from "./dataModel";
-// import { VltavaView } from "./view";
+/**
+ * Anchor is an default component is responsible for managing creation and the default component
+ */
+export class Anchor extends PrimedComponent implements IProvideComponentHTMLVisual {
+    private readonly defaultComponentId = "default-component-id";
+    private defaultComponentInternal: IComponentHTMLVisual | undefined;
 
-// /**
-//  * Anchor is an default component
-//  */
-// export class Anchor extends PrimedComponent implements IComponentHTMLVisual {
-//     private dataModelInternal: IVltavaDataModel | undefined;
+    private get defaultComponent() {
+        if (!this.defaultComponentInternal) {
+            throw new Error("Default Component was not initialized properly");
+        }
 
-//     private static readonly factory = new PrimedComponentFactory(Vltava, []);
+        return this .defaultComponentInternal;
+    }
 
-//     public static getFactory() {
-//         return Vltava.factory;
-//     }
+    private static readonly factory = new PrimedComponentFactory(Anchor, []);
 
-//     private get dataModel(): IVltavaDataModel {
-//         if (!this.dataModelInternal) {
-//             throw new Error("The Vltava DataModel was not properly initialized.");
-//         }
+    public static getFactory() {
+        return Anchor.factory;
+    }
 
-//         return this.dataModelInternal;
-//     }
+    public get IComponentHTMLVisual() { return this.defaultComponent; }
 
-//     public get IComponentHTMLVisual() { return this; }
+    protected async componentInitializingFirstTime(props: any) {
+        const defaultComponent = await this.createAndAttachComponent<IComponent>(uuid(), "vltava");
+        this.root.set(this.defaultComponentId, defaultComponent.IComponentHandle);
+    }
 
-//     protected async componentInitializingFirstTime(props: any) {
-//         const defaultComponentId = uuid();
-//         await this.createAndAttachComponent(defaultComponentId, "tabs");
-//         this.root.set("default-component-id", defaultComponentId);
-//     }
-
-//     protected async componentHasInitialized() {
-//         this.dataModelInternal =
-//             new VltavaDataModel(
-//                 this.root,
-//                 this.context,
-//                 this.runtime,
-//                 this.createAndAttachComponent.bind(this),
-//                 this.getComponent.bind(this));
-//     }
-
-//     /**
-//      * Will return a new Vltava View
-//      */
-//     public render(div: HTMLElement) {
-//         ReactDOM.render(
-//             <VltavaView dataModel={this.dataModel} />,
-//             div);
-//     }
-// }
+    protected async componentHasInitialized() {
+        this.defaultComponentInternal = await this.root.get<IComponentHandle>(this.defaultComponentId).get();
+    }
+}
