@@ -21,7 +21,7 @@ export interface IComponentHTMLOptions {
 
 export interface IComponentHTMLView {
     render(elm: HTMLElement, options?: IComponentHTMLOptions): void;
-    remove(): void;
+    remove?(): void;
 }
 
 export interface IProvideComponentHTMLVisual {
