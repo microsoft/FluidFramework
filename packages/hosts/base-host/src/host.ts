@@ -37,24 +37,91 @@ async function getComponentAndRender(loader: Loader, url: string, div: HTMLDivEl
     }
 }
 
-async function initializeChaincode(container: Container, pkg?: IFluidCodeDetails): Promise<void> {
-    if (!pkg) {
-        return;
-    }
+const currentCodeProposalKey = "code";
+export async function initializeContainerCode(
+    container: Container,
+    pkgForCodeProposal: IFluidCodeDetails): Promise<void> {
 
     const quorum = container.getQuorum();
 
-    // Wait for connection so that proposals can be sent
-    if (!container.connected) {
-        await new Promise<void>((resolve) => container.on("connected", () => resolve()));
+    // nothing to do if the proposal exists
+    //
+    if (quorum.has(currentCodeProposalKey)) {
+        return;
     }
 
-    // And then make the proposal if a code proposal has not yet been made
-    if (!quorum.has("code")) {
-        await quorum.propose("code", pkg);
+    // start a promise waiting for context changed, which will happen once we get a code proposal
+    //
+    const contextChangedP = new Promise<void>((resolve) => container.once("contextChanged", () => resolve()));
+
+    // short circuit if we know the container doesn't exist
+    //
+    if (!container.existing) {
+        await Promise.all([
+            quorum.propose(currentCodeProposalKey, pkgForCodeProposal),
+            contextChangedP,
+        ]);
+        return;
     }
 
-    console.log(`Code is ${quorum.get("code")}`);
+    // wait for a code proposal to show up
+    //
+    const proposalFoundP = new Promise<boolean>((resolve) => {
+        // wait for quorum and resolve promise if code shows up:
+        // it helps with faster rendering if we have no snapshot,
+        // but it also allows Fluid Debugger to work with no snapshots
+        const approveProposal = (_seqNumber, key: string) => {
+            if (key === currentCodeProposalKey) {
+                quorum.removeListener("approveProposal", approveProposal);
+                resolve(true);
+            }
+        };
+        quorum.on("approveProposal", approveProposal);
+    });
+
+    // wait for us to connect or a proposal to show up
+    //
+    let proposalFound =
+        await Promise.race([
+            proposalFoundP,
+            new Promise<boolean>((resolve) => {
+                if (!container.connected) {
+                    container.once("connected", () => resolve(false));
+                } else {
+                    resolve(false);
+                }
+            }),
+        ]);
+
+    // we are connected and there still isn't a proposal
+    // we'll wait for one to show up, and will create one
+    // if we are the oldest client
+    //
+    while (!proposalFound) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const thisClient = quorum.getMember(container.clientId!);
+        let shouldPropose = true;
+        for (const member of quorum.getMembers().values()) {
+            if (thisClient !== undefined && thisClient.sequenceNumber > member.sequenceNumber) {
+                shouldPropose = false;
+                break;
+            }
+        }
+        if (shouldPropose) {
+            await quorum.propose(currentCodeProposalKey, pkgForCodeProposal);
+            break;
+        }
+        proposalFound = await Promise.race([
+            proposalFoundP,
+            new Promise<boolean>((resolve) => {
+                container.once("addMember", () => resolve(false));
+                container.once("removeMember", () => resolve(false));
+            }),
+        ]);
+    }
+
+    // finally wait for the context to change
+    await contextChangedP;
 }
 
 /**
@@ -162,9 +229,9 @@ export class BaseHost {
 
         // If this is a new document we will go and instantiate the chaincode. For old documents we assume a legacy
         // package.
-        if (!container.existing) {
-            await initializeChaincode(container, pkg)
-                .catch((error) => console.error("chaincode error", error));
+        if (pkg) {
+            await initializeContainerCode(container, pkg)
+                .catch((error) => console.error("code proposal error", error));
         }
 
         return container;
