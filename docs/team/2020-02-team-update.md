@@ -12,13 +12,16 @@ who the Fluid Runtime team is and what we do, [we've got you covered](../team.md
 
 ## January: A brief look back
 
-January saw the Fluid team engage more broadly with internal partners, including Teams, OWA, OneNote, Office
+January saw the Fluid runtime team engage more broadly with internal partners, including Teams, OWA, OneNote, Office
 Programmability, Fabric, SPFx, among others. A key goal for the runtime team is to grow the Fluid developer base in a
 sustainable way, which means we need to enable a "self-service" model as much as possible.
 
 In January we began work to address these issues in several ways. As part of this effort, we updated the docs
 organization and UI, we now have an [end-to-end tutorial for the Sudoku component](../examples/sudoku.md), and we have a
 [detailed description of the code](../examples/yo-fluid-breakdown.html) that is produced by the `yo fluid` scaffold.
+
+We kicked off several initiatives around the Fluid component model, including a deep survey of the interfaces and
+patterns that have been pioneered in Bohemia, setting the stage for our February focus areas.
 
 
 ## February focus
