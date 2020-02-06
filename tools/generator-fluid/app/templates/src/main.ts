@@ -3,13 +3,14 @@ import {
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import {
+    IComponentHTMLView,
     IComponentHTMLVisual,
 } from "@microsoft/fluid-component-core-interfaces";
 
 /**
  * DiceRoller example using view interfaces and stock component classes.
  */
-export class DiceRoller extends PrimedComponent implements IComponentHTMLVisual {
+export class DiceRoller extends PrimedComponent implements IComponentHTMLView, IComponentHTMLVisual {
     public get IComponentHTMLVisual() { return this; }
 
     /**

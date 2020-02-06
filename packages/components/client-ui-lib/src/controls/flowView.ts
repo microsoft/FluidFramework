@@ -8,6 +8,7 @@ import * as api from "@fluid-internal/client-api";
 import {
     IComponent,
     IComponentHandle,
+    IComponentHTMLView,
     IComponentHTMLVisual,
     IComponentLoadable,
 } from "@microsoft/fluid-component-core-interfaces";
@@ -77,7 +78,7 @@ interface IMathOptions {
     display: string;
 }
 
-export interface IMathInstance extends IComponentLoadable, IComponentHTMLVisual, IComponentCursor,
+export interface IMathInstance extends IComponentLoadable, IComponentHTMLView, IComponentHTMLVisual, IComponentCursor,
     IComponentKeyHandlers, IComponentLayout, SearchMenu.ISearchMenuClient {
     IComponentLoadable: IComponentLoadable;
     IComponentCursor: IComponentCursor;
