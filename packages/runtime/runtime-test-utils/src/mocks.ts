@@ -17,7 +17,6 @@ import {
     IDeltaManager,
     IGenericBlob,
     ILoader,
-    IMessageScheduler,
 } from "@microsoft/fluid-container-definitions";
 import {
     DebugLogger,
@@ -492,15 +491,5 @@ export class MockSharedObjectServices implements ISharedObjectServices {
 
     public constructor(contents: { [key: string]: string }) {
         this.objectStorage = new MockObjectStorageService(contents);
-    }
-}
-
-/**
- * Mock implementation of IMessageScheduler for testing that does nothing
- */
-export class MockMessageScheduler implements IMessageScheduler {
-    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    constructor(manager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>) {
-        this.deltaManager = manager;
     }
 }

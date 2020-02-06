@@ -13,7 +13,7 @@ The `type` field on `IClient` has been removed.
 
 ## Remove back-compat support for loader <= 0.8
 
-Back-compat support code in ScheduleManager is removed for loader <= 0.8, which doesn't support group ops.
+Back-compat support code for postProcess and ScheduleManager is removed for loader <= 0.8, which doesn't support group ops.
 Any component based on runtime >= 0.14 will no longer work with loader <= 0.8
 
 # 0.13 Breaking Changes

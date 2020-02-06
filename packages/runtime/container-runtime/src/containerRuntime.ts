@@ -570,7 +570,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.logger = context.logger;
 
         this.scheduleManager = new ScheduleManager(
-            context.IMessageScheduler.deltaManager,
+            context.deltaManager,
             this,
             ChildLogger.create(this.logger, "ScheduleManager"),
         );
@@ -778,13 +778,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         } finally {
             this.scheduleManager.endOperation(error, message);
         }
-    }
-
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public postProcess(message: ISequencedDocumentMessage, local: boolean, context: any) {
-        return this.context.IMessageScheduler
-            ? Promise.reject("Scheduler assumes only process")
-            : Promise.resolve();
     }
 
     public processSignal(message: ISignalMessage, local: boolean) {
