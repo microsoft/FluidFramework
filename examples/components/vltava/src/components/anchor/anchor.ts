@@ -61,8 +61,7 @@ export class Anchor extends PrimedComponent implements IProvideComponentHTMLVisu
     protected async componentInitializingFirstTime(props: any) {
 
         const queue = ConsensusQueue.create<keyof componentKeys>(this.runtime, this.defaultComponentQueue);
-        queue.register();
-        this.root.set(this.defaultComponentQueue, (queue as IComponent).IComponentHandle);
+        this.root.set(this.defaultComponentQueue, queue.handle);
 
         const keysP: Promise<void>[] = [];
         Object.keys(componentKeys).forEach((key) => {
@@ -74,8 +73,7 @@ export class Anchor extends PrimedComponent implements IProvideComponentHTMLVisu
     }
 
     protected async componentInitializingFromExisting() {
-        // This is because ConsensusQueue doesn't like being stored as a handle for some reason
-        const queue = await this.runtime.getChannel(this.defaultComponentQueue) as ConsensusQueue;
+        const queue = await this.root.get<IComponentHandle>(this.defaultComponentQueue).get<ConsensusQueue>();
         await this.createDefaultComponentsRecursive(queue);
     }
 
