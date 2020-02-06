@@ -148,12 +148,12 @@ WORKDIR /usr/src/server
 # Copy the package.json structure we create from the setup stage to reduce container layers
 COPY --from=setup /usr/src/server/ ./
 
-# Copy over component npmrc and package.json to dynamically install packages.
-COPY server/routerlicious/component/* /tmp/component/
+# Copy over chaincode npmrc and package.json to dynamically install packages.
+COPY server/routerlicious/chaincode/* /tmp/chaincode/
 
 # Give write permission to node user.
-RUN chown -R node:node /tmp/component/
-RUN chmod -R 755 /tmp/component/*
+RUN chown -R node:node /tmp/chaincode/
+RUN chmod -R 755 /tmp/chaincode/*
 
 # Give node user access to nyc in order to run and store coverage tests. Do this in all packages directory
 # as well as the root

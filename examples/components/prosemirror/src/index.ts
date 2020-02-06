@@ -13,7 +13,7 @@ import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
 import { IComponentFactory, FlushMode } from "@microsoft/fluid-runtime-definitions";
 import { fluidExport as smde } from "./prosemirror";
 
-const defaultComponent = "@component/prosemirror";
+const defaultComponent = "@chaincode/prosemirror";
 
 class ProseMirrorFactory implements IRuntimeFactory {
     public get IRuntimeFactory() { return this; }

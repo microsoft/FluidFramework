@@ -1,6 +1,6 @@
 # Simple Component Embed
 
-This app simply embeds another component. It's meant for reference and not practical purposes.
+This app simply embeds another chaincode. It's meant for reference and not practical purposes.
 
 **NOTE that this demo is on 0.2.0 of Prague. This is required if you want to load 0.2.0 components in your component.**
 

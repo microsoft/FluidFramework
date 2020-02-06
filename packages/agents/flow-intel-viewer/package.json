@@ -1,7 +1,7 @@
 {
   "name": "@fluid-example/flow-intel-viewer",
   "version": "0.14.0",
-  "description": "Component for viewing insights in flow-scroll",
+  "description": "Chaincode for viewing insights in flow-scroll",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

@@ -13,7 +13,7 @@ import "mocha";
 import { SourceDocument } from "../src/document";
 
 // tslint:disable:mocha-no-side-effect-code
-const sourceDocumentType = "@component/source-document";
+const sourceDocumentType = "@chaincode/source-document";
 const sourceDocumentFactory = new PrimedComponentFactory(SourceDocument, [new SharedStringFactory()]);
 // tslint:enable:mocha-no-side-effect-code
 

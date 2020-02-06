@@ -14,7 +14,7 @@ import { SharedString, SharedStringFactory } from "@microsoft/fluid-sequence";
  * Implementation of counter component for testing.
  */
 export class TestComponent extends PrimedComponent {
-    public static readonly type = "@component/test-component";
+    public static readonly type = "@chaincode/test-component";
 
     public static getFactory() { return TestComponent.factory; }
 

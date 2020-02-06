@@ -8,7 +8,7 @@ const path = require("path");
 const merge = require("webpack-merge");
 
 const pkg = require("./package.json");
-const componentName = pkg.name.slice(1);
+const chaincodeName = pkg.name.slice(1);
 
 module.exports = env => {
     const isProduction = env && env.production;
@@ -48,7 +48,7 @@ module.exports = env => {
             library: "[name]",
             // https://github.com/webpack/webpack/issues/5767
             // https://github.com/webpack/webpack/issues/7939
-            devtoolNamespace: componentName,
+            devtoolNamespace: chaincodeName,
             libraryTarget: "umd"
         },
         devServer: {

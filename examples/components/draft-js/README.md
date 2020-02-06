@@ -17,7 +17,7 @@ You can try the following commands
 
 
     npm run deploy
-       Publishes the component to https://packages.wu2.prague.office-int.com/#/
+       Publishes the chaincode to https://packages.wu2.prague.office-int.com/#/
 ````
 
 We suggest you start by typing:

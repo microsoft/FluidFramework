@@ -285,7 +285,7 @@ export class WebCodeLoader implements ICodeLoader {
     }
 
     /**
-     * @param source - Details of where to find component
+     * @param source - Details of where to find chaincode
      */
     public async load<T>(
         source: IFluidCodeDetails,

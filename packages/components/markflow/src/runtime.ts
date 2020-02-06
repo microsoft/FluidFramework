@@ -6,7 +6,7 @@
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 
 export const webflowType = "@fluid-example/webflow";
-export const FlowDocumentType = "@component/flow-document";
+export const FlowDocumentType = "@chaincode/flow-document";
 
 export const fluidExport = new SimpleModuleInstantiationFactory(
     webflowType,

@@ -26,7 +26,7 @@ export class DocumentFactory implements IDocumentFactory {
         this.loaderDeferred.resolve(loader);
     }
 
-    public async create(component: IFluidCodeDetails): Promise<string> {
+    public async create(chaincode: IFluidCodeDetails): Promise<string> {
         // eslint-disable-next-line @typescript-eslint/no-misused-promises, no-async-promise-executor
         const monikerP = new Promise(async (resolve) => {
             // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
@@ -59,7 +59,7 @@ export class DocumentFactory implements IDocumentFactory {
         }
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        quorum.propose("code", component);
+        quorum.propose("code", chaincode);
 
         return url;
     }

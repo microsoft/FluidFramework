@@ -37,7 +37,7 @@ async function getComponentAndRender(loader: Loader, url: string, div: HTMLDivEl
     }
 }
 
-async function initializeComponent(container: Container, pkg?: IFluidCodeDetails): Promise<void> {
+async function initializeChaincode(container: Container, pkg?: IFluidCodeDetails): Promise<void> {
     if (!pkg) {
         return;
     }
@@ -62,7 +62,7 @@ async function initializeComponent(container: Container, pkg?: IFluidCodeDetails
  * @param hostConfig - Config specifying the resolver/factory to be used.
  * @param resolved - A resolved url from a url resolver.
  * @param pkg - A resolved package with cdn links.
- * @param scriptIds - The script tags the component are attached to the view with.
+ * @param scriptIds - The script tags the chaincode are attached to the view with.
  */
 async function createWebLoader(
     hostConfig: IBaseHostConfig,
@@ -71,7 +71,7 @@ async function createWebLoader(
     scriptIds: string[],
 ): Promise<Loader> {
 
-    // Create the web loader and prefetch the component we will need
+    // Create the web loader and prefetch the chaincode we will need
     const codeLoader = new WebCodeLoader(hostConfig.whiteList);
     if (pkg) {
         if (pkg.pkg) { // This is an IFluidPackage
@@ -111,12 +111,12 @@ async function createWebLoader(
 
 export class BaseHost {
     /**
-     * Function to load the container from the given url and initialize the component.
+     * Function to load the container from the given url and initialize the chaincode.
      * @param hostConfig - Config specifying the resolver/factory and other loader settings to be used.
      * @param url - Url of the Fluid component to be loaded.
      * @param resolved - A resolved url from a url resolver.
      * @param pkg - A resolved package with cdn links.
-     * @param scriptIds - The script tags the component are attached to the view with.
+     * @param scriptIds - The script tags the chaincode are attached to the view with.
      * @param div - The div to load the component into.
      */
     public static async start(
@@ -160,11 +160,11 @@ export class BaseHost {
         });
         await getComponentAndRender(loader, url, div);
 
-        // If this is a new document we will go and instantiate the component. For old documents we assume a legacy
+        // If this is a new document we will go and instantiate the chaincode. For old documents we assume a legacy
         // package.
         if (!container.existing) {
-            await initializeComponent(container, pkg)
-                .catch((error) => console.error("component error", error));
+            await initializeChaincode(container, pkg)
+                .catch((error) => console.error("chaincode error", error));
         }
 
         return container;

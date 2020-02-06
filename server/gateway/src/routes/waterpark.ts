@@ -21,7 +21,7 @@ import { defaultPartials } from "./partials";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pkgJson = require("../../package.json") as IPackage;
-const defaultComponent =
+const defaultChaincode =
     `@microsoft/fluid-external-component-loader@${pkgJson.version.endsWith(".0") ? "^" : ""}${pkgJson.version}`;
 
 export function create(
@@ -37,16 +37,15 @@ export function create(
     router.get("/", spoEnsureLoggedIn(), ensureLoggedIn(), (request, response, next) => {
         let redirect = `${request.baseUrl}/${moniker.choose()}`;
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        if (request.query.component) {
-            // TODO #1148 - remove usage of 'chaincode' below
-            redirect += `?chaincode=${request.query.component}`;
+        if (request.query.chaincode) {
+            redirect += `?chaincode=${request.query.chaincode}`;
         }
         return response.status(302).redirect(redirect);
     });
 
     router.get("/:id*", spoEnsureLoggedIn(), ensureLoggedIn(), (request, response, next) => {
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        const component = request.query.component ? request.query.component : defaultComponent;
+        const chaincode = request.query.chaincode ? request.query.chaincode : defaultChaincode;
         const start = Date.now();
 
         const jwtToken = jwt.sign(
@@ -82,12 +81,12 @@ export function create(
             // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             const cdn = request.query.cdn ? request.query.cdn : config.get("worker:npm");
 
-            const details = extractDetails(component);
+            const details = extractDetails(chaincode);
             const codeDetails = {
                 config: {
                     [`@${details.scope}:cdn`]: cdn,
                 },
-                package: component,
+                package: chaincode,
             };
 
             return webLoader.resolve(codeDetails);
@@ -129,7 +128,7 @@ export function create(
                 if (!pkg) {
                     resolved.url += `${path}`;
                 } else {
-                    resolved.url += `?chaincode=${component}`;
+                    resolved.url += `?chaincode=${chaincode}`;
                 }
                 winston.info(`render ${tenantId}/${documentId} +${Date.now() - start}`);
 
@@ -140,7 +139,7 @@ export function create(
                     {
                         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                         cache: fullTree ? JSON.stringify(fullTree.cache) : undefined,
-                        component: JSON.stringify(pkg),
+                        chaincode: JSON.stringify(pkg),
                         config: workerConfig,
                         jwt: jwtToken,
                         npm: config.get("worker:npm"),

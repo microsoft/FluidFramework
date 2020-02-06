@@ -51,7 +51,7 @@ export function getConfig(
 export const getParam = (params: Params, key: string) => Array.isArray(params) ? undefined : params[key];
 
 /**
- * Helper function to return a relative range (if local) or the specific component package version
+ * Helper function to return a relative range (if local) or the specific chaincode package version
  */
 export function getVersion() {
     // eslint-disable-next-line @typescript-eslint/no-require-imports

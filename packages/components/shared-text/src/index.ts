@@ -118,7 +118,7 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
     }
 
     /**
-     * Instantiates a new component host
+     * Instantiates a new chaincode host
      */
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const runtime = await ContainerRuntime.load(

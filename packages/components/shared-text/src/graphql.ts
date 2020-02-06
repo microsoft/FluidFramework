@@ -12,7 +12,7 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { GraphQLService } from "./database";
 
-// Note on defining components - snapshotting does not seem like it should be part of an IComponentComponent given
+// Note on defining components - snapshotting does not seem like it should be part of an IChaincodeComponent given
 // these synthetic components don't need it. We may want this to just be "attach"
 export class GraphIQLView extends EventEmitter implements IComponentHTMLVisual {
     public readonly id = "graphiql";

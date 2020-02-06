@@ -15,7 +15,7 @@ mkdir build_resources
 
 # Generate .npmrc
 echo "@prague:registry=$1" > build_resources/.npmrc
-echo "@component:registry=$1" >> build_resources/.npmrc
+echo "@chaincode:registry=$1" >> build_resources/.npmrc
 echo "@component:registry=$1" >> build_resources/.npmrc
 echo "@microsoft:registry=$1" >> build_resources/.npmrc
 echo "@fluid-internal:registry=$1" >> build_resources/.npmrc

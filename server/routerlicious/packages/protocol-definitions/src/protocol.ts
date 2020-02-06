@@ -34,7 +34,7 @@ export enum MessageType {
     // TODO the attach and operation names are partially historican. We may want to rename to align with changes
     // coming from code loading.
 
-    // Creates a new channel and attaches component to it
+    // Creates a new channel and attaches chaincode to it
     Attach = "attach",
 
     // Channel operation.
