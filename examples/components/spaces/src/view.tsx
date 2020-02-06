@@ -7,7 +7,7 @@ import { EmbeddedComponent } from "@microsoft/fluid-aqueduct-react";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 
 import * as React from "react";
-import  GridLayout, { Layout } from "react-grid-layout";
+import GridLayout, { Layout } from "react-grid-layout";
 
 import "../../../../node_modules/react-grid-layout/css/styles.css";
 import "../../../../node_modules/react-resizable/css/styles.css";
@@ -21,6 +21,9 @@ interface IEmbeddedComponentWrapperProps {
 interface IEmbeddedComponentWrapperState {
     element: JSX.Element;
 }
+
+const buttonContainerStyle: React.CSSProperties = { opacity: 1, backgroundColor: "none", position: "absolute", bottom: 0, left: 0 };
+const gridContainerStyle: React.CSSProperties = {paddingTop: "25px"};
 
 /**
  * This wrapper handles the async-ness of loading a component.
@@ -137,7 +140,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                 <div className="text" key={key} style={editableStyle} >
                     {
                         editable &&
-                        <div style={{ opacity: 1, backgroundColor: "none", position: "absolute", bottom: 0, left: 0 }}>
+                        <div style={buttonContainerStyle}>
                             <button onClick={() => this.props.dataModel.removeComponent(id)}>❌</button>
                             <button onClick={() => {
                                 navigator.clipboard.writeText(componentUrl).then(() => {
@@ -186,6 +189,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                         onResizeStop={this.onGridChangeEvent}
                         onDragStop={this.onGridChangeEvent}
                         layout={layouts}
+                        style={gridContainerStyle}
                     >
                         {array}
                     </GridLayout>

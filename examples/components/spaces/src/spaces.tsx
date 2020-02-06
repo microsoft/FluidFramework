@@ -71,7 +71,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
             this.adderComponent.addListener("saveLayout", async () => {
                 await this.dataModel.saveLayout();
             });
-            this.adderComponent.addListener("toggleEditable", async () => {
+            this.adderComponent.addListener("toggleEditable", () => {
                 this.isEditable = !this.isEditable;
                 this.adderComponent.root.set("isEditable", this.isEditable);
                 this.dataModel.emit("editableUpdated", this.isEditable);

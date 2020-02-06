@@ -15,6 +15,8 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { Manager } from "../container-services";
 import { SupportedComponent } from "../dataModel";
+
+const adderStyle: React.CSSProperties = { position: "absolute", top: 10, left: 10, zIndex: 1000 };
 /**
  * A component to allow you to add component
  */
@@ -23,7 +25,7 @@ export class Adder extends PrimedComponent implements IComponentHTMLVisual {
     public get IComponentHTMLVisual() { return this; }
 
     protected async componentHasInitialized() {
-        // Register with our manager to say that we support clicks
+        // Register with our manager to say that we support adding components, saving the layout, and toggling the edit state
         const manager = await this.getService<Manager>("manager");
         manager.registerProducer("add", this);
         manager.registerProducer("saveLayout", this);
@@ -75,7 +77,7 @@ export class Adder extends PrimedComponent implements IComponentHTMLVisual {
         const rerender = () => {
             const editable = this.root.get("isEditable");
             ReactDOM.render(
-                <div style={{ position: "absolute", top: 10, left: 10, zIndex: 1000 }}>
+                <div style={adderStyle}>
                     <button
                         id="edit"
                         onClick={() => this.emitToggleEditable()}
