@@ -2,8 +2,10 @@
 
 This package contains experimental portions of the framework, primarily interface definitions for the framework's component model.
 
-Everything in this package should support scenarios that it is the goal of the framework to support. Please file github issues, and work with contributors to determine this before submitting a pull request. However, things in this package may not be fully realized, and need additional honing before they can be promoted to the framework itself.
+These interfaces are designed to support scenarios requiring cooperation between distinct components, or between components and the app.  Interfaces in this package are still in development, and may be incomplete or need additional iteration before they can be promoted to the framework itself.  Consumers of this package should be prepared for breaking changes.
 
-Consumers of this package should be aware and prepared for both minor and major changes to occur as the code in this package is iterated upon.
+## Contributing
 
-That said, the code in the package should abide by the coding guidelines of the framework and runtime. The code's apis should be well documented, and implementations should have unit tests. Additionally, a section should be added to this readme, or a seperate readme should be added for all additions to this package that describe the scenarios the newly added code is meant to address.
+If you'd like to contribute an interface to the framework, please file a Github issue and work with the project contributors to evaluate the interface and its suitability for the package before submitting a pull request.
+
+Although experimental, code in this package still must abide by the coding guidelines of the framework and runtime.  APIs must be well documented with both TSDoc comments and a README explaining target scenarios and usage, and implementations should have unit tests.

@@ -1,0 +1,47 @@
+{
+  "name": "@prague/electron-host",
+  "version": "0.7.0",
+  "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "concurrently npm:build:compile npm:tslint",
+    "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
+    "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
+    "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+    "electron": "electron ./dist/index.html",
+    "electron:test": "electron --inspect=5858 ./dist/index.html",
+    "tsc": "tsc",
+    "tslint": "tslint --project tsconfig.json --format verbose",
+    "webpack": "webpack --env build"
+  },
+  "dependencies": {
+    "@prague/tiny-web-host": "^0.7.0",
+    "electron": "^5.0.7",
+    "react": "^16.8.3",
+    "react-dom": "^16.8.3"
+  },
+  "devDependencies": {
+    "@microsoft/api-extractor": "^7.7.2",
+    "@microsoft/fluid-build-common": "^0.7.0",
+    "@types/isomorphic-fetch": "^0.0.35",
+    "@types/node": "^10.12.12",
+    "@types/react": "^16.9.15",
+    "concurrently": "^4.1.0",
+    "html-webpack-plugin": "^3.2.0",
+    "rimraf": "^2.6.2",
+    "source-map-loader": "^0.2.4",
+    "ts-loader": "^4.5.0",
+    "tslint": "^5.11.0",
+    "typescript": "~3.4.5",
+    "webpack": "^4.8.2",
+    "webpack-cli": "^3.1.2",
+    "webpack-dev-server": "^3.8.0",
+    "webpack-merge": "^4.1.2"
+  },
+  "chaincode": "@prague/shared-text@latest"
+}

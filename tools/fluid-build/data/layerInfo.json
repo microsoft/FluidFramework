@@ -152,8 +152,8 @@
             "Component": {
                 "dot": false,
                 "dirs": [
-                    "packages/component/",
-                    "samples/chaincode/",
+                    "packages/components/",
+                    "examples/components/",
                     "packages/agent/",
                     "packages/server/tools-core"
                 ],
@@ -182,6 +182,7 @@
             "Test": {
                 "dev": true,
                 "packages": [
+                    "@microsoft/fluid-local-web-host",
                     "@microsoft/fluid-test-driver",
                     "@microsoft/fluid-test-runtime-utils",
                     "@microsoft/fluid-local-test-server",
