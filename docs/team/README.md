@@ -10,9 +10,6 @@ The Fluid Runtime team are the core maintainers of
 The team is responsible for maintaining the core Fluid runtime, as well as the framework, distributed data structures,
 drivers, sample hosts, and tooling.
 
-People-wise, the runtime team is Curtis Man and his team, but the team also works with Kurt Berglund's team and Steve
-Lucco very closely.
-
 
 ## How we work
 
@@ -23,7 +20,7 @@ need to work with the team in a specific area, please start with the primary eng
 ## How should I engage with the runtime team?
 
 We are consolidating as much as possible to our GitHub presence. If you think you've found a bug, please [file an issue][].
-If you wish there was better documentation on a specific topic, please [file an issue][].
+If you wish there was better documentation on a topic, please [file an issue][].
 
 
 ## Areas and experts

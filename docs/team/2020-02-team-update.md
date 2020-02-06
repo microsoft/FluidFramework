@@ -40,7 +40,7 @@ Note: Many of these projects will continue beyond February.
 * [GitHub project](https://github.com/microsoft/FluidFramework/projects/12)
 
 We are investigating various component patterns as part of a project called
-[Vltava](https://github.com/microsoft/FluidFramework/issues/1015). The plan is to create a "Experience" that can manage
+[Vltava](https://github.com/microsoft/FluidFramework/issues/1015). The plan is to create an "Experience" that can manage
 and create multiple surfaces. These surfaces are each Components and should be able to interact with each other as well
 as global services and components. This "Experience" will be a test ground for trying out component model patterns.
 
@@ -61,7 +61,7 @@ to work with one another. We are working closely with Bohemia experts to bring s
 the Fluid core.
 
 
-### Creation Flow / Singletons
+### Creation flow / singletons
 
 <Badge text="Vlad Sudzilouski" vertical="middle" />
 
@@ -89,9 +89,9 @@ discussion](https://github.com/microsoft/FluidFramework/issues/1042) for more in
 
 * [GitHub project](https://github.com/microsoft/FluidFramework/projects/18)
 
-We are working with our colleagues in **Teams** and **Noida** to finalize the interfaces and patterns that facilitate data
-exchange between components as well as establish `table-document` as a default data-model component that developers can
-reuse.
+As we've worked through the data-exchange scenarios with partners, we've recognized that the framework needs a common
+data-model component that developers can build upon. We are designing this component, `table-document`, closely with
+our colleagues in **Noida** and **Teams**.
 
 
 ### Documentation
@@ -118,7 +118,7 @@ first partner by the end of February.
 * [GitHub project](https://github.com/microsoft/FluidFramework/projects/13)
 
 The goal is to make sure the Fluid Framework can support the various code upgrade scenarios. The core idea is that when
-the loaded runtime needs to update to a new version, one of the clients can propose that new code to be used, and all
+the loaded container needs to update to a new version, one of the clients can propose that new code to be used, and all
 clients of that document will reload with the newer code.
 
 
