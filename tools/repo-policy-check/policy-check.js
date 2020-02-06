@@ -168,7 +168,7 @@ const handlers = [
     },
     {
         name: "dockerfile-packages",
-        match: /^(packages|samples)\/.*\/package\.json/i,
+        match: /^(packages)\/.*\/package\.json/i,
         handler: file => {
             const dockerfileCopyText = getDockerfileCopyText(file);
 
