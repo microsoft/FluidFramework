@@ -201,8 +201,7 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
         });
 
         flowDiv.appendChild(this.viewport);
-        const intelRenderable = this.intelViewer.addView();
-        intelRenderable.render(insightsDiv);
+        this.intelViewer.render(insightsDiv);
     }
 
     // #endregion IComponentHTMLView
