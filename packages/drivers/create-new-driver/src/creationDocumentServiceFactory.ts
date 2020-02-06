@@ -6,7 +6,6 @@
 import {
     IDocumentService,
     IDocumentServiceFactory,
-    IFluidResolvedUrl,
     IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
 import { parse } from "url";

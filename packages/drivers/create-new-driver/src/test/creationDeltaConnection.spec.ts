@@ -8,6 +8,7 @@ import { IClient, IDocumentMessage, MessageType, ScopeType } from "@microsoft/fl
 import * as assert from "assert";
 import { CreationServerMessagesHandler } from "..";
 import { CreationDocumentServiceFactory } from "../creationDocumentServiceFactory";
+import { CreationDriverUrlResolver } from "../creationDriverUrlResolver";
 
 describe("Creation Driver", () => {
 
@@ -15,10 +16,12 @@ describe("Creation Driver", () => {
     let client: IClient;
     let documentDeltaConnection1: IDocumentDeltaConnection;
     let documentDeltaConnection2: IDocumentDeltaConnection;
+    const docId = "docId";
     let resolved: IFluidResolvedUrl;
     beforeEach(async () => {
+        const resolver: CreationDriverUrlResolver = new CreationDriverUrlResolver();
         const factory = new CreationDocumentServiceFactory();
-        resolved = {endpoints: {}, type: "fluid", url: "", tokens: {}};
+        resolved = (await resolver.resolve({url: `http://fluid.com?uniqueId=${docId}`})) as IFluidResolvedUrl;
         service = await factory.createDocumentService(resolved);
         client = {
             mode: "write",
@@ -50,7 +53,7 @@ describe("Creation Driver", () => {
             type: MessageType.Operation,
         };
         const creationServerMessagesHandler =
-            CreationServerMessagesHandler.getInstance("createNewFileDoc", resolved.url);
+            CreationServerMessagesHandler.getInstance(docId);
         assert.equal(creationServerMessagesHandler.queuedMessages.length, 2,
             "Total messages should be 2 at this time including join messages");
         documentDeltaConnection1.submit([message]);
