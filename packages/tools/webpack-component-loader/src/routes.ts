@@ -16,6 +16,7 @@ import { OdspUrlResolver } from "./odspUrlResolver";
 
 const tokenManager = new OdspTokenManager(odspTokensCache);
 let odspAuthStage = 0;
+let odspAuthLock: Promise<void> | undefined;
 
 const getThisOrigin = (options: RouteOptions): string => `http://localhost:${options.port}`;
 
@@ -55,49 +56,65 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
                 // ignore these
                 return false;
             }
-            const originalUrl = `${getThisOrigin(options)}${req.url}`;
-            if (odspAuthStage >= 2) {
-                if (!options.odspAccessToken || !options.pushAccessToken) {
-                    throw Error("Failed to authenticate.");
-                }
-                // force creation of file if not already exists
-                const odspUrlResolver = new OdspUrlResolver(
-                    options.server,
-                    { accessToken: options.odspAccessToken });
-                await odspUrlResolver.resolve({ url: originalUrl });
-                return true;
+
+            while (odspAuthLock !== undefined) {
+                await odspAuthLock;
             }
+            let lockResolver: () => void;
+            odspAuthLock = new Promise((resolve) => {
+                lockResolver = () => {
+                    resolve();
+                    odspAuthLock = undefined;
+                };
+            });
+            try {
 
-            options.server = getServer(options.mode);
+                const originalUrl = `${getThisOrigin(options)}${req.url}`;
+                if (odspAuthStage >= 2) {
+                    if (!options.odspAccessToken || !options.pushAccessToken) {
+                        throw Error("Failed to authenticate.");
+                    }
+                    // force creation of file if not already exists
+                    const odspUrlResolver = new OdspUrlResolver(
+                        options.server,
+                        { accessToken: options.odspAccessToken });
+                    await odspUrlResolver.resolve({ url: originalUrl });
+                    return true;
+                }
 
-            if (odspAuthStage === 0) {
-                await tokenManager.getOdspTokens(
+                options.server = getServer(options.mode);
+
+                if (odspAuthStage === 0) {
+                    await tokenManager.getOdspTokens(
+                        options.server,
+                        getMicrosoftConfiguration(),
+                        (url: string) => res.redirect(url),
+                        async (tokens: IOdspTokens) => {
+                            options.odspAccessToken = tokens.accessToken;
+                            return originalUrl;
+                        },
+                        true,
+                        options.forceReauth,
+                    );
+                    odspAuthStage = 1;
+                    return false;
+                }
+                await tokenManager.getPushTokens(
                     options.server,
                     getMicrosoftConfiguration(),
                     (url: string) => res.redirect(url),
                     async (tokens: IOdspTokens) => {
-                        options.odspAccessToken = tokens.accessToken;
+                        options.pushAccessToken = tokens.accessToken;
                         return originalUrl;
                     },
                     true,
                     options.forceReauth,
                 );
-                odspAuthStage = 1;
+                odspAuthStage = 2;
                 return false;
+            } finally {
+                lockResolver();
             }
-            await tokenManager.getPushTokens(
-                options.server,
-                getMicrosoftConfiguration(),
-                (url: string) => res.redirect(url),
-                async (tokens: IOdspTokens) => {
-                    options.pushAccessToken = tokens.accessToken;
-                    return originalUrl;
-                },
-                true,
-                options.forceReauth,
-            );
-            odspAuthStage = 2;
-            return false;
         };
     }
 
