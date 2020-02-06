@@ -25,7 +25,7 @@ import { Adder } from "./components";
 export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
     private dataModelInternal: ISpacesDataModel | undefined;
     private adderComponent: Adder | undefined;
-    private isEditable = false;
+    private isEditable = true;
     private adderComponentId = "spaces-adder";
     private static readonly factory = new PrimedComponentFactory(Spaces, []);
 
@@ -66,7 +66,6 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
     protected async componentHasInitialized() {
         if (this.adderComponent) {
             this.adderComponent.addListener("add", async (type: SupportedComponent, w?: number, h?: number) => {
-                alert(type)
                 await this.dataModel.addComponent(type, w, h);
             });
             this.adderComponent.addListener("saveLayout", async () => {
@@ -85,7 +84,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
      */
     public render(div: HTMLElement) {
         ReactDOM.render(
-            <SpacesGridView dataModel={this.dataModel} adderComponentId={this.adderComponentId}></SpacesGridView>,
+            <SpacesGridView dataModel={this.dataModel} adderComponentId={this.adderComponentId} editable={this.isEditable}></SpacesGridView>,
             div);
     }
 }

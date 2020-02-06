@@ -80,7 +80,7 @@ export class Adder extends PrimedComponent implements IComponentHTMLVisual {
                         id="edit"
                         onClick={() => this.emitToggleEditable()}
                     >
-                        {`Edit: (${editable})`}
+                        {`Edit: ${editable}`}
                     </button>
                     {editable ? editableButtons : undefined}
                 </div>,

@@ -48,6 +48,7 @@ class EmbeddedComponentWrapper extends React.Component<IEmbeddedComponentWrapper
 interface ISpaceGridViewProps {
     dataModel: ISpacesDataModel;
     adderComponentId: string;
+    editable: boolean;
 }
 
 interface ISpaceGridViewState {
@@ -63,7 +64,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
     constructor(props) {
         super(props);
         this.state = {
-            editable: this.props.dataModel.componentList.size === 0,
+            editable: this.props.editable,
             componentMap: this.props.dataModel.componentList,
         };
 
@@ -76,7 +77,6 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
             this.setState({ componentMap: newMap });
         });
         this.props.dataModel.on("editableUpdated", (editable: boolean) => {
-            alert("event received" + editable);
             this.setState({editable});
         })
     }
