@@ -238,17 +238,6 @@ export interface IDocumentServiceFactory {
 }
 
 /**
- * Network errors are communicated from the driver to runtime by throwing object implementing INetworkError interface
- */
-export interface INetworkError {
-    readonly message: string;
-    readonly canRetry?: boolean;
-    readonly statusCode?: number;
-    readonly retryAfterSeconds?: number;
-    readonly online: string;
-}
-
-/**
  * Context for uploading a summary to storage.
  * Indicates the previously acked summary.
  */
