@@ -19,7 +19,11 @@ export interface IComponentHTMLOptions {
     display?: "block" | "inline";
 }
 
-export interface IComponentHTMLView {
+export interface IProvideComponentHTMLView {
+    readonly IComponentHTMLView?: IComponentHTMLView;
+}
+
+export interface IComponentHTMLView extends IProvideComponentHTMLView {
     render(elm: HTMLElement, options?: IComponentHTMLOptions): void;
     remove?(): void;
 }
