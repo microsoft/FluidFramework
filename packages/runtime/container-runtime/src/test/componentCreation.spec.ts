@@ -9,17 +9,18 @@ import {
     IComponentRegistry,
     IComponentRuntime,
     ComponentRegistryEntry,
+    NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import { MockRuntime } from "@microsoft/fluid-test-runtime-utils";
-import { ContainerRuntime } from "../containerRuntime";
 import { LocalComponentContext } from "../componentContext";
+import { ContainerRuntime } from "../containerRuntime";
 
 describe("Component Creation Tests", () => {
-    describe("Component creation via local context", () => {
+    describe("Component creation via local context creation and realize", () => {
         /**
-         * These tests simulate component and subcomponent creation by creating local contexts for them.
+         * These tests simulate component and subcomponent creation by creating local contexts and realizing them.
          * The component tree for these tests is as follows:
          *
          *                  Default
@@ -40,32 +41,32 @@ describe("Component Creation Tests", () => {
         const componentBName = "componentB";
         const componentCName = "componentC";
 
+        // Helper function that creates a ComponentRegistryEntry with the registry entries
+        // provided to it.
+        function createComponentRegistryEntry(entries: NamedComponentRegistryEntries): ComponentRegistryEntry {
+            const registryEntries = new Map(entries);
+            const factory: IComponentFactory = {
+                get IComponentFactory() { return factory; },
+                instantiateComponent: (context: IComponentContext) => {
+                    context.bindRuntime(new MockRuntime());
+                },
+            };
+            let registry: IComponentRegistry;
+            // eslint-disable-next-line prefer-const
+            registry = {
+                IComponentRegistry: registry,
+                // Returns the registry entry as per the entries provided in the param.
+                get: async (pkg) => registryEntries.get(pkg),
+            };
+
+            const entry: ComponentRegistryEntry = {
+                get IComponentFactory() { return factory; },
+                get IComponentRegistry() { return registry; },
+            };
+            return entry;
+        }
+
         beforeEach(async () => {
-            // Helper function that creates a ComponentRegistryEntry with the registry entries
-            // provided to it.
-            function createComponentRegistryEntry(entries): ComponentRegistryEntry {
-                const registryEntries = new Map(entries);
-                const factory: IComponentFactory = {
-                    get IComponentFactory() { return factory; },
-                    instantiateComponent: (context: IComponentContext) => {
-                        context.bindRuntime(new MockRuntime());
-                    },
-                };
-                let registry: IComponentRegistry;
-                // eslint-disable-next-line prefer-const
-                registry = {
-                    IComponentRegistry: registry,
-                    // Returns the registry entry as per the entries provided in the param.
-                    get: async (pkg) => registryEntries.get(pkg),
-                };
-
-                const entry: ComponentRegistryEntry = {
-                    get IComponentFactory() { return factory; },
-                    get IComponentRegistry() { return registry; },
-                };
-                return entry;
-            }
-
             // Component B is a leaf component and itss registry does not have any entries.
             const entryB = createComponentRegistryEntry([]);
             // Component C is a leaf component and itss registry does not have any entries.
@@ -90,7 +91,7 @@ describe("Component Creation Tests", () => {
             containerRuntime = { IComponentRegistry: globalRegistry } as ContainerRuntime;
         });
 
-        it("Create valid global component", async () => {
+        it("Valid global component", async () => {
             // Create the default component that is in the global registry.
             const context: LocalComponentContext = new LocalComponentContext(
                 "default-Id",
@@ -105,7 +106,7 @@ describe("Component Creation Tests", () => {
             assert.notStrictEqual(runtime, undefined);
         });
 
-        it("Create invalid global component", async () => {
+        it("Invalid global component", async () => {
             // Create component A that is not in the global registry.
             const context: LocalComponentContext = new LocalComponentContext(
                 "A-Id",
@@ -120,7 +121,7 @@ describe("Component Creation Tests", () => {
             assert.strictEqual(runtime, undefined);
         });
 
-        it("Create valid subcomponent from the global component", async () => {
+        it("Valid subcomponent from the global component", async () => {
             // Create component A that is in the registry of the default component.
             const contextA: LocalComponentContext = new LocalComponentContext(
                 "A-Id",
@@ -135,7 +136,7 @@ describe("Component Creation Tests", () => {
             assert.notStrictEqual(runtime, undefined);
         });
 
-        it("Create invalid subcomponent from the global component", async () => {
+        it("Invalid subcomponent from the global component", async () => {
             // Create component B that is in not the registry of the default component.
             const contextB: LocalComponentContext = new LocalComponentContext(
                 "B-Id",
@@ -150,7 +151,7 @@ describe("Component Creation Tests", () => {
             assert.strictEqual(runtime, undefined);
         });
 
-        it("Create valid subcomponent at depth 2", async () => {
+        it("Valid subcomponent at depth 2", async () => {
             // Create component B that is in the registry of component A (which is at depth 2).
             const contextB: LocalComponentContext = new LocalComponentContext(
                 "B-Id",
@@ -178,7 +179,7 @@ describe("Component Creation Tests", () => {
             assert.notStrictEqual(runtimeC, undefined);
         });
 
-        it("Create invalid subcomponent at depth 2", async () => {
+        it("Invalid subcomponent at depth 2", async () => {
             // Create a fake component that is not in the registry of component A (which is at depth 2).
             const contextFake: LocalComponentContext = new LocalComponentContext(
                 "fake-Id",
@@ -193,7 +194,7 @@ describe("Component Creation Tests", () => {
             assert.strictEqual(runtime, undefined);
         });
 
-        it("Create invalid subcomponent at depth 3", async () => {
+        it("Invalid subcomponent at depth 3", async () => {
             // Create a fake component that is not in the registry of component B (which is at depth 3).
             const contextFake: LocalComponentContext = new LocalComponentContext(
                 "fake-Id",
@@ -208,7 +209,7 @@ describe("Component Creation Tests", () => {
             assert.strictEqual(runtime, undefined);
         });
 
-        it("Create subcomponent which is in the registry of the parent component", async () => {
+        it("Subcomponent which is in the registry of the parent component", async () => {
             // Create component C that is in parent's registry but not in the registry of component B.
             const contextC: LocalComponentContext = new LocalComponentContext(
                 "C-Id",
