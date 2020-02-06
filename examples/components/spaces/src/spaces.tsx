@@ -26,10 +26,8 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
     private dataModelInternal: ISpacesDataModel | undefined;
     private adderComponent: Adder | undefined;
     private isEditable = false;
-
-    private static readonly factory = new PrimedComponentFactory(Spaces, []);
-
     private adderComponentId = "spaces-adder";
+    private static readonly factory = new PrimedComponentFactory(Spaces, []);
 
     public static getFactory() {
         return Spaces.factory;
@@ -46,11 +44,11 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
     public get IComponentHTMLVisual() { return this; }
 
     protected async componentInitializingFirstTime(props?: any) {
-        this.root.set("isEditable", this.isEditable);
         this.root.createSubDirectory("component-list");
         this.dataModelInternal =
             new SpacesDataModel(this.root, this.createAndAttachComponent.bind(this), this.getComponent.bind(this));
         this.adderComponent = await this.dataModel.addComponent<Adder>("adder", 4, 4, this.adderComponentId);
+        this.adderComponent.root.set("isEditable", this.isEditable);
         // Set the saved template if there is a template query param
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has("template")) {
@@ -62,7 +60,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
         this.dataModelInternal =
             new SpacesDataModel(this.root, this.createAndAttachComponent.bind(this), this.getComponent.bind(this));
         this.adderComponent = await this.getComponent<Adder>(this.adderComponentId);
-        this.isEditable = this.root.get("isEditable");
+        this.adderComponent.root.set("isEditable", this.isEditable);
     }
 
     protected async componentHasInitialized() {
@@ -76,12 +74,10 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
             });
             this.adderComponent.addListener("toggleEditable", async () => {
                 this.isEditable = !this.isEditable;
-                this.root.set("isEditable", this.isEditable);
+                this.adderComponent.root.set("isEditable", this.isEditable);
                 this.dataModel.emit("editableUpdated", this.isEditable);
             });
-        }
-        
-        
+        }        
     }
 
     /**
