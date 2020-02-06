@@ -83,7 +83,7 @@ async function main() {
     const baseDirectories = [
         path.join(resolvedRoot, "common"),
         path.join(resolvedRoot, "packages"),
-        path.join(resolvedRoot, "samples/chaincode"),
+        path.join(resolvedRoot, "examples/components"),
         path.join(resolvedRoot, "server/routerlicious/packages")
     ];
 
