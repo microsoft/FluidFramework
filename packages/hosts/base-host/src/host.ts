@@ -54,7 +54,8 @@ export async function initializeContainerCode(
     //
     const contextChangedP = new Promise<void>((resolve) => container.once("contextChanged", () => resolve()));
 
-    // short circuit if we know the container doesn't exist
+    // short circuit if we know the container wasn't existing
+    // this is the most common case
     //
     if (!container.existing) {
         await Promise.all([
@@ -98,18 +99,20 @@ export async function initializeContainerCode(
     // if we are the oldest client
     //
     while (!proposalFound) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const thisClient = quorum.getMember(container.clientId!);
-        let shouldPropose = true;
-        for (const member of quorum.getMembers().values()) {
-            if (thisClient !== undefined && thisClient.sequenceNumber > member.sequenceNumber) {
-                shouldPropose = false;
+        // get this clients seq
+        const thisClientSeq =
+            container.clientId !== undefined ? quorum.getMember(container.clientId)?.sequenceNumber : undefined;
+        if (thisClientSeq) {
+            // get the oldest client seq
+            const minClientSeq =
+                Array.from(quorum.getMembers().values())
+                    .reduce((pv, cv) => Math.min(pv, cv.sequenceNumber), thisClientSeq);
+
+            // if this client is the oldest client, it should propose
+            if(thisClientSeq === minClientSeq){
+                await quorum.propose(currentCodeProposalKey, pkgForCodeProposal);
                 break;
             }
-        }
-        if (shouldPropose) {
-            await quorum.propose(currentCodeProposalKey, pkgForCodeProposal);
-            break;
         }
         proposalFound = await Promise.race([
             proposalFoundP,
