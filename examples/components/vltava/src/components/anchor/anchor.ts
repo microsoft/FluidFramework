@@ -25,7 +25,7 @@ export class Anchor extends PrimedComponent implements IProvideComponentHTMLVisu
             throw new Error("Default Component was not initialized properly");
         }
 
-        return this .defaultComponentInternal;
+        return this.defaultComponentInternal;
     }
 
     private static readonly factory = new PrimedComponentFactory(Anchor, []);
