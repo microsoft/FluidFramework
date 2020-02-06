@@ -152,8 +152,8 @@
             "Component": {
                 "dot": false,
                 "dirs": [
-                    "packages/component/",
-                    "samples/chaincode/",
+                    "packages/components/",
+                    "examples/components/",
                     "packages/agent/",
                     "packages/server/tools-core"
                 ],

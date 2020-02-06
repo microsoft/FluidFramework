@@ -5,7 +5,7 @@ uid: examples
 # Examples
 
 You can find a number of examples in the Fluid repo, under the
-[samples/chaincode](https://github.com/Microsoft/FluidFramework/tree/master/samples/chaincode)
+[examples/components](https://github.com/Microsoft/FluidFramework/tree/master/examples/components)
 path. The following is a list of good examples to start with.
 
 Also see [the yo fluid breakdown](./yo-fluid-breakdown.md).
