@@ -1,8 +1,6 @@
 ---
-
 title: "Sudoku: An Example Fluid Framework component"
 uid: sudoku-example
-
 ---
 
 In this example we will build a collaborative Sudoku game. We will use Fluid distributed data structures to store and
@@ -46,7 +44,14 @@ After you've cloned the sample, install all the dependencies using `npm install`
 a local dev environment for testing and debugging. Visit <http://localhost:8080/> in a browser to load the Fluid
 development server, which will load two instances of the component side by side.
 
-![The Sudoku component loaded in the Fluid development server](./sudoku-side-by-side.png "Sudoku component")
+<style>
+  #sudoku {
+    height: 500px;
+    width: 910px;
+  }
+</style>
+
+<iframe id="sudoku" src="/fluid/sudoku.html"></iframe>
 
 ::: important
 
@@ -101,7 +106,7 @@ in `src/fluidSudoku.tsx`.
 
 ```typescript
 export class FluidSudoku extends PrimedComponent
-    implements IComponentHTMLVisual, IComponentReactViewable {}
+  implements IComponentHTMLVisual, IComponentReactViewable {}
 ```
 
 This class extends the [PrimedComponent][] abstract base class. Our component is visual, so we need to implement the
@@ -155,7 +160,6 @@ public render(element?: HTMLElement): void {
 ```
 
 As you can see, the render method uses React to render the `SudokuView` React component.
-
 
 ### Creating Fluid distributed data structures
 
@@ -218,7 +222,7 @@ DDS, not the DDS itself. Similarly, when loading a DDS that is stored within ano
 handle, then get the full DDS from the handle.**
 
 ```typescript
-await this.root.get<IComponentHandle>(this.sudokuMapKey).get<ISharedMap>()
+await this.root.get<IComponentHandle>(this.sudokuMapKey).get<ISharedMap>();
 ```
 
 ### Handling events from distributed data structures
@@ -229,7 +233,7 @@ simply call `render` again. This ensures that our UI updates whenever a remote c
 
 ```typescript
 this.puzzle.on("valueChanged", (changed, local, op) => {
-    this.render();
+  this.render();
 });
 ```
 
@@ -252,24 +256,24 @@ component.
 
 ```typescript{2-6,9}
 const numericInput = (keyString: string, coord: string) => {
-    let valueToSet = Number(keyString);
-    valueToSet = Number.isNaN(valueToSet) ? 0 : valueToSet;
-    if (valueToSet >= 10 || valueToSet < 0) {
-        return;
-    }
+  let valueToSet = Number(keyString);
+  valueToSet = Number.isNaN(valueToSet) ? 0 : valueToSet;
+  if (valueToSet >= 10 || valueToSet < 0) {
+    return;
+  }
 
-    if (coord !== undefined) {
-        const cellInputElement = getCellInputElement(coord);
-        cellInputElement.value = keyString;
+  if (coord !== undefined) {
+    const cellInputElement = getCellInputElement(coord);
+    cellInputElement.value = keyString;
 
-        const toSet = props.puzzle.get<SudokuCell>(coord);
-        if (toSet.fixed) {
-            return;
-        }
-        toSet.value = valueToSet;
-        toSet.isCorrect = valueToSet === toSet.correctValue;
-        props.puzzle.set(coord, toSet);
+    const toSet = props.puzzle.get<SudokuCell>(coord);
+    if (toSet.fixed) {
+      return;
     }
+    toSet.value = valueToSet;
+    toSet.isCorrect = valueToSet === toSet.correctValue;
+    props.puzzle.set(coord, toSet);
+  }
 };
 ```
 
@@ -313,30 +317,30 @@ First, you need to create a `SharedMap` for your presence data.
 1. Open `src/fluidSudoku.tsx`.
 1. Inside the `FluidSudoku` class, declare two new private variables like so:
 
-    ```ts
-    private readonly presenceMapKey = "clientPresence";
-    private clientPresence: ISharedMap | undefined;
-    ```
+   ```ts
+   private readonly presenceMapKey = "clientPresence";
+   private clientPresence: ISharedMap | undefined;
+   ```
 
 1. Inside the `componentInitializingFirstTime` method, add the following code to the bottom of the method to create and
    register a second `SharedMap`:
 
-    ```ts
-    // Create a SharedMap to store presence data
-    const clientPresence = SharedMap.create(this.runtime);
-    this.root.set(this.presenceMapKey, clientPresence.handle);
-    ```
+   ```ts
+   // Create a SharedMap to store presence data
+   const clientPresence = SharedMap.create(this.runtime);
+   this.root.set(this.presenceMapKey, clientPresence.handle);
+   ```
 
    Notice that the Fluid runtime is exposed via the `this.runtime` property provided by [PrimedComponent][].
 
 1. Inside the `componentHasInitialized` method, add the following code to the bottom of the method to retrieve the
    presence map when the component initializes:
 
-    ```ts
-    this.clientPresence = await this.root
-        .get<IComponentHandle>(this.presenceMapKey)
-        .get<ISharedMap>();
-    ```
+   ```ts
+   this.clientPresence = await this.root
+     .get<IComponentHandle>(this.presenceMapKey)
+     .get<ISharedMap>();
+   ```
 
 You now have a `SharedMap` to store presence data. When the component is first created, `componentInitializingFirstTime`
 will be called and the presence map will be created. When the component is loaded, `componentHasInitialized` will be
@@ -363,51 +367,51 @@ for storing the presence data, and a function to update the map with presence da
 1. Open `src/fluidSudoku.tsx`.
 1. Add the following function at the bottom of the `FluidSudoku` class:
 
-    ```ts
-    /**
-     * A function that can be used to update presence data.
-     *
-     * @param cellCoordinate - The coordinate of the cell to set.
-     * @param reset - If true, presence for the cell will be cleared.
-     */
-    private readonly presenceSetter = (cellCoordinate: string, reset: boolean): void => {
-        if (this.clientPresence) {
-            if (reset) {
-                // Retrieve the current clientId in the cell, if there is one
-                const prev = this.clientPresence.get<string>(cellCoordinate);
-                const isCurrentClient = this.runtime.clientId === prev;
-                if (!isCurrentClient) {
-                    return;
-                }
-                this.clientPresence.delete(cellCoordinate);
-            } else {
-                this.clientPresence.set(cellCoordinate, this.runtime.clientId);
-            }
-        }
-    };
-    ```
+   ```ts
+   /**
+    * A function that can be used to update presence data.
+    *
+    * @param cellCoordinate - The coordinate of the cell to set.
+    * @param reset - If true, presence for the cell will be cleared.
+    */
+   private readonly presenceSetter = (cellCoordinate: string, reset: boolean): void => {
+       if (this.clientPresence) {
+           if (reset) {
+               // Retrieve the current clientId in the cell, if there is one
+               const prev = this.clientPresence.get<string>(cellCoordinate);
+               const isCurrentClient = this.runtime.clientId === prev;
+               if (!isCurrentClient) {
+                   return;
+               }
+               this.clientPresence.delete(cellCoordinate);
+           } else {
+               this.clientPresence.set(cellCoordinate, this.runtime.clientId);
+           }
+       }
+   };
+   ```
 
    You can pass this function in to the `SudokuView` React component as a prop. The React component will call
    `presenceSetter` when users enter and leave cells, which will update the presence `SharedMap`.
 
 1. Replace the `createJSXElement` method with the following code:
 
-    ```ts
-    public createJSXElement(props?: any): JSX.Element {
-        if (this.puzzle) {
-            return (
-                <SudokuView
-                    puzzle={this.puzzle}
-                    clientPresence={this.clientPresence}
-                    clientId={this.runtime.clientId}
-                    setPresence={this.presenceSetter}
-                />
-            );
-        } else {
-            return <div />;
-        }
-    }
-    ```
+   ```ts
+   public createJSXElement(props?: any): JSX.Element {
+       if (this.puzzle) {
+           return (
+               <SudokuView
+                   puzzle={this.puzzle}
+                   clientPresence={this.clientPresence}
+                   clientId={this.runtime.clientId}
+                   setPresence={this.presenceSetter}
+               />
+           );
+       } else {
+           return <div />;
+       }
+   }
+   ```
 
    Notice that we're now passing the `clientPresence` SharedMap and the `setPresence` function as props.
 
@@ -416,11 +420,11 @@ for storing the presence data, and a function to update the map with presence da
 1. Still in `src/fluidSudoku.tsx`, add the following code to the bottom of the `componentHasInitialized` method to call
    render whenever a remote change is made to the presence map:
 
-    ```ts
-    this.clientPresence.on("valueChanged", (changed, local, op) => {
-        this.render();
-    });
-    ```
+   ```ts
+   this.clientPresence.on("valueChanged", (changed, local, op) => {
+     this.render();
+   });
+   ```
 
 ## Testing the changes
 
@@ -436,12 +440,12 @@ If you want to build your own component, check out [yo fluid](../guide/yo-fluid.
 
 See [Examples](./examples.md) for more examples.
 
-
 <!-- Links -->
-[IComponentHTMLVisual]: ../api/fluid-component-core-interfaces.IComponentHTMLVisual.md
-[IComponentReactViewable]: ../api/fluid-aqueduct-react.IComponentReactViewable.md
-[IProvideComponentHTMLVisual]: ../api/fluid-component-core-interfaces.IProvideComponentHTMLVisual.md
-[PrimedComponent]: ../api/fluid-aqueduct.PrimedComponent.md
-[SharedDirectory]: ../api/fluid-map.SharedDirectory.md
-[SharedMap]: ../api/fluid-map.SharedMap.md
+
+[icomponenthtmlvisual]: ../api/fluid-component-core-interfaces.IComponentHTMLVisual.md
+[icomponentreactviewable]: ../api/fluid-aqueduct-react.IComponentReactViewable.md
+[iprovidecomponenthtmlvisual]: ../api/fluid-component-core-interfaces.IProvideComponentHTMLVisual.md
+[primedcomponent]: ../api/fluid-aqueduct.PrimedComponent.md
+[shareddirectory]: ../api/fluid-map.SharedDirectory.md
+[sharedmap]: ../api/fluid-map.SharedMap.md
 [undo-redo]: ../api/fluid-undo-redo.md

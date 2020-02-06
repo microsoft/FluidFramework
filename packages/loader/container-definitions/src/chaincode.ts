@@ -176,8 +176,6 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
     readonly options: any;
     readonly configuration: IComponentConfiguration;
     readonly clientId: string | undefined;
-    // DEPRECATED: use clientDetails.type instead
-    readonly clientType: string; // Back-compat: 0.11 clientType
     readonly clientDetails: IClientDetails;
     readonly parentBranch: string | undefined | null;
     readonly blobManager: IBlobManager | undefined;

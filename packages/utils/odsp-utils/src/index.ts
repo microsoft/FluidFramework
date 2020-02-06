@@ -4,3 +4,5 @@
  */
 
 export * from "./odspUtils";
+export * from "./odspRequest";
+export * from "./odspDrives";

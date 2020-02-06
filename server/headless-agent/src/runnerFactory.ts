@@ -35,7 +35,7 @@ export class HeadlessResourcesFactory implements utils.IResourcesFactory<Headles
                 serverName: redisConfig.host,
             };
         }
-        
+
         const workerConfig = config.get("worker");
         const queueName = config.get("headless-agent:queue");
 
