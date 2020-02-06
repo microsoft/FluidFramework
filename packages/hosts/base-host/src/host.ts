@@ -103,13 +103,13 @@ export async function initializeContainerCode(
         const thisClientSeq =
             container.clientId !== undefined ? quorum.getMember(container.clientId)?.sequenceNumber : undefined;
         if (thisClientSeq) {
-            // get the oldest client seq
-            const minClientSeq =
+            // see if this client has the lowest seq
+            const clientWithLowerSeqExists =
                 Array.from(quorum.getMembers().values())
-                    .reduce((pv, cv) => Math.min(pv, cv.sequenceNumber), thisClientSeq);
+                    .some((c)=>thisClientSeq > c.sequenceNumber, thisClientSeq);
 
             // if this client is the oldest client, it should propose
-            if(thisClientSeq === minClientSeq){
+            if(!clientWithLowerSeqExists){
                 await quorum.propose(currentCodeProposalKey, pkgForCodeProposal);
                 break;
             }
