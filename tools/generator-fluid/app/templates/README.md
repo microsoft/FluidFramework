@@ -1,6 +1,6 @@
 # Welcome to your first Fluid Component
 
-Welcome to your first component.
+Welcome to your first component component.
 
 ## Getting Started
 To start coding, open this directory in your IDE and check out ./src/index.tsx

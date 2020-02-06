@@ -1,7 +1,7 @@
 {
   "name": "@fluid-example/owned-map",
   "version": "0.14.0",
-  "description": "Component starter project",
+  "description": "Chaincode starter project",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

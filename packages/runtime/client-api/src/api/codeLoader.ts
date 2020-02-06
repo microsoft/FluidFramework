@@ -31,7 +31,7 @@ import { Document } from "./document";
 const rootMapId = "root";
 const insightsMapId = "insights";
 
-export class Component implements IComponentFactory {
+export class Chaincode implements IComponentFactory {
     public get IComponentFactory() { return this; }
 
     public instantiateComponent(context: IComponentContext): void {
@@ -98,7 +98,7 @@ export class Component implements IComponentFactory {
     }
 }
 
-export class ComponentFactory implements IRuntimeFactory {
+export class ChaincodeFactory implements IRuntimeFactory {
 
     public get IRuntimeFactory() { return this; }
 
@@ -124,15 +124,15 @@ export class ComponentFactory implements IRuntimeFactory {
     }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const component = new Component();
+        const chaincode = new Chaincode();
 
         const runtime = await ContainerRuntime.load(
             context,
             [
-                ["@fluid-internal/client-api", Promise.resolve(component)],
+                ["@fluid-internal/client-api", Promise.resolve(chaincode)],
                 ...this.registries,
             ],
-            [ComponentFactory.containerRequestHandler],
+            [ChaincodeFactory.containerRequestHandler],
             this.runtimeOptions);
 
         // On first boot create the base component
@@ -157,7 +157,7 @@ export class CodeLoader implements ICodeLoader {
         runtimeOptions: IContainerRuntimeOptions,
         registries?: NamedComponentRegistryEntries,
     ) {
-        this.factory = new ComponentFactory(runtimeOptions,
+        this.factory = new ChaincodeFactory(runtimeOptions,
             registries ? registries : []);
     }
 

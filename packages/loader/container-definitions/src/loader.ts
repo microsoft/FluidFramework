@@ -11,7 +11,7 @@ import {
     IQuorum,
     ISequencedDocumentMessage,
 } from "@microsoft/fluid-protocol-definitions";
-import { IFluidCodeDetails } from "./component";
+import { IFluidCodeDetails } from "./chaincode";
 import { IDeltaManager } from "./deltas";
 
 /**

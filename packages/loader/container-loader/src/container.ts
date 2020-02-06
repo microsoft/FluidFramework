@@ -75,7 +75,7 @@ import { debug } from "./debug";
 import { DeltaManager } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { Loader, RelativeLoader } from "./loader";
-import { NullComponent } from "./nullRuntime";
+import { NullChaincode } from "./nullRuntime";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 
@@ -152,7 +152,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private loaded = false;
     private blobManager: BlobManager | undefined;
 
-    // Active component and associated runtime
+    // Active chaincode and associated runtime
     private storageService: IDocumentStorageService | undefined | null;
 
     private _version: string | undefined;
@@ -228,7 +228,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this._deltaManager.clientDetails;
     }
 
-    public get componentPackage(): string | IFluidCodeDetails | undefined {
+    public get chaincodePackage(): string | IFluidCodeDetails | undefined {
         return this.pkg;
     }
 
@@ -794,7 +794,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     private async loadCodeFromQuorum(
         quorum: Quorum,
-    ): Promise<{ pkg: IFluidCodeDetails | undefined; component: IRuntimeFactory }> {
+    ): Promise<{ pkg: IFluidCodeDetails | undefined; chaincode: IRuntimeFactory }> {
         // Back compat - can remove in 0.7
         const codeQuorumKey = quorum.has("code")
             ? "code"
@@ -802,9 +802,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.codeQuorumKey = codeQuorumKey;
 
         const pkg = codeQuorumKey ? quorum.get(codeQuorumKey) as IFluidCodeDetails : undefined;
-        const component = await this.loadCode(pkg);
+        const chaincode = await this.loadCode(pkg);
 
-        return { component, pkg };
+        return { chaincode, pkg };
     }
 
     /**
@@ -812,7 +812,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
      */
     private async loadCode(pkg: IFluidCodeDetails | undefined): Promise<IRuntimeFactory> {
         if (!pkg) {
-            return new NullComponent();
+            return new NullChaincode();
         }
 
         const component = await this.codeLoader.load<IRuntimeFactory | IFluidModule>(pkg);
@@ -1120,8 +1120,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         storage: IDocumentStorageService,
         snapshot?: ISnapshotTree,
     ) {
-        const component = await this.loadCodeFromQuorum(this.protocolHandler!.quorum);
-        this.pkg = component.pkg;
+        const chaincode = await this.loadCodeFromQuorum(this.protocolHandler!.quorum);
+        this.pkg = chaincode.pkg;
 
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go to this loader
@@ -1131,7 +1131,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this,
             this.scope,
             this.codeLoader,
-            component.component,
+            chaincode.chaincode,
             snapshot || { id: null, blobs: {}, commits: {}, trees: {} },
             attributes,
             this.blobManager,

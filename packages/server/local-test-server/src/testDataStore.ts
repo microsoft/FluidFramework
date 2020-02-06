@@ -27,17 +27,17 @@ export class TestDataStore {
      * Open or create a component instance.
      *
      * @param componentId - Identity of the component.
-     * @param componentPackage - Identity of the component package to use, if creating the component.
+     * @param chaincodePackage - Identity of the chaincode package to use, if creating the component.
      * @param path - Route to the desired subcomponent (use "" to retrieve the root component).
      * @param services - Services to provided by the caller to the component.
      */
     public async open<T>(
         componentId: string,
-        componentPackage: IFluidCodeDetails,
+        chaincodePackage: IFluidCodeDetails,
         path: string,
         scope?: IComponent,
     ): Promise<T> {
-        debug(`TestDataStore.open("${componentId}", "${componentPackage.package}")`);
+        debug(`TestDataStore.open("${componentId}", "${chaincodePackage.package}")`);
 
         const resolver = this.resolver;
         const loader = new Loader(
@@ -70,14 +70,14 @@ export class TestDataStore {
         await attach(loader, url, acceptResultOut);
         debug(`attached url = ${url}`);
 
-        // If this is a new document we will go and instantiate the component. For old documents we assume a legacy
+        // If this is a new document we will go and instantiate the chaincode. For old documents we assume a legacy
         // package.
         if (!container.existing) {
-            debug("initializing component");
+            debug("initializing chaincode");
 
-            await initializeComponent(container, componentPackage)
-                .catch((error) => { console.assert(false, `component error: ${error}`); });
-            debug("component initialized");
+            await initializeChaincode(container, chaincodePackage)
+                .catch((error) => { console.assert(false, `chaincode error: ${error}`); });
+            debug("chaincode initialized");
         }
 
         // Return the constructed/loaded component.  We retrieve this via queryInterface on the
@@ -86,7 +86,7 @@ export class TestDataStore {
     }
 }
 
-async function initializeComponent(container: Container, pkg: IFluidCodeDetails): Promise<void> {
+async function initializeChaincode(container: Container, pkg: IFluidCodeDetails): Promise<void> {
     if (!pkg) {
         return;
     }

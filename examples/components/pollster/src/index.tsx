@@ -14,7 +14,7 @@ import { Poll } from "./view/Poll";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
-const componentName = pkg.name;
+const chaincodeName = pkg.name;
 
 export class Pollster extends PrimedComponent implements IComponentHTMLVisual {
     public get IComponentHTMLVisual() { return this; }
@@ -49,8 +49,8 @@ export const PollInstantiationFactory = new PrimedComponentFactory(
 );
 
 export const fluidExport = new SimpleModuleInstantiationFactory(
-    componentName,
+    chaincodeName,
     new Map([
-        [componentName, Promise.resolve(PollInstantiationFactory)],
+        [chaincodeName, Promise.resolve(PollInstantiationFactory)],
     ]),
 );

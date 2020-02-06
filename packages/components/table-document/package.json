@@ -1,7 +1,7 @@
 {
   "name": "@fluid-example/table-document",
   "version": "0.14.0",
-  "description": "Component component containing a table's data",
+  "description": "Chaincode component containing a table's data",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

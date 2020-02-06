@@ -18,11 +18,11 @@ class ProgressBarsFactory implements IRuntimeFactory {
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const registry = new Map<string, Promise<IComponentFactory>>([
-            ["@component/smde", Promise.resolve(smde)],
+            ["@chaincode/smde", Promise.resolve(smde)],
         ]);
 
         const defaultComponentId = "default";
-        const defaultComponent = "@component/smde";
+        const defaultComponent = "@chaincode/smde";
 
         const runtime = await ContainerRuntime.load(
             context,

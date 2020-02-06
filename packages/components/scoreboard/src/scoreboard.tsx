@@ -21,7 +21,7 @@ export class Scoreboard extends PrimedComponent implements IComponentHTMLVisual 
     */
     protected async componentInitializingFirstTime() {
         this.root.createValueType("Hardcoders", CounterValueType.Name, 0);
-        this.root.createValueType("Componentrs", CounterValueType.Name, 0);
+        this.root.createValueType("Chaincoders", CounterValueType.Name, 0);
     }
 
     render(hostingElement: HTMLElement, options?: IComponentHTMLOptions): void {
@@ -34,7 +34,7 @@ export class Scoreboard extends PrimedComponent implements IComponentHTMLVisual 
                                 Scoreboard
                             </h1>
                             <h2 className="subtitle">
-                                Hardcoders vs. Componentrs
+                                Hardcoders vs. Chaincoders
                             </h2>
                         </div>
                     </div>
@@ -48,8 +48,8 @@ export class Scoreboard extends PrimedComponent implements IComponentHTMLVisual 
                     </div>
                     <div className="column">
                         <TeamScore
-                            name="Componentrs"
-                            counter={this.root.get("Componentrs")}
+                            name="Chaincoders"
+                            counter={this.root.get("Chaincoders")}
                             colorClass="has-background-grey-light" />
                     </div>
                 </div>

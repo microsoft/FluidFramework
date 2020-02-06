@@ -271,20 +271,20 @@ class Document {
 
         const resolver = new ContainerUrlResolver(
             new Map<string, IResolvedUrl>([[resolved.url, resolved]]));
-        const component = new API.Component();
+        const chaincode = new API.Chaincode();
         const codeLoader = new API.CodeLoader({ generateSummaries: false },
             [
-                ["@ms/atmentions", Promise.resolve(component)],
-                ["@ms/augloop", Promise.resolve(component)],
-                ["@ms/catalog", Promise.resolve(component)],
-                ["@ms/scriptor", Promise.resolve(component)],
-                ["@ms/discover", Promise.resolve(component)],
-                ["@ms/registro", Promise.resolve(component)],
-                ["@ms/formula", Promise.resolve(component)],
-                ["@ms/application-services", Promise.resolve(component)],
-                ["@ms/undo-stack", Promise.resolve(component)],
-                ["@ms/commanding-surface", Promise.resolve(component)],
-                ["@ms/dias", Promise.resolve(component)],
+                ["@ms/atmentions", Promise.resolve(chaincode)],
+                ["@ms/augloop", Promise.resolve(chaincode)],
+                ["@ms/catalog", Promise.resolve(chaincode)],
+                ["@ms/scriptor", Promise.resolve(chaincode)],
+                ["@ms/discover", Promise.resolve(chaincode)],
+                ["@ms/registro", Promise.resolve(chaincode)],
+                ["@ms/formula", Promise.resolve(chaincode)],
+                ["@ms/application-services", Promise.resolve(chaincode)],
+                ["@ms/undo-stack", Promise.resolve(chaincode)],
+                ["@ms/commanding-surface", Promise.resolve(chaincode)],
+                ["@ms/dias", Promise.resolve(chaincode)],
             ]);
         const options = {};
 

@@ -1,7 +1,7 @@
 {
   "name": "@fluid-example/math",
   "version": "0.14.0",
-  "description": "Component component that provides math.",
+  "description": "Chaincode component that provides math.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

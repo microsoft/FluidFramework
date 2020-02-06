@@ -6,7 +6,7 @@
 import { Page } from "puppeteer";
 
 // Extract the head and body HTML. Remove any <script> tag. And then wrap inside a basic HTML page.
-// todo (mdaumi): Component should specify how to do this. This should be used as a fallback.
+// todo (mdaumi): Chaincode should specify how to do this. This should be used as a fallback.
 export async function createCacheHTML(page: Page): Promise<string> {
     const [bodyHTML, headHTML] = await page.evaluate(() => [document.body.innerHTML, document.head.innerHTML]);
     const cleanBodyHTML = bodyHTML.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
