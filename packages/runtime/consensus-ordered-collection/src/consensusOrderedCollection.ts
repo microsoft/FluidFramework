@@ -202,7 +202,9 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
         const pending = this.promiseResolveQueue.shift()!;
         assert(pending);
         assert(message.contents.opName === pending.message.opName);
-        assert(message.clientSequenceNumber === -1
+
+        // if pending is -1 we don't have the information to do this check.
+        assert(pending.clientSequenceNumber === -1
             || message.clientSequenceNumber === pending.clientSequenceNumber);
         pending.resolve(value);
     }
@@ -213,6 +215,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
         assert(!this.isLocal());
 
         const clientSequenceNumber = this.submitLocalMessage(message);
+
         return new Promise((resolve, reject) => {
             // Note that clientSequenceNumber and message is only used for asserts and isn't strictly necessary.
             this.promiseResolveQueue.push({ resolve, clientSequenceNumber, message });

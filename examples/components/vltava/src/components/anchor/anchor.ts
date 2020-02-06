@@ -10,17 +10,37 @@ import {
     IProvideComponentHTMLVisual,
 } from "@microsoft/fluid-component-core-interfaces";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import {
+    IConsensusRegisterCollection,
+} from "@microsoft/fluid-register-collection";
+import {
+    ConsensusQueue,
+} from "@microsoft/fluid-ordered-collection";
 
 import uuid from "uuid/v4";
+
+enum componentKeys {
+    defaultComponentId
+}
 
 /**
  * Anchor is an default component is responsible for managing creation and the default component
  */
 export class Anchor extends PrimedComponent implements IProvideComponentHTMLVisual {
-    private readonly defaultComponentId = "default-component-id";
+    private readonly defaultComponentQueue = "defaultComponentQueue";
+
+    private readonly initializationCollectionInternal: IConsensusRegisterCollection | undefined;
     private defaultComponentInternal: IComponentHTMLVisual | undefined;
 
-    private get defaultComponent() {
+    public get initializationCollection(): IConsensusRegisterCollection {
+        if (!this.initializationCollectionInternal) {
+            throw new Error("Initialization Collection was not initialized properly");
+        }
+
+        return this.initializationCollectionInternal;
+    }
+
+    private get defaultComponent(): IComponentHTMLVisual {
         if (!this.defaultComponentInternal) {
             throw new Error("Default Component was not initialized properly");
         }
@@ -28,7 +48,9 @@ export class Anchor extends PrimedComponent implements IProvideComponentHTMLVisu
         return this.defaultComponentInternal;
     }
 
-    private static readonly factory = new PrimedComponentFactory(Anchor, []);
+    private static readonly factory = new PrimedComponentFactory(Anchor, [
+        ConsensusQueue.getFactory(),
+    ]);
 
     public static getFactory() {
         return Anchor.factory;
@@ -37,11 +59,48 @@ export class Anchor extends PrimedComponent implements IProvideComponentHTMLVisu
     public get IComponentHTMLVisual() { return this.defaultComponent; }
 
     protected async componentInitializingFirstTime(props: any) {
-        const defaultComponent = await this.createAndAttachComponent<IComponent>(uuid(), "vltava");
-        this.root.set(this.defaultComponentId, defaultComponent.IComponentHandle);
+
+        const queue = ConsensusQueue.create<keyof componentKeys>(this.runtime, this.defaultComponentQueue);
+        queue.register();
+        this.root.set(this.defaultComponentQueue, (queue as IComponent).IComponentHandle);
+
+        const keysP: Promise<void>[] = [];
+        Object.keys(componentKeys).forEach((key) => {
+            keysP.push(queue.add(key as keyof componentKeys));
+        });
+
+        await Promise.all(keysP);
+        await this.createDefaultComponentsRecursive(queue);
+    }
+
+    protected async componentInitializingFromExisting() {
+        // This is because ConsensusQueue doesn't like being stored as a handle for some reason
+        const queue = await this.runtime.getChannel(this.defaultComponentQueue) as ConsensusQueue;
+        await this.createDefaultComponentsRecursive(queue);
     }
 
     protected async componentHasInitialized() {
-        this.defaultComponentInternal = await this.root.get<IComponentHandle>(this.defaultComponentId).get();
+        this.defaultComponentInternal =
+            await this.root.get<IComponentHandle>(componentKeys[componentKeys.defaultComponentId]).get();
+    }
+
+    private async createDefaultComponentsRecursive(queue: ConsensusQueue<keyof componentKeys>): Promise<void> {
+        const item = await queue.remove();
+        if (item) {
+            await this.createComponent(componentKeys[item]);
+            await this.createDefaultComponentsRecursive(queue);
+        }
+    }
+
+    private async createComponent(id: componentKeys): Promise<void> {
+        switch(id) {
+            case componentKeys.defaultComponentId: {
+                const defaultComponent = await this.createAndAttachComponent<IComponent>(uuid(), "vltava");
+                this.root.set(componentKeys[componentKeys.defaultComponentId], defaultComponent.IComponentHandle);
+                break;
+            }
+            default:
+                break;
+        }
     }
 }
