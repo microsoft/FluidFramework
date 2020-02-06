@@ -25,6 +25,8 @@ export function create(
     mongoManager: MongoManager,
     loggerFormat: string,
     baseOrdererUrl: string,
+    defaultHistorianUrl: string,
+    defaultInternalHistorianUrl: string,
 ) {
     // Express app configuration
     const app: express.Express = express();
@@ -38,7 +40,9 @@ export function create(
     app.use(morgan(loggerFormat, { stream }));
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended: false }));
-    app.use("/api", api.create(collectionName, mongoManager, baseOrdererUrl));
+    app.use(
+        "/api",
+        api.create(collectionName, mongoManager, baseOrdererUrl, defaultHistorianUrl, defaultInternalHistorianUrl));
 
     // Catch 404 and forward to error handler
     app.use((req, res, next) => {
