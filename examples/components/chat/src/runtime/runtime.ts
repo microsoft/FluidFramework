@@ -97,14 +97,6 @@ export class Runtime extends EventEmitter {
         }
     }
 
-    public async postProcess(
-        message: ISequencedDocumentMessage,
-        local: boolean,
-        context: any,
-    ): Promise<void> {
-        //
-    }
-
     public submitMessage(type: MessageType, content: any) {
         this.submit(type, content);
     }
