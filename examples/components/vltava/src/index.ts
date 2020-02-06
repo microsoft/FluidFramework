@@ -21,7 +21,7 @@ import {
     IComponentRegistryDetails,
     IContainerComponentDetails,
 } from "./interfaces";
-import { Vltava } from "./vltava";
+import { Vltava } from "./components/vltava/vltava";
 
 const chaincodeName = "vltava";
 
