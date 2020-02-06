@@ -5,13 +5,17 @@
 
 import { CounterValueType } from "@microsoft/fluid-map";
 import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
-import { IComponentHTMLOptions, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import {
+    IComponentHTMLOptions,
+    IComponentHTMLView,
+    IComponentHTMLVisual,
+} from "@microsoft/fluid-component-core-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { TeamScore } from "./teamScore";
 import { WinnerText } from "./winnerText";
 
-export class Scoreboard extends PrimedComponent implements IComponentHTMLVisual {
+export class Scoreboard extends PrimedComponent implements IComponentHTMLView, IComponentHTMLVisual {
     public static readonly componentName = "Scoreboard";
 
     public get IComponentHTMLVisual() { return this; }

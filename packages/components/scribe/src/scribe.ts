@@ -7,6 +7,7 @@ import { EventEmitter } from "events";
 import { resolve } from "url";
 import {
     IComponentHTMLOptions,
+    IComponentHTMLView,
     IComponentHTMLVisual,
     IComponentLoadable,
     IComponentRouter,
@@ -376,7 +377,7 @@ const html =
 
 export class Scribe
     extends EventEmitter
-    implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual {
+    implements IComponentLoadable, IComponentRouter, IComponentHTMLView, IComponentHTMLVisual {
 
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new Scribe(runtime, context);

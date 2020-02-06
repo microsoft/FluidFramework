@@ -4,7 +4,7 @@
  */
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
 import { CollaborativeTextArea, IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
-import { IComponentHandle, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHandle, IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -19,6 +19,7 @@ export const TextBoxName = `${pkg.name as string}-textbox`;
  */
 export class TextBox extends PrimedComponent
     implements
+    IComponentHTMLView,
     IComponentHTMLVisual,
     IComponentReactViewable {
 
@@ -48,7 +49,7 @@ export class TextBox extends PrimedComponent
         this.text = await this.root.get<IComponentHandle>("text").get<SharedString>();
     }
 
-    // start IComponentHTMLVisual
+    // start IComponentHTMLView
 
     public render(div: HTMLElement) {
         ReactDOM.render(
@@ -57,7 +58,7 @@ export class TextBox extends PrimedComponent
         );
     }
 
-    // end IComponentHTMLVisual
+    // end IComponentHTMLView
 
     // start IComponentReactViewable
 

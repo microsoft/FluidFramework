@@ -78,7 +78,11 @@ class ProgressBarView implements IComponentHTMLView {
 }
 
 // The "model" side of a progress bar
-export class ProgressBar extends EventEmitter implements IComponentLoadable, IComponentHTMLVisual, IComponentRouter {
+export class ProgressBar extends EventEmitter implements
+    IComponentLoadable,
+    IComponentHTMLView,
+    IComponentHTMLVisual,
+    IComponentRouter {
     private defaultView: ProgressBarView;
 
     public handle: ComponentHandle;

@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 import { ISharedMap } from "@microsoft/fluid-map";
 import { SharedString } from "@microsoft/fluid-sequence";
 import * as GraphiQL from "graphiql";
@@ -14,7 +14,7 @@ import { GraphQLService } from "./database";
 
 // Note on defining components - snapshotting does not seem like it should be part of an IChaincodeComponent given
 // these synthetic components don't need it. We may want this to just be "attach"
-export class GraphIQLView extends EventEmitter implements IComponentHTMLVisual {
+export class GraphIQLView extends EventEmitter implements IComponentHTMLView, IComponentHTMLVisual {
     public readonly id = "graphiql";
 
     public get IComponentHTMLVisual() { return this; }

@@ -7,7 +7,11 @@ import { ClickerName } from "@fluid-example/clicker";
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
 import { IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
 import { ISharedCell, SharedCell } from "@microsoft/fluid-cell";
-import { IComponentHandle, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import {
+    IComponentHandle,
+    IComponentHTMLView,
+    IComponentHTMLVisual,
+} from "@microsoft/fluid-component-core-interfaces";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
@@ -36,6 +40,7 @@ const innerComponentKey = "innerId";
  */
 export class TodoItem extends PrimedComponent
     implements
+    IComponentHTMLView,
     IComponentHTMLVisual,
     IComponentReactViewable {
 
@@ -108,7 +113,7 @@ export class TodoItem extends PrimedComponent
         });
     }
 
-    // start IComponentHTMLVisual
+    // start IComponentHTMLView
 
     public render(div: HTMLElement) {
         ReactDOM.render(
@@ -117,7 +122,7 @@ export class TodoItem extends PrimedComponent
         );
     }
 
-    // end IComponentHTMLVisual
+    // end IComponentHTMLView
 
     // start IComponentReactViewable
 

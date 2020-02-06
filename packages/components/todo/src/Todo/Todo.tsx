@@ -5,7 +5,11 @@
 
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
 import { IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
-import { IComponentHandle, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import {
+    IComponentHandle,
+    IComponentHTMLView,
+    IComponentHTMLVisual,
+} from "@microsoft/fluid-component-core-interfaces";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
@@ -25,7 +29,10 @@ export const TodoName = `${pkg.name as string}-todo`;
  * - New todo item entry
  * - List of todo items
  */
-export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComponentReactViewable {
+export class Todo extends PrimedComponent implements
+    IComponentHTMLView,
+    IComponentHTMLVisual,
+    IComponentReactViewable {
 
     // DDS ids stored as variables to minimize simple string mistakes
     private readonly todoItemsKey = "todo-items";
@@ -65,7 +72,7 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
         });
     }
 
-    // start IComponentHTMLVisual
+    // start IComponentHTMLView
 
     /**
      * Creates a new view for a caller that doesn't directly support React
@@ -81,7 +88,7 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
         );
     }
 
-    // end IComponentHTMLVisual
+    // end IComponentHTMLView
 
     // start IComponentReactViewable
 

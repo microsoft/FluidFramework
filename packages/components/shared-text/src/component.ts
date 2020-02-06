@@ -13,6 +13,7 @@ import { SharedCell } from "@microsoft/fluid-cell";
 import {
     IComponent,
     IComponentHandle,
+    IComponentHTMLView,
     IComponentHTMLVisual,
     IComponentLoadable,
     IRequest,
@@ -57,7 +58,7 @@ async function getHandle(runtimeP: Promise<IComponentRuntime>): Promise<ICompone
 
 export class SharedTextRunner
     extends EventEmitter
-    implements IComponentHTMLVisual, IComponentLoadable, IProvideSharedString {
+    implements IComponentHTMLView, IComponentHTMLVisual, IComponentLoadable, IProvideSharedString {
 
     public static async load(runtime: ComponentRuntime, context: IComponentContext): Promise<SharedTextRunner> {
         const runner = new SharedTextRunner(runtime, context);

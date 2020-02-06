@@ -7,6 +7,7 @@ import { EventEmitter } from "events";
 import {
     IComponent,
     IComponentHTMLOptions,
+    IComponentHTMLView,
     IComponentHTMLVisual,
     IComponentLoadable,
     IComponentRouter,
@@ -155,7 +156,7 @@ async function displayMap(
 
 export class ProgressCollection
     extends EventEmitter
-    implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual {
+    implements IComponentLoadable, IComponentRouter, IComponentHTMLView, IComponentHTMLVisual {
 
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new ProgressCollection(runtime, context);
