@@ -152,24 +152,29 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
     public async createComponent(pkg: string, props?: any, id?: string): Promise<IComponentRuntime> {
         const details = await this.getInitialSnapshotDetails();
-        const packagePath: string[] = [...details.pkg];
+        const packagePath: string[] = [];
+        const registry = this.componentRuntime.IComponentRegistry;
+
+        let entry: ComponentRegistryEntry = await registry?.get(pkg);
+        // Look for the entry for the package in our sub-registry. If we find the entry, we
+        // need to add our path to the packagePath. If not, look into the global registry.
+        if (entry) {
+            packagePath.push(...details.pkg);
+        } else {
+            entry = await this._hostRuntime.IComponentRegistry.get(pkg);
+        }
+
+        if (!entry) {
+            throw new Error("Registry does not contain entry for the package");
+        }
+
         // A factory could not contain the registry for itself. So only append the passed package
         // to the path if it is not the same as the last snapshot pkg.
         if (!(packagePath.length > 0 && pkg === packagePath[packagePath.length - 1])) {
             packagePath.push(pkg);
         }
 
-        const pkgId = (id === undefined) ? uuid() : id;
-        // Try to create the component based off our sub-registry.
-        let runtimeP = await this.hostRuntime._createComponentWithProps(packagePath, props, pkgId);
-        if (!runtimeP) {
-            // If that failed, try to create it off the global registry.
-            runtimeP = await this.hostRuntime._createComponentWithProps(pkg, props, pkgId);
-            if (!runtimeP) {
-                throw new Error("Factory does not supply the component Registry");
-            }
-        }
-        return runtimeP;
+        return this.hostRuntime._createComponentWithProps(packagePath, props, id ?? uuid());
     }
 
     public async realize(): Promise<IComponentRuntime> {
@@ -186,11 +191,13 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             let factory: IComponentFactory;
             for (const pkg of packages) {
                 if (!registry) {
-                    return undefined;
+                    this.componentRuntimeDeferred = undefined;
+                    throw new Error("Factory does not supply the component Registry");
                 }
                 entry = await registry.get(pkg);
                 if (!entry) {
-                    return undefined;
+                    this.componentRuntimeDeferred = undefined;
+                    throw new Error("Registry does not contain an entry for the package");
                 }
                 factory = entry.IComponentFactory;
                 registry = entry.IComponentRegistry;
@@ -354,6 +361,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
     public bindRuntime(componentRuntime: IComponentRuntime): void {
         if (this.componentRuntime) {
+            this.componentRuntimeDeferred.reject("runtime already bound");
             throw new Error("runtime already bound");
         }
 

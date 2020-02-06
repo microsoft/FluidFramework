@@ -882,12 +882,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     public async createComponent(idOrPkg: string, maybePkg?: string | string[]) {
         const id = maybePkg === undefined ? uuid() : idOrPkg;
         const pkg = maybePkg === undefined ? idOrPkg : maybePkg;
-
-        const runtimeP = await this._createComponentWithProps(pkg, undefined, id);
-        if (!runtimeP) {
-            throw new Error("Factory does not supply the component Registry");
-        }
-        return runtimeP;
+        return this._createComponentWithProps(pkg, undefined, id);
     }
 
     public async _createComponentWithProps(pkg: string | string[], props: any, id: string): Promise<IComponentRuntime> {
