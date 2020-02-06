@@ -12,7 +12,6 @@ import WebpackDevServer from "webpack-dev-server";
 import { IOdspTokens, getServer } from "@microsoft/fluid-odsp-utils";
 import { getMicrosoftConfiguration, OdspTokenManager, odspTokensCache } from "@microsoft/fluid-tool-utils";
 import { RouteOptions } from "./loader";
-import { OdspUrlResolver } from "./odspUrlResolver";
 
 const tokenManager = new OdspTokenManager(odspTokensCache);
 let odspAuthStage = 0;
@@ -74,11 +73,6 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
                     if (!options.odspAccessToken || !options.pushAccessToken) {
                         throw Error("Failed to authenticate.");
                     }
-                    // force creation of file if not already exists
-                    const odspUrlResolver = new OdspUrlResolver(
-                        options.server,
-                        { accessToken: options.odspAccessToken });
-                    await odspUrlResolver.resolve({ url: originalUrl });
                     return true;
                 }
 
