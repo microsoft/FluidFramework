@@ -15,8 +15,7 @@
     "lint": "vuepress check-md",
     "start": "npm run build:copy && node buildDocs.js && npm run start:vuepress",
     "start:docker": "npm run build:copy && node buildDocs.js && npm run start:vuepress",
-    "start:vuepress": "vuepress dev --port 8080 --no-clear-screen --cache .cache",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start:vuepress": "vuepress dev --port 8080 --no-clear-screen --cache .cache"
   },
   "dependencies": {
     "@fluid-example/sudoku": "^0.14.20059",
