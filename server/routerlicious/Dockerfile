@@ -93,6 +93,7 @@ COPY packages/runtime/runtime-test-utils/package*.json packages/runtime/runtime-
 COPY packages/runtime/sequence/package*.json packages/runtime/sequence/
 COPY packages/server/local-test-server/package*.json packages/server/local-test-server/
 COPY packages/utils/odsp-utils/package*.json packages/utils/odsp-utils/
+COPY packages/utils/fluid-tool-utils/package*.json packages/utils/fluid-tool-utils/
 COPY packages/server/tools-core/package*.json packages/server/tools-core/
 COPY packages/test/snapshots/package*.json packages/test/snapshots/
 COPY packages/tools/fluid-fetch/package*.json packages/tools/fluid-fetch/
