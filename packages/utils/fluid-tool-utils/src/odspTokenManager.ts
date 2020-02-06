@@ -3,7 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { IOdspTokens, IClientConfig, fetchTokens, getOdspScope, pushScope } from "@microsoft/fluid-odsp-utils";
+import {
+    IOdspTokens,
+    IClientConfig,
+    fetchTokens,
+    getOdspScope,
+    pushScope,
+    refreshAccessToken,
+    getSharepointTenant,
+} from "@microsoft/fluid-odsp-utils";
 import { IAsyncCache, loadRC, saveRC } from "./fluidToolRC";
 import { serverListenAndHandle, endResponse } from "./httpHelpers";
 
@@ -39,34 +47,38 @@ export class OdspTokenManager {
     public async getOdspTokens(
         server: string,
         clientConfig: IClientConfig,
-        forceReauth = false,
         initialNavigator: (url: string) => void,
         redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>,
+        forceRefresh = false,
+        forceReauth = false,
     ): Promise<IOdspTokens> {
         return this.getTokensCore(
             false,
             server,
             clientConfig,
-            forceReauth,
             initialNavigator,
             redirectUriCallback,
+            forceRefresh,
+            forceReauth,
         );
     }
 
     public async getPushTokens(
         server: string,
         clientConfig: IClientConfig,
-        forceReauth = false,
         initialNavigator: (url: string) => void,
         redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>,
+        forceRefresh = false,
+        forceReauth = false,
     ): Promise<IOdspTokens> {
         return this.getTokensCore(
             true,
             server,
             clientConfig,
-            forceReauth,
             initialNavigator,
             redirectUriCallback,
+            forceRefresh,
+            forceReauth,
         );
     }
 
@@ -74,23 +86,36 @@ export class OdspTokenManager {
         isPush: boolean,
         server: string,
         clientConfig: IClientConfig,
-        forceReauth = false,
         initialNavigator: (url: string) => void,
         redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>,
+        forceRefresh = false,
+        forceReauth = false,
     ): Promise<IOdspTokens> {
         const scope = isPush ? pushScope : getOdspScope(server);
         const cacheKey: OdspTokenManagerCacheKey = isPush ? { isPush } : { isPush, server };
         if (!forceReauth && this.tokenCache) {
             const tokensFromCache = await this.tokenCache.get(cacheKey);
             if (tokensFromCache?.refreshToken) {
-                if (redirectUriCallback) {
-                    initialNavigator(await redirectUriCallback(tokensFromCache));
+                let canReturn = true;
+                if (forceRefresh) {
+                    try {
+                        await refreshAccessToken(scope, server, clientConfig, tokensFromCache);
+                    } catch (error) {
+                        canReturn = false;
+                    }
+                    await this.tokenCache.save(cacheKey, tokensFromCache);
                 }
-                return tokensFromCache;
+                if (canReturn === true) {
+                    if (redirectUriCallback) {
+                        initialNavigator(await redirectUriCallback(tokensFromCache));
+                    }
+                    return tokensFromCache;
+                }
             }
         }
 
-        const authUrl = `https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize?`
+        const tenant = isPush ? "organizations" : getSharepointTenant(server);
+        const authUrl = `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/authorize?`
             + `client_id=${clientConfig.clientId}`
             + `&scope=${scope}`
             + `&response_type=code`

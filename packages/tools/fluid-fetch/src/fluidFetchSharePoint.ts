@@ -25,8 +25,10 @@ async function resolveWrapper<T>(
         const tokens = await odspTokenManager.getOdspTokens(
             server,
             clientConfig,
-            forceTokenReauth,
             fluidFetchWebNavigator,
+            undefined,
+            undefined,
+            forceTokenReauth,
         );
 
         return callback({

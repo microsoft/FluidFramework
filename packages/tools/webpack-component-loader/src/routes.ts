@@ -74,12 +74,13 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
                 await tokenManager.getOdspTokens(
                     options.server,
                     getMicrosoftConfiguration(),
-                    options.forceReauth,
                     (url: string) => res.redirect(url),
                     async (tokens: IOdspTokens) => {
                         options.odspAccessToken = tokens.accessToken;
                         return originalUrl;
                     },
+                    true,
+                    options.forceReauth,
                 );
                 odspAuthStage = 1;
                 return false;
@@ -87,12 +88,13 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
             await tokenManager.getPushTokens(
                 options.server,
                 getMicrosoftConfiguration(),
-                options.forceReauth,
                 (url: string) => res.redirect(url),
                 async (tokens: IOdspTokens) => {
                     options.pushAccessToken = tokens.accessToken;
                     return originalUrl;
                 },
+                true,
+                options.forceReauth,
             );
             odspAuthStage = 2;
             return false;
@@ -108,12 +110,13 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
         await tokenManager.getOdspTokens(
             options.server,
             getMicrosoftConfiguration(),
-            true,
             (url: string) => res.redirect(url),
             async (tokens: IOdspTokens) => {
                 options.odspAccessToken = tokens.accessToken;
                 return `${getThisOrigin(options)}/pushLogin`;
             },
+            true,
+            true,
         );
     });
     app.get("/pushLogin", async (req, res) => {
@@ -125,8 +128,10 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
         options.pushAccessToken = (await tokenManager.getPushTokens(
             options.server,
             getMicrosoftConfiguration(),
-            true,
             (url: string) => res.redirect(url),
+            undefined,
+            true,
+            true,
         )).accessToken;
     });
     app.get("/file*", (req, res) => {

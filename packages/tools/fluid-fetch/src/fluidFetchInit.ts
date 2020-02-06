@@ -60,7 +60,6 @@ async function initializeODSPCore(
         const tokens = await odspTokenManager.getOdspTokens(
             server,
             clientConfig,
-            false,
             fluidFetchWebNavigator,
         );
         if (refresh || !tokens.accessToken) {
