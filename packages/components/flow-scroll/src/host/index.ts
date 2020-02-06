@@ -30,7 +30,7 @@ import { importDoc } from "./template";
 
 const insightsMapId = "insights";
 
-export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual {
+export class WebFlowHost extends PrimedComponent implements IComponentHTMLView, IComponentHTMLVisual {
     public static readonly type = "@fluid-example/webflow-host";
 
     private intelViewer: FlowIntelViewer;

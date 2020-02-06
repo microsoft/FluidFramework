@@ -17,7 +17,7 @@ import { FlowDocumentType } from "../runtime";
 import { WebflowView } from "./host";
 import { importDoc } from "./import";
 
-export class WebFlow extends PrimedComponent implements IComponentHTMLVisual {
+export class WebFlow extends PrimedComponent implements IComponentHTMLView, IComponentHTMLVisual {
     public constructor(runtime: IComponentRuntime, context: IComponentContext) {
         super(runtime, context);
     }

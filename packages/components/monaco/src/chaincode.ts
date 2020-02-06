@@ -8,6 +8,7 @@ import { PrimedComponent } from "@microsoft/fluid-aqueduct";
 import {
     IComponentHandle,
     IComponentHTMLOptions,
+    IComponentHTMLView,
     IComponentHTMLVisual,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentLayout } from "@microsoft/fluid-framework-experimental";
@@ -63,7 +64,7 @@ const defaultCompilerOptions = {
  * Component for using the Monaco text editor.
  */
 export class MonacoRunner extends PrimedComponent implements
-    IComponentHTMLVisual, IComponentLayout {
+    IComponentHTMLView, IComponentHTMLVisual, IComponentLayout {
 
     /**
      * Get a new MonacoRunner with the given runtime.

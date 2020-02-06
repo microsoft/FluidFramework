@@ -6,6 +6,7 @@
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
 import {
     IComponent,
+    IComponentHTMLView,
     IComponentHTMLVisual,
     IComponentLoadable,
     IResponse,
@@ -22,7 +23,7 @@ export const WaterParkLoaderName = `${pkg.name}-loader`;
  * Component that loads extneral components via their url
  */
 export class ExternalComponentLoader extends PrimedComponent
-    implements IComponentHTMLVisual {
+    implements IComponentHTMLView, IComponentHTMLVisual {
 
     private static readonly defaultComponents = [
         "@fluid-example/todo",

@@ -7,6 +7,7 @@ import { PrimedComponent } from "@microsoft/fluid-aqueduct";
 import {
     IComponent,
     IComponentHandle,
+    IComponentHTMLView,
     IComponentHTMLVisual,
     IComponentLoadable,
 } from "@microsoft/fluid-component-core-interfaces";
@@ -22,7 +23,10 @@ export const WaterParkViewName = `${pkg.name}-view`;
 /**
  * Component that loads extneral components via their url
  */
-export class ExternalComponentView extends PrimedComponent implements IComponentHTMLVisual, IComponentCollection {
+export class ExternalComponentView extends PrimedComponent implements
+    IComponentHTMLView,
+    IComponentHTMLVisual,
+    IComponentCollection {
 
     public get IComponentHTMLVisual() { return this; }
     public get IComponentCollection() { return this; }

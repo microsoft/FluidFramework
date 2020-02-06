@@ -8,6 +8,7 @@ import {
     IComponent,
     IComponentHandleContext,
     IComponentHTMLOptions,
+    IComponentHTMLView,
     IComponentHTMLVisual,
     IComponentLoadable,
     IComponentRouter,
@@ -22,7 +23,7 @@ import { IComponentContext, IComponentFactory, IComponentRuntime } from "@micros
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 
 export class ImageComponent implements
-    IComponentLoadable, IComponentHTMLVisual, IComponentRouter, IComponentLayout {
+    IComponentLoadable, IComponentHTMLView, IComponentHTMLVisual, IComponentRouter, IComponentLayout {
     public get IComponentLoadable() { return this; }
     public get IComponentHTMLVisual() { return this; }
     public get IComponentRouter() { return this; }

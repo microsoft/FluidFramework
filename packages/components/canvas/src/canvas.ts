@@ -7,6 +7,7 @@ import { PrimedComponent } from "@microsoft/fluid-aqueduct";
 import {
     IComponentHandle,
     IComponentHTMLOptions,
+    IComponentHTMLView,
     IComponentHTMLVisual,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IColor, IInk, Ink, InkCanvas } from "@microsoft/fluid-ink";
@@ -27,7 +28,7 @@ const colorPickerColors: IColor[] = [
     { r:   0, g:   0, b:   0, a: 1 },
 ];
 
-export class Canvas extends PrimedComponent implements IComponentHTMLVisual {
+export class Canvas extends PrimedComponent implements IComponentHTMLView, IComponentHTMLVisual {
     public get IComponentHTMLVisual() { return this; }
 
     private ink: IInk;

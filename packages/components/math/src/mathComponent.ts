@@ -421,7 +421,7 @@ export class MathView implements IComponentHTMLView, IComponentCursor, IComponen
 }
 
 export class MathInstance extends EventEmitter implements IComponentLoadable, IComponentRouter,
-    IComponentHTMLVisual {
+    IComponentHTMLView, IComponentHTMLVisual {
     public static defaultOptions: IMathOptions = { display: "inline" };
 
     public get IComponentLoadable() { return this; }

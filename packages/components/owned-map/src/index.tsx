@@ -7,6 +7,7 @@ import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFacto
 import {
     IComponentHandle,
     IComponentHTMLOptions,
+    IComponentHTMLView,
     IComponentHTMLVisual,
 } from "@microsoft/fluid-component-core-interfaces";
 import { Counter, CounterValueType } from "@microsoft/fluid-map";
@@ -14,7 +15,7 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { OwnedSharedMap } from "./ownedMap";
 
-export class OwnedMap extends PrimedComponent implements IComponentHTMLVisual {
+export class OwnedMap extends PrimedComponent implements IComponentHTMLView, IComponentHTMLVisual {
 
     public static getFactory() { return OwnedMap.factory; }
 

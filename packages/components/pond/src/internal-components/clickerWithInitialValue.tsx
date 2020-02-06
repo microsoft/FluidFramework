@@ -4,7 +4,7 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 import { Counter, CounterValueType, ISharedDirectory } from "@microsoft/fluid-map";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -16,7 +16,7 @@ export const ClickerWithInitialValueName = `${pkg.name as string}-clickerWithIni
 /**
  * Basic Clicker example using new interfaces and stock component classes.
  */
-export class ClickerWithInitialValue extends PrimedComponent implements IComponentHTMLVisual {
+export class ClickerWithInitialValue extends PrimedComponent implements IComponentHTMLView, IComponentHTMLVisual {
 
     public get IComponentHTMLVisual() { return this; }
 
@@ -32,7 +32,7 @@ export class ClickerWithInitialValue extends PrimedComponent implements ICompone
         this.root.createValueType("clicks", CounterValueType.Name, startingValue);
     }
 
-    // start IComponentHTMLVisual
+    // start IComponentHTMLView
 
     public render(div: HTMLElement) {
         // Get our counter object that we set in initialize and pass it in to the view.
@@ -43,7 +43,7 @@ export class ClickerWithInitialValue extends PrimedComponent implements ICompone
         );
     }
 
-    // end IComponentHTMLVisual
+    // end IComponentHTMLView
 
     // ----- COMPONENT SETUP STUFF -----
 

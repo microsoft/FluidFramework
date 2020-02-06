@@ -80,7 +80,6 @@ interface IMathOptions {
 export interface IMathInstance extends IComponentLoadable, IComponentHTMLVisual, IComponentCursor,
     IComponentKeyHandlers, IComponentLayout, SearchMenu.ISearchMenuClient {
     IComponentLoadable: IComponentLoadable;
-    IComponentHTMLVisual: IComponentHTMLVisual;
     IComponentCursor: IComponentCursor;
     IComponentKeyHandlers: IComponentKeyHandlers;
     IComponentLayout: IComponentLayout;

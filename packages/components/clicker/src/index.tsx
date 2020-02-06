@@ -4,7 +4,7 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 import { Counter, CounterValueType } from "@microsoft/fluid-map";
 import { ITask } from "@microsoft/fluid-runtime-definitions";
 import * as React from "react";
@@ -18,7 +18,7 @@ export const ClickerName = pkg.name as string;
 /**
  * Basic Clicker example using new interfaces and stock component classes.
  */
-export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
+export class Clicker extends PrimedComponent implements IComponentHTMLView, IComponentHTMLVisual {
 
     public get IComponentHTMLVisual() { return this; }
 

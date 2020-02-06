@@ -8,6 +8,7 @@ import {
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import {
+    IComponentHTMLView,
     IComponentHTMLVisual,
 } from "@microsoft/fluid-component-core-interfaces";
 
@@ -17,7 +18,7 @@ import * as ReactDOM from "react-dom";
 /**
  * Dice roller example using view interfaces and stock component classes.
  */
-export class DiceRoller extends PrimedComponent implements IComponentHTMLVisual {
+export class DiceRoller extends PrimedComponent implements IComponentHTMLView, IComponentHTMLVisual {
     public get IComponentHTMLVisual() { return this; }
 
     /**

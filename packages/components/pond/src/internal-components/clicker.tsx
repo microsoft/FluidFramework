@@ -4,7 +4,11 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { IComponentHandle, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import {
+    IComponentHandle,
+    IComponentHTMLView,
+    IComponentHTMLVisual,
+} from "@microsoft/fluid-component-core-interfaces";
 import { Counter, CounterValueType, ISharedDirectory, ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -16,7 +20,7 @@ export const ClickerName = `${pkg.name as string}-clicker`;
 /**
  * Basic Clicker example using new interfaces and stock component classes.
  */
-export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
+export class Clicker extends PrimedComponent implements IComponentHTMLView, IComponentHTMLVisual {
 
     public get IComponentHTMLVisual() { return this; }
 
