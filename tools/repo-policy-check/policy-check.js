@@ -76,6 +76,24 @@ function getOrAddLocalMap(key, getter) {
  */
 const handlers = [
     {
+        name: "html-copyright-file-header",
+        match: /(^|\/)[^\/]+\.html$/i,
+        handler: file => {
+            if (!/<!--.*Copyright/i.test(readFile(file))) {
+                return "Html file missing copyright header";
+            }
+        },
+        resolver: file => {
+            const prevContent = readFile(file);
+
+            const newContent = '<!-- ' + copyrightText.replace(newline, ' -->' + newline + '<!-- ') + ' -->' + newline + newline + prevContent;
+
+            writeFile(file, newContent);
+
+            return { resolved: true };
+        }
+    },
+    {
         name: "dockerfile-copyright-file-header",
         match: /(^|\/)Dockerfile$/i,
         handler: file => {
