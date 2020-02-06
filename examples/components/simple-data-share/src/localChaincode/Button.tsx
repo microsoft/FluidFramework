@@ -4,7 +4,7 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 import { Counter } from "@microsoft/fluid-map";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -16,7 +16,7 @@ const chaincodeName = pkg.name;
 /**
  * Button does not display any content but modifies the counter count on the button click.
  */
-export class Button extends PrimedComponent implements IComponentHTMLVisual {
+export class Button extends PrimedComponent implements IComponentHTMLView, IComponentHTMLVisual {
     public get IComponentHTMLVisual() { return this; }
 
     public static readonly chaincodeName = `${chaincodeName}/button`;

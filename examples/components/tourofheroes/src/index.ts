@@ -8,7 +8,7 @@ import { APP_BASE_HREF } from "@angular/common";
 import { platformBrowserDynamic } from "@angular/platform-browser-dynamic";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
-import { IComponentHTMLVisual, IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHTMLView, IComponentHTMLVisual, IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
 import { ISharedDirectory } from "@microsoft/fluid-map";
 import {
@@ -24,7 +24,7 @@ import { AppModule } from "./app/app.module";
 import { PRAGUE_PATH, PRAGUE_ROOT } from "./app/tokens";
 import { GraphQLService } from "./app/hero.service";
 
-export class TourOfHeroes extends PrimedComponent implements IComponentHTMLVisual {
+export class TourOfHeroes extends PrimedComponent implements IComponentHTMLView, IComponentHTMLVisual {
 
     public get IComponentHTMLVisual() { return this; }
 
@@ -77,7 +77,7 @@ export class TourOfHeroes extends PrimedComponent implements IComponentHTMLVisua
     }
 }
 
-class TourOfHeroesComponentView implements IComponentHTMLVisual {
+class TourOfHeroesComponentView implements IComponentHTMLView, IComponentHTMLVisual {
     public get IComponentHTMLVisual() { return this; }
 
     public get id() {
@@ -110,7 +110,7 @@ class TourOfHeroesComponentView implements IComponentHTMLVisual {
 
 // Note on defining components - snapshotting does not seem like it should be part of an IChaincodeComponent given
 // these synthetic components don't need it. We may want this to just be "attach"
-class GraphIQLView implements IComponentHTMLVisual {
+class GraphIQLView implements IComponentHTMLView, IComponentHTMLVisual {
     public get IComponentHTMLVisual() { return this; }
 
     public readonly id = "graphiql";

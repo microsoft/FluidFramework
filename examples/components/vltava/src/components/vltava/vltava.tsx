@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 
 import * as React from "react";
@@ -16,7 +16,7 @@ import { VltavaView } from "./view";
 /**
  * Vltava is an application experience
  */
-export class Vltava extends PrimedComponent implements IComponentHTMLVisual {
+export class Vltava extends PrimedComponent implements IComponentHTMLView, IComponentHTMLVisual {
     private dataModelInternal: IVltavaDataModel | undefined;
 
     private static readonly factory = new PrimedComponentFactory(Vltava, []);

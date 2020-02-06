@@ -8,6 +8,7 @@ import {
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import {
+    IComponentHTMLView,
     IComponentHTMLVisual,
 } from "@microsoft/fluid-component-core-interfaces";
 
@@ -22,7 +23,7 @@ import { ComponentToolbar, ComponentToolbarName } from "./components";
 /**
  * Spaces is the Fluid
  */
-export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
+export class Spaces extends PrimedComponent implements IComponentHTMLView, IComponentHTMLVisual {
     private dataModelInternal: ISpacesDataModel | undefined;
     private componentToolbar: ComponentToolbar | undefined;
     private static readonly componentToolbarId = "spaces-component-toolbar";

@@ -12,6 +12,7 @@ import {
 } from "@microsoft/fluid-aqueduct-react";
 import {
     IComponentHandle,
+    IComponentHTMLView,
     IComponentHTMLVisual,
 } from "@microsoft/fluid-component-core-interfaces";
 import { SharedString } from "@microsoft/fluid-sequence";
@@ -25,8 +26,7 @@ export const TextBoxName = `textbox`;
  * collaborative textarea.
  */
 export class TextBox extends PrimedComponent
-    implements IComponentHTMLVisual, IComponentReactViewable {
-
+    implements IComponentHTMLView, IComponentHTMLVisual, IComponentReactViewable {
     public get IComponentHTMLVisual() {
         return this;
     }
@@ -69,13 +69,13 @@ export class TextBox extends PrimedComponent
             .get<SharedString>();
     }
 
-    // start IComponentHTMLVisual
+    // start IComponentHTMLView
 
     public render(div: HTMLElement) {
         ReactDOM.render(this.createJSXElement(), div);
     }
 
-    // end IComponentHTMLVisual
+    // end IComponentHTMLView
 
     // start IComponentReactViewable
 

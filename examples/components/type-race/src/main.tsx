@@ -8,6 +8,7 @@ import {
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import {
+    IComponentHTMLView,
     IComponentHTMLVisual,
 } from "@microsoft/fluid-component-core-interfaces";
 import {
@@ -25,7 +26,7 @@ const style = require("./style.css");
 /**
  * Clicker example using view interfaces and stock component classes.
  */
-export class TypeRace extends PrimedComponent implements IComponentHTMLVisual {
+export class TypeRace extends PrimedComponent implements IComponentHTMLView, IComponentHTMLVisual {
     public get IComponentHTMLVisual() { return this; }
 
     private readonly textGenerator = new TextGenerator();

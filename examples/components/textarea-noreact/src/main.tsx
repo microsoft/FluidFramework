@@ -16,6 +16,7 @@ import {
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import {
+    IComponentHTMLView,
     IComponentHTMLVisual,
     IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
@@ -48,7 +49,7 @@ interface ITextareaState {
  */
 export class TextareaNoReact
     extends PrimedComponent
-    implements IComponentHTMLVisual {
+    implements IComponentHTMLView, IComponentHTMLVisual {
     public get IComponentHTMLVisual() { return this; }
 
     protected textareaState: ITextareaState;

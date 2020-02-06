@@ -4,7 +4,7 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
-import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 import { Counter, CounterValueType } from "@microsoft/fluid-map";
 
 // Import our local components
@@ -33,7 +33,7 @@ const chaincodeName = pkg.name;
  * There is also a Incrementor component which runs in the background and randomly increments the count value every 5
  * seconds.
  */
-export class SimpleDataSharing extends PrimedComponent implements IComponentHTMLVisual {
+export class SimpleDataSharing extends PrimedComponent implements IComponentHTMLView, IComponentHTMLVisual {
     public get IComponentHTMLVisual() { return this; }
 
     // Id should be unique identifiers

@@ -8,6 +8,7 @@ import {
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import {
+    IComponentHTMLView,
     IComponentHTMLVisual,
 } from "@microsoft/fluid-component-core-interfaces";
 
@@ -39,7 +40,7 @@ export const ButtonName = "button";
 /**
  * Clicker example using view interfaces and stock component classes.
  */
-export class Button extends PrimedComponent implements IComponentHTMLVisual {
+export class Button extends PrimedComponent implements IComponentHTMLView, IComponentHTMLVisual {
 
     public get IComponentHTMLVisual() { return this; }
 
