@@ -148,7 +148,6 @@ interface IRuntimeMessageMetadata {
 }
 
 export class ScheduleManager {
-    private readonly messageScheduler: IMessageScheduler | undefined;
     private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     private readonly deltaScheduler: DeltaScheduler;
     private pauseSequenceNumber: number | undefined;
@@ -159,16 +158,10 @@ export class ScheduleManager {
     private batchClientId: string;
 
     constructor(
-        messageScheduler: IMessageScheduler | undefined,
+        private readonly messageScheduler: IMessageScheduler,
         private readonly emitter: EventEmitter,
-        legacyDeltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         private readonly logger: ITelemetryLogger,
     ) {
-        if (!messageScheduler || !("toArray" in messageScheduler.deltaManager.inbound as any)) {
-            this.deltaManager = legacyDeltaManager;
-            return;
-        }
-
         this.messageScheduler = messageScheduler;
         this.deltaManager = this.messageScheduler.deltaManager;
         this.deltaScheduler = new DeltaScheduler(
@@ -590,7 +583,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.scheduleManager = new ScheduleManager(
             context.IMessageScheduler,
             this,
-            context.deltaManager,
             ChildLogger.create(this.logger, "ScheduleManager"),
         );
 

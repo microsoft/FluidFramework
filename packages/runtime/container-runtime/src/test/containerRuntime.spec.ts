@@ -126,7 +126,6 @@ describe("Runtime", () => {
                     scheduleManager = new ScheduleManager(
                         messageScheduler,
                         emitter,
-                        deltaManager,
                         DebugLogger.create("fluid:testScheduleManager"),
                     );
 
