@@ -6,7 +6,6 @@
 // In this case we want @types/express-serve-static-core, not express-serve-static-core, and so disable the lint rule
 // eslint-disable-next-line import/no-unresolved
 import { Params } from "express-serve-static-core";
-import * as _ from "lodash";
 
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function getParam(params: Params, key: string) {
