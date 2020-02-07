@@ -30,7 +30,8 @@ WORKDIR /
 COPY . .
 
 # Convert the json to markdown
-RUN npm run build:gendocs
+# Temporarily disable this to speed up doc builds
+# RUN npm run build:gendocs
 
 #############################
 FROM r11s AS docs
