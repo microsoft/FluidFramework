@@ -9,7 +9,6 @@ import {
 } from "@microsoft/fluid-aqueduct";
 import {
     IComponentHTMLView,
-    IComponentHTMLVisual,
 } from "@microsoft/fluid-component-core-interfaces";
 import {
     SharedMap,
@@ -26,8 +25,8 @@ const style = require("./style.css");
 /**
  * Clicker example using view interfaces and stock component classes.
  */
-export class TypeRace extends PrimedComponent implements IComponentHTMLView, IComponentHTMLVisual {
-    public get IComponentHTMLVisual() { return this; }
+export class TypeRace extends PrimedComponent implements IComponentHTMLView {
+    public get IComponentHTMLView() { return this; }
 
     private readonly textGenerator = new TextGenerator();
     private username: string;

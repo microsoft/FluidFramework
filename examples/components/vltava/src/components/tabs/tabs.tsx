@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 
 import * as React from "react";
@@ -12,7 +12,7 @@ import * as ReactDOM from "react-dom";
 import { TabsDataModel, ITabsDataModel } from "./dataModel";
 import { TabsView } from "./view";
 
-export class TabsComponent extends PrimedComponent implements IComponentHTMLView, IComponentHTMLVisual {
+export class TabsComponent extends PrimedComponent implements IComponentHTMLView {
     private dataModelInternal: ITabsDataModel | undefined;
 
     private static readonly factory = new PrimedComponentFactory(TabsComponent, []);
@@ -29,7 +29,7 @@ export class TabsComponent extends PrimedComponent implements IComponentHTMLView
         return this.dataModelInternal;
     }
 
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
 
     protected async componentInitializingFirstTime(props: any) {
         // create the tabs directory

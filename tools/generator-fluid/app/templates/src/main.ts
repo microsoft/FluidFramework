@@ -4,14 +4,13 @@ import {
 } from "@microsoft/fluid-aqueduct";
 import {
     IComponentHTMLView,
-    IComponentHTMLVisual,
 } from "@microsoft/fluid-component-core-interfaces";
 
 /**
  * DiceRoller example using view interfaces and stock component classes.
  */
-export class DiceRoller extends PrimedComponent implements IComponentHTMLView, IComponentHTMLVisual {
-    public get IComponentHTMLVisual() { return this; }
+export class DiceRoller extends PrimedComponent implements IComponentHTMLView {
+    public get IComponentHTMLView() { return this; }
 
     /**
      * ComponentInitializingFirstTime is called only once, it is executed only by the first client to open the

@@ -17,7 +17,6 @@ import {
 } from "@microsoft/fluid-aqueduct";
 import {
     IComponentHTMLView,
-    IComponentHTMLVisual,
     IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
 import {
@@ -47,10 +46,8 @@ interface ITextareaState {
  * allow collaborative editing. Heavily based on Skyler Jokiel's React-infused
  * CollaborativeTextArea in `packages/framework/aqueductreact`.
  */
-export class TextareaNoReact
-    extends PrimedComponent
-    implements IComponentHTMLView, IComponentHTMLVisual {
-    public get IComponentHTMLVisual() { return this; }
+export class TextareaNoReact extends PrimedComponent implements IComponentHTMLView {
+    public get IComponentHTMLView() { return this; }
 
     protected textareaState: ITextareaState;
     protected textareaRootKey: string;
