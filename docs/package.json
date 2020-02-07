@@ -11,7 +11,7 @@
     "build:copy:api": "copyfiles -f \"api-pages/**\" api/",
     "build:copy:fluid": "copyfiles -f \"node_modules/@microsoft/fluid-local-web-host/dist/**\" .vuepress/public/fluid/fluid-local-web-host && copyfiles -f \"node_modules/@fluid-example/sudoku/dist/**\" .vuepress/public/fluid/sudoku",
     "build:vuepress": "cross-env NODE_OPTIONS=\"--max-old-space-size=8192\" vuepress build --dest ./dist --cache .cache",
-    "clean": "rimraf api",
+    "clean": "rimraf api dist",
     "lint": "vuepress check-md",
     "start": "npm run build:copy && node buildDocs.js && npm run start:vuepress",
     "start:docker": "npm run build:copy && node buildDocs.js && npm run start:vuepress",
