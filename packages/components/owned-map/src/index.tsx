@@ -28,7 +28,7 @@ export class OwnedMap extends PrimedComponent implements IComponentHTMLView {
     public ownedMap: OwnedSharedMap;
     public counter: Counter;
 
-    // #region IComponentHTMLVisual
+    // #region IComponentHTMLView
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
         const render = () => this.doRender(elm);
         this.root.on("op", () => {
@@ -41,7 +41,7 @@ export class OwnedMap extends PrimedComponent implements IComponentHTMLView {
 
         this.doRender(elm);
     }
-    // #endregion IComponentHTMLVisual
+    // #endregion IComponentHTMLView
 
     /**
      *  The component has been loaded. Render the component into the provided div

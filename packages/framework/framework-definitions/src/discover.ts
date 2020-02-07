@@ -8,9 +8,9 @@ import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 /**
  * The interfaces in this file are related to component interface discovery. The idea
  * is that a component could say, for example, that it only cares about (and wants to be
- * notified of) components that implement IComponentHTMLVisual. Then, using these patterns,
+ * notified of) components that implement IComponentHTMLView. Then, using these patterns,
  * it will be notified of all loaded components that implement that type on load, and
- * of all new components that are loaded during that session that implement IComponentHTMLVisual.
+ * of all new components that are loaded during that session that implement IComponentHTMLView.
  *
  * Components who want their functionality to be discoverable should implement
  * IComponentDiscoverableInterfaces and list the interfaces they implement. Components that

@@ -84,9 +84,11 @@ export class ComponentView implements NodeView {
                 // First try to get it as a view
                 this.visual = component.IComponentHTMLView;
                 if (!this.visual) {
-                    // Otherwise get the visual, which will either be a view factory or a view
+                    // Otherwise get the visual, which is a view factory
                     const visual = component.IComponentHTMLVisual;
-                    this.visual = visual.addView ? visual.addView() : visual;
+                    if (visual) {
+                        this.visual = visual.addView();
+                    }
                 }
                 if (this.visual) {
                     this.visual.render(this.dom);

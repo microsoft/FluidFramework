@@ -9,7 +9,6 @@ import {
     IComponentRouter,
     IRequest,
     IResponse,
-    IComponentHTMLOptions,
     IComponentHTMLVisual,
     IComponent,
     IComponentHTMLView,
@@ -108,10 +107,6 @@ export class Persona extends EventEmitter implements
         this.views.add(view);
 
         return view;
-    }
-
-    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
-        throw new Error("Just addView please");
     }
 }
 

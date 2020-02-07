@@ -33,6 +33,5 @@ export interface IProvideComponentHTMLVisual {
 }
 
 export interface IComponentHTMLVisual extends IProvideComponentHTMLVisual {
-    render(elm: HTMLElement, options?: IComponentHTMLOptions): void;
     addView(scope?: IComponent): IComponentHTMLView;
 }

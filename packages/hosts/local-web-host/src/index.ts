@@ -95,7 +95,7 @@ export async function renderDefaultComponent(container: Container, div: HTMLElem
     // First try to get it as a view
     let renderable = component.IComponentHTMLView;
     if (!renderable) {
-        // Otherwise get the visual, which will either be a view factory or a view
+        // Otherwise get the visual, which is a view factory
         const visual = component.IComponentHTMLVisual;
         if (visual) {
             renderable = visual.addView();

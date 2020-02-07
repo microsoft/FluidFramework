@@ -9,7 +9,6 @@ import {
     IComponentRouter,
     IRequest,
     IResponse,
-    IComponentHTMLOptions,
     IComponentHTMLVisual,
     IComponent,
     IComponentHTMLView,
@@ -28,7 +27,6 @@ import { DrawerView } from "./drawerView";
 export class Drawer extends EventEmitter implements
     IComponentLoadable,
     IComponentRouter,
-    IComponentHTMLView,
     IComponentHTMLVisual {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new Drawer(runtime, context);
@@ -50,7 +48,6 @@ export class Drawer extends EventEmitter implements
 
     public get IComponentLoadable() { return this; }
     public get IComponentRouter() { return this; }
-    public get IComponentHTMLView() { return this; }
     public get IComponentHTMLVisual() { return this; }
 
     public url: string;
@@ -124,10 +121,6 @@ export class Drawer extends EventEmitter implements
         this.views.add(view);
 
         return view;
-    }
-
-    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
-        throw new Error("Just addView please");
     }
 }
 

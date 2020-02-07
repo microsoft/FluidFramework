@@ -118,9 +118,11 @@ async function attach(loader: ILoader, url: string, div: HTMLDivElement) {
   // First try to get it as a view
   let renderable = component.IComponentHTMLView;
   if (!renderable) {
-    // Otherwise get the visual, which will either be a view factory or a view
+    // Otherwise get the visual, which is a view factory
     const visual = component.IComponentHTMLVisual;
-    renderable = visual.addView ? visual.addView() : visual;
+    if (visual) {
+      renderable = visual.addView();
+    }
   }
   if (renderable) {
     renderable.render(div, { display: "block" });

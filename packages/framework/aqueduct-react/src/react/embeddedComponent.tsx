@@ -14,7 +14,7 @@ export interface IEmbeddedComponentProps {
 
 /**
  * Will render a component via react if the component supports IComponentReactViewable
- * or standard HTML if the component supports IComponentHTMLVisual
+ * or standard HTML if the component supports IComponentHTMLView
  *
  * If the component supports neither interface we render an empty <span />
  */
@@ -97,12 +97,8 @@ class HTMLVisualEmbeddedComponent extends React.Component<IHTMLVisualProps, { }>
 
     public async componentDidMount() {
         if (this.ref.current) {
-            if (this.props.component.addView) {
-                const view = this.props.component.addView();
-                view.render(this.ref.current);
-            } else {
-                this.props.component.render(this.ref.current);
-            }
+            const view = this.props.component.addView();
+            view.render(this.ref.current);
         }
     }
 
