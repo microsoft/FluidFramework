@@ -92,6 +92,7 @@ describe("Component Creation Tests", () => {
         });
 
         it("Valid global component", async () => {
+            let success: boolean = true;
             // Create the default component that is in the global registry.
             const context: LocalComponentContext = new LocalComponentContext(
                 "default-Id",
@@ -101,12 +102,17 @@ describe("Component Creation Tests", () => {
                 scope,
                 attachCb);
 
-            const runtime: IComponentRuntime = await context.realize();
-            // Verify that we get a valid IComponentRuntime.
-            assert.notStrictEqual(runtime, undefined);
+            try {
+                await context.realize();
+            } catch (error) {
+                success = false;
+            }
+            // Verify that realize was successful.
+            assert.strictEqual(success, true);
         });
 
         it("Invalid global component", async () => {
+            let success: boolean = true;
             // Create component A that is not in the global registry.
             const context: LocalComponentContext = new LocalComponentContext(
                 "A-Id",
@@ -116,12 +122,17 @@ describe("Component Creation Tests", () => {
                 scope,
                 attachCb);
 
-            const runtime: IComponentRuntime = await context.realize();
-            // Verify that we don't get a valid IComponentRuntime.
-            assert.strictEqual(runtime, undefined);
+            try {
+                await context.realize();
+            } catch (error) {
+                success = false;
+            }
+            // Verify that realize throws an error.
+            assert.strictEqual(success, false);
         });
 
         it("Valid subcomponent from the global component", async () => {
+            let success: boolean = true;
             // Create component A that is in the registry of the default component.
             const contextA: LocalComponentContext = new LocalComponentContext(
                 "A-Id",
@@ -131,12 +142,17 @@ describe("Component Creation Tests", () => {
                 scope,
                 attachCb);
 
-            const runtime: IComponentRuntime = await contextA.realize();
-            // Verify that we get a valid IComponentRuntime.
-            assert.notStrictEqual(runtime, undefined);
+            try {
+                await contextA.realize();
+            } catch (error) {
+                success = false;
+            }
+            // Verify that realize was successful.
+            assert.strictEqual(success, true);
         });
 
         it("Invalid subcomponent from the global component", async () => {
+            let success: boolean = true;
             // Create component B that is in not the registry of the default component.
             const contextB: LocalComponentContext = new LocalComponentContext(
                 "B-Id",
@@ -146,12 +162,17 @@ describe("Component Creation Tests", () => {
                 scope,
                 attachCb);
 
-            const runtime: IComponentRuntime =  await contextB.realize();
-            // Verify that we don't get a valid IComponentRuntime.
-            assert.strictEqual(runtime, undefined);
+            try {
+                await contextB.realize();
+            } catch (error) {
+                success = false;
+            }
+            // Verify that realize throws an error.
+            assert.strictEqual(success, false);
         });
 
         it("Valid subcomponent at depth 2", async () => {
+            let success: boolean = true;
             // Create component B that is in the registry of component A (which is at depth 2).
             const contextB: LocalComponentContext = new LocalComponentContext(
                 "B-Id",
@@ -161,9 +182,13 @@ describe("Component Creation Tests", () => {
                 scope,
                 attachCb);
 
-            const runtimeB: IComponentRuntime = await contextB.realize();
-            // Verify that we get a valid IComponentRuntime.
-            assert.notStrictEqual(runtimeB, undefined);
+            try {
+                await contextB.realize();
+            } catch (error) {
+                success = false;
+            }
+            // Verify that realize was successful.
+            assert.strictEqual(success, true);
 
             // Create component C that is in the registry of component A (which is at depth 2).
             const contextC: LocalComponentContext = new LocalComponentContext(
@@ -174,12 +199,17 @@ describe("Component Creation Tests", () => {
                 scope,
                 attachCb);
 
-            const runtimeC: IComponentRuntime = await contextC.realize();
-            // Verify that we get a valid IComponentRuntime.
-            assert.notStrictEqual(runtimeC, undefined);
+            try {
+                await contextC.realize();
+            } catch (error) {
+                success = false;
+            }
+            // Verify that realize was successful.
+            assert.strictEqual(success, true);
         });
 
         it("Invalid subcomponent at depth 2", async () => {
+            let success: boolean = true;
             // Create a fake component that is not in the registry of component A (which is at depth 2).
             const contextFake: LocalComponentContext = new LocalComponentContext(
                 "fake-Id",
@@ -189,12 +219,17 @@ describe("Component Creation Tests", () => {
                 scope,
                 attachCb);
 
-            const runtime: IComponentRuntime = await contextFake.realize();
-            // Verify that we don't get a valid IComponentRuntime.
-            assert.strictEqual(runtime, undefined);
+            try {
+                await contextFake.realize();
+            } catch (error) {
+                success = false;
+            }
+            // Verify that realize throws an error.
+            assert.strictEqual(success, false);
         });
 
         it("Invalid subcomponent at depth 3", async () => {
+            let success: boolean = true;
             // Create a fake component that is not in the registry of component B (which is at depth 3).
             const contextFake: LocalComponentContext = new LocalComponentContext(
                 "fake-Id",
@@ -204,12 +239,17 @@ describe("Component Creation Tests", () => {
                 scope,
                 attachCb);
 
-            const runtime: IComponentRuntime = await contextFake.realize();
-            // Verify that we don't get a valid IComponentRuntime.
-            assert.strictEqual(runtime, undefined);
+            try {
+                await contextFake.realize();
+            } catch (error) {
+                success = false;
+            }
+            // Verify that realize throws an error.
+            assert.strictEqual(success, false);
         });
 
         it("Subcomponent which is in the registry of the parent component", async () => {
+            let success: boolean = true;
             // Create component C that is in parent's registry but not in the registry of component B.
             const contextC: LocalComponentContext = new LocalComponentContext(
                 "C-Id",
@@ -219,10 +259,13 @@ describe("Component Creation Tests", () => {
                 scope,
                 attachCb);
 
-            const runtime: IComponentRuntime = await contextC.realize();
-            // Verify that we don't get a valid IComponentRuntime because the component being created was
-            // not in the current component's registry or the global registry.
-            assert.strictEqual(runtime, undefined);
+            try {
+                await contextC.realize();
+            } catch (error) {
+                success = false;
+            }
+            // Verify that realize throws an error.
+            assert.strictEqual(success, false);
         });
     });
 });

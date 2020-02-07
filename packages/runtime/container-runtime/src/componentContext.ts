@@ -193,12 +193,12 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             for (const pkg of packages) {
                 if (!registry) {
                     this.componentRuntimeDeferred.reject("Factory does not supply the component Registry");
-                    throw new Error("Factory does not supply the component Registry");
+                    return this.componentRuntimeDeferred.promise;
                 }
                 entry = await registry.get(pkg);
                 if (!entry) {
                     this.componentRuntimeDeferred.reject("Registry does not contain an entry for the package");
-                    throw new Error("Registry does not contain an entry for the package");
+                    return this.componentRuntimeDeferred.promise;
                 }
                 factory = entry.IComponentFactory;
                 registry = entry.IComponentRegistry;
