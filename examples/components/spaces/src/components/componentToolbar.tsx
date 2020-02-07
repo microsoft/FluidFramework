@@ -23,6 +23,7 @@ export const ComponentToolbarName = "componentToolbar";
  * A component to allow you to add component
  */
 export class ComponentToolbar extends PrimedComponent implements IComponentHTMLVisual {
+
     public get IComponentHTMLVisual() { return this; }
 
     private static readonly factory = new PrimedComponentFactory(ComponentToolbar, []);
@@ -35,7 +36,6 @@ export class ComponentToolbar extends PrimedComponent implements IComponentHTMLV
      * Will return a new Clicker view
      */
     public render(div: HTMLElement) {
-        this.emit
         ReactDOM.render(
             <ComponentToolbarView emit={this.emit.bind(this)}/>,
             div,
@@ -52,12 +52,14 @@ interface IComponentToolbarViewState {
 }
 
 class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, IComponentToolbarViewState>{
-    private emit: (event: string | symbol, ...args: any[]) => boolean;
+
+    private readonly emit: (event: string | symbol, ...args: any[]) => boolean;
+
     constructor(props: IComponentToolbarViewProps){
         super(props);
         this.emit = props.emit;
         this.state = {
-            isEditable: true
+            isEditable: true,
         };
     }
 

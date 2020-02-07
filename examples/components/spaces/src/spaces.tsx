@@ -45,8 +45,19 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
     protected async componentInitializingFirstTime(props?: any) {
         this.root.createSubDirectory("component-list");
         this.dataModelInternal =
-            new SpacesDataModel(this.root, this.createAndAttachComponent.bind(this), this.getComponent.bind(this), Spaces.componentToolbarId);
-        this.adderComponent = await this.dataModel.addComponent<ComponentToolbar>(ComponentToolbarName, 4, 4, Spaces.componentToolbarId);
+            new SpacesDataModel(
+                this.root,
+                this.createAndAttachComponent.bind(this),
+                this.getComponent.bind(this),
+                Spaces.componentToolbarId,
+            );
+        this.adderComponent =
+            await this.dataModel.addComponent<ComponentToolbar>(
+                ComponentToolbarName,
+                4,
+                4,
+                Spaces.componentToolbarId,
+            );
         // Set the saved template if there is a template query param
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has("template")) {
@@ -56,7 +67,12 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
 
     protected async componentInitializingFromExisting() {
         this.dataModelInternal =
-            new SpacesDataModel(this.root, this.createAndAttachComponent.bind(this), this.getComponent.bind(this), Spaces.componentToolbarId);
+            new SpacesDataModel(
+                this.root,
+                this.createAndAttachComponent.bind(this),
+                this.getComponent.bind(this),
+                Spaces.componentToolbarId,
+            );
         this.adderComponent = await this.getComponent<ComponentToolbar>(Spaces.componentToolbarId);
     }
 
