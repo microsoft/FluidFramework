@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IConnectionError, IThrottlingError, ErrorType } from "@microsoft/fluid-driver-definitions";
+import { IConnectionError, IThrottlingError, IWriteError, ErrorType } from "@microsoft/fluid-driver-definitions";
 
 /**
  * Network error error class - used to communicate all  network errors
@@ -33,6 +33,20 @@ export class ThrottlingError extends Error implements IThrottlingError {
         errorMessage: string,
         readonly retryAfterSeconds: number,
         readonly errorType: ErrorType.throttlingError = ErrorType.throttlingError) {
+        super(errorMessage);
+    }
+
+    public getCustomProperties() {
+        return copyObjectProps(this);
+    }
+}
+
+export class WriteError extends Error implements IWriteError {
+    public readonly critical = true;
+
+    constructor(
+        errorMessage: string,
+        readonly errorType: ErrorType.writeError = ErrorType.writeError) {
         super(errorMessage);
     }
 
