@@ -69,12 +69,12 @@ export class Anchor extends PrimedComponent implements IProvideComponentHTMLVisu
         });
 
         await Promise.all(keysP);
-        await this.createDefaultComponentsRecursive(queue);
+        await this.ensureInitialComponents(queue);
     }
 
     protected async componentInitializingFromExisting() {
         const queue = await this.root.get<IComponentHandle>(this.defaultComponentQueue).get<ConsensusQueue>();
-        await this.createDefaultComponentsRecursive(queue);
+        await this.ensureInitialComponents(queue);
     }
 
     protected async componentHasInitialized() {
@@ -82,11 +82,11 @@ export class Anchor extends PrimedComponent implements IProvideComponentHTMLVisu
             await this.root.get<IComponentHandle>(componentKeys[componentKeys.defaultComponentId]).get();
     }
 
-    private async createDefaultComponentsRecursive(queue: ConsensusQueue<keyof componentKeys>): Promise<void> {
-        const item = await queue.remove();
-        if (item) {
+    private async ensureInitialComponents(queue: ConsensusQueue<keyof componentKeys>): Promise<void> {
+        let item = await queue.remove();
+        while (item) {
             await this.createComponent(componentKeys[item]);
-            await this.createDefaultComponentsRecursive(queue);
+            item = await queue.remove();
         }
     }
 
