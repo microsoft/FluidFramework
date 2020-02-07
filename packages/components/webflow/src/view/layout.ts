@@ -93,7 +93,7 @@ export class Layout extends EventEmitter {
     private renderPromise = done;
     private renderResolver: () => void;
 
-    constructor(public readonly doc: FlowDocument, public readonly root: Element, formatter: Readonly<RootFormatter<IFormatterState>>, scheduler = new Scheduler(), public readonly viewFactoryRegistry: Map<string, IComponentHTMLViewFactory>, public readonly scope?: IComponent) {
+    constructor(public readonly doc: FlowDocument, public readonly root: Element, formatter: Readonly<RootFormatter<IFormatterState>>, scheduler = new Scheduler(), public readonly viewFactoryRegistry: Map<string, IComponentHTMLViewFactory> = new Map(), public readonly scope?: IComponent) {
         super();
 
         this.scheduleRender = scheduler.coalesce(scheduler.onTurnEnd, () => { this.render(); });
