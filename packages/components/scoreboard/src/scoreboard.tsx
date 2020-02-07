@@ -8,17 +8,16 @@ import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFacto
 import {
     IComponentHTMLOptions,
     IComponentHTMLView,
-    IComponentHTMLVisual,
 } from "@microsoft/fluid-component-core-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { TeamScore } from "./teamScore";
 import { WinnerText } from "./winnerText";
 
-export class Scoreboard extends PrimedComponent implements IComponentHTMLView, IComponentHTMLVisual {
+export class Scoreboard extends PrimedComponent implements IComponentHTMLView {
     public static readonly componentName = "Scoreboard";
 
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
 
     /**
     * Setup the distributed data structures; called once when the component is created (NOT initialized)

@@ -8,18 +8,15 @@ import {
     IComponentHandle,
     IComponentHTMLOptions,
     IComponentHTMLView,
-    IComponentHTMLVisual,
 } from "@microsoft/fluid-component-core-interfaces";
 import { Counter, CounterValueType } from "@microsoft/fluid-map";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { OwnedSharedMap } from "./ownedMap";
 
-export class OwnedMap extends PrimedComponent implements IComponentHTMLView, IComponentHTMLVisual {
+export class OwnedMap extends PrimedComponent implements IComponentHTMLView {
 
     public static getFactory() { return OwnedMap.factory; }
-
-    public get IComponentHTMLVisual() { return this; }
 
     private static readonly factory = new PrimedComponentFactory(
         OwnedMap,

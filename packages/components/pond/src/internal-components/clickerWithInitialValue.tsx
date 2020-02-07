@@ -4,7 +4,7 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
 import { Counter, CounterValueType, ISharedDirectory } from "@microsoft/fluid-map";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -16,9 +16,8 @@ export const ClickerWithInitialValueName = `${pkg.name as string}-clickerWithIni
 /**
  * Basic Clicker example using new interfaces and stock component classes.
  */
-export class ClickerWithInitialValue extends PrimedComponent implements IComponentHTMLView, IComponentHTMLVisual {
-
-    public get IComponentHTMLVisual() { return this; }
+export class ClickerWithInitialValue extends PrimedComponent implements IComponentHTMLView {
+    public get IComponentHTMLView() { return this; }
 
     /**
      * Do setup work here

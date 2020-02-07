@@ -8,7 +8,6 @@ import {
     IComponent,
     IComponentHTMLOptions,
     IComponentHTMLView,
-    IComponentHTMLVisual,
     IComponentLoadable,
     IComponentRouter,
     IRequest,
@@ -156,7 +155,7 @@ async function displayMap(
 
 export class ProgressCollection
     extends EventEmitter
-    implements IComponentLoadable, IComponentRouter, IComponentHTMLView, IComponentHTMLVisual {
+    implements IComponentLoadable, IComponentRouter, IComponentHTMLView {
 
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new ProgressCollection(runtime, context);
@@ -167,7 +166,7 @@ export class ProgressCollection
 
     public get IComponentLoadable() { return this; }
     public get IComponentRouter() { return this; }
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
 
     public url: string;
     private root: ISharedMap;

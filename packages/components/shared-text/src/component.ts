@@ -14,7 +14,6 @@ import {
     IComponent,
     IComponentHandle,
     IComponentHTMLView,
-    IComponentHTMLVisual,
     IComponentLoadable,
     IRequest,
     IResponse,
@@ -58,7 +57,7 @@ async function getHandle(runtimeP: Promise<IComponentRuntime>): Promise<ICompone
 
 export class SharedTextRunner
     extends EventEmitter
-    implements IComponentHTMLView, IComponentHTMLVisual, IComponentLoadable, IProvideSharedString {
+    implements IComponentHTMLView, IComponentLoadable, IProvideSharedString {
 
     public static async load(runtime: ComponentRuntime, context: IComponentContext): Promise<SharedTextRunner> {
         const runner = new SharedTextRunner(runtime, context);
@@ -68,7 +67,7 @@ export class SharedTextRunner
     }
 
     public get IComponentLoadable() { return this; }
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
     public get ISharedString() { return this.sharedString; }
 
     public readonly url = "/text";

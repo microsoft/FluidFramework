@@ -12,7 +12,6 @@ import {
     IComponent,
     IComponentHandle,
     IComponentHTMLView,
-    IComponentHTMLVisual,
 } from "@microsoft/fluid-component-core-interfaces";
 import { SharedDirectory } from "@microsoft/fluid-map";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
@@ -31,15 +30,15 @@ export const PondName = pkg.name as string;
  *  - Component creation with initial state
  *  - Component creation and storage using Handles
  */
-export class Pond extends PrimedComponent implements IComponentHTMLView, IComponentHTMLVisual {
+export class Pond extends PrimedComponent implements IComponentHTMLView {
 
     private readonly clickerKey = "clicker";
     private readonly clickerWithInitialValueKey = "clicker-with-initial-value";
 
-    public clicker2Render: IComponentHTMLView | IComponentHTMLVisual | undefined;
-    public clicker3Render: IComponentHTMLView | IComponentHTMLVisual | undefined;
+    public clicker2Render: IComponentHTMLView | undefined;
+    public clicker3Render: IComponentHTMLView | undefined;
 
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
 
     /**
    * Do setup work here
@@ -63,14 +62,10 @@ export class Pond extends PrimedComponent implements IComponentHTMLView, ICompon
 
     protected async componentHasInitialized() {
         const clicker2 = await this.root.get<IComponentHandle>(this.clickerKey).get<IComponent>();
-        this.clicker2Render = clicker2.IComponentHTMLView ?
-            clicker2.IComponentHTMLView :
-            clicker2.IComponentHTMLVisual;
+        this.clicker2Render = clicker2.IComponentHTMLView;
 
         const clicker3 = await this.root.get<IComponentHandle>(this.clickerWithInitialValueKey).get<IComponent>();
-        this.clicker3Render = clicker3.IComponentHTMLView ?
-            clicker3.IComponentHTMLView :
-            clicker3.IComponentHTMLVisual;
+        this.clicker3Render = clicker3.IComponentHTMLView;
     }
 
     // start IComponentHTMLView

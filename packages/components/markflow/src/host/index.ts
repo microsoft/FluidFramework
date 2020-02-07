@@ -22,6 +22,7 @@ export class WebFlow extends PrimedComponent implements IComponentHTMLView, ICom
         super(runtime, context);
     }
 
+    public get IComponentHTMLView() { return this; }
     public get IComponentHTMLVisual() { return this; }
 
     // #region IComponentHTMLVisual

@@ -9,7 +9,6 @@ import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aquedu
 import {
     IComponentHTMLOptions,
     IComponentHTMLView,
-    IComponentHTMLVisual,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { GridView } from "./grid";
@@ -27,7 +26,7 @@ const template = new Template({
     ],
 });
 
-export class TableView extends PrimedComponent implements IComponentHTMLView, IComponentHTMLVisual {
+export class TableView extends PrimedComponent implements IComponentHTMLView {
     public static getFactory() { return TableView.factory; }
 
     private static readonly factory = new PrimedComponentFactory(
@@ -35,7 +34,7 @@ export class TableView extends PrimedComponent implements IComponentHTMLView, IC
         [],
     );
 
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
 
     constructor(runtime: IComponentRuntime, context: IComponentContext) {
         super(runtime, context);
