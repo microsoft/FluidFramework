@@ -25,7 +25,6 @@ import { PersonaView } from "./personaView";
 export class Persona extends EventEmitter implements
     IComponentLoadable,
     IComponentRouter,
-    IComponentHTMLView,
     IComponentHTMLVisual {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new Persona(runtime, context);

@@ -24,7 +24,6 @@ import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 require("bootstrap/dist/css/bootstrap.min.css");
 
 class ProgressBarView implements IComponentHTMLView {
-
     public parent: HTMLElement;
     private barElem: HTMLDivElement;
 
@@ -99,6 +98,7 @@ export class ProgressBar extends EventEmitter implements
     }
 
     public get IComponentLoadable() { return this; }
+    public get IComponentHTMLView() { return this; }
     public get IComponentHTMLVisual() { return this; }
     public get IComponentRouter() { return this; }
 

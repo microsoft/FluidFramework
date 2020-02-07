@@ -20,7 +20,7 @@ export interface IComponentHTMLOptions {
 }
 
 export interface IProvideComponentHTMLView {
-    readonly IComponentHTMLView?: IComponentHTMLView;
+    readonly IComponentHTMLView: IComponentHTMLView;
 }
 
 export interface IComponentHTMLView extends IProvideComponentHTMLView {
@@ -34,5 +34,5 @@ export interface IProvideComponentHTMLVisual {
 
 export interface IComponentHTMLVisual extends IProvideComponentHTMLVisual {
     render(elm: HTMLElement, options?: IComponentHTMLOptions): void;
-    addView?(scope?: IComponent): IComponentHTMLView;
+    addView(scope?: IComponent): IComponentHTMLView;
 }

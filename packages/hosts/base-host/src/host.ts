@@ -32,7 +32,7 @@ async function getComponentAndRender(loader: Loader, url: string, div: HTMLDivEl
         // Otherwise get the visual, which will either be a view factory or a view
         const visual = component.IComponentHTMLVisual;
         if (visual) {
-            renderable = visual.addView ? visual.addView() : visual;
+            renderable = visual.addView();
         }
     }
     if (renderable) {

@@ -15,7 +15,7 @@ import * as ReactDOM from "react-dom";
 import { OwnedSharedMap } from "./ownedMap";
 
 export class OwnedMap extends PrimedComponent implements IComponentHTMLView {
-
+    public get IComponentHTMLView() { return this; }
     public static getFactory() { return OwnedMap.factory; }
 
     private static readonly factory = new PrimedComponentFactory(
