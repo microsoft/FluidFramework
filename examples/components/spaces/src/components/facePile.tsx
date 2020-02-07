@@ -42,7 +42,7 @@ interface IFacepileAddFaceExampleState {
     users: string[];
 }
 
-export const FacePileName = "facePile";
+export const FacePileName = "facepile";
 
 export class FacepileAddFaceExample extends React.Component<IFacepileAddFaceExampleProps,IFacepileAddFaceExampleState> {
     constructor(props: IFacepileAddFaceExampleProps) {

@@ -14,6 +14,7 @@ import {
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { SupportedComponent } from "../dataModel";
+import { ButtonName, FacePileName, NumberName, TextBoxName } from ".";
 
 const componentToolbarStyle: React.CSSProperties = { position: "absolute", top: 10, left: 10, zIndex: 1000 };
 
@@ -83,16 +84,16 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
                 <button onClick={async () => this.emitAddComponentEvent("clicker", 2, 2)}>
                     Clicker
                 </button>
-                <button onClick={async () => this.emitAddComponentEvent("button", 2, 2)}>
+                <button onClick={async () => this.emitAddComponentEvent(ButtonName, 2, 2)}>
                     Button
                 </button>
-                <button onClick={async () => this.emitAddComponentEvent("number", 2, 2)}>
+                <button onClick={async () => this.emitAddComponentEvent(NumberName, 2, 2)}>
                     Number
                 </button>
-                <button onClick={async () => this.emitAddComponentEvent("textbox", 9, 6)}>
+                <button onClick={async () => this.emitAddComponentEvent(TextBoxName, 9, 6)}>
                     TextBox
                 </button>
-                <button onClick={async () => this.emitAddComponentEvent("facepile", 2, 4)}>
+                <button onClick={async () => this.emitAddComponentEvent(FacePileName, 2, 4)}>
                     FacePile
                 </button>
                 <button onClick={async () => this.emitAddComponentEvent("codemirror", 12, 8)}>
