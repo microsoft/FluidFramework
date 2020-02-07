@@ -17,7 +17,7 @@ import {
     Client,
 } from "@microsoft/fluid-merge-tree";
 import { HandleTable } from "./handletable";
-import { SnapshotPath } from "./storage";
+import { SnapshotPath } from "./matrix";
 
 const unallocated = -1 as const;
 

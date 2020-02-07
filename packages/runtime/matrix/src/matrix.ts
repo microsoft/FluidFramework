@@ -20,16 +20,22 @@ import {
 import { makeHandlesSerializable, parseHandles, SharedObject } from "@microsoft/fluid-shared-object-base";
 import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { ObjectStoragePartition } from "@microsoft/fluid-runtime-utils";
 import { IMatrixProducer, IMatrixConsumer, IMatrixReader } from "@tiny-calc/nano";
 import { debug } from "./debug";
 import { pointToKey } from "./keys";
 import { IMatrixCellMsg, MatrixOp } from "./ops";
-import { SnapshotPath, ContentObjectStorage } from "./storage";
 import { PermutationVector } from "./permutationvector";
 import { SparseArray2D } from "./sparsearray2d";
 import { SharedMatrixFactory } from ".";
 
 const unallocated = -1 as const;
+
+export const enum SnapshotPath {
+    rows = "rows",
+    cols = "cols",
+    cells = "cells"
+}
 
 export class SharedMatrix<
     T extends Jsonable<JsonablePrimitive | IComponentHandle> = Jsonable<JsonablePrimitive | IComponentHandle>
@@ -163,8 +169,8 @@ export class SharedMatrix<
 
     protected async loadCore(branchId: string, storage: IObjectStorageService) {
         try {
-            await this.rows.load(this.runtime, new ContentObjectStorage(storage, SnapshotPath.rows), branchId);
-            await this.cols.load(this.runtime, new ContentObjectStorage(storage, SnapshotPath.cols), branchId);
+            await this.rows.load(this.runtime, new ObjectStoragePartition(storage, SnapshotPath.rows), branchId);
+            await this.cols.load(this.runtime, new ObjectStoragePartition(storage, SnapshotPath.cols), branchId);
             this.loadCells(await storage.read(SnapshotPath.cells));
         } catch (error) {
             this.logger.sendErrorEvent({ eventName: "MatrixLoadFailed" }, error);
