@@ -85,6 +85,7 @@ COPY packages/runtime/cell/package*.json packages/runtime/cell/
 COPY packages/runtime/client-api/package*.json packages/runtime/client-api/
 COPY packages/runtime/ink/package*.json packages/runtime/ink/
 COPY packages/runtime/map/package*.json packages/runtime/map/
+COPY packages/runtime/matrix/package*.json packages/runtime/matrix/
 COPY packages/runtime/merge-tree/package*.json packages/runtime/merge-tree/
 COPY packages/runtime/container-runtime/package*.json packages/runtime/container-runtime/
 COPY packages/runtime/runtime-definitions/package*.json packages/runtime/runtime-definitions/

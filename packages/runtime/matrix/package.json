@@ -1,5 +1,5 @@
 {
-  "name": "@microsoft/fluid-sequence",
+  "name": "@microsoft/fluid-matrix",
   "version": "0.14.0",
   "description": "Distributed map",
   "repository": "microsoft/FluidFramework",
@@ -10,6 +10,8 @@
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
+    "bench": "cd bench && node --expose-gc -r ts-node/register src/index.ts",
+    "bench:profile": "cd bench && tsc && node --prof dist/profile && node --prof-process isolate-0x*-v8.log > profile.txt && rm isolate-0x*-v8.log && cat profile.txt",
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
     "build:compile:min": "npm run build:compile",
@@ -25,9 +27,7 @@
     "lint:fix": "npm run eslint:fix",
     "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
-    "test:mocha": "mocha --recursive dist/test/**/*.spec.js -r make-promises-safe",
-    "test:newsnapfiles": "node dist/test/createSnapshotFiles.js",
-    "testfarm": "node dist/test/testFarm.js",
+    "test:mocha": "mocha -r ts-node/register -r make-promises-safe --recursive test/**/*.spec.ts --exit",
     "tsc": "tsc"
   },
   "nyc": {
@@ -51,34 +51,29 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
+    "@microsoft/fluid-common-definitions": "^0.13.0",
     "@microsoft/fluid-component-core-interfaces": "^0.14.0",
     "@microsoft/fluid-core-utils": "^0.13.0",
-    "@microsoft/fluid-map": "^0.14.0",
     "@microsoft/fluid-merge-tree": "^0.14.0",
     "@microsoft/fluid-protocol-definitions": "^0.1001.0",
     "@microsoft/fluid-runtime-definitions": "^0.14.0",
     "@microsoft/fluid-runtime-utils": "^0.14.0",
     "@microsoft/fluid-shared-object-base": "^0.14.0",
-    "debug": "^4.1.1",
-    "lodash": "^4.17.11"
+    "@tiny-calc/nano": "0.0.20232",
+    "debug": "^4.1.1"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",
     "@microsoft/eslint-config-fluid": "^0.14.0",
     "@microsoft/fluid-build-common": "^0.14.0",
-    "@microsoft/fluid-gitresources": "^0.1001.0",
-    "@microsoft/fluid-server-services-client": "^0.1001.0",
+    "@microsoft/fluid-local-test-server": "^0.14.0",
     "@microsoft/fluid-test-runtime-utils": "^0.14.0",
     "@types/debug": "^0.0.31",
-    "@types/diff": "^3.5.1",
     "@types/mocha": "^5.2.5",
-    "@types/random-js": "^1.0.31",
-    "@types/xmldoc": "^1.1.3",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",
     "concurrently": "^4.1.0",
     "copyfiles": "^2.1.0",
-    "diff": "^3.5.0",
     "eslint": "~6.8.0",
     "eslint-plugin-eslint-comments": "~3.1.2",
     "eslint-plugin-import": "2.20.0",
@@ -91,9 +86,8 @@
     "mocha": "^5.2.0",
     "mocha-junit-reporter": "^1.18.0",
     "nyc": "^14.1.1",
-    "random-js": "^1.0.8",
     "rimraf": "^2.6.2",
-    "typescript": "~3.7.4",
-    "xmldoc": "^1.1.2"
+    "ts-node": "^7.0.1",
+    "typescript": "~3.7.4"
   }
 }
