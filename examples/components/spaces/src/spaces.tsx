@@ -24,8 +24,11 @@ import { ComponentToolbar, ComponentToolbarName } from "./components";
  */
 export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
     private dataModelInternal: ISpacesDataModel | undefined;
-    private adderComponent: ComponentToolbar | undefined;
-    private static readonly componentToolbarId = "spaces-adder";
+    private componentToolbar: ComponentToolbar | undefined;
+    private static readonly componentToolbarId = "spaces-component-toolbar";
+
+    // TODO #1188 - Component registry should automatically add ComponentToolbar
+    // to the registry since it's required for the spaces component
     private static readonly factory = new PrimedComponentFactory(Spaces, []);
 
     public static getFactory() {
@@ -51,7 +54,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
                 this.getComponent.bind(this),
                 Spaces.componentToolbarId,
             );
-        this.adderComponent =
+        this.componentToolbar =
             await this.dataModel.addComponent<ComponentToolbar>(
                 ComponentToolbarName,
                 4,
@@ -73,19 +76,19 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
                 this.getComponent.bind(this),
                 Spaces.componentToolbarId,
             );
-        this.adderComponent = await this.getComponent<ComponentToolbar>(Spaces.componentToolbarId);
+        this.componentToolbar = await this.getComponent<ComponentToolbar>(Spaces.componentToolbarId);
     }
 
     protected async componentHasInitialized() {
-        if (this.adderComponent) {
-            this.adderComponent.addListener("addComponent", (type: SupportedComponent, w?: number, h?: number) => {
+        if (this.componentToolbar) {
+            this.componentToolbar.addListener("addComponent", (type: SupportedComponent, w?: number, h?: number) => {
                 /* eslint-disable-next-line @typescript-eslint/no-floating-promises */
                 this.dataModel.addComponent(type, w, h);
             });
-            this.adderComponent.addListener("saveLayout", () => {
+            this.componentToolbar.addListener("saveLayout", () => {
                 this.dataModel.saveLayout();
             });
-            this.adderComponent.addListener("toggleEditable", (isEditable: boolean) => {
+            this.componentToolbar.addListener("toggleEditable", (isEditable: boolean) => {
                 this.dataModel.emit("editableUpdated", isEditable);
             });
         }

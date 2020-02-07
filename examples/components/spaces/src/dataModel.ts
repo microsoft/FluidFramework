@@ -30,7 +30,7 @@ export interface ISpacesDataModel extends EventEmitter {
     getLayout(id: string): Layout;
     saveLayout(): void;
     setTemplate(): Promise<void>;
-    adderComponentId: string;
+    componentToolbarId: string;
 }
 
 /**
@@ -43,7 +43,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
         private readonly root: ISharedDirectory,
         private readonly createAndAttachComponent: <T>(id: string, pkg: string, props?: any) => Promise<T>,
         public getComponent: <T>(id: string) => Promise<T>,
-        public adderComponentId: string,
+        public componentToolbarId: string,
     ) {
         super();
 
