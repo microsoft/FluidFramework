@@ -8,7 +8,7 @@
 // Note that the exponents sum to 2^53, which fully utilizes the exact integer range of a Float64.
 export const maxRows = 0x100000000 as const;    // 2^32 = x4096 Excel maximum of 1,048,576 rows
 export const maxCols = 0x200000 as const;       // 2^21 =  x128 Excel maximum of 16,384 columns
-const colMask = 0x1fffff as const;
+const colMask = 0x1fffff as const;              // = maxCols - 1
 
 /**
  * Encode the given RC0 `row`/`col` as a 53b integer key.
