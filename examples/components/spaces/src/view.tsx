@@ -22,7 +22,14 @@ interface IEmbeddedComponentWrapperState {
     element: JSX.Element;
 }
 
-const buttonContainerStyle: React.CSSProperties = { opacity: 1, backgroundColor: "none", position: "absolute", bottom: 0, left: 0 };
+const buttonContainerStyle: React.CSSProperties = {
+    opacity: 1,
+    backgroundColor: "none",
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+};
+
 const gridContainerStyle: React.CSSProperties = {paddingTop: "25px"};
 
 /**
@@ -81,7 +88,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
         });
         this.props.dataModel.on("editableUpdated", (editable: boolean) => {
             this.setState({editable});
-        })
+        });
     }
 
     // This is kinda hacky. Is there a better way?
@@ -114,7 +121,6 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
         let adder: JSX.Element | undefined;
         this.state.componentMap.forEach((layout, id) => {
             const editable = this.state.editable && id !== this.props.adderComponentId;
-            
             // Do some CSS stuff depending on if the user is editing or not
             const editableStyle: React.CSSProperties = { overflow: "hidden", padding: 2 };
             const embeddedComponentStyle: React.CSSProperties = {
@@ -136,7 +142,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
             layouts.push(layout);
 
             const componentUrl = `${window.location.href}/${id}`;
-            const element = 
+            const element =
                 <div className="text" key={key} style={editableStyle} >
                     {
                         editable &&
@@ -155,13 +161,12 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                     <div style={embeddedComponentStyle}>
                         <EmbeddedComponentWrapper id={id} getComponent={this.props.dataModel.getComponent} />
                     </div>
-                </div>
+                </div>;
             if (id !== this.props.adderComponentId) {
                 array.push(element);
             } else {
                 adder = element;
             }
-           
         });
 
         return [adder, array, layouts];

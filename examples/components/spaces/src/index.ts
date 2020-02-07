@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable import/no-internal-modules */
 
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 
@@ -31,6 +30,7 @@ const componentName = "spaces";
 export const fluidExport = new SimpleModuleInstantiationFactory(
     componentName,
     new Map([
+        ["adder", Promise.resolve(AdderInstantiationFactory)],
         [ClickerName, Promise.resolve(ClickerInstantiationFactory)],
         [componentName, Promise.resolve(Spaces.getFactory())],
         ["button", Promise.resolve(ButtonInstantiationFactory)],
@@ -39,7 +39,6 @@ export const fluidExport = new SimpleModuleInstantiationFactory(
         ["facepile", Promise.resolve(FacePileInstantiationFactory)],
         ["codemirror", Promise.resolve(cmfe)],
         ["prosemirror", Promise.resolve(pmfe)],
-        ["adder", Promise.resolve(AdderInstantiationFactory)]
     ]),
     [["manager", async (r) => new Manager(r)]],
 );

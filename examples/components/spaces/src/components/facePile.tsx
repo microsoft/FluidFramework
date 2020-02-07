@@ -8,9 +8,7 @@ import {
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
-// eslint-disable-next-line import/no-internal-modules
 import { Persona, PersonaSize } from "office-ui-fabric-react/lib/Persona";
-// eslint-disable-next-line import/no-internal-modules
 import { Icon } from "office-ui-fabric-react/lib/Icon";
 
 import * as React from "react";

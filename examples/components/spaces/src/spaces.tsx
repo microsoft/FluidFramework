@@ -26,7 +26,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
     private dataModelInternal: ISpacesDataModel | undefined;
     private adderComponent: Adder | undefined;
     private isEditable = true;
-    private adderComponentId = "spaces-adder";
+    private static readonly adderComponentId = "spaces-adder";
     private static readonly factory = new PrimedComponentFactory(Spaces, []);
 
     public static getFactory() {
@@ -47,7 +47,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
         this.root.createSubDirectory("component-list");
         this.dataModelInternal =
             new SpacesDataModel(this.root, this.createAndAttachComponent.bind(this), this.getComponent.bind(this));
-        this.adderComponent = await this.dataModel.addComponent<Adder>("adder", 4, 4, this.adderComponentId);
+        this.adderComponent = await this.dataModel.addComponent<Adder>("adder", 4, 4, Spaces.adderComponentId);
         this.adderComponent.root.set("isEditable", this.isEditable);
         // Set the saved template if there is a template query param
         const urlParams = new URLSearchParams(window.location.search);
@@ -59,24 +59,25 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
     protected async componentInitializingFromExisting() {
         this.dataModelInternal =
             new SpacesDataModel(this.root, this.createAndAttachComponent.bind(this), this.getComponent.bind(this));
-        this.adderComponent = await this.getComponent<Adder>(this.adderComponentId);
+        this.adderComponent = await this.getComponent<Adder>(Spaces.adderComponentId);
         this.adderComponent.root.set("isEditable", this.isEditable);
     }
 
     protected async componentHasInitialized() {
         if (this.adderComponent) {
-            this.adderComponent.addListener("add", async (type: SupportedComponent, w?: number, h?: number) => {
-                await this.dataModel.addComponent(type, w, h);
+            this.adderComponent.addListener("add", (type: SupportedComponent, w?: number, h?: number) => {
+                /* eslint-disable-next-line @typescript-eslint/no-floating-promises */
+                this.dataModel.addComponent(type, w, h);
             });
-            this.adderComponent.addListener("saveLayout", async () => {
-                await this.dataModel.saveLayout();
+            this.adderComponent.addListener("saveLayout", () => {
+                this.dataModel.saveLayout();
             });
             this.adderComponent.addListener("toggleEditable", () => {
                 this.isEditable = !this.isEditable;
                 this.adderComponent.root.set("isEditable", this.isEditable);
                 this.dataModel.emit("editableUpdated", this.isEditable);
             });
-        }        
+        }
     }
 
     /**
@@ -84,7 +85,11 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
      */
     public render(div: HTMLElement) {
         ReactDOM.render(
-            <SpacesGridView dataModel={this.dataModel} adderComponentId={this.adderComponentId} editable={this.isEditable}></SpacesGridView>,
+            <SpacesGridView
+                dataModel={this.dataModel}
+                adderComponentId={Spaces.adderComponentId}
+                editable={this.isEditable}>
+            </SpacesGridView>,
             div);
     }
 }

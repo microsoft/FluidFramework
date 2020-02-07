@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable import/no-internal-modules */
 
 import { EventEmitter } from "events";
 import { ISharedDirectory, IDirectory, IDirectoryValueChanged } from "@microsoft/fluid-map";
@@ -124,7 +123,10 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
         }
     }
 
-    private async addComponentInternal<T>(type: SupportedComponent, layout: Layout, id = `${type}-${Date.now()}`): Promise<T> {
+    private async addComponentInternal<T>(
+        type: SupportedComponent,
+        layout: Layout,
+        id = `${type}-${Date.now()}`): Promise<T> {
         let pkg = "";
         switch (type) {
             case "clicker":
@@ -140,7 +142,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
             layout,
         };
         this.componentSubDirectory.set(id, defaultModel);
-        return await this.createAndAttachComponent<T>(id, pkg);
+        return this.createAndAttachComponent<T>(id, pkg);
     }
 }
 

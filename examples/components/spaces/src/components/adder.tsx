@@ -25,7 +25,8 @@ export class Adder extends PrimedComponent implements IComponentHTMLVisual {
     public get IComponentHTMLVisual() { return this; }
 
     protected async componentHasInitialized() {
-        // Register with our manager to say that we support adding components, saving the layout, and toggling the edit state
+        // Register with our manager to say that we support adding components,
+        // saving the layout, and toggling the edit state
         const manager = await this.getService<Manager>("manager");
         manager.registerProducer("add", this);
         manager.registerProducer("saveLayout", this);
@@ -49,31 +50,31 @@ export class Adder extends PrimedComponent implements IComponentHTMLVisual {
      * Will return a new Clicker view
      */
     public render(div: HTMLElement) {
-        const editableButtons = 
-        <>
-            <button onClick={async () => this.emitAddComponentEvent("clicker", 2, 2)}>
-                Clicker
-            </button>
-            <button onClick={async () => this.emitAddComponentEvent("button", 2, 2)}>
-                Button
-            </button>
-            <button onClick={async () => this.emitAddComponentEvent("number", 2, 2)}>
-                Number
-            </button>
-            <button onClick={async () => this.emitAddComponentEvent("textbox", 9, 6)}>
-                TextBox
-            </button>
-            <button onClick={async () => this.emitAddComponentEvent("facepile", 2, 4)}>
-                FacePile
-            </button>
-            <button onClick={async () => this.emitAddComponentEvent("codemirror", 12, 8)}>
-                CodeMirror
-            </button>
-            <button onClick={async () => this.emitAddComponentEvent("prosemirror", 16, 12)}>
-                ProseMirror
-            </button>
-            <button onClick={() => { this.emitSaveLayout() }}>Save Layout</button>
-        </>
+        const editableButtons =
+            <>
+                <button onClick={async () => this.emitAddComponentEvent("clicker", 2, 2)}>
+                    Clicker
+                </button>
+                <button onClick={async () => this.emitAddComponentEvent("button", 2, 2)}>
+                    Button
+                </button>
+                <button onClick={async () => this.emitAddComponentEvent("number", 2, 2)}>
+                    Number
+                </button>
+                <button onClick={async () => this.emitAddComponentEvent("textbox", 9, 6)}>
+                    TextBox
+                </button>
+                <button onClick={async () => this.emitAddComponentEvent("facepile", 2, 4)}>
+                    FacePile
+                </button>
+                <button onClick={async () => this.emitAddComponentEvent("codemirror", 12, 8)}>
+                    CodeMirror
+                </button>
+                <button onClick={async () => this.emitAddComponentEvent("prosemirror", 16, 12)}>
+                    ProseMirror
+                </button>
+                <button onClick={() => this.emitSaveLayout()}>Save Layout</button>
+            </>;
         const rerender = () => {
             const editable = this.root.get("isEditable");
             ReactDOM.render(
@@ -86,12 +87,13 @@ export class Adder extends PrimedComponent implements IComponentHTMLVisual {
                     </button>
                     {editable ? editableButtons : undefined}
                 </div>,
-            div);
-        }
+                div,
+            );
+        };
         rerender();
         this.on("toggleEditable", () => {
             rerender();
-        })
+        });
     }
 }
 
