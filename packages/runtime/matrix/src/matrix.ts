@@ -111,13 +111,6 @@ export class SharedMatrix<
         this.insert(this.rows, SnapshotPath.rows, start, count);
     }
 
-    public submitCellMessage(key: number | undefined, message: IMatrixCellMsg) {
-        const clientSequenceNumber = this.submitLocalMessage(message);
-        if (clientSequenceNumber !== -1) {
-            this.cellKeyToPendingCliSeq.set(key, clientSequenceNumber);
-        }
-    }
-
     public snapshot(): ITree {
         return {
             entries: [
@@ -260,6 +253,13 @@ export class SharedMatrix<
         this.cells.setCell(rowHandle, colHandle, value);
 
         return pointToKey(rowHandle, colHandle);
+    }
+
+    private submitCellMessage(key: number | undefined, message: IMatrixCellMsg) {
+        const clientSequenceNumber = this.submitLocalMessage(message);
+        if (clientSequenceNumber !== -1) {
+            this.cellKeyToPendingCliSeq.set(key, clientSequenceNumber);
+        }
     }
 
     // Constructs an ITreeEntry for the cell data.
