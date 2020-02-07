@@ -7,7 +7,7 @@ import {
     PrimedComponent,
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
-import { IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
 import { Persona, PersonaSize } from "office-ui-fabric-react/lib/Persona";
 import { Icon } from "office-ui-fabric-react/lib/Icon";
 
@@ -15,8 +15,8 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { IQuorum } from "@microsoft/fluid-protocol-definitions";
 
-export class FacePile extends PrimedComponent implements IComponentHTMLView, IComponentHTMLVisual {
-    public get IComponentHTMLVisual() { return this; }
+export class FacePile extends PrimedComponent implements IComponentHTMLView {
+    public get IComponentHTMLView() { return this; }
 
     private static readonly factory = new PrimedComponentFactory(FacePile, []);
 

@@ -9,7 +9,6 @@ import {
 } from "@microsoft/fluid-aqueduct";
 import {
     IComponentHTMLView,
-    IComponentHTMLVisual,
     IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
 import {
@@ -35,10 +34,8 @@ const divHTML = require("./styles/github-comment-only.html");
 /* eslint-enable @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, import/no-internal-modules,
 import/no-unassigned-import */
 
-export class GithubComment
-    extends TextareaNoReact
-    implements IComponentHTMLView, IComponentHTMLVisual {
-    public get IComponentHTMLVisual() { return this; }
+export class GithubComment extends TextareaNoReact implements IComponentHTMLView {
+    public get IComponentHTMLView() { return this; }
 
     /**
    * Extension of the parent class function that also forces the innerHTML of

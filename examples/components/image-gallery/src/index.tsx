@@ -4,7 +4,7 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
-import { IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import ImageGallery from "react-image-gallery";
@@ -14,8 +14,8 @@ import "react-image-gallery/styles/css/image-gallery.css";
 import "./Styles.css";
 import { ISharedMap } from "@microsoft/fluid-map";
 
-export class ImageGalleryComponent extends PrimedComponent implements IComponentHTMLView, IComponentHTMLVisual {
-    public get IComponentHTMLVisual() { return this; }
+export class ImageGalleryComponent extends PrimedComponent implements IComponentHTMLView {
+    public get IComponentHTMLView() { return this; }
 
     imageList = [
         {

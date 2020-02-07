@@ -13,7 +13,6 @@ import {
 import {
     IComponentHandle,
     IComponentHTMLView,
-    IComponentHTMLVisual,
 } from "@microsoft/fluid-component-core-interfaces";
 import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
@@ -25,15 +24,9 @@ export const TextBoxName = `textbox`;
  * TextBox is a really simple component that uses the CollaborativeTextArea to provide a
  * collaborative textarea.
  */
-export class TextBox extends PrimedComponent
-    implements IComponentHTMLView, IComponentHTMLVisual, IComponentReactViewable {
-    public get IComponentHTMLVisual() {
-        return this;
-    }
-
-    public get IComponentReactViewable() {
-        return this;
-    }
+export class TextBox extends PrimedComponent implements IComponentHTMLView, IComponentReactViewable {
+    public get IComponentHTMLView() { return this; }
+    public get IComponentReactViewable() { return this; }
 
     private static readonly factory =  new PrimedComponentFactory(
         TextBox,

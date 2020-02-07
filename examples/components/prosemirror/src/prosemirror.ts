@@ -65,6 +65,8 @@ class ProseMirrorView implements IComponentHTMLView {
     private textArea: HTMLDivElement;
     private readonly collabManager: FluidCollabManager;
 
+    public get IComponentHTMLView() { return this; }
+
     public constructor(
         private readonly text: SharedString,
         private readonly runtime: IComponentRuntime,
@@ -111,6 +113,7 @@ export class ProseMirror extends EventEmitter
 
     public get IComponentLoadable() { return this; }
     public get IComponentRouter() { return this; }
+    public get IComponentHTMLView() { return this; }
     public get IComponentHTMLVisual() { return this; }
     public get IRichTextEditor() { return this.collabManager; }
 
