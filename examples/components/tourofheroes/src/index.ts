@@ -10,6 +10,7 @@ import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aquedu
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
 import { IComponentHTMLVisual, IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
+import { ISharedDirectory } from "@microsoft/fluid-map";
 import {
     IComponentContext,
     IComponentFactory,
@@ -26,6 +27,10 @@ import { GraphQLService } from "./app/hero.service";
 export class TourOfHeroes extends PrimedComponent implements IComponentHTMLVisual {
 
     public get IComponentHTMLVisual() { return this; }
+
+    public get root(): ISharedDirectory {
+        return super.root;
+    }
 
     // Create the component's schema and perform other initialization tasks
     // (only called when document is initially created).
