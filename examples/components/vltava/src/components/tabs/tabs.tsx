@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { IComponent, IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
