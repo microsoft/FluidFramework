@@ -62,7 +62,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
 
     protected async componentHasInitialized() {
         if (this.adderComponent) {
-            this.adderComponent.addListener("add", (type: SupportedComponent, w?: number, h?: number) => {
+            this.adderComponent.addListener("addComponent", (type: SupportedComponent, w?: number, h?: number) => {
                 /* eslint-disable-next-line @typescript-eslint/no-floating-promises */
                 this.dataModel.addComponent(type, w, h);
             });

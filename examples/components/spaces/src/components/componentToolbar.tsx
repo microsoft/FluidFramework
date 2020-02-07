@@ -62,7 +62,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
     }
 
     public emitAddComponentEvent(type: SupportedComponent, w?: number, h?: number) {
-        this.emit("add", type, w, h);
+        this.emit("addComponent", type, w, h);
     }
 
     public emitSaveLayout() {
