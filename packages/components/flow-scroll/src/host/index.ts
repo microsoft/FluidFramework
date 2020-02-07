@@ -38,6 +38,7 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLView, 
         super(runtime, context);
     }
 
+    public get IComponentHTMLView() { return this; }
     public get IComponentHTMLVisual() { return this; }
 
     public addView(scope?: IComponent): IComponentHTMLView {

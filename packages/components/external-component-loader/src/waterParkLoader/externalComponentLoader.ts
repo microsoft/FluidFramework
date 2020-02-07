@@ -7,7 +7,6 @@ import { PrimedComponent } from "@microsoft/fluid-aqueduct";
 import {
     IComponent,
     IComponentHTMLView,
-    IComponentHTMLVisual,
     IComponentLoadable,
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
@@ -23,7 +22,7 @@ export const WaterParkLoaderName = `${pkg.name}-loader`;
  * Component that loads extneral components via their url
  */
 export class ExternalComponentLoader extends PrimedComponent
-    implements IComponentHTMLView, IComponentHTMLVisual {
+    implements IComponentHTMLView {
 
     private static readonly defaultComponents = [
         "@fluid-example/todo",
@@ -39,7 +38,7 @@ export class ExternalComponentLoader extends PrimedComponent
     private savedElement: HTMLElement;
     private error: string;
 
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
 
     public setViewComponent(component: IComponentLoadable) {
         this.root.set(this.viewComponentMapID, component.IComponentLoadable.url);

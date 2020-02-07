@@ -12,7 +12,6 @@ import {
     IComponent,
     IComponentHTMLOptions,
     IComponentHTMLView,
-    IComponentHTMLVisual,
     IComponentLoadable,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
@@ -62,7 +61,7 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
         private readonly mathP: Promise<IComponentCollection>,
         private readonly videosP: Promise<IComponentCollection>,
         private readonly imagesP: Promise<IComponentCollection>,
-        private readonly intelViewer: IComponentHTMLVisual,
+        private readonly intelViewer: IComponentHTMLView,
         private readonly root: ISharedDirectory,
     ) { }
 

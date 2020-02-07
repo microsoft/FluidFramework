@@ -8,7 +8,6 @@ import {
     IComponentHandle,
     IComponentHTMLOptions,
     IComponentHTMLView,
-    IComponentHTMLVisual,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IColor, IInk, Ink, InkCanvas } from "@microsoft/fluid-ink";
 // eslint-disable-next-line import/no-unassigned-import
@@ -28,8 +27,8 @@ const colorPickerColors: IColor[] = [
     { r:   0, g:   0, b:   0, a: 1 },
 ];
 
-export class Canvas extends PrimedComponent implements IComponentHTMLView, IComponentHTMLVisual {
-    public get IComponentHTMLVisual() { return this; }
+export class Canvas extends PrimedComponent implements IComponentHTMLView {
+    public get IComponentHTMLView() { return this; }
 
     private ink: IInk;
     private inkCanvas: InkCanvas;
