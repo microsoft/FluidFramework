@@ -19,7 +19,7 @@ export type SupportedComponent =
     | "facepile"
     | "codemirror"
     | "prosemirror"
-    | "adder";
+    | "componentToolbar";
 
 export interface ISpacesDataModel extends EventEmitter {
     componentList: Map<string, Layout>;
@@ -30,6 +30,7 @@ export interface ISpacesDataModel extends EventEmitter {
     getLayout(id: string): Layout;
     saveLayout(): void;
     setTemplate(): Promise<void>;
+    adderComponentId: string;
 }
 
 /**
@@ -42,6 +43,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
         private readonly root: ISharedDirectory,
         private readonly createAndAttachComponent: <T>(id: string, pkg: string, props?: any) => Promise<T>,
         public getComponent: <T>(id: string) => Promise<T>,
+        public adderComponentId: string,
     ) {
         super();
 

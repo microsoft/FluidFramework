@@ -17,16 +17,15 @@ import * as ReactDOM from "react-dom";
 import { ISpacesDataModel, SpacesDataModel, SupportedComponent } from "./dataModel";
 
 import { SpacesGridView } from "./view";
-import { Adder } from "./components";
+import { ComponentToolbar, ComponentToolbarName } from "./components";
 
 /**
  * Spaces is the Fluid
  */
 export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
     private dataModelInternal: ISpacesDataModel | undefined;
-    private adderComponent: Adder | undefined;
-    private isEditable = true;
-    private static readonly adderComponentId = "spaces-adder";
+    private adderComponent: ComponentToolbar | undefined;
+    private static readonly componentToolbarId = "spaces-adder";
     private static readonly factory = new PrimedComponentFactory(Spaces, []);
 
     public static getFactory() {
@@ -46,9 +45,8 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
     protected async componentInitializingFirstTime(props?: any) {
         this.root.createSubDirectory("component-list");
         this.dataModelInternal =
-            new SpacesDataModel(this.root, this.createAndAttachComponent.bind(this), this.getComponent.bind(this));
-        this.adderComponent = await this.dataModel.addComponent<Adder>("adder", 4, 4, Spaces.adderComponentId);
-        this.adderComponent.root.set("isEditable", this.isEditable);
+            new SpacesDataModel(this.root, this.createAndAttachComponent.bind(this), this.getComponent.bind(this), Spaces.componentToolbarId);
+        this.adderComponent = await this.dataModel.addComponent<ComponentToolbar>(ComponentToolbarName, 4, 4, Spaces.componentToolbarId);
         // Set the saved template if there is a template query param
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has("template")) {
@@ -58,9 +56,8 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
 
     protected async componentInitializingFromExisting() {
         this.dataModelInternal =
-            new SpacesDataModel(this.root, this.createAndAttachComponent.bind(this), this.getComponent.bind(this));
-        this.adderComponent = await this.getComponent<Adder>(Spaces.adderComponentId);
-        this.adderComponent.root.set("isEditable", this.isEditable);
+            new SpacesDataModel(this.root, this.createAndAttachComponent.bind(this), this.getComponent.bind(this), Spaces.componentToolbarId);
+        this.adderComponent = await this.getComponent<ComponentToolbar>(Spaces.componentToolbarId);
     }
 
     protected async componentHasInitialized() {
@@ -72,10 +69,8 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
             this.adderComponent.addListener("saveLayout", () => {
                 this.dataModel.saveLayout();
             });
-            this.adderComponent.addListener("toggleEditable", () => {
-                this.isEditable = !this.isEditable;
-                this.adderComponent.root.set("isEditable", this.isEditable);
-                this.dataModel.emit("editableUpdated", this.isEditable);
+            this.adderComponent.addListener("toggleEditable", (isEditable: boolean) => {
+                this.dataModel.emit("editableUpdated", isEditable);
             });
         }
     }
@@ -85,11 +80,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
      */
     public render(div: HTMLElement) {
         ReactDOM.render(
-            <SpacesGridView
-                dataModel={this.dataModel}
-                adderComponentId={Spaces.adderComponentId}
-                editable={this.isEditable}>
-            </SpacesGridView>,
+            <SpacesGridView dataModel={this.dataModel} />,
             div);
     }
 }

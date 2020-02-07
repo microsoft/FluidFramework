@@ -17,11 +17,17 @@ import * as ReactDOM from "react-dom";
 import { Manager } from "../container-services";
 
 /**
- * Clicker example using view interfaces and stock component classes.
+ * Number clicker example using view interfaces and stock component classes.
  */
 export class Number extends PrimedComponent implements IComponentHTMLVisual {
 
     public get IComponentHTMLVisual() { return this; }
+
+    private static readonly factory = new PrimedComponentFactory(Number, []);
+
+    public static getFactory() {
+        return Number.factory;
+    }
 
     protected async componentInitializingFirstTime(){
         this.root.createValueType("clicker-count", CounterValueType.Name, 0);
@@ -46,14 +52,6 @@ export class Number extends PrimedComponent implements IComponentHTMLVisual {
         );
     }
 }
-
-/**
- * This is where you define all your Distributed Data Structures and Value Types
- */
-export const NumberInstantiationFactory = new PrimedComponentFactory(
-    Number,
-    [],
-);
 
 interface INumberViewProps {
     counter: Counter;

@@ -13,26 +13,53 @@ import {
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { Manager } from "../container-services";
 import { SupportedComponent } from "../dataModel";
 
-const adderStyle: React.CSSProperties = { position: "absolute", top: 10, left: 10, zIndex: 1000 };
+const componentToolbarStyle: React.CSSProperties = { position: "absolute", top: 10, left: 10, zIndex: 1000 };
+
+export const ComponentToolbarName = "componentToolbar";
+
 /**
  * A component to allow you to add component
  */
-export class Adder extends PrimedComponent implements IComponentHTMLVisual {
-
+export class ComponentToolbar extends PrimedComponent implements IComponentHTMLVisual {
     public get IComponentHTMLVisual() { return this; }
 
-    protected async componentHasInitialized() {
-        // Register with our manager to say that we support adding components,
-        // saving the layout, and toggling the edit state
-        const manager = await this.getService<Manager>("manager");
-        manager.registerProducer("add", this);
-        manager.registerProducer("saveLayout", this);
-        manager.registerProducer("toggleEditable", this);
+    private static readonly factory = new PrimedComponentFactory(ComponentToolbar, []);
+
+    public static getFactory() {
+        return ComponentToolbar.factory;
     }
 
+    /**
+     * Will return a new Clicker view
+     */
+    public render(div: HTMLElement) {
+        this.emit
+        ReactDOM.render(
+            <ComponentToolbarView emit={this.emit.bind(this)}/>,
+            div,
+        );
+    }
+}
+
+interface IComponentToolbarViewProps {
+    emit: any;
+}
+
+interface IComponentToolbarViewState {
+    isEditable: boolean;
+}
+
+class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, IComponentToolbarViewState>{
+    private emit: any;
+    constructor(props: IComponentToolbarViewProps){
+        super(props);
+        this.emit = props.emit;
+        this.state = {
+            isEditable: true
+        };
+    }
 
     public emitAddComponentEvent(type: SupportedComponent, w?: number, h?: number) {
         this.emit("add", type, w, h);
@@ -43,13 +70,12 @@ export class Adder extends PrimedComponent implements IComponentHTMLVisual {
     }
 
     public emitToggleEditable() {
-        this.emit("toggleEditable");
+        const newIsEditable = !this.state.isEditable;
+        this.emit("toggleEditable", newIsEditable);
+        this.setState({isEditable: newIsEditable});
     }
 
-    /**
-     * Will return a new Clicker view
-     */
-    public render(div: HTMLElement) {
+    render(){
         const editableButtons =
             <>
                 <button onClick={async () => this.emitAddComponentEvent("clicker", 2, 2)}>
@@ -75,32 +101,16 @@ export class Adder extends PrimedComponent implements IComponentHTMLVisual {
                 </button>
                 <button onClick={() => this.emitSaveLayout()}>Save Layout</button>
             </>;
-        const rerender = () => {
-            const editable = this.root.get("isEditable");
-            ReactDOM.render(
-                <div style={adderStyle}>
-                    <button
-                        id="edit"
-                        onClick={() => this.emitToggleEditable()}
-                    >
-                        {`Edit: ${editable}`}
-                    </button>
-                    {editable ? editableButtons : undefined}
-                </div>,
-                div,
-            );
-        };
-        rerender();
-        this.on("toggleEditable", () => {
-            rerender();
-        });
+        return (
+            <div style={componentToolbarStyle}>
+                <button
+                    id="edit"
+                    onClick={() => this.emitToggleEditable()}
+                >
+                    {`Edit: ${this.state.isEditable}`}
+                </button>
+                {this.state.isEditable ? editableButtons : undefined}
+            </div>
+        );
     }
 }
-
-/**
- * This is where you define all your Distributed Data Structures and Value Types
- */
-export const AdderInstantiationFactory = new PrimedComponentFactory(
-    Adder,
-    [],
-);

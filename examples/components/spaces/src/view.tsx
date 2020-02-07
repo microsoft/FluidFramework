@@ -57,8 +57,6 @@ class EmbeddedComponentWrapper extends React.Component<IEmbeddedComponentWrapper
 
 interface ISpaceGridViewProps {
     dataModel: ISpacesDataModel;
-    adderComponentId: string;
-    editable: boolean;
 }
 
 interface ISpaceGridViewState {
@@ -74,7 +72,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
     constructor(props) {
         super(props);
         this.state = {
-            editable: this.props.editable,
+            editable: true,
             componentMap: this.props.dataModel.componentList,
         };
 
@@ -120,7 +118,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
         const layouts: Layout[] = [];
         let adder: JSX.Element | undefined;
         this.state.componentMap.forEach((layout, id) => {
-            const editable = this.state.editable && id !== this.props.adderComponentId;
+            const editable = this.state.editable && id !== this.props.dataModel.adderComponentId;
             // Do some CSS stuff depending on if the user is editing or not
             const editableStyle: React.CSSProperties = { overflow: "hidden", padding: 2 };
             const embeddedComponentStyle: React.CSSProperties = {
@@ -162,7 +160,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                         <EmbeddedComponentWrapper id={id} getComponent={this.props.dataModel.getComponent} />
                     </div>
                 </div>;
-            if (id !== this.props.adderComponentId) {
+            if (id !== this.props.dataModel.adderComponentId) {
                 array.push(element);
             } else {
                 adder = element;

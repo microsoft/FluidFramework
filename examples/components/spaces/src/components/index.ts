@@ -7,4 +7,4 @@ export * from "./button";
 export * from "./facePile";
 export * from "./number";
 export * from "./textBox";
-export * from "./adder";
+export * from "./componentToolbar";

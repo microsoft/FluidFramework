@@ -15,30 +15,24 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { IQuorum } from "@microsoft/fluid-protocol-definitions";
 
-/**
- * Clicker example using view interfaces and stock component classes.
- */
 export class FacePile extends PrimedComponent implements IComponentHTMLVisual {
-    public get IComponentHTMLVisual() {
-        return this;
+
+    public get IComponentHTMLVisual() { return this; }
+
+    private static readonly factory = new PrimedComponentFactory(FacePile, []);
+
+    public static getFactory() {
+        return FacePile.factory;
     }
 
     /**
-     * Will return a new Clicker view
+     * Will return a new FacePile view
      */
     public render(div: HTMLElement) {
         const quorum = this.context.getQuorum();
         ReactDOM.render(<FacepileAddFaceExample quorum={quorum} />, div);
     }
 }
-
-/**
- * This is where you define all your Distributed Data Structures and Value Types
- */
-export const FacePileInstantiationFactory = new PrimedComponentFactory(
-    FacePile,
-    [],
-);
 
 interface IFacepileAddFaceExampleProps {
     quorum: IQuorum;

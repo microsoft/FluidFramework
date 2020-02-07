@@ -10,11 +10,12 @@ import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
 import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
 
 import {
-    AdderInstantiationFactory,
-    ButtonInstantiationFactory,
-    NumberInstantiationFactory,
-    TextBoxInstantiationFactory,
-    FacePileInstantiationFactory,
+    ComponentToolbar,
+    ComponentToolbarName,
+    Button,
+    Number,
+    TextBox,
+    FacePile,
 } from "./components";
 import {
     Manager,
@@ -30,13 +31,13 @@ const componentName = "spaces";
 export const fluidExport = new SimpleModuleInstantiationFactory(
     componentName,
     new Map([
-        ["adder", Promise.resolve(AdderInstantiationFactory)],
         [ClickerName, Promise.resolve(ClickerInstantiationFactory)],
         [componentName, Promise.resolve(Spaces.getFactory())],
-        ["button", Promise.resolve(ButtonInstantiationFactory)],
-        ["number", Promise.resolve(NumberInstantiationFactory)],
-        ["textbox", Promise.resolve(TextBoxInstantiationFactory)],
-        ["facepile", Promise.resolve(FacePileInstantiationFactory)],
+        [ComponentToolbarName, Promise.resolve(ComponentToolbar.getFactory())],
+        ["button", Promise.resolve(Button.getFactory())],
+        ["number", Promise.resolve(Number.getFactory())],
+        ["textbox", Promise.resolve(TextBox.getFactory())],
+        ["facepile", Promise.resolve(FacePile.getFactory())],
         ["codemirror", Promise.resolve(cmfe)],
         ["prosemirror", Promise.resolve(pmfe)],
     ]),

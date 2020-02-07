@@ -6,7 +6,6 @@ import {
     PrimedComponent,
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
-import { IComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import {
     CollaborativeTextArea,
     IComponentReactViewable,
@@ -28,11 +27,22 @@ export const TextBoxName = `spaces-textbox`;
  */
 export class TextBox extends PrimedComponent
     implements IComponentHTMLVisual, IComponentReactViewable {
+
     public get IComponentHTMLVisual() {
         return this;
     }
+
     public get IComponentReactViewable() {
         return this;
+    }
+
+    private static readonly factory =  new PrimedComponentFactory(
+        TextBox,
+        [SharedString.getFactory()],
+    );
+
+    public static getFactory() {
+        return TextBox.factory;
     }
 
     private text: SharedString;
@@ -80,8 +90,3 @@ export class TextBox extends PrimedComponent
 
     // end IComponentReactViewable
 }
-
-export const TextBoxInstantiationFactory: IComponentFactory = new PrimedComponentFactory(
-    TextBox,
-    [SharedString.getFactory()],
-);
