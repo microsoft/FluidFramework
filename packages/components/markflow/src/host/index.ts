@@ -6,7 +6,6 @@
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import {
     IComponent,
-    IComponentHTMLOptions,
     IComponentHTMLView,
     IComponentHTMLVisual,
     IResponse,
@@ -17,22 +16,16 @@ import { FlowDocumentType } from "../runtime";
 import { WebflowView } from "./host";
 import { importDoc } from "./import";
 
-export class WebFlow extends PrimedComponent implements IComponentHTMLView, IComponentHTMLVisual {
+export class WebFlow extends PrimedComponent implements IComponentHTMLVisual {
     public constructor(runtime: IComponentRuntime, context: IComponentContext) {
         super(runtime, context);
     }
 
-    public get IComponentHTMLView() { return this; }
     public get IComponentHTMLVisual() { return this; }
 
     // #region IComponentHTMLVisual
     public addView(scope?: IComponent): IComponentHTMLView {
         return new WebflowView(this.getComponent<FlowDocument>(this.docId), this.context.documentId);
-    }
-
-    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
-        const view = new WebflowView(this.getComponent<FlowDocument>(this.docId), this.context.documentId);
-        view.render(elm, options);
     }
     // #endregion IComponentHTMLVisual
 

@@ -103,7 +103,7 @@ class ProseMirrorView implements IComponentHTMLView {
 }
 
 export class ProseMirror extends EventEmitter
-    implements IComponentLoadable, IComponentRouter, IComponentHTMLView, IComponentHTMLVisual, IProvideRichTextEditor {
+    implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual, IProvideRichTextEditor {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new ProseMirror(runtime, context);
         await collection.initialize();
@@ -113,7 +113,6 @@ export class ProseMirror extends EventEmitter
 
     public get IComponentLoadable() { return this; }
     public get IComponentRouter() { return this; }
-    public get IComponentHTMLView() { return this; }
     public get IComponentHTMLVisual() { return this; }
     public get IRichTextEditor() { return this.collabManager; }
 
@@ -121,7 +120,6 @@ export class ProseMirror extends EventEmitter
     public text: SharedString;
     private root: ISharedMap;
     private collabManager: FluidCollabManager;
-    private defaultView: ProseMirrorView;
 
     constructor(
         private readonly runtime: IComponentRuntime,
@@ -165,14 +163,6 @@ export class ProseMirror extends EventEmitter
 
     public addView(): IComponentHTMLView {
         return new ProseMirrorView(this.text, this.runtime);
-    }
-
-    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
-        if (!this.defaultView) {
-            this.defaultView = new ProseMirrorView(this.text, this.runtime);
-        }
-
-        this.defaultView.render(elm, options);
     }
 }
 

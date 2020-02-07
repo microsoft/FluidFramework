@@ -79,11 +79,8 @@ class ProgressBarView implements IComponentHTMLView {
 // The "model" side of a progress bar
 export class ProgressBar extends EventEmitter implements
     IComponentLoadable,
-    IComponentHTMLView,
     IComponentHTMLVisual,
     IComponentRouter {
-    private defaultView: ProgressBarView;
-
     public handle: ComponentHandle;
 
     constructor(
@@ -98,16 +95,8 @@ export class ProgressBar extends EventEmitter implements
     }
 
     public get IComponentLoadable() { return this; }
-    public get IComponentHTMLView() { return this; }
     public get IComponentHTMLVisual() { return this; }
     public get IComponentRouter() { return this; }
-
-    public render(elm: HTMLElement) {
-        if (!this.defaultView) {
-            this.defaultView = new ProgressBarView(this);
-        }
-        this.defaultView.render(elm);
-    }
 
     public addView(scope?: IComponent) {
         return new ProgressBarView(this);

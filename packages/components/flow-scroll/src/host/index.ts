@@ -11,7 +11,6 @@ import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aquedu
 import {
     IComponent,
     IComponentHandle,
-    IComponentHTMLOptions,
     IComponentHTMLView,
     IComponentHTMLVisual,
     IResponse,
@@ -30,7 +29,7 @@ import { importDoc } from "./template";
 
 const insightsMapId = "insights";
 
-export class WebFlowHost extends PrimedComponent implements IComponentHTMLView, IComponentHTMLVisual {
+export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual {
     public static readonly type = "@fluid-example/webflow-host";
 
     private intelViewer: FlowIntelViewer;
@@ -38,7 +37,6 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLView, 
         super(runtime, context);
     }
 
-    public get IComponentHTMLView() { return this; }
     public get IComponentHTMLVisual() { return this; }
 
     public addView(scope?: IComponent): IComponentHTMLView {
@@ -59,19 +57,6 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLView, 
         componentRuntime.attach();
         this.root.set(rootkey, componentRuntime.id);
         return response.value as T;
-    }
-
-    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
-        const view = new HostView(
-            // eslint-disable-next-line @typescript-eslint/promise-function-async
-            (rootkey: string, pkg: string, props?: any) => this.createSubComponent(rootkey, pkg, props),
-            this.getComponent<FlowDocument>(this.root.get(this.docId)),
-            this.openCollection("math"),
-            this.openCollection("video-players"),
-            this.openCollection("images"),
-            this.intelViewer,
-            this.root);
-        view.render(elm, options);
     }
 
     protected async componentInitializingFirstTime() {

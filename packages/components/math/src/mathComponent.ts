@@ -421,12 +421,11 @@ export class MathView implements IComponentHTMLView, IComponentCursor, IComponen
 }
 
 export class MathInstance extends EventEmitter implements IComponentLoadable, IComponentRouter,
-    IComponentHTMLView, IComponentHTMLVisual {
+    IComponentHTMLVisual {
     public static defaultOptions: IMathOptions = { display: "inline" };
 
     public get IComponentLoadable() { return this; }
     public get IComponentRouter() { return this; }
-    public get IComponentHTMLView() { return this; }
     public get IComponentHTMLVisual() { return this; }
 
     public handle: ComponentHandle;
@@ -434,7 +433,6 @@ export class MathInstance extends EventEmitter implements IComponentLoadable, IC
     public startMarker: MergeTree.Marker;
     public solnText = "x=0";
     public solnVar = "x";
-    private defaultView: MathView;
 
     constructor(
         public url: string,
@@ -452,17 +450,6 @@ export class MathInstance extends EventEmitter implements IComponentLoadable, IC
     public addView(scope?: IComponent) {
         console.warn("Instead of using {mathView = mathInstance.addView(scope)}, consider using {mathView = new MathView(mathInstance, scope)}");
         return new MathView(this, scope);
-    }
-
-    public render(elm: HTMLElement, options?: IComponentHTMLOptions) {
-        if (!this.defaultView) {
-            this.defaultView = new MathView(this);
-        }
-        let localOptions = this.options;
-        if (options) {
-            localOptions = options;
-        }
-        this.defaultView.render(elm, localOptions);
     }
 
     public insertText(text: string, pos: number) {

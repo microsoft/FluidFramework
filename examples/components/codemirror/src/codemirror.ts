@@ -196,7 +196,7 @@ class CodemirrorView implements IComponentHTMLView {
 
 export class CodeMirrorComponent
     extends EventEmitter
-    implements IComponentLoadable, IComponentRouter, IComponentHTMLView, IComponentHTMLVisual {
+    implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual {
 
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new CodeMirrorComponent(runtime, context);
@@ -207,14 +207,11 @@ export class CodeMirrorComponent
 
     public get IComponentLoadable() { return this; }
     public get IComponentRouter() { return this; }
-    public get IComponentHTMLView() { return this; }
     public get IComponentHTMLVisual() { return this; }
 
     public url: string;
     private text: SharedString;
     private root: ISharedMap;
-
-    private defaultView: CodemirrorView;
 
     constructor(
         private readonly runtime: IComponentRuntime,
@@ -253,14 +250,6 @@ export class CodeMirrorComponent
 
     public addView(scope: IComponent): IComponentHTMLView {
         return new CodemirrorView(this.text, this.runtime);
-    }
-
-    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
-        if (!this.defaultView) {
-            this.defaultView = new CodemirrorView(this.text, this.runtime);
-        }
-
-        this.defaultView.render(elm, options);
     }
 }
 
