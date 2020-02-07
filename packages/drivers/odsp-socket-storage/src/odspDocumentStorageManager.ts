@@ -619,7 +619,11 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                         if (!summary.parentHandle) {
                             throw Error("Parent summary does not exist to reference by handle.");
                         }
-                        id = `${summary.parentHandle}/${(summaryObject as IUploadSummaryHandle).path}`;
+                        let handlePath = (summaryObject as IUploadSummaryHandle).path;
+                        if (handlePath.length > 0 && !handlePath.startsWith("/")) {
+                            handlePath = `/${handlePath}`;
+                        }
+                        id = `${summary.parentHandle}${handlePath}`;
                     } else {
                         id = (summaryObject as api.ISummaryHandle).handle;
                     }

@@ -50,7 +50,7 @@ describe("Component Context Tests", () => {
                 storage,
                 scope,
                 1,
-                new SummaryTracker(false, 1, async () => undefined),
+                new SummaryTracker(false, "", 1, async () => undefined),
                 attachCb);
 
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -83,7 +83,7 @@ describe("Component Context Tests", () => {
                 storage,
                 scope,
                 1,
-                new SummaryTracker(false, 1, async () => undefined),
+                new SummaryTracker(false, "", 1, async () => undefined),
                 attachCb);
 
             await localComponentContext.realize()
@@ -109,7 +109,7 @@ describe("Component Context Tests", () => {
                 storage,
                 scope,
                 1,
-                new SummaryTracker(false, 1, async () => undefined),
+                new SummaryTracker(false, "", 1, async () => undefined),
                 attachCb);
 
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -173,7 +173,7 @@ describe("Component Context Tests", () => {
                 new DocumentStorageServiceProxy(storage as IDocumentStorageService, blobCache),
                 scope,
                 1,
-                new SummaryTracker(false, 1, async () => undefined));
+                new SummaryTracker(false, "", 1, async () => undefined));
             const snapshot = await remotedComponentContext.snapshot(true);
             const blob = snapshot.entries[0].value as IBlob;
 
@@ -205,7 +205,7 @@ describe("Component Context Tests", () => {
                 new DocumentStorageServiceProxy(storage as IDocumentStorageService, blobCache),
                 scope,
                 1,
-                new SummaryTracker(false, 1, async () => undefined));
+                new SummaryTracker(false, "", 1, async () => undefined));
             const snapshot = await remotedComponentContext.snapshot(true);
             const blob = snapshot.entries[0].value as IBlob;
 

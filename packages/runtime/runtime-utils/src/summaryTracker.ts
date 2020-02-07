@@ -22,7 +22,7 @@ export class SummaryTracker implements ISummaryTracker {
 
     public async getId(): Promise<string | null> {
         if (this.useContext === true) {
-            return ""; // placeholder
+            return this._fullPath;
         } else {
             const tree = await this.getSnapshotTree();
             if (tree === undefined) {
@@ -55,6 +55,7 @@ export class SummaryTracker implements ISummaryTracker {
 
         const newChild = new SummaryTracker(
             this.useContext,
+            `${this._fullPath}/${encodeURIComponent(key)}`,
             this._referenceSequenceNumber,
             this.formChildGetSnapshotTree(key));
 
@@ -64,6 +65,7 @@ export class SummaryTracker implements ISummaryTracker {
 
     public constructor(
         public readonly useContext: boolean,
+        private readonly _fullPath: string,
         private _referenceSequenceNumber: number,
         private _getSnapshotTree: () => Promise<ISnapshotTree | undefined>) {}
 

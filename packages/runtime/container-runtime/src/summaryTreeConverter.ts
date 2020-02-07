@@ -49,7 +49,7 @@ export class SummaryTreeConverter {
             snapshot,
             summaryStats,
             fullTree,
-            "");
+        );
 
         return { summaryStats, summaryTree };
     }
@@ -143,12 +143,11 @@ export class SummaryTreeConverter {
         snapshot: ITree,
         summaryStats: ISummaryStats,
         fullTree: boolean = false,
-        path: string,
     ): IUploadSummaryTree | IUploadSummaryHandle {
         if (snapshot.id !== null && snapshot.id !== undefined && !fullTree) {
             summaryStats.handleNodeCount++;
             return {
-                path,
+                path: snapshot.id,
                 handleType: SummaryType.Tree,
                 type: SummaryType.Handle,
             };
@@ -185,7 +184,7 @@ export class SummaryTreeConverter {
                             entry.value as ITree,
                             summaryStats,
                             fullTree,
-                            `${path}/${entry.path}`);
+                        );
                         break;
 
                     case TreeEntry[TreeEntry.Commit]:
@@ -195,7 +194,7 @@ export class SummaryTreeConverter {
                             entry.value as ITree,
                             summaryStats,
                             fullTree,
-                            `${path}/${entry.path}`);
+                        );
                         break;
 
                     default:

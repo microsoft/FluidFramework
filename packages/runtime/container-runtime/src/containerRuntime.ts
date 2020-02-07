@@ -545,8 +545,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.latestSummaryAck = { proposalHandle: undefined, ackHandle: undefined };
         this.summaryTracker = new SummaryTracker(
             this.storage.uploadSummaryWithContext !== undefined,
+            "",
             this.deltaManager.initialSequenceNumber,
-            async () => undefined);
+            async () => undefined,
+        );
 
         // Extract components stored inside the snapshot
         this.loadedFromSummary = context.baseSnapshot.trees[".protocol"] ? true : false;
