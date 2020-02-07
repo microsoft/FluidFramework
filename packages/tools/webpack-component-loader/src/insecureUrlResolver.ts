@@ -24,7 +24,7 @@ import * as jwt from "jsonwebtoken";
  * fluid://orderingUrl/<tenantId>/<documentId>/<path>.
  *
  * The tenantId/documentId pair defines the 'full' document ID the service makes use of. The path is then an optional
- * part of the URL that the document interprets and maps to a component. It's exactlys similar to how a web service
+ * part of the URL that the document interprets and maps to a component. It's exactly similar to how a web service
  * works or a router inside of a single page app framework.
  */
 export class InsecureUrlResolver implements IUrlResolver {

@@ -7,6 +7,8 @@
 /**/bin/
 /**/obj/
 _site/
+.cache/
+.vuepress/public/fluid/*/**
 
 # every directory under api is generated during a build
 api/**

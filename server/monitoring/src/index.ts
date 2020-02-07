@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as Sentry from "@sentry/node";
-import * as nconf from "nconf";
 import * as path from "path";
+import * as nconf from "nconf";
+import * as Sentry from "@sentry/node";
 import * as winston from "winston";
 import { configureLogging } from "./logger";
 import { testFluidService } from "./testService";
@@ -53,4 +53,4 @@ async function run() {
     }
 }
 
-run();
+run(); // eslint-disable-line @typescript-eslint/no-floating-promises

@@ -203,11 +203,6 @@ export interface IComponentContext extends EventEmitter {
     readonly existing: boolean;
     readonly options: any;
     readonly clientId: string;
-    /**
-     * DEPRECATED use hostRuntime.clientDetails.type instead
-     * back-compat: 0.11 clientType
-     */
-    readonly clientType: string;
     readonly parentBranch: string;
     readonly connected: boolean;
     readonly leader: boolean;
@@ -321,11 +316,6 @@ export interface IHostRuntime extends
     readonly existing: boolean;
     readonly options: any;
     readonly clientId: string;
-    /**
-     * DEPRECATED use clientDetails.type instead
-     * back-compat: 0.11 clientType
-     */
-    readonly clientType: string;
     readonly clientDetails: IClientDetails;
     readonly parentBranch: string;
     readonly connected: boolean;
@@ -342,6 +332,7 @@ export interface IHostRuntime extends
     readonly submitSignalFn: (contents: any) => void;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly closeFn: () => void;
+    readonly scope: IComponent;
 
     /**
      * Returns the runtime of the component.
@@ -417,4 +408,11 @@ export interface IHostRuntime extends
      * Executes a request against the runtime
      */
     request(request: IRequest): Promise<IResponse>;
+
+    /**
+     * Submits the signal to be sent to other clients.
+     * @param type - Type of the signal.
+     * @param content - Content of the signal.
+     */
+    submitSignal(type: string, content: any): void;
 }

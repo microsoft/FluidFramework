@@ -22,12 +22,12 @@ import {
     IDeltaManager,
     IDeltaSender,
     ILoader,
-    IMessageScheduler,
     IRuntime,
 } from "@microsoft/fluid-container-definitions";
 import {
     Deferred,
     Trace,
+    ChildLogger,
 } from "@microsoft/fluid-core-utils";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import { readAndParse, createIError } from "@microsoft/fluid-driver-utils";
@@ -84,6 +84,7 @@ import { Summarizer } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
 import { ISummaryStats, SummaryTreeConverter } from "./summaryTreeConverter";
 import { analyzeTasks } from "./taskAnalyzer";
+import { DeltaScheduler } from "./deltaScheduler";
 
 interface ISummaryTreeWithStats {
     summaryStats: ISummaryStats;
@@ -145,9 +146,8 @@ interface IRuntimeMessageMetadata {
     batch?: boolean;
 }
 
-class ScheduleManager {
-    private readonly messageScheduler: IMessageScheduler | undefined;
-    private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+export class ScheduleManager {
+    private readonly deltaScheduler: DeltaScheduler;
     private pauseSequenceNumber: number | undefined;
     private pauseClientId: string | undefined;
 
@@ -156,17 +156,14 @@ class ScheduleManager {
     private batchClientId: string;
 
     constructor(
-        messageScheduler: IMessageScheduler | undefined,
+        private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         private readonly emitter: EventEmitter,
-        legacyDeltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+        private readonly logger: ITelemetryLogger,
     ) {
-        if (!messageScheduler || !("toArray" in messageScheduler.deltaManager.inbound as any)) {
-            this.deltaManager = legacyDeltaManager;
-            return;
-        }
-
-        this.messageScheduler = messageScheduler;
-        this.deltaManager = this.messageScheduler.deltaManager;
+        this.deltaScheduler = new DeltaScheduler(
+            this.deltaManager,
+            ChildLogger.create(this.logger, "DeltaScheduler"),
+        );
 
         // Listen for delta manager sends and add batch metadata to messages
         this.deltaManager.on("prepareSend", (messages: IDocumentMessage[]) => {
@@ -209,57 +206,51 @@ class ScheduleManager {
     }
 
     public beginOperation(message: ISequencedDocumentMessage) {
-        // If in legacy mode every operation is a batch
-        if (!this.messageScheduler) {
-            this.emitter.emit("batchBegin", message);
-            return;
-        }
+        if (this.batchClientId !== message.clientId) {
+            // As a back stop for any bugs marking the end of a batch - if the client ID flipped, we
+            // consider the previous batch over.
+            if (this.batchClientId) {
+                this.emitter.emit("batchEnd", "Did not receive real batchEnd message", undefined);
+                this.deltaScheduler.batchEnd();
 
-        if (message.metadata === undefined) {
-            // If there is no metadata, and no client ID set, then this is an individual batch. Otherwise it's a
-            // message in the middle of a batch
-            if (!this.batchClientId) {
-                this.emitter.emit("batchBegin", message);
+                this.logger.sendTelemetryEvent({
+                    eventName: "BatchEndNotReceived",
+                    clientId: this.batchClientId,
+                    sequenceNumber: message.sequenceNumber,
+                });
             }
 
-            return;
-        }
-
-        // Otherwise we need to check for the metadata flag
-        const metadata = message.metadata as IRuntimeMessageMetadata;
-        if (metadata.batch === true) {
-            this.batchClientId = message.clientId;
+            // This could be the beginning of a new batch or an invidual message.
             this.emitter.emit("batchBegin", message);
+            this.deltaScheduler.batchBegin();
+
+            const batch = (message?.metadata as IRuntimeMessageMetadata)?.batch;
+            if (batch) {
+                this.batchClientId = message.clientId;
+            } else {
+                this.batchClientId = undefined;
+            }
         }
     }
 
     public endOperation(error: any | undefined, message: ISequencedDocumentMessage) {
-        if (!this.messageScheduler || error) {
+        if (error) {
             this.batchClientId = undefined;
             this.emitter.emit("batchEnd", error, message);
+            this.deltaScheduler.batchEnd();
             return;
         }
 
         this.updatePauseState(message.sequenceNumber);
 
-        // If no batchClientId has been set then we're in an individual batch
-        if (!this.batchClientId) {
-            this.emitter.emit("batchEnd", undefined, message);
-            return;
-        }
-
-        // As a back stop for any bugs marking the end of a batch - if the client ID flipped we consider the batch over
-        if (this.batchClientId !== message.clientId) {
-            this.emitter.emit("batchEnd", undefined, message);
-            this.batchClientId = undefined;
-            return;
-        }
-
-        // Otherwise need to check the metadata flag
-        const batch = message.metadata ? (message.metadata as IRuntimeMessageMetadata).batch : undefined;
-        if (batch === false) {
+        const batch = (message?.metadata as IRuntimeMessageMetadata)?.batch;
+        // If no batchClientId has been set then we're in an individual batch. Else, if we get
+        // batch end metadata, this is end of the current batch.
+        if (!this.batchClientId || batch === false) {
             this.batchClientId = undefined;
             this.emitter.emit("batchEnd", undefined, message);
+            this.deltaScheduler.batchEnd();
+            return;
         }
     }
 
@@ -423,14 +414,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.context.clientId;
     }
 
-    /**
-     * DEPRECATED use clientDetails.type instead
-     * back-compat: 0.11 clientType
-     */
-    public get clientType(): string {
-        return this.context.clientType;
-    }
-
     public get clientDetails(): IClientDetails {
         return this.context.clientDetails;
     }
@@ -474,6 +457,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
     public get flushMode(): FlushMode {
         return this._flushMode;
+    }
+
+    public get scope(): IComponent {
+        return this.context.scope;
     }
 
     public get IComponentRegistry(): IComponentRegistry {
@@ -580,10 +567,15 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.contextsDeferred.set(key, deferred);
         }
 
-        this.scheduleManager = new ScheduleManager(context.IMessageScheduler, this, context.deltaManager);
-        this.deltaSender = this.deltaManager;
-
         this.logger = context.logger;
+
+        this.scheduleManager = new ScheduleManager(
+            context.deltaManager,
+            this,
+            ChildLogger.create(this.logger, "ScheduleManager"),
+        );
+
+        this.deltaSender = this.deltaManager;
 
         this.deltaManager.on("allSentOpsAckd", () => {
             this.updateDocumentDirtyState(false);
@@ -788,15 +780,21 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public postProcess(message: ISequencedDocumentMessage, local: boolean, context: any) {
-        return this.context.IMessageScheduler
-            ? Promise.reject("Scheduler assumes only process")
-            : Promise.resolve();
-    }
-
     public processSignal(message: ISignalMessage, local: boolean) {
         const envelope = message.content as IEnvelope;
+        const innerContent = envelope.contents as { content: any; type: string };
+        const transformed: IInboundSignalMessage = {
+            clientId: message.clientId,
+            content: innerContent.content,
+            type: innerContent.type,
+        };
+
+        if (envelope.address === undefined) {
+            // No address indicates a container signal message.
+            this.emit("signal", transformed, local);
+            return;
+        }
+
         const context = this.contexts.get(envelope.address);
         if (!context) {
             // Attach message may not have been processed yet
@@ -804,13 +802,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.logger.sendTelemetryEvent({ eventName: "SignalComponentNotFound", componentId: envelope.address });
             return;
         }
-
-        const innerContent = envelope.contents as { content: any; type: string };
-        const transformed: IInboundSignalMessage = {
-            clientId: message.clientId,
-            content: innerContent.content,
-            type: innerContent.type,
-        };
 
         context.processSignal(transformed, local);
     }
@@ -958,6 +949,17 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
      */
     public isDocumentDirty(): boolean {
         return this.dirtyDocument;
+    }
+
+    /**
+     * Submits the signal to be sent to other clients.
+     * @param type - Type of the signal.
+     * @param content - Content of the signal.
+     */
+    public submitSignal(type: string, content: any) {
+        this.verifyNotClosed();
+        const envelope: IEnvelope = { address: undefined, contents: {type, content} };
+        return this.context.submitSignalFn(envelope);
     }
 
     private refreshBaseSummary(snapshot: ISnapshotTree) {
@@ -1319,11 +1321,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     private subscribeToLeadership() {
-        // Back-compat: 0.11 clientType
-        const interactive = this.context.clientType === "browser"
-            || (this.context.clientDetails && this.context.clientDetails.capabilities.interactive);
-
-        if (interactive) {
+        if (this.context.clientDetails.capabilities.interactive) {
             this.getScheduler().then((scheduler) => {
                 if (scheduler.leader) {
                     this.updateLeader(true);

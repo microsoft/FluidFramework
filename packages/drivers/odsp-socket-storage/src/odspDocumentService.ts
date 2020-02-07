@@ -102,9 +102,9 @@ export class OdspDocumentService implements IDocumentService {
             }
             const event = PerformanceEvent.start(this.logger,
                 { eventName: `${name || "OdspDocumentService"}_GetToken` });
-            let token: Promise<string | null>;
+            let token: string | null;
             try {
-                token = getStorageToken(this.siteUrl, refresh);
+                token = await getStorageToken(this.siteUrl, refresh);
             } catch (error) {
                 event.cancel({}, error);
                 throw error;

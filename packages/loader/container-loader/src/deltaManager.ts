@@ -12,10 +12,7 @@ import {
     IDeltaManager,
     IDeltaQueue,
 } from "@microsoft/fluid-container-definitions";
-import {
-    ChildLogger,
-    PerformanceEvent,
-} from "@microsoft/fluid-core-utils";
+import { PerformanceEvent } from "@microsoft/fluid-core-utils";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
@@ -78,7 +75,6 @@ enum retryFor {
 export class DeltaManager extends EventEmitter implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
     public get disposed() { return this.isDisposed; }
 
-    public readonly clientType: string;
     public readonly clientDetails: IClientDetails;
     public get IDeltaSender() { return this; }
 
@@ -205,16 +201,13 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         private readonly reconnect: boolean) {
         super();
 
-        this.clientType = this.client.type!; // Back-compat: 0.11 clientType
         this.clientDetails = this.client.details;
         this.systemConnectionMode = this.client.mode === "write" ? "write" : "read";
 
         this._inbound = new DeltaQueue<ISequencedDocumentMessage>(
             (op) => {
                 this.processInboundMessage(op);
-            },
-            ChildLogger.create(this.logger, "InboundDeltaQueue"),
-        );
+            });
 
         this._inbound.on("error", (error) => {
             this.emit("error", createIError(error));
@@ -225,9 +218,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this._outbound = new DeltaQueue<IDocumentMessage[]>(
             (messages) => {
                 this.connection!.submit(messages);
-            },
-            ChildLogger.create(this.logger, "OutboundDeltaQueue"),
-        );
+            });
 
         this._outbound.on("error", (error) => {
             this.emit("error", createIError(error));
@@ -239,9 +230,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 clientId: message.clientId,
                 content: JSON.parse(message.content as string),
             });
-        },
-        ChildLogger.create(this.logger, "InboundSignalDeltaQueue"),
-        );
+        });
 
         this._inboundSignal.on("error", (error) => {
             this.emit("error", createIError(error));
@@ -422,12 +411,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // const maxOpSize = this.context.deltaManager.maxMessageSize;
 
         // Start adding trace for the op.
-        // back-compat: 0.11 clientType
-        const clientType = this.clientDetails ? this.clientDetails.type : this.clientType;
         const traces: ITrace[] = [
             {
                 action: "start",
-                service: clientType || "unknown",
+                service: this.clientDetails.type || "unknown",
                 timestamp: Date.now(),
             }];
 
@@ -979,11 +966,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         // Add final ack trace.
         if (message.traces && message.traces.length > 0) {
-            // Back-compat: 0.11 clientType
-            const clientType = this.clientDetails ? this.clientDetails.type : this.clientType;
             message.traces.push({
                 action: "end",
-                service: clientType || "unknown",
+                service: this.clientDetails.type || "unknown",
                 timestamp: Date.now(),
             });
         }
