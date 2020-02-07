@@ -4,7 +4,17 @@ uid: yo-fluid
 
 # yo fluid
 
-yo fluid is a tool that helps create a scaffold for a Fluid component.
+yo fluid is a tool that helps create a scaffold for a Fluid component called **diceroller**.
+
+<style>
+  iframe#diceroller {
+    height: 95px;
+    width: 200px;
+  }
+</style>
+
+<iframe id="diceroller" src="/fluid/diceroller.html"></iframe>
+
 
 First, [clone the Fluid Framework repo locally](./README.md#clone-the-fluid-repo).
 
@@ -46,7 +56,7 @@ Overflow](https://stackoverflow.microsoft.com/questions/137930/npm-install-fails
 ## Next steps
 
 Now that you've used yo fluid to scaffold a new component, you should examine the contents of the yo fluid output, which
-is a sample component called DiceRoller. See the [yo fluid breakdown](../examples/yo-fluid-breakdown.md) for a
+is a sample component called **diceroller**. See the [yo fluid breakdown](../examples/yo-fluid-breakdown.md) for a
 step-by-step explanation of the code.
 
 Or you can jump right in to [building your own component](./build-a-component.md) using the scaffold as a base.
