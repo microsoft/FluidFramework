@@ -8,7 +8,6 @@ import { IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
 import {
     IComponentHandle,
     IComponentHTMLView,
-    IComponentHTMLVisual,
 } from "@microsoft/fluid-component-core-interfaces";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
@@ -31,7 +30,6 @@ export const TodoName = `${pkg.name as string}-todo`;
  */
 export class Todo extends PrimedComponent implements
     IComponentHTMLView,
-    IComponentHTMLVisual,
     IComponentReactViewable {
 
     // DDS ids stored as variables to minimize simple string mistakes
@@ -40,7 +38,7 @@ export class Todo extends PrimedComponent implements
 
     private todoItemsMap: ISharedMap;
 
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
     public get IComponentReactViewable() { return this; }
 
     // Would prefer not to hand this out, and instead give back a title component?

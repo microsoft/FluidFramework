@@ -10,7 +10,6 @@ import { ISharedCell, SharedCell } from "@microsoft/fluid-cell";
 import {
     IComponentHandle,
     IComponentHTMLView,
-    IComponentHTMLVisual,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
@@ -41,14 +40,13 @@ const innerComponentKey = "innerId";
 export class TodoItem extends PrimedComponent
     implements
     IComponentHTMLView,
-    IComponentHTMLVisual,
     IComponentReactViewable {
 
     private text: SharedString;
     private innerIdCell: ISharedCell;
     private baseUrl: string = "";
 
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
     public get IComponentReactViewable() { return this; }
 
     /**

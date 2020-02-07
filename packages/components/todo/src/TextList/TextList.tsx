@@ -4,7 +4,7 @@
  */
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
 import { IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
-import { IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
 import { IDirectory } from "@microsoft/fluid-map";
 import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
@@ -21,9 +21,8 @@ export const TextListName = `${pkg.name as string}-textlist`;
  */
 export class TextList extends PrimedComponent implements
     IComponentHTMLView,
-    IComponentHTMLVisual,
     IComponentReactViewable {
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
     public get IComponentReactViewable() { return this; }
 
     private textDirectory: IDirectory;

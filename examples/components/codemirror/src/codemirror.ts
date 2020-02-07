@@ -51,6 +51,8 @@ class CodemirrorView implements IComponentHTMLView {
 
     private sequenceDeltaCb: any;
 
+    public get IComponentHTMLView() { return this; }
+
     constructor(private readonly text: SharedString, private readonly runtime: IComponentRuntime) {
     }
 
@@ -205,6 +207,7 @@ export class CodeMirrorComponent
 
     public get IComponentLoadable() { return this; }
     public get IComponentRouter() { return this; }
+    public get IComponentHTMLView() { return this; }
     public get IComponentHTMLVisual() { return this; }
 
     public url: string;

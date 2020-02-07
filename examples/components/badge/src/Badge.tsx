@@ -9,7 +9,6 @@ import { SharedCell } from "@microsoft/fluid-cell";
 import {
     IComponentHandle,
     IComponentHTMLView,
-    IComponentHTMLVisual,
 } from "@microsoft/fluid-component-core-interfaces";
 import { SharedMap } from "@microsoft/fluid-map";
 import { SharedObjectSequence } from "@microsoft/fluid-sequence";
@@ -23,13 +22,12 @@ import { IHistory } from "./IHistory";
 
 export class Badge extends PrimedComponent implements
     IComponentHTMLView,
-    IComponentHTMLVisual,
     IComponentReactViewable {
     currentCell: SharedCell;
     optionsMap: SharedMap;
     historySequence: SharedObjectSequence<IHistory<IBadgeType>>;
 
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
     public get IComponentReactViewable() { return this; }
 
     private readonly currentId: string = "value";

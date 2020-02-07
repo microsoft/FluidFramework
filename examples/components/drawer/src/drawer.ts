@@ -50,6 +50,7 @@ export class Drawer extends EventEmitter implements
 
     public get IComponentLoadable() { return this; }
     public get IComponentRouter() { return this; }
+    public get IComponentHTMLView() { return this; }
     public get IComponentHTMLVisual() { return this; }
 
     public url: string;
