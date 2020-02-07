@@ -22,6 +22,16 @@ interface IEmbeddedComponentWrapperState {
     element: JSX.Element;
 }
 
+const buttonContainerStyle: React.CSSProperties = {
+    opacity: 1,
+    backgroundColor: "none",
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+};
+
+const gridContainerStyle: React.CSSProperties = {paddingTop: "25px"};
+
 /**
  * This wrapper handles the async-ness of loading a component.
  * This ideally shouldn't be here but is here for now to unblock me not knowing how to use EmbeddedComponent.
@@ -50,7 +60,7 @@ interface ISpaceGridViewProps {
 }
 
 interface ISpaceGridViewState {
-    editable: boolean;
+    isEditable: boolean;
     componentMap: Map<string, Layout>;
 }
 
@@ -62,7 +72,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
     constructor(props) {
         super(props);
         this.state = {
-            editable: this.props.dataModel.componentList.size === 0,
+            isEditable: true,
             componentMap: this.props.dataModel.componentList,
         };
 
@@ -73,6 +83,9 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
     componentDidMount() {
         this.props.dataModel.on("componentListChanged", (newMap: Map<string, Layout>) => {
             this.setState({ componentMap: newMap });
+        });
+        this.props.dataModel.on("editableUpdated", (isEditable: boolean) => {
+            this.setState({isEditable});
         });
     }
 
@@ -100,17 +113,19 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
         this.props.dataModel.updateGridItem(id, newItem);
     }
 
-    generateViewState(): [any[], Layout[]] {
-        const array = [];
+    generateViewState(): [JSX.Element, any[], Layout[]] {
+        const components = [];
         const layouts: Layout[] = [];
-        this.state.componentMap.forEach((layout, id) => {
+        let componentToolbar: JSX.Element | undefined;
 
+        this.state.componentMap.forEach((layout, id) => {
+            const editable = this.state.isEditable && id !== this.props.dataModel.componentToolbarId;
             // Do some CSS stuff depending on if the user is editing or not
             const editableStyle: React.CSSProperties = { overflow: "hidden", padding: 2 };
             const embeddedComponentStyle: React.CSSProperties = {
                 height: "100%",
             };
-            if (this.state.editable) {
+            if (editable) {
                 editableStyle.border = "1px solid black";
                 editableStyle.backgroundColor = "#d3d3d3";
                 editableStyle.boxSizing = "border-box";
@@ -126,12 +141,11 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
             layouts.push(layout);
 
             const componentUrl = `${window.location.href}/${id}`;
-
-            array.push(
+            const element =
                 <div className="text" key={key} style={editableStyle} >
                     {
-                        this.state.editable &&
-                        <div style={{ opacity: 1, backgroundColor: "none", position: "absolute", bottom: 0, left: 0 }}>
+                        editable &&
+                        <div style={buttonContainerStyle}>
                             <button onClick={() => this.props.dataModel.removeComponent(id)}>❌</button>
                             <button onClick={() => {
                                 navigator.clipboard.writeText(componentUrl).then(() => {
@@ -146,73 +160,43 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                     <div style={embeddedComponentStyle}>
                         <EmbeddedComponentWrapper id={id} getComponent={this.props.dataModel.getComponent} />
                     </div>
-                </div>);
+                </div>;
+            if (id !== this.props.dataModel.componentToolbarId) {
+                components.push(element);
+            } else {
+                componentToolbar = element;
+            }
         });
 
-        return [array, layouts];
+        return [componentToolbar, components, layouts];
     }
 
     render() {
-        const [array, layouts] = this.generateViewState();
-
+        const [componentToolbar, components, layouts] = this.generateViewState();
         return (
             <div>
-                <div style={{ position: "absolute", top: 10, left: 10, zIndex: 1000 }}>
-                    <button
-                        id="edit"
-                        onClick={() => { this.setState({ editable: !this.state.editable }); }}
-                    >
-                        Edit: {this.state.editable.toString()}
-                    </button>
-                    {this.state.editable &&
-                        <React.Fragment>
-                            <span>
-                                <button onClick={async () => this.props.dataModel.addComponent("clicker", 2, 2)}>
-                                    Clicker
-                                </button>
-                                <button onClick={async () => this.props.dataModel.addComponent("button", 2, 2)}>
-                                    Button
-                                </button>
-                                <button onClick={async () => this.props.dataModel.addComponent("number", 2, 2)}>
-                                    Number
-                                </button>
-                                <button onClick={async () => this.props.dataModel.addComponent("textbox", 9, 6)}>
-                                    TextBox
-                                </button>
-                                <button onClick={async () => this.props.dataModel.addComponent("facepile", 2, 4)}>
-                                    FacePile
-                                </button>
-                                <button onClick={async () => this.props.dataModel.addComponent("codemirror", 12, 8)}>
-                                    CodeMirror
-                                </button>
-                                <button onClick={async () => this.props.dataModel.addComponent("prosemirror", 16, 12)}>
-                                    ProseMirror
-                                </button>
-                            </span>
-                            <button onClick={() => { this.props.dataModel.saveLayout(); }}>Save Layout</button>
-                        </React.Fragment>
-                    }
-                </div>
+                {componentToolbar}
                 {
                     this.state.componentMap.size > 0 &&
-                    <GridLayout
-                        className="layout"
-                        cols={36}
-                        rowHeight={50}
-                        width={1800}
-                        // eslint-disable-next-line no-null/no-null
-                        compactType={null} // null is required for the GridLayout
-                        isDroppable={this.state.editable}
-                        isDraggable={this.state.editable}
-                        isResizable={this.state.editable}
-                        preventCollision={true}
-                        isRearrangeable={false}
-                        onResizeStop={this.onGridChangeEvent}
-                        onDragStop={this.onGridChangeEvent}
-                        layout={layouts}
-                    >
-                        {array}
-                    </GridLayout>
+                        <GridLayout
+                            className="layout"
+                            cols={36}
+                            rowHeight={50}
+                            width={1800}
+                            // eslint-disable-next-line no-null/no-null
+                            compactType={null} // null is required for the GridLayout
+                            isDroppable={this.state.isEditable}
+                            isDraggable={this.state.isEditable}
+                            isResizable={this.state.isEditable}
+                            preventCollision={true}
+                            isRearrangeable={false}
+                            onResizeStop={this.onGridChangeEvent}
+                            onDragStop={this.onGridChangeEvent}
+                            layout={layouts}
+                            style={gridContainerStyle}
+                        >
+                            {components}
+                        </GridLayout>
                 }
             </div>
         );
