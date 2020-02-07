@@ -36,7 +36,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
         this.setupAgent();
     }
 
-    // #region IComponentHTMLVisual
+    // #region IComponentHTMLView
 
     /**
      * Will return a new Clicker view
@@ -51,6 +51,8 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
         return div;
     }
 
+    // #endregion IComponentHTMLView
+
     public setupAgent() {
         const counter: Counter = this.root.get("clicks");
         const agentTask: ITask = {
@@ -64,8 +66,6 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
             console.log(err);
         });
     }
-
-    // #endregion IComponentHTMLVisual
 }
 
 // ----- REACT STUFF -----
