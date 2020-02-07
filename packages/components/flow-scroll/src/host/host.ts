@@ -46,11 +46,6 @@ class ThickViewFactory implements IComponentHTMLViewFactory {
     }
 }
 
-const viewRegistry: Map<string, IComponentHTMLViewFactory> = new Map([
-    ["MathView", new MathViewFactory() as IComponentHTMLViewFactory],
-    ["ThickView", new ThickViewFactory() as IComponentHTMLViewFactory],
-]);
-
 export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost {
     public get ISearchMenuHost() { return this; }
 
@@ -95,11 +90,15 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         Promise.all([this.docP, this.mathP, this.videosP, this.imagesP]).then(([doc, math, videos, images]) => {
+            const slot = template.get(this.viewport, "slot") as HTMLElement;
+
             // This view registry will match up the strings we put in the markers below against
             // the view classes they correspond with.
-            doc.setViewFactoryRegistry(viewRegistry);
-            const slot = template.get(this.viewport, "slot") as HTMLElement;
-            const editor = new Editor(doc, slot, htmlFormatter, this);
+            const viewFactoryRegistry: Map<string, IComponentHTMLViewFactory> = new Map([
+                ["MathView", new MathViewFactory() as IComponentHTMLViewFactory],
+                ["ThickView", new ThickViewFactory() as IComponentHTMLViewFactory],
+            ]);
+            const editor = new Editor(doc, slot, htmlFormatter, viewFactoryRegistry, this);
 
             const hasSelection = () => {
                 const { start, end } = editor.selection;

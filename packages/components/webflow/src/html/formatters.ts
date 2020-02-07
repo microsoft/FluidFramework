@@ -90,7 +90,7 @@ export class InclusionFormatter extends Formatter<IInclusionState> {
                     ? TagName.div
                     : TagName.span);
 
-            const viewFactory = layout.doc.getViewFactoryFromMarker(marker);
+            const viewFactory = layout.viewFactoryRegistry.get(marker.properties.view);
             state.view = layout.doc.getComponentFromMarker(marker).then((component: IComponent) => {
                 if (viewFactory) {
                     // We found a view class registered for this marker's view type

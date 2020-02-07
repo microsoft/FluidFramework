@@ -9,7 +9,7 @@ import { Dom, hasTagName, isTextNode, Scheduler, TagName } from "@fluid-example/
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { ISegment, LocalReference, MergeTreeMaintenanceType } from "@microsoft/fluid-merge-tree";
 import { SequenceEvent } from "@microsoft/fluid-sequence";
-import { FlowDocument } from "../document";
+import { FlowDocument, IComponentHTMLViewFactory } from "../document";
 import { clamp, done, emptyObject, getSegmentRange } from "../util";
 import { extractRef, updateRef } from "../util/localref";
 import { debug } from "./debug";
@@ -92,7 +92,7 @@ export class Layout extends EventEmitter {
     private renderPromise = done;
     private renderResolver: () => void;
 
-    constructor(public readonly doc: FlowDocument, public readonly root: Element, formatter: Readonly<RootFormatter<IFormatterState>>, scheduler = new Scheduler(), public readonly scope?: IComponent) {
+    constructor(public readonly doc: FlowDocument, public readonly root: Element, formatter: Readonly<RootFormatter<IFormatterState>>, scheduler = new Scheduler(), public readonly viewFactoryRegistry: Map<string, IComponentHTMLViewFactory>, public readonly scope?: IComponent) {
         super();
 
         this.scheduleRender = scheduler.coalesce(scheduler.onTurnEnd, () => { this.render(); });
