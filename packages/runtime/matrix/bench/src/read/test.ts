@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { benchmark, getTestArgs } from '../harness';
 import { fill, IArray2D } from '../imports';
 

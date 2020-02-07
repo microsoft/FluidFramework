@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import Benchmark = require('benchmark');
 import { Jsonable } from '@microsoft/fluid-runtime-definitions';
 const process = require('process');

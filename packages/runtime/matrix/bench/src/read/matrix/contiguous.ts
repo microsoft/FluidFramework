@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { pointwise } from '../test';
 import { createContiguousMatrix } from '../../util';
 import { getTestArgs } from '../../harness';

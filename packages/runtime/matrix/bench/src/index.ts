@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { run } from './harness';
 
 (async () => {
@@ -8,7 +13,7 @@ import { run } from './harness';
     { path: './src/read/sparsearray2d', args: { row: 0, col: 0, numRows: 256, numCols: 256, fill: false } },
     { path: './src/read/matrix/contiguous', args: { row: 0, col: 0, numRows: 256, numCols: 256, fill: false } },
     { path: './src/read/matrix/fragmented', args: { row: 0, col: 0, numRows: 256, numCols: 256, fill: false } },
-    { path: './src/read/tiled', args: { row: 0, col: 0, numRows: 256, numCols: 256, fill: false } }      
+    { path: './src/read/tiled', args: { row: 0, col: 0, numRows: 256, numCols: 256, fill: false } }
   ]);
   console.groupEnd();
 

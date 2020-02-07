@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { MockRuntime } from '@microsoft/fluid-test-runtime-utils';
 import { SharedMatrix, SharedMatrixFactory } from './imports';
 import { strict as assert } from 'assert';
