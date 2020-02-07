@@ -44,7 +44,7 @@ export class ComponentToolbar extends PrimedComponent implements IComponentHTMLV
 }
 
 interface IComponentToolbarViewProps {
-    emit: any;
+    emit: (event: string | symbol, ...args: any[]) => boolean;
 }
 
 interface IComponentToolbarViewState {
@@ -52,7 +52,7 @@ interface IComponentToolbarViewState {
 }
 
 class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, IComponentToolbarViewState>{
-    private emit: any;
+    private emit: (event: string | symbol, ...args: any[]) => boolean;
     constructor(props: IComponentToolbarViewProps){
         super(props);
         this.emit = props.emit;
