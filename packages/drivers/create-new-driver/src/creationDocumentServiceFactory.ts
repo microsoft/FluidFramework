@@ -8,6 +8,7 @@ import {
     IDocumentServiceFactory,
     IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
+import { parse } from "url";
 import { CreationDocumentService } from "./creationDocumentService";
 
 /**
@@ -20,7 +21,17 @@ export class CreationDocumentServiceFactory implements IDocumentServiceFactory {
     constructor() {
     }
 
-    public async createDocumentService(url: IResolvedUrl): Promise<IDocumentService> {
-        return new CreationDocumentService("createNewFileDoc", "createNewFileDocTenant");
+    public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
+        if (resolvedUrl.type !== "fluid") {
+            // tslint:disable-next-line:max-line-length
+            return Promise.reject("Only Fluid components currently supported in the RouterliciousDocumentServiceFactory");
+        }
+
+        const fluidResolvedUrl = resolvedUrl;
+        const parsedUrl = parse(fluidResolvedUrl.url);
+        const [, , documentId] = parsedUrl.pathname!.split("/");
+        return new CreationDocumentService(
+            documentId,
+            "createNewFileDocTenant");
     }
 }

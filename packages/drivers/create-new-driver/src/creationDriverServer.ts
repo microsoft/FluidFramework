@@ -31,14 +31,19 @@ interface IAugmentedDocumentMessage {
  */
 export class CreationServerMessagesHandler {
 
-    public static getInstance(documentId?: string): CreationServerMessagesHandler {
-        if (CreationServerMessagesHandler.instance === undefined && documentId !== undefined) {
-            CreationServerMessagesHandler.instance = new CreationServerMessagesHandler(documentId);
+    public static getInstance(documentId: string): CreationServerMessagesHandler {
+        if (CreationServerMessagesHandler.urlMap.has(documentId)) {
+            return CreationServerMessagesHandler.urlMap.get(documentId)!;
+        } else {
+            const instance = new CreationServerMessagesHandler(documentId);
+            CreationServerMessagesHandler.urlMap.set(documentId, instance);
+            return instance;
         }
-        return CreationServerMessagesHandler.instance;
     }
 
-    private static instance: CreationServerMessagesHandler;
+    // This map is from url to instance of server for that url. So this leads to creation of only 1 server instance
+    // for different clients of same file but different instances for different files.
+    private static readonly urlMap: Map<string, CreationServerMessagesHandler> = new Map();
 
     // These are the queues for messages, signals, contents that will be pushed to server when
     // an actual connection is created.
