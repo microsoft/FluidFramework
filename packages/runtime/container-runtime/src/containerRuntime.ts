@@ -648,35 +648,28 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
      */
     public async snapshot(tagMessage: string, fullTree: boolean = false): Promise<ITree> {
         // Iterate over each component and ask it to snapshot
-        const componentVersionsP = Array.from(this.contexts).map(async ([componentId, value]) => {
+        const componentSnapshotsP = Array.from(this.contexts).map(async ([componentId, value]) => {
             const snapshot = await value.snapshot();
 
             // If ID exists then previous commit is still valid
-            if (snapshot.id && !fullTree) {
-                return {
-                    id: componentId,
-                    version: snapshot.id,
-                };
-            } else {
-                return {
-                    id: componentId,
-                    version: null,
-                };
-            }
+            return {
+                componentId,
+                snapshot,
+            };
         });
 
         const root: ITree = { entries: [], id: null };
 
         // Add in module references to the component snapshots
-        const componentVersions = await Promise.all(componentVersionsP);
+        const componentSnapshots = await Promise.all(componentSnapshotsP);
 
         // Sort for better diffing of snapshots (in replay tool, used to find bugs in snapshotting logic)
         if (fullTree) {
-            componentVersions.sort((a, b) => a.id.localeCompare(b.id));
+            componentSnapshots.sort((a, b) => a.componentId.localeCompare(b.componentId));
         }
 
-        for (const componentVersion of componentVersions) {
-            root.entries.push(new TreeTreeEntry(componentVersion.id, componentVersion.version));
+        for (const componentSnapshot of componentSnapshots) {
+            root.entries.push(new TreeTreeEntry(componentSnapshot.componentId, componentSnapshot.snapshot));
         }
 
         if (this.chunkMap.size > 0) {
