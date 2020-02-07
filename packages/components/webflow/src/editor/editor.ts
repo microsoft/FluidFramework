@@ -14,6 +14,10 @@ import { Caret } from "./caret";
 import { debug } from "./debug";
 import * as styles from "./index.css";
 
+/**
+ * The Host provides the Editor with a registry of view factories which will be used to render components that have
+ * been inserted into the document.
+ */
 export interface IComponentHTMLViewFactory {
     createView(model: IComponent, scope?: IComponent): IComponentHTMLView;
 }
