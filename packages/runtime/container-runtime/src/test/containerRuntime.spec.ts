@@ -165,7 +165,7 @@ describe("Runtime", () => {
                     // trees with ids should become handles
                     const handle = assertSummaryHandle<IUploadSummaryHandle>(summaryTree.tree.h);
                     assert.strictEqual(handle.handleType, SummaryType.Tree);
-                    assert.strictEqual(handle.path, "/h");
+                    assert.strictEqual(handle.path, "test-handle");
 
                     // subtrees should recurse
                     const subTree = assertSummaryTree<IUploadSummaryTree>(summaryTree.tree.t);
@@ -176,7 +176,7 @@ describe("Runtime", () => {
 
                     const subTreeHandle = assertSummaryHandle<IUploadSummaryHandle>(subTree.tree.subtree);
                     assert.strictEqual(subTreeHandle.handleType, SummaryType.Tree);
-                    assert.strictEqual(subTreeHandle.path, "/t/subtree");
+                    assert.strictEqual(subTreeHandle.path, "subtree-handle");
                 });
 
                 it("Should calculate summary data correctly", () => {
