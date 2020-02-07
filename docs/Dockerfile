@@ -5,24 +5,43 @@ FROM node:10.16.0-slim AS base
 
 # node-gyp dependencies
 RUN apt-get update && apt-get install -y \
-        git
+        git \
+        yarn
+
+RUN npm install -g @microsoft/api-documenter@^7.4.6 copyfiles@^2.1.0
+
+#############################
+# Use pre-release version of vuepress with a perf fix
+WORKDIR /
+RUN git clone https://github.com/vuejs/vuepress.git vuepress
+WORKDIR /vuepress
+RUN git checkout fix/improve-build-time
+#9dce83575a8e798ee29fa8ddedacfdfbbb3e7ac6
+RUN yarn
+RUN yarn tsc
+RUN yarn boot
+RUN yarn register-vuepress
 
 #############################
 # Copy the source and the api artifact
 FROM base AS r11s
 
+WORKDIR /
 COPY . .
 
 # Convert the json to markdown
-WORKDIR /
-RUN npm install -g @microsoft/api-documenter@^7.4.6 copyfiles@^2.1.0
-RUN npm run build:gendocs
+# Temporarily disable this to speed up doc builds
+# RUN npm run build:gendocs
 
 #############################
 FROM r11s AS docs
 
 WORKDIR /docs
+
+# Copy the root .npmrc to pull private packages
+RUN cp ../.npmrc ./.npmrc
 RUN npm install
+RUN yarn link "vuepress"
 
 # Build
 RUN npm run build:ci

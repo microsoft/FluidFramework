@@ -36,7 +36,10 @@ export class TenantManager {
     constructor(
         private readonly mongoManager: MongoManager,
         private readonly collectionName: string,
-        private readonly baseOrdererUrl: string) {
+        private readonly baseOrdererUrl: string,
+        private readonly defaultHistorianUrl: string,
+        private readonly defaultInternalHistorianUrl: string,
+    ) {
     }
 
     /**
@@ -132,6 +135,13 @@ export class TenantManager {
                 type: "kafka",
                 url: this.baseOrdererUrl,
             };
+        }
+
+        // Older tenants did not include the historian endpoint in their storage configuration since this
+        // was always assumed to be a static value.
+        if (found.storage && !found.storage.historianUrl) {
+            found.storage.historianUrl = this.defaultHistorianUrl;
+            found.storage.internalHistorianUrl = this.defaultInternalHistorianUrl;
         }
 
         return found;

@@ -168,6 +168,12 @@ export async function initialize(
     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     const container = await baseHost.loadAndRender(url, div, pkg ? pkg.details : undefined);
 
+    // Move the div hosting components into a shadow so it doesn't catch external formatting
+    const shadowHostDiv = document.createElement("div");
+    document.body.insertBefore(shadowHostDiv, div);
+    const shadowRoot = shadowHostDiv.attachShadow({mode: "open"});
+    shadowRoot.appendChild(div);
+
     container.on("error", (error) => {
         console.error(error);
     });

@@ -12,7 +12,9 @@
     "deploy": "npm run build && npm version patch && npm run verdaccio",
     "dev": "webpack --env.development",
     "start": "webpack-dev-server --config webpack.config.js --package package.json --env.mode local",
-    "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
+    "start:r11s": "webpack-dev-server --config webpack.config.js --package package.json --env.mode r11s",
+    "start:spo-df": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo-df",
+    "start:spo": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo",
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
     "tsc": "tsc",
     "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
@@ -20,13 +22,13 @@
     "webpack:dev": "npm run dev"
   },
   "dependencies": {
-    "@microsoft/fluid-aqueduct": "^0.13.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.13.0",
+    "@microsoft/fluid-aqueduct": "^0.14.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.14.0",
     "react": "^16.8.3",
     "react-dom": "^16.8.3"
   },
   "devDependencies": {
-    "@microsoft/fluid-webpack-component-loader": "^0.13.0",
+    "@microsoft/fluid-webpack-component-loader": "^0.14.0",
     "@types/node": "^10.14.6",
     "@types/react-dom": "^16.0.11",
     "ts-loader": "^4.5.0",

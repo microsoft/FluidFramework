@@ -48,8 +48,7 @@ export interface IHeapNode<T> {
  * Ordered Heap data structure implementation
  */
 export class Heap<T> {
-    // TODO temporarily public while validating bug fix. Make private once fixed.
-    public L: IHeapNode<T>[];
+    private L: IHeapNode<T>[];
 
     /**
      * Creates an instance of Heap with comparer

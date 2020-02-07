@@ -42,15 +42,5 @@ export function analyzeTasks(
 }
 
 function isRobot(client: ISequencedClient): boolean {
-    return client.client && (
-        (
-            // Back-compat: 0.11 clientType
-            !client.client.details
-            && client.client.type !== "browser"
-        ) || (
-            client.client.details
-            && client.client.details.capabilities
-            && !client.client.details.capabilities.interactive
-        )
-    );
+    return !(client.client?.details?.capabilities?.interactive ?? true);
 }

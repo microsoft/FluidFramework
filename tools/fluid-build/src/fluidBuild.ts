@@ -37,7 +37,7 @@ async function main() {
     // TODO: Should read lerna.json to determine
     const baseDirectories = [ path.join(resolvedRoot, "packages")];
     if (!options.server) {
-        const samplesDirectory = path.join(resolvedRoot, "samples/chaincode");
+        const samplesDirectory = path.join(resolvedRoot, "examples/components");
         if (options.samples && existsSync(samplesDirectory)) {
             baseDirectories.push(samplesDirectory);
         }

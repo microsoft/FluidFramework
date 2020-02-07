@@ -164,7 +164,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             mongoManager,
             config.get("mongo:collectionNames:reservations"));
 
-        const tenantManager = new services.TenantManager(authEndpoint, config.get("worker:blobStorageUrl"));
+        const tenantManager = new services.TenantManager(authEndpoint);
 
         const databaseManager = new core.MongoDatabaseManager(
             mongoManager,
