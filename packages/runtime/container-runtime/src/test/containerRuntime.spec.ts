@@ -18,8 +18,8 @@ import {
     ISequencedDocumentMessage,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
-import { IDeltaManager, IMessageScheduler } from "@microsoft/fluid-container-definitions";
-import { MockDeltaManager, MockMessageScheduler } from "@microsoft/fluid-test-runtime-utils";
+import { IDeltaManager } from "@microsoft/fluid-container-definitions";
+import { MockDeltaManager } from "@microsoft/fluid-test-runtime-utils";
 import { IConvertedSummaryResults, SummaryTreeConverter } from "../summaryTreeConverter";
 import { ScheduleManager } from "../containerRuntime";
 
@@ -116,17 +116,14 @@ describe("Runtime", () => {
                 let batchEnd: number = 0;
                 let emitter: EventEmitter;
                 let deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-                let messageScheduler: IMessageScheduler;
                 let scheduleManager: ScheduleManager;
 
                 beforeEach(() => {
                     emitter = new EventEmitter();
                     deltaManager = new MockDeltaManager();
-                    messageScheduler = new MockMessageScheduler(deltaManager);
                     scheduleManager = new ScheduleManager(
-                        messageScheduler,
-                        emitter,
                         deltaManager,
+                        emitter,
                         DebugLogger.create("fluid:testScheduleManager"),
                     );
 

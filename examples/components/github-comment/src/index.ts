@@ -11,7 +11,7 @@ import { GithubCommentInstantiationFactory } from "./main";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
-export const componentName = pkg.name as string;
+export const chaincodeName = pkg.name as string;
 
 /**
  * This does setup for the Container. The SimpleModuleInstantiationFactory also
@@ -22,9 +22,9 @@ export const componentName = pkg.name as string;
  * 2. Map of string to factory for all components
  */
 export const fluidExport = new SimpleModuleInstantiationFactory(
-    componentName,
+    chaincodeName,
     new Map([
-        [componentName,
+        [chaincodeName,
             Promise.resolve(GithubCommentInstantiationFactory)],
     ]),
 );

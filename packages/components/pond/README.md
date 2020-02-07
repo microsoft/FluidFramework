@@ -18,7 +18,7 @@ You can try the following commands
 
 
     npm run deploy
-       Publishes the component to https://packages.wu2.prague.office-int.com/#/
+       Publishes the chaincode to https://packages.wu2.prague.office-int.com/#/
 ```
 
 We suggest you start by typing:
@@ -29,7 +29,7 @@ npm start
 
 ## Deploy
 
-To deploy and make your component "Live" you'll have to deploy it to verdaccio, our private NPM repository.
+To deploy and make your chaincode "Live" you'll have to deploy it to verdaccio, our private NPM repository.
 
 Go to https://packages.wu2.prague.office-int.com
 
@@ -46,7 +46,7 @@ To deploy, use
 npm run deploy
 ```
 
-To view your component, you can go to the URL
+To view your chaincode, you can go to the URL
 
 > https://www.wu2-ppe.prague.office-int.com/waterpark?chaincode={pkg.name}@{pkg.version};
 

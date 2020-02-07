@@ -11,7 +11,7 @@ import * as ReactDOM from "react-dom";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../../package.json");
-const componentName = pkg.name;
+const chaincodeName = pkg.name;
 
 /**
  * The TextDisplay does not directly manage or modify content.
@@ -19,7 +19,7 @@ const componentName = pkg.name;
  */
 export class TextDisplay extends PrimedComponent implements IComponentHTMLVisual {
     public get IComponentHTMLVisual() { return this; }
-    public static readonly componentName = `${componentName}/textDisplay`;
+    public static readonly chaincodeName = `${chaincodeName}/textDisplay`;
     public counter: Counter;
 
     public render(div: HTMLDivElement) {

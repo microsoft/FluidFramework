@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import {
     IComponentContext,
     IComponentRuntime,
@@ -34,8 +34,6 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
         private readonly root: ISharedDirectory,
         private readonly context: IComponentContext,
         runtime: IComponentRuntime,
-        public readonly createAndAttachComponent: (id: string, pkg: string, props?: any) => Promise<IComponent>,
-        private readonly getComponent: (id: string) => Promise<IComponent>,
     ) {
         super();
 
@@ -51,8 +49,7 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
     }
 
     public async getDefaultComponent(): Promise<IComponent> {
-        const defaultComponentId = this.root.get<string>("default-component-id");
-        return this.getComponent(defaultComponentId);
+        return this.root.get<IComponentHandle>("tabs-component-id").get();
     }
 
     public getTitle(): string {

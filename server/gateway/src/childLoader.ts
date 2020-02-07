@@ -24,7 +24,7 @@ import * as jwt from "jsonwebtoken";
 import * as winston from "winston";
 
 const packageUrl = "https://packages.wu2.prague.office-int.com";
-const installLocation = "/tmp/component";
+const installLocation = "/tmp/chaincode";
 const waitTimeoutMS = 60000;
 
 export interface IIncomingMessage {

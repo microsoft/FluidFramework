@@ -1,6 +1,6 @@
-# Welcome to your first Fluid Component
+# Welcome to your first Fluid Chaincode
 
-Welcome to your first component.
+Welcome to your first chaincode component.
 
 ## Getting Started
 To start coding, open this directory in your IDE and check out ./src/index.tsx
@@ -17,7 +17,7 @@ You can try the following commands
 
 
     npm run deploy
-       Publishes the component to https://packages.wu2.prague.office-int.com/#/
+       Publishes the chaincode to https://packages.wu2.prague.office-int.com/#/
 ````
 
 We suggest you start by typing:
@@ -32,7 +32,7 @@ Uncomment the commented code in ./src/index.tsx to add a title to your component
 
 ## Deploy
 
-To deploy and make your component "Live" you'll have to deploy it to verdaccio, our private NPM repository.
+To deploy and make your chaincode "Live" you'll have to deploy it to verdaccio, our private NPM repository.
 
 Go to https://packages.wu2.prague.office-int.com
 
@@ -48,7 +48,7 @@ To deploy, use
     npm run deploy
 
 
-To view your component, you can go to the URL
+To view your chaincode, you can go to the URL
 
     https://www.wu2-ppe.prague.office-int.com/loader/stupefied-kilby/prague/{random container name}?chaincode={pkg.name}@{pkg.version};
 

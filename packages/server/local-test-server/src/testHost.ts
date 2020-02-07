@@ -41,7 +41,7 @@ class TestRootComponent extends PrimedComponent implements IComponentRunnable {
     /**
      * Type name of the component for the IComponentRegistryLookup
      */
-    public static readonly type: string = "@component/test-root-component";
+    public static readonly type: string = "@chaincode/test-root-component";
 
     public static readonly codeProposal: IFluidCodeDetails = {
         package: TestRootComponent.type,

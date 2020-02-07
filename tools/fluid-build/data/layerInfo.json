@@ -71,6 +71,15 @@
                 "packages": [
                     "@microsoft/fluid-odsp-utils"
                 ]
+            },
+            "Tool-Utils": {
+                "dot": false,
+                "packages": [
+                    "@microsoft/fluid-tool-utils"
+                ],
+                "deps": [
+                    "Other-Utils"
+                ]
             }
         }
     },
@@ -176,7 +185,8 @@
                 "deps": [
                     "Framework",
                     "Routerlicious-Driver",
-                    "Other-Utils"
+                    "Other-Utils",
+                    "Tool-Utils"
                 ]
             },
             "Test": {

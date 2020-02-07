@@ -93,6 +93,7 @@ COPY packages/runtime/runtime-test-utils/package*.json packages/runtime/runtime-
 COPY packages/runtime/sequence/package*.json packages/runtime/sequence/
 COPY packages/server/local-test-server/package*.json packages/server/local-test-server/
 COPY packages/utils/odsp-utils/package*.json packages/utils/odsp-utils/
+COPY packages/utils/fluid-tool-utils/package*.json packages/utils/fluid-tool-utils/
 COPY packages/server/tools-core/package*.json packages/server/tools-core/
 COPY packages/test/snapshots/package*.json packages/test/snapshots/
 COPY packages/tools/fluid-fetch/package*.json packages/tools/fluid-fetch/
@@ -148,12 +149,12 @@ WORKDIR /usr/src/server
 # Copy the package.json structure we create from the setup stage to reduce container layers
 COPY --from=setup /usr/src/server/ ./
 
-# Copy over component npmrc and package.json to dynamically install packages.
-COPY server/routerlicious/component/* /tmp/component/
+# Copy over chaincode npmrc and package.json to dynamically install packages.
+COPY server/routerlicious/chaincode/* /tmp/chaincode/
 
 # Give write permission to node user.
-RUN chown -R node:node /tmp/component/
-RUN chmod -R 755 /tmp/component/*
+RUN chown -R node:node /tmp/chaincode/
+RUN chmod -R 755 /tmp/chaincode/*
 
 # Give node user access to nyc in order to run and store coverage tests. Do this in all packages directory
 # as well as the root

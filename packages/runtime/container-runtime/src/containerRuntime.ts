@@ -22,7 +22,6 @@ import {
     IDeltaManager,
     IDeltaSender,
     ILoader,
-    IMessageScheduler,
     IRuntime,
 } from "@microsoft/fluid-container-definitions";
 import {
@@ -148,8 +147,6 @@ interface IRuntimeMessageMetadata {
 }
 
 export class ScheduleManager {
-    private readonly messageScheduler: IMessageScheduler | undefined;
-    private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     private readonly deltaScheduler: DeltaScheduler;
     private pauseSequenceNumber: number | undefined;
     private pauseClientId: string | undefined;
@@ -159,18 +156,10 @@ export class ScheduleManager {
     private batchClientId: string;
 
     constructor(
-        messageScheduler: IMessageScheduler | undefined,
+        private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         private readonly emitter: EventEmitter,
-        legacyDeltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         private readonly logger: ITelemetryLogger,
     ) {
-        if (!messageScheduler || !("toArray" in messageScheduler.deltaManager.inbound as any)) {
-            this.deltaManager = legacyDeltaManager;
-            return;
-        }
-
-        this.messageScheduler = messageScheduler;
-        this.deltaManager = this.messageScheduler.deltaManager;
         this.deltaScheduler = new DeltaScheduler(
             this.deltaManager,
             ChildLogger.create(this.logger, "DeltaScheduler"),
@@ -217,13 +206,6 @@ export class ScheduleManager {
     }
 
     public beginOperation(message: ISequencedDocumentMessage) {
-        // If in legacy mode every operation is a batch
-        if (!this.messageScheduler) {
-            this.emitter.emit("batchBegin", message);
-            this.deltaScheduler.batchBegin();
-            return;
-        }
-
         if (this.batchClientId !== message.clientId) {
             // As a back stop for any bugs marking the end of a batch - if the client ID flipped, we
             // consider the previous batch over.
@@ -252,7 +234,7 @@ export class ScheduleManager {
     }
 
     public endOperation(error: any | undefined, message: ISequencedDocumentMessage) {
-        if (!this.messageScheduler || error) {
+        if (error) {
             this.batchClientId = undefined;
             this.emitter.emit("batchEnd", error, message);
             this.deltaScheduler.batchEnd();
@@ -496,7 +478,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
     private tasks: string[] = [];
 
-    // Back-compat: version decides between loading document and component.
+    // Back-compat: version decides between loading document and chaincode.
     private version: string;
 
     private _flushMode = FlushMode.Automatic;
@@ -588,9 +570,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.logger = context.logger;
 
         this.scheduleManager = new ScheduleManager(
-            context.IMessageScheduler,
-            this,
             context.deltaManager,
+            this,
             ChildLogger.create(this.logger, "ScheduleManager"),
         );
 
@@ -797,13 +778,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         } finally {
             this.scheduleManager.endOperation(error, message);
         }
-    }
-
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public postProcess(message: ISequencedDocumentMessage, local: boolean, context: any) {
-        return this.context.IMessageScheduler
-            ? Promise.reject("Scheduler assumes only process")
-            : Promise.resolve();
     }
 
     public processSignal(message: ISignalMessage, local: boolean) {

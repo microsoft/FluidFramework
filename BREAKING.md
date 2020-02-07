@@ -1,22 +1,20 @@
 # 0.14 Breaking Changes
-
 - [Samples and chaincode have been renamed to examples and components respectively](##Samples-and-chaincode-have-been-renamed-to-examples-and-components-respectively)
-- [Remove all references to the term chaincode](##Remove-all-references-to-the-term-chaincode)
 - [Top-level `type` on `IClient` removed](#Top-level-type-on-IClient-removed)
+- [Remove back-compat support for loader <= 0.8](#remove-back-compat-support-for-loader-0.8)
 
 ## Samples and chaincode have been renamed to examples and components respectively
-
-The directories themselves have been renamed.   
+The directories themselves have been renamed.
 All path references in the dockerfile and json manifests have been updated along with variables assigned using path constants in code
-
-## Remove all references to the term chaincode
-
-Any references to the internal name of "chaincode" have been removed, they have been replaced with "component"
-All packages starting with @chaincode now start with @component
 
 ## Top-level `type` on `IClient` removed
 
 The `type` field on `IClient` has been removed.
+
+## Remove back-compat support for loader <= 0.8
+
+Back-compat support code for postProcess and ScheduleManager is removed for loader <= 0.8, which doesn't support group ops.
+Any component based on runtime >= 0.14 will no longer work with loader <= 0.8
 
 # 0.13 Breaking Changes
 

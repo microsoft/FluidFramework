@@ -43,7 +43,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         container: Container,
         scope: IComponent,
         codeLoader: ICodeLoader,
-        component: IRuntimeFactory,
+        chaincode: IRuntimeFactory,
         baseSnapshot: ISnapshotTree | null,
         attributes: IDocumentAttributes,
         blobManager: BlobManager | undefined,
@@ -62,7 +62,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
             container,
             scope,
             codeLoader,
-            component,
+            chaincode,
             baseSnapshot,
             attributes,
             blobManager,
@@ -153,7 +153,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         private readonly container: Container,
         public readonly scope: IComponent,
         public readonly codeLoader: ICodeLoader,
-        public readonly component: IRuntimeFactory,
+        public readonly chaincode: IRuntimeFactory,
         private _baseSnapshot: ISnapshotTree | null,
         private readonly attributes: IDocumentAttributes,
         public readonly blobManager: BlobManager | undefined,
@@ -202,16 +202,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         this.runtime!.process(message, local, context);
     }
 
-    public async postProcess(message: ISequencedDocumentMessage, local: boolean, context: any): Promise<void> {
-        // Included for back compat with documents created prior to postProcess deprecation
-        // eslint-disable-next-line @typescript-eslint/unbound-method
-        if (!this.runtime || !this.runtime.postProcess) {
-            return Promise.reject("Runtime must query for IMessageHandler to signal it does not implement postProcess");
-        }
-
-        return this.runtime.postProcess(message, local, context);
-    }
-
     public processSignal(message: ISignalMessage, local: boolean) {
         this.runtime!.processSignal(message, local);
     }
@@ -238,6 +228,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
     }
 
     private async load() {
-        this.runtime = await this.component.instantiateRuntime(this);
+        this.runtime = await this.chaincode.instantiateRuntime(this);
     }
 }

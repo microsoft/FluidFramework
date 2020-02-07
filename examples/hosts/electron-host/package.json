@@ -43,5 +43,5 @@
     "webpack-dev-server": "^3.8.0",
     "webpack-merge": "^4.1.2"
   },
-  "component": "@prague/shared-text@latest"
+  "chaincode": "@prague/shared-text@latest"
 }

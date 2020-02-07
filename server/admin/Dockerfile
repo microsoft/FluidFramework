@@ -18,12 +18,12 @@ COPY package-lock.json .
 COPY package.json .
 RUN npm install
 
-# Copy over component npmrc and package.json to dynamically install packages.
-COPY component/* /tmp/component/
+# Copy over chaincode npmrc and package.json to dynamically install packages.
+COPY chaincode/* /tmp/chaincode/
 
 # Give write permission to node user.
-RUN chown -R node:node /tmp/component/
-RUN chmod -R 755 /tmp/component/*
+RUN chown -R node:node /tmp/chaincode/
+RUN chmod -R 755 /tmp/chaincode/*
 
 # And now copy over our actual code and build
 COPY . .

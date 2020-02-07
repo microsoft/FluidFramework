@@ -103,7 +103,7 @@ class TourOfHeroesComponentView implements IComponentHTMLVisual {
     }
 }
 
-// Note on defining components - snapshotting does not seem like it should be part of an IComponentComponent given
+// Note on defining components - snapshotting does not seem like it should be part of an IChaincodeComponent given
 // these synthetic components don't need it. We may want this to just be "attach"
 class GraphIQLView implements IComponentHTMLVisual {
     public get IComponentHTMLVisual() { return this; }
@@ -142,7 +142,7 @@ class GraphIQLView implements IComponentHTMLVisual {
     }
 }
 
-const TourOfHeroesType = "@component/tourofheroes";
+const TourOfHeroesType = "@chaincode/tourofheroes";
 const TourOfHeroesInstantiationFactory = new PrimedComponentFactory(TourOfHeroes, []);
 class TourOfHeroesContainerInstantiationFactory implements IRuntimeFactory, IComponentRegistry, IComponentFactory {
     public get IComponentFactory() { return this; }

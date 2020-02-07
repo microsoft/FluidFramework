@@ -7,7 +7,7 @@ import { PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@micro
 import { IProvideRuntimeFactory } from "@microsoft/fluid-container-definitions";
 import { IProvideComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import * as sequence from "@microsoft/fluid-sequence";
-import { MonacoRunner } from "./component";
+import { MonacoRunner } from "./chaincode";
 
 const componentFactory = new PrimedComponentFactory(
     MonacoRunner,

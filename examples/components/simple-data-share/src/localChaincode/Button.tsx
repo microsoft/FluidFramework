@@ -11,7 +11,7 @@ import * as ReactDOM from "react-dom";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../../package.json");
-const componentName = pkg.name;
+const chaincodeName = pkg.name;
 
 /**
  * Button does not display any content but modifies the counter count on the button click.
@@ -19,7 +19,7 @@ const componentName = pkg.name;
 export class Button extends PrimedComponent implements IComponentHTMLVisual {
     public get IComponentHTMLVisual() { return this; }
 
-    public static readonly componentName = `${componentName}/button`;
+    public static readonly chaincodeName = `${chaincodeName}/button`;
     public counter: Counter;
 
     public render(div: HTMLDivElement) {

@@ -28,9 +28,9 @@ npm start
 
 Then navigate to http://localhost:8080. This will redirect you to http://localhost:8080/example but you can change
 'example' to any string you'd like and a new document will be created under that name. By default a new Flow View
-will be created but by specifying the component query parameter any of the packages on
+will be created but by specifying the chaincode query parameter any of the packages on
 https://packages.wu2.prague.office-int.com can be loaded - i.e.
-http://localhost:8080/new-document?chaincode=@component/tourofheroes@0.0.5918.
+http://localhost:8080/new-document?chaincode=@chaincode/tourofheroes@0.0.5918.
 
 ## The Code
 
@@ -186,23 +186,23 @@ The interface for the loader is also simple.
 
 ```typescript
 export interface ICodeLoader {
-    load(source: string): Promise<IComponentFactory>;
+    load(source: string): Promise<IChaincodeFactory>;
 }
 ```
 
 load takes in a source string. Today this is a NPM package. But similar to npm package references is expected to
 grow into git repos, tarballs, CDN links, etc... 
 
-The IComponentFactory is a simple interface that defines the entry point function the loader expects the code
+The IChaincodeFactory is a simple interface that defines the entry point function the loader expects the code
 package to export.
 
 ```typescript
-export interface IComponentFactory {
+export interface IChaincodeFactory {
     instantiateRuntime(context: IContainerContext): Promise<IRuntime>;
 }
 ```
 
-Once the `IComponentFactory` is returned the loader then invokes the instantiateRuntime call to load the code package.
+Once the `IChaincodeFactory` is returned the loader then invokes the instantiateRuntime call to load the code package.
 
 ### Loading a Fluid document
 

@@ -38,7 +38,6 @@ import {
     buildSnapshotTree,
     isSystemMessage,
     ProtocolOpHandler,
-    Quorum,
     QuorumProxy,
     raiseConnectedEvent,
 } from "@microsoft/fluid-protocol-base";
@@ -75,7 +74,7 @@ import { debug } from "./debug";
 import { DeltaManager } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { Loader, RelativeLoader } from "./loader";
-import { NullComponent } from "./nullRuntime";
+import { NullChaincode } from "./nullRuntime";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 
@@ -152,7 +151,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private loaded = false;
     private blobManager: BlobManager | undefined;
 
-    // Active component and associated runtime
+    // Active chaincode and associated runtime
     private storageService: IDocumentStorageService | undefined | null;
 
     private _version: string | undefined;
@@ -167,8 +166,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private readonly _audience: Audience;
 
     private context: ContainerContext | undefined;
-    private pkg: string | IFluidCodeDetails | undefined;
-    private codeQuorumKey;
+    private pkg: IFluidCodeDetails | undefined;
     private protocolHandler: ProtocolOpHandler | undefined;
 
     private firstConnection = true;
@@ -228,7 +226,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this._deltaManager.clientDetails;
     }
 
-    public get componentPackage(): string | IFluidCodeDetails | undefined {
+    public get chaincodePackage(): IFluidCodeDetails | undefined {
         return this.pkg;
     }
 
@@ -753,17 +751,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             (sequenceNumber, key, value) => {
                 debug(`approved ${key}`);
                 if (key === "code" || key === "code2") {
-                    // Back compat - can remove in 0.7
-                    if (!this.codeQuorumKey) {
-                        this.codeQuorumKey = key;
-                    }
-
-                    // Back compat - can remove in 0.7
-                    if (key !== this.codeQuorumKey) {
-                        return;
-                    }
-
-                    debug(`loadCode ${JSON.stringify(value)}`);
+                    debug(`loadRuntimeFactory ${JSON.stringify(value)}`);
 
                     if (value === this.pkg) {
                         return;
@@ -792,34 +780,31 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return blobManager;
     }
 
-    private async loadCodeFromQuorum(
-        quorum: Quorum,
-    ): Promise<{ pkg: IFluidCodeDetails | undefined; component: IRuntimeFactory }> {
-        // Back compat - can remove in 0.7
-        const codeQuorumKey = quorum.has("code")
-            ? "code"
-            : quorum.has("code2") ? "code2" : undefined;
-        this.codeQuorumKey = codeQuorumKey;
+    private getCodeDetailsFromQuorum(): IFluidCodeDetails | undefined {
+        const quorum = this.protocolHandler!.quorum;
 
-        const pkg = codeQuorumKey ? quorum.get(codeQuorumKey) as IFluidCodeDetails : undefined;
-        const component = await this.loadCode(pkg);
+        let pkg = quorum.get("code");
 
-        return { component, pkg };
+        // Back compat
+        if (!pkg) {
+            pkg = quorum.get("code2");
+        }
+
+        return pkg;
     }
 
     /**
-     * Loads the code for the provided package
+     * Loads the runtime factory for the provided package
      */
-    private async loadCode(pkg: IFluidCodeDetails | undefined): Promise<IRuntimeFactory> {
-        if (!pkg) {
-            return new NullComponent();
-        }
-
+    private async loadRuntimeFactory(pkg: IFluidCodeDetails): Promise<IRuntimeFactory> {
         const component = await this.codeLoader.load<IRuntimeFactory | IFluidModule>(pkg);
 
         if ("fluidExport" in component) {
             const factory = component.fluidExport.IRuntimeFactory;
-            return factory ? factory : Promise.reject(PackageNotFactoryError);
+            if (!factory) {
+                throw new Error(PackageNotFactoryError);
+            }
+            return factory;
         }
 
         // TODO included for back-compat
@@ -827,7 +812,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             return component;
         }
 
-        return Promise.reject(PackageNotFactoryError);
+        throw new Error(PackageNotFactoryError);
     }
 
     private get client() {
@@ -1120,8 +1105,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         storage: IDocumentStorageService,
         snapshot?: ISnapshotTree,
     ) {
-        const component = await this.loadCodeFromQuorum(this.protocolHandler!.quorum);
-        this.pkg = component.pkg;
+        this.pkg = this.getCodeDetailsFromQuorum();
+        const chaincode = this.pkg ? await this.loadRuntimeFactory(this.pkg) : new NullChaincode();
 
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go to this loader
@@ -1131,7 +1116,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this,
             this.scope,
             this.codeLoader,
-            component.component,
+            chaincode,
             snapshot || { id: null, blobs: {}, commits: {}, trees: {} },
             attributes,
             this.blobManager,

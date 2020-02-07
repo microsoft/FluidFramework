@@ -7,16 +7,22 @@
   "scripts": {
     "build": "npm run build:vuepress",
     "build:ci": "npm run build:copy && node buildDocs.js && npm run build:vuepress",
-    "build:copy": "copyfiles -f \"api-pages/**\" api/",
+    "build:copy": "npm run build:copy:api && npm run build:copy:fluid",
+    "build:copy:api": "copyfiles -f \"api-pages/**\" api/",
+    "build:copy:fluid": "copyfiles -f \"node_modules/@microsoft/fluid-local-web-host/dist/**\" .vuepress/public/fluid/fluid-local-web-host && copyfiles -f \"node_modules/@fluid-example/sudoku/dist/**\" .vuepress/public/fluid/sudoku && copyfiles -f \"node_modules/@fluid-example/diceroller/dist/**\" .vuepress/public/fluid/diceroller && copyfiles -f \"node_modules/@fluid-example/todo/dist/**\" .vuepress/public/fluid/todo && copyfiles -f \"node_modules/@fluid-example/badge/dist/**\" .vuepress/public/fluid/badge",
     "build:vuepress": "cross-env NODE_OPTIONS=\"--max-old-space-size=8192\" vuepress build --dest ./dist --cache .cache",
-    "clean": "rimraf api",
+    "clean": "rimraf api dist .vuepress/public/fluid/*/**",
     "lint": "vuepress check-md",
     "start": "npm run build:copy && node buildDocs.js && npm run start:vuepress",
     "start:docker": "npm run build:copy && node buildDocs.js && npm run start:vuepress",
-    "start:vuepress": "vuepress dev --port 8080 --no-clear-screen --cache .cache",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start:vuepress": "vuepress dev --port 8080 --no-clear-screen --cache .cache"
   },
   "dependencies": {
+    "@fluid-example/badge": "^0.14.0",
+    "@fluid-example/diceroller": "^0.14.0",
+    "@fluid-example/sudoku": "^0.14.0",
+    "@fluid-example/todo": "^0.14.0",
+    "@microsoft/fluid-local-web-host": "^0.14.0",
     "@vuepress/plugin-pwa": "^1.3.0",
     "copyfiles": "^2.2.0",
     "firstline": "^2.0.2",

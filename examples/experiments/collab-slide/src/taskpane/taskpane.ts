@@ -33,7 +33,7 @@ export class DocumentFactory {
         this.loaderDeferred.resolve(loader);
     }
 
-    public async create(component: IFluidCodeDetails): Promise<string> {
+    public async create(chaincode: IFluidCodeDetails): Promise<string> {
         const monikerP = new Promise(async (resolve) => {
             if (this.moniker) {
                 resolve(this.moniker);
@@ -61,7 +61,7 @@ export class DocumentFactory {
             return Promise.reject("Code has already been proposed on document");
         }
 
-        quorum.propose("code", component);
+        quorum.propose("code", chaincode);
 
         return url;
     }

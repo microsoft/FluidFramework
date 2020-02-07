@@ -9,10 +9,10 @@ import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { parse } from "querystring";
 
 /**
- * The initializeComponent method takes in a document and a desired NPM package and establishes a code quorum
+ * The initializeChaincode method takes in a document and a desired NPM package and establishes a code quorum
  * on this package.
  */
-export async function initializeComponent(document: Container, pkg: IFluidCodeDetails): Promise<void> {
+export async function initializeChaincode(document: Container, pkg: IFluidCodeDetails): Promise<void> {
     if (!pkg) {
         return;
     }
@@ -68,5 +68,5 @@ export async function attach(loader: Loader, container: Container, url: string, 
 
 export function parsePackageName(url: Location, defaultPkg: string): string {
     const parsed = parse(url.search.substr(1));
-    return parsed.component ? parsed.component as string : defaultPkg;
+    return parsed.chaincode ? parsed.chaincode as string : defaultPkg;
 }

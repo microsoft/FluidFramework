@@ -64,7 +64,7 @@ Choosing between the options above might require user input.
 
 Components may implement **IComponentClipboardConsumer.getComponentFromClipboardHTML** to provide an
 alternate component identifier to be instantiated during the paste operation. This alternate component
-should be instantiated on paste instead of the original component identifier that was serialized
+should be instantiated on paste instead of the original component component identifier that was serialized
 on copy. In essence, the first instantiated component (serialized component identifier) may act as a
 factory for the component that will actually be instantiated.
 

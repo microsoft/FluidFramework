@@ -14,20 +14,20 @@ This is our core component. It does a few specific things:
 4. It initializes the Container Runtime.
 5. It loads all of the other components.
 
-## [`Button`](./src/localComponent/Button.tsx)
+## [`Button`](./src/localChaincode/Button.tsx)
 
 `Button` doesn't manage or display and Fluid state but updates that state on a trigger.
 
 1. Creates a button in the provided div.
 2. Increments the counter object on click.
 
-## [`Incrementor`](./src/localComponent/Incrementor.tsx)
+## [`Incrementor`](./src/localChaincode/Incrementor.tsx)
 
 `Incrementor` doesn't manage or have any UI. It simply set's a timer that will update the state of the provided counter. Adding this logic into its own component can be valuable when you need to reuse this logic with multiple other components. It reduces duplication.
 
 1. Create a timer to randomly increment the counter every 5 seconds.
 
-## [`TextDisplay`](./src/localComponent/TextDisplay.tsx)
+## [`TextDisplay`](./src/localChaincode/TextDisplay.tsx)
 
 `TextDisplay` doesn't modify state but only displays changes.
 

@@ -36,7 +36,7 @@ export class DrawerCommandBar extends React.Component<IDrawerCommandBarProps> {
     }
 
     private async createDocument(details: { pkg: string; name: string; version: string; icon: string }) {
-        const component: IFluidCodeDetails = {
+        const chaincode: IFluidCodeDetails = {
             config: {
                 "@fluid-example:cdn": "https://pragueauspkn-3873244262.azureedge.net",
             },
@@ -48,7 +48,7 @@ export class DrawerCommandBar extends React.Component<IDrawerCommandBarProps> {
         const member = context.getQuorum().getMember(clientId);
         const user = member ? member.client.user : {};
 
-        const name = await this.props.documentFactory.create(component);
+        const name = await this.props.documentFactory.create(chaincode);
         this.props.documentsMap.set(name, { ...details, user, date: Date.now() });
     }
 

@@ -13,7 +13,7 @@ import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
 import { IComponentFactory, FlushMode } from "@microsoft/fluid-runtime-definitions";
 import { fluidExport as persona } from "./persona";
 
-const componentPackage = "@component/persona";
+const componentPackage = "@chaincode/persona";
 
 class DrawerDocumentFactory implements IRuntimeFactory {
     public get IRuntimeFactory() { return this; }

@@ -14,11 +14,14 @@ export interface ITenantConfig {
 }
 
 export interface ITenantStorage {
-    // Historian backed URL to the storage provider
-    url: string;
+    // External URL to Historian outside of the cluster
+    historianUrl: string;
 
-    // Direct access URL to the storage provider
-    direct: string;
+    // Internal URL to Historian within the cluster
+    internalHistorianUrl: string;
+
+    // URL to the storage provider
+    url: string;
 
     // Storage provider owner
     owner: string;

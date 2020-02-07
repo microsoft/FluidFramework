@@ -10,7 +10,7 @@ example of this is the npm package that should be loaded to process operations a
 
 ## Document and channels
 
-The base document channel is 'owned' and run by the component of the loader. It should be versioned and require
+The base document channel is 'owned' and run by the chaincode of the loader. It should be versioned and require
 a specific loader version.
 
 The channels of the document run separate code as defined by the consensus field. It's possible we could further

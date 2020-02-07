@@ -114,7 +114,7 @@ export class BlobManager implements IBlobManager {
 }
 
 /**
- * Instantiates a new component
+ * Instantiates a new chaincode component
  */
 export function instantiateComponent(context: IComponentContext): void {
     const modules = new Map<string, any>();
