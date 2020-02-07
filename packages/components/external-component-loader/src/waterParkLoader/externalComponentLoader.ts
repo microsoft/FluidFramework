@@ -121,11 +121,21 @@ export class ExternalComponentLoader extends PrimedComponent
                         const pkgReg = await urlReg.IComponentRegistry.get(url) as IComponent;
                         let componentRuntime: IComponentRuntime;
                         if (pkgReg.IComponentDefaultFactoryName) {
-                            componentRuntime = await this.context.createComponent(
-                                ["url", url, pkgReg.IComponentDefaultFactoryName.getDefaultFactoryName()]);
+                            componentRuntime = await this.context.hostRuntime.createComponent(
+                                uuid(),
+                                [
+                                    WaterParkLoaderName,
+                                    "url",
+                                    url,
+                                    pkgReg.IComponentDefaultFactoryName.getDefaultFactoryName(),
+                                ]);
                         } else if (pkgReg.IComponentFactory) {
-                            componentRuntime = await this.context.createComponent(
-                                ["url", url]);
+                            componentRuntime = await this.context.hostRuntime.createComponent(
+                                uuid(), [
+                                    WaterParkLoaderName,
+                                    "url",
+                                    url,
+                                ]);
                         } else {
                             throw new Error(`${url} is not a factory, and does not provide default component name`);
                         }
