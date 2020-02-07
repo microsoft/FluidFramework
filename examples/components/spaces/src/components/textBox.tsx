@@ -18,8 +18,7 @@ import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-// tslint:disable-next-line: no-var-requires no-require-imports
-export const TextBoxName = `spaces-textbox`;
+export const TextBoxName = `textbox`;
 
 /**
  * TextBox is a really simple component that uses the CollaborativeTextArea to provide a

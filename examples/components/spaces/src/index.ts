@@ -5,7 +5,7 @@
 
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 
-import {ClickerName, ClickerInstantiationFactory} from "@fluid-example/clicker";
+import { ClickerName, ClickerInstantiationFactory } from "@fluid-example/clicker";
 import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
 import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
 
@@ -13,9 +13,13 @@ import {
     ComponentToolbar,
     ComponentToolbarName,
     Button,
+    ButtonName,
     Number,
+    NumberName,
     TextBox,
+    TextBoxName,
     FacePile,
+    FacePileName,
 } from "./components";
 import {
     Manager,
@@ -34,10 +38,10 @@ export const fluidExport = new SimpleModuleInstantiationFactory(
         [ClickerName, Promise.resolve(ClickerInstantiationFactory)],
         [componentName, Promise.resolve(Spaces.getFactory())],
         [ComponentToolbarName, Promise.resolve(ComponentToolbar.getFactory())],
-        ["button", Promise.resolve(Button.getFactory())],
-        ["number", Promise.resolve(Number.getFactory())],
-        ["textbox", Promise.resolve(TextBox.getFactory())],
-        ["facepile", Promise.resolve(FacePile.getFactory())],
+        [ButtonName, Promise.resolve(Button.getFactory())],
+        [NumberName, Promise.resolve(Number.getFactory())],
+        [TextBoxName, Promise.resolve(TextBox.getFactory())],
+        [FacePileName, Promise.resolve(FacePile.getFactory())],
         ["codemirror", Promise.resolve(cmfe)],
         ["prosemirror", Promise.resolve(pmfe)],
     ]),

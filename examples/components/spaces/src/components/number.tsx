@@ -16,6 +16,8 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { Manager } from "../container-services";
 
+export const NumberName = "number";
+
 /**
  * Number clicker example using view interfaces and stock component classes.
  */

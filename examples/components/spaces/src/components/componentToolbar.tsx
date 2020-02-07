@@ -20,7 +20,7 @@ const componentToolbarStyle: React.CSSProperties = { position: "absolute", top: 
 export const ComponentToolbarName = "componentToolbar";
 
 /**
- * A component to allow you to add component
+ * A component to allow you to add and manipulate components
  */
 export class ComponentToolbar extends PrimedComponent implements IComponentHTMLVisual {
 
@@ -33,7 +33,7 @@ export class ComponentToolbar extends PrimedComponent implements IComponentHTMLV
     }
 
     /**
-     * Will return a new Clicker view
+     * Will return a new ComponentToolbarView
      */
     public render(div: HTMLElement) {
         ReactDOM.render(

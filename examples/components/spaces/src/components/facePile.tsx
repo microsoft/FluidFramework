@@ -38,9 +38,11 @@ interface IFacepileAddFaceExampleProps {
     quorum: IQuorum;
 }
 
-export interface IFacepileAddFaceExampleState {
+interface IFacepileAddFaceExampleState {
     users: string[];
 }
+
+export const FacePileName = "facePile";
 
 export class FacepileAddFaceExample extends React.Component<IFacepileAddFaceExampleProps,IFacepileAddFaceExampleState> {
     constructor(props: IFacepileAddFaceExampleProps) {

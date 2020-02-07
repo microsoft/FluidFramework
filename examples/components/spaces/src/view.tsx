@@ -60,7 +60,7 @@ interface ISpaceGridViewProps {
 }
 
 interface ISpaceGridViewState {
-    editable: boolean;
+    isEditable: boolean;
     componentMap: Map<string, Layout>;
 }
 
@@ -72,7 +72,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
     constructor(props) {
         super(props);
         this.state = {
-            editable: true,
+            isEditable: true,
             componentMap: this.props.dataModel.componentList,
         };
 
@@ -84,8 +84,8 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
         this.props.dataModel.on("componentListChanged", (newMap: Map<string, Layout>) => {
             this.setState({ componentMap: newMap });
         });
-        this.props.dataModel.on("editableUpdated", (editable: boolean) => {
-            this.setState({editable});
+        this.props.dataModel.on("editableUpdated", (isEditable: boolean) => {
+            this.setState({isEditable});
         });
     }
 
@@ -114,11 +114,12 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
     }
 
     generateViewState(): [JSX.Element, any[], Layout[]] {
-        const array = [];
+        const components = [];
         const layouts: Layout[] = [];
-        let adder: JSX.Element | undefined;
+        let componentToolbar: JSX.Element | undefined;
+
         this.state.componentMap.forEach((layout, id) => {
-            const editable = this.state.editable && id !== this.props.dataModel.adderComponentId;
+            const editable = this.state.isEditable && id !== this.props.dataModel.adderComponentId;
             // Do some CSS stuff depending on if the user is editing or not
             const editableStyle: React.CSSProperties = { overflow: "hidden", padding: 2 };
             const embeddedComponentStyle: React.CSSProperties = {
@@ -161,41 +162,41 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                     </div>
                 </div>;
             if (id !== this.props.dataModel.adderComponentId) {
-                array.push(element);
+                components.push(element);
             } else {
-                adder = element;
+                componentToolbar = element;
             }
         });
 
-        return [adder, array, layouts];
+        return [componentToolbar, components, layouts];
     }
 
     render() {
-        const [adder, array, layouts] = this.generateViewState();
+        const [componentToolbar, components, layouts] = this.generateViewState();
         return (
             <div>
-                {adder}
+                {componentToolbar}
                 {
                     this.state.componentMap.size > 0 &&
-                    <GridLayout
-                        className="layout"
-                        cols={36}
-                        rowHeight={50}
-                        width={1800}
-                        // eslint-disable-next-line no-null/no-null
-                        compactType={null} // null is required for the GridLayout
-                        isDroppable={this.state.editable}
-                        isDraggable={this.state.editable}
-                        isResizable={this.state.editable}
-                        preventCollision={true}
-                        isRearrangeable={false}
-                        onResizeStop={this.onGridChangeEvent}
-                        onDragStop={this.onGridChangeEvent}
-                        layout={layouts}
-                        style={gridContainerStyle}
-                    >
-                        {array}
-                    </GridLayout>
+                        <GridLayout
+                            className="layout"
+                            cols={36}
+                            rowHeight={50}
+                            width={1800}
+                            // eslint-disable-next-line no-null/no-null
+                            compactType={null} // null is required for the GridLayout
+                            isDroppable={this.state.isEditable}
+                            isDraggable={this.state.isEditable}
+                            isResizable={this.state.isEditable}
+                            preventCollision={true}
+                            isRearrangeable={false}
+                            onResizeStop={this.onGridChangeEvent}
+                            onDragStop={this.onGridChangeEvent}
+                            layout={layouts}
+                            style={gridContainerStyle}
+                        >
+                            {components}
+                        </GridLayout>
                 }
             </div>
         );
