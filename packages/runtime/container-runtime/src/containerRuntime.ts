@@ -34,9 +34,9 @@ import { readAndParse, createIError } from "@microsoft/fluid-driver-utils";
 import {
     BlobTreeEntry,
     buildSnapshotTree,
-    CommitTreeEntry,
     isSystemType,
     raiseConnectedEvent,
+    TreeTreeEntry,
 } from "@microsoft/fluid-protocol-base";
 import {
     ConnectionState,
@@ -647,38 +647,20 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
      * @param tagMessage - Message to supply to storage service for writing the snapshot.
      */
     public async snapshot(tagMessage: string, fullTree: boolean = false): Promise<ITree> {
-        // Pull in the prior version and snapshot tree to store against
-        const lastVersion = fullTree ? [] : await this.storage.getVersions(this.id, 1);
-        const tree = lastVersion.length > 0
-            ? await this.storage.getSnapshotTree(lastVersion[0])
-            : { blobs: {}, commits: {}, trees: {} };
-
         // Iterate over each component and ask it to snapshot
         const componentVersionsP = Array.from(this.contexts).map(async ([componentId, value]) => {
             const snapshot = await value.snapshot();
 
             // If ID exists then previous commit is still valid
-            const commit = tree.commits[componentId] as string;
-            if (snapshot.id && commit && !fullTree) {
+            if (snapshot.id && !fullTree) {
                 return {
                     id: componentId,
-                    version: commit,
+                    version: snapshot.id,
                 };
             } else {
-                if (snapshot.id && !commit && !fullTree) {
-                    this.logger.sendErrorEvent({
-                        componentId,
-                        eventName: "MissingCommit",
-                        id: snapshot.id,
-                    });
-                }
-                const parent = commit ? [commit] : [];
-                const version = await this.storage.write(
-                    snapshot, parent, `${componentId} commit ${tagMessage}`, componentId);
-
                 return {
                     id: componentId,
-                    version: version.id,
+                    version: null,
                 };
             }
         });
@@ -693,21 +675,13 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             componentVersions.sort((a, b) => a.id.localeCompare(b.id));
         }
 
-        let gitModules = "";
         for (const componentVersion of componentVersions) {
-            root.entries.push(new CommitTreeEntry(componentVersion.id, componentVersion.version));
-
-            const repoUrl = "https://github.com/kurtb/praguedocs.git"; // this.storageService.repositoryUrl
-            // eslint-disable-next-line max-len
-            gitModules += `[submodule "${componentVersion.id}"]\n\tpath = ${componentVersion.id}\n\turl = ${repoUrl}\n\n`;
+            root.entries.push(new TreeTreeEntry(componentVersion.id, componentVersion.version));
         }
 
         if (this.chunkMap.size > 0) {
             root.entries.push(new BlobTreeEntry(".chunks", JSON.stringify([...this.chunkMap])));
         }
-
-        // Write the module lookup details
-        root.entries.push(new BlobTreeEntry(".gitmodules", gitModules));
 
         return root;
     }
