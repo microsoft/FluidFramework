@@ -6,7 +6,7 @@
 import * as assert from "assert";
 import { randomId, TokenList, TagName } from "@fluid-example/flow-util-lib";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { IComponent, IComponentHandle, IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IComponentHandle, IComponentHTMLOptions } from "@microsoft/fluid-component-core-interfaces";
 import {
     createInsertSegmentOp,
     createRemoveRangeOp,
@@ -49,10 +49,6 @@ export const enum DocSegmentKind {
 
     // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
     endOfText = "eot",
-}
-
-export interface IComponentHTMLViewFactory {
-    createView(model: IComponent, scope?: IComponent): IComponentHTMLView;
 }
 
 const tilesAndRanges = new Set([DocSegmentKind.paragraph, DocSegmentKind.lineBreak, DocSegmentKind.beginTags, DocSegmentKind.inclusion]);

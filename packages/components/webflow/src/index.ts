@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { FlowDocument, flowDocumentFactory, IComponentHTMLViewFactory } from "./document";
-export { Editor } from "./editor";
+export { FlowDocument, flowDocumentFactory } from "./document";
+export { Editor, IComponentHTMLViewFactory } from "./editor";
 export { htmlFormatter } from "./html/formatters";
 export { FlowDocumentType, fluidExport, WebFlowType } from "./runtime";

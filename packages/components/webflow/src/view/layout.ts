@@ -9,7 +9,8 @@ import { Dom, hasTagName, isTextNode, Scheduler, TagName } from "@fluid-example/
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { ISegment, LocalReference, MergeTreeMaintenanceType } from "@microsoft/fluid-merge-tree";
 import { SequenceEvent } from "@microsoft/fluid-sequence";
-import { FlowDocument, IComponentHTMLViewFactory } from "../document";
+import { FlowDocument } from "../document";
+import { IComponentHTMLViewFactory } from "../editor";
 import { clamp, done, emptyObject, getSegmentRange } from "../util";
 import { extractRef, updateRef } from "../util/localref";
 import { debug } from "./debug";

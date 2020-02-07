@@ -4,15 +4,19 @@
  */
 
 import { Caret as CaretUtil, Direction, getDeltaX, getDeltaY, KeyCode, Scheduler } from "@fluid-example/flow-util-lib";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
 import { paste } from "../clipboard/paste";
-import { DocSegmentKind, FlowDocument, getDocSegmentKind, IComponentHTMLViewFactory } from "../document";
+import { DocSegmentKind, FlowDocument, getDocSegmentKind } from "../document";
 import { ownsNode } from "../util/event";
 import { IFormatterState, RootFormatter } from "../view/formatter";
 import { Layout } from "../view/layout";
 import { Caret } from "./caret";
 import { debug } from "./debug";
 import * as styles from "./index.css";
+
+export interface IComponentHTMLViewFactory {
+    createView(model: IComponent, scope?: IComponent): IComponentHTMLView;
+}
 
 export class Editor {
     private readonly layout: Layout;
