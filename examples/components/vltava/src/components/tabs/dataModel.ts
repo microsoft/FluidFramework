@@ -28,11 +28,18 @@ export interface ITabsDataModel extends EventEmitter{
     getTabIds(): string[];
     createTab(type: string): Promise<string>;
     getNewTabTypes(): ITabsTypes[];
+
+    on(event: "newTab", listener: (local: boolean) => void): this;
 }
 
 export class TabsDataModel extends EventEmitter implements ITabsDataModel {
 
     private readonly tabs: IDirectory;
+
+    public on(event: "newTab", listener: (local: boolean) => void): this;
+    public on(event: string | symbol, listener: (...args: any[]) => void): this {
+        return super.on(event, listener);
+    }
 
     constructor(
         root: ISharedDirectory,

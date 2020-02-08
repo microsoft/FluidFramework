@@ -3,7 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export * from "./anchor";
 export * from "./button";
-export * from "./tabs";
-export * from "./vltava";

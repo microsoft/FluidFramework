@@ -18,6 +18,7 @@ import {
 
 import {
     Anchor,
+    Button,
     TabsComponent,
     Vltava,
 } from "./components";
@@ -54,6 +55,13 @@ export class InternalRegistry implements IComponentRegistry, IComponentRegistryD
 
 const generateFactory = () => {
     const containerComponentsDefinition: IContainerComponentDetails[] = [
+        {
+            type: "button",
+            factory: Promise.resolve(Button.getFactory()),
+            capabilities: ["IComponentHTMLVisual"],
+            friendlyName: "Button",
+            fabricIconName: "ButtonControl",
+        },
         {
             type: "clicker",
             factory: Promise.resolve(ClickerInstantiationFactory),

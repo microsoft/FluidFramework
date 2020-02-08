@@ -8,12 +8,13 @@ import {
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import {
+    IComponent,
     IComponentHTMLVisual,
+    IComponentHTMLView,
 } from "@microsoft/fluid-component-core-interfaces";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { Manager } from "../container-services";
 
 const buttonStyle: React.CSSProperties = {
     WebkitUserSelect: "none", // Chrome-Safari
@@ -34,6 +35,27 @@ const textStyle: React.CSSProperties = {
     cursor: "pointer",
 };
 
+class ButtonView implements IComponentHTMLView {
+
+    public constructor(public scope: IComponent) {
+    }
+
+    /**
+     * Will return a new Clicker view
+     */
+    public render(div: HTMLElement) {
+        ReactDOM.render(
+            <div style={buttonStyle} onClick={() => alert("not implemented")}>
+                <h1 style={textStyle}>+</h1>
+            </div>,
+            div);
+    }
+
+    public remove() {
+        // Nothing happens here
+    }
+}
+
 /**
  * Clicker example using view interfaces and stock component classes.
  */
@@ -48,19 +70,18 @@ export class Button extends PrimedComponent implements IComponentHTMLVisual {
     }
 
     protected async componentHasInitialized() {
-        // Register with our manager to say that we support clicks
-        const manager = await this.getService<Manager>("manager");
-        manager.registerProducer("click", this);
     }
 
     /**
-     * Will return a new Clicker view
+     * If someone just calls render they are not providing a scope and we just pass
+     * undefined in.
      */
     public render(div: HTMLElement) {
-        ReactDOM.render(
-            <div style={buttonStyle} onClick={() => this.emit("click")}>
-                <h1 style={textStyle}>+</h1>
-            </div>,
-            div);
+        const view = new ButtonView(undefined);
+        return view.render(div);
+    }
+
+    public addView(scope: IComponent) {
+        return new ButtonView(scope);
     }
 }
