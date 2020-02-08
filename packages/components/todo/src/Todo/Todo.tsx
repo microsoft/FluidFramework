@@ -11,6 +11,7 @@ import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+import * as uuid from "uuid";
 import { TodoItem, TodoItemName } from "../TodoItem/index";
 import { TodoView } from "./TodoView";
 
@@ -102,7 +103,7 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
     public async addTodoItemComponent(props?: any) {
 
         // Create a new todo item
-        const componentRuntime: IComponentRuntime = await this.context.createComponent(TodoItemName, props);
+        const componentRuntime: IComponentRuntime = await this.context.createComponent(uuid(), TodoItemName, props);
         await componentRuntime.request({ url: "/" });
         componentRuntime.attach();
 

@@ -131,7 +131,8 @@ export class ExternalComponentLoader extends PrimedComponent
                                 ]);
                         } else if (pkgReg.IComponentFactory) {
                             componentRuntime = await this.context.hostRuntime.createComponent(
-                                uuid(), [
+                                uuid(),
+                                [
                                     WaterParkLoaderName,
                                     "url",
                                     url,

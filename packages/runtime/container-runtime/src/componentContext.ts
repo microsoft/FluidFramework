@@ -150,7 +150,10 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         super();
     }
 
-    public async createComponent(pkg: string, props?: any, id?: string): Promise<IComponentRuntime> {
+    public async createComponent(pkgOrId: string, maybePkg?: string, props?: any): Promise<IComponentRuntime> {
+        const pkg = maybePkg ?? pkgOrId;
+        const id = maybePkg ? pkgOrId : uuid();
+
         const details = await this.getInitialSnapshotDetails();
         let packagePath: string[] = [...details.pkg];
 
@@ -175,7 +178,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             throw new Error("Registry does not contain entry for the package");
         }
 
-        return this.hostRuntime._createComponentWithProps(packagePath, props, id ?? uuid());
+        return this.hostRuntime._createComponentWithProps(packagePath, props, id);
     }
 
     public async realize(): Promise<IComponentRuntime> {

@@ -36,7 +36,8 @@
     "@microsoft/fluid-map": "^0.14.0",
     "@microsoft/fluid-runtime-definitions": "^0.14.0",
     "react": "^16.10.2",
-    "react-dom": "^16.10.2"
+    "react-dom": "^16.10.2",
+    "uuid": "^3.3.2"
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.14.0",

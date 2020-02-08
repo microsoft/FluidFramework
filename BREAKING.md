@@ -49,11 +49,11 @@ The IHost interface has been removed.  This primarily impacts the signature of t
 The `createSubComponent` method on `IComponentContext` has been removed. Use `createComponent` instead whose signature has been updated. The new function signature is as below:
 ```typescript
 public async createComponent(
-        pkg: string,
-        props?: any,
-        id?: string) {
+        pkgOrId: string,
+        pkg?: string,
+        props?: any) {
 ```
-It does not acccept a package path anymore but just a package name. It also accepts an optional package ID. This API will now attempt to create the specified package off the current sub-registry and if that fails, it will attempt to create it off the global registry.
+It does not acccept a package path anymore but just a package name. To pass in props, an ID has to be provided now. This API will now attempt to create the specified package off the current sub-registry and if that fails, it will attempt to create it off the global registry.
 
 For creating a component with a specific package path, use `createComponent` or `_createComponentWithProps` in `IHostRuntime`.
 

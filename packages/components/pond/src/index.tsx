@@ -11,6 +11,7 @@ import {
 import { IComponent, IComponentHandle, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 import { SharedDirectory } from "@microsoft/fluid-map";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import * as uuid from "uuid";
 
 import { Clicker, ClickerName, ClickerWithInitialValue, ClickerWithInitialValueName } from "./internal-components";
 
@@ -49,7 +50,7 @@ export class Pond extends PrimedComponent implements IComponentHTMLVisual {
     }
 
     async createSubComponent<T extends PrimedComponent>(rootKey: string, pkgName: string, props?: any) {
-        const componentRuntime: IComponentRuntime = await this.context.createComponent(pkgName, props);
+        const componentRuntime: IComponentRuntime = await this.context.createComponent(uuid(), pkgName, props);
         componentRuntime.attach();
         const response = componentRuntime.request({url: "/"});
         const responseValue = await this.asComponent<T>(response);
