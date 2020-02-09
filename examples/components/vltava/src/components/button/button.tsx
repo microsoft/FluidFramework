@@ -10,11 +10,12 @@ import {
 import {
     IComponent,
     IComponentHTMLVisual,
-    IComponentHTMLView,
 } from "@microsoft/fluid-component-core-interfaces";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+import { IComponentDiscoverableInterfaces } from "@microsoft/fluid-framework-interfaces";
+import { IComponentClicks } from "../../interfaces/clicker";
 
 const buttonStyle: React.CSSProperties = {
     WebkitUserSelect: "none", // Chrome-Safari
@@ -35,33 +36,22 @@ const textStyle: React.CSSProperties = {
     cursor: "pointer",
 };
 
-class ButtonView implements IComponentHTMLView {
-
-    public constructor(public scope: IComponent) {
-    }
-
-    /**
-     * Will return a new Clicker view
-     */
-    public render(div: HTMLElement) {
-        ReactDOM.render(
-            <div style={buttonStyle} onClick={() => alert("not implemented")}>
-                <h1 style={textStyle}>+</h1>
-            </div>,
-            div);
-    }
-
-    public remove() {
-        // Nothing happens here
-    }
+interface IButton {
+    click();
 }
 
 /**
- * Clicker example using view interfaces and stock component classes.
+ * Button is a simple component that is just a button. It registers with the matchMaker so
+ * when the button is pressed Components that consume clicks can do work
  */
-export class Button extends PrimedComponent implements IComponentHTMLVisual {
-
-    public get IComponentHTMLVisual() { return this; }
+export class Button extends PrimedComponent
+    implements
+        IButton,
+        IComponentHTMLVisual,
+        IComponentDiscoverableInterfaces,
+        IComponentClicks
+{
+    private readonly registeredCallbacks: (() => void)[] = [];
 
     private static readonly factory = new PrimedComponentFactory(Button, []);
 
@@ -69,7 +59,34 @@ export class Button extends PrimedComponent implements IComponentHTMLVisual {
         return Button.factory;
     }
 
+    public get IComponentHTMLVisual() { return this; }
+
+    public get IComponentDiscoverableInterfaces() { return this; }
+
+    public get IComponentClicks() { return this; }
+
+    public get discoverableInterfaces(): (keyof IComponent)[] {
+        return [
+            "IComponentClicks",
+        ];
+    }
+
+    public onClick(fn: () => void) {
+        this.registeredCallbacks.push(fn);
+    }
+
+    public click() {
+        this.registeredCallbacks.forEach((fn) => {
+            fn();
+        });
+    }
+
     protected async componentHasInitialized() {
+        const matchMaker = await this.getService<IComponent>("matchMaker");
+        const interfaceRegistry = matchMaker.IComponentInterfacesRegistry;
+        if (interfaceRegistry) {
+            interfaceRegistry.registerComponentInterfaces(this);
+        }
     }
 
     /**
@@ -77,11 +94,11 @@ export class Button extends PrimedComponent implements IComponentHTMLVisual {
      * undefined in.
      */
     public render(div: HTMLElement) {
-        const view = new ButtonView(undefined);
-        return view.render(div);
+        ReactDOM.render(
+            <div style={buttonStyle} onClick={this.click.bind(this)}>
+                <h1 style={textStyle}>+</h1>
+            </div>,
+            div);
     }
 
-    public addView(scope: IComponent) {
-        return new ButtonView(scope);
-    }
 }

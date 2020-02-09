@@ -7,6 +7,10 @@ import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
 import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
 import { Spaces } from "@fluid-example/spaces/dist/spaces";
+import {
+    ComponentToolbarName,
+    ComponentToolbar,
+} from "@fluid-example/spaces/dist/components";
 
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
@@ -19,6 +23,7 @@ import {
 import {
     Anchor,
     Button,
+    Number,
     TabsComponent,
     Vltava,
 } from "./components";
@@ -26,6 +31,7 @@ import {
     IComponentRegistryDetails,
     IContainerComponentDetails,
 } from "./interfaces";
+import { MatchMaker } from "./containerServices";
 
 export class InternalRegistry implements IComponentRegistry, IComponentRegistryDetails {
     public get IComponentRegistry() { return this; }
@@ -61,6 +67,13 @@ const generateFactory = () => {
             capabilities: ["IComponentHTMLVisual"],
             friendlyName: "Button",
             fabricIconName: "ButtonControl",
+        },
+        {
+            type: "number",
+            factory: Promise.resolve(Number.getFactory()),
+            capabilities: ["IComponentHTMLVisual"],
+            friendlyName: "Number",
+            fabricIconName: "NumberField",
         },
         {
             type: "clicker",
@@ -107,6 +120,7 @@ const generateFactory = () => {
     // We don't want to include the default wrapper component in our list of available components
     containerComponents.push([ "anchor", Promise.resolve(Anchor.getFactory())]);
     containerComponents.push([ "vltava", Promise.resolve(Vltava.getFactory())]);
+    containerComponents.push([ComponentToolbarName, Promise.resolve(ComponentToolbar.getFactory())]);
 
     const containerRegistries: NamedComponentRegistryEntries = [
         ["", Promise.resolve(new InternalRegistry(containerComponentsDefinition))],
@@ -119,6 +133,9 @@ const generateFactory = () => {
         [
             ...containerComponents,
             ...containerRegistries,
+        ],
+        [
+            ["matchMaker", async (r) => new MatchMaker(r)],
         ],
     );
 };
