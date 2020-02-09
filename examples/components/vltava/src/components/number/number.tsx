@@ -21,6 +21,14 @@ import * as ReactDOM from "react-dom";
 
 export const NumberName = "number";
 
+const numberStyle: React.CSSProperties = {
+    textAlign:"center",
+    width: "100%",
+    height:"100%",
+    boxSizing: "border-box",
+    border:"1px solid black",
+};
+
 interface INumber extends EventEmitter {
     value: number;
     on(event: "incremented", listener: (value: number) => void): this;
@@ -138,7 +146,7 @@ class NumberView extends React.Component<INumberViewProps, INumberViewState>{
 
     render(){
         return (
-            <div style={{textAlign:"center", width: "100%", height:"100%", border:"1px solid black"}}>
+            <div style={numberStyle}>
                 <h1 style={{display:"inline-block"}}>{this.state.value}</h1>
             </div>
         );

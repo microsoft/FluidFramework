@@ -62,6 +62,41 @@ export class InternalRegistry implements IComponentRegistry, IComponentRegistryD
 const generateFactory = () => {
     const containerComponentsDefinition: IContainerComponentDetails[] = [
         {
+            type: "prosemirror",
+            factory: Promise.resolve(pmfe),
+            capabilities: ["IComponentHTMLVisual"],
+            friendlyName: "Prosemirror",
+            fabricIconName: "Edit",
+        },
+        {
+            type: "codemirror",
+            factory: Promise.resolve(cmfe),
+            capabilities: ["IComponentHTMLVisual"],
+            friendlyName: "Codemirror",
+            fabricIconName: "Code",
+        },
+        {
+            type: "spaces",
+            factory: Promise.resolve(Spaces.getFactory()),
+            capabilities: ["IComponentHTMLVisual"],
+            friendlyName: "Spaces",
+            fabricIconName: "SnapToGrid",
+        },
+        {
+            type: "tabs",
+            factory: Promise.resolve(TabsComponent.getFactory()),
+            capabilities: ["IComponentHTMLVisual"],
+            friendlyName: "Tabs",
+            fabricIconName: "BrowserTab",
+        },
+        {
+            type: "clicker",
+            factory: Promise.resolve(ClickerInstantiationFactory),
+            capabilities: ["IComponentHTMLVisual"],
+            friendlyName: "Clicker",
+            fabricIconName: "NumberField",
+        },
+        {
             type: "button",
             factory: Promise.resolve(Button.getFactory()),
             capabilities: ["IComponentHTMLVisual"],
@@ -73,54 +108,20 @@ const generateFactory = () => {
             factory: Promise.resolve(Number.getFactory()),
             capabilities: ["IComponentHTMLVisual"],
             friendlyName: "Number",
-            fabricIconName: "NumberField",
-        },
-        {
-            type: "clicker",
-            factory: Promise.resolve(ClickerInstantiationFactory),
-            capabilities: ["IComponentHTMLVisual"],
-            friendlyName: "Clicker",
-            fabricIconName: "NumberField",
-        },
-        {
-            type: "tabs",
-            factory: Promise.resolve(TabsComponent.getFactory()),
-            capabilities: ["IComponentHTMLVisual"],
-            friendlyName: "Tabs",
-            fabricIconName: "BrowserTab",
-        },
-        {
-            type: "spaces",
-            factory: Promise.resolve(Spaces.getFactory()),
-            capabilities: ["IComponentHTMLVisual"],
-            friendlyName: "Spaces",
-            fabricIconName: "SnapToGrid",
-        },
-        {
-            type: "codemirror",
-            factory: Promise.resolve(cmfe),
-            capabilities: ["IComponentHTMLVisual"],
-            friendlyName: "Codemirror",
-            fabricIconName: "Code",
-        },
-        {
-            type: "prosemirror",
-            factory: Promise.resolve(pmfe),
-            capabilities: ["IComponentHTMLVisual"],
-            friendlyName: "Prosemirror",
-            fabricIconName: "Edit",
+            fabricIconName: "NumberSymbol",
         },
     ];
 
-    const containerComponents: [string, Promise<IProvideComponentFactory>][] = [];
+    const globalContainerComponents: [string, Promise<IProvideComponentFactory>][] = [];
     containerComponentsDefinition.forEach((value) => {
-        containerComponents.push([value.type, value.factory]);
+        globalContainerComponents.push([value.type, value.factory]);
     });
 
     // We don't want to include the default wrapper component in our list of available components
-    containerComponents.push([ "anchor", Promise.resolve(Anchor.getFactory())]);
-    containerComponents.push([ "vltava", Promise.resolve(Vltava.getFactory())]);
-    containerComponents.push([ComponentToolbarName, Promise.resolve(ComponentToolbar.getFactory())]);
+    const privateContainerComponents: [string, Promise<IProvideComponentFactory>][] = [];
+    privateContainerComponents.push(["anchor", Promise.resolve(Anchor.getFactory())]);
+    privateContainerComponents.push(["vltava", Promise.resolve(Vltava.getFactory())]);
+    privateContainerComponents.push([ComponentToolbarName, Promise.resolve(ComponentToolbar.getFactory())]);
 
     const containerRegistries: NamedComponentRegistryEntries = [
         ["", Promise.resolve(new InternalRegistry(containerComponentsDefinition))],
@@ -131,7 +132,8 @@ const generateFactory = () => {
     return new SimpleModuleInstantiationFactory(
         "anchor",
         [
-            ...containerComponents,
+            ...globalContainerComponents,
+            ...privateContainerComponents,
             ...containerRegistries,
         ],
         [

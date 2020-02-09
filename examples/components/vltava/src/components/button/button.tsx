@@ -24,6 +24,7 @@ const buttonStyle: React.CSSProperties = {
     textAlign:"center",
     width: "100%",
     height:"100%",
+    boxSizing: "border-box",
     border:"1px solid black",
     cursor: "pointer",
 };
