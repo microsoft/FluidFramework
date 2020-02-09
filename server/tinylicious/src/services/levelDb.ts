@@ -23,7 +23,7 @@ export class LevelDb extends EventEmitter implements IDb {
     }
 
     public async close(): Promise<void> {
-        return;
+        return this.db.close();
     }
 
     public collection<T>(name: string): ICollection<T> {
