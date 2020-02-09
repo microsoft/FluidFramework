@@ -22,7 +22,9 @@
     "lint": "npm run eslint",
     "start": "node dist/index.js",
     "start:debug": "node --inspect=0.0.0.0:9229 dist/index.js",
-    "tsc": "tsc"
+    "tsc": "tsc",
+    "docker:build": "docker build -t tinylicious .",
+    "docker:start": "docker run --rm -t -p 3000:3000 tinylicious"
   },
   "dependencies": {
     "@microsoft/fluid-core-utils": "0.13.17538",
@@ -59,6 +61,7 @@
     "@types/ws": "^6.0.4",
     "body-parser": "^1.17.1",
     "bytes": "^3.0.0",
+    "charwise": "^3.0.1",
     "compression": "^1.7.2",
     "cookie-parser": "^1.4.3",
     "cors": "^2.8.4",
@@ -66,6 +69,8 @@
     "isomorphic-git": "^0.72.1",
     "json-stringify-safe": "^5.0.1",
     "jsonwebtoken": "^8.4.0",
+    "level": "^6.0.0",
+    "level-sublevel": "^6.6.5",
     "lodash": "^4.17.11",
     "morgan": "^1.8.1",
     "nconf": "^0.10.0",
