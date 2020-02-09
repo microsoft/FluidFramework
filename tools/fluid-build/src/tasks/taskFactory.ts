@@ -24,6 +24,7 @@ const executableToLeafTask: { [key: string]: new (node: BuildPackage, command: s
     lessc: LesscTask,
     copyfiles: CopyfilesTask,
     echo: EchoTask,
+    "gen-version": GenVerTask,
 };
 
 export class TaskFactory {
@@ -60,9 +61,6 @@ export class TaskFactory {
         const ctor = executableToLeafTask[executable];
         if (ctor) {
             return new ctor(node, command);
-        }
-        if (executable === "node" && command === "gen-version") {
-            return new GenVerTask(node, command);
         }
         return new UnknownLeafTask(node, command);
     }

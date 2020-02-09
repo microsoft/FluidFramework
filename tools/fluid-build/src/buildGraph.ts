@@ -14,6 +14,7 @@ import { execWithErrorAsync, ExecAsyncResult } from "./common/utils";
 import { FileHashCache } from "./common/fileHashCache";
 import chalk from "chalk";
 import { options } from "./options";
+import * as semver from "semver";
 
 export enum BuildResult {
     Success,
@@ -185,12 +186,16 @@ export class BuildGraph {
         const needPropagate: BuildPackage[] = [];
         this.buildPackages.forEach((node) => {
             if (node.pkg.markForBuild) { needPropagate.push(node); }
-            for (const key of node.pkg.combinedDependencies) {
-                const child = this.buildPackages.get(key);
+            for (const { name, version } of node.pkg.combinedDependencies) {
+                const child = this.buildPackages.get(name);
                 if (child) {
-                    logVerbose(`Package dependency: ${node.pkg.nameColored} => ${child.pkg.nameColored}`);
-                    node.dependentPackages.push(child);
-                    child.parents.push(node);
+                    if (semver.satisfies(child.pkg.version, version)) {
+                        logVerbose(`Package dependency: ${node.pkg.nameColored} => ${child.pkg.nameColored}`);
+                        node.dependentPackages.push(child);
+                        child.parents.push(node);
+                    } else {
+                        logVerbose(`Package dependency version mismatch: ${node.pkg.nameColored} => ${child.pkg.nameColored}`);
+                    }
                 }
             }
         });
@@ -248,5 +253,5 @@ export class BuildGraph {
         if (!hasTask) {
             throw new Error(`No task for script ${this.buildScriptName} found`);
         }
-    } 
+    }
 }

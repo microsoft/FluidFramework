@@ -107,11 +107,11 @@ export class NpmDepChecker {
 
     private depcheckTypes() {
         let changed = false;
-        for (const dep of this.pkg.combinedDependencies) {
+        for (const { name: dep } of this.pkg.combinedDependencies) {
             if (dep.startsWith("@types/") && this.foundTypes.indexOf(dep) === -1) {
-                const name = dep.substring("@types/".length);
-                const altName = this.altTyping.get(name);
-                if (!(this.isInDependencies(name) || (altName && this.isInDependencies(altName)))) {
+                const typePkgName = dep.substring("@types/".length);
+                const altName = this.altTyping.get(typePkgName);
+                if (!(this.isInDependencies(typePkgName) || (altName && this.isInDependencies(altName)))) {
                     console.warn(`${this.pkg.nameColored}: warning: unused type dependency ${dep}`);
                     if (this.pkg.packageJson.devDependencies) {
                         delete this.pkg.packageJson.devDependencies[dep];

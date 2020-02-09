@@ -18,7 +18,7 @@
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "build:genver": "node node_modules/@microsoft/fluid-build-common/gen_version.js",
+    "build:genver": "gen-version",
     "bump-version": "npm version minor --no-push --no-git-tag-version && npm run build:genver",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",

@@ -25,6 +25,7 @@ interface FastBuildOptions {
     concurrency: number;
     samples: boolean;
     fixScripts: boolean;
+    all: boolean;
     server: boolean;
 }
 
@@ -47,6 +48,7 @@ export const options: FastBuildOptions = {
     concurrency: os.cpus().length, // TODO: argument?
     samples: true,
     fixScripts: false,
+    all: false,
     server: false,
 };
 
@@ -175,6 +177,11 @@ export function parseOptions(argv: string[]) {
 
         if (arg === "--uninstall") {
             setUninstall();
+            continue;
+        }
+
+        if (arg === "--all") {
+            options.all = true;
             continue;
         }
 

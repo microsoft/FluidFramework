@@ -9,9 +9,24 @@ import * as fs from "fs";
 import * as path from "path";
 import { sortPackageJson } from "sort-package-json";
 import { logStatus, logVerbose } from "./common/logging";
-import { globFn, copyFileAsync, execWithErrorAsync, existsSync, lstatAsync, mkdirAsync, realpathAsync, rimrafWithErrorAsync, unlinkAsync, symlinkAsync, writeFileAsync, ExecAsyncResult } from "./common/utils"
+import { 
+    globFn, 
+    copyFileAsync, 
+    execWithErrorAsync, 
+    existsSync, 
+    lstatAsync, 
+    mkdirAsync, 
+    realpathAsync, 
+    rimrafWithErrorAsync, 
+    unlinkAsync, 
+    symlinkAsync, 
+    writeFileAsync, 
+    ExecAsyncResult, 
+    renameAsync 
+} from "./common/utils"
 import { NpmDepChecker } from "./npmDepChecker";
 import { options } from "./options";
+import * as semver from "semver";
 
 interface IPerson {
     name: string;
@@ -115,10 +130,10 @@ export class Package {
     public get combinedDependencies() {
         const it = function* (packageJson: IPackage) {
             for (const item in packageJson.dependencies) {
-                yield (item);
+                yield ({ name: item, version: packageJson.dependencies[item] });
             }
             for (const item in packageJson.devDependencies) {
-                yield (item);
+                yield ({ name: item, version: packageJson.devDependencies[item] });
             }
         }
         return it(this.packageJson);
@@ -369,35 +384,54 @@ export class Package {
         return result;
     }
 
-    public async symlink(buildPackages: Map<string, Package>) {
+    public async symlink(buildPackages: Map<string, Package>, fix: boolean) {
         // Fluid specific
-        for (const dep of this.combinedDependencies) {
+        for (const { name: dep, version } of this.combinedDependencies) {
             const depBuildPackage = buildPackages.get(dep);
-            if (depBuildPackage) {
+            // Check and fix link if it is a know package and version satisfy the version.
+            // TODO: check of extranous symlinks
+            if (depBuildPackage && semver.satisfies(depBuildPackage.version, version)) {
                 const symlinkPath = path.join(this.directory, "node_modules", dep);
-                const symlinkDir = path.join(symlinkPath, "..");
                 try {
+                    let stat: fs.Stats | undefined;
                     if (existsSync(symlinkPath)) {
-                        const stat = await lstatAsync(symlinkPath);
-                        if (!stat.isSymbolicLink || await realpathAsync(symlinkPath) !== depBuildPackage.directory) {
-                            if (stat.isDirectory()) {
-                                await rimrafWithErrorAsync(symlinkPath, this.nameColored);
-                            } else {
-                                await unlinkAsync(symlinkPath);
-                            }
-                            await symlinkAsync(depBuildPackage.directory, symlinkPath, "junction");
-                            if (!options.nohoist) {
-                                console.warn(`${this.nameColored}: warning: replaced existing package ${symlinkPath}`);
-                            }
+                        stat = await lstatAsync(symlinkPath);
+                        if (stat.isSymbolicLink && await realpathAsync(symlinkPath) === depBuildPackage.directory) {
+                            // Have the correct symlink, continue
+                            continue;
                         }
+                    }
+                    if (!fix) {
+                        console.warn(`${this.nameColored}: warning: dependent package ${depBuildPackage.nameColored} not linked. Use --symlink to fix.`);
+                        continue;
+                    }
+
+                    // Fixing the symlink
+                    if (stat) {
+                        // Rename existing
+                        if (!options.nohoist) {
+                            console.warn(`${this.nameColored}: warning: renaming existing package in ${symlinkPath}`);
+                        }
+                        /*
+                        if (stat.isDirectory()) {
+                            await rimrafWithErrorAsync(symlinkPath, this.nameColored);
+                        } else {
+                            await unlinkAsync(symlinkPath);
+                        }
+                        */
+                        
+                        await renameAsync(symlinkPath, path.join(path.dirname(symlinkPath), `_${path.basename(symlinkPath)}`));
                     } else {
+                        // Ensure the directory exist
+                        const symlinkDir = path.join(symlinkPath, "..");
                         if (!existsSync(symlinkDir)) {
                             await mkdirAsync(symlinkDir, { recursive: true });
                         }
-                        await symlinkAsync(depBuildPackage.directory, symlinkPath, "junction");
                     }
+                    // Create symlink
+                    await symlinkAsync(depBuildPackage.directory, symlinkPath, "junction");
                 } catch (e) {
-                    throw new Error(`symlink failed on ${symlinkPath}. ${e}`);
+                    throw new Error(`symlink failed on ${symlinkPath}.\n ${e}`);
                 }
             }
         }
@@ -407,6 +441,7 @@ export class Package {
 interface TaskExec<TItem, TResult> {
     item: TItem;
     resolve: (result: TResult) => void;
+    reject: (reason?: any) => void;
 };
 
 async function queueExec<TItem, TResult>(items: Iterable<TItem>, exec: (item: TItem) => Promise<TResult>, messageCallback?: (item: TItem) => string) {
@@ -419,12 +454,16 @@ async function queueExec<TItem, TResult>(items: Iterable<TItem>, exec: (item: TI
         return result;
     } : exec;
     const q = queue(async (taskExec: TaskExec<TItem, TResult>, callback) => {
-        taskExec.resolve(await timedExec(taskExec.item));
+        try {
+            taskExec.resolve(await timedExec(taskExec.item));
+        } catch (e) {
+            taskExec.reject(e);
+        }
         callback();
     }, options.concurrency);
     const p: Promise<TResult>[] = [];
     for (const item of items) {
-        p.push(new Promise<TResult>(resolve => q.push({ item, resolve })));
+        p.push(new Promise<TResult>((resolve, reject) => q.push({ item, resolve, reject })));
     }
     return Promise.all(p);
 }
@@ -468,9 +507,9 @@ export class Packages {
         return this.queueExecOnAllPackage(pkg => pkg.noHoistInstall(repoRoot), "npm i");
     }
 
-    public async symlink() {
+    public async symlink(fix: boolean) {
         const packageMap = new Map<string, Package>(this.packages.map(pkg => [pkg.name, pkg]));
-        return this.queueExecOnAllPackageCore(pkg => pkg.symlink(packageMap), options.nohoist ? "symlink" : "")
+        return this.queueExecOnAllPackageCore(pkg => pkg.symlink(packageMap, fix), options.nohoist ? "symlink" : "")
     }
 
     public async checkScripts() {

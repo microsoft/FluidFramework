@@ -10,7 +10,7 @@ import { BuildGraph, BuildResult } from "./buildGraph";
 import { Timer } from "./common/timer";
 import { logStatus } from "./common/logging";
 import { getResolvedFluidRoot } from "./common/fluidUtils";
-import { existsSync, rimrafWithErrorAsync, execWithErrorAsync } from "./common/utils";
+import { existsSync, rimrafWithErrorAsync, execWithErrorAsync, ExecAsyncResult } from "./common/utils";
 import * as path from "path";
 import chalk from "chalk";
 
@@ -29,21 +29,33 @@ async function main() {
 
     versionCheck();
 
-    const resolvedFluidRoot = await getResolvedFluidRoot();
-    const resolvedRoot = options.server? path.join(resolvedFluidRoot, "server/routerlicious") : resolvedFluidRoot;
+    const resolvedRoot = await getResolvedFluidRoot();
 
     logStatus(`Processing ${resolvedRoot}`);
 
-    // TODO: Should read lerna.json to determine
-    const baseDirectories = [ path.join(resolvedRoot, "packages")];
-    if (!options.server) {
-        const samplesDirectory = path.join(resolvedRoot, "examples/components");
-        if (options.samples && existsSync(samplesDirectory)) {
-            baseDirectories.push(samplesDirectory);
-        }
-    }
-
     // Load the package
+    // Repo info
+    // TODO: Should read lerna.json to determine
+    const clientDirectory = path.join(resolvedRoot, "packages");
+    const serverDirectory = path.join(resolvedRoot, "server/routerlicious/packages");
+    const exampleDirectory = path.join(resolvedRoot, "examples/components");
+    const baseDirectories = [
+        path.join(resolvedRoot, "common"),
+        serverDirectory,
+        clientDirectory,
+        exampleDirectory,
+    ];
+    const packageInstallDirectories = [
+        path.join(resolvedRoot, "common/build/build-common"),
+        path.join(resolvedRoot, "common/build/eslint-config-fluid"),
+        path.join(resolvedRoot, "common/lib/common-definitions"),
+        path.join(resolvedRoot, "common/lib/common-utils"),
+    ];
+    const monoReposInstallDirectories = [
+        path.join(resolvedRoot),
+        serverDirectory,
+    ];
+
     const packages = Packages.load(baseDirectories);
     timer.time("Package scan completed");
 
@@ -68,8 +80,21 @@ async function main() {
             console.error("ERROR: No package matched");
             process.exit(-4)
         }
-    } else {
+    } else if (options.all) {
         packages.packages.forEach((pkg) => pkg.setMatched());
+    } else if (options.server) {
+        packages.packages.forEach((pkg) => {
+            if (pkg.directory.startsWith(serverDirectory)) {
+                pkg.setMatched();
+            }
+        });
+    } else {
+        // Default to client and example packages
+        packages.packages.forEach((pkg) => {
+            if (pkg.directory.startsWith(clientDirectory) || pkg.directory.startsWith(exampleDirectory)) {
+                pkg.setMatched();
+            }
+        });
     }
 
     if (options.install) {
@@ -81,10 +106,15 @@ async function main() {
     }
 
     try {
+
         if (options.uninstall) {
             const cleanPackageNodeModules = packages.cleanNodeModules();
-            const r = await Promise.all([cleanPackageNodeModules, rimrafWithErrorAsync(path.join(resolvedRoot, "node_modules"), "ERROR")]);
-            const succeeded = r[0] && !r[1].error;
+            const removePromise = Promise.all(
+                monoReposInstallDirectories.map(dir => rimrafWithErrorAsync(path.join(dir, "node_modules"), dir))
+            );
+
+            const r = await Promise.all([cleanPackageNodeModules, removePromise]);
+            const succeeded = r[0] && !r[1].some(ret => ret.error);
             if (!succeeded) {
                 console.error(`ERROR: Delete node_module failed`);
                 process.exit(-8);
@@ -100,6 +130,7 @@ async function main() {
         }
 
         if (options.install) {
+            console.log("Installing packages");
             if (options.nohoist) {
                 if (!await packages.noHoistInstall(resolvedRoot)) {
                     console.error(`ERROR: Install failed`);
@@ -107,8 +138,13 @@ async function main() {
                 }
             } else {
                 const installScript = "npm i";
-                const ret = await execWithErrorAsync(installScript, { cwd: resolvedRoot }, "ERROR");
-                if (ret.error) {
+                const installPromises: Promise<ExecAsyncResult>[] = [];
+                for (const dir of [...packageInstallDirectories, ...monoReposInstallDirectories]) {
+                    installPromises.push(execWithErrorAsync(installScript, { cwd: dir }, dir));
+                }
+                const rets = await Promise.all(installPromises);
+
+                if (rets.some(ret => ret.error)) {
                     console.error(`ERROR: Install failed`);
                     process.exit(-5);
                 }
@@ -116,13 +152,12 @@ async function main() {
             timer.time("Install completed", true);
         }
 
-        if (options.symlink) {
-            if (!await packages.symlink()) {
-                console.error(`ERROR: Symlink failed`);
-                process.exit(-7);
-            }
-            timer.time("Symlink completed", true);
+        const symlinkTaskName = options.symlink? "Symlink" : "Symlink check";
+        if (!await packages.symlink(options.symlink)) {
+            console.error(`ERROR: ${symlinkTaskName} failed`);
+            process.exit(-7);
         }
+        timer.time(`${symlinkTaskName} completed`, true);
 
         if (options.clean || options.build !== false) {
             // build the graph
