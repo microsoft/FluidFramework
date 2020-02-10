@@ -2,6 +2,7 @@
 - [Samples and chaincode have been renamed to examples and components respectively](##Samples-and-chaincode-have-been-renamed-to-examples-and-components-respectively)
 - [Top-level `type` on `IClient` removed](#Top-level-type-on-IClient-removed)
 - [Remove back-compat support for loader <= 0.8](#remove-back-compat-support-for-loader-0.8)
+- [`IComponentContext` - `createSubComponent` removed, `createComponent` signature updated](#`IComponentContext`---`createSubComponent`-removed,-`createComponent`-signature-updated)
 
 ## Samples and chaincode have been renamed to examples and components respectively
 The directories themselves have been renamed.
@@ -16,11 +17,24 @@ The `type` field on `IClient` has been removed.
 Back-compat support code for postProcess and ScheduleManager is removed for loader <= 0.8, which doesn't support group ops.
 Any component based on runtime >= 0.14 will no longer work with loader <= 0.8
 
+## `IComponentContext` - `createSubComponent` removed, `createComponent` signature updated
+
+The `createSubComponent` method on `IComponentContext` has been removed. Use `createComponent` instead whose signature has been updated. The new function signature is as below:
+```typescript
+public async createComponent(
+        pkgOrId: string | undefined,
+        pkg?: string,
+        props?: any) {
+```
+It does not acccept a package path anymore but just a package name. To pass in props, an ID has to be provided now. However, ID is being deprecated so prefer passing undefined in its place (the runtime will generate an ID in this case). This API will now attempt to create the specified package off the current sub-registry and if that fails, it will attempt to create it off the global registry.
+
+For creating a component with a specific package path, use `createComponent` or `_createComponentWithProps` in `IHostRuntime`.
+
+
 # 0.13 Breaking Changes
 
 - [Fluid Packages Require Consumers on TypeScript `>=3.6`](##Fluid-Packages-Require-Consumers-on-TypeScript->=3.6)
 - [IHost interface removed, Loader constructor signature updated](#IHost-interface-removed-Loader-constructor-signature-updated)
-- [`IComponentContext` - `createSubComponent` removed, `createComponent` signature updated](#`IComponentContext`---`createSubComponent`-removed,-`createComponent`-signature-updated)
 
 New error types are added in 0.13. So whenever any error is emitted from container it will be of type IError which will have the property errorType which will tell the app, what type of error it is.
 It will also contain the property critical which will tell the app that the error is critical if it is true. Different errorTypes are defined in loader/driver-definitions/src/error.ts.
@@ -43,19 +57,6 @@ More about the changes:
 ## IHost interface removed, Loader constructor signature updated
 
 The IHost interface has been removed.  This primarily impacts the signature of the `Loader` constructor, which now just takes the `IUrlResolver` directly in its place.
-
-## `IComponentContext` - `createSubComponent` removed, `createComponent` signature updated
-
-The `createSubComponent` method on `IComponentContext` has been removed. Use `createComponent` instead whose signature has been updated. The new function signature is as below:
-```typescript
-public async createComponent(
-        pkgOrId: string,
-        pkg?: string,
-        props?: any) {
-```
-It does not acccept a package path anymore but just a package name. To pass in props, an ID has to be provided now. This API will now attempt to create the specified package off the current sub-registry and if that fails, it will attempt to create it off the global registry.
-
-For creating a component with a specific package path, use `createComponent` or `_createComponentWithProps` in `IHostRuntime`.
 
 # 0.12 Breaking Changes
 

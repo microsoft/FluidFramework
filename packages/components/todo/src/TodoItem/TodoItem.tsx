@@ -12,7 +12,6 @@ import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import * as uuid from "uuid";
 import { TextBoxName } from "../TextBox";
 import { TextListName } from "../TextList";
 import { TodoItemSupportedComponents } from "./supportedComponent";
@@ -178,16 +177,16 @@ export class TodoItem extends PrimedComponent
         let componentRuntime: IComponentRuntime;
         switch (type) {
             case "todo":
-                componentRuntime = await this.context.createComponent(uuid(), TodoItemName, props);
+                componentRuntime = await this.context.createComponent(undefined, TodoItemName, props);
                 break;
             case "clicker":
-                componentRuntime = await this.context.createComponent(uuid(), ClickerName, props);
+                componentRuntime = await this.context.createComponent(undefined, ClickerName, props);
                 break;
             case "textBox":
-                componentRuntime = await this.context.createComponent(uuid(), TextBoxName, props);
+                componentRuntime = await this.context.createComponent(undefined, TextBoxName, props);
                 break;
             case "textList":
-                componentRuntime = await this.context.createComponent(uuid(), TextListName, props);
+                componentRuntime = await this.context.createComponent(undefined, TextListName, props);
                 break;
             default:
         }

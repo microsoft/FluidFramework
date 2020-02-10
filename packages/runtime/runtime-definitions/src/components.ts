@@ -252,10 +252,12 @@ export interface IComponentContext extends EventEmitter {
     /**
      * Creates a new component by using subregistries.
      * @param pkgOrId - Package name if a second parameter is not provided. Otherwise an explicit ID.
+     *                  ID is being deprecated, so prefer passing undefined instead (the runtime will
+     *                  generate an ID in this case).
      * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
      * @param props - Properties to be passed to the instantiateComponent through the context.
      */
-    createComponent(pkgOrId: string, pkg?: string, props?: any): Promise<IComponentRuntime>;
+    createComponent(pkgOrId: string | undefined, pkg?: string, props?: any): Promise<IComponentRuntime>;
 
     /**
      * Returns the runtime of the component.

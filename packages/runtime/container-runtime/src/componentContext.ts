@@ -150,28 +150,28 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         super();
     }
 
-    public async createComponent(pkgOrId: string, maybePkg?: string, props?: any): Promise<IComponentRuntime> {
-        const pkg = maybePkg ?? pkgOrId;
-        const id = maybePkg ? pkgOrId : uuid();
+    public async createComponent(pkgOrId: string | undefined, pkg?: string, props?: any): Promise<IComponentRuntime> {
+        const pkgName = pkg ?? pkgOrId;
+        const id = pkg ? (pkgOrId ?? uuid()) : uuid();
 
         const details = await this.getInitialSnapshotDetails();
         let packagePath: string[] = [...details.pkg];
 
         // A factory could not contain the registry for itself. So if it is the same the last snapshot
         // pkg, create component with our package path.
-        if (packagePath.length > 0 && pkg === packagePath[packagePath.length - 1]) {
-            return this.hostRuntime._createComponentWithProps(packagePath, props, id ?? uuid());
+        if (packagePath.length > 0 && pkgName === packagePath[packagePath.length - 1]) {
+            return this.hostRuntime._createComponentWithProps(packagePath, props, id);
         }
 
         // Look for the package entry in our sub-registry. If we find the entry, we need to add our path
         // to the packagePath. If not, look into the global registry and the packagePath becomes just the
         // passed package.
-        let entry: ComponentRegistryEntry = await this.componentRuntime.IComponentRegistry?.get(pkg);
+        let entry: ComponentRegistryEntry = await this.componentRuntime.IComponentRegistry?.get(pkgName);
         if (entry) {
-            packagePath.push(pkg);
+            packagePath.push(pkgName);
         } else {
-            entry = await this._hostRuntime.IComponentRegistry.get(pkg);
-            packagePath = [pkg];
+            entry = await this._hostRuntime.IComponentRegistry.get(pkgName);
+            packagePath = [pkgName];
         }
 
         if (!entry) {
