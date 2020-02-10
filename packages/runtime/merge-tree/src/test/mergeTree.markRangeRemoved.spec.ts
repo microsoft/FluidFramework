@@ -109,4 +109,56 @@ describe("MergeTree.markRangeRemoved", () => {
 
         assert.equal(client.getText(), "text");
     });
+
+    // Repro of issue #1213:
+    // https://github.com/microsoft/FluidFramework/issues/1214
+    it.skip("local and remote clients race to insert at position of removed segment", () => {
+
+        // Note: This test constructs it's own TestClients to avoid being initialized with "hello world".
+
+        // First we run through the ops from the perspective of a passive observer (i.e., all operations are remote).
+        const expected = new TestClient();
+        expected.startCollaboration("3");
+
+        {
+            let seq = 0;
+
+            // Client 1 locally inserts and removes the letter "a".
+            expected.insertTextRemote(0, "a", undefined,    ++seq, /* refSeq: */ 0, /* longClientId: */ "1");
+            expected.removeRangeRemote(0, 1,                ++seq, /* refSeq: */ 0, /* longClientId: */ "1");
+
+            // In parallel, Client 2 inserted "x" without knowledge of Client 1's insertion/removal.
+            expected.insertTextRemote(0, "X", undefined,    ++seq, /* refSeq: */ 0, /* longClientId: */ "2");
+
+            // Client 1 inserts "c" having received acks for its own edits, but has not yet having
+            // observed the insertion of "X" from client 2.
+            expected.insertTextRemote(0, "c", undefined,    ++seq, /* refSeq: */ 2, /* longClientId: */ "1");
+        }
+
+        // Next, we run through the same sequence from the perspective of client 1:
+        const actual = new TestClient();
+        actual.startCollaboration("1");
+
+        {
+            let seq = 0;
+
+            // Client 1 locally inserts and removes the letter "a".
+            const op1 = actual.insertTextLocal(0, "a");
+            const op2 = actual.removeRangeLocal(0, 1);
+
+            // Client 1 receives ACKs for op1 and op2.
+            actual.applyMsg(actual.makeOpMessage(op1, ++seq, /* refSeq: */ 0));
+            actual.applyMsg(actual.makeOpMessage(op2, ++seq, /* refSeq: */ 0));
+
+            // Client 1 locally inserts "c".
+            const op4 = actual.insertTextLocal(0, "c");
+
+            // Client 1 then receives the parallel insertion of "X" from Client 2.
+            actual.insertTextRemote(0, "X", {}, ++seq, /* refSeq: */ 0, /* longClientId: */ "2");
+
+            actual.applyMsg(actual.makeOpMessage(op4, ++seq, /* refSeq: */ 2));
+        }
+
+        assert.equal(actual.getText(), expected.getText());
+    });
 });
