@@ -34,12 +34,20 @@ const textStyle: React.CSSProperties = {
     cursor: "pointer",
 };
 
+export const ButtonName = "button";
+
 /**
  * Clicker example using view interfaces and stock component classes.
  */
 export class Button extends PrimedComponent implements IComponentHTMLVisual {
 
     public get IComponentHTMLVisual() { return this; }
+
+    private static readonly factory = new PrimedComponentFactory(Button, []);
+
+    public static getFactory() {
+        return Button.factory;
+    }
 
     protected async componentHasInitialized() {
         // Register with our manager to say that we support clicks
@@ -58,11 +66,3 @@ export class Button extends PrimedComponent implements IComponentHTMLVisual {
             div);
     }
 }
-
-/**
- * This is where you define all your Distributed Data Structures and Value Types
- */
-export const ButtonInstantiationFactory = new PrimedComponentFactory(
-    Button,
-    [],
-);

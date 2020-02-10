@@ -90,6 +90,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         private readonly logger: ITelemetryLogger,
         private readonly fetchFullSnapshot: boolean,
         private readonly odspCache: OdspCache,
+        private readonly isFirstContainerForService: boolean,
     ) {
         this.queryString = getQueryString(queryParams);
         this.appId = queryParams.app_id;
@@ -311,7 +312,10 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     // Populate the cache with paths from id-to-path mapping.
                     for (const blob of this.blobCache.values()) {
                         const path = blobsIdToPathMap.get(blob.sha);
-                        if (path) {
+                        // If this is the first container that was created for the service, it cannot be
+                        // the summarizing container (becauase the summarizing container is always created
+                        // after the main container). In this case, we do not need to do any hashing
+                        if (!this.isFirstContainerForService && path) {
                             const hash = gitHashFile(Buffer.from(blob.content, blob.encoding));
                             this.blobsShaToPathCache.set(hash, path);
                         }

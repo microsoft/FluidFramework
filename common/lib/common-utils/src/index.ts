@@ -8,7 +8,7 @@ export * from "./batchManager";
 export * from "./disposal";
 export * from "./eventEmitterWithErrorHandling";
 export * from "./eventForwarder";
-export * from "./gitHashFile";
+export * from "./hashFile";
 export * from "./heap";
 export * from "./logger";
 export * from "./promises";

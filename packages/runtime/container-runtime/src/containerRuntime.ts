@@ -35,9 +35,9 @@ import { readAndParse, createIError } from "@microsoft/fluid-driver-utils";
 import {
     BlobTreeEntry,
     buildSnapshotTree,
-    CommitTreeEntry,
     isSystemType,
     raiseConnectedEvent,
+    TreeTreeEntry,
 } from "@microsoft/fluid-protocol-base";
 import {
     ConnectionState,
@@ -587,7 +587,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.logger = context.logger;
 
         this.scheduleManager = new ScheduleManager(
-            context.IMessageScheduler.deltaManager,
+            context.deltaManager,
             this,
             ChildLogger.create(this.logger, "ScheduleManager"),
         );
@@ -659,67 +659,34 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
      * @param tagMessage - Message to supply to storage service for writing the snapshot.
      */
     public async snapshot(tagMessage: string, fullTree: boolean = false): Promise<ITree> {
-        // Pull in the prior version and snapshot tree to store against
-        const lastVersion = fullTree ? [] : await this.storage.getVersions(this.id, 1);
-        const tree = lastVersion.length > 0
-            ? await this.storage.getSnapshotTree(lastVersion[0])
-            : { blobs: {}, commits: {}, trees: {} };
-
         // Iterate over each component and ask it to snapshot
-        const componentVersionsP = Array.from(this.contexts).map(async ([componentId, value]) => {
-            const snapshot = await value.snapshot(true);
+        const componentSnapshotsP = Array.from(this.contexts).map(async ([componentId, value]) => {
+            const snapshot = await value.snapshot(fullTree);
 
             // If ID exists then previous commit is still valid
-            const commit = tree.commits[componentId] as string;
-            if (snapshot.id && commit && !fullTree) {
-                return {
-                    id: componentId,
-                    version: commit,
-                };
-            } else {
-                if (snapshot.id && !commit && !fullTree) {
-                    this.logger.sendErrorEvent({
-                        componentId,
-                        eventName: "MissingCommit",
-                        id: snapshot.id,
-                    });
-                }
-                const parent = commit ? [commit] : [];
-                const version = await this.storage.write(
-                    snapshot, parent, `${componentId} commit ${tagMessage}`, componentId);
-
-                return {
-                    id: componentId,
-                    version: version.id,
-                };
-            }
+            return {
+                componentId,
+                snapshot,
+            };
         });
 
         const root: ITree = { entries: [], id: null };
 
         // Add in module references to the component snapshots
-        const componentVersions = await Promise.all(componentVersionsP);
+        const componentSnapshots = await Promise.all(componentSnapshotsP);
 
         // Sort for better diffing of snapshots (in replay tool, used to find bugs in snapshotting logic)
         if (fullTree) {
-            componentVersions.sort((a, b) => a.id.localeCompare(b.id));
+            componentSnapshots.sort((a, b) => a.componentId.localeCompare(b.componentId));
         }
 
-        let gitModules = "";
-        for (const componentVersion of componentVersions) {
-            root.entries.push(new CommitTreeEntry(componentVersion.id, componentVersion.version));
-
-            const repoUrl = "https://github.com/kurtb/praguedocs.git"; // this.storageService.repositoryUrl
-            // eslint-disable-next-line max-len
-            gitModules += `[submodule "${componentVersion.id}"]\n\tpath = ${componentVersion.id}\n\turl = ${repoUrl}\n\n`;
+        for (const componentSnapshot of componentSnapshots) {
+            root.entries.push(new TreeTreeEntry(componentSnapshot.componentId, componentSnapshot.snapshot));
         }
 
         if (this.chunkMap.size > 0) {
             root.entries.push(new BlobTreeEntry(".chunks", JSON.stringify([...this.chunkMap])));
         }
-
-        // Write the module lookup details
-        root.entries.push(new BlobTreeEntry(".gitmodules", gitModules));
 
         return root;
     }
@@ -790,13 +757,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         } finally {
             this.scheduleManager.endOperation(error, message);
         }
-    }
-
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public postProcess(message: ISequencedDocumentMessage, local: boolean, context: any) {
-        return this.context.IMessageScheduler
-            ? Promise.reject("Scheduler assumes only process")
-            : Promise.resolve();
     }
 
     public processSignal(message: ISignalMessage, local: boolean) {

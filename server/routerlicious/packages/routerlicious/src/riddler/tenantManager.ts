@@ -139,7 +139,7 @@ export class TenantManager {
 
         // Older tenants did not include the historian endpoint in their storage configuration since this
         // was always assumed to be a static value.
-        if (!found.storage.historianUrl) {
+        if (found.storage && !found.storage.historianUrl) {
             found.storage.historianUrl = this.defaultHistorianUrl;
             found.storage.internalHistorianUrl = this.defaultInternalHistorianUrl;
         }

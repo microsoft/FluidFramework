@@ -8,25 +8,25 @@ import {
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
-// eslint-disable-next-line import/no-internal-modules
 import { Persona, PersonaSize } from "office-ui-fabric-react/lib/Persona";
-// eslint-disable-next-line import/no-internal-modules
 import { Icon } from "office-ui-fabric-react/lib/Icon";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { IQuorum } from "@microsoft/fluid-protocol-definitions";
 
-/**
- * Clicker example using view interfaces and stock component classes.
- */
 export class FacePile extends PrimedComponent implements IComponentHTMLVisual {
-    public get IComponentHTMLVisual() {
-        return this;
+
+    public get IComponentHTMLVisual() { return this; }
+
+    private static readonly factory = new PrimedComponentFactory(FacePile, []);
+
+    public static getFactory() {
+        return FacePile.factory;
     }
 
     /**
-     * Will return a new Clicker view
+     * Will return a new FacePile view
      */
     public render(div: HTMLElement) {
         const quorum = this.context.getQuorum();
@@ -34,21 +34,15 @@ export class FacePile extends PrimedComponent implements IComponentHTMLVisual {
     }
 }
 
-/**
- * This is where you define all your Distributed Data Structures and Value Types
- */
-export const FacePileInstantiationFactory = new PrimedComponentFactory(
-    FacePile,
-    [],
-);
-
 interface IFacepileAddFaceExampleProps {
     quorum: IQuorum;
 }
 
-export interface IFacepileAddFaceExampleState {
+interface IFacepileAddFaceExampleState {
     users: string[];
 }
+
+export const FacePileName = "facepile";
 
 export class FacepileAddFaceExample extends React.Component<IFacepileAddFaceExampleProps,IFacepileAddFaceExampleState> {
     constructor(props: IFacepileAddFaceExampleProps) {
