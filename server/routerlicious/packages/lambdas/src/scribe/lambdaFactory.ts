@@ -6,7 +6,7 @@
 import { EventEmitter } from "events";
 import { ProtocolOpHandler } from "@microsoft/fluid-protocol-base";
 import { IDocumentAttributes } from "@microsoft/fluid-protocol-definitions";
-import { GitManager, Historian } from "@microsoft/fluid-server-services-client";
+import { IGitManager } from "@microsoft/fluid-server-services-client";
 import {
     ICollection,
     IContext,
@@ -16,6 +16,7 @@ import {
     IProducer,
     IScribe,
     ISequencedOperationMessage,
+    ITenantManager,
     MongoManager,
 } from "@microsoft/fluid-server-services-core";
 import { Provider } from "nconf";
@@ -35,8 +36,8 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
         private readonly mongoManager: MongoManager,
         private readonly documentCollection: ICollection<IDocument>,
         private readonly messageCollection: ICollection<ISequencedOperationMessage>,
-        private readonly historianEndpoint: string,
         private readonly producer: IProducer,
+        private readonly tenantManager: ITenantManager,
     ) {
         super();
     }
@@ -46,9 +47,8 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
         const documentId = config.get("documentId");
 
         winston.info(`New tenant storage ${tenantId}/${documentId}`);
-        const endpoint = `${this.historianEndpoint}/repos/${encodeURIComponent(tenantId)}`;
-        const historian = new Historian(endpoint, true, false);
-        const gitManager = new GitManager(historian);
+        const tenant = await this.tenantManager.getTenant(tenantId);
+        const gitManager = tenant.gitManager;
 
         winston.info(`Querying mongo for proposals ${tenantId}/${documentId}`);
         const [protocolHead, document, messages] = await Promise.all([
@@ -109,7 +109,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
         await this.mongoManager.close();
     }
 
-    private async fetchLatestSummaryState(gitManager: GitManager, documentId: string): Promise<number> {
+    private async fetchLatestSummaryState(gitManager: IGitManager, documentId: string): Promise<number> {
         const existingRef = await gitManager.getRef(encodeURIComponent(documentId));
         if (!existingRef) {
             return -1;

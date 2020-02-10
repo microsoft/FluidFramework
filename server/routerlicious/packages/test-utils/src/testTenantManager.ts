@@ -12,7 +12,7 @@ export class TestTenant implements ITenant {
     private readonly repository = "test";
     private readonly manager: GitManager;
 
-    constructor(private readonly url: string) {
+    constructor(private readonly url: string, private readonly historianUrl: string) {
         const testHistorian = new TestHistorian();
         this.manager = new GitManager(testHistorian);
     }
@@ -23,8 +23,9 @@ export class TestTenant implements ITenant {
 
     public get storage(): ITenantStorage {
         return {
+            historianUrl: this.historianUrl,
+            internalHistorianUrl: this.historianUrl,
             credentials: null,
-            direct: null,
             owner: this.owner,
             repository: this.repository,
             url: this.url,
@@ -42,8 +43,8 @@ export class TestTenant implements ITenant {
 export class TestTenantManager implements ITenantManager {
     private readonly tenant: TestTenant;
 
-    constructor(url = "http://test") {
-        this.tenant = new TestTenant(url);
+    constructor(url = "http://test", historian = "http://historian") {
+        this.tenant = new TestTenant(url, historian);
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async

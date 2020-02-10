@@ -5,7 +5,6 @@
 
 import * as api from "@fluid-internal/client-api";
 import { getFileBlobType, IGenericBlob, IImageBlob, IVideoBlob } from "@microsoft/fluid-container-definitions";
-import { gitHashFile } from "@microsoft/fluid-core-utils";
 
 export async function blobUploadHandler(
     dragZone: HTMLDivElement,
@@ -21,7 +20,8 @@ export async function blobUploadHandler(
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         fileToInclusion(files[0])
             .then(async (blob) => {
-                await document.uploadBlob(blob);
+                // uploadBlob fills in the blob's id value if it wasn't set initially
+                blob = await document.uploadBlob(blob);
                 blobDisplayCB(blob);
             });
     };
@@ -57,14 +57,13 @@ async function fileToInclusion(file: File): Promise<IGenericBlob> {
     switch (baseInclusion.type) {
         case "image": {
             const blobP = imageHandler(file, baseInclusion);
-
             return Promise.all([arrayBufferP, blobP])
                 .then(([arrayBuffer, blob]) => {
                     const incl: IImageBlob = {
                         content: arrayBuffer,
                         fileName: file.name,
                         height: blob.height,
-                        id: gitHashFile(arrayBuffer),
+                        id: undefined,
                         size: arrayBuffer.byteLength,
                         type: "image",
                         url: blob.url,
@@ -81,7 +80,7 @@ async function fileToInclusion(file: File): Promise<IGenericBlob> {
                         content: arrayBuffer,
                         fileName: file.name,
                         height: blob.height,
-                        id: gitHashFile(arrayBuffer),
+                        id: undefined,
                         length: blob.length,
                         size: arrayBuffer.byteLength,
                         type: "video",
@@ -97,7 +96,7 @@ async function fileToInclusion(file: File): Promise<IGenericBlob> {
                     const incl: IGenericBlob = {
                         content: arrayBuffer,
                         fileName: file.name,
-                        id: gitHashFile(arrayBuffer),
+                        id: undefined,
                         size: arrayBuffer.byteLength,
                         type: "generic",
                         url: baseInclusion.url,

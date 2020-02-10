@@ -19,7 +19,6 @@ export interface IClientDetails {
 
 export interface IClient {
     mode?: ConnectionMode;
-    type?: string; // Deprecated; please don't use anymore
     details: IClientDetails;
     permission: string[];
     user: IUser;

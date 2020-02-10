@@ -13,9 +13,16 @@ export function create(
     collectionName: string,
     mongoManager: MongoManager,
     baseOrderUrl: string,
+    defaultHistorianUrl: string,
+    defaultInternalHistorianUrl: string,
 ): Router {
     const router: Router = Router();
-    const manager = new TenantManager(mongoManager, collectionName, baseOrderUrl);
+    const manager = new TenantManager(
+        mongoManager,
+        collectionName,
+        baseOrderUrl,
+        defaultHistorianUrl,
+        defaultInternalHistorianUrl);
 
     function returnResponse<T>(resultP: Promise<T>, response: Response) {
         resultP.then(

@@ -22,7 +22,6 @@ import {
     IDeltaManager,
     IDeltaSender,
     ILoader,
-    IMessageScheduler,
     IRuntime,
 } from "@microsoft/fluid-container-definitions";
 import {
@@ -35,9 +34,9 @@ import { readAndParse, createIError } from "@microsoft/fluid-driver-utils";
 import {
     BlobTreeEntry,
     buildSnapshotTree,
-    CommitTreeEntry,
     isSystemType,
     raiseConnectedEvent,
+    TreeTreeEntry,
 } from "@microsoft/fluid-protocol-base";
 import {
     ConnectionState,
@@ -148,8 +147,6 @@ interface IRuntimeMessageMetadata {
 }
 
 export class ScheduleManager {
-    private readonly messageScheduler: IMessageScheduler | undefined;
-    private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     private readonly deltaScheduler: DeltaScheduler;
     private pauseSequenceNumber: number | undefined;
     private pauseClientId: string | undefined;
@@ -159,18 +156,10 @@ export class ScheduleManager {
     private batchClientId: string;
 
     constructor(
-        messageScheduler: IMessageScheduler | undefined,
+        private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         private readonly emitter: EventEmitter,
-        legacyDeltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         private readonly logger: ITelemetryLogger,
     ) {
-        if (!messageScheduler || !("toArray" in messageScheduler.deltaManager.inbound as any)) {
-            this.deltaManager = legacyDeltaManager;
-            return;
-        }
-
-        this.messageScheduler = messageScheduler;
-        this.deltaManager = this.messageScheduler.deltaManager;
         this.deltaScheduler = new DeltaScheduler(
             this.deltaManager,
             ChildLogger.create(this.logger, "DeltaScheduler"),
@@ -217,64 +206,51 @@ export class ScheduleManager {
     }
 
     public beginOperation(message: ISequencedDocumentMessage) {
-        // If in legacy mode every operation is a batch
-        if (!this.messageScheduler) {
-            this.emitter.emit("batchBegin", message);
-            this.deltaScheduler.batchBegin(message);
-            return;
-        }
+        if (this.batchClientId !== message.clientId) {
+            // As a back stop for any bugs marking the end of a batch - if the client ID flipped, we
+            // consider the previous batch over.
+            if (this.batchClientId) {
+                this.emitter.emit("batchEnd", "Did not receive real batchEnd message", undefined);
+                this.deltaScheduler.batchEnd();
 
-        if (message.metadata === undefined) {
-            // If there is no metadata, and no client ID set, then this is an individual batch. Otherwise it's a
-            // message in the middle of a batch
-            if (!this.batchClientId) {
-                this.emitter.emit("batchBegin", message);
-                this.deltaScheduler.batchBegin(message);
+                this.logger.sendTelemetryEvent({
+                    eventName: "BatchEndNotReceived",
+                    clientId: this.batchClientId,
+                    sequenceNumber: message.sequenceNumber,
+                });
             }
 
-            return;
-        }
-
-        // Otherwise we need to check for the metadata flag
-        const metadata = message.metadata as IRuntimeMessageMetadata;
-        if (metadata.batch === true) {
-            this.batchClientId = message.clientId;
+            // This could be the beginning of a new batch or an invidual message.
             this.emitter.emit("batchBegin", message);
-            this.deltaScheduler.batchBegin(message);
+            this.deltaScheduler.batchBegin();
+
+            const batch = (message?.metadata as IRuntimeMessageMetadata)?.batch;
+            if (batch) {
+                this.batchClientId = message.clientId;
+            } else {
+                this.batchClientId = undefined;
+            }
         }
     }
 
     public endOperation(error: any | undefined, message: ISequencedDocumentMessage) {
-        if (!this.messageScheduler || error) {
+        if (error) {
             this.batchClientId = undefined;
             this.emitter.emit("batchEnd", error, message);
-            this.deltaScheduler.batchEnd(message);
+            this.deltaScheduler.batchEnd();
             return;
         }
 
         this.updatePauseState(message.sequenceNumber);
 
-        // If no batchClientId has been set then we're in an individual batch
-        if (!this.batchClientId) {
-            this.emitter.emit("batchEnd", undefined, message);
-            this.deltaScheduler.batchEnd(message);
-            return;
-        }
-
-        // As a back stop for any bugs marking the end of a batch - if the client ID flipped we consider the batch over
-        if (this.batchClientId !== message.clientId) {
+        const batch = (message?.metadata as IRuntimeMessageMetadata)?.batch;
+        // If no batchClientId has been set then we're in an individual batch. Else, if we get
+        // batch end metadata, this is end of the current batch.
+        if (!this.batchClientId || batch === false) {
             this.batchClientId = undefined;
             this.emitter.emit("batchEnd", undefined, message);
-            this.deltaScheduler.batchEnd(message);
+            this.deltaScheduler.batchEnd();
             return;
-        }
-
-        // Otherwise need to check the metadata flag
-        const batch = message.metadata ? (message.metadata as IRuntimeMessageMetadata).batch : undefined;
-        if (batch === false) {
-            this.batchClientId = undefined;
-            this.emitter.emit("batchEnd", undefined, message);
-            this.deltaScheduler.batchEnd(message);
         }
     }
 
@@ -438,14 +414,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.context.clientId;
     }
 
-    /**
-     * DEPRECATED use clientDetails.type instead
-     * back-compat: 0.11 clientType
-     */
-    public get clientType(): string {
-        return this.context.clientType;
-    }
-
     public get clientDetails(): IClientDetails {
         return this.context.clientDetails;
     }
@@ -489,6 +457,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
     public get flushMode(): FlushMode {
         return this._flushMode;
+    }
+
+    public get scope(): IComponent {
+        return this.context.scope;
     }
 
     public get IComponentRegistry(): IComponentRegistry {
@@ -598,9 +570,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.logger = context.logger;
 
         this.scheduleManager = new ScheduleManager(
-            context.IMessageScheduler,
-            this,
             context.deltaManager,
+            this,
             ChildLogger.create(this.logger, "ScheduleManager"),
         );
 
@@ -677,67 +648,34 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
      * @param tagMessage - Message to supply to storage service for writing the snapshot.
      */
     public async snapshot(tagMessage: string, fullTree: boolean = false): Promise<ITree> {
-        // Pull in the prior version and snapshot tree to store against
-        const lastVersion = fullTree ? [] : await this.storage.getVersions(this.id, 1);
-        const tree = lastVersion.length > 0
-            ? await this.storage.getSnapshotTree(lastVersion[0])
-            : { blobs: {}, commits: {}, trees: {} };
-
         // Iterate over each component and ask it to snapshot
-        const componentVersionsP = Array.from(this.contexts).map(async ([componentId, value]) => {
+        const componentSnapshotsP = Array.from(this.contexts).map(async ([componentId, value]) => {
             const snapshot = await value.snapshot();
 
             // If ID exists then previous commit is still valid
-            const commit = tree.commits[componentId] as string;
-            if (snapshot.id && commit && !fullTree) {
-                return {
-                    id: componentId,
-                    version: commit,
-                };
-            } else {
-                if (snapshot.id && !commit && !fullTree) {
-                    this.logger.sendErrorEvent({
-                        componentId,
-                        eventName: "MissingCommit",
-                        id: snapshot.id,
-                    });
-                }
-                const parent = commit ? [commit] : [];
-                const version = await this.storage.write(
-                    snapshot, parent, `${componentId} commit ${tagMessage}`, componentId);
-
-                return {
-                    id: componentId,
-                    version: version.id,
-                };
-            }
+            return {
+                componentId,
+                snapshot,
+            };
         });
 
         const root: ITree = { entries: [], id: null };
 
         // Add in module references to the component snapshots
-        const componentVersions = await Promise.all(componentVersionsP);
+        const componentSnapshots = await Promise.all(componentSnapshotsP);
 
         // Sort for better diffing of snapshots (in replay tool, used to find bugs in snapshotting logic)
         if (fullTree) {
-            componentVersions.sort((a, b) => a.id.localeCompare(b.id));
+            componentSnapshots.sort((a, b) => a.componentId.localeCompare(b.componentId));
         }
 
-        let gitModules = "";
-        for (const componentVersion of componentVersions) {
-            root.entries.push(new CommitTreeEntry(componentVersion.id, componentVersion.version));
-
-            const repoUrl = "https://github.com/kurtb/praguedocs.git"; // this.storageService.repositoryUrl
-            // eslint-disable-next-line max-len
-            gitModules += `[submodule "${componentVersion.id}"]\n\tpath = ${componentVersion.id}\n\turl = ${repoUrl}\n\n`;
+        for (const componentSnapshot of componentSnapshots) {
+            root.entries.push(new TreeTreeEntry(componentSnapshot.componentId, componentSnapshot.snapshot));
         }
 
         if (this.chunkMap.size > 0) {
             root.entries.push(new BlobTreeEntry(".chunks", JSON.stringify([...this.chunkMap])));
         }
-
-        // Write the module lookup details
-        root.entries.push(new BlobTreeEntry(".gitmodules", gitModules));
 
         return root;
     }
@@ -808,13 +746,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         } finally {
             this.scheduleManager.endOperation(error, message);
         }
-    }
-
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public postProcess(message: ISequencedDocumentMessage, local: boolean, context: any) {
-        return this.context.IMessageScheduler
-            ? Promise.reject("Scheduler assumes only process")
-            : Promise.resolve();
     }
 
     public processSignal(message: ISignalMessage, local: boolean) {
@@ -1358,11 +1289,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     private subscribeToLeadership() {
-        // Back-compat: 0.11 clientType
-        const interactive = this.context.clientType === "browser"
-            || (this.context.clientDetails && this.context.clientDetails.capabilities.interactive);
-
-        if (interactive) {
+        if (this.context.clientDetails.capabilities.interactive) {
             this.getScheduler().then((scheduler) => {
                 if (scheduler.leader) {
                     this.updateLeader(true);

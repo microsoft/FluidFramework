@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable import/no-internal-modules */
 
 import { EventEmitter } from "events";
 import { ISharedDirectory, IDirectory, IDirectoryValueChanged } from "@microsoft/fluid-map";
@@ -12,24 +11,26 @@ import {
 import { ClickerName } from "@fluid-example/clicker";
 import { Layout } from "react-grid-layout";
 
-type supportedComponent =
+export type SupportedComponent =
     "button"
     | "clicker"
     | "number"
     | "textbox"
     | "facepile"
     | "codemirror"
-    | "prosemirror";
+    | "prosemirror"
+    | "componentToolbar";
 
 export interface ISpacesDataModel extends EventEmitter {
     componentList: Map<string, Layout>;
-    addComponent(type: supportedComponent, w?: number, h?: number): Promise<void>;
-    getComponent(id: string): Promise<IComponent>;
+    addComponent<T>(type: SupportedComponent, w?: number, h?: number, id?: string): Promise<T>;
+    getComponent<T>(id: string): Promise<T>;
     removeComponent(id: string): void;
     updateGridItem(id: string, newLayout: Layout): void;
     getLayout(id: string): Layout;
     saveLayout(): void;
     setTemplate(): Promise<void>;
+    componentToolbarId: string;
 }
 
 /**
@@ -40,8 +41,9 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
 
     constructor(
         private readonly root: ISharedDirectory,
-        private readonly createAndAttachComponent: (id: string, pkg: string, props?: any) => Promise<IComponent>,
-        public getComponent: (id: string) => Promise<IComponent>,
+        private readonly createAndAttachComponent: <T>(id: string, pkg: string, props?: any) => Promise<T>,
+        public getComponent: <T>(id: string) => Promise<T>,
+        public componentToolbarId: string,
     ) {
         super();
 
@@ -76,9 +78,9 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
         return response;
     }
 
-    public async addComponent(type: supportedComponent, w: number = 1, h: number = 1): Promise<void> {
+    public async addComponent<T>(type: SupportedComponent, w: number = 1, h: number = 1, id?: string): Promise<T> {
         const defaultLayout = { x: 0, y: 0, w, h };
-        return this.addComponentInternal(type, defaultLayout);
+        return this.addComponentInternal<T>(type, defaultLayout, id);
     }
 
     public async removeComponent(id: string) {
@@ -114,16 +116,19 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
         const templateString = localStorage.getItem("spacesTemplate");
         if (templateString) {
             const template = JSON.parse(templateString) as ISpacesModel[];
-            const promises: Promise<void>[] = [];
+            const promises: Promise<IComponent>[] = [];
             template.forEach((value) => {
-                promises.push(this.addComponentInternal(value.type as supportedComponent, value.layout));
+                promises.push(this.addComponentInternal(value.type as SupportedComponent, value.layout));
             });
 
             await Promise.all(promises);
         }
     }
 
-    private async addComponentInternal(type: supportedComponent, layout: Layout): Promise<void> {
+    private async addComponentInternal<T>(
+        type: SupportedComponent,
+        layout: Layout,
+        id = `${type}-${Date.now()}`): Promise<T> {
         let pkg = "";
         switch (type) {
             case "clicker":
@@ -138,10 +143,8 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
             type,
             layout,
         };
-
-        const id = `${type}-${Date.now()}`;
         this.componentSubDirectory.set(id, defaultModel);
-        await this.createAndAttachComponent(id, pkg);
+        return this.createAndAttachComponent<T>(id, pkg);
     }
 }
 

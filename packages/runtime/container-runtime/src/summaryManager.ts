@@ -55,10 +55,12 @@ enum SummaryManagerState {
 }
 
 const defaultMaxRestarts = 5;
+const defaultInitialDelayMs = 5000;
 
 export class SummaryManager extends EventEmitter {
     private readonly logger: ITelemetryLogger;
     private readonly quorumHeap = new QuorumHeap();
+    private readonly initialDelayP: Promise<void>;
     private summarizerClientId?: string;
     private clientId?: string;
     private connected = false;
@@ -79,6 +81,7 @@ export class SummaryManager extends EventEmitter {
         private readonly enableWorker: boolean,
         parentLogger: ITelemetryLogger,
         private readonly maxRestarts: number = defaultMaxRestarts,
+        initialDelayMs: number = defaultInitialDelayMs,
     ) {
         super();
 
@@ -103,6 +106,8 @@ export class SummaryManager extends EventEmitter {
             this.quorumHeap.removeClient(clientId);
             this.refreshSummarizer();
         });
+
+        this.initialDelayP = new Promise((resolve) => setTimeout(resolve, initialDelayMs));
 
         this.refreshSummarizer();
     }
@@ -194,15 +199,22 @@ export class SummaryManager extends EventEmitter {
             return;
         }
 
-        // Back-compat: 0.11 clientType
-        const clientType = this.context.clientDetails ? this.context.clientDetails.type : this.context.clientType;
-        if (clientType === "summarizer") {
+        if (this.context.clientDetails.type === "summarizer") {
             // Make sure that the summarizer client does not load another summarizer.
             return;
         }
 
-        this.createSummarizer().then((summarizer) => {
-            if (this.shouldSummarize) {
+        // Back-off delay for subsequent retry starting.  The delay increase is linear,
+        // increasing by 20ms each time: 0ms, 20ms, 40ms, 60ms, etc.
+        const delayMs = (attempt - 1) * 20;
+        this.createSummarizer(delayMs).then((summarizer) => {
+            if (summarizer === undefined) {
+                if (this.shouldSummarize) {
+                    this.start(attempt + 1);
+                } else {
+                    this.state = SummaryManagerState.Off;
+                }
+            } else if (this.shouldSummarize) {
                 this.run(summarizer);
             } else {
                 summarizer.stop(this.getStopReason());
@@ -238,7 +250,16 @@ export class SummaryManager extends EventEmitter {
         });
     }
 
-    private async createSummarizer(): Promise<IComponentRunnable> {
+    private async createSummarizer(delayMs: number): Promise<IComponentRunnable | undefined> {
+        await Promise.all([
+            this.initialDelayP,
+            delayMs > 0 ? new Promise((resolve) => setTimeout(resolve, delayMs)) : Promise.resolve(),
+        ]);
+
+        if (!this.shouldSummarize) {
+            return undefined;
+        }
+
         // We have been elected the summarizer. Some day we may be able to summarize with a live document but for
         // now we play it safe and launch a second copy.
         this.logger.sendTelemetryEvent({ eventName: "CreatingSummarizer" });
@@ -249,7 +270,6 @@ export class SummaryManager extends EventEmitter {
         const request: IRequest = {
             headers: {
                 [LoaderHeader.cache]: false,
-                [LoaderHeader.clientType]: "summarizer", // Back-compat: 0.11 clientType
                 [LoaderHeader.clientDetails]: {
                     capabilities: { interactive: false },
                     type: "summarizer",

@@ -47,7 +47,7 @@ export class DeltaScheduler {
         this.deltaManager.inbound.on("idle", () => { this.inboundQueueIdle(); });
     }
 
-    public batchBegin(message: ISequencedDocumentMessage) {
+    public batchBegin() {
         if (this.deltaManager.inbound.length > 0 && !this.processingStartTime) {
             // Start the timer that keeps track of how long we have processed ops in the delta queue
             // in this call.
@@ -65,7 +65,7 @@ export class DeltaScheduler {
         }
     }
 
-    public batchEnd(message: ISequencedDocumentMessage) {
+    public batchEnd() {
         // If we have processed ops for more than the total processing time, we pause the
         // queue, yield the thread and schedule a resume. This ensures that we don't block
         // the JS threads for a long time (for example, when catching up ops right after

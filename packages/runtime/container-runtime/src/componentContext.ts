@@ -79,14 +79,6 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this._hostRuntime.clientId;
     }
 
-    /**
-     * DEPRECATED use hostRuntime.clientDetails.type instead
-     * back-compat: 0.11 clientType
-     */
-    public get clientType(): string {
-        return this._hostRuntime.clientType;
-    }
-
     public get blobManager(): IBlobManager {
         return this._hostRuntime.blobManager;
     }

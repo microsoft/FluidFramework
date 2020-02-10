@@ -101,7 +101,6 @@ async function* loadAllSequencedMessages(
         const client: IClient = {
             permission: [],
             scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
-            type: "browser", // Back-compat: 0.11 clientType
             details: {
                 capabilities: { interactive: true },
             },

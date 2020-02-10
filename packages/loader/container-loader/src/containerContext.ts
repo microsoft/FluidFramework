@@ -93,14 +93,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         return this.container.clientId;
     }
 
-    /**
-     * DEPRECATED use clientDetails.type
-     * back-compat: 0.11 clientType
-     */
-    public get clientType(): string {
-        return this.container.clientType;
-    }
-
     public get clientDetails(): IClientDetails {
         return this.container.clientDetails;
     }
@@ -211,16 +203,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any) {
         this.runtime!.process(message, local, context);
-    }
-
-    public async postProcess(message: ISequencedDocumentMessage, local: boolean, context: any): Promise<void> {
-        // Included for back compat with documents created prior to postProcess deprecation
-        // eslint-disable-next-line @typescript-eslint/unbound-method
-        if (!this.runtime || !this.runtime.postProcess) {
-            return Promise.reject("Runtime must query for IMessageHandler to signal it does not implement postProcess");
-        }
-
-        return this.runtime.postProcess(message, local, context);
     }
 
     public processSignal(message: ISignalMessage, local: boolean) {
