@@ -23,6 +23,7 @@ import {
 import {
     Anchor,
     Button,
+    LocationList,
     Number,
     TabsComponent,
     Vltava,
@@ -95,6 +96,13 @@ const generateFactory = () => {
             capabilities: ["IComponentHTMLVisual"],
             friendlyName: "Clicker",
             fabricIconName: "NumberField",
+        },
+        {
+            type: "locationList",
+            factory: Promise.resolve(LocationList.getFactory()),
+            capabilities: ["IComponentHTMLVisual"],
+            friendlyName: "Location List",
+            fabricIconName: "BulletedList2",
         },
         {
             type: "button",

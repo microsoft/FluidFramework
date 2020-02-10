@@ -3,6 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export * from "./clicker";
-export * from "./location";
-export * from "./registryDetails";
+export * from "./locationList";
