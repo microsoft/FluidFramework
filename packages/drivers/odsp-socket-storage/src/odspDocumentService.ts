@@ -49,6 +49,10 @@ export class OdspDocumentService implements IDocumentService {
 
     private readonly joinSessionKey: string;
 
+    // A hint for any document storage managers created if they are the first container
+    // being created by this service
+    private isFirstContainerForService: boolean = true;
+
     /**
      * @param appId - app id used for telemetry for network requests
      * @param hashedDocumentId - A unique identifer for the document. The "hashed" here implies that the contents of
@@ -120,7 +124,6 @@ export class OdspDocumentService implements IDocumentService {
      */
     public async connectToStorage(): Promise<IDocumentStorageService> {
         const latestSha: string | null | undefined = undefined;
-
         this.storageManager = new OdspDocumentStorageManager(
             { app_id: this.appId },
             this.hashedDocumentId,
@@ -131,7 +134,10 @@ export class OdspDocumentService implements IDocumentService {
             this.logger,
             true,
             this.odspCache,
+            this.isFirstContainerForService,
         );
+
+        this.isFirstContainerForService = false;
 
         return new OdspDocumentStorageService(this.storageManager);
     }
