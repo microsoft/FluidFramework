@@ -193,7 +193,7 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
     /**
      * Ambient services provided with the context
      */
-    readonly scope: IComponent;
+    readonly loaderScope: IComponent;
 
     error(err: IError): void;
     requestSnapshot(tagMessage: string): Promise<void>;

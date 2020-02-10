@@ -23,7 +23,7 @@ describe("Component Context Tests", () => {
 
         let localComponentContext: LocalComponentContext;
         let storage: IDocumentStorageService;
-        let scope: IComponent;
+        let loaderScope: IComponent;
         const attachCb = (mR: IComponentRuntime) => {};
         let containerRuntime: ContainerRuntime;
         beforeEach(async () => {
@@ -43,7 +43,13 @@ describe("Component Context Tests", () => {
 
         it("Check LocalComponent Attributes", () => {
             localComponentContext =
-                new LocalComponentContext("Test1", ["TestComponent1"], containerRuntime, storage, scope, attachCb);
+                new LocalComponentContext(
+                    "Test1",
+                    ["TestComponent1"],
+                    containerRuntime,
+                    storage,
+                    loaderScope,
+                    attachCb);
 
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             localComponentContext.realize();
@@ -69,7 +75,13 @@ describe("Component Context Tests", () => {
         it("Supplying array of packages in LocalComponentContext should create exception", async () => {
             let exception = false;
             localComponentContext =
-                new LocalComponentContext("Test1", ["TestComp", "SubComp"], containerRuntime, storage, scope, attachCb);
+                new LocalComponentContext(
+                    "Test1",
+                    ["TestComp", "SubComp"],
+                    containerRuntime,
+                    storage,
+                    loaderScope,
+                    attachCb);
 
             await localComponentContext.realize()
                 .catch((error) => {
@@ -88,7 +100,13 @@ describe("Component Context Tests", () => {
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = { IComponentRegistry: registryWithSubRegistries } as ContainerRuntime;
             localComponentContext =
-                new LocalComponentContext("Test1", ["TestComp", "SubComp"], containerRuntime, storage, scope, attachCb);
+                new LocalComponentContext(
+                    "Test1",
+                    ["TestComp", "SubComp"],
+                    containerRuntime,
+                    storage,
+                    loaderScope,
+                    attachCb);
 
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             localComponentContext.realize();
@@ -116,7 +134,7 @@ describe("Component Context Tests", () => {
         let remotedComponentContext: RemotedComponentContext;
         let componentAttributes: IComponentAttributes;
         let storage: IDocumentStorageService;
-        let scope: IComponent;
+        let loaderScope: IComponent;
         let containerRuntime: ContainerRuntime;
         beforeEach(async () => {
             const factory: { [key: string]: any } = {};
@@ -149,7 +167,7 @@ describe("Component Context Tests", () => {
                 snapshotTree,
                 containerRuntime,
                 new DocumentStorageServiceProxy(storage, blobCache),
-                scope);
+                loaderScope);
             const snapshot = await remotedComponentContext.snapshot(true);
             const blob = snapshot.entries[0].value as IBlob;
 
@@ -179,7 +197,7 @@ describe("Component Context Tests", () => {
                 snapshotTree,
                 containerRuntime,
                 new DocumentStorageServiceProxy(storage, blobCache),
-                scope);
+                loaderScope);
             const snapshot = await remotedComponentContext.snapshot(true);
             const blob = snapshot.entries[0].value as IBlob;
 

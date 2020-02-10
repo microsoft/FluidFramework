@@ -82,7 +82,7 @@ export class Drawer extends EventEmitter implements IComponentLoadable, ICompone
 
         this.root = await this.runtime.getChannel("root") as ISharedMap;
 
-        this.packageManager = this.context.scope.IPackageManager;
+        this.packageManager = this.context.loaderScope.IPackageManager;
         this.packagesP = this.packageManager
             ? this.fetchPackageData()
             : Promise.resolve([]);
@@ -111,7 +111,7 @@ export class Drawer extends EventEmitter implements IComponentLoadable, ICompone
 
     public addView(scope?: IComponent): IComponentHTMLView {
         const view = new DrawerView(
-            this.context.scope.IDocumentFactory,
+            this.context.loaderScope.IDocumentFactory,
             this.root,
             this.context,
             this.packagesP,

@@ -459,8 +459,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this._flushMode;
     }
 
-    public get scope(): IComponent {
-        return this.context.scope;
+    public get loaderScope(): IComponent {
+        return this.context.loaderScope;
     }
 
     public get IComponentRegistry(): IComponentRegistry {
@@ -559,7 +559,12 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         // Create a context for each of them
         for (const [key, value] of components) {
-            const componentContext = new RemotedComponentContext(key, value, this, this.storage, this.context.scope);
+            const componentContext = new RemotedComponentContext(
+                key,
+                value,
+                this,
+                this.storage,
+                this.context.loaderScope);
             const deferred = new Deferred<ComponentContext>();
             deferred.resolve(componentContext);
 
@@ -893,7 +898,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             Array.isArray(pkg) ? pkg : [pkg],
             this,
             this.storage,
-            this.context.scope,
+            this.context.loaderScope,
             (cr: IComponentRuntime) => this.attachComponent(cr),
             props);
 
@@ -1037,7 +1042,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     snapshotTree,
                     this,
                     new DocumentStorageServiceProxy(this.storage, flatBlobs),
-                    this.context.scope,
+                    this.context.loaderScope,
                     [attachMessage.type]);
 
                 break;

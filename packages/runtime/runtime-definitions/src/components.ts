@@ -221,7 +221,7 @@ export interface IComponentContext extends EventEmitter {
     /**
      * Ambient services provided with the context
      */
-    readonly scope: IComponent;
+    readonly loaderScope: IComponent;
 
     /**
      * Returns the current quorum.
@@ -332,7 +332,7 @@ export interface IHostRuntime extends
     readonly submitSignalFn: (contents: any) => void;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly closeFn: () => void;
-    readonly scope: IComponent;
+    readonly loaderScope: IComponent;
 
     /**
      * Returns the runtime of the component.

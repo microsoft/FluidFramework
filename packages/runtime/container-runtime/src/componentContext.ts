@@ -144,7 +144,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         public readonly id: string,
         public readonly existing: boolean,
         public readonly storage: IDocumentStorageService,
-        public readonly scope: IComponent,
+        public readonly loaderScope: IComponent,
         public readonly attach: (componentRuntime: IComponentRuntime) => void,
     ) {
         super();
@@ -411,7 +411,7 @@ export class RemotedComponentContext extends ComponentContext {
         private readonly initSnapshotValue: ISnapshotTree | string,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
-        scope: IComponent,
+        loaderScope: IComponent,
         private readonly pkg?: string[],
     ) {
         super(
@@ -419,7 +419,7 @@ export class RemotedComponentContext extends ComponentContext {
             id,
             true,
             storage,
-            scope,
+            loaderScope,
             () => {
                 throw new Error("Already attached");
             });
@@ -484,11 +484,11 @@ export class LocalComponentContext extends ComponentContext {
         private readonly pkg: string[],
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
-        scope: IComponent,
+        loaderScope: IComponent,
         attachCb: (componentRuntime: IComponentRuntime) => void,
         public readonly createProps?: any,
     ) {
-        super(runtime, id, false, storage, scope, attachCb);
+        super(runtime, id, false, storage, loaderScope, attachCb);
     }
 
     public generateAttachMessage(): IAttachMessage {
