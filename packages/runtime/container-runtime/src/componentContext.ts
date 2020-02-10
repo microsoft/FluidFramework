@@ -67,6 +67,26 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this._hostRuntime.id;
     }
 
+    public get type(): string {
+        // During ContainerRuntime creation, there is a small window where a remoted component
+        // context is created but pkg is not set until getInitialSnapshotDetails is called.
+        if (!this.pkg) {
+            console.log("The component is not fully created yet");
+            return undefined;
+        }
+        return this.pkg[this.pkg.length - 1];
+    }
+
+    public get path(): string[] {
+        // During ContainerRuntime creation, there is a small window where a remoted component
+        // context is created but pkg is not set until getInitialSnapshotDetails is called.
+        if (!this.pkg) {
+            console.log("The component is not fully created yet");
+            return undefined;
+        }
+        return this.pkg;
+    }
+
     public get parentBranch(): string {
         return this._hostRuntime.parentBranch;
     }
@@ -146,6 +166,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         public readonly storage: IDocumentStorageService,
         public readonly scope: IComponent,
         public readonly attach: (componentRuntime: IComponentRuntime) => void,
+        protected pkg?: string[],
     ) {
         super();
     }
@@ -426,7 +447,7 @@ export class RemotedComponentContext extends ComponentContext {
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IComponent,
-        private readonly pkg?: string[],
+        pkg?: string[],
     ) {
         super(
             runtime,
@@ -436,7 +457,8 @@ export class RemotedComponentContext extends ComponentContext {
             scope,
             () => {
                 throw new Error("Already attached");
-            });
+            },
+            pkg);
 
         if (initSnapshotValue && typeof initSnapshotValue !== "string") {
             // This will allow the summarizer to avoid calling realize if there
@@ -464,12 +486,7 @@ export class RemotedComponentContext extends ComponentContext {
                 tree = this.initSnapshotValue;
             }
 
-            if (tree === null || tree.blobs[".component"] === undefined) {
-                this.details = {
-                    pkg: this.pkg,
-                    snapshot: tree,
-                };
-            } else {
+            if (tree !== null && tree.blobs[".component"] !== undefined) {
                 // Need to rip through snapshot and use that to populate extraBlobs
                 const { pkg, snapshotFormatVersion } =
                     await readAndParse<IComponentAttributes>(
@@ -488,11 +505,13 @@ export class RemotedComponentContext extends ComponentContext {
                 } else if (snapshotFormatVersion === currentSnapshotFormatVersion) {
                     pkgFromSnapshot = JSON.parse(pkg) as string[];
                 }
-                this.details = {
-                    pkg: pkgFromSnapshot,
-                    snapshot: tree,
-                };
+                this.pkg = pkgFromSnapshot;
             }
+
+            this.details = {
+                pkg: this.pkg,
+                snapshot: tree,
+            };
         }
 
         return this.details;
@@ -502,14 +521,14 @@ export class RemotedComponentContext extends ComponentContext {
 export class LocalComponentContext extends ComponentContext {
     constructor(
         id: string,
-        private readonly pkg: string[],
+        pkg: string[],
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IComponent,
         attachCb: (componentRuntime: IComponentRuntime) => void,
         public readonly createProps?: any,
     ) {
-        super(runtime, id, false, storage, scope, attachCb);
+        super(runtime, id, false, storage, scope, attachCb, pkg);
     }
 
     public generateAttachMessage(): IAttachMessage {

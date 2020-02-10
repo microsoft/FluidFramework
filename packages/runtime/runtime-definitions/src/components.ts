@@ -200,6 +200,14 @@ export interface IComponentRuntime extends EventEmitter, IComponentRouter, Parti
 export interface IComponentContext extends EventEmitter {
     readonly documentId: string;
     readonly id: string;
+    /**
+     * The pacakge type for the component as specified in the factory.
+     */
+    readonly type: string;
+    /**
+     * The path for the component in the component tree.
+     */
+    readonly path: string[];
     readonly existing: boolean;
     readonly options: any;
     readonly clientId: string;
