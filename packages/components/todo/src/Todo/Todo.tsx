@@ -102,7 +102,7 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
     public async addTodoItemComponent(props?: any) {
 
         // Create a new todo item
-        const componentRuntime: IComponentRuntime = await this.context.createSubComponent(TodoItemName, props);
+        const componentRuntime: IComponentRuntime = await this.context.createComponent(undefined, TodoItemName, props);
         await componentRuntime.request({ url: "/" });
         componentRuntime.attach();
 

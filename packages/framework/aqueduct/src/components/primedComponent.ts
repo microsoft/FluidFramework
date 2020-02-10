@@ -44,7 +44,7 @@ export abstract class PrimedComponent extends SharedComponent {
      * The root directory will either be ready or will return an error. If an error is thrown
      * the root has not been correctly created/set.
      */
-    public get root(): ISharedDirectory {
+    protected get root(): ISharedDirectory {
         if (!this.internalRoot) {
             throw new Error(this.getUninitializedErrorString(`root`));
         }
@@ -55,7 +55,7 @@ export abstract class PrimedComponent extends SharedComponent {
     /**
      * Returns the built-in task manager responsible for scheduling tasks.
      */
-    public get taskManager(): ITaskManager {
+    protected get taskManager(): ITaskManager {
         if (!this.internalTaskManager) {
             throw new Error(this.getUninitializedErrorString(`taskManager`));
         }
@@ -69,7 +69,7 @@ export abstract class PrimedComponent extends SharedComponent {
      * on map doing proper snapshot blob partitioning to reuse non-changing big properties.
      * In future blobs would be implemented as first class citizen, using blob storage APIs
      */
-    public async writeBlob(blob: string): Promise<IComponentHandle> {
+    protected async writeBlob(blob: string): Promise<IComponentHandle> {
         const path = `${this.bigBlobs}${uuid()}`;
         this.root.set(path, blob);
         return new BlobHandle(path, this.root, this.runtime.IComponentHandleContext);
