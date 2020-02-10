@@ -15,7 +15,7 @@ import { Client } from "../client";
 import * as Collections from "../collections";
 import { UnassignedSequenceNumber } from "../constants";
 import { ISegment, Marker, MergeTree } from "../mergeTree";
-import { createInsertSegmentOp } from "../opBuilder";
+import { createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder";
 import { IJSONSegment, IMarkerDef, IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 import { PropertySet } from "../properties";
 import { SnapshotLegacy } from "../snapshotlegacy";
@@ -145,7 +145,7 @@ export class TestClient extends Client {
     public insertTextRemote(
         pos: number,
         text: string,
-        props: PropertySet,
+        props: PropertySet | undefined,
         seq: number,
         refSeq: number,
         longClientId: string,
@@ -156,6 +156,20 @@ export class TestClient extends Client {
         }
         this.applyMsg(this.makeOpMessage(
             createInsertSegmentOp(pos, segment),
+            seq,
+            refSeq,
+            longClientId));
+    }
+
+    public removeRangeRemote(
+        start: number,
+        end: number,
+        seq: number,
+        refSeq: number,
+        longClientId: string,
+    ) {
+        this.applyMsg(this.makeOpMessage(
+            createRemoveRangeOp(start, end),
             seq,
             refSeq,
             longClientId));
