@@ -1,0 +1,16 @@
+{
+    "extends": "@microsoft/fluid-build-common/ts-common-config.json",
+    "exclude": [
+        "dist",
+        "node_modules"
+    ],
+    "compilerOptions": {
+        "strict": true,
+        "rootDir": "..",
+        "outDir": "./dist",
+        "types": ["node"]
+    },
+    "include": [
+        "./src/**/*"
+    ]
+}
