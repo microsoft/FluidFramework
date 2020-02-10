@@ -8,13 +8,13 @@ import { IConnectionError, IThrottlingError, IWriteError, ErrorType } from "@mic
  * Network error error class - used to communicate all  network errors
  */
 export class NetworkError extends Error implements IConnectionError {
-
+    readonly errorType: ErrorType.connectionError = ErrorType.connectionError;
     constructor(
         errorMessage: string,
         readonly statusCode?: number,
         readonly canRetry?: boolean,
         readonly online = OnlineStatus[isOnline()],
-        readonly errorType: ErrorType.connectionError = ErrorType.connectionError) {
+    ) {
         super(errorMessage);
     }
 
@@ -28,11 +28,9 @@ export class NetworkError extends Error implements IConnectionError {
  * Throttling error class - used to communicate all throttling errors
  */
 export class ThrottlingError extends Error implements IThrottlingError {
+    readonly errorType: ErrorType.throttlingError = ErrorType.throttlingError;
 
-    constructor(
-        errorMessage: string,
-        readonly retryAfterSeconds: number,
-        readonly errorType: ErrorType.throttlingError = ErrorType.throttlingError) {
+    constructor(errorMessage: string, readonly retryAfterSeconds: number) {
         super(errorMessage);
     }
 
@@ -42,11 +40,10 @@ export class ThrottlingError extends Error implements IThrottlingError {
 }
 
 export class WriteError extends Error implements IWriteError {
+    readonly errorType: ErrorType.writeError = ErrorType.writeError;
     public readonly critical = true;
 
-    constructor(
-        errorMessage: string,
-        readonly errorType: ErrorType.writeError = ErrorType.writeError) {
+    constructor(errorMessage: string) {
         super(errorMessage);
     }
 

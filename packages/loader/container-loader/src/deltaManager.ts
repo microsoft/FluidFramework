@@ -366,8 +366,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
             this.setupNewSuccessfulConnection(connection);
 
-            // if we ask for write and get read it means we don't have write permissions
-            this.writePermission = requestedMode === "write" ? this._connectionMode === requestedMode : undefined;
+            if (requestedMode === "write") {
+                // if we ask for write and get read it means we don't have write permissions
+                this.writePermission = this._connectionMode === requestedMode;
+            }
 
             return connection;
         };

@@ -2,6 +2,7 @@
 - [Samples and chaincode have been renamed to examples and components respectively](##Samples-and-chaincode-have-been-renamed-to-examples-and-components-respectively)
 - [Top-level `type` on `IClient` removed](#Top-level-type-on-IClient-removed)
 - [Remove back-compat support for loader <= 0.8](#remove-back-compat-support-for-loader-0.8)
+- [New Error types](#New-Error-types)
 
 ## Samples and chaincode have been renamed to examples and components respectively
 The directories themselves have been renamed.
@@ -15,6 +16,10 @@ The `type` field on `IClient` has been removed.
 
 Back-compat support code for postProcess and ScheduleManager is removed for loader <= 0.8, which doesn't support group ops.
 Any component based on runtime >= 0.14 will no longer work with loader <= 0.8
+
+## New Error types
+The following new error interfaces have been added:
+- `IWriteError` is thrown when ops are sent on a read-only document
 
 # 0.13 Breaking Changes
 
