@@ -70,6 +70,10 @@ export abstract class PrimedComponent extends SharedComponent {
      * In future blobs would be implemented as first class citizen, using blob storage APIs
      */
     protected async writeBlob(blob: string): Promise<IComponentHandle> {
+        this.runtime.logger.sendTelemetryEvent({
+            eventName: "WriteBlob",
+            size: blob.length,
+        });
         const path = `${this.bigBlobs}${uuid()}`;
         this.root.set(path, blob);
         return new BlobHandle(path, this.root, this.runtime.IComponentHandleContext);
