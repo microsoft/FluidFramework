@@ -37,6 +37,12 @@ const calendarStyle: React.CSSProperties = {
 export class Calendar extends PrimedComponent implements IComponentHTMLVisual, IComponentDiscoverInterfaces {
     private static readonly factory = new PrimedComponentFactory(Calendar, []);
 
+    private readonly events: Event[] = [{
+        start: new Date(),
+        end: new Date(),
+        title: "foo",
+    }];
+
     public static getFactory() {
         return Calendar.factory;
     }
@@ -58,7 +64,10 @@ export class Calendar extends PrimedComponent implements IComponentHTMLVisual, I
 
             switch(interfaceName) {
                 case "IComponentEventData": {
-                    alert("here");
+                    const event = component.IComponentEventData;
+                    if (event){
+                        this.events.push(event.event);
+                    }
                 }
                 default:
             }
@@ -75,12 +84,6 @@ export class Calendar extends PrimedComponent implements IComponentHTMLVisual, I
 
     public render(div: HTMLElement) {
 
-        const events: Event[] = [{
-            start: new Date(),
-            end: new Date(),
-            title: "foo",
-        }];
-
         const onSelectSlot = (slotInfo: {
             start: Date;
             end: Date;
@@ -95,7 +98,7 @@ export class Calendar extends PrimedComponent implements IComponentHTMLVisual, I
             <div style={calendarStyle}>
                 <BigCalendar
                     localizer={localizer}
-                    events={events}
+                    events={this.events}
                     startAccessor="start"
                     endAccessor="end"
                     onSelectSlot={onSelectSlot}
