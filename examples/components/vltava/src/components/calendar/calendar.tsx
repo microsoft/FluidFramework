@@ -8,8 +8,10 @@ import {
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import {
+    IComponent,
     IComponentHTMLVisual,
 } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentDiscoverInterfaces } from "@microsoft/fluid-framework-interfaces";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -32,7 +34,7 @@ const calendarStyle: React.CSSProperties = {
  * Button is a simple component that is just a button. It registers with the matchMaker so
  * when the button is pressed Components that consume clicks can do work
  */
-export class Calendar extends PrimedComponent implements IComponentHTMLVisual {
+export class Calendar extends PrimedComponent implements IComponentHTMLVisual, IComponentDiscoverInterfaces {
     private static readonly factory = new PrimedComponentFactory(Calendar, []);
 
     public static getFactory() {
@@ -40,6 +42,36 @@ export class Calendar extends PrimedComponent implements IComponentHTMLVisual {
     }
 
     public get IComponentHTMLVisual() { return this; }
+    public get IComponentDiscoverInterfaces() { return this; }
+
+    public get interfacesToDiscover(): (keyof IComponent)[] {
+        return [
+            "IComponentEventData",
+        ];
+    }
+
+    public notifyComponentsDiscovered(interfaceName: keyof IComponent, components: readonly IComponent[]): void {
+        components.forEach((component) => {
+            if (!component[interfaceName]) {
+                console.log(`component doesn't support interface ${interfaceName}`);
+            }
+
+            switch(interfaceName) {
+                case "IComponentEventData": {
+                    alert("here");
+                }
+                default:
+            }
+        });
+    }
+
+    protected async componentHasInitialized() {
+        const matchMaker = await this.getService<IComponent>("matchMaker");
+        const interfaceRegistry = matchMaker.IComponentInterfacesRegistry;
+        if (interfaceRegistry) {
+            interfaceRegistry.registerComponentInterfaces(this);
+        }
+    }
 
     public render(div: HTMLElement) {
 
