@@ -16,10 +16,7 @@ import * as resources from "@microsoft/fluid-gitresources";
 import { buildHierarchy } from "@microsoft/fluid-protocol-base";
 import * as api from "@microsoft/fluid-protocol-definitions";
 import {
-    IUploadSummaryTree,
     ISummaryContext,
-    UploadSummaryObject,
-    IUploadSummaryHandle,
 } from "@microsoft/fluid-driver-definitions";
 import {
     IDocumentStorageGetVersionsResponse,
@@ -45,10 +42,11 @@ import { getWithRetryForTokenRefresh, throwOdspNetworkError } from "./odspUtils"
 
 const blobReuseFeatureDisabled = true;
 
+// back-compat: 0.14 uploadSummary
 type ConditionallyContextedSummary = {
     useContext: true,
     parentHandle: string | undefined,
-    tree: IUploadSummaryTree,
+    tree: api.ISummaryTree,
 } | {
     useContext: false,
     tree: api.ISummaryTree,
@@ -380,6 +378,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         return Promise.reject("Not supported");
     }
 
+    // back-compat: 0.14 uploadSummary
     public async uploadSummary(tree: api.ISummaryTree): Promise<api.ISummaryHandle> {
         this.checkSnapshotUrl();
 
@@ -402,7 +401,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         };
     }
 
-    public async uploadSummaryWithContext(summary: IUploadSummaryTree, context: ISummaryContext): Promise<string> {
+    public async uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string> {
         this.checkSnapshotUrl();
 
         const { result, blobsShaToPathCacheLatest } = await this.writeSummaryTree({
@@ -598,10 +597,10 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     const subtree: ConditionallyContextedSummary = summary.useContext === true ? {
                         useContext: true,
                         parentHandle: summary.parentHandle,
-                        tree: summaryObject as IUploadSummaryTree,
+                        tree: summaryObject,
                     } : {
                         useContext: false,
-                        tree: summaryObject as api.ISummaryTree,
+                        tree: summaryObject,
                     };
 
                     value = this.convertSummaryToSnapshotTree(
@@ -636,13 +635,14 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                         if (!summary.parentHandle) {
                             throw Error("Parent summary does not exist to reference by handle.");
                         }
-                        let handlePath = (summaryObject as IUploadSummaryHandle).path;
+                        let handlePath = summaryObject.handle;
                         if (handlePath.length > 0 && !handlePath.startsWith("/")) {
                             handlePath = `/${handlePath}`;
                         }
                         id = `${summary.parentHandle}${handlePath}`;
                     } else {
-                        id = (summaryObject as api.ISummaryHandle).handle;
+                        // back-compat: 0.14 uploadSummary
+                        id = summaryObject.handle;
                     }
 
                     // TODO: SPO will deprecate this soon
@@ -690,7 +690,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         return snapshotTree;
     }
 
-    private getServerType(value: api.SummaryObject | UploadSummaryObject): string {
+    private getServerType(value: api.SummaryObject): string {
         const type = value.type === api.SummaryType.Handle ? value.handleType : value.type;
         switch (type) {
             case api.SummaryType.Blob:

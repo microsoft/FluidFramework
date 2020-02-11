@@ -17,7 +17,7 @@ import { MockRuntime } from "@microsoft/fluid-test-runtime-utils";
 import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
 import { IComponentAttributes, LocalComponentContext, RemotedComponentContext } from "../componentContext";
 import { ContainerRuntime } from "../containerRuntime";
-import { DocumentStorageServiceProxy } from "../documentStorageServiceProxy";
+import { BlobCacheStorageService } from "../blobCacheStorageService";
 
 describe("Component Context Tests", () => {
     describe("LocalComponentContext Initialization", () => {
@@ -170,7 +170,7 @@ describe("Component Context Tests", () => {
                 "Test1",
                 snapshotTree,
                 containerRuntime,
-                new DocumentStorageServiceProxy(storage as IDocumentStorageService, blobCache),
+                new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                 scope,
                 1,
                 new SummaryTracker(false, "", 1, async () => undefined));
@@ -202,7 +202,7 @@ describe("Component Context Tests", () => {
                 "Test1",
                 snapshotTree,
                 containerRuntime,
-                new DocumentStorageServiceProxy(storage as IDocumentStorageService, blobCache),
+                new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                 scope,
                 1,
                 new SummaryTracker(false, "", 1, async () => undefined));

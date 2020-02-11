@@ -2,46 +2,20 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import {
-    IDocumentStorageService,
-    IUploadSummaryTree,
-    ISummaryContext,
-    UploadSummaryWithContextType,
-} from "@microsoft/fluid-driver-definitions";import {
-    ICreateBlobResponse,
     ISnapshotTree,
-    ISummaryHandle,
-    ISummaryTree,
-    ITree,
     IVersion,
 } from "@microsoft/fluid-protocol-definitions";
+import { DocumentStorageServiceProxy } from "@microsoft/fluid-driver-utils";
 import { debug } from "./debug";
 
-export class PrefetchDocumentStorageService implements IDocumentStorageService {
-    public readonly uploadSummaryWithContext: UploadSummaryWithContextType | undefined;
-
+export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy {
     // BlobId -> blob prefetchCache cache
     private readonly prefetchCache = new Map<string, Promise<string>>();
     private prefetchEnabled = true;
 
-    constructor(private readonly storage: IDocumentStorageService) {
-        if (this.storage.uploadSummaryWithContext !== undefined) {
-            this.uploadSummaryWithContext = async (summary: IUploadSummaryTree, context: ISummaryContext) => {
-                if (this.storage.uploadSummaryWithContext === undefined) {
-                    throw Error("Expected uploadSummaryWithContext in storage.");
-                }
-                return this.storage.uploadSummaryWithContext(summary, context);
-            };
-        }
-    }
-
-    public get repositoryUrl(): string {
-        return this.storage.repositoryUrl;
-    }
-
     public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
-        const p = this.storage.getSnapshotTree(version);
+        const p = this.internalStorageService.getSnapshotTree(version);
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         if (p && this.prefetchEnabled) {
             // We don't care if the prefetch succeed
@@ -54,39 +28,8 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
         return p;
     }
 
-    public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
-        return this.storage.getVersions(versionId, count);
-    }
-
     public async read(blobId: string): Promise<string> {
         return this.cachedRead(blobId);
-    }
-
-    public async getContent(version: IVersion, path: string): Promise<string> {
-        return this.storage.getContent(version, path);
-    }
-
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
-        return this.storage.write(tree, parents, message, ref);
-    }
-
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public uploadSummary(commit: ISummaryTree): Promise<ISummaryHandle> {
-        return this.storage.uploadSummary(commit);
-    }
-
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
-        return this.storage.downloadSummary(handle);
-    }
-
-    public async createBlob(file: Buffer): Promise<ICreateBlobResponse> {
-        return this.storage.createBlob(file);
-    }
-
-    public getRawUrl(blobId: string): string {
-        return this.storage.getRawUrl(blobId);
     }
 
     public stopPrefetch() {
@@ -101,11 +44,11 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
             if (prefetchedBlobP) {
                 return prefetchedBlobP;
             }
-            const prefetchedBlobPFromStorage = this.storage.read(blobId);
+            const prefetchedBlobPFromStorage = this.internalStorageService.read(blobId);
             this.prefetchCache.set(blobId, prefetchedBlobPFromStorage);
             return prefetchedBlobPFromStorage;
         }
-        return this.storage.read(blobId);
+        return this.internalStorageService.read(blobId);
     }
 
     private prefetchTree(tree: ISnapshotTree) {

@@ -22,9 +22,6 @@ import {
     ITokenProvider,
     ITree,
     IVersion,
-    SummaryType,
-    ISummaryAuthor,
-    ISummaryBlob,
 } from "@microsoft/fluid-protocol-definitions";
 import { IResolvedUrl } from "./urlResolver";
 
@@ -52,8 +49,6 @@ export interface IDocumentDeltaStorageService {
      */
     get(from?: number, to?: number): Promise<ISequencedDocumentMessage[]>;
 }
-
-export type UploadSummaryWithContextType = (summary: IUploadSummaryTree, context: ISummaryContext) => Promise<string>;
 
 /**
  * Interface to provide access to snapshots saved for a shared object
@@ -97,16 +92,20 @@ export interface IDocumentStorageService {
     getRawUrl(blobId: string): string;
 
     /**
+     * DEPRECATED: use uploadSummaryWithContext instead.
      * Generates and uploads a packfile that represents the given commit. A driver generated handle to the packfile
      * is returned as a result of this call.
+     * back-compat: 0.14 uploadSummary
      */
     uploadSummary(commit: ISummaryTree): Promise<ISummaryHandle>;
 
     /**
-     * Uploads a summary tree to storage using the given context for handle reference.
+     * Uploads a summary tree to storage using the given context for reference of previous summary handle.
+     * The ISummaryHandles in the uploaded tree should have paths to indicate which summary object they are
+     * referencing from the previously acked summary.
      * Returns the uploaded summary handle.
      */
-    readonly uploadSummaryWithContext: UploadSummaryWithContextType | undefined;
+    uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
 
     /**
      * Retrieves the commit that matches the packfile handle. If the packfile has already been committed and the
@@ -252,32 +251,3 @@ export interface ISummaryContext {
      */
     readonly ackHandle: string | undefined;
 }
-
-export interface IUploadSummaryTree {
-    type: SummaryType.Tree;
-    tree: { [path: string]: UploadSummaryObject };
-}
-
-export interface IUploadSummaryHandle {
-    type: SummaryType.Handle;
-    handleType: SummaryType;
-    path: string;
-}
-
-export interface IUploadSummaryCommit {
-    type: SummaryType.Commit;
-
-    author: ISummaryAuthor;
-
-    committer: ISummaryAuthor;
-
-    message: string;
-
-    // Tree referenced by the commit
-    tree: IUploadSummaryTree | IUploadSummaryHandle;
-
-    // Previous parents to the commit.
-    parents: string[];
-}
-
-export type UploadSummaryObject = IUploadSummaryTree | IUploadSummaryHandle | ISummaryBlob | IUploadSummaryCommit;

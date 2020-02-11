@@ -5,7 +5,7 @@
 
 import * as assert from "assert";
 import { gitHashFile } from "@microsoft/fluid-core-utils";
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+import { IDocumentStorageService, ISummaryContext } from "@microsoft/fluid-driver-definitions";
 import * as resources from "@microsoft/fluid-gitresources";
 import { buildHierarchy } from "@microsoft/fluid-protocol-base";
 import {
@@ -25,8 +25,6 @@ import * as gitStorage from "@microsoft/fluid-server-services-client";
  * Document access to underlying storage for routerlicious driver.
  */
 export class DocumentStorageService implements IDocumentStorageService {
-    public readonly uploadSummaryWithContext = undefined;
-
     // The values of this cache is useless. We only need the keys. So we are always putting
     // empty strings as values.
     private readonly blobsShaCache = new Map<string, string>();
@@ -79,6 +77,7 @@ export class DocumentStorageService implements IDocumentStorageService {
         return commit.then((c) => ({ date: c.committer.date, id: c.sha, treeId: c.tree.sha }));
     }
 
+    // back-compat: 0.14 uploadSummary
     public async uploadSummary(commit: ISummaryTree): Promise<ISummaryHandle> {
         const handle = await this.writeSummaryObject(commit, [], "");
         return {
@@ -86,6 +85,11 @@ export class DocumentStorageService implements IDocumentStorageService {
             handleType: SummaryType.Tree,
             type: SummaryType.Handle,
         };
+    }
+
+    public async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string> {
+        // TODO
+        throw Error("Not yet implemented.");
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async

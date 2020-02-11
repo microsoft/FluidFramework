@@ -18,42 +18,34 @@ import {
     ISequencedDocumentMessage,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
-import {
-    UploadSummaryObject,
-    IUploadSummaryTree,
-    IUploadSummaryHandle,
-} from "@microsoft/fluid-driver-definitions";
 import { IDeltaManager } from "@microsoft/fluid-container-definitions";
 import { MockDeltaManager } from "@microsoft/fluid-test-runtime-utils";
 import {
     IConvertedSummaryResults,
     SummaryTreeConverter,
-    IConvertedUploadSummaryResults,
 } from "../summaryTreeConverter";
 import { ScheduleManager } from "../containerRuntime";
-
-type AllSummaryObject = SummaryObject | UploadSummaryObject;
 
 describe("Runtime", () => {
     describe("Container Runtime", () => {
         describe("Utils", () => {
-            function assertSummaryTree<T extends ISummaryTree | IUploadSummaryTree>(obj: AllSummaryObject): T {
+            function assertSummaryTree(obj: SummaryObject): ISummaryTree {
                 if (obj && obj.type === SummaryType.Tree) {
-                    return obj as T;
+                    return obj;
                 } else {
                     assert.fail("Object should be summary tree");
                 }
             }
-            function assertSummaryBlob(obj: AllSummaryObject): ISummaryBlob {
+            function assertSummaryBlob(obj: SummaryObject): ISummaryBlob {
                 if (obj && obj.type === SummaryType.Blob) {
                     return obj;
                 } else {
                     assert.fail("Object should be summary blob");
                 }
             }
-            function assertSummaryHandle<T extends ISummaryHandle | IUploadSummaryHandle>(obj: AllSummaryObject): T {
+            function assertSummaryHandle(obj: SummaryObject): ISummaryHandle {
                 if (obj && obj.type === SummaryType.Handle) {
-                    return obj as T;
+                    return obj;
                 } else {
                     assert.fail("Object should be summary handle");
                 }
@@ -91,19 +83,19 @@ describe("Runtime", () => {
                 });
 
                 it("Should convert correctly", () => {
-                    const summaryTree = assertSummaryTree<ISummaryTree>(summaryResults.summaryTree);
+                    const summaryTree = assertSummaryTree(summaryResults.summaryTree);
 
                     // blobs should parse
                     const blob = assertSummaryBlob(summaryTree.tree.b);
                     assert.strictEqual(blob.content, "test-blob");
 
                     // trees with ids should become handles
-                    const handle = assertSummaryHandle<ISummaryHandle>(summaryTree.tree.h);
+                    const handle = assertSummaryHandle(summaryTree.tree.h);
                     assert.strictEqual(handle.handleType, SummaryType.Tree);
                     assert.strictEqual(handle.handle, "test-handle");
 
                     // subtrees should recurse
-                    const subTree = assertSummaryTree<ISummaryTree>(summaryTree.tree.t);
+                    const subTree = assertSummaryTree(summaryTree.tree.t);
                     const subBlobUtf8 = assertSummaryBlob(subTree.tree.bu8);
                     assert.strictEqual(subBlobUtf8.content, "test-u8");
                     const subBlobBase64 = assertSummaryBlob(subTree.tree.b64);
@@ -114,75 +106,6 @@ describe("Runtime", () => {
                     // nodes should count
                     assert.strictEqual(summaryResults.summaryStats.blobNodeCount, 3);
                     assert.strictEqual(summaryResults.summaryStats.handleNodeCount, 1);
-                    assert.strictEqual(summaryResults.summaryStats.treeNodeCount, 2);
-                    assert.strictEqual(summaryResults.summaryStats.totalBlobSize,
-                        bufferLength + Buffer.byteLength("test-blob") + Buffer.byteLength("test-u8"));
-                });
-            });
-
-            describe("Convert to Upload Summary Tree", () => {
-                let summaryResults: IConvertedUploadSummaryResults;
-                let bufferLength: number;
-                let converter: SummaryTreeConverter;
-
-                before(() => {
-                    converter = new SummaryTreeConverter();
-                });
-
-                beforeEach(() => {
-                    const base64Content = Buffer.from("test-b64").toString("base64");
-                    bufferLength = Buffer.from(base64Content, "base64").byteLength;
-                    const inputTree: ITree = {
-                        id: null,
-                        entries: [
-                            new TreeTreeEntry("t", {
-                                id: null,
-                                entries: [
-                                    new BlobTreeEntry("bu8", "test-u8"),
-                                    new BlobTreeEntry("b64", base64Content, "base64"),
-                                    new TreeTreeEntry("subtree", {
-                                        id: "subtree-handle",
-                                        entries: [],
-                                    }),
-                                ],
-                            }),
-                            new BlobTreeEntry("b", "test-blob"),
-                            new TreeTreeEntry("h", { id: "test-handle", entries: [
-                                new BlobTreeEntry("ignore", "this-should-be-ignored"),
-                            ] }),
-                        ],
-                    };
-                    summaryResults = converter.convertToUploadSummaryTree(inputTree);
-                });
-
-                it("Should convert correctly", () => {
-                    const summaryTree = assertSummaryTree<IUploadSummaryTree>(summaryResults.summaryTree);
-
-                    // blobs should parse
-                    const blob = assertSummaryBlob(summaryTree.tree.b);
-                    assert.strictEqual(blob.content, "test-blob");
-
-                    // trees with ids should become handles
-                    const handle = assertSummaryHandle<IUploadSummaryHandle>(summaryTree.tree.h);
-                    assert.strictEqual(handle.handleType, SummaryType.Tree);
-                    assert.strictEqual(handle.path, "test-handle");
-
-                    // subtrees should recurse
-                    const subTree = assertSummaryTree<IUploadSummaryTree>(summaryTree.tree.t);
-                    const subBlobUtf8 = assertSummaryBlob(subTree.tree.bu8);
-                    assert.strictEqual(subBlobUtf8.content, "test-u8");
-                    const subBlobBase64 = assertSummaryBlob(subTree.tree.b64);
-                    assert.strictEqual(subBlobBase64.content.toString("utf-8"), "test-b64");
-
-                    const subTreeHandle = assertSummaryHandle<IUploadSummaryHandle>(subTree.tree.subtree);
-                    assert.strictEqual(subTreeHandle.handleType, SummaryType.Tree);
-                    assert.strictEqual(subTreeHandle.path, "subtree-handle");
-                });
-
-                it("Should calculate summary data correctly", () => {
-                    // nodes should count
-                    assert.strictEqual(summaryResults.summaryStats.blobNodeCount, 3);
-                    assert.strictEqual(summaryResults.summaryStats.handleNodeCount, 2);
                     assert.strictEqual(summaryResults.summaryStats.treeNodeCount, 2);
                     assert.strictEqual(summaryResults.summaryStats.totalBlobSize,
                         bufferLength + Buffer.byteLength("test-blob") + Buffer.byteLength("test-u8"));

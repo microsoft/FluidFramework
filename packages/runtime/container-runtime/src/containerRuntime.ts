@@ -30,7 +30,7 @@ import {
     LazyPromise,
     ChildLogger,
 } from "@microsoft/fluid-core-utils";
-import { IDocumentStorageService, ISummaryContext, IUploadSummaryTree } from "@microsoft/fluid-driver-definitions";
+import { IDocumentStorageService, ISummaryContext } from "@microsoft/fluid-driver-definitions";
 import { readAndParse, createIError } from "@microsoft/fluid-driver-utils";
 import {
     BlobTreeEntry,
@@ -73,7 +73,7 @@ import { ComponentContext, LocalComponentContext, RemotedComponentContext } from
 import { ComponentHandleContext } from "./componentHandleContext";
 import { ComponentRegistry } from "./componentRegistry";
 import { debug } from "./debug";
-import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
+import { BlobCacheStorageService } from "./blobCacheStorageService";
 import {
     componentRuntimeRequestHandler,
     createLoadableComponentRuntimeRequestHandler,
@@ -87,9 +87,9 @@ import { ISummaryStats, SummaryTreeConverter } from "./summaryTreeConverter";
 import { analyzeTasks } from "./taskAnalyzer";
 import { DeltaScheduler } from "./deltaScheduler";
 
-interface ISummaryTreeWithStats<TSummaryTree extends ISummaryTree | IUploadSummaryTree> {
+interface ISummaryTreeWithStats {
     summaryStats: ISummaryStats;
-    summaryTree: TSummaryTree;
+    summaryTree: ISummaryTree;
 }
 
 export interface IGeneratedSummaryData {
@@ -544,10 +544,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         this.latestSummaryAck = { proposalHandle: undefined, ackHandle: undefined };
         this.summaryTracker = new SummaryTracker(
-            this.storage.uploadSummaryWithContext !== undefined,
-            "",
-            this.deltaManager.initialSequenceNumber,
-            async () => undefined,
+            this.storage.uploadSummaryWithContext !== undefined, // useContext - back-compat: 0.14 uploadSummary
+            "", // fullPath - the root is unnamed
+            this.deltaManager.initialSequenceNumber, // referenceSequenceNumber - last acked summary ref seq number
+            async () => undefined, // getSnapshotTree - this will be replaced on summary ack
         );
 
         // Extract components stored inside the snapshot
@@ -946,7 +946,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     /**
      * Returns a summary of the runtime at the current sequence number.
      */
-    private async summarize(fullTree: boolean = false): Promise<ISummaryTreeWithStats<ISummaryTree>> {
+    private async summarize(fullTree: boolean = false): Promise<ISummaryTreeWithStats> {
         const summaryTree: ISummaryTree = {
             tree: {},
             type: SummaryType.Tree,
@@ -957,32 +957,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         await Promise.all(Array.from(this.contexts).map(async ([key, value]) => {
             const snapshot = await value.snapshot(fullTree);
             const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(snapshot, fullTree);
-            summaryTree.tree[key] = treeWithStats.summaryTree;
-            summaryStats = this.summaryTreeConverter.mergeStats(summaryStats, treeWithStats.summaryStats);
-        }));
-
-        if (this.chunkMap.size > 0) {
-            summaryTree.tree[".chunks"] = {
-                content: JSON.stringify([...this.chunkMap]),
-                type: SummaryType.Blob,
-            };
-        }
-
-        summaryStats.treeNodeCount++; // Add this root tree node
-        return { summaryStats, summaryTree };
-    }
-
-    private async summarizeWithContext(fullTree: boolean = false): Promise<ISummaryTreeWithStats<IUploadSummaryTree>> {
-        const summaryTree: IUploadSummaryTree = {
-            tree: {},
-            type: SummaryType.Tree,
-        };
-        let summaryStats = this.summaryTreeConverter.mergeStats();
-
-        // Iterate over each component and ask it to snapshot
-        await Promise.all(Array.from(this.contexts).map(async ([key, value]) => {
-            const snapshot = await value.snapshot(fullTree);
-            const treeWithStats = this.summaryTreeConverter.convertToUploadSummaryTree(snapshot, fullTree);
             summaryTree.tree[key] = treeWithStats.summaryTree;
             summaryStats = this.summaryTreeConverter.mergeStats(summaryStats, treeWithStats.summaryStats);
         }));
@@ -1029,7 +1003,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     attachMessage.id,
                     snapshotTree,
                     this,
-                    new DocumentStorageServiceProxy(this.storage, flatBlobs),
+                    new BlobCacheStorageService(this.storage, flatBlobs),
                     this.context.scope,
                     message.sequenceNumber,
                     this.summaryTracker.createOrGetChild(attachMessage.id),
@@ -1129,28 +1103,11 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             }
 
             const trace = Trace.start();
-            let summarizeResult: {
-                useContext: true,
-                treeWithStats: ISummaryTreeWithStats<IUploadSummaryTree>,
-            } | {
-                useContext: false,
-                treeWithStats: ISummaryTreeWithStats<ISummaryTree>,
-            };
-
-            if (this.summaryTracker.useContext === true) {
-                summarizeResult = {
-                    useContext: true,
-                    treeWithStats: await this.summarizeWithContext(fullTree || safe),
-                };
-            } else {
-                summarizeResult = {
-                    useContext: false,
-                    treeWithStats: await this.summarize(fullTree || safe),
-                };
-            }
+            const useContext = this.summaryTracker.useContext;
+            const treeWithStats = await this.summarize(fullTree || safe);
 
             const generateData: IGeneratedSummaryData = {
-                summaryStats: summarizeResult.treeWithStats.summaryStats,
+                summaryStats: treeWithStats.summaryStats,
                 generateDuration: trace.trace().duration,
             };
 
@@ -1159,13 +1116,14 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             }
 
             let handle: string;
-            if (summarizeResult.useContext === true) {
+            if (useContext === true) {
                 handle = await this.context.storage.uploadSummaryWithContext(
-                    summarizeResult.treeWithStats.summaryTree,
+                    treeWithStats.summaryTree,
                     this.latestSummaryAck);
             } else {
+                // back-compat: 0.14 uploadSummary
                 const summaryHandle = await this.context.storage.uploadSummary(
-                    summarizeResult.treeWithStats.summaryTree);
+                    treeWithStats.summaryTree);
                 handle = summaryHandle.handle;
             }
 

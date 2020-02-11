@@ -217,17 +217,13 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
             getRawUrl: (blobId) => {
                 return storage.getRawUrl(blobId);
             },
+            // back-compat: 0.14 uploadSummary
             uploadSummary: async (commit) => {
                 return storage.uploadSummary(commit);
             },
-            uploadSummaryWithContext: storage.uploadSummaryWithContext !== undefined
-                ? async (summary, context) => {
-                    if (storage.uploadSummaryWithContext === undefined) {
-                        throw Error("Expected uploadSummaryWithContext in storage.");
-                    }
-                    return storage.uploadSummaryWithContext(summary, context);
-                }
-                : undefined,
+            uploadSummaryWithContext: async (summary, context) => {
+                return storage.uploadSummaryWithContext(summary, context);
+            },
             downloadSummary: async (handle) => {
                 return storage.downloadSummary(handle);
             },

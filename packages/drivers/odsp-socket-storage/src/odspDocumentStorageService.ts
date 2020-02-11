@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentStorageService, IUploadSummaryTree, ISummaryContext } from "@microsoft/fluid-driver-definitions";
+import { IDocumentStorageService, ISummaryContext } from "@microsoft/fluid-driver-definitions";
 import * as api from "@microsoft/fluid-protocol-definitions";
 import { OdspDocumentStorageManager } from "./odspDocumentStorageManager";
 
@@ -13,11 +13,12 @@ import { OdspDocumentStorageManager } from "./odspDocumentStorageManager";
 export class OdspDocumentStorageService implements IDocumentStorageService {
     constructor(private readonly storageManager: OdspDocumentStorageManager) { }
 
+    // back-compat: 0.14 uploadSummary
     public async uploadSummary(commit: api.ISummaryTree): Promise<api.ISummaryHandle> {
         return this.storageManager.uploadSummary(commit);
     }
 
-    public async uploadSummaryWithContext(summary: IUploadSummaryTree, context: ISummaryContext): Promise<string> {
+    public async uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string> {
         return this.storageManager.uploadSummaryWithContext(summary, context);
     }
 

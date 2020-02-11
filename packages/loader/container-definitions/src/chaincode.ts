@@ -201,7 +201,7 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
 
     /**
      * DEPRECATED
-     * back-compat: 0.13 refreshBaseSummary
+     * back-compat: 0.14 uploadSummary
      */
     refreshBaseSummary(snapshot: ISnapshotTree): void;
 }

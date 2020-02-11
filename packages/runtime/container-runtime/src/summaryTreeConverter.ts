@@ -13,7 +13,6 @@ import {
     SummaryType,
     TreeEntry,
 } from "@microsoft/fluid-protocol-definitions";
-import { IUploadSummaryTree, IUploadSummaryHandle, UploadSummaryObject } from "@microsoft/fluid-driver-definitions";
 
 export interface ISummaryStats {
     treeNodeCount: number;
@@ -27,11 +26,6 @@ export interface IConvertedSummaryResults {
     summaryTree: SummaryTree;
 }
 
-export interface IConvertedUploadSummaryResults {
-    summaryStats: ISummaryStats;
-    summaryTree: IUploadSummaryTree | IUploadSummaryHandle;
-}
-
 export class SummaryTreeConverter {
     public convertToSummaryTree(snapshot: ITree, fullTree: boolean = false): IConvertedSummaryResults {
         const summaryStats = this.mergeStats();
@@ -39,17 +33,6 @@ export class SummaryTreeConverter {
             snapshot,
             summaryStats,
             fullTree);
-
-        return { summaryStats, summaryTree };
-    }
-
-    public convertToUploadSummaryTree(snapshot: ITree, fullTree: boolean = false): IConvertedUploadSummaryResults {
-        const summaryStats = this.mergeStats();
-        const summaryTree = this.convertToUploadSummaryTreeCore(
-            snapshot,
-            summaryStats,
-            fullTree,
-        );
 
         return { summaryStats, summaryTree };
     }
@@ -125,76 +108,6 @@ export class SummaryTreeConverter {
                             entry.value as ITree,
                             summaryStats,
                             fullTree);
-                        break;
-
-                    default:
-                        throw new Error("Unexpected TreeEntry type");
-                }
-
-                summaryTree.tree[entry.path] = value;
-            }
-
-            summaryStats.treeNodeCount++;
-            return summaryTree;
-        }
-    }
-
-    protected convertToUploadSummaryTreeCore(
-        snapshot: ITree,
-        summaryStats: ISummaryStats,
-        fullTree: boolean = false,
-    ): IUploadSummaryTree | IUploadSummaryHandle {
-        if (snapshot.id !== null && snapshot.id !== undefined && !fullTree) {
-            summaryStats.handleNodeCount++;
-            return {
-                path: snapshot.id,
-                handleType: SummaryType.Tree,
-                type: SummaryType.Handle,
-            };
-        } else {
-            const summaryTree: IUploadSummaryTree = {
-                tree: {},
-                type: SummaryType.Tree,
-            };
-
-            for (const entry of snapshot.entries) {
-                let value: UploadSummaryObject;
-
-                switch (entry.type) {
-                    case TreeEntry[TreeEntry.Blob]:
-                        const blob = entry.value as IBlob;
-                        let content: string | Buffer;
-                        if (blob.encoding === "base64") {
-                            content = Buffer.from(blob.contents, "base64");
-                            summaryStats.totalBlobSize += content.byteLength;
-                        } else {
-                            content = blob.contents;
-                            summaryStats.totalBlobSize += Buffer.byteLength(content);
-                        }
-                        const summaryBlob: ISummaryBlob = {
-                            content,
-                            type: SummaryType.Blob,
-                        };
-                        value = summaryBlob;
-                        summaryStats.blobNodeCount++;
-                        break;
-
-                    case TreeEntry[TreeEntry.Tree]:
-                        value = this.convertToUploadSummaryTreeCore(
-                            entry.value as ITree,
-                            summaryStats,
-                            fullTree,
-                        );
-                        break;
-
-                    case TreeEntry[TreeEntry.Commit]:
-                        // Probably should not reach this case and assert so,
-                        // when snapshotting the commits become strings not ITrees
-                        value = this.convertToUploadSummaryTreeCore(
-                            entry.value as ITree,
-                            summaryStats,
-                            fullTree,
-                        );
                         break;
 
                     default:
