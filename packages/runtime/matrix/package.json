@@ -62,7 +62,7 @@
     "@microsoft/fluid-runtime-definitions": "^0.14.0",
     "@microsoft/fluid-runtime-utils": "^0.14.0",
     "@microsoft/fluid-shared-object-base": "^0.14.0",
-    "@tiny-calc/nano": "0.0.20232",
+    "@tiny-calc/nano": "0.0.20329",
     "debug": "^4.1.1"
   },
   "devDependencies": {
