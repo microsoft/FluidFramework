@@ -10,6 +10,7 @@ import { Timer } from "../common/timer";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
 import * as path from "path";
 import { writeFileAsync } from "../common/utils";
+import { FluidRepo } from "../common/fluidRepo";
 
 function printUsage() {
     console.log(
@@ -80,15 +81,8 @@ async function main() {
 
     const resolvedRoot = await getResolvedFluidRoot();
 
-    const baseDirectories = [
-        path.join(resolvedRoot, "common"),
-        path.join(resolvedRoot, "packages"),
-        path.join(resolvedRoot, "examples/components"),
-        path.join(resolvedRoot, "server/routerlicious/packages")
-    ];
-
     // Load the package
-    const packages = Packages.load(baseDirectories);
+    const packages = new FluidRepo(resolvedRoot).packages;
     timer.time("Package scan completed");
 
     try {

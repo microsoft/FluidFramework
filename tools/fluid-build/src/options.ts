@@ -5,8 +5,9 @@
 
 import * as os from "os";
 import { commonOptionString, parseOption } from "./common/commonOptions"
+import { IPackageMatchedOptions } from "./common/fluidRepo";
 
-interface FastBuildOptions {
+interface FastBuildOptions extends IPackageMatchedOptions {
     nolint: boolean;
     lintonly: boolean;
     showExec: boolean;
@@ -15,7 +16,6 @@ interface FastBuildOptions {
     buildScript: string;
     build?: boolean;
     vscode: boolean;
-    args: string[];
     symlink: boolean;
     depcheck: boolean;
     force: boolean;
@@ -25,8 +25,6 @@ interface FastBuildOptions {
     concurrency: number;
     samples: boolean;
     fixScripts: boolean;
-    all: boolean;
-    server: boolean;
 }
 
 // defaults
@@ -35,7 +33,7 @@ export const options: FastBuildOptions = {
     lintonly: false,
     showExec: false,
     clean: false,
-    args: [],
+    match: [],
     matchedOnly: true,
     buildScript: "build",
     vscode: false,
@@ -236,7 +234,7 @@ export function parseOptions(argv: string[]) {
 
         // Package regexp
         if (!arg.startsWith("-")) {
-            options.args.push(arg);
+            options.match.push(arg);
             continue;
         }
 
