@@ -989,14 +989,13 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.baseSequenceNumber = message.sequenceNumber;
 
         // Record collab window max size after every 1000th op.
-        const msnDistance = this.baseSequenceNumber - this.minSequenceNumber;
         if (message.sequenceNumber % 1000 === 0) {
             if (this.opSendTimeForLatencyStatisticsForMsnStatistics !== undefined)
             {
                 this.logger.sendTelemetryEvent({
                     eventName: "MsnStatistics",
                     sequenceNumber: message.sequenceNumber,
-                    msnDistance,
+                    msnDistance: this.baseSequenceNumber - this.minSequenceNumber,
                     timeDelta: message.timestamp - this.opSendTimeForLatencyStatisticsForMsnStatistics,
                 });
             }
