@@ -10,6 +10,7 @@ import {
 import {
     IComponent,
     IComponentHTMLVisual,
+    IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentDiscoverInterfaces } from "@microsoft/fluid-framework-interfaces";
 
@@ -25,23 +26,31 @@ import moment from "moment";
 
 import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
 import "react-big-calendar/lib/css/react-big-calendar.css";
+import { IDirectory, IDirectoryValueChanged } from "@microsoft/fluid-map";
+import { IComponentEventData } from "../../interfaces";
 
 const calendarStyle: React.CSSProperties = {
     height: "70vh",
 };
 
+interface ICalendarDataModel {
+    events: Event[];
+    on(event: "changed", listener: () => void): this;
+}
+
 /**
  * Button is a simple component that is just a button. It registers with the matchMaker so
  * when the button is pressed Components that consume clicks can do work
  */
-export class Calendar extends PrimedComponent implements IComponentHTMLVisual, IComponentDiscoverInterfaces {
-    private static readonly factory = new PrimedComponentFactory(Calendar, []);
+export class Calendar extends PrimedComponent
+    implements
+    ICalendarDataModel,
+    IComponentHTMLVisual,
+    IComponentDiscoverInterfaces
+{
+    private remoteEventsDir: IDirectory;
 
-    private readonly events: Event[] = [{
-        start: new Date(),
-        end: new Date(),
-        title: "foo",
-    }];
+    private static readonly factory = new PrimedComponentFactory(Calendar, []);
 
     public static getFactory() {
         return Calendar.factory;
@@ -66,6 +75,11 @@ export class Calendar extends PrimedComponent implements IComponentHTMLVisual, I
                 case "IComponentEventData": {
                     const event = component.IComponentEventData;
                     if (event){
+                        const loadable = component.IComponentLoadable;
+                        const handle = component.IComponentHandle;
+                        if (loadable && handle) {
+                            this.remoteEventsDir.set(loadable.url, handle.IComponentHandle);
+                        }
                         this.events.push(event.event);
                     }
                 }
@@ -74,7 +88,43 @@ export class Calendar extends PrimedComponent implements IComponentHTMLVisual, I
         });
     }
 
+    public readonly events: Event[] = [];
+
+    public on(event: "changed", listener: () => void): this;
+    public on(event: string | symbol, listener: (...args: any[]) => void): this {
+        return super.on(event, listener);
+    }
+
+    protected async componentInitializingFirstTime() {
+        this.root.createSubDirectory("remote-events");
+    }
+
     protected async componentHasInitialized() {
+        this.remoteEventsDir = this.root.getSubDirectory("remote-events");
+
+        // Setup listeners incase our subdirectory changes
+        this.root.on("valueChanged", (changed: IDirectoryValueChanged, local: boolean) => {
+            if (changed.path === this.remoteEventsDir.absolutePath) {
+                // our subdirectory changed and we should update our events
+                const value = this.remoteEventsDir.get<IComponentHandle>(changed.key);
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                value.get<IComponentEventData>().then((event) => {
+                    this.events.push(event as Event);
+                    this.emit("changed");
+                });
+            }
+        });
+
+        // Resolve handles we have to other Date Event Components
+        const keys = Array.from(this.remoteEventsDir.keys());
+        for (let i = 0; i < this.remoteEventsDir.size; i++) {
+            const key = keys[i];
+            const value = this.remoteEventsDir.get<IComponentHandle>(key);
+            const event = await value.get<IComponentEventData>();
+            this.events.push(event as Event);
+        }
+
+        // Register our component with the match maker
         const matchMaker = await this.getService<IComponent>("matchMaker");
         const interfaceRegistry = matchMaker.IComponentInterfacesRegistry;
         if (interfaceRegistry) {
@@ -83,28 +133,55 @@ export class Calendar extends PrimedComponent implements IComponentHTMLVisual, I
     }
 
     public render(div: HTMLElement) {
-
-        const onSelectSlot = (slotInfo: {
-            start: Date;
-            end: Date;
-            slots: Date[] | string[];
-            action: "select" | "click" | "doubleClick";
-        }) => alert(slotInfo.action);
-
-        const onSelectEvent = (event: Event, e: React.SyntheticEvent<HTMLElement>) => alert(event.title);
-
-        const localizer = momentLocalizer(moment);
         ReactDOM.render(
+            <CalendarView dataModel={this}/>,
+            div);
+    }
+}
+
+interface ICalendarViewProps {
+    dataModel: ICalendarDataModel;
+}
+
+interface ICalendarViewState {
+    events: Event[];
+}
+
+class CalendarView extends React.Component<ICalendarViewProps, ICalendarViewState> {
+    public constructor(props: ICalendarViewProps) {
+        super(props);
+
+        this.state = {
+            events: this.props.dataModel.events,
+        };
+
+        this.props.dataModel.on("changed", () => {
+            this.setState({events: this.props.dataModel.events});
+        });
+    }
+    private readonly localizer = momentLocalizer(moment);
+
+    private readonly onSelectSlot = (slotInfo: {
+        start: Date;
+        end: Date;
+        slots: Date[] | string[];
+        action: "select" | "click" | "doubleClick";
+    }) => alert(slotInfo.action);
+
+    private readonly onSelectEvent = (event: Event, e: React.SyntheticEvent<HTMLElement>) => alert(event.title);
+
+    public render() {
+        return (
             <div style={calendarStyle}>
                 <BigCalendar
-                    localizer={localizer}
-                    events={this.events}
+                    localizer={this.localizer}
+                    events={this.state.events}
                     startAccessor="start"
                     endAccessor="end"
-                    onSelectSlot={onSelectSlot}
-                    onSelectEvent={onSelectEvent}
+                    onSelectSlot={this.onSelectSlot}
+                    onSelectEvent={this.onSelectEvent}
                 />
-            </div>,
-            div);
+            </div>
+        );
     }
 }
