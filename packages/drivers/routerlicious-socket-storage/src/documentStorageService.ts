@@ -88,8 +88,10 @@ export class DocumentStorageService implements IDocumentStorageService {
     }
 
     public async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string> {
-        // TODO
-        throw Error("Not yet implemented.");
+        const snapshot = context.ackHandle
+            ? await this.getVersions(context.ackHandle, 1).then(async (versions) => this.getSnapshotTree(versions[0]))
+            : undefined;
+        return this.writeSummaryTree(summary, snapshot ?? undefined);
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -106,6 +108,7 @@ export class DocumentStorageService implements IDocumentStorageService {
         return this.manager.getRawUrl(blobId);
     }
 
+    // back-compat: 0.14 uploadSummary
     private async writeSummaryObject(
         value: SummaryObject,
         submodule: { path: string; sha: string }[],
@@ -113,16 +116,7 @@ export class DocumentStorageService implements IDocumentStorageService {
     ): Promise<string> {
         switch (value.type) {
             case SummaryType.Blob:
-                const content = typeof value.content === "string" ? value.content : value.content.toString("base64");
-                const encoding = typeof value.content === "string" ? "utf-8" : "base64";
-                // The gitHashFile would return the same hash as returned by the server as blob.sha
-                const hash = gitHashFile(Buffer.from(content, encoding));
-                if (!this.blobsShaCache.has(hash)) {
-                    const blob = await this.manager.createBlob(content, encoding);
-                    assert.strictEqual(hash, blob.sha, "Blob.sha and hash do not match!!");
-                    this.blobsShaCache.set(blob.sha, "");
-                }
-                return hash;
+                return this.writeSummaryBlob(value.content);
             case SummaryType.Commit:
                 const commitTreeHandle = await this.writeSummaryObject(
                     value.tree,
@@ -165,6 +159,81 @@ export class DocumentStorageService implements IDocumentStorageService {
             default:
                 return Promise.reject();
         }
+    }
+
+    private async writeSummaryTree(
+        summaryTree: ISummaryTree,
+        snapshot: ISnapshotTree | undefined,
+    ): Promise<string> {
+        const entries = await Promise.all(Object.keys(summaryTree.tree).map(async (key) => {
+            const entry = summaryTree.tree[key];
+            const pathHandle = await this.writeSummaryTreeObject(key, entry, snapshot);
+            const treeEntry: resources.ICreateTreeEntry = {
+                mode: this.getGitMode(entry),
+                path: encodeURIComponent(key),
+                sha: pathHandle,
+                type: this.getGitType(entry),
+            };
+            return treeEntry;
+        }));
+
+        const treeHandle = await this.manager.createGitTree({ tree: entries });
+        return treeHandle.sha;
+    }
+
+    private async writeSummaryTreeObject(
+        key: string,
+        object: SummaryObject,
+        snapshot: ISnapshotTree | undefined,
+    ): Promise<string> {
+        switch (object.type) {
+            case SummaryType.Blob: {
+                return this.writeSummaryBlob(object.content);
+            }
+            case SummaryType.Handle: {
+                if (snapshot === undefined) {
+                    throw Error("Parent summary does not exist to reference by handle.");
+                }
+                switch (object.handleType) {
+                    case SummaryType.Blob: {
+                        if (!snapshot.blobs[key]) {
+                            throw Error("Parent summary does not have blob handle for specified path.");
+                        }
+                        return snapshot.blobs[key];
+                    }
+                    case SummaryType.Tree: {
+                        const tryId = snapshot.trees[key]?.id;
+                        if (!tryId) {
+                            throw Error("Parent summary does not have tree handle for specified path.");
+                        }
+                        return tryId;
+                    }
+                    default:
+                        throw Error(`Unexpected handle summary object type: "${object.type}".`);
+                }
+            }
+            case SummaryType.Tree: {
+                return this.writeSummaryTree(object, snapshot?.trees[key]);
+            }
+
+            default:
+                throw Error(`Unexpected summary object type: "${object.type}".`);
+        }
+    }
+
+    private async writeSummaryBlob(content: string | Buffer): Promise<string> {
+        const { parsedContent, encoding } = typeof content === "string"
+            ? { parsedContent: content, encoding: "utf-8" }
+            : { parsedContent: content.toString("base64"), encoding: "base64" };
+
+        // The gitHashFile would return the same hash as returned by the server as blob.sha
+        const hash = gitHashFile(Buffer.from(parsedContent, encoding));
+        if (!this.blobsShaCache.has(hash)) {
+            const blob = await this.manager.createBlob(parsedContent, encoding);
+            assert.strictEqual(hash, blob.sha, "Blob.sha and hash do not match!!");
+            this.blobsShaCache.set(blob.sha, "");
+        }
+        return hash;
     }
 
     private getGitMode(value: SummaryObject): string {
