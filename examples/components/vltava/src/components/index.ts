@@ -5,6 +5,7 @@
 
 export * from "./anchor";
 export * from "./button";
+export * from "./calendar";
 export * from "./location-list";
 export * from "./number";
 export * from "./tabs";

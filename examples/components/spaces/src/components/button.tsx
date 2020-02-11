@@ -34,6 +34,8 @@ const textStyle: React.CSSProperties = {
     cursor: "pointer",
 };
 
+export const ButtonName = "button";
+
 /**
  * Clicker example using view interfaces and stock component classes.
  */

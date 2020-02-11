@@ -23,6 +23,7 @@ import {
 import {
     Anchor,
     Button,
+    Calendar,
     LocationList,
     Number,
     TabsComponent,
@@ -96,6 +97,13 @@ const generateFactory = () => {
             capabilities: ["IComponentHTMLVisual"],
             friendlyName: "Clicker",
             fabricIconName: "NumberField",
+        },
+        {
+            type: "calendar",
+            factory: Promise.resolve(Calendar.getFactory()),
+            capabilities: ["IComponentHTMLVisual"],
+            friendlyName: "Calendar",
+            fabricIconName: "Calendar",
         },
         {
             type: "locationList",

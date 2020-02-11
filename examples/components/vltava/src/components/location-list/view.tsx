@@ -51,7 +51,7 @@ export class ListView extends React.Component<IListViewProps, IListViewState> {
 
     public render() {
         const listItems: JSX.Element[] = [];
-        this.state.itemContent.forEach((item) =>{
+        this.state.itemContent.forEach((item) => {
             listItems.push(
                 <li>{item}</li>,
             );
