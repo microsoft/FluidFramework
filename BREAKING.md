@@ -4,6 +4,7 @@
 - [Remove back-compat support for loader <= 0.8](#remove-back-compat-support-for-loader-0.8)
 - [New Error types](#New-Error-types)
 - [`IComponentContext` - `createSubComponent` removed, `createComponent` signature updated](#`IComponentContext`---`createSubComponent`-removed,-`createComponent`-signature-updated)
+- [Changes to the render interfaces](#Changes-to-the-render-interfaces)
 
 ## Samples and chaincode have been renamed to examples and components respectively
 The directories themselves have been renamed.
@@ -35,6 +36,13 @@ It does not acccept a package path anymore but just a package name. To pass in p
 
 For creating a component with a specific package path, use `createComponent` or `_createComponentWithProps` in `IHostRuntime`.
 
+## Changes to the render interfaces
+
+The rendering interfaces have undergone several changes:
+- `IComponentHTMLRender` has been removed.  `IComponentHTMLView` now has a `render()` member, and `IComponentHTMLVisual` does not.  If your component renders, it should probably be an `IComponentHTMLView`.
+- Since `IComponentHTMLVisual` now only has the member `addView()`, it is mandatory.  If your component does not implement `addView`, it should not be an `IComponentHTMLVisual`.
+- On `IComponentHTMLView`, `remove()` is now optional.  If your view component needs to perform cleanup when removed from the DOM, do it in `remove()` - otherwise there is no need to implement it.
+- `IComponentHTMLView` now extends the new `IProvideComponentHTMLView`, so you can query for whether a component is a view.
 
 # 0.13 Breaking Changes
 
