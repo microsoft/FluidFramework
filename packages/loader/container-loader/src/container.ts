@@ -404,9 +404,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
 
     public resume() {
-        if (this.closed) {
-            return;
-        }
         assert(this.loaded);
         // Resume processing ops
         this._deltaManager.inbound.resume();
