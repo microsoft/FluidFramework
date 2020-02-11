@@ -23,6 +23,7 @@ import {
     IDeltaSender,
     ILoader,
     IRuntime,
+    IRuntimeState,
 } from "@microsoft/fluid-container-definitions";
 import {
     Deferred,
@@ -85,6 +86,7 @@ import { SummaryManager } from "./summaryManager";
 import { ISummaryStats, SummaryTreeConverter } from "./summaryTreeConverter";
 import { analyzeTasks } from "./taskAnalyzer";
 import { DeltaScheduler } from "./deltaScheduler";
+import { SummaryCollection } from "./summaryCollection";
 
 interface ISummaryTreeWithStats {
     summaryStats: ISummaryStats;
@@ -605,7 +607,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             () => this.summaryConfiguration,
             async (safe: boolean) => this.generateSummary(!this.loadedFromSummary, safe),
             async (handle, refSeq) => this.refreshLatestSummaryAck(handle, refSeq),
-            this.context.immediateSummary);
+            this.context.previousRuntimeState.summaryCollection);
 
         // Create the SummaryManager and mark the initial state
         this.summaryManager = new SummaryManager(
@@ -632,6 +634,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
     public get IComponentConfiguration() {
         return this.context.configuration;
+    }
+
+    public get summaryCollection(): SummaryCollection {
+        return this.summarizer.summaryCollection;
     }
 
     /**
@@ -684,9 +690,12 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.context.requestSnapshot(tagMessage);
     }
 
-    public async stop(): Promise<void> {
+    public async stop(): Promise<IRuntimeState> {
         this.verifyNotClosed();
+        const snapshot = await this.snapshot("", false);
+        this.summarizer.dispose();
         this.closed = true;
+        return { snapshot, summaryCollection: this.summaryCollection };
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string, version: string) {

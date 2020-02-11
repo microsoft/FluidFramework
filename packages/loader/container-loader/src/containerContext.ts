@@ -15,6 +15,7 @@ import {
     IAudience,
     ICodeLoader,
     IContainerContext,
+    IRuntimeState,
     IDeltaManager,
     ILoader,
     IRuntime,
@@ -44,7 +45,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         scope: IComponent,
         codeLoader: ICodeLoader,
         chaincode: IRuntimeFactory,
-        baseSnapshot: ISnapshotTree | null,
         attributes: IDocumentAttributes,
         blobManager: BlobManager | undefined,
         deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
@@ -57,14 +57,13 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         snapshotFn: (message: string) => Promise<void>,
         closeFn: (reason?: string) => void,
         version: string,
-        immediateSummary: boolean,
+        previousRuntimeState: IRuntimeState,
     ): Promise<ContainerContext> {
         const context = new ContainerContext(
             container,
             scope,
             codeLoader,
             chaincode,
-            baseSnapshot,
             attributes,
             blobManager,
             deltaManager,
@@ -77,7 +76,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
             snapshotFn,
             closeFn,
             version,
-            immediateSummary);
+            previousRuntimeState);
         await context.load();
 
         return context;
@@ -146,17 +145,17 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
     }
 
     public get baseSnapshot() {
-        return this._baseSnapshot;
+        return this._baseSnapshot ?? null;
     }
 
     private runtime: IRuntime | undefined;
+    private _baseSnapshot: ISnapshotTree | undefined;
 
     constructor(
         private readonly container: Container,
         public readonly scope: IComponent,
         public readonly codeLoader: ICodeLoader,
         public readonly chaincode: IRuntimeFactory,
-        private _baseSnapshot: ISnapshotTree | null,
         private readonly attributes: IDocumentAttributes,
         public readonly blobManager: BlobManager | undefined,
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
@@ -169,10 +168,11 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         public readonly snapshotFn: (message: string) => Promise<void>,
         public readonly closeFn: () => void,
         public readonly version: string,
-        public immediateSummary,
+        public readonly previousRuntimeState: IRuntimeState,
     ) {
         super();
         this.logger = container.subLogger;
+        this._baseSnapshot = previousRuntimeState.snapshotTree;
     }
 
     public refreshBaseSummary(snapshot: ISnapshotTree) {
@@ -190,15 +190,16 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         raiseConnectedEvent(this, value, clientId);
     }
 
-    public async stop(): Promise<ITree | null> {
-        const snapshot = await this.runtime!.snapshot("", false);
-        await this.runtime!.stop();
+    public async stop(): Promise<IRuntimeState> {
+        // const snapshot = await this.runtime!.snapshot("", false);
+        // const summaryCollection = this.runtime.summaryCollection;
+        const state = await this.runtime!.stop();
 
         // Dispose
         this.quorum.dispose();
         this.deltaManager.dispose();
 
-        return snapshot;
+        return state;
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any) {

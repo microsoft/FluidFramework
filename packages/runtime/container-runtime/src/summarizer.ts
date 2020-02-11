@@ -37,11 +37,11 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
 
     private readonly logger: ITelemetryLogger;
     private readonly runCoordinator: RunWhileConnectedCoordinator;
-    private readonly summaryCollection: SummaryCollection;
     private onBehalfOfClientId: string;
     private runningSummarizer?: RunningSummarizer;
     private systemOpListener?: (op: ISequencedDocumentMessage) => void;
     private opListener?: (error: any, op: ISequencedDocumentMessage) => void;
+    private immediateSummary: boolean = false;
 
     constructor(
         public readonly url: string,
@@ -49,11 +49,15 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         private readonly configurationGetter: () => ISummaryConfiguration,
         private readonly generateSummaryCore: (safe: boolean) => Promise<GenerateSummaryData>,
         private readonly refreshLatestAck: (handle: string, referenceSequenceNumber: number) => Promise<void>,
-        private immediateSummary: boolean,
+        public summaryCollection?: SummaryCollection,
     ) {
         this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");
         this.runCoordinator = new RunWhileConnectedCoordinator(runtime);
-        this.summaryCollection = new SummaryCollection(this.runtime.deltaManager.initialSequenceNumber);
+        if (summaryCollection) {
+            this.immediateSummary = true;
+        } else {
+            this.summaryCollection = new SummaryCollection(this.runtime.deltaManager.initialSequenceNumber);
+        }
         this.runtime.deltaManager.inbound.on("op",
             (op) => this.summaryCollection.handleOp(op as ISequencedDocumentMessage));
     }
@@ -164,7 +168,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
      * clear any outstanding timers and reset some of the state
      * properties.
      */
-    private dispose() {
+    public dispose() {
         if (this.runningSummarizer) {
             this.runningSummarizer.dispose();
             this.runningSummarizer = undefined;
@@ -285,8 +289,7 @@ export class RunningSummarizer implements IDisposable {
             configuration,
             (reason) => this.trySummarize(reason),
             lastOpSeqNumber,
-            firstAck,
-            immediateSummary);
+            firstAck);
 
         this.summarizeTimer = new Timer(
             maxSummarizeTimeoutTime,
@@ -303,6 +306,10 @@ export class RunningSummarizer implements IDisposable {
                     timePending: Date.now() - this.heuristics.lastSent.summaryTime,
                 });
             });
+
+        if (immediateSummary) {
+            this.trySummarize("immediate");
+        }
     }
 
     public dispose(): void {
@@ -557,7 +564,6 @@ class SummarizerHeuristics {
          */
         public lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
-        private readonly immediateSummary: boolean,
     ) {
         this.lastSent = firstAck;
         this._lastAcked = firstAck;
@@ -581,9 +587,7 @@ class SummarizerHeuristics {
         const timeSinceLastSummary = Date.now() - this.lastAcked.summaryTime;
         const opCountSinceLastSummary = this.lastOpSeqNumber - this.lastAcked.refSequenceNumber;
 
-        if (this.immediateSummary) {
-            this.trySummarize("immediate");
-        } else if (timeSinceLastSummary > this.configuration.maxTime) {
+        if (timeSinceLastSummary > this.configuration.maxTime) {
             this.trySummarize("maxTime");
         } else if (opCountSinceLastSummary > this.configuration.maxOps) {
             this.trySummarize("maxOps");

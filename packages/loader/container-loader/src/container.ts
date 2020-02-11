@@ -19,6 +19,7 @@ import {
     IFluidModule,
     IGenericBlob,
     IRuntimeFactory,
+    IRuntimeState,
     LoaderHeader,
 } from "@microsoft/fluid-container-definitions";
 import {
@@ -446,8 +447,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         let snapshot: ISnapshotTree | undefined;
         const blobs = new Map();
-        if (previousContextState) {
-            snapshot = buildSnapshotTree(previousContextState.entries, blobs);
+        if (previousContextState.snapshot) {
+            snapshot = buildSnapshotTree(previousContextState.snapshot.entries, blobs);
         }
 
         const storage = blobs.size > 0
@@ -460,7 +461,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             sequenceNumber: this._deltaManager.referenceSequenceNumber,
         };
 
-        await this.loadContext(attributes, storage, snapshot, true);
+        await this.loadContext(attributes, storage,
+            { snapshotTree: snapshot, summaryCollection: previousContextState.summaryCollection});
 
         this.deltaManager.inbound.systemResume();
         this.deltaManager.inboundSignal.systemResume();
@@ -645,7 +647,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // instantiateRuntime which will want to know existing state.  Wait for these promises to finish.
         [this.blobManager, this.protocolHandler] = await Promise.all([blobManagerP, protocolHandlerP, loadDetailsP]);
 
-        await this.loadContext(attributes, this.storageService, maybeSnapshotTree);
+        await this.loadContext(attributes, this.storageService, { snapshotTree: maybeSnapshotTree });
 
         this.context!.changeConnectionState(this.connectionState, this.clientId!, this._version);
 
@@ -1103,8 +1105,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private async loadContext(
         attributes: IDocumentAttributes,
         storage: IDocumentStorageService,
-        snapshot?: ISnapshotTree,
-        immediateSummary: boolean = false,
+        previousRuntimeState: IRuntimeState,
     ) {
         this.pkg = this.getCodeDetailsFromQuorum();
         const chaincode = this.pkg ? await this.loadRuntimeFactory(this.pkg) : new NullChaincode();
@@ -1113,12 +1114,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // are set. Global requests will still go to this loader
         const loader = new RelativeLoader(this.loader, this.originalRequest);
 
+        previousRuntimeState.snapshotTree = previousRuntimeState.snapshotTree ?? { id: null, blobs: {}, commits: {}, trees: {} };
+
         this.context = await ContainerContext.load(
             this,
             this.scope,
             this.codeLoader,
             chaincode,
-            snapshot || { id: null, blobs: {}, commits: {}, trees: {} },
             attributes,
             this.blobManager,
             new DeltaManagerProxy(this._deltaManager),
@@ -1131,7 +1133,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             async (message) => this.snapshot(message),
             (reason?: string) => this.close(reason),
             Container.version,
-            immediateSummary,
+            previousRuntimeState,
+
         );
 
         loader.resolveContainer(this);
