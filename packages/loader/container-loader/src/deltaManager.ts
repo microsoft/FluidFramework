@@ -1002,7 +1002,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             this.opSendTimeForLatencyStatisticsForMsnStatistics = message.timestamp;
         }
 
-        if (this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber) {
+        if (this.connection && this.connection.details.clientId === message.clientId &&
+                this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber) {
             assert(this.opSendTimeForLatencyStatistics);
             this.logger.sendTelemetryEvent({
                 eventName: "OpRoundtripTime",
