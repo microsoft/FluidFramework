@@ -94,7 +94,7 @@ describe("Errors Types", () => {
             message: "Test Error",
             code: 400,
         };
-        const networkError = createIError(errorObjectFromOdspError(err, false));
+        const networkError = createIError(errorObjectFromOdspError(err, () => false));
         assert.equal(networkError.errorType, ErrorType.connectionError, "Error is not a network error");
     });
 
@@ -104,7 +104,7 @@ describe("Errors Types", () => {
             code: 529,
             retryAfter: 100,
         };
-        const throttlingError = createIError(errorObjectFromOdspError(err, true));
+        const throttlingError = createIError(errorObjectFromOdspError(err, () => true));
         assert.equal(throttlingError.errorType, ErrorType.throttlingError, "Error is not a throttling error");
     });
 
@@ -114,7 +114,7 @@ describe("Errors Types", () => {
             code: 529,
             retryAfter: 100,
         };
-        const error1 = createIError(errorObjectFromOdspError(err, true), true);
+        const error1 = createIError(errorObjectFromOdspError(err, () => true), true);
         const error2 = createIError(error1, false);
         assert.equal(error1, error2, "Both errors should be same!!");
     });

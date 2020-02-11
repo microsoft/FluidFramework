@@ -21,6 +21,7 @@ Any component based on runtime >= 0.14 will no longer work with loader <= 0.8
 ## New Error types
 The following new error interfaces have been added:
 - `IWriteError` is thrown when ops are sent on a read-only document
+- `IFatalError` is thrown when a fatal error (500) is received from ODSP
 
 ## `IComponentContext` - `createSubComponent` removed, `createComponent` signature updated
 
