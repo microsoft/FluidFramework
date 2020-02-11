@@ -14,26 +14,17 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentDiscoverInterfaces } from "@microsoft/fluid-framework-interfaces";
 
+import { Event } from "react-big-calendar";
+
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-import {
-    Calendar as BigCalendar,
-    momentLocalizer,
-    Event,
-} from "react-big-calendar";
-import moment from "moment";
-
-import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
-import "react-big-calendar/lib/css/react-big-calendar.css";
 import { IDirectory, IDirectoryValueChanged } from "@microsoft/fluid-map";
 import { IComponentEventData } from "../../interfaces";
 
-const calendarStyle: React.CSSProperties = {
-    height: "70vh",
-};
+import { CalendarView } from "./view";
 
-interface ICalendarDataModel {
+export interface ICalendarDataModel {
     events: Event[];
     on(event: "changed", listener: () => void): this;
 }
@@ -136,52 +127,5 @@ export class Calendar extends PrimedComponent
         ReactDOM.render(
             <CalendarView dataModel={this}/>,
             div);
-    }
-}
-
-interface ICalendarViewProps {
-    dataModel: ICalendarDataModel;
-}
-
-interface ICalendarViewState {
-    events: Event[];
-}
-
-class CalendarView extends React.Component<ICalendarViewProps, ICalendarViewState> {
-    public constructor(props: ICalendarViewProps) {
-        super(props);
-
-        this.state = {
-            events: this.props.dataModel.events,
-        };
-
-        this.props.dataModel.on("changed", () => {
-            this.setState({events: this.props.dataModel.events});
-        });
-    }
-    private readonly localizer = momentLocalizer(moment);
-
-    private readonly onSelectSlot = (slotInfo: {
-        start: Date;
-        end: Date;
-        slots: Date[] | string[];
-        action: "select" | "click" | "doubleClick";
-    }) => alert(slotInfo.action);
-
-    private readonly onSelectEvent = (event: Event, e: React.SyntheticEvent<HTMLElement>) => alert(event.title);
-
-    public render() {
-        return (
-            <div style={calendarStyle}>
-                <BigCalendar
-                    localizer={this.localizer}
-                    events={this.state.events}
-                    startAccessor="start"
-                    endAccessor="end"
-                    onSelectSlot={this.onSelectSlot}
-                    onSelectEvent={this.onSelectEvent}
-                />
-            </div>
-        );
     }
 }
