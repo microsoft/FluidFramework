@@ -254,13 +254,16 @@ export class RunningSummarizer implements IDisposable {
             configuration,
             generateSummary,
             lastOpSeqNumber,
-            firstAck,
-            immediateSummary);
+            firstAck);
 
         await summarizer.waitStart();
 
         // Run the heuristics after starting
-        summarizer.heuristics.run();
+        if (immediateSummary) {
+            summarizer.trySummarize("immediate");
+        } else {
+            summarizer.heuristics.run();
+        }
         return summarizer;
     }
 
@@ -283,7 +286,6 @@ export class RunningSummarizer implements IDisposable {
         private readonly generateSummary: (safe: boolean) => Promise<GenerateSummaryData | undefined>,
         lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
-        immediateSummary: boolean,
     ) {
         this.heuristics = new SummarizerHeuristics(
             configuration,
@@ -306,10 +308,6 @@ export class RunningSummarizer implements IDisposable {
                     timePending: Date.now() - this.heuristics.lastSent.summaryTime,
                 });
             });
-
-        if (immediateSummary) {
-            this.trySummarize("immediate");
-        }
     }
 
     public dispose(): void {

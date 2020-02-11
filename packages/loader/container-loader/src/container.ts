@@ -461,8 +461,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             sequenceNumber: this._deltaManager.referenceSequenceNumber,
         };
 
-        await this.loadContext(attributes, storage,
-            { snapshotTree: snapshot, summaryCollection: previousContextState.summaryCollection});
+        await this.loadContext(attributes, storage, { ...previousContextState, snapshotTree: snapshot });
 
         this.deltaManager.inbound.systemResume();
         this.deltaManager.inboundSignal.systemResume();
@@ -1114,7 +1113,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // are set. Global requests will still go to this loader
         const loader = new RelativeLoader(this.loader, this.originalRequest);
 
-        previousRuntimeState.snapshotTree = previousRuntimeState.snapshotTree ?? { id: null, blobs: {}, commits: {}, trees: {} };
+        previousRuntimeState.snapshotTree = previousRuntimeState.snapshotTree ??
+            { id: null, blobs: {}, commits: {}, trees: {} };
 
         this.context = await ContainerContext.load(
             this,
