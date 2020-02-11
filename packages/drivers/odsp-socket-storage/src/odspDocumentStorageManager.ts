@@ -8,7 +8,7 @@ import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
     fromBase64ToUtf8,
     fromUtf8ToBase64,
-    gitHashFile,
+    hashFile,
     PerformanceEvent,
     TelemetryLogger,
 } from "@microsoft/fluid-core-utils";
@@ -42,6 +42,8 @@ const blobReuseFeatureDisabled = true;
 export class OdspDocumentStorageManager implements IDocumentStorageManager {
     // This cache is associated with mapping sha to path for previous summary which belongs to last summary handle.
     private blobsShaToPathCache: Map<string, string> = new Map();
+    // A set of pending blob hashes that will be inserted into blobsShaToPathCache
+    private readonly blobsCachePendingHashes: Set<Promise<void>> = new Set();
     private readonly blobCache: Map<string, resources.IBlob> = new Map();
     private readonly treesCache: Map<string, resources.ITree> = new Map();
 
@@ -301,8 +303,16 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                         // the summarizing container (becauase the summarizing container is always created
                         // after the main container). In this case, we do not need to do any hashing
                         if (!this.isFirstContainerForService && path) {
-                            const hash = gitHashFile(Buffer.from(blob.content, blob.encoding));
-                            this.blobsShaToPathCache.set(hash, path);
+                            // Schedule the hashes for later, but keep track of the tasks
+                            // to ensure they finish before they might be used
+                            const hashP = hashFile(Buffer.from(blob.content, blob.encoding)).then((hash: string) => {
+                                this.blobsShaToPathCache.set(hash, path);
+                            });
+                            this.blobsCachePendingHashes.add(hashP);
+                            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                            hashP.finally(() => {
+                                this.blobsCachePendingHashes.delete(hashP);
+                            });
                         }
                     }
                 }
@@ -505,7 +515,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         }
         // This cache is associated with mapping sha to path for currently generated summary.
         const blobsShaToPathCacheLatest: Map<string, string> = new Map();
-        const snapshotTree = this.convertSummaryToSnapshotTree(tree, blobsShaToPathCacheLatest);
+        const snapshotTree = await this.convertSummaryToSnapshotTree(tree, blobsShaToPathCacheLatest);
 
         const snapshot: ISnapshotRequest = {
             entries: snapshotTree.entries!,
@@ -531,7 +541,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     /**
      * Converts a summary tree to ODSP tree
      */
-    private convertSummaryToSnapshotTree(tree: api.ISummaryTree, blobsShaToPathCacheLatest: Map<string, string>, depth: number = 0, path: string = ""): ISnapshotTree {
+    private async convertSummaryToSnapshotTree(tree: api.ISummaryTree, blobsShaToPathCacheLatest: Map<string, string>, depth: number = 0, path: string = ""): Promise<ISnapshotTree> {
         const snapshotTree: ISnapshotTree = {
             entries: [],
         }!;
@@ -546,14 +556,17 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             /* eslint-disable no-case-declarations */
             switch (summaryObject.type) {
                 case api.SummaryType.Tree:
-                    value = this.convertSummaryToSnapshotTree(summaryObject, blobsShaToPathCacheLatest, depth + 1, `${path}/${key}`);
+                    value = await this.convertSummaryToSnapshotTree(summaryObject, blobsShaToPathCacheLatest, depth + 1, `${path}/${key}`);
                     break;
 
                 case api.SummaryType.Blob:
                     const content = typeof summaryObject.content === "string" ? summaryObject.content : summaryObject.content.toString("base64");
                     const encoding = typeof summaryObject.content === "string" ? "utf-8" : "base64";
 
-                    const hash = gitHashFile(Buffer.from(content, encoding));
+                    const hash = await hashFile(Buffer.from(content, encoding));
+                    await Promise.all(this.blobsCachePendingHashes.values());
+                    // Promises in blobsCachePendingHashes remove themselves as they resolve
+                    assert(this.blobsCachePendingHashes.size === 0);
                     let completePath = this.blobsShaToPathCache.get(hash);
                     // If the cache has the hash of the blob and handle of last summary is also present, then use that
                     // to generate complete path for the given blob.
