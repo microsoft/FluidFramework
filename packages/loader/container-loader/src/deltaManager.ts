@@ -33,7 +33,7 @@ import {
     ITrace,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
-import { createIError } from "@microsoft/fluid-driver-utils";
+import { createIError, WriteError } from "@microsoft/fluid-driver-utils";
 import { ContentCache } from "./contentCache";
 import { debug } from "./debug";
 import { DeltaConnection } from "./deltaConnection";
@@ -86,6 +86,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private _connectionMode: ConnectionMode = "write";
     // Overwrites the current connection mode to always write.
     private readonly systemConnectionMode: ConnectionMode;
+    private writePermission: boolean | undefined;
 
     private isDisposed: boolean = false;
     private pending: ISequencedDocumentMessage[] = [];
@@ -364,6 +365,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             }
 
             this.setupNewSuccessfulConnection(connection);
+
+            if (requestedMode === "write") {
+                // if we ask for write and get read it means we don't have write permissions
+                this.writePermission = this._connectionMode === requestedMode;
+            }
 
             return connection;
         };
@@ -726,9 +732,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // Always connect in write mode after getting nacked.
         connection.on("nack", (target: number) => {
             const nackReason = target === -1 ? "Nack: Start writing" : "Nack";
+            if (this.writePermission === false) {
+                this.close(new WriteError("WriteOnReadOnlyDocument"));
+            }
             if (!this.autoReconnect) {
-                // Not clear if reconnecting is the right thing in such state.
-                // Let's get telemetry to learn more...
                 this.logger.sendErrorEvent({ eventName: "NackWithNoReconnect", target, mode: this._connectionMode });
             }
             // eslint-disable-next-line @typescript-eslint/no-floating-promises

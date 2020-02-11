@@ -48,6 +48,9 @@
       "html",
       "text"
     ],
+    "require": [
+      "ts-node/register"
+    ],
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {

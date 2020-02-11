@@ -9,10 +9,11 @@ export enum ErrorType {
     throttlingError,
     serviceError,
     summarizingError,
+    writeError,
 }
 
 export type IError = IGeneralError | IThrottlingError | IConnectionError |
-IServiceError | ISummarizingError;
+IServiceError | ISummarizingError | IWriteError;
 
 export interface IGeneralError {
     readonly errorType: ErrorType.generalError;
@@ -44,4 +45,9 @@ export interface IServiceError {
 export interface ISummarizingError {
     readonly errorType: ErrorType.summarizingError;
     critical?: boolean;
+}
+
+export interface IWriteError {
+    readonly errorType: ErrorType.writeError;
+    readonly critical: boolean;
 }

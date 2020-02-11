@@ -100,8 +100,21 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     public createBlob(file: Buffer): Promise<api.ICreateBlobResponse> {
         this.checkSnapshotUrl();
 
-        // Need to wrap implementation with getWithRetryForTokenRefresh()
-        return Promise.reject(new Error("StandardDocumentStorageManager.createBlob() not implemented"));
+        const event = PerformanceEvent.start(this.logger, {
+            eventName: "createBlob",
+            size: file.length,
+        });
+
+        try {
+            // Future implementation goes here
+            // Need to wrap implementation with getWithRetryForTokenRefresh()
+            return Promise.reject(new Error("StandardDocumentStorageManager.createBlob() not implemented"));
+        } catch (error) {
+            event.cancel({}, error);
+            throw error;
+        }
+
+        event.end();
     }
 
     public async getBlob(blobid: string): Promise<resources.IBlob> {
