@@ -4,5 +4,6 @@
  */
 
 export * from "./clicker";
+export * from "./event";
 export * from "./location";
 export * from "./registryDetails";

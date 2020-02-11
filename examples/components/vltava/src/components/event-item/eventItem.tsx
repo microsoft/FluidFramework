@@ -11,10 +11,12 @@ import {
     IComponent,
     IComponentHTMLVisual,
 } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentDiscoverableInterfaces } from "@microsoft/fluid-framework-interfaces";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { IComponentDiscoverableInterfaces } from "@microsoft/fluid-framework-interfaces";
+
+import { IEventData } from "../../interfaces";
 /**
  * Button is a simple component that is just a button. It registers with the matchMaker so
  * when the button is pressed Components that consume clicks can do work
@@ -38,17 +40,24 @@ export class EventItem extends PrimedComponent
         return [];
     }
 
-    protected async componentHasInitialized() {
+    protected async componentInitializingFirstTime() {
+        // Set some information so that we can view it later and hook up the interfaces
+        // This should be configurable by the view.
+        this.root.set("data",
+            {
+                allDay: false,
+                title: this.url,
+                start: new Date(),
+                end: new Date(),
+                resource: "body text",
+            });
     }
 
-    /**
-     * If someone just calls render they are not providing a scope and we just pass
-     * undefined in.
-     */
     public render(div: HTMLElement) {
+        const data = this.root.get<IEventData>("data");
         ReactDOM.render(
             <div>
-                Event
+                {JSON.stringify(data)}
             </div>,
             div);
     }
