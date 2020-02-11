@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { readFileAsync } from "./common/utils";
+import { readFileAsync } from "./utils";
 import { Package } from "./npmPackage";
-import { logVerbose } from "./common/logging";
+import { logVerbose } from "./logging";
 
 interface DepCheckRecord {
     name: string,

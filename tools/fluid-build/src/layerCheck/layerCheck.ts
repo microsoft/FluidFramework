@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { Packages } from "../npmPackage";
 import { LayerGraph } from "./layerGraph";
 import { commonOptions, commonOptionString, parseOption } from "../common/commonOptions";
 import { Timer } from "../common/timer";

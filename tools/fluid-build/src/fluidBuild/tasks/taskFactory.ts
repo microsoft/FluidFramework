@@ -9,7 +9,7 @@ import { LeafTask, UnknownLeafTask } from "./leaf/leafTask";
 import { NPMTask } from "./npmTask";
 import { Task } from "./task";
 import { TscTask } from "./leaf/tscTask";
-import { getExecutableFromCommand } from "../common/utils";
+import { getExecutableFromCommand } from "../../common/utils";
 import { TsLintTask, EsLintTask } from "./leaf/lintTasks";
 import { WebpackTask } from "./leaf/webpackTask";
 import { LesscTask, CopyfilesTask, EchoTask, GenVerTask } from "./leaf/miscTasks";

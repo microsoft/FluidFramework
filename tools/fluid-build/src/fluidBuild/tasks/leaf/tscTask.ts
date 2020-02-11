@@ -5,8 +5,8 @@
 
 import * as assert from "assert";
 import { LeafTask } from "./leafTask";
-import { logVerbose } from "../../common/logging";
-import { readFileAsync, existsSync } from "../../common/utils";
+import { logVerbose } from "../../../common/logging";
+import { readFileAsync, existsSync } from "../../../common/utils";
 import path from "path";
 import * as ts from "typescript";
 const isEqual = require("lodash.isequal");

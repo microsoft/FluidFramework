@@ -4,7 +4,7 @@
  */
 
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
-import { globFn, toPosixPath, readFileAsync, existsSync } from "../../common/utils";
+import { globFn, toPosixPath, readFileAsync, existsSync } from "../../../common/utils";
 import { TscTask } from "./tscTask";
 import * as path from "path";
 

@@ -1,5 +1,5 @@
 import * as path from "path";
-import { Packages, Package } from "../npmPackage";
+import { Packages, Package } from "./npmPackage";
 import { rimrafWithErrorAsync, ExecAsyncResult, execWithErrorAsync } from "./utils";
 import { FluidPackageCheck } from "../fluidBuild/fluidPackageCheck";
 

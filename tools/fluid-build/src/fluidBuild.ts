@@ -3,17 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { Packages } from "./npmPackage";
-import { parseOptions, options } from "./options";
 import { commonOptions } from "./common/commonOptions";
-import { BuildGraph, BuildResult } from "./buildGraph";
-import { Timer } from "./common/timer";
-import { logStatus } from "./common/logging";
+import { FluidRepo } from "./common/fluidRepo";
 import { getResolvedFluidRoot } from "./common/fluidUtils";
-import { existsSync, rimrafWithErrorAsync, execWithErrorAsync, ExecAsyncResult } from "./common/utils";
+import { logStatus } from "./common/logging";
+import { Timer } from "./common/timer";
+import { existsSync } from "./common/utils";
+import { BuildGraph, BuildResult } from "./fluidBuild/buildGraph";
+import { parseOptions, options } from "./fluidBuild/options";
 import * as path from "path";
 import chalk from "chalk";
-import { FluidRepo } from "./common/fluidRepo";
 
 function versionCheck() {
     const pkg = require(path.join(__dirname, "..", "package.json"));

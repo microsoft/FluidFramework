@@ -8,7 +8,7 @@ import * as chalk from "chalk";
 import * as fs from "fs";
 import * as path from "path";
 import { sortPackageJson } from "sort-package-json";
-import { logStatus, logVerbose } from "./common/logging";
+import { logStatus, logVerbose } from "./logging";
 import {
     globFn,
     copyFileAsync,
@@ -23,9 +23,9 @@ import {
     writeFileAsync,
     ExecAsyncResult,
     renameAsync
-} from "./common/utils"
+} from "./utils"
 import { NpmDepChecker } from "./npmDepChecker";
-import { options } from "./options";
+import { options } from "../fluidBuild/options";
 import * as semver from "semver";
 
 interface IPerson {
