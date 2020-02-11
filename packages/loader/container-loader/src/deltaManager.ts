@@ -132,12 +132,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private deltaStorageDelay: number | undefined;
     private deltaStreamDelay: number | undefined;
 
-    // Collab window tracking. This is timestamp of %2000 message.
-    private lastMessageTimeForTelemetry: number | undefined;
+    // Collab window tracking. This is timestamp of %1000 message.
+    private opSendTimeForLatencyStatisticsForMsnStatistics: number | undefined;
 
     // To track round trip time for every %1000 client message.
-    private opSendTime: number | undefined;
-    private opNumberForRTT: number | undefined;
+    private opSendTimeForLatencyStatistics: number | undefined;
+    private clientSequenceNumberForLatencyStatistics: number | undefined;
 
     public get inbound(): IDeltaQueue<ISequencedDocumentMessage> {
         return this._inbound;
@@ -433,9 +433,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             type,
         };
 
-        if (this.opNumberForRTT !== undefined && message.clientSequenceNumber % 1000 === 0) {
-            this.opSendTime = Date.now();
-            this.opNumberForRTT = message.clientSequenceNumber;
+        // start with first client op and measure latency every 500 client ops
+        if (this.clientSequenceNumberForLatencyStatistics === undefined && message.clientSequenceNumber % 500 === 1) {
+            this.opSendTimeForLatencyStatistics = Date.now();
+            this.clientSequenceNumberForLatencyStatistics = message.clientSequenceNumber;
         }
 
         const outbound = this.createOutboundMessage(type, message);
@@ -712,6 +713,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         this.clientSequenceNumber = 0;
         this.clientSequenceNumberObserved = 0;
+        this.clientSequenceNumberForLatencyStatistics = undefined;
 
         connection.on("op", (documentId: string, messages: ISequencedDocumentMessage[]) => {
             if (messages instanceof Array) {
@@ -825,7 +827,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         error?: any,
         autoReconnect: boolean = true,
     ) {
-        this.opSendTime = undefined;
         // We quite often get protocol errors before / after observing nack/disconnect
         // we do not want to run through same sequence twice.
         if (connection !== this.connection) {
@@ -987,28 +988,30 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         assert.equal(message.sequenceNumber, this.baseSequenceNumber + 1);
         this.baseSequenceNumber = message.sequenceNumber;
 
-        // Record collab window max size after every 2000th op.
+        // Record collab window max size after every 1000th op.
         const msnDistance = this.baseSequenceNumber - this.minSequenceNumber;
-        if (message.sequenceNumber % 2000 === 0) {
-            this.logger.sendTelemetryEvent({
-                eventName: "OpStats",
-                sequenceNumber: message.sequenceNumber,
-                value: msnDistance,
-                timeDelta: this.lastMessageTimeForTelemetry ?
-                    message.timestamp - this.lastMessageTimeForTelemetry : undefined,
-            });
-            this.lastMessageTimeForTelemetry = message.timestamp;
+        if (message.sequenceNumber % 1000 === 0) {
+            if (this.opSendTimeForLatencyStatisticsForMsnStatistics !== undefined)
+            {
+                this.logger.sendTelemetryEvent({
+                    eventName: "MsnStatistics",
+                    sequenceNumber: message.sequenceNumber,
+                    msnDistance,
+                    timeDelta: message.timestamp - this.opSendTimeForLatencyStatisticsForMsnStatistics,
+                });
+            }
+            this.opSendTimeForLatencyStatisticsForMsnStatistics = message.timestamp;
         }
 
-        if (this.opSendTime !== undefined && this.opNumberForRTT === message.clientSequenceNumber) {
+        if (this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber) {
+            assert(this.opSendTimeForLatencyStatistics);
             this.logger.sendTelemetryEvent({
-                eventName: "OpRTT",
+                eventName: "OpRoundtripTime",
                 seqNumber: message.sequenceNumber,
-                rtt: this.opSendTime ?
-                    Date.now() - this.opSendTime : undefined,
+                clientSequenceNumber: message.clientSequenceNumber,
+                value: Date.now() - this.opSendTimeForLatencyStatistics!,
             });
-            this.opSendTime = undefined;
-            this.opNumberForRTT = undefined;
+            this.clientSequenceNumberForLatencyStatistics = undefined;
         }
 
         const result = this.handler!.process(message);
