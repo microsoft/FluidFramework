@@ -34,11 +34,11 @@ export class CalendarView extends React.Component<ICalendarViewProps, ICalendarV
         super(props);
 
         this.state = {
-            events: this.props.dataModel.events,
+            events: Array.from(this.props.dataModel.events.values()),
         };
 
         this.props.dataModel.on("changed", () => {
-            this.setState({ events: this.props.dataModel.events });
+            this.setState({ events: Array.from(this.props.dataModel.events.values()) });
         });
     }
     private readonly localizer = momentLocalizer(moment);

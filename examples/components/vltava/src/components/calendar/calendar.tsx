@@ -25,7 +25,7 @@ import { IComponentEventData } from "../../interfaces";
 import { CalendarView } from "./view";
 
 export interface ICalendarDataModel {
-    events: Event[];
+    events: Map<string, Event>;
     on(event: "changed", listener: () => void): this;
 }
 
@@ -71,7 +71,6 @@ export class Calendar extends PrimedComponent
                         if (loadable && handle) {
                             this.remoteEventsDir.set(loadable.url, handle.IComponentHandle);
                         }
-                        this.events.push(event.event);
                     }
                 }
                 default:
@@ -79,7 +78,7 @@ export class Calendar extends PrimedComponent
         });
     }
 
-    public readonly events: Event[] = [];
+    public readonly events = new Map<string, Event>();
 
     public on(event: "changed", listener: () => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
@@ -93,14 +92,17 @@ export class Calendar extends PrimedComponent
     protected async componentHasInitialized() {
         this.remoteEventsDir = this.root.getSubDirectory("remote-events");
 
-        // Setup listeners incase our subdirectory changes
+        // Setup listeners incase our list of events changes
         this.root.on("valueChanged", (changed: IDirectoryValueChanged, local: boolean) => {
             if (changed.path === this.remoteEventsDir.absolutePath) {
                 // our subdirectory changed and we should update our events
                 const value = this.remoteEventsDir.get<IComponentHandle>(changed.key);
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 value.get<IComponentEventData>().then((event) => {
-                    this.events.push(event as Event);
+                    this.events.set(changed.key, event.event);
+                    event.on("changed", () => {
+                        this.emit("changed");
+                    });
                     this.emit("changed");
                 });
             }
@@ -112,10 +114,13 @@ export class Calendar extends PrimedComponent
             const key = keys[i];
             const value = this.remoteEventsDir.get<IComponentHandle>(key);
             const event = await value.get<IComponentEventData>();
-            this.events.push(event as Event);
+            event.on("changed", () => {
+                this.emit("changed");
+            });
+            this.events.set(key, event.event);
         }
 
-        // Register our component with the match maker
+        // Register our component with the match maker so we can find new events
         const matchMaker = await this.getService<IComponent>("matchMaker");
         const interfaceRegistry = matchMaker.IComponentInterfacesRegistry;
         if (interfaceRegistry) {
