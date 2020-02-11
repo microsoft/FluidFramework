@@ -26,6 +26,13 @@ export interface IComponentHTMLView extends IProvideComponentHTMLView {
      * rendered component.
      */
     render(elm: HTMLElement, options?: IComponentHTMLOptions): void;
+
+    /**
+     * Views which need to perform cleanup (e.g. remove event listeners, timers, etc.) when
+     * removed from the DOM should implement remove() and perform that cleanup within.
+     * Components which wish to remove views from the DOM should call remove() on the view
+     * before removing it from the DOM.
+     */
     remove?(): void;
 }
 
@@ -34,8 +41,9 @@ export interface IProvideComponentHTMLVisual {
 }
 
 /**
- * An IComponentHTMLVisual is a view factory.  Typically it will be a model, binding itself to the views
- * it creates.
+ * An IComponentHTMLVisual is a view factory.  Typically (though not necessarily) it will be a model,
+ * binding itself to the views it creates.
+ * TODO: Consider renaming to IComponentHTMLViewFactory
  */
 export interface IComponentHTMLVisual extends IProvideComponentHTMLVisual {
     addView(scope?: IComponent): IComponentHTMLView;
