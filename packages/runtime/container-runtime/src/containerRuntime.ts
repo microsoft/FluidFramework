@@ -1084,11 +1084,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             return;
         }
 
-        if (!("uploadSummary" in this.context.storage)) {
-            this.logger.sendTelemetryEvent({ eventName: "SkipGenerateSummaryNotSupported" });
-            return;
-        }
-
         try {
             await this.scheduleManager.pause();
 
@@ -1103,7 +1098,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             }
 
             const trace = Trace.start();
-            const useContext = this.summaryTracker.useContext;
             const treeWithStats = await this.summarize(fullTree || safe);
 
             const generateData: IGeneratedSummaryData = {
@@ -1116,7 +1110,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             }
 
             let handle: string;
-            if (useContext === true) {
+            if (this.summaryTracker.useContext === true) {
                 handle = await this.context.storage.uploadSummaryWithContext(
                     treeWithStats.summaryTree,
                     this.latestSummaryAck);
