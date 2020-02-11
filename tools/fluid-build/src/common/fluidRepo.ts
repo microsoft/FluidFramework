@@ -1,6 +1,7 @@
 import * as path from "path";
 import { Packages, Package } from "../npmPackage";
 import { rimrafWithErrorAsync, ExecAsyncResult, execWithErrorAsync } from "./utils";
+import { FluidPackageCheck } from "../fluidBuild/fluidPackageCheck";
 
 export interface IPackageMatchedOptions {
     match: string[];
@@ -33,6 +34,10 @@ export class FluidRepo {
     public readonly packages: Packages;
     constructor(private readonly resolvedRoot: string) {
         this.packages = Packages.load(this.baseDirectories);
+
+        this.packages.packages.forEach((pkg) => {
+            pkg.packageCheck = new FluidPackageCheck(pkg.directory.startsWith(this.serverDirectory));
+        });
     }
 
     public async install(nohoist: boolean) {

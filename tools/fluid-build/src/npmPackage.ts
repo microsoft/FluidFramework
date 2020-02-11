@@ -9,20 +9,20 @@ import * as fs from "fs";
 import * as path from "path";
 import { sortPackageJson } from "sort-package-json";
 import { logStatus, logVerbose } from "./common/logging";
-import { 
-    globFn, 
-    copyFileAsync, 
-    execWithErrorAsync, 
-    existsSync, 
-    lstatAsync, 
-    mkdirAsync, 
-    realpathAsync, 
-    rimrafWithErrorAsync, 
-    unlinkAsync, 
-    symlinkAsync, 
-    writeFileAsync, 
-    ExecAsyncResult, 
-    renameAsync 
+import {
+    globFn,
+    copyFileAsync,
+    execWithErrorAsync,
+    existsSync,
+    lstatAsync,
+    mkdirAsync,
+    realpathAsync,
+    rimrafWithErrorAsync,
+    unlinkAsync,
+    symlinkAsync,
+    writeFileAsync,
+    ExecAsyncResult,
+    renameAsync
 } from "./common/utils"
 import { NpmDepChecker } from "./npmDepChecker";
 import { options } from "./options";
@@ -64,6 +64,10 @@ interface IPackage {
     [key: string]: any;
 };
 
+export interface IPackageCheck {
+    checkScripts(pkg: Package, fix: boolean): boolean;
+};
+
 export class Package {
     private static packageCount: number = 0;
     private static readonly chalkColor = [
@@ -88,6 +92,7 @@ export class Package {
     private readonly packageId = Package.packageCount++;
     private _matched: boolean = false;
     private _markForBuild: boolean = false;
+    public packageCheck: IPackageCheck | undefined;
 
     constructor(private readonly packageJsonFileName: string) {
         this.packageJson = require(packageJsonFileName);
@@ -160,198 +165,9 @@ export class Package {
     }
 
     public async checkScripts() {
-        // Fluid specific
-        const fixed = [this.checkBuildScripts(), this.checkTestCoverageScripts(), this.checkTestSafePromiseRequire(), this.checkMochaTestScripts(), this.checkJestJunitTestEntry()];
-
-        if (fixed.some((bool) => bool)) {
+        if (this.packageCheck && this.packageCheck.checkScripts(this, options.fixScripts)) {
             await this.savePackageJson();
         }
-    }
-
-    /**
-     * Verify that all packages with 'test' scripts require the 'make-promises-safe' package, which will cause unhandled
-     * promise rejections to throw errors
-     */
-    public checkTestSafePromiseRequire() {
-        let fixed = false;
-        const pkgstring = "make-promises-safe";
-        const pkgversion = "^5.1.0";
-        const testScript = options.server ? "test" : "test:mocha";
-        if (this.packageJson.scripts && this.packageJson.scripts[testScript] && /(ts-)?mocha/.test(this.packageJson.scripts[testScript]!)) {
-            if (this.packageJson.devDependencies && !this.packageJson.devDependencies[pkgstring]) {
-                console.warn(`${this.nameColored}: warning: missing ${pkgstring} dependency`);
-                if (options.fixScripts) {
-                    this.packageJson.devDependencies[pkgstring] = pkgversion;
-                    fixed = true;
-                }
-            }
-            if (!this.packageJson.scripts[testScript]!.includes(pkgstring)) {
-                if (/(ts-)?mocha/.test(this.packageJson.scripts[testScript]!)) {
-                    console.warn(`${this.nameColored}: warning: no ${pkgstring} require in test script`);
-                    if (options.fixScripts) {
-                        this.packageJson.scripts[testScript] += " -r " + pkgstring;
-                        fixed = true;
-                    }
-                }
-            }
-        }
-
-        return fixed;
-    }
-
-    /**
-     * mocha tests in packages/ should be in a "test:mocha" script so they can be run separately from jest tests
-     */
-    public checkMochaTestScripts() {
-        let fixed = false;
-        if (!options.server && this.packageJson.scripts && this.packageJson.scripts.test && /^(ts-)?mocha/.test(this.packageJson.scripts.test)) {
-            console.warn(`${this.nameColored}: warning: "mocha" in "test" script instead of "test:mocha" script`)
-            if (options.fixScripts) {
-                if (!this.packageJson.scripts["test:mocha"]) {
-                    this.packageJson.scripts["test:mocha"] = this.packageJson.scripts["test"];
-                    this.packageJson.scripts["test"] = "npm run test:mocha";
-                    fixed = true;
-                } else {
-                    console.warn(`${this.nameColored}: couldn't fix: "test" and "test:mocha" scripts both present`)
-                }
-            }
-        }
-
-        return fixed;
-    }
-
-    public checkJestJunitTestEntry() {
-        let fixed = false;
-        const pkgstring = "jest-junit";
-        const pkgversion = "^10.0.0";
-        if (this.packageJson.scripts && this.packageJson.scripts["test:jest"]) {
-            if (!this.packageJson.devDependencies[pkgstring]) {
-                console.warn(`${this.nameColored}: warning: missing ${pkgstring} dependency`);
-                if (options.fixScripts) {
-                    this.packageJson.devDependencies[pkgstring] = pkgversion;
-                    fixed = true;
-                }
-            }
-            if (!this.packageJson["jest-junit"]) {
-                console.warn(`${this.nameColored} warning: no jest-junit entry for jest test`);
-            }
-        }
-
-        return fixed;
-    }
-
-    public checkTestCoverageScripts() {
-        let fixed = false;
-        // Fluid specific
-        const testCoverageScript = this.getScript("test:coverage");
-        if (testCoverageScript && testCoverageScript.startsWith("nyc")) {
-            if (!this.packageJson.devDependencies.nyc) {
-                console.warn(`${this.nameColored}: warning: missing nyc dependency`);
-            }
-            if (this.packageJson.nyc) {
-                if (this.packageJson.nyc["exclude-after-remap"] !== false) {
-                    console.warn(`${this.nameColored}: warning: nyc.exclude-after-remap need to be false`);
-                    if (options.fixScripts) {
-                        this.packageJson.nyc["exclude-after-remap"] = false;
-                        fixed = true;
-                    }
-                }
-            } else {
-                console.warn(`${this.nameColored}: warning: missing nyc configuration`);
-            }
-        }
-
-        return fixed;
-    }
-
-    public checkBuildScripts() {
-        // Fluid specific
-        let fixed = false;
-        const buildScript = this.getScript("build");
-        if (buildScript) {
-            if (buildScript.startsWith("echo ") || buildScript === "npm run noop") {
-                return;
-            }
-            // These are script rules in the FluidFramework repo
-
-            // Default build script, tsc + eslint (with optional build:webpack)
-            const build: string[] = ["build:compile"];
-
-            // all build tasks, but optional build:webpack
-            const buildCompile: string[] = [];
-
-            // all build and lint steps (build + webpack)
-            const buildFull: string[] = ["build"];
-
-            // all build steps (build:compile + webpack)
-            const buildFullCompile: string[] = ["build:compile"];
-
-            // all build steps prod
-            const buildCompileMin: string[] = ["build:compile"];
-            const buildPrefix = this.packageJson.scripts["build:genver"] ? "npm run build:genver && " : "";
-            if (this.getScript("tsc")) {
-                buildCompile.push("tsc");
-            }
-            if (this.getScript("build:esnext")) {
-                buildCompile.push("build:esnext");
-            }
-
-            if (this.getScript("build:copy")) {
-                buildCompile.push("build:copy");
-            }
-
-            if (this.getScript("lint")) {
-                build.push("lint");
-            }
-
-            if (this.getScript("less")) {
-                buildCompile.push("less");
-            }
-
-            let implicitWebpack = true;
-            if (this.getScript("build:webpack:min")) {
-                buildCompileMin.push("build:webpack:min");
-                implicitWebpack = false;
-            }
-            if (this.getScript("build:webpack")) {
-                buildCompile.push("build:webpack");
-                implicitWebpack = false;
-            }
-
-            if (implicitWebpack && this.getScript("webpack")) {
-                buildFull.push("webpack");
-                buildFullCompile.push("webpack");
-            }
-
-            if (buildCompile.length === 0) {
-                console.warn(`${this.nameColored}: warning: can't detect anything to build`);
-                return;
-            }
-
-            const check = (scriptName: string, parts: string[], prefix = "") => {
-                const expected = prefix +
-                    (parts.length > 1 ? `concurrently npm:${parts.join(" npm:")}` : `npm run ${parts[0]}`);
-                if (this.packageJson.scripts[scriptName] !== expected) {
-                    console.warn(`${this.nameColored}: warning: non-conformant script ${scriptName}`);
-                    console.warn(`${this.nameColored}: warning:   expect: ${expected}`);
-                    console.warn(`${this.nameColored}: warning:      got: ${this.packageJson.scripts[scriptName]}`);
-                    if (options.fixScripts) {
-                        this.packageJson.scripts[scriptName] = expected;
-                        fixed = true;
-                    }
-                }
-            }
-            check("build", build, buildPrefix);
-            check("build:compile", buildCompile);
-            check("build:full", buildFull);
-            check("build:full:compile", buildFullCompile);
-            check("build:compile:min", buildCompileMin);
-
-            if (!this.getScript("clean")) {
-                console.warn(`${this.nameColored}: warning: package has "build" script without "clean" script`);
-            }
-        }
-        return fixed;
     }
 
     public async depcheck() {
@@ -419,7 +235,7 @@ export class Package {
                             await unlinkAsync(symlinkPath);
                         }
                         */
-                        
+
                         await renameAsync(symlinkPath, path.join(path.dirname(symlinkPath), `_${path.basename(symlinkPath)}`));
                     } else {
                         // Ensure the directory exist
