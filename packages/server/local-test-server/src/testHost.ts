@@ -22,12 +22,11 @@ import {
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+import { ITestDeltaConnectionServer, TestDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { TestDataStore } from "./testDataStore";
 import {
     IDocumentDeltaEvent,
-    ITestDeltaConnectionServer,
     TestCodeLoader,
-    TestDeltaConnectionServer,
     TestDocumentServiceFactory,
     TestResolver,
 } from "./";

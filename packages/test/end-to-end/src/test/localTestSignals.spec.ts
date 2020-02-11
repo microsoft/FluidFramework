@@ -7,11 +7,10 @@ import * as assert from "assert";
 import { Document, load } from "@fluid-internal/client-api";
 import {
     DocumentDeltaEventManager,
-    ITestDeltaConnectionServer,
-    TestDeltaConnectionServer,
     TestDocumentServiceFactory,
     TestResolver,
 } from "@microsoft/fluid-local-test-server";
+import { ITestDeltaConnectionServer, TestDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { IInboundSignalMessage } from "@microsoft/fluid-runtime-definitions";
 
 describe("TestSignals", () => {

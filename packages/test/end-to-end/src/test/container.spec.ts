@@ -17,12 +17,8 @@ import {
     IDocumentDeltaConnection,
     ErrorType,
 } from "@microsoft/fluid-driver-definitions";
-import {
-    ITestDeltaConnectionServer,
-    TestDeltaConnectionServer,
-    TestDocumentServiceFactory,
-    TestResolver,
-} from "@microsoft/fluid-local-test-server";
+import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-test-server";
+import { ITestDeltaConnectionServer, TestDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { MockDocumentDeltaConnection } from "@microsoft/fluid-test-loader-utils";
 import { ConnectionState } from "@microsoft/fluid-protocol-definitions";
 

@@ -9,7 +9,7 @@ import * as socketStorage from "@microsoft/fluid-routerlicious-driver";
 import { GitManager } from "@microsoft/fluid-server-services-client";
 import { TestHistorian } from "@microsoft/fluid-server-test-utils";
 import { TestDeltaStorageService, TestDocumentDeltaConnection } from "@microsoft/fluid-test-driver";
-import { ITestDeltaConnectionServer } from "./testDeltaConnectionServer";
+import { ITestDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 
 /**
  * Creates and returns a document service for testing.

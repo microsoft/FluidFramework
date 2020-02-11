@@ -3,11 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-    TestDeltaConnectionServer,
-    TestDocumentServiceFactory,
-    TestResolver,
-} from "@microsoft/fluid-local-test-server";
+import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-test-server";
+import { TestDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
 import {
