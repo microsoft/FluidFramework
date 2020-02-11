@@ -5,8 +5,6 @@
 
 // Do not use capital 'I' for JsonObject<T> and JsonArray<T> as the use of interfaces is
 // a workaround for lack of type recursion.
-// tslint:disable:interface-name
-
 export type JsonablePrimitive = undefined | null | boolean | number | string;
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface JsonableObject<T> extends Record<string, Jsonable<T>> { }

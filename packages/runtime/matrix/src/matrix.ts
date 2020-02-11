@@ -14,12 +14,10 @@ import {
 import {
     IComponentRuntime,
     IObjectStorageService,
-    Jsonable,
-    JsonablePrimitive,
+    Serializable,
 } from "@microsoft/fluid-runtime-definitions";
 import { makeHandlesSerializable, parseHandles, SharedObject } from "@microsoft/fluid-shared-object-base";
 import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { ObjectStoragePartition } from "@microsoft/fluid-runtime-utils";
 import { IMatrixProducer, IMatrixConsumer, IMatrixReader } from "@tiny-calc/nano";
 import { debug } from "./debug";
@@ -37,9 +35,9 @@ export const enum SnapshotPath {
     cells = "cells"
 }
 
-export class SharedMatrix<
-    T extends Jsonable<JsonablePrimitive | IComponentHandle> = Jsonable<JsonablePrimitive | IComponentHandle>
-> extends SharedObject implements IMatrixProducer<T | undefined | null>, IMatrixReader<T | undefined | null> {
+export class SharedMatrix<T extends Serializable = Serializable> extends SharedObject
+    implements IMatrixProducer<T | undefined | null>, IMatrixReader<T | undefined | null>
+{
     private readonly consumers = new Set<IMatrixConsumer<T>>();
 
     public static getFactory() { return new SharedMatrixFactory(); }

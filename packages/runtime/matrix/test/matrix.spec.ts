@@ -5,17 +5,14 @@
 
 import 'mocha';
 
-import { IComponentHandle } from '@microsoft/fluid-component-core-interfaces';
 import { TestHost } from '@microsoft/fluid-local-test-server';
-import { Jsonable, JsonablePrimitive } from '@microsoft/fluid-runtime-definitions';
+import { Serializable } from '@microsoft/fluid-runtime-definitions';
 import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from '@microsoft/fluid-test-runtime-utils';
 import { strict as assert } from 'assert';
 import { SharedMatrix, SharedMatrixFactory } from '../src';
 import { fill, check, insertFragmented } from './utils';
 
-type Json = Jsonable<JsonablePrimitive | IComponentHandle>;
-
-function extract<T extends Json>(actual: SharedMatrix<T>): ReadonlyArray<ReadonlyArray<T>> {
+function extract<T extends Serializable>(actual: SharedMatrix<T>): ReadonlyArray<ReadonlyArray<T>> {
     const m: T[][] = [];
     for (let r = 0; r < actual.numRows; r++) {
         const row: T[] = [];
@@ -29,12 +26,12 @@ function extract<T extends Json>(actual: SharedMatrix<T>): ReadonlyArray<Readonl
     return m;
 }
 
-function expectSize<T extends Json>(actual: SharedMatrix<T>, numRows: number, numCols: number) {
+function expectSize<T extends Serializable>(actual: SharedMatrix<T>, numRows: number, numCols: number) {
     assert.equal(actual.numRows, numRows);
     assert.equal(actual.numCols, numCols);
 }
 
-async function snapshot<T extends Json>(matrix: SharedMatrix<T>) {
+async function snapshot<T extends Serializable>(matrix: SharedMatrix<T>) {
     const objectStorage = new MockStorage(matrix.snapshot());
     const runtime = new MockRuntime();
     const matrix2 = new SharedMatrix(runtime, `load(${matrix.id})`);
@@ -59,7 +56,7 @@ describe('Matrix', () => {
             await TestHost.sync(host1, host2);
         }
 
-        async function expect<T extends Json>(expected: ReadonlyArray<ReadonlyArray<T>>) {
+        async function expect<T extends Serializable>(expected: ReadonlyArray<ReadonlyArray<T>>) {
             assert.deepEqual(extract(matrix), expected, 'Matrix must match expected.');
 
             // Ensure ops are ACKed prior to snapshot.  Otherwise, the unACKed segments won't be included.
