@@ -14,14 +14,18 @@ import {
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-import { Calendar as BigCalendar, momentLocalizer } from "react-big-calendar";
+import {
+    Calendar as BigCalendar,
+    momentLocalizer,
+    Event,
+} from "react-big-calendar";
 import moment from "moment";
 
 import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 
 const calendarStyle: React.CSSProperties = {
-    height: 500,
+    height: "70vh",
 };
 
 /**
@@ -37,19 +41,33 @@ export class Calendar extends PrimedComponent implements IComponentHTMLVisual {
 
     public get IComponentHTMLVisual() { return this; }
 
-    /**
-     * If someone just calls render they are not providing a scope and we just pass
-     * undefined in.
-     */
     public render(div: HTMLElement) {
+
+        const events: Event[] = [{
+            start: new Date(),
+            end: new Date(),
+            title: "foo",
+        }];
+
+        const onSelectSlot = (slotInfo: {
+            start: Date;
+            end: Date;
+            slots: Date[] | string[];
+            action: "select" | "click" | "doubleClick";
+        }) => alert(slotInfo.action);
+
+        const onSelectEvent = (event: Event, e: React.SyntheticEvent<HTMLElement>) => alert(event.title);
+
         const localizer = momentLocalizer(moment);
         ReactDOM.render(
             <div style={calendarStyle}>
                 <BigCalendar
                     localizer={localizer}
-                    events={[]}
+                    events={events}
                     startAccessor="start"
                     endAccessor="end"
+                    onSelectSlot={onSelectSlot}
+                    onSelectEvent={onSelectEvent}
                 />
             </div>,
             div);
