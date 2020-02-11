@@ -24,6 +24,7 @@ import {
     Anchor,
     Button,
     Calendar,
+    EventItem,
     LocationList,
     Number,
     TabsComponent,
@@ -104,6 +105,13 @@ const generateFactory = () => {
             capabilities: ["IComponentHTMLVisual"],
             friendlyName: "Calendar",
             fabricIconName: "Calendar",
+        },
+        {
+            type: "eventItem",
+            factory: Promise.resolve(EventItem.getFactory()),
+            capabilities: ["IComponentHTMLVisual"],
+            friendlyName: "Event Item",
+            fabricIconName: "EventDate",
         },
         {
             type: "locationList",
