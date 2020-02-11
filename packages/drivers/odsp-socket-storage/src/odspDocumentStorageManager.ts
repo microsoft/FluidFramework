@@ -513,6 +513,9 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                 result: { sha: tree.handle },
             };
         }
+
+        // Wait for all pending hashes to complete before using them in convertSummaryToSnapshotTree
+        await Promise.all(this.blobsCachePendingHashes.values());
         // This cache is associated with mapping sha to path for currently generated summary.
         const blobsShaToPathCacheLatest: Map<string, string> = new Map();
         const snapshotTree = await this.convertSummaryToSnapshotTree(tree, blobsShaToPathCacheLatest);
@@ -563,10 +566,9 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     const content = typeof summaryObject.content === "string" ? summaryObject.content : summaryObject.content.toString("base64");
                     const encoding = typeof summaryObject.content === "string" ? "utf-8" : "base64";
 
-                    const hash = await hashFile(Buffer.from(content, encoding));
-                    await Promise.all(this.blobsCachePendingHashes.values());
-                    // Promises in blobsCachePendingHashes remove themselves as they resolve
+                    // Promises for pending hashes in blobsCachePendingHashes should all have resolved and removed themselves
                     assert(this.blobsCachePendingHashes.size === 0);
+                    const hash = await hashFile(Buffer.from(content, encoding));
                     let completePath = this.blobsShaToPathCache.get(hash);
                     // If the cache has the hash of the blob and handle of last summary is also present, then use that
                     // to generate complete path for the given blob.
