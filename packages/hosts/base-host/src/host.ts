@@ -45,18 +45,15 @@ export async function initializeContainerCode(
     const quorum = container.getQuorum();
 
     // nothing to do if the proposal exists
-    //
     if (quorum.has(currentCodeProposalKey)) {
         return;
     }
 
     // start a promise waiting for context changed, which will happen once we get a code proposal
-    //
     const contextChangedP = new Promise<void>((resolve) => container.once("contextChanged", () => resolve()));
 
     // short circuit if we know the container wasn't existing
     // this is the most common case
-    //
     if (!container.existing) {
         await Promise.all([
             quorum.propose(currentCodeProposalKey, pkgForCodeProposal),
@@ -66,7 +63,6 @@ export async function initializeContainerCode(
     }
 
     // wait for a code proposal to show up
-    //
     const proposalFoundP = new Promise<boolean>((resolve) => {
         // wait for quorum and resolve promise if code shows up:
         // it helps with faster rendering if we have no snapshot,
@@ -81,7 +77,6 @@ export async function initializeContainerCode(
     });
 
     // wait for us to connect or a proposal to show up
-    //
     let proposalFound =
         await Promise.race([
             proposalFoundP,
@@ -127,9 +122,9 @@ export async function initializeContainerCode(
     // we are connected and there still isn't a proposal
     // we'll wait for one to show up, and will create one
     // if we are the oldest client
-    //
     proposalFound = await new Promise<boolean>((resolve) => proposeCodeIfOldestClient(resolve));
     while (!proposalFound) {
+        // wait for the proposal, and everytime the quorum changes check if we are now the oldest client
         proposalFound = await Promise.race([
             proposalFoundP,
             new Promise<boolean>((resolve) => container.once("addMember", () => proposeCodeIfOldestClient(resolve))),
