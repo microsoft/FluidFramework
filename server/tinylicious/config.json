@@ -31,6 +31,10 @@
         }
     },
     "storage": "/var/lib/tinylicious",
+    "db": {
+        "inMemory": false,
+        "path": "/var/lib/db"
+    },
     "error": {
         "track": false,
         "endpoint" : ""

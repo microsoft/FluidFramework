@@ -36,7 +36,7 @@ export class WebFlow extends PrimedComponent implements IComponentHTMLVisual {
     // #endregion IComponentHTMLVisual
 
     protected async componentInitializingFirstTime() {
-        const componentRuntime: IComponentRuntime = await this.context.createSubComponent(FlowDocumentType);
+        const componentRuntime: IComponentRuntime = await this.context.createComponent(FlowDocumentType);
         const response: IResponse = await componentRuntime.request({ url: "/" });
         componentRuntime.attach();
         this.docId = `${componentRuntime.id}`;
