@@ -9,9 +9,9 @@ import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import {
     DocumentDeltaEventManager,
     TestDocumentServiceFactory,
-    TestHost,
     TestResolver,
-} from "@microsoft/fluid-local-test-server";
+} from "@microsoft/fluid-local-driver";
+import { TestHost } from "@microsoft/fluid-local-test-utils";
 import { ITestDeltaConnectionServer, TestDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import { IntervalType, LocalReference } from "@microsoft/fluid-merge-tree";

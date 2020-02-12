@@ -14,7 +14,7 @@ import {
     IFluidResolvedUrl,
     ErrorType,
 } from "@microsoft/fluid-driver-definitions";
-import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-test-server";
+import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
 import { ITestDeltaConnectionServer, TestDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { createErrorObject } from "@microsoft/fluid-driver-base";
 import { errorObjectFromOdspError } from "@microsoft/fluid-odsp-driver";

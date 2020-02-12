@@ -11,7 +11,7 @@ import {
     DocumentDeltaEventManager,
     TestDocumentServiceFactory,
     TestResolver,
-} from "@microsoft/fluid-local-test-server";
+} from "@microsoft/fluid-local-driver";
 import { ITestDeltaConnectionServer, TestDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { ISharedMap } from "@microsoft/fluid-map";
 

@@ -4,6 +4,7 @@
 - [Remove back-compat support for loader <= 0.8](#remove-back-compat-support-for-loader-0.8)
 - [New Error types](#New-Error-types)
 - [`IComponentContext` - `createSubComponent` removed, `createComponent` signature updated](#`IComponentContext`---`createSubComponent`-removed,-`createComponent`-signature-updated)
+- [`fluid-local-test-server` package rename and move](#`fluid-local-test-server`-package-move-and-rename)
 
 ## Samples and chaincode have been renamed to examples and components respectively
 The directories themselves have been renamed.
@@ -35,6 +36,29 @@ It does not acccept a package path anymore but just a package name. To pass in p
 
 For creating a component with a specific package path, use `createComponent` or `_createComponentWithProps` in `IHostRuntime`.
 
+## `fluid-local-test-server` package move and rename
+
+The following classes / interfaces in have moved from `@microsoft/fluid-local-test-server` to `@microsoft/fluid-test-driver` in `./packages`:
+```text
+DocumentDeltaEventManager
+IDocumentDeltaEvent
+TestDocumentService
+TestDocumentServiceFactory
+TestResolver
+```
+
+The following classes / interfaces have moved from `@microsoft/fluid-local-test-server` in `./packages` to `@microsoft/fluid-server-local-server` in `./server`:
+```text
+ITestDeltaConnectionServer
+TestDeltaConnectionServer
+TestReservationManager
+```
+
+The following packages have been renamed in `./packages`:
+```text
+@microsoft/fluid-local-test-server -> @microsoft/fluid-local-test-utils
+@microsoft/fluid-test-driver -> @microsoft/fluid-local-driver
+```
 
 # 0.13 Breaking Changes
 

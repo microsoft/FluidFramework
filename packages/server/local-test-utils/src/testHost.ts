@@ -23,13 +23,13 @@ import {
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { ITestDeltaConnectionServer, TestDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
-import { TestDataStore } from "./testDataStore";
 import {
     IDocumentDeltaEvent,
-    TestCodeLoader,
     TestDocumentServiceFactory,
     TestResolver,
-} from "./";
+} from "@microsoft/fluid-local-driver";
+import { TestDataStore } from "./testDataStore";
+import { TestCodeLoader } from "./";
 
 /**
  * Basic component implementation for testing.

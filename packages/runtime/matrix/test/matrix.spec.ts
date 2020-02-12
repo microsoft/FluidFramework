@@ -6,7 +6,7 @@
 import 'mocha';
 
 import { IComponentHandle } from '@microsoft/fluid-component-core-interfaces';
-import { TestHost } from '@microsoft/fluid-local-test-server';
+import { TestHost } from '@microsoft/fluid-local-test-utils';
 import { Jsonable, JsonablePrimitive } from '@microsoft/fluid-runtime-definitions';
 import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from '@microsoft/fluid-test-runtime-utils';
 import { strict as assert } from 'assert';

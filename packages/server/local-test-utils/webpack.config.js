@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// This config exists in order to test local-test-server in a browser context, vs Node.js.
+// This config exists in order to test local-test-utils in a browser context, vs Node.js.
 
 const path = require('path');
 
