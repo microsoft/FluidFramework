@@ -157,7 +157,7 @@ export class PermutationVector extends Client {
 
     private readonly onDelta = (
         opArgs: IMergeTreeDeltaOpArgs,
-        { operation, deltaSegments }: IMergeTreeDeltaCallbackArgs
+        { operation, deltaSegments }: IMergeTreeDeltaCallbackArgs,
     ) => {
         this.cacheEnd = 0;
 
