@@ -121,8 +121,6 @@ export class EventItem extends PrimedComponent
     }
 
     public render(div: HTMLElement) {
-
-        // const data = this.root.get<IDateTimeEvent>("data");
         ReactDOM.render(
             <EventItemView dataModel={this}/>,
             div);
