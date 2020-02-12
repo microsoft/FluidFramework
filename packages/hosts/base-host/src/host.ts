@@ -94,32 +94,46 @@ export async function initializeContainerCode(
             }),
         ]);
 
+    let codeProposalP: Promise<void> | undefined;
+    const proposeCodeIfOldestClient = (resolve: (value: boolean) => void) => {
+        // make sure we haven't already kicked off a code proposal
+        if (codeProposalP === undefined) {
+            // get this clients seq
+            const thisClientSeq = container.clientId !== undefined ?
+                quorum.getMember(container.clientId)?.sequenceNumber : undefined;
+
+            if (thisClientSeq) {
+                // see if this client has the lowest seq
+                const clientWithLowerSeqExists =
+                    Array.from(quorum.getMembers().values())
+                        .some((c) => thisClientSeq > c.sequenceNumber, thisClientSeq);
+
+                // if this client is the oldest client, it should propose
+                if (!clientWithLowerSeqExists && codeProposalP === undefined) {
+                    codeProposalP = quorum.propose(currentCodeProposalKey, pkgForCodeProposal);
+                    codeProposalP.then(
+                        () => resolve(true),
+                        () => {
+                            codeProposalP = undefined;
+                            resolve(false);
+                        });
+                    return;
+                }
+            }
+        }
+        resolve(false);
+    };
+
     // we are connected and there still isn't a proposal
     // we'll wait for one to show up, and will create one
     // if we are the oldest client
     //
+    proposalFound = await new Promise<boolean>((resolve) => proposeCodeIfOldestClient(resolve));
     while (!proposalFound) {
-        // get this clients seq
-        const thisClientSeq =
-            container.clientId !== undefined ? quorum.getMember(container.clientId)?.sequenceNumber : undefined;
-        if (thisClientSeq) {
-            // see if this client has the lowest seq
-            const clientWithLowerSeqExists =
-                Array.from(quorum.getMembers().values())
-                    .some((c)=>thisClientSeq > c.sequenceNumber, thisClientSeq);
-
-            // if this client is the oldest client, it should propose
-            if(!clientWithLowerSeqExists){
-                await quorum.propose(currentCodeProposalKey, pkgForCodeProposal);
-                break;
-            }
-        }
         proposalFound = await Promise.race([
             proposalFoundP,
-            new Promise<boolean>((resolve) => {
-                container.once("addMember", () => resolve(false));
-                container.once("removeMember", () => resolve(false));
-            }),
+            new Promise<boolean>((resolve) => container.once("addMember", () => proposeCodeIfOldestClient(resolve))),
+            new Promise<boolean>((resolve) => container.once("removeMember", () => proposeCodeIfOldestClient(resolve))),
         ]);
     }
 
