@@ -61,6 +61,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
                 4,
                 Spaces.componentToolbarId,
             );
+        this.componentToolbar.emit("initializeComponents", this.dataModel.componentList.size - 1);
         // Set the saved template if there is a template query param
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has("template")) {
@@ -77,6 +78,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
                 Spaces.componentToolbarId,
             );
         this.componentToolbar = await this.getComponent<ComponentToolbar>(Spaces.componentToolbarId);
+        this.componentToolbar.emit("initializeComponents", this.dataModel.componentList.size - 1);
     }
 
     protected async componentHasInitialized() {

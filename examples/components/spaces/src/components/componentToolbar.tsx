@@ -25,6 +25,8 @@ export const ComponentToolbarName = "componentToolbar";
  */
 export class ComponentToolbar extends PrimedComponent implements IComponentHTMLVisual {
 
+    private hasComponents = false;
+
     public get IComponentHTMLVisual() { return this; }
 
     private static readonly factory = new PrimedComponentFactory(ComponentToolbar, []);
@@ -33,19 +35,34 @@ export class ComponentToolbar extends PrimedComponent implements IComponentHTMLV
         return ComponentToolbar.factory;
     }
 
+    protected async componentInitializingFirstTime() {
+        this.addListener("initializeComponents", (hasComponents: boolean) => {
+            this.hasComponents = hasComponents;
+        });
+    }
+
+    protected async componentInitializingFromExisting() {
+        this.addListener("initializeComponents", (hasComponents: boolean) => {
+            this.hasComponents = hasComponents;
+        });
+    }
+
+
     /**
      * Will return a new ComponentToolbarView
      */
     public render(div: HTMLElement) {
         ReactDOM.render(
-            <ComponentToolbarView emit={this.emit.bind(this)}/>,
+            <ComponentToolbarView emit={this.emit.bind(this)} hasComponents={this.hasComponents} />,
             div,
         );
     }
+
 }
 
 interface IComponentToolbarViewProps {
     emit: (event: string | symbol, ...args: any[]) => boolean;
+    hasComponents: boolean;
 }
 
 interface IComponentToolbarViewState {
@@ -54,28 +71,25 @@ interface IComponentToolbarViewState {
 
 class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, IComponentToolbarViewState>{
 
-    private readonly emit: (event: string | symbol, ...args: any[]) => boolean;
-
     constructor(props: IComponentToolbarViewProps){
         super(props);
-        this.emit = props.emit;
         this.state = {
-            isEditable: true,
+            isEditable: !props.hasComponents,
         };
     }
 
     public emitAddComponentEvent(type: SupportedComponent, w?: number, h?: number) {
-        this.emit("addComponent", type, w, h);
+        this.props.emit("addComponent", type, w, h);
     }
 
     public emitSaveLayout() {
-        this.emit("saveLayout");
+        this.props.emit("saveLayout");
     }
 
     public emitToggleEditable() {
         const newIsEditable = !this.state.isEditable;
-        this.emit("toggleEditable", newIsEditable);
-        this.setState({isEditable: newIsEditable});
+        this.props.emit("toggleEditable", newIsEditable);
+        this.setState({ isEditable: newIsEditable });
     }
 
     render(){
