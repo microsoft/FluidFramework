@@ -100,6 +100,7 @@ export class Calendar extends PrimedComponent
                 value.get<IComponentDateTimeEvent>().then((event) => {
                     this.events.set(changed.key, event.event);
                     const emit = () => this.emit("changed");
+                    // Set a listener so if the event itself changes we can re-get the value
                     event.on("changed", () => {
                         // eslint-disable-next-line @typescript-eslint/no-floating-promises
                         value.get<IComponentDateTimeEvent>().then((item) => {
@@ -119,6 +120,7 @@ export class Calendar extends PrimedComponent
             const value = this.remoteEventsDir.get<IComponentHandle>(key);
             const event = await value.get<IComponentDateTimeEvent>();
             const emit = () => this.emit("changed");
+            // Set a listener so if the event itself changes we can re-get the value
             event.on("changed", () => {
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 value.get<IComponentDateTimeEvent>().then((item) => {
