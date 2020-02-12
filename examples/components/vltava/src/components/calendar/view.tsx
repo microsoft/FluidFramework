@@ -47,14 +47,7 @@ export class CalendarView extends React.Component<ICalendarViewProps, ICalendarV
     }
     private readonly localizer = momentLocalizer(moment);
 
-    private readonly onSelectSlot = (slotInfo: {
-        start: Date;
-        end: Date;
-        slots: Date[] | string[];
-        action: "select" | "click" | "doubleClick";
-    }) => alert(slotInfo.action);
-
-    private readonly onSelectEvent = (event: Event, e: React.SyntheticEvent<HTMLElement>) => alert(event.title);
+    private readonly onSelectEvent = (event: Event, e: React.SyntheticEvent<HTMLElement>) => alert(event.resource);
 
     private readonly toEventFromIDateTimeEvent = (dtEvents: IDateTimeEvent[]): Event[] => {
         const events: Event[] = [];
@@ -78,7 +71,6 @@ export class CalendarView extends React.Component<ICalendarViewProps, ICalendarV
                     events={this.state.events}
                     startAccessor="start"
                     endAccessor="end"
-                    onSelectSlot={this.onSelectSlot}
                     onSelectEvent={this.onSelectEvent}
                 />
             </div>

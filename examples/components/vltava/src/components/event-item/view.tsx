@@ -101,7 +101,7 @@ export class EventItemView extends React.Component<IEventItemViewProps, IEventIt
                     />
                     <Checkbox
                         label="All Day"
-                        value={this.state.allDay.toString()}
+                        checked={this.state.allDay}
                         onChange={(_, checked) => { this.props.dataModel.setAllDay(checked); }}
                     />
                     <DatePicker
