@@ -8,12 +8,46 @@ import * as React from "react";
 
 import {
     Checkbox,
+    DatePicker,
     IStackProps,
     Stack,
     TextField,
+    DayOfWeek,
+    IDatePickerStrings,
 } from "office-ui-fabric-react";
 
 import { IEventItemDataModel } from "./eventItem";
+
+
+const DayPickerStrings: IDatePickerStrings = {
+    months: [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+    ],
+
+    shortMonths: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+
+    days: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+
+    shortDays: ["S", "M", "T", "W", "T", "F", "S"],
+
+    goToToday: "Go to today",
+    prevMonthAriaLabel: "Go to previous month",
+    nextMonthAriaLabel: "Go to next month",
+    prevYearAriaLabel: "Go to previous year",
+    nextYearAriaLabel: "Go to next year",
+    closeButtonAriaLabel: "Close date picker",
+};
 
 interface IEventItemViewProps {
     dataModel: IEventItemDataModel;
@@ -63,12 +97,26 @@ export class EventItemView extends React.Component<IEventItemViewProps, IEventIt
                     <TextField
                         label="Title"
                         value={this.state.title}
-                        onChange={(_, title)=> { this.props.dataModel.setTitle(title); }}
+                        onChange={(_, title) => { this.props.dataModel.setTitle(title); }}
                     />
                     <Checkbox
                         label="All Day"
                         value={this.state.allDay.toString()}
                         onChange={(_, checked) => { this.props.dataModel.setAllDay(checked); }}
+                    />
+                    <DatePicker
+                        label="Start Date"
+                        firstDayOfWeek={DayOfWeek.Sunday}
+                        strings={DayPickerStrings}
+                        value= {new Date(this.state.start)}
+                        onSelectDate= {(date) => { this.props.dataModel.setStart(date.toUTCString()); }}
+                    />
+                    <DatePicker
+                        label="End Date"
+                        firstDayOfWeek={DayOfWeek.Sunday}
+                        strings={DayPickerStrings}
+                        value= {new Date(this.state.end)}
+                        onSelectDate= {(date) => { this.props.dataModel.setEnd(date.toUTCString()); }}
                     />
                     <TextField
                         label="Body"
