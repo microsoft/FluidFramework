@@ -320,12 +320,12 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
         for (const consumer of this.consumers) {
             consumer.rowsChanged(position, numRemoved, numInserted, this);
         }
-    }
+    };
 
     // Invoked by PermutationVector to notify IMatrixConsumers of col insertion/deletions.
     private readonly onColDelta = (position: number, numRemoved: number, numInserted: number) => {
         for (const consumer of this.consumers) {
             consumer.colsChanged(position, numRemoved, numInserted, this);
         }
-    }
+    };
 }

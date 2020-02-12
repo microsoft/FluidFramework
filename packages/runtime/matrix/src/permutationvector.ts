@@ -94,7 +94,7 @@ export class PermutationVector extends Client {
         path: SnapshotPath,
         logger: ITelemetryBaseLogger,
         runtime: IComponentRuntime,
-        private readonly deltaCallback: (position: number, numRemoved: number, numInserted: number) => void
+        private readonly deltaCallback: (position: number, numRemoved: number, numInserted: number) => void,
     ) {
         super(
             PermutationSegment.fromJSONObject,
@@ -155,7 +155,10 @@ export class PermutationVector extends Client {
         return segment.start + offset;
     }
 
-    private readonly onDelta = (opArgs: IMergeTreeDeltaOpArgs, { operation, deltaSegments }: IMergeTreeDeltaCallbackArgs) => {
+    private readonly onDelta = (
+        opArgs: IMergeTreeDeltaOpArgs,
+        { operation, deltaSegments }: IMergeTreeDeltaCallbackArgs
+    ) => {
         this.cacheEnd = 0;
 
         switch (operation) {
