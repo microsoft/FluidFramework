@@ -7,7 +7,6 @@ import * as assert from "assert";
 import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
-    IComponent,
     IComponentHandle,
     IComponentHandleContext,
     IRequest,
@@ -71,15 +70,12 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
      * @param sharedObjectRegistry - The registry of shared objects used by this component
      * @param activeCallback - The callback called when the component runtime in active
      * @param componentRegistry - The regisitry of components created and used by this component
-     * @param containerScope - The services provided by the container context
      */
     public static load(
         context: IComponentContext,
         sharedObjectRegistry: ISharedObjectRegistry,
         activeCallback: (runtime: ComponentRuntime) => void,
         componentRegistry?: IComponentRegistry,
-        containerScope?: IComponent,
-
     ): void {
         const logger = ChildLogger.create(context.hostRuntime.logger, undefined, { componentId: context.id });
         const runtime = new ComponentRuntime(
@@ -95,7 +91,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
             context.getAudience(),
             context.snapshotFn,
             context.closeFn,
-            containerScope,
             sharedObjectRegistry,
             componentRegistry,
             logger);
@@ -170,7 +165,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         private readonly audience: IAudience,
         private readonly snapshotFn: (message: string) => Promise<void>,
         private readonly closeFn: () => void,
-        public readonly containerScope: IComponent | undefined,
         private readonly sharedObjectRegistry: ISharedObjectRegistry,
         private readonly componentRegistry: IComponentRegistry | undefined,
         public readonly logger: ITelemetryLogger,
