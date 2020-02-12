@@ -177,16 +177,16 @@ export class TodoItem extends PrimedComponent
         let componentRuntime: IComponentRuntime;
         switch (type) {
             case "todo":
-                componentRuntime = await this.context.createSubComponent(TodoItemName, props);
+                componentRuntime = await this.context.createComponent(undefined, TodoItemName, props);
                 break;
             case "clicker":
-                componentRuntime = await this.context.createSubComponent(ClickerName, props);
+                componentRuntime = await this.context.createComponent(undefined, ClickerName, props);
                 break;
             case "textBox":
-                componentRuntime = await this.context.createSubComponent(TextBoxName, props);
+                componentRuntime = await this.context.createComponent(undefined, TextBoxName, props);
                 break;
             case "textList":
-                componentRuntime = await this.context.createSubComponent(TextListName, props);
+                componentRuntime = await this.context.createComponent(undefined, TextListName, props);
                 break;
             default:
         }

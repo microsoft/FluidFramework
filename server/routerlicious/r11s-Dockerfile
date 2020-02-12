@@ -31,6 +31,7 @@ COPY server/routerlicious/packages/protocol-definitions/package*.json server/rou
 COPY server/routerlicious/packages/kafka-orderer/package*.json server/routerlicious/packages/kafka-orderer/
 COPY server/routerlicious/packages/lambdas-driver/package*.json server/routerlicious/packages/lambdas-driver/
 COPY server/routerlicious/packages/lambdas/package*.json server/routerlicious/packages/lambdas/
+COPY server/routerlicious/packages/local-server/package*.json server/routerlicious/packages/local-server/
 COPY server/routerlicious/packages/memory-orderer/package*.json server/routerlicious/packages/memory-orderer/
 COPY server/routerlicious/packages/routerlicious/package*.json server/routerlicious/packages/routerlicious/
 COPY server/routerlicious/packages/services/package*.json server/routerlicious/packages/services/

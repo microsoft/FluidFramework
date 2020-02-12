@@ -12,7 +12,6 @@ RUN chmod +x /tini
 WORKDIR /usr/src/server
 
 # Copy over the package and package-lock and install prior to the other code to optimize Docker's file system cache on rebuilds
-ARG NPM_TOKEN
 COPY .npmrc .
 COPY package-lock.json .
 COPY package.json .

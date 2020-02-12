@@ -5,7 +5,7 @@
 
 import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
 import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
-import { ClickerName, ClickerInstantiationFactory } from "@fluid-example/clicker";
+import { ClickerInstantiationFactory } from "@fluid-example/clicker";
 import { Spaces } from "@fluid-example/spaces/dist/spaces";
 
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
@@ -16,14 +16,15 @@ import {
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 
-import { TabsComponent } from "./components";
+import {
+    Anchor,
+    TabsComponent,
+    Vltava,
+} from "./components";
 import {
     IComponentRegistryDetails,
     IContainerComponentDetails,
 } from "./interfaces";
-import { Vltava } from "./vltava";
-
-const chaincodeName = "vltava";
 
 export class InternalRegistry implements IComponentRegistry, IComponentRegistryDetails {
     public get IComponentRegistry() { return this; }
@@ -54,7 +55,7 @@ export class InternalRegistry implements IComponentRegistry, IComponentRegistryD
 const generateFactory = () => {
     const containerComponentsDefinition: IContainerComponentDetails[] = [
         {
-            type: ClickerName,
+            type: "clicker",
             factory: Promise.resolve(ClickerInstantiationFactory),
             capabilities: ["IComponentHTMLVisual"],
             friendlyName: "Clicker",
@@ -96,7 +97,8 @@ const generateFactory = () => {
     });
 
     // We don't want to include the default wrapper component in our list of available components
-    containerComponents.push([ chaincodeName, Promise.resolve(Vltava.getFactory())]);
+    containerComponents.push([ "anchor", Promise.resolve(Anchor.getFactory())]);
+    containerComponents.push([ "vltava", Promise.resolve(Vltava.getFactory())]);
 
     const containerRegistries: NamedComponentRegistryEntries = [
         ["", Promise.resolve(new InternalRegistry(containerComponentsDefinition))],
@@ -105,7 +107,7 @@ const generateFactory = () => {
     // TODO: You should be able to specify the default registry instead of just a list of components
     // and the default registry is already determined Issue:#1138
     return new SimpleModuleInstantiationFactory(
-        chaincodeName,
+        "anchor",
         [
             ...containerComponents,
             ...containerRegistries,

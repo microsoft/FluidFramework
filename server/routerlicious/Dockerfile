@@ -85,6 +85,7 @@ COPY packages/runtime/cell/package*.json packages/runtime/cell/
 COPY packages/runtime/client-api/package*.json packages/runtime/client-api/
 COPY packages/runtime/ink/package*.json packages/runtime/ink/
 COPY packages/runtime/map/package*.json packages/runtime/map/
+COPY packages/runtime/matrix/package*.json packages/runtime/matrix/
 COPY packages/runtime/merge-tree/package*.json packages/runtime/merge-tree/
 COPY packages/runtime/container-runtime/package*.json packages/runtime/container-runtime/
 COPY packages/runtime/runtime-definitions/package*.json packages/runtime/runtime-definitions/
@@ -93,6 +94,7 @@ COPY packages/runtime/runtime-test-utils/package*.json packages/runtime/runtime-
 COPY packages/runtime/sequence/package*.json packages/runtime/sequence/
 COPY packages/server/local-test-server/package*.json packages/server/local-test-server/
 COPY packages/utils/odsp-utils/package*.json packages/utils/odsp-utils/
+COPY packages/utils/fluid-tool-utils/package*.json packages/utils/fluid-tool-utils/
 COPY packages/server/tools-core/package*.json packages/server/tools-core/
 COPY packages/test/snapshots/package*.json packages/test/snapshots/
 COPY packages/tools/fluid-fetch/package*.json packages/tools/fluid-fetch/

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 
 import * as React from "react";
@@ -14,7 +14,7 @@ import { IVltavaDataModel, VltavaDataModel } from "./dataModel";
 import { VltavaView } from "./view";
 
 /**
- * Vltava is a default component manager
+ * Vltava is an application experience
  */
 export class Vltava extends PrimedComponent implements IComponentHTMLVisual {
     private dataModelInternal: IVltavaDataModel | undefined;
@@ -36,9 +36,8 @@ export class Vltava extends PrimedComponent implements IComponentHTMLVisual {
     public get IComponentHTMLVisual() { return this; }
 
     protected async componentInitializingFirstTime(props: any) {
-        const defaultComponentId = uuid();
-        await this.createAndAttachComponent(defaultComponentId, "tabs");
-        this.root.set("default-component-id", defaultComponentId);
+        const tabsComponent = await this.createAndAttachComponent<IComponent>(uuid(), "tabs");
+        this.root.set("tabs-component-id", tabsComponent.IComponentHandle);
     }
 
     protected async componentHasInitialized() {
@@ -46,9 +45,7 @@ export class Vltava extends PrimedComponent implements IComponentHTMLVisual {
             new VltavaDataModel(
                 this.root,
                 this.context,
-                this.runtime,
-                this.createAndAttachComponent.bind(this),
-                this.getComponent.bind(this));
+                this.runtime);
     }
 
     /**

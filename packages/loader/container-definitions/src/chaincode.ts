@@ -151,12 +151,6 @@ export interface IRuntime {
     process(message: ISequencedDocumentMessage, local: boolean, context: any);
 
     /**
-     * Called immediately after a message has been processed but prior to the next message being executed
-     * @deprecated being removed and replaced with only process
-     */
-    postProcess?(message: ISequencedDocumentMessage, local: boolean, context: any): Promise<void>;
-
-    /**
      * Processes the given signal
      */
     processSignal(message: any, local: boolean);
