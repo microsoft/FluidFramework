@@ -56,7 +56,7 @@ export async function fetchJoinSession(
 
             // TODO This will only support ODC using api.onedrive.com, update to handle the future (share links etc)
             let prefix = "_api/";
-            if (siteOrigin.toLowerCase().includes(".onedrive.com")) {
+            if (siteOrigin.includes("api.onedrive.com")) {
                 prefix = "";
             }
 

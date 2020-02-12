@@ -28,8 +28,8 @@ export function isOdspUrl(url: string) {
     const urlLower = url.toLowerCase();
 
     // Splitting the regexes so we don't have regex soup
-    const odcRegex = /(.*\.onedrive\.com)\/v2.1\/(drive|drives\/[^/]+)\/items\/([\da-z]+)!(\d+)/;
-    const odcODataRegex = /(.*\.onedrive\.com)\/v2.1\/drives\('[^/]+'\)\/items\('[\da-z]+!\d+'\)/;
+    const odcRegex = /(.*api\.onedrive\.com)\/v2.1\/(drive|drives\/[^/]+)\/items\/([\da-z]+)!(\d+)/;
+    const odcODataRegex = /(.*api\.onedrive\.com)\/v2.1\/drives\('[^/]+'\)\/items\('[\da-z]+!\d+'\)/;
     const spoRegex = /(.*\.sharepoint(-df)*\.com)\/_api\/v2.1\/drives\/([^/]*)\/items\/([^/]*)/;
 
     if (spoRegex.exec(urlLower) || odcRegex.exec(urlLower) || odcODataRegex.exec(urlLower)) {
@@ -46,7 +46,7 @@ async function initializeODSP(url: URL) {
     // Pick a regex based on the hostname
     // TODO This will only support ODC using api.onedrive.com, update to handle the future (share links etc)
     let joinSessionMatch;
-    if (url.host.toLowerCase().includes(".onedrive.com")) {
+    if (url.host.includes("api.onedrive.com")) {
         // Capture groups:
         // 0: match
         // 1: origin
