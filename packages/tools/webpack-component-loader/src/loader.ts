@@ -15,9 +15,10 @@ import {
 import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import {
     ITestDeltaConnectionServer,
+    SessionStorageDbFactory,
     TestDeltaConnectionServer,
     TestDocumentServiceFactory,
-    TestResolver,
+    TestResolver
 } from "@microsoft/fluid-local-test-server";
 import { IUser } from "@microsoft/fluid-protocol-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
@@ -27,7 +28,6 @@ import * as jwt from "jsonwebtoken";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
 import { InsecureUrlResolver } from "./insecureUrlResolver";
-import { SessionStorageDbFactory } from "./sessionStorageTestDb";
 
 export interface IDevServerUser extends IUser {
     name: string;

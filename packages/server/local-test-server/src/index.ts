@@ -10,3 +10,4 @@ export * from "./testResolver";
 export * from "./documentEventManager";
 export * from "./testHost";
 export * from "./testDocumentServiceFactory";
+export * from "./sessionStorageTestDb";
