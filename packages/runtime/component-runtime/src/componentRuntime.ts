@@ -170,10 +170,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         private readonly audience: IAudience,
         private readonly snapshotFn: (message: string) => Promise<void>,
         private readonly closeFn: () => void,
-        // This will be used in a later change
-        // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-        // @ts-ignore
-        private readonly containerScope: IComponent | undefined,
+        public readonly containerScope: IComponent | undefined,
         private readonly sharedObjectRegistry: ISharedObjectRegistry,
         private readonly componentRegistry: IComponentRegistry | undefined,
         public readonly logger: ITelemetryLogger,
