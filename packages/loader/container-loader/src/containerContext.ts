@@ -41,7 +41,7 @@ import { Container } from "./container";
 export class ContainerContext extends EventEmitter implements IContainerContext {
     public static async load(
         container: Container,
-        loaderScope: IComponent,
+        scope: IComponent,
         codeLoader: ICodeLoader,
         chaincode: IRuntimeFactory,
         baseSnapshot: ISnapshotTree | null,
@@ -60,7 +60,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
     ): Promise<ContainerContext> {
         const context = new ContainerContext(
             container,
-            loaderScope,
+            scope,
             codeLoader,
             chaincode,
             baseSnapshot,
@@ -151,7 +151,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
 
     constructor(
         private readonly container: Container,
-        public readonly loaderScope: IComponent,
+        public readonly scope: IComponent,
         public readonly codeLoader: ICodeLoader,
         public readonly chaincode: IRuntimeFactory,
         private _baseSnapshot: ISnapshotTree | null,

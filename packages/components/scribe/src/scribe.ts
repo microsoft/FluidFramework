@@ -206,7 +206,7 @@ function initialize(
         });
     }
 
-    const documentFactory: IDocumentFactory = context.loaderScope ? context.loaderScope.IDocumentFactory : undefined;
+    const documentFactory: IDocumentFactory = context.scope ? context.scope.IDocumentFactory : undefined;
     if (documentFactory) {
         createButton.classList.remove("hidden");
     } else {

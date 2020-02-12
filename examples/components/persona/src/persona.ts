@@ -57,7 +57,7 @@ export class Persona extends EventEmitter implements IComponentLoadable, ICompon
     private async initialize() {
         // Create the schema for the persona on first load
         if (!this.runtime.existing) {
-            const graph = (this.context.loaderScope as any).IMicrosoftGraph;
+            const graph = (this.context.scope as any).IMicrosoftGraph;
             const me = graph ? await graph.me() : {};
 
             // eslint-disable-next-line no-shadow
@@ -78,7 +78,7 @@ export class Persona extends EventEmitter implements IComponentLoadable, ICompon
     }
 
     private async fetchAndUpdateMe() {
-        const graph = (this.context.loaderScope as any).IMicrosoftGraph;
+        const graph = (this.context.scope as any).IMicrosoftGraph;
         const me = graph ? await graph.me() : {};
 
         if (me.id !== this.details.get("id")) {
