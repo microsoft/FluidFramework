@@ -99,8 +99,13 @@ export class Calendar extends PrimedComponent
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 value.get<IComponentDateTimeEvent>().then((event) => {
                     this.events.set(changed.key, event.event);
+                    const emit = () => this.emit("changed");
                     event.on("changed", () => {
-                        this.emit("changed");
+                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                        value.get<IComponentDateTimeEvent>().then((item) => {
+                            this.events.set(changed.key, item.event);
+                            emit();
+                        });
                     });
                     this.emit("changed");
                 });
@@ -113,8 +118,13 @@ export class Calendar extends PrimedComponent
             const key = keys[i];
             const value = this.remoteEventsDir.get<IComponentHandle>(key);
             const event = await value.get<IComponentDateTimeEvent>();
+            const emit = () => this.emit("changed");
             event.on("changed", () => {
-                this.emit("changed");
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                value.get<IComponentDateTimeEvent>().then((item) => {
+                    this.events.set(key, item.event);
+                    emit();
+                });
             });
             this.events.set(key, event.event);
         }
