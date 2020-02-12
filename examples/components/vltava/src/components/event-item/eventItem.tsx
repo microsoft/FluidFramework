@@ -12,6 +12,7 @@ import {
     IComponentHTMLVisual,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentDiscoverableInterfaces } from "@microsoft/fluid-framework-interfaces";
+import { IDirectoryValueChanged } from "@microsoft/fluid-map";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -20,6 +21,16 @@ import {
     IComponentDateTimeEvent,
     IDateTimeEvent,
 } from "../../interfaces";
+import { EventItemView } from "./view";
+
+export interface IEventItemDataModel extends IComponentDateTimeEvent {
+    setTitle(newTitle: string): void;
+    setStart(newStart: string): void;
+    setEnd(newEnd: string): void;
+    setResource(newResource: string): void;
+    setAllDay(newAllDay: boolean): void;
+}
+
 /**
  * Button is a simple component that is just a button. It registers with the matchMaker so
  * when the button is pressed Components that consume clicks can do work
@@ -28,7 +39,8 @@ export class EventItem extends PrimedComponent
     implements
         IComponentHTMLVisual,
         IComponentDiscoverableInterfaces,
-        IComponentDateTimeEvent
+        IComponentDateTimeEvent,
+        IEventItemDataModel
 {
     private static readonly factory = new PrimedComponentFactory(EventItem, []);
 
@@ -53,6 +65,36 @@ export class EventItem extends PrimedComponent
         return ["IComponentDateTimeEvent"];
     }
 
+    public setTitle(newTitle: string): void {
+        const event = this.event;
+        event.title = newTitle;
+        this.root.set("data", event);
+    }
+
+    public setStart(newStart: string): void {
+        const event = this.event;
+        event.start = newStart;
+        this.root.set("data", event);
+    }
+
+    public setEnd(newEnd: string): void {
+        const event = this.event;
+        event.end = newEnd;
+        this.root.set("data", event);
+    }
+
+    public setResource(newResource: string): void {
+        const event = this.event;
+        event.resource = newResource;
+        this.root.set("data", event);
+    }
+
+    public setAllDay(newAllDay: boolean): void {
+        const event = this.event;
+        event.allDay = newAllDay;
+        this.root.set("data", event);
+    }
+
     protected async componentInitializingFirstTime() {
         // Set some information so that we can view it later and hook up the interfaces
         // This should be configurable by the view.
@@ -72,15 +114,17 @@ export class EventItem extends PrimedComponent
         if (interfaceRegistry) {
             interfaceRegistry.registerComponentInterfaces(this);
         }
+
+        this.root.on("valueChanged", (changed: IDirectoryValueChanged) => {
+            this.emit("changed", this.root.get(changed.key));
+        });
     }
 
     public render(div: HTMLElement) {
-        const data = this.root.get<IDateTimeEvent>("data");
+
+        // const data = this.root.get<IDateTimeEvent>("data");
         ReactDOM.render(
-            <div>
-                {JSON.stringify(data)}
-            </div>,
+            <EventItemView dataModel={this}/>,
             div);
     }
-
 }
