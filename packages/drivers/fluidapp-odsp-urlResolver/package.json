@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "@microsoft/fluid-component-core-interfaces": "^0.14.0",
-    "@microsoft/fluid-core-utils": "^0.13.0",
+    "@microsoft/fluid-core-utils": "^0.14.0",
     "@microsoft/fluid-driver-definitions": "^0.14.0",
     "@microsoft/fluid-odsp-driver": "^0.14.0"
   },

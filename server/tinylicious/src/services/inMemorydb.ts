@@ -5,9 +5,9 @@
 
 import { EventEmitter } from "events";
 import { ICollection, IDb } from "@microsoft/fluid-server-services-core";
-import { Collection } from "./collection";
+import { Collection } from "./inMemorycollection";
 
-export class DB extends EventEmitter implements IDb {
+export class InMemoryDb extends EventEmitter implements IDb {
     private readonly collections = new Map<string, Collection<any>>();
 
     public async close(): Promise<void> {

@@ -53,7 +53,7 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
     }
 
     public async createSubComponent<T>(rootkey: string, pkg: string, props?: any) {
-        const componentRuntime: IComponentRuntime = await this.context.createSubComponent(pkg);
+        const componentRuntime: IComponentRuntime = await this.context.createComponent(pkg);
         const response: IResponse = await componentRuntime.request({ url: "/" });
         componentRuntime.attach();
         this.root.set(rootkey, componentRuntime.id);

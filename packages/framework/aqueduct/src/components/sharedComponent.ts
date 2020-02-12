@@ -93,7 +93,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     /**
      * Given a request response will return a component if a component was in the response.
      */
-    public async asComponent<T>(response: Promise<IResponse>): Promise<T> {
+    protected async asComponent<T>(response: Promise<IResponse>): Promise<T> {
         const result = await response;
 
         if (result.status === 200 && result.mimeType === "fluid/component") {
