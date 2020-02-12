@@ -12,10 +12,13 @@ import {
 import moment from "moment";
 
 import * as React from "react";
+
+import { IDateTimeEvent } from "../../interfaces";
 import { ICalendarDataModel } from "./calendar";
 
 import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
 import "react-big-calendar/lib/css/react-big-calendar.css";
+
 
 const calendarStyle: React.CSSProperties = {
     height: "70vh",
@@ -34,11 +37,12 @@ export class CalendarView extends React.Component<ICalendarViewProps, ICalendarV
         super(props);
 
         this.state = {
-            events: Array.from(this.props.dataModel.events.values()),
+            events: this.toEventFromIDateTimeEvent(Array.from(this.props.dataModel.events.values())),
         };
 
         this.props.dataModel.on("changed", () => {
-            this.setState({ events: Array.from(this.props.dataModel.events.values()) });
+            const events = this.toEventFromIDateTimeEvent(Array.from(this.props.dataModel.events.values()));
+            this.setState({ events });
         });
     }
     private readonly localizer = momentLocalizer(moment);
@@ -51,6 +55,20 @@ export class CalendarView extends React.Component<ICalendarViewProps, ICalendarV
     }) => alert(slotInfo.action);
 
     private readonly onSelectEvent = (event: Event, e: React.SyntheticEvent<HTMLElement>) => alert(event.title);
+
+    private readonly toEventFromIDateTimeEvent = (dtEvents: IDateTimeEvent[]): Event[] => {
+        const events: Event[] = [];
+        dtEvents.forEach((event) => {
+            events.push({
+                allDay: event.allDay,
+                title: event.title,
+                start: new Date(event.start),
+                end: new Date(event.end),
+                resource: event.resource,
+            });
+        });
+        return events;
+    };
 
     public render() {
         return (

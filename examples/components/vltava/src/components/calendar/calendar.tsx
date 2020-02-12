@@ -14,18 +14,16 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentDiscoverInterfaces } from "@microsoft/fluid-framework-interfaces";
 
-import { Event } from "react-big-calendar";
-
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 import { IDirectory, IDirectoryValueChanged } from "@microsoft/fluid-map";
-import { IComponentEventData } from "../../interfaces";
+import { IComponentDateTimeEvent, IDateTimeEvent } from "../../interfaces";
 
 import { CalendarView } from "./view";
 
 export interface ICalendarDataModel {
-    events: Map<string, Event>;
+    events: Map<string, IDateTimeEvent>;
     on(event: "changed", listener: () => void): this;
 }
 
@@ -52,7 +50,7 @@ export class Calendar extends PrimedComponent
 
     public get interfacesToDiscover(): (keyof IComponent)[] {
         return [
-            "IComponentEventData",
+            "IComponentDateTimeEvent",
         ];
     }
 
@@ -63,8 +61,8 @@ export class Calendar extends PrimedComponent
             }
 
             switch(interfaceName) {
-                case "IComponentEventData": {
-                    const event = component.IComponentEventData;
+                case "IComponentDateTimeEvent": {
+                    const event = component.IComponentDateTimeEvent;
                     if (event){
                         const loadable = component.IComponentLoadable;
                         const handle = component.IComponentHandle;
@@ -74,11 +72,12 @@ export class Calendar extends PrimedComponent
                     }
                 }
                 default:
+                    // There is no default
             }
         });
     }
 
-    public readonly events = new Map<string, Event>();
+    public readonly events = new Map<string, IDateTimeEvent>();
 
     public on(event: "changed", listener: () => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
@@ -98,7 +97,7 @@ export class Calendar extends PrimedComponent
                 // our subdirectory changed and we should update our events
                 const value = this.remoteEventsDir.get<IComponentHandle>(changed.key);
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                value.get<IComponentEventData>().then((event) => {
+                value.get<IComponentDateTimeEvent>().then((event) => {
                     this.events.set(changed.key, event.event);
                     event.on("changed", () => {
                         this.emit("changed");
@@ -113,7 +112,7 @@ export class Calendar extends PrimedComponent
         for (let i = 0; i < this.remoteEventsDir.size; i++) {
             const key = keys[i];
             const value = this.remoteEventsDir.get<IComponentHandle>(key);
-            const event = await value.get<IComponentEventData>();
+            const event = await value.get<IComponentDateTimeEvent>();
             event.on("changed", () => {
                 this.emit("changed");
             });

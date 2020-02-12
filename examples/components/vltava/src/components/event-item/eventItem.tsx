@@ -17,8 +17,8 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 import {
-    IComponentEventData,
-    IEventData,
+    IComponentDateTimeEvent,
+    IDateTimeEvent,
 } from "../../interfaces";
 /**
  * Button is a simple component that is just a button. It registers with the matchMaker so
@@ -28,7 +28,7 @@ export class EventItem extends PrimedComponent
     implements
         IComponentHTMLVisual,
         IComponentDiscoverableInterfaces,
-        IComponentEventData
+        IComponentDateTimeEvent
 {
     private static readonly factory = new PrimedComponentFactory(EventItem, []);
 
@@ -36,21 +36,21 @@ export class EventItem extends PrimedComponent
         return EventItem.factory;
     }
 
-    public get IComponentEventData() { return this; }
+    public get IComponentDateTimeEvent() { return this; }
     public get IComponentHTMLVisual() { return this; }
     public get IComponentDiscoverableInterfaces() { return this; }
 
-    public get event(): IEventData {
-        return this.root.get("data");
+    public get event(): IDateTimeEvent {
+        return this.root.get<IDateTimeEvent>("data");
     }
 
-    public on(event: "changed", listener: (newEvent: IEventData) => void): this;
+    public on(event: "changed", listener: (newEvent: IDateTimeEvent) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
     }
 
     public get discoverableInterfaces(): (keyof IComponent)[] {
-        return ["IComponentEventData"];
+        return ["IComponentDateTimeEvent"];
     }
 
     protected async componentInitializingFirstTime() {
@@ -60,8 +60,8 @@ export class EventItem extends PrimedComponent
             {
                 allDay: false,
                 title: this.url,
-                start: new Date(),
-                end: new Date(),
+                start: new Date().toUTCString(),
+                end: new Date().toUTCString(),
                 resource: "body text",
             });
     }
@@ -75,7 +75,7 @@ export class EventItem extends PrimedComponent
     }
 
     public render(div: HTMLElement) {
-        const data = this.root.get<IEventData>("data");
+        const data = this.root.get<IDateTimeEvent>("data");
         ReactDOM.render(
             <div>
                 {JSON.stringify(data)}

@@ -4,6 +4,6 @@
  */
 
 export * from "./clicker";
-export * from "./event";
+export * from "./dateTimeEvent";
 export * from "./location";
 export * from "./registryDetails";
