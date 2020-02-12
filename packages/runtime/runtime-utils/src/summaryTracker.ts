@@ -12,23 +12,48 @@ import { ISummaryTracker } from "@microsoft/fluid-runtime-definitions";
  * reference sequence number.
  */
 export class SummaryTracker implements ISummaryTracker {
+    /**
+     * The reference sequence number of the most recent acked summary.
+     */
     public get referenceSequenceNumber() {
         return this._referenceSequenceNumber;
     }
 
+    /**
+     * The latest sequence number of change to this node or subtree.
+     */
+    public get latestSequenceNumber() {
+        return this._latestSequenceNumber;
+    }
+
+    // back-compat: 0.14 uploadSummary
     public async getSnapshotTree(): Promise<ISnapshotTree | undefined> {
         return this._getSnapshotTree();
     }
 
-    public async getId(): Promise<string | null> {
+    /**
+     * Gets the Id to use when summarizing.
+     * When useContext is true, this will be the full path to the node.
+     * When useContext is false, this will fetch the
+     * id from the previous snapshot tree.
+     */
+    public async getId(): Promise<string | undefined> {
+        if (this._latestSequenceNumber > this._referenceSequenceNumber) {
+            // If the latest sequence number exceeds the reference sequence number
+            // of the last acked summary, this indicates a change, and so we cannot
+            // reused the id.
+            return undefined;
+        }
         if (this.useContext === true) {
             return this._fullPath;
         } else {
+            // back-compat: 0.14 uploadSummary
             const tree = await this.getSnapshotTree();
-            if (tree === undefined) {
-                throw Error("Expected to find parent snapshot tree");
+            const id = tree?.id ?? undefined;
+            if (id === undefined) {
+                throw Error("Expected to find parent snapshot tree with id.");
             }
-            return tree.id;
+            return id;
         }
     }
 
@@ -47,7 +72,11 @@ export class SummaryTracker implements ISummaryTracker {
         }
     }
 
-    public createOrGetChild(key: string): ISummaryTracker {
+    public updateLatestSequenceNumber(latestSequenceNumber: number): void {
+        this._latestSequenceNumber = latestSequenceNumber;
+    }
+
+    public createOrGetChild(key: string, latestSequenceNumber: number): ISummaryTracker {
         const existingChild = this.children.get(key);
         if (existingChild) {
             return existingChild;
@@ -57,6 +86,7 @@ export class SummaryTracker implements ISummaryTracker {
             this.useContext,
             `${this._fullPath}/${encodeURIComponent(key)}`,
             this._referenceSequenceNumber,
+            latestSequenceNumber,
             this.formChildGetSnapshotTree(key));
 
         this.children.set(key, newChild);
@@ -67,8 +97,10 @@ export class SummaryTracker implements ISummaryTracker {
         public readonly useContext: boolean,
         private readonly _fullPath: string,
         private _referenceSequenceNumber: number,
+        private _latestSequenceNumber: number,
         private _getSnapshotTree: () => Promise<ISnapshotTree | undefined>) {}
 
+    // back-compat: 0.14 uploadSummary
     private formChildGetSnapshotTree(key: string): () => Promise<ISnapshotTree | undefined> {
         return async () => (await this._getSnapshotTree())?.trees[key];
     }

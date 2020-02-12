@@ -144,7 +144,6 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         public readonly existing: boolean,
         public readonly storage: IDocumentStorageService,
         public readonly scope: IComponent,
-        protected latestSequenceNumber: number,
         public readonly summaryTracker: ISummaryTracker,
         public readonly attach: (componentRuntime: IComponentRuntime) => void,
     ) {
@@ -243,7 +242,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     public process(message: ISequencedDocumentMessage, local: boolean): void {
         this.verifyNotClosed();
 
-        this.latestSequenceNumber = message.sequenceNumber;
+        this.summaryTracker.updateLatestSequenceNumber(message.sequenceNumber);
 
         if (this.loaded) {
             return this.componentRuntime.process(message, local);
@@ -295,9 +294,9 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
      * Notifies the object to take snapshot of a component.
      */
     public async snapshot(fullTree: boolean = false): Promise<ITree> {
-        if (!fullTree && this.latestSequenceNumber <= this.summaryTracker.referenceSequenceNumber) {
+        if (!fullTree) {
             const id = await this.summaryTracker.getId();
-            if (id !== null) {
+            if (id !== undefined) {
                 return { id, entries: [] };
             }
         }
@@ -417,7 +416,6 @@ export class RemotedComponentContext extends ComponentContext {
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IComponent,
-        latestSequenceNumber: number,
         summaryTracker: ISummaryTracker,
         private readonly pkg?: string[],
     ) {
@@ -427,7 +425,6 @@ export class RemotedComponentContext extends ComponentContext {
             true,
             storage,
             scope,
-            latestSequenceNumber,
             summaryTracker,
             () => {
                 throw new Error("Already attached");
@@ -494,12 +491,11 @@ export class LocalComponentContext extends ComponentContext {
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IComponent,
-        latestSequenceNumber: number,
         summaryTracker: ISummaryTracker,
         attachCb: (componentRuntime: IComponentRuntime) => void,
         public readonly createProps?: any,
     ) {
-        super(runtime, id, false, storage, scope, latestSequenceNumber, summaryTracker, attachCb);
+        super(runtime, id, false, storage, scope, summaryTracker, attachCb);
     }
 
     public generateAttachMessage(): IAttachMessage {

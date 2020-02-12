@@ -186,8 +186,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                     this.sharedObjectRegistry,
                     new Map(),
                     componentContext.branch,
-                    this.deltaManager.referenceSequenceNumber,
-                    this.componentContext.summaryTracker.createOrGetChild(path),
+                    this.componentContext.summaryTracker.createOrGetChild(
+                        path,
+                        this.deltaManager.referenceSequenceNumber,
+                    ),
                     undefined);
                 const deferred = new Deferred<IChannelContext>();
                 deferred.resolve(channelContext);
@@ -450,8 +452,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                         this.sharedObjectRegistry,
                         flatBlobs,
                         origin,
-                        message.sequenceNumber,
-                        this.componentContext.summaryTracker.createOrGetChild(attachMessage.id),
+                        this.componentContext.summaryTracker.createOrGetChild(
+                            attachMessage.id,
+                            message.sequenceNumber,
+                        ),
                         { type: attachMessage.type });
 
                     this.contexts.set(attachMessage.id, remoteChannelContext);

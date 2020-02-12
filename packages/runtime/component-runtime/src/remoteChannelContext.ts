@@ -44,7 +44,6 @@ export class RemoteChannelContext implements IChannelContext {
         private readonly registry: ISharedObjectRegistry,
         private readonly extraBlobs: Map<string, string>,
         private readonly branch: string,
-        private latestSequenceNumber: number,
         private readonly summaryTracker: ISummaryTracker,
         private readonly attributes: RequiredIChannelAttributes | undefined,
     ) {}
@@ -74,7 +73,7 @@ export class RemoteChannelContext implements IChannelContext {
     }
 
     public processOp(message: ISequencedDocumentMessage, local: boolean): void {
-        this.latestSequenceNumber = message.sequenceNumber;
+        this.summaryTracker.updateLatestSequenceNumber(message.sequenceNumber);
 
         if (this.isLoaded) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -87,10 +86,9 @@ export class RemoteChannelContext implements IChannelContext {
     }
 
     public async snapshot(fullTree: boolean = false): Promise<ITree> {
-        if (!fullTree && this.latestSequenceNumber <= this.summaryTracker.referenceSequenceNumber) {
+        if (!fullTree) {
             const id = await this.summaryTracker.getId();
-            // eslint-disable-next-line no-null/no-null
-            if (id !== null) {
+            if (id !== undefined) {
                 return { id, entries: [] };
             }
         }

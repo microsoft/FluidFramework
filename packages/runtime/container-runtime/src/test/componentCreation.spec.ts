@@ -92,7 +92,7 @@ describe("Component Creation Tests", () => {
             };
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = { IComponentRegistry: globalRegistry } as ContainerRuntime;
-            summaryTracker = new SummaryTracker(true, "", 0, async () => undefined);
+            summaryTracker = new SummaryTracker(true, "", 0, 0, async () => undefined);
         });
 
         it("Valid global component", async () => {
@@ -104,7 +104,6 @@ describe("Component Creation Tests", () => {
                 containerRuntime,
                 storage,
                 scope,
-                0,
                 summaryTracker,
                 attachCb);
 
@@ -126,7 +125,6 @@ describe("Component Creation Tests", () => {
                 containerRuntime,
                 storage,
                 scope,
-                0,
                 summaryTracker,
                 attachCb);
 
@@ -148,7 +146,6 @@ describe("Component Creation Tests", () => {
                 containerRuntime,
                 storage,
                 scope,
-                0,
                 summaryTracker,
                 attachCb);
 
@@ -170,7 +167,6 @@ describe("Component Creation Tests", () => {
                 containerRuntime,
                 storage,
                 scope,
-                0,
                 summaryTracker,
                 attachCb);
 
@@ -192,7 +188,6 @@ describe("Component Creation Tests", () => {
                 containerRuntime,
                 storage,
                 scope,
-                0,
                 summaryTracker,
                 attachCb);
 
@@ -211,7 +206,6 @@ describe("Component Creation Tests", () => {
                 containerRuntime,
                 storage,
                 scope,
-                0,
                 summaryTracker,
                 attachCb);
 
@@ -233,7 +227,6 @@ describe("Component Creation Tests", () => {
                 containerRuntime,
                 storage,
                 scope,
-                0,
                 summaryTracker,
                 attachCb);
 
@@ -255,7 +248,6 @@ describe("Component Creation Tests", () => {
                 containerRuntime,
                 storage,
                 scope,
-                0,
                 summaryTracker,
                 attachCb);
 
@@ -277,7 +269,6 @@ describe("Component Creation Tests", () => {
                 containerRuntime,
                 storage,
                 scope,
-                0,
                 summaryTracker,
                 attachCb);
 

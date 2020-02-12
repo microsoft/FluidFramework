@@ -547,6 +547,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.storage.uploadSummaryWithContext !== undefined, // useContext - back-compat: 0.14 uploadSummary
             "", // fullPath - the root is unnamed
             this.deltaManager.initialSequenceNumber, // referenceSequenceNumber - last acked summary ref seq number
+            this.deltaManager.initialSequenceNumber, // latestSequenceNumber - latest sequence number seen
             async () => undefined, // getSnapshotTree - this will be replaced on summary ack
         );
 
@@ -575,8 +576,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 this,
                 this.storage,
                 this.context.scope,
-                this.summaryTracker.referenceSequenceNumber,
-                this.summaryTracker.createOrGetChild(key));
+                this.summaryTracker.createOrGetChild(key, this.summaryTracker.referenceSequenceNumber));
             const deferred = new Deferred<ComponentContext>();
             deferred.resolve(componentContext);
 
@@ -873,8 +873,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this,
             this.storage,
             this.context.scope,
-            this.deltaManager.referenceSequenceNumber,
-            this.summaryTracker.createOrGetChild(id),
+            this.summaryTracker.createOrGetChild(id, this.deltaManager.referenceSequenceNumber),
             (cr: IComponentRuntime) => this.attachComponent(cr),
             props);
 
@@ -1005,8 +1004,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     this,
                     new BlobCacheStorageService(this.storage, flatBlobs),
                     this.context.scope,
-                    message.sequenceNumber,
-                    this.summaryTracker.createOrGetChild(attachMessage.id),
+                    this.summaryTracker.createOrGetChild(attachMessage.id, message.sequenceNumber),
                     [attachMessage.type]);
 
                 break;

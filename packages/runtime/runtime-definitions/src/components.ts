@@ -195,10 +195,34 @@ export interface IComponentRuntime extends EventEmitter, IComponentRouter, Parti
 }
 
 export interface ISummaryTracker {
+    /**
+     * The reference sequence number of the most recent acked summary.
+     */
     readonly referenceSequenceNumber: number;
-    getId(): Promise<string | null>;
+    /**
+     * The latest sequence number of change to this node or subtree.
+     */
+    readonly latestSequenceNumber: number;
+    /**
+     * Gets the id to use when summarizing, or undefined if it has changed.
+     */
+    getId(): Promise<string | undefined>;
+    /**
+     * Fetches the snapshot tree of the previously acked summary.
+     * back-compat: 0.14 uploadSummary
+     */
     getSnapshotTree(): Promise<ISnapshotTree | undefined>;
-    createOrGetChild(key: string): ISummaryTracker;
+    /**
+     * Updates the latest sequence number representing change to this node or subtree.
+     * @param latestSequenceNumber - new latest sequence number
+     */
+    updateLatestSequenceNumber(latestSequenceNumber: number): void;
+    /**
+     * Creates a child ISummaryTracker node based off information from its parent.
+     * @param key - key of node for newly created child ISummaryTracker
+     * @param latestSequenceNumber - inital value for latest sequence number of change
+     */
+    createOrGetChild(key: string, latestSequenceNumber: number): ISummaryTracker;
 }
 
 /**
