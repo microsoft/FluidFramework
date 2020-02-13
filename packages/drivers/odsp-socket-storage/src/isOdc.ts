@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 /**
  * Temporary internal function to check if an origin is OneDrive Consumer.
  * This will not work once/if we start using sharing URLs, but this is enough
