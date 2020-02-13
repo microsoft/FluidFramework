@@ -49,7 +49,7 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
 
         // A hint for driver if document was opened before by this factory
         const docId = odspResolvedUrl.hashedDocumentId;
-        const isFirstContainerForService = this.documentsOpened.has(docId);
+        const isFirstTimeContainerOpened = this.documentsOpened.has(docId);
         this.documentsOpened.add(docId);
 
         return new OdspDocumentService(
@@ -66,7 +66,7 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
             this.deltasFetchWrapper,
             Promise.resolve(getSocketIo()),
             this.odspCache,
-            isFirstContainerForService,
+            isFirstTimeContainerOpened,
         );
     }
 }
