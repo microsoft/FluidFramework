@@ -3,4 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export { Editor, IComponentHTMLViewFactory } from "./editor";
+export * from "./testDeltaConnectionServer";
+export * from "./testReservationManager";

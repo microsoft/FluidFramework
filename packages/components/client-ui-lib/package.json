@@ -49,7 +49,7 @@
     "@fluid-internal/client-api": "^0.14.0",
     "@microsoft/fluid-component-core-interfaces": "^0.14.0",
     "@microsoft/fluid-container-definitions": "^0.14.0",
-    "@microsoft/fluid-core-utils": "^0.13.0",
+    "@microsoft/fluid-core-utils": "^0.14.0",
     "@microsoft/fluid-framework-experimental": "^0.14.0",
     "@microsoft/fluid-framework-interfaces": "^0.14.0",
     "@microsoft/fluid-ink": "^0.14.0",
