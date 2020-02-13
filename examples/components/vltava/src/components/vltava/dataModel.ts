@@ -60,9 +60,7 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
         const members = this.quorum.getMembers();
         const users: string[] = [];
         members.forEach((value) => {
-            // Todo: interface says not to use type but there's not alternative
-            // should be value.client.details.environment
-            if (value.client.type === "browser") {
+            if (value.client.details?.capabilities?.interactive) {
                 users.push((value.client.user as any).name);
             }
         });
