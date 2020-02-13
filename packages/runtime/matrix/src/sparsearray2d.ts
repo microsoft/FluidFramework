@@ -85,7 +85,7 @@ export class SparseArray2D<T> implements IArray2D<T> {
         return undefined;
     }
 
-    setCell(row: number, col: number, value: T) {
+    setCell(row: number, col: number, value: T | undefined) {
         const keyHi = r0c0ToMorton2x16(row >>> 16, col >>> 16);
         const keyLo = r0c0ToMorton2x16((row << 16) >>> 16, (col << 16) >>> 16);
 
