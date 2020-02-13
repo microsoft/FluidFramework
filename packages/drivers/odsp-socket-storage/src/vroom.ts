@@ -8,7 +8,7 @@ import { PerformanceEvent } from "@microsoft/fluid-core-utils";
 import { ISocketStorageDiscovery } from "./contracts";
 import { OdspCache } from "./odspCache";
 import { fetchHelper, getWithRetryForTokenRefresh, IOdspResponse, throwOdspNetworkError } from "./odspUtils";
-import { isOdcOrigin } from "./tempIsOdc";
+import { isOdcOrigin } from "./isOdc";
 
 const getOrigin = (url: string) => new URL(url).origin;
 

@@ -8,7 +8,7 @@ import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IUrlResolver, OpenMode } from "@microsoft/fluid-driver-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { getHashedDocumentId } from "./odspUtils";
-import { isOdcOrigin } from "./tempIsOdc";
+import { isOdcOrigin } from "./isOdc";
 
 export function getSnapshotUrl(siteUrl: string, driveId: string, itemId: string) {
     const siteOrigin = new URL(siteUrl).origin;
