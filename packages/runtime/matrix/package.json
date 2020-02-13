@@ -26,17 +26,13 @@
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "test": "npm run test:mocha",
-    "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
-    "test:mocha": "mocha -r ts-node/register -r make-promises-safe --recursive test/**/*.spec.ts --exit",
+    "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml --exit",
+    "test:mocha": "mocha -r ts-node/register -r source-map-support/register -r ignore-styles --recursive test/**/*.spec.ts --exit -r make-promises-safe",
     "tsc": "tsc"
   },
   "nyc": {
     "all": true,
     "cache-dir": "nyc/.cache",
-    "exclude": [
-      "src/test/**/*.ts",
-      "dist/test/**/*.js"
-    ],
     "exclude-after-remap": false,
     "include": [
       "src/**/*.ts",
@@ -47,9 +43,6 @@
       "cobertura",
       "html",
       "text"
-    ],
-    "require": [
-      "ts-node/register"
     ],
     "temp-directory": "nyc/.nyc_output"
   },
@@ -90,6 +83,7 @@
     "mocha-junit-reporter": "^1.18.0",
     "nyc": "^14.1.1",
     "rimraf": "^2.6.2",
+    "source-map-support": "^0.5.16",
     "ts-node": "^7.0.1",
     "typescript": "~3.7.4"
   }
