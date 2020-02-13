@@ -18,7 +18,7 @@ import {
     SessionStorageDbFactory,
     TestDeltaConnectionServer,
     TestDocumentServiceFactory,
-    TestResolver
+    TestResolver,
 } from "@microsoft/fluid-local-test-server";
 import { IUser } from "@microsoft/fluid-protocol-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
