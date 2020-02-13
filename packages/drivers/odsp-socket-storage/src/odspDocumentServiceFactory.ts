@@ -66,7 +66,7 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
             this.deltasFetchWrapper,
             Promise.resolve(getSocketIo()),
             this.odspCache,
-            isFirstTimeContainerOpened,
+            isFirstTimeDocumentOpened,
         );
     }
 }

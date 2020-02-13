@@ -67,7 +67,7 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
             this.deltasFetchWrapper,
             import("./getSocketIo").then((m) => m.getSocketIo()),
             this.odspCache,
-            isFirstTimeContainerOpened,
+            isFirstTimeDocumentOpened,
         );
     }
 }

@@ -132,7 +132,7 @@ export class OdspDocumentService implements IDocumentService {
             this.logger,
             true,
             this.odspCache,
-            this.isFirstTimeContainerOpened,
+            this.isFirstTimeDocumentOpened,
         );
 
         return new OdspDocumentStorageService(this.storageManager);
