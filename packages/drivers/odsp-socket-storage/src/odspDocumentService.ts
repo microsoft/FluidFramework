@@ -143,7 +143,7 @@ export class OdspDocumentService implements IDocumentService {
         this.logger = DebugLogger.mixinDebugLogger(
             "fluid:telemetry:OdspDriver",
             logger,
-            { docId: hashedDocumentId, odc: isOdcUrl(snapshotStorageUrl) ? true : undefined });
+            { docId: hashedDocumentId, odc: isOdcUrl(snapshotStorageUrl) });
 
         this.getStorageToken = async (refresh: boolean, name?: string) => {
             if (refresh) {
