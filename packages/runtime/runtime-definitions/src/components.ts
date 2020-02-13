@@ -201,13 +201,9 @@ export interface IComponentContext extends EventEmitter {
     readonly documentId: string;
     readonly id: string;
     /**
-     * The pacakge type for the component as specified in the factory.
+     * The package path of the component as per the package factory.
      */
-    readonly type: string;
-    /**
-     * The path for the component in the component tree.
-     */
-    readonly path: string[];
+    readonly packagePath: readonly string[];
     readonly existing: boolean;
     readonly options: any;
     readonly clientId: string;

@@ -55,7 +55,7 @@ export interface IComponentAttributes {
 }
 
 interface ISnapshotDetails {
-    pkg: string[];
+    pkg: readonly string[];
     snapshot: ISnapshotTree;
 }
 
@@ -67,23 +67,9 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this._hostRuntime.id;
     }
 
-    public get type(): string {
-        // During ContainerRuntime creation, there is a small window where a remoted component
-        // context is created but pkg is not set until getInitialSnapshotDetails is called.
-        if (!this.pkg) {
-            console.log("The component is not fully created yet");
-            return undefined;
-        }
-        return this.pkg[this.pkg.length - 1];
-    }
-
-    public get path(): string[] {
-        // During ContainerRuntime creation, there is a small window where a remoted component
-        // context is created but pkg is not set until getInitialSnapshotDetails is called.
-        if (!this.pkg) {
-            console.log("The component is not fully created yet");
-            return undefined;
-        }
+    public get packagePath(): readonly string[] {
+        // The component must be loaded before the path is accessed.
+        assert(this.loaded);
         return this.pkg;
     }
 
@@ -166,7 +152,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         public readonly storage: IDocumentStorageService,
         public readonly scope: IComponent,
         public readonly attach: (componentRuntime: IComponentRuntime) => void,
-        protected pkg?: string[],
+        protected pkg?: readonly string[],
     ) {
         super();
     }
@@ -404,6 +390,10 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         // And now mark the runtime active
         this.loaded = true;
         this.componentRuntime = componentRuntime;
+
+        // Freeze the package path to ensure that someone doesn't modify it when it is
+        // returned in packagePath().
+        Object.freeze(this.pkg);
 
         // And notify the pending promise it is now available
         this.componentRuntimeDeferred.resolve(this.componentRuntime);
