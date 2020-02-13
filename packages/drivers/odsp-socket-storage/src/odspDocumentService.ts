@@ -81,7 +81,7 @@ export class OdspDocumentService implements IDocumentService {
         private readonly deltasFetchWrapper: IFetchWrapper,
         private readonly socketIOClientP: Promise<SocketIOClientStatic>,
         private readonly odspCache: OdspCache,
-        private readonly isFirstTimeContainerOpened = true,
+        private readonly isFirstTimeDocumentOpened = true,
     ) {
 
         this.joinSessionKey = `${this.hashedDocumentId}/joinsession`;

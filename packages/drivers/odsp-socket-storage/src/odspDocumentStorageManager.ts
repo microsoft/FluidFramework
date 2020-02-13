@@ -315,7 +315,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                         // If this is the first container that was created for the service, it cannot be
                         // the summarizing container (becauase the summarizing container is always created
                         // after the main container). In this case, we do not need to do any hashing
-                        if (!this.isFirstTimeContainerOpened && path) {
+                        if (!this.isFirstTimeDocumentOpened && path) {
                             // Schedule the hashes for later, but keep track of the tasks
                             // to ensure they finish before they might be used
                             const hashP = hashFile(Buffer.from(blob.content, blob.encoding)).then((hash: string) => {
