@@ -24,11 +24,11 @@ import {
 import { EventItemView } from "./view";
 
 export interface IEventItemDataModel extends IComponentDateTimeEvent {
-    setTitle(newTitle: string): void;
-    setStart(newStart: string): void;
-    setEnd(newEnd: string): void;
-    setResource(newResource: string): void;
-    setAllDay(newAllDay: boolean): void;
+    allDay: boolean;
+    end: string;
+    start: string;
+    title: string;
+    resource: string;
 }
 
 /**
@@ -48,15 +48,61 @@ export class EventItem extends PrimedComponent
         return EventItem.factory;
     }
 
+    public set allDay(value: boolean) {
+        this.root.set("allDay", value);
+    }
+
+    public get allDay(): boolean {
+        return this.root.get("allDay");
+    }
+
+    public set title(value: string) {
+        this.root.set("title", value);
+    }
+
+    public get title(): string {
+        return this.root.get("title");
+    }
+
+    public set start(value: string) {
+        this.root.set("start", value);
+    }
+
+    public get start(): string {
+        return this.root.get("start");
+    }
+
+    public set end(value: string) {
+        this.root.set("end", value);
+    }
+
+    public get end(): string {
+        return this.root.get("end");
+    }
+
+    public set resource(value: string) {
+        this.root.set("resource", value);
+    }
+
+    public get resource(): string {
+        return this.root.get("resource");
+    }
+
+    public get event(): IDateTimeEvent {
+        return {
+            allDay: this.root.get("allDay"),
+            title: this.root.get("title"),
+            start: this.root.get("start"),
+            end: this.root.get("end"),
+            resource: this.root.get("resource"),
+        };
+    }
+
     public get IComponentDateTimeEvent() { return this; }
     public get IComponentHTMLVisual() { return this; }
     public get IComponentDiscoverableInterfaces() { return this; }
 
-    public get event(): IDateTimeEvent {
-        return this.root.get<IDateTimeEvent>("data");
-    }
-
-    public on(event: "changed", listener: (newEvent: IDateTimeEvent) => void): this;
+    public on(event: "changed", listener: (id: string) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
     }
@@ -65,47 +111,18 @@ export class EventItem extends PrimedComponent
         return ["IComponentDateTimeEvent"];
     }
 
-    public setTitle(newTitle: string): void {
-        const event = this.event;
-        event.title = newTitle;
-        this.root.set("data", event);
-    }
-
-    public setStart(newStart: string): void {
-        const event = this.event;
-        event.start = newStart;
-        this.root.set("data", event);
-    }
-
-    public setEnd(newEnd: string): void {
-        const event = this.event;
-        event.end = newEnd;
-        this.root.set("data", event);
-    }
-
-    public setResource(newResource: string): void {
-        const event = this.event;
-        event.resource = newResource;
-        this.root.set("data", event);
-    }
-
-    public setAllDay(newAllDay: boolean): void {
-        const event = this.event;
-        event.allDay = newAllDay;
-        this.root.set("data", event);
+    public setEvent(event: Partial<IDateTimeEvent>) {
+        this.root.set("data", {...this.event, ...event});
     }
 
     protected async componentInitializingFirstTime() {
         // Set some information so that we can view it later and hook up the interfaces
         // This should be configurable by the view.
-        this.root.set("data",
-            {
-                allDay: false,
-                title: this.url,
-                start: new Date().toUTCString(),
-                end: new Date().toUTCString(),
-                resource: "body text",
-            });
+        this.allDay = false;
+        this.title = "New Date Event";
+        this.start =  new Date().toUTCString();
+        this.end = new Date().toUTCString();
+        this.resource = "Initial Body Text";
     }
 
     protected async componentHasInitialized() {
@@ -116,7 +133,7 @@ export class EventItem extends PrimedComponent
         }
 
         this.root.on("valueChanged", (changed: IDirectoryValueChanged) => {
-            this.emit("changed", this.root.get(changed.key));
+            this.emit("changed", changed.key);
         });
     }
 

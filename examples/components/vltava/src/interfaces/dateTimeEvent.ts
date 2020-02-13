@@ -13,11 +13,11 @@ export interface IProvideComponentDateTimeEvent {
 }
 
 export interface IDateTimeEvent {
-    allDay?: boolean;
-    title?: string;
-    start?: string;
-    end?: string;
-    resource?: any;
+    readonly allDay: boolean;
+    readonly title: string;
+    readonly start: string;
+    readonly end: string;
+    readonly resource: any;
 }
 
 
@@ -25,5 +25,5 @@ export interface IDateTimeEvent {
 export interface IComponentDateTimeEvent extends IProvideComponentDateTimeEvent {
     event: IDateTimeEvent;
 
-    on(event: "changed", listener: (newEvent: IDateTimeEvent) => void): this;
+    on(event: "changed", listener: (id: string) => void): this;
 }

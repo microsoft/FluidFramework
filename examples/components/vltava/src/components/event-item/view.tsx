@@ -74,14 +74,27 @@ export class EventItemView extends React.Component<IEventItemViewProps, IEventIt
             resource: event.resource,
         };
 
-        this.props.dataModel.on("changed", (newEvent) => {
-            this.setState({
-                allDay: newEvent.allDay,
-                title: newEvent.title,
-                start: newEvent.start,
-                end: newEvent.end,
-                resource: newEvent.resource,
-            });
+        this.props.dataModel.on("changed", (id) => {
+
+            switch(id) {
+                case "allDay" :
+                    this.setState({allDay: this.props.dataModel.allDay});
+                    break;
+                case "title" :
+                    this.setState({title: this.props.dataModel.title});
+                    break;
+                case "start" :
+                    this.setState({start: this.props.dataModel.start});
+                    break;
+                case "end" :
+                    this.setState({end: this.props.dataModel.end});
+                    break;
+                case "resource" :
+                    this.setState({end: this.props.dataModel.resource});
+                    break;
+                default:
+                    break;
+            }
         });
     }
 
@@ -97,33 +110,33 @@ export class EventItemView extends React.Component<IEventItemViewProps, IEventIt
                     <TextField
                         label="Title"
                         value={this.state.title}
-                        onChange={(_, title) => { this.props.dataModel.setTitle(title); }}
+                        onChange={(_, title) => { this.props.dataModel.title = title; }}
                     />
                     <Checkbox
                         label="All Day"
                         checked={this.state.allDay}
-                        onChange={(_, checked) => { this.props.dataModel.setAllDay(checked); }}
+                        onChange={(_, checked) => { this.props.dataModel.allDay = checked; } }
                     />
                     <DatePicker
                         label="Start Date"
                         firstDayOfWeek={DayOfWeek.Sunday}
                         strings={DayPickerStrings}
                         value= {new Date(this.state.start)}
-                        onSelectDate= {(date) => { this.props.dataModel.setStart(date.toUTCString()); }}
+                        onSelectDate= {(date) => { this.props.dataModel.start = date.toUTCString(); }}
                     />
                     <DatePicker
                         label="End Date"
                         firstDayOfWeek={DayOfWeek.Sunday}
                         strings={DayPickerStrings}
                         value= {new Date(this.state.end)}
-                        onSelectDate= {(date) => { this.props.dataModel.setEnd(date.toUTCString()); }}
+                        onSelectDate= {(date) => { this.props.dataModel.end = date.toUTCString(); }}
                     />
                     <TextField
                         label="Body"
                         multiline
                         rows={3}
                         value={this.state.resource}
-                        onChange={(_, body) => { this.props.dataModel.setResource(body); }}
+                        onChange={(_, body) => { this.props.dataModel.resource = body; }}
                     />
                 </Stack>
             </Stack>
