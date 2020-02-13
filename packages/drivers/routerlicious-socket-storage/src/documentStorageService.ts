@@ -194,23 +194,12 @@ export class DocumentStorageService implements IDocumentStorageService {
                 if (snapshot === undefined) {
                     throw Error("Parent summary does not exist to reference by handle.");
                 }
-                switch (object.handleType) {
-                    case SummaryType.Blob: {
-                        if (!snapshot.blobs[key]) {
-                            throw Error("Parent summary does not have blob handle for specified path.");
-                        }
-                        return snapshot.blobs[key];
-                    }
-                    case SummaryType.Tree: {
-                        const tryId = snapshot.trees[key]?.id;
-                        if (!tryId) {
-                            throw Error("Parent summary does not have tree handle for specified path.");
-                        }
-                        return tryId;
-                    }
-                    default:
-                        throw Error(`Unexpected handle summary object type: "${object.type}".`);
+                const path = object.handle.split("/");
+                if (path[0] === "") {
+                    // root of tree should be unnamed
+                    path.shift();
                 }
+                return this.getIdFromPath(object.handleType, path, snapshot);
             }
             case SummaryType.Tree: {
                 return this.writeSummaryTree(object, snapshot?.trees[key]);
@@ -219,6 +208,35 @@ export class DocumentStorageService implements IDocumentStorageService {
             default:
                 throw Error(`Unexpected summary object type: "${object.type}".`);
         }
+    }
+
+    private getIdFromPath(handleType: SummaryType, path: string[], snapshot: ISnapshotTree): string {
+        const key = path[0];
+        if (path.length === 1) {
+            switch (handleType) {
+                case SummaryType.Blob: {
+                    const tryId = snapshot.blobs[key];
+                    if (!tryId) {
+                        throw Error("Parent summary does not have blob handle for specified path.");
+                    }
+                    return tryId;
+                }
+                case SummaryType.Tree: {
+                    const tryId = snapshot.trees[key]?.id;
+                    if (!tryId) {
+                        throw Error("Parent summary does not have tree handle for specified path.");
+                    }
+                    return tryId;
+                }
+                default:
+                    throw Error(`Unexpected handle summary object type: "${handleType}".`);
+            }
+        }
+        const subtree = snapshot.trees[key];
+        if (!subtree) {
+            throw Error("Parent summary does not have handle for specified path.");
+        }
+        return this.getIdFromPath(handleType, path.slice(1), subtree);
     }
 
     private async writeSummaryBlob(content: string | Buffer): Promise<string> {
