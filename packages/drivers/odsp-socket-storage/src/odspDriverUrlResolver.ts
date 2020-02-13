@@ -8,13 +8,13 @@ import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IUrlResolver, OpenMode } from "@microsoft/fluid-driver-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { getHashedDocumentId } from "./odspUtils";
+import { isOdcOrigin } from "./tempIsOdc";
 
 export function getSnapshotUrl(siteUrl: string, driveId: string, itemId: string) {
     const siteOrigin = new URL(siteUrl).origin;
 
-    // TODO This will only support ODC using api.onedrive.com, update to handle the future (share links etc)
     let prefix = "_api/";
-    if (siteOrigin.includes("api.onedrive.com")) {
+    if (isOdcOrigin(siteOrigin)) {
         prefix = "";
     }
 

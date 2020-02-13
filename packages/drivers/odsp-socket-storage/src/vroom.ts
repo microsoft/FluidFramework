@@ -8,6 +8,7 @@ import { PerformanceEvent } from "@microsoft/fluid-core-utils";
 import { ISocketStorageDiscovery } from "./contracts";
 import { OdspCache } from "./odspCache";
 import { fetchHelper, getWithRetryForTokenRefresh, IOdspResponse, throwOdspNetworkError } from "./odspUtils";
+import { isOdcOrigin } from "./tempIsOdc";
 
 const getOrigin = (url: string) => new URL(url).origin;
 
@@ -54,9 +55,8 @@ export async function fetchJoinSession(
                 headers = { Authorization: `Bearer ${token}` };
             }
 
-            // TODO This will only support ODC using api.onedrive.com, update to handle the future (share links etc)
             let prefix = "_api/";
-            if (siteOrigin.includes("api.onedrive.com")) {
+            if (isOdcOrigin(siteOrigin)) {
                 prefix = "";
             }
 
