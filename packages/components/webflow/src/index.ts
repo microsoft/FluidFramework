@@ -4,6 +4,6 @@
  */
 
 export { FlowDocument, flowDocumentFactory } from "./document";
-export { Editor } from "./editor";
+export { Editor, IComponentHTMLViewFactory } from "./editor";
 export { htmlFormatter } from "./html/formatters";
 export { FlowDocumentType, fluidExport, WebFlowType } from "./runtime";
