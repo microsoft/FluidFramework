@@ -49,6 +49,10 @@ export class OdspDocumentService implements IDocumentService {
 
     private readonly joinSessionKey: string;
 
+    // A hint for any document storage managers created if they are the first container
+    // being created by this service
+    private isFirstContainerForService: boolean = true;
+
     /**
      * @param appId - app id used for telemetry for network requests
      * @param hashedDocumentId - A unique identifer for the document. The "hashed" here implies that the contents of
@@ -129,7 +133,11 @@ export class OdspDocumentService implements IDocumentService {
             this.getStorageToken,
             this.logger,
             true,
-            this.odspCache);
+            this.odspCache,
+            this.isFirstContainerForService,
+        );
+
+        this.isFirstContainerForService = false;
 
         return new OdspDocumentStorageService(this.storageManager);
     }
