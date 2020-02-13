@@ -77,7 +77,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         private readonly logger: ITelemetryLogger,
         private readonly fetchFullSnapshot: boolean,
         private readonly odspCache: OdspCache,
-        private readonly isFirstTimeContainerOpened: boolean,
+        private readonly isFirstTimeDocumentOpened: boolean,
     ) {
         this.queryString = getQueryString(queryParams);
         this.appId = queryParams.app_id;
