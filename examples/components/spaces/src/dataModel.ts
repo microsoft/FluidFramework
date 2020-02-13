@@ -10,6 +10,7 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { ClickerName } from "@fluid-example/clicker";
 import { Layout } from "react-grid-layout";
+import { IComponentRegistryDetails } from "./interfaces";
 
 export type SupportedComponent =
     "button"
@@ -33,6 +34,12 @@ export interface ISpacesDataModel extends EventEmitter {
     componentToolbarId: string;
 }
 
+export interface IComponentType {
+    type: string;
+    friendlyName: string;
+    fabricIconName: string;
+}
+
 /**
  * The Data Model is an abstraction layer so the React View doesn't need to interact directly with fluid.
  */
@@ -44,6 +51,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
         private readonly createAndAttachComponent: <T>(id: string, pkg: string, props?: any) => Promise<T>,
         public getComponent: <T>(id: string) => Promise<T>,
         public componentToolbarId: string,
+        private readonly internalRegistry: IComponentRegistryDetails,
     ) {
         super();
 
@@ -123,6 +131,18 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
 
             await Promise.all(promises);
         }
+    }
+
+    public getNewComponentTypes(): IComponentType[] {
+        const response: IComponentType[] = [];
+        this.internalRegistry.getFromCapabilities("IComponentHTMLVisual").forEach((e) => {
+            response.push({
+                type: e.type,
+                friendlyName: e.friendlyName,
+                fabricIconName: e.fabricIconName,
+            });
+        });
+        return response;
     }
 
     private async addComponentInternal<T>(

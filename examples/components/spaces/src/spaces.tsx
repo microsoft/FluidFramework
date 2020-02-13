@@ -18,6 +18,7 @@ import { ISpacesDataModel, SpacesDataModel, SupportedComponent } from "./dataMod
 
 import { SpacesGridView } from "./view";
 import { ComponentToolbar, ComponentToolbarName } from "./components";
+import { IProvideComponentFactory } from "@microsoft/fluid-runtime-definitions";
 
 /**
  * Spaces is the Fluid
@@ -47,13 +48,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
 
     protected async componentInitializingFirstTime(props?: any) {
         this.root.createSubDirectory("component-list");
-        this.dataModelInternal =
-            new SpacesDataModel(
-                this.root,
-                this.createAndAttachComponent.bind(this),
-                this.getComponent.bind(this),
-                Spaces.componentToolbarId,
-            );
+        await this.initializeDataModel();
         this.componentToolbar =
             await this.dataModel.addComponent<ComponentToolbar>(
                 ComponentToolbarName,
@@ -69,14 +64,21 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
     }
 
     protected async componentInitializingFromExisting() {
+        await this.initializeDataModel();
+        this.componentToolbar = await this.getComponent<ComponentToolbar>(Spaces.componentToolbarId);
+    }
+
+    private async initializeDataModel() {
+        const registry = ((await this.context.hostRuntime.IComponentRegistry) as any).map;
+        const registryDetails = (registry as Map<string, Promise<IProvideComponentFactory>>).values
         this.dataModelInternal =
             new SpacesDataModel(
                 this.root,
                 this.createAndAttachComponent.bind(this),
                 this.getComponent.bind(this),
                 Spaces.componentToolbarId,
+                registryDetails as any
             );
-        this.componentToolbar = await this.getComponent<ComponentToolbar>(Spaces.componentToolbarId);
     }
 
     protected async componentHasInitialized() {
