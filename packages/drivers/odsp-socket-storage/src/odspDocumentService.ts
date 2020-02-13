@@ -49,9 +49,6 @@ export class OdspDocumentService implements IDocumentService {
 
     private readonly joinSessionKey: string;
 
-    // A hint for any document storage managers created if they are the first container
-    // being created by this service
-    private isFirstContainerForService: boolean = true;
 
     /**
      * @param appId - app id used for telemetry for network requests
@@ -84,6 +81,7 @@ export class OdspDocumentService implements IDocumentService {
         private readonly deltasFetchWrapper: IFetchWrapper,
         private readonly socketIOClientP: Promise<SocketIOClientStatic>,
         private readonly odspCache: OdspCache,
+        private readonly isFirstContainerForService = true,
     ) {
 
         this.joinSessionKey = `${this.hashedDocumentId}/joinsession`;
@@ -136,8 +134,6 @@ export class OdspDocumentService implements IDocumentService {
             this.odspCache,
             this.isFirstContainerForService,
         );
-
-        this.isFirstContainerForService = false;
 
         return new OdspDocumentStorageService(this.storageManager);
     }

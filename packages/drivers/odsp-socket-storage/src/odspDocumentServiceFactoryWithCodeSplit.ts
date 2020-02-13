@@ -22,6 +22,9 @@ import { OdspDocumentService } from "./odspDocumentService";
  */
 export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentServiceFactory {
     public readonly protocolName = "fluid-odsp:";
+
+    private readonly documentsOpened = new Set<string>();
+
     /**
    * @param appId - app id used for telemetry for network requests.
    * @param getStorageToken - function that can provide the storage token for a given site. This is
@@ -44,9 +47,15 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
 
     public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
         const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
+
+        // A hint for driver if document was opened before by this factory
+        const docId = odspResolvedUrl.hashedDocumentId;
+        const isFirstContainerForService = this.documentsOpened.has(docId);
+        this.documentsOpened.add(docId);
+
         return new OdspDocumentService(
             this.appId,
-            odspResolvedUrl.hashedDocumentId,
+            docId,
             odspResolvedUrl.siteUrl,
             odspResolvedUrl.driveId,
             odspResolvedUrl.itemId,
@@ -56,8 +65,9 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
             this.logger,
             this.storageFetchWrapper,
             this.deltasFetchWrapper,
-      import("./getSocketIo").then((m) => m.getSocketIo()),
-      this.odspCache,
+            import("./getSocketIo").then((m) => m.getSocketIo()),
+            this.odspCache,
+            isFirstContainerForService,
         );
     }
 }
