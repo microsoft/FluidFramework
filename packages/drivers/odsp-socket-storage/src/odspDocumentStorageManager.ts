@@ -77,7 +77,6 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         private readonly logger: ITelemetryLogger,
         private readonly fetchFullSnapshot: boolean,
         private readonly odspCache: OdspCache,
-        private readonly isFirstContainerForService: boolean,
     ) {
         this.queryString = getQueryString(queryParams);
         this.appId = queryParams.app_id;
@@ -254,7 +253,13 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         if (this.firstVersionCall && count === 1 && (blobid === null || blobid === this.documentId)) {
             this.firstVersionCall = false;
 
+            const docLoadedBeforeKey = `${this.documentId}/loadedBefore`;
+            const docLoadedBefore = this.odspCache.get(docLoadedBeforeKey) === true;
+            this.odspCache.put(docLoadedBeforeKey, true);
+            assert(this.odspCache.get(docLoadedBeforeKey) === true);
+
             return getWithRetryForTokenRefresh(async (refresh) => {
+
                 const odspCacheKey: string = `${this.documentId}/getlatest`;
                 let odspSnapshot: IOdspSnapshot = this.odspCache.get(odspCacheKey);
                 if (!odspSnapshot) {
@@ -309,23 +314,26 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
                 if (blobs) {
                     this.initBlobsCache(blobs);
-                    // Populate the cache with paths from id-to-path mapping.
-                    for (const blob of this.blobCache.values()) {
-                        const path = blobsIdToPathMap.get(blob.sha);
-                        // If this is the first container that was created for the service, it cannot be
-                        // the summarizing container (becauase the summarizing container is always created
-                        // after the main container). In this case, we do not need to do any hashing
-                        if (!this.isFirstContainerForService && path) {
-                            // Schedule the hashes for later, but keep track of the tasks
-                            // to ensure they finish before they might be used
-                            const hashP = hashFile(Buffer.from(blob.content, blob.encoding)).then((hash: string) => {
-                                this.blobsShaToPathCache.set(hash, path);
-                            });
-                            this.blobsCachePendingHashes.add(hashP);
-                            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                            hashP.finally(() => {
-                                this.blobsCachePendingHashes.delete(hashP);
-                            });
+
+                    // If this is the first container that was created for the service, it cannot be
+                    // the summarizing container (becauase the summarizing container is always created
+                    // after the main container). In this case, we do not need to do any hashing
+                    if (docLoadedBefore) {
+                        // Populate the cache with paths from id-to-path mapping.
+                        for (const blob of this.blobCache.values()) {
+                            const path = blobsIdToPathMap.get(blob.sha);
+                            if (path) {
+                                // Schedule the hashes for later, but keep track of the tasks
+                                // to ensure they finish before they might be used
+                                const hashP = hashFile(Buffer.from(blob.content, blob.encoding)).then((hash: string) => {
+                                    this.blobsShaToPathCache.set(hash, path);
+                                });
+                                this.blobsCachePendingHashes.add(hashP);
+                                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                                hashP.finally(() => {
+                                    this.blobsCachePendingHashes.delete(hashP);
+                                });
+                            }
                         }
                     }
                 }
