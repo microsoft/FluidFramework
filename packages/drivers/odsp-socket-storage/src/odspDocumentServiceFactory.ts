@@ -49,7 +49,7 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
 
         // A hint for driver if document was opened before by this factory
         const docId = odspResolvedUrl.hashedDocumentId;
-        const isFirstTimeDocumentOpened = this.documentsOpened.has(docId);
+        const isFirstTimeDocumentOpened = !this.documentsOpened.has(docId);
         this.documentsOpened.add(docId);
 
         return new OdspDocumentService(
