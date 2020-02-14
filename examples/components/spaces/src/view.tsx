@@ -33,7 +33,7 @@ const buttonContainerStyle: React.CSSProperties = {
 const buttonStyle: React.CSSProperties = {
     width: "2rem",
     height: "2rem",
-}
+};
 
 const gridContainerStyle: React.CSSProperties = { paddingTop: "5rem" };
 
@@ -169,7 +169,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                                         }, (err) => {
                                             console.error("Async: Could not copy text: ", err);
                                         });
-                                }}
+                                    }}
                                 onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
                                     event.stopPropagation();
                                 }}

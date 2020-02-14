@@ -8,11 +8,10 @@ import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
 import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
 import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
-import { 
+import {
     IProvideComponentFactory,
     NamedComponentRegistryEntries,
     IComponentRegistry,
-    ComponentRegistryEntry
 } from "@microsoft/fluid-runtime-definitions";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 
@@ -81,8 +80,6 @@ export class InternalRegistry implements IComponentRegistry {
     public getFromCapabilities(type: keyof IComponent): IContainerComponentDetails[] {
         return this.containerComponentArray.filter((componentDetails) => componentDetails.capabilities.includes(type));
     }
-
-    public map: Map<string, Promise<ComponentRegistryEntry | undefined>>;
 }
 
 
@@ -93,35 +90,35 @@ const generateFactory = () => {
             factory: Promise.resolve(ClickerInstantiationFactory),
             friendlyName: "Clicker",
             fabricIconName: "Touch",
-            capabilities: ["IComponentHTMLVisual"]
+            capabilities: ["IComponentHTMLVisual"],
         },
         {
             type: ButtonName as SupportedComponent,
             factory: Promise.resolve(Button.getFactory()),
             friendlyName: FriendlyButtonName,
             fabricIconName: "ButtonControl",
-            capabilities: ["IComponentHTMLVisual"]
+            capabilities: ["IComponentHTMLVisual"],
         },
         {
             type: NumberName as SupportedComponent,
             factory: Promise.resolve(Number.getFactory()),
             friendlyName: FriendlyNumberName,
             fabricIconName: "NumberField",
-            capabilities: ["IComponentHTMLVisual"]
+            capabilities: ["IComponentHTMLVisual"],
         },
         {
             type: FacePileName as SupportedComponent,
             factory: Promise.resolve(FacePile.getFactory()),
             friendlyName: FriendlyFacePileName,
             fabricIconName: "People",
-            capabilities: ["IComponentHTMLVisual"]
+            capabilities: ["IComponentHTMLVisual"],
         },
         {
             type: TextBoxName as SupportedComponent,
             factory: Promise.resolve(TextBox.getFactory()),
             friendlyName: FriendlyTextBoxName,
             fabricIconName: "TextField",
-            capabilities: ["IComponentHTMLVisual"]
+            capabilities: ["IComponentHTMLVisual"],
         },
         {
             type: "codemirror",

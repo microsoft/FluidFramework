@@ -42,10 +42,9 @@ export class ComponentToolbar extends PrimedComponent implements IComponentHTMLV
     }
 
     protected async componentHasInitialized() {
-         const registry = await (this.context.hostRuntime.IComponentRegistry as InternalRegistry).get("");
+        const registry = await (this.context.hostRuntime.IComponentRegistry as InternalRegistry).get("");
         const registryDetails = (registry as IComponent).IComponentRegistryDetails;
         this.supportedComponentList = (registryDetails as InternalRegistry).getFromCapabilities("IComponentHTMLVisual");
-        
     }
 
     /**
@@ -98,19 +97,18 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
 
     render(){
         const editableButtons: JSX.Element[] = [];
-        this.supportedComponentList.forEach((supportedComponent => 
-                editableButtons.push(
-                    <Button
-                        key={`componentToolbarButton-${supportedComponent.type}`}
-                        iconProps={{ iconName: supportedComponent.fabricIconName }}
-                        onClick={async () => 
-                            this.emitAddComponentEvent(supportedComponent.type, 4, 4)}
-                        >
-                        {supportedComponent.friendlyName}
-                    </Button>
-                )
-            )
-        );
+        this.supportedComponentList.forEach(((supportedComponent: IContainerComponentDetails) => {
+            editableButtons.push(
+                <Button
+                    key={`componentToolbarButton-${supportedComponent.type}`}
+                    iconProps={{ iconName: supportedComponent.fabricIconName }}
+                    onClick={async () =>
+                        this.emitAddComponentEvent(supportedComponent.type, 4, 4)}
+                >
+                    {supportedComponent.friendlyName}
+                </Button>,
+            );
+        }));
 
         return (
             <div style={componentToolbarStyle}>
@@ -122,7 +120,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
                     {`Edit: ${this.state.isEditable}`}
                 </Button>
                 {this.state.isEditable ? editableButtons : undefined}
-                <Button 
+                <Button
                     iconProps={{ iconName: "Save" }}
                     onClick={() => this.emitSaveLayout()}
                 >

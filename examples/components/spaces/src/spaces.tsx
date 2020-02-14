@@ -68,12 +68,12 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
     }
 
     private async initializeDataModel() {
-       this.dataModelInternal =
+        this.dataModelInternal =
             new SpacesDataModel(
                 this.root,
                 this.createAndAttachComponent.bind(this),
                 this.getComponent.bind(this),
-                Spaces.componentToolbarId
+                Spaces.componentToolbarId,
             );
     }
 
