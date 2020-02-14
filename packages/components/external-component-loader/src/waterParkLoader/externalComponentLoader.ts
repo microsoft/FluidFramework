@@ -124,7 +124,7 @@ export class ExternalComponentLoader extends PrimedComponent
                             componentRuntime = await this.context.hostRuntime.createComponent(
                                 uuid(),
                                 [
-                                    WaterParkLoaderName,
+                                    ...this.context.packagePath,
                                     "url",
                                     url,
                                     pkgReg.IComponentDefaultFactoryName.getDefaultFactoryName(),
@@ -133,7 +133,7 @@ export class ExternalComponentLoader extends PrimedComponent
                             componentRuntime = await this.context.hostRuntime.createComponent(
                                 uuid(),
                                 [
-                                    WaterParkLoaderName,
+                                    ...this.context.packagePath,
                                     "url",
                                     url,
                                 ]);
