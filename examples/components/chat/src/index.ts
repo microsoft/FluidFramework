@@ -3,15 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerContext } from "@microsoft/fluid-container-definitions";
 import { renderChat } from "./chat";
 // eslint-disable-next-line import/no-internal-modules
 import { Runtime } from "./runtime/runtime";
 
-export class ChatRunner implements IComponentHTMLVisual {
-
-    public get IComponentHTMLVisual() { return this; }
+export class ChatRunner implements IComponentHTMLView {
+    public get IComponentHTMLView() { return this; }
 
     constructor(private readonly runtime: Runtime) {
     }

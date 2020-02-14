@@ -6,13 +6,13 @@
 import { Node } from "prosemirror-model";
 import { EditorView, NodeView } from "prosemirror-view";
 import { ILoader } from "@microsoft/fluid-container-definitions";
-import { IComponent, IComponentHTMLRender, IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 
 export class ComponentView implements NodeView {
     public dom: HTMLElement;
     public innerView;
 
-    private renderable: IComponentHTMLView | IComponentHTMLRender;
+    private visual: IComponentHTMLView | IComponentHTMLVisual;
 
     constructor(
         public node: Node,
@@ -64,7 +64,7 @@ export class ComponentView implements NodeView {
                 }
 
                 const component = result.value as IComponent;
-                if (!component.IComponentHTMLVisual) {
+                if (!component.IComponentHTMLView && !component.IComponentHTMLVisual) {
                     return Promise.reject<IComponent>();
                 }
 
@@ -77,13 +77,22 @@ export class ComponentView implements NodeView {
                 this.dom.innerHTML = "";
 
                 // Remove the previous view
-                if (this.renderable && "remove" in this.renderable) {
-                    this.renderable.remove();
+                if (this.visual && "remove" in this.visual) {
+                    this.visual.remove();
                 }
 
-                const visual = component.IComponentHTMLVisual;
-                this.renderable = visual.addView ? visual.addView() : visual;
-                this.renderable.render(this.dom);
+                // First try to get it as a view
+                this.visual = component.IComponentHTMLView;
+                if (!this.visual) {
+                    // Otherwise get the visual, which is a view factory
+                    const visual = component.IComponentHTMLVisual;
+                    if (visual) {
+                        this.visual = visual.addView();
+                    }
+                }
+                if (this.visual) {
+                    this.visual.render(this.dom);
+                }
             },
             (error) => {
                 // Fall back to URL if can't load

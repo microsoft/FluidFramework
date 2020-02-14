@@ -8,7 +8,7 @@ import {
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import {
-    IComponentHTMLVisual,
+    IComponentHTMLView,
 } from "@microsoft/fluid-component-core-interfaces";
 
 import * as React from "react";
@@ -23,9 +23,8 @@ export const ComponentToolbarName = "componentToolbar";
 /**
  * A component to allow you to add and manipulate components
  */
-export class ComponentToolbar extends PrimedComponent implements IComponentHTMLVisual {
-
-    public get IComponentHTMLVisual() { return this; }
+export class ComponentToolbar extends PrimedComponent implements IComponentHTMLView {
+    public get IComponentHTMLView() { return this; }
 
     private static readonly factory = new PrimedComponentFactory(ComponentToolbar, []);
 

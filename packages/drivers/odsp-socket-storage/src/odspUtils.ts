@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { isOnline, NetworkError, ThrottlingError, OnlineStatus } from "@microsoft/fluid-driver-utils";
+import { isOnline, FatalError, NetworkError, ThrottlingError, OnlineStatus } from "@microsoft/fluid-driver-utils";
 import { default as fetch, RequestInfo as FetchRequestInfo, RequestInit as FetchRequestInit } from "node-fetch";
 import * as sha from "sha.js";
 import { IOdspSocketError } from "./contracts";
@@ -45,14 +45,16 @@ export class OdspNetworkError extends NetworkError {
 /**
  * Returns network error based on error object from ODSP socket (IOdspSocketError)
  */
-export function errorObjectFromOdspError(socketError: IOdspSocketError, canRetry: boolean) {
-    if (socketError.retryAfter) {
+export function errorObjectFromOdspError(socketError: IOdspSocketError, retryFilter?: RetryFilter) {
+    if (socketError.code === 500) {
+        return new FatalError(socketError.message);
+    } else if (socketError.retryAfter) {
         return new ThrottlingError(socketError.message, socketError.retryAfter);
     } else {
         return new OdspNetworkError(
             socketError.message,
             socketError.code,
-            canRetry,
+            retryFilter?.(socketError.code) ?? true,
         );
     }
 }

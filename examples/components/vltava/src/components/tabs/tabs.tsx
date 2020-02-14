@@ -2,8 +2,9 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IComponentHTMLVisual, IComponent } from "@microsoft/fluid-component-core-interfaces";
+
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { IComponentHTMLView, IComponent } from "@microsoft/fluid-component-core-interfaces";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -11,7 +12,7 @@ import * as ReactDOM from "react-dom";
 import { TabsDataModel, ITabsDataModel } from "./dataModel";
 import { TabsView } from "./view";
 
-export class TabsComponent extends PrimedComponent implements IComponentHTMLVisual {
+export class TabsComponent extends PrimedComponent implements IComponentHTMLView {
     private dataModelInternal: ITabsDataModel | undefined;
 
     private static readonly factory = new PrimedComponentFactory(TabsComponent, []);
@@ -28,7 +29,7 @@ export class TabsComponent extends PrimedComponent implements IComponentHTMLVisu
         return this.dataModelInternal;
     }
 
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
 
     protected async componentInitializingFirstTime(props: any) {
         // create the tabs directory

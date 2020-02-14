@@ -45,13 +45,18 @@ async function attachCore(loader: Loader, url: string, div: HTMLDivElement) {
 
     // Check if the component is viewable
     const component = response.value as IComponent;
-    const viewable = component.IComponentHTMLVisual;
-    if (!viewable) {
-        return;
+    // First try to get it as a view
+    let renderable = component.IComponentHTMLView;
+    if (!renderable) {
+        // Otherwise get the visual, which is a view factory
+        const visual = component.IComponentHTMLVisual;
+        if (visual) {
+            renderable = visual.addView();
+        }
     }
-
-    const renderable = viewable.addView ? viewable.addView() : viewable;
-    renderable.render(div, { display: "block" });
+    if (renderable) {
+        renderable.render(div, { display: "block" });
+    }
 }
 
 /**
