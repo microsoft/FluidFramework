@@ -7,18 +7,16 @@ import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFacto
 import {
     IComponentHandle,
     IComponentHTMLOptions,
-    IComponentHTMLVisual,
+    IComponentHTMLView,
 } from "@microsoft/fluid-component-core-interfaces";
 import { Counter, CounterValueType } from "@microsoft/fluid-map";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { OwnedSharedMap } from "./ownedMap";
 
-export class OwnedMap extends PrimedComponent implements IComponentHTMLVisual {
-
+export class OwnedMap extends PrimedComponent implements IComponentHTMLView {
+    public get IComponentHTMLView() { return this; }
     public static getFactory() { return OwnedMap.factory; }
-
-    public get IComponentHTMLVisual() { return this; }
 
     private static readonly factory = new PrimedComponentFactory(
         OwnedMap,
@@ -30,7 +28,7 @@ export class OwnedMap extends PrimedComponent implements IComponentHTMLVisual {
     public ownedMap: OwnedSharedMap;
     public counter: Counter;
 
-    // #region IComponentHTMLVisual
+    // #region IComponentHTMLView
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
         const render = () => this.doRender(elm);
         this.root.on("op", () => {
@@ -43,7 +41,7 @@ export class OwnedMap extends PrimedComponent implements IComponentHTMLVisual {
 
         this.doRender(elm);
     }
-    // #endregion IComponentHTMLVisual
+    // #endregion IComponentHTMLView
 
     /**
      *  The component has been loaded. Render the component into the provided div

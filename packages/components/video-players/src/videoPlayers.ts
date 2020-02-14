@@ -7,7 +7,7 @@ import { EventEmitter } from "events";
 import {
     IComponent,
     IComponentHandleContext,
-    IComponentHTMLVisual,
+    IComponentHTMLView,
     IComponentLoadable,
     IComponentRouter,
     IRequest,
@@ -75,12 +75,12 @@ interface IYouTubePlayer {
 }
 
 export class VideoPlayer implements
-    IComponentLoadable, IComponentHTMLVisual, IComponentRouter, IComponentLayout {
+    IComponentLoadable, IComponentHTMLView, IComponentRouter, IComponentLayout {
 
     private player: IYouTubePlayer;
     private playerDiv: HTMLDivElement;
 
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
     public get IComponentRouter() { return this; }
     public get IComponentLayout() { return this; }
     public get IComponentLoadable() { return this; }

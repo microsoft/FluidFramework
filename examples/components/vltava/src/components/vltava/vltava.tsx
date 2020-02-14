@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { IComponent, IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -16,7 +16,7 @@ import { VltavaView } from "./view";
 /**
  * Vltava is an application experience
  */
-export class Vltava extends PrimedComponent implements IComponentHTMLVisual {
+export class Vltava extends PrimedComponent implements IComponentHTMLView {
     private dataModelInternal: IVltavaDataModel | undefined;
 
     private static readonly factory = new PrimedComponentFactory(Vltava, []);
@@ -33,7 +33,7 @@ export class Vltava extends PrimedComponent implements IComponentHTMLVisual {
         return this.dataModelInternal;
     }
 
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
 
     protected async componentInitializingFirstTime(props: any) {
         const tabsComponent = await this.createAndAttachComponent<IComponent>(uuid(), "tabs");

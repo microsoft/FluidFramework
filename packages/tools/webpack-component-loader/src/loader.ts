@@ -15,6 +15,7 @@ import {
 import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import {
     ITestDeltaConnectionServer,
+    SessionStorageDbFactory,
     TestDeltaConnectionServer,
     TestDocumentServiceFactory,
     TestResolver,
@@ -28,7 +29,6 @@ import * as jwt from "jsonwebtoken";
 import * as uuid from "uuid/v4";
 import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
 import { InsecureUrlResolver } from "./insecureUrlResolver";
-import { SessionStorageDbFactory } from "./sessionStorageTestDb";
 import { OdspUrlResolver } from "./odspUrlResolver";
 
 export interface IDevServerUser extends IUser {

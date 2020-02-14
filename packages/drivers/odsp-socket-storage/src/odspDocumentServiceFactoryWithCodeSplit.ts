@@ -34,6 +34,8 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
    * @param logger - a logger that can capture performance and diagnostic information
    * @param storageFetchWrapper - if not provided FetchWrapper will be used
    * @param deltasFetchWrapper - if not provided FetchWrapper will be used
+   * @param odspCache - This caches response for joinSession.
+   * @param fileInfoToCreateNewResponseCache - This caches response of new file creation.
    */
     constructor(
         private readonly appId: string,
@@ -43,6 +45,7 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
         private readonly storageFetchWrapper: IFetchWrapper = new FetchWrapper(),
         private readonly deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),
         private readonly odspCache: OdspCache = new OdspCache(),
+        private readonly fileInfoToCreateNewResponseCache = new OdspCache(),
     ) {}
 
     public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
@@ -53,13 +56,9 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
         const isFirstTimeDocumentOpened = !this.documentsOpened.has(docId);
         this.documentsOpened.add(docId);
 
-        return new OdspDocumentService(
+        return OdspDocumentService.create(
             this.appId,
-            docId,
-            odspResolvedUrl.siteUrl,
-            odspResolvedUrl.driveId,
-            odspResolvedUrl.itemId,
-            odspResolvedUrl.endpoints.snapshotStorageUrl,
+            resolvedUrl,
             this.getStorageToken,
             this.getWebsocketToken,
             this.logger,
@@ -68,6 +67,7 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
             import("./getSocketIo").then((m) => m.getSocketIo()),
             this.odspCache,
             isFirstTimeDocumentOpened,
+            this.fileInfoToCreateNewResponseCache,
         );
     }
 }
