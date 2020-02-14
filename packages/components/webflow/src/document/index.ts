@@ -281,10 +281,10 @@ export class FlowDocument extends PrimedComponent {
         this.sharedString.insertMarker(position, ReferenceType.Tile, FlowDocument.lineBreakProperties);
     }
 
-    public insertComponent(position: number, url: string, componentOptions: object, style?: string, classList?: string[]) {
+    public insertComponent(position: number, url: string, view: string, componentOptions: object, style?: string, classList?: string[]) {
         this.sharedString.insertMarker(position, ReferenceType.Tile, Object.freeze({
             ...FlowDocument.inclusionProperties,
-            componentOptions, url, style, classList: classList && classList.join(" "),
+            componentOptions, url, style, classList: classList && classList.join(" "), view,
         }));
     }
 
