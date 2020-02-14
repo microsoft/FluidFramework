@@ -37,6 +37,27 @@ async function getComponentAndRender(loader: Loader, url: string, div: HTMLDivEl
     }
 }
 
+function isOldestClient(container: Container) {
+    if (container.connected) {
+        const quorum = container.getQuorum();
+        const thisClientSeq = container.clientId !== undefined ?
+            quorum.getMember(container.clientId)?.sequenceNumber : undefined;
+
+        if (thisClientSeq) {
+            // see if this client has the lowest seq
+            const clientWithLowerSeqExists =
+                Array.from(quorum.getMembers().values())
+                    .some((c) => thisClientSeq > c.sequenceNumber, thisClientSeq);
+
+            // if this client is the oldest client, it should propose
+            if (!clientWithLowerSeqExists) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 const currentCodeProposalKey = "code";
 export async function initializeContainerCode(
     container: Container,
@@ -91,30 +112,16 @@ export async function initializeContainerCode(
 
     let codeProposalP: Promise<void> | undefined;
     const proposeCodeIfOldestClient = (resolve: (value: boolean) => void) => {
-        // make sure we haven't already kicked off a code proposal
-        if (codeProposalP === undefined) {
-            // get this clients seq
-            const thisClientSeq = container.clientId !== undefined ?
-                quorum.getMember(container.clientId)?.sequenceNumber : undefined;
+        if (codeProposalP === undefined && isOldestClient(container)){
+            codeProposalP = quorum.propose(currentCodeProposalKey, pkgForCodeProposal);
+            codeProposalP.then(
+                () => resolve(true),
+                () => {
+                    codeProposalP = undefined;
+                    resolve(false);
+                });
+            return;
 
-            if (thisClientSeq) {
-                // see if this client has the lowest seq
-                const clientWithLowerSeqExists =
-                    Array.from(quorum.getMembers().values())
-                        .some((c) => thisClientSeq > c.sequenceNumber, thisClientSeq);
-
-                // if this client is the oldest client, it should propose
-                if (!clientWithLowerSeqExists && codeProposalP === undefined) {
-                    codeProposalP = quorum.propose(currentCodeProposalKey, pkgForCodeProposal);
-                    codeProposalP.then(
-                        () => resolve(true),
-                        () => {
-                            codeProposalP = undefined;
-                            resolve(false);
-                        });
-                    return;
-                }
-            }
         }
         resolve(false);
     };
