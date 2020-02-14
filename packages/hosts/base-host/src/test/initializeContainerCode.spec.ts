@@ -15,14 +15,13 @@ import { initializeContainerCode } from "../initializeContainerCode";
 const codePkg = {} as IFluidCodeDetails;
 
 
-class MockQuorum extends EventEmitter implements IQuorum{
+class MockQuorum implements IQuorum, EventEmitter{
 
     private readonly map = new Map<string, any>();
     private readonly members: Map<string, ISequencedClient>;
-
+    private readonly eventEmitter = new EventEmitter();
 
     constructor(... members: [string, Partial<ISequencedClient>][]) {
-        super();
         this.members = new Map(members as [string, ISequencedClient][] ?? []);
     }
 
@@ -31,18 +30,34 @@ class MockQuorum extends EventEmitter implements IQuorum{
             assert.fail(`${key} exists`);
         }
         this.map.set(key, value);
-        this.emit("approveProposal", 0, key, value);
-        this.emit("commitProposal", 0, key, value);
+        this.eventEmitter.emit("approveProposal", 0, key, value);
+        this.eventEmitter.emit("commitProposal", 0, key, value);
     }
+
     has(key: string): boolean {
         return this.map.has(key);
     }
+
     get(key: string) {
         return this.map.get(key);
     }
+
     getApprovalData(key: string): ICommittedProposal | undefined {
         throw new Error("Method not implemented.");
     }
+
+    addMember(id: string, client: ISequencedClient) {
+        this.members.set(id, client);
+        this.eventEmitter.emit("addMember");
+    }
+
+    removeMember(id: string) {
+        if (this.members.delete(id)) {
+            this.eventEmitter.emit("removeMember");
+        }
+    }
+
+
     getMembers(): Map<string, ISequencedClient> {
         return this.members;
     }
@@ -54,6 +69,69 @@ class MockQuorum extends EventEmitter implements IQuorum{
     dispose(): void {
         throw new Error("Method not implemented.");
     }
+
+
+    addListener(event: string | symbol, listener: (...args: any[]) => void): this {
+        throw new Error("Method not implemented.");
+    }
+    on(event: string | symbol, listener: (...args: any[]) => void): this {
+        switch (event) {
+            case "afterOn":
+                this.eventEmitter.on(event, listener);
+                return this;
+
+            case "addMember":
+            case "removeMember":
+            case "approveProposal":
+            case "commitProposal":
+                this.eventEmitter.on(event, listener);
+                this.eventEmitter.emit("afterOn", event);
+                return this;
+            default:
+                throw new Error("Method not implemented.");
+        }
+    }
+    once(event: string | symbol, listener: (...args: any[]) => void): this {
+        throw new Error("Method not implemented.");
+    }
+    prependListener(event: string | symbol, listener: (...args: any[]) => void): this {
+        throw new Error("Method not implemented.");
+    }
+    prependOnceListener(event: string | symbol, listener: (...args: any[]) => void): this {
+        throw new Error("Method not implemented.");
+    }
+    removeListener(event: string | symbol, listener: (...args: any[]) => void): this {
+        this.eventEmitter.removeListener(event, listener);
+        return this;
+    }
+    off(event: string | symbol, listener: (...args: any[]) => void): this {
+        throw new Error("Method not implemented.");
+    }
+    removeAllListeners(event?: string | symbol | undefined): this {
+        throw new Error("Method not implemented.");
+    }
+    setMaxListeners(n: number): this {
+        throw new Error("Method not implemented.");
+    }
+    getMaxListeners(): number {
+        throw new Error("Method not implemented.");
+    }
+    listeners(event: string | symbol): Function[] {
+        throw new Error("Method not implemented.");
+    }
+    rawListeners(event: string | symbol): Function[] {
+        throw new Error("Method not implemented.");
+    }
+    emit(event: string | symbol, ...args: any[]): boolean {
+        throw new Error("Method not implemented.");
+    }
+    eventNames(): (string | symbol)[] {
+        throw new Error("Method not implemented.");
+    }
+    listenerCount(type: string | symbol): number {
+        throw new Error("Method not implemented.");
+    }
+
 }
 
 describe("base-host", () => {
@@ -74,6 +152,12 @@ describe("base-host", () => {
                 getQuorum: () => quorum,
                 existing: false,
                 once: (event, listener) => {
+                    switch (event) {
+                        case "contextChanged":
+                            break;
+                        default:
+                            assert.fail(`Didn't expect ${String(event)}`);
+                    }
                     listener(event);
                     return containter as Container;
                 },
@@ -110,7 +194,12 @@ describe("base-host", () => {
                 const quorum = new MockQuorum(
                     ["1", { sequenceNumber: 1 }],
                     ["2", { sequenceNumber: 2 }],
-                ) as unknown as IQuorum;
+                );
+                quorum.on("afterOn", (event) => {
+                    if (event === "removeMember") {
+                        quorum.removeMember("1");
+                    }
+                });
                 const containter: Partial<Container> = {
                     getQuorum: () => quorum,
                     existing: true,
@@ -119,9 +208,6 @@ describe("base-host", () => {
                     once: (event, listener) => {
                         switch (event) {
                             case "contextChanged":
-                                break;
-                            case "removeMember":
-                                quorum.getMembers().delete("1");
                                 break;
                             default:
                                 assert.fail(`Didn't expect ${String(event)}`);

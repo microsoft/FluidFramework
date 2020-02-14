@@ -18,7 +18,6 @@ function createProposeOnceFunc(quorum: IQuorum, pkgForCodeProposal: IFluidCodeDe
     let proposalP;
     let done = false;
     return async () => {
-
         if (done) {
             return done;
         }
@@ -71,7 +70,7 @@ export async function initializeContainerCode(
         return;
     }
 
-    const proposeFunc = createProposeOnceFunc(quorum, pkgForCodeProposal);
+    const proposeOnceFunc = createProposeOnceFunc(quorum, pkgForCodeProposal);
 
     // start a promise waiting for context changed, which will happen once we get a code proposal
     const contextChangedP = new Promise<void>((resolve) => container.once("contextChanged", () => resolve()));
@@ -80,14 +79,14 @@ export async function initializeContainerCode(
     // this is the most common case
     if (!container.existing) {
         await Promise.all([
-            proposeFunc(),
+            proposeOnceFunc(),
             contextChangedP,
         ]);
         return;
     }
 
     // wait for a code proposal to show up
-    const proposalFoundP = new Promise<boolean>((resolve) => {
+    const proposalFoundP = new Promise<true>((resolve) => {
         // wait for quorum and resolve promise if code shows up:
         // it helps with faster rendering if we have no snapshot,
         // but it also allows Fluid Debugger to work with no snapshots
@@ -100,23 +99,20 @@ export async function initializeContainerCode(
         quorum.on("approveProposal", approveProposal);
     });
 
-    // wait for us to connect or a proposal to show up
-    await Promise.race([
-        proposalFoundP,
-        new Promise<boolean>((resolve) => {
-            if (!container.connected) {
-                container.once("connected", () => resolve(false));
-            } else {
-                resolve(false);
-            }
-        }),
-    ]);
+
+    if (!container.connected) {
+        // wait for us to connect or a proposal to show up
+        await Promise.race([
+            proposalFoundP,
+            new Promise<false>((resolve) => container.once("connected", () => resolve(false))),
+        ]);
+    }
 
     const proposeCodeIfOldestClient = async () => {
-        // if no proposal found, and we are the older client, then propose, otherwise return false
+        // if no proposal found, and we are the oldest client, then propose, otherwise return false
         return Promise.race([
             proposalFoundP,
-            isOldestClient(container) ? proposeFunc() : Promise.resolve(false),
+            isOldestClient(container) ? proposeOnceFunc() : Promise.resolve(false),
         ]);
     };
 
@@ -125,24 +121,26 @@ export async function initializeContainerCode(
     // if we are the oldest client
     if (!await proposeCodeIfOldestClient())
     {
-        const quorumChangeHandler = (resolve: (value: true) => void) => {
+        const quorumChangeHandler = (resolveOnProposal: () => void) => {
             proposeCodeIfOldestClient()
                 .then((proposed) => {
                     if (proposed) {
-                        resolve(proposed);
+                        resolveOnProposal();
                     }
                 }).catch(() => { });
         };
-
-        await Promise.all([
-            proposalFoundP,
-            new Promise<boolean>((resolve) => quorum.on("addMember", () => quorumChangeHandler(resolve))),
-            new Promise<boolean>((resolve) => quorum.on("removeMember", () => quorumChangeHandler(resolve))),
-        ]);
-        quorum.removeListener("addMember", quorumChangeHandler);
-        quorum.removeListener("removeMember", quorumChangeHandler);
+        try {
+            await Promise.race([
+                proposalFoundP,
+                new Promise((resolve) => quorum.on("addMember", () => quorumChangeHandler(resolve))),
+                new Promise((resolve) => quorum.on("removeMember", () => quorumChangeHandler(resolve))),
+            ]);
+        }
+        finally {
+            quorum.removeListener("addMember", quorumChangeHandler);
+            quorum.removeListener("removeMember", quorumChangeHandler);
+        }
     }
-
 
     // finally wait for the context to change
     await contextChangedP;
