@@ -175,7 +175,7 @@ export interface ISequencedDocumentMessage {
     traces: ITrace[];
 
     // Timestamp when the server ticketed the message
-    timestamp?: number;
+    timestamp: number;
 }
 
 export interface ISequencedDocumentSystemMessage extends ISequencedDocumentMessage {
