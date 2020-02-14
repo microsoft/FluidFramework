@@ -9,7 +9,7 @@ import {
 } from "@microsoft/fluid-aqueduct";
 import {
     IComponent,
-    IComponentHTMLVisual,
+    IComponentHTMLView,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentDiscoverableInterfaces } from "@microsoft/fluid-framework-interfaces";
 import { IDirectoryValueChanged } from "@microsoft/fluid-map";
@@ -37,7 +37,7 @@ export interface IEventItemDataModel extends IComponentDateTimeEvent {
  */
 export class EventItem extends PrimedComponent
     implements
-        IComponentHTMLVisual,
+        IComponentHTMLView,
         IComponentDiscoverableInterfaces,
         IComponentDateTimeEvent,
         IEventItemDataModel
@@ -99,7 +99,7 @@ export class EventItem extends PrimedComponent
     }
 
     public get IComponentDateTimeEvent() { return this; }
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
     public get IComponentDiscoverableInterfaces() { return this; }
 
     public on(event: "changed", listener: (id: string) => void): this;

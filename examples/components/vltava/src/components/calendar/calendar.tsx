@@ -9,7 +9,7 @@ import {
 } from "@microsoft/fluid-aqueduct";
 import {
     IComponent,
-    IComponentHTMLVisual,
+    IComponentHTMLView,
     IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentDiscoverInterfaces } from "@microsoft/fluid-framework-interfaces";
@@ -34,7 +34,7 @@ export interface ICalendarDataModel {
 export class Calendar extends PrimedComponent
     implements
     ICalendarDataModel,
-    IComponentHTMLVisual,
+    IComponentHTMLView,
     IComponentDiscoverInterfaces
 {
     private remoteEventsDir: IDirectory;
@@ -45,7 +45,7 @@ export class Calendar extends PrimedComponent
         return Calendar.factory;
     }
 
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
     public get IComponentDiscoverInterfaces() { return this; }
 
     public get interfacesToDiscover(): (keyof IComponent)[] {
