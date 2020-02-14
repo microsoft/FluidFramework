@@ -15,7 +15,6 @@ export type ComponentRegistryEntry = Readonly<Partial<IProvideComponentRegistry 
 export type NamedComponentRegistryEntries =
     Iterable<[string, Promise<ComponentRegistryEntry>]>;
 
-
 export interface IProvideComponentRegistry {
     IComponentRegistry: IComponentRegistry;
 }
