@@ -2,9 +2,14 @@
   "name": "fluid-health-monitor",
   "version": "0.0.1",
   "description": "Checks Fluid service health using a script",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/FluidFramework.git"
+  },
   "license": "MIT",
   "author": "Microsoft",
   "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
     "build:compile": "npm run tsc",
@@ -22,16 +27,18 @@
     "docker:start": "docker run --rm -t monitoring"
   },
   "dependencies": {
-    "@microsoft/fluid-container-definitions": "0.13.17538",
-    "@microsoft/fluid-container-loader": "0.13.17538",
-    "@microsoft/fluid-routerlicious-driver": "0.13.17538",
-    "@microsoft/fluid-routerlicious-host": "0.13.17538",
-    "@microsoft/fluid-driver-definitions": "0.13.17538",
-    "@microsoft/fluid-base-host": "0.13.17538",
+    "@microsoft/fluid-container-definitions": "0.13.19189",
+    "@microsoft/fluid-container-loader": "0.13.19189",
+    "@microsoft/fluid-routerlicious-driver": "0.13.19189",
+    "@microsoft/fluid-routerlicious-host": "0.13.19189",
+    "@microsoft/fluid-driver-definitions": "0.13.19189",
+    "@microsoft/fluid-base-host": "0.13.19189",
+    "@microsoft/fluid-server-services": "0.1002.20282",
     "@sentry/node": "^5.6.2",
     "debug": "^4.1.1",
     "jsonwebtoken": "^8.5.1",
     "nconf": "^0.10.0",
+    "@types/mocha": "^5.2.5",
     "uuid": "^3.3.2",
     "winston": "3.2.1"
   },
