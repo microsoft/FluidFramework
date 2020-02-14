@@ -6,8 +6,8 @@
 import {
     IComponent,
     IComponentHandle,
-    IComponentHTMLVisual,
-    IProvideComponentHTMLVisual,
+    IComponentHTMLView,
+    IProvideComponentHTMLView,
 } from "@microsoft/fluid-component-core-interfaces";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 
@@ -16,9 +16,9 @@ import uuid from "uuid/v4";
 /**
  * Anchor is an default component is responsible for managing creation and the default component
  */
-export class Anchor extends PrimedComponent implements IProvideComponentHTMLVisual {
+export class Anchor extends PrimedComponent implements IProvideComponentHTMLView {
     private readonly defaultComponentId = "default-component-id";
-    private defaultComponentInternal: IComponentHTMLVisual | undefined;
+    private defaultComponentInternal: IComponentHTMLView | undefined;
 
     private get defaultComponent() {
         if (!this.defaultComponentInternal) {
@@ -34,7 +34,7 @@ export class Anchor extends PrimedComponent implements IProvideComponentHTMLVisu
         return Anchor.factory;
     }
 
-    public get IComponentHTMLVisual() { return this.defaultComponent; }
+    public get IComponentHTMLView() { return this.defaultComponent; }
 
     protected async componentInitializingFirstTime(props: any) {
         const defaultComponent = await this.createAndAttachComponent<IComponent>(uuid(), "vltava");
