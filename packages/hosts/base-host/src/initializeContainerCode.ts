@@ -22,12 +22,10 @@ function createProposeOnceFunc(quorum: IQuorum, pkgForCodeProposal: IFluidCodeDe
             return done;
         }
 
-        if (proposalP !== undefined) {
-            await proposalP;
-            return done;
+        if (proposalP === undefined) {
+            proposalP = quorum.propose(currentCodeProposalKey, pkgForCodeProposal);
         }
 
-        proposalP = quorum.propose(currentCodeProposalKey, pkgForCodeProposal);
         try {
             await proposalP;
             done = true;
@@ -119,8 +117,8 @@ export async function initializeContainerCode(
     // we are connected and there still isn't a proposal
     // we'll wait for one to show up, and will create one
     // if we are the oldest client
-    if (!await proposeCodeIfOldestClient())
-    {
+    if (!await proposeCodeIfOldestClient()) {
+
         const quorumChangeHandler = (resolveOnProposal: () => void) => {
             proposeCodeIfOldestClient()
                 .then((proposed) => {
