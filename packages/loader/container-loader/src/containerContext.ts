@@ -15,7 +15,6 @@ import {
     IAudience,
     ICodeLoader,
     IContainerContext,
-    IRuntimeState,
     IDeltaManager,
     ILoader,
     IRuntime,
@@ -57,7 +56,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         snapshotFn: (message: string) => Promise<void>,
         closeFn: (reason?: string) => void,
         version: string,
-        previousRuntimeState: IRuntimeState,
+        previousRuntimeState: any,
     ): Promise<ContainerContext> {
         const context = new ContainerContext(
             container,
@@ -168,7 +167,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         public readonly snapshotFn: (message: string) => Promise<void>,
         public readonly closeFn: () => void,
         public readonly version: string,
-        public readonly previousRuntimeState: IRuntimeState,
+        public readonly previousRuntimeState: any,
     ) {
         super();
         this.logger = container.subLogger;
@@ -190,7 +189,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         raiseConnectedEvent(this, value, clientId);
     }
 
-    public async stop(): Promise<IRuntimeState> {
+    public async stop(): Promise<any> {
         // const snapshot = await this.runtime!.snapshot("", false);
         // const summaryCollection = this.runtime.summaryCollection;
         const state = await this.runtime!.stop();

@@ -23,7 +23,6 @@ import {
     IDeltaSender,
     ILoader,
     IRuntime,
-    IRuntimeState,
 } from "@microsoft/fluid-container-definitions";
 import {
     Deferred,
@@ -87,6 +86,14 @@ import { ISummaryStats, SummaryTreeConverter } from "./summaryTreeConverter";
 import { analyzeTasks } from "./taskAnalyzer";
 import { DeltaScheduler } from "./deltaScheduler";
 import { SummaryCollection } from "./summaryCollection";
+
+export interface IRuntimeState {
+    snapshot?: ITree,
+    snapshotTree?: ISnapshotTree,
+    summaryCollection?: any,
+    nextSumm?: Promise<Summarizer>,
+    nextD?: Deferred<Summarizer>,
+}
 
 interface ISummaryTreeWithStats {
     summaryStats: ISummaryStats;
@@ -469,6 +476,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.registry;
     }
 
+    public nextSumm?: Promise<Summarizer>;
+    public nextD?: Deferred<Summarizer>;
     public readonly IComponentSerializer: IComponentSerializer = new ComponentSerializer();
 
     public readonly IComponentHandleContext: IComponentHandleContext;
@@ -597,6 +606,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.context.on("refreshBaseSummary",
             (snapshot: ISnapshotTree) => this.refreshBaseSummary(snapshot));
 
+        this.nextSumm = this.context.previousRuntimeState.nextSumm;
+        this.nextD = this.context.previousRuntimeState.nextD;
+
         // We always create the summarizer in the case that we are asked to generate summaries. But this may
         // want to be on demand instead.
         // Don't use optimizations when generating summaries with a document loaded using snapshots.
@@ -614,7 +626,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             context,
             this.runtimeOptions.generateSummaries !== false || this.loadedFromSummary,
             this.runtimeOptions.enableWorker,
-            this.logger);
+            this.logger,
+            (s) => { this.nextSumm = s; },
+            this.nextSumm);
+
         if (this.context.connectionState === ConnectionState.Connected) {
             this.summaryManager.setConnected(this.context.clientId);
         }
@@ -695,7 +710,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         const snapshot = await this.snapshot("", false);
         this.summarizer.dispose();
         this.closed = true;
-        return { snapshot, summaryCollection: this.summaryCollection };
+        return { snapshot, summaryCollection: this.summaryCollection, nextSumm: this.nextSumm, nextD: this.nextD };
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string, version: string) {

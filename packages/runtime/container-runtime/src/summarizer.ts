@@ -11,7 +11,7 @@ import {
     IRequest,
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
-import { ChildLogger, PerformanceEvent, PromiseTimer, Timer } from "@microsoft/fluid-core-utils";
+import { ChildLogger, PerformanceEvent, PromiseTimer, Timer, Deferred } from "@microsoft/fluid-core-utils";
 import {
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
@@ -60,6 +60,10 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         }
         this.runtime.deltaManager.inbound.on("op",
             (op) => this.summaryCollection.handleOp(op as ISequencedDocumentMessage));
+
+        if (this.runtime.nextD) {
+            this.runtime.nextD.resolve(this);
+        }
     }
 
     public async run(onBehalfOf: string): Promise<void> {
@@ -180,6 +184,12 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
             this.runtime.removeListener("batchEnd", this.opListener);
         }
     }
+
+    public setSumm(f) {
+        this.runtime.nextD = new Deferred<Summarizer>();
+        f(this.runtime.nextD.promise);
+    }
+
 
     private async generateSummary(safe: boolean): Promise<GenerateSummaryData | undefined> {
         if (this.onBehalfOfClientId !== this.runtime.summarizerClientId) {

@@ -9,6 +9,7 @@ import { IComponent, IComponentRunnable, IRequest } from "@microsoft/fluid-compo
 import { IContainerContext, LoaderHeader } from "@microsoft/fluid-container-definitions";
 import { ChildLogger, Heap, IComparer, IHeapNode, PerformanceEvent } from "@microsoft/fluid-core-utils";
 import { ISequencedClient } from "@microsoft/fluid-protocol-definitions";
+import { Summarizer } from "./summarizer";
 
 interface ITrackedClient {
     clientId: string;
@@ -80,6 +81,8 @@ export class SummaryManager extends EventEmitter {
         private readonly summariesEnabled: boolean,
         private readonly enableWorker: boolean,
         parentLogger: ITelemetryLogger,
+        private readonly f: (s: Promise<Summarizer>) => void,
+        private readonly nextSumm?: Promise<Summarizer>,
         private readonly maxRestarts: number = defaultMaxRestarts,
         initialDelayMs: number = defaultInitialDelayMs,
     ) {
@@ -260,6 +263,11 @@ export class SummaryManager extends EventEmitter {
             return undefined;
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
+        if (this.nextSumm) {
+            return this.nextSumm;
+        }
+
         // We have been elected the summarizer. Some day we may be able to summarize with a live document but for
         // now we play it safe and launch a second copy.
         this.logger.sendTelemetryEvent({ eventName: "CreatingSummarizer" });
@@ -288,11 +296,13 @@ export class SummaryManager extends EventEmitter {
         }
 
         const rawComponent = response.value as IComponent;
-        const summarizer = rawComponent.IComponentRunnable;
+        const summarizer = rawComponent.IComponentRunnable as Summarizer;
 
         if (!summarizer) {
             return Promise.reject<IComponentRunnable>("Component does not implement IComponentRunnable");
         }
+
+        summarizer.setSumm(this.f);
 
         return summarizer;
     }
