@@ -23,7 +23,7 @@ import {
 import {
     Anchor,
     Calendar,
-    EventItem,
+    DateEventItem,
     TabsComponent,
     Vltava,
 } from "./components";
@@ -105,7 +105,7 @@ const generateFactory = () => {
         },
         {
             type: "eventItem",
-            factory: Promise.resolve(EventItem.getFactory()),
+            factory: Promise.resolve(DateEventItem.getFactory()),
             capabilities: ["IComponentHTMLVisual"],
             friendlyName: "Event Item",
             fabricIconName: "EventDate",

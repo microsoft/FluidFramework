@@ -23,7 +23,7 @@ import {
 } from "../../interfaces";
 import { EventItemView } from "./view";
 
-export interface IEventItemDataModel extends IComponentDateTimeEvent {
+export interface IDateEventItemDataModel extends IComponentDateTimeEvent {
     allDay: boolean;
     end: string;
     start: string;
@@ -32,20 +32,21 @@ export interface IEventItemDataModel extends IComponentDateTimeEvent {
 }
 
 /**
- * Button is a simple component that is just a button. It registers with the matchMaker so
- * when the button is pressed Components that consume clicks can do work
+ * DateEventItem displays a simple Forum that allows you to enter an event. It emits
+ * looks for the MatchMaker Container Service to register itself as a provider of
+ * IComponentDateTimeEvent.
  */
-export class EventItem extends PrimedComponent
+export class DateEventItem extends PrimedComponent
     implements
         IComponentHTMLView,
         IComponentDiscoverableInterfaces,
         IComponentDateTimeEvent,
-        IEventItemDataModel
+        IDateEventItemDataModel
 {
-    private static readonly factory = new PrimedComponentFactory(EventItem, []);
+    private static readonly factory = new PrimedComponentFactory(DateEventItem, []);
 
     public static getFactory() {
-        return EventItem.factory;
+        return DateEventItem.factory;
     }
 
     public set allDay(value: boolean) {

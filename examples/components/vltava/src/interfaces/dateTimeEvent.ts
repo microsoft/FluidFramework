@@ -20,10 +20,8 @@ export interface IDateTimeEvent {
     readonly resource: any;
 }
 
-
-// Note: IComponentHandle is required if you want the other person to be able to get a handle to your data
 export interface IComponentDateTimeEvent extends IProvideComponentDateTimeEvent {
-    event: IDateTimeEvent;
+    readonly event: IDateTimeEvent;
 
     on(event: "changed", listener: (id: string) => void): this;
 }

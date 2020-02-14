@@ -16,7 +16,7 @@ import {
     IDatePickerStrings,
 } from "office-ui-fabric-react";
 
-import { IEventItemDataModel } from "./eventItem";
+import { IDateEventItemDataModel } from "./eventItem";
 
 
 const DayPickerStrings: IDatePickerStrings = {
@@ -50,7 +50,7 @@ const DayPickerStrings: IDatePickerStrings = {
 };
 
 interface IEventItemViewProps {
-    dataModel: IEventItemDataModel;
+    dataModel: IDateEventItemDataModel;
 }
 
 interface IEventItemViewState {

@@ -28,14 +28,12 @@ export interface ICalendarDataModel {
 }
 
 /**
- * Button is a simple component that is just a button. It registers with the matchMaker so
- * when the button is pressed Components that consume clicks can do work
+ * Calendar uses the MatchMaker Container Service to find all other Components that Provide
+ * IComponentDateTimeEvent data. It binds to those events and holds handles to the components.
+ * It display the DateTimeEvent in the calendar view.
  */
 export class Calendar extends PrimedComponent
-    implements
-    ICalendarDataModel,
-    IComponentHTMLView,
-    IComponentDiscoverInterfaces
+    implements ICalendarDataModel, IComponentHTMLView, IComponentDiscoverInterfaces
 {
     private remoteEventsDir: IDirectory;
 
@@ -57,7 +55,7 @@ export class Calendar extends PrimedComponent
     public notifyComponentsDiscovered(interfaceName: keyof IComponent, components: readonly IComponent[]): void {
         components.forEach((component) => {
             if (!component[interfaceName]) {
-                console.log(`component doesn't support interface ${interfaceName}`);
+                throw new Error(`Component doesn't support interface ${interfaceName}`);
             }
 
             switch(interfaceName) {
@@ -72,7 +70,6 @@ export class Calendar extends PrimedComponent
                     }
                 }
                 default:
-                    // There is no default
             }
         });
     }
@@ -113,10 +110,7 @@ export class Calendar extends PrimedComponent
             }
         });
 
-        // Resolve handles we have to other Date Event Components
-        const keys = Array.from(this.remoteEventsDir.keys());
-        for (let i = 0; i < this.remoteEventsDir.size; i++) {
-            const key = keys[i];
+        for (const key of this.remoteEventsDir.keys()) {
             const value = this.remoteEventsDir.get<IComponentHandle>(key);
             const event = await value.get<IComponentDateTimeEvent>();
             const emit = () => this.emit("changed");
