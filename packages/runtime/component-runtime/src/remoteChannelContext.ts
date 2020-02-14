@@ -46,7 +46,9 @@ export class RemoteChannelContext implements IChannelContext {
         private readonly extraBlobs: Map<string, string>,
         private readonly branch: string,
         private readonly attributes: RequiredIChannelAttributes | undefined,
-    ) {}
+    ) {
+        this.summaryTracker.setBaseTree(baseSnapshot);
+    }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public getChannel(): Promise<IChannel> {
