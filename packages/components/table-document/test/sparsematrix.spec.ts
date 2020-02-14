@@ -7,7 +7,7 @@
 
 import * as assert from "assert";
 import { SparseMatrix, SparseMatrixFactory, SparseMatrixItem } from "@microsoft/fluid-sequence";
-import { TestHost } from "@microsoft/fluid-local-test-server";
+import { TestHost } from "@microsoft/fluid-local-test-utils";
 // eslint-disable-next-line import/no-unassigned-import
 import "mocha";
 

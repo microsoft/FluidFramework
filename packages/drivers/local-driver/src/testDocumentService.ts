@@ -8,24 +8,8 @@ import { ConnectionMode, IClient } from "@microsoft/fluid-protocol-definitions";
 import * as socketStorage from "@microsoft/fluid-routerlicious-driver";
 import { GitManager } from "@microsoft/fluid-server-services-client";
 import { TestHistorian } from "@microsoft/fluid-server-test-utils";
-import { TestDeltaStorageService, TestDocumentDeltaConnection } from "@microsoft/fluid-test-driver";
-import { ITestDeltaConnectionServer } from "./testDeltaConnectionServer";
-
-/**
- * Creates and returns a document service for testing.
- * @param testDeltaConnectionServer - delta connection server for ops
- * @param tokenProvider - token provider with a single token
- * @param tenantId - ID of tenant
- * @param documentId - ID of document
- */
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-export function createTestDocumentService(
-    testDeltaConnectionServer: ITestDeltaConnectionServer,
-    tokenProvider: socketStorage.TokenProvider,
-    tenantId: string,
-    documentId: string): api.IDocumentService {
-    return new TestDocumentService(testDeltaConnectionServer, tokenProvider, tenantId, documentId);
-}
+import { ITestDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { TestDeltaStorageService, TestDocumentDeltaConnection } from "./";
 
 /**
  * Basic implementation of a document service for testing.
@@ -83,6 +67,7 @@ export class TestDocumentService implements api.IDocumentService {
      * Returns null
      */
     public async branch(): Promise<string> {
+        // eslint-disable-next-line no-null/no-null
         return null;
     }
 
@@ -90,6 +75,23 @@ export class TestDocumentService implements api.IDocumentService {
      * Returns null
      */
     public getErrorTrackingService(): any {
+        // eslint-disable-next-line no-null/no-null
         return null;
     }
+}
+
+/**
+ * Creates and returns a document service for testing.
+ * @param testDeltaConnectionServer - delta connection server for ops
+ * @param tokenProvider - token provider with a single token
+ * @param tenantId - ID of tenant
+ * @param documentId - ID of document
+ */
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
+export function createTestDocumentService(
+    testDeltaConnectionServer: ITestDeltaConnectionServer,
+    tokenProvider: socketStorage.TokenProvider,
+    tenantId: string,
+    documentId: string): api.IDocumentService {
+    return new TestDocumentService(testDeltaConnectionServer, tokenProvider, tenantId, documentId);
 }

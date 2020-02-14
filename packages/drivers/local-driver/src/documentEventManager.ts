@@ -5,7 +5,7 @@
 
 import { IDeltaManager } from "@microsoft/fluid-container-definitions";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { ITestDeltaConnectionServer } from "./testDeltaConnectionServer";
+import { ITestDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 
 /**
  * Document delta event which must at least provide access
