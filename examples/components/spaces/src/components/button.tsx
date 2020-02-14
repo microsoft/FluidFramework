@@ -35,9 +35,10 @@ const textStyle: React.CSSProperties = {
 };
 
 export const ButtonName = "button";
+export const FriendlyButtonName = "Button";
 
 /**
- * Clicker example using view interfaces and stock component classes.
+ * Button example using view interfaces and stock component classes.
  */
 export class Button extends PrimedComponent implements IComponentHTMLVisual {
 

@@ -44,6 +44,8 @@ interface IFacepileAddFaceExampleState {
 
 export const FacePileName = "facepile";
 
+export const FriendlyFacePileName = "Face Pile";
+
 export class FacepileAddFaceExample extends React.Component<IFacepileAddFaceExampleProps,IFacepileAddFaceExampleState> {
     constructor(props: IFacepileAddFaceExampleProps) {
         super(props);

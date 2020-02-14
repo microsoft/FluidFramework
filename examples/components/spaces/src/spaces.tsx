@@ -18,7 +18,6 @@ import { ISpacesDataModel, SpacesDataModel, SupportedComponent } from "./dataMod
 
 import { SpacesGridView } from "./view";
 import { ComponentToolbar, ComponentToolbarName } from "./components";
-import { IProvideComponentFactory } from "@microsoft/fluid-runtime-definitions";
 
 /**
  * Spaces is the Fluid
@@ -69,15 +68,12 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
     }
 
     private async initializeDataModel() {
-        const registry = ((await this.context.hostRuntime.IComponentRegistry) as any).map;
-        const registryDetails = (registry as Map<string, Promise<IProvideComponentFactory>>).values
-        this.dataModelInternal =
+       this.dataModelInternal =
             new SpacesDataModel(
                 this.root,
                 this.createAndAttachComponent.bind(this),
                 this.getComponent.bind(this),
-                Spaces.componentToolbarId,
-                registryDetails as any
+                Spaces.componentToolbarId
             );
     }
 
@@ -101,7 +97,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
      */
     public render(div: HTMLElement) {
         ReactDOM.render(
-            <SpacesGridView dataModel={this.dataModel} />,
+            <SpacesGridView dataModel={this.dataModel}/>,
             div);
     }
 }

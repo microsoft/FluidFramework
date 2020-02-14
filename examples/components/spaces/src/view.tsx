@@ -30,7 +30,12 @@ const buttonContainerStyle: React.CSSProperties = {
     left: 0,
 };
 
-const gridContainerStyle: React.CSSProperties = {paddingTop: "25px"};
+const buttonStyle: React.CSSProperties = {
+    width: "2rem",
+    height: "2rem",
+}
+
+const gridContainerStyle: React.CSSProperties = { paddingTop: "5rem" };
 
 /**
  * This wrapper handles the async-ness of loading a component.
@@ -146,15 +151,40 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                     {
                         editable &&
                         <div style={buttonContainerStyle}>
-                            <button onClick={() => this.props.dataModel.removeComponent(id)}>❌</button>
-                            <button onClick={() => {
-                                navigator.clipboard.writeText(componentUrl).then(() => {
-                                    console.log("Async: Copying to clipboard was successful!");
-                                }, (err) => {
-                                    console.error("Async: Could not copy text: ", err);
-                                });
-                            }}>📎</button>
-                            <button onClick={() => window.open(componentUrl, "_blank")}>↗</button>
+                            <button
+                                style={buttonStyle}
+                                onClick={() => this.props.dataModel.removeComponent(id)}
+                                onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
+                                    event.stopPropagation();
+                                }}
+                            >
+                                {"❌"}
+                            </button>
+                            <button
+                                style={buttonStyle}
+                                onClick={
+                                    () => {
+                                        navigator.clipboard.writeText(componentUrl).then(() => {
+                                            console.log("Async: Copying to clipboard was successful!");
+                                        }, (err) => {
+                                            console.error("Async: Could not copy text: ", err);
+                                        });
+                                }}
+                                onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
+                                    event.stopPropagation();
+                                }}
+                            >
+                                {"📎"}
+                            </button>
+                            <button
+                                style={buttonStyle}
+                                onClick={() => window.open(componentUrl, "_blank")}
+                                onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
+                                    event.stopPropagation();
+                                }}
+                            >
+                                {"↗️"}
+                            </button>
                         </div>
                     }
                     <div style={embeddedComponentStyle}>

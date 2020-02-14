@@ -19,6 +19,7 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 export const TextBoxName = `textbox`;
+export const FriendlyTextBoxName = "Text Box";
 
 /**
  * TextBox is a really simple component that uses the CollaborativeTextArea to provide a
