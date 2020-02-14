@@ -23,6 +23,7 @@ import {
     IDeltaSender,
     ILoader,
     IRuntime,
+    IRuntimeState,
 } from "@microsoft/fluid-container-definitions";
 import {
     Deferred,
@@ -85,15 +86,15 @@ import { SummaryManager } from "./summaryManager";
 import { ISummaryStats, SummaryTreeConverter } from "./summaryTreeConverter";
 import { analyzeTasks } from "./taskAnalyzer";
 import { DeltaScheduler } from "./deltaScheduler";
-import { SummaryCollection } from "./summaryCollection";
+// import { SummaryCollection } from "./summaryCollection";
 
-export interface IRuntimeState {
+/* export interface IRuntimeState {
     snapshot?: ITree,
     snapshotTree?: ISnapshotTree,
-    summaryCollection?: any,
-    nextSumm?: Promise<Summarizer>,
-    nextD?: Deferred<Summarizer>,
-}
+    summaryCollection?: SummaryCollection,
+    nextSummarizerP?: Promise<Summarizer>,
+    nextSummarizerD?: Deferred<Summarizer>,
+} */
 
 interface ISummaryTreeWithStats {
     summaryStats: ISummaryStats;
@@ -376,7 +377,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     ): Promise<ContainerRuntime> {
         const componentRegistry = new ContainerRuntimeComponentRegistry(registryEntries);
 
-        const chunkId = context.baseSnapshot.blobs[".chunks"];
+        const chunkId = context.baseSnapshot?.blobs[".chunks"];
         const chunks = chunkId
             ? await readAndParse<[string, string[]][]>(context.storage, chunkId)
             : [];
@@ -476,8 +477,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.registry;
     }
 
-    public nextSumm?: Promise<Summarizer>;
-    public nextD?: Deferred<Summarizer>;
+    public nextSummarizerP?: Promise<Summarizer>;
+    public nextSummarizerD?: Deferred<Summarizer>;
     public readonly IComponentSerializer: IComponentSerializer = new ComponentSerializer();
 
     public readonly IComponentHandleContext: IComponentHandleContext;
@@ -552,7 +553,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.IComponentHandleContext = new ComponentHandleContext("", this);
 
         // Extract components stored inside the snapshot
-        this.loadedFromSummary = context.baseSnapshot.trees[".protocol"] ? true : false;
+        this.loadedFromSummary = context.baseSnapshot?.trees[".protocol"] ? true : false;
         const components = new Map<string, ISnapshotTree | string>();
         if (this.loadedFromSummary) {
             Object.keys(context.baseSnapshot.trees).forEach((value) => {
@@ -561,7 +562,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     components.set(value, tree);
                 }
             });
-        } else {
+        } else if (context.baseSnapshot) {
             Object.keys(context.baseSnapshot.commits).forEach((key) => {
                 const moduleId = context.baseSnapshot.commits[key];
                 components.set(key, moduleId);
@@ -606,8 +607,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.context.on("refreshBaseSummary",
             (snapshot: ISnapshotTree) => this.refreshBaseSummary(snapshot));
 
-        this.nextSumm = this.context.previousRuntimeState.nextSumm;
-        this.nextD = this.context.previousRuntimeState.nextD;
+        this.nextSummarizerP = this.context.previousRuntimeState.nextSumm;
+        this.nextSummarizerD = this.context.previousRuntimeState.nextD;
 
         // We always create the summarizer in the case that we are asked to generate summaries. But this may
         // want to be on demand instead.
@@ -627,8 +628,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.runtimeOptions.generateSummaries !== false || this.loadedFromSummary,
             this.runtimeOptions.enableWorker,
             this.logger,
-            (s) => { this.nextSumm = s; },
-            this.nextSumm);
+            (summarizer) => { this.nextSummarizerP = summarizer; },
+            this.nextSummarizerP);
 
         if (this.context.connectionState === ConnectionState.Connected) {
             this.summaryManager.setConnected(this.context.clientId);
@@ -649,10 +650,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
     public get IComponentConfiguration() {
         return this.context.configuration;
-    }
-
-    public get summaryCollection(): SummaryCollection {
-        return this.summarizer.summaryCollection;
     }
 
     /**
@@ -708,9 +705,15 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     public async stop(): Promise<IRuntimeState> {
         this.verifyNotClosed();
         const snapshot = await this.snapshot("", false);
+        this.summaryManager.dispose();
         this.summarizer.dispose();
         this.closed = true;
-        return { snapshot, summaryCollection: this.summaryCollection, nextSumm: this.nextSumm, nextD: this.nextD };
+        return {
+            snapshot,
+            summaryCollection: this.summarizer.summaryCollection,
+            nextSummarizerP: this.nextSummarizerP,
+            nextSummarizerD: this.nextSummarizerD,
+        };
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string, version: string) {

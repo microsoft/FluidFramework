@@ -20,6 +20,7 @@ import {
     IGenericBlob,
     IRuntimeFactory,
     LoaderHeader,
+    IRuntimeState,
 } from "@microsoft/fluid-container-definitions";
 import {
     ChildLogger,
@@ -1110,7 +1111,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private async loadContext(
         attributes: IDocumentAttributes,
         storage: IDocumentStorageService,
-        previousRuntimeState: any,
+        previousRuntimeState: IRuntimeState,
     ) {
         this.pkg = this.getCodeDetailsFromQuorum();
         const chaincode = this.pkg ? await this.loadRuntimeFactory(this.pkg) : new NullChaincode();
@@ -1118,9 +1119,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go to this loader
         const loader = new RelativeLoader(this.loader, this.originalRequest);
-
-        previousRuntimeState.snapshotTree = previousRuntimeState.snapshotTree ??
-            { id: null, blobs: {}, commits: {}, trees: {} };
 
         this.context = await ContainerContext.load(
             this,
@@ -1140,7 +1138,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             (reason?: string) => this.close(reason),
             Container.version,
             previousRuntimeState,
-
         );
 
         loader.resolveContainer(this);

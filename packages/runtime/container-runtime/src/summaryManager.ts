@@ -4,10 +4,10 @@
  */
 
 import { EventEmitter } from "events";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger, IDisposable } from "@microsoft/fluid-common-definitions";
 import { IComponent, IComponentRunnable, IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerContext, LoaderHeader } from "@microsoft/fluid-container-definitions";
-import { ChildLogger, Heap, IComparer, IHeapNode, PerformanceEvent } from "@microsoft/fluid-core-utils";
+import { ChildLogger, Heap, IComparer, IHeapNode, PerformanceEvent, PromiseTimer } from "@microsoft/fluid-core-utils";
 import { ISequencedClient } from "@microsoft/fluid-protocol-definitions";
 import { Summarizer } from "./summarizer";
 
@@ -58,18 +58,24 @@ enum SummaryManagerState {
 const defaultMaxRestarts = 5;
 const defaultInitialDelayMs = 5000;
 
-export class SummaryManager extends EventEmitter {
+export class SummaryManager extends EventEmitter implements IDisposable {
     private readonly logger: ITelemetryLogger;
     private readonly quorumHeap = new QuorumHeap();
     private readonly initialDelayP: Promise<void>;
+    private readonly initialDelayTimer: PromiseTimer;
     private summarizerClientId?: string;
     private clientId?: string;
     private connected = false;
     private state = SummaryManagerState.Off;
     private runningSummarizer?: IComponentRunnable;
+    private _disposed = false;
 
     public get summarizer() {
         return this.summarizerClientId;
+    }
+
+    public get disposed() {
+        return this._disposed;
     }
 
     private get shouldSummarize() {
@@ -81,8 +87,8 @@ export class SummaryManager extends EventEmitter {
         private readonly summariesEnabled: boolean,
         private readonly enableWorker: boolean,
         parentLogger: ITelemetryLogger,
-        private readonly f: (s: Promise<Summarizer>) => void,
-        private readonly nextSumm?: Promise<Summarizer>,
+        private readonly setNextSummarizer: (s: Promise<Summarizer>) => void,
+        private readonly nextSummarizerP?: Promise<Summarizer>,
         private readonly maxRestarts: number = defaultMaxRestarts,
         initialDelayMs: number = defaultInitialDelayMs,
     ) {
@@ -110,7 +116,9 @@ export class SummaryManager extends EventEmitter {
             this.refreshSummarizer();
         });
 
-        this.initialDelayP = new Promise((resolve) => setTimeout(resolve, initialDelayMs));
+        // this.initialDelayP = new Promise((resolve) => setTimeout(resolve, initialDelayMs));
+        this.initialDelayTimer = new PromiseTimer(initialDelayMs, () => {});
+        this.initialDelayP = this.initialDelayTimer.start().catch(() => {});
 
         this.refreshSummarizer();
     }
@@ -212,6 +220,9 @@ export class SummaryManager extends EventEmitter {
         const delayMs = (attempt - 1) * 20;
         this.createSummarizer(delayMs).then((summarizer) => {
             if (summarizer === undefined) {
+                if (this.disposed) {
+                    return;
+                }
                 if (this.shouldSummarize) {
                     this.start(attempt + 1);
                 } else {
@@ -259,13 +270,13 @@ export class SummaryManager extends EventEmitter {
             delayMs > 0 ? new Promise((resolve) => setTimeout(resolve, delayMs)) : Promise.resolve(),
         ]);
 
-        if (!this.shouldSummarize) {
+        if (this.disposed || !this.shouldSummarize) {
             return undefined;
         }
 
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        if (this.nextSumm) {
-            return this.nextSumm;
+        if (this.nextSummarizerP) {
+            return this.nextSummarizerP;
         }
 
         // We have been elected the summarizer. Some day we may be able to summarize with a live document but for
@@ -302,8 +313,13 @@ export class SummaryManager extends EventEmitter {
             return Promise.reject<IComponentRunnable>("Component does not implement IComponentRunnable");
         }
 
-        summarizer.setSumm(this.f);
+        this.setNextSummarizer(summarizer.setSummarizer());
 
         return summarizer;
+    }
+
+    public dispose() {
+        this.initialDelayTimer.clear();
+        this._disposed = true;
     }
 }

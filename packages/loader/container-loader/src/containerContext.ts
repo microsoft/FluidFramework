@@ -19,6 +19,7 @@ import {
     ILoader,
     IRuntime,
     IRuntimeFactory,
+    IRuntimeState,
 } from "@microsoft/fluid-container-definitions";
 import { IDocumentStorageService, IError } from "@microsoft/fluid-driver-definitions";
 import { raiseConnectedEvent } from "@microsoft/fluid-protocol-base";
@@ -56,7 +57,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         snapshotFn: (message: string) => Promise<void>,
         closeFn: (reason?: string) => void,
         version: string,
-        previousRuntimeState: any,
+        previousRuntimeState: IRuntimeState,
     ): Promise<ContainerContext> {
         const context = new ContainerContext(
             container,
@@ -144,11 +145,11 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
     }
 
     public get baseSnapshot() {
-        return this._baseSnapshot ?? null;
+        return this._baseSnapshot;
     }
 
     private runtime: IRuntime | undefined;
-    private _baseSnapshot: ISnapshotTree | undefined;
+    private _baseSnapshot: ISnapshotTree | null;
 
     constructor(
         private readonly container: Container,
@@ -171,6 +172,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
     ) {
         super();
         this.logger = container.subLogger;
+        // this._baseSnapshot = previousRuntimeState.snapshotTree ?? { id: null, blobs: {}, commits: {}, trees: {} };
         this._baseSnapshot = previousRuntimeState.snapshotTree;
     }
 
@@ -189,9 +191,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         raiseConnectedEvent(this, value, clientId);
     }
 
-    public async stop(): Promise<any> {
-        // const snapshot = await this.runtime!.snapshot("", false);
-        // const summaryCollection = this.runtime.summaryCollection;
+    public async stop(): Promise<IRuntimeState> {
         const state = await this.runtime!.stop();
 
         // Dispose
@@ -225,8 +225,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public reloadContext(): Promise<void> {
+    public async reloadContext(): Promise<void> {
         return this.container.reloadContext();
     }
 

@@ -61,9 +61,8 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         this.runtime.deltaManager.inbound.on("op",
             (op) => this.summaryCollection.handleOp(op as ISequencedDocumentMessage));
 
-        if (this.runtime.nextD) {
-            this.runtime.nextD.resolve(this);
-        }
+        // eslint-disable-next-line no-unused-expressions
+        this.runtime.nextSummarizerD?.resolve(this);
     }
 
     public async run(onBehalfOf: string): Promise<void> {
@@ -185,9 +184,9 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         }
     }
 
-    public setSumm(f) {
-        this.runtime.nextD = new Deferred<Summarizer>();
-        f(this.runtime.nextD.promise);
+    public async setSummarizer(): Promise<Summarizer> {
+        this.runtime.nextSummarizerD = new Deferred<Summarizer>();
+        return this.runtime.nextSummarizerD.promise;
     }
 
 
