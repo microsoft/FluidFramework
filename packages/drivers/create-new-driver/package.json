@@ -53,7 +53,7 @@
     "@microsoft/fluid-component-core-interfaces": "^0.14.0",
     "@microsoft/fluid-core-utils": "^0.14.0",
     "@microsoft/fluid-driver-definitions": "^0.14.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1001.0"
+    "@microsoft/fluid-protocol-definitions": "^0.1002.0"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",
