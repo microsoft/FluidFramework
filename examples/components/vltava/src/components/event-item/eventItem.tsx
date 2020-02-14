@@ -139,10 +139,10 @@ export class EventItem extends PrimedComponent
 
     public render(div: HTMLElement) {
         ReactDOM.render(
-            <>
+            <div style={{padding: 20}}>
                 <h1>Date Event Item</h1>
                 <EventItemView dataModel={this}/>
-            </>,
+            </div>,
             div);
     }
 }
