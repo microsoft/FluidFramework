@@ -4,7 +4,7 @@
  */
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
 import { IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
-import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
 import { IDirectory } from "@microsoft/fluid-map";
 import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
@@ -19,8 +19,10 @@ export const TextListName = `${pkg.name as string}-textlist`;
  * TextBox is a really simple component that uses the CollaborativeTextArea to provide a
  * collaborative textarea.
  */
-export class TextList extends PrimedComponent implements IComponentHTMLVisual, IComponentReactViewable {
-    public get IComponentHTMLVisual() { return this; }
+export class TextList extends PrimedComponent implements
+    IComponentHTMLView,
+    IComponentReactViewable {
+    public get IComponentHTMLView() { return this; }
     public get IComponentReactViewable() { return this; }
 
     private textDirectory: IDirectory;
@@ -46,7 +48,7 @@ export class TextList extends PrimedComponent implements IComponentHTMLVisual, I
         });
     }
 
-    // start IComponentHTMLVisual
+    // start IComponentHTMLView
 
     public render(div: HTMLElement) {
         ReactDOM.render(
@@ -55,7 +57,7 @@ export class TextList extends PrimedComponent implements IComponentHTMLVisual, I
         );
     }
 
-    // end IComponentHTMLVisual
+    // end IComponentHTMLView
 
     // start IComponentReactViewable
 

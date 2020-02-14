@@ -10,8 +10,8 @@ import { tableViewType } from "@fluid-example/table-view";
 import { Editor, FlowDocument, htmlFormatter, IComponentHTMLViewFactory } from "@fluid-example/webflow";
 import {
     IComponent,
+    IComponentHTMLOptions,
     IComponentHTMLView,
-    IComponentHTMLVisual,
     IComponentLoadable,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
@@ -61,7 +61,7 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
         private readonly mathP: Promise<IComponentCollection>,
         private readonly videosP: Promise<IComponentCollection>,
         private readonly imagesP: Promise<IComponentCollection>,
-        private readonly intelViewer: IComponentHTMLVisual,
+        private readonly intelViewer: IComponentHTMLView,
         private readonly root: ISharedDirectory,
     ) { }
 
@@ -73,7 +73,7 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
         }
     }
 
-    public render(elm: HTMLElement): void {
+    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
         const flowDiv = document.createElement("div");
         const insightsDiv = document.createElement("div");
         elm.style.display = "flex";
@@ -200,8 +200,7 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
         });
 
         flowDiv.appendChild(this.viewport);
-        const intelRenderable = this.intelViewer.addView();
-        intelRenderable.render(insightsDiv);
+        this.intelViewer.render(insightsDiv);
     }
 
     // #endregion IComponentHTMLView
