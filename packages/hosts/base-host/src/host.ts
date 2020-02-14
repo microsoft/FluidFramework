@@ -12,6 +12,8 @@ import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { IFluidResolvedUrl, IResolvedUrl } from "@microsoft/fluid-driver-definitions";
 import { IResolvedPackage, WebCodeLoader } from "@microsoft/fluid-web-code-loader";
 import { IBaseHostConfig } from "./hostConfig";
+import { initializeContainerCode } from "./initializeContainerCode";
+
 
 async function getComponentAndRender(loader: Loader, url: string, div: HTMLDivElement) {
     const response = await loader.request({ url });
@@ -35,112 +37,6 @@ async function getComponentAndRender(loader: Loader, url: string, div: HTMLDivEl
         renderable.render(div, { display: "block" });
         return;
     }
-}
-
-function isOldestClient(container: Container) {
-    if (container.connected) {
-        const quorum = container.getQuorum();
-        const thisClientSeq = container.clientId !== undefined ?
-            quorum.getMember(container.clientId)?.sequenceNumber : undefined;
-
-        if (thisClientSeq) {
-            // see if this client has the lowest seq
-            const clientWithLowerSeqExists =
-                Array.from(quorum.getMembers().values())
-                    .some((c) => thisClientSeq > c.sequenceNumber, thisClientSeq);
-
-            // if this client is the oldest client, it should propose
-            if (!clientWithLowerSeqExists) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-const currentCodeProposalKey = "code";
-export async function initializeContainerCode(
-    container: Container,
-    pkgForCodeProposal: IFluidCodeDetails): Promise<void> {
-
-    const quorum = container.getQuorum();
-
-    // nothing to do if the proposal exists
-    if (quorum.has(currentCodeProposalKey)) {
-        return;
-    }
-
-    // start a promise waiting for context changed, which will happen once we get a code proposal
-    const contextChangedP = new Promise<void>((resolve) => container.once("contextChanged", () => resolve()));
-
-    // short circuit if we know the container wasn't existing
-    // this is the most common case
-    if (!container.existing) {
-        await Promise.all([
-            quorum.propose(currentCodeProposalKey, pkgForCodeProposal),
-            contextChangedP,
-        ]);
-        return;
-    }
-
-    // wait for a code proposal to show up
-    const proposalFoundP = new Promise<boolean>((resolve) => {
-        // wait for quorum and resolve promise if code shows up:
-        // it helps with faster rendering if we have no snapshot,
-        // but it also allows Fluid Debugger to work with no snapshots
-        const approveProposal = (_seqNumber, key: string) => {
-            if (key === currentCodeProposalKey) {
-                quorum.removeListener("approveProposal", approveProposal);
-                resolve(true);
-            }
-        };
-        quorum.on("approveProposal", approveProposal);
-    });
-
-    // wait for us to connect or a proposal to show up
-    let proposalFound =
-        await Promise.race([
-            proposalFoundP,
-            new Promise<boolean>((resolve) => {
-                if (!container.connected) {
-                    container.once("connected", () => resolve(false));
-                } else {
-                    resolve(false);
-                }
-            }),
-        ]);
-
-    let codeProposalP: Promise<void> | undefined;
-    const proposeCodeIfOldestClient = (resolve: (value: boolean) => void) => {
-        if (codeProposalP === undefined && isOldestClient(container)){
-            codeProposalP = quorum.propose(currentCodeProposalKey, pkgForCodeProposal);
-            codeProposalP.then(
-                () => resolve(true),
-                () => {
-                    codeProposalP = undefined;
-                    resolve(false);
-                });
-            return;
-
-        }
-        resolve(false);
-    };
-
-    // we are connected and there still isn't a proposal
-    // we'll wait for one to show up, and will create one
-    // if we are the oldest client
-    proposalFound = await new Promise<boolean>((resolve) => proposeCodeIfOldestClient(resolve));
-    while (!proposalFound) {
-        // wait for the proposal, and everytime the quorum changes check if we are now the oldest client
-        proposalFound = await Promise.race([
-            proposalFoundP,
-            new Promise<boolean>((resolve) => container.once("addMember", () => proposeCodeIfOldestClient(resolve))),
-            new Promise<boolean>((resolve) => container.once("removeMember", () => proposeCodeIfOldestClient(resolve))),
-        ]);
-    }
-
-    // finally wait for the context to change
-    await contextChangedP;
 }
 
 /**

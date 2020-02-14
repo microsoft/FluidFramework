@@ -10,7 +10,7 @@ import { Container } from "@microsoft/fluid-container-loader";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { ICommittedProposal, IQuorum, ISequencedClient } from "@microsoft/fluid-protocol-definitions";
-import { initializeContainerCode } from "../host";
+import { initializeContainerCode } from "../initializeContainerCode";
 
 const codePkg = {} as IFluidCodeDetails;
 
