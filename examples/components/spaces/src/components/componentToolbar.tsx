@@ -8,7 +8,7 @@ import {
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import {
-    IComponentHTMLVisual, IComponent,
+    IComponentHTMLVisual,
 } from "@microsoft/fluid-component-core-interfaces";
 import {
     DefaultButton as Button,
@@ -18,7 +18,8 @@ import {
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { SupportedComponent } from "../dataModel";
-import { IContainerComponentDetails, InternalRegistry } from "..";
+import { IContainerComponentDetails, IProvideComponentRegistryDetails } from "../interfaces";
+import { InternalRegistry } from "..";
 
 const componentToolbarStyle: React.CSSProperties = { position: "absolute", top: 10, left: 10, zIndex: 1000 };
 
@@ -43,7 +44,8 @@ export class ComponentToolbar extends PrimedComponent implements IComponentHTMLV
 
     protected async componentHasInitialized() {
         const registry = await (this.context.hostRuntime.IComponentRegistry as InternalRegistry).get("");
-        const registryDetails = (registry as IComponent).IComponentRegistryDetails;
+        const registryDetails = (registry as Readonly<Partial<IProvideComponentRegistryDetails>>)
+            .IComponentRegistryDetails;
         this.supportedComponentList = (registryDetails as InternalRegistry).getFromCapabilities("IComponentHTMLVisual");
     }
 

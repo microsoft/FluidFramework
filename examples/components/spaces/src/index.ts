@@ -33,28 +33,9 @@ import {
 } from "./components";
 import { Spaces } from "./spaces";
 import { SupportedComponent } from "./dataModel";
+import { IContainerComponentDetails } from "./interfaces";
 
 const componentName = "spaces";
-
-declare module "@microsoft/fluid-component-core-interfaces" {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideComponentRegistryDetails>> { }
-}
-
-export interface IContainerComponentDetails {
-    type: SupportedComponent;
-    factory: Promise<IProvideComponentFactory>;
-    friendlyName: string;
-    fabricIconName: string;
-    capabilities: (keyof IComponent)[];
-}
-export interface IProvideComponentRegistryDetails {
-    readonly IComponentRegistryDetails: IComponentRegistryDetails;
-}
-
-export interface IComponentRegistryDetails extends IProvideComponentRegistryDetails {
-    getFromCapabilities(type: keyof IComponent): IContainerComponentDetails[];
-}
 
 export class InternalRegistry implements IComponentRegistry {
     public get IComponentRegistry() { return this; }
