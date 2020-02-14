@@ -5,9 +5,16 @@
 
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 
-import { ClickerName, ClickerInstantiationFactory } from "@fluid-example/clicker";
+import { ClickerInstantiationFactory } from "@fluid-example/clicker";
 import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
 import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
+import { 
+    IProvideComponentFactory,
+    NamedComponentRegistryEntries,
+    IComponentRegistry,
+    ComponentRegistryEntry
+} from "@microsoft/fluid-runtime-definitions";
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 
 import {
     ComponentToolbar,
@@ -26,9 +33,6 @@ import {
     FriendlyTextBoxName,
 } from "./components";
 import { Spaces } from "./spaces";
-import { IProvideComponentFactory, NamedComponentRegistryEntries, IComponentRegistry, ComponentRegistryEntry } from "@microsoft/fluid-runtime-definitions";
-
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { SupportedComponent } from "./dataModel";
 
 const componentName = "spaces";
@@ -85,7 +89,7 @@ export class InternalRegistry implements IComponentRegistry {
 const generateFactory = () => {
     const containerComponentsDefinition: IContainerComponentDetails[] = [
         {
-            type: ClickerName as SupportedComponent,
+            type: "clicker",
             factory: Promise.resolve(ClickerInstantiationFactory),
             friendlyName: "Clicker",
             fabricIconName: "Touch",
