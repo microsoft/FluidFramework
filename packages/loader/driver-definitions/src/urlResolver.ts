@@ -21,6 +21,12 @@ export interface IFluidResolvedUrl extends IResolvedUrlBase {
     url: string;
     tokens: { [name: string]: string };
     endpoints: { [name: string]: string };
+    openMode?: OpenMode;
+}
+
+export enum OpenMode {
+    "CreateNew",
+    "OpenExisting",
 }
 
 export interface IUrlResolver {
