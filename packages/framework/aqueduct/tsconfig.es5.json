@@ -1,0 +1,16 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "outDir": "./es5",
+        "target": "ES5",
+        "lib": [
+            "es2016",
+            "dom"
+        ]
+    },
+    "exclude": [
+        "dist",
+        "node_modules",
+        "test"
+    ],
+}

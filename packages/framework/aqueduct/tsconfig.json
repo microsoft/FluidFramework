@@ -6,6 +6,7 @@
     ],
     "compilerOptions": {
         "strict": true,
+        "esModuleInterop": true,
         "declarationDir": "./dist",
         "rootDir": "./src",
         "outDir": "./dist",

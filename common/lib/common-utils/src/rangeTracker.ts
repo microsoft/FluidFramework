@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import assert from "assert";
 
-// eslint-disable-next-line max-len
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, import/no-internal-modules
-const cloneDeep = require("lodash/cloneDeep");
+// eslint-disable-next-line import/no-internal-modules
+import cloneDeep from "lodash/cloneDeep";
 
 /**
  * A range in the RangeTracker
