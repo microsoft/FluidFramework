@@ -6,7 +6,8 @@
         "lib": [
             "es2016",
             "dom"
-        ]
+        ],
+        "downlevelIteration": true
     },
     "exclude": [
         "dist",
