@@ -27,8 +27,8 @@
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
     "start:docker": "webpack-dev-server --config webpack.config.js --package package.json --env.mode docker",
     "start:r11s": "webpack-dev-server --config webpack.config.js --package package.json --env.mode r11s",
-    "start:spo-df": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo-df",
     "start:spo": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo",
+    "start:spo-df": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo-df",
     "tsc": "tsc",
     "webpack": "webpack --env.production"
   },
