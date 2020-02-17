@@ -8,8 +8,7 @@
         "strict": true,
         "rootDir": "./src",
         "outDir": "./dist",
-        "types": [ "node", "mocha" ],
-        "esModuleInterop": true
+        "types": [ "node", "mocha" ]
     },
     "include": [
         "src/**/*"

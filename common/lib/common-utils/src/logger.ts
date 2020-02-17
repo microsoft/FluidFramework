@@ -13,7 +13,7 @@ import {
     ITelemetryProperties,
     TelemetryEventPropertyType,
 } from "@microsoft/fluid-common-definitions";
-import registerDebug from "debug";
+import * as registerDebug from "debug";
 import { pkgName, pkgVersion } from "./packageVersion";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const performanceNow = require("performance-now") as (() => number);

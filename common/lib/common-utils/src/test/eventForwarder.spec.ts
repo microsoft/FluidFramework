@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import * as assert from "assert";
 import { EventEmitter } from "events";
 import { EventForwarder } from "../eventForwarder";
 
