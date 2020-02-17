@@ -29,7 +29,7 @@
     "postinstall:lerna": "lerna bootstrap --strict --hoist --nohoist tslint-microsoft-contrib",
     "publish-local": "lerna run publish-local --stream",
     "restart": "cd server/routerlicious && npm run restart",
-    "sort-package-json": "sort-package-json && sort-package-json ./{server,tools}/*/package.json && sort-package-json ./examples/*/*/package.json && lerna exec -- sort-package-json ./package.json",
+    "sort-package-json": "sort-package-json && lerna exec --stream -- sort-package-json ./package.json && sort-package-json ./tools/*/package.json && sort-package-json ./common/*/*/package.json",
     "start": "docker-compose up",
     "stop": "docker-compose down",
     "stop:full": "docker-compose down && docker volume prune --force",
