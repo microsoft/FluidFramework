@@ -11,10 +11,12 @@ import {
     IProvideComponentRegistry,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
-import { SimpleContainerRuntimeFactory } from "./simpleContainerRuntimeFactory";
+
+import { ContainerServiceRegistryEntries } from "../containerServices";
+import { SimpleContainerRuntimeFactory } from "./";
 
 /**
- *  Simple Fluid Module instantiation library. This should be exposed as fluidExport off the entrypoint to your module
+ *  Simple Fluid Module instantiation library. This should be exposed as fluidExport off the entry point to your module
  *
  * This factory exposes the following interfaces:
  *  IComponentFactory: instantiates the default component directly, sub-components must be registered manually
@@ -31,7 +33,9 @@ export class SimpleModuleInstantiationFactory implements
     constructor(
         private readonly defaultComponentName: string,
         private readonly registryEntries: NamedComponentRegistryEntries,
-        private readonly requestHandlers: RuntimeRequestHandler[] = []) {
+        private readonly serviceRegistry: ContainerServiceRegistryEntries = [],
+        private readonly requestHandlers: RuntimeRequestHandler[] = [],
+    ) {
         this.registry = new ComponentRegistry(registryEntries);
     }
     public get IComponentRegistry() { return this.registry; }
@@ -45,7 +49,7 @@ export class SimpleModuleInstantiationFactory implements
             context,
             this.defaultComponentName,
             this.registryEntries,
-            true,
+            this.serviceRegistry,
             this.requestHandlers,
         );
     }

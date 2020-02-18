@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { DocumentDeltaEventManager, TestHost } from "@microsoft/fluid-local-test-server";
 import { Counter, CounterValueType } from "@microsoft/fluid-map";
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString, SharedStringFactory } from "@microsoft/fluid-sequence";
-import { strict as assert } from "assert";
 
 /**
  * Implementation of counter component for testing.
@@ -51,7 +51,7 @@ export class TestComponent extends PrimedComponent {
 }
 
 // tslint:disable-next-line:mocha-no-side-effect-code
-const testComponents: ReadonlyArray<[string, Promise<IComponentFactory>]> = [
+const testComponents: readonly [string, Promise<IComponentFactory>][] = [
     [TestComponent.type, Promise.resolve(TestComponent.getFactory())],
 ];
 

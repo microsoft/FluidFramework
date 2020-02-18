@@ -46,8 +46,8 @@ export function create(config: Provider, ensureLoggedIn: any): Router {
                 "profile",
                 "email",
             ],
-        },
-    ));
+        }),
+    );
 
     router.get(
         "/login_spo",
@@ -56,8 +56,8 @@ export function create(config: Provider, ensureLoggedIn: any): Router {
                 "offline_access",
                 "https://microsoft-my.sharepoint.com/AllSites.Write",
             ],
-        },
-    ));
+        }),
+    );
 
     router.get(
         "/login_spo-df",
@@ -66,8 +66,8 @@ export function create(config: Provider, ensureLoggedIn: any): Router {
                 "offline_access",
                 "https://microsoft-my.sharepoint-df.com/AllSites.Write",
             ],
-        },
-    ));
+        }),
+    );
 
     router.get(
         "/login_pushsrv",
@@ -76,8 +76,8 @@ export function create(config: Provider, ensureLoggedIn: any): Router {
                 "offline_access",
                 "https://pushchannel.1drv.ms/PushChannel.ReadWrite.All",
             ],
-        },
-    ));
+        }),
+    );
 
     router.get(
         "/connect/microsoft",
@@ -97,8 +97,8 @@ export function create(config: Provider, ensureLoggedIn: any): Router {
         passport.authenticate("openidconnect", {
             failureRedirect: "/login",
             successReturnToOrRedirect: "/",
-        },
-    ));
+        }),
+    );
 
     router.get(
         "/login/local",

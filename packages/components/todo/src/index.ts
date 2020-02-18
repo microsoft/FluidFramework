@@ -13,5 +13,6 @@ export const fluidExport = new SimpleModuleInstantiationFactory(
     new Map([
         [OrchestratorName, Promise.resolve(OrchestratorInstantiationFactory)],
     ]),
+    [],
     [todoItemViewRequestHandler, todoViewRequestHandler],
 );

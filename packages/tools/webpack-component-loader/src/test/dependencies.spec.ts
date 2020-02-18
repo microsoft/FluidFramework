@@ -28,14 +28,14 @@ const verifyNoFluidPackages = async (dir: string, visitedPkgDirs: string[] = [])
     const searches: Promise<void>[] = [];
     for (const entry of entries) {
         const entryDir = path.join(dir, entry);
-        if (entry.indexOf("@fluid") !== -1) {
+        if (entry.includes("@fluid")) {
             assert.fail(entryDir);
         }
         // exclude files
-        if (entry.indexOf(".") === -1) {
-            if (searchFolders.indexOf(entry) !== -1) {
+        if (!entry.includes(".")) {
+            if (searchFolders.includes(entry)) {
                 searches.push(verifyNoFluidPackages(entryDir, visitedPkgDirs));
-            } else if (visitedPkgDirs.indexOf(entry) === -1) {
+            } else if (!visitedPkgDirs.includes(entry)) {
                 // only visit other folders once as these will either be packages
                 //  or things like src, and dist that are not relevant
                 visitedPkgDirs.push(entry);

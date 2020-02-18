@@ -15,6 +15,7 @@ import {
 import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import {
     ITestDeltaConnectionServer,
+    SessionStorageDbFactory,
     TestDeltaConnectionServer,
     TestDocumentServiceFactory,
     TestResolver,
@@ -26,22 +27,58 @@ import { extractDetails, IResolvedPackage } from "@microsoft/fluid-web-code-load
 import * as jwt from "jsonwebtoken";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
+import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
 import { InsecureUrlResolver } from "./insecureUrlResolver";
-import { SessionStorageDbFactory } from "./sessionStorageTestDb";
+import { OdspUrlResolver } from "./odspUrlResolver";
 
 export interface IDevServerUser extends IUser {
     name: string;
 }
 
-export interface IRouteOptions {
-    mode: "local" | "docker" | "live" | "tinylicious";
+export interface IBaseRouteOptions {
+    port: number;
+    npm?: string;
+}
+
+export interface ILocalRouteOptions extends IBaseRouteOptions {
+    mode: "local";
+    single?: boolean;
+}
+
+export interface IDockerRouteOptions extends IBaseRouteOptions {
+    mode: "docker";
+    tenantId?: string;
+    tenantSecret?: string;
+    bearerSecret?: string;
+}
+
+export interface IRouterliciousRouteOptions extends IBaseRouteOptions {
+    mode: "r11s";
     fluidHost?: string;
     tenantId?: string;
     tenantSecret?: string;
     bearerSecret?: string;
-    npm?: string;
-    single?: boolean;
 }
+
+export interface ITinyliciousRouteOptions extends IBaseRouteOptions {
+    mode: "tinylicious";
+    bearerSecret?: string;
+}
+
+export interface IOdspRouteOptions extends IBaseRouteOptions {
+    mode: "spo" | "spo-df";
+    server?: string;
+    odspAccessToken?: string;
+    pushAccessToken?: string;
+    forceReauth?: boolean;
+}
+
+export type RouteOptions =
+    | ILocalRouteOptions
+    | IDockerRouteOptions
+    | IRouterliciousRouteOptions
+    | ITinyliciousRouteOptions
+    | IOdspRouteOptions;
 
 const getUser = (): IDevServerUser => ({
     id: uuid(),
@@ -136,7 +173,7 @@ async function getResolvedPackage(
     };
 }
 
-function getUrlResolver(options: IRouteOptions): IUrlResolver {
+function getUrlResolver(documentId: string, options: RouteOptions): IUrlResolver {
     switch (options.mode) {
         case "docker":
             return new InsecureUrlResolver(
@@ -148,7 +185,7 @@ function getUrlResolver(options: IRouteOptions): IUrlResolver {
                 getUser(),
                 options.bearerSecret);
 
-        case "live":
+        case "r11s":
             return new InsecureUrlResolver(
                 options.fluidHost,
                 options.fluidHost.replace("www", "alfred"),
@@ -168,8 +205,14 @@ function getUrlResolver(options: IRouteOptions): IUrlResolver {
                 getUser(),
                 options.bearerSecret);
 
+        case "spo":
+        case "spo-df":
+            return new OdspUrlResolver(
+                options.server,
+                { accessToken: options.odspAccessToken });
+
         default: // Local
-            return new TestResolver();
+            return new TestResolver(documentId);
     }
 }
 
@@ -177,7 +220,9 @@ function getUrlResolver(options: IRouteOptions): IUrlResolver {
 function makeSideBySideDiv(divId?: string) {
     const div = document.createElement("div");
     div.style.flexGrow = "1";
+    div.style.width = "50vw"; // ensure the divs don't encroach on each other
     div.style.border = "1px solid lightgray";
+    div.style.boxSizing = "border-box";
     div.style.position = "relative";                // Make the new <div> a CSS stacking context.
     if (divId) {
         div.id = divId;
@@ -188,7 +233,7 @@ function makeSideBySideDiv(divId?: string) {
 export async function start(
     documentId: string,
     packageJson: IPackage,
-    options: IRouteOptions,
+    options: RouteOptions,
     div: HTMLDivElement,
 ): Promise<void> {
     const url = window.location.href;
@@ -202,22 +247,39 @@ export async function start(
         url,
     };
 
-    const urlResolver = getUrlResolver(options);
+    const urlResolver = getUrlResolver(documentId, options);
 
     let documentServiceFactory: IDocumentServiceFactory;
     let deltaConn: ITestDeltaConnectionServer;
-    if (options.mode !== "local") {
-        documentServiceFactory = new RouterliciousDocumentServiceFactory(
-            false,
-            new DefaultErrorTracking(),
-            false,
-            true,
-            undefined,
-        );
-    } else {
-        deltaConn = TestDeltaConnectionServer.create(new SessionStorageDbFactory(documentId));
-        documentServiceFactory = new TestDocumentServiceFactory(deltaConn);
+
+    switch (options.mode) {
+        case "local": {
+            deltaConn = TestDeltaConnectionServer.create(new SessionStorageDbFactory(documentId));
+            documentServiceFactory = new TestDocumentServiceFactory(deltaConn);
+            break;
+        }
+        case "spo":
+        case "spo-df": {
+            // TODO: web socket token
+            documentServiceFactory = new OdspDocumentServiceFactory(
+                "webpack-component-loader",
+                async (siteUrl, refresh) => { return options.odspAccessToken; },
+                async (refresh) => { return options.pushAccessToken; },
+                { send: (event) => { return; } },
+            );
+            break;
+        }
+        default: {
+            documentServiceFactory = new RouterliciousDocumentServiceFactory(
+                false,
+                new DefaultErrorTracking(),
+                false,
+                true,
+                undefined,
+            );
+        }
     }
+
     const hostConf: IBaseHostConfig = { documentServiceFactory, urlResolver };
 
     const double = (options.mode === "local") && !options.single;

@@ -22,7 +22,7 @@ WORKDIR /usr/src/server
 # Copy over the package and package-lock and install prior to the other code to optimize Docker's file system cache on rebuilds
 COPY LICENSE.txt .
 COPY server/routerlicious/package*.json server/routerlicious/
-COPY server/routerlicious/lerna-docker.json server/routerlicious/lerna.json
+COPY server/routerlicious/lerna.json server/routerlicious/lerna.json
 COPY server/routerlicious/.npmrc server/routerlicious/
 COPY tools/build-server-resources/build-version.js server/routerlicious/tools/build-server-resources/
 
@@ -31,6 +31,7 @@ COPY server/routerlicious/packages/protocol-definitions/package*.json server/rou
 COPY server/routerlicious/packages/kafka-orderer/package*.json server/routerlicious/packages/kafka-orderer/
 COPY server/routerlicious/packages/lambdas-driver/package*.json server/routerlicious/packages/lambdas-driver/
 COPY server/routerlicious/packages/lambdas/package*.json server/routerlicious/packages/lambdas/
+COPY server/routerlicious/packages/local-server/package*.json server/routerlicious/packages/local-server/
 COPY server/routerlicious/packages/memory-orderer/package*.json server/routerlicious/packages/memory-orderer/
 COPY server/routerlicious/packages/routerlicious/package*.json server/routerlicious/packages/routerlicious/
 COPY server/routerlicious/packages/services/package*.json server/routerlicious/packages/services/
@@ -39,8 +40,6 @@ COPY server/routerlicious/packages/services-core/package*.json server/routerlici
 COPY server/routerlicious/packages/services-utils/package*.json server/routerlicious/packages/services-utils/
 COPY server/routerlicious/packages/test-utils/package*.json server/routerlicious/packages/test-utils/
 COPY server/routerlicious/packages/protocol-base/package*.json server/routerlicious/packages/protocol-base/
-COPY packages/utils/build-common/package*.json server/routerlicious/packages/utils/build-common/
-COPY packages/utils/eslint-config-fluid/package*.json server/routerlicious/packages/utils/eslint-config-fluid/
 
 # Copy over chaincode npmrc and package.json to dynamically install packages.
 COPY server/routerlicious/chaincode/* /tmp/chaincode/
@@ -68,8 +67,6 @@ RUN npm install --unsafe-perm
 # And now copy over our actual code and build
 WORKDIR /usr/src/server
 COPY server/routerlicious/packages/ server/routerlicious/packages/
-COPY packages/utils/build-common/ server/routerlicious/packages/utils/build-common/
-COPY packages/utils/eslint-config-fluid/ server/routerlicious/packages/utils/eslint-config-fluid/
 
 # Switch to the server folder and build
 WORKDIR /usr/src/server/server/routerlicious

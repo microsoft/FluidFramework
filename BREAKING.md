@@ -1,3 +1,77 @@
+# 0.14 Breaking Changes
+- [Samples and chaincode have been renamed to examples and components respectively](##Samples-and-chaincode-have-been-renamed-to-examples-and-components-respectively)
+- [Top-level `type` on `IClient` removed](#Top-level-type-on-IClient-removed)
+- [Remove back-compat support for loader <= 0.8](#remove-back-compat-support-for-loader-0.8)
+- [New Error types](#New-Error-types)
+- [`IComponentContext` - `createSubComponent` removed, `createComponent` signature updated](#`IComponentContext`---`createSubComponent`-removed,-`createComponent`-signature-updated)
+- [Changes to the render interfaces](#Changes-to-the-render-interfaces)
+
+## Samples and chaincode have been renamed to examples and components respectively
+The directories themselves have been renamed.
+All path references in the dockerfile and json manifests have been updated along with variables assigned using path constants in code
+
+## Top-level `type` on `IClient` removed
+
+The `type` field on `IClient` has been removed.
+
+## Remove back-compat support for loader <= 0.8
+
+Back-compat support code for postProcess and ScheduleManager is removed for loader <= 0.8, which doesn't support group ops.
+Any component based on runtime >= 0.14 will no longer work with loader <= 0.8
+
+## New Error types
+The following new error interfaces have been added:
+- `IWriteError` is thrown when ops are sent on a read-only document
+- `IFatalError` is thrown when a fatal error (500) is received from ODSP
+
+## `IComponentContext` - `createSubComponent` removed, `createComponent` signature updated
+
+The `createSubComponent` method on `IComponentContext` has been removed. Use `createComponent` instead whose signature has been updated. The new function signature is as below:
+```typescript
+public async createComponent(
+        pkgOrId: string | undefined,
+        pkg?: string,
+        props?: any) {
+```
+It does not acccept a package path anymore but just a package name. To pass in props, an ID has to be provided now. However, ID is being deprecated so prefer passing undefined in its place (the runtime will generate an ID in this case). This API will now attempt to create the specified package off the current sub-registry and if that fails, it will attempt to create it off the global registry.
+
+For creating a component with a specific package path, use `createComponent` or `_createComponentWithProps` in `IHostRuntime`.
+
+## Changes to the render interfaces
+
+The rendering interfaces have undergone several changes:
+- `IComponentHTMLRender` has been removed.  `IComponentHTMLView` now has a `render()` member, and `IComponentHTMLVisual` does not.  If your component renders, it should probably be an `IComponentHTMLView`.
+- Since `IComponentHTMLVisual` now only has the member `addView()`, it is mandatory.  If your component does not already implement `addView`, it should not be an `IComponentHTMLVisual`.
+- On `IComponentHTMLView`, `remove()` is now optional.  If your view component needs to perform cleanup when removed from the DOM, do it in `remove()` - otherwise there is no need to implement it.
+- `IComponentHTMLView` now extends the new `IProvideComponentHTMLView`, so you can query for whether a component is a view.  You must implement the `IComponentHTMLView` member if you implement the interface.
+
+# 0.13 Breaking Changes
+
+- [Fluid Packages Require Consumers on TypeScript `>=3.6`](##Fluid-Packages-Require-Consumers-on-TypeScript->=3.6)
+- [IHost interface removed, Loader constructor signature updated](#IHost-interface-removed-Loader-constructor-signature-updated)
+
+New error types are added in 0.13. So whenever any error is emitted from container it will be of type IError which will have the property errorType which will tell the app, what type of error it is.
+It will also contain the property critical which will tell the app that the error is critical if it is true. Different errorTypes are defined in loader/driver-definitions/src/error.ts.
+
+## Fluid Packages Require Consumers on TypeScript `>=3.6`
+
+Fluid now requires consumers of our packages to use a TypeScript compiler version `>=3.6`. The Fluid `./packages` repo has upgraded to TypeScript `3.7.4`. TypeScript 3.7 has a breaking change to the `.d.ts` format having to do with getters and setters and is part of an effort to do [Class Field Mitigations](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#class-field-mitigations).
+
+TypeScript now emits `get/set` accessors in `.d.ts` files. TypeScript versions `3.5` and prior do not know how to read these and throw the below error when compiling. TypeScript version `3.6` is forwards compatible but does not emit the accessors.
+
+```text
+"error TS1086: An accessor cannot be declared in an ambient context."
+```
+
+More about the changes:
+
+- [Class Field Mitigations](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#class-field-mitigations)  
+- [Full list of TypeScript changes](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html)
+
+## IHost interface removed, Loader constructor signature updated
+
+The IHost interface has been removed.  This primarily impacts the signature of the `Loader` constructor, which now just takes the `IUrlResolver` directly in its place.
+
 # 0.12 Breaking Changes
 
 - [Packages moved from packages to server](#Packages-moved-from-packages-to-server)

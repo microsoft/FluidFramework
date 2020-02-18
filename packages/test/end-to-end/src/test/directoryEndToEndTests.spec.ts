@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* tslint:disable:no-unsafe-any */
-/* tslint:disable:no-backbone-get-set-outside-model  */
+import * as assert from "assert";
 import * as api from "@fluid-internal/client-api";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import {
@@ -16,7 +15,6 @@ import {
 } from "@microsoft/fluid-local-test-server";
 import { ISharedDirectory, ISharedMap, SharedDirectory, SharedMap } from "@microsoft/fluid-map";
 import { MessageType } from "@microsoft/fluid-protocol-definitions";
-import * as assert from "assert";
 
 describe("Directory", () => {
     const id = "fluid://test.com/test/test";
@@ -37,15 +35,15 @@ describe("Directory", () => {
         const serviceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
         const resolver = new TestResolver();
         user1Document = await api.load(
-            id, { resolver }, {}, serviceFactory);
+            id, resolver, {}, serviceFactory);
         documentDeltaEventManager.registerDocuments(user1Document);
 
         user2Document = await api.load(
-            id, { resolver }, {}, serviceFactory);
+            id, resolver, {}, serviceFactory);
         documentDeltaEventManager.registerDocuments(user2Document);
 
         user3Document = await api.load(
-            id, { resolver }, {}, serviceFactory);
+            id, resolver, {}, serviceFactory);
         documentDeltaEventManager.registerDocuments(user3Document);
         await documentDeltaEventManager.pauseProcessing();
 
@@ -60,11 +58,11 @@ describe("Directory", () => {
     });
 
     function expectAllValues(msg, key, path, value1, value2, value3) {
-        const user1Value = root1Directory.getWorkingDirectory(path).get(key) as string;
+        const user1Value = root1Directory.getWorkingDirectory(path).get(key);
         assert.equal(user1Value, value1, `Incorrect value for ${key} in document 1 ${msg}`);
-        const user2Value = root2Directory.getWorkingDirectory(path).get(key) as string;
+        const user2Value = root2Directory.getWorkingDirectory(path).get(key);
         assert.equal(user2Value, value2, `Incorrect value for ${key} in document 2 ${msg}`);
-        const user3Value = root3Directory.getWorkingDirectory(path).get(key) as string;
+        const user3Value = root3Directory.getWorkingDirectory(path).get(key);
         assert.equal(user3Value, value3, `Incorrect value for ${key} in document 3 ${msg}`);
     }
     function expectAllBeforeValues(key, path, value1, value2, value3) {
@@ -75,9 +73,11 @@ describe("Directory", () => {
     }
 
     function expectAllSize(size: number, path?: string) {
+        /* eslint-disable @typescript-eslint/strict-boolean-expressions */
         const dir1 = path ? root1Directory.getWorkingDirectory(path) : root1Directory;
         const dir2 = path ? root2Directory.getWorkingDirectory(path) : root2Directory;
         const dir3 = path ? root3Directory.getWorkingDirectory(path) : root3Directory;
+        /* eslint-enable @typescript-eslint/strict-boolean-expressions */
 
         const keys1 = Array.from(dir1.keys());
         assert.equal(keys1.length, size, "Incorrect number of Keys in document1");

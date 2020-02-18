@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory, SimpleContainerRuntimeFactory } from "@microsoft/fluid-aqueduct";
+import {
+    PrimedComponent,
+    PrimedComponentFactory,
+    SimpleContainerRuntimeFactory,
+    ContainerServiceRegistryEntries,
+} from "@microsoft/fluid-aqueduct";
 import {
     IComponent,
     IComponentHandle,
@@ -158,6 +163,7 @@ export class TestHost {
         private readonly sharedObjectFactories: readonly ISharedObjectFactory[] = [],
         deltaConnectionServer?: ITestDeltaConnectionServer,
         private readonly scope: IComponent = {},
+        private readonly containerServiceRegistry: ContainerServiceRegistryEntries = [],
     ) {
         this.deltaConnectionServer = deltaConnectionServer || TestDeltaConnectionServer.create();
 
@@ -176,7 +182,8 @@ export class TestHost {
                                 [TestRootComponent.type, Promise.resolve(
                                     new PrimedComponentFactory(TestRootComponent, sharedObjectFactories),
                                 )],
-                            ]),
+                            ],
+                            this.containerServiceRegistry),
                     },
                 ],
             ]),
@@ -197,7 +204,8 @@ export class TestHost {
             this.componentRegistry,
             this.sharedObjectFactories,
             this.deltaConnectionServer,
-            this.scope);
+            this.scope,
+            this.containerServiceRegistry);
     }
 
     /**

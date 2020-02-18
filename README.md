@@ -31,7 +31,7 @@ Yo Fluid is now ready. Try it!
 yo @microsoft/fluid
 ````
 
-[Chaincode](./samples/chaincode/README.md) has additional examples of building components with Fluid.
+[Components](./examples/components/README.md) has additional examples of building components with Fluid.
 
 \* For Yo Fluid setup issues: [Unauthorized - Stack Overflow](https://stackoverflow.microsoft.com/questions/137930/npm-install-fails-with-auth-issues/137931#137931)
 
@@ -90,7 +90,7 @@ the [Fluid](https://stackoverflow.microsoft.com/questions/tagged/fluid) tag.
 
 ## Source Code Overview
 
-[Samples/Chaincode](./samples/chaincode) contains our latest component and chaincode demos. This is the right place to get started checking out the world of Fluid.
+[Examples/Components](./examples/components) contains our latest component and chaincode demos. This is the right place to get started checking out the world of Fluid.
 
 [Packages](./packages) contains the core Fluid runtime
 
@@ -117,7 +117,7 @@ Architectural design principals can be found in the [Fluid documentation](https:
 
 Developers looking to make deep/advanced Fluid changes can find our latest implementations in [Routerlicious](./server/routerlicious).
 
-[Samples/legacy](./samples/experiments/legacy) folder contains a set of legacy prototypes around a collaborative canvas. As well as MUIs that load within the browser or within an enlightened host.
+[Examples/legacy](./examples/experiments/legacy) folder contains a set of legacy prototypes around a collaborative canvas. As well as MUIs that load within the browser or within an enlightened host.
 
 ## Build Status
 

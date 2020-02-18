@@ -8,7 +8,7 @@ import * as ops from "./ops";
 import { TextSegment } from "./textSegment";
 
 export function loadSegments(content: string, segLimit: number, markers: boolean = false, withProps: boolean = true) {
-    // tslint:disable-next-line:no-parameter-reassignment
+    // eslint-disable-next-line no-param-reassign
     content = content.replace(/^\uFEFF/, "");
 
     const paragraphs = content.split(/\r?\n/);
@@ -41,7 +41,7 @@ export function loadSegments(content: string, segLimit: number, markers: boolean
             } else {
                 const emphStrings = paragraph.split("_");
                 for (let i = 0, len = emphStrings.length; i < len; i++) {
-                    // tslint:disable-next-line:no-bitwise
+                    // eslint-disable-next-line no-bitwise
                     if (i & 1) {
                         if (emphStrings[i].length > 0) {
                             segments.push(

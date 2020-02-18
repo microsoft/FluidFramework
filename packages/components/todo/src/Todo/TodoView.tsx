@@ -4,7 +4,7 @@
  */
 
 import { CollaborativeInput } from "@microsoft/fluid-aqueduct-react";
-import { IComponentHTMLVisual, IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHTMLView, IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { ContainerRuntime, RequestParser } from "@microsoft/fluid-container-runtime";
 import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
@@ -36,22 +36,22 @@ export async function todoViewRequestHandler(request: IRequest, runtime: Contain
     return { status: 200, mimeType: "fluid/component", value: todoView };
 }
 
-function getVisual(todoModel: Todo) {
-    const visual = {
+function getView(todoModel: Todo) {
+    const view = {
         render: (elm: HTMLElement) => {
             ReactDOM.render(<TodoView todoModel={ todoModel }/>, elm);
         },
-        IComponentHTMLVisual: undefined,
+        IComponentHTMLView: undefined,
     };
-    visual.IComponentHTMLVisual = visual;
-    return visual;
+    view.IComponentHTMLView = view;
+    return view;
 }
 
-export class TodoView extends React.Component<TodoViewProps, TodoViewState> implements IComponentHTMLVisual {
-    public get IComponentHTMLVisual() { return this.visual; }
+export class TodoView extends React.Component<TodoViewProps, TodoViewState> implements IComponentHTMLView {
+    public get IComponentHTMLView() { return this.view; }
     private newTextInput: HTMLInputElement;
     private titleString: SharedString;
-    private readonly visual: IComponentHTMLVisual;
+    private readonly view: IComponentHTMLView;
 
     constructor(props: TodoViewProps) {
         super(props);
@@ -64,7 +64,7 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> impl
         this.createNewTodoItem = this.createNewTodoItem.bind(this);
         this.refreshTodoItemListFromModel = this.refreshTodoItemListFromModel.bind(this);
 
-        this.visual = getVisual(this.props.todoModel);
+        this.view = getView(this.props.todoModel);
     }
 
     public async componentDidMount() {

@@ -16,27 +16,41 @@ import {
     ITokenClaims,
 } from "@microsoft/fluid-protocol-definitions";
 
+// This is coppied from alfred.  Probably should clean this up.
+const DefaultServiceConfiguration: IServiceConfiguration = {
+    blockSize: 64436,
+    maxMessageSize: 16 * 1024,
+    summary: {
+        idleTime: 5000,
+        maxOps: 1000,
+        maxTime: 5000 * 12,
+        maxAckWaitTime: 600000,
+    },
+};
+
 /**
  * Mock Document Delta Connection for testing
  */
 export class MockDocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
     public claims: ITokenClaims = {
         documentId: "documentId",
-        scopes: [ "doc:read", "doc:write", "summary:write" ],
+        scopes: ["doc:read", "doc:write", "summary:write"],
         tenantId: "tenantId",
         user: {
             id: "mockid",
         },
     };
-    public mode: ConnectionMode;
-    public existing: boolean;
-    public parentBranch: string;
-    public maxMessageSize: number;
-    public version: string;
+
+    public readonly mode: ConnectionMode = "write";
+    public readonly existing: boolean = true;
+    // eslint-disable-next-line no-null/no-null
+    public readonly parentBranch: string | null = null;
+    public readonly maxMessageSize: number = 16 * 1024;
+    public readonly version: string = "";
     public initialMessages?: ISequencedDocumentMessage[];
     public initialContents?: IContentMessage[];
     public initialSignals?: ISignalMessage[];
-    public serviceConfiguration: IServiceConfiguration;
+    public readonly serviceConfiguration = DefaultServiceConfiguration;
 
     constructor(
         public readonly clientId: string,

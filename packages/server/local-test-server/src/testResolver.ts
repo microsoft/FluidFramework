@@ -13,9 +13,11 @@ import { generateToken } from "@microsoft/fluid-server-services-client";
  * related test classes in the local-test-server suite of implementations.
  */
 export class TestResolver implements IUrlResolver {
-    private readonly id = "documentId";
     private readonly tenantId = "tenantId";
     private readonly tokenKey = "tokenKey";
+
+    constructor(private readonly id: string = "documentId") {
+    }
 
     /**
      * Resolves URL requests by providing fake URLs with an actually generated

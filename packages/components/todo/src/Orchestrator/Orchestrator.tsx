@@ -4,7 +4,7 @@
  */
 
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
-import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -22,17 +22,17 @@ const todoId = "TodoId";
  * - New todo item entry
  * - List of todo items
  */
-export class Orchestrator extends PrimedComponent implements IComponentHTMLVisual {
+export class Orchestrator extends PrimedComponent implements IComponentHTMLView {
     private todoComponent: Todo;
 
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
 
     /**
      * Do setup work here
      */
     protected async componentInitializingFirstTime() {
         // Create a new todo item
-        const componentRuntime: IComponentRuntime = await this.context.createSubComponent(TodoName);
+        const componentRuntime: IComponentRuntime = await this.context.createComponent(TodoName);
         await componentRuntime.request({ url: "/" });
         componentRuntime.attach();
 
@@ -44,7 +44,7 @@ export class Orchestrator extends PrimedComponent implements IComponentHTMLVisua
         this.todoComponent = await this.getComponent<Todo>(this.root.get(todoId));
     }
 
-    // Start IComponentHTMLVisual
+    // Start IComponentHTMLView
 
     /**
      * Creates a new view for a caller that doesn't directly support React
@@ -53,5 +53,5 @@ export class Orchestrator extends PrimedComponent implements IComponentHTMLVisua
         ReactDOM.render(<TodoView todoModel={this.todoComponent}/>, div);
     }
 
-    // End IComponentHTMLVisual
+    // End IComponentHTMLView
 }

@@ -84,7 +84,6 @@ export class PartialSequenceLengths {
      * has its partials up to date
      * @param collabWindow - segment window of the segment tree containing textSegmentBlock
      */
-    // tslint:disable-next-line: max-func-body-length
     private static combineBranch(
         mergeTree: MergeTree,
         block: IMergeBlock,
@@ -233,6 +232,7 @@ export class PartialSequenceLengths {
                 // Leaf segment
                 const segment = child;
                 const segBranchId = mergeTree.getBranchId(segment.clientId);
+                // eslint-disable-next-line max-len
                 // console.log(`seg br ${segBranchId} cli ${glc(mergeTree, segment.clientId)} me ${glc(mergeTree, mergeTree.collabWindow.clientId)}`);
                 if (segBranchId <= branchId) {
                     if (seqLTE(segment.seq, collabWindow.minSeq)) {
@@ -376,7 +376,7 @@ export class PartialSequenceLengths {
             }
         }
         if (seqPartialLen === undefined) {
-            // tslint:disable-next-line: no-object-literal-type-assertion
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             seqPartialLen = {
                 clientId,
                 seglen: seqSeglen,
@@ -410,6 +410,7 @@ export class PartialSequenceLengths {
         clientId: number,
         collabWindow: CollaborationWindow) {
         const segBranchId = mergeTree.getBranchId(clientId);
+        // eslint-disable-next-line max-len
         // console.log(`seg br ${segBranchId} cli ${glc(mergeTree, segment.clientId)} me ${glc(mergeTree, mergeTree.collabWindow.clientId)}`);
         if (segBranchId === 0) {
             this.updateBranch(mergeTree, 0, block, seq, clientId, collabWindow);

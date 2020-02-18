@@ -50,6 +50,6 @@ export function configureLogging(config: IWinstonConfig) {
     // tslint:disable-next-line:only-arrow-functions
     (debug as any).formatArgs = function(args: any[]) {
         const name = this.namespace;
-        args[0] = name + " " + args[0];
+        args[0] = `${name} ${args[0]}`;
     };
 }

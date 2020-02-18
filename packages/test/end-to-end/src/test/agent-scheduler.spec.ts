@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable unicorn/filename-case */
+
+import * as assert from "assert";
 import { AgentSchedulerFactory, TaskManager } from "@microsoft/fluid-agent-scheduler";
 import { TestHost } from "@microsoft/fluid-local-test-server";
 import { IAgentScheduler } from "@microsoft/fluid-runtime-definitions";
-import * as assert from "assert";
 
 const AgentSchedulerType = "@microsoft/fluid-agent-scheduler";
 

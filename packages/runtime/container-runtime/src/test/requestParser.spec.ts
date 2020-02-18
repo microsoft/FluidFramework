@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-// tslint:disable: prefer-const
+
 import * as assert from "assert";
 import { RequestParser } from "../requestParser";
 

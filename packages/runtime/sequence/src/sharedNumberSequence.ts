@@ -30,7 +30,6 @@ export class SharedNumberSequence extends SharedSequence<number> {
     }
 
     constructor(document: IComponentRuntime, public id: string) {
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         super(document, id, SharedNumberSequenceFactory.Attributes, SharedNumberSequenceFactory.segmentFromSpec);
     }
 

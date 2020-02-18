@@ -1,9 +1,10 @@
 *
 !*.json
 !.npmrc
+!_api-extractor-temp/**
 !LICENSE.txt
 !packages/**
-!samples/chaincode/**
+!examples/components/**
 !server/routerlicious
 !docs/**
 !tools/build-server-resources/**
@@ -11,3 +12,4 @@
 **/dist
 **/lib
 **/nyc
+**/*.tsbuildinfo

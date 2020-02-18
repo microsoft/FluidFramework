@@ -42,7 +42,6 @@ function expectTree(actual: Node, expected: ISnapshotNode) {
     assert.strictEqual(i, children.length);
 }
 
-// tslint:disable:max-func-body-length
 describe("Layout", () => {
     let host: TestHost;
     let doc: FlowDocument;

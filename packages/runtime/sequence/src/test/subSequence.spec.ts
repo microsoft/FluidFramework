@@ -4,6 +4,7 @@
  */
 
 import { createInsertSegmentOp, createRemoveRangeOp, PropertySet } from "@microsoft/fluid-merge-tree";
+// eslint-disable-next-line import/no-internal-modules
 import { TestClient } from "@microsoft/fluid-merge-tree/dist/test";
 import { SubSequence } from "../sharedSequence";
 

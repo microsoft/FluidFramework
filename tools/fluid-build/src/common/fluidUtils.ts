@@ -19,7 +19,7 @@ async function isFluidRootLerna(dir: string) {
     if (Array.isArray(parsed.packages)
         && parsed.packages.length == 2
         && parsed.packages[0] === "packages/**"
-        && parsed.packages[1] === "samples/chaincode/**") {
+        && parsed.packages[1] === "examples/components/**") {
         return true;
     }
     return false;

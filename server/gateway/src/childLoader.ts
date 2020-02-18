@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+import { parse } from "url";
 import { IBaseHostConfig } from "@microsoft/fluid-base-host";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
@@ -20,7 +21,6 @@ import { NodeCodeLoader, NodeWhiteList } from "@microsoft/fluid-server-services"
 import { promiseTimeout } from "@microsoft/fluid-server-services-client";
 import Axios from "axios";
 import * as jwt from "jsonwebtoken";
-import { parse } from "url";
 import * as winston from "winston";
 
 const packageUrl = "https://packages.wu2.prague.office-int.com";
@@ -80,8 +80,8 @@ class KeyValueLoader {
         // TODO: figure out how to pass clientId and token here
         documentServiceFactories.push(new OdspDocumentServiceFactory(
             "Fake app-id",
-            (siteUrl: string) => Promise.resolve("fake token"),
-            () => Promise.resolve("fake token"),
+            async (siteUrl: string) => Promise.resolve("fake token"),
+            async () => Promise.resolve("fake token"),
             new BaseTelemetryNullLogger()));
 
         documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
@@ -100,7 +100,7 @@ class KeyValueLoader {
         config.tokens = (result.data as IFluidResolvedUrl).tokens;
 
         const loader = new Loader(
-            { resolver: hostConf.urlResolver },
+            hostConf.urlResolver,
             hostConf.documentServiceFactory,
             new NodeCodeLoader(packageUrl, installLocation, waitTimeoutMS, new NodeWhiteList()),
             config,
@@ -124,8 +124,10 @@ class KeyValueLoader {
     }
 
     private registerAttach(loader: Loader, container: Container, uri: string) {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.attach(loader, uri);
         container.on("contextChanged", (value) => {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.attach(loader, uri);
         });
     }
@@ -145,12 +147,13 @@ class KeyValueLoader {
 let cache: IKeyValue;
 
 // TODO (mdaumi): Move this to comlink.
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
 process.on("message", async (message: IIncomingMessage) => {
     if (message.type === "init") {
         const keyValueLoaderP = promiseTimeout(cacheLoadTimeoutMS, KeyValueLoader.load(message.param));
-        const cacheP = keyValueLoaderP.then((keyValueLoader: KeyValueLoader) => {
+        const cacheP = keyValueLoaderP.then(async (keyValueLoader: KeyValueLoader) => {
             return keyValueLoader.cache;
-        }, (err) => {
+        }, async (err) => {
             return Promise.reject(err);
         });
         cacheP.then((resolvedCache) => {

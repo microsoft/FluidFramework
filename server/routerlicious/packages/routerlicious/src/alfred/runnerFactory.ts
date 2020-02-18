@@ -20,8 +20,8 @@ import * as redis from "redis";
 import * as winston from "winston";
 import * as ws from "ws";
 import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
+import { DefaultServiceConfiguration } from "@microsoft/fluid-server-lambdas";
 import { AlfredRunner } from "./runner";
-import { DefaultServiceConfiguration } from "./utils";
 
 class NodeWebSocketServer implements core.IWebSocketServer {
     private readonly webSocketServer: ws.Server;
@@ -59,7 +59,6 @@ export class OrdererManager implements core.IOrdererManager {
             return Promise.reject("Invalid ordering service endpoint");
         }
 
-        /* eslint-disable @typescript-eslint/indent */
         switch (tenant.orderer.type) {
             case "kafka":
                 return this.kafkaFactory.create(tenantId, documentId);
@@ -68,7 +67,6 @@ export class OrdererManager implements core.IOrdererManager {
             default:
                 return this.localOrderManager.get(tenantId, documentId);
         }
-        /* eslint-enable @typescript-eslint/indent */
     }
 }
 
@@ -166,7 +164,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             mongoManager,
             config.get("mongo:collectionNames:reservations"));
 
-        const tenantManager = new services.TenantManager(authEndpoint, config.get("worker:blobStorageUrl"));
+        const tenantManager = new services.TenantManager(authEndpoint);
 
         const databaseManager = new core.MongoDatabaseManager(
             mongoManager,

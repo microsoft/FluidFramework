@@ -5,10 +5,7 @@
 
 import { ITrace } from "@microsoft/fluid-protocol-definitions";
 import * as telegraf from "telegrafjs";
-
-export interface IMetricClient {
-    writeLatencyMetric(series: string, traces: ITrace[]): Promise<void>;
-}
+import {DefaultMetricClient, IMetricClient} from  "@microsoft/fluid-server-services-core";
 
 class TelegrafClient implements IMetricClient {
     private readonly telegrafClient: any;
@@ -56,16 +53,8 @@ class TelegrafClient implements IMetricClient {
     }
 }
 
-// Default client for loca run.
-class DefaultClient implements IMetricClient {
-
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public writeLatencyMetric(series: string, traces: ITrace[]): Promise<void> {
-        return Promise.resolve();
-    }
-}
 
 export function createMetricClient(config: any): IMetricClient {
     // eslint-disable-next-line max-len
-    return (config !== undefined && config.client === "telegraf") ? new TelegrafClient(config.telegraf) : new DefaultClient();
+    return (config !== undefined && config.client === "telegraf") ? new TelegrafClient(config.telegraf) : new DefaultMetricClient();
 }

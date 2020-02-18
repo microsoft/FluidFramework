@@ -25,7 +25,7 @@ import { MockDocumentDeltaConnection } from "./mockDocumentDeltaConnection";
 export class MockDocumentService implements IDocumentService {
     public get deltaStorageMessages() { return this._deltaStorageMessages; }
 
-    public nextClientId?: string;
+    private nextClientId: number = 0;
 
     private readonly _deltaStorageMessages: ISequencedDocumentMessage[] = [];
 
@@ -45,7 +45,7 @@ export class MockDocumentService implements IDocumentService {
     public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
         return this.deltaConnectionFactory
             ? this.deltaConnectionFactory()
-            : new MockDocumentDeltaConnection(this.nextClientId);
+            : new MockDocumentDeltaConnection(`mock_client_${this.nextClientId++}`);
     }
     public async branch(): Promise<string> {
         throw new Error("Method not implemented.");

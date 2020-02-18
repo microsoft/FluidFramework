@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable eqeqeq */
+/* eslint-disable @typescript-eslint/consistent-type-assertions, eqeqeq, max-len, no-bitwise, no-shadow */
 
 import * as assert from "assert";
 import * as fs from "fs";
@@ -1635,8 +1635,10 @@ export class DocumentTree {
                 const pg = DocumentTree.generateParagraph();
                 items.push(pg);
             } else {
+                // eslint-disable-next-line no-param-reassign
                 rowProbability /= 2;
                 if (rowProbability < 0.08) {
+                    // eslint-disable-next-line no-param-reassign
                     rowProbability = 0;
                 }
                 const row = DocumentTree.generateRow(rowProbability);

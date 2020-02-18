@@ -35,7 +35,6 @@ export class SnapshotLoader {
         // Override branch by default which is derived from document id,
         // as document id isn't stable for spo
         // which leads to branch id being in correct
-        // tslint:disable-next-line: no-unsafe-any
         const branch = this.runtime.options && this.runtime.options.enableBranching
             ? branchId : this.runtime.documentId;
 

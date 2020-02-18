@@ -12,7 +12,7 @@ Responsibilities of the server:
 * Broadcast ops to all connected clients
 * Data persistence
 
-We provide a reference implementation of a Fluid server called <xref:r11s>.
+We provide a reference implementation of a Fluid server called [Routerlicious](./server/README.md).
 
 ## Client
 

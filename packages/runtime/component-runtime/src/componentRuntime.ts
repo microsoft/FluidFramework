@@ -76,7 +76,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         sharedObjectRegistry: ISharedObjectRegistry,
         activeCallback: (runtime: ComponentRuntime) => void,
         componentRegistry?: IComponentRegistry,
-
     ): void {
         const logger = ChildLogger.create(context.hostRuntime.logger, undefined, { componentId: context.id });
         const runtime = new ComponentRuntime(
@@ -116,14 +115,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
 
     public get clientId(): string {
         return this.componentContext.clientId;
-    }
-
-    /**
-     * DEPRECATED use clientDetails.type instead
-     * back-compat: 0.11 clientType
-     */
-    public get clientType(): string {
-        return this.componentContext.clientType;
     }
 
     public get clientDetails(): IClientDetails {

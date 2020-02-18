@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable no-null/no-null */
+
+import * as assert from "assert";
 import { SparseMatrix, SparseMatrixFactory, SparseMatrixItem } from "@microsoft/fluid-sequence";
 import { TestHost } from "@microsoft/fluid-local-test-server";
-import * as assert from "assert";
+// eslint-disable-next-line import/no-unassigned-import
 import "mocha";
 
 describe("SparseMatrix", () => {
@@ -19,7 +22,7 @@ describe("SparseMatrix", () => {
             rows.push(cols);
         }
         return rows;
-    }
+    };
 
     describe("local client", () => {
         let host: TestHost;
@@ -30,7 +33,7 @@ describe("SparseMatrix", () => {
             matrix = await host.createType("matrix", SparseMatrixFactory.Type);
         });
 
-        const expect = async (expected: ReadonlyArray<ReadonlyArray<any>>) => {
+        const expect = async (expected: readonly (readonly any[])[]) => {
             const expectedCols = expected.length > 0
                 ? expected[0].length
                 : 0;
@@ -56,22 +59,22 @@ describe("SparseMatrix", () => {
         it("append row", async () => {
             matrix.insertRows(0, 1);
             await expect([
-                [ undefined ]
+                [undefined],
             ]);
         });
 
         it("set(0,0)", async () => {
             matrix.setItems(0, 0, ["BL"]);
             await expect([
-                [ "BL", undefined ]
+                ["BL", undefined],
             ]);
         });
 
         it("insert 1 row", async () => {
             matrix.insertRows(0, 1);
             await expect([
-                [ undefined, undefined ],
-                [ "BL", undefined ]
+                [undefined, undefined],
+                ["BL", undefined],
             ]);
         });
 
@@ -79,31 +82,31 @@ describe("SparseMatrix", () => {
             matrix.setItems(0, 0, ["TL", "TR"]);
             matrix.setItems(1, 1, ["BR"]);
             await expect([
-                [ "TL", "TR", undefined ],
-                [ "BL", "BR", undefined ]
+                ["TL", "TR", undefined],
+                ["BL", "BR", undefined],
             ]);
         });
 
         it("insert 1 col", async () => {
             matrix.insertCols(1, 1);
             await expect([
-                [ "TL", undefined, "TR", undefined ],
-                [ "BL", undefined, "BR", undefined ]
+                ["TL", undefined, "TR", undefined],
+                ["BL", undefined, "BR", undefined],
             ]);
         });
 
         it("remove 1 col", async () => {
             matrix.removeCols(1, 1);
             await expect([
-                [ "TL", "TR", undefined ],
-                [ "BL", "BR", undefined ]
+                ["TL", "TR", undefined],
+                ["BL", "BR", undefined],
             ]);
         });
 
         it("remove 1 row", async () => {
             matrix.removeRows(0, 1);
             await expect([
-                [ "BL", "BR" ]
+                ["BL", "BR"],
             ]);
         });
     });
@@ -116,11 +119,11 @@ describe("SparseMatrix", () => {
 
         const print = (matrix: SparseMatrix) => {
             for (const row of extract(matrix, 10)) {
-                console.log(`[${row.join(",")}]`)
+                console.log(`[${row.join(",")}]`);
             }
-        }
+        };
 
-        const assertMatrices = async (expected: ReadonlyArray<ReadonlyArray<any>>) => {
+        const assertMatrices = async (expected: readonly (readonly any[])[]) => {
             await TestHost.sync(host1, host2);
             print(matrix1);
             assert.deepStrictEqual(extract(matrix1, 10), extract(matrix2, 10));
@@ -155,8 +158,8 @@ describe("SparseMatrix", () => {
             matrix2.setItems(0, 1, ["A", "B"]);
 
             await assertMatrices([
-                [ undefined, "A", "B", undefined ],
-                [ undefined, 1, 2, undefined ],
+                [undefined, "A", "B", undefined],
+                [undefined, 1, 2, undefined],
             ]);
         });
 
@@ -164,7 +167,7 @@ describe("SparseMatrix", () => {
             matrix1.insertRows(0, 1);
             matrix1.setItems(0, 0, [">", "<"]);
             await assertMatrices([
-                [">", "<", undefined]
+                [">", "<", undefined],
             ]);
 
             matrix1.insertCols(1, 1);
@@ -173,7 +176,7 @@ describe("SparseMatrix", () => {
             matrix2.insertCols(1, 1);
             matrix2.setItems(0, 1, [2]);
             await assertMatrices([
-                [">", 2, 1, "<", undefined]
+                [">", 2, 1, "<", undefined],
             ]);
         });
 
@@ -181,7 +184,7 @@ describe("SparseMatrix", () => {
             matrix1.insertRows(0, 1);
             matrix1.setItems(0, 0, [">", "<"]);
             await assertMatrices([
-                [">", "<", undefined]
+                [">", "<", undefined],
             ]);
 
             matrix1.insertCols(1, 1);
@@ -191,7 +194,7 @@ describe("SparseMatrix", () => {
             matrix2.setItems(0, 1, [2]);
             await assertMatrices([
                 [undefined, 2, undefined, undefined],
-                [">", 1, "<", undefined]
+                [">", 1, "<", undefined],
             ]);
         });
 
@@ -211,8 +214,9 @@ describe("SparseMatrix", () => {
                         n: 2,
                         s: "s2",
                         a: [],
-                        o: {}
-                    }], o: {}}],
+                        o: {},
+                    }], o: {}
+                }],
                 o: {
                     b: false,
                     n: 3,
@@ -220,17 +224,17 @@ describe("SparseMatrix", () => {
                         b: false,
                         n: -1,
                         s: "s2",
-                        a: [{ 
+                        a: [{
                             b: false,
                             n: -1,
                             s: "s2",
                             a: [],
-                            o: {}
-                        }],o: {}
+                            o: {},
+                        }], o: {},
                     }],
-                    o: {}
+                    o: {},
                 },
-            }
+            };
 
             const items = [null, true, -1, "s", [null, true, -1, "s"], json];
 

@@ -235,7 +235,7 @@ export class GitManager implements IGitManager {
         // Kick off the work to create all the tree values
         const entriesP: Promise<resources.ICreateBlobResponse | resources.ITree>[] = [];
         for (const entry of files.entries) {
-            /* eslint-disable @typescript-eslint/indent, no-case-declarations */
+            /* eslint-disable no-case-declarations */
             switch (api.TreeEntry[entry.type]) {
                 case api.TreeEntry.Blob:
                     const entryAsBlob = entry.value as api.IBlob;
@@ -263,7 +263,7 @@ export class GitManager implements IGitManager {
                 default:
                     return Promise.reject("Unknown entry type");
             }
-            /* eslint-enable @typescript-eslint/indent, no-case-declarations */
+            /* eslint-enable no-case-declarations */
         }
 
         // Wait for them all to resolve

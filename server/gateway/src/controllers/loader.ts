@@ -23,7 +23,7 @@ import { PackageManager } from "./packageManager";
 import { IHostServices } from "./services";
 
 class MailServices {
-    constructor(private accessToken: string) {
+    constructor(private readonly accessToken: string) {
     }
 
     // Create draft
@@ -103,6 +103,7 @@ export async function initialize(
     user: any,
 ) {
     const documentFactory = new DocumentFactory(config.tenantId);
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     const graph = user.accessToken ? new MicrosoftGraph(user.accessToken) : undefined;
     const packageManager = new PackageManager(
         config.packageManager.endpoint,
@@ -115,6 +116,7 @@ export async function initialize(
         IPackageManager: packageManager,
     };
 
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     if (user.accounts) {
         for (const account of user.accounts) {
             if (account.provider === "msa") {
@@ -128,8 +130,8 @@ export async function initialize(
     // TODO: need to be support refresh token
     documentServiceFactories.push(new OdspDocumentServiceFactory(
         clientId,
-        (siteUrl: string) => Promise.resolve(resolved.tokens.storageToken),
-        () => Promise.resolve(resolved.tokens.socketToken),
+        async (siteUrl: string) => Promise.resolve(resolved.tokens.storageToken),
+        async () => Promise.resolve(resolved.tokens.socketToken),
         new BaseTelemetryNullLogger()));
 
     documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
@@ -153,7 +155,7 @@ export async function initialize(
     };
 
     // Provide access to all loader services from command line for easier testing as we bring more up
-    // tslint:disable-next-line
+    // eslint-disable-next-line dot-notation
     window["allServices"] = services;
 
     const baseHost = new BaseHost(hostConfig, resolved, pkg, scriptIds);
@@ -163,7 +165,14 @@ export async function initialize(
     console.log(`Loading ${url}`);
 
     const div = document.getElementById("content") as HTMLDivElement;
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     const container = await baseHost.loadAndRender(url, div, pkg ? pkg.details : undefined);
+
+    // Move the div hosting components into a shadow so it doesn't catch external formatting
+    const shadowHostDiv = document.createElement("div");
+    document.body.insertBefore(shadowHostDiv, div);
+    const shadowRoot = shadowHostDiv.attachShadow({mode: "open"});
+    shadowRoot.appendChild(div);
 
     container.on("error", (error) => {
         console.error(error);

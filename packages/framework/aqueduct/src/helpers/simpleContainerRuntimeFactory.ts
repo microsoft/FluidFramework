@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { IContainerContext } from "@microsoft/fluid-container-definitions";
 import {
     componentRuntimeRequestHandler,
@@ -10,6 +11,10 @@ import {
     RuntimeRequestHandler,
 } from "@microsoft/fluid-container-runtime";
 import { IHostRuntime, NamedComponentRegistryEntries } from "@microsoft/fluid-runtime-definitions";
+import {
+    generateContainerServicesRequestHandler,
+    ContainerServiceRegistryEntries,
+} from "../containerServices";
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class SimpleContainerRuntimeFactory {
@@ -22,7 +27,7 @@ export class SimpleContainerRuntimeFactory {
         context: IContainerContext,
         chaincode: string,
         registryEntries: NamedComponentRegistryEntries,
-        generateSummaries: boolean = true,
+        serviceRegistry: ContainerServiceRegistryEntries = [],
         requestHandlers: RuntimeRequestHandler[] = [],
     ): Promise<ContainerRuntime> {
         // Debug(`instantiateRuntime(chaincode=${chaincode},registry=${JSON.stringify(registry)})`);
@@ -32,10 +37,10 @@ export class SimpleContainerRuntimeFactory {
             [
                 // eslint-disable-next-line @typescript-eslint/no-use-before-define
                 defaultComponentRuntimeRequestHandler,
+                generateContainerServicesRequestHandler(serviceRegistry),
                 ...requestHandlers,
                 componentRuntimeRequestHandler,
-            ],
-            { generateSummaries });
+            ]);
         // Debug("runtime loaded.");
 
         // On first boot create the base component

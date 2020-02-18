@@ -80,6 +80,7 @@
         "gatewayUrl": "http://gateway:3000",
         "serverUrl": "http://localhost:3003",
         "blobStorageUrl": "http://historian:3000",
+        "internalBlobStorageUrl": "http://historian:3000",
         "repository": "prague",
         "npm": "https://pragueauspkn-3873244262.azureedge.net",
         "clusterNpm": "https://pragueauspkn-3873244262.azureedge.net",

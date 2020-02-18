@@ -4,13 +4,14 @@
  */
 
 import { KeyCode, randomId, Template, TagName } from "@fluid-example/flow-util-lib";
+import { MathInstance, MathView } from "@fluid-example/math";
 import * as SearchMenu from "@fluid-example/search-menu";
 import { tableViewType } from "@fluid-example/table-view";
-import { Editor, FlowDocument, htmlFormatter } from "@fluid-example/webflow";
+import { Editor, FlowDocument, htmlFormatter, IComponentHTMLViewFactory } from "@fluid-example/webflow";
 import {
     IComponent,
+    IComponentHTMLOptions,
     IComponentHTMLView,
-    IComponentHTMLVisual,
     IComponentLoadable,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
@@ -33,6 +34,18 @@ const template = new Template(
         ],
     });
 
+class MathViewFactory implements IComponentHTMLViewFactory {
+    public createView(model: MathInstance, scope?: IComponent) {
+        return new MathView(model, scope);
+    }
+}
+
+class ThickViewFactory implements IComponentHTMLViewFactory {
+    public createView(model: IComponent, scope?: IComponent) {
+        return model as IComponentHTMLView;
+    }
+}
+
 export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost {
     public get ISearchMenuHost() { return this; }
 
@@ -48,7 +61,7 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
         private readonly mathP: Promise<IComponentCollection>,
         private readonly videosP: Promise<IComponentCollection>,
         private readonly imagesP: Promise<IComponentCollection>,
-        private readonly intelViewer: IComponentHTMLVisual,
+        private readonly intelViewer: IComponentHTMLView,
         private readonly root: ISharedDirectory,
     ) { }
 
@@ -60,8 +73,7 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
         }
     }
 
-    // tslint:disable-next-line:max-func-body-length
-    public render(elm: HTMLElement): void {
+    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
         const flowDiv = document.createElement("div");
         const insightsDiv = document.createElement("div");
         elm.style.display = "flex";
@@ -79,7 +91,14 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         Promise.all([this.docP, this.mathP, this.videosP, this.imagesP]).then(([doc, math, videos, images]) => {
             const slot = template.get(this.viewport, "slot") as HTMLElement;
-            const editor = new Editor(doc, slot, htmlFormatter, this);
+
+            // This view registry will match up the strings we put in the markers below against
+            // the view classes they correspond with.
+            const viewFactoryRegistry: Map<string, IComponentHTMLViewFactory> = new Map([
+                ["MathView", new MathViewFactory() as IComponentHTMLViewFactory],
+                ["ThickView", new ThickViewFactory() as IComponentHTMLViewFactory],
+            ]);
+            const editor = new Editor(doc, slot, htmlFormatter, viewFactoryRegistry, this);
 
             const hasSelection = () => {
                 const { start, end } = editor.selection;
@@ -88,21 +107,31 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
 
             const always = () => true;
 
-            const insertComponent = (type: string, componentOptions: object, style?: string, classList?: string[]) => {
+            const insertComponent = (
+                type: string,
+                view: string,
+                componentOptions: object,
+                style?: string,
+                classList?: string[],
+            ) => {
                 const position = editor.selection.end;
                 const url = randomId();
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 this.createSubComponent(url, type);
-                doc.insertComponent(position, `/${this.root.get(url)}`, componentOptions, style, classList);
+                doc.insertComponent(position, `/${this.root.get(url)}`, view, componentOptions, style, classList);
             };
 
-            const insertComponentFromCollection =
-                (factory: IComponentCollection, componentOptions: object, style?: string, classList?: string[]) => {
-                    const position = editor.selection.end;
-                    const instance = factory.createCollectionItem(componentOptions) as IComponentLoadable;
-                    doc.insertComponent(position, `/${instance.url}`, componentOptions, style, classList);
-
-                };
+            const insertComponentFromCollection = (
+                factory: IComponentCollection,
+                view: string,
+                componentOptions: object,
+                style?: string,
+                classList?: string[],
+            ) => {
+                const position = editor.selection.end;
+                const instance = factory.createCollectionItem(componentOptions) as IComponentLoadable;
+                doc.insertComponent(position, `/${instance.url}`, view, componentOptions, style, classList);
+            };
 
             const insertTags = (tags: TagName[]) => {
                 const selection = editor.selection;
@@ -142,11 +171,13 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
                 { key: "p", enabled: always, exec: () => { setFormat(TagName.p); } },
                 { key: "ul", enabled: always, exec: () => { insertTags([TagName.ul, TagName.li]); } },
                 { key: "red", enabled: always, exec: () => { setStyle("color:red"); } },
-                { key: "math inline", enabled: always, exec: () => insertComponentFromCollection(math, { display: "inline" }) },
-                { key: "math block", enabled: always, exec: () => insertComponentFromCollection(math, { display: "block" }) },
-                { key: "morton", enabled: always, exec: () => insertComponentFromCollection(videos, {}, "display:block;width:61%;--aspect-ratio:calc(16/9)") },
-                { key: "image", enabled: always, exec: () => insertComponentFromCollection(images, {}, "display:inline-block;float:left;resize:both;overflow:hidden") },
-                { key: "table", enabled: always, exec: () => insertComponent(tableViewType, {}) },
+                // Math is the only component from this set with view/model separation,
+                // so it's the only one with a different view factory.  The rest can already be rendered directly.
+                { key: "math inline", enabled: always, exec: () => insertComponentFromCollection(math, "MathView", { display: "inline" }) },
+                { key: "math block", enabled: always, exec: () => insertComponentFromCollection(math, "MathView", { display: "block" }) },
+                { key: "morton", enabled: always, exec: () => insertComponentFromCollection(videos, "ThickView", {}, "display:block;width:61%;--aspect-ratio:calc(16/9)") },
+                { key: "image", enabled: always, exec: () => insertComponentFromCollection(images, "ThickView", {}, "display:inline-block;float:left;resize:both;overflow:hidden") },
+                { key: "table", enabled: always, exec: () => insertComponent(tableViewType, "ThickView", {}) },
             ];
             /* eslint-enable max-len */
 
@@ -169,8 +200,7 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
         });
 
         flowDiv.appendChild(this.viewport);
-        const intelRenderable = this.intelViewer.addView();
-        intelRenderable.render(insightsDiv);
+        this.intelViewer.render(insightsDiv);
     }
 
     // #endregion IComponentHTMLView

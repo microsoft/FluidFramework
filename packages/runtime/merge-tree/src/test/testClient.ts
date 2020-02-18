@@ -15,7 +15,7 @@ import { Client } from "../client";
 import * as Collections from "../collections";
 import { UnassignedSequenceNumber } from "../constants";
 import { ISegment, Marker, MergeTree } from "../mergeTree";
-import { createInsertSegmentOp } from "../opBuilder";
+import { createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder";
 import { IJSONSegment, IMarkerDef, IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 import { PropertySet } from "../properties";
 import { SnapshotLegacy } from "../snapshotlegacy";
@@ -63,7 +63,7 @@ export class TestClient extends Client {
 
         const client2 = new TestClient(undefined, specToSeg);
         await client2.load(
-            // tslint:disable-next-line: no-object-literal-type-assertion
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             {
                 logger: client2.logger,
                 clientId: newLongClientId,
@@ -75,6 +75,7 @@ export class TestClient extends Client {
     public mergeTree: MergeTree;
 
     public readonly checkQ: Collections.List<string> = Collections.ListMakeHead<string>();
+    // eslint-disable-next-line max-len
     protected readonly q: Collections.List<ISequencedDocumentMessage> = Collections.ListMakeHead<ISequencedDocumentMessage>();
 
     private readonly textHelper: MergeTreeTextHelper;
@@ -144,7 +145,7 @@ export class TestClient extends Client {
     public insertTextRemote(
         pos: number,
         text: string,
-        props: PropertySet,
+        props: PropertySet | undefined,
         seq: number,
         refSeq: number,
         longClientId: string,
@@ -155,6 +156,20 @@ export class TestClient extends Client {
         }
         this.applyMsg(this.makeOpMessage(
             createInsertSegmentOp(pos, segment),
+            seq,
+            refSeq,
+            longClientId));
+    }
+
+    public removeRangeRemote(
+        start: number,
+        end: number,
+        seq: number,
+        refSeq: number,
+        longClientId: string,
+    ) {
+        this.applyMsg(this.makeOpMessage(
+            createRemoveRangeOp(start, end),
             seq,
             refSeq,
             longClientId));

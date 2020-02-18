@@ -61,7 +61,7 @@ export class TaskFactory {
         if (ctor) {
             return new ctor(node, command);
         }
-        if (executable === "node" && command === "node node_modules/@microsoft/fluid-build-common/gen_version.js") {
+        if (executable === "node" && command === "gen-version") {
             return new GenVerTask(node, command);
         }
         return new UnknownLeafTask(node, command);

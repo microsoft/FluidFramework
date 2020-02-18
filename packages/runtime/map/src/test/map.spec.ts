@@ -35,8 +35,6 @@ describe("Routerlicious", () => {
             });
 
             it("Can set and get map data", async () => {
-                // tslint:disable:no-backbone-get-set-outside-model
-                /* tslint:disable:no-unsafe-any */
                 testMap.set("testKey", "testValue");
                 testMap.set("testKey2", "testValue2");
                 assert.equal(testMap.get("testKey"), "testValue");

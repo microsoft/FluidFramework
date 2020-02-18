@@ -102,7 +102,7 @@ export interface IDocumentMessage {
     clientSequenceNumber: number;
 
     // The reference sequence number the message was sent relative to
-    referenceSequenceNumber: number | undefined;
+    referenceSequenceNumber: number;
 
     // The type of document message being sent
     type: string;

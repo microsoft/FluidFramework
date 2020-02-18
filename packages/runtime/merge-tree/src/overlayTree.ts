@@ -30,6 +30,7 @@ function createTreeMarkerOps(
     endMarkerProps[onodeTypeKey] = nodeType;
 
     if (!beginMarkerProps) {
+        // eslint-disable-next-line no-param-reassign
         beginMarkerProps = MergeLib.createMap<any>();
     }
     beginMarkerProps[MergeLib.reservedMarkerIdKey] = id;

@@ -623,7 +623,8 @@ const right = [
     // Nikolay Yegorovich Zhukovsky (Russian: Никола́й Его́рович Жуко́вский, January 17 1847 – March 17, 1921) was a Russian scientist, mathematician and engineer, and a founding father of modern aero- and hydrodynamics. Whereas contemporary scientists scoffed at the idea of human flight, Zhukovsky was the first to undertake the study of airflow. He is often called the Father of Russian Aviation. https://en.wikipedia.org/wiki/Nikolay_Yegorovich_Zhukovsky
     "zhukovsky",
 ];
-// tslint:enable:max-line-length
+
+/* eslint-enable max-len */
 
 const fluidNames = [
     "lucco",

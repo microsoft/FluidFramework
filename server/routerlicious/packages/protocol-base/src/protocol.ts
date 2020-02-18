@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import {
     IClientJoin,
     ICommittedProposal,
@@ -29,7 +28,6 @@ export interface IScribeProtocolState {
 }
 
 export function isSystemMessage(message: ISequencedDocumentMessage) {
-    /* eslint-disable @typescript-eslint/indent */
     switch (message.type) {
         case MessageType.ClientJoin:
         case MessageType.ClientLeave:
@@ -43,13 +41,12 @@ export function isSystemMessage(message: ISequencedDocumentMessage) {
         default:
             return false;
     }
-    /* eslint-enable @typescript-eslint/indent */
 }
 
 /**
  * Handles protocol specific ops.
  */
-export class ProtocolOpHandler extends EventEmitter {
+export class ProtocolOpHandler {
     public readonly quorum: Quorum;
 
     constructor(
@@ -61,7 +58,6 @@ export class ProtocolOpHandler extends EventEmitter {
         values: [string, ICommittedProposal][],
         sendProposal: (key: string, value: any) => number,
         sendReject: (sequenceNumber: number) => void) {
-        super();
         this.quorum = new Quorum(
             minimumSequenceNumber,
             members,
@@ -78,7 +74,6 @@ export class ProtocolOpHandler extends EventEmitter {
     public processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult {
         let immediateNoOp = false;
 
-        /* eslint-disable @typescript-eslint/indent */
         switch (message.type) {
             case MessageType.ClientJoin:
                 const systemJoinMessage = message as ISequencedDocumentSystemMessage;
@@ -115,21 +110,8 @@ export class ProtocolOpHandler extends EventEmitter {
                 this.quorum.rejectProposal(message.clientId, sequenceNumber);
                 break;
 
-            case MessageType.Summarize:
-                this.emit("Summary", message);
-                break;
-
-            case MessageType.SummaryAck:
-                this.emit("Summary", message);
-                break;
-
-            case MessageType.SummaryNack:
-                this.emit("Summary", message);
-                break;
-
             default:
         }
-        /* eslint-enable @typescript-eslint/indent */
 
         // Update tracked sequence numbers
         this.minimumSequenceNumber = message.minimumSequenceNumber;
@@ -188,11 +170,5 @@ export class ProtocolOpHandler extends EventEmitter {
         };
 
         return summary;
-    }
-
-    public on(event: "Summary", listener: (message: ISequencedDocumentMessage) => void): this;
-
-    public on(event: string | symbol, listener: (...args: any[]) => void): this {
-        return super.on(event, listener);
     }
 }

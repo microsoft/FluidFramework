@@ -15,6 +15,7 @@ import {
     TreeEntry,
 } from "@microsoft/fluid-protocol-definitions";
 import { IChannelAttributes, IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+import { ObjectStoragePartition } from "@microsoft/fluid-runtime-utils";
 import { makeHandlesSerializable, parseHandles, SharedObject } from "@microsoft/fluid-shared-object-base";
 import { debug } from "./debug";
 import {
@@ -30,16 +31,6 @@ const cloneDeep = require("lodash/cloneDeep");
 
 const snapshotFileName = "header";
 const contentPath = "content";
-
-class ContentObjectStorage implements IObjectStorageService {
-    constructor(private readonly storage: IObjectStorageService) {
-    }
-
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public read(path: string): Promise<string> {
-        return this.storage.read(`${contentPath}/${path}`);
-    }
-}
 
 export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     extends SharedObject
@@ -110,7 +101,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     ) {
         super(id, document, attributes);
 
-        /* tslint:disable:no-unsafe-any */
         this.client = new MergeTree.Client(
             segmentFromSpec,
             ChildLogger.create(this.logger, "SharedSegmentSequence.MergeTreeClient"),
@@ -487,7 +477,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         try {
             const msgs = await this.client.load(
                 this.runtime,
-                new ContentObjectStorage(storage),
+                new ObjectStoragePartition(storage, contentPath),
                 branchId);
             msgs.forEach((m) => this.processMergeTreeMsg(m));
             this.loadFinished();

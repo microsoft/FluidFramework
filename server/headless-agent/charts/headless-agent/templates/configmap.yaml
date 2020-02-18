@@ -45,6 +45,7 @@ data:
         },
         "worker": {
             "alfredUrl": "{{ .Values.endpoints.alfred }}",
+            "internalGatewayUrl": "{{ .Values.endpoints.internalGatewayUrl }}",
             "serverUrl": "{{ .Values.endpoints.alfredUrl }}",
             "packageUrl": "{{ .Values.endpoints.packageUrl }}",
             "blobStorageUrl": "{{ .Values.endpoints.historianUrl }}",

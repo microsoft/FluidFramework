@@ -82,12 +82,10 @@ export function countOperations(mergeTree: MergeTree) {
     assert.strictEqual(mergeTree.mergeTreeMaintenanceCallback, undefined);
 
     const fn = (deltaArgs) => {
-        // tslint:disable:no-unsafe-any
         const previous = counts[deltaArgs.operation] as undefined | number;
         counts[deltaArgs.operation] = (previous === undefined
             ? 1
             : previous + 1);
-        // tslint:enable:no-unsafe-any
     };
 
     mergeTree.mergeTreeDeltaCallback = (opArgs, deltaArgs) => { fn(deltaArgs); };

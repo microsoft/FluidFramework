@@ -200,14 +200,13 @@ export interface IComponentRuntime extends EventEmitter, IComponentRouter, Parti
 export interface IComponentContext extends EventEmitter {
     readonly documentId: string;
     readonly id: string;
+    /**
+     * The package path of the component as per the package factory.
+     */
+    readonly packagePath: readonly string[];
     readonly existing: boolean;
     readonly options: any;
     readonly clientId: string;
-    /**
-     * DEPRECATED use hostRuntime.clientDetails.type instead
-     * back-compat: 0.11 clientType
-     */
-    readonly clientType: string;
     readonly parentBranch: string;
     readonly connected: boolean;
     readonly leader: boolean;
@@ -255,18 +254,14 @@ export interface IComponentContext extends EventEmitter {
     submitSignal(type: string, content: any): void;
 
     /**
-     * Creates a new component.
-     * @param pkgOrId - Package name if a second parameter is not provided. Otherwise an explicit ID.
-     * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
-     */
-    createComponent(pkgOrId: string, pkg?: string | string[]): Promise<IComponentRuntime>;
-
-    /**
      * Creates a new component by using subregistries.
-     * @param pkg - Package name of the component.
-     * @param props - properties to be passed to the instantiateComponent thru the context.
+     * @param pkgOrId - Package name if a second parameter is not provided. Otherwise an explicit ID.
+     *                  ID is being deprecated, so prefer passing undefined instead (the runtime will
+     *                  generate an ID in this case).
+     * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
+     * @param props - Properties to be passed to the instantiateComponent through the context.
      */
-    createSubComponent(pkg: string | string[], props?: any): Promise<IComponentRuntime>;
+    createComponent(pkgOrId: string | undefined, pkg?: string, props?: any): Promise<IComponentRuntime>;
 
     /**
      * Returns the runtime of the component.
@@ -321,11 +316,6 @@ export interface IHostRuntime extends
     readonly existing: boolean;
     readonly options: any;
     readonly clientId: string;
-    /**
-     * DEPRECATED use clientDetails.type instead
-     * back-compat: 0.11 clientType
-     */
-    readonly clientType: string;
     readonly clientDetails: IClientDetails;
     readonly parentBranch: string;
     readonly connected: boolean;
@@ -342,6 +332,7 @@ export interface IHostRuntime extends
     readonly submitSignalFn: (contents: any) => void;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly closeFn: () => void;
+    readonly scope: IComponent;
 
     /**
      * Returns the runtime of the component.
@@ -417,4 +408,11 @@ export interface IHostRuntime extends
      * Executes a request against the runtime
      */
     request(request: IRequest): Promise<IResponse>;
+
+    /**
+     * Submits the signal to be sent to other clients.
+     * @param type - Type of the signal.
+     * @param content - Content of the signal.
+     */
+    submitSignal(type: string, content: any): void;
 }

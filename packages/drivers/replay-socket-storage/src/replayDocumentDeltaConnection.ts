@@ -122,7 +122,6 @@ export class ReplayControllerStatic extends ReplayController {
         fetchedOps: ISequencedDocumentMessage[]): Promise<void> {
         let current = this.skipToIndex(fetchedOps);
 
-        // tslint:disable-next-line:promise-must-complete
         return new Promise((resolve, reject) => {
             const replayNextOps = () => {
                 // Emit the ops from replay to the end every "deltainterval" milliseconds

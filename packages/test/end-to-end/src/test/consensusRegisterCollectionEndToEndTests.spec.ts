@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import * as api from "@fluid-internal/client-api";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import {
@@ -19,13 +20,11 @@ import {
     ReadPolicy,
 } from "@microsoft/fluid-register-collection";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
-import * as assert from "assert";
 
 interface ISharedObjectConstructor<T> {
     create(runtime: IComponentRuntime, id?: string): T;
 }
 
-generate("ConsensusRegisterCollection", ConsensusRegisterCollection);
 function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegisterCollection>) {
     describe(name, () => {
         const id = "fluid://test.com/test/test";
@@ -45,15 +44,15 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
             const documentService = new TestDocumentServiceFactory(testDeltaConnectionServer);
             const resolver = new TestResolver();
             user1Document = await api.load(
-                id, { resolver }, {}, documentService);
+                id, resolver, {}, documentService);
             documentDeltaEventManager.registerDocuments(user1Document);
 
             user2Document = await api.load(
-                id, { resolver }, {}, documentService);
+                id, resolver, {}, documentService);
             documentDeltaEventManager.registerDocuments(user2Document);
 
             user3Document = await api.load(
-                id, { resolver }, {}, documentService);
+                id, resolver, {}, documentService);
             documentDeltaEventManager.registerDocuments(user3Document);
             root1 = user1Document.getRoot();
             root2 = user2Document.getRoot();
@@ -179,3 +178,5 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
         });
     });
 }
+
+generate("ConsensusRegisterCollection", ConsensusRegisterCollection);

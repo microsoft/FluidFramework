@@ -24,16 +24,17 @@ import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 require("bootstrap/dist/css/bootstrap.min.css");
 
 class ProgressBarView implements IComponentHTMLView {
-
     public parent: HTMLElement;
+    private barElem: HTMLDivElement;
 
     constructor(private readonly bar: ProgressBar) {
+        this.bar.on("updateValue", this.sizeBarElemToProgress);
     }
 
     public get IComponentHTMLView() { return this; }
 
     public remove() {
-        this.bar.detach(this);
+        this.bar.off("updateValue", this.sizeBarElemToProgress);
     }
 
     public render(parent: HTMLElement) {
@@ -64,17 +65,22 @@ class ProgressBarView implements IComponentHTMLView {
             parent.appendChild(downButton);
             parent.appendChild(upButton);
 
-            (div.firstElementChild as HTMLDivElement).style.width = `${this.bar.value}%`;
+            this.barElem = div.firstElementChild as HTMLDivElement;
+            this.sizeBarElemToProgress();
             this.parent = parent;
         }
     }
+
+    private readonly sizeBarElemToProgress = () => {
+        this.barElem.style.width = `${this.bar.value}%`;
+    };
 }
 
 // The "model" side of a progress bar
-export class ProgressBar implements IComponentLoadable, IComponentHTMLVisual, IComponentRouter {
-    private readonly views = new Set<ProgressBarView>();
-    private defaultView: ProgressBarView;
-
+export class ProgressBar extends EventEmitter implements
+    IComponentLoadable,
+    IComponentHTMLVisual,
+    IComponentRouter {
     public handle: ComponentHandle;
 
     constructor(
@@ -84,6 +90,7 @@ export class ProgressBar implements IComponentLoadable, IComponentHTMLVisual, IC
         context: IComponentHandleContext,
         private readonly collection: ProgressCollection,
     ) {
+        super();
         this.handle = new ComponentHandle(this, keyId, context);
     }
 
@@ -91,34 +98,17 @@ export class ProgressBar implements IComponentLoadable, IComponentHTMLVisual, IC
     public get IComponentHTMLVisual() { return this; }
     public get IComponentRouter() { return this; }
 
-    public render(elm: HTMLElement) {
-        if (!this.defaultView) {
-            this.defaultView = this.addView(this);
-        }
-        this.defaultView.render(elm);
-    }
-
-    public addView(host: IComponent) {
-        const attached = new ProgressBarView(this);
-        this.views.add(attached);
-
-        return attached;
+    public addView(scope?: IComponent) {
+        return new ProgressBarView(this);
     }
 
     public changeValue(newValue: number) {
         this.collection.changeValue(this.keyId, newValue);
     }
 
-    public detach(view: ProgressBarView) {
-        this.views.delete(view);
-    }
-
     public update(value: number) {
         this.value = value;
-
-        for (const view of this.views) {
-            view.render(view.parent);
-        }
+        this.emit("updateValue");
     }
 
     public async request(request: IRequest): Promise<IResponse> {

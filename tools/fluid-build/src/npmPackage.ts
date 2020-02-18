@@ -194,7 +194,7 @@ export class Package {
             if (options.fixScripts) {
                 if (!this.packageJson.scripts["test:mocha"]) {
                     this.packageJson.scripts["test:mocha"] = this.packageJson.scripts["test"];
-                    this.packageJson.scripts["test"] = "test:mocha";
+                    this.packageJson.scripts["test"] = "npm run test:mocha";
                     fixed = true;
                 } else {
                     console.warn(`${this.nameColored}: couldn't fix: "test" and "test:mocha" scripts both present`)
@@ -259,7 +259,7 @@ export class Package {
             }
             // These are script rules in the FluidFramework repo
 
-            // Default build script, tsc + tslint (with optional build:webpack)
+            // Default build script, tsc + eslint (with optional build:webpack)
             const build: string[] = ["build:compile"];
 
             // all build tasks, but optional build:webpack
@@ -285,8 +285,8 @@ export class Package {
                 buildCompile.push("build:copy");
             }
 
-            if (this.getScript("tslint")) {
-                build.push("tslint");
+            if (this.getScript("lint")) {
+                build.push("lint");
             }
 
             if (this.getScript("less")) {
@@ -380,7 +380,7 @@ export class Package {
                     if (existsSync(symlinkPath)) {
                         const stat = await lstatAsync(symlinkPath);
                         if (!stat.isSymbolicLink || await realpathAsync(symlinkPath) !== depBuildPackage.directory) {
-                            if (stat.isDirectory) {
+                            if (stat.isDirectory()) {
                                 await rimrafWithErrorAsync(symlinkPath, this.nameColored);
                             } else {
                                 await unlinkAsync(symlinkPath);

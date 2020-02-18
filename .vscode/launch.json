@@ -64,8 +64,8 @@
             "type": "node",
             "request": "launch",
             "name": "Flow-Util Tests",
-            "cwd": "${workspaceFolder}/packages/components/flow-util",
-            "program": "${workspaceFolder}/packages/components/flow-util/node_modules/ts-mocha/bin/ts-mocha",
+            "cwd": "${workspaceFolder}/packages/components/flow-util-lib",
+            "program": "${workspaceFolder}/packages/components/flow-util-lib/node_modules/ts-mocha/bin/ts-mocha",
             "args": [
                 // Note: 'ignore-styles' must be after 'ts-node', otherwise 'ignore-styles' will intercept
                 //       'index.ts' files if there is an 'index.css' in the same directory.
@@ -86,7 +86,7 @@
             "type": "node",
             "request": "launch",
             "name": "Table Tests",
-            "cwd": "${workspaceFolder}/packages/components/table-test",
+            "cwd": "${workspaceFolder}/packages/components/table-test-lib",
             "program": "${workspaceFolder}/packages/components/webflow/node_modules/mocha/bin/_mocha",
             "args": [
                 "-r",

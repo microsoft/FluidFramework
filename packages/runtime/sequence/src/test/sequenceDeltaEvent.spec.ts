@@ -1,8 +1,11 @@
+/* eslint-disable no-null/no-null */
 /*!
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
+import { isNullOrUndefined } from "util";
 import {
     createAnnotateRangeOp,
     createInsertSegmentOp,
@@ -11,11 +14,8 @@ import {
     PropertySet,
     TextSegment,
 } from "@microsoft/fluid-merge-tree";
-import {
-    TestClient,
-} from "@microsoft/fluid-merge-tree/dist/test/";
-import * as assert from "assert";
-import { isNullOrUndefined } from "util";
+// eslint-disable-next-line import/no-internal-modules
+import { TestClient } from "@microsoft/fluid-merge-tree/dist/test/";
 import { SequenceDeltaEvent } from "../sequenceDeltaEvent";
 
 interface IExpectedSegmentInfo {
@@ -142,18 +142,20 @@ describe("non-collab", () => {
         it("add property over overlapping runs", () => {
 
             annotateText(2, 10, { foo: "bar" },
-                [{ offset: 2, numChar: 1, props: { foo: "bar", foo1: "bar1" }, propDeltas: { foo: null } },
-                { offset: 3, numChar: 4, props: { foo: "bar", foo2: "bar2" }, propDeltas: { foo: null } },
-                { offset: 7, numChar: 3, props: { foo: "bar", foo3: "bar3" }, propDeltas: { foo: null } },
+                [
+                    { offset: 2, numChar: 1, props: { foo: "bar", foo1: "bar1" }, propDeltas: { foo: null } },
+                    { offset: 3, numChar: 4, props: { foo: "bar", foo2: "bar2" }, propDeltas: { foo: null } },
+                    { offset: 7, numChar: 3, props: { foo: "bar", foo3: "bar3" }, propDeltas: { foo: null } },
                 ]);
         });
 
         it("nullify all properties", () => {
 
             annotateText(2, 10, { foo: undefined },
-                [{ offset: 2, numChar: 1, props: { foo: undefined, foo1: "bar1" }, propDeltas: { foo: "bar" } },
-                { offset: 3, numChar: 4, props: { foo: undefined, foo2: "bar2" }, propDeltas: { foo: "bar" } },
-                { offset: 7, numChar: 3, props: { foo: undefined, foo3: "bar3" }, propDeltas: { foo: "bar" } },
+                [
+                    { offset: 2, numChar: 1, props: { foo: undefined, foo1: "bar1" }, propDeltas: { foo: "bar" } },
+                    { offset: 3, numChar: 4, props: { foo: undefined, foo2: "bar2" }, propDeltas: { foo: "bar" } },
+                    { offset: 7, numChar: 3, props: { foo: undefined, foo3: "bar3" }, propDeltas: { foo: "bar" } },
                 ]);
 
             annotateText(2, 3, { foo1: undefined },
@@ -173,8 +175,7 @@ describe("non-collab", () => {
             start: number,
             end: number,
             newProps: PropertySet,
-            expected: IExpectedSegmentInfo[])
-            : void {
+            expected: IExpectedSegmentInfo[]): void {
             let deltaArgs: IMergeTreeDeltaCallbackArgs;
             client.mergeTree.mergeTreeDeltaCallback = (opArgs, delta) => { deltaArgs = delta; };
             const op = client.annotateRangeLocal(start, end, newProps, undefined);
@@ -531,8 +532,8 @@ describe("collab", () => {
             const localInsertText = "brown ";
             const remoteInsertPos1 = 4; // before "fox", and before local update
             const remoteInsertText1 = "quick ";
-            let remoteInsertPos2: number; // before "fox", but after local update
-            remoteInsertPos2 = client.getLength() - 3 + localInsertText.length + remoteInsertText1.length;
+            // before "fox", but after local update
+            const remoteInsertPos2 = client.getLength() - 3 + localInsertText.length + remoteInsertText1.length;
             const remoteInsertText2 = "lazy ";
 
             // output: The quick brown fox jumps over the lazy dog
@@ -604,8 +605,8 @@ describe("collab", () => {
             const localInsertText1 = "quick ";
             const remoteInsertPos = 4; // before "fox", and before local update
             const remoteInsertText = "brown ";
-            let localInsertPos2: number; // before "dog", after local update
-            localInsertPos2 = client.getLength() - 3 + remoteInsertText.length + localInsertText1.length;
+            // before "dog", after local update
+            const localInsertPos2 = client.getLength() - 3 + remoteInsertText.length + localInsertText1.length;
             const localInsertText2 = "lazy ";
 
             // output: The quick brown fox jumps over the lazy dog
@@ -683,10 +684,8 @@ describe("collab", () => {
         it("separate regions, local before remote", () => {
             const localRemovePosStart = 4; // "quick "
             const localRemovePosEnd = localRemovePosStart + 6;
-            let remoteRemovePosStart: number; // "lazy "
-            let remoteRemovePosEnd: number;
-            remoteRemovePosStart = client.getLength() - 8;
-            remoteRemovePosEnd = remoteRemovePosStart + 5;
+            const remoteRemovePosStart = client.getLength() - 8; // "lazy "
+            const remoteRemovePosEnd = remoteRemovePosStart + 5;
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
@@ -723,7 +722,8 @@ describe("collab", () => {
             assert(!event.isLocal);
             assert(!event.isEmpty);
             assert.equal(event.first.position, remoteRemovePosStart - localRemovePosEnd + localRemovePosStart);
-            assert.equal(event.last.position + event.last.segment.cachedLength, remoteRemovePosEnd - localRemovePosEnd + localRemovePosStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength,
+                remoteRemovePosEnd - localRemovePosEnd + localRemovePosStart);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.first.segment.cachedLength, remoteRemovePosEnd - remoteRemovePosStart);
             const segment2 = event.first.segment as TextSegment;
@@ -733,10 +733,8 @@ describe("collab", () => {
         it("separate regions, remote before local", () => {
             const localRemovePosStart = 4; // "quick "
             const localRemovePosEnd = localRemovePosStart + 6;
-            let remoteRemovePosStart: number; // "lazy "
-            let remoteRemovePosEnd: number;
-            remoteRemovePosStart = client.getLength() - 8;
-            remoteRemovePosEnd = remoteRemovePosStart + 5;
+            const remoteRemovePosStart = client.getLength() - 8; // "lazy "
+            const remoteRemovePosEnd = remoteRemovePosStart + 5;
 
             const currentSeqNumber = client.mergeTree.collabWindow.currentSeq;
 
@@ -773,7 +771,8 @@ describe("collab", () => {
             assert(!event.isLocal);
             assert(!event.isEmpty);
             assert.equal(event.first.position, remoteRemovePosStart - localRemovePosEnd + localRemovePosStart);
-            assert.equal(event.last.position + event.last.segment.cachedLength, remoteRemovePosEnd - localRemovePosEnd + localRemovePosStart);
+            assert.equal(event.last.position + event.last.segment.cachedLength,
+                remoteRemovePosEnd - localRemovePosEnd + localRemovePosStart);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.first.segment.cachedLength, remoteRemovePosEnd - remoteRemovePosStart);
             const segment2 = event.first.segment as TextSegment;
@@ -1912,8 +1911,8 @@ describe("collab", () => {
             isEmpty: boolean,
             start: number,
             end: number,
-            expected: IExpectedSegmentInfo[])
-            : void {
+            expected: IExpectedSegmentInfo[],
+        ): void {
 
             assert(event.isLocal === isLocal);
             assert(event.isEmpty === isEmpty);
@@ -2305,7 +2304,8 @@ describe("collab", () => {
             assert(!event.isLocal);
             assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos - (deleteRangeEnd - deleteRangeStart));
-            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos - (deleteRangeEnd - deleteRangeStart) + insertText.length);
+            assert.equal(event.last.position + event.last.segment.cachedLength,
+                insertPos - (deleteRangeEnd - deleteRangeStart) + insertText.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.first.segment.cachedLength, insertText.length);
             const segment2 = event.first.segment as TextSegment;
@@ -2354,7 +2354,8 @@ describe("collab", () => {
             assert(!event.isLocal);
             assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos - (deleteRangeEnd - deleteRangeStart));
-            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos - (deleteRangeEnd - deleteRangeStart) + insertText.length);
+            assert.equal(event.last.position + event.last.segment.cachedLength,
+                insertPos - (deleteRangeEnd - deleteRangeStart) + insertText.length);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.first.segment.cachedLength, insertText.length);
             const segment2 = event.first.segment as TextSegment;
@@ -2712,7 +2713,8 @@ describe("collab", () => {
             assert(!event.isLocal);
             assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos - (deleteRangeEnd - deleteRangeStart));
-            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length - (deleteRangeEnd - deleteRangeStart));
+            assert.equal(event.last.position + event.last.segment.cachedLength,
+                insertPos + insertText.length - (deleteRangeEnd - deleteRangeStart));
             assert.equal(event.ranges.length, 1);
             assert.equal(event.first.segment.cachedLength, insertText.length);
             const segment2 = event.first.segment as TextSegment;
@@ -2761,7 +2763,8 @@ describe("collab", () => {
             assert(!event.isLocal);
             assert(!event.isEmpty);
             assert.equal(event.first.position, insertPos - (deleteRangeEnd - deleteRangeStart));
-            assert.equal(event.last.position + event.last.segment.cachedLength, insertPos + insertText.length - (deleteRangeEnd - deleteRangeStart));
+            assert.equal(event.last.position + event.last.segment.cachedLength,
+                insertPos + insertText.length - (deleteRangeEnd - deleteRangeStart));
             assert.equal(event.ranges.length, 1);
             assert.equal(event.first.segment.cachedLength, insertText.length);
             const segment2 = event.first.segment as TextSegment;

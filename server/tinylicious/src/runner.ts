@@ -11,13 +11,15 @@ import {
     IWebServer,
     IWebServerFactory,
     MongoManager,
+    DefaultMetricClient,
 } from "@microsoft/fluid-server-services-core";
 import * as utils from "@microsoft/fluid-server-services-utils";
 import { Deferred } from "@microsoft/fluid-core-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
+import { configureWebSocketServices } from "@microsoft/fluid-server-lambdas";
+import { TestClientManager } from "@microsoft/fluid-server-test-utils";
 import * as app from "./app";
-import * as io from "./io";
 
 export class TinyliciousRunner implements utils.IRunner {
     private server: IWebServer;
@@ -49,13 +51,14 @@ export class TinyliciousRunner implements utils.IRunner {
 
         const httpServer = this.server.httpServer;
 
-        // Register all the socket.io stuff
-        io.register(
+        configureWebSocketServices(
             this.server.webSocketServer,
             this.orderManager,
             this.tenantManager,
             this.storage,
-            this.contentCollection);
+            this.contentCollection,
+            new TestClientManager(),
+            new DefaultMetricClient());
 
         // Listen on provided port, on all network interfaces.
         httpServer.listen(this.port);
@@ -92,14 +95,14 @@ export class TinyliciousRunner implements utils.IRunner {
 
         // Handle specific listen errors with friendly messages
         switch (error.code) {
-        case "EACCES":
-            this.runningDeferred.reject(`${bind} requires elevated privileges`);
-            break;
-        case "EADDRINUSE":
-            this.runningDeferred.reject(`${bind} is already in use`);
-            break;
-        default:
-            throw error;
+            case "EACCES":
+                this.runningDeferred.reject(`${bind} requires elevated privileges`);
+                break;
+            case "EADDRINUSE":
+                this.runningDeferred.reject(`${bind} is already in use`);
+                break;
+            default:
+                throw error;
         }
     }
 

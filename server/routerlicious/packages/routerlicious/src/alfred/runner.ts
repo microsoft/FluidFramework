@@ -18,9 +18,10 @@ import {
 import * as utils from "@microsoft/fluid-server-services-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
+import { createMetricClient } from "@microsoft/fluid-server-services";
 import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
+import { configureWebSocketServices } from "@microsoft/fluid-server-lambdas";
 import * as app from "./app";
-import * as io from "./io";
 
 export class AlfredRunner implements utils.IRunner {
     private server: IWebServer;
@@ -60,14 +61,14 @@ export class AlfredRunner implements utils.IRunner {
         const httpServer = this.server.httpServer;
 
         // Register all the socket.io stuff
-        io.register(
+        configureWebSocketServices(
             this.server.webSocketServer,
-            this.metricClientConfig,
             this.orderManager,
             this.tenantManager,
             this.storage,
             this.contentCollection,
-            this.clientManager);
+            this.clientManager,
+            createMetricClient(this.metricClientConfig));
 
         // Listen on provided port, on all network interfaces.
         httpServer.listen(this.port);
@@ -104,7 +105,6 @@ export class AlfredRunner implements utils.IRunner {
             : `Port ${this.port}`;
 
         // Handle specific listen errors with friendly messages
-        /* eslint-disable @typescript-eslint/indent */
         switch (error.code) {
             case "EACCES":
                 this.runningDeferred.reject(`${bind} requires elevated privileges`);
@@ -115,7 +115,6 @@ export class AlfredRunner implements utils.IRunner {
             default:
                 throw error;
         }
-        /* eslint-enable @typescript-eslint/indent */
     }
 
     /**

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export * from "./alfred";
 export * from "./broadcaster";
 export * from "./deli";
 export * from "./scribe";

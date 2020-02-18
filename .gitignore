@@ -3,6 +3,7 @@ node_modules
 dist
 nyc
 *.log
+.DS_Store
 
 # Rush: Temporary files
 common/temp
@@ -13,4 +14,4 @@ package-deps.json
 *.tsbuildinfo
 
 # Temporary api-extractor build artifacts
-packages/_api-extractor-temp/**
+**/_api-extractor-temp/**

@@ -17,6 +17,7 @@ import {
 import { TestClient } from "@microsoft/fluid-merge-tree/dist/test/testClient";
 import {
     IBlob,
+    IChunkedOp,
     ISequencedDocumentMessage,
     ITree,
     ITreeEntry,
@@ -117,7 +118,34 @@ export class ClientReplayTool {
         const clients = new Map<string, Map<string, TestClient>>();
         const mergeTreeAttachTrees = new Map<string, { tree: ITree, specToSeg(segment: IJSONSegment): ISegment }>();
         const mergeTreeMessages = new Array<IFullPathSequencedDocumentMessage>();
+        const chunkMap = new Map<string, string[]>();
         for (const message of this.deltaStorageService.getFromWebSocket(0, this.args.to)) {
+
+            if (message.type === MessageType.ChunkedOp) {
+                const chunk = JSON.parse(message.contents as string) as IChunkedOp;
+                if (!chunkMap.has(message.clientId)) {
+                    chunkMap.set(message.clientId, new Array<string>(chunk.totalChunks));
+                }
+                const chunks = chunkMap.get(message.clientId);
+                const chunkIndex = chunk.chunkId - 1;
+                if (chunks[chunkIndex] !== undefined) {
+                    throw new Error("Chunk already assigned");
+                }
+                chunks[chunkIndex] = chunk.contents;
+                if (chunk.chunkId === chunk.totalChunks) {
+                    for (const c of chunks) {
+                        if (c === undefined) {
+                            throw new Error("Chunk not assigned");
+                        }
+                    }
+                    message.contents = chunks.join("");
+                    message.type = chunk.originalType;
+                    chunkMap.delete(message.clientId);
+                } else {
+                    continue;
+                }
+            }
+
             const messagePathParts: string[] = [];
             switch (message.type as MessageType) {
                 case MessageType.Operation:
@@ -215,9 +243,7 @@ export class ClientReplayTool {
                             && pendingMessages[0].sequenceNumber <= message.referenceSequenceNumber) {
                             const pendingMessage = pendingMessages.shift();
                             try {
-                                if (this.args.testReconnet) {
-                                    client.get(pendingMessage.fullPath).applyMsg(pendingMessage);
-                                }
+                                client.get(pendingMessage.fullPath).applyMsg(pendingMessage);
                             } catch (error) {
                                 console.log(JSON.stringify(pendingMessage, undefined, 2));
                                 throw error;
@@ -269,22 +295,18 @@ export class ClientReplayTool {
         const mergeTreeTypes = [
             {
                 type: SharedStringFactory.Type,
-                // eslint-disable-next-line @typescript-eslint/unbound-method
                 specToSeg: SharedStringFactory.segmentFromSpec,
             },
             {
                 type: SparseMatrixFactory.Type,
-                // eslint-disable-next-line @typescript-eslint/unbound-method
                 specToSeg: SparseMatrixFactory.segmentFromSpec,
             },
             {
                 type: SharedObjectSequenceFactory.Type,
-                // eslint-disable-next-line @typescript-eslint/unbound-method
                 specToSeg: SharedObjectSequenceFactory.segmentFromSpec,
             },
             {
                 type: SharedNumberSequenceFactory.Type,
-                // eslint-disable-next-line @typescript-eslint/unbound-method
                 specToSeg: SharedNumberSequenceFactory.segmentFromSpec,
             },
         ];

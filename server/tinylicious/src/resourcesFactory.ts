@@ -11,6 +11,7 @@ import * as bytes from "bytes";
 import * as git from "isomorphic-git";
 import { Provider } from "nconf";
 import * as socketIo from "socket.io";
+import { Historian } from "@microsoft/fluid-server-services-client";
 import { TinyliciousResources } from "./resources";
 import {
     DbFactory,
@@ -28,7 +29,7 @@ export class TinyliciousResourcesFactory implements utils.IResourcesFactory<Tiny
         const collectionNames = config.get("mongo:collectionNames");
 
         const tenantManager = new TenantManager();
-        const dbFactory = new DbFactory();
+        const dbFactory = new DbFactory(config);
         const taskMessageSender = new TaskMessageSender();
         const mongoManager = new MongoManager(dbFactory);
         const databaseManager = new MongoDatabaseManager(
@@ -51,7 +52,10 @@ export class TinyliciousResourcesFactory implements utils.IResourcesFactory<Tiny
             taskMessageSender,
             config.get("foreman:permissions"),
             maxSendMessageSize,
-            io);
+            async (tenantId: string) => {
+                const url = `http://localhost:${port}/repos/${encodeURIComponent(tenantId)}`;
+                return new Historian(url, false, false);
+            });
 
         // TODO would be nicer to just pass the mongoManager down
         const db = await mongoManager.getDatabase();

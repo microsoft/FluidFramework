@@ -8,22 +8,23 @@ import {
     IComponent,
     IComponentHandleContext,
     IComponentHTMLOptions,
-    IComponentHTMLVisual,
+    IComponentHTMLView,
     IComponentLoadable,
     IComponentRouter,
     IRequest,
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentHandle, ComponentRuntime } from "@microsoft/fluid-component-runtime";
-import { IComponentCollection, IComponentLayout } from "@microsoft/fluid-framework-interfaces";
+import { IComponentLayout } from "@microsoft/fluid-framework-experimental";
+import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { ISharedMap, MapFactory } from "@microsoft/fluid-map";
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 
 export class ImageComponent implements
-    IComponentLoadable, IComponentHTMLVisual, IComponentRouter, IComponentLayout {
+    IComponentLoadable, IComponentHTMLView, IComponentRouter, IComponentLayout {
     public get IComponentLoadable() { return this; }
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
     public get IComponentRouter() { return this; }
     public get IComponentLayout() { return this; }
 

@@ -56,6 +56,25 @@ export interface IQuorum extends EventEmitter, IDisposable {
     getMembers(): Map<string, ISequencedClient>;
 
     getMember(clientId: string): ISequencedClient | undefined;
+
+    on(event: "error", listener: (message: any) => void): this;
+    on(event: "addMember", listener: (clientId: string, details: ISequencedClient) => void): this;
+    on(event: "removeMember", listener: (clientId: string) => void): this;
+    on(event: "addProposal", listener: (proposal: IPendingProposal) => void): this;
+    on(
+        event: "approveProposal",
+        listener: (sequenceNumber: number, key: string, value: any, approvalSequenceNumber: number) => void): this;
+    on(
+        event: "commitProposal",
+        listener: (
+            sequenceNumber: number,
+            key: string,
+            value: any,
+            approvalSequenceNumber: number,
+            commitSequenceNumber: number) => void): this;
+    on(
+        event: "rejectProposal",
+        listener: (sequenceNumber: number, key: string, value: any, rejections: string[]) => void): this;
 }
 
 export interface IProtocolState {

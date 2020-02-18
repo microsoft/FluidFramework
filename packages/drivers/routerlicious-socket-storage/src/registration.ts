@@ -29,7 +29,6 @@ export function createDocumentService(
     credentials?,
     seedData?: IGitCache): IDocumentService {
 
-    /* tslint:disable:no-unsafe-any */
     const service = new DocumentService(
         ordererUrl,
         deltaStorageUrl,

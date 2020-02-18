@@ -258,7 +258,6 @@ describe("Routerlicious", () => {
             });
 
             it("Should populate the directory with undefined values", async () => {
-                // tslint:disable-next-line:max-line-length
                 await populate(testDirectory, {
                     storage: {
                         testKey: {

@@ -5,7 +5,6 @@
 
 import { EventEmitter } from "events";
 import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
-import { IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import {
     IClientDetails,
     IDocumentMessage,
@@ -30,13 +29,6 @@ export interface ICodeLoader {
  */
 export interface ICodeWhiteList {
     testSource(source: IFluidCodeDetails): Promise<boolean>;
-}
-
-/**
- * Host provider interfaces
- */
-export interface IHost {
-    resolver: IUrlResolver | IUrlResolver[];
 }
 
 export interface IContainer extends EventEmitter {
@@ -70,11 +62,6 @@ export enum LoaderHeader {
      */
     cache = "fluid-cache",
 
-    /**
-     * DEPRECATED use clientDetails instead
-     * back-compat: 0.11 clientType
-     */
-    clientType = "fluid-client-type",
     clientDetails = "fluid-client-details",
     executionContext = "execution-context",
 
@@ -95,12 +82,6 @@ export enum LoaderHeader {
 }
 export interface ILoaderHeader {
     [LoaderHeader.cache]: boolean;
-
-    /**
-     * DEPRECATED use clientDetails instead
-     * back-compat: 0.11 clientType
-     */
-    [LoaderHeader.clientType]: string;
     [LoaderHeader.clientDetails]: IClientDetails;
     [LoaderHeader.pause]: boolean;
     [LoaderHeader.executionContext]: string;

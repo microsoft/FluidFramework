@@ -8,7 +8,8 @@
         "strict": true,
         "declarationDir": "./dist",
         "rootDir": "./src",
-        "outDir": "./dist"
+        "outDir": "./dist",
+        "types": [ "mocha" ]
     },
     "include": [
         "src/**/*"

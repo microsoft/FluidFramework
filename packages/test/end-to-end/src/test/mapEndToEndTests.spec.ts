@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* tslint:disable:no-unsafe-any */
-/* tslint:disable:no-backbone-get-set-outside-model  */
+import * as assert from "assert";
 import * as api from "@fluid-internal/client-api";
 import {
     DocumentDeltaEventManager,
@@ -15,7 +14,6 @@ import {
 } from "@microsoft/fluid-local-test-server";
 import { ISharedMap } from "@microsoft/fluid-map";
 import { MessageType } from "@microsoft/fluid-protocol-definitions";
-import * as assert from "assert";
 
 describe("Map", () => {
     const id = "fluid://test.com/test/test";
@@ -35,15 +33,15 @@ describe("Map", () => {
         const serviceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
         const resolver = new TestResolver();
         user1Document = await api.load(
-            id, { resolver }, {}, serviceFactory);
+            id, resolver, {}, serviceFactory);
         documentDeltaEventManager.registerDocuments(user1Document);
 
         user2Document = await api.load(
-            id, { resolver }, {}, serviceFactory);
+            id, resolver, {}, serviceFactory);
         documentDeltaEventManager.registerDocuments(user2Document);
 
         user3Document = await api.load(
-            id, { resolver }, {}, serviceFactory);
+            id, resolver, {}, serviceFactory);
         documentDeltaEventManager.registerDocuments(user3Document);
         root1 = user1Document.getRoot();
         root2 = user2Document.getRoot();
@@ -54,11 +52,11 @@ describe("Map", () => {
     });
 
     function expectAllValues(msg, key, value1, value2, value3) {
-        const user1Value = root1.get(key) as string;
+        const user1Value = root1.get(key);
         assert.equal(user1Value, value1, `Incorrect value for ${key} in document 1 ${msg}`);
-        const user2Value = root2.get(key) as string;
+        const user2Value = root2.get(key);
         assert.equal(user2Value, value2, `Incorrect value for ${key} in document 2 ${msg}`);
-        const user3Value = root3.get(key) as string;
+        const user3Value = root3.get(key);
         assert.equal(user3Value, value3, `Incorrect value for ${key} in document 3 ${msg}`);
     }
     function expectAllBeforeValues(key, value1, value2, value3) {

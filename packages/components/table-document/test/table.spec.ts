@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable no-shadow */
+
+import * as assert from "assert";
 import { TestHost } from "@microsoft/fluid-local-test-server";
 import {
     TableDocument,
@@ -10,7 +13,7 @@ import {
     TableSliceType,
     TableSlice,
 } from "../src";
-import * as assert from "assert";
+// eslint-disable-next-line import/no-unassigned-import
 import "mocha";
 import { TableDocumentItem } from "../src/table";
 
@@ -24,7 +27,7 @@ describe("TableDocument", () => {
         ]);
     });
 
-    after(async () => { await host.close(); })
+    after(async () => { await host.close(); });
 
     function makeId(type: string) {
         const id = Math.random().toString(36).substr(2);
@@ -32,9 +35,7 @@ describe("TableDocument", () => {
         return id;
     }
 
-    async function createTable() {
-        return await host.createAndAttachComponent(makeId("Table-Document"), TableDocumentType);
-    }
+    const createTable = async () => host.createAndAttachComponent(makeId("Table-Document"), TableDocumentType);
 
     let table: TableDocument;
     beforeEach(async () => {
@@ -51,9 +52,9 @@ describe("TableDocument", () => {
             rows.push(cols);
         }
         return rows;
-    }
+    };
 
-    const expect = async (expected: ReadonlyArray<ReadonlyArray<any>>) => {
+    const expect = async (expected: readonly (readonly any[])[]) => {
         assert.strictEqual(table.numRows, expected.length);
         assert.deepStrictEqual(extract(table), expected);
 
@@ -198,7 +199,8 @@ describe("TableDocument", () => {
             table.setCellValue(min.row, min.col, "start");
             table.setCellValue(max.row, max.col, "end");
 
-            const slice = await table.createSlice(makeId("Table-Slice"), "unnamed-slice", min.row, min.col, max.row, max.col);
+            const slice = await table.createSlice(makeId("Table-Slice"), "unnamed-slice",
+                min.row, min.col, max.row, max.col);
             assert.strictEqual(slice.getCellValue(min.row, min.col), "start");
             assert.strictEqual(slice.getCellValue(max.row, max.col), "end");
 

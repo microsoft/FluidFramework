@@ -7,12 +7,12 @@ import { IClient } from "@microsoft/fluid-protocol-definitions";
 import { Request } from "express";
 // In this case we want @types/express-serve-static-core, not express-serve-static-core, and so disable the lint rule
 // tslint:disable-next-line:no-implicit-dependencies
-import { Params } from "express-serve-static-core";
+import { Params } from "express-serve-static-core"; // eslint-disable-line import/no-unresolved
 import * as _ from "lodash";
 
 export interface ICachedPackage {
     entrypoint: string;
-    scripts: { id: string, url: string }[];
+    scripts: { id: string; url: string }[];
 }
 
 export interface IJWTClaims {
@@ -36,7 +36,6 @@ export function getConfig(
     updatedConfig.tenantId = tenantId;
     updatedConfig.trackError = trackError;
     const client: IClient = {
-        type: "browser", // back-compat: 0.11 clientType
         details: { capabilities: { interactive: true } },
         permission: [],
         scopes: [],
@@ -49,21 +48,19 @@ export function getConfig(
     return JSON.stringify(updatedConfig);
 }
 
-export function getParam(params: Params, key: string) {
-    return Array.isArray(params) ? undefined : params[key];
-}
+export const getParam = (params: Params, key: string) => Array.isArray(params) ? undefined : params[key];
 
 /**
  * Helper function to return a relative range (if local) or the specific chaincode package version
  */
 export function getVersion() {
-    const version = require("../package.json").version;
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const version = require("../package.json").version as string;
     return `${version.endsWith(".0") ? "^" : ""}${version}`;
 }
 
-function getUser(request: Request) {
-    return request.user ? request.user : request.session.guest;
-}
+// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+const getUser = (request: Request) => request.user ? request.user : request.session.guest;
 
 export function getJWTClaims(request: Request): IJWTClaims {
     const user = getUser(request);
@@ -77,6 +74,4 @@ export function getJWTClaims(request: Request): IJWTClaims {
     };
 }
 
-export function getUserDetails(request: Request): string {
-    return JSON.stringify(getUser(request));
-}
+export const getUserDetails = (request: Request) => JSON.stringify(getUser(request));

@@ -9,7 +9,7 @@ import { IDocumentFactory } from "@microsoft/fluid-host-service-interfaces";
 import Axios from "axios";
 
 export class DocumentFactory implements IDocumentFactory {
-    private loaderDeferred = new Deferred<ILoader>();
+    private readonly loaderDeferred = new Deferred<ILoader>();
 
     public get IDocumentFactory(): IDocumentFactory { return this; }
 
@@ -27,7 +27,9 @@ export class DocumentFactory implements IDocumentFactory {
     }
 
     public async create(chaincode: IFluidCodeDetails): Promise<string> {
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises, no-async-promise-executor
         const monikerP = new Promise(async (resolve) => {
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (this.moniker) {
                 resolve(this.moniker);
             } else {
@@ -38,13 +40,15 @@ export class DocumentFactory implements IDocumentFactory {
         const [loader, moniker] = await Promise.all([
             this.loaderDeferred.promise,
             monikerP,
-        ]);
+        ]) as [ILoader, unknown];
 
         // generate a moniker to use as part of creating the new document
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         const url = this.url ? this.url : `${window.location.origin}/loader/${this.tenantId}/${moniker}`;
         const resolved = await loader.resolve({ url });
 
         // TODO need connected flag on the IContainer
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (!(resolved as any).connected) {
             await new Promise((r) => resolved.once("connected", r));
         }
@@ -54,6 +58,7 @@ export class DocumentFactory implements IDocumentFactory {
             return Promise.reject("Code has already been proposed on document");
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         quorum.propose("code", chaincode);
 
         return url;

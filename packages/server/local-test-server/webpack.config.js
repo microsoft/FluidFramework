@@ -34,4 +34,7 @@ module.exports = {
     devServer: {
         publicPath: '/dist'
     },
+    node: {
+      fs: "empty",
+    },
 };

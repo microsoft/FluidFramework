@@ -1,9 +1,0 @@
-{
-    "extends": [
-        "@microsoft/eslint-config-fluid/no-tslint"
-    ],
-    "rules": {
-        "@typescript-eslint/unbound-method": "off",
-        "max-len": "off"
-    }
-}

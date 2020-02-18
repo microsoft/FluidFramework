@@ -3,17 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 import * as React from "react";
 import { IComponentReactViewable } from "./interfaces";
 
 export interface IEmbeddedComponentProps {
     component: IComponent;
+    style?: React.CSSProperties;
 }
 
 /**
  * Will render a component via react if the component supports IComponentReactViewable
- * or standard HTML if the component supports IComponentHTMLVisual
+ * or standard HTML if the component supports IComponentHTMLView
  *
  * If the component supports neither interface we render an empty <span />
  */
@@ -29,9 +30,15 @@ export class EmbeddedComponent extends React.Component<IEmbeddedComponentProps> 
             return;
         }
 
+        const htmlView = this.props.component.IComponentHTMLView;
+        if (htmlView) {
+            this.element = <HTMLViewEmbeddedComponent component={htmlView} />;
+            return;
+        }
+
         const htmlVisual = this.props.component.IComponentHTMLVisual;
         if (htmlVisual) {
-            this.element = <HTMLEmbeddedComponent component={htmlVisual} />;
+            this.element = <HTMLVisualEmbeddedComponent component={htmlVisual} />;
             return;
         }
 
@@ -43,35 +50,60 @@ export class EmbeddedComponent extends React.Component<IEmbeddedComponentProps> 
     }
 }
 
-interface IHTMLProps {
+interface IHTMLViewProps {
+    component: IComponentHTMLView;
+    style?: React.CSSProperties;
+}
+
+/**
+ * Embeds a Fluid Component that supports IComponentHTMLView
+ */
+class HTMLViewEmbeddedComponent extends React.Component<IHTMLViewProps, { }> {
+    private readonly ref: React.RefObject<HTMLSpanElement>;
+
+    constructor(props: IHTMLViewProps) {
+        super(props);
+
+        this.ref = React.createRef<HTMLSpanElement>();
+    }
+
+    public async componentDidMount() {
+        if (this.ref.current) {
+            this.props.component.render(this.ref.current);
+        }
+    }
+
+    public render() {
+        return <span style={this.props.style} ref={this.ref}></span>;
+    }
+}
+
+interface IHTMLVisualProps {
     component: IComponentHTMLVisual;
+    style?: React.CSSProperties;
 }
 
 /**
  * Embeds a Fluid Component that supports IComponentHTMLVisual
  */
-class HTMLEmbeddedComponent extends React.Component<IHTMLProps, { }> {
-    private readonly ref: React.RefObject<HTMLDivElement>;
+class HTMLVisualEmbeddedComponent extends React.Component<IHTMLVisualProps, { }> {
+    private readonly ref: React.RefObject<HTMLSpanElement>;
 
-    constructor(props: IHTMLProps) {
+    constructor(props: IHTMLVisualProps) {
         super(props);
 
-        this.ref = React.createRef<HTMLDivElement>();
+        this.ref = React.createRef<HTMLSpanElement>();
     }
 
     public async componentDidMount() {
         if (this.ref.current) {
-            if (this.props.component.addView) {
-                const view = this.props.component.addView();
-                view.render(this.ref.current);
-            } else {
-                this.props.component.render(this.ref.current);
-            }
+            const view = this.props.component.addView();
+            view.render(this.ref.current);
         }
     }
 
     public render() {
-        return <div ref={this.ref}></div>;
+        return <span style={this.props.style} ref={this.ref}></span>;
     }
 }
 

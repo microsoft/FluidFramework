@@ -15,7 +15,6 @@ import * as Comlink from "comlink";
 
 // Proxy loader that proxies request to web worker.
 interface IProxyLoader extends ILoader, IComponentRunnable {
-    // tslint:disable no-misused-new
     // eslint-disable-next-line @typescript-eslint/no-misused-new
     new(id: string,
         options: any,

@@ -24,6 +24,8 @@ describe("Loader", () => {
             let intendedResult: IProcessMessageResult;
             const docId = "docId";
             const submitEvent = "test-submit";
+            // Stash the real setTimeout because sinon fake timers will hijack it.
+            const realSetTimeout = setTimeout;
 
             async function startDeltaManager() {
                 await deltaManager.connect();
@@ -33,12 +35,29 @@ describe("Loader", () => {
                 deltaManager.updateQuorumJoin();
             }
 
-            function emitSequentialOp(type: MessageType = MessageType.Operation) {
+            // function to yield control in the Javascript event loop.
+            async function yieldEventLoop(): Promise<void> {
+                await new Promise<void>((resolve) => {
+                    realSetTimeout(resolve, 0);
+                });
+            }
+
+            async function emitSequentialOp(type: MessageType = MessageType.Operation) {
                 deltaConnection.emitOp(docId, [{
                     minimumSequenceNumber: 0,
                     sequenceNumber: seq++,
                     type,
                 }]);
+
+                // Yield the event loop because the inbound op will be processed asynchronously.
+                await yieldEventLoop();
+            }
+
+            async function tickClock(tickValue: number) {
+                clock.tick(tickValue);
+
+                // Yield the event loop because the outbound op will be processed asynchronously.
+                await yieldEventLoop();
             }
 
             before(() => {
@@ -68,9 +87,7 @@ describe("Loader", () => {
                     false,
                 );
                 deltaManager.attachOpHandler(0, 0, {
-                    process(message) {
-                        return intendedResult;
-                    },
+                    process: (message) => intendedResult,
                     processSignal() {},
                 }, true);
             });
@@ -101,11 +118,12 @@ describe("Loader", () => {
                         runCount++;
                     });
 
-                    emitSequentialOp();
-                    clock.tick(expectedTimeout - 1);
+                    await emitSequentialOp();
+
+                    await tickClock(expectedTimeout - 1);
                     assert.strictEqual(runCount, 0);
 
-                    clock.tick(1);
+                    await tickClock(1);
                     assert.strictEqual(runCount, 1);
                 });
 
@@ -121,22 +139,22 @@ describe("Loader", () => {
                     });
 
                     // initial op
-                    emitSequentialOp();
+                    await emitSequentialOp();
 
                     for (let i = 0; i < numberOfSuccessiveOps; i++) {
-                        clock.tick(1);
-                        emitSequentialOp();
+                        await tickClock(1);
+                        await emitSequentialOp();
                     }
                     // should not run until timeout
-                    clock.tick(expectedTimeout - numberOfSuccessiveOps - 1);
+                    await tickClock(expectedTimeout - numberOfSuccessiveOps - 1);
                     assert.strictEqual(runCount, 0);
 
                     // should run after timeout
-                    clock.tick(1);
+                    await tickClock(1);
                     assert.strictEqual(runCount, 1);
 
                     // should not run again (make sure no additional timeouts created)
-                    clock.tick(expectedTimeout);
+                    await tickClock(expectedTimeout);
                     assert.strictEqual(runCount, 1);
                 });
 
@@ -147,8 +165,8 @@ describe("Loader", () => {
                         assert.fail("Should not send no-op.");
                     });
 
-                    emitSequentialOp(MessageType.NoOp);
-                    clock.tick(expectedTimeout);
+                    await emitSequentialOp(MessageType.NoOp);
+                    await tickClock(expectedTimeout);
                 });
 
                 it("Should immediately update with immediate content", async () => {
@@ -161,7 +179,7 @@ describe("Loader", () => {
                         runCount++;
                     });
 
-                    emitSequentialOp(MessageType.NoOp);
+                    await emitSequentialOp(MessageType.NoOp);
                     assert.strictEqual(runCount, 1);
                 });
 
@@ -186,13 +204,13 @@ describe("Loader", () => {
                         assert.fail("Should not send no-op.");
                     });
 
-                    emitSequentialOp();
-                    clock.tick(expectedTimeout - 1);
+                    await emitSequentialOp();
+                    await tickClock(expectedTimeout - 1);
                     deltaManager.submit(MessageType.Operation, ignoreContent);
-                    clock.tick(1);
+                    await tickClock(1);
 
                     // make extra sure
-                    clock.tick(expectedTimeout);
+                    await tickClock(expectedTimeout);
                 });
             });
         });

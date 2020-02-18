@@ -4,7 +4,7 @@
  */
 
 import { CollaborativeInput } from "@microsoft/fluid-aqueduct-react";
-import { IComponentHTMLVisual, IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHTMLView, IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { ContainerRuntime, RequestParser } from "@microsoft/fluid-container-runtime";
 import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
@@ -35,20 +35,20 @@ export async function todoItemViewRequestHandler(request: IRequest, runtime: Con
     return { status: 200, mimeType: "fluid/component", value: todoItemView };
 }
 
-function getVisual(todoItemModel: TodoItem) {
-    const visual = {
+function getView(todoItemModel: TodoItem) {
+    const view = {
         render: (elm: HTMLElement) => {
             ReactDOM.render(<TodoItemView todoItemModel={ todoItemModel }/>, elm);
         },
-        IComponentHTMLVisual: undefined,
+        IComponentHTMLView: undefined,
     };
-    visual.IComponentHTMLVisual = visual;
-    return visual;
+    view.IComponentHTMLView = view;
+    return view;
 }
 
 export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemViewState>
-    implements IComponentHTMLVisual {
-    public get IComponentHTMLVisual() { return this.visual; }
+    implements IComponentHTMLView {
+    public get IComponentHTMLView() { return this.view; }
     private readonly itemText: SharedString;
     private readonly itemUrl: string;
     private readonly buttonStyle = {
@@ -58,7 +58,7 @@ export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemVie
         width: "35px",
     };
 
-    private readonly visual: IComponentHTMLVisual;
+    private readonly view: IComponentHTMLView;
 
     constructor(props: TodoItemViewProps) {
         super(props);
@@ -76,7 +76,7 @@ export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemVie
 
         this.setCheckedState = this.setCheckedState.bind(this);
 
-        this.visual = getVisual(this.props.todoItemModel);
+        this.view = getView(this.props.todoItemModel);
     }
 
     public componentDidMount() {

@@ -560,7 +560,6 @@ export class IntervalCollectionView<TInterval extends ISerializableInterval> ext
         return this.localCollection.nextInterval(pos);
     }
 
-    /* tslint:disable:no-unnecessary-override */
     public on(
         event: "addInterval" | "deleteInterval",
         listener: (interval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage) => void): this {

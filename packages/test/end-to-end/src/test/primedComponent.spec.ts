@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { TestHost } from "@microsoft/fluid-local-test-server";
-import * as assert from "assert";
+import { ISharedDirectory } from "@microsoft/fluid-map";
 
 const PrimedType = "@microsoft/fluid-primedComponent";
 
@@ -14,6 +15,12 @@ const PrimedType = "@microsoft/fluid-primedComponent";
  * My sample component
  */
 class Component extends PrimedComponent {
+    public get root(): ISharedDirectory {
+        return super.root;
+    }
+    public async writeBlob(blob: string): Promise<IComponentHandle> {
+        return super.writeBlob(blob);
+    }
 }
 
 describe("PrimedComponent", () => {

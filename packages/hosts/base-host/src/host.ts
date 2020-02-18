@@ -13,7 +13,7 @@ import { IFluidResolvedUrl, IResolvedUrl } from "@microsoft/fluid-driver-definit
 import { IResolvedPackage, WebCodeLoader } from "@microsoft/fluid-web-code-loader";
 import { IBaseHostConfig } from "./hostConfig";
 
-async function attach(loader: Loader, url: string, div: HTMLDivElement) {
+async function getComponentAndRender(loader: Loader, url: string, div: HTMLDivElement) {
     const response = await loader.request({ url });
 
     if (response.status !== 200 ||
@@ -26,27 +26,30 @@ async function attach(loader: Loader, url: string, div: HTMLDivElement) {
 
     // Check if the component is viewable
     const component = response.value as IComponent;
-    const viewable = component.IComponentHTMLVisual;
-
-    if (viewable) {
-        const renderable =
-            viewable.addView ? viewable.addView() : viewable;
-
+    // First try to get it as a view
+    let renderable = component.IComponentHTMLView;
+    if (!renderable) {
+        // Otherwise get the visual, which is a view factory
+        const visual = component.IComponentHTMLVisual;
+        if (visual) {
+            renderable = visual.addView();
+        }
+    }
+    if (renderable) {
         renderable.render(div, { display: "block" });
-        return;
     }
 }
 
-async function initializeChaincode(document: Container, pkg?: IFluidCodeDetails): Promise<void> {
+async function initializeChaincode(container: Container, pkg?: IFluidCodeDetails): Promise<void> {
     if (!pkg) {
         return;
     }
 
-    const quorum = document.getQuorum();
+    const quorum = container.getQuorum();
 
     // Wait for connection so that proposals can be sent
-    if (!document.connected) {
-        await new Promise<void>((resolve) => document.on("connected", () => resolve()));
+    if (!container.connected) {
+        await new Promise<void>((resolve) => container.on("connected", () => resolve()));
     }
 
     // And then make the proposal if a code proposal has not yet been made
@@ -55,14 +58,6 @@ async function initializeChaincode(document: Container, pkg?: IFluidCodeDetails)
     }
 
     console.log(`Code is ${quorum.get("code")}`);
-}
-
-async function registerAttach(loader: Loader, container: Container, uri: string, div: HTMLDivElement) {
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    container.on("contextChanged", async (value) => {
-        await attach(loader, uri, div);
-    });
-    await attach(loader, uri, div);
 }
 
 /**
@@ -89,7 +84,6 @@ async function createWebLoader(
                 scriptIds,
             });
             if (pkg.details.package === pkg.pkg.name) {
-                // eslint-disable-next-line require-atomic-updates
                 pkg.details.package = `${pkg.pkg.name}@${pkg.pkg.version}`;
             }
         }
@@ -110,7 +104,7 @@ async function createWebLoader(
         hostConfig.proxyLoaderFactories : new Map<string, IProxyLoaderFactory>();
 
     return new Loader(
-        { resolver: hostConfig.urlResolver },
+        hostConfig.urlResolver,
         hostConfig.documentServiceFactory,
         codeLoader,
         config,
@@ -163,11 +157,11 @@ export class BaseHost {
     public async loadAndRender(url: string, div: HTMLDivElement, pkg?: IFluidCodeDetails) {
         const loader = await this.getLoader();
         const container = await loader.resolve({ url });
-        await registerAttach(
-            loader,
-            container,
-            url,
-            div);
+
+        container.on("contextChanged", (value) => {
+            getComponentAndRender(loader, url, div).catch(() => { });
+        });
+        await getComponentAndRender(loader, url, div);
 
         // If this is a new document we will go and instantiate the chaincode. For old documents we assume a legacy
         // package.

@@ -16,7 +16,7 @@ abstract class LintBaseTask extends LeafWithDoneFileTask {
 
     protected async getDoneFileContent() {
         try {
-            const doneFileContent = { tsBuildInfoFile: {}, configJson: "" };
+            const doneFileContent = { tsBuildInfoFile: {}, config: "" };
             if (this.tscTask) {
                 const tsBuildInfo = await this.tscTask.readTsBuildInfo();
                 if (tsBuildInfo === undefined) {
@@ -26,7 +26,7 @@ abstract class LintBaseTask extends LeafWithDoneFileTask {
                 const configFile = this.configFileFullPath;
                 if (existsSync(configFile)) {
                     // Include the config file if it exists so that we can detect changes
-                    doneFileContent.configJson = await readFileAsync(this.configFileFullPath, "utf8");
+                    doneFileContent.config = await readFileAsync(this.configFileFullPath, "utf8");
                 }
             }
             return JSON.stringify(doneFileContent);
@@ -65,12 +65,21 @@ export class TsLintTask extends LintBaseTask {
 }
 
 export class EsLintTask extends LintBaseTask {
+    private _configFileFullPath: string | undefined
     protected get doneFile() {
         // TODO: This assume there is only one tslint task per package
         return "eslint.done.build.log";
     }
 
     protected get configFileFullPath() {
-        return this.getPackageFileFullPath(".eslintrc.json");
+        if (!this._configFileFullPath) {
+            const jsonConfig = this.getPackageFileFullPath(".eslintrc.json");
+            if (existsSync(jsonConfig)) {
+                this._configFileFullPath = jsonConfig;
+            } else {
+                this._configFileFullPath = this.getPackageFileFullPath(".eslintrc.js");
+            }
+        }
+        return this._configFileFullPath;
     }
 }

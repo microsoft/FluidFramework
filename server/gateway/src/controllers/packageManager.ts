@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as query from "querystring";
 import { IPackage } from "@microsoft/fluid-container-definitions";
 import {
     IPackageList,
@@ -12,7 +13,6 @@ import {
     ISearchResult,
 } from "@microsoft/fluid-host-service-interfaces";
 import Axios from "axios";
-import * as query from "querystring";
 
 export class PackageManager implements IPackageManager {
     public get IPackageManager(): IPackageManager { return this; }

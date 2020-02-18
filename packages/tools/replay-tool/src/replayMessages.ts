@@ -271,7 +271,6 @@ class Document {
 
         const resolver = new ContainerUrlResolver(
             new Map<string, IResolvedUrl>([[resolved.url, resolved]]));
-        const host = { resolver };
         const chaincode = new API.Chaincode();
         const codeLoader = new API.CodeLoader({ generateSummaries: false },
             [
@@ -292,7 +291,7 @@ class Document {
         // Load the Fluid document
         this.docLogger = ChildLogger.create(new Logger(containerDescription, errorHandler));
         const loader = new Loader(
-            host,
+            resolver,
             serviceFactory,
             codeLoader,
             options, {},

@@ -4,15 +4,14 @@
  */
 
 import { ScopeType } from "@microsoft/fluid-protocol-definitions";
-import { IAlfredTenant } from "@microsoft/fluid-server-services-core";
+import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
 import * as jwt from "jsonwebtoken";
-import * as _ from "lodash";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import { spoEnsureLoggedIn } from "../gateway-odsp-utils";
-import { resolveUrl } from "../gateway-urlresolver";
+import { spoEnsureLoggedIn } from "../gatewayOdspUtils";
+import { resolveUrl } from "../gatewayUrlResolver";
 import { IAlfred, IKeyValueWrapper } from "../interfaces";
 import { getConfig, getParam, getUserDetails } from "../utils";
 import { defaultPartials } from "./partials";
@@ -46,6 +45,7 @@ export function create(
      * Loading of a specific fluid document.
      */
     router.get("/:docId?", spoEnsureLoggedIn(), ensureLoggedIn(), async (request, response) => {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         const docId = getParam(request.params, "docId") || await getDocId();
         winston.info(`Loading FrontPage from ${docId}`);
         if (docId === undefined) {
@@ -69,6 +69,7 @@ export function create(
                 response.render(
                     "frontpage",
                     {
+                        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                         cache: fullTree ? JSON.stringify(fullTree.cache) : undefined,
                         config: workerConfig,
                         jwt: jwtToken,

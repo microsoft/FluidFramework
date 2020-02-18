@@ -13,7 +13,6 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import {
     ICodeLoader,
-    IHost,
     ILoader,
     IProxyLoaderFactory,
     LoaderHeader,
@@ -24,6 +23,7 @@ import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
     IResolvedUrl,
+    IUrlResolver,
 } from "@microsoft/fluid-driver-definitions";
 import { configurableUrlResolver } from "@microsoft/fluid-driver-utils";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
@@ -154,8 +154,8 @@ export class Loader extends EventEmitter implements ILoader {
     private readonly protocolToDocumentFactoryMap: Map<string, IDocumentServiceFactory>;
 
     constructor(
-        private readonly containerHost: IHost,
-        private readonly documentServiceFactories: IDocumentServiceFactory | IDocumentServiceFactory[],
+        private readonly resolver: IUrlResolver | IUrlResolver[],
+        documentServiceFactories: IDocumentServiceFactory | IDocumentServiceFactory[],
         private readonly codeLoader: ICodeLoader,
         private readonly options: any,
         private readonly scope: IComponent,
@@ -164,11 +164,11 @@ export class Loader extends EventEmitter implements ILoader {
     ) {
         super();
 
-        if (!containerHost) {
-            throw new Error("An IContainerHost must be provided");
+        if (!resolver) {
+            throw new Error("An IUrlResolver must be provided");
         }
 
-        if (!this.documentServiceFactories) {
+        if (!documentServiceFactories) {
             throw new Error("An IDocumentService must be provided");
         }
 
@@ -176,7 +176,7 @@ export class Loader extends EventEmitter implements ILoader {
             throw new Error("An ICodeLoader must be provided");
         }
 
-        this.protocolToDocumentFactoryMap = createProtocolToFactoryMapping(this.documentServiceFactories);
+        this.protocolToDocumentFactoryMap = createProtocolToFactoryMapping(documentServiceFactories);
     }
 
     public async resolve(request: IRequest): Promise<Container> {
@@ -243,10 +243,10 @@ export class Loader extends EventEmitter implements ILoader {
         }
 
         let toCache: IResolvedUrl | undefined;
-        if (Array.isArray(this.containerHost.resolver)) {
-            toCache = await configurableUrlResolver(this.containerHost.resolver, request);
+        if (Array.isArray(this.resolver)) {
+            toCache = await configurableUrlResolver(this.resolver, request);
         } else {
-            toCache = await this.containerHost.resolver.resolve(request);
+            toCache = await this.resolver.resolve(request);
         }
         if (!toCache) {
             return Promise.reject(`Invalid URL ${request.url}`);
@@ -345,7 +345,6 @@ export class Loader extends EventEmitter implements ILoader {
 
         const headerSeqNum = request.headers[LoaderHeader.sequenceNumber];
         if (headerSeqNum) {
-            // tslint:disable-next-line no-unsafe-any
             fromSequenceNumber = headerSeqNum;
         }
 
@@ -362,8 +361,7 @@ export class Loader extends EventEmitter implements ILoader {
         };
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    private loadContainer(
+    private async loadContainer(
         id: string,
         documentService: IDocumentService,
         request: IRequest,

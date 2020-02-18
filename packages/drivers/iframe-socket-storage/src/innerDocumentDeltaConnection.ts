@@ -39,7 +39,6 @@ export class InnerDocumentDeltaConnection extends EventEmitter implements IDocum
         connection: IConnected,
         outerProxy: IOuterDocumentDeltaConnectionProxy): Promise<IDocumentDeltaConnection> {
 
-        // tslint:disable-next-line: no-unsafe-any
         const deltaConnection = new InnerDocumentDeltaConnection(connection, outerProxy);
 
         return deltaConnection;

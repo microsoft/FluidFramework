@@ -11,7 +11,7 @@ import {
     IRequest,
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+import { IDocumentStorageService, IError } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionState,
     IClientDetails,
@@ -151,12 +151,6 @@ export interface IRuntime {
     process(message: ISequencedDocumentMessage, local: boolean, context: any);
 
     /**
-     * Called immediately after a message has been processed but prior to the next message being executed
-     * @deprecated being removed and replaced with only process
-     */
-    postProcess?(message: ISequencedDocumentMessage, local: boolean, context: any): Promise<void>;
-
-    /**
      * Processes the given signal
      */
     processSignal(message: any, local: boolean);
@@ -176,8 +170,6 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
     readonly options: any;
     readonly configuration: IComponentConfiguration;
     readonly clientId: string | undefined;
-    // DEPRECATED: use clientDetails.type instead
-    readonly clientType: string; // Back-compat: 0.11 clientType
     readonly clientDetails: IClientDetails;
     readonly parentBranch: string | undefined | null;
     readonly blobManager: IBlobManager | undefined;
@@ -203,7 +195,7 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
      */
     readonly scope: IComponent;
 
-    error(err: any): void;
+    error(err: IError): void;
     requestSnapshot(tagMessage: string): Promise<void>;
     reloadContext(): Promise<void>;
     refreshBaseSummary(snapshot: ISnapshotTree): void;

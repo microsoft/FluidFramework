@@ -196,7 +196,6 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     public on(event: "error", listener: (error: any) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this;
 
-    /* tslint:disable:no-unnecessary-override */
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
     }

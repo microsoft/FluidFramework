@@ -16,7 +16,7 @@ import chalk from "chalk";
 
 function versionCheck() {
     const pkg = require(path.join(__dirname, "..", "package.json"));
-    const builtVersion = "0.0.3";
+    const builtVersion = "0.0.4";
     if (pkg.version > builtVersion) {
         console.warn(`WARNING: fluid-build is out of date, please rebuild (built: ${builtVersion}, package: ${pkg.version})\n`);
     }
@@ -37,7 +37,7 @@ async function main() {
     // TODO: Should read lerna.json to determine
     const baseDirectories = [ path.join(resolvedRoot, "packages")];
     if (!options.server) {
-        const samplesDirectory = path.join(resolvedRoot, "samples/chaincode");
+        const samplesDirectory = path.join(resolvedRoot, "examples/components");
         if (options.samples && existsSync(samplesDirectory)) {
             baseDirectories.push(samplesDirectory);
         }

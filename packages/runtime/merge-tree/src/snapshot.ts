@@ -41,8 +41,8 @@ export class Snapshot {
     // Please note that this number has no direct relationship to anything other than size of raw text (characters).
     // As we produce json for the blob (and then encode into base64 and send over the wire compressed), this number
     // is really hard to correlate with any actual metric that matters (like bytes over the wire).
-    // For test with small number of chunks it would be closer to blob size (before base64 encoding), for very chunky text
-    // blob size can easily be 4x-8x of that number.
+    // For test with small number of chunks it would be closer to blob size (before base64 encoding),
+    // for very chunky text, blob size can easily be 4x-8x of that number.
     public static readonly sizeOfFirstChunk: number = 10000;
 
     private header: SnapshotHeader;
@@ -124,7 +124,8 @@ export class Snapshot {
             };
 
             if (chunk1.chunkSegmentCount < chunk1.totalSegmentCount) {
-                const chunk2 = this.getSeqLengthSegs(this.segments, this.segmentLengths, this.header.segmentsTotalLength, chunk1.chunkSegmentCount);
+                const chunk2 = this.getSeqLengthSegs(this.segments, this.segmentLengths,
+                    this.header.segmentsTotalLength, chunk1.chunkSegmentCount);
                 length += chunk2.chunkLengthChars;
                 segments += chunk2.chunkSegmentCount;
                 tree.entries.push({
@@ -203,9 +204,9 @@ export class Snapshot {
             // Next determine if the snapshot needs to preserve information required for merging the segment
             // (seq, client, etc.)  This information is only needed if the segment is above the MSN (and doesn't
             // have a pending remove.)
-            if ((segment.seq <= minSeq)                                     // Segment is below the MSN, and...
-                && (segment.removedSeq === undefined                        // .. Segment has not been removed, or...
-                    || segment.removedSeq === UnassignedSequenceNumber)     // .. Removal op to be delivered on reconnect
+            if ((segment.seq <= minSeq)                                   // Segment is below the MSN, and...
+                && (segment.removedSeq === undefined                      // .. Segment has not been removed, or...
+                    || segment.removedSeq === UnassignedSequenceNumber)   // .. Removal op to be delivered on reconnect
             ) {
                 // This segment is below the MSN, which means that future ops will not reference it.  Attempt to
                 // coalesce the new segment with the previous (if any).

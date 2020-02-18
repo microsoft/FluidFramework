@@ -13,12 +13,13 @@ export type MergeTreeDeltaOperationType =
 
 // Note: Assigned negative integers to avoid clashing with MergeTreeDeltaType
 export const enum MergeTreeMaintenanceType {
-    APPEND  = -1,
-    SPLIT   = -2,
+    APPEND = -1,
+    SPLIT = -2,
 }
 
 export type MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType | MergeTreeMaintenanceType;
 
+// eslint-disable-next-line max-len
 export interface IMergeTreeDeltaCallbackArgs<TOperationType extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType> {
     readonly operation: TOperationType;
     readonly deltaSegments: IMergeTreeSegmentDelta[];

@@ -20,7 +20,7 @@ import {
     IRuntime,
     IRuntimeFactory,
 } from "@microsoft/fluid-container-definitions";
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+import { IDocumentStorageService, IError } from "@microsoft/fluid-driver-definitions";
 import { raiseConnectedEvent } from "@microsoft/fluid-protocol-base";
 import {
     ConnectionState,
@@ -51,7 +51,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         quorum: IQuorum,
         loader: ILoader,
         storage: IDocumentStorageService | null | undefined,
-        errorFn: (err: any) => void,
+        errorFn: (err: IError) => void,
         submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         submitSignalFn: (contents: any) => void,
         snapshotFn: (message: string) => Promise<void>,
@@ -89,14 +89,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
 
     public get clientId(): string | undefined {
         return this.container.clientId;
-    }
-
-    /**
-     * DEPRECATED use clientDetails.type
-     * back-compat: 0.11 clientType
-     */
-    public get clientType(): string {
-        return this.container.clientType;
     }
 
     public get clientDetails(): IClientDetails {
@@ -169,7 +161,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         public readonly quorum: IQuorum,
         public readonly storage: IDocumentStorageService | undefined | null,
         public readonly loader: ILoader,
-        private readonly errorFn: (err: any) => void,
+        private readonly errorFn: (err: IError) => void,
         public readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         public readonly submitSignalFn: (contents: any) => void,
         public readonly snapshotFn: (message: string) => Promise<void>,
@@ -210,16 +202,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         this.runtime!.process(message, local, context);
     }
 
-    public async postProcess(message: ISequencedDocumentMessage, local: boolean, context: any): Promise<void> {
-        // Included for back compat with documents created prior to postProcess deprecation
-        // eslint-disable-next-line @typescript-eslint/unbound-method
-        if (!this.runtime || !this.runtime.postProcess) {
-            return Promise.reject("Runtime must query for IMessageHandler to signal it does not implement postProcess");
-        }
-
-        return this.runtime.postProcess(message, local, context);
-    }
-
     public processSignal(message: ISignalMessage, local: boolean) {
         this.runtime!.processSignal(message, local);
     }
@@ -232,7 +214,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         return this.snapshotFn(tagMessage);
     }
 
-    public error(err: any): void {
+    public error(err: IError): void {
         this.errorFn(err);
     }
 

@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
-import * as assert from "assert";
 import { SharedSegmentSequenceUndoRedoHandler } from "../sequenceHandler";
 import { UndoRedoStackManager } from "../undoRedoStackManager";
 
 const text =
-    // tslint:disable-next-line: max-line-length
+    // eslint-disable-next-line max-len
     "The SharedSegementSequenceRevertable does the heavy lifting of tracking and reverting changes on the underlying SharedSegementSequence. This is accomplished via TrackingGroup objects.";
 
 function insertTextAsChunks(sharedString: SharedString, targetLength = text.length) {

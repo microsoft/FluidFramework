@@ -40,8 +40,8 @@ export class SnapshotLegacy {
     // Please note that this number has no direct relationship to anything other than size of raw text (characters).
     // As we produce json for the blob (and then encode into base64 and send over the wire compressed), this number
     // is really hard to correlate with any actual metric that matters (like bytes over the wire).
-    // For test with small number of chunks it would be closer to blob size (before base64 encoding), for very chunky text
-    // blob size can easily be 4x-8x of that number.
+    // For test with small number of chunks it would be closer to blob size (before base64 encoding),
+    // for very chunky text, blob size can easily be 4x-8x of that number.
     public static readonly sizeOfFirstChunk: number = 10000;
 
     header: SnapshotHeader;
@@ -64,7 +64,7 @@ export class SnapshotLegacy {
         approxSequenceLength: number,
         startIndex = 0): ops.MergeTreeChunk {
 
-        const segs = <ops.IJSONSegment[]>[];
+        const segs: ops.IJSONSegment[] = [];
         let sequenceLength = 0;
         let segCount = 0;
         while ((sequenceLength < approxSequenceLength) && ((startIndex + segCount) < allSegments.length)) {
@@ -113,7 +113,8 @@ export class SnapshotLegacy {
         };
 
         if (chunk1.chunkSegmentCount < chunk1.totalSegmentCount) {
-            const chunk2 = this.getSeqLengthSegs(this.segments, this.segmentLengths, this.header.segmentsTotalLength, chunk1.chunkSegmentCount);
+            const chunk2 = this.getSeqLengthSegs(this.segments, this.segmentLengths,
+                this.header.segmentsTotalLength, chunk1.chunkSegmentCount);
             length += chunk2.chunkLengthChars;
             segments += chunk2.chunkSegmentCount;
             tree.entries.push({
@@ -157,16 +158,19 @@ export class SnapshotLegacy {
             seq: this.mergeTree.collabWindow.minSeq,
         };
 
-        const segs = <MergeTree.ISegment[]>[];
+        const segs: MergeTree.ISegment[] = [];
         let prev: MergeTree.ISegment | undefined;
         const extractSegment =
+            // eslint-disable-next-line max-len
             (segment: MergeTree.ISegment, pos: number, refSeq: number, clientId: number, start: number, end: number) => {
                 // eslint-disable-next-line eqeqeq
                 if ((segment.seq != UnassignedSequenceNumber) && (segment.seq <= this.seq) &&
                     // eslint-disable-next-line eqeqeq
                     ((segment.removedSeq === undefined) || (segment.removedSeq == UnassignedSequenceNumber) ||
                         (segment.removedSeq > this.seq))) {
-                    if (prev && prev.canAppend(segment) && Properties.matchProperties(prev.properties, segment.properties)) {
+                    if (prev && prev.canAppend(segment)
+                        && Properties.matchProperties(prev.properties, segment.properties)
+                    ) {
                         prev = prev.clone();
                         prev.append(segment.clone());
                     } else {
@@ -194,12 +198,16 @@ export class SnapshotLegacy {
         });
 
         // We observed this.header.segmentsTotalLength < totalLength to happen in some cases
-        // When this condition happens, we might not write out all segments in getSeqLengthSegs() when writing out "body"
-        // Issue #1995 tracks following up on the core of the problem.
+        // When this condition happens, we might not write out all segments in getSeqLengthSegs()
+        // when writing out "body". Issue #1995 tracks following up on the core of the problem.
         // In the meantime, this code makes sure we will write out all segments properly
         // eslint-disable-next-line eqeqeq
         if (this.header.segmentsTotalLength != totalLength) {
-            this.logger.sendErrorEvent({ eventName: "SegmentsTotalLengthMismatch", totalLength, segmentsTotalLength: this.header.segmentsTotalLength });
+            this.logger.sendErrorEvent({
+                eventName: "SegmentsTotalLengthMismatch",
+                totalLength,
+                segmentsTotalLength: this.header.segmentsTotalLength,
+            });
             this.header.segmentsTotalLength = totalLength;
         }
 

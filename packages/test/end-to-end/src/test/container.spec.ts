@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import * as API from "@fluid-internal/client-api";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
@@ -12,7 +13,9 @@ import {
     IDocumentService,
     IDocumentStorageService,
     IFluidResolvedUrl,
+    IGeneralError,
     IDocumentDeltaConnection,
+    ErrorType,
 } from "@microsoft/fluid-driver-definitions";
 import {
     ITestDeltaConnectionServer,
@@ -21,7 +24,6 @@ import {
     TestResolver,
 } from "@microsoft/fluid-local-test-server";
 import { MockDocumentDeltaConnection } from "@microsoft/fluid-test-loader-utils";
-import * as assert from "assert";
 import { ConnectionState } from "@microsoft/fluid-protocol-definitions";
 
 describe("Container", () => {
@@ -40,12 +42,18 @@ describe("Container", () => {
         testResolved = await testResolver.resolve(testRequest) as IFluidResolvedUrl;
         const serviceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
         service = await serviceFactory.createDocumentService(testResolved);
-        const host = { resolver: testResolver };
 
         codeLoader = new API.CodeLoader({ generateSummaries: false });
         const options = {};
 
-        loader = new Loader(host, serviceFactory, codeLoader, options, {}, new Map<string, IProxyLoaderFactory>());
+        loader = new Loader(
+            testResolver,
+            serviceFactory,
+            codeLoader,
+            options,
+            {},
+            new Map<string, IProxyLoaderFactory>(),
+        );
     });
 
     it("Load container successfully", async () => {
@@ -69,7 +77,9 @@ describe("Container", () => {
     it("Load container unsuccessfully", async () => {
         let success: boolean = true;
         try {
-            service.connectToStorage = (): Promise<IDocumentStorageService> => {
+            // Issue typescript-eslint/typescript-eslint #1256
+            // eslint-disable-next-line @typescript-eslint/unbound-method
+            service.connectToStorage = async (): Promise<IDocumentStorageService> => {
                 return Promise.reject(false);
             };
             await Container.load(
@@ -81,7 +91,8 @@ describe("Container", () => {
                 loader,
                 testRequest);
         } catch (error) {
-            success = error as boolean;
+            const err = error as IGeneralError;
+            success = err.error as boolean;
         }
         assert.equal(success, false);
     });
@@ -89,6 +100,8 @@ describe("Container", () => {
     it("Load container with error", async () => {
         let success: boolean = true;
         try {
+            // Issue typescript-eslint/typescript-eslint #1256
+            // eslint-disable-next-line @typescript-eslint/unbound-method
             service.connectToDeltaStorage = async (): Promise<IDocumentDeltaStorageService> => {
                 return Promise.reject(false);
             };
@@ -101,7 +114,9 @@ describe("Container", () => {
                 loader,
                 testRequest);
         } catch (error) {
-            success = error as boolean;
+            assert.equal(error.errorType, ErrorType.generalError, "Error is not a general error");
+            const generalError = error as IGeneralError;
+            success = generalError.error as boolean;
         }
         assert.equal(success, false);
     });
@@ -110,6 +125,8 @@ describe("Container", () => {
         deltaConnection = new MockDocumentDeltaConnection(
             "test",
         );
+        // Issue typescript-eslint/typescript-eslint #1256
+        // eslint-disable-next-line @typescript-eslint/unbound-method
         service.connectToDeltaStream = async (): Promise<IDocumentDeltaConnection> => {
             return deltaConnection;
         };
@@ -122,9 +139,11 @@ describe("Container", () => {
             {},
             loader,
             testRequest);
-        assert.equal(container.connectionState, ConnectionState.Connecting, "Container should be in Connecting state");
+        assert.equal(container.connectionState, ConnectionState.Connecting,
+            "Container should be in Connecting state");
         deltaConnection.disconnect();
-        assert.equal(container.connectionState, ConnectionState.Disconnected, "Container should be in Disconnected state");
+        assert.equal(container.connectionState, ConnectionState.Disconnected,
+            "Container should be in Disconnected state");
         deltaConnection.removeAllListeners();
     });
 
@@ -132,6 +151,8 @@ describe("Container", () => {
         deltaConnection = new MockDocumentDeltaConnection(
             "test",
         );
+        // Issue typescript-eslint/typescript-eslint #1256
+        // eslint-disable-next-line @typescript-eslint/unbound-method
         service.connectToDeltaStream = async (): Promise<IDocumentDeltaConnection> => {
             return deltaConnection;
         };
@@ -144,9 +165,11 @@ describe("Container", () => {
             {},
             loader,
             testRequest);
-        assert.equal(container.connectionState, ConnectionState.Connecting, "Container should be in Connecting state");
+        assert.equal(container.connectionState, ConnectionState.Connecting,
+            "Container should be in Connecting state");
         deltaConnection.emitError("Test Error");
-        assert.equal(container.connectionState, ConnectionState.Disconnected, "Container should be in Disconnected state");
+        assert.equal(container.connectionState, ConnectionState.Disconnected,
+            "Container should be in Disconnected state");
         assert.equal(container.closed, false, "Container should not be closed");
         deltaConnection.removeAllListeners();
     });
@@ -155,6 +178,8 @@ describe("Container", () => {
         deltaConnection = new MockDocumentDeltaConnection(
             "test",
         );
+        // Issue typescript-eslint/typescript-eslint #1256
+        // eslint-disable-next-line @typescript-eslint/unbound-method
         service.connectToDeltaStream = async (): Promise<IDocumentDeltaConnection> => {
             return deltaConnection;
         };
@@ -170,13 +195,15 @@ describe("Container", () => {
         container.on("error", (error) => {
             errorRaised = true;
         });
-        assert.equal(container.connectionState, ConnectionState.Connecting, "Container should be in Connecting state");
+        assert.equal(container.connectionState, ConnectionState.Connecting,
+            "Container should be in Connecting state");
         const err = {
             message: "Test error",
             canRetry: false,
         };
         deltaConnection.emitError(err);
-        assert.equal(container.connectionState, ConnectionState.Disconnected, "Container should be in Disconnected state");
+        assert.equal(container.connectionState, ConnectionState.Disconnected,
+            "Container should be in Disconnected state");
         assert.equal(container.closed, true, "Container should be closed");
         assert.equal(errorRaised, true, "Error event should be raised.");
         deltaConnection.removeAllListeners();
@@ -186,6 +213,8 @@ describe("Container", () => {
         deltaConnection = new MockDocumentDeltaConnection(
             "test",
         );
+        // Issue typescript-eslint/typescript-eslint #1256
+        // eslint-disable-next-line @typescript-eslint/unbound-method
         service.connectToDeltaStream = async (): Promise<IDocumentDeltaConnection> => {
             return deltaConnection;
         };
@@ -200,9 +229,11 @@ describe("Container", () => {
         container.on("error", (error) => {
             assert.ok(false, "Error event should not be raised.");
         });
-        assert.equal(container.connectionState, ConnectionState.Connecting, "Container should be in Connecting state");
+        assert.equal(container.connectionState, ConnectionState.Connecting,
+            "Container should be in Connecting state");
         container.close();
-        assert.equal(container.connectionState, ConnectionState.Disconnected, "Container should be in Disconnected state");
+        assert.equal(container.connectionState, ConnectionState.Disconnected,
+            "Container should be in Disconnected state");
         assert.equal(container.closed, true, "Container should be closed");
         deltaConnection.removeAllListeners();
     });

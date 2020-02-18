@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import * as ClientUI from "@fluid-example/client-ui-lib";
 import { Caret, CaretEventType, Direction, ICaretEvent } from "@fluid-example/flow-util-lib";
 import * as SearchMenu from "@fluid-example/search-menu";
@@ -19,10 +20,12 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentHandle, ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import {
-    ComponentCursorDirection,
-    IComponentCollection,
-    IComponentCursor,
     IComponentLayout,
+    ComponentCursorDirection,
+    IComponentCursor,
+} from "@microsoft/fluid-framework-experimental";
+import {
+    IComponentCollection,
 } from "@microsoft/fluid-framework-interfaces";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
@@ -50,8 +53,7 @@ const cursorDirectionToDirection = {
 
 type IMathMarkerInst = MathExpr.IMathMarker;
 
-class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout {
-
+export class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout {
     public get IComponentHTMLView() { return this; }
 
     public get IComponentCursor() { return this; }
@@ -68,11 +70,12 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
     public options?: IComponentHTMLOptions;
     public rootElement: HTMLElement;
 
-    constructor(public instance: MathInstance, public scope?: IComponent) {
+    constructor(public instance: MathInstance, scope?: IComponent) {
         if (scope) {
             this.searchMenuHost = scope.ISearchMenuHost;
         }
         this.options = this.instance.options;
+        this.instance.on("remoteEdit", this.remoteEdit);
     }
 
     // IComponentHTMLView
@@ -84,10 +87,10 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
     }
 
     public remove() {
-        this.instance.removeView(this);
+        this.instance.off("remoteEdit", this.remoteEdit);
     }
 
-    public remoteEdit(pos: number, len: number, isInsert: boolean) {
+    public remoteEdit = (pos: number, len: number, isInsert: boolean) => {
         if (this.cursorActive) {
             const mathMarker = this.instance.endMarker;
             let mathCursorNew = this.mathCursor;
@@ -107,7 +110,7 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
                 mathMarker.mathTokens);
         }
         this.localRender();
-    }
+    };
 
     // IComponentCursor
     public enter(direction: ComponentCursorDirection) {
@@ -417,7 +420,7 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
 
 }
 
-export class MathInstance implements IComponentLoadable, IComponentRouter,
+export class MathInstance extends EventEmitter implements IComponentLoadable, IComponentRouter,
     IComponentHTMLVisual {
     public static defaultOptions: IMathOptions = { display: "inline" };
 
@@ -426,12 +429,10 @@ export class MathInstance implements IComponentLoadable, IComponentRouter,
     public get IComponentHTMLVisual() { return this; }
 
     public handle: ComponentHandle;
-    public views: MathView[];
     public endMarker: IMathMarkerInst;
     public startMarker: MergeTree.Marker;
     public solnText = "x=0";
     public solnVar = "x";
-    private defaultView: MathView;
 
     constructor(
         public url: string,
@@ -441,35 +442,14 @@ export class MathInstance implements IComponentLoadable, IComponentRouter,
         public readonly options = MathInstance.defaultOptions,
         inCombinedText = false,
     ) {
+        super();
         this.handle = new ComponentHandle(this, leafId, context);
         this.initialize(inCombinedText);
     }
 
     public addView(scope?: IComponent) {
-        if (!this.views) {
-            this.views = [];
-        }
-        const view = new MathView(this, scope);
-        this.views.push(view);
-        return view;
-    }
-
-    public removeView(view: MathView) {
-        const index = this.views.indexOf(view);
-        if (index >= 0) {
-            this.views.splice(index, 1);
-        }
-    }
-
-    public render(elm: HTMLElement, options?: IComponentHTMLOptions) {
-        if (!this.defaultView) {
-            this.defaultView = this.addView();
-        }
-        let localOptions = this.options;
-        if (options) {
-            localOptions = options;
-        }
-        this.defaultView.render(elm, localOptions);
+        console.warn("Instead of using {mathView = mathInstance.addView(scope)}, consider using {mathView = new MathView(mathInstance, scope)}");
+        return new MathView(this, scope);
     }
 
     public insertText(text: string, pos: number) {
@@ -496,11 +476,7 @@ export class MathInstance implements IComponentLoadable, IComponentRouter,
         const mathText = this.collection.getText(this);
         mathMarker.mathTokens = MathExpr.lexMath(mathText);
         mathMarker.mathText = mathText;
-        if (this.views) {
-            for (const view of this.views) {
-                view.remoteEdit(pos, len, isInsert);
-            }
-        }
+        this.emit("remoteEdit", pos, len, isInsert);
     }
 
     public postInsert() {
@@ -602,10 +578,14 @@ export class MathCollection implements IComponentLoadable, IComponentCollection,
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        const instanceId = request.url
-            .substr(1)
-            .substr(0, !request.url.includes("/", 1) ? request.url.length : request.url.indexOf("/"));
+        // Trim leading slash, if it exists
+        const trimmedUrl = request.url.startsWith("/") ? request.url.substr(1) : request.url;
 
+        // Next segment is math instance id, if it exists
+        const instanceId = trimmedUrl
+            .substr(0, !trimmedUrl.includes("/", 1) ? trimmedUrl.length : trimmedUrl.indexOf("/"));
+
+        // If no instance is requested, then the collection itself is being requested
         if (!instanceId) {
             return {
                 mimeType: "fluid/component",

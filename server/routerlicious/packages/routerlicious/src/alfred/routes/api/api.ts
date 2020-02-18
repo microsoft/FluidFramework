@@ -86,7 +86,6 @@ function sendJoin(tenantId: string, documentId: string, clientId: string, produc
     const detail: IClient = {
         permission: [],
         scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
-        type: "robot", // Back-compat: 0.11 clientType
         details: {
             capabilities: { interactive: false },
         },

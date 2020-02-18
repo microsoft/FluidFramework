@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-test-snapshots",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "description": "Comprehensive test of snapshot logic.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -9,7 +9,7 @@
   "main": "dist/generateSnapshotFiles.js",
   "types": "dist/generateSnapshotFiles.js",
   "scripts": {
-    "build": "concurrently npm:build:compile npm:tslint",
+    "build": "concurrently npm:build:compile npm:lint",
     "build:compile": "npm run tsc",
     "build:compile:min": "npm run build:compile",
     "build:full": "npm run build",
@@ -17,12 +17,13 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "lint": "npm run eslint",
+    "lint:fix": "npm run eslint:fix",
     "test": "node --experimental-worker ../../../node_modules/mocha/bin/_mocha --recursive dist/test -r make-promises-safe",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "test:generate": "node --experimental-worker dist/generateSnapshotFiles.js",
     "test:sequential": "node ../../../node_modules/mocha/bin/_mocha --recursive dist/test",
-    "tsc": "tsc",
-    "tslint": "npm run eslint"
+    "tsc": "tsc"
   },
   "nyc": {
     "all": true,
@@ -45,25 +46,25 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@microsoft/fluid-protocol-definitions": "^0.1001.0",
-    "@microsoft/fluid-replay-tool": "^0.13.0"
+    "@microsoft/fluid-protocol-definitions": "^0.1002.0",
+    "@microsoft/fluid-replay-tool": "^0.14.0"
   },
   "devDependencies": {
-    "@microsoft/eslint-config-fluid": "^0.13.0",
-    "@microsoft/fluid-build-common": "^0.13.0",
+    "@microsoft/eslint-config-fluid": "^0.14.0",
+    "@microsoft/fluid-build-common": "^0.14.0",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.14.6",
-    "@typescript-eslint/eslint-plugin": "^2.9.0",
-    "@typescript-eslint/parser": "^2.9.0",
+    "@typescript-eslint/eslint-plugin": "~2.17.0",
+    "@typescript-eslint/parser": "~2.17.0",
     "concurrently": "^4.1.0",
-    "eslint": "^6.7.1",
-    "eslint-plugin-eslint-comments": "^3.1.2",
-    "eslint-plugin-import": "^2.18.2",
-    "eslint-plugin-no-null": "^1.0.2",
-    "eslint-plugin-optimize-regex": "^1.1.7",
-    "eslint-plugin-prefer-arrow": "^1.1.7",
-    "eslint-plugin-react": "^7.16.0",
-    "eslint-plugin-unicorn": "^14.0.1",
+    "eslint": "~6.8.0",
+    "eslint-plugin-eslint-comments": "~3.1.2",
+    "eslint-plugin-import": "2.20.0",
+    "eslint-plugin-no-null": "~1.0.2",
+    "eslint-plugin-optimize-regex": "~1.1.7",
+    "eslint-plugin-prefer-arrow": "~1.1.7",
+    "eslint-plugin-react": "~7.18.0",
+    "eslint-plugin-unicorn": "~15.0.1",
     "make-promises-safe": "^5.1.0",
     "mocha": "^5.2.0",
     "mocha-junit-reporter": "^1.18.0",

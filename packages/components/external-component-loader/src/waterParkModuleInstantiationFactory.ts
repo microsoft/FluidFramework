@@ -29,7 +29,6 @@ export class WaterParkModuleInstantiationFactory extends SimpleModuleInstantiati
             context,
             this.viewComponentName,
             this.entries,
-            true,
         );
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises

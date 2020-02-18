@@ -31,6 +31,7 @@
     },
     "worker": {
         "alfredUrl": "http://alfred:3000",
+        "internalGatewayUrl": "http://gateway:3000",
         "serverUrl": "http://localhost:3000",
         "packageUrl": "http://auspkn:3000",
         "blobStorageUrl": "http://historian:3000",

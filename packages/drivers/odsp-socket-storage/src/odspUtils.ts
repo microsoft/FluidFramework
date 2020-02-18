@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { isOnline, NetworkError, OnlineStatus } from "@microsoft/fluid-driver-utils";
+import { isOnline, FatalError, NetworkError, ThrottlingError, OnlineStatus } from "@microsoft/fluid-driver-utils";
 import { default as fetch, RequestInfo as FetchRequestInfo, RequestInit as FetchRequestInit } from "node-fetch";
 import * as sha from "sha.js";
 import { IOdspSocketError } from "./contracts";
@@ -26,8 +26,7 @@ export function throwOdspNetworkError(
         message,
         statusCode,
         canRetry,
-        undefined,
-        response && response.headers && response.headers.get("sprequestguid"),
+        response && response.headers ? `${response.headers.get("sprequestguid")}` : undefined,
         online,
     );
 }
@@ -35,25 +34,29 @@ export function throwOdspNetworkError(
 export class OdspNetworkError extends NetworkError {
     constructor(
         errorMessage: string,
-        readonly statusCode: number | undefined,
+        readonly statusCode: number,
         readonly canRetry: boolean,
-        readonly retryAfterSeconds?: number,
-        readonly sprequestguid?: string | null,
+        readonly sprequestguid?: string,
         readonly online = OnlineStatus[isOnline()]) {
-        super(errorMessage, statusCode, canRetry, retryAfterSeconds, online);
+        super(errorMessage, statusCode, canRetry, online);
     }
 }
 
 /**
  * Returns network error based on error object from ODSP socket (IOdspSocketError)
  */
-export function errorObjectFromOdspError(socketError: IOdspSocketError, canRetry: boolean) {
-    return new OdspNetworkError(
-        socketError.message,
-        socketError.code,
-        canRetry,
-        socketError.retryAfter,
-    );
+export function errorObjectFromOdspError(socketError: IOdspSocketError, retryFilter?: RetryFilter) {
+    if (socketError.code === 500) {
+        return new FatalError(socketError.message);
+    } else if (socketError.retryAfter) {
+        return new ThrottlingError(socketError.message, socketError.retryAfter);
+    } else {
+        return new OdspNetworkError(
+            socketError.message,
+            socketError.code,
+            retryFilter?.(socketError.code) ?? true,
+        );
+    }
 }
 
 /**
@@ -143,14 +146,15 @@ export function fetchHelper(
             throwOdspNetworkError(`Error ${response.status} from the server`, response.status, retryFilter(response.status), response);
         }
 
-        // .json() can fail and message (that goes into telemetry) would container full request URI, including tokens...
-        // It tails for me with "Unexpected end of JSON input" quite often - an attempt to download big file (many ops)
-        // almost always ends up with this error - I'd guess 1% of op request end up here... It always succeeds on
-        // retry.
+        // JSON.parse() can fail and message (that goes into telemetry) would container full request URI, including
+        // tokens... It fails for me with "Unexpected end of JSON input" quite often - an attempt to download big file
+        // (many ops) almost always ends up with this error - I'd guess 1% of op request end up here... It always
+        // succeeds on retry.
         try {
+            const text = await response.text();
             const res = {
-                headers: response.headers,
-                content: await response.json(),
+                headers: new Headers({ ...response.headers, "body-size": text.length }),
+                content: JSON.parse(text),
             };
             return res;
         } catch (e) {

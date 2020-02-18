@@ -12,13 +12,12 @@ import {
     IDeltaManager,
     IDeltaQueue,
 } from "@microsoft/fluid-container-definitions";
-import {
-    ChildLogger,
-    PerformanceEvent,
-} from "@microsoft/fluid-core-utils";
+import { PerformanceEvent } from "@microsoft/fluid-core-utils";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
+    IThrottlingError,
+    ErrorType,
 } from "@microsoft/fluid-driver-definitions";
 import { isSystemType } from "@microsoft/fluid-protocol-base";
 import {
@@ -34,6 +33,7 @@ import {
     ITrace,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
+import { createIError, WriteError } from "@microsoft/fluid-driver-utils";
 import { ContentCache } from "./contentCache";
 import { debug } from "./debug";
 import { DeltaConnection } from "./deltaConnection";
@@ -55,7 +55,7 @@ const ImmediateNoOpResponse = "";
 
 const DefaultContentBufferSize = 10;
 
-// Test if we deal with INetworkError / NetworkError object and if it has enough information to make a call.
+// Test if we deal with NetworkError object and if it has enough information to make a call.
 // If in doubt, allow retries.
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 function canRetryOnError(error: any) {
@@ -75,7 +75,6 @@ enum retryFor {
 export class DeltaManager extends EventEmitter implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
     public get disposed() { return this.isDisposed; }
 
-    public readonly clientType: string;
     public readonly clientDetails: IClientDetails;
     public get IDeltaSender() { return this; }
 
@@ -87,6 +86,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private _connectionMode: ConnectionMode = "write";
     // Overwrites the current connection mode to always write.
     private readonly systemConnectionMode: ConnectionMode;
+    private writePermission: boolean | undefined;
 
     private isDisposed: boolean = false;
     private pending: ISequencedDocumentMessage[] = [];
@@ -202,19 +202,16 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         private readonly reconnect: boolean) {
         super();
 
-        this.clientType = this.client.type!; // Back-compat: 0.11 clientType
         this.clientDetails = this.client.details;
         this.systemConnectionMode = this.client.mode === "write" ? "write" : "read";
 
         this._inbound = new DeltaQueue<ISequencedDocumentMessage>(
             (op) => {
                 this.processInboundMessage(op);
-            },
-            ChildLogger.create(this.logger, "InboundDeltaQueue"),
-        );
+            });
 
         this._inbound.on("error", (error) => {
-            this.emit("error", error);
+            this.emit("error", createIError(error));
         });
 
         // Outbound message queue. The outbound queue is represented as a queue of an array of ops. Ops contained
@@ -222,12 +219,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this._outbound = new DeltaQueue<IDocumentMessage[]>(
             (messages) => {
                 this.connection!.submit(messages);
-            },
-            ChildLogger.create(this.logger, "OutboundDeltaQueue"),
-        );
+            });
 
         this._outbound.on("error", (error) => {
-            this.emit("error", error);
+            this.emit("error", createIError(error));
         });
 
         // Inbound signal queue
@@ -236,12 +231,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 clientId: message.clientId,
                 content: JSON.parse(message.content as string),
             });
-        },
-        ChildLogger.create(this.logger, "InboundSignalDeltaQueue"),
-        );
+        });
 
         this._inboundSignal.on("error", (error) => {
-            this.emit("error", error);
+            this.emit("error", createIError(error));
         });
 
         // Require the user to start the processing
@@ -305,7 +298,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     public async connect(requestedMode: ConnectionMode = "write"): Promise<IConnectionDetails> {
-        assert(!this.closed);
+        if (this.closed) {
+            throw new Error("Attempting to connect a closed DeltaManager");
+        }
 
         if (this.connection) {
             return this.connection.details;
@@ -355,7 +350,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                         retryDelayFromError :
                         Math.min(delay * 2, MaxReconnectDelay);
 
-                    this.emitDelayInfo(retryFor.DELTASTREAM, delay);
+                    if (retryDelayFromError) {
+                        this.emitDelayInfo(retryFor.DELTASTREAM, retryDelayFromError);
+                    }
                     await waitForConnectedState(delay);
                 }
             }
@@ -370,6 +367,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             }
 
             this.setupNewSuccessfulConnection(connection);
+
+            if (requestedMode === "write") {
+                // if we ask for write and get read it means we don't have write permissions
+                this.writePermission = this._connectionMode === requestedMode;
+            }
 
             return connection;
         };
@@ -417,12 +419,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // const maxOpSize = this.context.deltaManager.maxMessageSize;
 
         // Start adding trace for the op.
-        // back-compat: 0.11 clientType
-        const clientType = this.clientDetails ? this.clientDetails.type : this.clientType;
         const traces: ITrace[] = [
             {
                 action: "start",
-                service: clientType || "unknown",
+                service: this.clientDetails.type || "unknown",
                 timestamp: Date.now(),
             }];
 
@@ -587,7 +587,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 success,
             });
 
-            this.emitDelayInfo(retryFor.DELTASTORAGE, delay);
+            if (retryAfter && retryAfter >= 0) {
+                // Emit throttling info only if we get it from error.
+                this.emitDelayInfo(retryFor.DELTASTORAGE, delay);
+            }
             await waitForConnectedState(delay);
         }
 
@@ -608,7 +611,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         // Note: "disconnect" & "nack" do not have error object
         if (raiseContainerError && error !== undefined) {
-            this.emit("error", error);
+            this.emit("error", createIError(error, true));
         }
 
         this.logger.sendTelemetryEvent({ eventName: "ContainerClose" }, error);
@@ -677,7 +680,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         if (this.deltaStreamDelay && this.deltaStorageDelay) {
             const delayTime = Math.max(this.deltaStorageDelay, this.deltaStreamDelay);
             if (delayTime >= 0) {
-                this.emit("connectionDelay", delayTime);
+                const throttlingError: IThrottlingError = {
+                    errorType: ErrorType.throttlingError,
+                    message: "Service busy/throttled.",
+                    retryAfterSeconds: delayTime,
+                };
+                this.emit("error", throttlingError);
             }
         }
     }
@@ -726,9 +734,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // Always connect in write mode after getting nacked.
         connection.on("nack", (target: number) => {
             const nackReason = target === -1 ? "Nack: Start writing" : "Nack";
+            if (this.writePermission === false) {
+                this.close(new WriteError("WriteOnReadOnlyDocument"));
+            }
             if (!this.autoReconnect) {
-                // Not clear if reconnecting is the right thing in such state.
-                // Let's get telemetry to learn more...
                 this.logger.sendErrorEvent({ eventName: "NackWithNoReconnect", target, mode: this._connectionMode });
             }
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -859,7 +868,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     private getRetryDelayFromError(error): number | undefined {
-        // tslint:disable-next-line: no-unsafe-any
         return error !== null && typeof error === "object" && error.retryAfterSeconds ? error.retryAfterSeconds
             : undefined;
     }
@@ -967,11 +975,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         // Add final ack trace.
         if (message.traces && message.traces.length > 0) {
-            // Back-compat: 0.11 clientType
-            const clientType = this.clientDetails ? this.clientDetails.type : this.clientType;
             message.traces.push({
                 action: "end",
-                service: clientType || "unknown",
+                service: this.clientDetails.type || "unknown",
                 timestamp: Date.now(),
             });
         }
@@ -1114,7 +1120,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     private stopSequenceNumberUpdate(): void {
         if (this.updateSequenceNumberTimer) {
-            // tslint:disable-next-line: no-unsafe-any
             clearTimeout(this.updateSequenceNumberTimer);
         }
         this.updateSequenceNumberTimer = undefined;

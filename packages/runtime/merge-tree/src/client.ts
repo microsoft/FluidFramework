@@ -227,7 +227,11 @@ export class Client {
             segment,
             opArgs);
 
-        this.completeAndLogOp(opArgs, this.getClientSequenceArgs(opArgs), { start: op.pos1, end: undefined }, clockStart);
+        this.completeAndLogOp(
+            opArgs,
+            this.getClientSequenceArgs(opArgs),
+            { start: op.pos1, end: undefined },
+            clockStart);
 
         return op;
     }
@@ -514,7 +518,7 @@ export class Client {
                     currentSeq: this.getCurrentSeq(),
                     end,
                     eventName: "InvalidOpRange",
-                    invalidPositions,
+                    invalidPositions: invalidPositions.toString(),
                     length,
                     opPos1: op.pos1,
                     opPos1Relative: op.relativePos1 !== undefined,
@@ -660,10 +664,10 @@ export class Client {
     }
     cloneFromSegments() {
         const clone = new Client(this.specToSegment, this.logger, this.mergeTree.options);
-        const segments = <ISegment[]>[];
+        const segments: ISegment[] = [];
         const newRoot = this.mergeTree.blockClone(this.mergeTree.root, segments);
         clone.mergeTree.root = newRoot;
-        let undoSeg = <IUndoInfo[]>[];
+        let undoSeg: IUndoInfo[] = [];
         for (const segment of segments) {
             if (segment.seq !== 0) {
                 undoSeg.push({
@@ -909,7 +913,7 @@ export class Client {
 
         // TODO: Remove options flag once new snapshot format is adopted as default.
         //       (See https://github.com/microsoft/FluidFramework/issues/84)
-        const snap = this.mergeTree.options.newMergeTreeSnapshotFormat
+        const snap = this.mergeTree.options && this.mergeTree.options.newMergeTreeSnapshotFormat
             ? new Snapshot(this.mergeTree, this.logger)
             : new SnapshotLegacy(this.mergeTree, this.logger);
 
@@ -996,6 +1000,7 @@ export class Client {
     getPropertiesAtPosition(pos: number) {
         const segWindow = this.getCollabWindow();
         if (this.verboseOps) {
+            // eslint-disable-next-line max-len
             console.log(`getPropertiesAtPosition cli ${this.getLongClientId(segWindow.clientId)} ref seq ${segWindow.currentSeq}`);
         }
 
@@ -1010,6 +1015,7 @@ export class Client {
     getRangeExtentsOfPosition(pos: number) {
         const segWindow = this.getCollabWindow();
         if (this.verboseOps) {
+            // eslint-disable-next-line max-len
             console.log(`getRangeExtentsOfPosition cli ${this.getLongClientId(segWindow.clientId)} ref seq ${segWindow.currentSeq}`);
         }
 

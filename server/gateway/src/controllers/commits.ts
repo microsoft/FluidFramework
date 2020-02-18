@@ -4,6 +4,7 @@
  */
 
 import * as resources from "@microsoft/fluid-gitresources";
+// eslint-disable-next-line import/no-unassigned-import
 import "gitgraph.js";
 import * as $ from "jquery";
 
@@ -17,13 +18,13 @@ const templateConfig = {
         lineWidth: 4,
         showLabel: false, // display branch names on graph
         spacingX: 50,
-      },
+    },
     commit: {
         dot: {
-           color: "#f2f2f2",
-           size: 40,
-           strokeColor: "#000000",
-           strokeWidth: 5,
+            color: "#f2f2f2",
+            size: 40,
+            strokeColor: "#000000",
+            strokeWidth: 5,
         },
         message: {
             color: "black",
@@ -38,10 +39,10 @@ const templateConfig = {
             font: "normal 12pt Arial",
         },
         tooltipHTMLFormatter: (commit) => {
-            return "" + commit.sha1 + "" + ": " + commit.message;
+            return `${commit.sha1}: ${commit.message}`;
         },
     },
-  };
+};
 const template = new GitGraph.Template(templateConfig);
 
 function generateGraph(
@@ -59,9 +60,11 @@ function generateGraph(
     };
     const graph = new GitGraph(config);
 
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     const fullId = tenantId
         ? `${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}`
         : encodeURIComponent(id);
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     const path = pathPostfix ? `${fullId}/${pathPostfix}` : fullId;
 
     const master = graph.branch("master");
@@ -72,8 +75,8 @@ function generateGraph(
             message: commitTag.length >= 1 ? commitTag[0] : "",
             onClick: (commit: any) => {
                 console.log(commit);
-                // tslint:disable-next-line:max-line-length
-                const url = `${document.location.origin}/${encodeURIComponent(type)}/${path}?version=${encodeURIComponent(commit.sha1)}`;
+                const url = `${document.location.origin}/${encodeURIComponent(type)}\
+                    /${path}?version=${encodeURIComponent(commit.sha1)}`;
                 window.open(url, "_blank");
             },
             sha1: version.sha,

@@ -9,7 +9,7 @@ import Axios from "axios";
 export class MicrosoftGraph implements IMicrosoftGraph {
     public get IMicrosoftGraph(): IMicrosoftGraph { return this; }
 
-    constructor(private accessToken: string) {
+    constructor(private readonly accessToken: string) {
     }
 
     public async me(): Promise<IGraphUser> {

@@ -26,7 +26,7 @@ export class SegmentPropertiesManager {
                 assert(this.pendingKeyUpdateCount[key] > 0);
                 this.pendingKeyUpdateCount[key]--;
                 if (this.pendingKeyUpdateCount[key] === 0) {
-                    // tslint:disable-next-line: no-dynamic-delete
+                    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
                     delete this.pendingKeyUpdateCount[key];
                 }
             }
@@ -74,7 +74,7 @@ export class SegmentPropertiesManager {
             for (const key of  Object.keys(this.segment.properties)) {
                 if (!newProps[key] && shouldModifyKey(key)) {
                     deltas[key] = this.segment.properties[key];
-                    // tslint:disable-next-line: no-dynamic-delete
+                    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
                     delete this.segment.properties[key];
                 }
             }
@@ -102,7 +102,7 @@ export class SegmentPropertiesManager {
                 newValue = newProps[key];
             }
             if (newValue === null) {
-                // tslint:disable-next-line: no-dynamic-delete
+                // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
                 delete this.segment.properties[key];
 
             } else {

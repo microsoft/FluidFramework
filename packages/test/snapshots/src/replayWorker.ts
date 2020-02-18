@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-unresolved
 import * as threads from "worker_threads";
 import { IWorkerArgs, processOneFile } from "./replayMultipleFiles";
 

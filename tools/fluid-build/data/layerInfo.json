@@ -71,6 +71,15 @@
                 "packages": [
                     "@microsoft/fluid-odsp-utils"
                 ]
+            },
+            "Tool-Utils": {
+                "dot": false,
+                "packages": [
+                    "@microsoft/fluid-tool-utils"
+                ],
+                "deps": [
+                    "Other-Utils"
+                ]
             }
         }
     },
@@ -152,8 +161,8 @@
             "Component": {
                 "dot": false,
                 "dirs": [
-                    "packages/component/",
-                    "samples/chaincode/",
+                    "packages/components/",
+                    "examples/components/",
                     "packages/agent/",
                     "packages/server/tools-core"
                 ],
@@ -176,12 +185,14 @@
                 "deps": [
                     "Framework",
                     "Routerlicious-Driver",
-                    "Other-Utils"
+                    "Other-Utils",
+                    "Tool-Utils"
                 ]
             },
             "Test": {
                 "dev": true,
                 "packages": [
+                    "@microsoft/fluid-local-web-host",
                     "@microsoft/fluid-test-driver",
                     "@microsoft/fluid-test-runtime-utils",
                     "@microsoft/fluid-local-test-server",

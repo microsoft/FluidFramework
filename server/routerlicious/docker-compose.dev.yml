@@ -1,8 +1,5 @@
 version: '3.4'
 services:
-    gateway:
-        volumes:
-            - ../gateway:/usr/src/server
     alfred:
         volumes:
             - .:/usr/src/server/server/routerlicious

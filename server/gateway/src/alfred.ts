@@ -12,13 +12,13 @@ import Axios from "axios";
 import { IAlfred } from "./interfaces";
 
 export class Alfred implements IAlfred {
-    private tenants = new Map<string, GitManager>();
+    private readonly tenants = new Map<string, GitManager>();
 
     constructor(
-        tenants: { id: string, key: string }[],
-        private ordererUrl: string,
-        private historianUrl: string,
-        private riddlerUrl: string,
+        tenants: { id: string; key: string }[],
+        private readonly ordererUrl: string,
+        private readonly historianUrl: string,
+        private readonly riddlerUrl: string,
     ) {
         for (const tenant of tenants) {
             const historian = new Historian(
@@ -40,17 +40,20 @@ export class Alfred implements IAlfred {
     public async getFullTree(
         tenantId: string,
         documentId: string,
-    ): Promise<{ cache: IGitCache, code: string | IFluidCodeDetails }> {
+    ): Promise<{ cache: IGitCache; code: string | IFluidCodeDetails }> {
         const gitManager = this.getGitManager(tenantId);
         const versions = await gitManager.getCommits(documentId, 1);
         if (versions.length === 0) {
+            // eslint-disable-next-line no-null/no-null
             return { cache: { blobs: [], commits: [], refs: { [documentId]: null }, trees: [] }, code: null };
         }
 
         const fullTree = await gitManager.getFullTree(versions[0].sha);
 
         // TODO this needs to be summary aware
+        // eslint-disable-next-line no-null/no-null
         let code: string | IFluidCodeDetails = null;
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (fullTree.quorumValues) {
             let quorumValues;
             for (const blob of fullTree.blobs) {
@@ -93,7 +96,8 @@ export class Alfred implements IAlfred {
 
     public async getLatestVersion(tenantId: string, documentId: string): Promise<ICommit> {
         const versions = await this.getVersions(tenantId, documentId, 1);
-        if (!versions.length) {
+        if (versions.length === 0) {
+            // eslint-disable-next-line no-null/no-null
             return null;
         }
 
@@ -115,6 +119,7 @@ export class Alfred implements IAlfred {
 
     private getGitManager(id: string): GitManager {
         const result = this.tenants.get(id);
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (!result) {
             throw new Error(`Unknown tenant: ${id}`);
         }

@@ -68,7 +68,6 @@ function processTests(tests: { markdown: string, html: string, section: string }
 //     assert.strictEqual(i, children.length);
 // }
 
-// tslint:disable:max-func-body-length
 describe("Markdown", () => {
     let host: TestHost;
     let doc: FlowDocument;
@@ -97,7 +96,6 @@ describe("Markdown", () => {
         let renderResolver: () => void;
         layout.invalidatedCallback = () => {
             if (!renderResolver) {
-                // tslint:disable-next-line:promise-must-complete
                 rendered = new Promise((accept) => {
                     console.log("Render pending");
                     renderResolver = accept;

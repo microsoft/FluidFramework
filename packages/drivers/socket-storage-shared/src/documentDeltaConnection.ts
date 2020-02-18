@@ -66,7 +66,6 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      * @param url - websocket URL
      * @param timeoutMs - timeout for socket connection attempt in milliseconds (default: 20000)
      */
-    // tslint:disable-next-line: max-func-body-length
     public static async create(
         tenantId: string,
         id: string,
