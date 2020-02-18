@@ -65,6 +65,8 @@ class ProseMirrorView implements IComponentHTMLView {
     private textArea: HTMLDivElement;
     private readonly collabManager: FluidCollabManager;
 
+    public get IComponentHTMLView() { return this; }
+
     public constructor(
         private readonly text: SharedString,
         private readonly runtime: IComponentRuntime,
@@ -118,7 +120,6 @@ export class ProseMirror extends EventEmitter
     public text: SharedString;
     private root: ISharedMap;
     private collabManager: FluidCollabManager;
-    private defaultView: ProseMirrorView;
 
     constructor(
         private readonly runtime: IComponentRuntime,
@@ -162,14 +163,6 @@ export class ProseMirror extends EventEmitter
 
     public addView(): IComponentHTMLView {
         return new ProseMirrorView(this.text, this.runtime);
-    }
-
-    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
-        if (!this.defaultView) {
-            this.defaultView = new ProseMirrorView(this.text, this.runtime);
-        }
-
-        this.defaultView.render(elm, options);
     }
 }
 

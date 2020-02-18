@@ -298,7 +298,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     public async connect(requestedMode: ConnectionMode = "write"): Promise<IConnectionDetails> {
-        assert(!this.closed);
+        if (this.closed) {
+            throw new Error("Attempting to connect a closed DeltaManager");
+        }
 
         if (this.connection) {
             return this.connection.details;

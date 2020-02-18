@@ -7,7 +7,7 @@
 
 import * as assert from "assert";
 import { AgentSchedulerFactory, TaskManager } from "@microsoft/fluid-agent-scheduler";
-import { TestHost } from "@microsoft/fluid-local-test-server";
+import { TestHost } from "@microsoft/fluid-local-test-utils";
 import { IAgentScheduler } from "@microsoft/fluid-runtime-definitions";
 
 const AgentSchedulerType = "@microsoft/fluid-agent-scheduler";
