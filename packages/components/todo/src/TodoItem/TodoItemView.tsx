@@ -5,7 +5,7 @@
 
 import { CollaborativeInput } from "@microsoft/fluid-aqueduct-react";
 import { IComponentHTMLView, IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { ContainerRuntime, RequestParser } from "@microsoft/fluid-container-runtime";
+import { IHostRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -19,20 +19,6 @@ interface TodoItemViewProps {
 interface TodoItemViewState {
     checked: boolean;
     innerComponentVisible: boolean;
-}
-
-export async function todoItemViewRequestHandler(request: IRequest, runtime: ContainerRuntime) {
-    const requestParser = new RequestParser(request);
-    const pathParts = requestParser.pathParts;
-    if (pathParts[0] !== "TodoItemView") {
-        return undefined;
-    }
-
-    const modelRequest = requestParser.createSubRequest(1);
-    const todoItemModel = (await runtime.request(modelRequest)).value as TodoItem;
-    // eslint-disable-next-line @typescript-eslint/no-use-before-define
-    const todoItemView = new TodoItemView({ todoItemModel });
-    return { status: 200, mimeType: "fluid/component", value: todoItemView };
 }
 
 function getView(todoItemModel: TodoItem) {
@@ -59,6 +45,12 @@ export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemVie
     };
 
     private readonly view: IComponentHTMLView;
+
+    public static async request(request: IRequest, runtime: IHostRuntime) {
+        const todoItemModel = (await runtime.request(request)).value as TodoItem;
+        const todoItemView = new TodoItemView({ todoItemModel });
+        return { status: 200, mimeType: "fluid/component", value: todoItemView };
+    }
 
     constructor(props: TodoItemViewProps) {
         super(props);
