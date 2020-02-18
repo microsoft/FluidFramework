@@ -8,7 +8,7 @@
   "sideEffects": false,
   "main": "dist/index.js",
   "module": "lib/index.js",
-  "es5": "es5/index.js",
+  "module:es5": "es5/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist/**/*",
