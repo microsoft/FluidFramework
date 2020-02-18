@@ -10,6 +10,9 @@ import * as kafka from "kafka-node";
 import { debug } from "./debug";
 import { ensureTopics } from "./kafkaTopics";
 
+// time before reconnecting after an error occurs
+const defaultReconnectDelay = 5000;
+
 export class KafkaNodeConsumer implements IConsumer {
     private client: kafka.KafkaClient;
     private offset: kafka.Offset;
@@ -22,7 +25,8 @@ export class KafkaNodeConsumer implements IConsumer {
         public readonly groupId: string,
         public readonly topic: string,
         private readonly topicPartitions?: number,
-        private readonly topicReplicationFactor?: number) {
+        private readonly topicReplicationFactor?: number,
+        private readonly reconnectDelay: number = defaultReconnectDelay) {
         clientOptions.clientId = clientId;
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.connect();
@@ -72,48 +76,6 @@ export class KafkaNodeConsumer implements IConsumer {
 
         try {
             await ensureTopics(this.client, [this.topic], this.topicPartitions, this.topicReplicationFactor);
-
-            this.consumerGroup = new kafka.ConsumerGroup(
-                {
-                    kafkaHost: this.clientOptions.kafkaHost,
-                    ssl: this.clientOptions.sslOptions,
-                    sslOptions: this.clientOptions.sslOptions,
-                    id: this.clientOptions.clientId,
-                    autoCommit: false,
-                    fetchMaxBytes: 1024 * 1024,
-                    fetchMinBytes: 1,
-                    fromOffset: "latest",
-                    groupId,
-                    maxTickMessages: 100000,
-                },
-                [this.topic]);
-
-            this.consumerGroup.on("connect", () => {
-                this.events.emit("connected");
-            });
-
-            this.consumerGroup.on("rebalancing", () => {
-                const payloads = (this.consumerGroup as any).topicPayloads;
-                this.events.emit("rebalancing", this.getPartitions(payloads));
-            });
-
-            this.consumerGroup.on("rebalanced", () => {
-                const payloads = (this.consumerGroup as any).topicPayloads;
-                this.events.emit("rebalanced", this.getPartitions(payloads));
-            });
-
-            this.consumerGroup.on("message", (message: any) => {
-                this.events.emit("data", message);
-            });
-
-            this.consumerGroup.on("error", (error) => {
-                this.events.emit("error", error);
-            });
-
-            this.consumerGroup.on("offsetOutOfRange", (error) => {
-                this.events.emit("error", error);
-            });
-
         } catch (error) {
             // Close the client if it exists
             if (this.client) {
@@ -125,12 +87,54 @@ export class KafkaNodeConsumer implements IConsumer {
 
             this.events.emit("error", error);
 
-            // reconnect in 5 seconds
             setTimeout(() => {
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 this.connect();
-            }, 5000);
+            }, this.reconnectDelay);
+
+            return;
         }
+
+        this.consumerGroup = new kafka.ConsumerGroup(
+            {
+                kafkaHost: this.clientOptions.kafkaHost,
+                ssl: this.clientOptions.sslOptions,
+                sslOptions: this.clientOptions.sslOptions,
+                id: this.clientOptions.clientId,
+                autoCommit: false,
+                fetchMaxBytes: 1024 * 1024,
+                fetchMinBytes: 1,
+                fromOffset: "latest",
+                groupId,
+                maxTickMessages: 100000,
+            },
+            [this.topic]);
+
+        this.consumerGroup.on("connect", () => {
+            this.events.emit("connected");
+        });
+
+        this.consumerGroup.on("rebalancing", () => {
+            const payloads = (this.consumerGroup as any).topicPayloads;
+            this.events.emit("rebalancing", this.getPartitions(payloads));
+        });
+
+        this.consumerGroup.on("rebalanced", () => {
+            const payloads = (this.consumerGroup as any).topicPayloads;
+            this.events.emit("rebalanced", this.getPartitions(payloads));
+        });
+
+        this.consumerGroup.on("message", (message: any) => {
+            this.events.emit("data", message);
+        });
+
+        this.consumerGroup.on("error", (error) => {
+            this.events.emit("error", error);
+        });
+
+        this.consumerGroup.on("offsetOutOfRange", (error) => {
+            this.events.emit("error", error);
+        });
     }
 
     private getPartitions(rawPartitions: any[]): IPartition[] {
