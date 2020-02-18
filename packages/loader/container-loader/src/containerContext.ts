@@ -172,7 +172,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
     ) {
         super();
         this.logger = container.subLogger;
-        // this._baseSnapshot = previousRuntimeState.snapshotTree ?? { id: null, blobs: {}, commits: {}, trees: {} };
         this._baseSnapshot = previousRuntimeState.snapshotTree;
     }
 

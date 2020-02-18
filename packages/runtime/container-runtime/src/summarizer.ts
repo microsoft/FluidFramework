@@ -189,7 +189,6 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         return this.runtime.nextSummarizerD.promise;
     }
 
-
     private async generateSummary(safe: boolean): Promise<GenerateSummaryData | undefined> {
         if (this.onBehalfOfClientId !== this.runtime.summarizerClientId) {
             // We are no longer the summarizer, we should stop ourself

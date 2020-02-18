@@ -116,7 +116,6 @@ export class SummaryManager extends EventEmitter implements IDisposable {
             this.refreshSummarizer();
         });
 
-        // this.initialDelayP = new Promise((resolve) => setTimeout(resolve, initialDelayMs));
         this.initialDelayTimer = new PromiseTimer(initialDelayMs, () => {});
         this.initialDelayP = this.initialDelayTimer.start().catch(() => {});
 

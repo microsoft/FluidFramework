@@ -646,13 +646,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // instantiateRuntime which will want to know existing state.  Wait for these promises to finish.
         [this.blobManager, this.protocolHandler] = await Promise.all([blobManagerP, protocolHandlerP, loadDetailsP]);
 
-        const printq = () => {
-            console.log("quorum:");
-            this.getQuorum().getMembers().forEach((v,k) => console.log(k, v.client.details));
-        };
-        this.getQuorum().on("addMember", printq);
-        this.getQuorum().on("removeMember", printq);
-
         await this.loadContext(attributes, this.storageService, { snapshotTree: maybeSnapshotTree });
 
         this.context!.changeConnectionState(this.connectionState, this.clientId!, this._version);
@@ -1142,8 +1135,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         loader.resolveContainer(this);
         this.emit("contextChanged", this.pkg);
-        console.log("loadContext() quorum:");
-        this.getQuorum().getMembers().forEach((v,k) => console.log(k, v.client.details));
     }
 
     // Please avoid calling it directly.

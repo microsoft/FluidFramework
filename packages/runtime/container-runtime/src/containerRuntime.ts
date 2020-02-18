@@ -86,15 +86,6 @@ import { SummaryManager } from "./summaryManager";
 import { ISummaryStats, SummaryTreeConverter } from "./summaryTreeConverter";
 import { analyzeTasks } from "./taskAnalyzer";
 import { DeltaScheduler } from "./deltaScheduler";
-// import { SummaryCollection } from "./summaryCollection";
-
-/* export interface IRuntimeState {
-    snapshot?: ITree,
-    snapshotTree?: ISnapshotTree,
-    summaryCollection?: SummaryCollection,
-    nextSummarizerP?: Promise<Summarizer>,
-    nextSummarizerD?: Deferred<Summarizer>,
-} */
 
 interface ISummaryTreeWithStats {
     summaryStats: ISummaryStats;
