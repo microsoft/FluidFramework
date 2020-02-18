@@ -22,8 +22,11 @@ import {
     meets,
     pair,
     Pair,
-} from "../bspSet";
-import { Ivl, ivlMeets, ivlCompare, ivlMeetsOrTouches, ivlJoin, ivlExcept } from "../split";
+// we're accessing some internal functions that wouldn't necessarily be exported in index.ts
+// eslint-disable-next-line import/no-internal-modules
+} from "../src/bspSet";
+// eslint-disable-next-line import/no-internal-modules
+import { Ivl, ivlMeets, ivlCompare, ivlMeetsOrTouches, ivlJoin, ivlExcept } from "../src/split";
 
 /** Represents a half-open 2D rectangle [xa,xb) x [ya,yb) */
 type Rect2D = [Ivl, Ivl];

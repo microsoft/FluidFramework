@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { strict as assert } from "assert";
 import {
     createFromProduct,
@@ -10,9 +15,9 @@ import {
     project,
     forEachProduct,
     meetsProduct,
-} from "../productSet";
-import { createFromKey, empty, dense } from "../bspSet";
-import { Ivl, boundedParetoSetOperations } from "../split";
+} from "../src/productSet";
+import { createFromKey, empty, dense } from "../src/bspSet";
+import { Ivl, boundedParetoSetOperations } from "../src/split";
 
 describe("Product-set tests", () => {
     const anyValue: Ivl = [0, 1000];
