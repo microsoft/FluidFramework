@@ -15,6 +15,7 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { SupportedComponent } from "../dataModel";
 import { ButtonName, FacePileName, NumberName, TextBoxName } from ".";
+import { ISharedDirectory } from "@microsoft/fluid-map";
 
 const componentToolbarStyle: React.CSSProperties = { position: "absolute", top: 10, left: 10, zIndex: 1000 };
 
@@ -25,8 +26,6 @@ export const ComponentToolbarName = "componentToolbar";
  */
 export class ComponentToolbar extends PrimedComponent implements IComponentHTMLVisual {
 
-    private hasComponents = false;
-
     public get IComponentHTMLVisual() { return this; }
 
     private static readonly factory = new PrimedComponentFactory(ComponentToolbar, []);
@@ -35,16 +34,13 @@ export class ComponentToolbar extends PrimedComponent implements IComponentHTMLV
         return ComponentToolbar.factory;
     }
 
-    protected async componentInitializingFirstTime() {
-        this.addListener("initializeComponents", (hasComponents: boolean) => {
-            this.hasComponents = hasComponents;
-        });
+    public changeEditState(isEditable: boolean){
+        this.root.set("isEditable", isEditable);
+        this.emit("onEditChanged", isEditable);
     }
 
-    protected async componentInitializingFromExisting() {
-        this.addListener("initializeComponents", (hasComponents: boolean) => {
-            this.hasComponents = hasComponents;
-        });
+    protected async componentInitializingFirstTime() {
+        this.root.set("isEditable", false);
     }
 
 
@@ -53,7 +49,7 @@ export class ComponentToolbar extends PrimedComponent implements IComponentHTMLV
      */
     public render(div: HTMLElement) {
         ReactDOM.render(
-            <ComponentToolbarView emit={this.emit.bind(this)} hasComponents={this.hasComponents} />,
+            <ComponentToolbarView emit={this.emit.bind(this)} root={this.root} />,
             div,
         );
     }
@@ -62,7 +58,7 @@ export class ComponentToolbar extends PrimedComponent implements IComponentHTMLV
 
 interface IComponentToolbarViewProps {
     emit: (event: string | symbol, ...args: any[]) => boolean;
-    hasComponents: boolean;
+    root: ISharedDirectory
 }
 
 interface IComponentToolbarViewState {
@@ -74,8 +70,12 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
     constructor(props: IComponentToolbarViewProps){
         super(props);
         this.state = {
-            isEditable: !props.hasComponents,
+            isEditable: props.root.get("isEditable"),
         };
+
+        props.root.on("onEditChanged", (isEditable: boolean) => {
+            this.setState({ isEditable })
+        })
     }
 
     public emitAddComponentEvent(type: SupportedComponent, w?: number, h?: number) {
@@ -93,6 +93,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
     }
 
     render(){
+        const { isEditable } = this.state;
         const editableButtons =
             <>
                 <button onClick={async () => this.emitAddComponentEvent("clicker", 2, 2)}>
@@ -124,9 +125,9 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
                     id="edit"
                     onClick={() => this.emitToggleEditable()}
                 >
-                    {`Edit: ${this.state.isEditable}`}
+                    {`Edit: ${ isEditable }`}
                 </button>
-                {this.state.isEditable ? editableButtons : undefined}
+                { isEditable ? editableButtons : undefined }
             </div>
         );
     }
