@@ -8,6 +8,7 @@ import { PerformanceEvent } from "@microsoft/fluid-core-utils";
 import { ISocketStorageDiscovery } from "./contracts";
 import { OdspCache } from "./odspCache";
 import { fetchHelper, getWithRetryForTokenRefresh, IOdspResponse, throwOdspNetworkError } from "./odspUtils";
+import { isOdcOrigin } from "./isOdc";
 
 const getOrigin = (url: string) => new URL(url).origin;
 
@@ -45,6 +46,7 @@ export async function fetchJoinSession(
         const joinSessionEvent = PerformanceEvent.start(logger, { eventName: "JoinSession" });
         let response: IOdspResponse<ISocketStorageDiscovery>;
         try {
+            // TODO Extract the auth header-vs-query logic out
             const siteOrigin = getOrigin(siteUrl);
             let queryParams = `app_id=${appId}&access_token=${token}${additionalParams ? `&${additionalParams}` : ""}`;
             let headers = {};
@@ -53,14 +55,20 @@ export async function fetchJoinSession(
                 headers = { Authorization: `Bearer ${token}` };
             }
 
+            let prefix = "_api/";
+            if (isOdcOrigin(siteOrigin)) {
+                prefix = "";
+            }
+
             response = await fetchHelper(
-                `${siteOrigin}/_api/v2.1/drives/${driveId}/items/${itemId}/${path}?${queryParams}`,
+                `${siteOrigin}/${prefix}v2.1/drives/${driveId}/items/${itemId}/${path}?${queryParams}`,
                 { method, headers },
             );
         } catch (error) {
             joinSessionEvent.cancel({}, error);
             throw error;
         }
+        // TODO SPO-specific telemetry
         joinSessionEvent.end({
             sprequestguid: response.headers.get("sprequestguid"),
             sprequestduration: response.headers.get("sprequestduration"),
