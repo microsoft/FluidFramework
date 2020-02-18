@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { EventData, EventHubClient } from "@azure/event-hubs";
 import { Deferred } from "@microsoft/fluid-core-utils";
 import { IPendingBoxcar, IProducer } from "@microsoft/fluid-server-services-core";
@@ -19,6 +20,8 @@ class PendingBoxcar implements IPendingBoxcar {
 }
 
 export class EventHubProducer implements IProducer {
+    private readonly events = new EventEmitter();
+
     private readonly messages = new Map<string, PendingBoxcar>();
     private sendPending: NodeJS.Immediate;
     private readonly client: EventHubClient;
@@ -65,7 +68,13 @@ export class EventHubProducer implements IProducer {
         return this.client.close();
     }
 
-    public once(event: "producerError", listener: (...args: any[]) => void): this {
+    public on(event: "connected" | "produced" | "error", listener: (...args: any[]) => void): this {
+        this.events.on(event, listener);
+        return this;
+    }
+
+    public once(event: "connected" | "produced" | "error", listener: (...args: any[]) => void): this {
+        this.events.once(event, listener);
         return this;
     }
 
@@ -99,9 +108,15 @@ export class EventHubProducer implements IProducer {
 
     private sendBoxcar(boxcar: IPendingBoxcar) {
         boxcar.messages[0].partitionKey = boxcar.documentId;
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.client
             .sendBatch(boxcar.messages)
-            .then(() => boxcar.deferred.resolve());
+            .then(() => {
+                this.events.emit("produced");
+                boxcar.deferred.resolve();
+            })
+            .catch((error) => {
+                this.events.emit("error", error);
+                boxcar.deferred.reject(error);
+            });
     }
 }
