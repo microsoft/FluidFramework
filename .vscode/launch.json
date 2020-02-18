@@ -110,30 +110,6 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Local Server Tests",
-            "cwd": "${workspaceFolder}/packages/server/local-test-server",
-            "program": "${workspaceFolder}/common/tools/node_modules/mocha/bin/_mocha",
-            "args": [
-                "-r",
-                "${workspaceFolder}/common/tools/node_modules/ts-node/register",
-                "--no-timeouts",
-                "src/test/**/*.ts",
-                // "src/test/**/sharedInterval.spec.ts",
-                "--exit"
-            ],
-            "env": {
-                // "DEBUG": "*,-socket.io*,-engine.io*,-follow-redirects",
-                "RUSH_ROOT": "${workspaceFolder}",
-                "TS_NODE_PROJECT": "tsconfig.json"
-            },
-            "console": "integratedTerminal",
-            "skipFiles": [
-                "<node_internals>/**/*.js"
-            ]
-        },
-        {
-            "type": "node",
-            "request": "launch",
             "name": "Mocha Tests",
             "cwd": "${workspaceFolder}/",
             "program": "${workspaceFolder}/common/tools/node_modules/mocha/bin/_mocha",
@@ -341,26 +317,6 @@
             },
             "args": ["--no-timeouts", "--exit", "--require", "ts-node/register","${file}", ],
             "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Local Test Server",
-            "cwd": "${workspaceFolder}/packages/server/local-test-server",
-            "program": "${workspaceFolder}/packages/server/local-test-server/node_modules/.bin/_mocha",
-            "args": [
-                "--require", "ts-node/register",
-                "-u", "tdd",
-                "--colors",
-                "--no-timeouts",
-                "--recursive",
-                "src/test/**/*.spec.ts",
-                "--exit"
-            ],
-            "env": {
-                "TS_NODE_PROJECT": "tsconfig.json"
-            },
-            "internalConsoleOptions": "openOnSessionStart"
         }
 
     ]
