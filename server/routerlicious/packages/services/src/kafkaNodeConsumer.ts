@@ -93,21 +93,13 @@ export class KafkaNodeConsumer implements IConsumer {
             });
 
             this.consumerGroup.on("rebalancing", () => {
-                try {
-                    const payloads = (this.consumerGroup as any).topicPayloads;
-                    this.events.emit("rebalancing", this.getPartitions(payloads));
-                } catch (ex) {
-                    this.events.emit("error", ex);
-                }
+                const payloads = (this.consumerGroup as any).topicPayloads;
+                this.events.emit("rebalancing", this.getPartitions(payloads));
             });
 
             this.consumerGroup.on("rebalanced", () => {
-                try {
-                    const payloads = (this.consumerGroup as any).topicPayloads;
-                    this.events.emit("rebalanced", this.getPartitions(payloads));
-                } catch (ex) {
-                    this.events.emit("error", ex);
-                }
+                const payloads = (this.consumerGroup as any).topicPayloads;
+                this.events.emit("rebalanced", this.getPartitions(payloads));
             });
 
             this.consumerGroup.on("message", (message: any) => {
