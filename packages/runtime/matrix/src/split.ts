@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { SetOperations, Pair } from "./bspSet";
 
 /** Represents a half-open interval [a, b) */
