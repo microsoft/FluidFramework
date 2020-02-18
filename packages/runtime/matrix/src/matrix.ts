@@ -14,12 +14,10 @@ import {
 import {
     IComponentRuntime,
     IObjectStorageService,
-    Jsonable,
-    JsonablePrimitive,
+    Serializable,
 } from "@microsoft/fluid-runtime-definitions";
 import { makeHandlesSerializable, parseHandles, SharedObject } from "@microsoft/fluid-shared-object-base";
 import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { ObjectStoragePartition } from "@microsoft/fluid-runtime-utils";
 import { IMatrixProducer, IMatrixConsumer, IMatrixReader } from "@tiny-calc/nano";
 import { debug } from "./debug";
@@ -37,17 +35,17 @@ export const enum SnapshotPath {
     cells = "cells"
 }
 
-export class SharedMatrix<
-    T extends Jsonable<JsonablePrimitive | IComponentHandle> = Jsonable<JsonablePrimitive | IComponentHandle>
-> extends SharedObject implements IMatrixProducer<T | undefined | null>, IMatrixReader<T | undefined | null> {
-    private readonly consumers = new Set<IMatrixConsumer<T>>();
+export interface WritableArrayLike<T> {
+    readonly length: number;
+    [n: number]: T;
+}
+
+export class SharedMatrix<T extends Serializable = Serializable> extends SharedObject
+    implements IMatrixProducer<T | undefined | null>, IMatrixReader<T | undefined | null>
+{
+    private readonly consumers = new Set<IMatrixConsumer<T | undefined | null>>();
 
     public static getFactory() { return new SharedMatrixFactory(); }
-
-    // #region IMatrixReader
-    public get numRows() { return this.rows.getLength(); }
-    public get numCols() { return this.cols.getLength(); }
-    // #endregion IMatrixReader
 
     private readonly rows: PermutationVector;   // Map logical row to storage handle (if any)
     private readonly cols: PermutationVector;   // Map logical col to storage handle (if any)
@@ -60,26 +58,31 @@ export class SharedMatrix<
     constructor(runtime: IComponentRuntime, public id: string) {
         super(id, runtime, SharedMatrixFactory.Attributes);
 
-        this.rows = new PermutationVector(SnapshotPath.rows, this.logger, runtime.options);
-        this.cols = new PermutationVector(SnapshotPath.cols, this.logger, runtime.options);
+        this.rows = new PermutationVector(SnapshotPath.rows, this.logger, runtime.options, this.onRowDelta);
+        this.cols = new PermutationVector(SnapshotPath.cols, this.logger, runtime.options, this.onColDelta);
     }
 
     public static create(runtime: IComponentRuntime, id?: string) {
         return runtime.createChannel(id, SharedMatrixFactory.Type) as SharedMatrix;
     }
 
-    // #region IMatrixConsumer
+    // #region IMatrixProducer
 
-    removeMatrixConsumer(consumer: IMatrixConsumer<T>): void {
+    removeMatrixConsumer(consumer: IMatrixConsumer<T | undefined | null>): void {
         this.consumers.delete(consumer);
     }
 
-    openMatrix(consumer: IMatrixConsumer<T>): IMatrixReader<T | undefined | null> {
+    openMatrix(consumer: IMatrixConsumer<T | undefined | null>): IMatrixReader<T | undefined | null> {
         this.consumers.add(consumer);
         return this;
     }
 
-    // #endregion IMatrixConsumer
+    // #endregion IMatrixProducer
+
+    // #region IMatrixReader
+
+    public get numRows() { return this.rows.getLength(); }
+    public get numCols() { return this.cols.getLength(); }
 
     public read(row: number, col: number): T | undefined | null {
         // Map the logical (row, col) to associated storage handles.
@@ -95,6 +98,8 @@ export class SharedMatrix<
 
         return this.cells.read(rowHandle, colHandle);
     }
+
+    // #endregion IMatrixReader
 
     public setCell(row: number, col: number, value: T) {
         // Write or clear the value in storage.
@@ -230,9 +235,9 @@ export class SharedMatrix<
         start: number,
         count: number,
     ) {
-    // Construct a new MergeTree op to insert a new segment with the appropriate number of unallocated rows/cols.
-    // Note that serialized RunSegment will continue to contain unallocated items, even if the RunSegment in
-    // the MergeTree is modified prior to the op being transmitted.
+        // Construct a new MergeTree op to insert a new segment with the appropriate number of unallocated rows/cols.
+        // Note that serialized RunSegment will continue to contain unallocated items, even if the RunSegment in
+        // the MergeTree is modified prior to the op being transmitted.
         const op = vector.insert(start, count);
 
         // Note whether this `op` targets rows or cols.  (See dispatch in `processCore()`)
@@ -241,8 +246,11 @@ export class SharedMatrix<
         this.submitLocalMessage(op);
     }
 
-    private storeCell(row: number, col: number, value: T) {
+    private storeCell(row: number, col: number, value: T | undefined) {
         const clear = value === undefined;
+
+        // TODO: `toHandle()` should take the refSeq and client to produce the current handle from
+        //       past positions.
 
         // Map the logical row/col to the allocated storage handles (if any).
         // If clearing and either the row and/or col is unallocated, no further work is necessary.
@@ -257,8 +265,16 @@ export class SharedMatrix<
         }
 
         this.cells.setCell(rowHandle, colHandle, value);
+        const key = pointToKey(rowHandle, colHandle);
 
-        return pointToKey(rowHandle, colHandle);
+        // TODO: row/col position should be tardised to the current seq# before notification.
+        // TODO: Pretty lame to alloc an array to send a single value.  Probably warrants a
+        //       singular `cellChanged` API.
+        for (const consumer of this.consumers.values()) {
+            consumer.cellsChanged(row, col, 1, 1, [value], this);
+        }
+
+        return key;
     }
 
     private submitCellMessage(key: number | undefined, message: IMatrixCellMsg) {
@@ -298,4 +314,18 @@ export class SharedMatrix<
         this.cells = SparseArray2D.load(cellData[0]);
         this.cellKeyToPendingCliSeq = new Map(cellData[1]);
     }
+
+    // Invoked by PermutationVector to notify IMatrixConsumers of row insertion/deletions.
+    private readonly onRowDelta = (position: number, numRemoved: number, numInserted: number) => {
+        for (const consumer of this.consumers) {
+            consumer.rowsChanged(position, numRemoved, numInserted, this);
+        }
+    };
+
+    // Invoked by PermutationVector to notify IMatrixConsumers of col insertion/deletions.
+    private readonly onColDelta = (position: number, numRemoved: number, numInserted: number) => {
+        for (const consumer of this.consumers) {
+            consumer.colsChanged(position, numRemoved, numInserted, this);
+        }
+    };
 }

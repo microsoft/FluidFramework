@@ -6,7 +6,7 @@
 import { ICodeLoader, IFluidCodeDetails, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
 
 /**
- * Implementation of the code loader for the local-test-server.  This expects that
+ * Implementation of the code loader for the local-test-utils. This expects that
  * an array of keys to runtime factories will be provided at construction time, which can
  * then be loaded by providing the key as the load source.
  */

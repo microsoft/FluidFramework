@@ -55,7 +55,7 @@ class ProxySocketConnection implements IOrdererConnection {
         this.socket.emit(op, id, ...data);
     }
 
-    public once(event: "producerError", listener: (...args: any[]) => void) {
+    public once(event: "error", listener: (...args: any[]) => void) {
         return;
     }
 }

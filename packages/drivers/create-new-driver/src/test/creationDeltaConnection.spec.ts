@@ -4,9 +4,10 @@
  */
 
 import * as assert from "assert";
-import { IDocumentDeltaConnection, IResolvedUrl, IDocumentService } from "@microsoft/fluid-driver-definitions";
-import { IClient, ScopeType, IDocumentMessage, MessageType } from "@microsoft/fluid-protocol-definitions";
+import { IDocumentDeltaConnection, IDocumentService, IFluidResolvedUrl } from "@microsoft/fluid-driver-definitions";
+import { IClient, IDocumentMessage, MessageType, ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { CreationDocumentServiceFactory } from "../creationDocumentServiceFactory";
+import { CreationDriverUrlResolver } from "../creationDriverUrlResolver";
 import { CreationServerMessagesHandler } from "..";
 
 describe("Creation Driver", () => {
@@ -15,9 +16,12 @@ describe("Creation Driver", () => {
     let client: IClient;
     let documentDeltaConnection1: IDocumentDeltaConnection;
     let documentDeltaConnection2: IDocumentDeltaConnection;
+    const docId = "docId";
+    let resolved: IFluidResolvedUrl;
     beforeEach(async () => {
+        const resolver: CreationDriverUrlResolver = new CreationDriverUrlResolver();
         const factory = new CreationDocumentServiceFactory();
-        const resolved: IResolvedUrl = {endpoints: {}, type: "fluid", url: "", tokens: {}};
+        resolved = (await resolver.resolve({url: `http://fluid.com?uniqueId=${docId}`})) as IFluidResolvedUrl;
         service = await factory.createDocumentService(resolved);
         client = {
             mode: "write",
@@ -47,7 +51,8 @@ describe("Creation Driver", () => {
             referenceSequenceNumber: 0,
             type: MessageType.Operation,
         };
-        const creationServerMessagesHandler = CreationServerMessagesHandler.getInstance();
+        const creationServerMessagesHandler =
+            CreationServerMessagesHandler.getInstance(docId);
         assert.equal(creationServerMessagesHandler.queuedMessages.length, 2,
             "Total messages should be 2 at this time including join messages");
         documentDeltaConnection1.submit([message]);

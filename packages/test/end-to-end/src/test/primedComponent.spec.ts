@@ -6,7 +6,7 @@
 import * as assert from "assert";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { TestHost } from "@microsoft/fluid-local-test-server";
+import { TestHost } from "@microsoft/fluid-local-test-utils";
 import { ISharedDirectory } from "@microsoft/fluid-map";
 
 const PrimedType = "@microsoft/fluid-primedComponent";

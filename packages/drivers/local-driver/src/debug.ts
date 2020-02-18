@@ -6,5 +6,5 @@
 import * as registerDebug from "debug";
 import { pkgName, pkgVersion } from "./packageVersion";
 
-export const debug = registerDebug("fluid:test-driver");
+export const debug = registerDebug("fluid:local-driver");
 debug(`Package: ${pkgName} - Version: ${pkgVersion}`);

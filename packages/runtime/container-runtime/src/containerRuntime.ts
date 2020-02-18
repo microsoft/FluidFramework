@@ -365,6 +365,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         registryEntries: NamedComponentRegistryEntries,
         requestHandlers: RuntimeRequestHandler[] = [],
         runtimeOptions?: IContainerRuntimeOptions,
+        containerScope: IComponent = context.scope,
     ): Promise<ContainerRuntime> {
         const componentRegistry = new ContainerRuntimeComponentRegistry(registryEntries);
 
@@ -373,7 +374,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             ? await readAndParse<[string, string[]][]>(context.storage, chunkId)
             : [];
 
-        const runtime = new ContainerRuntime(context, componentRegistry, chunks, runtimeOptions);
+        const runtime = new ContainerRuntime(context, componentRegistry, chunks, runtimeOptions, containerScope);
         runtime.requestHandler = new RuntimeRequestHandlerBuilder();
         runtime.requestHandler.pushHandler(
             createLoadableComponentRuntimeRequestHandler(runtime.summarizer),
@@ -461,7 +462,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     public get scope(): IComponent {
-        return this.context.scope;
+        return this.containerScope;
     }
 
     public get IComponentRegistry(): IComponentRegistry {
@@ -535,6 +536,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         private readonly registry: IComponentRegistry,
         readonly chunks: [string, string[]][],
         private readonly runtimeOptions: IContainerRuntimeOptions = { generateSummaries: true, enableWorker: false },
+        private readonly containerScope: IComponent,
     ) {
         super();
 
@@ -575,7 +577,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 value,
                 this,
                 this.storage,
-                this.context.scope,
+                this.containerScope,
                 this.summaryTracker.createOrGetChild(key, this.summaryTracker.referenceSequenceNumber));
             const deferred = new Deferred<ComponentContext>();
             deferred.resolve(componentContext);
@@ -872,7 +874,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             Array.isArray(pkg) ? pkg : [pkg],
             this,
             this.storage,
-            this.context.scope,
+            this.containerScope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.referenceSequenceNumber),
             (cr: IComponentRuntime) => this.attachComponent(cr),
             props);
@@ -1003,7 +1005,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     snapshotTree,
                     this,
                     new BlobCacheStorageService(this.storage, flatBlobs),
-                    this.context.scope,
+                    this.containerScope,
                     this.summaryTracker.createOrGetChild(attachMessage.id, message.sequenceNumber),
                     [attachMessage.type]);
 

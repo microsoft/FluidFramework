@@ -75,7 +75,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         sharedObjectRegistry: ISharedObjectRegistry,
         activeCallback: (runtime: ComponentRuntime) => void,
         componentRegistry?: IComponentRegistry,
-
     ): void {
         const logger = ChildLogger.create(context.hostRuntime.logger, undefined, { componentId: context.id });
         const runtime = new ComponentRuntime(

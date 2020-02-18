@@ -231,6 +231,10 @@ export interface ISummaryTracker {
 export interface IComponentContext extends EventEmitter {
     readonly documentId: string;
     readonly id: string;
+    /**
+     * The package path of the component as per the package factory.
+     */
+    readonly packagePath: readonly string[];
     readonly existing: boolean;
     readonly options: any;
     readonly clientId: string;

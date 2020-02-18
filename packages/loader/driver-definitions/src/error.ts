@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+
 // tslint:disable: no-unsafe-any
 export enum ErrorType {
     generalError,
@@ -10,10 +11,11 @@ export enum ErrorType {
     serviceError,
     summarizingError,
     writeError,
+    fatalError,
 }
 
 export type IError = IGeneralError | IThrottlingError | IConnectionError |
-IServiceError | ISummarizingError | IWriteError;
+IServiceError | ISummarizingError | IWriteError | IFatalError;
 
 export interface IGeneralError {
     readonly errorType: ErrorType.generalError;
@@ -49,5 +51,10 @@ export interface ISummarizingError {
 
 export interface IWriteError {
     readonly errorType: ErrorType.writeError;
+    readonly critical: boolean;
+}
+
+export interface IFatalError {
+    readonly errorType: ErrorType.fatalError;
     readonly critical: boolean;
 }
