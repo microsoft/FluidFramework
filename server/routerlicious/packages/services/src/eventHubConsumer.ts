@@ -27,9 +27,8 @@ export class EventHubConsumer implements IConsumer {
     constructor(
         endpoint: string,
         clientId: string,
-        public groupId: string,
-        public topic: string,
-        autoCommit: boolean,
+        public readonly groupId: string,
+        public readonly topic: string,
         storageEndpoint: string,
         storageContainerName: string,
         additionalOptions?: FromTokenProviderOptions,
