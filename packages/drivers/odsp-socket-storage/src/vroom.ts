@@ -7,7 +7,7 @@ import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { PerformanceEvent } from "@microsoft/fluid-core-utils";
 import { ISocketStorageDiscovery } from "./contracts";
 import { OdspCache } from "./odspCache";
-import { fetchHelper, getWithRetryForTokenRefresh, IOdspResponse, throwOdspNetworkError } from "./odspUtils";
+import { fetchHelper, getWithRetryForTokenRefresh, throwOdspNetworkError } from "./odspUtils";
 
 const getOrigin = (url: string) => new URL(url).origin;
 
@@ -35,7 +35,7 @@ export async function fetchJoinSession(
     method: string,
     logger: ITelemetryLogger,
     getVroomToken: (refresh: boolean, name?: string) => Promise<string | undefined | null>,
-): Promise<IOdspResponse<ISocketStorageDiscovery>> {
+): Promise<ISocketStorageDiscovery> {
     return getWithRetryForTokenRefresh(async (refresh: boolean) => {
         const token = await getVroomToken(refresh, "JoinSession");
         if (!token) {
@@ -43,7 +43,6 @@ export async function fetchJoinSession(
         }
 
         const joinSessionEvent = PerformanceEvent.start(logger, { eventName: "JoinSession" });
-        let response: IOdspResponse<ISocketStorageDiscovery>;
         try {
             const siteOrigin = getOrigin(siteUrl);
             let queryParams = `app_id=${appId}&access_token=${token}${additionalParams ? `&${additionalParams}` : ""}`;
@@ -53,19 +52,20 @@ export async function fetchJoinSession(
                 headers = { Authorization: `Bearer ${token}` };
             }
 
-            response = await fetchHelper(
+            const response = await fetchHelper(
                 `${siteOrigin}/_api/v2.1/drives/${driveId}/items/${itemId}/${path}?${queryParams}`,
                 { method, headers },
             );
+
+            joinSessionEvent.end({
+                sprequestguid: response.headers.get("sprequestguid"),
+                sprequestduration: response.headers.get("sprequestduration"),
+            });
+            return response.content;
         } catch (error) {
             joinSessionEvent.cancel({}, error);
             throw error;
         }
-        joinSessionEvent.end({
-            sprequestguid: response.headers.get("sprequestguid"),
-            sprequestduration: response.headers.get("sprequestduration"),
-        });
-        return response;
     });
 }
 
@@ -101,7 +101,7 @@ export async function getSocketStorageDiscovery(
         return cachedResult.content;
     }
 
-    const response: IOdspResponse<ISocketStorageDiscovery> = await fetchJoinSession(
+    const response: ISocketStorageDiscovery = await fetchJoinSession(
         appId,
         driveId,
         itemId,
@@ -113,13 +113,13 @@ export async function getSocketStorageDiscovery(
         getVroomToken,
     );
 
-    if (response.content.runtimeTenantId && !response.content.tenantId) {
-        response.content.tenantId = response.content.runtimeTenantId;
+    if (response.runtimeTenantId && !response.tenantId) {
+        response.tenantId = response.runtimeTenantId;
     }
     // Never expire the joinsession result. On error, the delta connection will invalidate it.
-    odspCache.put(joinSessionKey, { content: response.content, timestamp: Date.now() });
+    odspCache.put(joinSessionKey, { content: response, timestamp: Date.now() });
 
-    return response.content;
+    return response;
 }
 
 interface IOdspJoinSessionCachedItem {
