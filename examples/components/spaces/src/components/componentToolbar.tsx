@@ -10,12 +10,12 @@ import {
 import {
     IComponentHTMLVisual,
 } from "@microsoft/fluid-component-core-interfaces";
+import { ISharedDirectory } from "@microsoft/fluid-map";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { SupportedComponent } from "../dataModel";
 import { ButtonName, FacePileName, NumberName, TextBoxName } from ".";
-import { ISharedDirectory } from "@microsoft/fluid-map";
 
 const componentToolbarStyle: React.CSSProperties = { position: "absolute", top: 10, left: 10, zIndex: 1000 };
 
@@ -74,8 +74,8 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
         };
 
         props.root.on("onEditChanged", (isEditable: boolean) => {
-            this.setState({ isEditable })
-        })
+            this.setState({ isEditable });
+        });
     }
 
     public emitAddComponentEvent(type: SupportedComponent, w?: number, h?: number) {

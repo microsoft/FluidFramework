@@ -146,14 +146,14 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                     {
                         editable &&
                         <div style={buttonContainerStyle}>
-                            <button 
+                            <button
                                 onClick={() => this.props.dataModel.removeComponent(id)}
                                 onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
                                     event.stopPropagation();
                                 }}>
                                 ❌
                             </button>
-                            <button 
+                            <button
                                 onClick={() => {
                                     navigator.clipboard.writeText(componentUrl).then(() => {
                                         console.log("Async: Copying to clipboard was successful!");
@@ -166,7 +166,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                                 }}>
                                 📎
                             </button>
-                            <button 
+                            <button
                                 onClick={() => window.open(componentUrl, "_blank")}
                                 onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
                                     event.stopPropagation();
