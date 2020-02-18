@@ -23,52 +23,7 @@ import {
     pair,
     Pair,
 } from "../bspSet";
-
-/** Represents a half-open interval [a, b) */
-type Ivl<Index extends number = number> = Pair<Index>;
-
-/** A much faster version of `Math.max` specialized to two numeric arguments. */
-const fastMax = <Index extends number>(x1: Index, x2: Index): Index => x1 < x2 ? x2 : x1;
-
-/** A much faster version of `Math.min` specialized to two numeric arguments. */
-const fastMin = <Index extends number>(x1: Index, x2: Index): Index => x1 < x2 ? x1 : x2;
-
-function ivlJoin<Index extends number>(ivl1: Ivl<Index>, ivl2: Ivl<Index>): Ivl<Index> {
-    const [x1a, x1b] = ivl1;
-    const [x2a, x2b] = ivl2;
-    return [fastMin(x1a, x2a), fastMax(x1b, x2b)];
-}
-
-function ivlMeets(ivl1: Ivl, ivl2: Ivl): boolean {
-    const [x1a, x1b] = ivl1;
-    const [x2a, x2b] = ivl2;
-    return fastMax(x1a, x2a) < fastMin(x1b, x2b);
-}
-
-function ivlMeetsOrTouches(ivl1: Ivl, ivl2: Ivl): boolean {
-    const [x1a, x1b] = ivl1;
-    const [x2a, x2b] = ivl2;
-    return fastMax(x1a, x2a) <= fastMin(x1b, x2b);
-}
-
-/** computes the set difference on intervals. Precondition: they meet */
-function ivlExcept<Index extends number>(ivl1: Ivl<Index>, ivl2: Ivl<Index>): Ivl<Index> | undefined {
-    const [x1a, x1b] = ivl1;
-    const [x2a, x2b] = ivl2;
-    if (x1a < x2a && x2b >= x1b) { return [x1a, x2a]; }
-    if (x1a >= x2a && x2b < x1b) { return [x2b, x1b]; }
-    return undefined;
-}
-
-
-export function ivlCompare<Index extends number>(ivl1: Ivl<Index>, ivl2: Ivl<Index>): -1 | 0 | 1 | undefined {
-    const [x1a, x1b] = ivl1;
-    const [x2a, x2b] = ivl2;
-    if (x1a === x2a && x1b === x2b) { return 0; }
-    if (x1a >= x2a && x1b <= x2b) { return -1; }
-    if (x1a <= x2a && x1b >= x2b) { return 1; }
-    return undefined;
-}
+import { Ivl, ivlMeets, ivlCompare, ivlMeetsOrTouches, ivlJoin, ivlExcept } from "../split";
 
 /** Represents a half-open 2D rectangle [xa,xb) x [ya,yb) */
 type Rect2D = [Ivl, Ivl];
@@ -365,7 +320,8 @@ describe("BSP-set tests", () => {
             ]);
 
             for (const set of sets) {
-                assert.equal(compare(set, expected) < 0, true);
+                const cmp = compare(set, expected);
+                assert.equal(cmp !== undefined && cmp < 0, true);
             }
 
             const actual = sets.reduce(union);
@@ -399,7 +355,8 @@ describe("BSP-set tests", () => {
             ]);
 
             for (const set of sets) {
-                assert.equal(compare(set, expected) < 0, true);
+                const cmp = compare(set, expected);
+                assert.equal(cmp !== undefined && cmp < 0, true);
             }
 
             const actual = sets.reduce(union);
@@ -429,7 +386,8 @@ describe("BSP-set tests", () => {
             ]);
 
             for (const set of sets) {
-                assert.equal(compare(set, expected) > 0, true);
+                const cmp = compare(set, expected);
+                assert.equal(cmp !== undefined && cmp > 0, true);
             }
 
             const actual = sets.reduce(intersect);
