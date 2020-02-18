@@ -4,7 +4,7 @@
  */
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 
-import * as assert from "assert";
+import assert from "assert";
 
 import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import { IHostRuntime } from "@microsoft/fluid-runtime-definitions";
