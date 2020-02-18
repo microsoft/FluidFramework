@@ -132,7 +132,7 @@ export function fetchHelper(
     requestInfo: RequestInfo,
     requestInit: RequestInit | undefined,
     retryFilter: RetryFilter = defaultRetryFilter,
-): Promise<any> {
+): Promise<IOdspResponse<any>> {
     // Node-fetch and dom have conflicting typing, force them to work by casting for now
     return fetch(requestInfo as FetchRequestInfo, requestInit as FetchRequestInit).then(async (fetchResponse) => {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
@@ -152,13 +152,14 @@ export function fetchHelper(
         // succeeds on retry.
         try {
             const text = await response.text();
+            response.headers.set("body-size", text.length.toString());
             const res = {
-                headers: new Headers({ ...response.headers, "body-size": text.length }),
+                headers: response.headers,
                 content: JSON.parse(text),
             };
             return res;
         } catch (e) {
-            throwOdspNetworkError(`Error while parsing fetch response`, 400, true, response);
+            throwOdspNetworkError(`Error while parsing fetch response: ${e}`, 400, true, response);
         }
     }, (error) => {
         // While we do not know for sure whether computer is offline, this error is not actionable and
