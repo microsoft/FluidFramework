@@ -19,6 +19,8 @@ interface IDdsCollectionState {
 }
 
 export class DdsCollectionComponent extends React.Component<IDdsCollectionProps, IDdsCollectionState> {
+    protected readonly newMapTextInput = React.createRef<HTMLInputElement>();
+
     constructor(props: IDdsCollectionProps) {
         super(props);
         this.state = { maps: [] };
@@ -28,7 +30,7 @@ export class DdsCollectionComponent extends React.Component<IDdsCollectionProps,
         return <div>
             <div>
                 <span>
-                    <input type="text"></input>
+                    <input type="text" ref={this.newMapTextInput}></input>
                     <button onClick={(e) => this.addMap(e.currentTarget)}>Add Map</button>
                 </span>
             </div>
@@ -61,16 +63,16 @@ export class DdsCollectionComponent extends React.Component<IDdsCollectionProps,
     }
 
     private addMap(e: HTMLButtonElement) {
-        const newMapEl = e.previousElementSibling as HTMLInputElement;
-        const newMapName = newMapEl?.value ?? undefined;
-        if (newMapName !== undefined && newMapName.length > 0) {
-            if (this.props.mapDir.get(newMapName) === undefined) {
+        const newMapNameEl = this.newMapTextInput.current ?? undefined;
+        if (newMapNameEl !== undefined) {
+            const newMapName = newMapNameEl.value;
+            if (newMapName.length > 0 && this.props.mapDir.get(newMapName) === undefined) {
                 const newMap = this.props.mapCreate(newMapName);
                 newMap.register();
                 this.props.mapDir.set(newMapName, newMap.handle);
 
                 // clear
-                newMapEl.value = "";
+                newMapNameEl.value = "";
             }
         }
     }

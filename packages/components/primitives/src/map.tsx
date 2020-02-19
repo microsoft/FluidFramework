@@ -16,6 +16,9 @@ interface IMapState {
 }
 
 export class MapComponent extends React.Component<IMapProps, IMapState> {
+    protected readonly newEntryKeyTextInput = React.createRef<HTMLInputElement>();
+    protected readonly newEntryValueTextInput = React.createRef<HTMLInputElement>();
+
     constructor(props: IMapProps) {
         super(props);
 
@@ -45,8 +48,8 @@ export class MapComponent extends React.Component<IMapProps, IMapState> {
                 <MapEntryComponent key={key} map={this.props.map} mapKey={key}></MapEntryComponent>,
             )}
             <span>
-                <input type="text"></input>
-                <input type="text"></input>
+                <input type="text" ref={this.newEntryKeyTextInput}></input>
+                <input type="text" ref={this.newEntryValueTextInput}></input>
                 <button onClick={(e) => this.addMapKey(e.currentTarget)}>Add Entry</button>
             </span>
         </div>;
@@ -57,13 +60,12 @@ export class MapComponent extends React.Component<IMapProps, IMapState> {
     }
 
     private addMapKey(e: HTMLButtonElement) {
-        const newValueEl = e.previousElementSibling as HTMLInputElement;
-        const newKeyEl = newValueEl?.previousElementSibling as HTMLInputElement;
+        const newKeyEl = this.newEntryKeyTextInput.current ?? undefined;
+        const newValueEl = this.newEntryValueTextInput.current ?? undefined;
 
-        const keyText = newKeyEl?.value ?? undefined;
-        if (keyText !== undefined) {
-            const valueText = newValueEl?.value ?? "";
-            this.props.map.set(keyText, valueText);
+        if (newKeyEl !== undefined && newValueEl !== undefined && newKeyEl.value.length > 0) {
+            const valueText = newValueEl.value ?? "";
+            this.props.map.set(newKeyEl.value, valueText);
 
             // clear
             newKeyEl.value = "";
