@@ -66,12 +66,18 @@ async function getInternalComponent(
     if (!match) {
         return getWebComponent(url);
     }
+    const internalGateway = parse(config.get("worker:gatewayUrl"));
+    const internal = internalGateway.host === url.host;
+    console.log(`
+    internal: ${internal}
+    `);
 
     const tenantId = match[1];
+    const safeTenantId = encodeURIComponent(tenantId);
     const documentId = match[2];
     const path = match[3];
 
-    const orderer = config.get("worker:serverUrl");
+    const orderer = internal ? config.get("worker:alfredUrl") : config.get("worker:serverUrl");
 
     const user: IAlfredUser = (request.user as IJWTClaims).user;
 
@@ -80,14 +86,12 @@ async function getInternalComponent(
     const fluidUrl = `fluid://${url.host}/${tenantId}/${documentId}${path}${url.hash ? url.hash : ""}`;
 
     const deltaStorageUrl =
-        `${config.get("worker:serverUrl")}\
-        /deltas\
-        /${encodeURIComponent(tenantId)}/${encodeURIComponent(documentId)}`;
+        `${orderer}/deltas/${safeTenantId}/${encodeURIComponent(documentId)}`;
 
     const storageUrl =
-        `${config.get("worker:blobStorageUrl").replace("historian:3000", "localhost:3001")}\
-        /repos\
-        /${encodeURIComponent(tenantId)}`;
+        `${internal ?
+            config.get("worker:internalBlobStorageUrl") :
+            config.get("worker:blobStorageUrl").replace("historian:3000", "localhost:3001")}/repos/${safeTenantId}`;
 
     return {
         endpoints: {
@@ -112,6 +116,7 @@ export function create(
 
     const gateway = parse(config.get("gateway:url"));
     const alfred = parse(config.get("worker:serverUrl"));
+    const internalGateway = parse(config.get("worker:gatewayUrl"));
     const federatedEndpoints = config.get("gateway:federation:endpoints") as string[];
 
     router.post("/load", passport.authenticate("jwt", { session: false }), (request, response) => {
@@ -125,7 +130,14 @@ export function create(
             scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
         }
 
-        const resultP = (alfred.host === url.host || gateway.host === url.host)
+        console.log(`
+
+        internalGateway.host: ${internalGateway.host}
+        url.host: ${url.host}
+
+        `);
+
+        const resultP = (alfred.host === url.host || gateway.host === url.host || internalGateway.host === url.host)
             ? getInternalComponent(request, config, url, appTenants, scopes)
             : isExternalComponent(urlPrefix, federatedEndpoints)
                 ? getExternalComponent(request, `${urlPrefix}/api/v1/load`, request.body.url as string, scopes)
