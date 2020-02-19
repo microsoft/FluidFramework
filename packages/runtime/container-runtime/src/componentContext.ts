@@ -441,13 +441,6 @@ export class RemotedComponentContext extends ComponentContext {
                 throw new Error("Already attached");
             },
             pkg);
-
-        if (initSnapshotValue && typeof initSnapshotValue !== "string") {
-            // This will allow the summarizer to avoid calling realize if there
-            // are no changes to the component.  If the initSnapshotValue is a
-            // string, the summarizer cannot avoid calling realize.
-            this.summaryTracker.setBaseTree(initSnapshotValue);
-        }
     }
 
     public generateAttachMessage(): IAttachMessage {
