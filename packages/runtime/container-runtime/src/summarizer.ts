@@ -26,14 +26,28 @@ import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
 const maxSummarizeTimeoutTime = 20000; // 20 sec
 const maxSummarizeTimeoutCount = 5; // Double and resend 5 times
 
+declare module "@microsoft/fluid-component-core-interfaces" {
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IComponent extends Readonly<Partial<IProvideSummarizer>> { }
+}
+
+export interface IProvideSummarizer {
+    readonly ISummarizer: ISummarizer;
+}
+
+export interface ISummarizer extends IComponentRouter, IComponentRunnable, IComponentLoadable {
+    setSummarizer(): Promise<Summarizer>;
+}
+
 /**
  * Summarizer is responsible for coordinating when to send generate and send summaries.
  * It is the main entry point for summary work.
  */
-export class Summarizer implements IComponentRouter, IComponentRunnable, IComponentLoadable {
+export class Summarizer implements ISummarizer {
     public get IComponentRouter() { return this; }
     public get IComponentRunnable() { return this; }
     public get IComponentLoadable() { return this; }
+    public get ISummarizer() { return this; }
 
     private readonly logger: ITelemetryLogger;
     private readonly runCoordinator: RunWhileConnectedCoordinator;

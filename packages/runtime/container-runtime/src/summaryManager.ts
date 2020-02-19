@@ -9,7 +9,7 @@ import { IComponent, IComponentRunnable, IRequest } from "@microsoft/fluid-compo
 import { IContainerContext, LoaderHeader } from "@microsoft/fluid-container-definitions";
 import { ChildLogger, Heap, IComparer, IHeapNode, PerformanceEvent, PromiseTimer } from "@microsoft/fluid-core-utils";
 import { ISequencedClient } from "@microsoft/fluid-protocol-definitions";
-import { Summarizer } from "./summarizer";
+import { ISummarizer, Summarizer } from "./summarizer";
 
 interface ITrackedClient {
     clientId: string;
@@ -227,7 +227,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
                     this.state = SummaryManagerState.Off;
                 }
             } else if (this.shouldSummarize) {
-                this.setNextSummarizer((summarizer as Summarizer).setSummarizer());
+                this.setNextSummarizer(summarizer.setSummarizer());
                 this.run(summarizer);
             } else {
                 summarizer.stop(this.getStopReason());
@@ -263,7 +263,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         });
     }
 
-    private async createSummarizer(delayMs: number): Promise<IComponentRunnable | undefined> {
+    private async createSummarizer(delayMs: number): Promise<ISummarizer | undefined> {
         await Promise.all([
             this.initialDelayP,
             delayMs > 0 ? new Promise((resolve) => setTimeout(resolve, delayMs)) : Promise.resolve(),
@@ -302,14 +302,14 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         const response = await loader.request(request);
 
         if (response.status !== 200 || response.mimeType !== "fluid/component") {
-            return Promise.reject<IComponentRunnable>("Invalid summarizer route");
+            return Promise.reject<ISummarizer>("Invalid summarizer route");
         }
 
         const rawComponent = response.value as IComponent;
-        const summarizer = rawComponent.IComponentRunnable as Summarizer;
+        const summarizer = rawComponent.ISummarizer;
 
         if (!summarizer) {
-            return Promise.reject<IComponentRunnable>("Component does not implement IComponentRunnable");
+            return Promise.reject<ISummarizer>("Component does not implement ISummarizer");
         }
 
         return summarizer;
