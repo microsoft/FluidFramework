@@ -79,7 +79,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     }
 
     private get shouldSummarize() {
-        return this.connected && this.clientId === this.summarizer;
+        return this.connected && !this.disposed && this.clientId === this.summarizer;
     }
 
     constructor(
@@ -150,6 +150,8 @@ export class SummaryManager extends EventEmitter implements IDisposable {
             return "parentNotConnected";
         } else if (this.clientId !== this.summarizer) {
             return "parentShouldNotSummarize";
+        } else if (this.disposed) {
+            return "disposed";
         } else {
             return undefined;
         }
@@ -219,15 +221,13 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         const delayMs = (attempt - 1) * 20;
         this.createSummarizer(delayMs).then((summarizer) => {
             if (summarizer === undefined) {
-                if (this.disposed) {
-                    return;
-                }
                 if (this.shouldSummarize) {
                     this.start(attempt + 1);
                 } else {
                     this.state = SummaryManagerState.Off;
                 }
             } else if (this.shouldSummarize) {
+                this.setNextSummarizer((summarizer as Summarizer).setSummarizer());
                 this.run(summarizer);
             } else {
                 summarizer.stop(this.getStopReason());
@@ -269,7 +269,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
             delayMs > 0 ? new Promise((resolve) => setTimeout(resolve, delayMs)) : Promise.resolve(),
         ]);
 
-        if (this.disposed || !this.shouldSummarize) {
+        if (!this.shouldSummarize) {
             return undefined;
         }
 
@@ -311,8 +311,6 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         if (!summarizer) {
             return Promise.reject<IComponentRunnable>("Component does not implement IComponentRunnable");
         }
-
-        this.setNextSummarizer(summarizer.setSummarizer());
 
         return summarizer;
     }

@@ -598,8 +598,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.context.on("refreshBaseSummary",
             (snapshot: ISnapshotTree) => this.refreshBaseSummary(snapshot));
 
-        this.nextSummarizerP = this.context.previousRuntimeState.nextSumm;
-        this.nextSummarizerD = this.context.previousRuntimeState.nextD;
+        this.nextSummarizerP = this.context.previousRuntimeState.nextSummarizerP;
+        this.nextSummarizerD = this.context.previousRuntimeState.nextSummarizerD;
 
         // We always create the summarizer in the case that we are asked to generate summaries. But this may
         // want to be on demand instead.
