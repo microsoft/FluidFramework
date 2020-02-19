@@ -5,12 +5,13 @@
 
 import 'mocha';
 
-import { TestHost } from '@microsoft/fluid-local-test-server';
+import { TestHost } from '@microsoft/fluid-local-test-utils';
 import { Serializable } from '@microsoft/fluid-runtime-definitions';
 import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from '@microsoft/fluid-test-runtime-utils';
 import { strict as assert } from 'assert';
 import { SharedMatrix, SharedMatrixFactory } from '../src';
 import { fill, check, insertFragmented } from './utils';
+import { TestConsumer } from './testconsumer';
 
 function extract<T extends Serializable>(actual: SharedMatrix<T>): ReadonlyArray<ReadonlyArray<T>> {
     const m: T[][] = [];
@@ -51,13 +52,16 @@ describe('Matrix', () => {
         let host1: TestHost;
         let host2: TestHost;
         let matrix: SharedMatrix<number>;
+        let clone: TestConsumer<number>;
 
         async function sync() {
             await TestHost.sync(host1, host2);
         }
 
         async function expect<T extends Serializable>(expected: ReadonlyArray<ReadonlyArray<T>>) {
-            assert.deepEqual(extract(matrix), expected, 'Matrix must match expected.');
+            const actual = extract(matrix);
+            assert.deepEqual(actual, expected, 'Matrix must match expected.');
+            assert.deepEqual(clone.extract(), actual, 'Matrix must notify IMatrixConsumers of all changes.');
 
             // Ensure ops are ACKed prior to snapshot.  Otherwise, the unACKed segments won't be included.
             await sync();
@@ -76,6 +80,9 @@ describe('Matrix', () => {
                     .slice(2),
                 SharedMatrixFactory.Type
             );
+
+            clone = new TestConsumer();
+            matrix.openMatrix(clone);
         });
 
         // Note: We check the num rows/cols explicitly in these tests to differentiate between
@@ -157,6 +164,14 @@ describe('Matrix', () => {
             // in the event that the test case forgets to call/await `expect()`.)
             await sync();
             await snapshot(await snapshot(matrix));
+
+            // Ensure that IMatrixConsumer observed all changes to matrix.
+            assert.deepEqual(clone.extract(), extract(matrix));
+
+            // Sanity check that removing the consumer stops change notifications.
+            matrix.removeMatrixConsumer(clone);
+            matrix.insertCols(0, 1);
+            assert.equal(clone.numCols, matrix.numCols - 1);
         });
 
         after(async () => {

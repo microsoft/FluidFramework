@@ -240,7 +240,7 @@ export async function loadIFramedFluidContainer(
         scriptUrl = `https://pragueauspkn-3873244262.azureedge.net/@fluid-example/tiny-web-host@${packageJson.version}/dist/main.bundle.js`;
     }
 
-    // As per IComponentHTMLVisual, if the div has a size already, the render is expected to fill the space
+    // As per IComponentHTMLView, if the div has a size already, the render is expected to fill the space
     // it has been given. If not, the render should grow based on its own content.
     const divRect = div.getBoundingClientRect();
     const expandToGivenSize = divRect.height && divRect.width;

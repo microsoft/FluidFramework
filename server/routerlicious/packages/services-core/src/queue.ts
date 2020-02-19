@@ -19,9 +19,9 @@ export interface IPartition {
 }
 
 export interface IConsumer {
-    groupId: string;
+    readonly groupId: string;
 
-    topic: string;
+    readonly topic: string;
 
     /**
      * Commits consumer checkpoint offset.
@@ -31,6 +31,7 @@ export interface IConsumer {
     /**
      * Event Handler.
      */
+    on(event: "connected", listener: () => void): this;
     on(event: "data", listener: (message: IQueuedMessage) => void): this;
     on(event: "rebalancing" | "rebalanced", listener: (partitions: IPartition[]) => void): this;
     on(event: string, listener: (...args: any[]) => void): this;
@@ -74,9 +75,10 @@ export interface IProducer {
     close(): Promise<void>;
 
     /**
-     * Error event Handler.
+     * Event handlers
      */
-    once(event: "producerError", listener: (...args: any[]) => void): this;
+    on(event: "connected" | "produced" | "error", listener: (...args: any[]) => void): this;
+    once(event: "connected" | "produced" | "error", listener: (...args: any[]) => void): this;
 }
 
 export interface IPendingBoxcar {

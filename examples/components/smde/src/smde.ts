@@ -11,7 +11,7 @@ import {
     IRequest,
     IResponse,
     IComponentHTMLOptions,
-    IComponentHTMLVisual,
+    IComponentHTMLView,
     IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
@@ -32,7 +32,10 @@ import { Viewer } from "./marked";
 // eslint-disable-next-line import/no-internal-modules, import/no-unassigned-import
 import "simplemde/dist/simplemde.min.css";
 
-export class Smde extends EventEmitter implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual {
+export class Smde extends EventEmitter implements
+    IComponentLoadable,
+    IComponentRouter,
+    IComponentHTMLView {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new Smde(runtime, context);
         await collection.initialize();
@@ -42,7 +45,7 @@ export class Smde extends EventEmitter implements IComponentLoadable, IComponent
 
     public get IComponentLoadable() { return this; }
     public get IComponentRouter() { return this; }
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
 
     public url: string;
     private root: ISharedMap;

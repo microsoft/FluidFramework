@@ -9,7 +9,6 @@ import {
     IComponentRouter,
     IRequest,
     IResponse,
-    IComponentHTMLOptions,
     IComponentHTMLVisual,
     IComponent,
     IComponentHTMLView,
@@ -25,7 +24,10 @@ import { initializeIcons } from "@uifabric/icons";
 import * as semver from "semver";
 import { DrawerView } from "./drawerView";
 
-export class Drawer extends EventEmitter implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual {
+export class Drawer extends EventEmitter implements
+    IComponentLoadable,
+    IComponentRouter,
+    IComponentHTMLVisual {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new Drawer(runtime, context);
         await collection.initialize();
@@ -119,10 +121,6 @@ export class Drawer extends EventEmitter implements IComponentLoadable, ICompone
         this.views.add(view);
 
         return view;
-    }
-
-    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
-        throw new Error("Just addView please");
     }
 }
 

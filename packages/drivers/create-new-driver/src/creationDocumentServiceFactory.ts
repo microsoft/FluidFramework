@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { parse } from "url";
 import {
     IDocumentService,
     IDocumentServiceFactory,
@@ -20,7 +21,18 @@ export class CreationDocumentServiceFactory implements IDocumentServiceFactory {
     constructor() {
     }
 
-    public async createDocumentService(url: IResolvedUrl): Promise<IDocumentService> {
-        return new CreationDocumentService("createNewFileDoc", "createNewFileDocTenant");
+    public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
+        if (resolvedUrl.type !== "fluid") {
+            // eslint-disable-next-line max-len
+            return Promise.reject("Only Fluid components currently supported in the RouterliciousDocumentServiceFactory");
+        }
+
+        const fluidResolvedUrl = resolvedUrl;
+        const parsedUrl = parse(fluidResolvedUrl.url);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const [, , documentId] = parsedUrl.pathname!.split("/");
+        return new CreationDocumentService(
+            documentId,
+            "createNewFileDocTenant");
     }
 }

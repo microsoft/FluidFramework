@@ -9,7 +9,6 @@ import {
     IComponentRouter,
     IRequest,
     IResponse,
-    IComponentHTMLOptions,
     IComponentHTMLVisual,
     IComponent,
     IComponentHTMLView,
@@ -22,7 +21,10 @@ import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { initializeIcons } from "@uifabric/icons";
 import { PersonaView } from "./personaView";
 
-export class Persona extends EventEmitter implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual {
+export class Persona extends EventEmitter implements
+    IComponentLoadable,
+    IComponentRouter,
+    IComponentHTMLVisual {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new Persona(runtime, context);
         await collection.initialize();
@@ -105,10 +107,6 @@ export class Persona extends EventEmitter implements IComponentLoadable, ICompon
         this.views.add(view);
 
         return view;
-    }
-
-    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
-        throw new Error("Just addView please");
     }
 }
 

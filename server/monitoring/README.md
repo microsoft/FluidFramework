@@ -3,18 +3,17 @@ Monitors Fluid production health via a cron job.
 
 To build locally
 ```
-docker build --build-arg NPM_TOKEN=$(echo $NPM_TOKEN) -t monitoring .
+`npm run docker:build`
 ```
 
 And to run locally
 ```
-`docker run --rm -t monitoring`
+`npm run docker:start`
 ```
-
 
 Building and pushing to Fluid registry
 ```
-docker build --build-arg NPM_TOKEN=$(echo $NPM_TOKEN) -t prague.azurecr.io/monitoring .
+docker build -t prague.azurecr.io/monitoring .
 docker push prague.azurecr.io/monitoring
 ```
 
