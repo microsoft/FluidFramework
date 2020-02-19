@@ -5,7 +5,6 @@
 
 import { PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { SharedMap } from "@microsoft/fluid-map";
-import { SharedString } from "@microsoft/fluid-sequence";
 import { PrimitivesCollection } from "./main";
 
 /**
@@ -16,6 +15,5 @@ export const PrimitivesInstantiationFactory = new PrimedComponentFactory(
     PrimitivesCollection,
     [
         SharedMap.getFactory(),
-        SharedString.getFactory(),
     ],
 );
