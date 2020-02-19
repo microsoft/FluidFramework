@@ -10,7 +10,7 @@ import { generateToken } from "@microsoft/fluid-server-services-client";
 
 /**
  * Resolves URLs by providing fake URLs which succeed with the other
- * related test classes in the local-test-server suite of implementations.
+ * related test classes.
  */
 export class TestResolver implements IUrlResolver {
     private readonly tenantId = "tenantId";

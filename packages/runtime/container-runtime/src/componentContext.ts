@@ -55,7 +55,7 @@ export interface IComponentAttributes {
 }
 
 interface ISnapshotDetails {
-    pkg: string[];
+    pkg: readonly string[];
     snapshot: ISnapshotTree;
 }
 
@@ -65,6 +65,12 @@ interface ISnapshotDetails {
 export abstract class ComponentContext extends EventEmitter implements IComponentContext {
     public get documentId(): string {
         return this._hostRuntime.id;
+    }
+
+    public get packagePath(): readonly string[] {
+        // The component must be loaded before the path is accessed.
+        assert(this.loaded);
+        return this.pkg;
     }
 
     public get parentBranch(): string {
@@ -146,6 +152,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         public readonly storage: IDocumentStorageService,
         public readonly scope: IComponent,
         public readonly attach: (componentRuntime: IComponentRuntime) => void,
+        protected pkg?: readonly string[],
     ) {
         super();
     }
@@ -384,6 +391,10 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         this.loaded = true;
         this.componentRuntime = componentRuntime;
 
+        // Freeze the package path to ensure that someone doesn't modify it when it is
+        // returned in packagePath().
+        Object.freeze(this.pkg);
+
         // And notify the pending promise it is now available
         this.componentRuntimeDeferred.resolve(this.componentRuntime);
     }
@@ -426,7 +437,7 @@ export class RemotedComponentContext extends ComponentContext {
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IComponent,
-        private readonly pkg?: string[],
+        pkg?: string[],
     ) {
         super(
             runtime,
@@ -436,7 +447,8 @@ export class RemotedComponentContext extends ComponentContext {
             scope,
             () => {
                 throw new Error("Already attached");
-            });
+            },
+            pkg);
 
         if (initSnapshotValue && typeof initSnapshotValue !== "string") {
             // This will allow the summarizer to avoid calling realize if there
@@ -464,12 +476,7 @@ export class RemotedComponentContext extends ComponentContext {
                 tree = this.initSnapshotValue;
             }
 
-            if (tree === null || tree.blobs[".component"] === undefined) {
-                this.details = {
-                    pkg: this.pkg,
-                    snapshot: tree,
-                };
-            } else {
+            if (tree !== null && tree.blobs[".component"] !== undefined) {
                 // Need to rip through snapshot and use that to populate extraBlobs
                 const { pkg, snapshotFormatVersion } =
                     await readAndParse<IComponentAttributes>(
@@ -488,11 +495,13 @@ export class RemotedComponentContext extends ComponentContext {
                 } else if (snapshotFormatVersion === currentSnapshotFormatVersion) {
                     pkgFromSnapshot = JSON.parse(pkg) as string[];
                 }
-                this.details = {
-                    pkg: pkgFromSnapshot,
-                    snapshot: tree,
-                };
+                this.pkg = pkgFromSnapshot;
             }
+
+            this.details = {
+                pkg: this.pkg,
+                snapshot: tree,
+            };
         }
 
         return this.details;
@@ -502,14 +511,14 @@ export class RemotedComponentContext extends ComponentContext {
 export class LocalComponentContext extends ComponentContext {
     constructor(
         id: string,
-        private readonly pkg: string[],
+        pkg: string[],
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IComponent,
         attachCb: (componentRuntime: IComponentRuntime) => void,
         public readonly createProps?: any,
     ) {
-        super(runtime, id, false, storage, scope, attachCb);
+        super(runtime, id, false, storage, scope, attachCb, pkg);
     }
 
     public generateAttachMessage(): IAttachMessage {
