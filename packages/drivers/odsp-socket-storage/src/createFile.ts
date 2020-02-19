@@ -6,7 +6,7 @@
 import { Deferred } from "@microsoft/fluid-core-utils";
 import { IOdspResolvedUrl } from "./contracts";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { OdspCache } from "./odspCache";
+import { IOdspCache } from "./odspCache";
 import { createOdspUrl, OdspDriverUrlResolver } from "./odspDriverUrlResolver";
 import { getWithRetryForTokenRefresh, throwOdspNetworkError } from "./odspUtils";
 
@@ -40,7 +40,7 @@ export function getKeyFromFileInfo(fileInfo: INewFileInfo): string {
 export async function createNewFluidFile(
     getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
     newFileInfoPromise: Promise<INewFileInfo> | undefined,
-    fileInfoToCreateNewResponseCache: OdspCache,
+    fileInfoToCreateNewResponseCache: IOdspCache,
 ): Promise<IOdspResolvedUrl> {
     if (!newFileInfoPromise) {
         throw new Error("Odsp driver needs to create a new file but no newFileInfo supplied");

@@ -32,7 +32,7 @@ import { fetchSnapshot } from "./fetchSnapshot";
 import { IFetchWrapper } from "./fetchWrapper";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { OdspCache } from "./odspCache";
+import { IOdspCache } from "./odspCache";
 import { getWithRetryForTokenRefresh, throwOdspNetworkError } from "./odspUtils";
 
 /* eslint-disable max-len */
@@ -76,7 +76,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         private readonly getStorageToken: (refresh: boolean, name?: string) => Promise<string | null>,
         private readonly logger: ITelemetryLogger,
         private readonly fetchFullSnapshot: boolean,
-        private readonly odspCache: OdspCache,
+        private readonly odspCache: IOdspCache,
         private readonly isFirstTimeDocumentOpened: boolean,
     ) {
         this.queryString = getQueryString(queryParams);

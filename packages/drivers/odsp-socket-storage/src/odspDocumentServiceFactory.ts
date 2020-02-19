@@ -23,6 +23,7 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
     public readonly protocolName = "fluid-odsp:";
 
     private readonly documentsOpened = new Set<string>();
+    private readonly fileInfoToCreateNewResponseCache = new OdspCache();
 
     /**
    * @param appId - app id used for telemetry for network requests.
@@ -44,7 +45,6 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
         private readonly storageFetchWrapper: IFetchWrapper = new FetchWrapper(),
         private readonly deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),
         private readonly odspCache: OdspCache = new OdspCache(),
-        private readonly fileInfoToCreateNewResponseCache = new OdspCache(),
     ) { }
 
     public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {

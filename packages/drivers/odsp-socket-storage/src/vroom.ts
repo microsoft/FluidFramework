@@ -6,7 +6,7 @@
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { PerformanceEvent } from "@microsoft/fluid-core-utils";
 import { ISocketStorageDiscovery } from "./contracts";
-import { OdspCache } from "./odspCache";
+import { IOdspCache } from "./odspCache";
 import { fetchHelper, getWithRetryForTokenRefresh, throwOdspNetworkError } from "./odspUtils";
 
 const getOrigin = (url: string) => new URL(url).origin;
@@ -87,7 +87,7 @@ export async function getSocketStorageDiscovery(
     siteUrl: string,
     logger: ITelemetryLogger,
     getVroomToken: (refresh: boolean, name?: string) => Promise<string | undefined | null>,
-    odspCache: OdspCache,
+    odspCache: IOdspCache,
     joinSessionKey: string,
 ): Promise<ISocketStorageDiscovery> {
     // We invalidate the cache here because we will take the decision to put the joinsession result
@@ -95,7 +95,8 @@ export async function getSocketStorageDiscovery(
     // an hour we put the same result again with updated time so that we keep using the same result for
     // consecutive join session calls because the server moved. If there is nothing in cache or the
     // response was cached an hour ago, then we make the join session call again.
-    const cachedResult: IOdspJoinSessionCachedItem = odspCache.get(joinSessionKey, true);
+    const cachedResult: IOdspJoinSessionCachedItem = odspCache.get(joinSessionKey);
+    odspCache.remove(joinSessionKey);
     if (cachedResult && Date.now() - cachedResult.timestamp <= 3600000 && cachedResult.content) {
         odspCache.put(joinSessionKey, { content: cachedResult.content, timestamp: Date.now() });
         return cachedResult.content;

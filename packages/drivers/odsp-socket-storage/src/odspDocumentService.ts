@@ -22,7 +22,7 @@ import { IOdspResolvedUrl, ISocketStorageDiscovery } from "./contracts";
 import { createNewFluidFile } from "./createFile";
 import { debug } from "./debug";
 import { IFetchWrapper } from "./fetchWrapper";
-import { OdspCache } from "./odspCache";
+import { IOdspCache } from "./odspCache";
 import { OdspDeltaStorageService } from "./odspDeltaStorageService";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
 import { OdspDocumentStorageManager } from "./odspDocumentStorageManager";
@@ -66,9 +66,9 @@ export class OdspDocumentService implements IDocumentService {
         storageFetchWrapper: IFetchWrapper,
         deltasFetchWrapper: IFetchWrapper,
         socketIOClientP: Promise<SocketIOClientStatic>,
-        odspCache: OdspCache,
+        odspCache: IOdspCache,
         isFirstTimeDocumentOpened = true,
-        fileInfoToCreateNewResponseCache = new OdspCache(),
+        fileInfoToCreateNewResponseCache: IOdspCache,
     ): Promise<IDocumentService> {
         let odspResolvedUrl: IOdspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
         if (odspResolvedUrl.openMode === OpenMode.CreateNew && odspResolvedUrl.newFileInfoPromise) {
@@ -137,7 +137,7 @@ export class OdspDocumentService implements IDocumentService {
         private readonly storageFetchWrapper: IFetchWrapper,
         private readonly deltasFetchWrapper: IFetchWrapper,
         private readonly socketIOClientP: Promise<SocketIOClientStatic>,
-        private readonly odspCache: OdspCache,
+        private readonly odspCache: IOdspCache,
         private readonly isFirstTimeDocumentOpened = true,
     ) {
 

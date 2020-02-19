@@ -5,18 +5,21 @@
 
 import * as assert from "assert";
 
-export class OdspCache {
+export interface IOdspCache {
+    get(key: string): any;
+    remove(key: string);
+    put(key: string, value: any, expiryTime?: number);
+}
+
+export class OdspCache implements IOdspCache {
     private readonly odspCache: Map<string, any>;
 
     constructor() {
         this.odspCache = new Map<string, any>();
     }
 
-    public get(key: string, removeKey: boolean = false) {
+    public get(key: string) {
         const val = this.odspCache.get(key);
-        if (removeKey && val) {
-            this.odspCache.delete(key);
-        }
         return val;
     }
 
