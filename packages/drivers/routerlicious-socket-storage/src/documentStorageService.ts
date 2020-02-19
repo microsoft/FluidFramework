@@ -211,7 +211,7 @@ export class DocumentStorageService implements IDocumentStorageService {
         handlePath: string,
         fullSnapshot: ISnapshotTree,
     ): string {
-        const path = handlePath.split("/");
+        const path = handlePath.split("/").map((part) => decodeURIComponent(part));
         if (path[0] === "") {
             // root of tree should be unnamed
             path.shift();
