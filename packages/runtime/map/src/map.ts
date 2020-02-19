@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
 import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import { addBlobToTree } from "@microsoft/fluid-protocol-base";
 import {
