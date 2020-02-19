@@ -185,6 +185,7 @@ export class DocumentStorageService implements IDocumentStorageService {
         key: string,
         object: SummaryObject,
         snapshot: ISnapshotTree | undefined,
+        currentPath = "",
     ): Promise<string> {
         switch (object.type) {
             case SummaryType.Blob: {
@@ -194,12 +195,7 @@ export class DocumentStorageService implements IDocumentStorageService {
                 if (snapshot === undefined) {
                     throw Error("Parent summary does not exist to reference by handle.");
                 }
-                const path = object.handle.split("/");
-                if (path[0] === "") {
-                    // root of tree should be unnamed
-                    path.shift();
-                }
-                return this.getIdFromPath(object.handleType, path, snapshot);
+                return this.getIdFromPath(object.handleType, object.handle, snapshot);
             }
             case SummaryType.Tree: {
                 return this.writeSummaryTree(object, snapshot?.trees[key]);
@@ -210,7 +206,25 @@ export class DocumentStorageService implements IDocumentStorageService {
         }
     }
 
-    private getIdFromPath(handleType: SummaryType, path: string[], snapshot: ISnapshotTree): string {
+    private getIdFromPath(
+        handleType: SummaryType,
+        handlePath: string,
+        fullSnapshot: ISnapshotTree,
+    ): string {
+        const path = handlePath.split("/");
+        if (path[0] === "") {
+            // root of tree should be unnamed
+            path.shift();
+        }
+
+        return this.getIdFromPathCore(handleType, path, fullSnapshot);
+    }
+
+    private getIdFromPathCore(
+        handleType: SummaryType,
+        path: string[],
+        snapshot: ISnapshotTree,
+    ): string {
         const key = path[0];
         if (path.length === 1) {
             switch (handleType) {
@@ -232,11 +246,7 @@ export class DocumentStorageService implements IDocumentStorageService {
                     throw Error(`Unexpected handle summary object type: "${handleType}".`);
             }
         }
-        const subtree = snapshot.trees[key];
-        if (!subtree) {
-            throw Error("Parent summary does not have handle for specified path.");
-        }
-        return this.getIdFromPath(handleType, path.slice(1), subtree);
+        return this.getIdFromPathCore(handleType, path.slice(1), snapshot);
     }
 
     private async writeSummaryBlob(content: string | Buffer): Promise<string> {
