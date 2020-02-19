@@ -121,7 +121,6 @@ export interface IFluidCodeDetails {
 
 export interface IRuntimeState {
     snapshot?: ITree,
-    snapshotTree?: ISnapshotTree,
     [key: string]: any;
 }
 

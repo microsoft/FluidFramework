@@ -461,7 +461,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             sequenceNumber: this._deltaManager.referenceSequenceNumber,
         };
 
-        await this.loadContext(attributes, storage, { ...previousContextState, snapshotTree: snapshot });
+        await this.loadContext(attributes, storage, snapshot, previousContextState);
 
         this.deltaManager.inbound.systemResume();
         this.deltaManager.inboundSignal.systemResume();
@@ -646,7 +646,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // instantiateRuntime which will want to know existing state.  Wait for these promises to finish.
         [this.blobManager, this.protocolHandler] = await Promise.all([blobManagerP, protocolHandlerP, loadDetailsP]);
 
-        await this.loadContext(attributes, this.storageService, { snapshotTree: maybeSnapshotTree });
+        await this.loadContext(attributes, this.storageService, maybeSnapshotTree);
 
         this.context!.changeConnectionState(this.connectionState, this.clientId!, this._version);
 
@@ -1104,7 +1104,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private async loadContext(
         attributes: IDocumentAttributes,
         storage: IDocumentStorageService,
-        previousRuntimeState: IRuntimeState,
+        snapshot?: ISnapshotTree,
+        previousRuntimeState: IRuntimeState = {},
     ) {
         this.pkg = this.getCodeDetailsFromQuorum();
         const chaincode = this.pkg ? await this.loadRuntimeFactory(this.pkg) : new NullChaincode();
@@ -1118,6 +1119,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.scope,
             this.codeLoader,
             chaincode,
+            snapshot ?? null,
             attributes,
             this.blobManager,
             new DeltaManagerProxy(this._deltaManager),
