@@ -22,7 +22,6 @@ export class DdsCollectionComponent extends React.Component<IDdsCollectionProps,
     constructor(props: IDdsCollectionProps) {
         super(props);
         this.state = { maps: [] };
-        this.props.listenValueChanged(() => this.getMaps());
     }
 
     public render() {
@@ -35,6 +34,11 @@ export class DdsCollectionComponent extends React.Component<IDdsCollectionProps,
             </div>
             {this.state.maps.map((map) => <MapComponent key={map.name} name={map.name} map={map.map}></MapComponent>)}
         </div>;
+    }
+
+    componentDidMount() {
+        this.getMaps();
+        this.props.listenValueChanged(() => this.getMaps());
     }
 
     private getMaps(): void {

@@ -96,7 +96,7 @@ export class MapEntryComponent extends React.Component<IMapEntryProps, IMapEntry
         return <div>
             <span>
                 <span>{this.props.mapKey}</span>
-                <input type="text" onInput={(e) => this.changeValue(e.currentTarget)} value={this.state.mapValue}>
+                <input type="text" onChange={(e) => this.changeValue(e.currentTarget)} value={this.state.mapValue}>
                 </input>
                 <button onClick={() => this.removeEntry()}>Remove Entry</button>
             </span>
