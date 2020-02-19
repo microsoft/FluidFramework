@@ -8,11 +8,10 @@ import * as api from "@fluid-internal/client-api";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import {
     DocumentDeltaEventManager,
-    ITestDeltaConnectionServer,
-    TestDeltaConnectionServer,
     TestDocumentServiceFactory,
     TestResolver,
-} from "@microsoft/fluid-local-test-server";
+} from "@microsoft/fluid-local-driver";
+import { ITestDeltaConnectionServer, TestDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { MessageType } from "@microsoft/fluid-protocol-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 
