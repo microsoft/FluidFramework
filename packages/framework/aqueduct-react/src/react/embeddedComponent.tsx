@@ -13,16 +13,21 @@ export interface IEmbeddedComponentProps {
 }
 
 /**
- * Will render a component via react if the component supports IComponentReactViewable
- * or standard HTML if the component supports IComponentHTMLView
+ * Abstracts rendering of components as a React component.  Supports React elements, as well as
+ * components that implement IComponentReactViewable, IComponentHTMLView, or IComponentHTMLVisual.
  *
- * If the component supports neither interface we render an empty <span />
+ * If the component is none of these, we render an empty <span />
  */
 export class EmbeddedComponent extends React.Component<IEmbeddedComponentProps> {
     private readonly element: JSX.Element;
 
     constructor(props: IEmbeddedComponentProps) {
         super(props);
+
+        if (React.isValidElement(this.props.component)) {
+            this.element = this.props.component;
+            return;
+        }
 
         const reactViewable = this.props.component.IComponentReactViewable;
         if (reactViewable) {
