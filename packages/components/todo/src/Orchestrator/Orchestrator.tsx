@@ -4,11 +4,13 @@
  */
 
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
-import { IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
-import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IComponentHTMLView, IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { RequestParser } from "@microsoft/fluid-container-runtime";
+import { IComponentRuntime, IHostRuntime } from "@microsoft/fluid-runtime-definitions";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { Todo, TodoName, TodoView } from "../Todo";
+import { TodoItemView } from "../TodoItem";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../../package.json");
@@ -54,4 +56,17 @@ export class Orchestrator extends PrimedComponent implements IComponentHTMLView 
     }
 
     // End IComponentHTMLView
+}
+
+export async function viewRequestHandler(request: IRequest, runtime: IHostRuntime) {
+    const requestParser = new RequestParser(request);
+    const pathParts = requestParser.pathParts;
+
+    if (pathParts[0] === "TodoView") {
+        const modelRequest = requestParser.createSubRequest(1);
+        return TodoView.request(modelRequest, runtime);
+    } else if (pathParts[0] === "TodoItemView") {
+        const modelRequest = requestParser.createSubRequest(1);
+        return TodoItemView.request(modelRequest, runtime);
+    }
 }
