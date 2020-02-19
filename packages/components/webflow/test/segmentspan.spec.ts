@@ -4,7 +4,7 @@
  */
 
 import { TextSegment } from "@microsoft/fluid-merge-tree";
-import { TestHost } from "@microsoft/fluid-local-test-server";
+import { TestHost } from "@microsoft/fluid-local-test-utils";
 import * as assert from "assert";
 import "mocha";
 import { FlowDocument, flowDocumentFactory, SegmentSpan } from "../src/document";

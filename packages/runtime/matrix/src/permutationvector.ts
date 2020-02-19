@@ -15,6 +15,10 @@ import {
     createGroupOp,
     LocalReferenceCollection,
     Client,
+    IMergeTreeDeltaOpArgs,
+    IMergeTreeDeltaCallbackArgs,
+    MergeTreeDeltaType,
+    IMergeTreeSegmentDelta,
 } from "@microsoft/fluid-merge-tree";
 import { HandleTable } from "./handletable";
 import { SnapshotPath } from "./matrix";
@@ -86,7 +90,12 @@ export class PermutationVector extends Client {
     private cacheEnd = 0;
     private cacheHandle = 0;
 
-    constructor(path: SnapshotPath, logger: ITelemetryBaseLogger, runtime: IComponentRuntime) {
+    constructor(
+        path: SnapshotPath,
+        logger: ITelemetryBaseLogger,
+        runtime: IComponentRuntime,
+        private readonly deltaCallback: (position: number, numRemoved: number, numInserted: number) => void,
+    ) {
         super(
             PermutationSegment.fromJSONObject,
             ChildLogger.create(logger, `Matrix.${path}.MergeTreeClient`), {
@@ -99,7 +108,7 @@ export class PermutationVector extends Client {
     }
 
     public insert(start: number, length: number) {
-    // Allocate the number of requested handles and sort them to encourage contiguous runs.
+        // Allocate the number of requested handles and sort them to encourage contiguous runs.
         const handles = this.handleTable.allocateMany(length).sort();
 
         // For each contiguous run of handles, insert a PermunationSegment.
@@ -146,7 +155,46 @@ export class PermutationVector extends Client {
         return segment.start + offset;
     }
 
-    private readonly onDelta = () => {
+    private readonly onDelta = (
+        opArgs: IMergeTreeDeltaOpArgs,
+        { operation, deltaSegments }: IMergeTreeDeltaCallbackArgs,
+    ) => {
         this.cacheEnd = 0;
+
+        switch (operation) {
+            case MergeTreeDeltaType.INSERT:
+                this.enumerateDeltaRanges(deltaSegments, (position, length) => {
+                    this.deltaCallback(position, /* numRemoved: */ 0, /* numInserted: */ length);
+                });
+                break;
+            case MergeTreeDeltaType.REMOVE:
+                this.enumerateDeltaRanges(deltaSegments, (position, length) => {
+                    this.deltaCallback(position, /* numRemoved: */ length, /* numInsert: */ 0);
+                });
+                break;
+            default:
+                assert.fail();
+        }
     };
+
+    private enumerateDeltaRanges(deltas: IMergeTreeSegmentDelta[], callback: (position, length) => void) {
+        const segment0 = deltas[0].segment;
+        let rangeStart = this.getPosition(segment0);
+        let rangeLength = segment0.cachedLength;
+
+        for (let i = 1; i < deltas.length; i++) {
+            const segment = deltas[i].segment;
+            const segStart = this.getPosition(segment);
+
+            if (segStart === rangeLength) {
+                rangeLength += segment.cachedLength;
+            } else {
+                callback(rangeStart, rangeLength);
+                rangeStart = segStart;
+                rangeLength = segment.cachedLength;
+            }
+        }
+
+        callback(rangeStart, rangeLength);
+    }
 }

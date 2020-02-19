@@ -5,7 +5,7 @@
 
 import { randomId, TagName } from "@fluid-example/flow-util-lib";
 import { Marker, ReferenceType } from "@microsoft/fluid-merge-tree";
-import { TestHost } from "@microsoft/fluid-local-test-server";
+import { TestHost } from "@microsoft/fluid-local-test-utils";
 import * as assert from "assert";
 import "mocha";
 import { FlowDocument, flowDocumentFactory } from "../src/document";

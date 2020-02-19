@@ -27,9 +27,8 @@ export class EventHubConsumer implements IConsumer {
     constructor(
         endpoint: string,
         clientId: string,
-        public groupId: string,
-        public topic: string,
-        autoCommit: boolean,
+        public readonly groupId: string,
+        public readonly topic: string,
         storageEndpoint: string,
         storageContainerName: string,
         additionalOptions?: FromTokenProviderOptions,
@@ -46,15 +45,11 @@ export class EventHubConsumer implements IConsumer {
                 ...additionalOptions,
             });
 
-        const startP = this.eventHost.start(
+        this.eventHost.start(
             (context, data) => this.handleMessage(context, data),
-            (error) => this.error(error));
-
-        startP.catch((error) => {
-            debug("Error starting event hub");
-            debug(JSON.stringify(error));
-            this.error(error);
-        });
+            (error) => this.handleError(error))
+            .then(() => this.events.emit("connected"),
+                (error) => this.handleError(error));
     }
 
     public async commitCheckpoint(partitionId: number, queuedMessage: IQueuedMessage): Promise<void> {
@@ -147,7 +142,7 @@ export class EventHubConsumer implements IConsumer {
         this.events.emit("data", eventHubMessage);
     }
 
-    private error(error) {
+    private handleError(error) {
         this.events.emit("error", error);
     }
 }

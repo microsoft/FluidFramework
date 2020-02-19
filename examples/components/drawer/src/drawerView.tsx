@@ -31,6 +31,8 @@ export class DrawerView implements IComponentHTMLView {
     private packages: { pkg: string; name: string; version: string; icon: string }[] = [];
     private elm: HTMLElement;
 
+    public get IComponentHTMLView() { return this; }
+
     constructor(
         private readonly documentsFactory: IDocumentFactory,
         private readonly documentsMap: ISharedMap,

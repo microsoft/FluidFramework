@@ -4,7 +4,10 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { IComponentHandle, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import {
+    IComponentHandle,
+    IComponentHTMLView,
+} from "@microsoft/fluid-component-core-interfaces";
 import { Counter, CounterValueType, ISharedDirectory, ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -16,9 +19,8 @@ export const ClickerName = `${pkg.name as string}-clicker`;
 /**
  * Basic Clicker example using new interfaces and stock component classes.
  */
-export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
-
-    public get IComponentHTMLVisual() { return this; }
+export class Clicker extends PrimedComponent implements IComponentHTMLView {
+    public get IComponentHTMLView() { return this; }
 
     private storedMap: ISharedMap | undefined;
     private counter: Counter | undefined;
@@ -45,7 +47,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
         this.storedMap = await this.root.get<IComponentHandle>("storedMap").get<ISharedMap>();
     }
 
-    // start IComponentHTMLVisual
+    // start IComponentHTMLView
 
     public render(div: HTMLElement) {
         if (!this.storedMap || !this.counter) {
@@ -59,7 +61,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
         );
     }
 
-    // end IComponentHTMLVisual
+    // end IComponentHTMLView
 
     // ----- COMPONENT SETUP STUFF -----
 

@@ -51,6 +51,8 @@ class CodemirrorView implements IComponentHTMLView {
 
     private sequenceDeltaCb: any;
 
+    public get IComponentHTMLView() { return this; }
+
     constructor(private readonly text: SharedString, private readonly runtime: IComponentRuntime) {
     }
 
@@ -211,8 +213,6 @@ export class CodeMirrorComponent
     private text: SharedString;
     private root: ISharedMap;
 
-    private defaultView: CodemirrorView;
-
     constructor(
         private readonly runtime: IComponentRuntime,
         /* Private */ context: IComponentContext,
@@ -250,14 +250,6 @@ export class CodeMirrorComponent
 
     public addView(scope: IComponent): IComponentHTMLView {
         return new CodemirrorView(this.text, this.runtime);
-    }
-
-    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
-        if (!this.defaultView) {
-            this.defaultView = new CodemirrorView(this.text, this.runtime);
-        }
-
-        this.defaultView.render(elm, options);
     }
 }
 
