@@ -49,7 +49,11 @@ export class ComponentToolbar extends PrimedComponent implements IComponentHTMLV
      */
     public render(div: HTMLElement) {
         ReactDOM.render(
-            <ComponentToolbarView emit={this.emit.bind(this)} root={this.root} />,
+            <ComponentToolbarView
+                emit={this.emit.bind(this)}
+                addListener={this.addListener.bind(this)}
+                root={this.root}
+            />,
             div,
         );
     }
@@ -58,7 +62,8 @@ export class ComponentToolbar extends PrimedComponent implements IComponentHTMLV
 
 interface IComponentToolbarViewProps {
     emit: (event: string | symbol, ...args: any[]) => boolean;
-    root: ISharedDirectory
+    addListener: (event: string | symbol, listener: (...args: any[]) => void) => ComponentToolbar;
+    root: ISharedDirectory;
 }
 
 interface IComponentToolbarViewState {
@@ -72,8 +77,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
         this.state = {
             isEditable: props.root.get("isEditable"),
         };
-
-        props.root.on("onEditChanged", (isEditable: boolean) => {
+        props.addListener("onEditChanged", (isEditable: boolean) => {
             this.setState({ isEditable });
         });
     }
