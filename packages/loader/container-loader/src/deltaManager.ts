@@ -16,6 +16,7 @@ import { PerformanceEvent } from "@microsoft/fluid-core-utils";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
+    IError,
     IThrottlingError,
     ErrorType,
 } from "@microsoft/fluid-driver-definitions";
@@ -124,20 +125,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     private messageBuffer: IDocumentMessage[] = [];
 
-    private pongCount: number = 0;
-    private socketLatency = 0;
-
     private connectFirstConnection = true;
 
     private deltaStorageDelay: number | undefined;
     private deltaStreamDelay: number | undefined;
-
-    // Collab window tracking. This is timestamp of %1000 message.
-    private opSendTimeForLatencyStatisticsForMsnStatistics: number | undefined;
-
-    // To track round trip time for every %1000 client message.
-    private opSendTimeForLatencyStatistics: number | undefined;
-    private clientSequenceNumberForLatencyStatistics: number | undefined;
 
     public get inbound(): IDeltaQueue<ISequencedDocumentMessage> {
         return this._inbound;
@@ -244,6 +235,20 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this._outbound.pause();
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this._inboundSignal.pause();
+    }
+
+    on(event: "error", listener: (error: IError) => void);
+    on(event: "prepareSend", listener: (messageBuffer: any[]) => void);
+    on(event: "submitOp", listener: (message: IDocumentMessage) => void);
+    on(event: "beforeOpProcessing", listener: (message: ISequencedDocumentMessage) => void);
+    on(event: "allSentOpsAckd" | "caughtUp", listener: () => void);
+    on(event: "closed", listener: (error?: IError) => void);
+    on(event: "pong" | "processTime", listener: (latency: number) => void);
+    on(event: "connect", listener: (details: IConnectionDetails) => void);
+    on(event: "disconnect", listener: (reason: string) => void);
+
+    public on(event: string | symbol, listener: (...args: any[]) => void): this {
+        return super.on(event, listener);
     }
 
     public dispose() {
@@ -395,7 +400,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             connectCore().then((connection) => {
                 cleanupConnectionAttempt();
                 resolve(connection.details);
-            }).catch(cleanupAndReject);
+            }).catch((cleanupAndReject));
         });
 
         return this.connectionP;
@@ -434,12 +439,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             traces,
             type,
         };
-
-        // start with first client op and measure latency every 500 client ops
-        if (this.clientSequenceNumberForLatencyStatistics === undefined && message.clientSequenceNumber % 500 === 1) {
-            this.opSendTimeForLatencyStatistics = Date.now();
-            this.clientSequenceNumberForLatencyStatistics = message.clientSequenceNumber;
-        }
 
         const outbound = this.createOutboundMessage(type, message);
         this.stopSequenceNumberUpdate();
@@ -610,9 +609,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
         this.closed = true;
 
+        const iError = error && createIError(error, true);
         // Note: "disconnect" & "nack" do not have error object
         if (raiseContainerError && error !== undefined) {
-            this.emit("error", createIError(error, true));
+            this.emit("error", iError);
         }
 
         this.logger.sendTelemetryEvent({ eventName: "ContainerClose" }, error);
@@ -636,20 +636,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // Drop pending messages - this will ensure catchUp() does not go into infinite loop
         this.pending = [];
 
-        this.emit("closed");
+        this.emit("closed", iError);
 
         this.removeAllListeners();
-    }
-
-    private recordPingTime(latency: number) {
-        this.pongCount++;
-        this.socketLatency += latency;
-        const aggregateCount = 100;
-        if (this.pongCount === aggregateCount) {
-            this.logger.sendTelemetryEvent({ eventName: "DeltaLatency", value: this.socketLatency / aggregateCount });
-            this.pongCount = 0;
-            this.socketLatency = 0;
-        }
     }
 
     // Specific system level message attributes are need to be looked at by the server.
@@ -715,7 +704,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         this.clientSequenceNumber = 0;
         this.clientSequenceNumberObserved = 0;
-        this.clientSequenceNumberForLatencyStatistics = undefined;
 
         connection.on("op", (documentId: string, messages: ISequencedDocumentMessage[]) => {
             if (messages instanceof Array) {
@@ -774,7 +762,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         });
 
         connection.on("pong", (latency: number) => {
-            this.recordPingTime(latency);
             this.emit("pong", latency);
         });
 
@@ -990,31 +977,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         assert.equal(message.sequenceNumber, this.baseSequenceNumber + 1);
         this.baseSequenceNumber = message.sequenceNumber;
 
-        // Record collab window max size after every 1000th op.
-        if (message.sequenceNumber % 1000 === 0) {
-            if (this.opSendTimeForLatencyStatisticsForMsnStatistics !== undefined)
-            {
-                this.logger.sendTelemetryEvent({
-                    eventName: "MsnStatistics",
-                    sequenceNumber: message.sequenceNumber,
-                    msnDistance: this.baseSequenceNumber - this.minSequenceNumber,
-                    timeDelta: message.timestamp - this.opSendTimeForLatencyStatisticsForMsnStatistics,
-                });
-            }
-            this.opSendTimeForLatencyStatisticsForMsnStatistics = message.timestamp;
-        }
-
-        if (this.connection && this.connection.details.clientId === message.clientId &&
-                this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber) {
-            assert(this.opSendTimeForLatencyStatistics);
-            this.logger.sendTelemetryEvent({
-                eventName: "OpRoundtripTime",
-                seqNumber: message.sequenceNumber,
-                clientSequenceNumber: message.clientSequenceNumber,
-                value: Date.now() - this.opSendTimeForLatencyStatistics!,
-            });
-            this.clientSequenceNumberForLatencyStatistics = undefined;
-        }
+        this.emit("beforeOpProcessing", message);
 
         const result = this.handler!.process(message);
         this.scheduleSequenceNumberUpdate(message, result.immediateNoOp === true);

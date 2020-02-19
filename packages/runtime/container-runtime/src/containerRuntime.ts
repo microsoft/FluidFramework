@@ -85,6 +85,7 @@ import { SummaryManager } from "./summaryManager";
 import { ISummaryStats, SummaryTreeConverter } from "./summaryTreeConverter";
 import { analyzeTasks } from "./taskAnalyzer";
 import { DeltaScheduler } from "./deltaScheduler";
+import { ReportConnectionTelemetry } from "./connectionTelemetry";
 
 interface ISummaryTreeWithStats {
     summaryStats: ISummaryStats;
@@ -619,7 +620,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         }
 
         this.latestSummaryAck = { referenceSequenceNumber: this.deltaManager.initialSequenceNumber };
+
+        ReportConnectionTelemetry(this.deltaManager, this.logger);
     }
+
     public get IComponentTokenProvider() {
 
         if (this.options && this.options.intelligence) {
