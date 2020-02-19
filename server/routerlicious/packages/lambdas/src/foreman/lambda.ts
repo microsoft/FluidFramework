@@ -64,11 +64,6 @@ export class ForemanLambda extends SequencedLambda {
                         sequencedMessage.documentId,
                         helpContent);
                 } else if (sequencedMessage.operation.type === MessageType.Summarize) {
-                    console.log(`
-                    
-                    Foreman - Summary
-                    
-                    `);
                     await this.trackDocument(
                         sequencedMessage.operation.clientId,
                         sequencedMessage.tenantId,
@@ -103,11 +98,6 @@ export class ForemanLambda extends SequencedLambda {
                     tenantId,
                     token: generateToken(tenantId, docId, key, scopes),
                 };
-                console.log(`
-                
-                Sent Task!
-                
-                `);
                 this.messageSender.sendTask(
                     queueName,
                     {

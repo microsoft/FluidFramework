@@ -68,9 +68,6 @@ async function getInternalComponent(
     }
     const internalGateway = parse(config.get("worker:gatewayUrl"));
     const internal = internalGateway.host === url.host;
-    console.log(`
-    internal: ${internal}
-    `);
 
     const tenantId = match[1];
     const safeTenantId = encodeURIComponent(tenantId);
@@ -129,13 +126,6 @@ export function create(
         } else {
             scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
         }
-
-        console.log(`
-
-        internalGateway.host: ${internalGateway.host}
-        url.host: ${url.host}
-
-        `);
 
         const resultP = (alfred.host === url.host || gateway.host === url.host || internalGateway.host === url.host)
             ? getInternalComponent(request, config, url, appTenants, scopes)
