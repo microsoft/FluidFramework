@@ -76,7 +76,11 @@ export class MockDeltaConnectionFactory {
 
     public processAllMessages() {
         while (this.messages.length > 0) {
-            const msg = this.messages.shift();
+            let msg = this.messages.shift();
+
+            // Explicitly JSON clone the value to match the behavior of going thru the wire.
+            msg = JSON.parse(JSON.stringify(msg));
+
             this.minSeq.set(msg.clientId, msg.referenceSequenceNumber);
             msg.sequenceNumber = ++this.sequenceNumber;
             msg.minimumSequenceNumber = this.getMinSeq();

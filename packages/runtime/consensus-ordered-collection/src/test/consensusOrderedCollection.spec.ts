@@ -4,100 +4,176 @@
  */
 
 import * as assert from "assert";
-import { MockRuntime } from "@microsoft/fluid-test-runtime-utils";
-import { ConsensusQueueFactory, ConsensusStackFactory } from "../consensusOrderedCollectionFactory";
-import { IConsensusOrderedCollection, IConsensusOrderedCollectionFactory } from "../interfaces";
+import { ConnectionState } from "@microsoft/fluid-protocol-definitions";
+import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
+import { ConsensusQueueFactory } from "../consensusOrderedCollectionFactory";
+import { IConsensusOrderedCollection } from "../interfaces";
 
 describe("Routerlicious", () => {
-    describe("Api", () => {
-        // tslint:disable:mocha-no-side-effect-code
-        function generate(
-            name: string,
-            factory: IConsensusOrderedCollectionFactory,
-            input: any[],
-            output: any[]) {
+    const runtime = new MockRuntime();
+    const factory = new ConsensusQueueFactory();
 
-            describe(name, () => {
-                let testCollection: IConsensusOrderedCollection;
+    // tslint:disable:mocha-no-side-effect-code
+    function generate(
+        input: any[],
+        output: any[],
+        creator: () => IConsensusOrderedCollection,
+        processMessages: () => void) {
 
-                beforeEach(async () => {
-                    testCollection = factory.create(new MockRuntime(), "consensus-ordered-collection");
-                });
+        let testCollection: IConsensusOrderedCollection;
 
-                it("Can create a collection", () => {
-                    assert.ok(testCollection);
-                });
-
-                it("Can add and remove data", async () => {
-                    assert.strictEqual(await testCollection.remove(), undefined);
-                    await testCollection.add("testValue");
-                    assert.strictEqual(await testCollection.remove(), "testValue");
-                });
-
-                it("Can wait for data", async () => {
-                    let added = false;
-                    const p = testCollection.waitAndRemove();
-                    p.then((value) => {
-                        assert(added, "Wait resolved before value is added");
-                    })
-                        .catch((reason) => {
-                            assert(false, "Unexpected promise rejection");
-                        });
-
-                    added = true;
-                    await testCollection.add("testValue");
-                    assert.strictEqual(await p, "testValue");
-                });
-
-                it("Data ordering", async () => {
-                    for (const item of input) {
-                        await testCollection.add(item);
-                    }
-
-                    for (const item of output) {
-                        assert.strictEqual(await testCollection.remove(), item);
-                    }
-                    assert.strictEqual(await testCollection.remove(), undefined,
-                        "Remove from empty collection should undefined");
-                });
-
-                it("Event", async () => {
-                    let addCount = 0;
-                    let removeCount = 0;
-                    testCollection.on("add", (value) => {
-                        assert.strictEqual(value, input[addCount], "Added event value not matched");
-                        addCount += 1;
-                    });
-                    testCollection.on("remove", (value) => {
-                        assert.strictEqual(value, output[removeCount], "Remove event value not matched");
-                        removeCount += 1;
-                    });
-                    for (const item of input) {
-                        await testCollection.add(item);
-                    }
-                    let count = output.length;
-                    while (count > 0) {
-                        await testCollection.remove();
-                        count -= 1;
-                    }
-                    assert.strictEqual(await testCollection.remove(), undefined,
-                        "Remove from empty collection should undefined");
-
-                    assert.strictEqual(addCount, input.length, "Incorrect number add event");
-                    assert.strictEqual(removeCount, output.length, "Incorrect number remove event");
-                });
-
-                it("Object value needs to be cloned", async () => {
-                    const testCollection2: IConsensusOrderedCollection<{ x: number }> = testCollection;
-                    const obj = { x: 1 };
-                    await testCollection2.add(obj);
-                    const result = await testCollection2.remove();
-                    assert.notStrictEqual(result, obj);
-                    assert.strictEqual(result.x, 1);
-                });
-            });
+        async function removeItem() {
+            const waitP = testCollection.remove();
+            processMessages();
+            return waitP;
         }
-        generate("ConsensusQueue", new ConsensusQueueFactory(), [1, 2], [1, 2]);
-        generate("ConsensusStack", new ConsensusStackFactory(), [1, 2], [2, 1]);
+
+        async function addItem(item) {
+            const waitP = testCollection.add(item);
+            processMessages();
+            return waitP;
+        }
+
+        describe("ConsensusQueue", () => {
+            beforeEach(async () => {
+                testCollection = creator();
+            });
+
+            it("Can create a collection", () => {
+                assert.ok(testCollection);
+            });
+
+            it("Can add and remove data", async () => {
+                assert.strictEqual(await removeItem(), undefined);
+                await addItem("testValue");
+                assert.strictEqual(await removeItem(), "testValue");
+            });
+
+            it("Can wait for data", async () => {
+                let added = false;
+                const p = testCollection.waitAndRemove();
+                p.then((value) => {
+                    assert(added, "Wait resolved before value is added");
+                }).catch((reason) => {
+                    assert(false, "Unexpected promise rejection");
+                });
+
+                added = true;
+                await addItem("testValue");
+                // There are two hops here - one "add" message, another "remove" message.
+                await Promise.resolve().then(() => processMessages());
+                assert.strictEqual(await p, "testValue");
+            });
+
+            it("Data ordering", async () => {
+                for (const item of input) {
+                    await addItem(item);
+                }
+
+                for (const item of output) {
+                    assert.strictEqual(await removeItem(), item);
+                }
+                assert.strictEqual(await removeItem(), undefined,
+                    "Remove from empty collection should undefined");
+            });
+
+            it("Event", async () => {
+                let addCount = 0;
+                let removeCount = 0;
+                testCollection.on("add", (value) => {
+                    assert.strictEqual(value, input[addCount], "Added event value not matched");
+                    addCount += 1;
+                });
+                testCollection.on("remove", (value) => {
+                    assert.strictEqual(value, output[removeCount], "Remove event value not matched");
+                    removeCount += 1;
+                });
+                for (const item of input) {
+                    await addItem(item);
+                }
+
+                processMessages();
+
+                let count = output.length;
+                while (count > 0) {
+                    await removeItem();
+                    count -= 1;
+                }
+                assert.strictEqual(await removeItem(), undefined,
+                    "Remove from empty collection should undefined");
+
+                assert.strictEqual(addCount, input.length, "Incorrect number add event");
+                assert.strictEqual(removeCount, output.length, "Incorrect number remove event");
+            });
+
+            it("Object value needs to be cloned", async () => {
+                const obj = { x: 1 };
+                await addItem(obj);
+                const result = await removeItem();
+                assert.notStrictEqual(result, obj);
+                assert.strictEqual(result.x, 1);
+            });
+        });
+    }
+
+    describe("Detached", () => {
+        generate([1, 2], [1, 2], () => {
+            return factory.create(runtime, "consensus-ordered-collection");
+        },
+        () => {});
+    });
+
+    describe("Attached, connected", () => {
+        let deltaConnFactory: MockDeltaConnectionFactory;
+        let counter = 0;
+
+        generate([1, 2], [1, 2],
+            () => {
+                deltaConnFactory = new MockDeltaConnectionFactory();
+                const deltaConnection = deltaConnFactory.createDeltaConnection(runtime);
+                runtime.services = {
+                    deltaConnection,
+                    objectStorage: new MockStorage(),
+                };
+                counter++;
+                const testCollection = factory.create(runtime, `consensus-ordered-collection_${counter}`);
+                testCollection.connect(runtime.services);
+                deltaConnection.state = ConnectionState.Connected;
+                return testCollection;
+            },
+            () => {
+                deltaConnFactory.processAllMessages();
+            });
+    });
+
+    it("Disconnection flow", async () => {
+        const deltaConnFactory = new MockDeltaConnectionFactory();
+        const deltaConnection = deltaConnFactory.createDeltaConnection(runtime);
+        runtime.services = {
+            deltaConnection,
+            objectStorage: new MockStorage(),
+        };
+        const testCollection = factory.create(runtime, "consensus-ordered-collection");
+        testCollection.connect(runtime.services);
+        deltaConnection.state = ConnectionState.Connected;
+
+        const waitP = testCollection.add("sample");
+
+        // Drop connection
+        deltaConnection.state = ConnectionState.Disconnected;
+        deltaConnFactory.clearMessages();
+        deltaConnection.state = ConnectionState.Connected;
+        deltaConnFactory.processAllMessages();
+
+        await waitP;
+        const resultP = testCollection.remove();
+
+        // Drop connection one more time
+        deltaConnection.state = ConnectionState.Disconnected;
+        deltaConnFactory.clearMessages();
+        deltaConnection.state = ConnectionState.Connected;
+        deltaConnFactory.processAllMessages();
+
+        assert.strictEqual(await resultP, "sample");
     });
 });

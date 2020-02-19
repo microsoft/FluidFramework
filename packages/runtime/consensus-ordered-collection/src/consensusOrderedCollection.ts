@@ -152,6 +152,13 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
         return this.data.snapshot();
     }
 
+    protected onConnect(pending: any[]) {
+        // resubmit non-acked messages
+        for (const record of this.promiseResolveQueue) {
+            record.clientSequenceNumber = this.submitLocalMessage(record.message);
+        }
+    }
+
     protected async loadCore(
         branchId: string,
         storage: IObjectStorageService): Promise<void> {
