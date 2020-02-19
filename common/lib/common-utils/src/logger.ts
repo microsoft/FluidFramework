@@ -75,6 +75,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             // For example, XHR will throw object derived from Error that contains config information
             // for failed request, including all the headers, and thus - user tokens!
             // Extract only call stack, message, and couple network-related properties form error object
+
             const errorAsObject = error as {
                 stack?: string;
                 message?: string;
@@ -82,7 +83,12 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
 
             event.stack = errorAsObject.stack;
             event.error = errorAsObject.message;
-            if (error.getCustomProperties) {
+            
+            // Error message can container PII information.
+            // If we know for sure it does, we have to not log it.
+            if ((error as any).containsPII) {
+                event.error = "Error message was removed as it contained PII";
+            } else if (error.getCustomProperties) {
                 const customProps: object = error.getCustomProperties();
                 for (const key of Object.keys(customProps)) {
                     if (event[key] === undefined) {

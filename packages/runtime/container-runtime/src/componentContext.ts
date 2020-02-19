@@ -181,6 +181,17 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this.hostRuntime._createComponentWithProps(packagePath, props, id);
     }
 
+    public rejectDeferredRealize(reason: string)
+    {
+        const error = new Error(reason);
+        // Error messages contain package names that is considered Personal Identifiable Information
+        // Mark it as such, so that if it ever reaches telemetry pipeline, it has a chance to remove it.
+        (error as any).containsPII = true;
+
+        this.componentRuntimeDeferred.reject(error);
+        throw error;
+    }
+
     public async realize(): Promise<IComponentRuntime> {
         if (!this.componentRuntimeDeferred) {
             this.componentRuntimeDeferred = new Deferred<IComponentRuntime>();
@@ -196,21 +207,19 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             let lastPkg: string | undefined;
             for (const pkg of packages) {
                 if (!registry) {
-                    this.componentRuntimeDeferred.reject(`No registry for ${lastPkg} package`);
-                    return this.componentRuntimeDeferred.promise;
+                    this.rejectDeferredRealize(`No registry for ${lastPkg} package`);
                 }
                 lastPkg = pkg;
                 entry = await registry.get(pkg);
                 if (!entry) {
-                    this.componentRuntimeDeferred.reject(`Registry does not contain an entry for the package ${pkg}`);
-                    return this.componentRuntimeDeferred.promise;
+                    this.rejectDeferredRealize(`Registry does not contain an entry for the package ${pkg}`);
                 }
                 factory = entry.IComponentFactory;
                 registry = entry.IComponentRegistry;
             }
 
             if (factory === undefined) {
-                throw new Error(`Can't find factory for ${lastPkg} package`);
+                this.rejectDeferredRealize(`Can't find factory for ${lastPkg} package`);
             }
             // During this call we will invoke the instantiate method - which will call back into us
             // via the bindRuntime call to resolve componentRuntimeDeferred
