@@ -64,6 +64,11 @@ export class ForemanLambda extends SequencedLambda {
                         sequencedMessage.documentId,
                         helpContent);
                 } else if (sequencedMessage.operation.type === MessageType.Summarize) {
+                    console.log(`
+                    
+                    Foreman - Summary
+                    
+                    `);
                     await this.trackDocument(
                         sequencedMessage.operation.clientId,
                         sequencedMessage.tenantId,
