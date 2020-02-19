@@ -57,7 +57,7 @@ export class DdsCollectionComponent extends React.Component<IDdsCollectionProps,
                 maps.push({ name, map });
             }
         }));
-        return maps;
+        return maps.sort((a, b) => a.name.localeCompare(b.name));
     }
 
     private addMap(e: HTMLButtonElement) {

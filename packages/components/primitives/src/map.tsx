@@ -26,14 +26,14 @@ export class MapComponent extends React.Component<IMapProps, IMapState> {
         this.props.map.on("valueChanged", (changed) => {
             // add
             if (changed.previousValue === undefined) {
-                this.setState({ keys: Array.from(this.props.map.keys()) });
+                this.refresh();
                 return;
             }
 
             // delete
             const newValue = this.props.map.get(changed.key);
             if (newValue === undefined) {
-                this.setState({ keys: Array.from(this.props.map.keys()) });
+                this.refresh();
             }
         });
     }
@@ -50,6 +50,10 @@ export class MapComponent extends React.Component<IMapProps, IMapState> {
                 <button onClick={(e) => this.addMapKey(e.currentTarget)}>Add Entry</button>
             </span>
         </div>;
+    }
+
+    private refresh() {
+        this.setState({ keys: Array.from(this.props.map.keys()).sort() });
     }
 
     private addMapKey(e: HTMLButtonElement) {
