@@ -7,6 +7,7 @@ import { KeyCode, Scheduler, Template } from "@fluid-example/flow-util-lib";
 import { colIndexToName, TableDocument } from "@fluid-example/table-document";
 import { BorderRect } from "./borderstyle";
 import * as styles from "./index.css";
+import { TableView } from "./tableview";
 
 const tableTemplate = new Template({
     tag: "table",
@@ -64,13 +65,16 @@ export class GridView {
 
     private readonly invalidate: () => void;
 
-    constructor(private readonly doc: TableDocument) {
+    constructor(
+        private readonly doc: TableDocument,
+        private readonly tableView: TableView,
+    ) {
         const scheduler = new Scheduler();
         this.invalidate = scheduler.coalesce(scheduler.onLayout, this.refreshCells);
 
-        this.root.addEventListener("click", this.onClick as EventListener);
-        this.tbody.addEventListener("pointerdown", this.cellDown as EventListener);
-        this.tbody.addEventListener("pointermove", this.cellMove as EventListener);
+        this.root.addEventListener("click", this.onGridClick as EventListener);
+        this.tbody.addEventListener("pointerdown", this.cellPointerDown as EventListener);
+        this.tbody.addEventListener("pointermove", this.cellPointerMove as EventListener);
         this.inputBox.addEventListener("keydown", this.cellKeyDown);
         this.inputBox.addEventListener("input", this.cellInput);
 
@@ -93,10 +97,7 @@ export class GridView {
         if (this.inputBox.parentElement !== td) {
             const value = this.doc.evaluateCell(row, col);
 
-            const text = `\u200B${
-                value === undefined
-                    ? ""
-                    : value}`;
+            const text = `\u200B${value ?? ""}`;
 
             if (td.textContent !== text) {
                 td.textContent = text;
@@ -163,9 +164,12 @@ export class GridView {
             }
             this.cols.append(th);
         }
+
+        this.refreshFormulaInput();
+        this.refreshNumberSummary();
     };
 
-    private readonly onClick = (e: MouseEvent) => {
+    private readonly onGridClick = (e: MouseEvent) => {
         const maybeTd = this.getCellFromEvent(e);
         if (maybeTd) {
             const [row, col] = this.getRowColFromTd(maybeTd);
@@ -183,7 +187,7 @@ export class GridView {
         }
     };
 
-    private readonly cellDown = (e: PointerEvent) => {
+    private readonly cellPointerDown = (e: PointerEvent) => {
         const maybeTd = this.getCellFromEvent(e);
         if (maybeTd) {
             this.commitInput();
@@ -195,7 +199,7 @@ export class GridView {
         }
     };
 
-    private readonly cellMove = (e: PointerEvent) => {
+    private readonly cellPointerMove = (e: PointerEvent) => {
         if (!e.buttons) {
             return;
         }
@@ -255,9 +259,7 @@ export class GridView {
             console.assert(this.tdText.nodeType === Node.TEXT_NODE);
 
             const value = this.doc.getCellValue(row, col);
-            this.inputBox.value = value === undefined
-                ? ""
-                : `${value}`;
+            this.inputBox.value = `${value ?? ""}`;
             newParent.appendChild(this.inputBox);
             this.cellInput();
             this.tdText.textContent = `\u200B${this.inputBox.value}`;
@@ -309,6 +311,7 @@ export class GridView {
     private readonly cellInput = () => {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.tdText!.textContent = `\u200B${this.inputBox.value}`;
+        this.refreshFormulaInput();
     };
 
     private readonly cellKeyDown = (e: KeyboardEvent) => {
@@ -324,6 +327,16 @@ export class GridView {
         }
         /* eslint-enable default-case */
     };
+
+    public readonly formulaKeypress = (e: KeyboardEvent) => {
+        if (e.code === KeyCode.enter) {
+            this.updateSelectionFromFormulaInput();
+        }
+    }
+
+    public readonly formulaFocusOut = () => {
+        this.updateSelectionFromFormulaInput();
+    }
 
     private getCellFromEvent(e: Event) {
         const target = e.target as HTMLElement;
@@ -359,5 +372,71 @@ export class GridView {
         // Row headings are inside the <tbody>, therefore we need to adjust our column
         // index by +/-1 to skip them.
         return 0 <= col && col < (cols.length - 1) && cols.item(col + 1);
+    }
+
+    private refreshFormulaInput() {
+        if (this.selection.start === this.selection.end) {
+            const [row, col] = this.selection.start;
+            // The formula bar should always show raw values, but when a cell is
+            // selected for edit it will be showing the raw value
+            const cellValue = this.doc.getCellValue(row, col);
+            this.tableView.formulaInput = `${cellValue ?? ""}`;
+        } else {
+            this.tableView.formulaInput = "<multiple selection>";
+        }
+    }
+
+    private updateSelectionFromFormulaInput() {
+        // Don't handle multiple selection yet
+        if (this.selection.start === this.selection.end) {
+            const [row, col] = this.selection.start;
+            const selectedCell = this.getTdFromRowCol(row, col) as HTMLTableDataCellElement;
+            if (selectedCell) {
+                const previous = this.doc.getCellValue(row, col);
+                const current = this.parseInput(this.tableView.formulaInput);
+                if (previous !== current) {
+                    selectedCell.textContent = `\u200B${current}`;
+                    this.doc.setCellValue(row, col, current);
+                }
+            }
+        }
+    }
+
+    private refreshNumberSummary() {
+        const [rowStart, colStart] = this.selection.start;
+        const [rowEnd, colEnd] = this.selection.end;
+        const minRow = Math.min(rowStart, rowEnd);
+        const maxRow = Math.max(rowStart, rowEnd);
+        const minCol = Math.min(colStart, colEnd);
+        const maxCol = Math.max(colStart, colEnd);
+
+        let count:number = 0;
+        let sum:number = 0;
+        for (let row  = minRow; row <= maxRow; row++) {
+            for (let col = minCol; col <= maxCol; col++) {
+                const currentCell = this.getTdFromRowCol(row, col) as HTMLTableDataCellElement;
+                if (currentCell.textContent) {
+                    const cellValue = this.parseInput(this.sanitizeNumberString(currentCell.textContent));
+                    if (typeof(cellValue) === "number") {
+                        count++;
+                        sum+= cellValue;
+                    }
+                }
+            }
+        }
+
+        if (count > 1) {
+            this.tableView.selectionSummary = `Average:${sum/count} Count:${count} Sum:${sum}`;
+        } else {
+            this.tableView.selectionSummary = "\u200B";
+        }
+    }
+
+    private sanitizeNumberString(input: string):string {
+        // Remove a prefix zero width space
+        if (input.length > 0 && input[0] === "\u200B") {
+            return input.substr(1);
+        }
+        return input;
     }
 }
