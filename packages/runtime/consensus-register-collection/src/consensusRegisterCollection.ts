@@ -68,7 +68,7 @@ interface IPendingRecord {
     /**
      * The resolve function to call after the local operation is ack'ed
      */
-    resolve: (nonConcurrent: boolean) => void;
+    resolve: (winner: boolean) => void;
 
     /**
      * The client sequence number of the operation. For assert only.
@@ -277,14 +277,14 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
                     // not when op was actually sent over wire (as client can ingest ops in between)
                     // in other words, we can't use ISequencedDocumentMessage.referenceSequenceNumber
                     assert(op.refSeq <= message.referenceSequenceNumber);
-                    const nonConcurrent = this.processInboundWrite(
+                    const winner = this.processInboundWrite(
                         op.refSeq,
                         message.sequenceNumber,
                         op,
                         local);
                     // If it is local operation, resolve the promise.
                     if (local) {
-                        this.processLocalMessage(message, nonConcurrent);
+                        this.processLocalMessage(message, winner);
                     }
                     break;
 
@@ -309,9 +309,9 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
     {
         let data = this.data.get(op.key);
         // Atomic update if it's a new register or the write attempt was not concurrent (ref seq >= sequence number)
-        let nonConcurrent = false;
+        let winner = false;
         if (data === undefined || refSeq >= data.atomic.sequenceNumber) {
-            nonConcurrent = true;
+            winner = true;
             const atomicUpdate: ILocalRegister = {
                 sequenceNumber,
                 value: op.value,
@@ -348,10 +348,10 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
         data.versions.push(versionUpdate);
         this.emit("versionChanged", op.key, op.value, local);
 
-        return nonConcurrent;
+        return winner;
     }
 
-    private processLocalMessage(message: ISequencedDocumentMessage, nonConcurrent: boolean) {
+    private processLocalMessage(message: ISequencedDocumentMessage, winner: boolean) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const pending = this.promiseResolveQueue.shift()!;
         assert(pending);
@@ -360,7 +360,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
             || message.clientSequenceNumber === pending.clientSequenceNumber,
             `${message.clientSequenceNumber} !== ${pending.clientSequenceNumber}`);
         /* eslint-enable @typescript-eslint/indent */
-        pending.resolve(nonConcurrent);
+        pending.resolve(winner);
     }
 
     private async submit(message: IRegisterOperation): Promise<boolean> {
