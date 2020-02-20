@@ -25,16 +25,10 @@ import {
     TestTenantManager,
     TestWebSocketServer,
     TestClientManager,
+    DebugLogger,
 } from "@microsoft/fluid-server-test-utils";
 import { configureWebSocketServices} from "@microsoft/fluid-server-lambdas";
-import * as winston from "winston";
 import { TestReservationManager } from "./testReservationManager";
-
-winston.configure({
-    transports: [
-        new winston.transports.Console(),
-    ],
-});
 
 /**
  * Items needed for handling deltas.
@@ -143,7 +137,8 @@ export class TestDeltaConnectionServer implements ITestDeltaConnectionServer {
             testStorage,
             testDbFactory.testDatabase.collection("ops"),
             new TestClientManager(),
-            new DefaultMetricClient());
+            new DefaultMetricClient(),
+            DebugLogger.create("fluid-server:TestDeltaConnectionServer"));
 
         return new TestDeltaConnectionServer(webSocketServer, databaseManager, testOrderer, testDbFactory);
     }

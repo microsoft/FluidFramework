@@ -6,7 +6,8 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { Deferred } from "@microsoft/fluid-core-utils";
-import { IContext, IQueuedMessage } from "@microsoft/fluid-server-services-core";
+import { IContext, IQueuedMessage, ILogger } from "@microsoft/fluid-server-services-core";
+import { DebugLogger } from "./logger";
 
 interface IWaitOffset {
     deferred: Deferred<void>;
@@ -35,6 +36,8 @@ export class TestContext extends EventEmitter implements IContext {
     public error(error: any, restart: boolean) {
         this.emit("error", error, restart);
     }
+
+    public readonly log: ILogger = DebugLogger.create("fluid-test:TestContext");
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public waitForOffset(value: number): Promise<void> {

@@ -32,7 +32,9 @@ import {
     ITopic,
     IWebSocket,
     IQueuedMessage,
+    ILogger,
 } from "@microsoft/fluid-server-services-core";
+import { DebugLogger } from "@microsoft/fluid-server-test-utils";
 import { ILocalOrdererSetup } from "./interfaces";
 import { LocalKafka } from "./localKafka";
 import { LocalLambdaController } from "./localLambdaController";
@@ -147,6 +149,8 @@ class LocalContext implements IContext {
     public error(error: any, restart: boolean) {
         return;
     }
+
+    public readonly log: ILogger = DebugLogger.create("fluid-server:LocalContext");
 }
 
 /**

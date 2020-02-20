@@ -7,7 +7,6 @@
 
 import { IRangeTrackerSnapshot } from "@microsoft/fluid-core-utils";
 import { ICollection, IContext, IDocument, IQueuedMessage } from "@microsoft/fluid-server-services-core";
-import * as winston from "winston";
 
 export interface IClientSequenceNumber {
     // Whether or not the object can expire
@@ -69,7 +68,7 @@ export class CheckpointContext {
             },
             (error) => {
                 // TODO flag context as error
-                winston.error("Error writing checkpoint to MongoDB", error);
+                this.context.log.error(`Error writing checkpoint to MongoDB: ${JSON.stringify(error)}`);
             });
     }
 
@@ -95,7 +94,7 @@ export class CheckpointContext {
         // Retry the checkpoint on error
         // eslint-disable-next-line @typescript-eslint/promise-function-async
         return updateP.catch((error) => {
-            winston.error("Error writing checkpoint to MongoDB", error);
+            this.context.log.error(`Error writing checkpoint to MongoDB: ${JSON.stringify(error)}`);
             return new Promise<void>((resolve, reject) => {
                 resolve(this.checkpointCore(checkpoint));
             });
