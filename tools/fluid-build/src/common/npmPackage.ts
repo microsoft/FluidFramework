@@ -10,7 +10,6 @@ import * as path from "path";
 import { sortPackageJson } from "sort-package-json";
 import { logStatus, logVerbose } from "./logging";
 import {
-    globFn,
     copyFileAsync,
     execWithErrorAsync,
     existsSync,
@@ -24,7 +23,7 @@ import {
     ExecAsyncResult,
     renameAsync
 } from "./utils"
-import { NpmDepChecker } from "./npmDepChecker";
+
 import { options } from "../fluidBuild/options";
 import * as semver from "semver";
 
@@ -192,25 +191,8 @@ export class Package {
         return rimrafWithErrorAsync(path.join(this.directory, "node_modules"), this.nameColored);
     }
 
-    private async savePackageJson() {
+    public async savePackageJson() {
         return writeFileAsync(this.packageJsonFileName, `${JSON.stringify(sortPackageJson(this.packageJson), undefined, 2)}\n`);
-    }
-
-    public async depcheck() {
-        // Fluid specific
-        let checkFiles: string[];
-        if (this.packageJson.dependencies) {
-            const tsFiles = await globFn(`${this.directory}/**/*.ts`, { ignore: `${this.directory}/node_modules` });
-            const tsxFiles = await globFn(`${this.directory}/**/*.tsx`, { ignore: `${this.directory}/node_modules` });
-            checkFiles = tsFiles.concat(tsxFiles);
-        } else {
-            checkFiles = [];
-        }
-
-        const npmDepChecker = new NpmDepChecker(this, checkFiles);
-        if (await npmDepChecker.run()) {
-            await this.savePackageJson();
-        }
     }
 
     public async noHoistInstall(repoRoot: string) {
@@ -230,7 +212,7 @@ export class Package {
         // Fluid specific
         for (const { name: dep, version } of this.combinedDependencies) {
             const depBuildPackage = buildPackages.get(dep);
-            // Check and fix link if it is a know package and version satisfy the version.
+            // Check and fix link if it is a known package and version satisfy the version.
             // TODO: check of extranous symlinks
             if (depBuildPackage && semver.satisfies(depBuildPackage.version, version)) {
                 const symlinkPath = path.join(this.directory, "node_modules", dep);
