@@ -8,7 +8,7 @@ We defined generic kafka interfaces (IProducer and IConsumer) that can be implem
 kafka": {
     "lib": {
         "name": "kafka-node",
-        "endpoint": "zookeeper:2181"
+        "endpoint": "kafka:9092"
     }
 }
 ```
