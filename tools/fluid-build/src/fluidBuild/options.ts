@@ -91,9 +91,7 @@ function setReinstall(nohoist: boolean) {
 function setInstall(nohoist: boolean) {
     options.install = true;
     options.nohoist = nohoist;
-    if (nohoist) {
-        options.symlink = true;
-    }
+    options.symlink = true;
     setBuild(false);
 }
 

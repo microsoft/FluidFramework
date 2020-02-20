@@ -68,6 +68,43 @@ export interface IPackageCheck {
     checkScripts(pkg: Package, fix: boolean): boolean;
 };
 
+function writeBin(dir: string, pkgName: string, binName: string, binPath: string) {
+    const outFile = path.normalize(`${dir}/node_modules/.bin/${binName}`);
+    if (process.platform === "win32") {
+        const winpath = `%~dp0\\..\\node_modules\\${path.normalize(pkgName)}\\${path.normalize(binPath)}`;
+        const cmd = 
+`@IF EXIST "%~dp0\\node.exe" (
+  "%~dp0\\node.exe"  "${winpath}" %*
+) ELSE (
+  @SETLOCAL
+  @SET PATHEXT=%PATHEXT:;.JS;=;%
+  node  "${winpath}" %*
+)`;
+        logVerbose(`Writing ${outFile}.cmd`);
+        writeFileAsync(`${binName}.cmd`, cmd);
+    }
+
+    const posixpath = `$basedir/../node_modules/${path.posix.normalize(pkgName)}/${path.posix.normalize(binPath)}`;
+    const sh = `#!/bin/sh
+basedir=$(dirname "$(echo "$0" | sed -e 's,\\\\,/,g')")
+
+case \`uname\` in
+    *CYGWIN*) basedir=\`cygpath -w "$basedir"\`;;
+esac
+
+if [ -x "$basedir/node" ]; then
+  "$basedir/node"  "${posixpath}" "$@"
+  ret=$?
+else
+  node  "${posixpath}" "$@"
+  ret=$?
+fi
+exit $ret`;
+
+    logVerbose(`Writing ${outFile}`);
+    writeFileAsync(outFile, sh);
+}
+
 export class Package {
     private static packageCount: number = 0;
     private static readonly chalkColor = [
@@ -228,15 +265,16 @@ export class Package {
                         if (!options.nohoist) {
                             console.warn(`${this.nameColored}: warning: renaming existing package in ${symlinkPath}`);
                         }
-                        /*
-                        if (stat.isDirectory()) {
-                            await rimrafWithErrorAsync(symlinkPath, this.nameColored);
+                        const replace = true;
+                        if (replace) {
+                            if (stat.isDirectory()) {
+                                await rimrafWithErrorAsync(symlinkPath, this.nameColored);
+                            } else {
+                                await unlinkAsync(symlinkPath);
+                            }
                         } else {
-                            await unlinkAsync(symlinkPath);
+                            await renameAsync(symlinkPath, path.join(path.dirname(symlinkPath), `_${path.basename(symlinkPath)}`));
                         }
-                        */
-
-                        await renameAsync(symlinkPath, path.join(path.dirname(symlinkPath), `_${path.basename(symlinkPath)}`));
                     } else {
                         // Ensure the directory exist
                         const symlinkDir = path.join(symlinkPath, "..");
@@ -246,6 +284,12 @@ export class Package {
                     }
                     // Create symlink
                     await symlinkAsync(depBuildPackage.directory, symlinkPath, "junction");
+
+                    if (depBuildPackage.packageJson.bin) {
+                        for (var name of Object.keys(depBuildPackage.packageJson.bin)) {
+                            writeBin(this.directory, depBuildPackage.name, name, depBuildPackage.packageJson.bin[name]);
+                        }
+                    }
                 } catch (e) {
                     throw new Error(`symlink failed on ${symlinkPath}.\n ${e}`);
                 }

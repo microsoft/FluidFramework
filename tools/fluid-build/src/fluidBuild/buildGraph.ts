@@ -241,6 +241,7 @@ export class BuildGraph {
         let hasTask = false;
         this.buildPackages.forEach((node, name) => {
             if (!node.pkg.markForBuild) {
+                logVerbose(`${node.pkg.nameColored}: Not marked for build`);
                 this.buildPackages.delete(name);
                 return;
             }

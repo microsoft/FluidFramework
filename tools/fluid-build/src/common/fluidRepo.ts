@@ -1,7 +1,7 @@
 import * as path from "path";
 import { Packages, Package } from "./npmPackage";
 import { rimrafWithErrorAsync, ExecAsyncResult, execWithErrorAsync } from "./utils";
-import { FluidPackageCheck } from "../fluidBuild/fluidPackageCheck";
+import { FluidPackageCheck, RepoType } from "../fluidBuild/fluidPackageCheck";
 
 export interface IPackageMatchedOptions {
     match: string[];
@@ -36,7 +36,10 @@ export class FluidRepo {
         this.packages = Packages.load(this.baseDirectories);
 
         this.packages.packages.forEach((pkg) => {
-            pkg.packageCheck = new FluidPackageCheck(pkg.directory.startsWith(this.serverDirectory));
+            pkg.packageCheck = new FluidPackageCheck(
+                pkg.directory.startsWith(this.serverDirectory)? RepoType.Server :
+                pkg.directory.startsWith(this.clientDirectory)? RepoType.Client : RepoType.Common
+            ); 
         });
     }
 

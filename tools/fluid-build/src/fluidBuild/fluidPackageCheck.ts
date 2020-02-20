@@ -1,8 +1,13 @@
 import { IPackageCheck, Package } from "../common/npmPackage";
 
-export class FluidPackageCheck implements IPackageCheck {
-    constructor(private readonly server: boolean) {
+export enum RepoType {
+    Common,
+    Client,
+    Server,
+};
 
+export class FluidPackageCheck implements IPackageCheck {
+    constructor(private readonly repoType: RepoType) {
     }
 
     public checkScripts(pkg: Package, fix: boolean) {
@@ -24,7 +29,7 @@ export class FluidPackageCheck implements IPackageCheck {
         let fixed = false;
         const pkgstring = "make-promises-safe";
         const pkgversion = "^5.1.0";
-        const testScript = this.server ? "test" : "test:mocha";
+        const testScript = this.repoType === RepoType.Server ? "test" : "test:mocha";
         if (pkg.packageJson.scripts && pkg.packageJson.scripts[testScript] && /(ts-)?mocha/.test(pkg.packageJson.scripts[testScript]!)) {
             if (pkg.packageJson.devDependencies && !pkg.packageJson.devDependencies[pkgstring]) {
                 console.warn(`${pkg.nameColored}: warning: missing ${pkgstring} dependency`);
@@ -52,7 +57,7 @@ export class FluidPackageCheck implements IPackageCheck {
      */
     public checkMochaTestScripts(pkg: Package, fix: boolean) {
         let fixed = false;
-        if (!this.server && pkg.packageJson.scripts && pkg.packageJson.scripts.test && /^(ts-)?mocha/.test(pkg.packageJson.scripts.test)) {
+        if (this.repoType !== RepoType.Server && pkg.packageJson.scripts && pkg.packageJson.scripts.test && /^(ts-)?mocha/.test(pkg.packageJson.scripts.test)) {
             console.warn(`${pkg.nameColored}: warning: "mocha" in "test" script instead of "test:mocha" script`)
             if (fix) {
                 if (!pkg.packageJson.scripts["test:mocha"]) {
@@ -193,7 +198,9 @@ export class FluidPackageCheck implements IPackageCheck {
             check("build:compile", buildCompile);
             check("build:full", buildFull);
             check("build:full:compile", buildFullCompile);
-            check("build:compile:min", buildCompileMin);
+            if (this.repoType !== RepoType.Common) {
+                check("build:compile:min", buildCompileMin);
+            }
 
             if (!pkg.getScript("clean")) {
                 console.warn(`${pkg.nameColored}: warning: package has "build" script without "clean" script`);
