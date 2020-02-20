@@ -37,7 +37,7 @@ export class TestContext extends EventEmitter implements IContext {
         this.emit("error", error, restart);
     }
 
-    public readonly log: ILogger = DebugLogger.create("fluid-test:TestContext");
+    public readonly log: ILogger = DebugLogger.create("fluid-server:TestContext");
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public waitForOffset(value: number): Promise<void> {

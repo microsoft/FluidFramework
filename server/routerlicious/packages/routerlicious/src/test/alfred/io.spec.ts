@@ -86,7 +86,7 @@ describe("Routerlicious", () => {
                         contentCollection,
                         testClientManager,
                         new DefaultMetricClient(),
-                        DebugLogger.create("fluid-test:TestAlfredIO"));
+                        DebugLogger.create("fluid-server:TestAlfredIO"));
                 });
 
                 function connectToServer(
