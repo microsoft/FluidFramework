@@ -64,6 +64,7 @@ COPY packages/framework/aqueduct-react/package*.json packages/framework/aqueduct
 COPY packages/framework/experimental/package*.json packages/framework/experimental/
 COPY packages/framework/framework-definitions/package*.json packages/framework/framework-definitions/
 COPY packages/framework/undo-redo/package*.json packages/framework/undo-redo/
+COPY packages/framework/view-adapters/package*.json packages/framework/view-adapters/
 COPY packages/loader/component-core-interfaces/package*.json packages/loader/component-core-interfaces/
 COPY packages/loader/container-definitions/package*.json packages/loader/container-definitions/
 COPY packages/loader/container-loader/package*.json packages/loader/container-loader/

@@ -5,7 +5,7 @@
 
 import { IComponent, IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 import * as React from "react";
-import { IComponentReactViewable } from "./interfaces";
+import { IComponentReactViewable } from "../interfaces";
 
 export interface IEmbeddedComponentProps {
     component: IComponent;
@@ -30,19 +30,19 @@ export class EmbeddedComponent extends React.Component<IEmbeddedComponentProps> 
         }
 
         const reactViewable = this.props.component.IComponentReactViewable;
-        if (reactViewable) {
+        if (reactViewable !== undefined) {
             this.element = <ReactEmbeddedComponent component={reactViewable}/>;
             return;
         }
 
         const htmlView = this.props.component.IComponentHTMLView;
-        if (htmlView) {
+        if (htmlView !== undefined) {
             this.element = <HTMLViewEmbeddedComponent component={htmlView} />;
             return;
         }
 
         const htmlVisual = this.props.component.IComponentHTMLVisual;
-        if (htmlVisual) {
+        if (htmlVisual !== undefined) {
             this.element = <HTMLVisualEmbeddedComponent component={htmlVisual} />;
             return;
         }
@@ -73,7 +73,8 @@ class HTMLViewEmbeddedComponent extends React.Component<IHTMLViewProps, { }> {
     }
 
     public async componentDidMount() {
-        if (this.ref.current) {
+        // eslint-disable-next-line no-null/no-null
+        if (this.ref.current !== null) {
             this.props.component.render(this.ref.current);
         }
     }
@@ -101,7 +102,8 @@ class HTMLVisualEmbeddedComponent extends React.Component<IHTMLVisualProps, { }>
     }
 
     public async componentDidMount() {
-        if (this.ref.current) {
+        // eslint-disable-next-line no-null/no-null
+        if (this.ref.current !== null) {
             const view = this.props.component.addView();
             view.render(this.ref.current);
         }
