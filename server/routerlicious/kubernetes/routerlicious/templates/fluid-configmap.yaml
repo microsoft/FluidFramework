@@ -37,7 +37,7 @@ data:
         "kafka": {
             "lib": {
                 "name": "kafka-node",
-                "endpoint": "{{ .Values.zookeeper.url }}"
+                "endpoint": "{{ .Values.kafka.url }}"
             },
             "maxMessageSize": "1MB"
         },

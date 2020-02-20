@@ -26,7 +26,7 @@
     "kafka": {
         "lib": {
             "name": "kafka-node",
-            "endpoint": "zookeeper:2181"
+            "endpoint": "kafka:9092"
         },
         "maxMessageSize": "1MB"
     },
