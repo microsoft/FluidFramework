@@ -145,8 +145,8 @@ export class BaseHost {
         });
         await getComponentAndRender(loader, url, div);
 
-        // If this is a new document we will go and instantiate the chaincode. For old documents we assume a legacy
-        // package.
+        // if a package is provided, try to initialize the code proposal with it
+        // if not we assume the contianer already has a code proposal
         if (pkg) {
             await initializeContainerCode(container, pkg)
                 .catch((error) => console.error("code proposal error", error));
