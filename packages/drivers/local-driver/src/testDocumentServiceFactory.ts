@@ -10,7 +10,7 @@ import {
     IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
 import { TokenProvider } from "@microsoft/fluid-routerlicious-driver";
-import { ITestDeltaConnectionServer } from "./testDeltaConnectionServer";
+import { ITestDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { createTestDocumentService } from "./testDocumentService";
 
 /**

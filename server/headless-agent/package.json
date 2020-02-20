@@ -18,6 +18,7 @@
     "test": "node dist/puppeteer/cli.js -u https://www.wu2-ppe.prague.office-int.com -d samasoa5agaz -t search"
   },
   "dependencies": {
+    "@azure/storage-blob": "^12.0.2",
     "@microsoft/fluid-base-host": "^0.13.19190",
     "@microsoft/fluid-container-loader": "^0.13.19190",
     "@microsoft/fluid-driver-definitions": "^0.13.19190",

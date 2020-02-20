@@ -58,7 +58,7 @@ RUN git clone https://%24praguedocs:$DOCSGITPASSWORD@praguedocs.scm.azurewebsite
 WORKDIR /praguedocs
 RUN git pull
 WORKDIR /
-RUN rsync docs/dist/ praguedocs/ -rv --exclude '.git'
+RUN rsync docs/dist/ praguedocs/ -rv --delete --exclude '.git'
 
 WORKDIR /praguedocs
 RUN git add .

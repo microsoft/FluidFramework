@@ -5,7 +5,7 @@
 
 import 'mocha';
 
-import { TestHost } from '@microsoft/fluid-local-test-server';
+import { TestHost } from '@microsoft/fluid-local-test-utils';
 import { Serializable } from '@microsoft/fluid-runtime-definitions';
 import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from '@microsoft/fluid-test-runtime-utils';
 import { strict as assert } from 'assert';

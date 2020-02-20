@@ -210,7 +210,7 @@ export function configureWebSocketServices(
                 connectionsMap.set(clientId, connection);
 
                 // Eventually we will send disconnect reason as headers to client.
-                connection.once("producerError", (error) => {
+                connection.once("error", (error) => {
                     winston.info(`Disconnecting socket on connection error`, error);
                     socket.disconnect(true);
                 });
