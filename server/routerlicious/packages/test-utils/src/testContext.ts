@@ -18,6 +18,10 @@ export class TestContext extends EventEmitter implements IContext {
     public offset: number = Number.NEGATIVE_INFINITY;
     private waits: IWaitOffset[] = [];
 
+    constructor(public readonly log: ILogger = DebugLogger.create("fluid-server:TestContext")) {
+        super();
+    }
+
     public checkpoint(queuedMessage: IQueuedMessage) {
         assert(queuedMessage.offset > this.offset, `${queuedMessage.offset} > ${this.offset}`);
         this.offset = queuedMessage.offset;
@@ -36,8 +40,6 @@ export class TestContext extends EventEmitter implements IContext {
     public error(error: any, restart: boolean) {
         this.emit("error", error, restart);
     }
-
-    public readonly log: ILogger = DebugLogger.create("fluid-server:TestContext");
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public waitForOffset(value: number): Promise<void> {

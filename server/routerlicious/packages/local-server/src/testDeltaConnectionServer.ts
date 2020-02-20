@@ -110,6 +110,8 @@ export class TestDeltaConnectionServer implements ITestDeltaConnectionServer {
             databaseManager,
             testTenantManager);
 
+        const logger = DebugLogger.create("fluid-server:TestDeltaConnectionServer");
+
         const nodeFactory = new LocalNodeFactory(
             "os",
             "http://localhost:4000", // Unused placeholder url
@@ -120,7 +122,8 @@ export class TestDeltaConnectionServer implements ITestDeltaConnectionServer {
             new TestTaskMessageSender(),
             testTenantManager,
             {},
-            16 * 1024);
+            16 * 1024,
+            logger);
 
         const reservationManager = new TestReservationManager(
             nodeFactory,
@@ -138,7 +141,7 @@ export class TestDeltaConnectionServer implements ITestDeltaConnectionServer {
             testDbFactory.testDatabase.collection("ops"),
             new TestClientManager(),
             new DefaultMetricClient(),
-            DebugLogger.create("fluid-server:TestDeltaConnectionServer"));
+            logger);
 
         return new TestDeltaConnectionServer(webSocketServer, databaseManager, testOrderer, testDbFactory);
     }

@@ -109,6 +109,7 @@ export class ScribeLambda extends SequencedLambda {
                 this.minSequenceNumber = value.operation.minimumSequenceNumber;
 
                 if (msnChanged) {
+                    // When the MSN changes we can process up to it to save space
                     this.processFromPending(this.minSequenceNumber);
                 }
 
@@ -418,7 +419,6 @@ export class ScribeLambda extends SequencedLambda {
         };
 
         await this.sendToDeli(operation);
-        this.context.log.info(`Sent summaryAck for sequenceNumber: ${summarySequenceNumber}`);
     }
 
     private async sendSummaryNack(summarySequenceNumber: number, errorMessage: string) {
@@ -436,7 +436,6 @@ export class ScribeLambda extends SequencedLambda {
         };
 
         await this.sendToDeli(operation);
-        this.context.log.info(`Sent summaryNack for sequenceNumber: ${summarySequenceNumber}`);
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
