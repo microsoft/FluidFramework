@@ -104,13 +104,14 @@ export async function getSocketStorageDiscovery(
     // consecutive join session calls because the server moved. If there is nothing in cache or the
     // response was cached an hour ago, then we make the join session call again. Never expire the
     // joinsession result. On error, the delta connection will invalidate it.
-    const cachedResultP: Promise<IOdspJoinSessionCachedItem> = odspCache.get(joinSessionKey, true);
+    const cachedResultP: Promise<IOdspJoinSessionCachedItem> = odspCache.get(joinSessionKey);
     if (cachedResultP !== undefined) {
         const cachedResult = await cachedResultP;
         if (Date.now() - cachedResult.timestamp <= 3600000 && cachedResult.content) {
             odspCache.put(joinSessionKey, Promise.resolve({ content: cachedResult.content, timestamp: Date.now() }));
             return cachedResult.content;
         }
+        odspCache.remove(joinSessionKey);
     }
 
     const responseDeferredP = new Deferred<IOdspJoinSessionCachedItem>();
