@@ -896,7 +896,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.emit("processTime", time);
         });
 
-        this._deltaManager.on("readonly", (readonly) => {
+        deltaManager.on("readonly", (readonly) => {
             this.emit("readonly", readonly);
         });
 
