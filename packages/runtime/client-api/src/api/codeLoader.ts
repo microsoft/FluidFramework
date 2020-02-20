@@ -166,6 +166,6 @@ export class CodeLoader implements ICodeLoader {
     }
 
     public async load(source: IFluidCodeDetails): Promise<IFluidModule> {
-        return Promise.resolve(this.fluidModule as any);
+        return Promise.resolve(this.fluidModule);
     }
 }
