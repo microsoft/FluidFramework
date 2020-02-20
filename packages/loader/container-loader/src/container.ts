@@ -16,7 +16,6 @@ import {
     IContainer,
     IDeltaManager,
     IFluidCodeDetails,
-    IFluidModule,
     IGenericBlob,
     IRuntimeFactory,
     LoaderHeader,
@@ -802,22 +801,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
      * Loads the runtime factory for the provided package
      */
     private async loadRuntimeFactory(pkg: IFluidCodeDetails): Promise<IRuntimeFactory> {
-        const component = await this.codeLoader.load<IRuntimeFactory | IFluidModule>(pkg);
+        const component = await this.codeLoader.load(pkg);
 
-        if ("fluidExport" in component) {
-            const factory = component.fluidExport.IRuntimeFactory;
-            if (!factory) {
-                throw new Error(PackageNotFactoryError);
-            }
-            return factory;
+        const factory = component.fluidExport.IRuntimeFactory;
+        if (!factory) {
+            throw new Error(PackageNotFactoryError);
         }
+        return factory;
 
-        // TODO included for back-compat
-        if ("instantiateRuntime" in component) {
-            return component;
-        }
-
-        throw new Error(PackageNotFactoryError);
     }
 
     private get client() {

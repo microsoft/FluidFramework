@@ -12,6 +12,7 @@ import {
     IFluidCodeDetails,
     IRuntime,
     IRuntimeFactory,
+    IFluidModule,
 } from "@microsoft/fluid-container-definitions";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@microsoft/fluid-container-runtime";
 import * as ink from "@microsoft/fluid-ink";
@@ -151,17 +152,20 @@ export class ChaincodeFactory implements IRuntimeFactory {
 }
 
 export class CodeLoader implements ICodeLoader {
-    private readonly factory: IRuntimeFactory;
+    private readonly fluidModule: IFluidModule;
 
     constructor(
         runtimeOptions: IContainerRuntimeOptions,
         registries?: NamedComponentRegistryEntries,
     ) {
-        this.factory = new ChaincodeFactory(runtimeOptions,
-            registries ? registries : []);
+        this.fluidModule = {
+            fluidExport: new ChaincodeFactory(
+                runtimeOptions,
+                registries ? registries : []),
+        };
     }
 
-    public async load<T>(source: IFluidCodeDetails): Promise<T> {
-        return Promise.resolve(this.factory as any);
+    public async load(source: IFluidCodeDetails): Promise<IFluidModule> {
+        return Promise.resolve(this.fluidModule as any);
     }
 }
