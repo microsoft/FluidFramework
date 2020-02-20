@@ -64,16 +64,12 @@ interface IPackage {
     [key: string]: any;
 };
 
-export interface IPackageCheck {
-    checkScripts(pkg: Package, fix: boolean): boolean;
-};
-
 function writeBin(dir: string, pkgName: string, binName: string, binPath: string) {
     const outFile = path.normalize(`${dir}/node_modules/.bin/${binName}`);
     if (process.platform === "win32") {
         const winpath = `%~dp0\\..\\node_modules\\${path.normalize(pkgName)}\\${path.normalize(binPath)}`;
-        const cmd = 
-`@IF EXIST "%~dp0\\node.exe" (
+        const cmd =
+            `@IF EXIST "%~dp0\\node.exe" (
   "%~dp0\\node.exe"  "${winpath}" %*
 ) ELSE (
   @SETLOCAL
@@ -129,7 +125,6 @@ export class Package {
     private readonly packageId = Package.packageCount++;
     private _matched: boolean = false;
     private _markForBuild: boolean = false;
-    public packageCheck: IPackageCheck | undefined;
 
     constructor(private readonly packageJsonFileName: string) {
         this.packageJson = require(packageJsonFileName);
@@ -199,12 +194,6 @@ export class Package {
 
     private async savePackageJson() {
         return writeFileAsync(this.packageJsonFileName, `${JSON.stringify(sortPackageJson(this.packageJson), undefined, 2)}\n`);
-    }
-
-    public async checkScripts() {
-        if (this.packageCheck && this.packageCheck.checkScripts(this, options.fixScripts)) {
-            await this.savePackageJson();
-        }
     }
 
     public async depcheck() {
@@ -370,12 +359,6 @@ export class Packages {
     public async symlink(fix: boolean) {
         const packageMap = new Map<string, Package>(this.packages.map(pkg => [pkg.name, pkg]));
         return this.queueExecOnAllPackageCore(pkg => pkg.symlink(packageMap, fix), options.nohoist ? "symlink" : "")
-    }
-
-    public async checkScripts() {
-        for (const pkg of this.packages) {
-            await pkg.checkScripts();
-        }
     }
 
     private async queueExecOnAllPackageCore<TResult>(exec: (pkg: Package) => Promise<TResult>, message?: string) {

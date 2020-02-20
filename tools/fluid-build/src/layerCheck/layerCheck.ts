@@ -9,7 +9,7 @@ import { Timer } from "../common/timer";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
 import * as path from "path";
 import { writeFileAsync } from "../common/utils";
-import { FluidRepo } from "../common/fluidRepo";
+import { FluidRepoBase } from "../common/fluidRepoBase";
 
 function printUsage() {
     console.log(
@@ -81,7 +81,7 @@ async function main() {
     const resolvedRoot = await getResolvedFluidRoot();
 
     // Load the package
-    const packages = new FluidRepo(resolvedRoot).packages;
+    const packages = new FluidRepoBase(resolvedRoot).packages;
     timer.time("Package scan completed");
 
     try {

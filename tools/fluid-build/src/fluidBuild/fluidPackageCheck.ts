@@ -1,22 +1,29 @@
-import { IPackageCheck, Package } from "../common/npmPackage";
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
 
-export enum RepoType {
-    Common,
+import { FluidRepo } from "./fluidRepo";
+import { Package } from "../common/npmPackage";
+
+export enum MonoRepo {
+    None,
     Client,
     Server,
 };
 
-export class FluidPackageCheck implements IPackageCheck {
-    constructor(private readonly repoType: RepoType) {
+export class FluidPackageCheck {
+    constructor(private readonly repoType: MonoRepo) {
     }
 
-    public checkScripts(pkg: Package, fix: boolean) {
+    public static checkScripts(repo: FluidRepo, pkg: Package, fix: boolean) {
+        const monoRepo = repo.getMonoRepo(pkg);
         const fixed = [
-            this.checkBuildScripts(pkg, fix),
-            this.checkTestCoverageScripts(pkg, fix),
-            this.checkTestSafePromiseRequire(pkg, fix),
-            this.checkMochaTestScripts(pkg, fix),
-            this.checkJestJunitTestEntry(pkg, fix),
+            FluidPackageCheck.checkBuildScripts(pkg, fix, monoRepo),
+            FluidPackageCheck.checkTestCoverageScripts(pkg, fix),
+            FluidPackageCheck.checkTestSafePromiseRequire(pkg, fix, monoRepo),
+            FluidPackageCheck.checkMochaTestScripts(pkg, fix, monoRepo),
+            FluidPackageCheck.checkJestJunitTestEntry(pkg, fix),
         ];
         return fixed.some((bool) => bool);
     }
@@ -25,11 +32,11 @@ export class FluidPackageCheck implements IPackageCheck {
      * Verify that all packages with 'test' scripts require the 'make-promises-safe' package, which will cause unhandled
      * promise rejections to throw errors
      */
-    public checkTestSafePromiseRequire(pkg: Package, fix: boolean) {
+    private static checkTestSafePromiseRequire(pkg: Package, fix: boolean, monoRepo: MonoRepo) {
         let fixed = false;
         const pkgstring = "make-promises-safe";
         const pkgversion = "^5.1.0";
-        const testScript = this.repoType === RepoType.Server ? "test" : "test:mocha";
+        const testScript = monoRepo === MonoRepo.Server ? "test" : "test:mocha";
         if (pkg.packageJson.scripts && pkg.packageJson.scripts[testScript] && /(ts-)?mocha/.test(pkg.packageJson.scripts[testScript]!)) {
             if (pkg.packageJson.devDependencies && !pkg.packageJson.devDependencies[pkgstring]) {
                 console.warn(`${pkg.nameColored}: warning: missing ${pkgstring} dependency`);
@@ -55,9 +62,9 @@ export class FluidPackageCheck implements IPackageCheck {
     /**
      * mocha tests in packages/ should be in a "test:mocha" script so they can be run separately from jest tests
      */
-    public checkMochaTestScripts(pkg: Package, fix: boolean) {
+    public static checkMochaTestScripts(pkg: Package, fix: boolean, monoRepo: MonoRepo) {
         let fixed = false;
-        if (this.repoType !== RepoType.Server && pkg.packageJson.scripts && pkg.packageJson.scripts.test && /^(ts-)?mocha/.test(pkg.packageJson.scripts.test)) {
+        if (monoRepo !== MonoRepo.Server && pkg.packageJson.scripts && pkg.packageJson.scripts.test && /^(ts-)?mocha/.test(pkg.packageJson.scripts.test)) {
             console.warn(`${pkg.nameColored}: warning: "mocha" in "test" script instead of "test:mocha" script`)
             if (fix) {
                 if (!pkg.packageJson.scripts["test:mocha"]) {
@@ -73,7 +80,7 @@ export class FluidPackageCheck implements IPackageCheck {
         return fixed;
     }
 
-    public checkJestJunitTestEntry(pkg: Package, fix: boolean) {
+    private static checkJestJunitTestEntry(pkg: Package, fix: boolean) {
         let fixed = false;
         const pkgstring = "jest-junit";
         const pkgversion = "^10.0.0";
@@ -93,7 +100,7 @@ export class FluidPackageCheck implements IPackageCheck {
         return fixed;
     }
 
-    public checkTestCoverageScripts(pkg: Package, fix: boolean) {
+    private static checkTestCoverageScripts(pkg: Package, fix: boolean) {
         let fixed = false;
         // Fluid specific
         const testCoverageScript = pkg.getScript("test:coverage");
@@ -117,7 +124,7 @@ export class FluidPackageCheck implements IPackageCheck {
         return fixed;
     }
 
-    public checkBuildScripts(pkg: Package, fix: boolean) {
+    private static checkBuildScripts(pkg: Package, fix: boolean, monoRepo: MonoRepo) {
         // Fluid specific
         let fixed = false;
         const buildScript = pkg.getScript("build");
@@ -198,7 +205,7 @@ export class FluidPackageCheck implements IPackageCheck {
             check("build:compile", buildCompile);
             check("build:full", buildFull);
             check("build:full:compile", buildFullCompile);
-            if (this.repoType !== RepoType.Common) {
+            if (monoRepo !== MonoRepo.None) {
                 check("build:compile:min", buildCompileMin);
             }
 

@@ -4,7 +4,7 @@
  */
 
 import { commonOptions } from "./common/commonOptions";
-import { FluidRepo } from "./common/fluidRepo";
+import { FluidRepo } from "./fluidBuild/fluidRepo";
 import { getResolvedFluidRoot } from "./common/fluidUtils";
 import { logStatus } from "./common/logging";
 import { Timer } from "./common/timer";
@@ -36,11 +36,10 @@ async function main() {
     // Load the package
     // Repo info
     const repo = new FluidRepo(resolvedRoot);
-    const packages = repo.packages;
     timer.time("Package scan completed");
 
     // Check scripts
-    await packages.checkScripts();
+    repo.checkScripts(options.fixScripts);
     timer.time("Check scripts completed");
 
     const matched = repo.setMatched(options);
@@ -67,9 +66,7 @@ async function main() {
         }
 
         if (options.depcheck) {
-            for (const pkg of packages.packages) {
-                await pkg.depcheck();
-            }
+            repo.depcheck();
             timer.time("Dependencies check completed", true)
         }
 
@@ -83,7 +80,7 @@ async function main() {
         }
 
         const symlinkTaskName = options.symlink ? "Symlink" : "Symlink check";
-        if (!await packages.symlink(options.symlink)) {
+        if (!await repo.symlink(options.symlink)) {
             console.error(`ERROR: ${symlinkTaskName} failed`);
             process.exit(-7);
         }
@@ -91,7 +88,7 @@ async function main() {
 
         if (options.clean || options.build !== false) {
             // build the graph
-            const buildGraph = new BuildGraph(packages.packages, options.buildScript);
+            const buildGraph = new BuildGraph(repo.packages.packages, options.buildScript);
             timer.time("Build graph creation completed");
 
             if (options.clean) {

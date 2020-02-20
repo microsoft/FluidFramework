@@ -5,7 +5,7 @@
 
 import * as os from "os";
 import { commonOptionString, parseOption } from "../common/commonOptions"
-import { IPackageMatchedOptions } from "../common/fluidRepo";
+import { IPackageMatchedOptions } from "./fluidRepo";
 
 interface FastBuildOptions extends IPackageMatchedOptions {
     nolint: boolean;
