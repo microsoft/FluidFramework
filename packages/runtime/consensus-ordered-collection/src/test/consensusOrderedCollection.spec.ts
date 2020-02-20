@@ -10,7 +10,6 @@ import { ConsensusQueueFactory } from "../consensusOrderedCollectionFactory";
 import { IConsensusOrderedCollection } from "../interfaces";
 
 describe("Routerlicious", () => {
-    const runtime = new MockRuntime();
     const factory = new ConsensusQueueFactory();
 
     // tslint:disable:mocha-no-side-effect-code
@@ -118,7 +117,7 @@ describe("Routerlicious", () => {
 
     describe("Detached", () => {
         generate([1, 2], [1, 2], () => {
-            return factory.create(runtime, "consensus-ordered-collection");
+            return factory.create(new MockRuntime(), "consensus-ordered-collection");
         },
         () => {});
     });
@@ -129,6 +128,7 @@ describe("Routerlicious", () => {
 
         generate([1, 2], [1, 2],
             () => {
+                const runtime = new MockRuntime();
                 deltaConnFactory = new MockDeltaConnectionFactory();
                 const deltaConnection = deltaConnFactory.createDeltaConnection(runtime);
                 runtime.services = {
@@ -147,6 +147,7 @@ describe("Routerlicious", () => {
     });
 
     it("Disconnection flow", async () => {
+        const runtime = new MockRuntime();
         const deltaConnFactory = new MockDeltaConnectionFactory();
         const deltaConnection = deltaConnFactory.createDeltaConnection(runtime);
         runtime.services = {

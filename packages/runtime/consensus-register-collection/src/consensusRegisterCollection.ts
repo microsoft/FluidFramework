@@ -53,6 +53,12 @@ interface IRegisterOperation {
     key: string;
     type: "write";
     value: IRegisterValue;
+
+    // Message can be delivered with delay - resubmitted on reconnect.
+    // As such, refSeq needs to reference seq # at the time op was created (here),
+    // not when op was actually sent over wire (as client can ingest ops in between)
+    // in other words, we can't use ISequencedDocumentMessage.referenceSequenceNumber
+    refSeq: number;
 }
 
 /**
@@ -151,6 +157,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
             key,
             type: "write",
             value: operationValue,
+            refSeq: this.runtime.deltaManager.referenceSequenceNumber,
         };
         return this.submit(op);
     }
@@ -265,8 +272,13 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
             const op: IRegisterOperation = message.contents;
             switch (op.type) {
                 case "write":
+                    // Message can be delivered with delay - resubmitted on reconnect.
+                    // As such, refSeq needs to reference seq # at the time op was created (here),
+                    // not when op was actually sent over wire (as client can ingest ops in between)
+                    // in other words, we can't use ISequencedDocumentMessage.referenceSequenceNumber
+                    assert(op.refSeq <= message.referenceSequenceNumber);
                     const nonConcurrent = this.processInboundWrite(
-                        message.referenceSequenceNumber,
+                        op.refSeq,
                         message.sequenceNumber,
                         op,
                         local);

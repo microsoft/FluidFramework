@@ -47,6 +47,21 @@ import { ComponentSerializer } from "@microsoft/fluid-runtime-utils";
 import { IHistorian } from "@microsoft/fluid-server-services-client";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
+import { MockDeltaManager } from "./mockDeltas";
+
+export class MockDeltaManagerWithConnectionFactory extends MockDeltaManager {
+    public get minimumSequenceNumber(): number {
+        return this.connectionFactory.getMinSeq();
+    }
+
+    public get referenceSequenceNumber(): number {
+        return this.connectionFactory.sequenceNumber;
+    }
+
+    constructor(readonly connectionFactory?: MockDeltaConnectionFactory) {
+        super();
+    }
+}
 
 /**
  * Factory to create MockDeltaConnection for testing
@@ -56,10 +71,28 @@ export class MockDeltaConnectionFactory {
     public minSeq = new Map<string, number>();
     private readonly messages: ISequencedDocumentMessage[] = [];
     private readonly deltaConnections: MockDeltaConnection[] = [];
+
+    public getMinSeq(): number {
+        let minSeq: number;
+        for (const [, clientSeq] of this.minSeq) {
+            if (!minSeq) {
+                minSeq = clientSeq;
+            } else {
+                minSeq = Math.min(minSeq, clientSeq);
+            }
+        }
+        return minSeq ? minSeq : 0;
+    }
+
     public createDeltaConnection(runtime: MockRuntime): IDeltaConnection {
         // eslint-disable-next-line @typescript-eslint/no-use-before-define
         const delta = new MockDeltaConnection(this, runtime);
         this.deltaConnections.push(delta);
+
+        assert(runtime.deltaManager === undefined ||
+            runtime.deltaManager instanceof MockDeltaManagerWithConnectionFactory &&
+            runtime.deltaManager.connectionFactory === this);
+        runtime.deltaManager = new MockDeltaManagerWithConnectionFactory(this);
         return delta;
     }
 
@@ -90,18 +123,6 @@ export class MockDeltaConnectionFactory {
                 }
             }
         }
-    }
-
-    private getMinSeq(): number {
-        let minSeq: number;
-        for (const [, clientSeq] of this.minSeq) {
-            if (!minSeq) {
-                minSeq = clientSeq;
-            } else {
-                minSeq = Math.min(minSeq, clientSeq);
-            }
-        }
-        return minSeq ? minSeq : 0;
     }
 }
 
@@ -195,7 +216,7 @@ export class MockRuntime extends EventEmitter
     public readonly path = "";
     public readonly connected: boolean;
     public readonly leader: boolean;
-    public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    public deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     public readonly loader: ILoader;
     public readonly logger: ITelemetryLogger = DebugLogger.create("fluid:MockRuntime");
     public services: ISharedObjectServices;
