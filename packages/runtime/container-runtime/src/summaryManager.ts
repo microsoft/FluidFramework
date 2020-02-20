@@ -87,8 +87,8 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         private readonly summariesEnabled: boolean,
         private readonly enableWorker: boolean,
         parentLogger: ITelemetryLogger,
-        private readonly setNextSummarizer: (s: Promise<Summarizer>) => void,
-        private nextSummarizerP?: Promise<Summarizer>,
+        private readonly setNextSummarizer: (summarizer: Promise<Summarizer>) => void,
+        private readonly nextSummarizerP?: Promise<Summarizer>,
         private readonly maxRestarts: number = defaultMaxRestarts,
         initialDelayMs: number = defaultInitialDelayMs,
     ) {
@@ -235,7 +235,6 @@ export class SummaryManager extends EventEmitter implements IDisposable {
             }
         }, (error) => {
             this.logger.sendErrorEvent({ eventName: "CreateSummarizerError", attempt }, error);
-            this.nextSummarizerP = undefined; // avoid looping forever if this rejects
             if (this.shouldSummarize) {
                 this.start(attempt + 1);
             } else {

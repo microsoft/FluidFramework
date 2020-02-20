@@ -36,6 +36,9 @@ export interface IProvideSummarizer {
 }
 
 export interface ISummarizer extends IComponentRouter, IComponentRunnable, IComponentLoadable {
+    /**
+     * Returns a promise that will be resolved with the next Summarizer after context reload
+     */
     setSummarizer(): Promise<Summarizer>;
 }
 
@@ -68,6 +71,7 @@ export class Summarizer implements ISummarizer {
         this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");
         this.runCoordinator = new RunWhileConnectedCoordinator(runtime);
         if (summaryCollection) {
+            // summarize immediately because we just went through context reload
             this.immediateSummary = true;
         } else {
             this.summaryCollection = new SummaryCollection(this.runtime.deltaManager.initialSequenceNumber);

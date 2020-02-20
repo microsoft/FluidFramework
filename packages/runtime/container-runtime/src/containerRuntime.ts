@@ -23,6 +23,7 @@ import {
     IDeltaSender,
     ILoader,
     IRuntime,
+    IRuntimeState,
 } from "@microsoft/fluid-container-definitions";
 import {
     Deferred,
@@ -706,18 +707,19 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.context.requestSnapshot(tagMessage);
     }
 
-    public async stop(): Promise<IPreviousState> {
+    public async stop(): Promise<IRuntimeState> {
         this.verifyNotClosed();
         const snapshot = await this.snapshot("", false);
         this.summaryManager.dispose();
         this.summarizer.dispose();
         this.closed = true;
-        return {
+        const state: IPreviousState = {
             snapshot,
             summaryCollection: this.summarizer.summaryCollection,
             nextSummarizerP: this.nextSummarizerP,
             nextSummarizerD: this.nextSummarizerD,
         };
+        return state;
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string, version: string) {
