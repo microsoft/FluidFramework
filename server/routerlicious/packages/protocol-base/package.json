@@ -49,7 +49,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@microsoft/fluid-core-utils": "0.13.17538",
+    "@microsoft/fluid-core-utils": "^0.13.0",
     "@microsoft/fluid-gitresources": "^0.1001.0",
     "@microsoft/fluid-protocol-definitions": "^0.1001.0",
     "lodash": "^4.17.11"

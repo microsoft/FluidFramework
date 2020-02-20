@@ -22,7 +22,7 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@microsoft/fluid-core-utils": "0.13.17538",
+    "@microsoft/fluid-core-utils": "^0.13.0",
     "@microsoft/fluid-gitresources": "^0.1001.0",
     "@microsoft/fluid-protocol-definitions": "^0.1001.0",
     "@microsoft/fluid-server-services-client": "^0.1001.0",
