@@ -609,7 +609,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
         this.closed = true;
 
-        const iError = error && createIError(error, true);
+        const iError = error === undefined ? error : createIError(error, true);
         // Note: "disconnect" & "nack" do not have error object
         if (raiseContainerError && error !== undefined) {
             this.emit("error", iError);
