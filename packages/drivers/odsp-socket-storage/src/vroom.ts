@@ -111,6 +111,7 @@ export async function getSocketStorageDiscovery(
             odspCache.put(joinSessionKey, Promise.resolve({ content: cachedResult.content, timestamp: Date.now() }));
             return cachedResult.content;
         }
+        // Invalidating the cache because it is stale.
         odspCache.remove(joinSessionKey);
     }
 
