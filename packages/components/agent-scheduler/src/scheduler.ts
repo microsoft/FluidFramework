@@ -29,10 +29,6 @@ import {
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import * as debug from "debug";
 
-interface IChanged {
-    key: string;
-}
-
 const LeaderTaskId = "leader";
 
 class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent, IComponentRouter {
@@ -293,15 +289,15 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
             // Listeners for new/released tasks. All clients will try to grab at the same time.
             // May be we want a randomized timer (Something like raft) to reduce chattiness?
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
-            this.scheduler.on("atomicChanged", async (changed: IChanged) => {
+            this.scheduler.on("atomicChanged", async (key: string) => {
                 if (this.context.hostRuntime.deltaManager.active) {
-                    const currentClient = this.getTaskClientId(changed.key);
+                    const currentClient = this.getTaskClientId(key);
                     // Either a client registered for a new task or released a running task.
                     if (currentClient === null) {
-                        await this.pickNewTasks([changed.key]);
+                        await this.pickNewTasks([key]);
                     }
                     // A new leader was picked. set leadership info.
-                    if (changed.key === LeaderTaskId && currentClient === this.runtime.clientId) {
+                    if (key === LeaderTaskId && currentClient === this.runtime.clientId) {
                         this._leader = true;
                         this.emit("leader");
                     }

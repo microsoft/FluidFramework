@@ -69,7 +69,7 @@ export interface IConsensusRegisterCollection<T = any> extends ISharedObject {
     /**
      * Event listeners
      */
-    on(event: "atomicChanged" | "versionChanged", listener: (...args: any[]) => void): this;
+    on(event: "atomicChanged" | "versionChanged", listener: (key: string, value: any, local: boolean) => void): this;
 }
 
 /**

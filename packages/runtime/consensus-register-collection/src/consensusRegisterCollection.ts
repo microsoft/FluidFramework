@@ -115,6 +115,16 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
         super(id, runtime, attributes);
     }
 
+    public on(
+        event: "atomicChanged" | "versionChanged",
+        listener: (key: string, value: any, local: boolean) => void): this;
+    public on(event: string | symbol, listener: (...args: any[]) => void): this;
+
+    public on(event: string, listener: (...args: any[]) => void): this
+    {
+        return super.on(event, listener);
+    }
+
     /**
      * Creates a new register or writes a new value.
      * Returns a promise that will resolve when the write is acked.
@@ -303,7 +313,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
             } else {
                 data.atomic = atomicUpdate;
             }
-            this.emit("atomicChanged", local, op);
+            this.emit("atomicChanged", op.key, op.value, local);
         }
 
         // Keep removing versions where incoming refseq is greater than or equals to current.
@@ -324,7 +334,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
 
         // Push the new element.
         data.versions.push(versionUpdate);
-        this.emit("versionChanged", local, op);
+        this.emit("versionChanged", op.key, op.value, local);
 
         return nonConcurrent;
     }
