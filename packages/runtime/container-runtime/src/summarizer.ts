@@ -80,7 +80,7 @@ export class Summarizer implements ISummarizer {
             (op) => this.summaryCollection.handleOp(op as ISequencedDocumentMessage));
 
         // eslint-disable-next-line no-unused-expressions
-        this.runtime.nextSummarizerD?.resolve(this);
+        this.runtime.previousState.nextSummarizerD?.resolve(this);
     }
 
     public async run(onBehalfOf: string): Promise<void> {

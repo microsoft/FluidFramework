@@ -488,9 +488,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     public readonly IComponentHandleContext: IComponentHandleContext;
 
     public readonly logger: ITelemetryLogger;
+    public readonly previousState: IPreviousState;
     private readonly summaryManager: SummaryManager;
     private readonly summaryTreeConverter = new SummaryTreeConverter();
-    private readonly previousState: IPreviousState;
     private latestSummaryAck: { handle?: string; referenceSequenceNumber: number };
 
     private tasks: string[] = [];
