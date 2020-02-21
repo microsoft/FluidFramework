@@ -7,14 +7,10 @@ import {
     IFluidCodeDetails,
 } from "@microsoft/fluid-container-definitions";
 import { Container } from "@microsoft/fluid-container-loader";
-// eslint-disable-next-line import/no-extraneous-dependencies
-import {
-    IQuorum,
-} from "@microsoft/fluid-protocol-definitions";
 
 const currentCodeProposalKey = "code";
 
-function createProposeOnceFunc(quorum: IQuorum, pkgForCodeProposal: IFluidCodeDetails) {
+function createProposeOnceFunc(container: Container, pkgForCodeProposal: IFluidCodeDetails) {
     let proposalP;
     let done = false;
     return async () => {
@@ -22,7 +18,12 @@ function createProposeOnceFunc(quorum: IQuorum, pkgForCodeProposal: IFluidCodeDe
             return done;
         }
 
+        if (!container.connected) {
+            await new Promise<false>((resolve) => container.once("connected", () => resolve()));
+        }
+
         if (proposalP === undefined) {
+            const quorum = container.getQuorum();
             proposalP = quorum.propose(currentCodeProposalKey, pkgForCodeProposal);
         }
 
@@ -68,7 +69,7 @@ export async function initializeContainerCode(
         return;
     }
 
-    const proposeOnceFunc = createProposeOnceFunc(quorum, pkgForCodeProposal);
+    const proposeOnceFunc = createProposeOnceFunc(container, pkgForCodeProposal);
 
     // start a promise waiting for context changed, which will happen once we get a code proposal
     const contextChangedP = new Promise<void>((resolve) => container.once("contextChanged", () => resolve()));

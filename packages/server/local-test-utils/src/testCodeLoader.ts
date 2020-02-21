@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ICodeLoader, IFluidCodeDetails, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
+import { ICodeLoader, IFluidCodeDetails, IRuntimeFactory, IFluidModule } from "@microsoft/fluid-container-definitions";
 
 /**
  * Implementation of the code loader for the local-test-utils. This expects that
@@ -26,8 +26,7 @@ export class TestCodeLoader implements ICodeLoader {
      * if the key does not exist.
      * @param source - key of code to load
      */
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public load<T>(pkg: IFluidCodeDetails): Promise<T> {
+    public async load(pkg: IFluidCodeDetails): Promise<IFluidModule> {
         let source: string;
 
         if (typeof pkg.package === "string") {
@@ -41,6 +40,7 @@ export class TestCodeLoader implements ICodeLoader {
             throw new Error(`TestCodeLoader: Missing IRuntimeFactory for '${source}'.`);
         }
 
-        return Promise.resolve(factory as any);
+        const fluidExport = await factory;
+        return { fluidExport };
     }
 }
