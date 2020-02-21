@@ -187,7 +187,7 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
         this.protocolToDocumentFactoryMap = createProtocolToFactoryMapping(documentServiceFactories);
     }
 
-    public async create(source: IFluidCodeDetails): Promise<Container> {
+    public async experimentalCreate(source: IFluidCodeDetails): Promise<Container> {
         throw new Error("Method not implemented.");
     }
 

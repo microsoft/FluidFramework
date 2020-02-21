@@ -370,11 +370,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.removeAllListeners();
     }
 
-    public isAttached(): boolean {
+    public experimentalIsAttached(): boolean {
         throw new Error("Method not implemented.");
     }
 
-    public async attach(resolver: IUrlResolver, options: any): Promise<void> {
+    public async experimentalAttach(resolver: IUrlResolver, options: any): Promise<void> {
         throw new Error("Method not implemented.");
     }
 

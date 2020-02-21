@@ -42,7 +42,7 @@ export interface IExperimentalUrlResolver {
     readonly isExperimentalUrlResolver: true;
 
     // Creates a new document on the host with the provided options. Returns the resolved URL.
-    createAndResolve(
+    experimentalCreateAndResolve(
         summary: ISummaryTree,
         sequenceNumber: number,
         values: [string, ICommittedProposal][],

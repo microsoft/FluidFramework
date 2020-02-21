@@ -163,10 +163,10 @@ export interface IExperimentalRuntime {
 
     // Creates a summary for use in the create new flow.
     // Any attach, etc... logic can happen at this point in time.
-    summarizeForCreate(): ISummaryTree;
+    experimentalSummarizeForCreate(): ISummaryTree;
 
     // Bind the registered services once attached.
-    connect(storageService: IDocumentStorageService): void;
+    experimentalConnect(storageService: IDocumentStorageService): void;
 }
 
 export interface IMessageScheduler {
