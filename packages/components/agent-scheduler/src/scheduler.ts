@@ -16,7 +16,6 @@ import {
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import { LoaderHeader } from "@microsoft/fluid-container-definitions";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
-import { ConnectionState } from "@microsoft/fluid-protocol-definitions";
 import { ConsensusRegisterCollection } from "@microsoft/fluid-register-collection";
 import {
     IAgentScheduler,
@@ -48,9 +47,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
             scheduler = await handle.get<ConsensusRegisterCollection<string | null>>();
         }
         const agentScheduler = new AgentScheduler(runtime, context, scheduler);
-        agentScheduler.initialize().catch((err) => {
-            debug(err as string);
-        });
+        await agentScheduler.initialize();
 
         return agentScheduler;
     }
@@ -91,7 +88,6 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     }
 
     public async register(...taskUrls: string[]): Promise<void> {
-        await this.waitForFullConnection();
         for (const taskUrl of taskUrls) {
             if (this.registeredTasks.has(taskUrl)) {
                 return Promise.reject(`${taskUrl} is already registered`);
@@ -110,7 +106,6 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     }
 
     public async pick(taskId: string, worker: boolean): Promise<void> {
-        await this.waitForFullConnection();
         if (this.localTasks.has(taskId)) {
             return Promise.reject(`${taskId} is already attempted`);
         }
@@ -124,7 +119,6 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     }
 
     public async release(...taskUrls: string[]): Promise<void> {
-        await this.waitForFullConnection();
         for (const taskUrl of taskUrls) {
             if (!this.localTasks.has(taskUrl)) {
                 return Promise.reject(`${taskUrl} was never registered`);
@@ -157,7 +151,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
             try {
                 await this.pickCore(possibleTasks);
             } catch (err) {
-                debug(err as string); // Just log the error. It will be attempted again.
+                this.runtime.logger.sendErrorEvent({eventName: "AgentSchedulerPickError"}, err);
             }
         }
     }
@@ -188,7 +182,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         }
     }
 
-    private async pickCore(taskUrls: string[]) {
+    private async pickCore(taskUrls: string[]): Promise<void> {
         if (taskUrls.length > 0) {
             const picksP: Promise<boolean>[] = [];
             for (const taskUrl of taskUrls) {
@@ -198,7 +192,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
             await Promise.all(picksP);
 
             // The registers should have up to date results now. Start the respective task if this client was chosen.
-            const runningP: Promise<IComponentRunnable | void>[] = [];
+            const runningP: Promise<void>[] = [];
             for (const taskUrl of taskUrls) {
                 const pickedClientId = this.getTaskClientId(taskUrl);
 
@@ -218,7 +212,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
                     debug(`${pickedClientId} is running ${taskUrl}`);
                 }
             }
-            return runningP;
+            await Promise.all(runningP);
         }
     }
 
@@ -235,7 +229,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
 
             // Releases are not contested by definition. So every id should have null value now.
             for (const taskUrl of taskUrls) {
-                assert.equal(this.getTaskClientId(taskUrl), null, `${taskUrl} was not released`);
+                assert.notEqual(this.getTaskClientId(taskUrl), this.runtime.clientId, `${taskUrl} was not released`);
                 debug(`Released ${taskUrl}`);
             }
         }
@@ -248,11 +242,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
                 debug(`Clearing ${taskUrl}`);
                 clearP.push(this.writeCore(taskUrl, null));
             }
-            try {
-                await Promise.all(clearP);
-            } catch (err) {
-                debug(err as string);
-            }
+            await Promise.all(clearP);
         }
     }
 
@@ -267,8 +257,6 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     private async initialize() {
         const configuration = (this.context.hostRuntime as IComponent).IComponentConfiguration;
         if (configuration === undefined || configuration.canReconnect) {
-            await this.waitForFullConnection();
-
             const quorum = this.runtime.getQuorum();
             // A client left the quorum. Iterate and clear tasks held by that client.
             // Ideally a leader should do this cleanup. But it's complicated when a leader itself leaves.
@@ -304,20 +292,16 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
                 }
             });
 
-            await this.initializeCore();
-            this.handleReconnection();
-        }
-    }
-
-    // Ensures that runtime and scheduler is connected.
-    private async waitForFullConnection(): Promise<void> {
-        if (!this.runtime.connected) {
-            // tslint:disable-next-line
-            await new Promise<void>((resolve) => this.runtime.on("connected", () => resolve()));
-        }
-        if (this.scheduler.state !== ConnectionState.Connected) {
-            // tslint:disable-next-line
-            await new Promise<void>((resolve) => this.scheduler.on("connected", () => resolve()));
+            const initializeCore = () => {
+                this.initializeCore().catch((error) => {
+                    this.runtime.logger.sendErrorEvent({eventName: "AgentSchedulerInitError"}, error);
+                });
+            };
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
+            this.runtime.on("connected", () => {
+                initializeCore();
+            });
+            initializeCore();
         }
     }
 
@@ -335,25 +319,13 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
             await this.clearTasks(clearCandidates);
 
             // Each client expresses interest to be a leader.
-            try {
-                await this.pick(LeaderTaskId, false);
+            await this.pick(LeaderTaskId, false);
 
-                // There must be a leader now.
-                const leaderClientId = this.getTaskClientId(LeaderTaskId);
-                assert(leaderClientId, "No leader present");
-                this._leader = leaderClientId === this.runtime.clientId;
-            } catch (err) {
-                debug(err as string);
-            }
+            // There must be a leader now.
+            const leaderClientId = this.getTaskClientId(LeaderTaskId);
+            assert(leaderClientId, "No leader present");
+            this._leader = leaderClientId === this.runtime.clientId;
         }
-    }
-
-    private handleReconnection() {
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        this.runtime.on("connected", async () => {
-            await this.waitForFullConnection();
-            await this.initializeCore();
-        });
     }
 
     private async runTask(url: string, worker: boolean) {
@@ -372,13 +344,13 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         };
         const response = await this.runtime.loader.request(request);
         if (response.status !== 200 || response.mimeType !== "fluid/component") {
-            return Promise.reject<IComponentRunnable>("Invalid agent route");
+            return Promise.reject("Invalid agent route");
         }
 
         const rawComponent = response.value as IComponent;
         const agent = rawComponent.IComponentRunnable;
         if (agent === undefined) {
-            return Promise.reject<IComponentRunnable>("Component does not implement IComponentRunnable");
+            return Promise.reject("Component does not implement IComponentRunnable");
         }
 
         return agent.run();
@@ -434,13 +406,9 @@ export class TaskManager implements ITaskManager {
             return Promise.reject("Picking not allowed on secondary copy");
         } else {
             const urlWithSlash = componentUrl.startsWith("/") ? componentUrl : `/${componentUrl}`;
-            try {
-                await this.scheduler.pick(
-                    `${urlWithSlash}/${this.url}/${taskId}`,
-                    worker !== undefined ? worker : false);
-            } catch (err) {
-                debug(err as string); // Just log the error. It will be attempted again.
-            }
+            return this.scheduler.pick(
+                `${urlWithSlash}/${this.url}/${taskId}`,
+                worker !== undefined ? worker : false);
         }
     }
 }
