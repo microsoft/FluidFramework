@@ -7,7 +7,7 @@ import { IComponentHandle, IRequest, IResponse } from "@microsoft/fluid-componen
 import { ISharedDirectory, MapFactory, SharedDirectory } from "@microsoft/fluid-map";
 import { ITaskManager } from "@microsoft/fluid-runtime-definitions";
 // eslint-disable-next-line import/no-internal-modules
-import uuid from "uuid/v4";
+import * as uuid from "uuid/v4";
 import { BlobHandle } from "./blobHandle";
 import { SharedComponent } from "./sharedComponent";
 
