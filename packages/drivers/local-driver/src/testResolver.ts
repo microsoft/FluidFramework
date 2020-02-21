@@ -5,7 +5,7 @@
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
-import { ScopeType } from "@microsoft/fluid-protocol-definitions";
+import { ScopeType, ISummaryTree, ICommittedProposal } from "@microsoft/fluid-protocol-definitions";
 import { generateToken } from "@microsoft/fluid-server-services-client";
 
 /**
@@ -39,5 +39,14 @@ export class TestResolver implements IUrlResolver {
         };
 
         return resolved;
+    }
+
+    public async create(
+        summary: ISummaryTree,
+        sequenceNumber: number,
+        values: [string, ICommittedProposal][],
+        options: any,
+    ): Promise<IResolvedUrl> {
+        throw new Error("Method not implemented.");
     }
 }

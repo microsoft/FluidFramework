@@ -22,6 +22,7 @@ import {
     ITree,
     SummaryType,
 } from "@microsoft/fluid-protocol-definitions";
+import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 
 class NullRuntime extends EventEmitter implements IRuntime {
     public get IComponentSerializer(): IComponentSerializer {
@@ -49,6 +50,14 @@ class NullRuntime extends EventEmitter implements IRuntime {
             tree: {},
             type: SummaryType.Tree,
         });
+    }
+
+    public summarizeForCreate(): ISummaryTree {
+        throw new Error("Method not implemented");
+    }
+
+    public connect(storageService: IDocumentStorageService): void {
+        throw new Error("Method not implemented");
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string) {

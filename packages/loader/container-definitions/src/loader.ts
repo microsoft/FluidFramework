@@ -11,6 +11,7 @@ import {
     IQuorum,
     ISequencedDocumentMessage,
 } from "@microsoft/fluid-protocol-definitions";
+import { IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import { IFluidCodeDetails } from "./chaincode";
 import { IDeltaManager } from "./deltas";
 
@@ -35,6 +36,19 @@ export interface IContainer extends EventEmitter {
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 
     getQuorum(): IQuorum;
+
+    /**
+     * Flag indicating if the given container has been attached to a host service.
+     */
+    isAttached(): boolean;
+
+    /**
+     * Attaches the container to the provided host.
+     *
+     * TODO - in the case of failure options should give a retry policy. Or some continuation function
+     * that allows attachment to a secondary document.
+     */
+    attach(resolver: IUrlResolver, options: any): Promise<void>;
 }
 
 export interface ILoader {
@@ -51,6 +65,12 @@ export interface ILoader {
      * a request against the server found from the resolve step.
      */
     resolve(request: IRequest): Promise<IContainer>;
+
+    /**
+     * Creates a new contanier using the specified chaincode but in an unattached state. While unattached all
+     * updates will only be local until the user explciitly attaches the container to a service provider.
+     */
+    create(source: IFluidCodeDetails): Promise<IContainer>;
 }
 
 export enum LoaderHeader {

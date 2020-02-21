@@ -6,6 +6,7 @@
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import { createOdspUrl, OdspDriverUrlResolver } from "@microsoft/fluid-odsp-driver";
+import { ISummaryTree, ICommittedProposal } from "@microsoft/fluid-protocol-definitions";
 
 export class OdspUrlResolver implements IUrlResolver {
 
@@ -21,6 +22,15 @@ export class OdspUrlResolver implements IUrlResolver {
             return odspDriverUrlResolver.resolve({ url: urlToBeResolved });
         }
         return undefined;
+    }
+
+    public async create(
+        summary: ISummaryTree,
+        sequenceNumber: number,
+        values: [string, ICommittedProposal][],
+        options: any,
+    ): Promise<IResolvedUrl> {
+        throw new Error("Method not implemented.");
     }
 }
 

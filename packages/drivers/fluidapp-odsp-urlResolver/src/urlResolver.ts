@@ -7,6 +7,7 @@ import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
 import { IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import { createOdspUrl, OdspDriverUrlResolver } from "@microsoft/fluid-odsp-driver";
+import { ISummaryTree, ICommittedProposal } from "@microsoft/fluid-protocol-definitions";
 
 const fluidOfficeServers = [
     "dev.fluidpreview.office.net",
@@ -29,6 +30,15 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
             return odspDriverUrlResolver.resolve({ url: urlToBeResolved });
         }
         return undefined;
+    }
+
+    public async create(
+        summary: ISummaryTree,
+        sequenceNumber: number,
+        values: [string, ICommittedProposal][],
+        options: any,
+    ): Promise<IResolvedUrl> {
+        throw new Error("Method not implemented.");
     }
 }
 

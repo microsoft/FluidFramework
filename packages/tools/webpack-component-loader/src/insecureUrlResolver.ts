@@ -9,7 +9,7 @@ import {
     IResolvedUrl,
     IUrlResolver,
 } from "@microsoft/fluid-driver-definitions";
-import { ITokenClaims, IUser } from "@microsoft/fluid-protocol-definitions";
+import { ITokenClaims, IUser, ISummaryTree, ICommittedProposal } from "@microsoft/fluid-protocol-definitions";
 import Axios from "axios";
 import * as jwt from "jsonwebtoken";
 
@@ -89,6 +89,15 @@ export class InsecureUrlResolver implements IUrlResolver {
 
             return this.cache.get(request.url);
         }
+    }
+
+    public async create(
+        summary: ISummaryTree,
+        sequenceNumber: number,
+        values: [string, ICommittedProposal][],
+        options: any,
+    ): Promise<IResolvedUrl> {
+        throw new Error("Method not implemented.");
     }
 
     private auth(tenantId: string, documentId: string) {

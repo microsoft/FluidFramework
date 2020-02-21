@@ -22,6 +22,7 @@ import {
     ISnapshotTree,
     ITree,
     MessageType,
+    ISummaryTree,
 } from "@microsoft/fluid-protocol-definitions";
 import { IAudience } from "./audience";
 import { IBlobManager } from "./blobs";
@@ -154,6 +155,13 @@ export interface IRuntime {
      * Processes the given signal
      */
     processSignal(message: any, local: boolean);
+
+    // Creates a summary for use in the create new flow.
+    // Any attach, etc... logic can happen at this point in time.
+    summarizeForCreate(): ISummaryTree;
+
+    // Bind the registered services once attached.
+    connect(storageService: IDocumentStorageService): void;
 }
 
 export interface IMessageScheduler {

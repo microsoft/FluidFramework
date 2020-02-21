@@ -33,6 +33,8 @@ import {
     ISequencedDocumentMessage,
     ITree,
     TreeEntry,
+    ISummaryTree,
+    ICommittedProposal,
 } from "@microsoft/fluid-protocol-definitions";
 import {
     FileSnapshotReader,
@@ -148,6 +150,15 @@ class ContainerUrlResolver implements IUrlResolver {
             return Promise.reject(`ContainerUrlResolver can't resolve ${request}`);
         }
         return this.cache.get(request.url);
+    }
+
+    public async create(
+        summary: ISummaryTree,
+        sequenceNumber: number,
+        values: [string, ICommittedProposal][],
+        options: any,
+    ): Promise<IResolvedUrl> {
+        throw new Error("Method not implemented.");
     }
 }
 

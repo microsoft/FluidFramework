@@ -16,6 +16,7 @@ import {
     ILoader,
     IProxyLoaderFactory,
     LoaderHeader,
+    IFluidCodeDetails,
 } from "@microsoft/fluid-container-definitions";
 import { Deferred } from "@microsoft/fluid-core-utils";
 import {
@@ -81,6 +82,10 @@ export class RelativeLoader extends EventEmitter implements ILoader {
         }
 
         return this.loader.request(request);
+    }
+
+    public async create(source: IFluidCodeDetails): Promise<Container> {
+        throw new Error("Method not implemented.");
     }
 
     public resolveContainer(container: Container) {
@@ -177,6 +182,10 @@ export class Loader extends EventEmitter implements ILoader {
         }
 
         this.protocolToDocumentFactoryMap = createProtocolToFactoryMapping(documentServiceFactories);
+    }
+
+    public async create(source: IFluidCodeDetails): Promise<Container> {
+        throw new Error("Method not implemented.");
     }
 
     public async resolve(request: IRequest): Promise<Container> {

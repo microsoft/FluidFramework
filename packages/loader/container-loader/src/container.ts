@@ -32,6 +32,7 @@ import {
     IDocumentService,
     IDocumentStorageService,
     IError,
+    IUrlResolver,
 } from "@microsoft/fluid-driver-definitions";
 import { createIError, readAndParse, OnlineStatus, isOnline } from "@microsoft/fluid-driver-utils";
 import {
@@ -364,6 +365,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.emit("closed");
 
         this.removeAllListeners();
+    }
+
+    public isAttached(): boolean {
+        throw new Error("Method not implemented.");
+    }
+
+    public async attach(resolver: IUrlResolver, options: any): Promise<void> {
+        throw new Error("Method not implemented.");
     }
 
     public async request(path: IRequest): Promise<IResponse> {

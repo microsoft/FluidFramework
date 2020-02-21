@@ -5,7 +5,8 @@
 
 import * as assert from "assert";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IUrlResolver, OpenMode } from "@microsoft/fluid-driver-definitions";
+import { IUrlResolver, OpenMode, IResolvedUrl } from "@microsoft/fluid-driver-definitions";
+import { ISummaryTree, ICommittedProposal } from "@microsoft/fluid-protocol-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { getHashedDocumentId } from "./odspUtils";
 import { isOdcOrigin } from "./isOdc";
@@ -100,6 +101,15 @@ export class OdspDriverUrlResolver implements IUrlResolver {
             driveId,
             itemId,
         };
+    }
+
+    public async create(
+        summary: ISummaryTree,
+        sequenceNumber: number,
+        values: [string, ICommittedProposal][],
+        options: any,
+    ): Promise<IResolvedUrl> {
+        throw new Error("Method not implemented.");
     }
 
     private decodeOdspUrl(url: string): { siteUrl: string; driveId: string; itemId: string; path: string } {

@@ -9,7 +9,7 @@ import {
     IRequest,
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
-import { IContainer, ILoader } from "@microsoft/fluid-container-definitions";
+import { IContainer, ILoader, IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import { IFluidResolvedUrl } from "@microsoft/fluid-driver-definitions";
 import * as Comlink from "comlink";
 
@@ -68,5 +68,9 @@ export class WebWorkerLoader implements ILoader, IComponentRunnable, IComponentR
 
     public async resolve(request: IRequest): Promise<IContainer> {
         return this.proxy.resolve(request);
+    }
+
+    public async create(source: IFluidCodeDetails): Promise<IContainer> {
+        throw new Error("Method not implemented.");
     }
 }
