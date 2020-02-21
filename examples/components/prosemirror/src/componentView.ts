@@ -61,12 +61,12 @@ export class ComponentView implements NodeView {
         const componentP = loadP.then(
             (result) => {
                 if (result.mimeType !== "fluid/component") {
-                    return Promise.reject<IComponent>();
+                    throw new Error("Can't insert a non-fluid component");
                 }
 
                 const component = result.value as IComponent;
-                if (!component.IComponentHTMLView && !component.IComponentHTMLVisual) {
-                    return Promise.reject<IComponent>();
+                if (!HTMLViewAdapter.canAdapt(component)) {
+                    throw new Error("Don't know how to render this component");
                 }
 
                 return component;

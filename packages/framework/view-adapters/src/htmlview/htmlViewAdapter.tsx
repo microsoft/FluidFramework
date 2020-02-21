@@ -17,6 +17,15 @@ import { IComponentReactViewable } from "../interfaces";
 export class HTMLViewAdapter implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
+    public static canAdapt(component: IComponent) {
+        return (
+            React.isValidElement(component)
+            || component.IComponentReactViewable !== undefined
+            || component.IComponentHTMLView !== undefined
+            || component.IComponentHTMLVisual !== undefined
+        );
+    }
+
     /**
      * A reference to the current container node for this view so we can unmount it appropriately in
      * the React cases.  This also doubles as a way for us to know if we are mounted or not.
