@@ -108,8 +108,9 @@ export class TodoView extends React.Component<TodoViewProps, TodoViewState> {
                 <form onSubmit={this.createNewTodoItem}>
                     <input
                         type="text"
-                        ref={(input) => { this.newTextInput = input; }} />
-                    <button type="submit">+</button>
+                        ref={(input) => { this.newTextInput = input; }}
+                        name="itemName" />
+                    <button type="submit" name="createItem">+</button>
                 </form>
                 <div className="todo-item-list">
                     {todoItemComponents}
