@@ -514,7 +514,6 @@ export class DeliLambda implements IPartitionLambda {
         return false;
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
     private async sendForward(message: ITicketedMessage) {
         const scriptoriumP = this.forwardProducer.send([message], message.tenantId, message.documentId);
         const broadcasterP = this.broadcastProducer.send([message], message.tenantId, message.documentId);

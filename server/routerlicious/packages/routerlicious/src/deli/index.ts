@@ -61,7 +61,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
         localProducer,
         undefined,
         localContext,
-        async (_, context: LocalContext) => new BroadcasterLambda(publisher, localContext));
+        async (_, context: LocalContext) => new BroadcasterLambda(publisher, context));
 
     await broadcasterLambda.start();
 
