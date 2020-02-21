@@ -81,7 +81,7 @@ data:
         "foreman": {
             "queues": ["paparazziQueue2", "augloopQueue2"],
             "permissions": {
-                "paparazziQueue": ["snapshot", "spell", "intel", "translation", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation"],
+                "paparazziQueue": ["snapshot", "spell", "intel", "translation", "search", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation", "chain-search"],
                 "augloopQueue": ["augmentation"]
             }
         },
@@ -141,7 +141,7 @@ data:
             "blobStorageUrl": "{{ .Values.historian.externalUrl }}",
             "repository": "FluidFramework",
             "npm": "",
-            "permission": ["snapshot", "spell", "intel", "translation", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation"]
+            "permission": ["snapshot", "spell", "intel", "translation", "search", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation", "chain-search"]
         },
         "tenantConfig": [
         ],
