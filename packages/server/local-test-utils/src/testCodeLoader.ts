@@ -39,12 +39,8 @@ export class TestCodeLoader implements ICodeLoader {
         if (factory === undefined) {
             throw new Error(`TestCodeLoader: Missing IRuntimeFactory for '${source}'.`);
         }
-        const maybeRuntimeFactory = factory as IRuntimeFactory;
-        if (maybeRuntimeFactory.IRuntimeFactory) {
-            return Promise.resolve({ fluidExport: maybeRuntimeFactory });
-        } else {
-            const fluidExport = await (factory as Promise<IRuntimeFactory>);
-            return { fluidExport };
-        }
+
+        const fluidExport = await factory;
+        return { fluidExport };
     }
 }
