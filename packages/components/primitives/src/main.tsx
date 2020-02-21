@@ -15,7 +15,7 @@ import { SharedMap, IDirectory, IDirectoryValueChanged } from "@microsoft/fluid-
 import { DdsCollectionComponent } from "./ddsCollection";
 
 /**
- * Dice roller example using view interfaces and stock component classes.
+ * Basic DDS examples using view interfaces and stock component classes.
  */
 export class PrimitivesCollection extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
