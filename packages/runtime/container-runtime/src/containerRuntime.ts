@@ -486,12 +486,15 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     private needsFlush = false;
     private flushTrigger = false;
 
+    // Always matched IAgentScheduler.leader property
     private _leader = false;
 
     public get connected(): boolean {
         return this.connectionState === ConnectionState.Connected;
     }
 
+    // Almost the same as IAgentScheduler.leader (this._leader),
+    // but returns false if disconnected
     public get leader(): boolean {
         if (this.connected && this.deltaManager && this.deltaManager.active) {
             return this._leader;
@@ -723,9 +726,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         if (value === ConnectionState.Connected) {
             this.summaryManager.setConnected(clientId);
         } else {
-            if (this._leader) {
-                this.updateLeader(false);
-            }
+            this.updateLeader();
             this.summaryManager.setDisconnected();
         }
     }
@@ -1294,18 +1295,18 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.getScheduler().then((scheduler) => {
                 if (scheduler.leader) {
                     this.updateLeader(true);
-                } else {
-                    scheduler.on("leader", () => {
-                        this.updateLeader(true);
-                    });
                 }
+                scheduler.on("leader", () => {
+                    this.updateLeader(true);
+                });
+                scheduler.on("notleader", () => {
+                    this.updateLeader(false);
+                });
             }, (err) => {
                 debug(err);
             });
             this.context.quorum.on("removeMember", (clientId: string) => {
-                if (clientId === this.clientId && this._leader) {
-                    this.updateLeader(false);
-                } else if (this.leader) {
+                if (this.leader) {
                     this.runTaskAnalyzer();
                 }
             });
@@ -1319,16 +1320,18 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return schedulerComponent.IAgentScheduler;
     }
 
-    private updateLeader(leadership: boolean) {
-        this._leader = leadership;
-        if (this._leader) {
+    private updateLeader(leadership?: boolean) {
+        if (leadership !== undefined) {
+            this._leader = leadership;
+        }
+        if (this.leader) {
             this.emit("leader", this.clientId);
         } else {
             this.emit("noleader", this.clientId);
         }
 
         for (const [, context] of this.contexts) {
-            context.updateLeader(this._leader);
+            context.updateLeader(this.leader);
         }
         if (this.leader) {
             this.runTaskAnalyzer();
