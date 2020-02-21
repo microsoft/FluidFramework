@@ -16,9 +16,26 @@ import { IComponentReactViewable } from "../interfaces";
  */
 export class HTMLViewAdapter implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
+
+    /**
+     * A reference to the current container node for this view so we can unmount it appropriately in
+     * the React cases.  This also doubles as a way for us to know if we are mounted or not.
+     */
+    private containerNode: HTMLElement | undefined;
+
+    /**
+     * If the component is an IComponentHTMLVisual we will create and persist one IComponentHTMLView from it, which
+     * we will retain across rendering/removal.
+     */
+    private viewFromVisual: IComponentHTMLView | undefined;
+
     constructor(private readonly component: IComponent) { }
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions) {
+        // Note that if we're already mounted, this can cause multiple rendering with possibly unintended effects.
+        // Probably try to avoid doing this.
+        this.containerNode = elm;
+
         if (React.isValidElement(this.component)) {
             ReactDOM.render(this.component, elm);
             return;
@@ -38,12 +55,55 @@ export class HTMLViewAdapter implements IComponentHTMLView {
 
         const htmlVisual = this.component.IComponentHTMLVisual;
         if (htmlVisual !== undefined) {
-            const view = htmlVisual.addView();
-            view.render(elm, options);
+            if (this.viewFromVisual === undefined) {
+                // This is the first time we're trying to render, so get a view.
+                this.viewFromVisual = htmlVisual.addView();
+            }
+            this.viewFromVisual.render(elm, options);
             return;
         }
 
+        // Either it's an unrenderable component, or using some framework we don't support.
+        console.warn("Attempting to render an unsupported component via HTMLViewAdapter");
         elm.appendChild(document.createElement("span"));
+    }
+
+    public remove() {
+        if (this.containerNode === undefined) {
+            // Then we are already unmounted.
+            return;
+        }
+
+        if (React.isValidElement(this.component)) {
+            // Not ideal - this will also remove the component from the DOM.  But not sure how else to enter into
+            // componentWillUnmount handling which is what we really want.
+            ReactDOM.unmountComponentAtNode(this.containerNode);
+            this.containerNode = undefined;
+            return;
+        }
+
+        const reactViewable = this.component.IComponentReactViewable;
+        if (reactViewable !== undefined) {
+            // Not ideal - this will also remove the component from the DOM.  But not sure how else to enter into
+            // componentWillUnmount handling which is what we really want.
+            ReactDOM.unmountComponentAtNode(this.containerNode);
+            this.containerNode = undefined;
+            return;
+        }
+
+        const htmlView = this.component.IComponentHTMLView;
+        if (htmlView !== undefined && htmlView.remove !== undefined) {
+            htmlView.remove();
+            this.containerNode = undefined;
+            return;
+        }
+
+        const htmlVisual = this.component.IComponentHTMLVisual;
+        if (htmlVisual !== undefined && this.viewFromVisual !== undefined && this.viewFromVisual.remove !== undefined) {
+            this.viewFromVisual.remove();
+            this.containerNode = undefined;
+            return;
+        }
     }
 }
 
