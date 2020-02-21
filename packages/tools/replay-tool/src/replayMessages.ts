@@ -152,7 +152,7 @@ class ContainerUrlResolver implements IUrlResolver {
         return this.cache.get(request.url);
     }
 
-    public async create(
+    public async createAndResolve(
         summary: ISummaryTree,
         sequenceNumber: number,
         values: [string, ICommittedProposal][],

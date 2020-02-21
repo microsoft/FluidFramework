@@ -103,7 +103,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
         };
     }
 
-    public async create(
+    public async createAndResolve(
         summary: ISummaryTree,
         sequenceNumber: number,
         values: [string, ICommittedProposal][],

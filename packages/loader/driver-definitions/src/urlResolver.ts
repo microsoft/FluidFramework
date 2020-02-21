@@ -37,7 +37,7 @@ export interface IUrlResolver {
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
 
     // Creates a new document on the host with the provided options. Returns the resolved URL.
-    create(
+    createAndResolve(
         summary: ISummaryTree,
         sequenceNumber: number,
         values: [string, ICommittedProposal][],

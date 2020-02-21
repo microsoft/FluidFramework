@@ -29,7 +29,7 @@ export class CreationDriverUrlResolver implements IUrlResolver {
         return response;
     }
 
-    public async create(
+    public async createAndResolve(
         summary: ISummaryTree,
         sequenceNumber: number,
         values: [string, ICommittedProposal][],

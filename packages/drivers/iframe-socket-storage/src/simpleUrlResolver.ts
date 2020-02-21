@@ -20,7 +20,7 @@ export class InnerUrlResolver implements IUrlResolver {
         return Promise.resolve(this.resolved);
     }
 
-    public async create(
+    public async createAndResolve(
         summary: ISummaryTree,
         sequenceNumber: number,
         values: [string, ICommittedProposal][],

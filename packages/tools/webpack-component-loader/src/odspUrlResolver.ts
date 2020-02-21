@@ -47,7 +47,7 @@ export class OdspUrlResolver implements IUrlResolver {
         return `/r11s/${encoded}`;
     }
 
-    public async create(
+    public async createAndResolve(
         summary: ISummaryTree,
         sequenceNumber: number,
         values: [string, ICommittedProposal][],

@@ -24,7 +24,7 @@ export class OdspUrlResolver implements IUrlResolver {
         return undefined;
     }
 
-    public async create(
+    public async createAndResolve(
         summary: ISummaryTree,
         sequenceNumber: number,
         values: [string, ICommittedProposal][],

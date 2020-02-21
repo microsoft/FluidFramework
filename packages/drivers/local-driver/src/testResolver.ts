@@ -41,7 +41,7 @@ export class TestResolver implements IUrlResolver {
         return resolved;
     }
 
-    public async create(
+    public async createAndResolve(
         summary: ISummaryTree,
         sequenceNumber: number,
         values: [string, ICommittedProposal][],
