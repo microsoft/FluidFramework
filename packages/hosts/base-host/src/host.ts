@@ -11,6 +11,7 @@ import {
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { IFluidResolvedUrl, IResolvedUrl } from "@microsoft/fluid-driver-definitions";
 import { IResolvedPackage, WebCodeLoader } from "@microsoft/fluid-web-code-loader";
+import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 import { IBaseHostConfig } from "./hostConfig";
 import { initializeContainerCode } from "./initializeContainerCode";
 
@@ -26,20 +27,10 @@ async function getComponentAndRender(loader: Loader, url: string, div: HTMLDivEl
         return;
     }
 
-    // Check if the component is viewable
+    // Render the component with an HTMLViewAdapter to abstract the UI framework used by the component
     const component = response.value as IComponent;
-    // First try to get it as a view
-    let renderable = component.IComponentHTMLView;
-    if (!renderable) {
-        // Otherwise get the visual, which is a view factory
-        const visual = component.IComponentHTMLVisual;
-        if (visual) {
-            renderable = visual.addView();
-        }
-    }
-    if (renderable) {
-        renderable.render(div, { display: "block" });
-    }
+    const embed = new HTMLViewAdapter(component);
+    embed.render(div, { display: "block" });
 }
 
 /**

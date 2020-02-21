@@ -52,6 +52,7 @@
     "@microsoft/fluid-container-definitions": "^0.14.0",
     "@microsoft/fluid-container-loader": "^0.14.0",
     "@microsoft/fluid-driver-definitions": "^0.14.0",
+    "@microsoft/fluid-view-adapters": "^0.14.0",
     "@microsoft/fluid-web-code-loader": "^0.14.0"
   },
   "devDependencies": {
