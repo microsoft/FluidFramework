@@ -178,6 +178,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     private _closed = false;
 
+    public get readonly(): boolean | undefined {
+        return this._deltaManager.readonly;
+    }
+
     public get closed(): boolean {
         return this._closed;
     }
@@ -331,6 +335,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this.protocolHandler!.quorum;
     }
 
+    public on(event: "readonly", listener: (readonly: boolean) => void): void;
     public on(event: "connected" | "contextChanged", listener: (clientId: string) => void): this;
     public on(event: "disconnected" | "joining" | "closed", listener: () => void): this;
     public on(event: "error", listener: (error: any) => void): this;
@@ -889,6 +894,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         deltaManager.on("processTime", (time) => {
             this.emit("processTime", time);
+        });
+
+        deltaManager.on("readonly", (readonly) => {
+            this.emit("readonly", readonly);
         });
 
         return deltaManager;
