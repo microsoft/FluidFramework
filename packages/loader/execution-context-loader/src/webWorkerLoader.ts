@@ -9,7 +9,7 @@ import {
     IRequest,
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
-import { IContainer, ILoader, IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
+import { IContainer, ILoader } from "@microsoft/fluid-container-definitions";
 import { IFluidResolvedUrl } from "@microsoft/fluid-driver-definitions";
 import * as Comlink from "comlink";
 

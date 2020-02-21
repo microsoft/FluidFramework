@@ -10,7 +10,6 @@ import {
     getDriveItemByRootFileName,
     IOdspAuthRequestInfo,
 } from "@microsoft/fluid-odsp-utils";
-import { ISummaryTree, ICommittedProposal } from "@microsoft/fluid-protocol-definitions";
 
 export class OdspUrlResolver implements IUrlResolver {
     private readonly driverUrlResolver = new OdspDriverUrlResolver();
@@ -45,14 +44,5 @@ export class OdspUrlResolver implements IUrlResolver {
     private formFilePath(documentId: string): string {
         const encoded = encodeURIComponent(`${documentId}.fluid`);
         return `/r11s/${encoded}`;
-    }
-
-    public async createAndResolve(
-        summary: ISummaryTree,
-        sequenceNumber: number,
-        values: [string, ICommittedProposal][],
-        options: any,
-    ): Promise<IResolvedUrl> {
-        throw new Error("Method not implemented.");
     }
 }

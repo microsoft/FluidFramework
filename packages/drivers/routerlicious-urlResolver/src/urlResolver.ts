@@ -11,6 +11,7 @@ import {
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
+    IExperimentalUrlResolver,
 } from "@microsoft/fluid-driver-definitions";
 import { IUser, ScopeType, ISummaryTree, ICommittedProposal } from "@microsoft/fluid-protocol-definitions";
 import { generateToken, IAlfredTenant } from "@microsoft/fluid-server-services-client";
@@ -22,7 +23,9 @@ const r11sServers = [
     "www.eu.prague.office-int.com",
 ];
 
-export class RouterliciousUrlResolver implements IUrlResolver {
+export class RouterliciousUrlResolver implements IUrlResolver, IExperimentalUrlResolver {
+
+    public readonly isExperimentalUrlResolver = true;
 
     constructor(
         private readonly config: { provider: Provider, tenantId: string, documentId: string } | undefined,

@@ -5,7 +5,6 @@
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
-import { ISummaryTree, ICommittedProposal } from "@microsoft/fluid-protocol-definitions";
 
 export class CreationDriverUrlResolver implements IUrlResolver {
     constructor() { }
@@ -27,14 +26,5 @@ export class CreationDriverUrlResolver implements IUrlResolver {
         };
 
         return response;
-    }
-
-    public async createAndResolve(
-        summary: ISummaryTree,
-        sequenceNumber: number,
-        values: [string, ICommittedProposal][],
-        options: any,
-    ): Promise<IResolvedUrl> {
-        throw new Error("Method not implemented.");
     }
 }

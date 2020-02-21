@@ -11,7 +11,6 @@ import {
     IUrlResolver,
 } from "@microsoft/fluid-driver-definitions";
 import Axios from "axios";
-import { ISummaryTree, ICommittedProposal } from "@microsoft/fluid-protocol-definitions";
 
 export class ContainerUrlResolver implements IUrlResolver {
     private readonly cache = new Map<string, Promise<IResolvedUrl>>();
@@ -48,14 +47,5 @@ export class ContainerUrlResolver implements IUrlResolver {
         }
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return this.cache.get(request.url)!;
-    }
-
-    public async createAndResolve(
-        summary: ISummaryTree,
-        sequenceNumber: number,
-        values: [string, ICommittedProposal][],
-        options: any,
-    ): Promise<IResolvedUrl> {
-        throw new Error("Method not implemented.");
     }
 }

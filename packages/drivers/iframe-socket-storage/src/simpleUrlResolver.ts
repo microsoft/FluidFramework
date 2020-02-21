@@ -5,7 +5,6 @@
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
-import { ISummaryTree, ICommittedProposal } from "@microsoft/fluid-protocol-definitions";
 
 /**
  * A UrlResolver that just returns what's given.
@@ -18,14 +17,5 @@ export class InnerUrlResolver implements IUrlResolver {
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public resolve(request: IRequest): Promise<IResolvedUrl> {
         return Promise.resolve(this.resolved);
-    }
-
-    public async createAndResolve(
-        summary: ISummaryTree,
-        sequenceNumber: number,
-        values: [string, ICommittedProposal][],
-        options: any,
-    ): Promise<IResolvedUrl> {
-        throw new Error("Method not implemented.");
     }
 }
