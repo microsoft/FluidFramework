@@ -26,17 +26,3 @@ services:
         volumes:
             - ../..:/usr/src/server
         restart: always
-    broadcastereh:
-        build:
-            context: ../..
-            dockerfile: server/routerlicious/r11s-Dockerfile
-            target: runner
-        ports:
-            - "5868:5858"
-        command: node --inspect=0.0.0.0:5858 dist/event-hub-service/index.js broadcaster /usr/src/server/server/routerlicious/packages/routerlicious/dist/broadcaster/index.js
-        environment:
-            - DEBUG=fluid:*
-            - NODE_ENV=development
-        volumes:
-            - ../..:/usr/src/server
-        restart: always

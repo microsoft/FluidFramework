@@ -71,10 +71,6 @@ scriptorium:
   name: scriptorium
   replicas: 8
 
-broadcaster:
-  name: broadcaster
-  replicas: 8
-
 scribe:
   name: scribe
   replicas: 8

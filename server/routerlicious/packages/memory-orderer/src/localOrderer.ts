@@ -31,9 +31,10 @@ import {
     ITenantManager,
     ITopic,
     IWebSocket,
-    IQueuedMessage,
 } from "@microsoft/fluid-server-services-core";
+import { DummyKafka } from "./dummyKafka";
 import { ILocalOrdererSetup } from "./interfaces";
+import { LocalContext } from "./localContext";
 import { LocalKafka } from "./localKafka";
 import { LocalLambdaController } from "./localLambdaController";
 import { LocalOrdererConnection } from "./localOrdererConnection";
@@ -135,17 +136,6 @@ class LocalSocketPublisher implements IPublisher {
     }
 
     public async close() {
-    }
-}
-
-// Want a pure local orderer that can do all kinds of stuff
-class LocalContext implements IContext {
-    public checkpoint(queuedMessage: IQueuedMessage) {
-        return;
-    }
-
-    public error(error: any, restart: boolean) {
-        return;
     }
 }
 
@@ -347,6 +337,7 @@ export class LocalOrderer implements IOrderer {
                     documentCollection,
                     this.deltasKafka,
                     this.rawDeltasKafka,
+                    new DummyKafka(),
                     this.clientTimeout,
                     ActivityCheckingTimeout,
                     NoopConsolidationTimeout);

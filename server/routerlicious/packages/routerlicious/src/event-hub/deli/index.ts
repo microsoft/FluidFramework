@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { DeliLambdaFactory } from "@microsoft/fluid-server-lambdas";
+import { BroadcasterLambda, DeliLambdaFactory } from "@microsoft/fluid-server-lambdas";
 import { create as createDocumentRouter } from "@microsoft/fluid-server-lambdas-driver";
+import { LocalKafka, LocalContext, LocalLambdaController } from "@microsoft/fluid-server-memory-orderer";
 import * as services from "@microsoft/fluid-server-services";
 import * as core from "@microsoft/fluid-server-services-core";
 import { Provider } from "nconf";
@@ -28,7 +29,27 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
     const forwardProducer = new services.EventHubProducer(endpoint, forwardSendTopic);
     const reverseProducer = new services.EventHubProducer(endpoint, reverseSendTopic);
 
-    return new DeliLambdaFactory(mongoManager, collection, forwardProducer, reverseProducer);
+    const redisConfig = config.get("redis");
+    const redisOptions: any = { password: redisConfig.pass };
+    if (redisConfig.tls) {
+        redisOptions.tls = {
+            serverName: redisConfig.host,
+        };
+    }
+    const publisher = new services.SocketIoRedisPublisher(redisConfig.port, redisConfig.host, redisOptions);
+
+    const localContext = new LocalContext();
+    const localProducer = new LocalKafka();
+
+    const broadcasterLambda = new LocalLambdaController(
+        localProducer,
+        undefined,
+        localContext,
+        async (_, context: LocalContext) => new BroadcasterLambda(publisher, localContext));
+
+    await broadcasterLambda.start();
+
+    return new DeliLambdaFactory(mongoManager, collection, forwardProducer, reverseProducer, localProducer);
 }
 
 export async function create(config: Provider): Promise<core.IPartitionLambdaFactory> {

@@ -31,7 +31,8 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         private readonly mongoManager: MongoManager,
         private readonly collection: ICollection<IDocument>,
         private readonly forwardProducer: IProducer,
-        private readonly reverseProducer: IProducer) {
+        private readonly reverseProducer: IProducer,
+        private readonly broadcastProduer: IProducer) {
         super();
     }
 
@@ -57,6 +58,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             // The producer as well it shouldn't take. Maybe it just gives an output stream?
             this.forwardProducer,
             this.reverseProducer,
+            this.broadcastProduer,
             ClientSequenceTimeout,
             ActivityCheckingTimeout,
             NoopConsolidationTimeout);

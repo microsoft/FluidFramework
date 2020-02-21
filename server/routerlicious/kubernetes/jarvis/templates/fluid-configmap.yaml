@@ -101,10 +101,6 @@ data:
             "scriptorium": {
                 "group": "{{ template "scriptorium.fullname" . }}",
                 "topic": "{{ .Values.kafka.topics.deltas }}"
-            },
-            "broadcaster": {
-                "group": "{{ template "broadcaster.fullname" . }}",
-                "topic": "{{ .Values.kafka.topics.deltas }}"
             }
         },
         "scriptorium": {

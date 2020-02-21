@@ -92,6 +92,7 @@ export class DeliLambda implements IPartitionLambda {
         collection: ICollection<IDocument>,
         private readonly forwardProducer: IProducer,
         private readonly reverseProducer: IProducer,
+        private readonly broadcastProducer: IProducer,
         private readonly clientTimeout: number,
         private readonly activityTimeout: number,
         private readonly noOpConsolidationTimeout: number) {
@@ -186,7 +187,7 @@ export class DeliLambda implements IPartitionLambda {
 
             // Update the msn last sent.
             this.lastSentMSN = ticketedMessage.msn;
-            this.lastSendP = this.sendToScriptorium(ticketedMessage.message);
+            this.lastSendP = this.sendForward(ticketedMessage.message);
         }
 
         const checkpoint = this.generateCheckpoint(rawMessage);
@@ -514,8 +515,10 @@ export class DeliLambda implements IPartitionLambda {
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
-    private sendToScriptorium(message: ITicketedMessage): Promise<void> {
-        return this.forwardProducer.send([message], message.tenantId, message.documentId);
+    private async sendForward(message: ITicketedMessage) {
+        const scriptoriumP = this.forwardProducer.send([message], message.tenantId, message.documentId);
+        const broadcasterP = this.broadcastProducer.send([message], message.tenantId, message.documentId);
+        await Promise.all([broadcasterP, scriptoriumP]);
     }
 
     private sendToAlfred(message: IRawOperationMessage) {
