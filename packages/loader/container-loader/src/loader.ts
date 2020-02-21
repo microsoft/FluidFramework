@@ -17,6 +17,7 @@ import {
     IProxyLoaderFactory,
     LoaderHeader,
     IFluidCodeDetails,
+    IExperimentalLoader,
 } from "@microsoft/fluid-container-definitions";
 import { Deferred } from "@microsoft/fluid-core-utils";
 import {
@@ -152,11 +153,13 @@ export function createProtocolToFactoryMapping(
 /**
  * Manages Fluid resource loading
  */
-export class Loader extends EventEmitter implements ILoader {
+export class Loader extends EventEmitter implements ILoader, IExperimentalLoader {
 
     private readonly containers = new Map<string, Promise<Container>>();
     private readonly resolveCache = new Map<string, IResolvedUrl>();
     private readonly protocolToDocumentFactoryMap: Map<string, IDocumentServiceFactory>;
+
+    public readonly isExperimentalLoader = true;
 
     constructor(
         private readonly resolver: IUrlResolver | IUrlResolver[],

@@ -14,6 +14,7 @@ import {
     IContainerContext,
     IRuntime,
     IRuntimeFactory,
+    IExperimentalRuntime,
 } from "@microsoft/fluid-container-definitions";
 import {
     ConnectionState,
@@ -24,7 +25,9 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 
-class NullRuntime extends EventEmitter implements IRuntime {
+class NullRuntime extends EventEmitter implements IRuntime, IExperimentalRuntime {
+
+    public readonly isExperimentalRuntime = true;
     public get IComponentSerializer(): IComponentSerializer {
         throw new Error("Not implemented");
     }

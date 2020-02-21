@@ -23,6 +23,7 @@ import {
     IDeltaSender,
     ILoader,
     IRuntime,
+    IExperimentalRuntime,
 } from "@microsoft/fluid-container-definitions";
 import {
     Deferred,
@@ -351,7 +352,9 @@ const schedulerRuntimeRequestHandler: RuntimeRequestHandler =
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the component level mappings.
  */
-export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRuntime {
+export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRuntime, IExperimentalRuntime {
+
+    public readonly isExperimentalRuntime = true;
     /**
      * Load the components from a snapshot and returns the runtime.
      * @param context - Context of the container.

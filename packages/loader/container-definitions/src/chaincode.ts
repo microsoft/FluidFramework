@@ -155,6 +155,11 @@ export interface IRuntime {
      * Processes the given signal
      */
     processSignal(message: any, local: boolean);
+}
+
+export interface IExperimentalRuntime {
+
+    isExperimentalRuntime: true;
 
     // Creates a summary for use in the create new flow.
     // Any attach, etc... logic can happen at this point in time.

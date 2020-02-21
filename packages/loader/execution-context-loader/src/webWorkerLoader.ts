@@ -69,8 +69,4 @@ export class WebWorkerLoader implements ILoader, IComponentRunnable, IComponentR
     public async resolve(request: IRequest): Promise<IContainer> {
         return this.proxy.resolve(request);
     }
-
-    public async create(source: IFluidCodeDetails): Promise<IContainer> {
-        throw new Error("Method not implemented.");
-    }
 }

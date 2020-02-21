@@ -36,6 +36,11 @@ export interface IContainer extends EventEmitter {
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 
     getQuorum(): IQuorum;
+}
+
+export interface IExperimentalContainer {
+
+    readonly isExperimentalContainer: true;
 
     /**
      * Flag indicating if the given container has been attached to a host service.
@@ -65,6 +70,11 @@ export interface ILoader {
      * a request against the server found from the resolve step.
      */
     resolve(request: IRequest): Promise<IContainer>;
+}
+
+export interface IExperimentalLoader {
+
+    isExperimentalLoader: true;
 
     /**
      * Creates a new contanier using the specified chaincode but in an unattached state. While unattached all
