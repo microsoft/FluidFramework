@@ -246,7 +246,12 @@ export class FlowDocument extends PrimedComponent {
                         // If not, remove any positions up to, but excluding the current segment
                         // and adjust the pending removal range to just after this marker.
                         debug(`  exclude end tag '</${segment.properties.tag}>' at ${position}.`);
-                        ops.push(createRemoveRangeOp(start, position));
+
+                        // If the preserved end tag is at the beginning of the removal range, no remove op
+                        // is necessary.  Just skip over it.
+                        if (start !== position) {
+                            ops.push(createRemoveRangeOp(start, position));
+                        }
                         start = position + 1;
                     }
                     break;
@@ -257,6 +262,7 @@ export class FlowDocument extends PrimedComponent {
             return true;
         }, start, end);
 
+        // If there is a non-empty span remaining, generate its remove op now.
         if (start !== end) {
             ops.push(createRemoveRangeOp(start, end));
         }

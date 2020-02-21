@@ -145,25 +145,49 @@ describe("base-host", () => {
             await initializeContainerCode(containter as Container, codePkg);
             assert(quorum.has("code"), "quorum missing code proposal");
         });
-
-        it("Non-existent Container", async () => {
-            const quorum = new MockQuorum() as unknown as IQuorum;
-            const containter: Partial<Container> = {
-                getQuorum: () => quorum,
-                existing: false,
-                once: (event, listener) => {
-                    switch (event) {
-                        case "contextChanged":
-                            break;
-                        default:
-                            assert.fail(`Didn't expect ${String(event)}`);
-                    }
-                    listener(event);
-                    return containter as Container;
-                },
-            };
-            await initializeContainerCode(containter as Container, codePkg);
-            assert(quorum.has("code"), "quorum missing code proposal");
+        describe("Non-existent Container", () => {
+            it("Not Connected", async () => {
+                const quorum = new MockQuorum() as unknown as IQuorum;
+                const containter: Partial<Container> = {
+                    getQuorum: () => quorum,
+                    existing: false,
+                    connected: false,
+                    once: (event, listener) => {
+                        switch (event) {
+                            case "connected":
+                            case "contextChanged":
+                                break;
+                            default:
+                                assert.fail(`Didn't expect ${String(event)}`);
+                        }
+                        listener(event);
+                        return containter as Container;
+                    },
+                };
+                await initializeContainerCode(containter as Container, codePkg);
+                assert(quorum.has("code"), "quorum missing code proposal");
+            });
+            it("Connected", async () => {
+                const quorum = new MockQuorum() as unknown as IQuorum;
+                const containter: Partial<Container> = {
+                    getQuorum: () => quorum,
+                    existing: false,
+                    connected: true,
+                    once: (event, listener) => {
+                        switch (event) {
+                            case "connected":
+                            case "contextChanged":
+                                break;
+                            default:
+                                assert.fail(`Didn't expect ${String(event)}`);
+                        }
+                        listener(event);
+                        return containter as Container;
+                    },
+                };
+                await initializeContainerCode(containter as Container, codePkg);
+                assert(quorum.has("code"), "quorum missing code proposal");
+            });
         });
 
         describe("Existing Container ", () => {
