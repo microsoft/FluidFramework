@@ -11,9 +11,9 @@ import {
     IQuorum,
     ISequencedDocumentMessage,
 } from "@microsoft/fluid-protocol-definitions";
+import { IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import { IFluidCodeDetails, IFluidModule } from "./chaincode";
 import { IDeltaManager } from "./deltas";
-import { IUrlResolver } from "@microsoft/fluid-driver-definitions";
 
 /**
  * Code loading interface
