@@ -37,7 +37,7 @@ data:
         "kafka": {
             "lib": {
                 "name": "kafka-node",
-                "endpoint": "{{ .Values.zookeeper.url }}"
+                "endpoint": "{{ .Values.kafka.url }}"
             },
             "maxMessageSize": "1MB"
         },
@@ -152,7 +152,7 @@ data:
             "permissions": {
                 "paparazziQueue": ["snapshot", "spell", "intel", "translation"],
                 "augloopQueue": ["augmentation"],
-                "headlessQueue": ["chain-snapshot", "chain-intel", "chain-translation", "chain-spell", "chain-cache"]
+                "headlessQueue": ["chain-snapshot", "chain-intel", "chain-translation", "chain-spell", "chain-cache", "chain-search"]
             }
         },
         "paparazzi": {
@@ -197,7 +197,7 @@ data:
             "repository": "FluidFramework",
             "clusterNpm": "{{ .Values.worker.clusterNpm }}",
             "npm": "{{ .Values.worker.npm }}",
-            "permission": ["snapshot", "spell", "intel", "translation", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation"]
+            "permission": ["snapshot", "spell", "intel", "translation", "search", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation", "chain-search"]
         },
         "tenantConfig": [
             {{- $lastIndex := sub (len .Values.riddler.tenants) 1}}

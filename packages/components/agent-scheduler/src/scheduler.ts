@@ -29,10 +29,6 @@ import {
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import * as debug from "debug";
 
-interface IChanged {
-    key: string;
-}
-
 const LeaderTaskId = "leader";
 
 class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent, IComponentRouter {
@@ -168,7 +164,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
 
     private async registerCore(taskUrls: string[]): Promise<void> {
         if (taskUrls.length > 0) {
-            const registersP: Promise<void>[] = [];
+            const registersP: Promise<boolean>[] = [];
             for (const taskUrl of taskUrls) {
                 debug(`Registering ${taskUrl}`);
                 // tslint:disable no-null-keyword
@@ -194,7 +190,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
 
     private async pickCore(taskUrls: string[]) {
         if (taskUrls.length > 0) {
-            const picksP: Promise<void>[] = [];
+            const picksP: Promise<boolean>[] = [];
             for (const taskUrl of taskUrls) {
                 debug(`Requesting ${taskUrl}`);
                 picksP.push(this.writeCore(taskUrl, this.runtime.clientId));
@@ -228,7 +224,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
 
     private async releaseCore(taskUrls: string[]) {
         if (taskUrls.length > 0) {
-            const releasesP: Promise<void>[] = [];
+            const releasesP: Promise<boolean>[] = [];
             for (const taskUrl of taskUrls) {
                 debug(`Releasing ${taskUrl}`);
                 // Remove from local map so that it can be picked later.
@@ -247,7 +243,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
 
     private async clearTasks(taskUrls: string[]) {
         if (this.runtime.connected && taskUrls.length > 0) {
-            const clearP: Promise<void>[] = [];
+            const clearP: Promise<boolean>[] = [];
             for (const taskUrl of taskUrls) {
                 debug(`Clearing ${taskUrl}`);
                 clearP.push(this.writeCore(taskUrl, null));
@@ -264,7 +260,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         return this.scheduler.read(url);
     }
 
-    private async writeCore(key: string, value: string | null): Promise<void> {
+    private async writeCore(key: string, value: string | null): Promise<boolean> {
         return this.scheduler.write(key, value);
     }
 
@@ -293,15 +289,15 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
             // Listeners for new/released tasks. All clients will try to grab at the same time.
             // May be we want a randomized timer (Something like raft) to reduce chattiness?
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
-            this.scheduler.on("atomicChanged", async (changed: IChanged) => {
+            this.scheduler.on("atomicChanged", async (key: string) => {
                 if (this.context.hostRuntime.deltaManager.active) {
-                    const currentClient = this.getTaskClientId(changed.key);
+                    const currentClient = this.getTaskClientId(key);
                     // Either a client registered for a new task or released a running task.
                     if (currentClient === null) {
-                        await this.pickNewTasks([changed.key]);
+                        await this.pickNewTasks([key]);
                     }
                     // A new leader was picked. set leadership info.
-                    if (changed.key === LeaderTaskId && currentClient === this.runtime.clientId) {
+                    if (key === LeaderTaskId && currentClient === this.runtime.clientId) {
                         this._leader = true;
                         this.emit("leader");
                     }

@@ -25,7 +25,6 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.14.0",
     "@microsoft/fluid-map": "^0.14.0",
     "@microsoft/fluid-sequence": "^0.14.0",
     "react": "^16.10.2"

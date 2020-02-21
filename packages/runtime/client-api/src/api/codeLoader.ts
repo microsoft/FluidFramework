@@ -17,7 +17,7 @@ import {
 import { ContainerRuntime, IContainerRuntimeOptions } from "@microsoft/fluid-container-runtime";
 import * as ink from "@microsoft/fluid-ink";
 import * as map from "@microsoft/fluid-map";
-import { ConsensusQueue, ConsensusStack } from "@microsoft/fluid-ordered-collection";
+import { ConsensusQueue } from "@microsoft/fluid-ordered-collection";
 import { ConsensusRegisterCollection } from "@microsoft/fluid-register-collection";
 import {
     IComponentContext,
@@ -44,7 +44,6 @@ export class Chaincode implements IComponentFactory {
         const objectSequenceFactory = sequence.SharedObjectSequence.getFactory();
         const numberSequenceFactory = sequence.SharedNumberSequence.getFactory();
         const consensusQueueFactory = ConsensusQueue.getFactory();
-        const consensusStackFactory = ConsensusStack.getFactory();
         const consensusRegisterCollectionFactory = ConsensusRegisterCollection.getFactory();
         const sparseMatrixFactory = sequence.SparseMatrix.getFactory();
         const directoryFactory = map.SharedDirectory.getFactory();
@@ -59,7 +58,6 @@ export class Chaincode implements IComponentFactory {
         modules.set(objectSequenceFactory.type, objectSequenceFactory);
         modules.set(numberSequenceFactory.type, numberSequenceFactory);
         modules.set(consensusQueueFactory.type, consensusQueueFactory);
-        modules.set(consensusStackFactory.type, consensusStackFactory);
         modules.set(consensusRegisterCollectionFactory.type, consensusRegisterCollectionFactory);
         modules.set(sparseMatrixFactory.type, sparseMatrixFactory);
         modules.set(directoryFactory.type, directoryFactory);
