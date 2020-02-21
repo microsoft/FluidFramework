@@ -11,7 +11,7 @@ import {
     IQuorum,
     ISequencedDocumentMessage,
 } from "@microsoft/fluid-protocol-definitions";
-import { IFluidCodeDetails } from "./chaincode";
+import { IFluidCodeDetails, IFluidModule } from "./chaincode";
 import { IDeltaManager } from "./deltas";
 
 /**
@@ -21,7 +21,7 @@ export interface ICodeLoader {
     /**
      * Loads the package specified by IPackage and returns a promise to its entry point exports.
      */
-    load<T>(source: IFluidCodeDetails): Promise<T>;
+    load(source: IFluidCodeDetails): Promise<IFluidModule>;
 }
 
 /**

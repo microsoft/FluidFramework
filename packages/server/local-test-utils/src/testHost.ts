@@ -166,24 +166,27 @@ export class TestHost {
     ) {
         this.deltaConnectionServer = deltaConnectionServer || TestDeltaConnectionServer.create();
 
+        const runtimeFactory = {
+            IRuntimeFactory: undefined,
+            // eslint-disable-next-line @typescript-eslint/promise-function-async
+            instantiateRuntime: (context) => SimpleContainerRuntimeFactory.instantiateRuntime(
+                context,
+                TestRootComponent.type,
+                [
+                    ...componentRegistry,
+                    [TestRootComponent.type, Promise.resolve(
+                        new PrimedComponentFactory(TestRootComponent, sharedObjectFactories),
+                    )],
+                ],
+                this.containerServiceRegistry),
+        };
+        runtimeFactory.IRuntimeFactory = runtimeFactory;
+
         const store = new TestDataStore(
             new TestCodeLoader([
                 [
                     TestRootComponent.type,
-                    {
-                        IRuntimeFactory: undefined,
-                        // eslint-disable-next-line @typescript-eslint/promise-function-async
-                        instantiateRuntime: (context) => SimpleContainerRuntimeFactory.instantiateRuntime(
-                            context,
-                            TestRootComponent.type,
-                            [
-                                ...componentRegistry,
-                                [TestRootComponent.type, Promise.resolve(
-                                    new PrimedComponentFactory(TestRootComponent, sharedObjectFactories),
-                                )],
-                            ],
-                            this.containerServiceRegistry),
-                    },
+                    runtimeFactory,
                 ],
             ]),
             new TestDocumentServiceFactory(this.deltaConnectionServer),
