@@ -8,7 +8,7 @@ import {
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import {
-    IComponentHTMLVisual,
+    IComponentHTMLView,
 } from "@microsoft/fluid-component-core-interfaces";
 
 import * as React from "react";
@@ -40,9 +40,8 @@ export const FriendlyButtonName = "Button";
 /**
  * Button example using view interfaces and stock component classes.
  */
-export class Button extends PrimedComponent implements IComponentHTMLVisual {
-
-    public get IComponentHTMLVisual() { return this; }
+export class Button extends PrimedComponent implements IComponentHTMLView {
+    public get IComponentHTMLView() { return this; }
 
     private static readonly factory = new PrimedComponentFactory(Button, []);
 

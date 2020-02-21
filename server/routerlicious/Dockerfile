@@ -56,14 +56,15 @@ COPY packages/drivers/iframe-socket-storage/package*.json packages/drivers/ifram
 COPY packages/drivers/socket-storage-shared/package*.json packages/drivers/socket-storage-shared/
 COPY packages/drivers/odsp-urlResolver/package*.json packages/drivers/odsp-urlResolver/
 COPY packages/drivers/fluidapp-odsp-urlResolver/package*.json packages/drivers/fluidapp-odsp-urlResolver/
+COPY packages/drivers/local-driver/package*.json packages/drivers/local-driver/
 COPY packages/drivers/routerlicious-urlResolver/package*.json packages/drivers/routerlicious-urlResolver/
-COPY packages/drivers/test-driver/package*.json packages/drivers/test-driver/
 COPY packages/drivers/create-new-driver/package*.json packages/drivers/create-new-driver/
 COPY packages/framework/aqueduct/package*.json packages/framework/aqueduct/
 COPY packages/framework/aqueduct-react/package*.json packages/framework/aqueduct-react/
 COPY packages/framework/experimental/package*.json packages/framework/experimental/
 COPY packages/framework/framework-definitions/package*.json packages/framework/framework-definitions/
 COPY packages/framework/undo-redo/package*.json packages/framework/undo-redo/
+COPY packages/framework/view-adapters/package*.json packages/framework/view-adapters/
 COPY packages/loader/component-core-interfaces/package*.json packages/loader/component-core-interfaces/
 COPY packages/loader/container-definitions/package*.json packages/loader/container-definitions/
 COPY packages/loader/container-loader/package*.json packages/loader/container-loader/
@@ -92,7 +93,7 @@ COPY packages/runtime/runtime-definitions/package*.json packages/runtime/runtime
 COPY packages/runtime/runtime-utils/package*.json packages/runtime/runtime-utils/
 COPY packages/runtime/runtime-test-utils/package*.json packages/runtime/runtime-test-utils/
 COPY packages/runtime/sequence/package*.json packages/runtime/sequence/
-COPY packages/server/local-test-server/package*.json packages/server/local-test-server/
+COPY packages/server/local-test-utils/package*.json packages/server/local-test-utils/
 COPY packages/utils/odsp-utils/package*.json packages/utils/odsp-utils/
 COPY packages/utils/fluid-tool-utils/package*.json packages/utils/fluid-tool-utils/
 COPY packages/server/tools-core/package*.json packages/server/tools-core/

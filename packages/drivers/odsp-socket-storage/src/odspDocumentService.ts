@@ -10,13 +10,16 @@ import {
     IDocumentDeltaStorageService,
     IDocumentService,
     IDocumentStorageService,
+    IResolvedUrl,
+    OpenMode,
 } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionMode,
     IClient,
     IErrorTrackingService,
 } from "@microsoft/fluid-protocol-definitions";
-import { ISocketStorageDiscovery } from "./contracts";
+import { IOdspResolvedUrl, ISocketStorageDiscovery } from "./contracts";
+import { createNewFluidFile } from "./createFile";
 import { debug } from "./debug";
 import { IFetchWrapper } from "./fetchWrapper";
 import { OdspCache } from "./odspCache";
@@ -26,6 +29,7 @@ import { OdspDocumentStorageManager } from "./odspDocumentStorageManager";
 import { OdspDocumentStorageService } from "./odspDocumentStorageService";
 import { getWithRetryForTokenRefresh, isLocalStorageAvailable } from "./odspUtils";
 import { getSocketStorageDiscovery } from "./vroom";
+import { isOdcUrl } from "./isOdc";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const performanceNow = require("performance-now") as (() => number);
@@ -38,6 +42,60 @@ const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
  * clients
  */
 export class OdspDocumentService implements IDocumentService {
+
+    /**
+     * @param appId - app id used for telemetry for network requests.
+     * @param getStorageToken - function that can provide the storage token for a given site. This is
+     * is also referred to as the "VROOM" token in SPO.
+     * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also
+     * referred to as the "Push" token in SPO.
+     * @param logger - a logger that can capture performance and diagnostic information
+     * @param storageFetchWrapper - if not provided FetchWrapper will be used
+     * @param deltasFetchWrapper - if not provided FetchWrapper will be used
+     * @param socketIOClientP - promise to the socket io library required by the driver
+     * @param odspCache - This caches response for joinSession.
+     * @param newFileInfoPromise - promise to supply info needed to create a new file.
+     * New file is not created until this promise resolves.
+     * @param fileInfoToCreateNewResponseCache - This caches response of new file creation.
+     */
+    public static async create(
+        appId: string,
+        resolvedUrl: IResolvedUrl,
+        getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
+        getWebsocketToken: (refresh) => Promise<string | null>,
+        logger: ITelemetryBaseLogger,
+        storageFetchWrapper: IFetchWrapper,
+        deltasFetchWrapper: IFetchWrapper,
+        socketIOClientP: Promise<SocketIOClientStatic>,
+        odspCache: OdspCache,
+        isFirstTimeDocumentOpened = true,
+        fileInfoToCreateNewResponseCache = new OdspCache(),
+    ): Promise<IDocumentService> {
+        let odspResolvedUrl: IOdspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
+        if (odspResolvedUrl.openMode === OpenMode.CreateNew && odspResolvedUrl.newFileInfoPromise) {
+            odspResolvedUrl = await createNewFluidFile(
+                getStorageToken,
+                odspResolvedUrl.newFileInfoPromise,
+                fileInfoToCreateNewResponseCache);
+        }
+        return new OdspDocumentService(
+            appId,
+            odspResolvedUrl.hashedDocumentId,
+            odspResolvedUrl.siteUrl,
+            odspResolvedUrl.driveId,
+            odspResolvedUrl.itemId,
+            odspResolvedUrl.endpoints.snapshotStorageUrl,
+            getStorageToken,
+            getWebsocketToken,
+            logger,
+            storageFetchWrapper,
+            deltasFetchWrapper,
+            socketIOClientP,
+            odspCache,
+            isFirstTimeDocumentOpened,
+        );
+    }
+
     private storageManager?: OdspDocumentStorageManager;
     private joinSessionP: Promise<ISocketStorageDiscovery> | undefined;
 
@@ -49,9 +107,6 @@ export class OdspDocumentService implements IDocumentService {
 
     private readonly joinSessionKey: string;
 
-    // A hint for any document storage managers created if they are the first container
-    // being created by this service
-    private isFirstContainerForService: boolean = true;
 
     /**
      * @param appId - app id used for telemetry for network requests
@@ -84,6 +139,7 @@ export class OdspDocumentService implements IDocumentService {
         private readonly deltasFetchWrapper: IFetchWrapper,
         private readonly socketIOClientP: Promise<SocketIOClientStatic>,
         private readonly odspCache: OdspCache,
+        private readonly isFirstTimeDocumentOpened = true,
     ) {
 
         this.joinSessionKey = `${this.hashedDocumentId}/joinsession`;
@@ -91,7 +147,7 @@ export class OdspDocumentService implements IDocumentService {
         this.logger = DebugLogger.mixinDebugLogger(
             "fluid:telemetry:OdspDriver",
             logger,
-            { docId: hashedDocumentId });
+            { docId: hashedDocumentId, odc: isOdcUrl(snapshotStorageUrl) });
 
         this.getStorageToken = async (refresh: boolean, name?: string) => {
             if (refresh) {
@@ -134,10 +190,8 @@ export class OdspDocumentService implements IDocumentService {
             this.logger,
             true,
             this.odspCache,
-            this.isFirstContainerForService,
+            this.isFirstTimeDocumentOpened,
         );
-
-        this.isFirstContainerForService = false;
 
         return new OdspDocumentStorageService(this.storageManager);
     }

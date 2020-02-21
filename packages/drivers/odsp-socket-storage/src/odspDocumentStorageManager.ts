@@ -37,8 +37,6 @@ import { getWithRetryForTokenRefresh, throwOdspNetworkError } from "./odspUtils"
 
 /* eslint-disable max-len */
 
-const blobReuseFeatureDisabled = true;
-
 export class OdspDocumentStorageManager implements IDocumentStorageManager {
     // This cache is associated with mapping sha to path for previous summary which belongs to last summary handle.
     private blobsShaToPathCache: Map<string, string> = new Map();
@@ -77,7 +75,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         private readonly logger: ITelemetryLogger,
         private readonly fetchFullSnapshot: boolean,
         private readonly odspCache: OdspCache,
-        private readonly isFirstContainerForService: boolean,
+        private readonly isFirstTimeDocumentOpened: boolean,
     ) {
         this.queryString = getQueryString(queryParams);
         this.appId = queryParams.app_id;
@@ -315,7 +313,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                         // If this is the first container that was created for the service, it cannot be
                         // the summarizing container (becauase the summarizing container is always created
                         // after the main container). In this case, we do not need to do any hashing
-                        if (!this.isFirstContainerForService && path) {
+                        if (!this.isFirstTimeDocumentOpened && path) {
                             // Schedule the hashes for later, but keep track of the tasks
                             // to ensure they finish before they might be used
                             const hashP = hashFile(Buffer.from(blob.content, blob.encoding)).then((hash: string) => {
@@ -585,7 +583,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     let completePath = this.blobsShaToPathCache.get(hash);
                     // If the cache has the hash of the blob and handle of last summary is also present, then use that
                     // to generate complete path for the given blob.
-                    if (blobReuseFeatureDisabled || !completePath || !this.lastSummaryHandle) {
+                    if (!completePath || !this.lastSummaryHandle) {
                         value = {
                             content,
                             encoding,

@@ -14,12 +14,8 @@ import {
     IFluidResolvedUrl,
     ErrorType,
 } from "@microsoft/fluid-driver-definitions";
-import {
-    ITestDeltaConnectionServer,
-    TestDeltaConnectionServer,
-    TestDocumentServiceFactory,
-    TestResolver,
-} from "@microsoft/fluid-local-test-server";
+import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
+import { ITestDeltaConnectionServer, TestDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { createErrorObject } from "@microsoft/fluid-driver-base";
 import { errorObjectFromOdspError } from "@microsoft/fluid-odsp-driver";
 import { createIError } from "@microsoft/fluid-driver-utils";
@@ -94,7 +90,7 @@ describe("Errors Types", () => {
             message: "Test Error",
             code: 400,
         };
-        const networkError = createIError(errorObjectFromOdspError(err, false));
+        const networkError = createIError(errorObjectFromOdspError(err, () => false));
         assert.equal(networkError.errorType, ErrorType.connectionError, "Error is not a network error");
     });
 
@@ -104,7 +100,7 @@ describe("Errors Types", () => {
             code: 529,
             retryAfter: 100,
         };
-        const throttlingError = createIError(errorObjectFromOdspError(err, true));
+        const throttlingError = createIError(errorObjectFromOdspError(err, () => true));
         assert.equal(throttlingError.errorType, ErrorType.throttlingError, "Error is not a throttling error");
     });
 
@@ -114,7 +110,7 @@ describe("Errors Types", () => {
             code: 529,
             retryAfter: 100,
         };
-        const error1 = createIError(errorObjectFromOdspError(err, true), true);
+        const error1 = createIError(errorObjectFromOdspError(err, () => true), true);
         const error2 = createIError(error1, false);
         assert.equal(error1, error2, "Both errors should be same!!");
     });

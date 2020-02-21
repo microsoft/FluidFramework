@@ -4,9 +4,12 @@
  */
 
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
-import { IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
+import { IComponentReactViewable } from "@microsoft/fluid-view-adapters";
 import { SharedCell } from "@microsoft/fluid-cell";
-import { IComponentHandle, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import {
+    IComponentHandle,
+    IComponentHTMLView,
+} from "@microsoft/fluid-component-core-interfaces";
 import { SharedMap } from "@microsoft/fluid-map";
 import { SharedObjectSequence } from "@microsoft/fluid-sequence";
 // eslint-disable-next-line import/no-internal-modules
@@ -17,13 +20,14 @@ import { IBadgeType } from "./IBadgeType";
 import { BadgeView } from "./BadgeView";
 import { IHistory } from "./IHistory";
 
-export class Badge extends PrimedComponent implements IComponentHTMLVisual, IComponentReactViewable {
+export class Badge extends PrimedComponent implements
+    IComponentHTMLView,
+    IComponentReactViewable {
     currentCell: SharedCell;
     optionsMap: SharedMap;
     historySequence: SharedObjectSequence<IHistory<IBadgeType>>;
 
-    public get IComponentHTMLVisual() { return this; }
-    public get IComponentHTMLRender() { return this; }
+    public get IComponentHTMLView() { return this; }
     public get IComponentReactViewable() { return this; }
 
     private readonly currentId: string = "value";

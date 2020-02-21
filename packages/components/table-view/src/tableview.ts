@@ -6,7 +6,10 @@
 import { Template } from "@fluid-example/flow-util-lib";
 import { TableDocument, TableDocumentType } from "@fluid-example/table-document";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { IComponentHTMLOptions, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import {
+    IComponentHTMLOptions,
+    IComponentHTMLView,
+} from "@microsoft/fluid-component-core-interfaces";
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { GridView } from "./grid";
 import * as styles from "./index.css";
@@ -23,7 +26,7 @@ const template = new Template({
     ],
 });
 
-export class TableView extends PrimedComponent implements IComponentHTMLVisual {
+export class TableView extends PrimedComponent implements IComponentHTMLView {
     public static getFactory() { return TableView.factory; }
 
     private static readonly factory = new PrimedComponentFactory(
@@ -31,13 +34,13 @@ export class TableView extends PrimedComponent implements IComponentHTMLVisual {
         [],
     );
 
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
 
     constructor(runtime: IComponentRuntime, context: IComponentContext) {
         super(runtime, context);
     }
 
-    // #region IComponentHTMLVisual
+    // #region IComponentHTMLView
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
         const root = template.clone();
         elm.append(root);
@@ -74,7 +77,7 @@ export class TableView extends PrimedComponent implements IComponentHTMLVisual {
             });
         });
     }
-    // #endregion IComponentHTMLVisual
+    // #endregion IComponentHTMLView
 
     protected async componentInitializingFirstTime() {
         const doc = await this.createAndAttachComponent<TableDocument>(this.docId, TableDocumentType);

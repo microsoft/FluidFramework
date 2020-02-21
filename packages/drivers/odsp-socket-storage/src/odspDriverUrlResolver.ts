@@ -5,17 +5,24 @@
 
 import * as assert from "assert";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
+import { IUrlResolver, OpenMode } from "@microsoft/fluid-driver-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { getHashedDocumentId } from "./odspUtils";
+import { isOdcOrigin } from "./isOdc";
 
-function getSnapshotUrl(siteUrl: string, driveId: string, itemId: string) {
+export function getSnapshotUrl(siteUrl: string, driveId: string, itemId: string) {
     const siteOrigin = new URL(siteUrl).origin;
-    return `${siteOrigin}/_api/v2.1/drives/${driveId}/items/${itemId}/opStream/snapshots`;
+
+    let prefix = "_api/";
+    if (isOdcOrigin(siteOrigin)) {
+        prefix = "";
+    }
+
+    return `${siteOrigin}/${prefix}v2.1/drives/${driveId}/items/${itemId}/opStream/snapshots`;
 }
 
 /**
- * Encodes SPO information into a URL format that can be handled by the Loader
+ * Encodes ODC/SPO information into a URL format that can be handled by the Loader
  * @param siteUrl - The site where the container is hosted
  * @param driveId - The id of the drive with the container
  * @param itemId - The id of the container
@@ -42,7 +49,31 @@ function removeBeginningSlash(str: string): string {
 export class OdspDriverUrlResolver implements IUrlResolver {
     constructor() { }
 
-    public async resolve(request: IRequest): Promise<IResolvedUrl> {
+    public async resolve(request: IRequest): Promise<IOdspResolvedUrl> {
+        if (request.headers && request.headers.openMode === OpenMode.CreateNew && request.headers.newFileInfoPromise) {
+            const [, queryString] = request.url.split("?");
+
+            const searchParams = new URLSearchParams(queryString);
+
+            const uniqueId = searchParams.get("uniqueId");
+            if (uniqueId === null) {
+                throw new Error("ODSP URL for new file should contain the uniqueId");
+            }
+            return {
+                type: "fluid",
+                endpoints: {
+                    snapshotStorageUrl: "",
+                },
+                openMode: OpenMode.CreateNew,
+                newFileInfoPromise: request.headers.newFileInfoPromise,
+                tokens: {},
+                url: `fluid-odsp://placeholder/placeholder/${uniqueId}?version=null`,
+                hashedDocumentId: "",
+                siteUrl: "",
+                driveId: "",
+                itemId: "",
+            };
+        }
         const { siteUrl, driveId, itemId, path } = this.decodeOdspUrl(request.url);
         const hashedDocumentId = getHashedDocumentId(driveId, itemId);
         assert.ok(!hashedDocumentId.includes("/"), "Docid should not contain slashes!!");
@@ -57,18 +88,18 @@ export class OdspDriverUrlResolver implements IUrlResolver {
                 documentUrl += searchParams;
             }
         }
-        const response: IOdspResolvedUrl = {
-            endpoints: { snapshotStorageUrl: getSnapshotUrl(siteUrl, driveId, itemId) },
-            tokens: {},
+        return {
             type: "fluid",
+            endpoints: {
+                snapshotStorageUrl: getSnapshotUrl(siteUrl, driveId, itemId),
+            },
+            tokens: {},
             url: documentUrl,
             hashedDocumentId,
             siteUrl,
             driveId,
             itemId,
         };
-
-        return response;
     }
 
     private decodeOdspUrl(url: string): { siteUrl: string; driveId: string; itemId: string; path: string } {

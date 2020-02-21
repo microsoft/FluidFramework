@@ -13,7 +13,7 @@ import {
     IClient,
     IConnect,
 } from "@microsoft/fluid-protocol-definitions";
-import { ThrottlingError } from "@microsoft/fluid-driver-utils";
+import { FatalError, ThrottlingError } from "@microsoft/fluid-driver-utils";
 import { IOdspSocketError } from "./contracts";
 import { debug } from "./debug";
 import { errorObjectFromOdspError, OdspNetworkError, socketErrorRetryFilter } from "./odspUtils";
@@ -106,7 +106,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             if (errorObject !== null && typeof errorObject === "object" && errorObject.canRetry) {
                 const socketError: IOdspSocketError = errorObject.socketError;
                 if (typeof socketError === "object" && socketError !== null) {
-                    throw errorObjectFromOdspError(socketError, socketErrorRetryFilter(socketError.code));
+                    throw errorObjectFromOdspError(socketError, socketErrorRetryFilter);
                 }
             }
             throw errorObject;
@@ -174,7 +174,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
                 // filter out retryable vs. non-retryable cases.
                 // Specifically, it will have one retry for 403 - see
                 // connectToDeltaStream() / getWithRetryForTokenRefresh() call.
-                const error = errorObjectFromOdspError(socketError, true /*canRetry */);
+                const error = errorObjectFromOdspError(socketError);
 
                 // The server always closes the socket after sending this message
                 // fully remove the socket reference now
@@ -200,7 +200,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
     private static removeSocketIoReference(
         key: string,
         isFatalError: boolean,
-        reason: string | OdspNetworkError | ThrottlingError) {
+        reason: string | OdspNetworkError | ThrottlingError | FatalError) {
         const socketReference = OdspDocumentDeltaConnection.socketIoSockets.get(key);
         if (!socketReference) {
             // This is expected to happen if we removed the reference due the socket not being connected
