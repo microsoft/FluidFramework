@@ -6,13 +6,14 @@
 import { Node } from "prosemirror-model";
 import { EditorView, NodeView } from "prosemirror-view";
 import { ILoader } from "@microsoft/fluid-container-definitions";
-import { IComponent, IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 
 export class ComponentView implements NodeView {
     public dom: HTMLElement;
     public innerView;
 
-    private visual: IComponentHTMLView | IComponentHTMLVisual;
+    private visual: HTMLViewAdapter | undefined;
 
     constructor(
         public node: Node,
@@ -73,26 +74,16 @@ export class ComponentView implements NodeView {
 
         componentP.then(
             (component) => {
-                // Clear any previous content
-                this.dom.innerHTML = "";
-
                 // Remove the previous view
-                if (this.visual && "remove" in this.visual) {
+                if (this.visual) {
                     this.visual.remove();
                 }
 
-                // First try to get it as a view
-                this.visual = component.IComponentHTMLView;
-                if (!this.visual) {
-                    // Otherwise get the visual, which is a view factory
-                    const visual = component.IComponentHTMLVisual;
-                    if (visual) {
-                        this.visual = visual.addView();
-                    }
-                }
-                if (this.visual) {
-                    this.visual.render(this.dom);
-                }
+                // Clear any previous content
+                this.dom.innerHTML = "";
+
+                this.visual = new HTMLViewAdapter(component);
+                this.visual.render(this.dom);
             },
             (error) => {
                 // Fall back to URL if can't load
