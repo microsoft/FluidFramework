@@ -13,7 +13,7 @@ import {
 } from "@microsoft/fluid-local-driver";
 import { ITestDeltaConnectionServer, TestDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { ISharedMap } from "@microsoft/fluid-map";
-import { ConsensusQueue, ConsensusStack, IConsensusOrderedCollection } from "@microsoft/fluid-ordered-collection";
+import { ConsensusQueue, IConsensusOrderedCollection } from "@microsoft/fluid-ordered-collection";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 
 interface ISharedObjectConstructor<T> {
@@ -259,4 +259,3 @@ function generate(
 }
 
 generate("ConsensusQueue", ConsensusQueue, [1, 2, 3], [1, 2, 3]);
-generate("ConsensusStack", ConsensusStack, [1, 2, 3], [3, 2, 1]);

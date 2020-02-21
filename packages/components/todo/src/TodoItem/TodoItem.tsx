@@ -5,7 +5,6 @@
 
 import { ClickerName } from "@fluid-example/clicker";
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
-import { IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
 import { ISharedCell, SharedCell } from "@microsoft/fluid-cell";
 import {
     IComponentHandle,
@@ -13,6 +12,7 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
+import { IComponentReactViewable } from "@microsoft/fluid-view-adapters";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { TextBoxName } from "../TextBox";

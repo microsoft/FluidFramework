@@ -39,7 +39,6 @@ import {
 } from "@microsoft/fluid-runtime-definitions";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
-import { ContainerRuntime } from "./containerRuntime";
 
 // Snapshot Format Version to be used in component attributes.
 const currentSnapshotFormatVersion = "0.1";
@@ -145,7 +144,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     private _baseSnapshot: ISnapshotTree;
 
     constructor(
-        private readonly _hostRuntime: ContainerRuntime,
+        private readonly _hostRuntime: IHostRuntime,
         public readonly id: string,
         public readonly existing: boolean,
         public readonly storage: IDocumentStorageService,
@@ -424,7 +423,7 @@ export class RemotedComponentContext extends ComponentContext {
     constructor(
         id: string,
         private readonly initSnapshotValue: ISnapshotTree | string,
-        runtime: ContainerRuntime,
+        runtime: IHostRuntime,
         storage: IDocumentStorageService,
         scope: IComponent,
         summaryTracker: ISummaryTracker,
@@ -497,7 +496,7 @@ export class LocalComponentContext extends ComponentContext {
     constructor(
         id: string,
         pkg: string[],
-        runtime: ContainerRuntime,
+        runtime: IHostRuntime,
         storage: IDocumentStorageService,
         scope: IComponent,
         summaryTracker: ISummaryTracker,

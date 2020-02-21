@@ -4,7 +4,6 @@
  */
 
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
-import { IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
 import {
     IComponentHandle,
     IComponentHTMLView,
@@ -12,6 +11,7 @@ import {
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
+import { IComponentReactViewable } from "@microsoft/fluid-view-adapters";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { TodoItem, TodoItemName } from "../TodoItem/index";

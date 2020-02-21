@@ -63,6 +63,13 @@ export class ForemanLambda extends SequencedLambda {
                         sequencedMessage.tenantId,
                         sequencedMessage.documentId,
                         helpContent);
+                } else if (sequencedMessage.operation.type === MessageType.Summarize) {
+                    await this.trackDocument(
+                        sequencedMessage.operation.clientId,
+                        sequencedMessage.tenantId,
+                        sequencedMessage.documentId,
+                        ["chain-search"],
+                    );
                 }
             }
         }

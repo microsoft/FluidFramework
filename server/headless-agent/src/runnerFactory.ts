@@ -5,6 +5,7 @@
 
 // tslint:disable max-classes-per-file
 
+import { BlobServiceClient } from "@azure/storage-blob";
 import * as services from "@microsoft/fluid-server-services";
 import * as core from "@microsoft/fluid-server-services-core";
 import * as utils from "@microsoft/fluid-server-services-utils";
@@ -12,10 +13,12 @@ import { Provider } from "nconf";
 import * as redis from "redis";
 import { ICache, RedisCache } from "./redisCache";
 import { HeadlessRunner } from "./runner";
+import { AzureBlobService, ISearchStorage } from "./searchStorage";
 
 export class HeadlessResources implements utils.IResources {
     constructor(
         public workerConfig: any,
+        public searchStorage: ISearchStorage,
         public messageReceiver: core.ITaskMessageReceiver,
         public cache: ICache) {
     }
@@ -27,6 +30,8 @@ export class HeadlessResources implements utils.IResources {
 
 export class HeadlessResourcesFactory implements utils.IResourcesFactory<HeadlessResources> {
     public async create(config: Provider): Promise<HeadlessResources> {
+        const workerConfig = config.get("worker");
+
         const rabbitmqConfig = config.get("rabbitmq");
         const redisConfig = config.get("redis");
         const redisOptions: redis.ClientOpts = { password: redisConfig.pass };
@@ -36,14 +41,20 @@ export class HeadlessResourcesFactory implements utils.IResourcesFactory<Headles
             };
         }
 
-        const workerConfig = config.get("worker");
         const queueName = config.get("headless-agent:queue");
 
         const redisClient = redis.createClient(redisConfig.port, redisConfig.host, redisOptions);
         const cache = new RedisCache(redisClient);
+
         const messageReceiver = services.createMessageReceiver(rabbitmqConfig, queueName);
 
-        return new HeadlessResources(workerConfig, messageReceiver, cache);
+        const connectionString = config.get("headless-agent:searchEndpoint");
+        const searchContainer = config.get("headless-agent:searchContainer");
+        const blobServiceClient = await BlobServiceClient.fromConnectionString(connectionString);
+        const containerClient = await blobServiceClient.getContainerClient(searchContainer);
+        const azureBlobService = new AzureBlobService(containerClient);
+
+        return new HeadlessResources(workerConfig, azureBlobService, messageReceiver, cache);
     }
 }
 
@@ -52,6 +63,7 @@ export class HeadlessRunnerFactory implements utils.IRunnerFactory<HeadlessResou
         return new HeadlessRunner(
             resources.workerConfig,
             resources.messageReceiver,
+            resources.searchStorage,
             resources.cache);
     }
 }

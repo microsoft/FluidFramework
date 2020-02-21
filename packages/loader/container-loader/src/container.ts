@@ -16,7 +16,6 @@ import {
     IContainer,
     IDeltaManager,
     IFluidCodeDetails,
-    IFluidModule,
     IGenericBlob,
     IRuntimeFactory,
     LoaderHeader,
@@ -178,6 +177,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     private _closed = false;
 
+    public get readonly(): boolean | undefined {
+        return this._deltaManager.readonly;
+    }
+
     public get closed(): boolean {
         return this._closed;
     }
@@ -331,6 +334,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this.protocolHandler!.quorum;
     }
 
+    public on(event: "readonly", listener: (readonly: boolean) => void): void;
     public on(event: "connected" | "contextChanged", listener: (clientId: string) => void): this;
     public on(event: "disconnected" | "joining" | "closed", listener: () => void): this;
     public on(event: "error", listener: (error: any) => void): this;
@@ -797,22 +801,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
      * Loads the runtime factory for the provided package
      */
     private async loadRuntimeFactory(pkg: IFluidCodeDetails): Promise<IRuntimeFactory> {
-        const component = await this.codeLoader.load<IRuntimeFactory | IFluidModule>(pkg);
+        const component = await this.codeLoader.load(pkg);
 
-        if ("fluidExport" in component) {
-            const factory = component.fluidExport.IRuntimeFactory;
-            if (!factory) {
-                throw new Error(PackageNotFactoryError);
-            }
-            return factory;
+        const factory = component.fluidExport.IRuntimeFactory;
+        if (!factory) {
+            throw new Error(PackageNotFactoryError);
         }
+        return factory;
 
-        // TODO included for back-compat
-        if ("instantiateRuntime" in component) {
-            return component;
-        }
-
-        throw new Error(PackageNotFactoryError);
     }
 
     private get client() {
@@ -889,6 +885,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         deltaManager.on("processTime", (time) => {
             this.emit("processTime", time);
+        });
+
+        deltaManager.on("readonly", (readonly) => {
+            this.emit("readonly", readonly);
         });
 
         return deltaManager;
