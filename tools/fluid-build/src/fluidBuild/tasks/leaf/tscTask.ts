@@ -145,9 +145,6 @@ export class TscTask extends LeafTask {
 
     private get configFileFullPath() {
         if (this._tsConfigFullPath === undefined) {
-            // TODO: parse the command line for real, split space for now.
-            const args = this.command.split(" ");
-
             const parsedCommand = this.parsedCommandLine;
             if (!parsedCommand) { return undefined; }
 

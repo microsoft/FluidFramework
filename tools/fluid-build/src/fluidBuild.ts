@@ -8,15 +8,15 @@ import { FluidRepo } from "./fluidBuild/fluidRepo";
 import { getResolvedFluidRoot } from "./common/fluidUtils";
 import { logStatus } from "./common/logging";
 import { Timer } from "./common/timer";
-import { existsSync } from "./common/utils";
-import { BuildGraph, BuildResult } from "./fluidBuild/buildGraph";
+import { existsSync, rimrafWithErrorAsync } from "./common/utils";
+import { BuildResult } from "./fluidBuild/buildGraph";
 import { parseOptions, options } from "./fluidBuild/options";
 import * as path from "path";
 import chalk from "chalk";
 
 function versionCheck() {
     const pkg = require(path.join(__dirname, "..", "package.json"));
-    const builtVersion = "0.0.4";
+    const builtVersion = "0.0.5";
     if (pkg.version > builtVersion) {
         console.warn(`WARNING: fluid-build is out of date, please rebuild (built: ${builtVersion}, package: ${pkg.version})\n`);
     }
@@ -80,15 +80,18 @@ async function main() {
         }
 
         const symlinkTaskName = options.symlink ? "Symlink" : "Symlink check";
-        if (!await repo.symlink(options.symlink)) {
-            console.error(`ERROR: ${symlinkTaskName} failed`);
-            process.exit(-7);
+        const updated = await repo.symlink(options);
+        if (updated) {
+            logStatus(`${updated} symlink updated. Running clean script.`);
+            repo.clean();
         }
         timer.time(`${symlinkTaskName} completed`, options.symlink);
 
         if (options.clean || options.build !== false) {
+            logStatus(`Symlink in ${options.fullSymlink ? "full" : options.fullSymlink === false ? "isolated" : "non-dependent"} mode`);
+
             // build the graph
-            const buildGraph = new BuildGraph(repo.packages.packages, options.buildScript);
+            const buildGraph = repo.createBuildGraph(options, options.buildScript);
             timer.time("Build graph creation completed");
 
             if (options.clean) {

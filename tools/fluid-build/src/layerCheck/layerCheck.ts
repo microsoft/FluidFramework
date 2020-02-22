@@ -16,6 +16,7 @@ function printUsage() {
         `
 Usage: fluid-layer-check <options>
 Options:
+     --dot <path>     Generate *.dot for GraphViz
 ${commonOptionString}
 `);
 }
@@ -65,7 +66,7 @@ function parseOptions(argv: string[]) {
 
 function versionCheck() {
     const pkg = require(path.join(__dirname, "..", "..", "package.json"));
-    const builtVersion = "0.0.4";
+    const builtVersion = "0.0.5";
     if (pkg.version > builtVersion) {
         console.warn(`WARNING: layer-check is out of date, please rebuild (built: ${builtVersion}, package: ${pkg.version})\n`);
     }

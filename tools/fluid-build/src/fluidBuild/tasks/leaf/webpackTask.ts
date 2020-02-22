@@ -39,17 +39,17 @@ export class WebpackTask extends LeafWithDoneFileTask {
             }
 
             for (const dep of this.allDependentTasks) {
-                    if (dep.executable === "tsc") {
-                        if (!content.dependencies[dep.package.name]) {
-                            content.dependencies[dep.package.name] = {};
-                        }
-                        const tsBuildInfo = await (dep as TscTask).readTsBuildInfo();
-                        if (tsBuildInfo === undefined) {
-                            return undefined;
-                        }
-                        content.dependencies[dep.package.name][dep.command] = tsBuildInfo;
+                if (dep.executable === "tsc") {
+                    if (!content.dependencies[dep.package.name]) {
+                        content.dependencies[dep.package.name] = {};
                     }
+                    const tsBuildInfo = await (dep as TscTask).readTsBuildInfo();
+                    if (tsBuildInfo === undefined) {
+                        return undefined;
+                    }
+                    content.dependencies[dep.package.name][dep.command] = tsBuildInfo;
                 }
+            }
 
             return JSON.stringify(content);
         } catch {

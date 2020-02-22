@@ -12,20 +12,13 @@ import { logStatus, logVerbose } from "./logging";
 import {
     copyFileAsync,
     execWithErrorAsync,
-    existsSync,
-    lstatAsync,
-    mkdirAsync,
-    realpathAsync,
     rimrafWithErrorAsync,
     unlinkAsync,
-    symlinkAsync,
     writeFileAsync,
     ExecAsyncResult,
-    renameAsync
 } from "./utils"
 
 import { options } from "../fluidBuild/options";
-import * as semver from "semver";
 
 interface IPerson {
     name: string;
@@ -62,43 +55,6 @@ interface IPackage {
     cpu: string[];
     [key: string]: any;
 };
-
-function writeBin(dir: string, pkgName: string, binName: string, binPath: string) {
-    const outFile = path.normalize(`${dir}/node_modules/.bin/${binName}`);
-    if (process.platform === "win32") {
-        const winpath = `%~dp0\\..\\node_modules\\${path.normalize(pkgName)}\\${path.normalize(binPath)}`;
-        const cmd =
-            `@IF EXIST "%~dp0\\node.exe" (
-  "%~dp0\\node.exe"  "${winpath}" %*
-) ELSE (
-  @SETLOCAL
-  @SET PATHEXT=%PATHEXT:;.JS;=;%
-  node  "${winpath}" %*
-)`;
-        logVerbose(`Writing ${outFile}.cmd`);
-        writeFileAsync(`${binName}.cmd`, cmd);
-    }
-
-    const posixpath = `$basedir/../node_modules/${path.posix.normalize(pkgName)}/${path.posix.normalize(binPath)}`;
-    const sh = `#!/bin/sh
-basedir=$(dirname "$(echo "$0" | sed -e 's,\\\\,/,g')")
-
-case \`uname\` in
-    *CYGWIN*) basedir=\`cygpath -w "$basedir"\`;;
-esac
-
-if [ -x "$basedir/node" ]; then
-  "$basedir/node"  "${posixpath}" "$@"
-  ret=$?
-else
-  node  "${posixpath}" "$@"
-  ret=$?
-fi
-exit $ret`;
-
-    logVerbose(`Writing ${outFile}`);
-    writeFileAsync(outFile, sh);
-}
 
 export class Package {
     private static packageCount: number = 0;
@@ -207,66 +163,6 @@ export class Package {
 
         return result;
     }
-
-    public async symlink(buildPackages: Map<string, Package>, fix: boolean) {
-        // Fluid specific
-        for (const { name: dep, version } of this.combinedDependencies) {
-            const depBuildPackage = buildPackages.get(dep);
-            // Check and fix link if it is a known package and version satisfy the version.
-            // TODO: check of extranous symlinks
-            if (depBuildPackage && semver.satisfies(depBuildPackage.version, version)) {
-                const symlinkPath = path.join(this.directory, "node_modules", dep);
-                try {
-                    let stat: fs.Stats | undefined;
-                    if (existsSync(symlinkPath)) {
-                        stat = await lstatAsync(symlinkPath);
-                        if (stat.isSymbolicLink && await realpathAsync(symlinkPath) === depBuildPackage.directory) {
-                            // Have the correct symlink, continue
-                            continue;
-                        }
-                    }
-                    if (!fix) {
-                        console.warn(`${this.nameColored}: warning: dependent package ${depBuildPackage.nameColored} not linked. Use --symlink to fix.`);
-                        continue;
-                    }
-
-                    // Fixing the symlink
-                    if (stat) {
-                        // Rename existing
-                        if (!options.nohoist) {
-                            console.warn(`${this.nameColored}: warning: renaming existing package in ${symlinkPath}`);
-                        }
-                        const replace = true;
-                        if (replace) {
-                            if (stat.isDirectory()) {
-                                await rimrafWithErrorAsync(symlinkPath, this.nameColored);
-                            } else {
-                                await unlinkAsync(symlinkPath);
-                            }
-                        } else {
-                            await renameAsync(symlinkPath, path.join(path.dirname(symlinkPath), `_${path.basename(symlinkPath)}`));
-                        }
-                    } else {
-                        // Ensure the directory exist
-                        const symlinkDir = path.join(symlinkPath, "..");
-                        if (!existsSync(symlinkDir)) {
-                            await mkdirAsync(symlinkDir, { recursive: true });
-                        }
-                    }
-                    // Create symlink
-                    await symlinkAsync(depBuildPackage.directory, symlinkPath, "junction");
-
-                    if (depBuildPackage.packageJson.bin) {
-                        for (var name of Object.keys(depBuildPackage.packageJson.bin)) {
-                            writeBin(this.directory, depBuildPackage.name, name, depBuildPackage.packageJson.bin[name]);
-                        }
-                    }
-                } catch (e) {
-                    throw new Error(`symlink failed on ${symlinkPath}.\n ${e}`);
-                }
-            }
-        }
-    }
 };
 
 interface TaskExec<TItem, TResult> {
@@ -338,9 +234,40 @@ export class Packages {
         return this.queueExecOnAllPackage(pkg => pkg.noHoistInstall(repoRoot), "npm i");
     }
 
-    public async symlink(fix: boolean) {
-        const packageMap = new Map<string, Package>(this.packages.map(pkg => [pkg.name, pkg]));
-        return this.queueExecOnAllPackageCore(pkg => pkg.symlink(packageMap, fix), options.nohoist ? "symlink" : "")
+    public async forEachAsync<TResult>(exec: (pkg: Package) => Promise<TResult>, parallel: boolean, message?: string) {
+        if (parallel) { return this.queueExecOnAllPackageCore(exec, message) };
+
+        const results: TResult[] = [];
+        for (const pkg of this.packages) {
+            results.push(await exec(pkg));
+        }
+        return results;
+    }
+
+    public static async clean(packages: Package[], status: boolean) {
+        const cleanP: Promise<ExecAsyncResult>[] = [];
+        let numDone = 0;
+        const execCleanScript = async (pkg: Package, cleanScript: string) => {
+            const startTime = Date.now();
+            const result = await execWithErrorAsync(cleanScript, {
+                cwd: pkg.directory,
+                env: { PATH: `${process.env["PATH"]}${path.delimiter}${path.join(pkg.directory, "node_modules", ".bin")}` }
+            }, pkg.nameColored);
+
+            if (status) {
+                const elapsedTime = (Date.now() - startTime) / 1000;
+                logStatus(`[${++numDone}/${cleanP.length}] ${pkg.nameColored}: ${cleanScript} - ${elapsedTime.toFixed(3)}s`);
+            }
+            return result;
+        };
+        for (const pkg of packages) {
+            const cleanScript = pkg.getScript("clean");
+            if (cleanScript) {
+                cleanP.push(execCleanScript(pkg, cleanScript));
+            }
+        };
+        const results = await Promise.all(cleanP);
+        return !results.some(result => result.error);
     }
 
     private async queueExecOnAllPackageCore<TResult>(exec: (pkg: Package) => Promise<TResult>, message?: string) {

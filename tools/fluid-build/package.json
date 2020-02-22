@@ -1,6 +1,6 @@
 {
   "name": "fluid-build",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "private": true,
   "description": "Fluid Build tool",
   "license": "MIT",

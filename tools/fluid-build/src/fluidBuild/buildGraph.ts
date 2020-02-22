@@ -6,7 +6,7 @@
 import { AsyncPriorityQueue } from "async";
 import * as path from "path";
 import { logStatus, logVerbose } from "../common/logging";
-import { Package } from "../common/npmPackage";
+import { Package, Packages } from "../common/npmPackage";
 import { Task, TaskExec } from "./tasks/task";
 import { TaskFactory } from "./tasks/taskFactory";
 import { Timer } from '../common/timer';
@@ -94,24 +94,20 @@ export class BuildPackage {
     }
 }
 
-interface BuildPackageTaskExec<T> {
-    buildPackage: BuildPackage;
-    resolve: (result: T) => void;
-};
-
 export class BuildGraph {
     private readonly buildPackages = new Map<string, BuildPackage>();
     private readonly buildContext = new BuildContext();
 
     public constructor(
         private readonly packages: Package[],
-        private readonly buildScriptName: string) {
+        private readonly buildScriptName: string,
+        getDepFilter: (pkg: Package) => (dep: Package) => boolean) {
 
         packages.forEach((value) =>
             this.buildPackages.set(value.name, new BuildPackage(this.buildContext, value, buildScriptName))
         );
 
-        const needPropagate = this.buildDependencies();
+        const needPropagate = this.buildDependencies(getDepFilter);
         this.populateLevel();
         this.propagateMarkForBuild(needPropagate);
         this.filterPackagesAndInitializeTasks();
@@ -148,30 +144,14 @@ export class BuildGraph {
     }
 
     public async clean() {
-        const cleanP: Promise<ExecAsyncResult>[] = [];
-        let numDone = 0;
-        const execCleanScript = async (pkg: Package, cleanScript: string) => {
-            const startTime = Date.now();
-            const result = await execWithErrorAsync(cleanScript, {
-                cwd: pkg.directory,
-                env: { PATH: `${process.env["PATH"]}${path.delimiter}${path.join(pkg.directory, "node_modules", ".bin")}` }
-            }, pkg.nameColored);
-
-            const elapsedTime = (Date.now() - startTime) / 1000;
-            logStatus(`[${++numDone}/${cleanP.length}] ${pkg.nameColored}: ${cleanScript} - ${elapsedTime.toFixed(3)}s`);
-            return result;
-        };
+        const cleanPackages: Package[] = [];
         this.buildPackages.forEach((node) => {
             if (options.matchedOnly === true && !node.pkg.matched) {
                 return;
             }
-            const cleanScript = node.pkg.getScript("clean");
-            if (cleanScript) {
-                cleanP.push(execCleanScript(node.pkg, cleanScript));
-            }
+            cleanPackages.push(node.pkg);
         });
-        const results = await Promise.all(cleanP);
-        return !results.some(result => result.error);
+        return Packages.clean(cleanPackages, true);
     }
 
     public get numSkippedTasks(): number {
@@ -182,17 +162,22 @@ export class BuildGraph {
         return this.buildContext.taskStats.leafExecTimeTotal;
     }
 
-    private buildDependencies() {
+    private buildDependencies(getDepFilter: (pkg: Package) => (dep: Package) => boolean) {
         const needPropagate: BuildPackage[] = [];
         this.buildPackages.forEach((node) => {
             if (node.pkg.markForBuild) { needPropagate.push(node); }
+            const depFilter = getDepFilter(node.pkg);
             for (const { name, version } of node.pkg.combinedDependencies) {
                 const child = this.buildPackages.get(name);
                 if (child) {
                     if (semver.satisfies(child.pkg.version, version)) {
-                        logVerbose(`Package dependency: ${node.pkg.nameColored} => ${child.pkg.nameColored}`);
-                        node.dependentPackages.push(child);
-                        child.parents.push(node);
+                        if (depFilter(child.pkg)) {
+                            logVerbose(`Package dependency: ${node.pkg.nameColored} => ${child.pkg.nameColored}`);
+                            node.dependentPackages.push(child);
+                            child.parents.push(node);
+                        } else {
+                            logVerbose(`Package dependency skipped: ${node.pkg.nameColored} => ${child.pkg.nameColored}`);
+                        }
                     } else {
                         logVerbose(`Package dependency version mismatch: ${node.pkg.nameColored} => ${child.pkg.nameColored}`);
                     }
