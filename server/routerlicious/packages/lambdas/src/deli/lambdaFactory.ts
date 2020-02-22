@@ -5,7 +5,6 @@
 
 import { EventEmitter } from "events";
 import {
-    CombinedProducer,
     ICollection,
     IContext,
     IDocument,
@@ -32,8 +31,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         private readonly mongoManager: MongoManager,
         private readonly collection: ICollection<IDocument>,
         private readonly forwardProducer: IProducer,
-        private readonly reverseProducer: IProducer,
-        private readonly broadcastProducer: IProducer) {
+        private readonly reverseProducer: IProducer) {
         super();
     }
 
@@ -57,7 +55,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             // It probably shouldn't take the collection - I can manage that
             this.collection,
             // The producer as well it shouldn't take. Maybe it just gives an output stream?
-            new CombinedProducer([this.forwardProducer, this.broadcastProducer]),
+            this.forwardProducer,
             this.reverseProducer,
             ClientSequenceTimeout,
             ActivityCheckingTimeout,

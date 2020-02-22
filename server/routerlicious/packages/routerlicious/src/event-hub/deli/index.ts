@@ -40,7 +40,9 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
     const publisher = new services.SocketIoRedisPublisher(redisConfig.port, redisConfig.host, redisOptions);
 
     const localContext = new LocalContext(winston);
+
     const localProducer = new LocalKafka();
+    const combinedProducer = new core.CombinedProducer([forwardProducer, localProducer]);
 
     const broadcasterLambda = new LocalLambdaController(
         localProducer,
@@ -50,7 +52,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
 
     await broadcasterLambda.start();
 
-    return new DeliLambdaFactory(mongoManager, collection, forwardProducer, reverseProducer, localProducer);
+    return new DeliLambdaFactory(mongoManager, collection, combinedProducer, reverseProducer);
 }
 
 export async function create(config: Provider): Promise<core.IPartitionLambdaFactory> {
