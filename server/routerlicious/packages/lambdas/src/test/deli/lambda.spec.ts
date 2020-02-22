@@ -4,7 +4,6 @@
  */
 
 import {
-    CombinedProducer,
     ICollection,
     IPartitionLambda,
     IProducer,
@@ -37,11 +36,8 @@ describe("Routerlicious", () => {
 
             let testCollection: ICollection<any>;
             let testKafka: TestKafka;
-            let testMemoryKafka: TestKafka;
             let testForwardProducer: IProducer;
             let testReverseProducer: IProducer;
-            let testBroadcastProducer: IProducer;
-            let testCombinedProducer: IProducer;
             let testContext: TestContext;
             let factory: DeliLambdaFactory;
             let lambda: IPartitionLambda;
@@ -77,16 +73,13 @@ describe("Routerlicious", () => {
                 testCollection = database.collection("documents");
 
                 testKafka =  new TestKafka();
-                testMemoryKafka =  new TestKafka();
 
                 testForwardProducer = testKafka.createProducer();
                 testReverseProducer = testKafka.createProducer();
-                testBroadcastProducer = testMemoryKafka.createProducer();
-                testCombinedProducer = new CombinedProducer([testForwardProducer, testBroadcastProducer]);
 
                 messageFactory = new MessageFactory(testId, testClientId);
                 kafkaMessageFactory = new KafkaMessageFactory("test", 1, false);
-                factory = new DeliLambdaFactory(mongoManager, testCollection, testCombinedProducer, testReverseProducer);
+                factory = new DeliLambdaFactory(mongoManager, testCollection, testForwardProducer, testReverseProducer);
 
                 testContext = new TestContext();
                 const config = (new nconf.Provider({})).defaults({ documentId: testId, tenantId: testTenantId })

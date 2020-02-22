@@ -19,7 +19,6 @@ import {
 } from "@microsoft/fluid-server-lambdas";
 import { IGitManager } from "@microsoft/fluid-server-services-client";
 import {
-    CombinedProducer,
     IContext,
     IDatabaseManager,
     IDocumentDetails,
@@ -337,7 +336,7 @@ export class LocalOrderer implements IOrderer {
                     this.documentId,
                     this.details.value,
                     documentCollection,
-                    new CombinedProducer([this.deltasKafka]),
+                    this.deltasKafka,
                     this.rawDeltasKafka,
                     this.clientTimeout,
                     ActivityCheckingTimeout,
