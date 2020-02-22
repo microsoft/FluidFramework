@@ -197,7 +197,8 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             taskMessageSender,
             tenantManager,
             foremanConfig.permissions,
-            maxSendMessageSize);
+            maxSendMessageSize,
+            winston);
         const localOrderManager = new LocalOrderManager(nodeFactory, reservationManager);
         const kafkaOrdererFactory = new KafkaOrdererFactory(
             producer,

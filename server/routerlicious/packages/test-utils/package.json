@@ -29,6 +29,7 @@
     "@microsoft/fluid-protocol-definitions": "^0.1002.0",
     "@microsoft/fluid-server-services-client": "^0.1002.0",
     "@microsoft/fluid-server-services-core": "^0.1002.0",
+    "debug": "^4.1.1",
     "lodash": "^4.17.11",
     "moniker": "^0.1.2",
     "string-hash": "^1.1.3",
