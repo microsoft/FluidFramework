@@ -19,6 +19,7 @@ import {
 } from "@microsoft/fluid-server-lambdas";
 import { IGitManager } from "@microsoft/fluid-server-services-client";
 import {
+    CombinedProducer,
     IContext,
     IDatabaseManager,
     IDocumentDetails,
@@ -33,7 +34,6 @@ import {
     IWebSocket,
     ILogger,
 } from "@microsoft/fluid-server-services-core";
-import { DummyKafka } from "./dummyKafka";
 import { ILocalOrdererSetup } from "./interfaces";
 import { LocalContext } from "./localContext";
 import { LocalKafka } from "./localKafka";
@@ -337,9 +337,8 @@ export class LocalOrderer implements IOrderer {
                     this.documentId,
                     this.details.value,
                     documentCollection,
-                    this.deltasKafka,
+                    new CombinedProducer([this.deltasKafka]),
                     this.rawDeltasKafka,
-                    new DummyKafka(),
                     this.clientTimeout,
                     ActivityCheckingTimeout,
                     NoopConsolidationTimeout);
