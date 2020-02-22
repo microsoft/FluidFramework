@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IContext, IQueuedMessage } from "@microsoft/fluid-server-services-core";
+import { IContext, ILogger, IQueuedMessage } from "@microsoft/fluid-server-services-core";
 
 export class LocalContext implements IContext {
+    constructor(public readonly log: ILogger) {}
+
     public checkpoint(queuedMessage: IQueuedMessage) {
         return;
     }

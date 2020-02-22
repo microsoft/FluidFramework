@@ -10,6 +10,7 @@ import * as services from "@microsoft/fluid-server-services";
 import * as core from "@microsoft/fluid-server-services-core";
 import * as bytes from "bytes";
 import { Provider } from "nconf";
+import * as winston from "winston";
 
 export async function deliCreate(config: Provider): Promise<core.IPartitionLambdaFactory> {
     const mongoUrl = config.get("mongo:endpoint") as string;
@@ -54,7 +55,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
     }
     const publisher = new services.SocketIoRedisPublisher(redisConfig.port, redisConfig.host, redisOptions);
 
-    const localContext = new LocalContext();
+    const localContext = new LocalContext(winston);
     const localProducer = new LocalKafka();
 
     const broadcasterLambda = new LocalLambdaController(
