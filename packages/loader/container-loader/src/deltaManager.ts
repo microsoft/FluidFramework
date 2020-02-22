@@ -382,7 +382,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             // Regardless of how the connection attempt concludes, we'll clear the promise and remove the listener
             const cleanupConnectionAttempt = () => {
                 this.connectionP = undefined;
-                this.removeListener("closed", cleanupAndReject);
+                this.removeListener("close", cleanupAndReject);
             };
 
             // Reject the connection promise if the DeltaManager gets closed during connection
@@ -390,7 +390,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 cleanupConnectionAttempt();
                 reject(error);
             };
-            this.on("closed", cleanupAndReject);
+            this.on("close", cleanupAndReject);
 
             // Attempt the connection
             connectCore().then((connection) => {
@@ -641,7 +641,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // Drop pending messages - this will ensure catchUp() does not go into infinite loop
         this.pending = [];
 
-        this.emit("closed");
+        this.emit("close");
 
         this.removeAllListeners();
     }

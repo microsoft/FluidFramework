@@ -336,7 +336,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     public on(event: "readonly", listener: (readonly: boolean) => void): void;
     public on(event: "connected" | "contextChanged", listener: (clientId: string) => void): this;
-    public on(event: "disconnected" | "joining" | "closed", listener: () => void): this;
+    public on(event: "disconnected" | "joining" | "close", listener: () => void): this;
     public on(event: "error", listener: (error: any) => void): this;
     public on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
     public on(event: "pong" | "processTime", listener: (latency: number) => void): this;
@@ -360,7 +360,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         assert(this.connectionState === ConnectionState.Disconnected, "disconnect event was not raised!");
 
-        this.emit("closed");
+        this.emit("close");
 
         this.removeAllListeners();
     }
@@ -895,7 +895,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
 
     private attachDeltaManagerOpHandler(attributes: IDocumentAttributes, catchUp: boolean): void {
-        this._deltaManager.on("closed", () => {
+        this._deltaManager.on("close", () => {
             this.close();
         });
 

@@ -44,6 +44,13 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     ) {
         super();
         this.innerHandle = new ComponentHandle(this, this.url, runtime.IComponentHandleContext);
+
+        // Container event handlers
+        context.hostRuntime.on("close", () => {
+            (async function(component: SharedComponent) {
+                await component.onContainerClose();
+            }(this));
+        });
     }
 
     /**
@@ -180,4 +187,9 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
      * Called every time the component is initialized after create or existing.
      */
     protected async componentHasInitialized(): Promise<void> { }
+
+    /**
+     * Called when the host container emits a close event
+     */
+    protected async onContainerClose(): Promise<void> { }
 }
