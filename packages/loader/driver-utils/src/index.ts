@@ -4,6 +4,7 @@
  */
 
 export * from "./configurableUrlResolver";
+export * from "./driverProtocolMapping";
 export * from "./network";
 export * from "./readAndParse";
 export * from "./error";
