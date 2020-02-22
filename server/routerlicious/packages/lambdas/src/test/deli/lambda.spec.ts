@@ -36,6 +36,7 @@ describe("Routerlicious", () => {
 
             let testCollection: ICollection<any>;
             let testKafka: TestKafka;
+            let testMemoryKafka: TestKafka;
             let testForwardProducer: IProducer;
             let testReverseProducer: IProducer;
             let testBroadcastProducer: IProducer;
@@ -74,9 +75,11 @@ describe("Routerlicious", () => {
                 testCollection = database.collection("documents");
 
                 testKafka =  new TestKafka();
+                testMemoryKafka =  new TestKafka();
+
                 testForwardProducer = testKafka.createProducer();
                 testReverseProducer = testKafka.createProducer();
-                testBroadcastProducer = testKafka.createProducer();
+                testBroadcastProducer = testMemoryKafka.createProducer();
                 messageFactory = new MessageFactory(testId, testClientId);
                 kafkaMessageFactory = new KafkaMessageFactory("test", 1, false);
                 factory = new DeliLambdaFactory(mongoManager, testCollection, testForwardProducer, testReverseProducer, testBroadcastProducer);
