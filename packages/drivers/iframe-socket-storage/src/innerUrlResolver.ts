@@ -8,8 +8,7 @@ import { IResolvedUrl, IUrlResolver, IFluidResolvedUrl, OpenMode } from "@micros
 import { InnerDocumentServiceFactory } from ".";
 
 /**
- * A UrlResolver that just returns what's given.
- * A convenience for when we're using iframes
+ * A UrlResolver that returns a fixed url
  */
 export class InnerUrlResolver implements IUrlResolver {
     public static resolvedUrl: IFluidResolvedUrl = {
@@ -21,8 +20,7 @@ export class InnerUrlResolver implements IUrlResolver {
     };
 
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public resolve(request: IRequest): Promise<IResolvedUrl> {
+    public async resolve(request: IRequest): Promise<IResolvedUrl> {
         return Promise.resolve(InnerUrlResolver.resolvedUrl);
     }
 }

@@ -33,12 +33,6 @@ module.exports = env => {
         },
         devtool: "source-map",
         watch: true,
-        node: {
-            fs: "empty",
-            dgram: "empty",
-            net: "empty",
-            tls: "empty"
-        },
         stats: 'minimal',
     }
 };
