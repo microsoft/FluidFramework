@@ -8,7 +8,7 @@ import {
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import {
-    IComponentHTMLView,
+    IComponentHTMLView, IComponent,
 } from "@microsoft/fluid-component-core-interfaces";
 
 import * as React from "react";
@@ -18,11 +18,12 @@ import { ISpacesDataModel, SpacesDataModel } from "./dataModel";
 
 import { SpacesGridView } from "./view";
 import { ComponentToolbar } from "./components";
+import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
 
 /**
  * Spaces is the Fluid
  */
-export class Spaces extends PrimedComponent implements IComponentHTMLView {
+export class Spaces extends PrimedComponent implements IComponentHTMLView, IComponentCollection {
     private dataModelInternal: ISpacesDataModel | undefined;
     private componentToolbar: ComponentToolbar | undefined;
     private static readonly componentToolbarId = "spaces-component-toolbar";
@@ -44,6 +45,24 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
     }
 
     public get IComponentHTMLView() { return this; }
+    public get IComponentCollection() { return this; }
+
+
+    public createCollectionItem<T>(options: T): IComponent{
+        // eslint-disable-next-line dot-notation
+        const id: string = options["id"];
+        const type: string = options["type"];
+        const url: string = options["url"];
+        return this.dataModel.setComponent(id, type, url);
+    }
+
+    public removeCollectionItem(instance: IComponent): void {
+        let componentUrl: string;
+        if (instance.IComponentLoadable) {
+            componentUrl = instance.IComponentLoadable.url;
+            this.dataModel.removeComponent(componentUrl);
+        }
+    }
 
     protected async componentInitializingFirstTime(props?: any) {
         this.root.createSubDirectory("component-list");

@@ -15,6 +15,7 @@ export interface ISpacesDataModel extends EventEmitter {
     componentList: Map<string, Layout>;
     addComponent<T>(type: string, w?: number, h?: number, id?: string): Promise<T>;
     setComponentToolbar(id: string, type: string): void;
+    setComponent(id: string, type: string, url: string): IComponent;
     getComponent<T>(id: string): Promise<T>;
     removeComponent(id: string): void;
     updateGridItem(id: string, newLayout: Layout): void;
@@ -85,6 +86,21 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
         };
         this.componentSubDirectory.set(id, defaultModel);
         this.componentToolbarId = id;
+    }
+
+    public setComponent(id: string, type: string): IComponent{
+        const defaultModel: ISpacesModel = {
+            type,
+            layout: { x: 0, y: 0, w: 6, h: 2 }
+        };
+        const component = this.getComponent(id);
+        if (component) {
+            this.componentSubDirectory.set(id, defaultModel);
+            return component as IComponent;
+        } else {
+            throw new Error(`Runtime does not contain component with id: ${id}`);
+        }
+        
     }
 
     public async addComponent<T>(type: string, w: number = 1, h: number = 1, id?: string): Promise<T> {

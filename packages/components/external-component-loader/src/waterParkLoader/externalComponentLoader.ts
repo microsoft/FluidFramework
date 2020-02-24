@@ -120,9 +120,10 @@ export class ExternalComponentLoader extends PrimedComponent
                         const urlReg = await this.runtime.IComponentRegistry.get("url");
                         const pkgReg = await urlReg.IComponentRegistry.get(url) as IComponent;
                         let componentRuntime: IComponentRuntime;
+                        const id = uuid();
                         if (pkgReg.IComponentDefaultFactoryName) {
                             componentRuntime = await this.context.hostRuntime.createComponent(
-                                uuid(),
+                                id,
                                 [
                                     ...this.context.packagePath,
                                     "url",
@@ -131,7 +132,7 @@ export class ExternalComponentLoader extends PrimedComponent
                                 ]);
                         } else if (pkgReg.IComponentFactory) {
                             componentRuntime = await this.context.hostRuntime.createComponent(
-                                uuid(),
+                                id,
                                 [
                                     ...this.context.packagePath,
                                     "url",
@@ -148,7 +149,7 @@ export class ExternalComponentLoader extends PrimedComponent
                             // eslint-disable-next-line @typescript-eslint/await-thenable
                             component = await component.IComponentCollection.createCollectionItem();
                         }
-                        viewComponent.IComponentCollection.createCollectionItem(component.IComponentLoadable);
+                        viewComponent.IComponentCollection.createCollectionItem({id, type: value})
                     } else {
                         throw new Error("View component is empty or is not an IComponentCollection!!");
                     }
