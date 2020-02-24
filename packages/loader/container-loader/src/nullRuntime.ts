@@ -14,7 +14,6 @@ import {
     IContainerContext,
     IRuntime,
     IRuntimeFactory,
-    IExperimentalRuntime,
 } from "@microsoft/fluid-container-definitions";
 import {
     ConnectionState,
@@ -23,9 +22,8 @@ import {
     ITree,
     SummaryType,
 } from "@microsoft/fluid-protocol-definitions";
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 
-class NullRuntime extends EventEmitter implements IRuntime, IExperimentalRuntime {
+class NullRuntime extends EventEmitter implements IRuntime {
 
     public readonly isExperimentalRuntime = true;
     public get IComponentSerializer(): IComponentSerializer {
@@ -53,14 +51,6 @@ class NullRuntime extends EventEmitter implements IRuntime, IExperimentalRuntime
             tree: {},
             type: SummaryType.Tree,
         });
-    }
-
-    public experimentalSummarizeForCreate(): ISummaryTree {
-        throw new Error("Method not implemented");
-    }
-
-    public experimentalConnect(storageService: IDocumentStorageService): void {
-        throw new Error("Method not implemented");
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string) {

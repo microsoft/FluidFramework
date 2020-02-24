@@ -46,7 +46,9 @@ interface IParsedUrl {
     version: string | null | undefined;
 }
 
-export class RelativeLoader extends EventEmitter implements ILoader {
+export class RelativeLoader extends EventEmitter implements ILoader, IExperimentalLoader {
+
+    public readonly isExperimentalLoader = true;
 
     // Because the loader is passed to the container during construction we need to resolve the target container
     // after construction.
@@ -85,7 +87,7 @@ export class RelativeLoader extends EventEmitter implements ILoader {
         return this.loader.request(request);
     }
 
-    public async create(source: IFluidCodeDetails): Promise<Container> {
+    public async experimentalCreate(source: IFluidCodeDetails): Promise<Container> {
         throw new Error("Method not implemented.");
     }
 
