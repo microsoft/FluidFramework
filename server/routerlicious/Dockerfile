@@ -125,6 +125,7 @@ COPY examples/components/textarea-noreact/package*.json examples/components/text
 COPY examples/components/tourofheroes/package*.json examples/components/tourofheroes/
 COPY examples/components/type-race/package*.json examples/components/type-race/
 COPY examples/components/vltava/package*.json examples/components/vltava/
+COPY examples/hosts/iframe-host/package*.json examples/hosts/iframe-host/
 
 FROM node:10.16.0-slim AS base
 

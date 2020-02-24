@@ -1,3 +1,7 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
 import { InnerDocumentServiceFactory, InnerUrlResolver } from "@microsoft/fluid-iframe-driver";
 import { BaseHost } from "@microsoft/fluid-base-host";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
