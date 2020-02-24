@@ -10,8 +10,8 @@ import {
     IDocumentStorageService,
 } from "@microsoft/fluid-driver-definitions";
 import { ConnectionMode, IClient } from "@microsoft/fluid-protocol-definitions";
+import { DocumentStorageServiceProxy } from "@microsoft/fluid-driver-utils";
 import { InnerDocumentDeltaConnection, IOuterDocumentDeltaConnectionProxy } from "./innerDocumentDeltaConnection";
-import { InnerDocumentStorageService } from "./innerDocumentStorageService";
 
 /**
  * The shell of the document Service that we'll use on the inside of an IFrame
@@ -45,7 +45,7 @@ export class InnerDocumentService implements IDocumentService {
      * @returns returns the document storage service for routerlicious driver.
      */
     public async connectToStorage(): Promise<IDocumentStorageService> {
-        return new InnerDocumentStorageService(this.outerProxy.storage);
+        return new DocumentStorageServiceProxy(this.outerProxy.storage);
     }
 
     /**

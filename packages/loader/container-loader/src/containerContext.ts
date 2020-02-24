@@ -172,6 +172,10 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         this.logger = container.subLogger;
     }
 
+    /**
+     * DEPRECATED
+     * back-compat: 0.13 refreshBaseSummary
+     */
     public refreshBaseSummary(snapshot: ISnapshotTree) {
         this._baseSnapshot = snapshot;
         // Need to notify runtime of the update
