@@ -156,6 +156,14 @@ export interface IRuntime {
     processSignal(message: any, local: boolean);
 }
 
+export interface IExperimentalRuntime {
+
+    isExperimentalRuntime: true;
+
+    // Bind the registered services once attached.
+    experimentalAttachServices(storageService: IDocumentStorageService): void;
+}
+
 export interface IMessageScheduler {
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 }
