@@ -10,6 +10,7 @@ import {
     IDocumentStorageService,
 } from "@microsoft/fluid-driver-definitions";
 import { ConnectionMode, IClient } from "@microsoft/fluid-protocol-definitions";
+import { Remote } from "comlink";
 import { InnerDocumentDeltaConnection, IOuterDocumentDeltaConnectionProxy } from "./innerDocumentDeltaConnection";
 import { InnerDocumentStorageService } from "./innerDocumentStorageService";
 
@@ -20,23 +21,22 @@ export class InnerDocumentService implements IDocumentService {
     /**
      * Create a new InnerDocumentService
      */
-    public static async create(proxyObject: {
+    public static async create(proxyObject: Remote<{
         clientId: string,
         stream: IOuterDocumentDeltaConnectionProxy,
         deltaStorage: IDocumentDeltaStorageService,
         storage: IDocumentStorageService,
-    }): Promise<InnerDocumentService> {
-        // eslint-disable-next-line @typescript-eslint/await-thenable
+    }>): Promise<InnerDocumentService> {
         return new InnerDocumentService(proxyObject, await proxyObject.clientId);
     }
 
-    constructor(private readonly outerProxy: {
-        clientId: string,
-        stream: IOuterDocumentDeltaConnectionProxy,
-        deltaStorage: IDocumentDeltaStorageService,
-        storage: IDocumentStorageService
-    },
-        // eslint-disable-next-line @typescript-eslint/indent
+    private constructor(
+        private readonly outerProxy: Remote<{
+            clientId: string,
+            stream: IOuterDocumentDeltaConnectionProxy,
+            deltaStorage: IDocumentDeltaStorageService,
+            storage: IDocumentStorageService
+        }>,
         public clientId: string) { }
 
     /**
@@ -55,8 +55,7 @@ export class InnerDocumentService implements IDocumentService {
      */
     public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
         return {
-            // eslint-disable-next-line @typescript-eslint/promise-function-async
-            get: (from?: number, to?: number) => this.outerProxy.deltaStorage.get(from, to),
+            get: async (from?: number, to?: number) => this.outerProxy.deltaStorage.get(from, to),
         };
     }
 

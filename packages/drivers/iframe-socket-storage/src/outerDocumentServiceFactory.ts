@@ -12,7 +12,6 @@ import {
     IDocumentServiceFactory,
     IDocumentStorageService,
     IFluidResolvedUrl,
-    IResolvedUrl,
     IUrlResolver,
 } from "@microsoft/fluid-driver-definitions";
 import {
@@ -51,76 +50,8 @@ export interface IDocumentServiceFactoryProxy {
         };
     };
 
-    createDocumentService(resolvedUrl: IFluidResolvedUrl): Promise<string>;
+    createDocumentService(): Promise<string>;
     connected(): Promise<void>;
-}
-
-/**
- * Creates a proxy outerdocumentservice from either a resolvedURL or a request
- * Remotes the real connection to an iframe
- */
-export class IFrameDocumentServiceProxyFactory {
-
-    public static async create(
-        documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[],
-        frame: HTMLIFrameElement,
-        options: any,
-        urlResolver: IUrlResolver | IUrlResolver[],
-    ) {
-        return new IFrameDocumentServiceProxyFactory(documentServiceFactory, frame, options, urlResolver);
-    }
-
-    public readonly protocolName = "fluid-outer:";
-    private documentServiceProxy: DocumentServiceFactoryProxy | undefined;
-
-    constructor(
-        private readonly documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[],
-        private readonly frame: HTMLIFrameElement,
-        private readonly options: any,
-        private readonly urlResolver: IUrlResolver | IUrlResolver[],
-    ) {
-
-    }
-
-    public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<void> {
-        // eslint-disable-next-line @typescript-eslint/no-use-before-define
-        this.documentServiceProxy = new DocumentServiceFactoryProxy(
-            this.documentServiceFactory,
-            this.options,
-            resolvedUrl as IFluidResolvedUrl,
-        );
-
-        return this.createProxy();
-    }
-
-    public async createDocumentServiceFromRequest(request: IRequest): Promise<void> {
-        // Simplify this with either https://github.com/microsoft/FluidFramework/pull/448
-        // or https://github.com/microsoft/FluidFramework/issues/447
-        const resolvers: IUrlResolver[] = [];
-        if (!(Array.isArray(this.urlResolver))) {
-            resolvers.push(this.urlResolver);
-        } else {
-            resolvers.push(... this.urlResolver);
-        }
-
-        const resolvedUrl = await configurableUrlResolver(resolvers, request);
-        if (!resolvedUrl) {
-            return Promise.reject("No Resolver for request");
-        }
-
-        return this.createDocumentService(resolvedUrl);
-    }
-
-    private async createProxy() {
-
-        // Host guarantees that frame and contentWindow are both loaded
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const iframeContentWindow = this.frame.contentWindow!;
-
-        iframeContentWindow.window.postMessage("EndpointExposed", "*");
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        Comlink.expose(this.documentServiceProxy!.getProxy(), Comlink.windowEndpoint(iframeContentWindow));
-    }
 }
 
 /**
@@ -136,28 +67,25 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
         },
     };
 
-    private readonly tokens: {
-        [name: string]: string;
-    };
     private readonly driverProtocolMappings: DocumentServiceFactoryProtocolMatcher;
 
     constructor(
         documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[],
         private readonly options: any,
         private readonly resolvedUrl: IFluidResolvedUrl,
+        frame: HTMLIFrameElement,
     ) {
         this.driverProtocolMappings = new DocumentServiceFactoryProtocolMatcher(documentServiceFactory);
-        this.tokens = this.resolvedUrl.tokens;
         this.clients = {};
+        this.createProxy(frame);
     }
 
-    public async createDocumentService(resolvedUrl: IFluidResolvedUrl): Promise<string> {
+    public async createDocumentService(): Promise<string> {
 
-        const documentServiceFactory = this.driverProtocolMappings.getFactory(resolvedUrl);
+        const documentServiceFactory = this.driverProtocolMappings.getFactory(this.resolvedUrl);
 
-        resolvedUrl.tokens = this.tokens;
         const connectedDocumentService: IDocumentService =
-            await documentServiceFactory.createDocumentService(resolvedUrl);
+            await documentServiceFactory.createDocumentService(this.resolvedUrl);
 
         const clientDetails = this.options ? (this.options.client as IClient) : null;
         const mode: ConnectionMode = "write";
@@ -187,16 +115,24 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
         return;
     }
 
-    public getProxy(): IDocumentServiceFactoryProxy {
-        return {
-            // eslint-disable-next-line @typescript-eslint/unbound-method
-            connected: this.connected,
+
+    private createProxy(frame: HTMLIFrameElement) {
+
+        // Host guarantees that frame and contentWindow are both loaded
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const iframeContentWindow = frame.contentWindow!;
+
+        const proxy = {
+            connected: async () => this.connected(),
             clients: this.clients,
             // Continue investigation of scope after feature check in
-            // eslint-disable-next-line @typescript-eslint/promise-function-async
-            createDocumentService: (resolvedUrl: IFluidResolvedUrl) => this.createDocumentService(resolvedUrl),
+            createDocumentService: async () => this.createDocumentService(),
         };
+
+        iframeContentWindow.window.postMessage("EndpointExposed", "*");
+        Comlink.expose(proxy, Comlink.windowEndpoint(iframeContentWindow));
     }
+
 
     private getStorage(storage: IDocumentStorageService): IDocumentStorageService {
         return {
@@ -301,3 +237,60 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
         return outerMethodsToProxy;
     }
 }
+
+/**
+ * Creates a proxy outerdocumentservice from either a resolvedURL or a request
+ * Remotes the real connection to an iframe
+ */
+export class IFrameDocumentServiceProxyFactory {
+
+    public static async create(
+        documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[],
+        frame: HTMLIFrameElement,
+        options: any,
+        urlResolver: IUrlResolver | IUrlResolver[],
+    ) {
+        return new IFrameDocumentServiceProxyFactory(documentServiceFactory, frame, options, urlResolver);
+    }
+
+    public readonly protocolName = "fluid-outer:";
+
+    constructor(
+        private readonly documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[],
+        private readonly frame: HTMLIFrameElement,
+        private readonly options: any,
+        private readonly urlResolver: IUrlResolver | IUrlResolver[],
+    ) {
+
+    }
+
+    public async createDocumentService(resolvedUrl: IFluidResolvedUrl): Promise<IDocumentServiceFactoryProxy> {
+        return Promise.resolve(
+            new DocumentServiceFactoryProxy(
+                this.documentServiceFactory,
+                this.options,
+                resolvedUrl,
+                this.frame,
+            ));
+    }
+
+    public async createDocumentServiceFromRequest(request: IRequest): Promise<IDocumentServiceFactoryProxy> {
+        // Simplify this with either https://github.com/microsoft/FluidFramework/pull/448
+        // or https://github.com/microsoft/FluidFramework/issues/447
+        const resolvers: IUrlResolver[] = [];
+        if (!(Array.isArray(this.urlResolver))) {
+            resolvers.push(this.urlResolver);
+        } else {
+            resolvers.push(... this.urlResolver);
+        }
+
+        const resolvedUrl = await configurableUrlResolver(resolvers, request);
+        if (!resolvedUrl  || resolvedUrl.type !== "fluid") {
+            return Promise.reject("No Resolver for request");
+        }
+
+        return this.createDocumentService(resolvedUrl);
+    }
+}
+
+

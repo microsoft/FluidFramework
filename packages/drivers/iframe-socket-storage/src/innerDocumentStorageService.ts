@@ -12,6 +12,7 @@ import {
     ITree,
     IVersion,
 } from "@microsoft/fluid-protocol-definitions";
+import { Remote } from "comlink";
 
 /**
  * Document access to underlying storage for routerlicious driver.
@@ -21,7 +22,7 @@ export class InnerDocumentStorageService implements IDocumentStorageService {
         return this.outerStorageService.repositoryUrl;
     }
 
-    constructor(private readonly outerStorageService: IDocumentStorageService) {
+    constructor(private readonly outerStorageService: Remote<IDocumentStorageService>) {
     }
 
     public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
@@ -45,8 +46,7 @@ export class InnerDocumentStorageService implements IDocumentStorageService {
         return this.outerStorageService.getContent(version, path);
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
+    public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
         return this.outerStorageService.write(tree, parents, message, ref);
     }
 
@@ -55,8 +55,7 @@ export class InnerDocumentStorageService implements IDocumentStorageService {
 
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
+    public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
         return this.outerStorageService.downloadSummary(handle);
     }
 
@@ -65,6 +64,7 @@ export class InnerDocumentStorageService implements IDocumentStorageService {
     }
 
     public getRawUrl(blobId: string): string {
-        return this.outerStorageService.getRawUrl(blobId);
+        throw new Error("getRawUrl not proxible");
+        // return this.outerStorageService.getRawUrl(blobId);
     }
 }
