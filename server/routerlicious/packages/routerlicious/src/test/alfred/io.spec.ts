@@ -25,6 +25,7 @@ import {
     TestTenantManager,
     TestWebSocket,
     TestWebSocketServer,
+    DebugLogger,
 } from "@microsoft/fluid-server-test-utils";
 import * as assert from "assert";
 import { OrdererManager } from "../../alfred/runnerFactory";
@@ -84,7 +85,8 @@ describe("Routerlicious", () => {
                         testStorage,
                         contentCollection,
                         testClientManager,
-                        new DefaultMetricClient());
+                        new DefaultMetricClient(),
+                        DebugLogger.create("fluid-server:TestAlfredIO"));
                 });
 
                 function connectToServer(

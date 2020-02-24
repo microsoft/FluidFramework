@@ -19,6 +19,7 @@ import {
     IGenericBlob,
     IRuntimeFactory,
     LoaderHeader,
+    IExperimentalContainer,
 } from "@microsoft/fluid-container-definitions";
 import {
     ChildLogger,
@@ -31,6 +32,7 @@ import {
     IDocumentService,
     IDocumentStorageService,
     IError,
+    IUrlResolver,
 } from "@microsoft/fluid-driver-definitions";
 import { createIError, readAndParse, OnlineStatus, isOnline } from "@microsoft/fluid-driver-utils";
 import {
@@ -85,8 +87,10 @@ const merge = require("lodash/merge");
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
-export class Container extends EventEmitterWithErrorHandling implements IContainer {
+export class Container extends EventEmitterWithErrorHandling implements IContainer, IExperimentalContainer {
     public static version = "^0.1.0";
+
+    public readonly isExperimentalContainer = true;
 
     /**
      * Load container.
@@ -363,6 +367,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.emit("closed");
 
         this.removeAllListeners();
+    }
+
+    public experimentalIsAttached(): boolean {
+        throw new Error("Method not implemented.");
+    }
+
+    public async experimentalAttach(resolver: IUrlResolver, options: any): Promise<void> {
+        throw new Error("Method not implemented.");
     }
 
     public async request(path: IRequest): Promise<IResponse> {

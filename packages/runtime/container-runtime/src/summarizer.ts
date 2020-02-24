@@ -18,6 +18,7 @@ import {
     ISummaryConfiguration,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
+import { ISummaryContext } from "@microsoft/fluid-driver-definitions";
 import { ContainerRuntime, GenerateSummaryData } from "./containerRuntime";
 import { RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
 import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
@@ -48,7 +49,7 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
         private readonly runtime: ContainerRuntime,
         private readonly configurationGetter: () => ISummaryConfiguration,
         private readonly generateSummaryCore: (safe: boolean) => Promise<GenerateSummaryData>,
-        private readonly refreshLatestAck: (handle: string, referenceSequenceNumber: number) => Promise<void>,
+        private readonly refreshLatestAck: (context: ISummaryContext, referenceSequenceNumber: number) => Promise<void>,
     ) {
         this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");
         this.runCoordinator = new RunWhileConnectedCoordinator(runtime);
@@ -189,9 +190,12 @@ export class Summarizer implements IComponentRouter, IComponentRunnable, ICompon
             try {
                 const ack = await this.summaryCollection.waitSummaryAck(refSequenceNumber);
                 refSequenceNumber = ack.summaryOp.referenceSequenceNumber;
-                const handle = ack.summaryAckNack.contents.handle;
+                const context: ISummaryContext = {
+                    proposalHandle: ack.summaryOp.contents.handle,
+                    ackHandle: ack.summaryAckNack.contents.handle,
+                };
 
-                await this.refreshLatestAck(handle, refSequenceNumber);
+                await this.refreshLatestAck(context, refSequenceNumber);
                 refSequenceNumber++;
             } catch (error) {
                 this.logger.sendErrorEvent({ eventName: "HandleSummaryAckError", refSequenceNumber }, error);
@@ -454,6 +458,8 @@ export class RunningSummarizer implements IDisposable {
             error: ackNack.type === MessageType.SummaryNack ? ackNack.contents.errorMessage : undefined,
             handle: ackNack.type === MessageType.SummaryAck ? ackNack.contents.handle : undefined,
         });
+
+        this.pendingAckTimer.clear();
 
         // Update for success
         if (ackNack.type === MessageType.SummaryAck) {
