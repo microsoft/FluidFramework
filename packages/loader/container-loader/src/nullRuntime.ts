@@ -25,7 +25,6 @@ import {
 
 class NullRuntime extends EventEmitter implements IRuntime {
 
-    public readonly isExperimentalRuntime = true;
     public get IComponentSerializer(): IComponentSerializer {
         throw new Error("Not implemented");
     }
