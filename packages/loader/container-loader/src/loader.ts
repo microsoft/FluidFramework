@@ -87,7 +87,7 @@ export class RelativeLoader extends EventEmitter implements ILoader, IExperiment
         return this.loader.request(request);
     }
 
-    public async experimentalCreate(source: IFluidCodeDetails): Promise<Container> {
+    public async experimentalCreateDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
         throw new Error("Method not implemented.");
     }
 
@@ -189,7 +189,7 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
         this.protocolToDocumentFactoryMap = createProtocolToFactoryMapping(documentServiceFactories);
     }
 
-    public async experimentalCreate(source: IFluidCodeDetails): Promise<Container> {
+    public async experimentalCreateDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
         throw new Error("Method not implemented.");
     }
 

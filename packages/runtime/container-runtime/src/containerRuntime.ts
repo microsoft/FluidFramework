@@ -946,11 +946,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         }
     }
 
-    public experimentalSummarizeForCreate(): ISummaryTree {
-        throw new Error("Method not implemented");
-    }
-
-    public experimentalConnect(storageService: IDocumentStorageService): void {
+    public experimentalAttachServices(storageService: IDocumentStorageService): void {
         throw new Error("Method not implemented");
     }
 

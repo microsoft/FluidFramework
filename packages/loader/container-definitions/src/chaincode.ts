@@ -22,7 +22,6 @@ import {
     ISnapshotTree,
     ITree,
     MessageType,
-    ISummaryTree,
 } from "@microsoft/fluid-protocol-definitions";
 import { IAudience } from "./audience";
 import { IBlobManager } from "./blobs";
@@ -161,12 +160,8 @@ export interface IExperimentalRuntime {
 
     isExperimentalRuntime: true;
 
-    // Creates a summary for use in the create new flow.
-    // Any attach, etc... logic can happen at this point in time.
-    experimentalSummarizeForCreate(): ISummaryTree;
-
     // Bind the registered services once attached.
-    experimentalConnect(storageService: IDocumentStorageService): void;
+    experimentalAttachServices(storageService: IDocumentStorageService): void;
 }
 
 export interface IMessageScheduler {

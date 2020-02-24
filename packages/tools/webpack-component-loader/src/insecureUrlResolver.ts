@@ -94,7 +94,7 @@ export class InsecureUrlResolver implements IUrlResolver, IExperimentalUrlResolv
         }
     }
 
-    public async experimentalCreateAndResolve(
+    public async experimentalCreate(
         summary: ISummaryTree,
         sequenceNumber: number,
         values: [string, ICommittedProposal][],

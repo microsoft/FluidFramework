@@ -80,7 +80,7 @@ export interface IExperimentalLoader {
      * Creates a new contanier using the specified chaincode but in an unattached state. While unattached all
      * updates will only be local until the user explciitly attaches the container to a service provider.
      */
-    experimentalCreate(source: IFluidCodeDetails): Promise<IContainer>;
+    experimentalCreateDetachedContainer(source: IFluidCodeDetails): Promise<IContainer>;
 }
 
 export enum LoaderHeader {
