@@ -19,7 +19,6 @@ import {
 import { FluidRepo } from "./fluidRepo";
 import * as semver from "semver";
 import * as fs from "fs";
-import { MonoRepo } from "./fluidPackageCheck";
 
 async function writeAndReplace(outFile: string, bakFile: string, content: string) {
     logVerbose(`Writing ${outFile}`);
@@ -102,7 +101,7 @@ async function fixSymlink(stat: fs.Stats | undefined, symlinkPath: string, pkg: 
 }
 
 async function revertSymlink(symlinkPath: string, pkg: Package, depBuildPackage: Package) {
-    
+
     await unlinkAsync(symlinkPath);
     const origPath = path.join(path.dirname(symlinkPath), `_${path.basename(symlinkPath)}`);
     if (existsSync(origPath)) {
@@ -135,8 +134,8 @@ export async function symlinkPackage(repo: FluidRepo, pkg: Package, buildPackage
         if (depBuildPackage && semver.satisfies(depBuildPackage.version, version)) {
             const sameMonoRepo = repo.isSameMonoRepo(monoRepo, depBuildPackage);
             const localSymlinkPath = path.join(pkg.directory, "node_modules", dep);
-            const monoRepoSymlinkPath = monoRepoNodeModulePath? path.join(monoRepoNodeModulePath, dep) : undefined;
-            
+            const monoRepoSymlinkPath = monoRepoNodeModulePath ? path.join(monoRepoNodeModulePath, dep) : undefined;
+
             try {
                 let stat: fs.Stats | undefined;
                 let symlinkPath: string | undefined = undefined;
@@ -149,23 +148,26 @@ export async function symlinkPackage(repo: FluidRepo, pkg: Package, buildPackage
                 }
 
                 if (symlinkPath) {
-                    // logVerbose(`${pkg.nameColored}: Symlink found ${symlinkPath}`);
                     stat = await lstatAsync(symlinkPath);
-                    if (stat.isSymbolicLink && await realpathAsync(symlinkPath) === depBuildPackage.directory) {
-                        // Have the correct symlink, continue
-                        if (!sameMonoRepo) {
-                            if (options.fullSymlink === undefined) {
-                                options.fullSymlink = true;
-                            } else if (!options.fullSymlink) {
-                                if (options.symlink) {
-                                    await revertSymlink(symlinkPath, pkg, depBuildPackage);
-                                    changed++;
-                                } else {
-                                    console.warn(`${pkg.nameColored}: warning: dependent package ${depBuildPackage.nameColored} linked. Use --symlink to fix`);
+                    if (stat.isSymbolicLink()) {
+                        const realPath = await realpathAsync(symlinkPath);
+                        if (realPath === depBuildPackage.directory) {
+                            // Have the correct symlink, continue
+                            if (!sameMonoRepo) {
+                                if (options.fullSymlink === undefined) {
+                                    options.fullSymlink = true;
+                                } else if (!options.fullSymlink) {
+                                    if (options.symlink) {
+                                        await revertSymlink(symlinkPath, pkg, depBuildPackage);
+                                        changed++;
+                                    } else {
+                                        console.warn(`${pkg.nameColored}: warning: dependent package ${depBuildPackage.nameColored} linked. Use --symlink to fix`);
+                                    }
                                 }
                             }
+                            continue;
                         }
-                        continue;
+                        logVerbose(`${pkg.nameColored}: Symlink found ${symlinkPath} @${realPath}, expects ${depBuildPackage.directory}`);
                     }
                 }
 
