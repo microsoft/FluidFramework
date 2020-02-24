@@ -181,7 +181,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         }
 
         if (!entry) {
-            throw new Error("Registry does not contain entry for the package");
+            throw new Error(`Registry does not contain entry for package '${pkgName}'`);
         }
 
         return this.hostRuntime._createComponentWithProps(packagePath, props, id);
@@ -206,7 +206,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
                 }
                 entry = await registry.get(pkg);
                 if (!entry) {
-                    this.componentRuntimeDeferred.reject("Registry does not contain an entry for the package");
+                    this.componentRuntimeDeferred.reject(`Registry does not contain entry for package '${pkg}'`);
                     return this.componentRuntimeDeferred.promise;
                 }
                 factory = entry.IComponentFactory;
