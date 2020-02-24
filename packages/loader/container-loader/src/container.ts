@@ -801,7 +801,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
      * Loads the runtime factory for the provided package
      */
     private async loadRuntimeFactory(pkg: IFluidCodeDetails): Promise<IRuntimeFactory> {
+        const perfEvent = PerformanceEvent.start(this.logger, { eventName: "CodeLoad" });
         const component = await this.codeLoader.load(pkg);
+        perfEvent.end();
 
         const factory = component.fluidExport.IRuntimeFactory;
         if (!factory) {
