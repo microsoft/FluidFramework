@@ -947,18 +947,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.context.submitSignalFn(envelope);
     }
 
-    private refreshBaseSummary(snapshot: ISnapshotTree) {
-        // Currently only is called from summaries
-        this.loadedFromSummary = true;
-        // Propagate updated tree to all components
-        for (const key of Object.keys(snapshot.trees)) {
-            if (this.contexts.has(key)) {
-                const component = this.contexts.get(key);
-                component.refreshBaseSummary(snapshot.trees[key]);
-            }
-        }
-    }
-
     public experimentalAttachServices(storageService: IDocumentStorageService): void {
         throw new Error("Method not implemented");
     }
