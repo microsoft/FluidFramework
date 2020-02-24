@@ -5,11 +5,11 @@
 
 import { WaterParkLoaderInstantiationFactory, WaterParkLoaderName } from "./waterParkLoader";
 import { WaterParkModuleInstantiationFactory } from "./waterParkModuleInstantiationFactory";
-import { WaterParkViewInstantiationFactory, WaterParkViewName } from "./waterParkView";
+import { SpacesComponentName, SpacesInstantiationFactory } from "./spaces";
 
 export const fluidExport = new WaterParkModuleInstantiationFactory(
     new Map([
         [WaterParkLoaderName, Promise.resolve(WaterParkLoaderInstantiationFactory)],
-        [WaterParkViewName, Promise.resolve(WaterParkViewInstantiationFactory)],
+        [SpacesComponentName, Promise.resolve(SpacesInstantiationFactory)],
     ]),
 );

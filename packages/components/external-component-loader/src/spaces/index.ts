@@ -3,15 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import { SimpleModuleInstantiationFactory, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
-import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
-import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
 import {
     IProvideComponentFactory,
     NamedComponentRegistryEntries,
     IComponentRegistry,
+    IComponentFactory,
 } from "@microsoft/fluid-runtime-definitions";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 
@@ -32,10 +31,9 @@ import {
     FriendlyTextBoxName,
 } from "./components";
 import { Spaces } from "./spaces";
-import { SupportedComponent } from "./dataModel";
 import { IContainerComponentDetails } from "./interfaces";
 
-const componentName = "spaces";
+export const SpacesComponentName = "spaces";
 
 export class InternalRegistry implements IComponentRegistry {
     public get IComponentRegistry() { return this; }
@@ -63,6 +61,10 @@ export class InternalRegistry implements IComponentRegistry {
     }
 }
 
+export const SpacesInstantiationFactory: IComponentFactory = new PrimedComponentFactory(
+    Spaces,
+    [],
+);
 
 const generateFactory = () => {
     const containerComponentsDefinition: IContainerComponentDetails[] = [
@@ -74,45 +76,31 @@ const generateFactory = () => {
             capabilities: ["IComponentHTMLVisual"],
         },
         {
-            type: ButtonName as SupportedComponent,
+            type: ButtonName as string,
             factory: Promise.resolve(Button.getFactory()),
             friendlyName: FriendlyButtonName,
             fabricIconName: "ButtonControl",
             capabilities: ["IComponentHTMLVisual"],
         },
         {
-            type: NumberName as SupportedComponent,
+            type: NumberName as string,
             factory: Promise.resolve(Number.getFactory()),
             friendlyName: FriendlyNumberName,
             fabricIconName: "NumberField",
             capabilities: ["IComponentHTMLVisual"],
         },
         {
-            type: FacePileName as SupportedComponent,
+            type: FacePileName as string,
             factory: Promise.resolve(FacePile.getFactory()),
             friendlyName: FriendlyFacePileName,
             fabricIconName: "People",
             capabilities: ["IComponentHTMLVisual"],
         },
         {
-            type: TextBoxName as SupportedComponent,
+            type: TextBoxName as string,
             factory: Promise.resolve(TextBox.getFactory()),
             friendlyName: FriendlyTextBoxName,
             fabricIconName: "TextField",
-            capabilities: ["IComponentHTMLVisual"],
-        },
-        {
-            type: "codemirror",
-            factory: Promise.resolve(cmfe),
-            friendlyName: "Code Mirror",
-            fabricIconName: "Code",
-            capabilities: ["IComponentHTMLVisual"],
-        },
-        {
-            type: "prosemirror",
-            factory: Promise.resolve(pmfe),
-            friendlyName: "Prose Mirror",
-            fabricIconName: "Edit",
             capabilities: ["IComponentHTMLVisual"],
         },
     ];
@@ -123,7 +111,7 @@ const generateFactory = () => {
     });
 
     // We don't want to include the default wrapper component in our list of available components
-    containerComponents.push([ componentName, Promise.resolve(Spaces.getFactory())]);
+    containerComponents.push([ SpacesComponentName, Promise.resolve(Spaces.getFactory())]);
     containerComponents.push([ ComponentToolbarName, Promise.resolve(ComponentToolbar.getFactory()) ]);
 
     const containerRegistries: NamedComponentRegistryEntries = [
@@ -133,7 +121,7 @@ const generateFactory = () => {
     // TODO: You should be able to specify the default registry instead of just a list of components
     // and the default registry is already determined Issue:#1138
     return new SimpleModuleInstantiationFactory(
-        componentName,
+        SpacesComponentName,
         [
             ...containerComponents,
             ...containerRegistries,

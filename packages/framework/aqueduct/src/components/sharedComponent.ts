@@ -149,7 +149,8 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
             url: `/${id}`,
         };
 
-        return this.asComponent(this.context.hostRuntime.request(request));
+        const component = await this.asComponent<T>(this.context.hostRuntime.request(request));
+        return component;
     }
 
     /**
