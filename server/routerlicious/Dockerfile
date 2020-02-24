@@ -175,6 +175,7 @@ RUN npm install --unsafe-perm
 # And now copy over our actual code and build
 COPY packages/ packages/
 COPY examples/components/ examples/components/
+COPY examples/hosts/iframe-host examples/hosts/iframe-host
 
 # Set the version number
 ARG VERSION_BUILDNUMBER=0
