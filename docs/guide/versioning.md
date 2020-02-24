@@ -21,7 +21,7 @@ With minor upgrades, old clients and new clients cannot collaborate on the same 
 Deciding when and how to propose new code will be up to the host and runtime code.  There are some guidelines and utilities the Fluid Framework will provide to help make this process easier.
 
 #### When to Propose
-The active users will effectively experience a refresh, but not an actual page refresh.  For this reason, it may be desirable to prefer this operation occur when there is only one active client on the document.  It may be common for the loaded code or host to check for available updates on initial code load, and then propose first.
+The active users will effectively experience a refresh, but not necessarily an actual page refresh.  For this reason, it may be desirable to prefer this operation occur when there is only one active client on the document.  It may be common for the loaded code or host to check for available updates on initial code load, and then propose first.
 
 #### How to Propose
 Proposing code for upgrade is as simple as calling `quorum.propose("code", ...)`.  It is then the responsibility of the other clients to be listening for the quorum's "addProposal" event if they want a chance to reject it.  Accepting quorum code proposals is implicit.
@@ -47,6 +47,10 @@ It may also be desirable in some cases to have user interaction, giving them a c
 Accepted code proposals in the quorum are handled by the container.  The container will stop and dispose all top-level runtime objects and proxy objects which will largely disconnect most of the old code, allowing it to be garbage collected.  It is up to the loaded code to clean itself up if it has any timers or global event handlers, etc.
 
 The summarizer will aggressively try to summarizer after a reload, to reduce new clients going through a reload.
+
+In order to support hosts that want to do a full page refresh, it is up to the loaded code to block until a summary ack is seen after the code proposal is accepted.
+
+The framework may also support a streamlined "fast" summarize which all clients attempt on reload, to reduce blocking during a full page refresh.
 
 #### Full Page Refresh
 If a full page refresh is required for interactive clients, then all clients must be blocked until the summarizer client has a chance to reload and summarize.  Upon receiving the new summary op, the clients are then safe to refresh the page as they will load from the latest summary.  The sequence of events may look something like this:
