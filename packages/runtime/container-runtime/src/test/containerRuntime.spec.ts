@@ -20,7 +20,10 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import { IDeltaManager } from "@microsoft/fluid-container-definitions";
 import { MockDeltaManager } from "@microsoft/fluid-test-runtime-utils";
-import { IConvertedSummaryResults, SummaryTreeConverter } from "../summaryTreeConverter";
+import {
+    IConvertedSummaryResults,
+    SummaryTreeConverter,
+} from "../summaryTreeConverter";
 import { ScheduleManager } from "../containerRuntime";
 
 describe("Runtime", () => {

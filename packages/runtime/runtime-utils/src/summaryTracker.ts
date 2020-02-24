@@ -4,76 +4,104 @@
  */
 
 import { ISnapshotTree } from "@microsoft/fluid-protocol-definitions";
+import { ISummaryTracker } from "@microsoft/fluid-runtime-definitions";
 
 /**
- * Initial - this is the initial state of the tracker, which means that
- * no changes have come in, but the base summary has not been set yet.
- * Invalid - when a change comes in, the baseId cannot be used.
- * Valid - no changes have come in since the last reset, and the
- * base summary has been set.
+ * SummaryTracker is a tree node which allows for deferred
+ * snapshot tree access and tracks the latest acked summary
+ * reference sequence number.
  */
-export enum SummaryTrackerState {
-    Initial = 0,
-    Invalid = -1,
-    Valid = 1,
-}
-
-/**
- * Responsible for tracking changes related to base summary tree usage.
- * It basically tracks 2 things: whether there have been any changes since
- * the base summary, and whether the base summary has been refreshed.
- * Only if both things are true can the baseId be reused during summarization.
- * This is represented by 3 states in the SummaryTrackerState enum.
- */
-export class SummaryTracker {
-    public get state() { return this._state; }
-    public get baseTree() { return this._baseSnapshotTree; }
-
-    private _state: SummaryTrackerState = SummaryTrackerState.Initial;
-    // eslint-disable-next-line no-null/no-null
-    private _baseSnapshotTree: ISnapshotTree | null = null;
+export class SummaryTracker implements ISummaryTracker {
+    /**
+     * The reference sequence number of the most recent acked summary.
+     */
+    public get referenceSequenceNumber() {
+        return this._referenceSequenceNumber;
+    }
 
     /**
-     * Gets the baseId if it can be reused during summarization;
-     * returns null otherwise
+     * The latest sequence number of change to this node or subtree.
      */
-    public getBaseId(): string | null {
-        if (this._state === SummaryTrackerState.Valid && this._baseSnapshotTree && this._baseSnapshotTree.id) {
-            return this._baseSnapshotTree.id;
+    public get latestSequenceNumber() {
+        return this._latestSequenceNumber;
+    }
+
+    // back-compat: 0.14 uploadSummary
+    public async getSnapshotTree(): Promise<ISnapshotTree | undefined> {
+        return this._getSnapshotTree();
+    }
+
+    /**
+     * Gets the Id to use when summarizing.
+     * When useContext is true, this will be the full path to the node.
+     * When useContext is false, this will fetch the
+     * id from the previous snapshot tree.
+     */
+    public async getId(): Promise<string | undefined> {
+        if (this._latestSequenceNumber > this._referenceSequenceNumber) {
+            // If the latest sequence number exceeds the reference sequence number
+            // of the last acked summary, this indicates a change, and so we cannot
+            // reused the id.
+            return undefined;
+        }
+        if (this.useContext === true) {
+            return this._fullPath;
         } else {
-            // eslint-disable-next-line no-null/no-null
-            return null;
+            // back-compat: 0.14 uploadSummary
+            const tree = await this.getSnapshotTree();
+            const id = tree?.id ?? undefined;
+            if (id === undefined) {
+                throw Error("Expected to find parent snapshot tree with id.");
+            }
+            return id;
         }
     }
 
-    /**
-     * Indicate that a change has occurred since the base.
-     * Set state to invalid.
-     */
-    public invalidate() {
-        if (this._state !== SummaryTrackerState.Invalid) {
-            this._state = SummaryTrackerState.Invalid;
+    private readonly children = new Map<string, SummaryTracker>();
+
+    public refreshLatestSummary(
+        referenceSequenceNumber: number,
+        getSnapshot: () => Promise<ISnapshotTree | undefined>,
+    ) {
+        this._referenceSequenceNumber = referenceSequenceNumber;
+        this._getSnapshotTree = getSnapshot;
+
+        // Propagate update to all child nodes
+        for (const [key, value] of this.children.entries()) {
+            value.refreshLatestSummary(referenceSequenceNumber, this.formChildGetSnapshotTree(key));
         }
     }
 
-    /**
-     * Resets state to initial.
-     */
-    public reset() {
-        if (this._state !== SummaryTrackerState.Initial) {
-            this._state = SummaryTrackerState.Initial;
-        }
+    public updateLatestSequenceNumber(latestSequenceNumber: number): void {
+        this._latestSequenceNumber = latestSequenceNumber;
     }
 
-    /**
-     * Sets the base summary tree.
-     * Set state to valid if not invalid.
-     * @param snapshot - base summary to set
-     */
-    public setBaseTree(snapshot: ISnapshotTree | null) {
-        this._baseSnapshotTree = snapshot;
-        if (this._state === SummaryTrackerState.Initial) {
-            this._state = SummaryTrackerState.Valid;
+    public createOrGetChild(key: string, latestSequenceNumber: number): ISummaryTracker {
+        const existingChild = this.children.get(key);
+        if (existingChild) {
+            return existingChild;
         }
+
+        const newChild = new SummaryTracker(
+            this.useContext,
+            `${this._fullPath}/${encodeURIComponent(key)}`,
+            this._referenceSequenceNumber,
+            latestSequenceNumber,
+            this.formChildGetSnapshotTree(key));
+
+        this.children.set(key, newChild);
+        return newChild;
+    }
+
+    public constructor(
+        public readonly useContext: boolean,
+        private readonly _fullPath: string,
+        private _referenceSequenceNumber: number,
+        private _latestSequenceNumber: number,
+        private _getSnapshotTree: () => Promise<ISnapshotTree | undefined>) {}
+
+    // back-compat: 0.14 uploadSummary
+    private formChildGetSnapshotTree(key: string): () => Promise<ISnapshotTree | undefined> {
+        return async () => (await this._getSnapshotTree())?.trees[key];
     }
 }
