@@ -44,7 +44,7 @@ And writes the cell values to these locations:
 physical row -> 1 | 8 .
                 2 | C F
 ```
-The next row/column to inserted will be assigned the next available physical address, regardless of
+The next row/column to be inserted is assigned the next available physical address, regardless of
 where the row/col was logically inserted.  Deleted rows/cols are recycled after clearing the physical store.
 
 This indirection between logical row/col and storage row/col provides three functions:
@@ -80,4 +80,4 @@ if (level0 !== undefined) {
 return undefined;   // Empty region
 ```
 A benefit of storing the cell data in [Z-order](https://en.wikipedia.org/wiki/Z-order_curve) is that both row-major and col-major
-traversal benefit from prefetching and cache coherence.  Reading/writing to the physical storage along either access is typically within an order of magnitude compared to sequentially accessing a cache hot native JavaScript array.
+traversal benefit from prefetching and cache coherence.  Reading/writing to the physical storage along either axis is typically within an order of magnitude compared to sequentially accessing a cache hot native JavaScript array.
