@@ -6,7 +6,8 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { Deferred } from "@microsoft/fluid-core-utils";
-import { IContext, IQueuedMessage } from "@microsoft/fluid-server-services-core";
+import { IContext, IQueuedMessage, ILogger } from "@microsoft/fluid-server-services-core";
+import { DebugLogger } from "./logger";
 
 interface IWaitOffset {
     deferred: Deferred<void>;
@@ -16,6 +17,10 @@ interface IWaitOffset {
 export class TestContext extends EventEmitter implements IContext {
     public offset: number = Number.NEGATIVE_INFINITY;
     private waits: IWaitOffset[] = [];
+
+    constructor(public readonly log: ILogger = DebugLogger.create("fluid-server:TestContext")) {
+        super();
+    }
 
     public checkpoint(queuedMessage: IQueuedMessage) {
         assert(queuedMessage.offset > this.offset, `${queuedMessage.offset} > ${this.offset}`);

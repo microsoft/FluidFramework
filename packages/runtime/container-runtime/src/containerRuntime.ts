@@ -28,9 +28,10 @@ import {
 import {
     Deferred,
     Trace,
+    LazyPromise,
     ChildLogger,
 } from "@microsoft/fluid-core-utils";
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+import { IDocumentStorageService, ISummaryContext } from "@microsoft/fluid-driver-definitions";
 import { readAndParse, createIError } from "@microsoft/fluid-driver-utils";
 import {
     BlobTreeEntry,
@@ -66,14 +67,14 @@ import {
     IInboundSignalMessage,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
-import { ComponentSerializer } from "@microsoft/fluid-runtime-utils";
+import { ComponentSerializer, SummaryTracker } from "@microsoft/fluid-runtime-utils";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
 import { ComponentContext, LocalComponentContext, RemotedComponentContext } from "./componentContext";
 import { ComponentHandleContext } from "./componentHandleContext";
 import { ComponentRegistry } from "./componentRegistry";
 import { debug } from "./debug";
-import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
+import { BlobCacheStorageService } from "./blobCacheStorageService";
 import {
     componentRuntimeRequestHandler,
     createLoadableComponentRuntimeRequestHandler,
@@ -478,7 +479,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     public readonly logger: ITelemetryLogger;
     private readonly summaryManager: SummaryManager;
     private readonly summaryTreeConverter = new SummaryTreeConverter();
-    private latestSummaryAck: { handle?: string; referenceSequenceNumber: number };
+    private latestSummaryAck: ISummaryContext;
+    private readonly summaryTracker: SummaryTracker;
 
     private tasks: string[] = [];
 
@@ -545,6 +547,15 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         this.IComponentHandleContext = new ComponentHandleContext("", this);
 
+        this.latestSummaryAck = { proposalHandle: undefined, ackHandle: undefined };
+        this.summaryTracker = new SummaryTracker(
+            this.storage.uploadSummaryWithContext !== undefined, // useContext - back-compat: 0.14 uploadSummary
+            "", // fullPath - the root is unnamed
+            this.deltaManager.initialSequenceNumber, // referenceSequenceNumber - last acked summary ref seq number
+            this.deltaManager.initialSequenceNumber, // latestSequenceNumber - latest sequence number seen
+            async () => undefined, // getSnapshotTree - this will be replaced on summary ack
+        );
+
         // Extract components stored inside the snapshot
         this.loadedFromSummary = context.baseSnapshot.trees[".protocol"] ? true : false;
         const components = new Map<string, ISnapshotTree | string>();
@@ -564,7 +575,13 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         // Create a context for each of them
         for (const [key, value] of components) {
-            const componentContext = new RemotedComponentContext(key, value, this, this.storage, this.containerScope);
+            const componentContext = new RemotedComponentContext(
+                key,
+                value,
+                this,
+                this.storage,
+                this.containerScope,
+                this.summaryTracker.createOrGetChild(key, this.summaryTracker.referenceSequenceNumber));
             const deferred = new Deferred<ComponentContext>();
             deferred.resolve(componentContext);
 
@@ -597,9 +614,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.clearPartialChunks(clientId);
         });
 
-        this.context.on("refreshBaseSummary",
-            (snapshot: ISnapshotTree) => this.refreshBaseSummary(snapshot));
-
         // We always create the summarizer in the case that we are asked to generate summaries. But this may
         // want to be on demand instead.
         // Don't use optimizations when generating summaries with a document loaded using snapshots.
@@ -609,7 +623,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this,
             () => this.summaryConfiguration,
             async (safe: boolean) => this.generateSummary(!this.loadedFromSummary, safe),
-            async (handle, refSeq) => this.refreshLatestSummaryAck(handle, refSeq));
+            async (summContext, refSeq) => this.refreshLatestSummaryAck(summContext, refSeq));
 
         // Create the SummaryManager and mark the initial state
         this.summaryManager = new SummaryManager(
@@ -620,8 +634,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         if (this.context.connectionState === ConnectionState.Connected) {
             this.summaryManager.setConnected(this.context.clientId);
         }
-
-        this.latestSummaryAck = { referenceSequenceNumber: this.deltaManager.initialSequenceNumber };
     }
     public get IComponentTokenProvider() {
 
@@ -654,7 +666,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     public async snapshot(tagMessage: string, fullTree: boolean = false): Promise<ITree> {
         // Iterate over each component and ask it to snapshot
         const componentSnapshotsP = Array.from(this.contexts).map(async ([componentId, value]) => {
-            const snapshot = await value.snapshot();
+            const snapshot = await value.snapshot(fullTree);
 
             // If ID exists then previous commit is still valid
             return {
@@ -866,6 +878,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this,
             this.storage,
             this.containerScope,
+            this.summaryTracker.createOrGetChild(id, this.deltaManager.referenceSequenceNumber),
             (cr: IComponentRuntime) => this.attachComponent(cr),
             props);
 
@@ -963,9 +976,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         // Iterate over each component and ask it to snapshot
         await Promise.all(Array.from(this.contexts).map(async ([key, value]) => {
             const snapshot = await value.snapshot(fullTree);
-            const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
-                snapshot,
-                fullTree);
+            const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(snapshot, fullTree);
             summaryTree.tree[key] = treeWithStats.summaryTree;
             summaryStats = this.summaryTreeConverter.mergeStats(summaryStats, treeWithStats.summaryStats);
         }));
@@ -1012,8 +1023,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     attachMessage.id,
                     snapshotTree,
                     this,
-                    new DocumentStorageServiceProxy(this.storage, flatBlobs),
+                    new BlobCacheStorageService(this.storage, flatBlobs),
                     this.containerScope,
+                    this.summaryTracker.createOrGetChild(attachMessage.id, message.sequenceNumber),
                     [attachMessage.type]);
 
                 break;
@@ -1091,11 +1103,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             return;
         }
 
-        if (!("uploadSummary" in this.context.storage)) {
-            this.logger.sendTelemetryEvent({ eventName: "SkipGenerateSummaryNotSupported" });
-            return;
-        }
-
         try {
             await this.scheduleManager.pause();
 
@@ -1111,6 +1118,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
             const trace = Trace.start();
             const treeWithStats = await this.summarize(fullTree || safe);
+
             const generateData: IGeneratedSummaryData = {
                 summaryStats: treeWithStats.summaryStats,
                 generateDuration: trace.trace().duration,
@@ -1120,24 +1128,36 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 return { ...attemptData, ...generateData };
             }
 
-            const handle = await this.context.storage.uploadSummary(treeWithStats.summaryTree);
+            let handle: string;
+            if (this.summaryTracker.useContext === true) {
+                handle = await this.context.storage.uploadSummaryWithContext(
+                    treeWithStats.summaryTree,
+                    this.latestSummaryAck);
+            } else {
+                // back-compat: 0.14 uploadSummary
+                const summaryHandle = await this.context.storage.uploadSummary(
+                    treeWithStats.summaryTree);
+                handle = summaryHandle.handle;
+            }
 
             // safe mode refreshes the latest summary ack
             if (safe) {
                 const versions = await this.storage.getVersions(this.id, 1);
                 const parents = versions.map((version) => version.id);
-                await this.refreshLatestSummaryAck(parents[0], this.deltaManager.referenceSequenceNumber);
+                await this.refreshLatestSummaryAck(
+                    { proposalHandle: undefined, ackHandle: parents[0] },
+                    this.deltaManager.referenceSequenceNumber);
             }
 
-            const parent = this.latestSummaryAck.handle;
+            const parent = this.latestSummaryAck.ackHandle;
             const summaryMessage: ISummaryContent = {
-                handle: handle.handle,
+                handle,
                 head: parent,
                 message,
                 parents: parent ? [parent] : [],
             };
             const uploadData: IUploadedSummaryData = {
-                handle: handle.handle,
+                handle,
                 uploadDuration: trace.trace().duration,
             };
 
@@ -1375,40 +1395,34 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         }
     }
 
-    private async refreshLatestSummaryAck(handle: string, referenceSequenceNumber: number) {
-        if (referenceSequenceNumber < this.latestSummaryAck.referenceSequenceNumber) {
-            return;
-        } else if (
-            referenceSequenceNumber === this.latestSummaryAck.referenceSequenceNumber
-            && !this.latestSummaryAck.handle
-        ) {
-            // When first loading we may not have the ack handle (version)
-            this.latestSummaryAck.handle = handle;
+    private async refreshLatestSummaryAck(context: ISummaryContext, referenceSequenceNumber: number) {
+        if (referenceSequenceNumber < this.summaryTracker.referenceSequenceNumber) {
             return;
         }
 
-        this.latestSummaryAck = { handle, referenceSequenceNumber };
+        // Only called from summaries
+        this.loadedFromSummary = true;
 
-        // We have to call get version to get the treeId for r11s; this isnt needed
-        // for odsp currently, since their treeId is undefined
-        const versionsResult = await this.setOrLogError("FailedToGetVersion",
-            // eslint-disable-next-line @typescript-eslint/promise-function-async
-            () => this.storage.getVersions(handle, 1),
-            (versions) => !!(versions && versions.length));
+        const snapshotTree = new LazyPromise(async () => {
+            // We have to call get version to get the treeId for r11s; this isnt needed
+            // for odsp currently, since their treeId is undefined
+            const versionsResult = await this.setOrLogError("FailedToGetVersion",
+                async () => this.storage.getVersions(context.ackHandle, 1),
+                (versions) => !!(versions && versions.length));
 
-        if (versionsResult.success) {
-            const snapshotResult = await this.setOrLogError("FailedToGetSnapshot",
-                // eslint-disable-next-line @typescript-eslint/promise-function-async
-                () => this.storage.getSnapshotTree(versionsResult.result[0]),
-                (snapshot) => !!snapshot);
+            if (versionsResult.success) {
+                const snapshotResult = await this.setOrLogError("FailedToGetSnapshot",
+                    async () => this.storage.getSnapshotTree(versionsResult.result[0]),
+                    (snapshot) => !!snapshot);
 
-            if (snapshotResult.success) {
-                // Refresh base summary
-                // it might be nice to do this in the container in the future, and maybe for all
-                // clients, not just the summarizer
-                this.context.refreshBaseSummary(snapshotResult.result);
+                if (snapshotResult.success) {
+                    return snapshotResult.result;
+                }
             }
-        }
+        });
+
+        this.latestSummaryAck = context;
+        this.summaryTracker.refreshLatestSummary(referenceSequenceNumber, async () => snapshotTree);
     }
 
     private async setOrLogError<T>(

@@ -47,18 +47,3 @@ services:
         volumes:
             - ./functions/deli/dist:/usr/src/server/functions/deli/dist
             - ../..:/usr/src/server
-    broadcaster2:
-        build:
-            context: .
-            dockerfile: ./functions/Dockerfile
-            target: runner
-            args:
-                - NPM_TOKEN=${NPM_TOKEN}
-        command: node deli/dist/kafka-service/index.js broadcaster /usr/src/server/functions/deli/dist/broadcaster/index.js
-        environment:
-            - DEBUG=fluid:*
-            - NODE_ENV=development
-        restart: always
-        volumes:
-            - ./functions/deli/dist:/usr/src/server/functions/deli/dist
-            - ../..:/usr/src/server

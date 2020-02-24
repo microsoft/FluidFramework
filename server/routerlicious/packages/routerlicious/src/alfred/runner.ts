@@ -68,7 +68,8 @@ export class AlfredRunner implements utils.IRunner {
             this.storage,
             this.contentCollection,
             this.clientManager,
-            createMetricClient(this.metricClientConfig));
+            createMetricClient(this.metricClientConfig),
+            winston);
 
         // Listen on provided port, on all network interfaces.
         httpServer.listen(this.port);

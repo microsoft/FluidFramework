@@ -18,9 +18,9 @@ import {
     ISequencedOperationMessage,
     ITenantManager,
     MongoManager,
+    ILogger,
 } from "@microsoft/fluid-server-services-core";
 import { Provider } from "nconf";
-import * as winston from "winston";
 import { NoOpLambda } from "../utils";
 import { ScribeLambda } from "./lambda";
 
@@ -46,20 +46,20 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
         const tenantId = config.get("tenantId");
         const documentId = config.get("documentId");
 
-        winston.info(`New tenant storage ${tenantId}/${documentId}`);
+        context.log.info(`New tenant storage ${tenantId}/${documentId}`);
         const tenant = await this.tenantManager.getTenant(tenantId);
         const gitManager = tenant.gitManager;
 
-        winston.info(`Querying mongo for proposals ${tenantId}/${documentId}`);
+        context.log.info(`Querying mongo for proposals ${tenantId}/${documentId}`);
         const [protocolHead, document, messages] = await Promise.all([
-            this.fetchLatestSummaryState(gitManager, documentId),
+            this.fetchLatestSummaryState(gitManager, documentId, context.log),
             this.documentCollection.findOne({ documentId, tenantId }),
             this.messageCollection.find({ documentId, tenantId }, { "operation.sequenceNumber": 1 }),
         ]);
 
         // If the document doesn't exist then we trivially accept every message
         if (!document) {
-            winston.info(`Creating NoOpLambda due to missing ${tenantId}/${documentId}`);
+            context.log.info(`Creating NoOpLambda due to missing ${tenantId}/${documentId}`);
             return new NoOpLambda(context);
         }
 
@@ -89,7 +89,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             () => { return; },
         );
 
-        winston.info(`Proposals ${tenantId}/${documentId}: ${JSON.stringify(document)}`);
+        context.log.info(`Proposals ${tenantId}/${documentId}: ${JSON.stringify(document)}`);
 
         return new ScribeLambda(
             context,
@@ -109,7 +109,10 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
         await this.mongoManager.close();
     }
 
-    private async fetchLatestSummaryState(gitManager: IGitManager, documentId: string): Promise<number> {
+    private async fetchLatestSummaryState(
+        gitManager: IGitManager,
+        documentId: string,
+        logger: ILogger): Promise<number> {
         const existingRef = await gitManager.getRef(encodeURIComponent(documentId));
         if (!existingRef) {
             return -1;
@@ -120,7 +123,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             const attributes =
                 JSON.parse(Buffer.from(content.content, content.encoding).toString()) as IDocumentAttributes;
 
-            winston.info(`Attributes ${JSON.stringify(attributes)}`);
+            logger.info(`Attributes ${JSON.stringify(attributes)}`);
             return attributes.sequenceNumber;
         } catch (exception) {
             return 0;
