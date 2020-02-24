@@ -35,7 +35,6 @@ module.exports = env => {
         devtool: "source-map",
         watch: env != "build",
         node: {
-            fs: "empty",
             dgram: "empty",
             net: "empty",
             tls: "empty"
