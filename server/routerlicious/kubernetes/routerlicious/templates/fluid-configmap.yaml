@@ -123,10 +123,6 @@ data:
                 "group": "{{ template "scriptorium.fullname" . }}",
                 "topic": "{{ .Values.kafka.topics.deltas }}"
             },
-            "broadcaster": {
-                "group": "{{ template "broadcaster.fullname" . }}",
-                "topic": "{{ .Values.kafka.topics.deltas }}"
-            },
             "scribe": {
                 "group": "{{ template "scribe.fullname" . }}",
                 "topic": "{{ .Values.kafka.topics.deltas }}"

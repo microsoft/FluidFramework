@@ -31,10 +31,10 @@ import {
     ITenantManager,
     ITopic,
     IWebSocket,
-    IQueuedMessage,
     ILogger,
 } from "@microsoft/fluid-server-services-core";
 import { ILocalOrdererSetup } from "./interfaces";
+import { LocalContext } from "./localContext";
 import { LocalKafka } from "./localKafka";
 import { LocalLambdaController } from "./localLambdaController";
 import { LocalOrdererConnection } from "./localOrdererConnection";
@@ -136,19 +136,6 @@ class LocalSocketPublisher implements IPublisher {
     }
 
     public async close() {
-    }
-}
-
-// Want a pure local orderer that can do all kinds of stuff
-class LocalContext implements IContext {
-    constructor(public readonly log: ILogger) {}
-
-    public checkpoint(queuedMessage: IQueuedMessage) {
-        return;
-    }
-
-    public error(error: any, restart: boolean) {
-        return;
     }
 }
 
