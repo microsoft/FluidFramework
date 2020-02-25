@@ -91,6 +91,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
             this.componentToolbar.addListener("toggleEditable", (isEditable: boolean) => {
                 this.dataModel.emit("editableUpdated", isEditable);
             });
+            this.componentToolbar.changeEditState(this.dataModel.componentList.size - 1 === 0);
         }
     }
 
