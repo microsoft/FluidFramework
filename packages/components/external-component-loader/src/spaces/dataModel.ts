@@ -14,8 +14,9 @@ import { Layout } from "react-grid-layout";
 export interface ISpacesDataModel extends EventEmitter {
     componentList: Map<string, Layout>;
     addComponent<T>(type: string, w?: number, h?: number, id?: string): Promise<T>;
-    setComponentToolbar(id: string, type: string): void;
+    setComponentToolbar(id: string, type: string): IComponent;
     setComponent(id: string, type: string, url: string): IComponent;
+    getComponentToolbar(): IComponent;
     getComponent<T>(id: string): Promise<T>;
     removeComponent(id: string): void;
     updateGridItem(id: string, newLayout: Layout): void;
@@ -78,17 +79,18 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
 
     public setComponentToolbar(
         id: string,
-        type: string) {
-
-        const defaultModel: ISpacesModel = {
-            type,
-            layout: { x: 0, y: 0, w: 6, h: 2 }
-        };
-        this.componentSubDirectory.set(id, defaultModel);
+        type: string): IComponent {
         this.componentToolbarId = id;
+        return this.setComponent(id, type);
     }
 
-    public setComponent(id: string, type: string): IComponent{
+    
+    public getComponentToolbar(): IComponent {
+        const component = this.getComponent(this.componentToolbarId);
+        return component as IComponent;
+    }
+
+    public setComponent(id: string, type: string): IComponent {
         const defaultModel: ISpacesModel = {
             type,
             layout: { x: 0, y: 0, w: 6, h: 2 }

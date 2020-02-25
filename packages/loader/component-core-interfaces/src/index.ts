@@ -9,5 +9,6 @@ export { IComponent } from "./components";
 export * from "./componentLoadable";
 export * from "./componentRender";
 export * from "./componentRouter";
+export * from "./componentEventable";
 export * from "./handles";
 export * from "./serializer";

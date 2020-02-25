@@ -8,7 +8,9 @@ import {
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import {
-    IComponentHTMLView, IComponent,
+    IComponentHTMLView,
+    IComponent,
+    IComponentEventable,
 } from "@microsoft/fluid-component-core-interfaces";
 
 import * as React from "react";
@@ -18,7 +20,7 @@ import { ISpacesDataModel, SpacesDataModel } from "./dataModel";
 
 import { SpacesGridView } from "./view";
 import { ComponentToolbar } from "./components";
-import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
+import { IComponentCollection, } from "@microsoft/fluid-framework-interfaces";
 
 /**
  * Spaces is the Fluid
@@ -26,7 +28,8 @@ import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
 export class Spaces extends PrimedComponent implements IComponentHTMLView, IComponentCollection {
     private dataModelInternal: ISpacesDataModel | undefined;
     private componentToolbar: ComponentToolbar | undefined;
-    private static readonly componentToolbarId = "spaces-component-toolbar";
+    private componentToolbarId = "spaces-component-toolbar";
+    private isEditable = true;
 
     // TODO #1188 - Component registry should automatically add ComponentToolbar
     // to the registry since it's required for the spaces component
@@ -67,13 +70,6 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView, IComp
     protected async componentInitializingFirstTime(props?: any) {
         this.root.createSubDirectory("component-list");
         await this.initializeDataModel();
-        // this.componentToolbar =
-        //     await this.dataModel.addComponent<ComponentToolbar>(
-        //         ComponentToolbarName,
-        //         4,
-        //         4,
-        //         Spaces.componentToolbarId,
-        //     );
         // Set the saved template if there is a template query param
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has("template")) {
@@ -82,11 +78,28 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView, IComp
     }
 
     public async setComponentToolbar(id: string, type: string) {
-        this.dataModel.setComponentToolbar(id, type);
+        this.componentToolbarId = id;
+        const componentToolbar = await this.dataModel.setComponentToolbar(id, type);
+        this.root.set("componentToolbarId", id);
+        this.addToolbarListeners(componentToolbar);
     }
 
     protected async componentInitializingFromExisting() {
         await this.initializeDataModel();
+        const componentToolbar = await this.dataModel.getComponentToolbar();
+        this.addToolbarListeners(componentToolbar);
+        this.isEditable = this.dataModel.componentList.size !>= 1;
+        this.dataModel.emit("editableUpdated", this.isEditable);
+    }
+
+
+    private addToolbarListeners(componentToolbar: IComponent) {
+        if (componentToolbar.IComponentEventable) {
+            (componentToolbar as IComponentEventable).addListener("toggleEditable", () => {
+                this.isEditable = !this.isEditable;
+                this.dataModel.emit("editableUpdated", this.isEditable);
+            });
+        }
     }
 
     private async initializeDataModel() {
@@ -95,7 +108,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView, IComp
                 this.root,
                 this.createAndAttachComponent.bind(this),
                 this.getComponent.bind(this),
-                Spaces.componentToolbarId,
+                this.root.get("componentToolbarId") || this.componentToolbarId
             );
     }
 
@@ -119,7 +132,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView, IComp
      */
     public render(div: HTMLElement) {
         ReactDOM.render(
-            <div><label>hi</label><SpacesGridView dataModel={this.dataModel}/></div>
+            <div><SpacesGridView dataModel={this.dataModel}/></div>
             ,
             div);
     }

@@ -40,6 +40,8 @@ export class ExternalComponentLoader extends PrimedComponent
 
     public get IComponentHTMLView() { return this; }
 
+    public get IComponentEventable() { return this; }
+
     public setViewComponent(component: IComponentLoadable) {
         this.root.set(this.viewComponentMapID, component.IComponentLoadable.url);
         this.viewComponentP = Promise.resolve(component);
@@ -86,6 +88,11 @@ export class ExternalComponentLoader extends PrimedComponent
             counterButton.textContent = "Add Component";
             // eslint-disable-next-line @typescript-eslint/promise-function-async
             counterButton.onclick = () => this.inputClick(input);
+
+            const editableButton = document.createElement("button");
+            inputDiv.append(editableButton);
+            editableButton.textContent = "Toggle Edit";
+            editableButton.onclick = () => this.emit("toggleEditable");
 
             if (this.error) {
                 const errorDiv = document.createElement("div");

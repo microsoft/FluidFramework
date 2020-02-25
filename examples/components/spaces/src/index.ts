@@ -57,7 +57,7 @@ export class InternalRegistry implements IComponentRegistry {
 
         return undefined;
     }
-    
+
     public getFromCapabilities(type: keyof IComponent): IContainerComponentDetails[] {
         return this.containerComponentArray.filter((componentDetails) => componentDetails.capabilities.includes(type));
     }
