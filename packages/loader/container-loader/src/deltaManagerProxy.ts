@@ -10,7 +10,7 @@ import {
     IDeltaQueue,
     IDeltaSender,
 } from "@microsoft/fluid-container-definitions";
-import { EventForwarder } from "@microsoft/fluid-core-utils";
+import { EventForwarder } from "@microsoft/fluid-common-utils";
 import {
     ConnectionMode,
     IClientDetails,

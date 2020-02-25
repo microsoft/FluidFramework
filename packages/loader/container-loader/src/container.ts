@@ -28,7 +28,7 @@ import {
     EventEmitterWithErrorHandling,
     PerformanceEvent,
     TelemetryLogger,
-} from "@microsoft/fluid-core-utils";
+} from "@microsoft/fluid-common-utils";
 import {
     IDocumentService,
     IDocumentStorageService,

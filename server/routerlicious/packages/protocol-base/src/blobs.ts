@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { gitHashFile } from "@microsoft/fluid-core-utils";
+import { gitHashFile } from "@microsoft/fluid-common-utils";
 import * as git from "@microsoft/fluid-gitresources";
 import {
     FileMode,

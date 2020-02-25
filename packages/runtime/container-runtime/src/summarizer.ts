@@ -11,7 +11,7 @@ import {
     IRequest,
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
-import { ChildLogger, PerformanceEvent, PromiseTimer, Timer, Deferred } from "@microsoft/fluid-core-utils";
+import { ChildLogger, Deferred, PerformanceEvent, PromiseTimer, Timer } from "@microsoft/fluid-common-utils";
 import {
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
