@@ -12,12 +12,13 @@ import {
     ICodeLoader,
     IProvideRuntimeFactory,
     IFluidModule,
+    IFluidCodeDetails,
 } from "@microsoft/fluid-container-definitions";
 import {  Loader, Container } from "@microsoft/fluid-container-loader";
 import { IProvideComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
-
+import { initializeContainerCode } from "@microsoft/fluid-base-host";
 
 export async function createLocalContainerFactory(
     entryPoint: Partial<IProvideRuntimeFactory & IProvideComponentFactory & IFluidModule>,
@@ -55,21 +56,7 @@ export async function createLocalContainerFactory(
 
         const container = await loader.resolve({ url: documentId });
 
-        const quorum = container.getQuorum();
-
-        const maybeContextChangedP = new Promise((resolve) => {
-            if (!quorum.has("code")) {
-                container.once("contextChanged", () => resolve());
-            } else {
-                resolve();
-            }
-        });
-
-        if (!container.existing) {
-            await quorum.propose("code", {});
-        }
-
-        await maybeContextChangedP;
+        await initializeContainerCode(container, {} as any as IFluidCodeDetails);
 
         return container;
     };

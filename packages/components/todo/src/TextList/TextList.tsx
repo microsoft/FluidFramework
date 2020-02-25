@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
-import { IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
 import { IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
 import { IDirectory } from "@microsoft/fluid-map";
 import { SharedString } from "@microsoft/fluid-sequence";
+import { IComponentReactViewable } from "@microsoft/fluid-view-adapters";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { TextListView } from "./TextListView";

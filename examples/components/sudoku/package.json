@@ -36,9 +36,9 @@
   ],
   "dependencies": {
     "@microsoft/fluid-aqueduct": "^0.14.0",
-    "@microsoft/fluid-aqueduct-react": "^0.14.0",
     "@microsoft/fluid-component-core-interfaces": "^0.14.0",
     "@microsoft/fluid-map": "^0.14.0",
+    "@microsoft/fluid-view-adapters": "^0.14.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2",
     "sudokus": "^1.0.2"

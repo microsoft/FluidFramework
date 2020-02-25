@@ -31,9 +31,10 @@ import {
     ITenantManager,
     ITopic,
     IWebSocket,
-    IQueuedMessage,
+    ILogger,
 } from "@microsoft/fluid-server-services-core";
 import { ILocalOrdererSetup } from "./interfaces";
+import { LocalContext } from "./localContext";
 import { LocalKafka } from "./localKafka";
 import { LocalLambdaController } from "./localLambdaController";
 import { LocalOrdererConnection } from "./localOrdererConnection";
@@ -138,17 +139,6 @@ class LocalSocketPublisher implements IPublisher {
     }
 }
 
-// Want a pure local orderer that can do all kinds of stuff
-class LocalContext implements IContext {
-    public checkpoint(queuedMessage: IQueuedMessage) {
-        return;
-    }
-
-    public error(error: any, restart: boolean) {
-        return;
-    }
-}
-
 /**
  * Performs local ordering of messages based on an in-memory stream of operations.
  */
@@ -162,6 +152,7 @@ export class LocalOrderer implements IOrderer {
         tenantManager: ITenantManager,
         permission: any,
         maxMessageSize: number,
+        logger: ILogger,
         gitManager?: IGitManager,
         setup: ILocalOrdererSetup = new LocalOrdererSetup(
             tenantId,
@@ -170,11 +161,11 @@ export class LocalOrderer implements IOrderer {
             databaseManager,
             gitManager),
         pubSub: IPubSub = new PubSub(),
-        broadcasterContext: IContext = new LocalContext(),
-        scriptoriumContext: IContext = new LocalContext(),
-        foremanContext: IContext = new LocalContext(),
-        scribeContext: IContext = new LocalContext(),
-        deliContext: IContext = new LocalContext(),
+        broadcasterContext: IContext = new LocalContext(logger),
+        scriptoriumContext: IContext = new LocalContext(logger),
+        foremanContext: IContext = new LocalContext(logger),
+        scribeContext: IContext = new LocalContext(logger),
+        deliContext: IContext = new LocalContext(logger),
         clientTimeout: number = ClientSequenceTimeout,
         serviceConfiguration = DefaultServiceConfiguration,
         scribeNackOnSummarizeException = false,

@@ -16,11 +16,14 @@ import {
     IContainer,
     IDeltaManager,
     IFluidCodeDetails,
-    IFluidModule,
     IGenericBlob,
     IRuntimeFactory,
     LoaderHeader,
+<<<<<<< HEAD
     IRuntimeState,
+=======
+    IExperimentalContainer,
+>>>>>>> bf3b0eeb6c095cd5c44163377169b79176eab9d8
 } from "@microsoft/fluid-container-definitions";
 import {
     ChildLogger,
@@ -33,6 +36,7 @@ import {
     IDocumentService,
     IDocumentStorageService,
     IError,
+    IUrlResolver,
 } from "@microsoft/fluid-driver-definitions";
 import { createIError, readAndParse, OnlineStatus, isOnline } from "@microsoft/fluid-driver-utils";
 import {
@@ -87,8 +91,10 @@ const merge = require("lodash/merge");
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
-export class Container extends EventEmitterWithErrorHandling implements IContainer {
+export class Container extends EventEmitterWithErrorHandling implements IContainer, IExperimentalContainer {
     public static version = "^0.1.0";
+
+    public readonly isExperimentalContainer = true;
 
     /**
      * Load container.
@@ -178,6 +184,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private lastVisible: number | undefined;
 
     private _closed = false;
+
+    public get readonly(): boolean | undefined {
+        return this._deltaManager.readonly;
+    }
 
     public get closed(): boolean {
         return this._closed;
@@ -332,6 +342,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this.protocolHandler!.quorum;
     }
 
+    public on(event: "readonly", listener: (readonly: boolean) => void): void;
     public on(event: "connected" | "contextChanged", listener: (clientId: string) => void): this;
     public on(event: "disconnected" | "joining" | "closed", listener: () => void): this;
     public on(event: "error", listener: (error: any) => void): this;
@@ -360,6 +371,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.emit("closed");
 
         this.removeAllListeners();
+    }
+
+    public experimentalIsAttached(): boolean {
+        throw new Error("Method not implemented.");
+    }
+
+    public async experimentalAttach(resolver: IUrlResolver, options: any): Promise<void> {
+        throw new Error("Method not implemented.");
     }
 
     public async request(path: IRequest): Promise<IResponse> {
@@ -798,22 +817,22 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
      * Loads the runtime factory for the provided package
      */
     private async loadRuntimeFactory(pkg: IFluidCodeDetails): Promise<IRuntimeFactory> {
-        const component = await this.codeLoader.load<IRuntimeFactory | IFluidModule>(pkg);
-
-        if ("fluidExport" in component) {
-            const factory = component.fluidExport.IRuntimeFactory;
-            if (!factory) {
-                throw new Error(PackageNotFactoryError);
-            }
-            return factory;
+        let component;
+        const perfEvent = PerformanceEvent.start(this.logger, { eventName: "CodeLoad" });
+        try {
+            component = await this.codeLoader.load(pkg);
+        } catch (error) {
+            perfEvent.cancel({}, error);
+            throw error;
         }
+        perfEvent.end();
 
-        // TODO included for back-compat
-        if ("instantiateRuntime" in component) {
-            return component;
+        const factory = component.fluidExport.IRuntimeFactory;
+        if (!factory) {
+            throw new Error(PackageNotFactoryError);
         }
+        return factory;
 
-        throw new Error(PackageNotFactoryError);
     }
 
     private get client() {
@@ -890,6 +909,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         deltaManager.on("processTime", (time) => {
             this.emit("processTime", time);
+        });
+
+        deltaManager.on("readonly", (readonly) => {
+            this.emit("readonly", readonly);
         });
 
         return deltaManager;

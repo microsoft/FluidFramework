@@ -26,7 +26,7 @@
     "kafka": {
         "lib": {
             "name": "kafka-node",
-            "endpoint": "zookeeper:2181"
+            "endpoint": "kafka:9092"
         },
         "maxMessageSize": "1MB"
     },
@@ -110,10 +110,6 @@
         "copier": {
             "group": "copier",
             "topic": "rawdeltas"
-        },
-        "broadcaster": {
-            "group": "broadcaster",
-            "topic": "deltas"
         },
         "scribe": {
             "group": "scribe",

@@ -161,6 +161,14 @@ export interface IRuntime {
     processSignal(message: any, local: boolean);
 }
 
+export interface IExperimentalRuntime {
+
+    isExperimentalRuntime: true;
+
+    // Bind the registered services once attached.
+    experimentalAttachServices(storageService: IDocumentStorageService): void;
+}
+
 export interface IMessageScheduler {
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 }
@@ -204,6 +212,11 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
     error(err: IError): void;
     requestSnapshot(tagMessage: string): Promise<void>;
     reloadContext(): Promise<void>;
+
+    /**
+     * DEPRECATED
+     * back-compat: 0.14 uploadSummary
+     */
     refreshBaseSummary(snapshot: ISnapshotTree): void;
 }
 

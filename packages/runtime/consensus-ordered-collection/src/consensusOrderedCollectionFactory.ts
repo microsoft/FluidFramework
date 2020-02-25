@@ -5,7 +5,6 @@
 
 import { IChannelAttributes, IComponentRuntime, ISharedObjectServices } from "@microsoft/fluid-runtime-definitions";
 import { ConsensusQueue } from "./consensusQueue";
-import { ConsensusStack } from "./consensusStack";
 import { IConsensusOrderedCollection, IConsensusOrderedCollectionFactory } from "./interfaces";
 import { pkgVersion } from "./packageVersion";
 
@@ -42,44 +41,6 @@ export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory
 
     public create(document: IComponentRuntime, id: string): IConsensusOrderedCollection {
         const collection = new ConsensusQueue(id, document);
-        collection.initializeLocal();
-        return collection;
-    }
-}
-
-/**
- * The factory that defines the consensus stack
- */
-export class ConsensusStackFactory implements IConsensusOrderedCollectionFactory {
-    public static Type = "https://graph.microsoft.com/types/consensus-stack";
-
-    public static Attributes: IChannelAttributes = {
-        type: ConsensusStackFactory.Type,
-        snapshotFormatVersion: "0.1",
-        packageVersion: pkgVersion,
-    };
-
-    public get type() {
-        return ConsensusStackFactory.Type;
-    }
-
-    public get attributes() {
-        return ConsensusStackFactory.Attributes;
-    }
-
-    public async load(
-        document: IComponentRuntime,
-        id: string,
-        services: ISharedObjectServices,
-        branchId: string): Promise<IConsensusOrderedCollection> {
-
-        const collection = new ConsensusStack(id, document);
-        await collection.load(branchId, services);
-        return collection;
-    }
-
-    public create(document: IComponentRuntime, id: string): IConsensusOrderedCollection {
-        const collection = new ConsensusStack(id, document);
         collection.initializeLocal();
         return collection;
     }

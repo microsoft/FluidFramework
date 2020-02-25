@@ -14,11 +14,17 @@ import {
     IComponentRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 import { MockRuntime } from "@microsoft/fluid-test-runtime-utils";
+import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
 import { IComponentAttributes, LocalComponentContext, RemotedComponentContext } from "../componentContext";
 import { ContainerRuntime } from "../containerRuntime";
-import { DocumentStorageServiceProxy } from "../documentStorageServiceProxy";
+import { BlobCacheStorageService } from "../blobCacheStorageService";
 
 describe("Component Context Tests", () => {
+    let summaryTracker: SummaryTracker;
+    beforeEach(async () => {
+        summaryTracker = new SummaryTracker(false, "", 0, 0, async () => undefined);
+    });
+
     describe("LocalComponentContext Initialization", () => {
 
         let localComponentContext: LocalComponentContext;
@@ -42,8 +48,14 @@ describe("Component Context Tests", () => {
         });
 
         it("Check LocalComponent Attributes", () => {
-            localComponentContext =
-                new LocalComponentContext("Test1", ["TestComponent1"], containerRuntime, storage, scope, attachCb);
+            localComponentContext = new LocalComponentContext(
+                "Test1",
+                ["TestComponent1"],
+                containerRuntime,
+                storage,
+                scope,
+                summaryTracker,
+                attachCb);
 
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             localComponentContext.realize();
@@ -68,8 +80,14 @@ describe("Component Context Tests", () => {
 
         it("Supplying array of packages in LocalComponentContext should create exception", async () => {
             let exception = false;
-            localComponentContext =
-                new LocalComponentContext("Test1", ["TestComp", "SubComp"], containerRuntime, storage, scope, attachCb);
+            localComponentContext = new LocalComponentContext(
+                "Test1",
+                ["TestComp", "SubComp"],
+                containerRuntime,
+                storage,
+                scope,
+                new SummaryTracker(true, "", 0, 0, async () => undefined),
+                attachCb);
 
             await localComponentContext.realize()
                 .catch((error) => {
@@ -87,8 +105,14 @@ describe("Component Context Tests", () => {
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = { IComponentRegistry: registryWithSubRegistries } as ContainerRuntime;
-            localComponentContext =
-                new LocalComponentContext("Test1", ["TestComp", "SubComp"], containerRuntime, storage, scope, attachCb);
+            localComponentContext = new LocalComponentContext(
+                "Test1",
+                ["TestComp", "SubComp"],
+                containerRuntime,
+                storage,
+                scope,
+                summaryTracker,
+                attachCb);
 
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             localComponentContext.realize();
@@ -115,7 +139,7 @@ describe("Component Context Tests", () => {
 
         let remotedComponentContext: RemotedComponentContext;
         let componentAttributes: IComponentAttributes;
-        let storage: IDocumentStorageService;
+        const storage: Partial<IDocumentStorageService> = {};
         let scope: IComponent;
         let containerRuntime: ContainerRuntime;
         beforeEach(async () => {
@@ -148,8 +172,10 @@ describe("Component Context Tests", () => {
                 "Test1",
                 snapshotTree,
                 containerRuntime,
-                new DocumentStorageServiceProxy(storage, blobCache),
-                scope);
+                new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
+                scope,
+                summaryTracker,
+            );
             const snapshot = await remotedComponentContext.snapshot(true);
             const blob = snapshot.entries[0].value as IBlob;
 
@@ -178,8 +204,10 @@ describe("Component Context Tests", () => {
                 "Test1",
                 snapshotTree,
                 containerRuntime,
-                new DocumentStorageServiceProxy(storage, blobCache),
-                scope);
+                new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
+                scope,
+                summaryTracker,
+            );
             const snapshot = await remotedComponentContext.snapshot(true);
             const blob = snapshot.entries[0].value as IBlob;
 
