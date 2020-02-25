@@ -8,7 +8,7 @@ import {
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import {
-    IComponentHTMLView,
+    IComponentHTMLView, IComponent,
 } from "@microsoft/fluid-component-core-interfaces";
 import {
     DefaultButton as Button,
@@ -18,8 +18,8 @@ import {
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { SupportedComponent } from "../dataModel";
-import { IContainerComponentDetails, IProvideComponentRegistryDetails } from "../interfaces";
 import { InternalRegistry } from "..";
+import { IContainerComponentDetails } from "@microsoft/fluid-runtime-definitions";
 
 const componentToolbarStyle: React.CSSProperties = { position: "absolute", top: 10, left: 10, zIndex: 1000 };
 
@@ -42,9 +42,8 @@ export class ComponentToolbar extends PrimedComponent implements IComponentHTMLV
     }
 
     protected async componentHasInitialized() {
-        const registry = await (this.context.hostRuntime.IComponentRegistry as InternalRegistry).get("");
-        const registryDetails = (registry as Readonly<Partial<IProvideComponentRegistryDetails>>)
-            .IComponentRegistryDetails;
+        const registry = await this.context.hostRuntime.IComponentRegistry.get("");
+        const registryDetails = (registry as IComponent).IComponentRegistryDetails;
         this.supportedComponentList = (registryDetails as InternalRegistry).getFromCapabilities("IComponentHTMLVisual");
     }
 
@@ -104,7 +103,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
                     key={`componentToolbarButton-${supportedComponent.type}`}
                     iconProps={{ iconName: supportedComponent.fabricIconName }}
                     onClick={async () =>
-                        this.emitAddComponentEvent(supportedComponent.type, 4, 4)}
+                        this.emitAddComponentEvent(supportedComponent.type as SupportedComponent, 4, 4)}
                 >
                     {supportedComponent.friendlyName}
                 </Button>,

@@ -11,11 +11,14 @@ import {
     IDirectory,
     IDirectoryValueChanged,
 } from "@microsoft/fluid-map";
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import {
+    ISequencedDocumentMessage
+} from "@microsoft/fluid-protocol-definitions";
+import {
+    IComponentRegistryDetails
+} from "@microsoft/fluid-runtime-definitions";
 
 import uuid from "uuid/v4";
-
-import { IComponentRegistryDetails } from "../../interfaces";
 
 export interface ITabsTypes {
     type: string;
