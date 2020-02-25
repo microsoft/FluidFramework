@@ -5,7 +5,7 @@
 
 import * as assert from "assert";
 import { IDisposable } from "@microsoft/fluid-common-definitions";
-import { Deferred } from "@microsoft/fluid-core-utils";
+import { Deferred } from "@microsoft/fluid-common-utils";
 import {
     ISequencedDocumentMessage,
     ISummaryAck,

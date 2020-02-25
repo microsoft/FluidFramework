@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fromUtf8ToBase64 } from "@microsoft/fluid-core-utils";
+import { fromUtf8ToBase64 } from "@microsoft/fluid-common-utils";
 import { DocumentDeltaConnection } from "@microsoft/fluid-driver-base";
 import * as api from "@microsoft/fluid-driver-definitions";
 import { ConnectionMode, IClient, IErrorTrackingService } from "@microsoft/fluid-protocol-definitions";

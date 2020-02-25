@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
-import { PerformanceEvent, Deferred } from "@microsoft/fluid-core-utils";
+import { PerformanceEvent, Deferred } from "@microsoft/fluid-common-utils";
 import { ISocketStorageDiscovery } from "./contracts";
 import { OdspCache } from "./odspCache";
 import { fetchHelper, getWithRetryForTokenRefresh, throwOdspNetworkError } from "./odspUtils";
