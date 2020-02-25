@@ -19,7 +19,7 @@ describe("Container Runtime", () => {
     /**
      * The following tests test the async processing model of ContainerRuntime -
      * Batch messages are processed in a single turn no matter how long it takes to process them.
-     * Non-batch messages are processed in multiple turns if they take long time to process.
+     * Non-batch messages are processed in multiple turns if they take longer than DeltaScheduler's processingTime.
      */
     describe("Async op processing", () => {
         let deltaManager: DeltaManager;
@@ -173,7 +173,8 @@ describe("Container Runtime", () => {
             assert.strictEqual(count, batchEnd, "Did not receive correct batchEnd event for the batch");
         });
 
-        it("A non-batch message followed by batch messages that take longer than DeltaScheduler's processing time to process", async () => {
+        it(`A non-batch message followed by batch messages that take longer than
+            DeltaScheduler's processing time to process`, async () => {
             await startDeltaManager();
             // Since each message will take ~1 ms to process, we can use DeltaScheduler's processingTime as
             // a reference for the number of messages we sent.
@@ -191,7 +192,8 @@ describe("Container Runtime", () => {
             assert.strictEqual(2, batchEnd, "Did not receive correct batchEnd event for the batch");
         });
 
-        it("Batch messages followed by a non-batch message that take longer than DeltaScheduler's processing time to process", async () => {
+        it(`Batch messages followed by a non-batch message that take longer than
+            DeltaScheduler's processing time to process`, async () => {
             await startDeltaManager();
             // Since each message will take ~1 ms to process, we can use DeltaScheduler's processingTime as
             // a reference for the number of messages we sent.
