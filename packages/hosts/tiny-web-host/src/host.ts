@@ -182,7 +182,6 @@ async function loadContainer(
     return BaseHost.start(
         hostConf,
         href,
-        resolved, // resolved, IResolvedUrl,
         pkg, // pkg, IResolvedPackage, (gateway/routes/loader has an example (pkgP))
         scriptIds, // scriptIds, string[], defines the id of the script tag added to the page
         div,

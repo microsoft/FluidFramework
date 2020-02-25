@@ -5,7 +5,6 @@
 
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { BaseHost, IBaseHostConfig } from "@microsoft/fluid-base-host";
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import {
     IFluidModule,
     IFluidPackage,
@@ -238,11 +237,6 @@ export async function start(
     const scriptIds: string[] = [];
     const pkg = await getResolvedPackage(packageJson, scriptIds);
 
-    // Construct a request
-    const req: IRequest = {
-        url,
-    };
-
     const urlResolver = getUrlResolver(documentId, options);
 
     let documentServiceFactory: IDocumentServiceFactory;
@@ -290,7 +284,6 @@ export async function start(
     const start1Promise = BaseHost.start(
         hostConf,
         url,
-        await urlResolver.resolve(req),
         pkg,
         scriptIds,
         double ? leftDiv : div,
@@ -307,7 +300,6 @@ export async function start(
         start2Promise = BaseHost.start(
             hostConf2,
             url,
-            await urlResolver.resolve(req),
             pkg,
             scriptIds,
             rightDiv,

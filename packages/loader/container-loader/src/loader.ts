@@ -390,6 +390,7 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
             this.scope,
             this,
             request,
+            resolved,
             logger);
 
         return container;

@@ -33,6 +33,7 @@ import {
     IDocumentStorageService,
     IError,
     IUrlResolver,
+    IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
 import { createIError, readAndParse, OnlineStatus, isOnline } from "@microsoft/fluid-driver-utils";
 import {
@@ -103,6 +104,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         scope: IComponent,
         loader: Loader,
         request: IRequest,
+        resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
     ): Promise<Container> {
         const container = new Container(
@@ -113,6 +115,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             codeLoader,
             loader,
             request,
+            resolvedUrl,
             logger);
 
         return new Promise<Container>((res, rej) => {
@@ -284,13 +287,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         private readonly codeLoader: ICodeLoader,
         private readonly loader: Loader,
         private readonly originalRequest: IRequest,
+        resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
     ) {
         super();
 
         const [, docId] = id.split("/");
         this._id = decodeURI(docId);
-        this._scopes = this.getScopes(options);
+        this._scopes = this.getScopes(resolvedUrl);
         this._audience = new Audience();
         this.canReconnect = !(originalRequest.headers && originalRequest.headers[LoaderHeader.reconnect] === false);
 
@@ -1089,9 +1093,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
     }
 
-    private getScopes(options: any): string[] {
-        return options && options.tokens && options.tokens.jwt ?
-            jwtDecode<ITokenClaims>(options.tokens.jwt).scopes : [];
+    private getScopes(resolvedUrl: IResolvedUrl): string[] {
+        return resolvedUrl?.type === "fluid" && resolvedUrl?.tokens?.jwt ?
+            jwtDecode<ITokenClaims>(resolvedUrl.tokens.jwt).scopes : [];
     }
 
     /**
