@@ -40,7 +40,7 @@ Options:
      --vscode         Output error message to work with default problem matcher in vscode
      --defroot <path> Default root directory of the fluid repo if infer failed (default: env _FLUID_DEFAULT_ROOT_)
      --root <path>    Root directory of the fluid repo (default: env _FLUID_ROOT_)
-     --timer          Time separate phases
+     --timer          Measure elapsed time of each step
      --logtime        Display the current time on every status message for logging
   -v --verbose        Verbose messages
 ```
@@ -94,7 +94,7 @@ Options:
      --dot <path>     Generate *.dot for GraphViz
      --defroot <path> Default root directory of the fluid repo if infer failed (default: env _FLUID_DEFAULT_ROOT_)
      --root <path>    Root directory of the fluid repo (default: env _FLUID_ROOT_)
-     --timer          Time separate phases
+     --timer          Measure elapsed time of each step
      --logtime        Display the current time on every status message for logging
   -v --verbose        Verbose messages
 ```

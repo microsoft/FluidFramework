@@ -5,7 +5,7 @@
 
 import { IDeltaManager } from "@microsoft/fluid-container-definitions";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { ITestDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { ILocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 
 /**
  * Document delta event which must at least provide access
@@ -40,9 +40,9 @@ export class DocumentDeltaEventManager {
     }
 
     /**
-     * @param testDeltaConnectionServer - instance of delta connection server
+     * @param localDeltaConnectionServer - instance of delta connection server
      */
-    public constructor(private readonly testDeltaConnectionServer: ITestDeltaConnectionServer) { }
+    public constructor(private readonly localDeltaConnectionServer: ILocalDeltaConnectionServer) { }
 
     /**
      * Registers a collection of document delta events by adding them to
@@ -146,7 +146,7 @@ export class DocumentDeltaEventManager {
         let working: boolean;
         do {
             await DocumentDeltaEventManager.yieldEventLoop();
-            working = await this.testDeltaConnectionServer.hasPendingWork();
+            working = await this.localDeltaConnectionServer.hasPendingWork();
             if (!working) {
                 for (const doc of docs) {
                     if (hasWork(doc)) {
