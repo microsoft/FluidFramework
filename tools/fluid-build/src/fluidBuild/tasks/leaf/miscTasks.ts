@@ -4,8 +4,8 @@
  */
 
 import { LeafTask } from "./leafTask";
-import { toPosixPath, globFn, unquote, statAsync, readFileAsync } from "../../common/utils";
-import { logVerbose } from "../../common/logging";
+import { toPosixPath, globFn, unquote, statAsync, readFileAsync } from "../../../common/utils";
+import { logVerbose } from "../../../common/logging";
 import * as path from "path";
 
 export class EchoTask extends LeafTask {

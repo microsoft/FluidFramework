@@ -4,7 +4,7 @@
  */
 
 import { AsyncPriorityQueue } from "async";
-import { logVerbose } from "../common/logging";
+import { logVerbose } from "../../common/logging";
 import { NPMTask } from "./npmTask";
 import { Task, TaskExec } from "./task";
 import { BuildResult, BuildPackage } from "../buildGraph";

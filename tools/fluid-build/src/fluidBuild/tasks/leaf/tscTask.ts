@@ -5,8 +5,8 @@
 
 import * as assert from "assert";
 import { LeafTask } from "./leafTask";
-import { logVerbose } from "../../common/logging";
-import { readFileAsync, existsSync } from "../../common/utils";
+import { logVerbose } from "../../../common/logging";
+import { readFileAsync, existsSync } from "../../../common/utils";
 import path from "path";
 import * as ts from "typescript";
 const isEqual = require("lodash.isequal");
@@ -145,9 +145,6 @@ export class TscTask extends LeafTask {
 
     private get configFileFullPath() {
         if (this._tsConfigFullPath === undefined) {
-            // TODO: parse the command line for real, split space for now.
-            const args = this.command.split(" ");
-
             const parsedCommand = this.parsedCommandLine;
             if (!parsedCommand) { return undefined; }
 
