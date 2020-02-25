@@ -17,9 +17,7 @@ import {
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { SupportedComponent } from "../dataModel";
 import { IContainerComponentDetails, IProvideComponentRegistryDetails } from "../interfaces";
-import { InternalRegistry } from "..";
 
 const componentToolbarStyle: React.CSSProperties = { position: "absolute", top: 10, left: 10, zIndex: 1000 };
 
@@ -42,10 +40,10 @@ export class ComponentToolbar extends PrimedComponent implements IComponentHTMLV
     }
 
     protected async componentHasInitialized() {
-        const registry = await (this.context.hostRuntime.IComponentRegistry as InternalRegistry).get("");
+        const registry = await this.context.hostRuntime.IComponentRegistry.get("");
         const registryDetails = (registry as Readonly<Partial<IProvideComponentRegistryDetails>>)
             .IComponentRegistryDetails;
-        this.supportedComponentList = (registryDetails as InternalRegistry).getFromCapabilities("IComponentHTMLVisual");
+        this.supportedComponentList = (registryDetails as any).getFromCapabilities("IComponentHTMLVisual");
     }
 
     /**
@@ -82,7 +80,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
         };
     }
 
-    public emitAddComponentEvent(type: SupportedComponent, w?: number, h?: number) {
+    public emitAddComponentEvent(type: string, w?: number, h?: number) {
         this.emit("addComponent", type, w, h);
     }
 

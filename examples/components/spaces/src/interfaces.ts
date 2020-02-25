@@ -6,10 +6,8 @@
 import { IProvideComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces/dist/components";
 
-import { SupportedComponent } from "./dataModel";
-
 export interface IContainerComponentDetails {
-    type: SupportedComponent;
+    type: string;
     factory: Promise<IProvideComponentFactory>;
     friendlyName: string;
     fabricIconName: string;

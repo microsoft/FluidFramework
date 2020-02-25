@@ -10,19 +10,13 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { Layout } from "react-grid-layout";
 
-export type SupportedComponent =
-    "button"
-    | "clicker"
-    | "number"
-    | "textbox"
-    | "facepile"
-    | "codemirror"
-    | "prosemirror"
-    | "componentToolbar";
 
 export interface ISpacesDataModel extends EventEmitter {
     componentList: Map<string, Layout>;
-    addComponent<T>(type: SupportedComponent, w?: number, h?: number, id?: string): Promise<T>;
+    addComponent<T>(type: string, w?: number, h?: number, id?: string): Promise<T>;
+    setComponentToolbar(id: string, type: string): IComponent;
+    setComponent(id: string, type: string, url: string): IComponent;
+    getComponentToolbar(): IComponent;
     getComponent<T>(id: string): Promise<T>;
     removeComponent(id: string): void;
     updateGridItem(id: string, newLayout: Layout): void;
@@ -83,7 +77,35 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
         return response;
     }
 
-    public async addComponent<T>(type: SupportedComponent, w: number = 1, h: number = 1, id?: string): Promise<T> {
+    public setComponentToolbar(
+        id: string,
+        type: string): IComponent {
+        this.componentToolbarId = id;
+        return this.setComponent(id, type);
+    }
+
+    
+    public getComponentToolbar(): IComponent {
+        const component = this.getComponent(this.componentToolbarId);
+        return component as IComponent;
+    }
+
+    public setComponent(id: string, type: string): IComponent {
+        const defaultModel: ISpacesModel = {
+            type,
+            layout: { x: 0, y: 0, w: 6, h: 2 }
+        };
+        const component = this.getComponent(id);
+        if (component) {
+            this.componentSubDirectory.set(id, defaultModel);
+            return component as IComponent;
+        } else {
+            throw new Error(`Runtime does not contain component with id: ${id}`);
+        }
+        
+    }
+
+    public async addComponent<T>(type: string, w: number = 1, h: number = 1, id?: string): Promise<T> {
         const defaultLayout = { x: 0, y: 0, w, h };
         return this.addComponentInternal<T>(type, defaultLayout, id);
     }
@@ -123,7 +145,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
             const template = JSON.parse(templateString) as ISpacesModel[];
             const promises: Promise<IComponent>[] = [];
             template.forEach((value) => {
-                promises.push(this.addComponentInternal(value.type as SupportedComponent, value.layout));
+                promises.push(this.addComponentInternal(value.type, value.layout));
             });
 
             await Promise.all(promises);
@@ -131,7 +153,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
     }
 
     private async addComponentInternal<T>(
-        type: SupportedComponent,
+        type: string,
         layout: Layout,
         id = `${type}-${Date.now()}`): Promise<T> {
 
