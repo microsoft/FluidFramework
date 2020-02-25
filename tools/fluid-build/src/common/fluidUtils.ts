@@ -92,6 +92,6 @@ export async function getResolvedFluidRoot() {
         process.exit(-102);
     }
 
-    // Use realpath.native to get the case-sensitive path
+    // Use realpath.native to get the case-sensitive path on windows
     return await realpathAsync(resolvedRoot);
 }
