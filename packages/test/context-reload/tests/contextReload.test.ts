@@ -11,8 +11,8 @@ describe("context reload", () => {
     });
 
     it("has a button to be clicked", async () => {
-        await page.waitForSelector("button");
-        await expect(page).toClick("button", { text: "Upgrade Version" });
+        await page.waitForSelector("button.upgrade");
+        await expect(page).toClick("button.upgrade", { text: "Upgrade Version" });
     });
 
     it("has a dice roller on the new version", async () => {
@@ -32,15 +32,21 @@ describe("context reload", () => {
       await page.$eval(".cdn", (el) => {
         if (el && el instanceof HTMLInputElement) {
           el.value = "";
+        } else {
+          throw Error("couldn't clear cdn");
         }
       });
       const input = await page.$(".cdn");
       if (input) {
         await input.type(`${globals.PATH}/file`);
+      } else {
+        throw Error("couldn't input cdn");
       }
 
-      await expect(page).toClick("button", { text: "Upgrade Version" });
-      await expect(page).toClick("button", { text: "Roll" });
+      await page.waitForSelector("button.upgrade");
+      await expect(page).toClick("button.upgrade", { text: "Upgrade Version" });
+      await page.waitForSelector("button.diceroller");
+      await expect(page).toClick("button.diceroller", { text: "Roll" });
 
       const diceValue = await getValue(0);
       const diceValue2 = await getValue(1);

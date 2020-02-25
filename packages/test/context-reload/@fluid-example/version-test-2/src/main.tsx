@@ -45,10 +45,10 @@ export class VersionTest extends PrimedComponent implements IComponentHTMLView {
             <input type="text" value={this.upgradeToVersion} onChange={e => {this.upgradeToVersion = e.currentTarget.value; rerender();}} />
           </div>
           <button onClick={() => this.quorumProposeCode()}>Upgrade Version</button>
-          <div id="diceroller">
+          <div>
           cool dice roller:
           <span className="dicevalue" style={{ fontSize: 50 }}>{this.getDiceChar(diceValue)}</span>
-          <button onClick={this.rollDice.bind(this)}>Roll</button>
+          <button className="diceroller" onClick={this.rollDice.bind(this)}>Roll</button>
           </div>
         </div>,
         div

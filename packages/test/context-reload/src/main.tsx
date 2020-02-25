@@ -47,7 +47,7 @@ export class VersionTest extends PrimedComponent implements IComponentHTMLView {
             cdn:
             <input className="cdn" type="text" value={this.cdn} onChange={e => {this.cdn = e.currentTarget.value; rerender();}} />
           </div>
-          <button onClick={() => this.quorumProposeCode()}>Upgrade Version</button>
+          <button className="upgrade" onClick={() => this.quorumProposeCode()}>Upgrade Version</button>
         </div>,
         div
       );
