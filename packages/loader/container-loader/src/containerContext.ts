@@ -196,10 +196,10 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
     }
 
     public async stop(): Promise<IRuntimeState> {
-        const state = await this.runtime!.stop();
+        let state = await this.runtime!.stop();
         // back-compat: 0.14 runtimeState
         if (!state) {
-            return { snapshot: await this.runtime!.snapshot("", false) };
+            state = { snapshot: await this.runtime!.snapshot("", false) };
         }
 
         // Dispose

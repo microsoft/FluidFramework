@@ -121,7 +121,7 @@ export interface IFluidCodeDetails {
 
 export interface IRuntimeState {
     snapshot?: ITree,
-    [key: string]: any;
+    state?: unknown,
 }
 
 /**

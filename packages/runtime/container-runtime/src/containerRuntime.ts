@@ -95,8 +95,7 @@ interface ISummaryTreeWithStats {
     summaryTree: ISummaryTree;
 }
 
-interface IPreviousState {
-    snapshot?: ITree;
+export interface IPreviousState {
     summaryCollection?: SummaryCollection,
 
     // only one (or zero) of these will be defined. the summarizing Summarizer will resolve the deferred promise, and
@@ -630,7 +629,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.clearPartialChunks(clientId);
         });
 
-        this.previousState = this.context.previousRuntimeState;
+        this.previousState = this.context.previousRuntimeState.state as IPreviousState;
 
         // We always create the summarizer in the case that we are asked to generate summaries. But this may
         // want to be on demand instead.
@@ -729,12 +728,11 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.summarizer.dispose();
         this.closed = true;
         const state: IPreviousState = {
-            snapshot,
             summaryCollection: this.summarizer.summaryCollection,
             nextSummarizerP: this.nextSummarizerP,
             nextSummarizerD: this.nextSummarizerD,
         };
-        return state;
+        return { snapshot, state };
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string, version: string) {
