@@ -4,7 +4,7 @@
 !_api-extractor-temp/**
 !LICENSE.txt
 !packages/**
-!examples/components/**
+!examples/**
 !server/routerlicious
 !docs/**
 !tools/build-server-resources/**
