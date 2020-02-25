@@ -4,7 +4,7 @@
  */
 
 import { commonOptions } from "./commonOptions";
-import { existsSync, readFileAsync } from "./utils";
+import { existsSync, readFileAsync, realpathAsync } from "./utils";
 import * as path from "path";
 import { logVerbose } from "./logging";
 
@@ -78,22 +78,20 @@ export async function getResolvedFluidRoot() {
         } else {
             console.error(`ERROR: Unknown repo root. Specify it with --root or environment variable _FLUID_ROOT_`);
             process.exit(-101);
-            throw new Error("Internal error");
         }
     }
 
     if (checkFluidRoot && !isFluidRoot(root)) {
         console.error(`ERROR: '${root}' is not a root of fluid repo.`);
         process.exit(-100);
-        throw new Error("Internal error");
     }
 
     const resolvedRoot = path.resolve(root);
     if (!existsSync(resolvedRoot)) {
         console.error(`ERROR: Repo root '${resolvedRoot}' not exist.`);
         process.exit(-102);
-        throw new Error("Internal error");
     }
 
-    return resolvedRoot;
+    // Use realpath.native to get the case-sensitive path
+    return await realpathAsync(resolvedRoot);
 }

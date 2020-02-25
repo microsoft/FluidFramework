@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { Packages } from "./npmPackage";
-import { parseOptions, options } from "./options";
 import { commonOptions } from "./common/commonOptions";
-import { BuildGraph, BuildResult } from "./buildGraph";
-import { Timer } from "./common/timer";
-import { logStatus } from "./common/logging";
+import { FluidRepo } from "./fluidBuild/fluidRepo";
 import { getResolvedFluidRoot } from "./common/fluidUtils";
-import { existsSync, rimrafWithErrorAsync, execWithErrorAsync } from "./common/utils";
+import { logStatus } from "./common/logging";
+import { Timer } from "./common/timer";
+import { existsSync, rimrafWithErrorAsync } from "./common/utils";
+import { BuildResult } from "./fluidBuild/buildGraph";
+import { parseOptions, options } from "./fluidBuild/options";
 import * as path from "path";
 import chalk from "chalk";
 
 function versionCheck() {
     const pkg = require(path.join(__dirname, "..", "package.json"));
-    const builtVersion = "0.0.4";
+    const builtVersion = "0.0.5";
     if (pkg.version > builtVersion) {
         console.warn(`WARNING: fluid-build is out of date, please rebuild (built: ${builtVersion}, package: ${pkg.version})\n`);
     }
@@ -29,47 +29,23 @@ async function main() {
 
     versionCheck();
 
-    const resolvedFluidRoot = await getResolvedFluidRoot();
-    const resolvedRoot = options.server? path.join(resolvedFluidRoot, "server/routerlicious") : resolvedFluidRoot;
+    const resolvedRoot = await getResolvedFluidRoot();
 
     logStatus(`Processing ${resolvedRoot}`);
 
-    // TODO: Should read lerna.json to determine
-    const baseDirectories = [ path.join(resolvedRoot, "packages")];
-    if (!options.server) {
-        const samplesDirectory = path.join(resolvedRoot, "examples/components");
-        if (options.samples && existsSync(samplesDirectory)) {
-            baseDirectories.push(samplesDirectory);
-        }
-    }
-
     // Load the package
-    const packages = Packages.load(baseDirectories);
+    // Repo info
+    const repo = new FluidRepo(resolvedRoot);
     timer.time("Package scan completed");
 
     // Check scripts
-    await packages.checkScripts();
+    repo.checkScripts(options.fixScripts);
     timer.time("Check scripts completed");
 
-    const hasMatchArgs = options.args.length;
-    if (hasMatchArgs) {
-        let matched = false;
-        options.args.forEach((arg) => {
-            const regExp = new RegExp(arg);
-            packages.packages.forEach((pkg) => {
-                if (regExp.test(pkg.name)) {
-                    matched = true;
-                    pkg.setMatched();
-                }
-            });
-        });
-
-        if (!matched) {
-            console.error("ERROR: No package matched");
-            process.exit(-4)
-        }
-    } else {
-        packages.packages.forEach((pkg) => pkg.setMatched());
+    const matched = repo.setMatched(options);
+    if (!matched) {
+        console.error("ERROR: No package matched");
+        process.exit(-4)
     }
 
     if (options.install) {
@@ -82,51 +58,40 @@ async function main() {
 
     try {
         if (options.uninstall) {
-            const cleanPackageNodeModules = packages.cleanNodeModules();
-            const r = await Promise.all([cleanPackageNodeModules, rimrafWithErrorAsync(path.join(resolvedRoot, "node_modules"), "ERROR")]);
-            const succeeded = r[0] && !r[1].error;
-            if (!succeeded) {
-                console.error(`ERROR: Delete node_module failed`);
+            if (!await repo.uninstall()) {
+                console.error(`ERROR: uninstall failed`);
                 process.exit(-8);
             }
-            timer.time("Delete node_modules completed", true);
+            timer.time("Uninstall completed", true);
         }
 
         if (options.depcheck) {
-            for (const pkg of packages.packages) {
-                await pkg.depcheck();
-            }
+            repo.depcheck();
             timer.time("Dependencies check completed", true)
         }
 
         if (options.install) {
-            if (options.nohoist) {
-                if (!await packages.noHoistInstall(resolvedRoot)) {
-                    console.error(`ERROR: Install failed`);
-                    process.exit(-6);
-                }
-            } else {
-                const installScript = "npm i";
-                const ret = await execWithErrorAsync(installScript, { cwd: resolvedRoot }, "ERROR");
-                if (ret.error) {
-                    console.error(`ERROR: Install failed`);
-                    process.exit(-5);
-                }
+            console.log("Installing packages");
+            if (!await repo.install(options.nohoist)) {
+                console.error(`ERROR: Install failed`);
+                process.exit(-5);
             }
             timer.time("Install completed", true);
         }
 
-        if (options.symlink) {
-            if (!await packages.symlink()) {
-                console.error(`ERROR: Symlink failed`);
-                process.exit(-7);
-            }
-            timer.time("Symlink completed", true);
+        const symlinkTaskName = options.symlink ? "Symlink" : "Symlink check";
+        const updated = await repo.symlink(options);
+        if (updated) {
+            logStatus(`${updated} symlink updated. Running clean script.`);
+            repo.clean();
         }
+        timer.time(`${symlinkTaskName} completed`, options.symlink);
 
         if (options.clean || options.build !== false) {
+            logStatus(`Symlink in ${options.fullSymlink ? "full" : options.fullSymlink === false ? "isolated" : "non-dependent"} mode`);
+
             // build the graph
-            const buildGraph = new BuildGraph(packages.packages, options.buildScript);
+            const buildGraph = repo.createBuildGraph(options, options.buildScript);
             timer.time("Build graph creation completed");
 
             if (options.clean) {
@@ -142,9 +107,9 @@ async function main() {
                 const buildResult = await buildGraph.build(timer);
                 const buildStatus = buildResultString(buildResult);
                 const elapsedTime = timer.time();
-                const totalElapsedTime = buildGraph.totalElapsedTime;
-                const concurrency = buildGraph.totalElapsedTime / elapsedTime;
                 if (commonOptions.timer) {
+                    const totalElapsedTime = buildGraph.totalElapsedTime;
+                    const concurrency = buildGraph.totalElapsedTime / elapsedTime;
                     logStatus(`Execution time: ${totalElapsedTime.toFixed(3)}s, Concurrency: ${concurrency.toFixed(3)}`);
                     logStatus(`Build ${buildStatus} - ${elapsedTime.toFixed(3)}s`);
                 } else {
