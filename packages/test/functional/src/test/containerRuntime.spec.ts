@@ -166,7 +166,7 @@ describe("Container Runtime", () => {
             }
 
             // Assert that the processing should have happened in more than one turn.
-            assert.strict(numberOfTurns > 1);
+            assert.strict(numberOfTurns > 1, "The processing should have taken more than one turn");
 
             // We should have received all the batch events.
             assert.strictEqual(count, batchBegin, "Did not receive correct batchBegin event for the batch");
