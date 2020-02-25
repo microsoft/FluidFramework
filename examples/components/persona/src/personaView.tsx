@@ -43,6 +43,8 @@ export class PersonaReactComponent extends React.Component<IPersonaReactComponen
 }
 
 export class PersonaView implements IComponentHTMLView {
+    public get IComponentHTMLView() { return this; }
+
     constructor(private readonly directory: IDirectory, public remove: () => void) {
     }
 

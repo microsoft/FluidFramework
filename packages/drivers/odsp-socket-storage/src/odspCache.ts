@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-
 export class OdspCache {
     private readonly odspCache: Map<string, any>;
 
@@ -12,11 +10,8 @@ export class OdspCache {
         this.odspCache = new Map<string, any>();
     }
 
-    public get(key: string, removeKey: boolean = false) {
+    public get(key: string) {
         const val = this.odspCache.get(key);
-        if (removeKey && val) {
-            this.odspCache.delete(key);
-        }
         return val;
     }
 
@@ -25,7 +20,6 @@ export class OdspCache {
     }
 
     public put(key: string, value: any, expiryTime?: number) {
-        assert(!this.odspCache.has(key), "Insertion rejected because cache already has that key!!");
         this.odspCache.set(key, value);
         if (expiryTime) {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises

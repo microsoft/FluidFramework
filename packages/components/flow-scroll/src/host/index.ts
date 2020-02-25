@@ -11,7 +11,6 @@ import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aquedu
 import {
     IComponent,
     IComponentHandle,
-    IComponentHTMLOptions,
     IComponentHTMLView,
     IComponentHTMLVisual,
     IResponse,
@@ -58,10 +57,6 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
         componentRuntime.attach();
         this.root.set(rootkey, componentRuntime.id);
         return response.value as T;
-    }
-
-    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
-        this.addView().render(elm, options);
     }
 
     protected async componentInitializingFirstTime() {

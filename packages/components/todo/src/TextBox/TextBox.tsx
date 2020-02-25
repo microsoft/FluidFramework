@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
-import { CollaborativeTextArea, IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
-import { IComponentHandle, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { CollaborativeTextArea } from "@microsoft/fluid-aqueduct-react";
+import { IComponentHandle, IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
 import { SharedString } from "@microsoft/fluid-sequence";
+import { IComponentReactViewable } from "@microsoft/fluid-view-adapters";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
@@ -17,12 +18,8 @@ export const TextBoxName = `${pkg.name as string}-textbox`;
  * TextBox is a really simple component that uses the CollaborativeTextArea to provide a
  * collaborative textarea.
  */
-export class TextBox extends PrimedComponent
-    implements
-    IComponentHTMLVisual,
-    IComponentReactViewable {
-
-    public get IComponentHTMLVisual() { return this; }
+export class TextBox extends PrimedComponent implements IComponentHTMLView, IComponentReactViewable {
+    public get IComponentHTMLView() { return this; }
     public get IComponentReactViewable() { return this; }
 
     private text: SharedString;
@@ -48,7 +45,7 @@ export class TextBox extends PrimedComponent
         this.text = await this.root.get<IComponentHandle>("text").get<SharedString>();
     }
 
-    // start IComponentHTMLVisual
+    // start IComponentHTMLView
 
     public render(div: HTMLElement) {
         ReactDOM.render(
@@ -57,7 +54,7 @@ export class TextBox extends PrimedComponent
         );
     }
 
-    // end IComponentHTMLVisual
+    // end IComponentHTMLView
 
     // start IComponentReactViewable
 

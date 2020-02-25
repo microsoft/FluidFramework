@@ -34,7 +34,6 @@ import {
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
-    ISnapshotTree,
     ITreeEntry,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
@@ -76,7 +75,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         sharedObjectRegistry: ISharedObjectRegistry,
         activeCallback: (runtime: ComponentRuntime) => void,
         componentRegistry?: IComponentRegistry,
-
     ): void {
         const logger = ChildLogger.create(context.hostRuntime.logger, undefined, { componentId: context.id });
         const runtime = new ComponentRuntime(
@@ -187,6 +185,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                     this.sharedObjectRegistry,
                     new Map(),
                     componentContext.branch,
+                    this.componentContext.summaryTracker.createOrGetChild(
+                        path,
+                        this.deltaManager.referenceSequenceNumber,
+                    ),
                     undefined);
                 const deferred = new Deferred<IChannelContext>();
                 deferred.resolve(channelContext);
@@ -414,7 +416,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
 
         this.closed = true;
 
-        return this.snapshotInternal();
+        return this.snapshotInternal(true);
     }
 
     public async close(): Promise<void> {
@@ -449,6 +451,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                         this.sharedObjectRegistry,
                         flatBlobs,
                         origin,
+                        this.componentContext.summaryTracker.createOrGetChild(
+                            attachMessage.id,
+                            message.sequenceNumber,
+                        ),
                         { type: attachMessage.type });
 
                     this.contexts.set(attachMessage.id, remoteChannelContext);
@@ -608,18 +614,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         this.componentContext.on("notleader", (clientId: string) => {
             this.emit("notleader", clientId);
         });
-        this.componentContext.on("refreshBaseSummary",
-            (snapshot: ISnapshotTree) => this.refreshBaseSummary(snapshot));
-    }
-
-    private refreshBaseSummary(snapshot: ISnapshotTree) {
-        // Propogate updated tree to all channels
-        for (const key of Object.keys(snapshot.trees)) {
-            const channel = this.contexts.get(key);
-            if (channel) {
-                channel.refreshBaseSummary(snapshot.trees[key]);
-            }
-        }
     }
 
     private verifyNotClosed() {

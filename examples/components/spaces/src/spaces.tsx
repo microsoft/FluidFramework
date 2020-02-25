@@ -8,7 +8,7 @@ import {
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import {
-    IComponentHTMLVisual,
+    IComponentHTMLView,
 } from "@microsoft/fluid-component-core-interfaces";
 
 import * as React from "react";
@@ -22,7 +22,7 @@ import { ComponentToolbar, ComponentToolbarName } from "./components";
 /**
  * Spaces is the Fluid
  */
-export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
+export class Spaces extends PrimedComponent implements IComponentHTMLView {
     private dataModelInternal: ISpacesDataModel | undefined;
     private componentToolbar: ComponentToolbar | undefined;
     private static readonly componentToolbarId = "spaces-component-toolbar";
@@ -43,7 +43,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
         return this.dataModelInternal;
     }
 
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
 
     protected async componentInitializingFirstTime(props?: any) {
         this.root.createSubDirectory("component-list");

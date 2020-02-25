@@ -124,7 +124,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
         this.submitRawOperation([message]);
     }
 
-    public once(event: "producerError", listener: (...args: any[]) => void) {
+    public once(event: "error", listener: (...args: any[]) => void) {
         this.producer.once(event, listener);
     }
 

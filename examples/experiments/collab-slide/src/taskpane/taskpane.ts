@@ -113,12 +113,20 @@ async function attach(loader: ILoader, url: string, div: HTMLDivElement) {
     return;
   }
 
+  // Check if the component is viewable
   const component = response.value as IComponent;
-  const viewable = component.IComponentHTMLVisual;
-
-  const renderable = viewable.addView ? viewable.addView() : viewable;
-
-  renderable.render(div, { display: "block" });
+  // First try to get it as a view
+  let renderable = component.IComponentHTMLView;
+  if (!renderable) {
+    // Otherwise get the visual, which is a view factory
+    const visual = component.IComponentHTMLVisual;
+    if (visual) {
+      renderable = visual.addView();
+    }
+  }
+  if (renderable) {
+    renderable.render(div, { display: "block" });
+  }
 
   const editor = (component as any).IRichTextEditor;
 
