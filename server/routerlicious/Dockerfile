@@ -97,12 +97,13 @@ COPY packages/server/local-test-utils/package*.json packages/server/local-test-u
 COPY packages/utils/odsp-utils/package*.json packages/utils/odsp-utils/
 COPY packages/utils/fluid-tool-utils/package*.json packages/utils/fluid-tool-utils/
 COPY packages/server/tools-core/package*.json packages/server/tools-core/
+COPY packages/test/functional/package*.json packages/test/functional/
+COPY packages/test/end-to-end/package*.json packages/test/end-to-end/
 COPY packages/test/snapshots/package*.json packages/test/snapshots/
 COPY packages/tools/fluid-fetch/package*.json packages/tools/fluid-fetch/
 COPY packages/tools/replay-tool/package*.json packages/tools/replay-tool/
 COPY packages/tools/webpack-component-loader/package*.json packages/tools/webpack-component-loader/
 COPY packages/tools/merge-tree-client-replay/package*.json packages/tools/merge-tree-client-replay/
-COPY packages/test/end-to-end/package*.json packages/test/end-to-end/
 COPY examples/components/badge/package*.json examples/components/badge/
 COPY examples/components/chat/package*.json examples/components/chat/
 COPY examples/components/codemirror/package*.json examples/components/codemirror/
