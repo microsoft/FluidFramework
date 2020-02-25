@@ -33,7 +33,7 @@ import {
     IDocumentStorageService,
     IError,
     IUrlResolver,
-    IResolvedUrl,
+    IFluidResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
 import { createIError, readAndParse, OnlineStatus, isOnline } from "@microsoft/fluid-driver-utils";
 import {
@@ -104,7 +104,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         scope: IComponent,
         loader: Loader,
         request: IRequest,
-        resolvedUrl: IResolvedUrl,
+        resolvedUrl: IFluidResolvedUrl,
         logger?: ITelemetryBaseLogger,
     ): Promise<Container> {
         const container = new Container(
@@ -287,7 +287,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         private readonly codeLoader: ICodeLoader,
         private readonly loader: Loader,
         private readonly originalRequest: IRequest,
-        resolvedUrl: IResolvedUrl,
+        resolvedUrl: IFluidResolvedUrl,
         logger?: ITelemetryBaseLogger,
     ) {
         super();
@@ -1093,8 +1093,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
     }
 
-    private getScopes(resolvedUrl: IResolvedUrl): string[] {
-        return resolvedUrl?.type === "fluid" && resolvedUrl?.tokens?.jwt ?
+    private getScopes(resolvedUrl: IFluidResolvedUrl): string[] {
+        return resolvedUrl?.tokens?.jwt ?
             jwtDecode<ITokenClaims>(resolvedUrl.tokens.jwt).scopes : [];
     }
 
