@@ -35,7 +35,6 @@ export class ComponentToolbar extends PrimedComponent implements IComponentHTMLV
 
     public changeEditState(isEditable: boolean){
         this.root.set("isEditable", isEditable);
-        this.emit("onEditChanged", isEditable);
     }
 
     protected async componentInitializingFirstTime() {
@@ -50,7 +49,6 @@ export class ComponentToolbar extends PrimedComponent implements IComponentHTMLV
         ReactDOM.render(
             <ComponentToolbarView
                 emit={this.emit.bind(this)}
-                addListener={this.addListener.bind(this)}
                 root={this.root}
             />,
             div,
@@ -61,7 +59,6 @@ export class ComponentToolbar extends PrimedComponent implements IComponentHTMLV
 
 interface IComponentToolbarViewProps {
     emit: (event: string | symbol, ...args: any[]) => boolean;
-    addListener: (event: string | symbol, listener: (...args: any[]) => void) => ComponentToolbar;
     root: ISharedDirectory;
 }
 
@@ -76,8 +73,10 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
         this.state = {
             isEditable: props.root.get("isEditable"),
         };
-        props.addListener("onEditChanged", (isEditable: boolean) => {
-            this.setState({ isEditable });
+        props.root.on("valueChanged", (change, local) => {
+            if (change.key === "isEditable") {
+                this.setState({isEditable: props.root.get("isEditable")})
+            }
         });
     }
 
