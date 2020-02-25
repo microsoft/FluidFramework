@@ -1,0 +1,68 @@
+{
+  "name": "@fluid-example/version-test-1",
+  "description": "Component to test version conversion.",
+  "version": "0.1.0",
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "main": "dist/index.js",
+  "module": "lib/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "npm run build:compile",
+    "build:compile": "npm run tsc",
+    "build:full": "concurrently npm:build npm:webpack",
+    "build:full:compile": "concurrently npm:build:compile npm:webpack",
+    "build:compile:min": "npm run build:compile",
+    "build-v2": "cd @fluid-example/version-test-2 && test -e dist/main.bundle.js || npm run webpack",
+    "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+    "start": "webpack-dev-server --config webpack.config.js --package package.json",
+    "start:r11s": "webpack-dev-server --config webpack.config.js --package package.json --env.mode r11s",
+    "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
+    "tsc": "tsc",
+    "test:jest": "npm run build-v2 && jest",
+    "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
+    "webpack": "webpack --env.production && npm run tsc",
+    "webpack:dev": "webpack --env.development"
+  },
+  "devDependencies": {
+    "@microsoft/fluid-webpack-component-loader": "^0.14.0",
+    "@types/jest": "22.2.3",
+    "@types/jest-environment-puppeteer": "2.2.0",
+    "@types/node": "^10.14.6",
+    "@types/react": "^16.9.15",
+    "@types/react-dom": "^16.9.4",
+    "jest": "^24.9.0",
+    "jest-junit": "^10.0.0",
+    "jest-puppeteer": "^4.3.0",
+    "puppeteer": "^1.20.0",
+    "ts-jest": "24.1.0",
+    "ts-loader": "^6.1.2",
+    "typescript": "~3.7.4",
+    "webpack": "^4.16.5",
+    "webpack-cli": "^3.1.2",
+    "webpack-dev-server": "^3.8.0",
+    "webpack-merge": "^4.1.4"
+  },
+  "dependencies": {
+    "@microsoft/fluid-aqueduct": "^0.14.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.14.0",
+    "react": "^16.10.2",
+    "react-dom": "^16.10.2"
+  },
+  "fluid": {
+    "browser": {
+      "umd": {
+        "files": [
+          "dist/main.bundle.js"
+        ],
+        "library": "main"
+      }
+    }
+  },
+  "jest-junit": {
+    "outputDirectory": "nyc",
+    "outputName": "jest-junit-report.xml"
+  },
+  "license": "MIT",
+  "private": true
+}
