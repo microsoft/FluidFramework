@@ -199,7 +199,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         let state = await this.runtime!.stop();
         // back-compat: 0.14 runtimeState
         if (!state) {
-            state = { snapshot: await this.runtime!.snapshot("", false) };
+            state = { snapshot: await this.runtime!.snapshot("", false) ?? undefined };
         }
 
         // Dispose
