@@ -15,7 +15,7 @@ The package name is changed to `fluid-common-utils` to make it parallel to `flui
 
 ### `fluid-local-test-server` package move and rename
 
-The following classes / interfaces in have moved from `@microsoft/fluid-local-test-server` to `@microsoft/fluid-test-driver` in `./packages`:
+The following classes / interfaces have moved from `@microsoft/fluid-local-test-server` to `@microsoft/fluid-test-driver` in `./packages`:
 
 ```text
 DocumentDeltaEventManager
@@ -25,12 +25,11 @@ TestDocumentServiceFactory
 TestResolver
 ```
 
-The following classes / interfaces have moved from `@microsoft/fluid-local-test-server` in `./packages` to `@microsoft/fluid-server-local-server` in `./server`:
-
+The following classes / interfaces have been renamed and have moved from `@microsoft/fluid-local-test-server` in `./packages` to `@microsoft/fluid-server-local-server` in `./server`:
 ```text
-ITestDeltaConnectionServer
-TestDeltaConnectionServer
-TestReservationManager
+ITestDeltaConnectionServer -> ILocalDeltaConnectionServer
+TestDeltaConnectionServer -> LocalDeltaConnectionServer
+TestReservationManager -> LocalReservationManager
 ```
 
 The following packages have been renamed in `./packages`:

@@ -28,12 +28,12 @@ import {
     DebugLogger,
 } from "@microsoft/fluid-server-test-utils";
 import { configureWebSocketServices} from "@microsoft/fluid-server-lambdas";
-import { TestReservationManager } from "./testReservationManager";
+import { LocalReservationManager } from "./localReservationManager";
 
 /**
  * Items needed for handling deltas.
  */
-export interface ITestDeltaConnectionServer {
+export interface ILocalDeltaConnectionServer {
     webSocketServer: IWebSocketServer;
     databaseManager: IDatabaseManager;
     testDbFactory: ITestDbFactory;
@@ -41,7 +41,7 @@ export interface ITestDeltaConnectionServer {
 }
 
 /**
- * Implementation of order manager for testing.
+ * Implementation of order manager.
  */
 class TestOrderManager implements IOrdererManager {
     private readonly orderersP: Promise<IOrderer>[] = [];
@@ -82,13 +82,13 @@ class TestOrderManager implements IOrdererManager {
 }
 
 /**
- * Implementation of delta connection server for testing.
+ * Implementation of local delta connection server.
  */
-export class TestDeltaConnectionServer implements ITestDeltaConnectionServer {
+export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
     /**
-     * Creates and returns a delta connection server for testing.
+     * Creates and returns a local delta connection server.
      */
-    public static create(testDbFactory: ITestDbFactory = new TestDbFactory({})): ITestDeltaConnectionServer {
+    public static create(testDbFactory: ITestDbFactory = new TestDbFactory({})): ILocalDeltaConnectionServer {
         const nodesCollectionName = "nodes";
         const documentsCollectionName = "documents";
         const deltasCollectionName = "deltas";
@@ -110,7 +110,7 @@ export class TestDeltaConnectionServer implements ITestDeltaConnectionServer {
             databaseManager,
             testTenantManager);
 
-        const logger = DebugLogger.create("fluid-server:TestDeltaConnectionServer");
+        const logger = DebugLogger.create("fluid-server:LocalDeltaConnectionServer");
 
         const nodeFactory = new LocalNodeFactory(
             "os",
@@ -125,7 +125,7 @@ export class TestDeltaConnectionServer implements ITestDeltaConnectionServer {
             16 * 1024,
             logger);
 
-        const reservationManager = new TestReservationManager(
+        const reservationManager = new LocalReservationManager(
             nodeFactory,
             mongoManager,
             reservationsCollectionName);
@@ -143,7 +143,7 @@ export class TestDeltaConnectionServer implements ITestDeltaConnectionServer {
             new DefaultMetricClient(),
             logger);
 
-        return new TestDeltaConnectionServer(webSocketServer, databaseManager, testOrderer, testDbFactory);
+        return new LocalDeltaConnectionServer(webSocketServer, databaseManager, testOrderer, testDbFactory);
     }
 
     private constructor(
