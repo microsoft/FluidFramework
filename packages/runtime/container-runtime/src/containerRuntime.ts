@@ -629,7 +629,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.clearPartialChunks(clientId);
         });
 
-        this.previousState = this.context.previousRuntimeState.state as IPreviousState;
+        this.previousState = this.context.previousRuntimeState.state as IPreviousState ?? {};
 
         // We always create the summarizer in the case that we are asked to generate summaries. But this may
         // want to be on demand instead.
