@@ -28,10 +28,12 @@ const { exec } = require('child_process');
 
 function setEnv(name, value) {
     const shell = process.env.SHELL ? process.env.SHELL.split('/').pop() : null;
+    const termProgram = process.env.TERM_PROGRAM;
     const setString = `export ${name}="${value}"`;
     switch (shell) {
         case "bash":
-            return exec(`${setString} && echo '${setString}' >> ~/.bashrc`, stdResponse);
+            const destFile = termProgram === "Apple_Terminal" ? "~/.bash_profile" : "~/.bashrc";
+            return exec(`${setString} && echo '${setString}' >> ${destFile}`, stdResponse);
         case "zsh":
             return exec(`${setString} && echo '${setString}' >> ~/.zshrc`, stdResponse);
         case "fish":

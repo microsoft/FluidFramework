@@ -8,7 +8,7 @@ import * as api from "@fluid-internal/client-api";
 import {
     IComponent,
     IComponentHandle,
-    IComponentHTMLVisual,
+    IComponentHTMLView,
     IComponentLoadable,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IGenericBlob } from "@microsoft/fluid-container-definitions";
@@ -56,13 +56,13 @@ function getComponentBlock(marker: MergeTree.Marker): IBlockViewMarker {
 }
 
 interface IBlockViewMarker extends MergeTree.Marker {
-    instanceP?: Promise<IComponentHTMLVisual>;
-    instance?: IComponentHTMLVisual & IComponent;
+    instanceP?: Promise<IComponentHTMLView>;
+    instance?: IComponentHTMLView & IComponent;
 }
 
 interface IComponentViewMarker extends MergeTree.Marker {
-    instanceP?: Promise<IComponentHTMLVisual>;
-    instance?: IComponentHTMLVisual;
+    instanceP?: Promise<IComponentHTMLView>;
+    instance?: IComponentHTMLView;
 }
 
 interface IMathCollection {
@@ -77,10 +77,9 @@ interface IMathOptions {
     display: string;
 }
 
-export interface IMathInstance extends IComponentLoadable, IComponentHTMLVisual, IComponentCursor,
+export interface IMathInstance extends IComponentLoadable, IComponentHTMLView, IComponentCursor,
     IComponentKeyHandlers, IComponentLayout, SearchMenu.ISearchMenuClient {
     IComponentLoadable: IComponentLoadable;
-    IComponentHTMLVisual: IComponentHTMLVisual;
     IComponentCursor: IComponentCursor;
     IComponentKeyHandlers: IComponentKeyHandlers;
     IComponentLayout: IComponentLayout;
@@ -823,7 +822,7 @@ function renderSegmentIntoLine(
                                 }
 
                                 const component = response.value as IComponent;
-                                const viewable = component.IComponentHTMLVisual;
+                                const viewable = component.IComponentHTMLView;
                                 if (!viewable) {
                                     return Promise.reject("component is not viewable");
                                 }
@@ -2332,9 +2331,9 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                         newBlock.instanceP = newBlock.properties.leafId.get()
                             .then(async (component: IComponent) => {
                                 // TODO below is a temporary workaround. Should every QI interface also implement
-                                // IComponent. Then you can go from IComponentHTMLVisual to IComponentLayout.
+                                // IComponent. Then you can go from IComponentHTMLView to IComponentLayout.
                                 // Or should you query for each one individually.
-                                const viewable = component.IComponentHTMLVisual;
+                                const viewable = component.IComponentHTMLView;
                                 if (!viewable) {
                                     return Promise.reject("component is not viewable");
                                 }

@@ -31,8 +31,7 @@ function serialize(directory: map.ISharedDirectory): string {
     assert(tree.entries[0].path === "header");
     assert(tree.entries[0].type === TreeEntry[TreeEntry.Blob]);
     const contents = (tree.entries[0].value as IBlob).contents;
-    // return JSON.stringify((JSON.parse(contents) as IDirectoryNewStorageFormat).content);
-    return contents;
+    return JSON.stringify((JSON.parse(contents) as map.IDirectoryNewStorageFormat).content);
 }
 
 describe("Routerlicious", () => {
@@ -193,7 +192,7 @@ describe("Routerlicious", () => {
         });
 
         describe(".populate", () => {
-            it("Should populate the directory from an empty JSON object", async () => {
+            it("Should populate the directory from an empty JSON object (old format)", async () => {
                 await populate(testDirectory, {});
                 assert.equal(testDirectory.size, 0, "Failed to initialize to empty directory storage");
                 testDirectory.set("testKey", "testValue");
@@ -206,7 +205,7 @@ describe("Routerlicious", () => {
                 );
             });
 
-            it("Should populate the directory from a basic JSON object", async () => {
+            it("Should populate the directory from a basic JSON object (old format)", async () => {
                 await populate(testDirectory, {
                     storage: {
                         testKey: {
@@ -257,7 +256,7 @@ describe("Routerlicious", () => {
                 );
             });
 
-            it("Should populate the directory with undefined values", async () => {
+            it("Should populate the directory with undefined values (old format)", async () => {
                 await populate(testDirectory, {
                     storage: {
                         testKey: {
@@ -308,7 +307,7 @@ describe("Routerlicious", () => {
                 );
             });
 
-            it.skip("Should populate, serialize and de-serialize directory with long property values", async () => {
+            it("Should populate, serialize and de-serialize directory with long property values", async () => {
                 // 40K word
                 let longWord = "0123456789";
                 for (let i = 0; i < 12; i++) {

@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Jsonable, JsonablePrimitive } from "@microsoft/fluid-runtime-definitions";
-
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { Serializable } from "@microsoft/fluid-runtime-definitions";
 
 export enum MatrixOp {
     spliceCols,
@@ -27,5 +25,5 @@ export interface IMatrixCellMsg extends IMatrixMsg {
     type: MatrixOp.set;
     row: number;
     col: number;
-    value: Jsonable<JsonablePrimitive | IComponentHandle>;
+    value: Serializable;
 }

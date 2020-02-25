@@ -40,6 +40,7 @@ COPY . .
 RUN npm run tsc
 
 RUN mkdir /var/lib/tinylicious && chown node:node /var/lib/tinylicious
+RUN mkdir /var/lib/db && chown node:node /var/lib/db
 
 # Don't run as root user
 USER node

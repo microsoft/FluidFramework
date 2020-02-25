@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IContext, IQueuedMessage } from "@microsoft/fluid-server-services-core";
-import { TestKafka } from "@microsoft/fluid-server-test-utils";
+import { IContext, IQueuedMessage, ILogger } from "@microsoft/fluid-server-services-core";
+import { TestKafka, DebugLogger } from "@microsoft/fluid-server-test-utils";
 import * as assert from "assert";
 import { DocumentContextManager } from "../../document-router/contextManager";
 
@@ -19,6 +19,8 @@ class TestContext implements IContext {
     public error(error: any, restart: boolean) {
         throw new Error("Method not implemented.");
     }
+
+    public readonly log: ILogger = DebugLogger.create("fluid-server:TestContextManager");
 }
 
 describe("document-router", () => {

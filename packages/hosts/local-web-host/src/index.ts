@@ -3,11 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-    TestDeltaConnectionServer,
-    TestDocumentServiceFactory,
-    TestResolver,
-} from "@microsoft/fluid-local-test-server";
+import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
+import { TestDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
 import {
@@ -15,12 +12,13 @@ import {
     ICodeLoader,
     IProvideRuntimeFactory,
     IFluidModule,
+    IFluidCodeDetails,
 } from "@microsoft/fluid-container-definitions";
 import {  Loader, Container } from "@microsoft/fluid-container-loader";
 import { IProvideComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
-
+import { initializeContainerCode } from "@microsoft/fluid-base-host";
 
 export async function createLocalContainerFactory(
     entryPoint: Partial<IProvideRuntimeFactory & IProvideComponentFactory & IFluidModule>,
@@ -58,21 +56,7 @@ export async function createLocalContainerFactory(
 
         const container = await loader.resolve({ url: documentId });
 
-        const quorum = container.getQuorum();
-
-        const maybeContextChangedP = new Promise((resolve) => {
-            if (!quorum.has("code")) {
-                container.once("contextChanged", () => resolve());
-            } else {
-                resolve();
-            }
-        });
-
-        if (!container.existing) {
-            await quorum.propose("code", {});
-        }
-
-        await maybeContextChangedP;
+        await initializeContainerCode(container, {} as any as IFluidCodeDetails);
 
         return container;
     };
@@ -92,13 +76,16 @@ export async function renderDefaultComponent(container: Container, div: HTMLElem
 
     // Check if the component is viewable
     const component = response.value as IComponent;
-    const viewable = component.IComponentHTMLVisual;
-
-    if (viewable) {
-        const renderable =
-            viewable.addView ? viewable.addView() : viewable;
-
+    // First try to get it as a view
+    let renderable = component.IComponentHTMLView;
+    if (!renderable) {
+        // Otherwise get the visual, which is a view factory
+        const visual = component.IComponentHTMLVisual;
+        if (visual) {
+            renderable = visual.addView();
+        }
+    }
+    if (renderable) {
         renderable.render(div, { display: "block" });
-        return;
     }
 }

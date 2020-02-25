@@ -12,12 +12,13 @@ export const createConsumer = (
     endPoint: string,
     clientId: string,
     groupId: string,
-    topic: string,
-    autoCommit: boolean): IConsumer => new KafkaNodeConsumer(endPoint, clientId, groupId, topic, autoCommit);
+    topic: string): IConsumer =>
+    new KafkaNodeConsumer({ kafkaHost: endPoint }, clientId, groupId, topic);
 
 export const createProducer = (
     type: string,
     endPoint: string,
     clientId: string,
     topic: string,
-    maxKafkaMessageSize: number): IProducer => new KafkaNodeProducer(endPoint, clientId, topic);
+    maxKafkaMessageSize: number): IProducer =>
+    new KafkaNodeProducer({ kafkaHost: endPoint }, clientId, topic);

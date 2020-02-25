@@ -33,7 +33,7 @@ import {
     ITrace,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
-import { createIError } from "@microsoft/fluid-driver-utils";
+import { createIError, WriteError } from "@microsoft/fluid-driver-utils";
 import { ContentCache } from "./contentCache";
 import { debug } from "./debug";
 import { DeltaConnection } from "./deltaConnection";
@@ -83,9 +83,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
      */
     public autoReconnect: boolean = true;
 
+    // Current connection mode. "read" if disconnected.
     private _connectionMode: ConnectionMode = "write";
-    // Overwrites the current connection mode to always write.
-    private readonly systemConnectionMode: ConnectionMode;
+    private _readonly: boolean | undefined;
+
+    // Connection mode used when reconnecting on error or disconnect.
+    private readonly defaultReconnectionMode: ConnectionMode;
 
     private isDisposed: boolean = false;
     private pending: ISequencedDocumentMessage[] = [];
@@ -194,6 +197,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         return this._connectionMode;
     }
 
+    public get readonly(): boolean | undefined {
+        return this._readonly;
+    }
+
     constructor(
         private readonly service: IDocumentService,
         private readonly client: IClient,
@@ -202,7 +209,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         super();
 
         this.clientDetails = this.client.details;
-        this.systemConnectionMode = this.client.mode === "write" ? "write" : "read";
+        this.defaultReconnectionMode = this.client.mode === "write" ? "write" : "read";
 
         this._inbound = new DeltaQueue<ISequencedDocumentMessage>(
             (op) => {
@@ -297,7 +304,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     public async connect(requestedMode: ConnectionMode = "write"): Promise<IConnectionDetails> {
-        assert(!this.closed);
+        if (this.closed) {
+            throw new Error("Attempting to connect a closed DeltaManager");
+        }
 
         if (this.connection) {
             return this.connection.details;
@@ -363,7 +372,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 });
             }
 
-            this.setupNewSuccessfulConnection(connection);
+            this.setupNewSuccessfulConnection(connection, requestedMode);
 
             return connection;
         };
@@ -409,6 +418,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // TODO need to fail if gets too large
         // const serializedContent = JSON.stringify(this.messageBuffer);
         // const maxOpSize = this.context.deltaManager.maxMessageSize;
+
+        if (this.readonly) {
+            this.logger.sendErrorEvent({ eventName: "SubmitOpReadOnly", type });
+            return -1;
+        }
 
         // Start adding trace for the op.
         const traces: ITrace[] = [
@@ -687,11 +701,21 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
      * initial messages.
      * @param connection - The newly established connection
      */
-    private setupNewSuccessfulConnection(connection: DeltaConnection) {
+    private setupNewSuccessfulConnection(connection: DeltaConnection, requestedMode: ConnectionMode) {
         this.connection = connection;
 
         // Back-compat for newer clients and old server. If the server does not have mode, we reset to write.
         this._connectionMode = connection.details.mode ? connection.details.mode : "write";
+
+        if (requestedMode === "write") {
+            // if we ask for write and get read it means we don't have write permissions
+            const oldValue = this._readonly;
+            this._readonly = this._connectionMode !== requestedMode;
+            if (oldValue !== this._readonly) {
+                this.emit("readonly", this._readonly);
+            }
+        }
+
 
         this.emitDelayInfo(retryFor.DELTASTREAM, -1);
 
@@ -726,9 +750,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // Always connect in write mode after getting nacked.
         connection.on("nack", (target: number) => {
             const nackReason = target === -1 ? "Nack: Start writing" : "Nack";
+            if (this._readonly) {
+                this.close(new WriteError("WriteOnReadOnlyDocument"));
+            }
             if (!this.autoReconnect) {
-                // Not clear if reconnecting is the right thing in such state.
-                // Let's get telemetry to learn more...
                 this.logger.sendErrorEvent({ eventName: "NackWithNoReconnect", target, mode: this._connectionMode });
             }
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -743,7 +768,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             this.reconnectOnError(
                 `Disconnect: ${disconnectReason}`,
                 connection,
-                this.systemConnectionMode,
+                this.defaultReconnectionMode,
                 disconnectReason,
                 this.autoReconnect,
             );
@@ -758,7 +783,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             this.reconnectOnError(
                 `Error: ${error}`,
                 connection,
-                this.systemConnectionMode,
+                this.defaultReconnectionMode,
                 error);
         });
 

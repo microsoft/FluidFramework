@@ -27,7 +27,7 @@ export function analyzeTasks(
     clients: Map<string, ISequencedClient>,
     tasks: string[]): IHelpTasks {
     const robotClients = [...clients].filter((client) => isRobot(client[1]));
-    const handledTasks = robotClients.map((robot) => robot[1].client.type);
+    const handledTasks = robotClients.map((robot) => robot[1].client.details.type);
     const unhandledTasks = tasks.filter((task) => !handledTasks.includes(task));
     if (unhandledTasks.length > 0) {
         const runnerClient = clients.get(runnerClientId);

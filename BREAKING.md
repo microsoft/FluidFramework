@@ -2,7 +2,10 @@
 - [Samples and chaincode have been renamed to examples and components respectively](##Samples-and-chaincode-have-been-renamed-to-examples-and-components-respectively)
 - [Top-level `type` on `IClient` removed](#Top-level-type-on-IClient-removed)
 - [Remove back-compat support for loader <= 0.8](#remove-back-compat-support-for-loader-0.8)
+- [New Error types](#New-Error-types)
 - [`IComponentContext` - `createSubComponent` removed, `createComponent` signature updated](#`IComponentContext`---`createSubComponent`-removed,-`createComponent`-signature-updated)
+- [Changes to the render interfaces](#Changes-to-the-render-interfaces)
+- [`fluid-local-test-server` package move and rename](#`fluid-local-test-server`-package-move-and-rename)
 
 ## Samples and chaincode have been renamed to examples and components respectively
 The directories themselves have been renamed.
@@ -17,6 +20,11 @@ The `type` field on `IClient` has been removed.
 Back-compat support code for postProcess and ScheduleManager is removed for loader <= 0.8, which doesn't support group ops.
 Any component based on runtime >= 0.14 will no longer work with loader <= 0.8
 
+## New Error types
+The following new error interfaces have been added:
+- `IWriteError` is thrown when ops are sent on a read-only document
+- `IFatalError` is thrown when a fatal error (500) is received from ODSP
+
 ## `IComponentContext` - `createSubComponent` removed, `createComponent` signature updated
 
 The `createSubComponent` method on `IComponentContext` has been removed. Use `createComponent` instead whose signature has been updated. The new function signature is as below:
@@ -30,6 +38,37 @@ It does not acccept a package path anymore but just a package name. To pass in p
 
 For creating a component with a specific package path, use `createComponent` or `_createComponentWithProps` in `IHostRuntime`.
 
+## Changes to the render interfaces
+
+The rendering interfaces have undergone several changes:
+- `IComponentHTMLRender` has been removed.  `IComponentHTMLView` now has a `render()` member, and `IComponentHTMLVisual` does not.  If your component renders, it should probably be an `IComponentHTMLView`.
+- Since `IComponentHTMLVisual` now only has the member `addView()`, it is mandatory.  If your component does not already implement `addView`, it should not be an `IComponentHTMLVisual`.
+- On `IComponentHTMLView`, `remove()` is now optional.  If your view component needs to perform cleanup when removed from the DOM, do it in `remove()` - otherwise there is no need to implement it.
+- `IComponentHTMLView` now extends the new `IProvideComponentHTMLView`, so you can query for whether a component is a view.  You must implement the `IComponentHTMLView` member if you implement the interface.
+
+## `fluid-local-test-server` package move and rename
+
+The following classes / interfaces in have moved from `@microsoft/fluid-local-test-server` to `@microsoft/fluid-test-driver` in `./packages`:
+```text
+DocumentDeltaEventManager
+IDocumentDeltaEvent
+TestDocumentService
+TestDocumentServiceFactory
+TestResolver
+```
+
+The following classes / interfaces have moved from `@microsoft/fluid-local-test-server` in `./packages` to `@microsoft/fluid-server-local-server` in `./server`:
+```text
+ITestDeltaConnectionServer
+TestDeltaConnectionServer
+TestReservationManager
+```
+
+The following packages have been renamed in `./packages`:
+```text
+@microsoft/fluid-local-test-server -> @microsoft/fluid-local-test-utils
+@microsoft/fluid-test-driver -> @microsoft/fluid-local-driver
+```
 
 # 0.13 Breaking Changes
 

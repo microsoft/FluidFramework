@@ -4,9 +4,9 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
-import { IComponentHandle, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHandle, IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
+import { IComponentReactViewable } from "@microsoft/fluid-view-adapters";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { loadPuzzle } from "./helpers/puzzles";
@@ -21,8 +21,8 @@ export const FluidSudokuName = "FluidSudoku";
  * A collaborative Sudoku component built on the Fluid Framework.
  */
 export class FluidSudoku extends PrimedComponent
-    implements IComponentHTMLVisual, IComponentReactViewable {
-    public get IComponentHTMLVisual() {
+    implements IComponentHTMLView, IComponentReactViewable {
+    public get IComponentHTMLView() {
         return this;
     }
 
