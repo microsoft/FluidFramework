@@ -1139,7 +1139,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.scope,
             this.codeLoader,
             chaincode,
-            snapshot ?? null,
+            // back-compat: 0.14 undefinedSnapshot
+            snapshot || { id: null, blobs: {}, commits: {}, trees: {} },
             attributes,
             this.blobManager,
             new DeltaManagerProxy(this._deltaManager),
