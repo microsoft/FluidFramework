@@ -859,7 +859,15 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             return new NullChaincode();
         }
 
-        const component = await this.codeLoader.load<IRuntimeFactory | IFluidModule>(pkg);
+        let component;
+        const perfEvent = PerformanceEvent.start(this.logger, { eventName: "CodeLoad" });
+        try {
+            component = await this.codeLoader.load<IRuntimeFactory | IFluidModule>(pkg);
+        } catch (error) {
+            perfEvent.cancel({}, error);
+            throw error;
+        }
+        perfEvent.end();
 
         if ("fluidExport" in component) {
             const factory = component.fluidExport.IRuntimeFactory;
