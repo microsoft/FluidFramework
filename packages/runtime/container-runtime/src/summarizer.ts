@@ -9,8 +9,7 @@ import {
     IComponentRouter,
     IComponentRunnable,
     IRequest,
-    IResponse,);
-
+    IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import { ChildLogger, PerformanceEvent, PromiseTimer, Timer, Deferred } from "@microsoft/fluid-core-utils";
 import {
@@ -54,6 +53,10 @@ export class Summarizer implements ISummarizer {
     public get IComponentLoadable() { return this; }
     public get ISummarizer() { return this; }
 
+    public get summaryCollection() {
+        return this._summaryCollection;
+    }
+
     private readonly logger: ITelemetryLogger;
     private readonly runCoordinator: RunWhileConnectedCoordinator;
     private onBehalfOfClientId: string;
@@ -68,15 +71,15 @@ export class Summarizer implements ISummarizer {
         private readonly configurationGetter: () => ISummaryConfiguration,
         private readonly generateSummaryCore: (safe: boolean) => Promise<GenerateSummaryData>,
         private readonly refreshLatestAck: (context: ISummaryContext, referenceSequenceNumber: number) => Promise<void>,
-        public summaryCollection?: SummaryCollection,
+        private readonly _summaryCollection?: SummaryCollection,
     ) {
         this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");
         this.runCoordinator = new RunWhileConnectedCoordinator(runtime);
-        if (summaryCollection) {
+        if (_summaryCollection) {
             // summarize immediately because we just went through context reload
             this.immediateSummary = true;
         } else {
-            this.summaryCollection = new SummaryCollection(this.runtime.deltaManager.initialSequenceNumber);
+            this._summaryCollection = new SummaryCollection(this.runtime.deltaManager.initialSequenceNumber);
         }
         this.runtime.deltaManager.inbound.on("op",
             (op) => this.summaryCollection.handleOp(op as ISequencedDocumentMessage));

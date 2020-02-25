@@ -19,11 +19,8 @@ import {
     IGenericBlob,
     IRuntimeFactory,
     LoaderHeader,
-<<<<<<< HEAD
     IRuntimeState,
-=======
     IExperimentalContainer,
->>>>>>> bf3b0eeb6c095cd5c44163377169b79176eab9d8
 } from "@microsoft/fluid-container-definitions";
 import {
     ChildLogger,
