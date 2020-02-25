@@ -279,7 +279,7 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
 
         const resolvedAsFluid = await this.getResolvedUrl(request);
         if (resolvedAsFluid.type !== "fluid") {
-            throw new Error(`Cannot resolve no fluid urls: ${request.url}`);
+            throw new Error(`Cannot resolve non fluid container request: ${JSON.stringify(resolvedAsFluid)}`);
         }
 
         // Parse URL into components
