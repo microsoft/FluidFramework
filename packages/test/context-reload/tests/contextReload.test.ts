@@ -11,6 +11,7 @@ describe("context reload", () => {
     });
 
     it("has a button to be clicked", async () => {
+        await page.waitForSelector("button");
         await expect(page).toClick("button", { text: "Upgrade Version" });
     });
 
@@ -27,10 +28,10 @@ describe("context reload", () => {
         }, index);
       };
 
-      await page.evaluate(() => {
-        const cdn = document.querySelector<HTMLInputElement>(".cdn");
-        if (cdn) {
-          cdn.value = "";
+      await page.waitForSelector(".cdn");
+      await page.$eval(".cdn", (el) => {
+        if (el && el instanceof HTMLInputElement) {
+          el.value = "";
         }
       });
       const input = await page.$(".cdn");
