@@ -16,6 +16,7 @@ import {
     ITaskMessageSender,
     ITenantManager,
 } from "@microsoft/fluid-server-services-core";
+import * as winston from "winston";
 
 export class OrdererManager implements IOrdererManager {
     private readonly map = new Map<string, Promise<IOrderer>>();
@@ -55,6 +56,7 @@ export class OrdererManager implements IOrdererManager {
             this.tenantManager,
             this.permission,
             this.maxMessageSize,
+            winston,
             gitManager);
 
         // This is a temporary hack to work around promise bugs in the LocalOrderer load. The LocalOrderer does not
