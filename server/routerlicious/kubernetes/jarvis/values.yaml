@@ -24,10 +24,6 @@ scriptorium:
   name: scriptorium2
   replicas: 1
 
-broadcaster:
-  name: broadcaster2
-  replicas: 1
-
 riddler:
   url: http://angry-dog-riddler
 

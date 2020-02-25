@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Package, Packages } from "../npmPackage";
+import { Package, Packages } from "../common/npmPackage";
 import { logVerbose } from "../common/logging";
 import * as path from "path";
 

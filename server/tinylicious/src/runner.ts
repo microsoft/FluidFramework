@@ -58,7 +58,8 @@ export class TinyliciousRunner implements utils.IRunner {
             this.storage,
             this.contentCollection,
             new TestClientManager(),
-            new DefaultMetricClient());
+            new DefaultMetricClient(),
+            winston);
 
         // Listen on provided port, on all network interfaces.
         httpServer.listen(this.port);

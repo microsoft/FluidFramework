@@ -6,7 +6,7 @@
 import * as assert from "assert";
 import * as fs from "fs";
 import * as util from "util";
-import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
+import { fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
 import {
     IDocumentService,
     IDocumentStorageService,

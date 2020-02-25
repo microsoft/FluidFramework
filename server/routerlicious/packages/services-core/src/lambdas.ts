@@ -4,10 +4,16 @@
  */
 
 import { EventEmitter } from "events";
-import { safelyParseJSON } from "@microsoft/fluid-core-utils";
+import { safelyParseJSON } from "@microsoft/fluid-common-utils";
 import * as nconf from "nconf";
 import { BoxcarType, IBoxcarMessage, IMessage } from "./messages";
 import { IQueuedMessage } from "./queue";
+
+export interface ILogger {
+    info(message: string): void;
+    warn(message: string): void;
+    error(message: string): void;
+}
 
 export interface IContext {
     /**
@@ -20,6 +26,11 @@ export interface IContext {
      * should be restarted.
      */
     error(error: any, restart: boolean): void;
+
+    /**
+     * Used to log events / errors.
+     */
+    readonly log: ILogger;
 }
 
 export interface IPartitionLambda {

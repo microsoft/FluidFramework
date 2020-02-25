@@ -8,8 +8,9 @@ import {
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
+    IExperimentalUrlResolver,
 } from "@microsoft/fluid-driver-definitions";
-import { ITokenClaims, IUser } from "@microsoft/fluid-protocol-definitions";
+import { ITokenClaims, IUser, ISummaryTree, ICommittedProposal } from "@microsoft/fluid-protocol-definitions";
 import Axios from "axios";
 import * as jwt from "jsonwebtoken";
 
@@ -27,8 +28,10 @@ import * as jwt from "jsonwebtoken";
  * part of the URL that the document interprets and maps to a component. It's exactly similar to how a web service
  * works or a router inside of a single page app framework.
  */
-export class InsecureUrlResolver implements IUrlResolver {
+export class InsecureUrlResolver implements IUrlResolver, IExperimentalUrlResolver {
     private readonly cache = new Map<string, Promise<IResolvedUrl>>();
+
+    public readonly isExperimentalUrlResolver = true;
 
     constructor(
         private readonly hostUrl: string,
@@ -89,6 +92,15 @@ export class InsecureUrlResolver implements IUrlResolver {
 
             return this.cache.get(request.url);
         }
+    }
+
+    public async experimentalCreate(
+        summary: ISummaryTree,
+        sequenceNumber: number,
+        values: [string, ICommittedProposal][],
+        options: any,
+    ): Promise<IResolvedUrl> {
+        throw new Error("Method not implemented.");
     }
 
     private auth(tenantId: string, documentId: string) {

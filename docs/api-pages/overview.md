@@ -22,6 +22,23 @@ Runtime interfaces and implementation.
 
 Loader for host pages to load a Fluid container, or just a component within the container.
 
+## Container
+The Loader returns a Container object that can be used by the calling host.
+
+### Lifecycle
+APIs that can be used to manage the lifecycle of the container and its connections
+
+* `close()` - Closes the container (socket connections)
+* `on()` - The Container object also emits lifecycle events such as 'connected' and 'error'
+
+### Container State
+Properties that can be used to query container state
+
+* `clientId` - The clientId representing the host/user if connected to delta connection, otherwise undefined
+* `audience` - Information about all connections to the container. Has getMembers() call that exposes IClient information and emits events 'addMember' and 'removeMember'
+* `connected` - Whether or not the container is connected or not
+* `connectionState` - The current connection state of the container. Disconnected, Connecting, or Connected
+
 ## Driver
 
 Client driver that implements the protocols that talks to a Fluid service backend (the ordering and storage services).

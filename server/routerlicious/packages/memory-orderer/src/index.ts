@@ -10,3 +10,5 @@ export * from "./localOrderer";
 export * from "./localOrderManager";
 export * from "./nodeManager";
 export * from "./reservationManager";
+export * from "./localLambdaController";
+export * from "./localContext";

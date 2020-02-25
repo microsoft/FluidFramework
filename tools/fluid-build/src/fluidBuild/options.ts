@@ -4,9 +4,11 @@
  */
 
 import * as os from "os";
-import { commonOptionString, parseOption } from "./common/commonOptions"
+import { commonOptionString, parseOption } from "../common/commonOptions"
+import { IPackageMatchedOptions } from "./fluidRepo";
+import { ISymlinkOptions } from "./symlinkUtils";
 
-interface FastBuildOptions {
+interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
     nolint: boolean;
     lintonly: boolean;
     showExec: boolean;
@@ -15,8 +17,8 @@ interface FastBuildOptions {
     buildScript: string;
     build?: boolean;
     vscode: boolean;
-    args: string[];
     symlink: boolean;
+    fullSymlink: boolean | undefined;
     depcheck: boolean;
     force: boolean;
     install: boolean
@@ -25,7 +27,6 @@ interface FastBuildOptions {
     concurrency: number;
     samples: boolean;
     fixScripts: boolean;
-    server: boolean;
 }
 
 // defaults
@@ -34,11 +35,12 @@ export const options: FastBuildOptions = {
     lintonly: false,
     showExec: false,
     clean: false,
-    args: [],
+    match: [],
     matchedOnly: true,
     buildScript: "build",
     vscode: false,
     symlink: false,
+    fullSymlink: undefined,
     depcheck: false,
     force: false,
     install: false,
@@ -47,6 +49,7 @@ export const options: FastBuildOptions = {
     concurrency: os.cpus().length, // TODO: argument?
     samples: true,
     fixScripts: false,
+    all: false,
     server: false,
 };
 
@@ -56,16 +59,20 @@ function printUsage() {
 Usage: fluid-build <options> [<package regexp> ...]
   [<package regexp> ...] Regexp to match the package name (default: all packages)
 Options:
+     --all            Operate on all packages/monorepo (default: client monorepo)
   -c --clean          Same as running build script 'clean' on matched packages (all if package regexp is not specified)
   -d --dep            Apply actions (clean/force/rebuild) to matched packages and their dependent packages
   -f --force          Force build and ignore dependency check on matched packages (all if package regexp is not specified)
   -? --help           Print this message
+     --install        Run NPM install for all packages/monorepo
   -r --rebuild        Clean and build on matched packages (all if package regexp is not specified)
+     --reinstall      Same as --uninstall --install
      --root <path>    Root directory of the fluid repo (default: env _FLUID_ROOT_)
   -s --script <name>  NPM script to execute (default:build)
      --server         Operate on the server monorepo
-     --timer          Time separate phases
-  -v --verbose        Verbose messages
+     --symlink        Fix symlink between packages within monorepo (isolate mode)
+     --symlink:full   Fix symlink between packages across monorepo (full mode)
+     --uninstall      Clean all node_modules
      --vscode         Output error message to work with default problem matcher in vscode
 ${commonOptionString}
 `);
@@ -91,14 +98,17 @@ function setReinstall(nohoist: boolean) {
 function setInstall(nohoist: boolean) {
     options.install = true;
     options.nohoist = nohoist;
-    if (nohoist) {
-        options.symlink = true;
-    }
     setBuild(false);
 }
 
 function setUninstall() {
     options.uninstall = true;
+    setBuild(false);
+}
+
+function setSymlink(fullSymlink: boolean) {
+    options.symlink = true;
+    options.fullSymlink = fullSymlink;
     setBuild(false);
 }
 
@@ -178,6 +188,11 @@ export function parseOptions(argv: string[]) {
             continue;
         }
 
+        if (arg === "--all") {
+            options.all = true;
+            continue;
+        }
+
         if (arg === "--server") {
             options.server = true;
             continue;
@@ -200,8 +215,12 @@ export function parseOptions(argv: string[]) {
         }
 
         if (arg === "--symlink") {
-            options.symlink = true;
-            setBuild(false);
+            setSymlink(false);
+            continue;
+        }
+
+        if (arg === "--symlink:full") {
+            setSymlink(true);
             continue;
         }
 
@@ -229,7 +248,7 @@ export function parseOptions(argv: string[]) {
 
         // Package regexp
         if (!arg.startsWith("-")) {
-            options.args.push(arg);
+            options.match.push(arg);
             continue;
         }
 
