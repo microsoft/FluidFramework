@@ -22,7 +22,7 @@ import {
 import {
     ChildLogger,
     Deferred,
-} from "@microsoft/fluid-core-utils";
+} from "@microsoft/fluid-common-utils";
 import {
     buildSnapshotTree,
     raiseConnectedEvent,

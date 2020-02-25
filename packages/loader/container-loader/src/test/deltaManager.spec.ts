@@ -6,7 +6,7 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
-import { DebugLogger } from "@microsoft/fluid-core-utils";
+import { DebugLogger } from "@microsoft/fluid-common-utils";
 import { IClient, IDocumentMessage, IProcessMessageResult, MessageType } from "@microsoft/fluid-protocol-definitions";
 import { MockDocumentDeltaConnection, MockDocumentService } from "@microsoft/fluid-test-loader-utils";
 import { SinonFakeTimers, useFakeTimers } from "sinon";

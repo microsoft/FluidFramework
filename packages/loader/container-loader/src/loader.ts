@@ -19,7 +19,7 @@ import {
     IFluidCodeDetails,
     IExperimentalLoader,
 } from "@microsoft/fluid-container-definitions";
-import { Deferred } from "@microsoft/fluid-core-utils";
+import { Deferred } from "@microsoft/fluid-common-utils";
 import {
     IDocumentService,
     IDocumentServiceFactory,

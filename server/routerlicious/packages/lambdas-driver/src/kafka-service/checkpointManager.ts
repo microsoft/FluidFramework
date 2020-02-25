@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { Deferred } from "@microsoft/fluid-core-utils";
+import { Deferred } from "@microsoft/fluid-common-utils";
 import { IConsumer, IQueuedMessage } from "@microsoft/fluid-server-services-core";
 
 export class CheckpointManager {
