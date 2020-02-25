@@ -27,9 +27,14 @@ describe("context reload", () => {
         }, index);
       };
 
+      await page.evaluate(() => {
+        const cdn = document.querySelector<HTMLInputElement>(".cdn");
+        if (cdn) {
+          cdn.value = "";
+        }
+      });
       const input = await page.$(".cdn");
       if (input) {
-        await input.click({ clickCount: 3 }); // select all
         await input.type(`${globals.PATH}/file`);
       }
 
