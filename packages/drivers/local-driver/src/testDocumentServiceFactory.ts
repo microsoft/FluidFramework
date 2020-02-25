@@ -10,7 +10,7 @@ import {
     IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
 import { TokenProvider } from "@microsoft/fluid-routerlicious-driver";
-import { ITestDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { ILocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { createTestDocumentService } from "./testDocumentService";
 
 /**
@@ -20,9 +20,9 @@ export class TestDocumentServiceFactory implements IDocumentServiceFactory {
 
     public readonly protocolName = "fluid-test:";
     /**
-     * @param testDeltaConnectionServer - delta connection server for ops
+     * @param localDeltaConnectionServer - delta connection server for ops
      */
-    constructor(private readonly testDeltaConnectionServer: ITestDeltaConnectionServer) { }
+    constructor(private readonly localDeltaConnectionServer: ILocalDeltaConnectionServer) { }
 
     /**
      * Creates and returns a document service for testing using the given resolved
@@ -52,6 +52,6 @@ export class TestDocumentServiceFactory implements IDocumentServiceFactory {
         const tokenProvider = new TokenProvider(jwtToken);
 
         return Promise.resolve(
-            createTestDocumentService(this.testDeltaConnectionServer, tokenProvider, tenantId, documentId));
+            createTestDocumentService(this.localDeltaConnectionServer, tokenProvider, tenantId, documentId));
     }
 }
