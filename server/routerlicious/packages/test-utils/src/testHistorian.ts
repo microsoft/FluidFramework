@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { gitHashFile } from "@microsoft/fluid-core-utils";
+import { gitHashFile } from "@microsoft/fluid-common-utils";
 import * as git from "@microsoft/fluid-gitresources";
 import { IHistorian } from "@microsoft/fluid-server-services-client";
 import { ICollection, IDb } from "@microsoft/fluid-server-services-core";

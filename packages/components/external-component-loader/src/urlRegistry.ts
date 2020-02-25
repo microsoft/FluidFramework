@@ -4,7 +4,7 @@
  */
 
 import { IFluidModule, IFluidPackage, isFluidPackage } from "@microsoft/fluid-container-definitions";
-import { Deferred } from "@microsoft/fluid-core-utils";
+import { Deferred } from "@microsoft/fluid-common-utils";
 import {
     ComponentRegistryEntry,
     IComponentRegistry,

@@ -22,7 +22,7 @@ import {
     DebugLogger,
     Deferred,
     fromUtf8ToBase64,
-} from "@microsoft/fluid-core-utils";
+} from "@microsoft/fluid-common-utils";
 import * as git from "@microsoft/fluid-gitresources";
 import {
     ConnectionState,

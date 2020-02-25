@@ -30,7 +30,7 @@ import {
     Trace,
     LazyPromise,
     ChildLogger,
-} from "@microsoft/fluid-core-utils";
+} from "@microsoft/fluid-common-utils";
 import { IDocumentStorageService, ISummaryContext } from "@microsoft/fluid-driver-definitions";
 import { readAndParse, createIError } from "@microsoft/fluid-driver-utils";
 import {

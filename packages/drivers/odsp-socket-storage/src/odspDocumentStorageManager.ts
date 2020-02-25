@@ -11,7 +11,7 @@ import {
     hashFile,
     PerformanceEvent,
     TelemetryLogger,
-} from "@microsoft/fluid-core-utils";
+} from "@microsoft/fluid-common-utils";
 import * as resources from "@microsoft/fluid-gitresources";
 import { buildHierarchy } from "@microsoft/fluid-protocol-base";
 import * as api from "@microsoft/fluid-protocol-definitions";
