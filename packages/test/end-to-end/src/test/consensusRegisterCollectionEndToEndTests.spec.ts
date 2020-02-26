@@ -11,7 +11,7 @@ import {
     TestDocumentServiceFactory,
     TestResolver,
 } from "@microsoft/fluid-local-driver";
-import { ITestDeltaConnectionServer, TestDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { ISharedMap } from "@microsoft/fluid-map";
 import {
     ConsensusRegisterCollection,
@@ -28,7 +28,7 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
     describe(name, () => {
         const id = "fluid://test.com/test/test";
 
-        let testDeltaConnectionServer: ITestDeltaConnectionServer;
+        let testDeltaConnectionServer: ILocalDeltaConnectionServer;
         let documentDeltaEventManager: DocumentDeltaEventManager;
         let user1Document: api.Document;
         let user2Document: api.Document;
@@ -38,7 +38,7 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
         let root3: ISharedMap;
 
         beforeEach(async () => {
-            testDeltaConnectionServer = TestDeltaConnectionServer.create();
+            testDeltaConnectionServer = LocalDeltaConnectionServer.create();
             documentDeltaEventManager = new DocumentDeltaEventManager(testDeltaConnectionServer);
             const documentService = new TestDocumentServiceFactory(testDeltaConnectionServer);
             const resolver = new TestResolver();

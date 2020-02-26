@@ -14,7 +14,8 @@
         "sourceMap": true,
         "inlineSources": true,
         "jsx": "react",
-        "allowSyntheticDefaultImports": true
+        "allowSyntheticDefaultImports": true,
+        "types": ["node", "react", "react-dom", "jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer"]
     },
     "include": [
         "src/**/*"

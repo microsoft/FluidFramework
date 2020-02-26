@@ -4,7 +4,7 @@
  */
 
 import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
-import { TestDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
 import {
@@ -28,7 +28,7 @@ export async function createLocalContainerFactory(
 
     const urlResolver = new TestResolver(documentId);
 
-    const deltaConn = TestDeltaConnectionServer.create();
+    const deltaConn = LocalDeltaConnectionServer.create();
     const documentServiceFactory = new TestDocumentServiceFactory(deltaConn);
 
 
