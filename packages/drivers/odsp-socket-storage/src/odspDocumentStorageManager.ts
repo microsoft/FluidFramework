@@ -269,7 +269,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                 const odspCacheKey: string = `${this.documentId}/getlatest`;
                 let odspSnapshot: IOdspSnapshot = this.odspCache.get(odspCacheKey);
                 if (!odspSnapshot) {
-                    const storageToken = await this.getStorageToken(refresh, "GetVersions");
+                    const storageToken = await this.getStorageToken(refresh, "TreesLatest");
 
                     // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
                     // snapshot code path. We should leverage the fact that these deltas are returned to speed up the deltas fetch.
