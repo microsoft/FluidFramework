@@ -86,7 +86,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
 
             // Error message can container PII information.
             // If we know for sure it does, we have to not log it.
-            if ((error as any).containsPII) {
+            if (error.containsPII) {
                 event.error = "Error message was removed as it contained PII";
             } else if (error.getCustomProperties) {
                 const customProps: object = error.getCustomProperties();
