@@ -10,7 +10,7 @@ import {
     IComponentHandleContext,
     IComponentSerializer,
 } from "@microsoft/fluid-component-core-interfaces";
-import { ChildLogger, fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
+import { ChildLogger, fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
 import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from "@microsoft/fluid-protocol-definitions";
 import { IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
 import { UnassignedSequenceNumber } from "./constants";

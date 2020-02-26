@@ -11,7 +11,7 @@ import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@microsoft/fluid-comm
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
-import { ChildLogger, TelemetryLogger } from "@microsoft/fluid-core-utils";
+import { ChildLogger, TelemetryLogger } from "@microsoft/fluid-common-utils";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,

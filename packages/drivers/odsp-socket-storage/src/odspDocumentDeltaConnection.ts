@@ -5,7 +5,7 @@
 
 import * as assert from "assert";
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
-import { TelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import { TelemetryNullLogger } from "@microsoft/fluid-common-utils";
 import { DocumentDeltaConnection } from "@microsoft/fluid-driver-base";
 import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
 import {

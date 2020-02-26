@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred } from "@microsoft/fluid-core-utils";
+import { Deferred } from "@microsoft/fluid-common-utils";
 import { IConsumer, IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
 import { IRunner } from "@microsoft/fluid-server-services-utils";
 import { Provider } from "nconf";
