@@ -4,11 +4,12 @@
  */
 
 import { EventEmitter } from "events";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger, IDisposable } from "@microsoft/fluid-common-definitions";
 import { IComponent, IComponentRunnable, IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerContext, LoaderHeader } from "@microsoft/fluid-container-definitions";
-import { ChildLogger, Heap, IComparer, IHeapNode, PerformanceEvent } from "@microsoft/fluid-core-utils";
+import { ChildLogger, Heap, IComparer, IHeapNode, PerformanceEvent, PromiseTimer } from "@microsoft/fluid-common-utils";
 import { ISequencedClient } from "@microsoft/fluid-protocol-definitions";
+import { ISummarizer, Summarizer } from "./summarizer";
 
 interface ITrackedClient {
     clientId: string;
@@ -57,22 +58,28 @@ enum SummaryManagerState {
 const defaultMaxRestarts = 5;
 const defaultInitialDelayMs = 5000;
 
-export class SummaryManager extends EventEmitter {
+export class SummaryManager extends EventEmitter implements IDisposable {
     private readonly logger: ITelemetryLogger;
     private readonly quorumHeap = new QuorumHeap();
     private readonly initialDelayP: Promise<void>;
+    private readonly initialDelayTimer: PromiseTimer;
     private summarizerClientId?: string;
     private clientId?: string;
     private connected = false;
     private state = SummaryManagerState.Off;
     private runningSummarizer?: IComponentRunnable;
+    private _disposed = false;
 
     public get summarizer() {
         return this.summarizerClientId;
     }
 
+    public get disposed() {
+        return this._disposed;
+    }
+
     private get shouldSummarize() {
-        return this.connected && this.clientId === this.summarizer;
+        return this.connected && !this.disposed && this.clientId === this.summarizer;
     }
 
     constructor(
@@ -80,6 +87,8 @@ export class SummaryManager extends EventEmitter {
         private readonly summariesEnabled: boolean,
         private readonly enableWorker: boolean,
         parentLogger: ITelemetryLogger,
+        private readonly setNextSummarizer: (summarizer: Promise<Summarizer>) => void,
+        private readonly nextSummarizerP?: Promise<Summarizer>,
         private readonly maxRestarts: number = defaultMaxRestarts,
         initialDelayMs: number = defaultInitialDelayMs,
     ) {
@@ -107,7 +116,8 @@ export class SummaryManager extends EventEmitter {
             this.refreshSummarizer();
         });
 
-        this.initialDelayP = new Promise((resolve) => setTimeout(resolve, initialDelayMs));
+        this.initialDelayTimer = new PromiseTimer(initialDelayMs, () => {});
+        this.initialDelayP = this.initialDelayTimer.start().catch(() => {});
 
         this.refreshSummarizer();
     }
@@ -140,6 +150,8 @@ export class SummaryManager extends EventEmitter {
             return "parentNotConnected";
         } else if (this.clientId !== this.summarizer) {
             return "parentShouldNotSummarize";
+        } else if (this.disposed) {
+            return "disposed";
         } else {
             return undefined;
         }
@@ -215,6 +227,7 @@ export class SummaryManager extends EventEmitter {
                     this.state = SummaryManagerState.Off;
                 }
             } else if (this.shouldSummarize) {
+                this.setNextSummarizer(summarizer.setSummarizer());
                 this.run(summarizer);
             } else {
                 summarizer.stop(this.getStopReason());
@@ -250,7 +263,7 @@ export class SummaryManager extends EventEmitter {
         });
     }
 
-    private async createSummarizer(delayMs: number): Promise<IComponentRunnable | undefined> {
+    private async createSummarizer(delayMs: number): Promise<ISummarizer | undefined> {
         await Promise.all([
             this.initialDelayP,
             delayMs > 0 ? new Promise((resolve) => setTimeout(resolve, delayMs)) : Promise.resolve(),
@@ -258,6 +271,11 @@ export class SummaryManager extends EventEmitter {
 
         if (!this.shouldSummarize) {
             return undefined;
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
+        if (this.nextSummarizerP) {
+            return this.nextSummarizerP;
         }
 
         // We have been elected the summarizer. Some day we may be able to summarize with a live document but for
@@ -284,16 +302,21 @@ export class SummaryManager extends EventEmitter {
         const response = await loader.request(request);
 
         if (response.status !== 200 || response.mimeType !== "fluid/component") {
-            return Promise.reject<IComponentRunnable>("Invalid summarizer route");
+            return Promise.reject<ISummarizer>("Invalid summarizer route");
         }
 
         const rawComponent = response.value as IComponent;
-        const summarizer = rawComponent.IComponentRunnable;
+        const summarizer = rawComponent.ISummarizer;
 
         if (!summarizer) {
-            return Promise.reject<IComponentRunnable>("Component does not implement IComponentRunnable");
+            return Promise.reject<ISummarizer>("Component does not implement ISummarizer");
         }
 
         return summarizer;
+    }
+
+    public dispose() {
+        this.initialDelayTimer.clear();
+        this._disposed = true;
     }
 }

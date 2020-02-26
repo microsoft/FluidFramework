@@ -14,6 +14,7 @@ import {
     DefaultButton as Button,
     initializeIcons,
 } from "office-ui-fabric-react";
+import { ISharedDirectory } from "@microsoft/fluid-map";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -47,20 +48,35 @@ export class ComponentToolbar extends PrimedComponent implements IComponentHTMLV
         this.supportedComponentList = (registryDetails as InternalRegistry).getFromCapabilities("IComponentHTMLVisual");
     }
 
+    public changeEditState(isEditable: boolean){
+        this.root.set("isEditable", isEditable);
+    }
+
+    protected async componentInitializingFirstTime() {
+        this.root.set("isEditable", false);
+    }
+
+
     /**
      * Will return a new ComponentToolbarView
      */
     public render(div: HTMLElement) {
         ReactDOM.render(
-            <ComponentToolbarView emit={this.emit.bind(this)} supportedComponentList={this.supportedComponentList}/>,
+            <ComponentToolbarView
+                emit={this.emit.bind(this)}
+                root={this.root}
+                supportedComponentList={this.supportedComponentList}
+            />,
             div,
         );
     }
+
 }
 
 interface IComponentToolbarViewProps {
     emit: (event: string | symbol, ...args: any[]) => boolean;
     supportedComponentList: IContainerComponentDetails[];
+    root: ISharedDirectory;
 }
 
 interface IComponentToolbarViewState {
@@ -69,30 +85,33 @@ interface IComponentToolbarViewState {
 
 class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, IComponentToolbarViewState>{
 
-    private readonly emit: (event: string | symbol, ...args: any[]) => boolean;
     private readonly supportedComponentList: IContainerComponentDetails[];
 
     constructor(props: IComponentToolbarViewProps){
         super(props);
-        this.emit = props.emit;
         this.supportedComponentList = props.supportedComponentList;
         this.state = {
-            isEditable: true,
+            isEditable: props.root.get("isEditable"),
         };
+        props.root.on("valueChanged", (change, local) => {
+            if (change.key === "isEditable") {
+                this.setState({isEditable: props.root.get("isEditable")})
+            }
+        });
     }
 
     public emitAddComponentEvent(type: SupportedComponent, w?: number, h?: number) {
-        this.emit("addComponent", type, w, h);
+        this.props.emit("addComponent", type, w, h);
     }
 
     public emitSaveLayout() {
-        this.emit("saveLayout");
+        this.props.emit("saveLayout");
     }
 
     public emitToggleEditable() {
         const newIsEditable = !this.state.isEditable;
-        this.emit("toggleEditable", newIsEditable);
-        this.setState({isEditable: newIsEditable});
+        this.props.emit("toggleEditable", newIsEditable);
+        this.setState({ isEditable: newIsEditable });
     }
 
     render(){
