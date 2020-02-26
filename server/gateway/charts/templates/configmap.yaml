@@ -94,7 +94,7 @@ data:
                 "username": "{{ .Values.packageManager.username }}",
                 "password": "{{ .Values.packageManager.password }}"
             },
-            "permission": ["snapshot", "spell", "intel", "translation", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation"]
+            "permission": ["snapshot", "spell", "intel", "translation", "search", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation", "chain-search"]
         },
         "keyValue": {
             "documentUrl": "{{ .Values.gateway.keyValueUrl }}",

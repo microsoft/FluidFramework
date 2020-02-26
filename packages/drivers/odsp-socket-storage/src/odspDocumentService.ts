@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
-import { DebugLogger, PerformanceEvent, TelemetryLogger, TelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import { DebugLogger, PerformanceEvent, TelemetryLogger, TelemetryNullLogger } from "@microsoft/fluid-common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -29,6 +29,7 @@ import { OdspDocumentStorageManager } from "./odspDocumentStorageManager";
 import { OdspDocumentStorageService } from "./odspDocumentStorageService";
 import { getWithRetryForTokenRefresh, isLocalStorageAvailable } from "./odspUtils";
 import { getSocketStorageDiscovery } from "./vroom";
+import { isOdcUrl } from "./isOdc";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const performanceNow = require("performance-now") as (() => number);
@@ -146,7 +147,7 @@ export class OdspDocumentService implements IDocumentService {
         this.logger = DebugLogger.mixinDebugLogger(
             "fluid:telemetry:OdspDriver",
             logger,
-            { docId: hashedDocumentId });
+            { docId: hashedDocumentId, odc: isOdcUrl(snapshotStorageUrl) });
 
         this.getStorageToken = async (refresh: boolean, name?: string) => {
             if (refresh) {

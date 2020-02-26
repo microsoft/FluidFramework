@@ -70,8 +70,8 @@ class MyRegistry implements IComponentRegistry {
             package: name,
             config,
         };
-        return this.context.codeLoader.load<IComponentFactory>(codeDetails);
-
+        const fluidModule = await this.context.codeLoader.load(codeDetails);
+        return fluidModule.fluidExport.IComponentFactory;
     }
 }
 

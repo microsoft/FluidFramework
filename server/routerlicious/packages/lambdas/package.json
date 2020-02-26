@@ -48,7 +48,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@microsoft/fluid-core-utils": "^0.14.0",
+    "@microsoft/fluid-common-utils": "^0.14.0",
     "@microsoft/fluid-gitresources": "^0.1002.0",
     "@microsoft/fluid-protocol-base": "^0.1002.0",
     "@microsoft/fluid-protocol-definitions": "^0.1002.0",
@@ -62,8 +62,7 @@
     "moniker": "^0.1.2",
     "nconf": "^0.10.0",
     "semver": "^6.3.0",
-    "uuid": "^3.3.2",
-    "winston": "^3.1.0"
+    "uuid": "^3.3.2"
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.14.0",

@@ -9,10 +9,10 @@ import { InMemoryDb } from "./inMemorydb";
 import { LevelDb } from "./levelDb";
 
 export class DbFactory implements IDbFactory {
-    private db;
+    private readonly db;
 
     constructor(config: Provider) {
-        this.db = config.get("db:inMemory") ? new InMemoryDb() : new LevelDb(config.get("db:path")); 
+        this.db = config.get("db:inMemory") ? new InMemoryDb() : new LevelDb(config.get("db:path"));
     }
 
     public async connect(): Promise<IDb> {

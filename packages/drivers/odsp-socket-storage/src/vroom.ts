@@ -4,10 +4,11 @@
  */
 
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
-import { PerformanceEvent } from "@microsoft/fluid-core-utils";
+import { PerformanceEvent, Deferred } from "@microsoft/fluid-common-utils";
 import { ISocketStorageDiscovery } from "./contracts";
 import { OdspCache } from "./odspCache";
 import { fetchHelper, getWithRetryForTokenRefresh, throwOdspNetworkError } from "./odspUtils";
+import { isOdcOrigin } from "./isOdc";
 
 const getOrigin = (url: string) => new URL(url).origin;
 
@@ -44,6 +45,7 @@ export async function fetchJoinSession(
 
         const joinSessionEvent = PerformanceEvent.start(logger, { eventName: "JoinSession" });
         try {
+            // TODO Extract the auth header-vs-query logic out
             const siteOrigin = getOrigin(siteUrl);
             let queryParams = `app_id=${appId}&access_token=${token}${additionalParams ? `&${additionalParams}` : ""}`;
             let headers = {};
@@ -52,11 +54,17 @@ export async function fetchJoinSession(
                 headers = { Authorization: `Bearer ${token}` };
             }
 
+            let prefix = "_api/";
+            if (isOdcOrigin(siteOrigin)) {
+                prefix = "";
+            }
+
             const response = await fetchHelper(
-                `${siteOrigin}/_api/v2.1/drives/${driveId}/items/${itemId}/${path}?${queryParams}`,
+                `${siteOrigin}/${prefix}v2.1/drives/${driveId}/items/${itemId}/${path}?${queryParams}`,
                 { method, headers },
             );
 
+            // TODO SPO-specific telemetry
             joinSessionEvent.end({
                 sprequestguid: response.headers.get("sprequestguid"),
                 sprequestduration: response.headers.get("sprequestduration"),
@@ -94,30 +102,44 @@ export async function getSocketStorageDiscovery(
     // again based on the last time it was put in the cache. So if the result is valid and used within
     // an hour we put the same result again with updated time so that we keep using the same result for
     // consecutive join session calls because the server moved. If there is nothing in cache or the
-    // response was cached an hour ago, then we make the join session call again.
-    const cachedResult: IOdspJoinSessionCachedItem = odspCache.get(joinSessionKey, true);
-    if (cachedResult && Date.now() - cachedResult.timestamp <= 3600000 && cachedResult.content) {
-        odspCache.put(joinSessionKey, { content: cachedResult.content, timestamp: Date.now() });
-        return cachedResult.content;
+    // response was cached an hour ago, then we make the join session call again. Never expire the
+    // joinsession result. On error, the delta connection will invalidate it.
+    const cachedResultP: Promise<IOdspJoinSessionCachedItem> = odspCache.get(joinSessionKey);
+    if (cachedResultP !== undefined) {
+        const cachedResult = await cachedResultP;
+        if (Date.now() - cachedResult.timestamp <= 3600000 && cachedResult.content) {
+            odspCache.put(joinSessionKey, Promise.resolve({ content: cachedResult.content, timestamp: Date.now() }));
+            return cachedResult.content;
+        }
+        // Invalidating the cache because it is stale.
+        odspCache.remove(joinSessionKey);
     }
 
-    const response: ISocketStorageDiscovery = await fetchJoinSession(
-        appId,
-        driveId,
-        itemId,
-        siteUrl,
-        "opStream/joinSession",
-        "",
-        "POST",
-        logger,
-        getVroomToken,
-    );
+    const responseDeferredP = new Deferred<IOdspJoinSessionCachedItem>();
+    odspCache.put(joinSessionKey, responseDeferredP.promise);
+    let response: ISocketStorageDiscovery;
+    try {
+        response = await fetchJoinSession(
+            appId,
+            driveId,
+            itemId,
+            siteUrl,
+            "opStream/joinSession",
+            "",
+            "POST",
+            logger,
+            getVroomToken,
+        );
 
-    if (response.runtimeTenantId && !response.tenantId) {
-        response.tenantId = response.runtimeTenantId;
+        if (response.runtimeTenantId && !response.tenantId) {
+            response.tenantId = response.runtimeTenantId;
+        }
+    } catch (error) {
+        responseDeferredP.reject(error);
+        odspCache.remove(joinSessionKey);
+        throw error;
     }
-    // Never expire the joinsession result. On error, the delta connection will invalidate it.
-    odspCache.put(joinSessionKey, { content: response, timestamp: Date.now() });
+    responseDeferredP.resolve({ content: response, timestamp: Date.now() });
 
     return response;
 }
