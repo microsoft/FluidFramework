@@ -32,7 +32,6 @@ module.exports = env => {
             extensions: [".js", ".ts", ".tsx"]
         },
         devtool: "source-map",
-        watch: true,
         stats: 'minimal',
     }
 };
