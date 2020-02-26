@@ -6,11 +6,9 @@
 import { SimpleContainerRuntimeFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { IContainerContext, IRuntime } from "@microsoft/fluid-container-definitions";
 import { NamedComponentRegistryEntries } from "@microsoft/fluid-runtime-definitions";
+import { Spaces, SpacesComponentName } from "@fluid-example/spaces";
 import * as uuid from "uuid";
 import { ExternalComponentLoader, WaterParkLoaderName } from "./waterParkLoader";
-import { SpacesComponentName } from "./spaces";
-import { Spaces } from "./spaces/spaces";
-
 /**
  * This class creates two components: A loader and a view component for water park and then
  * add loader component to the view component to be rendered.
@@ -23,7 +21,7 @@ export class WaterParkModuleInstantiationFactory extends SimpleModuleInstantiati
         private readonly entries: NamedComponentRegistryEntries,
         private readonly loaderComponentName: string = WaterParkLoaderName,
         private readonly viewComponentName: string = SpacesComponentName) {
-        super(viewComponentName, entries);      
+        super(viewComponentName, entries);
     }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
@@ -37,10 +35,12 @@ export class WaterParkModuleInstantiationFactory extends SimpleModuleInstantiati
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         runtimeP.then(async (runtime) => {
             if (!runtime.existing) {
-                const loaderComponent = await SimpleContainerRuntimeFactory.createAndAttachComponent<ExternalComponentLoader>(
+                const loaderComponent = await SimpleContainerRuntimeFactory
+                    .createAndAttachComponent<ExternalComponentLoader>(
                     runtime,
                     this.loaderComponentId,
-                    this.loaderComponentName);
+                    this.loaderComponentName,
+                );
                 const viewResponse = await runtime.request({ url: SimpleContainerRuntimeFactory.defaultComponentId });
                 const viewComponent = viewResponse.value as Spaces;
                 await viewComponent.setComponentToolbar(loaderComponent.id, this.loaderComponentName);

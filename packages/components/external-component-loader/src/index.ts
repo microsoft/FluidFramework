@@ -3,9 +3,9 @@
 * Licensed under the MIT License.
 */
 
+import { SpacesComponentName, SpacesInstantiationFactory } from "@fluid-example/spaces";
 import { WaterParkLoaderInstantiationFactory, WaterParkLoaderName } from "./waterParkLoader";
 import { WaterParkModuleInstantiationFactory } from "./waterParkModuleInstantiationFactory";
-import { SpacesComponentName, SpacesInstantiationFactory } from "./spaces";
 
 export const fluidExport = new WaterParkModuleInstantiationFactory(
     new Map([

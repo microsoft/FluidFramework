@@ -156,7 +156,7 @@ export class ExternalComponentLoader extends PrimedComponent
                             // eslint-disable-next-line @typescript-eslint/await-thenable
                             component = await component.IComponentCollection.createCollectionItem();
                         }
-                        viewComponent.IComponentCollection.createCollectionItem({id, type: value})
+                        viewComponent.IComponentCollection.createCollectionItem({id, type: value});
                     } else {
                         throw new Error("View component is empty or is not an IComponentCollection!!");
                     }

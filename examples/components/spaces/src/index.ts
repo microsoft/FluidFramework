@@ -11,8 +11,11 @@ import {
     NamedComponentRegistryEntries,
     IComponentRegistry,
     IComponentFactory,
+    IContainerComponentDetails,
 } from "@microsoft/fluid-runtime-definitions";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+
+export * from "./spaces";
 
 import {
     ComponentToolbar,
@@ -31,7 +34,6 @@ import {
     FriendlyTextBoxName,
 } from "./components";
 import { Spaces } from "./spaces";
-import { IContainerComponentDetails } from "./interfaces";
 
 export const SpacesComponentName = "spaces";
 

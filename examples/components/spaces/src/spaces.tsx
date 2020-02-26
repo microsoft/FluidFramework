@@ -12,6 +12,7 @@ import {
     IComponent,
     IComponentEventable,
 } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -19,8 +20,7 @@ import * as ReactDOM from "react-dom";
 import { ISpacesDataModel, SpacesDataModel } from "./dataModel";
 
 import { SpacesGridView } from "./view";
-import { ComponentToolbar } from "./components";
-import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
+import { ComponentToolbar, ComponentToolbarName } from "./components";
 
 /**
  * Spaces is the Fluid
@@ -33,7 +33,11 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView, IComp
 
     // TODO #1188 - Component registry should automatically add ComponentToolbar
     // to the registry since it's required for the spaces component
-    private static readonly factory = new PrimedComponentFactory(Spaces, []);
+    private static readonly factory = new PrimedComponentFactory(
+        Spaces,
+        [],
+        [[ ComponentToolbarName, Promise.resolve(ComponentToolbar.getFactory()) ]]
+    );
 
     public static getFactory() {
         return Spaces.factory;

@@ -47,6 +47,7 @@
     "@fluid-example/codemirror": "^0.14.0",
     "@fluid-example/prosemirror": "^0.14.0",
     "@fluid-example/shared-text": "^0.14.0",
+    "@fluid-example/spaces": "^0.14.0",
     "@microsoft/fluid-aqueduct-react": "^0.14.0",
     "@microsoft/fluid-component-runtime": "^0.14.0",
     "@microsoft/fluid-map": "^0.14.0",
