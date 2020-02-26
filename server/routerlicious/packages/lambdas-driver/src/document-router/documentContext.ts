@@ -5,7 +5,8 @@
 
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { IContext, IQueuedMessage } from "@microsoft/fluid-server-services-core";
+import { IContext, IQueuedMessage, ILogger } from "@microsoft/fluid-server-services-core";
+import * as winston from "winston";
 
 export class DocumentContext extends EventEmitter implements IContext {
     // We track two offsets - head and tail. Head represents the largest offset related to this document we
@@ -73,6 +74,10 @@ export class DocumentContext extends EventEmitter implements IContext {
 
     public error(error: any, restart: boolean) {
         this.emit("error", error, restart);
+    }
+
+    public get log(): ILogger {
+        return winston;
     }
 
     public close() {

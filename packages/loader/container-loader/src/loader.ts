@@ -16,8 +16,10 @@ import {
     ILoader,
     IProxyLoaderFactory,
     LoaderHeader,
+    IFluidCodeDetails,
+    IExperimentalLoader,
 } from "@microsoft/fluid-container-definitions";
-import { Deferred } from "@microsoft/fluid-core-utils";
+import { Deferred } from "@microsoft/fluid-common-utils";
 import {
     IDocumentService,
     IDocumentServiceFactory,
@@ -44,7 +46,9 @@ interface IParsedUrl {
     version: string | null | undefined;
 }
 
-export class RelativeLoader extends EventEmitter implements ILoader {
+export class RelativeLoader extends EventEmitter implements ILoader, IExperimentalLoader {
+
+    public readonly isExperimentalLoader = true;
 
     // Because the loader is passed to the container during construction we need to resolve the target container
     // after construction.
@@ -81,6 +85,10 @@ export class RelativeLoader extends EventEmitter implements ILoader {
         }
 
         return this.loader.request(request);
+    }
+
+    public async experimentalCreateDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
+        throw new Error("Method not implemented.");
     }
 
     public resolveContainer(container: Container) {
@@ -147,11 +155,13 @@ export function createProtocolToFactoryMapping(
 /**
  * Manages Fluid resource loading
  */
-export class Loader extends EventEmitter implements ILoader {
+export class Loader extends EventEmitter implements ILoader, IExperimentalLoader {
 
     private readonly containers = new Map<string, Promise<Container>>();
     private readonly resolveCache = new Map<string, IResolvedUrl>();
     private readonly protocolToDocumentFactoryMap: Map<string, IDocumentServiceFactory>;
+
+    public readonly isExperimentalLoader = true;
 
     constructor(
         private readonly resolver: IUrlResolver | IUrlResolver[],
@@ -177,6 +187,10 @@ export class Loader extends EventEmitter implements ILoader {
         }
 
         this.protocolToDocumentFactoryMap = createProtocolToFactoryMapping(documentServiceFactories);
+    }
+
+    public async experimentalCreateDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
+        throw new Error("Method not implemented.");
     }
 
     public async resolve(request: IRequest): Promise<Container> {

@@ -4,6 +4,7 @@
  */
 
 export * from "./configurableUrlResolver";
+export * from "./documentStorageServiceProxy";
 export * from "./network";
 export * from "./readAndParse";
 export * from "./error";

@@ -11,7 +11,8 @@ import {
     IQuorum,
     ISequencedDocumentMessage,
 } from "@microsoft/fluid-protocol-definitions";
-import { IFluidCodeDetails } from "./chaincode";
+import { IUrlResolver } from "@microsoft/fluid-driver-definitions";
+import { IFluidCodeDetails, IFluidModule } from "./chaincode";
 import { IDeltaManager } from "./deltas";
 
 /**
@@ -21,7 +22,7 @@ export interface ICodeLoader {
     /**
      * Loads the package specified by IPackage and returns a promise to its entry point exports.
      */
-    load<T>(source: IFluidCodeDetails): Promise<T>;
+    load(source: IFluidCodeDetails): Promise<IFluidModule>;
 }
 
 /**
@@ -35,6 +36,24 @@ export interface IContainer extends EventEmitter {
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 
     getQuorum(): IQuorum;
+}
+
+export interface IExperimentalContainer {
+
+    readonly isExperimentalContainer: true;
+
+    /**
+     * Flag indicating if the given container has been attached to a host service.
+     */
+    experimentalIsAttached(): boolean;
+
+    /**
+     * Attaches the container to the provided host.
+     *
+     * TODO - in the case of failure options should give a retry policy. Or some continuation function
+     * that allows attachment to a secondary document.
+     */
+    experimentalAttach(resolver: IUrlResolver, options: any): Promise<void>;
 }
 
 export interface ILoader {
@@ -51,6 +70,17 @@ export interface ILoader {
      * a request against the server found from the resolve step.
      */
     resolve(request: IRequest): Promise<IContainer>;
+}
+
+export interface IExperimentalLoader {
+
+    isExperimentalLoader: true;
+
+    /**
+     * Creates a new contanier using the specified chaincode but in an unattached state. While unattached all
+     * updates will only be local until the user explciitly attaches the container to a service provider.
+     */
+    experimentalCreateDetachedContainer(source: IFluidCodeDetails): Promise<IContainer>;
 }
 
 export enum LoaderHeader {

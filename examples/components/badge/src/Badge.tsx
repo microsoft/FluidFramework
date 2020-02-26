@@ -4,7 +4,7 @@
  */
 
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
-import { IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
+import { IComponentReactViewable } from "@microsoft/fluid-view-adapters";
 import { SharedCell } from "@microsoft/fluid-cell";
 import {
     IComponentHandle,

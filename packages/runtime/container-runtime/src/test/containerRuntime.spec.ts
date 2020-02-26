@@ -5,7 +5,7 @@
 
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { DebugLogger } from "@microsoft/fluid-core-utils";
+import { DebugLogger } from "@microsoft/fluid-common-utils";
 import { BlobTreeEntry, TreeTreeEntry } from "@microsoft/fluid-protocol-base";
 import {
     ISummaryBlob,
@@ -20,7 +20,10 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import { IDeltaManager } from "@microsoft/fluid-container-definitions";
 import { MockDeltaManager } from "@microsoft/fluid-test-runtime-utils";
-import { IConvertedSummaryResults, SummaryTreeConverter } from "../summaryTreeConverter";
+import {
+    IConvertedSummaryResults,
+    SummaryTreeConverter,
+} from "../summaryTreeConverter";
 import { ScheduleManager } from "../containerRuntime";
 
 describe("Runtime", () => {
