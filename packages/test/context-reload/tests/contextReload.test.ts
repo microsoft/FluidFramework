@@ -45,6 +45,8 @@ describe("context reload", () => {
         }
       }, cdn);
 
+      expect(await (await cdn.getProperty("value")).jsonValue()).toBe("");
+
 /*
       await page.$eval("#sbs-left", (el) => {
         const cdn = el.querySelector("input.cdn");
@@ -55,6 +57,8 @@ describe("context reload", () => {
 
       // const input = await leftDiv.$(".cdn");
       await cdn.type(`${globals.PATH}/file`, { delay: 1 });
+      expect(await (await cdn.getProperty("value")).jsonValue()).toBe(`${globals.PATH}/file`);
+      console.log(await (await cdn.getProperty("value")).jsonValue());
 
       await page.waitForSelector("button.upgrade");
       const upgrade = await leftDiv.$("button.upgrade");
