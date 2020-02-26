@@ -23,6 +23,7 @@ import {
     IDeltaSender,
     ILoader,
     IRuntime,
+    IRuntimeState,
     IExperimentalRuntime,
 } from "@microsoft/fluid-container-definitions";
 import {
@@ -87,10 +88,20 @@ import { SummaryManager } from "./summaryManager";
 import { ISummaryStats, SummaryTreeConverter } from "./summaryTreeConverter";
 import { analyzeTasks } from "./taskAnalyzer";
 import { DeltaScheduler } from "./deltaScheduler";
+import { SummaryCollection } from "./summaryCollection";
 
 interface ISummaryTreeWithStats {
     summaryStats: ISummaryStats;
     summaryTree: ISummaryTree;
+}
+
+export interface IPreviousState {
+    summaryCollection?: SummaryCollection,
+
+    // only one (or zero) of these will be defined. the summarizing Summarizer will resolve the deferred promise, and
+    // the SummaryManager that spawned it will have that deferred's promise
+    nextSummarizerP?: Promise<Summarizer>,
+    nextSummarizerD?: Deferred<Summarizer>,
 }
 
 export interface IGeneratedSummaryData {
@@ -372,7 +383,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     ): Promise<ContainerRuntime> {
         const componentRegistry = new ContainerRuntimeComponentRegistry(registryEntries);
 
-        const chunkId = context.baseSnapshot.blobs[".chunks"];
+        const chunkId = context.baseSnapshot?.blobs[".chunks"];
         const chunks = chunkId
             ? await readAndParse<[string, string[]][]>(context.storage, chunkId)
             : [];
@@ -472,11 +483,15 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.registry;
     }
 
+    public nextSummarizerP?: Promise<Summarizer>;
+    public nextSummarizerD?: Deferred<Summarizer>;
+
     public readonly IComponentSerializer: IComponentSerializer = new ComponentSerializer();
 
     public readonly IComponentHandleContext: IComponentHandleContext;
 
     public readonly logger: ITelemetryLogger;
+    public readonly previousState: IPreviousState;
     private readonly summaryManager: SummaryManager;
     private readonly summaryTreeConverter = new SummaryTreeConverter();
     private latestSummaryAck: ISummaryContext;
@@ -557,7 +572,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         );
 
         // Extract components stored inside the snapshot
-        this.loadedFromSummary = context.baseSnapshot.trees[".protocol"] ? true : false;
+        this.loadedFromSummary = context.baseSnapshot?.trees[".protocol"] ? true : false;
         const components = new Map<string, ISnapshotTree | string>();
         if (this.loadedFromSummary) {
             Object.keys(context.baseSnapshot.trees).forEach((value) => {
@@ -566,7 +581,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     components.set(value, tree);
                 }
             });
-        } else {
+        } else if (context.baseSnapshot) {
             Object.keys(context.baseSnapshot.commits).forEach((key) => {
                 const moduleId = context.baseSnapshot.commits[key];
                 components.set(key, moduleId);
@@ -614,6 +629,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.clearPartialChunks(clientId);
         });
 
+        this.previousState = this.context.previousRuntimeState.state as IPreviousState ?? {};
+
         // We always create the summarizer in the case that we are asked to generate summaries. But this may
         // want to be on demand instead.
         // Don't use optimizations when generating summaries with a document loaded using snapshots.
@@ -623,14 +640,18 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this,
             () => this.summaryConfiguration,
             async (safe: boolean) => this.generateSummary(!this.loadedFromSummary, safe),
-            async (summContext, refSeq) => this.refreshLatestSummaryAck(summContext, refSeq));
+            async (summContext, refSeq) => this.refreshLatestSummaryAck(summContext, refSeq),
+            this.previousState.summaryCollection);
 
         // Create the SummaryManager and mark the initial state
         this.summaryManager = new SummaryManager(
             context,
             this.runtimeOptions.generateSummaries !== false || this.loadedFromSummary,
             this.runtimeOptions.enableWorker,
-            this.logger);
+            this.logger,
+            (summarizer) => { this.nextSummarizerP = summarizer; },
+            this.previousState.nextSummarizerP);
+
         if (this.context.connectionState === ConnectionState.Connected) {
             this.summaryManager.setConnected(this.context.clientId);
         }
@@ -700,9 +721,18 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.context.requestSnapshot(tagMessage);
     }
 
-    public async stop(): Promise<void> {
+    public async stop(): Promise<IRuntimeState> {
         this.verifyNotClosed();
+        const snapshot = await this.snapshot("", false);
+        this.summaryManager.dispose();
+        this.summarizer.dispose();
         this.closed = true;
+        const state: IPreviousState = {
+            summaryCollection: this.summarizer.summaryCollection,
+            nextSummarizerP: this.nextSummarizerP,
+            nextSummarizerD: this.nextSummarizerD,
+        };
+        return { snapshot, state };
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string, version: string) {
