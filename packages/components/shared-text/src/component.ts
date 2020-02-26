@@ -168,8 +168,8 @@ export class SharedTextRunner
 
         await this.rootView.wait("flowContainerMap");
 
-        this.sharedString = await this.rootView.get<IComponentHandle>("text").get<SharedString>();
-        this.insightsMap = await this.rootView.get<IComponentHandle>("insights").get<ISharedMap>();
+        this.sharedString = await this.rootView.get<IComponentHandle<SharedString>>("text").get();
+        this.insightsMap = await this.rootView.get<IComponentHandle<ISharedMap>>("insights").get();
         debug(`Shared string ready - ${performanceNow()}`);
         debug(`id is ${this.runtime.id}`);
         debug(`Partial load fired: ${performanceNow()}`);
@@ -217,9 +217,9 @@ export class SharedTextRunner
             url.resolve(document.baseURI, "/public/images/bindy.svg"));
 
         const overlayMap = await this.rootView
-            .get<IComponentHandle>("flowContainerMap")
-            .get<ISharedMap>();
-        const overlayInkMap = await overlayMap.get<IComponentHandle>("overlayInk").get<ISharedMap>();
+            .get<IComponentHandle<ISharedMap>>("flowContainerMap")
+            .get();
+        const overlayInkMap = await overlayMap.get<IComponentHandle<ISharedMap>>("overlayInk").get();
 
         const containerDiv = document.createElement("div");
         containerDiv.id = "flow-container";

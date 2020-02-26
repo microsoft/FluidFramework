@@ -35,7 +35,7 @@ export function TextListView(props: ITextListViewProps) {
             const addedItems = newIds.filter((x) => !currentIds.includes(x));
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             addedItems.forEach(async (id) => {
-                const sharedStringP = props.textDirectory.get<IComponentHandle>(id).get<SharedString>();
+                const sharedStringP = props.textDirectory.get<IComponentHandle<SharedString>>(id).get();
                 sharedStringsP.push(sharedStringP);
                 sharedStringList.push({
                     id,

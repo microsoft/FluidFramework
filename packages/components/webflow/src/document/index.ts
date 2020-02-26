@@ -471,8 +471,8 @@ export class FlowDocument extends PrimedComponent {
     }
 
     protected async componentHasInitialized() {
-        const handle = await this.root.wait<IComponentHandle>("text");
-        this.maybeSharedString = await handle.get<SharedString>();
+        const handle = await this.root.wait<IComponentHandle<SharedString>>("text");
+        this.maybeSharedString = await handle.get();
     }
 
     private getOppositeMarker(marker: Marker, oldPrefixLength: number, newPrefix: string) {

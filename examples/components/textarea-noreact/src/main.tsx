@@ -156,8 +156,8 @@ export class TextareaNoReact extends PrimedComponent implements IComponentHTMLVi
         // lightly edited from `collaborativeTextArea.tsx` from `aqueduct` to use
         // these sources instead of React.
         const newText =
-            (await this.root.get<IComponentHandle>(this.textareaRootKey)
-                .get<SharedString>())
+            (await this.root.get<IComponentHandle<SharedString>>(this.textareaRootKey)
+                .get())
                 .getText();
 
         // We only need to insert if the text changed.
@@ -252,8 +252,8 @@ export class TextareaNoReact extends PrimedComponent implements IComponentHTMLVi
         // these sources instead of React.
         const evctAsHTML = (ev.currentTarget as HTMLTextAreaElement);
         const textareaString =
-            await this.root.get<IComponentHandle>(this.textareaRootKey)
-                .get<SharedString>();
+            await this.root.get<IComponentHandle<SharedString>>(this.textareaRootKey)
+                .get();
 
         // We need to set the value here to keep the input responsive to the user
         const newText = evctAsHTML.value;
@@ -321,8 +321,8 @@ export class TextareaNoReact extends PrimedComponent implements IComponentHTMLVi
         // called once - it is not called for every view, so there would be no way
         // to inform another client to update on a new change.
         const textareaString =
-            await this.root.get<IComponentHandle>(this.textareaRootKey)
-                .get<SharedString>();
+            await this.root.get<IComponentHandle<SharedString>>(this.textareaRootKey)
+                .get();
 
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         textareaString.on("sequenceDelta", this.handleIncomingChange);
