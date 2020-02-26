@@ -4,23 +4,17 @@
  */
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IResolvedUrl, IUrlResolver, IFluidResolvedUrl, OpenMode } from "@microsoft/fluid-driver-definitions";
-import { InnerDocumentServiceFactory } from ".";
+import { IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 
 /**
  * A UrlResolver that returns a fixed url
  */
 export class InnerUrlResolver implements IUrlResolver {
-    public static resolvedUrl: IFluidResolvedUrl = {
-        type: "fluid",
-        endpoints: {},
-        tokens: {},
-        url: `${InnerDocumentServiceFactory.protocolName}//nowhere.fluid/tenantid/documentid`,
-        openMode: OpenMode.OpenExisting,
-    };
 
+    constructor(private readonly resolved: IResolvedUrl) {
+    }
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
-        return Promise.resolve(InnerUrlResolver.resolvedUrl);
+        return Promise.resolve(this.resolved);
     }
 }

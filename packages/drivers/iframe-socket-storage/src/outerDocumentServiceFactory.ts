@@ -41,6 +41,7 @@ const socketIOEvents = [
 ];
 
 export interface IDocumentServiceFactoryProxy {
+
     clients: {
         [clientId: string]: {
             clientId: string;
@@ -49,7 +50,7 @@ export interface IDocumentServiceFactoryProxy {
             storage: IDocumentStorageService;
         };
     };
-
+    getFluidUrl(): Promise<IFluidResolvedUrl>;
     createDocumentService(): Promise<string>;
     connected(): Promise<void>;
 }
@@ -66,7 +67,6 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
             storage: IDocumentStorageService;
         },
     };
-
     private readonly driverProtocolMappings: DocumentServiceFactoryProtocolMatcher;
 
     constructor(
@@ -115,6 +115,16 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
         return;
     }
 
+    public async getFluidUrl(): Promise<IFluidResolvedUrl> {
+        return Promise.resolve<IFluidResolvedUrl>({
+            endpoints: {},
+            tokens: {},
+            type: "fluid",
+            url: this.resolvedUrl.url,
+            openMode: this.resolvedUrl.openMode,
+        });
+    }
+
 
     private createProxy(frame: HTMLIFrameElement) {
 
@@ -122,11 +132,12 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const iframeContentWindow = frame.contentWindow!;
 
-        const proxy = {
+        const proxy: IDocumentServiceFactoryProxy = {
             connected: async () => this.connected(),
             clients: this.clients,
             // Continue investigation of scope after feature check in
             createDocumentService: async () => this.createDocumentService(),
+            getFluidUrl: async () => this.getFluidUrl(),
         };
 
         iframeContentWindow.window.postMessage("EndpointExposed", "*");

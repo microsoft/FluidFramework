@@ -6,10 +6,13 @@
 import {
     IDocumentService,
     IDocumentServiceFactory,
+    IUrlResolver,
+    IFluidResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
 import * as Comlink from "comlink";
 import { InnerDocumentService } from "./innerDocumentService";
 import { IDocumentServiceFactoryProxy } from "./outerDocumentServiceFactory";
+import { InnerUrlResolver } from "./innerUrlResolver";
 
 /**
  * Connects to the outerDocumentService factory across the iframe boundary
@@ -50,13 +53,17 @@ export class InnerDocumentServiceFactory implements IDocumentServiceFactory {
         // Remove eventListener if the create returns, the trigger was sent before inner was created
         // Leaving the eventListener will eat events.
         window.removeEventListener("message", evtListener);
-        return new InnerDocumentServiceFactory(rtnProxy);
+        const url = await rtnProxy.getFluidUrl();
+        return new InnerDocumentServiceFactory(rtnProxy, url);
     }
 
     public static readonly protocolName = "fluid:";
     public readonly protocolName = InnerDocumentServiceFactory.protocolName;
-
-    private constructor(private readonly outerProxy: Comlink.Remote<IDocumentServiceFactoryProxy>){
+    public readonly urlResolver: IUrlResolver;
+    private constructor(
+        private readonly outerProxy: Comlink.Remote<IDocumentServiceFactoryProxy>,
+        public readonly resolvedUrl: IFluidResolvedUrl) {
+        this.urlResolver = new InnerUrlResolver(resolvedUrl);
     }
 
     public async createDocumentService(): Promise<IDocumentService> {

@@ -13,6 +13,7 @@ import {
     IContainerContext,
     IRuntime,
     IRuntimeFactory,
+    IRuntimeState,
 } from "@microsoft/fluid-container-definitions";
 import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 
@@ -28,7 +29,8 @@ class ProxyRuntime implements IRuntime{
     }
     async changeConnectionState(value: ConnectionState, clientId: string, version?: string | undefined) {
     }
-    async stop(): Promise<void> {
+    async stop(): Promise<IRuntimeState> {
+        throw new Error("Method not implemented.");
     }
     async process(message: ISequencedDocumentMessage, local: boolean, context: any) {
     }

@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { InnerDocumentServiceFactory, InnerUrlResolver } from "@microsoft/fluid-iframe-driver";
+import { InnerDocumentServiceFactory } from "@microsoft/fluid-iframe-driver";
 import { BaseHost } from "@microsoft/fluid-base-host";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 export async function runInner(divId: string){
@@ -22,12 +22,12 @@ export async function runInner(divId: string){
     const baseHost = new BaseHost(
         {
             documentServiceFactory,
-            urlResolver: new InnerUrlResolver(),
+            urlResolver: documentServiceFactory.urlResolver,
             config: {},
         },
-        InnerUrlResolver.resolvedUrl,
+        documentServiceFactory.resolvedUrl,
         undefined,
         []);
 
-    await baseHost.loadAndRender(InnerUrlResolver.resolvedUrl.url, div, pkg);
+    await baseHost.loadAndRender(documentServiceFactory.resolvedUrl.url, div, pkg);
 }
