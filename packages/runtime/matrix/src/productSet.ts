@@ -251,8 +251,6 @@ function compareSubspace<T>(
     return cmp;
 }
 
-
-
 const tryUnionSubspaces = (() => {
     const cache: { left?: unknown, right?: unknown, res?: unknown } = {};
     return <T>(
@@ -424,23 +422,29 @@ function splitBox<T>(productOperations: ProductOperations<T>, [box, probabilitie
 function restrictByBounds<T>(
     productOperations: ProductOperations<T>,
     set: UntypedProductSet<T>,
-    bounds: UntypedProduct<T> | Empty,
-): UntypedProductSet<T> {
-    if (bounds === empty || set === empty) {return empty;}
-    if (set === dense) {return subspace(bounds);}
-    const cmp = compareSubspace(productOperations, set.bounds, bounds);
-    if (cmp !== undefined && cmp <= 0) {return set;}
-    const newBounds = unsafe.combineProduct(productOperations, set.bounds, bounds, intersectUntyped);
-    if (newBounds === empty) {return empty;}
+    leftBounds: UntypedProduct<T>,
+    rightBounds: UntypedProduct<T>,
+): Pair<UntypedProductSet<T>> {
+    if (set === empty) { return [empty, empty]; }
+    if (set === dense) { return [subspace(leftBounds), subspace(rightBounds)]; }
+    const cmp = compareSubspace(productOperations, set.bounds, leftBounds);
+
+    // the set is fully contained in the left half, i.e. we know the pair.
+    if (cmp !== undefined && cmp <= 0) { return [set, empty]; }
+
+    const newLeftBounds = unsafe.combineProduct(productOperations, set.bounds, leftBounds, intersectUntyped);
+
+    // if we know, that the left set is completely empty, then the whole set is in the right bounds.
+    if (newLeftBounds === empty) { return [empty, set]; }
+
+    const newRightBounds = unsafe.combineProduct(productOperations, set.bounds, rightBounds, intersectUntyped);
     if (set.isSubspace) {
-        return subspace(newBounds);
+        return [subspace(newLeftBounds), newRightBounds === empty ? empty : subspace(newRightBounds)];
     }
 
-    return combineChildren(
-        productOperations,
-        restrictByBounds(productOperations, set.left, bounds),
-        restrictByBounds(productOperations, set.right, bounds),
-    );
+    const [ll, lr] = restrictByBounds(productOperations, set.left, leftBounds, rightBounds);
+    const [rl, rr] = restrictByBounds(productOperations, set.right, leftBounds, rightBounds);
+    return [combineChildren(productOperations, ll, rl), combineChildren(productOperations, lr, rr)];
 }
 
 const splitByBox = <T>(
@@ -448,8 +452,9 @@ const splitByBox = <T>(
     set: UntypedProductSet<T>,
     [leftBounds]: Box<T>,
     [rightBounds]: Box<T>,
-): Pair<UntypedProductSet<T>, UntypedProductSet<T>> =>
-    [restrictByBounds(productOperations, set, leftBounds), restrictByBounds(productOperations, set, rightBounds)];
+): Pair<UntypedProductSet<T>, UntypedProductSet<T>> => {
+    return restrictByBounds(productOperations, set, leftBounds, rightBounds);
+};
 
 function recurse<T>(
     productOperations: ProductOperations<T>,
