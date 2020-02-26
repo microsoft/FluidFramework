@@ -83,7 +83,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
 
             event.stack = errorAsObject.stack;
             event.error = errorAsObject.message;
-            
+
             // Error message can container PII information.
             // If we know for sure it does, we have to not log it.
             if ((error as any).containsPII) {
