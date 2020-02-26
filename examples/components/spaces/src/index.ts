@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { SimpleModuleInstantiationFactory, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
 import {
     IProvideComponentFactory,
     NamedComponentRegistryEntries,
     IComponentRegistry,
-    IComponentFactory,
     IContainerComponentDetails,
 } from "@microsoft/fluid-runtime-definitions";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 
 export * from "./spaces";
+export * from "./components";
 
 import {
     ComponentToolbar,
@@ -57,16 +57,11 @@ export class InternalRegistry implements IComponentRegistry {
 
         return undefined;
     }
-    
+
     public getFromCapabilities(type: keyof IComponent): IContainerComponentDetails[] {
         return this.containerComponentArray.filter((componentDetails) => componentDetails.capabilities.includes(type));
     }
 }
-
-export const SpacesInstantiationFactory: IComponentFactory = new PrimedComponentFactory(
-    Spaces,
-    [],
-);
 
 const generateFactory = () => {
     const containerComponentsDefinition: IContainerComponentDetails[] = [

@@ -14,9 +14,9 @@ import { Layout } from "react-grid-layout";
 export interface ISpacesDataModel extends EventEmitter {
     componentList: Map<string, Layout>;
     addComponent<T>(type: string, w?: number, h?: number, id?: string): Promise<T>;
-    setComponentToolbar(id: string, type: string): IComponent;
+    setComponentToolbar(id: string, type: string): Promise<IComponent>;
     setComponent(id: string, type: string, url: string): IComponent;
-    getComponentToolbar(): IComponent;
+    getComponentToolbar(): Promise<IComponent>;
     getComponent<T>(id: string): Promise<T>;
     removeComponent(id: string): void;
     updateGridItem(id: string, newLayout: Layout): void;
@@ -77,23 +77,25 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
         return response;
     }
 
-    public setComponentToolbar(
+    public async setComponentToolbar(
         id: string,
-        type: string): IComponent {
-        this.componentToolbarId = id;
-        return this.setComponent(id, type);
+        type: string): Promise<IComponent> {
+        return this.removeComponent(this.componentToolbarId).then(async () => {
+            this.componentToolbarId = id;
+            return await this.setComponent(id, type);
+        });
     }
 
-    
-    public getComponentToolbar(): IComponent {
-        const component = this.getComponent(this.componentToolbarId);
+    public async getComponentToolbar(): Promise<IComponent> {
+        const component = await this.getComponent(this.componentToolbarId);
         return component as IComponent;
     }
 
+    // TODO: Fix promise typing here
     public setComponent(id: string, type: string): IComponent {
         const defaultModel: ISpacesModel = {
             type,
-            layout: { x: 0, y: 0, w: 6, h: 2 }
+            layout: { x: 0, y: 0, w: 6, h: 2 },
         };
         const component = this.getComponent(id);
         if (component) {
@@ -102,7 +104,6 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
         } else {
             throw new Error(`Runtime does not contain component with id: ${id}`);
         }
-        
     }
 
     public async addComponent<T>(type: string, w: number = 1, h: number = 1, id?: string): Promise<T> {

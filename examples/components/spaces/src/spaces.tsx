@@ -10,7 +10,6 @@ import {
 import {
     IComponentHTMLView,
     IComponent,
-    IComponentEventable,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
 
@@ -27,16 +26,16 @@ import { ComponentToolbar, ComponentToolbarName } from "./components";
  */
 export class Spaces extends PrimedComponent implements IComponentHTMLView, IComponentCollection {
     private dataModelInternal: ISpacesDataModel | undefined;
-    private componentToolbar: ComponentToolbar | undefined;
-    private componentToolbarId = "spaces-component-toolbar";
-    private isEditable = true;
+    private componentToolbar: IComponent | undefined;
+    private static readonly defaultComponentToolbarId = "spaces-component-toolbar";
+    private componentToolbarId = Spaces.defaultComponentToolbarId;
 
     // TODO #1188 - Component registry should automatically add ComponentToolbar
     // to the registry since it's required for the spaces component
     private static readonly factory = new PrimedComponentFactory(
         Spaces,
         [],
-        [[ ComponentToolbarName, Promise.resolve(ComponentToolbar.getFactory()) ]]
+        [[ ComponentToolbarName, Promise.resolve(ComponentToolbar.getFactory()) ]],
     );
 
     public static getFactory() {
@@ -47,7 +46,6 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView, IComp
         if (!this.dataModelInternal) {
             throw new Error("The Spaces DataModel was not properly initialized.");
         }
-
         return this.dataModelInternal;
     }
 
@@ -58,7 +56,9 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView, IComp
     public createCollectionItem<T>(options: T): IComponent{
         // eslint-disable-next-line dot-notation
         const id: string = options["id"];
+        // eslint-disable-next-line dot-notation
         const type: string = options["type"];
+        // eslint-disable-next-line dot-notation
         const url: string = options["url"];
         return this.dataModel.setComponent(id, type, url);
     }
@@ -74,6 +74,15 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView, IComp
     protected async componentInitializingFirstTime(props?: any) {
         this.root.createSubDirectory("component-list");
         await this.initializeDataModel();
+        this.root.set("componentToolbarId", this.componentToolbarId);
+        this.componentToolbar =
+            await this.dataModel.addComponent<ComponentToolbar>(
+                ComponentToolbarName,
+                4,
+                4,
+                Spaces.defaultComponentToolbarId,
+            );
+        (this.componentToolbar as ComponentToolbar).changeEditState(false);
         // Set the saved template if there is a template query param
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has("template")) {
@@ -81,27 +90,40 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView, IComp
         }
     }
 
+    protected async componentInitializingFromExisting() {
+        await this.initializeDataModel();
+        const isEditable = this.dataModel.componentList.size - 1 !== 0;
+        this.componentToolbar = await this.dataModel.getComponentToolbar();
+        if (this.root.get("componentToolbarId") === Spaces.defaultComponentToolbarId) {
+            (this.componentToolbar as ComponentToolbar).changeEditState(isEditable);
+        }
+    }
+
     public async setComponentToolbar(id: string, type: string) {
         this.componentToolbarId = id;
         const componentToolbar = await this.dataModel.setComponentToolbar(id, type);
+        this.componentToolbar = componentToolbar;
         this.root.set("componentToolbarId", id);
-        this.addToolbarListeners(componentToolbar);
+        this.addToolbarListeners();
     }
 
-    protected async componentInitializingFromExisting() {
-        await this.initializeDataModel();
-        const componentToolbar = await this.dataModel.getComponentToolbar();
-        this.addToolbarListeners(componentToolbar);
-        this.isEditable = this.dataModel.componentList.size !>= 1;
-        this.dataModel.emit("editableUpdated", this.isEditable);
+    protected async componentHasInitialized() {
+        this.addToolbarListeners();
     }
 
 
-    private addToolbarListeners(componentToolbar: IComponent) {
-        if (componentToolbar.IComponentEventable) {
-            (componentToolbar as IComponentEventable).addListener("toggleEditable", () => {
-                this.isEditable = !this.isEditable;
-                this.dataModel.emit("editableUpdated", this.isEditable);
+    private addToolbarListeners() {
+        if (this.componentToolbar && this.componentToolbar.IComponentEventable) {
+            const eventableComponentToolbar = this.componentToolbar.IComponentEventable;
+            eventableComponentToolbar.addListener("addComponent", (type: string, w?: number, h?: number) => {
+                /* eslint-disable-next-line @typescript-eslint/no-floating-promises */
+                this.dataModel.addComponent(type, w, h);
+            });
+            eventableComponentToolbar.addListener("saveLayout", () => {
+                this.dataModel.saveLayout();
+            });
+            eventableComponentToolbar.addListener("toggleEditable", (isEditable?: boolean) => {
+                this.dataModel.emit("editableUpdated", isEditable);
             });
         }
     }
@@ -112,23 +134,8 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView, IComp
                 this.root,
                 this.createAndAttachComponent.bind(this),
                 this.getComponent.bind(this),
-                this.root.get("componentToolbarId") || this.componentToolbarId
+                this.root.get("componentToolbarId") || this.componentToolbarId,
             );
-    }
-
-    protected async componentHasInitialized() {
-        if (this.componentToolbar) {
-            this.componentToolbar.addListener("addComponent", (type: string, w?: number, h?: number) => {
-                /* eslint-disable-next-line @typescript-eslint/no-floating-promises */
-                this.dataModel.addComponent(type, w, h);
-            });
-            this.componentToolbar.addListener("saveLayout", () => {
-                this.dataModel.saveLayout();
-            });
-            this.componentToolbar.addListener("toggleEditable", (isEditable: boolean) => {
-                this.dataModel.emit("editableUpdated", isEditable);
-            });
-        }
     }
 
     /**
@@ -136,8 +143,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView, IComp
      */
     public render(div: HTMLElement) {
         ReactDOM.render(
-            <div><SpacesGridView dataModel={this.dataModel}/></div>
-            ,
+            <div><SpacesGridView dataModel={this.dataModel}/></div>,
             div);
     }
 }

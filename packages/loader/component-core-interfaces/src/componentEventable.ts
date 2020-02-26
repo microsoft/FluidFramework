@@ -10,10 +10,8 @@ export interface IProvideComponentEventable {
 }
 
 /**
- * An IComponentHTMLView is a renderable component, which may or may not also be its own model.
- * If it is its own model, it is a "thick" view, otherwise it is a "thin" view.
+ * An IComponentEventable is a component that can emit and listen to events.
  */
-export interface IComponentEventable extends EventEmitter {
-    sendModifyEvent<T>(eventName: string, args: T)
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface IComponentEventable extends EventEmitter { }
 
