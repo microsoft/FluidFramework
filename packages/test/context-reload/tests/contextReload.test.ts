@@ -38,7 +38,7 @@ describe("context reload", () => {
       });
       const input = await page.$(".cdn");
       if (input) {
-        await input.type(`${globals.PATH}/file`);
+        await input.type(`${globals.PATH}/file`, { delay: 10 });
       } else {
         throw Error("couldn't input cdn");
       }
