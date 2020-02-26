@@ -12,10 +12,10 @@ import {
     IDirectoryValueChanged,
 } from "@microsoft/fluid-map";
 import {
-    ISequencedDocumentMessage
+    ISequencedDocumentMessage,
 } from "@microsoft/fluid-protocol-definitions";
 import {
-    IComponentRegistryDetails
+    IComponentRegistryDetails,
 } from "@microsoft/fluid-runtime-definitions";
 
 import uuid from "uuid/v4";
