@@ -22,7 +22,7 @@ export class VersionTest extends PrimedComponent implements IComponentHTMLView {
   public get IComponentHTMLView() { return this; }
   private upgradeToPkg: string = "@fluid-example/version-test-2";
   private upgradeToVersion: string = "0.2.x";
-  private cdn: string = "http://localhost:8087/file";
+  private cdn: string = "http://localhost:8080/file";
 
   protected async componentInitializingFirstTime() {
     this.root.set("title", "version 1");

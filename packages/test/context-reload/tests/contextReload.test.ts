@@ -16,6 +16,7 @@ describe("context reload", () => {
     });
 
     it("has a dice roller on the new version", async () => {
+      // jest.setTimeout(20 * 1000);
       const getValue = async (index: number) => {
         return page.evaluate((i: number) => {
             const diceElements = document.getElementsByClassName("dicevalue");
@@ -27,24 +28,39 @@ describe("context reload", () => {
             return "";
         }, index);
       };
-/*
-      await page.waitForSelector(".cdn");
-      await page.$eval(".cdn", (el) => {
+
+      const leftDiv = await page.waitForSelector("#sbs-left");
+      if (!leftDiv) {
+        throw Error("no left div");
+      }
+
+      await page.waitForSelector("input.cdn");
+      const cdn = await leftDiv.$(".cdn");
+      if (!cdn) {
+        throw Error("no cdn");
+      }
+      await page.evaluate((el) => {
         if (el && el instanceof HTMLInputElement) {
           el.value = "";
-        } else {
-          throw Error("couldn't clear cdn");
         }
-      });
-      const input = await page.$(".cdn");
-      if (input) {
-        await input.type(`${globals.PATH}/file`, { delay: 10 });
-      } else {
-        throw Error("couldn't input cdn");
-      } */
+      }, cdn);
+
+/*
+      await page.$eval("#sbs-left", (el) => {
+        const cdn = el.querySelector("input.cdn");
+        if (cdn && cdn instanceof HTMLInputElement) {
+          cdn.value = "";
+        }
+      }); */
+
+      // const input = await leftDiv.$(".cdn");
+      await cdn.type(`${globals.PATH}/file`, { delay: 1 });
 
       await page.waitForSelector("button.upgrade");
-      await expect(page).toClick("button.upgrade", { text: "Upgrade Version" });
+      const upgrade = await leftDiv.$("button.upgrade");
+      upgrade && await upgrade.click();
+      // await expect(page).toClick("button.upgrade", { text: "Upgrade Version" });
+
       await page.waitForSelector("button.diceroller");
       await expect(page).toClick("button.diceroller", { text: "Roll" });
 
