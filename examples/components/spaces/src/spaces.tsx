@@ -12,6 +12,7 @@ import {
     IComponent,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
+import { SharedObjectSequence } from "@microsoft/fluid-sequence";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -29,12 +30,15 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView, IComp
     private componentToolbar: IComponent | undefined;
     private static readonly defaultComponentToolbarId = "spaces-component-toolbar";
     private componentToolbarId = Spaces.defaultComponentToolbarId;
+    private readonly sequence: SharedObjectSequence<string>;
 
     // TODO #1188 - Component registry should automatically add ComponentToolbar
     // to the registry since it's required for the spaces component
     private static readonly factory = new PrimedComponentFactory(
         Spaces,
-        [],
+        [
+            SharedObjectSequence.getFactory(),
+        ],
         [[ ComponentToolbarName, Promise.resolve(ComponentToolbar.getFactory()) ]],
     );
 
@@ -99,9 +103,9 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView, IComp
         }
     }
 
-    public async setComponentToolbar(id: string, type: string) {
+    public async setComponentToolbar(id: string, type: string, url: string) {
         this.componentToolbarId = id;
-        const componentToolbar = await this.dataModel.setComponentToolbar(id, type);
+        const componentToolbar = await this.dataModel.setComponentToolbar(id, type, url);
         this.componentToolbar = componentToolbar;
         this.root.set("componentToolbarId", id);
         this.addToolbarListeners();
@@ -135,6 +139,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView, IComp
                 this.createAndAttachComponent.bind(this),
                 this.getComponent.bind(this),
                 this.root.get("componentToolbarId") || this.componentToolbarId,
+                this.sequence,
             );
     }
 

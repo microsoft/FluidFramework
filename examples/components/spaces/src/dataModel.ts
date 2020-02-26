@@ -9,12 +9,13 @@ import {
     IComponent,
 } from "@microsoft/fluid-component-core-interfaces";
 import { Layout } from "react-grid-layout";
+import { SharedObjectSequence } from "@microsoft/fluid-sequence";
 
 
 export interface ISpacesDataModel extends EventEmitter {
     componentList: Map<string, Layout>;
     addComponent<T>(type: string, w?: number, h?: number, id?: string): Promise<T>;
-    setComponentToolbar(id: string, type: string): Promise<IComponent>;
+    setComponentToolbar(id: string, type: string, url: string): Promise<IComponent>;
     setComponent(id: string, type: string, url: string): IComponent;
     getComponentToolbar(): Promise<IComponent>;
     getComponent<T>(id: string): Promise<T>;
@@ -38,11 +39,13 @@ export interface IComponentType {
 export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
     private readonly componentSubDirectory: IDirectory;
 
+
     constructor(
         private readonly root: ISharedDirectory,
         private readonly createAndAttachComponent: <T>(id: string, pkg: string, props?: any) => Promise<T>,
         public getComponent: <T>(id: string) => Promise<T>,
         public componentToolbarId: string,
+        private readonly sequence: SharedObjectSequence<string>,
     ) {
         super();
 
@@ -79,10 +82,21 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
 
     public async setComponentToolbar(
         id: string,
-        type: string): Promise<IComponent> {
+        type: string,
+        url: string): Promise<IComponent> {
         return this.removeComponent(this.componentToolbarId).then(async () => {
             this.componentToolbarId = id;
-            return await this.setComponent(id, type);
+            const component = await this.getComponent(id);
+            const defaultModel: ISpacesModel = {
+                type,
+                layout: { x: 0, y: 0, w: 6, h: 2 },
+            };
+            if (component) {
+                this.componentSubDirectory.set(id, defaultModel);
+                return component as IComponent;
+            } else {
+                throw new Error(`Runtime does not contain component with id: ${id}`);
+            }
         });
     }
 
@@ -91,12 +105,32 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
         return component as IComponent;
     }
 
-    // TODO: Fix promise typing here
-    public setComponent(id: string, type: string): IComponent {
+    public setComponent(id: string, type: string, url: string): IComponent {
         const defaultModel: ISpacesModel = {
             type,
             layout: { x: 0, y: 0, w: 6, h: 2 },
         };
+        // TODO: Figure out how to use loadable component and sequence, and type this correctly
+        // line 115-133 use this, current code path is 134-140
+        //let loadableComponent: IComponentLoadable;
+        this.getComponent<IComponent>(url)
+            .then((returnedComponent) => {
+                if (returnedComponent) {
+                    if (returnedComponent.IComponentLoadable) {
+                        this.componentSubDirectory.set(id, defaultModel);
+                        this.sequence.insert(this.sequence.getLength(), [url]);
+                        // loadableComponent = { url, IComponentLoadable: component.IComponentLoadable };
+                    } else {
+                        throw new Error("Component is not an instance of IComponentLoadable!!");
+                    }
+                } else {
+                    throw new Error(`Runtime does not contain component with id: ${id}`);
+                }
+            })
+            .catch((error) => {
+                throw error;
+            });
+        // return loadableComponent;
         const component = this.getComponent(id);
         if (component) {
             this.componentSubDirectory.set(id, defaultModel);
