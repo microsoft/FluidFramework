@@ -47,7 +47,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
             scheduler = await handle.get<ConsensusRegisterCollection<string | null>>();
         }
         const agentScheduler = new AgentScheduler(runtime, context, scheduler);
-        await agentScheduler.initialize();
+        agentScheduler.initialize();
 
         return agentScheduler;
     }
@@ -225,7 +225,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         return this.scheduler.write(key, value);
     }
 
-    private async initialize() {
+    private initialize() {
         const configuration = (this.context.hostRuntime as IComponent).IComponentConfiguration;
         if (configuration === undefined || configuration.canReconnect) {
             const quorum = this.runtime.getQuorum();
@@ -283,6 +283,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
             }
 
             this.runtime.on("connected", () => {
+                assert(this.isActive());
                 this.initializeCore();
             });
         }
@@ -321,7 +322,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
             const currentClient = this.getTaskClientId(taskUrl);
             if (!currentClient) {
                 newTasks.push(taskUrl);
-            } else if (!this.runtime.getQuorum().getMembers().has(currentClient)) {
+            } else if (this.runtime.getQuorum().getMember(currentClient) === undefined) {
                 clearCandidates.push(taskUrl);
             }
         }
