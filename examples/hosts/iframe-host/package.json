@@ -16,15 +16,14 @@
     "build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:copy": "copyfiles -u 1 \"src/**/*.html\" dist/",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
-    "build:full": "concurrently npm:build npm:webpack",
-    "build:full:compile": "concurrently npm:build:compile npm:webpack",
+    "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
-    "webpack": "webpack --env build",
     "start": " npm run build:copy & webpack-dev-server --content-base dist/"
 
   },
