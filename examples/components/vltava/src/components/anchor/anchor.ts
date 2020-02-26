@@ -4,7 +4,6 @@
  */
 
 import {
-    IComponent,
     IComponentHandle,
     IComponentHTMLVisual,
     IProvideComponentHTMLVisual,
@@ -37,8 +36,8 @@ export class Anchor extends PrimedComponent implements IProvideComponentHTMLVisu
     public get IComponentHTMLVisual() { return this.defaultComponent; }
 
     protected async componentInitializingFirstTime(props: any) {
-        const defaultComponent = await this.createAndAttachComponent<IComponent>(uuid(), "vltava");
-        this.root.set(this.defaultComponentId, defaultComponent.IComponentHandle);
+        const defaultComponent = await this.createAndAttachComponent(uuid(), "vltava");
+        this.root.set(this.defaultComponentId, defaultComponent.handle);
     }
 
     protected async componentHasInitialized() {
