@@ -183,7 +183,7 @@ export class OdspDocumentService implements IDocumentService {
             event.end();
 
             return token;
-        }
+        };
 
         this.localStorageAvailable = isLocalStorageAvailable();
     }
