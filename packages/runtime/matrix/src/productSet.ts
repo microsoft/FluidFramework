@@ -251,61 +251,72 @@ function compareSubspace<T>(
     return cmp;
 }
 
-function tryUnionSubspaces<T>(
-    productOperations: ProductOperations<T>,
-    left: Subspace<T>,
-    right: Subspace<T>,
-): Subspace<T> | Dense | Empty | undefined {
-    const cmp = compareSubspace(productOperations, left.bounds, right.bounds);
-    if (cmp !== undefined) {
-        return cmp <= 0 ? right : left;
-    }
-    let differentDimension: keyof T | undefined;
 
-    // because Object.keys only returns string[], we need to downcast
-    const po_keys = Object.keys(productOperations) as (keyof T)[];
-    for (const dim of po_keys) {
-        if (Object.prototype.hasOwnProperty.call(productOperations, dim)) {
-            const cmp_inner = compareUntyped<unknown, unknown>(
-                productOperations[dim],
-                toBspSet(left.bounds[dim]),
-                toBspSet(right.bounds[dim]),
-            );
-            if (cmp_inner !== 0) {
-                if (differentDimension !== undefined) {
-                    return undefined;
+
+const tryUnionSubspaces = (() => {
+    const cache: { left?: unknown, right?: unknown, res?: unknown } = {};
+    return <T>(
+        productOperations: ProductOperations<T>,
+        left: Subspace<T>,
+        right: Subspace<T>,
+    ): Subspace<T> | Dense | Empty | undefined => {
+        if (left === cache.left && right === cache.right) {
+            return cache.res as ReturnType<typeof tryUnionSubspaces>;
+        }
+        cache.left = left;
+        cache.right = right;
+
+        const cmp = compareSubspace(productOperations, left.bounds, right.bounds);
+        if (cmp !== undefined) {
+            return cache.res = cmp <= 0 ? right : left;
+        }
+        let differentDimension: keyof T | undefined;
+
+        // because Object.keys only returns string[], we need to downcast
+        const po_keys = Object.keys(productOperations) as (keyof T)[];
+        for (const dim of po_keys) {
+            if (Object.prototype.hasOwnProperty.call(productOperations, dim)) {
+                const cmp_inner = compareUntyped<unknown, unknown>(
+                    productOperations[dim],
+                    toBspSet(left.bounds[dim]),
+                    toBspSet(right.bounds[dim]),
+                );
+                if (cmp_inner !== 0) {
+                    if (differentDimension !== undefined) {
+                        return cache.res = undefined;
+                    }
+
+                    differentDimension = dim;
                 }
-
-                differentDimension = dim;
             }
         }
-    }
 
-    if (differentDimension !== undefined) {
-        const newDim = unionUntyped<unknown, unknown>(
-            productOperations[differentDimension],
-            toBspSet(left.bounds[differentDimension]),
-            toBspSet(right.bounds[differentDimension]),
-        );
-        if (newDim === empty) {return empty;}
-        if (newDim === dense) {
+        if (differentDimension !== undefined) {
+            const newDim = unionUntyped<unknown, unknown>(
+                productOperations[differentDimension],
+                toBspSet(left.bounds[differentDimension]),
+                toBspSet(right.bounds[differentDimension]),
+            );
+            if (newDim === empty) { return cache.res = empty; }
+            if (newDim === dense) {
 
-            // we are actually deleting the `differentDimension`, so the variable
-            // `deleted` must be there. Hence disabling the rule here.
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { [differentDimension]: deleted, ...leftBoundsWithoutDifferentDimension } = left.bounds;
-            return subspace<unknown>(leftBoundsWithoutDifferentDimension);
+                // we are actually deleting the `differentDimension`, so the variable
+                // `deleted` must be there. Hence disabling the rule here.
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { [differentDimension]: deleted, ...leftBoundsWithoutDifferentDimension } = left.bounds;
+                return cache.res = subspace<unknown>(leftBoundsWithoutDifferentDimension);
+            }
+
+            const newBounds: UntypedProduct<T> = {
+                ...left.bounds,
+                [differentDimension]: newDim,
+            };
+            return cache.res = subspace(newBounds);
         }
 
-        const newBounds: UntypedProduct<T> = {
-            ...left.bounds,
-            [differentDimension]: newDim,
-        };
-        return subspace(newBounds);
-    }
-
-    return undefined;
-}
+        return cache.res = undefined;
+    };
+})();
 
 function combineChildren<T>(
     productOperations: ProductOperations<T>,
