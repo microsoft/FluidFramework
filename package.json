@@ -40,7 +40,7 @@
     "test:coverage": "nyc npm run test:report",
     "test:fromroot": "mocha \"packages/**/dist/test/**/*.spec.js\" --exit",
     "test:full": "npm run test:ci:coverage",
-    "test:jest": "lerna run test:jest --concurrency 1 --stream --no-bail --no-sort",
+    "test:jest": "lerna run test:jest --stream --no-bail --no-sort",
     "test:jest:report": "lerna run test:jest --stream --no-bail --no-sort -- -- --ci --reporters=default --reporters=jest-junit",
     "test:mocha": "lerna run test:mocha --stream --no-bail --no-sort",
     "test:mocha:report": "lerna run test:mocha --stream --no-bail --no-sort -- -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/mocha-junit-report.xml",

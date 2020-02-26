@@ -27,7 +27,7 @@ describe("context reload", () => {
             return "";
         }, index);
       };
-
+/*
       await page.waitForSelector(".cdn");
       await page.$eval(".cdn", (el) => {
         if (el && el instanceof HTMLInputElement) {
@@ -41,7 +41,7 @@ describe("context reload", () => {
         await input.type(`${globals.PATH}/file`, { delay: 10 });
       } else {
         throw Error("couldn't input cdn");
-      }
+      } */
 
       await page.waitForSelector("button.upgrade");
       await expect(page).toClick("button.upgrade", { text: "Upgrade Version" });
