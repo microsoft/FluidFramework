@@ -48,7 +48,7 @@ describe("sharedText", () => {
       }, index);
     }
 
-    const word: string = "sharedTestText";
+    const word: string = "sharedTextTest";
     // Type a word in one of the documents. There are two classes with name "flow-view",
     // one for each user. This will pick the first class it finds and type in that.
     await page.type('[class=flow-view]', word, {delay: 10});
