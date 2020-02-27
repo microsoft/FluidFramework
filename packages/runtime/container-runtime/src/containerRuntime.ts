@@ -493,7 +493,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     public readonly logger: ITelemetryLogger;
     public readonly previousState: IPreviousState;
     private readonly summaryManager: SummaryManager;
-    private readonly summaryTreeConverter = new SummaryTreeConverter();
+    private readonly summaryTreeConverter: SummaryTreeConverter;
     private latestSummaryAck: ISummaryContext;
     private readonly summaryTracker: SummaryTracker;
 
@@ -565,14 +565,17 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         this.IComponentHandleContext = new ComponentHandleContext("", this);
 
+        // useContext - back-compat: 0.14 uploadSummary
+        const useContext = this.storage.uploadSummaryWithContext !== undefined;
         this.latestSummaryAck = { proposalHandle: undefined, ackHandle: undefined };
         this.summaryTracker = new SummaryTracker(
-            this.storage.uploadSummaryWithContext !== undefined, // useContext - back-compat: 0.14 uploadSummary
+            useContext,
             "", // fullPath - the root is unnamed
             this.deltaManager.initialSequenceNumber, // referenceSequenceNumber - last acked summary ref seq number
             this.deltaManager.initialSequenceNumber, // latestSequenceNumber - latest sequence number seen
             async () => undefined, // getSnapshotTree - this will be replaced on summary ack
         );
+        this.summaryTreeConverter = new SummaryTreeConverter(useContext);
 
         // Extract components stored inside the snapshot
         this.loadedFromSummary = context.baseSnapshot?.trees[".protocol"] ? true : false;
@@ -990,14 +993,18 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             tree: {},
             type: SummaryType.Tree,
         };
-        let summaryStats = this.summaryTreeConverter.mergeStats();
+        let summaryStats = SummaryTreeConverter.mergeStats();
 
         // Iterate over each component and ask it to snapshot
         await Promise.all(Array.from(this.contexts).map(async ([key, value]) => {
             const snapshot = await value.snapshot(fullTree);
-            const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(snapshot, fullTree);
+            const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
+                snapshot,
+                `/${encodeURIComponent(key)}`,
+                fullTree,
+            );
             summaryTree.tree[key] = treeWithStats.summaryTree;
-            summaryStats = this.summaryTreeConverter.mergeStats(summaryStats, treeWithStats.summaryStats);
+            summaryStats = SummaryTreeConverter.mergeStats(summaryStats, treeWithStats.summaryStats);
         }));
 
         if (this.chunkMap.size > 0) {
@@ -1443,7 +1450,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         });
 
         this.latestSummaryAck = context;
-        this.summaryTracker.refreshLatestSummary(referenceSequenceNumber, async () => snapshotTree);
+        await this.summaryTracker.refreshLatestSummary(referenceSequenceNumber, async () => snapshotTree);
     }
 
     private async setOrLogError<T>(
