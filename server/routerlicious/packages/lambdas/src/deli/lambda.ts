@@ -42,7 +42,7 @@ import { ClientSequenceNumberManager } from "./clientSeqManager";
 enum IncomingMessageOrder {
     Duplicate,
     Gap,
-    Consecutive,
+    ConsecutiveOrSystem,
 }
 
 enum SendType {
@@ -493,7 +493,7 @@ export class DeliLambda implements IPartitionLambda {
 
     private checkOrder(message: IRawOperationMessage, content: any): IncomingMessageOrder {
         if (message.operation.type !== MessageType.Integrate && !message.clientId) {
-            return IncomingMessageOrder.Consecutive;
+            return IncomingMessageOrder.ConsecutiveOrSystem;
         }
 
         let clientId: string;
@@ -508,13 +508,13 @@ export class DeliLambda implements IPartitionLambda {
 
         const client = this.clientSeqManager.get(clientId);
         if (!client) {
-            return IncomingMessageOrder.Consecutive;
+            return IncomingMessageOrder.ConsecutiveOrSystem;
         }
 
         // Perform duplicate and gap detection - Check that we have a monotonically increasing CID
         const expectedClientSequenceNumber = client.clientSequenceNumber + 1;
         if (clientSequenceNumber === expectedClientSequenceNumber) {
-            return IncomingMessageOrder.Consecutive;
+            return IncomingMessageOrder.ConsecutiveOrSystem;
         } else if (clientSequenceNumber > expectedClientSequenceNumber) {
             this.context.log.info(
                 `Gap ${clientId}:${expectedClientSequenceNumber} > ${clientSequenceNumber}`);
