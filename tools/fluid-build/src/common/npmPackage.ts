@@ -7,7 +7,7 @@ import { queue } from "async";
 import * as chalk from "chalk";
 import * as fs from "fs";
 import * as path from "path";
-import sortPackageJson from "sort-package-json";
+import { sortPackageJson } from "sort-package-json";
 import { logStatus, logVerbose } from "./logging";
 import {
     copyFileAsync,
