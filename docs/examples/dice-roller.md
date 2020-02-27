@@ -1,49 +1,43 @@
 ---
-uid: yo-fluid-details
+title: Dice roller
 sidebarDepth: 2
 ---
 
-# Yo Fluid Breakdown
-
-Congratulations, you've used [yo fluid](../guide/yo-fluid.md) to create your first component! If you haven't done this
-yet, head over to [yo fluid](../guide/yo-fluid.md).
+The DIce roller is a simple Fluid component that uses Fluid's distributed data structures to simulate rolling a die.
 
 [[toc]]
 
-## Creation options
+# Set up your dev environment
 
-[yo fluid](../guide/yo-fluid.md) allows you to create a Fluid component either using React or just vanilla JavaScript.
+If you haven't already, [set up your Fluid Framework development
+environment](../guide/README.md#set-up-your-development-environment).
 
-```
-? Which experience would you like to start with?
-> react
-  vanillaJS
-```
+First, clone the tutorial repository here:
+   <https://dev.azure.com/FluidDeveloperProgram/Developer%20Preview/_git/fluid-dice-roller-tutorial>.
 
-You'll also get the option to customize your container. If this is your first time building a component, we recommend
-choosing "no" for this option (we'll explain this option further below).
+Since the Git repository is authenticated, it is easiest to visit the URL above and click the "Clone" button in the
+top-right corner of the UI. Follow the resulting instructions to clone the repo.
 
-```
-? Do you want to customize your container (advanced)?
-> no
-  yes
-```
+Once you've cloned the repo, run `npm install` in the root of the repository to install dependencies.
 
-<hr />
+Finally, you can open the folder in Visual Studio Code.
 
-## main.tsx/main.ts
+::: danger TODO
+Finish reviewing and correcting everything in the sections below.
+:::
 
-After completing the prompts, `yo fluid` will generate your project. `src/main.ts*` file is where the component logic lives.
-Below we will walk through both the vanillaJS and the React examples.
+## main.tsx
 
-### Declare Imports
+The `src/main.tsx` file is where the component logic lives.
+
+### Declare imports
 
 First we will declare all our imports. Here is a quick description and use cases for each is discussed further below.
 
 `PrimedComponent` and `PrimedComponentFactory` from [@microsoft/fluid-aqueduct](../api/fluid-aqueduct.md) provide helper
 functionality. `IComponentHTMLVisual` from
 [@microsoft/fluid-component-core-interfaces](../api/fluid-component-core-interfaces.md) provides the interface for
-enabling rendering. `React` and `ReactDOM` are _only for React_ and enable React use.
+enabling rendering. `React` and `ReactDOM` enable React use.
 
 ```typescript
 import {
@@ -52,8 +46,8 @@ import {
 } from "@microsoft/fluid-aqueduct";
 import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 
-import * as React from "react"; // only used with react
-import * as ReactDOM from "react-dom"; // only used with react
+import * as React from "react";
+import * as ReactDOM from "react-dom";
 ```
 
 ### Define our component class

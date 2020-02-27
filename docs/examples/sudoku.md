@@ -1,10 +1,12 @@
 ---
-title: "Sudoku: An Example Fluid Framework component"
+title: "Sudoku"
 uid: sudoku-example
 ---
 
 In this example we will build a collaborative Sudoku game. We will use Fluid distributed data structures to store and
 synchronize the Sudoku data.
+
+[[toc]]
 
 # Acknowledgements
 
@@ -15,7 +17,7 @@ Keller (<https://github.com/ffflorian>).
 # Set up your dev environment
 
 If you haven't already, [set up your Fluid Framework development
-environment](../guide/README.md#set-up-your-development-environment)
+environment](../guide/README.md#set-up-your-development-environment).
 
 First, clone the tutorial repository here:
    <https://dev.azure.com/FluidDeveloperProgram/Developer%20Preview/_git/fluid-sudoku-tutorial>.
@@ -52,10 +54,7 @@ After you've cloned the sample repo and installed dependencies using `npm instal
 a local dev environment for testing and debugging. Visit <http://localhost:8080/> in a browser to load the Fluid
 development server, which will load two instances of the component side by side.
 
-::: important
-The Fluid Framework requires a modern browser such as the new [Edge](https://www.microsoft.com/edge) browser or [Google
-Chrome](https://www.google.com/chrome/browser/index.html).
-:::
+!!!include(../includes/browsers.md)!!!
 
 <style>
   #sudoku {

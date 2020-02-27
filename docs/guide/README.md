@@ -48,5 +48,9 @@ You'll need [Git](https://git-scm.com/) to use the [Fluid tutorials](../examples
 
 #### Install a Chromium-based browser
 
-The Fluid Framework requires a modern browser such as the new [Edge](https://www.microsoft.com/edge) browser or [Google
-Chrome](https://www.google.com/chrome/browser/index.html).
+!!!include(../includes/browsers.md)!!!
+
+## Next steps
+
+Now that your development environment is set up, try one of the tutorials, or read more about [distributed data
+structures](./dds.md) or the [Fluid component model](./components.md).

@@ -192,6 +192,14 @@ const getGuideSidebar = () => {
                 "dds-anatomy",
             ]
         },
+        {
+            title: "Component model",
+            collapsable: false,
+            children: [
+                "components.md",
+                "component-design-principles.md",
+            ]
+        },
     ]
 }
 
@@ -329,9 +337,8 @@ module.exports = {
                         "singletons",
                     ]
                 },
-                "examples",
                 "sudoku",
-                "yo-fluid-breakdown",
+                "badge",
             ],
             "/how/": [
                 "",
