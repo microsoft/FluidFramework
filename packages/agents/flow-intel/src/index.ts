@@ -20,7 +20,7 @@ export class TextAnalyzer implements IComponentRouter, IComponentRunnable {
 
     public async run() {
         if (this.config === undefined || this.config.key === undefined || this.config.key.length === 0) {
-            return Promise.reject("No intel key provided.");
+            throw new Error("No intel key provided.");
         }
         const intelRunner = new IntelRunner(this.document, this.insightsMap, this.config);
         return intelRunner.start();
