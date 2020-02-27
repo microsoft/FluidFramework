@@ -22,7 +22,7 @@
     "lodash.isequal": "^4.5.0",
     "rimraf": "^2.6.2",
     "semver": "^7.1.2",
-    "sort-package-json": "1.39.1",
+    "sort-package-json": "1.40.0",
     "typescript": "^3.7.4"
   },
   "devDependencies": {
