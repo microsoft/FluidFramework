@@ -96,9 +96,11 @@ export class ExternalComponentView extends PrimedComponent implements
                 this.sequence.getItems(0).forEach((url) => {
                     const component = this.urlToComponent.get(url);
                     if (component) {
-                        const renderable = component.IComponentHTMLView;
+                        const renderable = component.IComponentHTMLView
+                            // back-compat: 0.14 htmlView
+                            ?? component.IComponentHTMLVisual as any as IComponentHTMLView;
 
-                        if (renderable) {
+                        if (renderable && renderable.render !== undefined) {
                             const containerDiv = document.createElement("div");
                             mainDiv.appendChild(containerDiv);
                             const style = containerDiv.style;
