@@ -79,6 +79,8 @@ the Fluid runtime will merge the change in the appropriate way eventually. And b
 it will be possible to build a wide range of capabilities including rich version history, attribution, data validation,
 'time travel' within a document, and much more.
 
+[Read more about total order broadcast and eventual consistency](./how/tob.md)
+
 ### Distributed Data Structures
 
 Much of Fluid's power lies in a set of base primitives called distributed data structures. These data structures, such

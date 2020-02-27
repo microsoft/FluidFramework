@@ -14,10 +14,18 @@ Keller (<https://github.com/ffflorian>).
 
 # Set up your dev environment
 
-1. Install Node.js 10 and VS Code
-1. Clone the tutorial repository here: <https://offnet.visualstudio.com/officenet/_git/fluid-sudoku-tutorial>
-1. Run `npm install` in the root of the repository to install dependencies.
-1. Open the folder in VS Code.
+If you haven't already, [set up your Fluid Framework development
+environment](../guide/README.md#set-up-your-development-environment)
+
+First, clone the tutorial repository here:
+   <https://dev.azure.com/FluidDeveloperProgram/Developer%20Preview/_git/fluid-sudoku-tutorial>.
+
+Since the Git repository is authenticated, it is easiest to visit the URL above and click the "Clone" button in the
+top-right corner of the UI. Follow the resulting instructions to clone the repo.
+
+Once you've cloned the repo, run `npm install` in the root of the repository to install dependencies.
+
+Finally, you can open the folder in Visual Studio Code.
 
 ## Folder layout
 
@@ -40,9 +48,14 @@ The _src_ folder contains the source files for the Sudoku Fluid component.
 
 ## Run the sample
 
-After you've cloned the sample, install all the dependencies using `npm install`. You can then use `npm start` to start
+After you've cloned the sample repo and installed dependencies using `npm install`, you can then use `npm start` to start
 a local dev environment for testing and debugging. Visit <http://localhost:8080/> in a browser to load the Fluid
 development server, which will load two instances of the component side by side.
+
+::: important
+The Fluid Framework requires a modern browser such as the new [Edge](https://www.microsoft.com/edge) browser or [Google
+Chrome](https://www.google.com/chrome/browser/index.html).
+:::
 
 <style>
   #sudoku {
