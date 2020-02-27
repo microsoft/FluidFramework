@@ -179,14 +179,39 @@ async function loadContainer(
         documentServiceFactory,
         urlResolver: resolver,
     };
-    return BaseHost.start(
+
+    const baseHost = new BaseHost(
         hostConf,
-        href,
-        resolved, // resolved, IResolvedUrl,
-        pkg, // pkg, IResolvedPackage, (gateway/routes/loader has an example (pkgP))
-        scriptIds, // scriptIds, string[], defines the id of the script tag added to the page
-        div,
+        resolved,
+        pkg,
+        scriptIds,
     );
+    const container = await baseHost.initializeContainer(
+        href,
+        pkg ? pkg.details : undefined,
+    );
+    container.on("contextChanged", (value) => {
+        getComponentAndRender(baseHost, href, div).catch(() => { });
+    });
+    await getComponentAndRender(baseHost, href, div);
+
+    return container;
+}
+
+async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
+    const component = await baseHost.getComponent(url);
+    // First try to get it as a view
+    let renderable = component.IComponentHTMLView;
+    if (!renderable) {
+        // Otherwise get the visual, which is a view factory
+        const visual = component.IComponentHTMLVisual;
+        if (visual) {
+            renderable = visual.addView();
+        }
+    }
+    if (renderable) {
+        renderable.render(div, { display: "block" });
+    }
 }
 
 const routerliciousRegex = /^(http(s)?:\/\/)?www\..{3,9}\.prague\.office-int\.com\/loader\/.*/;
