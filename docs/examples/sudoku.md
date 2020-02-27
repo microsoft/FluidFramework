@@ -134,9 +134,9 @@ container to use this component both with and without React. A host using React 
 and use the JSX directly, while a non-React hot would just give the component a hosting element and let it render
 itself.
 
-### Implementing interfaces
+#### Implementing interfaces
 
-#### IComponentReactViewable
+##### IComponentReactViewable
 
 [IComponentReactViewable][] requires us to implement a method that will return the JSX that represents the component.
 The implementation is as follows:
@@ -159,7 +159,7 @@ public createJSXElement(props?: any): JSX.Element {
 Notice that we pass the puzzle data, a `SharedMap` distributed data structure that we will discuss more below, to the
 SudokuView React component as props.
 
-#### IComponentHTMLVisual
+##### IComponentHTMLVisual
 
 [IComponentHTMLVisual][] requires us to implement the `render()` method, which is straightforward since we're using the
 `SudokuView` React component to do the heavy lifting.
@@ -177,7 +177,7 @@ public render(element?: HTMLElement): void {
 
 As you can see, the render method uses React to render the `SudokuView` React component.
 
-### Creating Fluid distributed data structures
+#### Creating Fluid distributed data structures
 
 How does the `puzzle` property get populated? How are distributed data structures created and used?
 
@@ -227,7 +227,7 @@ protected async componentHasInitialized() {
 The `componentHasInitialized` method is called once after the component has completed initialization, be it the first
 time or subsequent times.
 
-#### A note about component handles
+##### A note about component handles
 
 You probably noticed some confusing code above. What are handles? Why do we store the SharedMap's _handle_ in the `root`
 SharedDirectory instead of the SharedMap itself? The underlying reasons are beyond the scope of this example, but the
@@ -241,7 +241,7 @@ handle, then get the full DDS from the handle.**
 await this.root.get<IComponentHandle>(this.sudokuMapKey).get<ISharedMap>();
 ```
 
-### Handling events from distributed data structures
+#### Handling events from distributed data structures
 
 Distributed data structures can be changed by both local code and remote clients. In the `componentHasInitialized`
 method, we also connect a method to be called each time the Sudoku data - the [SharedMap][] - is changed. In our case we
@@ -253,7 +253,7 @@ this.puzzle.on("valueChanged", (changed, local, op) => {
 });
 ```
 
-### Updating distributed data structures
+#### Updating distributed data structures
 
 In the previous step we showed how to use event listeners with distributed data structures to respond to remote data
 changes. But how do we update the data based on _user_ input? To do that, we need to listen to some DOM events as users
@@ -310,7 +310,7 @@ render based on this event, because all clients are running the same code.
 In other words, it is very rare that there is a need for the handling to differ, and we recommend a unidirectional data
 flow.
 
-# Lab: Adding "presence" to the Fluid Sudoku component
+## Lab: Adding "presence" to the Fluid Sudoku component
 
 The Sudoku component is collaborative; multiple clients can update the cells in real time. However, there's no
 indication of where other clients are - which cells they're in. In this lab we'll add basic 'presence' to our Sudoku
@@ -326,7 +326,7 @@ particularly interesting, and Fluid provides an alternative mechanism, _signals_
 isn't necessary. That said, this serves as a useful example of how to use Fluid to solve complex problems with very
 little code.
 
-## Create a SharedMap to contain presence data
+### Create a SharedMap to contain presence data
 
 First, you need to create a `SharedMap` for your presence data.
 
@@ -362,7 +362,7 @@ You now have a `SharedMap` to store presence data. When the component is first c
 will be called and the presence map will be created. When the component is loaded, `componentHasInitialized` will be
 called, which retrieves the `SharedMap` instance.
 
-## Rendering presence
+### Rendering presence
 
 Now that you have a presence map, you need to render some indication that a remote user is in a cell. We're going to
 take a shortcut here because our SudokuView React component can already display presence information when provided two
@@ -378,7 +378,7 @@ you've completed this tutorial, you should consider reviewing the implementation
 SudokuView in detail. For now, however, we'll skip that and focus on implementing the two necessary props - a SharedMap
 for storing the presence data, and a function to update the map with presence data.
 
-## Setting presence data
+### Setting presence data
 
 1. Open `src/fluidSudoku.tsx`.
 1. Add the following function at the bottom of the `FluidSudoku` class:
@@ -431,7 +431,7 @@ for storing the presence data, and a function to update the map with presence da
 
    Notice that we're now passing the `clientPresence` SharedMap and the `setPresence` function as props.
 
-## Listening to distributed data structure events
+### Listening to distributed data structure events
 
 1. Still in `src/fluidSudoku.tsx`, add the following code to the bottom of the `componentHasInitialized` method to call
    render whenever a remote change is made to the presence map:
@@ -442,7 +442,7 @@ for storing the presence data, and a function to update the map with presence da
    });
    ```
 
-## Testing the changes
+### Testing the changes
 
 Now run `npm start` again and notice that your selected cell is now highlighted on the other side.
 
@@ -452,9 +452,7 @@ Now that you have some experience with Fluid, are there other features you could
 you could extend it to display a client name in the cell to show client-specific presence. Or you could use the
 [undo-redo][] package to add undo/redo support!
 
-If you want to build your own component, check out [yo fluid](../guide/yo-fluid.md).
-
-See [Examples](./examples.md) for more examples.
+Or check out [other examples](./README.md).
 
 <!-- Links -->
 

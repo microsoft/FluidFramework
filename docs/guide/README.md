@@ -34,6 +34,14 @@ multiple NodeJS versions.
 * [nvm for macOS/Linux](https://github.com/nvm-sh/nvm)
 :::
 
+#### Install vsts-npm-auth (Windows only)
+
+If you are using Windows, install vsts-npm-auth globally using the following command:
+
+`npm install -g vsts-npm-auth --registry https://registry.npmjs.com --always-auth false`
+
+This tool is used to simplify the use of [authenticated NPM feeds](./package-feed.md).
+
 #### Install a code editor
 
 You can use any code editor or IDE that supports TypeScript to build with Fluid, such as:
