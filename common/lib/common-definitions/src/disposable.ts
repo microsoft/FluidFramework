@@ -10,5 +10,5 @@ export interface IDisposable {
 
 export interface IAsyncDisposable {
     readonly disposed: boolean;
-    disposeAsync(): void;
+    async disposeAsync(): Promise<void>;
 }
