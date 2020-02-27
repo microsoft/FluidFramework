@@ -8,7 +8,7 @@ import { ConnectionMode, IClient } from "@microsoft/fluid-protocol-definitions";
 import * as socketStorage from "@microsoft/fluid-routerlicious-driver";
 import { GitManager } from "@microsoft/fluid-server-services-client";
 import { TestHistorian } from "@microsoft/fluid-server-test-utils";
-import { ITestDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { ILocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { TestDeltaStorageService, TestDocumentDeltaConnection } from "./";
 
 /**
@@ -16,13 +16,13 @@ import { TestDeltaStorageService, TestDocumentDeltaConnection } from "./";
  */
 export class TestDocumentService implements api.IDocumentService {
     /**
-     * @param testDeltaConnectionServer - delta connection server for ops
+     * @param localDeltaConnectionServer - delta connection server for ops
      * @param tokenProvider - token provider with a single token
      * @param tenantId - ID of tenant
      * @param documentId - ID of document
      */
     constructor(
-        private readonly testDeltaConnectionServer: ITestDeltaConnectionServer,
+        private readonly localDeltaConnectionServer: ILocalDeltaConnectionServer,
         private readonly tokenProvider: socketStorage.TokenProvider,
         private readonly tenantId: string,
         private readonly documentId: string,
@@ -33,7 +33,7 @@ export class TestDocumentService implements api.IDocumentService {
      */
     public async connectToStorage(): Promise<api.IDocumentStorageService> {
         return new socketStorage.DocumentStorageService(this.documentId,
-            new GitManager(new TestHistorian(this.testDeltaConnectionServer.testDbFactory.testDatabase)));
+            new GitManager(new TestHistorian(this.localDeltaConnectionServer.testDbFactory.testDatabase)));
     }
 
     /**
@@ -43,7 +43,7 @@ export class TestDocumentService implements api.IDocumentService {
         return new TestDeltaStorageService(
             this.tenantId,
             this.documentId,
-            this.testDeltaConnectionServer.databaseManager);
+            this.localDeltaConnectionServer.databaseManager);
     }
 
     /**
@@ -59,7 +59,7 @@ export class TestDocumentService implements api.IDocumentService {
             this.documentId,
             this.tokenProvider.token,
             client,
-            this.testDeltaConnectionServer.webSocketServer,
+            this.localDeltaConnectionServer.webSocketServer,
             mode);
     }
 
@@ -82,16 +82,16 @@ export class TestDocumentService implements api.IDocumentService {
 
 /**
  * Creates and returns a document service for testing.
- * @param testDeltaConnectionServer - delta connection server for ops
+ * @param localDeltaConnectionServer - delta connection server for ops
  * @param tokenProvider - token provider with a single token
  * @param tenantId - ID of tenant
  * @param documentId - ID of document
  */
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function createTestDocumentService(
-    testDeltaConnectionServer: ITestDeltaConnectionServer,
+    localDeltaConnectionServer: ILocalDeltaConnectionServer,
     tokenProvider: socketStorage.TokenProvider,
     tenantId: string,
     documentId: string): api.IDocumentService {
-    return new TestDocumentService(testDeltaConnectionServer, tokenProvider, tenantId, documentId);
+    return new TestDocumentService(localDeltaConnectionServer, tokenProvider, tenantId, documentId);
 }

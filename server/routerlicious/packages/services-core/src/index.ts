@@ -19,3 +19,4 @@ export * from "./publisher";
 export * from "./queue";
 export * from "./taskMessages";
 export * from "./tenant";
+export * from "./combinedProducer";

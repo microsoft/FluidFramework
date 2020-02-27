@@ -10,19 +10,19 @@ import {
     TestDocumentServiceFactory,
     TestResolver,
 } from "@microsoft/fluid-local-driver";
-import { ITestDeltaConnectionServer, TestDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { IInboundSignalMessage } from "@microsoft/fluid-runtime-definitions";
 
 describe("TestSignals", () => {
     const id = "fluid-test://test.com/test/test";
 
-    let testDeltaConnectionServer: ITestDeltaConnectionServer;
+    let testDeltaConnectionServer: ILocalDeltaConnectionServer;
     let documentDeltaEventManager: DocumentDeltaEventManager;
     let user1Document: Document;
     let user2Document: Document;
 
     beforeEach(async () => {
-        testDeltaConnectionServer = TestDeltaConnectionServer.create();
+        testDeltaConnectionServer = LocalDeltaConnectionServer.create();
         documentDeltaEventManager = new DocumentDeltaEventManager(testDeltaConnectionServer);
 
         const resolver = new TestResolver();

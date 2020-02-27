@@ -42,7 +42,7 @@
         "layers": {
             "Base-Utils": {
                 "packages": [
-                    "@microsoft/fluid-core-utils"
+                    "@microsoft/fluid-common-utils"
                 ],
                 "deps": [
                     "Base-Definitions"
