@@ -77,7 +77,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
     constructor(props) {
         super(props);
         this.state = {
-            isEditable: true,
+            isEditable: this.props.dataModel.componentList.size - 1 === 0,
             componentMap: this.props.dataModel.componentList,
         };
 
