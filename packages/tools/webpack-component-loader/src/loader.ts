@@ -314,10 +314,10 @@ export async function start(
 
         await Promise.all([
             container1Promise.then(async (container) => {
-                await startRendering(container, baseHost2, url, leftDiv);
+                await startRendering(container, baseHost1, url, leftDiv);
             }),
             container2Promise.then(async (container) => {
-                await startRendering(container, baseHost1, url, rightDiv);
+                await startRendering(container, baseHost2, url, rightDiv);
             }),
         ]);
     } else {
