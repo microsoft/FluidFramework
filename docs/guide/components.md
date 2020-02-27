@@ -7,7 +7,7 @@ uid: component-model
 This section will provide an overview of the Fluid Framework Component Model, including a description of the layered approach,
 interfaces, examples, and links to relevant resources.
 
-For an overview of Fluid, please read [What is Fluid?](../../what-is-fluid.md)
+For an overview of Fluid, please read [What is Fluid?](../what-is-fluid.md)
 
 ## What makes a component a ‘Fluid Component’?
 

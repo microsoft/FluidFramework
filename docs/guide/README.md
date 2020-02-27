@@ -15,23 +15,23 @@ development environment to build Fluid Framework solutions. You can use a Window
 
 #### Install NodeJS
 
-::: important
-You **must** use [NodeJS LTS version 10](https://nodejs.org/dist/latest-v10.x/). There are known bugs on other NodeJS versions.
-:::
+Install NodeJS **version 10** or **version 12**.
 
 - If you are using Windows, you can use the msi installers
   ([x86](https://nodejs.org/dist/latest-v10.x/node-v10.19.0-x86.msi) or
   [x64](https://nodejs.org/dist/latest-v10.x/node-v10.19.0-x64.msi)) for the easiest way to set up NodeJS
   (notice that these direct links evolve over time, so check the latest v10 from the above directory).
 - If you have NodeJS already installed, check that you have the correct version by using `node -v`. It should return
-  version 10.19.0.
+  version 10.19.0 or 12.16.1.
 
 ::: tip
-If you do not have NodeJS already installed, we recommend using nvm to simplify installing and managing
+
+If you do not have NodeJS already installed, we stringly recommend using nvm to simplify installing and managing
 multiple NodeJS versions.
 
 * [nvm for Windows](https://github.com/coreybutler/nvm-windows)
 * [nvm for macOS/Linux](https://github.com/nvm-sh/nvm)
+
 :::
 
 #### Install vsts-npm-auth (Windows only)
