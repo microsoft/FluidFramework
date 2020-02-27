@@ -314,7 +314,7 @@ export async function start(
 
         await Promise.all([
             container1Promise.then(async (container) => {
-                await startRendering(container, baseHost1, url, leftDiv);
+                await startRendering(container, baseHost2, url, leftDiv);
             }),
             container2Promise.then(async (container) => {
                 await startRendering(container, baseHost1, url, rightDiv);
@@ -335,6 +335,10 @@ async function startRendering(container: Container, baseHost: BaseHost, url: str
 
 async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
     const component = await baseHost.getComponent(url);
+    if (component === undefined) {
+        return;
+    }
+
     // First try to get it as a view
     let renderable = component.IComponentHTMLView;
     if (!renderable) {

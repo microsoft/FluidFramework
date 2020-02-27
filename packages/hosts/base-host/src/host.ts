@@ -131,7 +131,7 @@ export class BaseHost {
                 response.mimeType === "fluid/component" ||
                 response.mimeType === "prague/component"
             )) {
-            throw new Error("Failed to getComponent");
+            return undefined;
         }
 
         return response.value as IComponent;
@@ -139,6 +139,10 @@ export class BaseHost {
 
     private async getComponentAndRender(url: string, div: HTMLDivElement) {
         const component = await this.getComponent(url);
+        if (component === undefined) {
+            return;
+        }
+
         // First try to get it as a view
         let renderable = component.IComponentHTMLView;
         if (!renderable) {

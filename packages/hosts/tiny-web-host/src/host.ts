@@ -200,6 +200,10 @@ async function loadContainer(
 
 async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
     const component = await baseHost.getComponent(url);
+    if (component === undefined) {
+        return;
+    }
+
     // First try to get it as a view
     let renderable = component.IComponentHTMLView;
     if (!renderable) {
