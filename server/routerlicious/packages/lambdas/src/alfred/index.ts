@@ -22,7 +22,6 @@ import { canSummarize, canWrite } from "@microsoft/fluid-server-services-client"
 
 import * as jwt from "jsonwebtoken";
 import * as semver from "semver";
-import * as winston from "winston";
 import * as core from "@microsoft/fluid-server-services-core";
 import {
     createRoomJoinMessage,
@@ -115,7 +114,8 @@ export function configureWebSocketServices(
     storage: core.IDocumentStorage,
     contentCollection: core.ICollection<any>,
     clientManager: core.IClientManager,
-    metricLogger: core.IMetricClient) {
+    metricLogger: core.IMetricClient,
+    logger: core.ILogger) {
 
 
     webSocketServer.on("connection", (socket: core.IWebSocket) => {
@@ -210,8 +210,8 @@ export function configureWebSocketServices(
                 connectionsMap.set(clientId, connection);
 
                 // Eventually we will send disconnect reason as headers to client.
-                connection.once("producerError", (error) => {
-                    winston.info(`Disconnecting socket on connection error`, error);
+                connection.once("error", (error) => {
+                    logger.error(`Disconnecting socket on connection error: ${JSON.stringify(error)}`);
                     socket.disconnect(true);
                 });
 
@@ -265,7 +265,7 @@ export function configureWebSocketServices(
                     }
                 },
                 (error) => {
-                    winston.info(`connectDocument error`, error);
+                    logger.error(`Connect Document error: ${JSON.stringify(error)}`);
                     socket.emit("connect_document_error", error);
                 });
         });
@@ -288,7 +288,7 @@ export function configureWebSocketServices(
                                     // End of tracking. Write traces.
                                     metricLogger.writeLatencyMetric("latency", message.traces).catch(
                                         (error) => {
-                                            winston.error(error.stack);
+                                            logger.error(error.stack);
                                         });
                                     return false;
                                 } else {
@@ -377,13 +377,13 @@ export function configureWebSocketServices(
         socket.on("disconnect", async () => {
             // Send notification messages for all client IDs in the connection map
             for (const [clientId, connection] of connectionsMap) {
-                winston.info(`Disconnect of ${clientId}`);
+                logger.info(`Disconnect of ${clientId}`);
                 connection.disconnect();
             }
             // Send notification messages for all client IDs in the room map
             const removeP = [];
             for (const [clientId, room] of roomMap) {
-                winston.info(`Disconnect of ${clientId} from room`);
+                logger.info(`Disconnect of ${clientId} from room`);
                 removeP.push(clientManager.removeClient(room.tenantId, room.documentId, clientId));
                 // Back-compat check for older clients.
                 if (versionMap.has(clientId)) {

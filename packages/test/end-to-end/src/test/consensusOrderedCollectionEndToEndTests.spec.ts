@@ -8,13 +8,12 @@ import * as api from "@fluid-internal/client-api";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import {
     DocumentDeltaEventManager,
-    ITestDeltaConnectionServer,
-    TestDeltaConnectionServer,
     TestDocumentServiceFactory,
     TestResolver,
-} from "@microsoft/fluid-local-test-server";
+} from "@microsoft/fluid-local-driver";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { ISharedMap } from "@microsoft/fluid-map";
-import { ConsensusQueue, ConsensusStack, IConsensusOrderedCollection } from "@microsoft/fluid-ordered-collection";
+import { ConsensusQueue, IConsensusOrderedCollection } from "@microsoft/fluid-ordered-collection";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 
 interface ISharedObjectConstructor<T> {
@@ -28,7 +27,7 @@ function generate(
     describe(name, () => {
         const id = "fluid://test.com/test/test";
 
-        let testDeltaConnectionServer: ITestDeltaConnectionServer;
+        let testDeltaConnectionServer: ILocalDeltaConnectionServer;
         let documentDeltaEventManager: DocumentDeltaEventManager;
         let user1Document: api.Document;
         let user2Document: api.Document;
@@ -38,7 +37,7 @@ function generate(
         let root3: ISharedMap;
 
         beforeEach(async () => {
-            testDeltaConnectionServer = TestDeltaConnectionServer.create();
+            testDeltaConnectionServer = LocalDeltaConnectionServer.create();
             documentDeltaEventManager = new DocumentDeltaEventManager(testDeltaConnectionServer);
             const documentService = new TestDocumentServiceFactory(testDeltaConnectionServer);
             const resolver = new TestResolver();
@@ -260,4 +259,3 @@ function generate(
 }
 
 generate("ConsensusQueue", ConsensusQueue, [1, 2, 3], [1, 2, 3]);
-generate("ConsensusStack", ConsensusStack, [1, 2, 3], [3, 2, 1]);

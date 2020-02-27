@@ -34,7 +34,4 @@ module.exports = {
     library: 'FluidLoader',
     libraryTarget: 'umd',
   },
-  node: {
-    fs: "empty",
-  },
 };

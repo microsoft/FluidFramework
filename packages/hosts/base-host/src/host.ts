@@ -12,6 +12,8 @@ import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { IFluidResolvedUrl, IResolvedUrl } from "@microsoft/fluid-driver-definitions";
 import { IResolvedPackage, WebCodeLoader } from "@microsoft/fluid-web-code-loader";
 import { IBaseHostConfig } from "./hostConfig";
+import { initializeContainerCode } from "./initializeContainerCode";
+
 
 async function getComponentAndRender(loader: Loader, url: string, div: HTMLDivElement) {
     const response = await loader.request({ url });
@@ -38,26 +40,6 @@ async function getComponentAndRender(loader: Loader, url: string, div: HTMLDivEl
     if (renderable) {
         renderable.render(div, { display: "block" });
     }
-}
-
-async function initializeChaincode(container: Container, pkg?: IFluidCodeDetails): Promise<void> {
-    if (!pkg) {
-        return;
-    }
-
-    const quorum = container.getQuorum();
-
-    // Wait for connection so that proposals can be sent
-    if (!container.connected) {
-        await new Promise<void>((resolve) => container.on("connected", () => resolve()));
-    }
-
-    // And then make the proposal if a code proposal has not yet been made
-    if (!quorum.has("code")) {
-        await quorum.propose("code", pkg);
-    }
-
-    console.log(`Code is ${quorum.get("code")}`);
 }
 
 /**
@@ -163,11 +145,11 @@ export class BaseHost {
         });
         await getComponentAndRender(loader, url, div);
 
-        // If this is a new document we will go and instantiate the chaincode. For old documents we assume a legacy
-        // package.
-        if (!container.existing) {
-            await initializeChaincode(container, pkg)
-                .catch((error) => console.error("chaincode error", error));
+        // if a package is provided, try to initialize the code proposal with it
+        // if not we assume the contianer already has a code proposal
+        if (pkg) {
+            await initializeContainerCode(container, pkg)
+                .catch((error) => console.error("code proposal error", error));
         }
 
         return container;

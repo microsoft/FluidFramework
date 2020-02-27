@@ -1,12 +1,46 @@
 # 0.14 Breaking Changes
-- [Samples and chaincode have been renamed to examples and components respectively](##Samples-and-chaincode-have-been-renamed-to-examples-and-components-respectively)
-- [Top-level `type` on `IClient` removed](#Top-level-type-on-IClient-removed)
-- [Remove back-compat support for loader <= 0.8](#remove-back-compat-support-for-loader-0.8)
-- [New Error types](#New-Error-types)
-- [`IComponentContext` - `createSubComponent` removed, `createComponent` signature updated](#`IComponentContext`---`createSubComponent`-removed,-`createComponent`-signature-updated)
-- [Changes to the render interfaces](#Changes-to-the-render-interfaces)
 
-## Samples and chaincode have been renamed to examples and components respectively
+- [Packages move and renamed](#packages-moved-and-renamed)
+- [Top-level `type` on `IClient` removed](#top-level-type-on-iclient-removed)
+- [Remove back-compat support for loader <= 0.8](#remove-back-compat-support-for-loader-08)
+- [New Error types](#new-error-types)
+- [`IComponentContext` - `createSubComponent` removed, `createComponent` signature updated](#icomponentcontext-createsubcomponent-removed-createcomponent-signature-updated)
+- [Changes to the render interfaces](#changes-to-the-render-interfaces)
+
+## Packages move and renamed
+
+### `fluid-core-utils` package renamed
+
+The package name is changed to `fluid-common-utils` to make it parallel to `fluid-common-definitions`
+
+### `fluid-local-test-server` package move and rename
+
+The following classes / interfaces have moved from `@microsoft/fluid-local-test-server` to `@microsoft/fluid-test-driver` in `./packages`:
+
+```text
+DocumentDeltaEventManager
+IDocumentDeltaEvent
+TestDocumentService
+TestDocumentServiceFactory
+TestResolver
+```
+
+The following classes / interfaces have been renamed and have moved from `@microsoft/fluid-local-test-server` in `./packages` to `@microsoft/fluid-server-local-server` in `./server`:
+```text
+ITestDeltaConnectionServer -> ILocalDeltaConnectionServer
+TestDeltaConnectionServer -> LocalDeltaConnectionServer
+TestReservationManager -> LocalReservationManager
+```
+
+The following packages have been renamed in `./packages`:
+
+```text
+@microsoft/fluid-local-test-server -> @microsoft/fluid-local-test-utils
+@microsoft/fluid-test-driver -> @microsoft/fluid-local-driver
+```
+
+### `samples` and `chaincode` directories have been renamed to `examples` and `components` respectively
+
 The directories themselves have been renamed.
 All path references in the dockerfile and json manifests have been updated along with variables assigned using path constants in code
 

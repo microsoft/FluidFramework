@@ -14,18 +14,14 @@ import {
     IFluidResolvedUrl,
     ErrorType,
 } from "@microsoft/fluid-driver-definitions";
-import {
-    ITestDeltaConnectionServer,
-    TestDeltaConnectionServer,
-    TestDocumentServiceFactory,
-    TestResolver,
-} from "@microsoft/fluid-local-test-server";
+import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { createErrorObject } from "@microsoft/fluid-driver-base";
 import { errorObjectFromOdspError } from "@microsoft/fluid-odsp-driver";
 import { createIError } from "@microsoft/fluid-driver-utils";
 
 describe("Errors Types", () => {
-    let testDeltaConnectionServer: ITestDeltaConnectionServer;
+    let testDeltaConnectionServer: ILocalDeltaConnectionServer;
     let testResolver: TestResolver;
     let testResolved: IFluidResolvedUrl;
     const testRequest: IRequest = { url: "" };
@@ -34,7 +30,7 @@ describe("Errors Types", () => {
     let loader: Loader;
 
     beforeEach(async () => {
-        testDeltaConnectionServer = TestDeltaConnectionServer.create();
+        testDeltaConnectionServer = LocalDeltaConnectionServer.create();
         testResolver = new TestResolver();
         testResolved = await testResolver.resolve(testRequest) as IFluidResolvedUrl;
         const serviceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);

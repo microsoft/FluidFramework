@@ -298,7 +298,6 @@ module.exports = {
                         //     children: [
                         //         "ConsensusQueue",
                         //         "ConsensusRegisterCollection",
-                        //         "ConsensusStack",
                         //     ],
                         // },
                     ]

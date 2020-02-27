@@ -13,13 +13,9 @@ import {
     isFluidPackage,
 } from "@microsoft/fluid-container-definitions";
 import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
-import {
-    ITestDeltaConnectionServer,
-    SessionStorageDbFactory,
-    TestDeltaConnectionServer,
-    TestDocumentServiceFactory,
-    TestResolver,
-} from "@microsoft/fluid-local-test-server";
+import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { SessionStorageDbFactory } from "@microsoft/fluid-local-test-utils";
 import { IUser } from "@microsoft/fluid-protocol-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { getRandomName } from "@microsoft/fluid-server-services-client";
@@ -250,11 +246,11 @@ export async function start(
     const urlResolver = getUrlResolver(documentId, options);
 
     let documentServiceFactory: IDocumentServiceFactory;
-    let deltaConn: ITestDeltaConnectionServer;
+    let deltaConn: ILocalDeltaConnectionServer;
 
     switch (options.mode) {
         case "local": {
-            deltaConn = TestDeltaConnectionServer.create(new SessionStorageDbFactory(documentId));
+            deltaConn = LocalDeltaConnectionServer.create(new SessionStorageDbFactory(documentId));
             documentServiceFactory = new TestDocumentServiceFactory(deltaConn);
             break;
         }

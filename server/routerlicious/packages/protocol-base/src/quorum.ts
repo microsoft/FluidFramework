@@ -5,7 +5,7 @@
 
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { Deferred, doIfNotDisposed, EventForwarder } from "@microsoft/fluid-core-utils";
+import { Deferred, doIfNotDisposed, EventForwarder } from "@microsoft/fluid-common-utils";
 import {
     ConnectionState,
     ICommittedProposal,

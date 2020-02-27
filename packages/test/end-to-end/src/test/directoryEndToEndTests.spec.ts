@@ -8,11 +8,10 @@ import * as api from "@fluid-internal/client-api";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import {
     DocumentDeltaEventManager,
-    ITestDeltaConnectionServer,
-    TestDeltaConnectionServer,
     TestDocumentServiceFactory,
     TestResolver,
-} from "@microsoft/fluid-local-test-server";
+} from "@microsoft/fluid-local-driver";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { ISharedDirectory, ISharedMap, SharedDirectory, SharedMap } from "@microsoft/fluid-map";
 import { MessageType } from "@microsoft/fluid-protocol-definitions";
 
@@ -20,7 +19,7 @@ describe("Directory", () => {
     const id = "fluid://test.com/test/test";
     const directoryId = "testDirectory";
 
-    let testDeltaConnectionServer: ITestDeltaConnectionServer;
+    let testDeltaConnectionServer: ILocalDeltaConnectionServer;
     let documentDeltaEventManager: DocumentDeltaEventManager;
     let user1Document: api.Document;
     let user2Document: api.Document;
@@ -30,7 +29,7 @@ describe("Directory", () => {
     let root3Directory: ISharedDirectory;
 
     beforeEach(async () => {
-        testDeltaConnectionServer = TestDeltaConnectionServer.create();
+        testDeltaConnectionServer = LocalDeltaConnectionServer.create();
         documentDeltaEventManager = new DocumentDeltaEventManager(testDeltaConnectionServer);
         const serviceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
         const resolver = new TestResolver();

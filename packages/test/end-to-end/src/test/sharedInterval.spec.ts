@@ -8,12 +8,11 @@ import * as api from "@fluid-internal/client-api";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import {
     DocumentDeltaEventManager,
-    ITestDeltaConnectionServer,
-    TestDeltaConnectionServer,
     TestDocumentServiceFactory,
-    TestHost,
     TestResolver,
-} from "@microsoft/fluid-local-test-server";
+} from "@microsoft/fluid-local-driver";
+import { TestHost } from "@microsoft/fluid-local-test-utils";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import { IntervalType, LocalReference } from "@microsoft/fluid-merge-tree";
 import { IBlob } from "@microsoft/fluid-protocol-definitions";
@@ -209,7 +208,7 @@ describe("SharedInterval", () => {
     describe("Handles in value types", () => {
         const id = "fluid://test.com/test/test";
 
-        let testDeltaConnectionServer: ITestDeltaConnectionServer;
+        let testDeltaConnectionServer: ILocalDeltaConnectionServer;
         let documentDeltaEventManager: DocumentDeltaEventManager;
         let user1Document: api.Document;
         let user2Document: api.Document;
@@ -219,7 +218,7 @@ describe("SharedInterval", () => {
         let root3: ISharedMap;
 
         beforeEach(async () => {
-            testDeltaConnectionServer = TestDeltaConnectionServer.create();
+            testDeltaConnectionServer = LocalDeltaConnectionServer.create();
             documentDeltaEventManager = new DocumentDeltaEventManager(testDeltaConnectionServer);
             const serviceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
             const resolver = new TestResolver();

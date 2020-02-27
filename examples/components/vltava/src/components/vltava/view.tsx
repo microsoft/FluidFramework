@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EmbeddedComponent } from "@microsoft/fluid-aqueduct-react";
+import { EmbeddedComponent } from "@microsoft/fluid-view-adapters";
 import * as React from "react";
 
 import { IVltavaDataModel } from "./dataModel";

@@ -4,7 +4,7 @@
  */
 
 import { ISerializedHandle } from "@microsoft/fluid-component-core-interfaces";
-import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
+import { fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
 import {
     FileMode,
     ISequencedDocumentMessage,
