@@ -17,59 +17,19 @@ describe("context reload", () => {
 
     it("has a dice roller on the new version", async () => {
       // jest.setTimeout(20 * 1000);
-      const getValue = async (index: number) => {
-        return page.evaluate((i: number) => {
-            const diceElements = document.getElementsByClassName("dicevalue");
-            const dice = diceElements[i] as HTMLDivElement;
-            if (dice) {
-                return dice.innerText;
-            }
-
-            return "";
-        }, index);
-      };
-
-      const leftDiv = await page.waitForSelector("#sbs-left");
-      if (!leftDiv) {
-        throw Error("no left div");
+      const getDiceValue = (div: "left" | "right") => {
+        return page.$eval(`#sbs-${div} .dicevalue`, (el) => (el as HTMLDivElement).innerText);
       }
 
-      await page.waitForSelector("input.cdn");
-      const cdn = await leftDiv.$(".cdn");
-      if (!cdn) {
-        throw Error("no cdn");
-      }
-      await page.evaluate((el) => {
-        if (el && el instanceof HTMLInputElement) {
-          el.value = "";
-        }
-      }, cdn);
+      await expect(page).toFill("#sbs-left input.cdn", `${globals.PATH}/file`);
+      await expect(await page.$eval("#sbs-left input.cdn", (el) => (el as HTMLInputElement).value)).toBe(`${globals.PATH}/file`);
 
-      expect(await (await cdn.getProperty("value")).jsonValue()).toBe("");
-
-/*
-      await page.$eval("#sbs-left", (el) => {
-        const cdn = el.querySelector("input.cdn");
-        if (cdn && cdn instanceof HTMLInputElement) {
-          cdn.value = "";
-        }
-      }); */
-
-      // const input = await leftDiv.$(".cdn");
-      await cdn.type(`${globals.PATH}/file`, { delay: 1 });
-      expect(await (await cdn.getProperty("value")).jsonValue()).toBe(`${globals.PATH}/file`);
-      console.log(await (await cdn.getProperty("value")).jsonValue());
-
-      await page.waitForSelector("button.upgrade");
-      const upgrade = await leftDiv.$("button.upgrade");
+      const upgrade = await page.$("#sbs-left button.upgrade");
       upgrade && await upgrade.click();
-      // await expect(page).toClick("button.upgrade", { text: "Upgrade Version" });
 
       await page.waitForSelector("button.diceroller");
       await expect(page).toClick("button.diceroller", { text: "Roll" });
 
-      const diceValue = await getValue(0);
-      const diceValue2 = await getValue(1);
-      expect(diceValue).toEqual(diceValue2);
+      expect(getDiceValue("left")).toEqual(getDiceValue("right"));
     });
   });
