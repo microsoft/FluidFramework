@@ -14,21 +14,6 @@ import { IResolvedPackage, WebCodeLoader } from "@microsoft/fluid-web-code-loade
 import { IBaseHostConfig } from "./hostConfig";
 import { initializeContainerCode } from "./initializeContainerCode";
 
-function renderComponent(component: IComponent, div: HTMLDivElement) {
-    // First try to get it as a view
-    let renderable = component.IComponentHTMLView;
-    if (!renderable) {
-        // Otherwise get the visual, which is a view factory
-        const visual = component.IComponentHTMLVisual;
-        if (visual) {
-            renderable = visual.addView();
-        }
-    }
-    if (renderable) {
-        renderable.render(div, { display: "block" });
-    }
-}
-
 /**
  * Create a loader and return it.
  * @param hostConfig - Config specifying the resolver/factory to be used.
@@ -152,9 +137,20 @@ export class BaseHost {
         return response.value as IComponent;
     }
 
-    private async getComponentAndRender(url, div) {
+    private async getComponentAndRender(url: string, div: HTMLDivElement) {
         const component = await this.getComponent(url);
-        renderComponent(component, div);
+        // First try to get it as a view
+        let renderable = component.IComponentHTMLView;
+        if (!renderable) {
+            // Otherwise get the visual, which is a view factory
+            const visual = component.IComponentHTMLVisual;
+            if (visual) {
+                renderable = visual.addView();
+            }
+        }
+        if (renderable) {
+            renderable.render(div, { display: "block" });
+        }
     }
 
     public async loadAndRender(url: string, div: HTMLDivElement, pkg?: IFluidCodeDetails) {
