@@ -5,6 +5,7 @@
 - [Remove back-compat support for loader <= 0.8](#remove-back-compat-support-for-loader-08)
 - [New Error types](#new-error-types)
 - [`IComponentContext` - `createSubComponent` removed, `createComponent` signature updated](#icomponentcontext-createsubcomponent-removed-createcomponent-signature-updated)
+- [`IComponentHandle` - Moved type parameter from get to interface](#icomponenthandle-type-parameter-moved)
 - [Changes to the render interfaces](#changes-to-the-render-interfaces)
 
 ## Packages move and renamed
@@ -70,6 +71,18 @@ public async createComponent(
 It does not acccept a package path anymore but just a package name. To pass in props, an ID has to be provided now. However, ID is being deprecated so prefer passing undefined in its place (the runtime will generate an ID in this case). This API will now attempt to create the specified package off the current sub-registry and if that fails, it will attempt to create it off the global registry.
 
 For creating a component with a specific package path, use `createComponent` or `_createComponentWithProps` in `IHostRuntime`.
+
+## `IComponentHandle` - Type parameter moved
+The type parameter previously on the `get()` method has moved to the `IComponentHandle` type.
+
+Old:
+```ts
+    map.get<IComponentHandle>(..).get<ISharedMap>();
+```
+New:
+```ts
+    map.get<IComponentHandle<ISharedMap>>(..).get();
+```
 
 ## Changes to the render interfaces
 
