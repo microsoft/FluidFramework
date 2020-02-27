@@ -7,3 +7,8 @@ export interface IDisposable {
     readonly disposed: boolean;
     dispose(): void;
 }
+
+export interface IAsyncDisposable {
+    readonly disposed: boolean;
+    disposeAsync(): void;
+}
