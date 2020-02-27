@@ -14,17 +14,21 @@ import { IRuntime } from "@microsoft/fluid-container-definitions";
 export class ComponentHandleContext implements IComponentHandleContext {
     public get IComponentRouter() { return this; }
     public get IComponentHandleContext() { return this; }
-    public readonly isAttached = true;
 
     constructor(
         public readonly path: string,
         private readonly runtime: IRuntime,
+        private _isAttached: boolean,
         public readonly routeContext?: IComponentHandleContext,
     ) {
     }
 
+    public get isAttached(): boolean {
+        return this._isAttached;
+    }
+
     public attach(): void {
-        return;
+        this._isAttached = true;
     }
 
     public bind(handle: IComponentHandle): void {

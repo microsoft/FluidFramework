@@ -202,10 +202,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     constructor(
-        private readonly service: IDocumentService,
+        private service: IDocumentService | undefined,
         private readonly client: IClient,
         private readonly logger: ITelemetryLogger,
-        private readonly reconnect: boolean) {
+        private readonly reconnect: boolean,
+    ) {
         super();
 
         this.clientDetails = this.client.details;
@@ -303,9 +304,17 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.inQuorum = false;
     }
 
+    public attachServices(service: IDocumentService) {
+        this.service = service;
+    }
+
     public async connect(requestedMode: ConnectionMode = "write"): Promise<IConnectionDetails> {
         if (this.closed) {
             throw new Error("Attempting to connect a closed DeltaManager");
+        }
+
+        if (!this.service) {
+            return Promise.reject("Delta manager is not attached");
         }
 
         if (this.connection) {
@@ -331,7 +340,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 connectRepeatCount++;
 
                 try {
-                    connection = await DeltaConnection.connect(this.service, this.client, requestedMode);
+                    connection = await DeltaConnection.connect(this.service!, this.client, requestedMode);
                 } catch (error) {
                     // Socket.io error when we connect to wrong socket, or hit some multiplexing bug
                     if (!canRetryOnError(error)) {
@@ -474,6 +483,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         fromInitial: number,
         to?: number,
     ): Promise<ISequencedDocumentMessage[]> {
+        if (!this.service) {
+            return Promise.reject("Delta manager is not attached");
+        }
+
         let retry: number = 0;
         let from: number = fromInitial;
         const allDeltas: ISequencedDocumentMessage[] = [];

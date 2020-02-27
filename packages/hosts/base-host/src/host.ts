@@ -116,6 +116,17 @@ export class BaseHost {
         return baseHost.loadAndRender(url, div, pkg ? pkg.details : undefined);
     }
 
+    public static async create(
+        hostConfig: IBaseHostConfig,
+        resolved: IResolvedUrl,
+        pkg: IResolvedPackage,
+        scriptIds: string[],
+        div: HTMLDivElement,
+    ): Promise<Container> {
+        const baseHost = new BaseHost(hostConfig, resolved, pkg, scriptIds);
+        return baseHost.createAndRender(div, pkg.details);
+    }
+
     private readonly loaderP: Promise<Loader>;
     public constructor(
         hostConfig: IBaseHostConfig,
@@ -150,6 +161,30 @@ export class BaseHost {
         if (pkg) {
             await initializeContainerCode(container, pkg)
                 .catch((error) => console.error("code proposal error", error));
+        }
+
+        return container;
+    }
+
+    public async createAndRender(div: HTMLDivElement, pkg: IFluidCodeDetails) {
+        const loader = await this.getLoader();
+
+        const container = await loader.createDetachedContainer(pkg);
+        const response = await container.request({ url: "/" });
+
+        // Check if the component is viewable
+        const component = response.value as IComponent;
+        // First try to get it as a view
+        let renderable = component.IComponentHTMLView;
+        if (!renderable) {
+            // Otherwise get the visual, which is a view factory
+            const visual = component.IComponentHTMLVisual;
+            if (visual) {
+                renderable = visual.addView();
+            }
+        }
+        if (renderable) {
+            renderable.render(div, { display: "block" });
         }
 
         return container;

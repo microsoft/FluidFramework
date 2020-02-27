@@ -58,7 +58,7 @@ export class RelativeLoader extends EventEmitter implements ILoader, IExperiment
      * BaseRequest is the original request that triggered the load. This URL is used in case credentials need
      * to be fetched again.
      */
-    constructor(private readonly loader: Loader, private readonly baseRequest: IRequest) {
+    constructor(private readonly loader: Loader, private readonly baseRequest?: IRequest) {
         super();
     }
 
@@ -74,6 +74,9 @@ export class RelativeLoader extends EventEmitter implements ILoader, IExperiment
 
     public async request(request: IRequest): Promise<IResponse> {
         if (request.url.startsWith("/")) {
+            if (!this.baseRequest) {
+                throw new Error("Not available. Container detached");
+            }
             if (this.needExecutionContext(request)) {
                 return this.loader.requestWorker(this.baseRequest.url, request);
             } else {
@@ -87,7 +90,7 @@ export class RelativeLoader extends EventEmitter implements ILoader, IExperiment
         return this.loader.request(request);
     }
 
-    public async experimentalCreateDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
+    public async createDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
         throw new Error("Method not implemented.");
     }
 
@@ -189,8 +192,16 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
         this.protocolToDocumentFactoryMap = createProtocolToFactoryMapping(documentServiceFactories);
     }
 
-    public async experimentalCreateDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
-        throw new Error("Method not implemented.");
+    public async createDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
+        debug(`Container creating in detached state: ${now()} `);
+
+        return Container.create(
+            this.codeLoader,
+            this.options,
+            this.scope,
+            this,
+            source,
+            this.logger);
     }
 
     public async resolve(request: IRequest): Promise<Container> {
@@ -237,7 +248,14 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
         }
     }
 
-    private parseUrl(url: string): IParsedUrl | null {
+    public factoryForResolved(resolvedUrl: IFluidResolvedUrl): IDocumentServiceFactory {
+        const factory: IDocumentServiceFactory =
+            selectDocumentServiceFactoryForProtocol(resolvedUrl, this.protocolToDocumentFactoryMap);
+
+        return factory;
+    }
+
+    public parseUrl(url: string): IParsedUrl | null {
         const parsed = parse(url, true);
 
         const regex = /^\/([^/]*\/[^/]*)(\/?.*)$/;

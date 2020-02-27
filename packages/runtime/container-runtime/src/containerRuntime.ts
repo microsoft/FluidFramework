@@ -25,6 +25,7 @@ import {
     IRuntime,
     IRuntimeState,
     IExperimentalRuntime,
+    IExperimentalContainerContext,
 } from "@microsoft/fluid-container-definitions";
 import {
     Deferred,
@@ -496,6 +497,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     private readonly summaryTreeConverter = new SummaryTreeConverter();
     private latestSummaryAck: ISummaryContext;
     private readonly summaryTracker: SummaryTracker;
+    private readonly roots = new Map<string, IComponentRuntime>();
 
     private tasks: string[] = [];
 
@@ -560,11 +562,16 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         this.chunkMap = new Map<string, string[]>(chunks);
 
-        this.IComponentHandleContext = new ComponentHandleContext("", this);
+        this.IComponentHandleContext = new ComponentHandleContext(
+            "",
+            this,
+            this.context.isExperimentalContainerContext ?
+                (this.context as IExperimentalContainerContext).isAttached() : true);
 
         this.latestSummaryAck = { proposalHandle: undefined, ackHandle: undefined };
         this.summaryTracker = new SummaryTracker(
-            this.storage.uploadSummaryWithContext !== undefined, // useContext - back-compat: 0.14 uploadSummary
+            this.storage &&
+                this.storage.uploadSummaryWithContext !== undefined, // useContext - back-compat: 0.14 uploadSummary
             "", // fullPath - the root is unnamed
             this.deltaManager.initialSequenceNumber, // referenceSequenceNumber - last acked summary ref seq number
             this.deltaManager.initialSequenceNumber, // latestSequenceNumber - latest sequence number seen
@@ -823,6 +830,12 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     public async getComponentRuntime(id: string, wait = true): Promise<IComponentRuntime> {
         this.verifyNotClosed();
 
+        // ContainerContext is not attached. So serve the runtime from registered roots.
+        if (this.context.isExperimentalContainerContext
+            && !(this.context as IExperimentalContainerContext).isAttached()) {
+            return this.roots.has(id) ? this.roots.get(id) : Promise.reject("Unknown component ID");
+        }
+
         if (!this.contextsDeferred.has(id)) {
             if (!wait) {
                 return Promise.reject(`Process ${id} does not exist`);
@@ -834,6 +847,14 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         const componentContext = await this.contextsDeferred.get(id).promise;
         return componentContext.realize();
+    }
+
+    public registerRoot(runtime: IComponentRuntime) {
+        if (this.context.isExperimentalContainerContext
+            && (this.context as IExperimentalContainerContext).isAttached()) {
+            throw new Error("Can only register roots when unattached");
+        }
+        this.roots.set(runtime.id, runtime);
     }
 
     public setFlushMode(mode: FlushMode): void {
@@ -977,10 +998,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.context.submitSignalFn(envelope);
     }
 
-    public experimentalAttachServices(storageService: IDocumentStorageService): void {
-        throw new Error("Method not implemented");
-    }
-
     /**
      * Returns a summary of the runtime at the current sequence number.
      */
@@ -1096,16 +1113,31 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.verifyNotClosed();
 
         const context = this.contexts.get(componentRuntime.id);
-        const message = context.generateAttachMessage();
+        // If storage is not available then we are not yet fully attached and so will defer to the initial snapshot
+        if (this.IComponentHandleContext.isAttached) {
+            const message = context.generateAttachMessage();
 
-        this.pendingAttach.set(componentRuntime.id, message);
-        if (this.connected) {
-            this.submit(MessageType.Attach, message);
+            this.pendingAttach.set(componentRuntime.id, message);
+            if (this.connected) {
+                this.submit(MessageType.Attach, message);
+            }
         }
 
         // Resolve the deferred so other local components can access it.
         const deferred = this.contextsDeferred.get(componentRuntime.id);
         deferred.resolve(context);
+    }
+
+    public async attachAndSummarize(): Promise<ISummaryTree> {
+        // Trigger an attach on all bound contexts
+        for (const [, root] of this.roots) {
+            root.attach();
+        }
+        this.IComponentHandleContext.attach();
+
+        const treeWithStats = await this.summarize(true);
+
+        return treeWithStats.summaryTree;
     }
 
     private async generateSummary(fullTree: boolean = false, safe: boolean = false): Promise<GenerateSummaryData> {

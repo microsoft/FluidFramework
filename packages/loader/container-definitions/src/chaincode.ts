@@ -22,6 +22,7 @@ import {
     ISnapshotTree,
     ITree,
     MessageType,
+    ISummaryTree,
 } from "@microsoft/fluid-protocol-definitions";
 import { IAudience } from "./audience";
 import { IBlobManager } from "./blobs";
@@ -129,6 +130,8 @@ export interface IRuntimeState {
  */
 export interface IRuntime {
 
+    isExperimentalRuntime?: boolean;
+
     /**
      * Executes a request against the runtime
      */
@@ -161,12 +164,11 @@ export interface IRuntime {
     processSignal(message: any, local: boolean);
 }
 
-export interface IExperimentalRuntime {
+export interface IExperimentalRuntime extends IRuntime {
 
     isExperimentalRuntime: true;
 
-    // Bind the registered services once attached.
-    experimentalAttachServices(storageService: IDocumentStorageService): void;
+    attachAndSummarize(): Promise<ISummaryTree>;
 }
 
 export interface IMessageScheduler {
@@ -178,6 +180,7 @@ export interface IProvideMessageScheduler {
 }
 
 export interface IContainerContext extends EventEmitter, IMessageScheduler, IProvideMessageScheduler {
+    isExperimentalContainerContext?: boolean;
     readonly id: string;
     readonly existing: boolean | undefined;
     readonly options: any;
@@ -218,6 +221,17 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
      * back-compat: 0.14 uploadSummary
      */
     refreshBaseSummary(snapshot: ISnapshotTree): void;
+}
+
+export interface IExperimentalContainerContext extends IContainerContext {
+    isExperimentalContainerContext: true;
+
+    isAttached(): boolean;
+
+    attachAndSummarize(): Promise<ISummaryTree>;
+
+    // Bind the registered services once attached.
+    attachServices(storageService: IDocumentStorageService): void;
 }
 
 export interface IProvideComponentTokenProvider {

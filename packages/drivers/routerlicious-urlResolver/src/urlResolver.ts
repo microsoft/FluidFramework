@@ -140,11 +140,11 @@ export class RouterliciousUrlResolver implements IUrlResolver, IExperimentalUrlR
         return resolved;
     }
 
-    public async experimentalCreate(
+    public async create(
         summary: ISummaryTree,
         sequenceNumber: number,
         values: [string, ICommittedProposal][],
-        options: any,
+        request: IRequest,
     ): Promise<IResolvedUrl> {
         throw new Error("Method not implemented.");
     }

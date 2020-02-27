@@ -31,18 +31,20 @@ export enum OpenMode {
 }
 
 export interface IUrlResolver {
+    isExperimentalUrlResolver?: boolean;
+
     // Like DNS should be able to cache resolution requests. Then possibly just have a token provider go and do stuff?
     // the expiration of it could be relative to the lifetime of the token? Requests after need to refresh?
     // or do we split the token access from this?
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
 }
 
-export interface IExperimentalUrlResolver {
+export interface IExperimentalUrlResolver extends IUrlResolver {
 
-    readonly isExperimentalUrlResolver: true;
+    isExperimentalUrlResolver: true;
 
     // Creates a new document on the host with the provided options. Returns the resolved URL.
-    experimentalCreate(
+    create(
         summary: ISummaryTree,
         sequenceNumber: number,
         values: [string, ICommittedProposal][],

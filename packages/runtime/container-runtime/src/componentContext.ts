@@ -136,6 +136,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this._baseSnapshot;
     }
 
+    public readonly attach: (componentRuntime: IComponentRuntime) => void;
     protected componentRuntime: IComponentRuntime;
     private closed = false;
     private loaded = false;
@@ -150,10 +151,16 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         public readonly storage: IDocumentStorageService,
         public readonly scope: IComponent,
         public readonly summaryTracker: ISummaryTracker,
-        public readonly attach: (componentRuntime: IComponentRuntime) => void,
+        public isAttached: boolean,
+        attach: (componentRuntime: IComponentRuntime) => void,
         protected pkg?: readonly string[],
     ) {
         super();
+
+        this.attach = (componentRuntime: IComponentRuntime) => {
+            attach(componentRuntime);
+            this.isAttached = true;
+        };
     }
 
     public async createComponent(pkgOrId: string | undefined, pkg?: string, props?: any): Promise<IComponentRuntime> {
@@ -436,6 +443,7 @@ export class RemotedComponentContext extends ComponentContext {
             storage,
             scope,
             summaryTracker,
+            true,
             () => {
                 throw new Error("Already attached");
             },
@@ -503,7 +511,7 @@ export class LocalComponentContext extends ComponentContext {
         attachCb: (componentRuntime: IComponentRuntime) => void,
         public readonly createProps?: any,
     ) {
-        super(runtime, id, false, storage, scope, summaryTracker, attachCb, pkg);
+        super(runtime, id, false, storage, scope, summaryTracker, false, attachCb, pkg);
     }
 
     public generateAttachMessage(): IAttachMessage {

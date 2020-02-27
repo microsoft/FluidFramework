@@ -20,6 +20,8 @@ import {
     IRuntime,
     IRuntimeFactory,
     IRuntimeState,
+    IExperimentalRuntime,
+    IExperimentalContainerContext,
 } from "@microsoft/fluid-container-definitions";
 import { IDocumentStorageService, IError } from "@microsoft/fluid-driver-definitions";
 import { raiseConnectedEvent } from "@microsoft/fluid-protocol-base";
@@ -35,11 +37,14 @@ import {
     ISnapshotTree,
     ITree,
     MessageType,
+    ISummaryTree,
 } from "@microsoft/fluid-protocol-definitions";
 import { BlobManager } from "./blobManager";
 import { Container } from "./container";
 
-export class ContainerContext extends EventEmitter implements IContainerContext {
+export class ContainerContext extends EventEmitter implements IContainerContext, IExperimentalContainerContext {
+
+    public readonly isExperimentalContainerContext = true;
     public static async load(
         container: Container,
         scope: IComponent,
@@ -71,6 +76,48 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
             deltaManager,
             quorum,
             storage,
+            loader,
+            errorFn,
+            submitFn,
+            submitSignalFn,
+            snapshotFn,
+            closeFn,
+            version,
+            previousRuntimeState);
+        await context.load();
+        return context;
+    }
+
+    public static async create(
+        container: Container,
+        scope: IComponent,
+        codeLoader: ICodeLoader,
+        chaincode: IRuntimeFactory,
+        baseSnapshot: ISnapshotTree | null,
+        attributes: IDocumentAttributes,
+        blobManager: BlobManager | undefined,
+        deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+        quorum: IQuorum,
+        loader: ILoader,
+        errorFn: (err: IError) => void,
+        submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
+        submitSignalFn: (contents: any) => void,
+        snapshotFn: (message: string) => Promise<void>,
+        closeFn: (reason?: string) => void,
+        version: string,
+        previousRuntimeState: IRuntimeState,
+    ): Promise<ContainerContext> {
+        const context = new ContainerContext(
+            container,
+            scope,
+            codeLoader,
+            chaincode,
+            baseSnapshot,
+            attributes,
+            blobManager,
+            deltaManager,
+            quorum,
+            undefined,
             loader,
             errorFn,
             submitFn,
@@ -150,6 +197,10 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         return this._baseSnapshot;
     }
 
+    public get storage(): IDocumentStorageService | undefined | null {
+        return this._storage;
+    }
+
     private runtime: IRuntime | undefined;
 
     constructor(
@@ -162,7 +213,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         public readonly blobManager: BlobManager | undefined,
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         public readonly quorum: IQuorum,
-        public readonly storage: IDocumentStorageService | undefined | null,
+        public _storage: IDocumentStorageService | undefined | null,
         public readonly loader: ILoader,
         private readonly errorFn: (err: IError) => void,
         public readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
@@ -188,6 +239,19 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
 
     public async snapshot(tagMessage: string, fullTree: boolean = false): Promise<ITree | null> {
         return this.runtime!.snapshot(tagMessage, fullTree);
+    }
+
+    public isAttached(): boolean {
+        return this.container.isAttached();
+    }
+
+    public async attachAndSummarize(): Promise<ISummaryTree> {
+        const tree = await (this.runtime! as IExperimentalRuntime).attachAndSummarize();
+        return tree;
+    }
+
+    public attachServices(storage: IDocumentStorageService): void {
+        this._storage = storage;
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string, version?: string) {
