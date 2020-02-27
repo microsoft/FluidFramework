@@ -597,11 +597,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.context.on("refreshBaseSummary",
             (snapshot: ISnapshotTree) => this.refreshBaseSummary(snapshot));
 
-        // Pass through "close" events from the container context
-        this.context.on("close", () => {
-            this.emit("close");
-        });
-
         // We always create the summarizer in the case that we are asked to generate summaries. But this may
         // want to be on demand instead.
         // Don't use optimizations when generating summaries with a document loaded using snapshots.
@@ -693,6 +688,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     public async stop(): Promise<void> {
         this.verifyNotClosed();
         this.closed = true;
+
+        this.emit("dispose");
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string, version: string) {

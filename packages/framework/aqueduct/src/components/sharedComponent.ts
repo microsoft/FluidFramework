@@ -4,6 +4,7 @@
  */
 
 import { EventEmitter } from "events";
+import { IDisposable } from "@microsoft/fluid-common-definitions";
 import {
     IComponent,
     IComponentHandle,
@@ -24,9 +25,12 @@ import { serviceRoutePathRoot } from "../containerServices";
  * You probably don't want to inherit from this component directly unless you are creating another base component class
  */
 // eslint-disable-next-line max-len
-export abstract class SharedComponent extends EventEmitter implements IComponentLoadable, IComponentRouter, IProvideComponentHandle {
+export abstract class SharedComponent extends EventEmitter implements IComponentLoadable, IComponentRouter, IProvideComponentHandle, IDisposable {
     private initializeP: Promise<void> | undefined;
     private readonly innerHandle: IComponentHandle;
+    public disposed = false;
+
+    private readonly runtimeDisposeCallback: () => void;
 
     public get id() { return this.runtime.id; }
     public get IComponentRouter() { return this; }
@@ -46,11 +50,10 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
         this.innerHandle = new ComponentHandle(this, this.url, runtime.IComponentHandleContext);
 
         // Container event handlers
-        context.hostRuntime.on("close", () => {
-            (async function(component: SharedComponent) {
-                await component.onContainerClose();
-            }(this));
-        });
+        this.runtimeDisposeCallback = () => {
+            this.onContainerClose();
+        };
+        context.hostRuntime.on("dispose", this.runtimeDisposeCallback);
     }
 
     /**
@@ -65,6 +68,13 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
 
         await this.initializeP;
     }
+
+    public dispose(): void {
+        this.context.hostRuntime.removeListener("dispose", this.runtimeDisposeCallback);
+
+        this.disposed = true;
+    }
+
     // #region IComponentRouter
 
     /**
@@ -189,7 +199,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     protected async componentHasInitialized(): Promise<void> { }
 
     /**
-     * Called when the host container emits a close event
+     * Called when the host container closes and disposes itself
      */
-    protected async onContainerClose(): Promise<void> { }
+    protected onContainerClose(): void { }
 }

@@ -12,7 +12,7 @@ import {
     IDeltaManager,
     IDeltaQueue,
 } from "@microsoft/fluid-container-definitions";
-import { PerformanceEvent } from "@microsoft/fluid-core-utils";
+import { PerformanceEvent } from "@microsoft/fluid-common-utils";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
@@ -382,7 +382,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             // Regardless of how the connection attempt concludes, we'll clear the promise and remove the listener
             const cleanupConnectionAttempt = () => {
                 this.connectionP = undefined;
-                this.removeListener("close", cleanupAndReject);
+                this.removeListener("closed", cleanupAndReject);
             };
 
             // Reject the connection promise if the DeltaManager gets closed during connection
@@ -390,7 +390,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 cleanupConnectionAttempt();
                 reject(error);
             };
-            this.on("close", cleanupAndReject);
+            this.on("closed", cleanupAndReject);
 
             // Attempt the connection
             connectCore().then((connection) => {
@@ -641,7 +641,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // Drop pending messages - this will ensure catchUp() does not go into infinite loop
         this.pending = [];
 
-        this.emit("close");
+        this.emit("closed");
 
         this.removeAllListeners();
     }

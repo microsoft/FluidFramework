@@ -170,11 +170,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
     ) {
         super();
         this.logger = container.subLogger;
-
-        // Pass through "close" events from the container
-        container.on("close", () => {
-            this.emit("close");
-        });
     }
 
     public refreshBaseSummary(snapshot: ISnapshotTree) {
