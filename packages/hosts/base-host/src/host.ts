@@ -14,20 +14,7 @@ import { IResolvedPackage, WebCodeLoader } from "@microsoft/fluid-web-code-loade
 import { IBaseHostConfig } from "./hostConfig";
 import { initializeContainerCode } from "./initializeContainerCode";
 
-
-async function getComponentAndRender(loader: Loader, url: string, div: HTMLDivElement) {
-    const response = await loader.request({ url });
-
-    if (response.status !== 200 ||
-        !(
-            response.mimeType === "fluid/component" ||
-            response.mimeType === "prague/component"
-        )) {
-        return;
-    }
-
-    // Check if the component is viewable
-    const component = response.value as IComponent;
+function renderComponent(component: IComponent, div: HTMLDivElement) {
     // First try to get it as a view
     let renderable = component.IComponentHTMLView;
     if (!renderable) {
@@ -136,21 +123,47 @@ export class BaseHost {
         return this.loaderP;
     }
 
-    public async loadAndRender(url: string, div: HTMLDivElement, pkg?: IFluidCodeDetails) {
+    public async initializeContainer(url: string, pkg?: IFluidCodeDetails) {
         const loader = await this.getLoader();
         const container = await loader.resolve({ url });
 
-        container.on("contextChanged", (value) => {
-            getComponentAndRender(loader, url, div).catch(() => { });
-        });
-        await getComponentAndRender(loader, url, div);
-
         // if a package is provided, try to initialize the code proposal with it
-        // if not we assume the contianer already has a code proposal
+        // if not we assume the container already has a code proposal
         if (pkg) {
             await initializeContainerCode(container, pkg)
                 .catch((error) => console.error("code proposal error", error));
         }
+
+        return container;
+    }
+
+    public async getComponent(url: string) {
+        const loader = await this.getLoader();
+        const response = await loader.request({ url });
+
+        if (response.status !== 200 ||
+            !(
+                response.mimeType === "fluid/component" ||
+                response.mimeType === "prague/component"
+            )) {
+            throw new Error("Failed to getComponent");
+        }
+
+        return response.value as IComponent;
+    }
+
+    private async getComponentAndRender(url, div) {
+        const component = await this.getComponent(url);
+        renderComponent(component, div);
+    }
+
+    public async loadAndRender(url: string, div: HTMLDivElement, pkg?: IFluidCodeDetails) {
+        const container = await this.initializeContainer(url, pkg);
+
+        container.on("contextChanged", (value) => {
+            this.getComponentAndRender(url, div).catch(() => { });
+        });
+        await this.getComponentAndRender(url, div);
 
         return container;
     }
