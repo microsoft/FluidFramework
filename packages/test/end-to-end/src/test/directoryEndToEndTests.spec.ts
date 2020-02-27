@@ -51,9 +51,9 @@ describe("Directory", () => {
         user1Document.getRoot().set(directoryId, directory.handle);
         await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
 
-        root1Directory = await user1Document.getRoot().get<IComponentHandle>(directoryId).get<ISharedDirectory>();
-        root2Directory = await user2Document.getRoot().get<IComponentHandle>(directoryId).get<ISharedDirectory>();
-        root3Directory = await user3Document.getRoot().get<IComponentHandle>(directoryId).get<ISharedDirectory>();
+        root1Directory = await user1Document.getRoot().get<IComponentHandle<ISharedDirectory>>(directoryId).get();
+        root2Directory = await user2Document.getRoot().get<IComponentHandle<ISharedDirectory>>(directoryId).get();
+        root3Directory = await user3Document.getRoot().get<IComponentHandle<ISharedDirectory>>(directoryId).get();
     });
 
     function expectAllValues(msg, key, path, value1, value2, value3) {
@@ -274,9 +274,9 @@ describe("Directory", () => {
                 root1Directory.set("mapKey", newMap.handle);
                 await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
                 const [root1Map, root2Map, root3Map] = await Promise.all([
-                    root1Directory.get<IComponentHandle>("mapKey").get<ISharedMap>(),
-                    root2Directory.get<IComponentHandle>("mapKey").get<ISharedMap>(),
-                    root3Directory.get<IComponentHandle>("mapKey").get<ISharedMap>(),
+                    root1Directory.get<IComponentHandle<ISharedMap>>("mapKey").get(),
+                    root2Directory.get<IComponentHandle<ISharedMap>>("mapKey").get(),
+                    root3Directory.get<IComponentHandle<ISharedMap>>("mapKey").get(),
                 ]);
 
                 assert.ok(root1Map);

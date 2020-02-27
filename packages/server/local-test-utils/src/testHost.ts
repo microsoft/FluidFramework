@@ -88,8 +88,8 @@ class TestRootComponent extends PrimedComponent implements IComponentRunnable {
      * @param id - ID of shared object
      */
     public async getType<T extends ISharedObject>(id: string): Promise<T> {
-        const handle = await this.root.wait<IComponentHandle>(id);
-        return handle.get<T>();
+        const handle = await this.root.wait<IComponentHandle<T>>(id);
+        return handle.get();
     }
 
     /**

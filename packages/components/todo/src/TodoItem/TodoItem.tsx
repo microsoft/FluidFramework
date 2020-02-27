@@ -82,8 +82,8 @@ export class TodoItem extends PrimedComponent
     }
 
     protected async componentHasInitialized() {
-        const text = this.root.get<IComponentHandle>(textKey).get<SharedString>();
-        const innerIdCell = this.root.get<IComponentHandle>(innerComponentKey).get<ISharedCell>();
+        const text = this.root.get<IComponentHandle<SharedString>>(textKey).get();
+        const innerIdCell = this.root.get<IComponentHandle<ISharedCell>>(innerComponentKey).get();
         this.baseUrl = this.root.get(baseUrlKey);
 
         this.setCheckedState = this.setCheckedState.bind(this);
