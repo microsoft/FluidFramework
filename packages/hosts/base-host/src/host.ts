@@ -188,7 +188,7 @@ export class BaseHost {
         if (response.status === 200 &&
             (response.mimeType === "fluid/component" || response.mimeType === "prague/component")) {
             const component = response.value as IComponent;
-    
+
             // First try to get it as a view
             let renderable = component.IComponentHTMLView;
             if (!renderable) {
