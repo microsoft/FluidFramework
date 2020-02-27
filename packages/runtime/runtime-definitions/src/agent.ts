@@ -93,7 +93,7 @@ export interface IAgentScheduler extends IProvideAgentScheduler, IComponentRoute
     /**
      * Event listeners
      */
-    on(event: "leader" | "picked" | "running", listener: (...args: any[]) => void): this;
+    on(event: "notleader" | "leader" | "picked" | "released", listener: (...args: any[]) => void): this;
 }
 
 declare module "@microsoft/fluid-component-core-interfaces" {

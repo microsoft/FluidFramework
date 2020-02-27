@@ -14,34 +14,6 @@ import { IResolvedPackage, WebCodeLoader } from "@microsoft/fluid-web-code-loade
 import { IBaseHostConfig } from "./hostConfig";
 import { initializeContainerCode } from "./initializeContainerCode";
 
-
-async function getComponentAndRender(loader: Loader, url: string, div: HTMLDivElement) {
-    const response = await loader.request({ url });
-
-    if (response.status !== 200 ||
-        !(
-            response.mimeType === "fluid/component" ||
-            response.mimeType === "prague/component"
-        )) {
-        return;
-    }
-
-    // Check if the component is viewable
-    const component = response.value as IComponent;
-    // First try to get it as a view
-    let renderable = component.IComponentHTMLView;
-    if (!renderable) {
-        // Otherwise get the visual, which is a view factory
-        const visual = component.IComponentHTMLVisual;
-        if (visual) {
-            renderable = visual.addView();
-        }
-    }
-    if (renderable) {
-        renderable.render(div, { display: "block" });
-    }
-}
-
 /**
  * Create a loader and return it.
  * @param hostConfig - Config specifying the resolver/factory to be used.
@@ -147,17 +119,12 @@ export class BaseHost {
         return this.loaderP;
     }
 
-    public async loadAndRender(url: string, div: HTMLDivElement, pkg?: IFluidCodeDetails) {
+    public async initializeContainer(url: string, pkg?: IFluidCodeDetails) {
         const loader = await this.getLoader();
         const container = await loader.resolve({ url });
 
-        container.on("contextChanged", (value) => {
-            getComponentAndRender(loader, url, div).catch(() => { });
-        });
-        await getComponentAndRender(loader, url, div);
-
         // if a package is provided, try to initialize the code proposal with it
-        // if not we assume the contianer already has a code proposal
+        // if not we assume the container already has a code proposal
         if (pkg) {
             await initializeContainerCode(container, pkg)
                 .catch((error) => console.error("code proposal error", error));
@@ -166,14 +133,27 @@ export class BaseHost {
         return container;
     }
 
-    public async createAndRender(div: HTMLDivElement, pkg: IFluidCodeDetails) {
+    public async getComponent(url: string) {
         const loader = await this.getLoader();
+        const response = await loader.request({ url });
 
-        const container = await loader.createDetachedContainer(pkg);
-        const response = await container.request({ url: "/" });
+        if (response.status !== 200 ||
+            !(
+                response.mimeType === "fluid/component" ||
+                response.mimeType === "prague/component"
+            )) {
+            return undefined;
+        }
 
-        // Check if the component is viewable
-        const component = response.value as IComponent;
+        return response.value as IComponent;
+    }
+
+    private async getComponentAndRender(url: string, div: HTMLDivElement) {
+        const component = await this.getComponent(url);
+        if (component === undefined) {
+            return;
+        }
+
         // First try to get it as a view
         let renderable = component.IComponentHTMLView;
         if (!renderable) {
@@ -185,6 +165,42 @@ export class BaseHost {
         }
         if (renderable) {
             renderable.render(div, { display: "block" });
+        }
+    }
+
+    public async loadAndRender(url: string, div: HTMLDivElement, pkg?: IFluidCodeDetails) {
+        const container = await this.initializeContainer(url, pkg);
+
+        container.on("contextChanged", (value) => {
+            this.getComponentAndRender(url, div).catch(() => { });
+        });
+        await this.getComponentAndRender(url, div);
+
+        return container;
+    }
+
+    public async createAndRender(div: HTMLDivElement, pkg: IFluidCodeDetails) {
+        const loader = await this.getLoader();
+
+        const container = await loader.createDetachedContainer(pkg);
+        const response = await container.request({ url: "/" });
+
+        if (response.status === 200 &&
+            (response.mimeType === "fluid/component" || response.mimeType === "prague/component")) {
+            const component = response.value as IComponent;
+    
+            // First try to get it as a view
+            let renderable = component.IComponentHTMLView;
+            if (!renderable) {
+                // Otherwise get the visual, which is a view factory
+                const visual = component.IComponentHTMLVisual;
+                if (visual) {
+                    renderable = visual.addView();
+                }
+            }
+            if (renderable) {
+                renderable.render(div, { display: "block" });
+            }
         }
 
         return container;
