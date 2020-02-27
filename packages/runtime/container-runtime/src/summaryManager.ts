@@ -89,6 +89,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         parentLogger: ITelemetryLogger,
         private readonly setNextSummarizer: (summarizer: Promise<Summarizer>) => void,
         private readonly nextSummarizerP?: Promise<Summarizer>,
+        immediateSummary: boolean = false,
         private readonly maxRestarts: number = defaultMaxRestarts,
         initialDelayMs: number = defaultInitialDelayMs,
     ) {
@@ -116,7 +117,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
             this.refreshSummarizer();
         });
 
-        this.initialDelayTimer = new PromiseTimer(initialDelayMs, () => {});
+        this.initialDelayTimer = new PromiseTimer(immediateSummary ? 0 : initialDelayMs, () => {});
         this.initialDelayP = this.initialDelayTimer.start().catch(() => {});
 
         this.refreshSummarizer();

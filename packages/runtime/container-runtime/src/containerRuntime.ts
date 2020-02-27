@@ -97,6 +97,7 @@ interface ISummaryTreeWithStats {
 
 export interface IPreviousState {
     summaryCollection?: SummaryCollection,
+    reload?: boolean,
 
     // only one (or zero) of these will be defined. the summarizing Summarizer will resolve the deferred promise, and
     // the SummaryManager that spawned it will have that deferred's promise
@@ -653,7 +654,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.runtimeOptions.enableWorker,
             this.logger,
             (summarizer) => { this.nextSummarizerP = summarizer; },
-            this.previousState.nextSummarizerP);
+            this.previousState.nextSummarizerP,
+            !!this.previousState.reload);
 
         if (this.context.connectionState === ConnectionState.Connected) {
             this.summaryManager.setConnected(this.context.clientId);
@@ -731,6 +733,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.summarizer.dispose();
         this.closed = true;
         const state: IPreviousState = {
+            reload: true,
             summaryCollection: this.summarizer.summaryCollection,
             nextSummarizerP: this.nextSummarizerP,
             nextSummarizerD: this.nextSummarizerD,
