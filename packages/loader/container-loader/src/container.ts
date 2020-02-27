@@ -301,7 +301,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         private readonly loader: Loader,
         id?: string,
         private service?: IDocumentService,
-        private readonly originalRequest?: IRequest,
+        private originalRequest?: IRequest,
         logger?: ITelemetryBaseLogger,
     ) {
         super();
@@ -410,6 +410,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const protocolHandler = this.protocolHandler!;
         const quorumSnapshot = protocolHandler.quorum.snapshot();
 
+        this.originalRequest = request;
         // Actually go and create the resolved document
         const resolvedUrl = await (resolver as IExperimentalUrlResolver).create(
             summary,
