@@ -35,7 +35,7 @@ import { debug } from "./debug";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const now = require("performance-now") as () => number;
 
-interface IParsedUrl {
+export interface IParsedUrl {
     id: string;
     path: string;
     /**
