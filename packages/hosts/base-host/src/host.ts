@@ -9,7 +9,6 @@ import {
     IProxyLoaderFactory,
 } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
-import { IFluidResolvedUrl, IResolvedUrl } from "@microsoft/fluid-driver-definitions";
 import { IResolvedPackage, WebCodeLoader } from "@microsoft/fluid-web-code-loader";
 import { IBaseHostConfig } from "./hostConfig";
 import { initializeContainerCode } from "./initializeContainerCode";
@@ -17,13 +16,11 @@ import { initializeContainerCode } from "./initializeContainerCode";
 /**
  * Create a loader and return it.
  * @param hostConfig - Config specifying the resolver/factory to be used.
- * @param resolved - A resolved url from a url resolver.
  * @param pkg - A resolved package with cdn links.
  * @param scriptIds - The script tags the chaincode are attached to the view with.
  */
 async function createWebLoader(
     hostConfig: IBaseHostConfig,
-    resolved: IResolvedUrl,
     pkg: IResolvedPackage | undefined,
     scriptIds: string[],
 ): Promise<Loader> {
@@ -51,7 +48,6 @@ async function createWebLoader(
     // We need to extend options, otherwise we nest properties, like client, too deeply
     //
     config.blockUpdateMarkers = true;
-    config.tokens = (resolved as IFluidResolvedUrl).tokens;
 
     const scope = hostConfig.scope ? hostConfig.scope : {};
     const proxyLoaderFactories = hostConfig.proxyLoaderFactories ?
@@ -79,26 +75,23 @@ export class BaseHost {
     public static async start(
         hostConfig: IBaseHostConfig,
         url: string,
-        resolved: IResolvedUrl,
         pkg: IResolvedPackage | undefined,
         scriptIds: string[],
         div: HTMLDivElement,
     ): Promise<Container> {
-        const baseHost = new BaseHost(hostConfig, resolved, pkg, scriptIds);
+        const baseHost = new BaseHost(hostConfig, pkg, scriptIds);
         return baseHost.loadAndRender(url, div, pkg ? pkg.details : undefined);
     }
 
     private readonly loaderP: Promise<Loader>;
     public constructor(
         hostConfig: IBaseHostConfig,
-        resolved: IResolvedUrl,
         seedPackage: IResolvedPackage | undefined,
         scriptIds: string[],
     ) {
 
         this.loaderP = createWebLoader(
             hostConfig,
-            resolved,
             seedPackage,
             scriptIds,
         );

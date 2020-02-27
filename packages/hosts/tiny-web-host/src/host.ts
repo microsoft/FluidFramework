@@ -182,7 +182,6 @@ async function loadContainer(
 
     const baseHost = new BaseHost(
         hostConf,
-        resolved,
         pkg,
         scriptIds,
     );
