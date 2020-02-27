@@ -83,9 +83,6 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
                 /* eslint-disable-next-line @typescript-eslint/no-floating-promises */
                 this.dataModel.addComponent(type, w, h);
             });
-            this.componentToolbar.addListener("saveLayout", () => {
-                this.dataModel.saveLayout();
-            });
             this.componentToolbar.addListener("toggleEditable", (isEditable: boolean) => {
                 this.dataModel.emit("editableUpdated", isEditable);
             });

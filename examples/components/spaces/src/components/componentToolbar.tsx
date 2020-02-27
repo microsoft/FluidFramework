@@ -104,10 +104,6 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
         this.props.emit("addComponent", type, w, h);
     }
 
-    public emitSaveLayout() {
-        this.props.emit("saveLayout");
-    }
-
     public emitToggleEditable() {
         const newIsEditable = !this.state.isEditable;
         this.props.emit("toggleEditable", newIsEditable);
@@ -139,12 +135,6 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
                     {`Edit: ${this.state.isEditable}`}
                 </Button>
                 {this.state.isEditable ? editableButtons : undefined}
-                <Button
-                    iconProps={{ iconName: "Save" }}
-                    onClick={() => this.emitSaveLayout()}
-                >
-                    {"Save Layout"}
-                </Button>
             </div>
         );
     }
