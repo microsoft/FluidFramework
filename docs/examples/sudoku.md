@@ -1,35 +1,39 @@
 ---
 title: "Sudoku"
 uid: sudoku-example
+sidebarDepth: 2
 ---
 
 In this example we will build a collaborative Sudoku game. We will use Fluid distributed data structures to store and
 synchronize the Sudoku data.
 
-[[toc]]
+## Set up your dev environment
 
-# Acknowledgements
+If you haven't already, [set up your Fluid Framework development
+environment](../guide/README.md#set-up-your-development-environment).
+
+### Clone the tutorial repository
+
+First, clone [the tutorial
+repository](https://dev.azure.com/FluidDeveloperProgram/Developer%20Preview/_git/fluid-sudoku-tutorial).
+
+Since the Git repository is authenticated, it is easiest to visit the link above and click the "Clone" button in the
+top-right corner of the UI. Follow the resulting instructions to clone the repo.
+
+Once you've cloned the repo, you'll need to set up access to the [private Fluid NPM feed](../guide/package-feed.md). On
+Windows, you can run the `npm run auth` command to automate this process.
+
+Now that you have access to the private feed, run `npm install` in the root of the repository to install dependencies.
+
+Finally, you can open the folder in Visual Studio Code.
+
+## Acknowledgements
 
 This example uses the [sudokus](https://github.com/Moeriki/node-sudokus) NPM package by Dieter Luypaert
 (<https://github.com/Moeriki>) and the [@types/sudokus](https://www.npmjs.com/package/@types/sudokus) package by Florian
 Keller (<https://github.com/ffflorian>).
 
-# Set up your dev environment
-
-If you haven't already, [set up your Fluid Framework development
-environment](../guide/README.md#set-up-your-development-environment).
-
-First, clone the tutorial repository here:
-   <https://dev.azure.com/FluidDeveloperProgram/Developer%20Preview/_git/fluid-sudoku-tutorial>.
-
-Since the Git repository is authenticated, it is easiest to visit the URL above and click the "Clone" button in the
-top-right corner of the UI. Follow the resulting instructions to clone the repo.
-
-Once you've cloned the repo, run `npm install` in the root of the repository to install dependencies.
-
-Finally, you can open the folder in Visual Studio Code.
-
-## Folder layout
+### Folder layout
 
 The project has the following folder layout:
 
@@ -48,7 +52,7 @@ The project has the following folder layout:
 
 The _src_ folder contains the source files for the Sudoku Fluid component.
 
-## Run the sample
+### Run the sample
 
 After you've cloned the sample repo and installed dependencies using `npm install`, you can then use `npm start` to start
 a local dev environment for testing and debugging. Visit <http://localhost:8080/> in a browser to load the Fluid
@@ -57,7 +61,7 @@ development server, which will load two instances of the component side by side.
 !!!include(../includes/browsers.md)!!!
 
 <style>
-  #sudoku {
+  iframe#sudoku {
     height: 500px;
     width: 910px;
   }
@@ -74,9 +78,9 @@ empty schema, by reloading <http://localhost:8080/>. This will redirect you to a
 
 :::
 
-# Deep dive
+## Deep dive
 
-## Data model
+### Data model
 
 For our Sudoku data model, we will use a map-like data structure with string keys. Each key in the map is a coordinate
 (row, column) of a cell in the Sudoku puzzle. The top left cell has coordinate `"0,0"`, the cell to its right has
@@ -102,7 +106,7 @@ the `SudokuCell` class in `/src/helpers/sudokuCell.ts` for an example of this pa
 
 :::
 
-## Rendering
+### Rendering
 
 In order to render the Sudoku data, we use a React component called `SudokuView` This component is defined in
 `src/react/sudokuView.tsx` and accepts the map of Sudoku cell data as a prop. It then renders the Sudoku and
@@ -111,7 +115,7 @@ accompanying UI.
 The `SudokuView` React component is also responsible for handling UI interaction from the user; we'll examine that in
 more detail later.
 
-## The Fluid component
+### The Fluid component
 
 The React component described above does not itself represent a Fluid component. Rather, the Fluid component is defined
 in `src/fluidSudoku.tsx`.
@@ -442,7 +446,7 @@ for storing the presence data, and a function to update the map with presence da
 
 Now run `npm start` again and notice that your selected cell is now highlighted on the other side.
 
-## What's next
+## Next steps
 
 Now that you have some experience with Fluid, are there other features you could add to the Sudoku component? Perhaps
 you could extend it to display a client name in the cell to show client-specific presence. Or you could use the

@@ -54,7 +54,9 @@ componentization of data and UX, intelligent agents, and many other elements in 
 
 Below is a diagram showing the full 'Fluid Tech Stack', followed by a description of each layer:
 
-**TODO: Add diagram**
+::: danger TODO
+Diagram
+:::
 
 ### Fluid Framework Distributed System - Total Order Broadcast & Eventual Consistency
 

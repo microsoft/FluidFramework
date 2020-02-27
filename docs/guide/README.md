@@ -52,5 +52,5 @@ You'll need [Git](https://git-scm.com/) to use the [Fluid tutorials](../examples
 
 ## Next steps
 
-Now that your development environment is set up, try one of the tutorials, or read more about [distributed data
-structures](./dds.md) or the [Fluid component model](./components.md).
+Now that your development environment is set up, try [one of the tutorials](../examples/README.md), or read more about
+[distributed data structures](./dds.md) and the [Fluid component model](./components.md).

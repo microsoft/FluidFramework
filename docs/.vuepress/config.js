@@ -207,17 +207,17 @@ module.exports = {
     title: "Fluid Framework",
     description: "State that flows",
     evergreen: true,
-    // head: [
-    //     ["link", { rel: "icon", href: "/images/homescreen48.png" }],
-    //     ["link", { rel: "manifest", crossorigin: "use-credentials", href: "/manifest.webmanifest" }],
-    //     ["meta", { name: "theme-color", content: "#00BCF2" }],
-    //     ["meta", { name: "apple-mobile-web-app-capable", content: "yes" }],
-    //     ["meta", { name: "apple-mobile-web-app-status-bar-style", content: "black" }],
-    //     ["link", { rel: "apple-touch-icon", href: "/images/homescreen192.png" }],
-    //     // ["link", { rel: "mask-icon", href: "/icons/safari-pinned-tab.svg", color: "#3eaf7c" }],
-    //     ["meta", { name: "msapplication-TileImage", content: "/images/homescreen144.png" }],
-    //     ["meta", { name: "msapplication-TileColor", content: "#000000" }]
-    // ],
+    head: [
+        ["link", { rel: "icon", href: "/images/homescreen48.png" }],
+        ["link", { rel: "manifest", href: "/manifest.webmanifest" }],
+        ["meta", { name: "theme-color", content: "#00BCF2" }],
+        ["meta", { name: "apple-mobile-web-app-capable", content: "yes" }],
+        ["meta", { name: "apple-mobile-web-app-status-bar-style", content: "black" }],
+        ["link", { rel: "apple-touch-icon", href: "/images/homescreen192.png" }],
+        // ["link", { rel: "mask-icon", href: "/icons/safari-pinned-tab.svg", color: "#3eaf7c" }],
+        ["meta", { name: "msapplication-TileImage", content: "/images/homescreen144.png" }],
+        ["meta", { name: "msapplication-TileColor", content: "#000000" }]
+    ],
     plugins: [
         ["code-switcher"],
         ["tabs"],
@@ -235,6 +235,13 @@ module.exports = {
         //         updatePopup: true
         //     }
         // ],
+        [
+            "@vuepress/pwa",
+            {
+                serviceWorker: true,
+                updatePopup: true
+            }
+        ],
         [
             "vuepress-plugin-container",
             {

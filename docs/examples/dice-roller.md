@@ -3,22 +3,24 @@ title: Dice roller
 sidebarDepth: 2
 ---
 
-The DIce roller is a simple Fluid component that uses Fluid's distributed data structures to simulate rolling a die.
+The Dice roller is a simple Fluid component that uses Fluid's distributed data structures to simulate rolling a die.
 
-[[toc]]
-
-# Set up your dev environment
+## Set up your dev environment
 
 If you haven't already, [set up your Fluid Framework development
 environment](../guide/README.md#set-up-your-development-environment).
 
-First, clone the tutorial repository here:
-   <https://dev.azure.com/FluidDeveloperProgram/Developer%20Preview/_git/fluid-dice-roller-tutorial>.
 
-Since the Git repository is authenticated, it is easiest to visit the URL above and click the "Clone" button in the
+First, clone [the tutorial
+repository](https://dev.azure.com/FluidDeveloperProgram/Developer%20Preview/_git/fluid-dice-roller-react-tutorial).
+
+Since the Git repository is authenticated, it is easiest to visit the link above and click the "Clone" button in the
 top-right corner of the UI. Follow the resulting instructions to clone the repo.
 
-Once you've cloned the repo, run `npm install` in the root of the repository to install dependencies.
+Once you've cloned the repo, you'll need to set up access to the [private Fluid NPM feed](../guide/package-feed.md). On
+Windows, you can run the `npm run auth` command to automate this process.
+
+Now that you have access to the private feed, run `npm install` in the root of the repository to install dependencies.
 
 Finally, you can open the folder in Visual Studio Code.
 

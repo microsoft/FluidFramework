@@ -8,9 +8,18 @@ sidebarDepth: 2
 **Badge** is a Fluid component that allows users to create an in-line badge within a document to represent the status
 of the overall document or a section of it.
 
-![Badge UI](./badge.png)
+<style>
+  iframe#badge {
+    height: 250px;
+    width: 800px;
+  }
+</style>
 
-## Custom status
+<iframe id="badge" src="/fluid/badge.html"></iframe>
+
+## Features
+
+### Custom status
 
 Badge includes four preset statuses: Drafting, Reviewing, Complete, and Archived.
 
@@ -18,13 +27,13 @@ You can also set a custom status with any text or color.
 
 ![Color picker and custom status UI](./badge-color-picker.png)
 
-## History
+### History
 
 The history of the Badge is also shown on hover, so users can see how the status has evolved over time.
 
 ![Status history UI](./badge-history.png)
 
-## Data model
+### Data model
 
 Badge uses the following distributed data structures:
 
@@ -33,10 +42,12 @@ Badge uses the following distributed data structures:
 - SharedCell - represents the Badge's current state
 - SharedObjectSequence - stores the history of status changes
 
-# Set up your dev environment
+## Set up your dev environment
 
 If you haven't already, [set up your Fluid Framework development
 environment](../guide/README.md#set-up-your-development-environment).
+
+### Clone the tutorial repository
 
 ::: danger TODO
 Double-check URL to repo.
@@ -45,10 +56,13 @@ Double-check URL to repo.
 First, clone the Badge repository here:
    <https://dev.azure.com/FluidDeveloperProgram/Developer%20Preview/_git/fluid-badge>.
 
-Since the Git repository is authenticated, it is easiest to visit the URL above and click the "Clone" button in the
+Since the Git repository is authenticated, it is easiest to visit the link above and click the "Clone" button in the
 top-right corner of the UI. Follow the resulting instructions to clone the repo.
 
-Once you've cloned the repo, run `npm install` in the root of the repository to install dependencies.
+Once you've cloned the repo, you'll need to set up access to the [private Fluid NPM feed](../guide/package-feed.md). On
+Windows, you can run the `npm run auth` command to automate this process.
+
+Now that you have access to the private feed, run `npm install` in the root of the repository to install dependencies.
 
 Finally, you can open the folder in Visual Studio Code.
 
