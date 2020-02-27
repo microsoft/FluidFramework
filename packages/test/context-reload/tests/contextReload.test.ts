@@ -10,15 +10,15 @@ describe("context reload", () => {
       await page.goto(globals.PATH, { waitUntil: "load" });
     });
 
-    it("has a button to be clicked", async () => {
-        await page.waitForSelector("button.upgrade");
-        await expect(page).toClick("button.upgrade", { text: "Upgrade Version" });
-    });
+    // it("has a button to be clicked", async () => {
+    //     await page.waitForSelector("button.upgrade");
+    //     await expect(page).toClick("button.upgrade", { text: "Upgrade Version" });
+    // });
 
     it("has a dice roller on the new version", async () => {
       // jest.setTimeout(20 * 1000);
-      const getDiceValue = (div: "left" | "right") => {
-        return page.$eval(`#sbs-${div} .dicevalue`, (el) => (el as HTMLDivElement).innerText);
+      const getDiceValue = async (div: "left" | "right") => {
+        return await page.$eval(`#sbs-${div} .dicevalue`, (el) => (el as HTMLDivElement).innerText);
       }
 
       await expect(page).toFill("#sbs-left input.cdn", `${globals.PATH}/file`);
@@ -30,6 +30,6 @@ describe("context reload", () => {
       await page.waitForSelector("button.diceroller");
       await expect(page).toClick("button.diceroller", { text: "Roll" });
 
-      expect(getDiceValue("left")).toEqual(getDiceValue("right"));
+      await expect(await getDiceValue("left")).toEqual(await getDiceValue("right"));
     });
   });
