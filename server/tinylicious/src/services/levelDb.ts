@@ -13,7 +13,7 @@ const MaxFetchSize = 2000;
 
 export class LevelDb extends EventEmitter implements IDb {
 
-    private db: any;
+    private readonly db: any;
 
     constructor(private readonly path: string) {
         super();

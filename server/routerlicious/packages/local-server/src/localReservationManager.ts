@@ -12,7 +12,7 @@ import {
 } from "@microsoft/fluid-server-memory-orderer";
 import { ICollection, MongoManager } from "@microsoft/fluid-server-services-core";
 
-export class TestReservationManager extends EventEmitter implements IReservationManager {
+export class LocalReservationManager extends EventEmitter implements IReservationManager {
     constructor(
         private readonly nodeFactory: IConcreteNodeFactory,
         private readonly mongoManager: MongoManager,

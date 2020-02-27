@@ -9,7 +9,7 @@ import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import {
     IComponent,
 } from "@microsoft/fluid-container-definitions";
-import { ChildLogger, EventEmitterWithErrorHandling } from "@microsoft/fluid-core-utils";
+import { ChildLogger, EventEmitterWithErrorHandling } from "@microsoft/fluid-common-utils";
 import { ConnectionState, ISequencedDocumentMessage, ITree, MessageType } from "@microsoft/fluid-protocol-definitions";
 import {
     IChannelAttributes,

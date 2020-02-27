@@ -19,6 +19,7 @@ import {
     IGenericBlob,
     IRuntimeFactory,
     LoaderHeader,
+    IRuntimeState,
     IExperimentalContainer,
 } from "@microsoft/fluid-container-definitions";
 import {
@@ -27,7 +28,7 @@ import {
     EventEmitterWithErrorHandling,
     PerformanceEvent,
     TelemetryLogger,
-} from "@microsoft/fluid-core-utils";
+} from "@microsoft/fluid-common-utils";
 import {
     IDocumentService,
     IDocumentStorageService,
@@ -466,8 +467,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         let snapshot: ISnapshotTree | undefined;
         const blobs = new Map();
-        if (previousContextState) {
-            snapshot = buildSnapshotTree(previousContextState.entries, blobs);
+        if (previousContextState.snapshot) {
+            snapshot = buildSnapshotTree(previousContextState.snapshot.entries, blobs);
         }
 
         const storage = blobs.size > 0
@@ -480,7 +481,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             sequenceNumber: this._deltaManager.referenceSequenceNumber,
         };
 
-        await this.loadContext(attributes, storage, snapshot);
+        await this.loadContext(attributes, storage, snapshot, previousContextState);
 
         this.deltaManager.inbound.systemResume();
         this.deltaManager.inboundSignal.systemResume();
@@ -817,7 +818,15 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
      * Loads the runtime factory for the provided package
      */
     private async loadRuntimeFactory(pkg: IFluidCodeDetails): Promise<IRuntimeFactory> {
-        const component = await this.codeLoader.load(pkg);
+        let component;
+        const perfEvent = PerformanceEvent.start(this.logger, { eventName: "CodeLoad" });
+        try {
+            component = await this.codeLoader.load(pkg);
+        } catch (error) {
+            perfEvent.cancel({}, error);
+            throw error;
+        }
+        perfEvent.end();
 
         const factory = component.fluidExport.IRuntimeFactory;
         if (!factory) {
@@ -1120,6 +1129,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         attributes: IDocumentAttributes,
         storage: IDocumentStorageService,
         snapshot?: ISnapshotTree,
+        previousRuntimeState: IRuntimeState = {},
     ) {
         this.pkg = this.getCodeDetailsFromQuorum();
         const chaincode = this.pkg ? await this.loadRuntimeFactory(this.pkg) : new NullChaincode();
@@ -1133,6 +1143,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.scope,
             this.codeLoader,
             chaincode,
+            // back-compat: 0.14 undefinedSnapshot
             snapshot || { id: null, blobs: {}, commits: {}, trees: {} },
             attributes,
             this.blobManager,
@@ -1146,6 +1157,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             async (message) => this.snapshot(message),
             (reason?: string) => this.close(reason),
             Container.version,
+            previousRuntimeState,
         );
 
         loader.resolveContainer(this);

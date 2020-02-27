@@ -1,13 +1,48 @@
 # 0.14 Breaking Changes
-- [Samples and chaincode have been renamed to examples and components respectively](##Samples-and-chaincode-have-been-renamed-to-examples-and-components-respectively)
-- [Top-level `type` on `IClient` removed](#Top-level-type-on-IClient-removed)
-- [Remove back-compat support for loader <= 0.8](#remove-back-compat-support-for-loader-0.8)
-- [New Error types](#New-Error-types)
-- [`IComponentContext` - `createSubComponent` removed, `createComponent` signature updated](#`IComponentContext`---`createSubComponent`-removed,-`createComponent`-signature-updated)
-- [Changes to the render interfaces](#Changes-to-the-render-interfaces)
-- [`fluid-local-test-server` package move and rename](#`fluid-local-test-server`-package-move-and-rename)
 
-## Samples and chaincode have been renamed to examples and components respectively
+- [Packages move and renamed](#packages-moved-and-renamed)
+- [Top-level `type` on `IClient` removed](#top-level-type-on-iclient-removed)
+- [Remove back-compat support for loader <= 0.8](#remove-back-compat-support-for-loader-08)
+- [New Error types](#new-error-types)
+- [`IComponentContext` - `createSubComponent` removed, `createComponent` signature updated](#icomponentcontext-createsubcomponent-removed-createcomponent-signature-updated)
+- [`IComponentHandle` - Moved type parameter from get to interface](#icomponenthandle-type-parameter-moved)
+- [Changes to the render interfaces](#changes-to-the-render-interfaces)
+- [Old runtime container cannot load new components](#old-runtime-container-cannot-load-new-components)
+
+## Packages move and renamed
+
+### `fluid-core-utils` package renamed
+
+The package name is changed to `fluid-common-utils` to make it parallel to `fluid-common-definitions`
+
+### `fluid-local-test-server` package move and rename
+
+The following classes / interfaces have moved from `@microsoft/fluid-local-test-server` to `@microsoft/fluid-test-driver` in `./packages`:
+
+```text
+DocumentDeltaEventManager
+IDocumentDeltaEvent
+TestDocumentService
+TestDocumentServiceFactory
+TestResolver
+```
+
+The following classes / interfaces have been renamed and have moved from `@microsoft/fluid-local-test-server` in `./packages` to `@microsoft/fluid-server-local-server` in `./server`:
+```text
+ITestDeltaConnectionServer -> ILocalDeltaConnectionServer
+TestDeltaConnectionServer -> LocalDeltaConnectionServer
+TestReservationManager -> LocalReservationManager
+```
+
+The following packages have been renamed in `./packages`:
+
+```text
+@microsoft/fluid-local-test-server -> @microsoft/fluid-local-test-utils
+@microsoft/fluid-test-driver -> @microsoft/fluid-local-driver
+```
+
+### `samples` and `chaincode` directories have been renamed to `examples` and `components` respectively
+
 The directories themselves have been renamed.
 All path references in the dockerfile and json manifests have been updated along with variables assigned using path constants in code
 
@@ -38,6 +73,18 @@ It does not acccept a package path anymore but just a package name. To pass in p
 
 For creating a component with a specific package path, use `createComponent` or `_createComponentWithProps` in `IHostRuntime`.
 
+## `IComponentHandle` - Type parameter moved
+The type parameter previously on the `get()` method has moved to the `IComponentHandle` type.
+
+Old:
+```ts
+    map.get<IComponentHandle>(..).get<ISharedMap>();
+```
+New:
+```ts
+    map.get<IComponentHandle<ISharedMap>>(..).get();
+```
+
 ## Changes to the render interfaces
 
 The rendering interfaces have undergone several changes:
@@ -46,29 +93,9 @@ The rendering interfaces have undergone several changes:
 - On `IComponentHTMLView`, `remove()` is now optional.  If your view component needs to perform cleanup when removed from the DOM, do it in `remove()` - otherwise there is no need to implement it.
 - `IComponentHTMLView` now extends the new `IProvideComponentHTMLView`, so you can query for whether a component is a view.  You must implement the `IComponentHTMLView` member if you implement the interface.
 
-## `fluid-local-test-server` package move and rename
+## Old runtime container cannot load new components
 
-The following classes / interfaces in have moved from `@microsoft/fluid-local-test-server` to `@microsoft/fluid-test-driver` in `./packages`:
-```text
-DocumentDeltaEventManager
-IDocumentDeltaEvent
-TestDocumentService
-TestDocumentServiceFactory
-TestResolver
-```
-
-The following classes / interfaces have moved from `@microsoft/fluid-local-test-server` in `./packages` to `@microsoft/fluid-server-local-server` in `./server`:
-```text
-ITestDeltaConnectionServer
-TestDeltaConnectionServer
-TestReservationManager
-```
-
-The following packages have been renamed in `./packages`:
-```text
-@microsoft/fluid-local-test-server -> @microsoft/fluid-local-test-utils
-@microsoft/fluid-test-driver -> @microsoft/fluid-local-driver
-```
+The way that summaries are generated has changed in such a way that the runtime container is backwards compatible with 0.13 components, but 0.13 runtime container cannot load 0.14 or later components.
 
 # 0.13 Breaking Changes
 

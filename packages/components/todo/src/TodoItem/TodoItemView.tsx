@@ -76,6 +76,7 @@ export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemVie
                             width: "inherit",
                         }}/>
                     <button
+                        name="toggleInnerVisible"
                         style={this.buttonStyle}
                         onClick={() => {this.setState({innerComponentVisible: !this.state.innerComponentVisible}); }}>
                         {this.state.innerComponentVisible ? "▲" : "▼"}

@@ -30,7 +30,7 @@ describe("AgentScheduler", () => {
         afterEach(async () => { await host.close(); });
 
         it("No tasks initially", async () => {
-            assert.deepStrictEqual(scheduler.pickedTasks(), []);
+            assert.deepStrictEqual(scheduler.pickedTasks(), [leader]);
         });
 
         it("Can pick tasks", async () => {
@@ -75,9 +75,8 @@ describe("AgentScheduler", () => {
         });
 
         it("Single client must be the leader", async () => {
-            assert(!scheduler.leader, "leader present");
-            await scheduler.pick("task1", false);
             assert(scheduler.leader, "No leader present");
+            await scheduler.pick("task1", false);
             await scheduler.release("task1");
             assert(scheduler.leader, "No leader present");
         });

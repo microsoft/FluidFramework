@@ -7,10 +7,10 @@ import { AsyncPriorityQueue } from "async";
 import * as assert from "assert";
 import * as path from "path";
 import { BuildResult, BuildPackage, summarizeBuildResult } from "../../buildGraph";
-import { logStatus, logVerbose } from "../../common/logging";
+import { logStatus, logVerbose } from "../../../common/logging";
 import { options } from "../../options";
 import { Task, TaskExec } from "../task";
-import { getExecutableFromCommand, writeFileAsync, unlinkAsync, readFileAsync, execAsync, existsSync, ExecAsyncResult } from "../../common/utils";
+import { getExecutableFromCommand, writeFileAsync, unlinkAsync, readFileAsync, execAsync, existsSync, ExecAsyncResult } from "../../../common/utils";
 import chalk from "chalk";
 
 export abstract class LeafTask extends Task {

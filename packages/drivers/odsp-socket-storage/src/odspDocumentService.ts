@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
-import { DebugLogger, PerformanceEvent, TelemetryLogger, TelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import { DebugLogger, PerformanceEvent, TelemetryLogger, TelemetryNullLogger } from "@microsoft/fluid-common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -102,6 +102,7 @@ export class OdspDocumentService implements IDocumentService {
     private readonly logger: TelemetryLogger;
 
     private readonly getStorageToken: (refresh: boolean) => Promise<string | null>;
+    private readonly getWebsocketToken: (refresh) => Promise<string | null>;
 
     private readonly localStorageAvailable: boolean;
 
@@ -133,7 +134,7 @@ export class OdspDocumentService implements IDocumentService {
         private readonly itemId: string,
         private readonly snapshotStorageUrl: string,
         getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
-        readonly getWebsocketToken: (refresh) => Promise<string | null>,
+        getWebsocketToken: (refresh) => Promise<string | null>,
         logger: ITelemetryBaseLogger,
         private readonly storageFetchWrapper: IFetchWrapper,
         private readonly deltasFetchWrapper: IFetchWrapper,
@@ -161,6 +162,20 @@ export class OdspDocumentService implements IDocumentService {
             let token: string | null;
             try {
                 token = await getStorageToken(this.siteUrl, refresh);
+            } catch (error) {
+                event.cancel({}, error);
+                throw error;
+            }
+            event.end();
+
+            return token;
+        };
+
+        this.getWebsocketToken = async (refresh) => {
+            const event = PerformanceEvent.start(this.logger, { eventName: "GetWebsocketToken" });
+            let token: string | null;
+            try {
+                token = await getWebsocketToken(refresh);
             } catch (error) {
                 event.cancel({}, error);
                 throw error;

@@ -13,7 +13,7 @@ import {
     IGenericBlob,
     ILoader,
 } from "@microsoft/fluid-container-definitions";
-import { Deferred } from "@microsoft/fluid-core-utils";
+import { Deferred } from "@microsoft/fluid-common-utils";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import { readAndParse } from "@microsoft/fluid-driver-utils";
 import { BlobTreeEntry, raiseConnectedEvent } from "@microsoft/fluid-protocol-base";
@@ -35,8 +35,8 @@ import {
     IEnvelope,
     IHostRuntime,
     IInboundSignalMessage,
-    ISummaryTracker,
 } from "@microsoft/fluid-runtime-definitions";
+import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
 
@@ -149,11 +149,26 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         public readonly existing: boolean,
         public readonly storage: IDocumentStorageService,
         public readonly scope: IComponent,
-        public readonly summaryTracker: ISummaryTracker,
+        public readonly summaryTracker: SummaryTracker,
         public readonly attach: (componentRuntime: IComponentRuntime) => void,
         protected pkg?: readonly string[],
     ) {
         super();
+
+        // back-compat: 0.14 uploadSummary
+        this.summaryTracker.addRefreshHandler(async () => {
+            // We do not want to get the snapshot unless we have to.
+            // If the component runtime is listening on refreshBaseSummary
+            // event, then that means it is older version and requires the
+            // component context to emit this event.
+            if (this.listeners("refreshBaseSummary")?.length > 0) {
+                const subtree = await this.summaryTracker.getSnapshotTree();
+                if (subtree) {
+                    // This subtree may not yet exist in acked summary, so only emit if found.
+                    this.emit("refreshBaseSummary", subtree);
+                }
+            }
+        });
     }
 
     public async createComponent(pkgOrId: string | undefined, pkg?: string, props?: any): Promise<IComponentRuntime> {
@@ -426,7 +441,7 @@ export class RemotedComponentContext extends ComponentContext {
         runtime: IHostRuntime,
         storage: IDocumentStorageService,
         scope: IComponent,
-        summaryTracker: ISummaryTracker,
+        summaryTracker: SummaryTracker,
         pkg?: string[],
     ) {
         super(
@@ -499,7 +514,7 @@ export class LocalComponentContext extends ComponentContext {
         runtime: IHostRuntime,
         storage: IDocumentStorageService,
         scope: IComponent,
-        summaryTracker: ISummaryTracker,
+        summaryTracker: SummaryTracker,
         attachCb: (componentRuntime: IComponentRuntime) => void,
         public readonly createProps?: any,
     ) {

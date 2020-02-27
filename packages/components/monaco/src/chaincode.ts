@@ -147,8 +147,8 @@ export class MonacoRunner extends PrimedComponent implements
         // outputDiv.style.width = "50%";
         // hostWrapper.appendChild(outputDiv);
 
-        const textHandle = await this.root.wait<IComponentHandle>("text");
-        const text = await textHandle.get<SharedString>();
+        const textHandle = await this.root.wait<IComponentHandle<SharedString>>("text");
+        const text = await textHandle.get();
 
         monaco.languages.typescript.typescriptDefaults.setCompilerOptions(defaultCompilerOptions);
         if (hostDts) {

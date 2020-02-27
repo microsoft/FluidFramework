@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import { strict as assert } from "assert";
 import { randomId, TokenList, TagName } from "@fluid-example/flow-util-lib";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { IComponent, IComponentHandle, IComponentHTMLOptions } from "@microsoft/fluid-component-core-interfaces";
@@ -84,7 +84,7 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
 
                 // Ensure that 'nestEnd' range label matches the 'beginTags' range label (otherwise it
                 // will not close the range.)
-                assert.strictEqual(segment.getRangeLabels()[0], DocSegmentKind.beginTags, `Unknown refType '${markerType}'.`);
+                assert.equal(segment.getRangeLabels()[0], DocSegmentKind.beginTags, `Unknown refType '${markerType}'.`);
                 return DocSegmentKind.endTags;
         }
     }
@@ -471,8 +471,8 @@ export class FlowDocument extends PrimedComponent {
     }
 
     protected async componentHasInitialized() {
-        const handle = await this.root.wait<IComponentHandle>("text");
-        this.maybeSharedString = await handle.get<SharedString>();
+        const handle = await this.root.wait<IComponentHandle<SharedString>>("text");
+        this.maybeSharedString = await handle.get();
     }
 
     private getOppositeMarker(marker: Marker, oldPrefixLength: number, newPrefix: string) {

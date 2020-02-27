@@ -110,9 +110,9 @@ export class Badge extends PrimedComponent implements
      * object refs as props to the React component.
      */
     protected async componentHasInitialized() {
-        this.currentCell = await this.root.get<IComponentHandle>(this.currentId).get<SharedCell>();
-        this.optionsMap = await this.root.get<IComponentHandle>(this.optionsId).get<SharedMap>();
-        this.historySequence = await this.root.get<IComponentHandle>(this.historyId).get<SharedObjectSequence<IHistory<IBadgeType>>>();
+        this.currentCell = await this.root.get<IComponentHandle<SharedCell>>(this.currentId).get();
+        this.optionsMap = await this.root.get<IComponentHandle<SharedMap>>(this.optionsId).get();
+        this.historySequence = await this.root.get<IComponentHandle<SharedObjectSequence<IHistory<IBadgeType>>>>(this.historyId).get();
     }
 
     public render(div: HTMLElement) {

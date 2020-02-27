@@ -18,12 +18,12 @@ import {
     ErrorType,
 } from "@microsoft/fluid-driver-definitions";
 import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
-import { ITestDeltaConnectionServer, TestDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { MockDocumentDeltaConnection } from "@microsoft/fluid-test-loader-utils";
 import { ConnectionState } from "@microsoft/fluid-protocol-definitions";
 
 describe("Container", () => {
-    let testDeltaConnectionServer: ITestDeltaConnectionServer;
+    let testDeltaConnectionServer: ILocalDeltaConnectionServer;
     let testResolver: TestResolver;
     let testResolved: IFluidResolvedUrl;
     let deltaConnection: MockDocumentDeltaConnection;
@@ -33,7 +33,7 @@ describe("Container", () => {
     let loader: Loader;
 
     beforeEach(async () => {
-        testDeltaConnectionServer = TestDeltaConnectionServer.create();
+        testDeltaConnectionServer = LocalDeltaConnectionServer.create();
         testResolver = new TestResolver();
         testResolved = await testResolver.resolve(testRequest) as IFluidResolvedUrl;
         const serviceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
