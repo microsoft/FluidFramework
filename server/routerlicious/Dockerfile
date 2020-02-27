@@ -37,6 +37,7 @@ COPY packages/components/markflow/package*.json packages/components/markflow/
 COPY packages/components/math/package*.json packages/components/math/
 COPY packages/components/monaco/package*.json packages/components/monaco/
 COPY packages/components/owned-map/package*.json packages/components/owned-map/
+COPY packages/components/primitives/package*.json packages/components/primitives/
 COPY packages/components/scoreboard/package*.json packages/components/scoreboard/
 COPY packages/components/scribe/package*.json packages/components/scribe/
 COPY packages/components/shared-text/package*.json packages/components/shared-text/
