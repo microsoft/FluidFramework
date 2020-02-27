@@ -56,7 +56,7 @@ export class ComponentToolbar extends PrimedComponent implements IComponentHTMLV
     }
 
     protected async componentInitializingFirstTime() {
-        this.root.set("isEditable", false);
+        this.root.set("isEditable", true);
     }
 
 

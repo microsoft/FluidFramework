@@ -86,7 +86,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView, IComp
                 4,
                 Spaces.defaultComponentToolbarId,
             );
-        (this.componentToolbar as ComponentToolbar).changeEditState(false);
+        (this.componentToolbar as ComponentToolbar).changeEditState(true);
         // Set the saved template if there is a template query param
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has("template")) {
@@ -96,11 +96,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView, IComp
 
     protected async componentInitializingFromExisting() {
         await this.initializeDataModel();
-        const isEditable = this.dataModel.componentList.size - 1 !== 0;
         this.componentToolbar = await this.dataModel.getComponentToolbar();
-        if (this.root.get("componentToolbarId") === Spaces.defaultComponentToolbarId) {
-            (this.componentToolbar as ComponentToolbar).changeEditState(isEditable);
-        }
     }
 
     public async setComponentToolbar(id: string, type: string, url: string) {
@@ -113,6 +109,11 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView, IComp
 
     protected async componentHasInitialized() {
         this.addToolbarListeners();
+        const isEditable = this.dataModel.componentList.size - 1 === 0;
+        this.dataModel.emit("editableUpdated", isEditable);
+        if (this.root.get("componentToolbarId") === Spaces.defaultComponentToolbarId) {
+            (this.componentToolbar as ComponentToolbar).changeEditState(isEditable);
+        }
     }
 
 
