@@ -19,6 +19,7 @@ import { OdspUrlResolver } from "@microsoft/fluid-odsp-urlresolver";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import { RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlresolver";
+import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 import { extractDetails, IResolvedPackage } from "@microsoft/fluid-web-code-loader";
 import { v4 } from "uuid";
 import { IOdspTokenApi, IRouterliciousTokenApi, ITokenApis } from "./utils";
@@ -204,18 +205,9 @@ async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLD
         return;
     }
 
-    // First try to get it as a view
-    let renderable = component.IComponentHTMLView;
-    if (!renderable) {
-        // Otherwise get the visual, which is a view factory
-        const visual = component.IComponentHTMLVisual;
-        if (visual) {
-            renderable = visual.addView();
-        }
-    }
-    if (renderable) {
-        renderable.render(div, { display: "block" });
-    }
+    // Render the component with an HTMLViewAdapter to abstract the UI framework used by the component
+    const view = new HTMLViewAdapter(component);
+    view.render(div, { display: "block" });
 }
 
 const routerliciousRegex = /^(http(s)?:\/\/)?www\..{3,9}\.prague\.office-int\.com\/loader\/.*/;
