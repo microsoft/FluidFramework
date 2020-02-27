@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { RateLimiter } from "@microsoft/fluid-core-utils";
+import { RateLimiter } from "@microsoft/fluid-common-utils";
 import {
     IHelpMessage,
     IQueueMessage,
@@ -12,7 +12,6 @@ import {
     ScopeType,
 } from "@microsoft/fluid-protocol-definitions";
 import * as core from "@microsoft/fluid-server-services-core";
-import * as winston from "winston";
 import { generateToken } from "@microsoft/fluid-server-services-client";
 import { SequencedLambda } from "../sequencedLambda";
 
@@ -105,7 +104,8 @@ export class ForemanLambda extends SequencedLambda {
                         type: "tasks:start",
                     },
                 );
-                winston.info(`Request to ${queueName}: ${tenantId}/${docId}/${clientId}:${JSON.stringify(tasks)}`);
+                this.context.log.info(
+                    `Request to ${queueName}: ${tenantId}/${docId}/${clientId}:${JSON.stringify(tasks)}`);
             }
         }
     }

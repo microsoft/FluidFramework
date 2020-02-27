@@ -5,7 +5,7 @@
 
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 import { TscTask } from "./tscTask";
-import { readFileAsync } from "../../common/utils";
+import { readFileAsync } from "../../../common/utils";
 import { existsSync } from "fs";
 
 abstract class LintBaseTask extends LeafWithDoneFileTask {

@@ -20,7 +20,3 @@
 {{- define "scriptorium.fullname" -}}
 {{- printf "%s-%s" .Release.Name .Values.scriptorium.name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
-
-{{- define "broadcaster.fullname" -}}
-{{- printf "%s-%s" .Release.Name .Values.broadcaster.name | trunc 63 | trimSuffix "-" -}}
-{{- end -}}

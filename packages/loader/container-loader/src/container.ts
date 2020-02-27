@@ -19,6 +19,7 @@ import {
     IGenericBlob,
     IRuntimeFactory,
     LoaderHeader,
+    IExperimentalContainer,
 } from "@microsoft/fluid-container-definitions";
 import {
     ChildLogger,
@@ -26,11 +27,12 @@ import {
     EventEmitterWithErrorHandling,
     PerformanceEvent,
     TelemetryLogger,
-} from "@microsoft/fluid-core-utils";
+} from "@microsoft/fluid-common-utils";
 import {
     IDocumentService,
     IDocumentStorageService,
     IError,
+    IUrlResolver,
 } from "@microsoft/fluid-driver-definitions";
 import { createIError, readAndParse, OnlineStatus, isOnline } from "@microsoft/fluid-driver-utils";
 import {
@@ -85,8 +87,10 @@ const merge = require("lodash/merge");
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
-export class Container extends EventEmitterWithErrorHandling implements IContainer {
+export class Container extends EventEmitterWithErrorHandling implements IContainer, IExperimentalContainer {
     public static version = "^0.1.0";
+
+    public readonly isExperimentalContainer = true;
 
     /**
      * Load container.
@@ -368,6 +372,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.emit("closed");
 
         this.removeAllListeners();
+    }
+
+    public experimentalIsAttached(): boolean {
+        throw new Error("Method not implemented.");
+    }
+
+    public async experimentalAttach(resolver: IUrlResolver, options: any): Promise<void> {
+        throw new Error("Method not implemented.");
     }
 
     public async request(path: IRequest): Promise<IResponse> {
@@ -806,7 +818,15 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
      * Loads the runtime factory for the provided package
      */
     private async loadRuntimeFactory(pkg: IFluidCodeDetails): Promise<IRuntimeFactory> {
-        const component = await this.codeLoader.load(pkg);
+        let component;
+        const perfEvent = PerformanceEvent.start(this.logger, { eventName: "CodeLoad" });
+        try {
+            component = await this.codeLoader.load(pkg);
+        } catch (error) {
+            perfEvent.cancel({}, error);
+            throw error;
+        }
+        perfEvent.end();
 
         const factory = component.fluidExport.IRuntimeFactory;
         if (!factory) {

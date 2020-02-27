@@ -22,7 +22,7 @@ import {
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-import { ITestDeltaConnectionServer, TestDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import {
     IDocumentDeltaEvent,
     TestDocumentServiceFactory,
@@ -147,7 +147,7 @@ export class TestHost {
         }
     }
 
-    public readonly deltaConnectionServer: ITestDeltaConnectionServer;
+    public readonly deltaConnectionServer: ILocalDeltaConnectionServer;
     private rootResolver: (accept: TestRootComponent) => void;
 
     private readonly root = new Promise<TestRootComponent>((accept) => { this.rootResolver = accept; });
@@ -160,11 +160,11 @@ export class TestHost {
     constructor(
         private readonly componentRegistry: NamedComponentRegistryEntries,
         private readonly sharedObjectFactories: readonly ISharedObjectFactory[] = [],
-        deltaConnectionServer?: ITestDeltaConnectionServer,
+        deltaConnectionServer?: ILocalDeltaConnectionServer,
         private readonly scope: IComponent = {},
         private readonly containerServiceRegistry: ContainerServiceRegistryEntries = [],
     ) {
-        this.deltaConnectionServer = deltaConnectionServer || TestDeltaConnectionServer.create();
+        this.deltaConnectionServer = deltaConnectionServer || LocalDeltaConnectionServer.create();
 
         const runtimeFactory = {
             IRuntimeFactory: undefined,

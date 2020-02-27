@@ -6,7 +6,9 @@
 module.exports = {
   server: {
     command: "npm run start -- --port 8083",
-    port: 8083
+    port: 8083,
+    launchTimeout:10000,
+    usedPortAction: 'error'
   },
   launch: {
     args: ['--no-sandbox', '--disable-setuid-sandbox'], // https://github.com/puppeteer/puppeteer/blob/master/docs/troubleshooting.md#setting-up-chrome-linux-sandbox

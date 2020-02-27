@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Heap, IComparer, IHeapNode } from "@microsoft/fluid-core-utils";
+import { Heap, IComparer, IHeapNode } from "@microsoft/fluid-common-utils";
 import * as _ from "lodash";
 import { IClientSequenceNumber } from "./checkpointContext";
 

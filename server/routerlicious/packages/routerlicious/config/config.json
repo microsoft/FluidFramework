@@ -111,10 +111,6 @@
             "group": "copier",
             "topic": "rawdeltas"
         },
-        "broadcaster": {
-            "group": "broadcaster",
-            "topic": "deltas"
-        },
         "scribe": {
             "group": "scribe",
             "topic": "deltas"

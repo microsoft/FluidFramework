@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+import { IDocumentStorageService, ISummaryContext } from "@microsoft/fluid-driver-definitions";
 import * as api from "@microsoft/fluid-protocol-definitions";
 
 /**
@@ -44,7 +44,12 @@ export class CreationDocumentStorageService implements IDocumentStorageService {
         return "";
     }
 
+    // back-compat: 0.14 uploadSummary
     public async uploadSummary(commit: api.ISummaryTree): Promise<api.ISummaryHandle> {
+        throw new Error("Not implemented.");
+    }
+
+    public async uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string> {
         throw new Error("Not implemented.");
     }
 
