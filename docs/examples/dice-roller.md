@@ -24,10 +24,6 @@ Now that you have access to the private feed, run `npm install` in the root of t
 
 Finally, you can open the folder in Visual Studio Code.
 
-::: danger TODO
-Finish reviewing and correcting everything in the sections below.
-:::
-
 ## main.tsx
 
 The `src/main.tsx` file is where the component logic lives.

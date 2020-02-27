@@ -209,7 +209,7 @@ module.exports = {
     evergreen: true,
     head: [
         ["link", { rel: "icon", href: "/images/homescreen48.png" }],
-        ["link", { rel: "manifest", href: "/manifest.webmanifest" }],
+        ["link", { rel: "manifest", crossorigin: "use-credentials", href: "/manifest.webmanifest" }],
         ["meta", { name: "theme-color", content: "#00BCF2" }],
         ["meta", { name: "apple-mobile-web-app-capable", content: "yes" }],
         ["meta", { name: "apple-mobile-web-app-status-bar-style", content: "black" }],
@@ -226,13 +226,6 @@ module.exports = {
         //     "vuepress-plugin-code-copy",
         //     {
         //         color: "#999",
-        //     }
-        // ],
-        // [
-        //     "@vuepress/pwa",
-        //     {
-        //         serviceWorker: true,
-        //         updatePopup: true
         //     }
         // ],
         [

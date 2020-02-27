@@ -49,10 +49,6 @@ environment](../guide/README.md#set-up-your-development-environment).
 
 ### Clone the tutorial repository
 
-::: danger TODO
-Double-check URL to repo.
-:::
-
 First, clone the Badge repository here:
    <https://dev.azure.com/FluidDeveloperProgram/Developer%20Preview/_git/fluid-badge>.
 
