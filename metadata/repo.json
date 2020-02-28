@@ -1,9 +1,9 @@
 {
-    "contacts": [ "{{creator}}", "{{securitygroup}}" ],
+    "contacts": [ "tylerbu@microsoft.com", "fluidrtdev@microsoft.com" ],
     "description": "",
-    "deployedToProduction": {{externalfacing}},
+    "deployedToProduction": false,
     "complianceTypes": [],
-    "inventoryId": [ {{servicetreeids}} ],
+    "inventoryId": [ "28ef95b3-d9a1-412a-bf15-ae93d41407f4" ],
     "schema": {
         "office": "1.0.0"
     }

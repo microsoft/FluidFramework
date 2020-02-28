@@ -2,13 +2,17 @@
   strategy: simpleReplace
   scope: "/"
   parameters:
-    - name: "{{ServiceTreeIds}}"
-      value: "{{ServiceTreeIds}}"
-    - name: "{{ExternalFacing}}"
-      value: "{{ExternalFacing}}"
-    - name: "{{Justification}}"
-      value: "{{Justification}}"
-    - name: "{{Creator}}"
-      value: "{{Creator}}"
-    - name: "{{SecurityGroup}}"
-      value: "{{SecurityGroup}}"
+    - name: ""28ef95b3-d9a1-412a-bf15-ae93d41407f4""
+      value: ""28ef95b3-d9a1-412a-bf15-ae93d41407f4""
+    - name: "False"
+      value: "False"
+    - name: "ScheduleIt is a project to design and build an activity-based end-to-end solution using the Fluid Framework.
+
+It is not intended to be shipped."
+      value: "ScheduleIt is a project to design and build an activity-based end-to-end solution using the Fluid Framework.
+
+It is not intended to be shipped."
+    - name: "Tylerbu@microsoft.com"
+      value: "Tylerbu@microsoft.com"
+    - name: "Fluidrtdev@microsoft.com"
+      value: "Fluidrtdev@microsoft.com"
