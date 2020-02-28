@@ -16,10 +16,11 @@ import {
     IContainer,
     IDeltaManager,
     IFluidCodeDetails,
-    IFluidModule,
     IGenericBlob,
     IRuntimeFactory,
     LoaderHeader,
+    IRuntimeState,
+    IExperimentalContainer,
 } from "@microsoft/fluid-container-definitions";
 import {
     ChildLogger,
@@ -27,18 +28,19 @@ import {
     EventEmitterWithErrorHandling,
     PerformanceEvent,
     TelemetryLogger,
-} from "@microsoft/fluid-core-utils";
+} from "@microsoft/fluid-common-utils";
 import {
     IDocumentService,
     IDocumentStorageService,
     IError,
+    IUrlResolver,
+    IFluidResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
 import { createIError, readAndParse, OnlineStatus, isOnline } from "@microsoft/fluid-driver-utils";
 import {
     buildSnapshotTree,
     isSystemMessage,
     ProtocolOpHandler,
-    Quorum,
     QuorumProxy,
     raiseConnectedEvent,
 } from "@microsoft/fluid-protocol-base";
@@ -59,9 +61,6 @@ import {
     ISignalClient,
     ISignalMessage,
     ISnapshotTree,
-    ISummaryAck,
-    ISummaryContent,
-    ISummaryNack,
     ITokenClaims,
     ITree,
     ITreeEntry,
@@ -90,8 +89,10 @@ const merge = require("lodash/merge");
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
-export class Container extends EventEmitterWithErrorHandling implements IContainer {
+export class Container extends EventEmitterWithErrorHandling implements IContainer, IExperimentalContainer {
     public static version = "^0.1.0";
+
+    public readonly isExperimentalContainer = true;
 
     /**
      * Load container.
@@ -104,6 +105,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         scope: IComponent,
         loader: Loader,
         request: IRequest,
+        resolvedUrl: IFluidResolvedUrl,
         logger?: ITelemetryBaseLogger,
     ): Promise<Container> {
         const container = new Container(
@@ -114,6 +116,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             codeLoader,
             loader,
             request,
+            resolvedUrl,
             logger);
 
         return new Promise<Container>((res, rej) => {
@@ -170,8 +173,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private readonly _audience: Audience;
 
     private context: ContainerContext | undefined;
-    private pkg: string | IFluidCodeDetails | undefined;
-    private codeQuorumKey;
+    private pkg: IFluidCodeDetails | undefined;
     private protocolHandler: ProtocolOpHandler | undefined;
 
     private firstConnection = true;
@@ -182,6 +184,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private lastVisible: number | undefined;
 
     private _closed = false;
+
+    public get readonly(): boolean | undefined {
+        return this._deltaManager.readonly;
+    }
 
     public get closed(): boolean {
         return this._closed;
@@ -227,19 +233,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this._scopes;
     }
 
-    /**
-     * DEPRECATED: use clientDetails.type instead
-     * back-compat: 0.11 clientType
-     */
-    public get clientType(): string {
-        return this._deltaManager.clientType;
-    }
-
     public get clientDetails(): IClientDetails {
         return this._deltaManager.clientDetails;
     }
 
-    public get chaincodePackage(): string | IFluidCodeDetails | undefined {
+    public get chaincodePackage(): IFluidCodeDetails | undefined {
         return this.pkg;
     }
 
@@ -290,20 +288,20 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         private readonly codeLoader: ICodeLoader,
         private readonly loader: Loader,
         private readonly originalRequest: IRequest,
+        resolvedUrl: IFluidResolvedUrl,
         logger?: ITelemetryBaseLogger,
     ) {
         super();
 
         const [, docId] = id.split("/");
         this._id = decodeURI(docId);
-        this._scopes = this.getScopes(options);
+        this._scopes = this.getScopes(resolvedUrl);
         this._audience = new Audience();
         this.canReconnect = !(originalRequest.headers && originalRequest.headers[LoaderHeader.reconnect] === false);
 
         // Create logger for components to use
-        // back-compat: 0.11 clientType
-        const type = this.client.details ? this.client.details.type : this.client.type;
-        const interactive = this.client.details?.capabilities?.interactive ?? this.client.type === "browser";
+        const type = this.client.details.type;
+        const interactive = this.client.details.capabilities.interactive;
         const clientType = `${interactive ? "interactive" : "noninteractive"}${type ? `/${type}` : ""}`;
         this.subLogger = DebugLogger.mixinDebugLogger(
             "fluid:telemetry",
@@ -345,6 +343,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this.protocolHandler!.quorum;
     }
 
+    public on(event: "readonly", listener: (readonly: boolean) => void): void;
     public on(event: "connected" | "contextChanged", listener: (clientId: string) => void): this;
     public on(event: "disconnected" | "joining" | "closed", listener: () => void): this;
     public on(event: "error", listener: (error: any) => void): this;
@@ -373,6 +372,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.emit("closed");
 
         this.removeAllListeners();
+    }
+
+    public experimentalIsAttached(): boolean {
+        throw new Error("Method not implemented.");
+    }
+
+    public async experimentalAttach(resolver: IUrlResolver, options: any): Promise<void> {
+        throw new Error("Method not implemented.");
     }
 
     public async request(path: IRequest): Promise<IResponse> {
@@ -448,7 +455,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         if (this._connectionState === ConnectionState.Disconnected) {
             this.manualReconnectInProgress = true;
         }
-        return this._deltaManager.connect().catch(() => { });
+        return this._deltaManager.connect();
     }
 
     private async reloadContextCore(): Promise<void> {
@@ -460,8 +467,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         let snapshot: ISnapshotTree | undefined;
         const blobs = new Map();
-        if (previousContextState) {
-            snapshot = buildSnapshotTree(previousContextState.entries, blobs);
+        if (previousContextState.snapshot) {
+            snapshot = buildSnapshotTree(previousContextState.snapshot.entries, blobs);
         }
 
         const storage = blobs.size > 0
@@ -474,7 +481,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             sequenceNumber: this._deltaManager.referenceSequenceNumber,
         };
 
-        await this.loadContext(attributes, storage, snapshot);
+        await this.loadContext(attributes, storage, snapshot, previousContextState);
 
         this.deltaManager.inbound.systemResume();
         this.deltaManager.inboundSignal.systemResume();
@@ -736,38 +743,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         const protocolLogger = ChildLogger.create(this.subLogger, "ProtocolHandler");
 
-        protocol.on("Summary", (message) => {
-            switch (message.type) {
-                case MessageType.Summarize:
-                    protocolLogger.sendTelemetryEvent({
-                        eventName: "Summarize",
-                        message: (message.contents as ISummaryContent).toString(),
-                        summarySequenceNumber: message.sequenceNumber,
-                        refSequenceNumber: message.referenceSequenceNumber,
-                    });
-                    break;
-                case MessageType.SummaryAck:
-                    const ack = message.contents as ISummaryAck;
-                    protocolLogger.sendTelemetryEvent({
-                        eventName: "SummaryAck",
-                        handle: ack.handle,
-                        sequenceNumber: message.sequenceNumber,
-                        summarySequenceNumber: ack.summaryProposal.summarySequenceNumber,
-                    });
-                    break;
-                case MessageType.SummaryNack:
-                    const nack = message.contents as ISummaryNack;
-                    protocolLogger.sendTelemetryEvent({
-                        eventName: "SummaryNack",
-                        error: nack.errorMessage,
-                        sequenceNumber: message.sequenceNumber,
-                        summarySequenceNumber: nack.summaryProposal.summarySequenceNumber,
-                    });
-                    break;
-                default:
-            }
-        });
-
         protocol.quorum.on("error", (error) => {
             protocolLogger.sendErrorEvent(error);
         });
@@ -797,17 +772,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             (sequenceNumber, key, value) => {
                 debug(`approved ${key}`);
                 if (key === "code" || key === "code2") {
-                    // Back compat - can remove in 0.7
-                    if (!this.codeQuorumKey) {
-                        this.codeQuorumKey = key;
-                    }
-
-                    // Back compat - can remove in 0.7
-                    if (key !== this.codeQuorumKey) {
-                        return;
-                    }
-
-                    debug(`loadCode ${JSON.stringify(value)}`);
+                    debug(`loadRuntimeFactory ${JSON.stringify(value)}`);
 
                     if (value === this.pkg) {
                         return;
@@ -836,49 +801,45 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return blobManager;
     }
 
-    private async loadCodeFromQuorum(
-        quorum: Quorum,
-    ): Promise<{ pkg: IFluidCodeDetails | undefined; chaincode: IRuntimeFactory }> {
-        // Back compat - can remove in 0.7
-        const codeQuorumKey = quorum.has("code")
-            ? "code"
-            : quorum.has("code2") ? "code2" : undefined;
-        this.codeQuorumKey = codeQuorumKey;
+    private getCodeDetailsFromQuorum(): IFluidCodeDetails | undefined {
+        const quorum = this.protocolHandler!.quorum;
 
-        const pkg = codeQuorumKey ? quorum.get(codeQuorumKey) as IFluidCodeDetails : undefined;
-        const chaincode = await this.loadCode(pkg);
+        let pkg = quorum.get("code");
 
-        return { chaincode, pkg };
+        // Back compat
+        if (!pkg) {
+            pkg = quorum.get("code2");
+        }
+
+        return pkg;
     }
 
     /**
-     * Loads the code for the provided package
+     * Loads the runtime factory for the provided package
      */
-    private async loadCode(pkg: IFluidCodeDetails | undefined): Promise<IRuntimeFactory> {
-        if (!pkg) {
-            return new NullChaincode();
+    private async loadRuntimeFactory(pkg: IFluidCodeDetails): Promise<IRuntimeFactory> {
+        let component;
+        const perfEvent = PerformanceEvent.start(this.logger, { eventName: "CodeLoad" });
+        try {
+            component = await this.codeLoader.load(pkg);
+        } catch (error) {
+            perfEvent.cancel({}, error);
+            throw error;
         }
+        perfEvent.end();
 
-        const component = await this.codeLoader.load<IRuntimeFactory | IFluidModule>(pkg);
-
-        if ("fluidExport" in component) {
-            const factory = component.fluidExport.IRuntimeFactory;
-            return factory ? factory : Promise.reject(PackageNotFactoryError);
+        const factory = component.fluidExport.IRuntimeFactory;
+        if (!factory) {
+            throw new Error(PackageNotFactoryError);
         }
+        return factory;
 
-        // TODO included for back-compat
-        if ("instantiateRuntime" in component) {
-            return component;
-        }
-
-        return Promise.reject(PackageNotFactoryError);
     }
 
     private get client() {
         const client: IClient = this.options && this.options.client
             ? (this.options.client as IClient)
             : {
-                type: "browser", // Back-compat: 0.11 clientType
                 details: {
                     capabilities: { interactive: true },
                 },
@@ -895,11 +856,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             merge(client.details, headerClientDetails);
         }
 
-        // Back-compat: 0.11 clientType
-        const headerClientType = this.originalRequest.headers && this.originalRequest.headers[LoaderHeader.clientType];
-        if (headerClientType) {
-            client.type = headerClientType;
-        }
         return client;
     }
 
@@ -954,6 +910,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         deltaManager.on("processTime", (time) => {
             this.emit("processTime", time);
+        });
+
+        deltaManager.on("readonly", (readonly) => {
+            this.emit("readonly", readonly);
         });
 
         return deltaManager;
@@ -1142,9 +1102,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
     }
 
-    private getScopes(options: any): string[] {
-        return options && options.tokens && options.tokens.jwt ?
-            jwtDecode<ITokenClaims>(options.tokens.jwt).scopes : [];
+    private getScopes(resolvedUrl: IFluidResolvedUrl): string[] {
+        return resolvedUrl?.tokens?.jwt ?
+            jwtDecode<ITokenClaims>(resolvedUrl.tokens.jwt).scopes : [];
     }
 
     /**
@@ -1169,9 +1129,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         attributes: IDocumentAttributes,
         storage: IDocumentStorageService,
         snapshot?: ISnapshotTree,
+        previousRuntimeState: IRuntimeState = {},
     ) {
-        const chaincode = await this.loadCodeFromQuorum(this.protocolHandler!.quorum);
-        this.pkg = chaincode.pkg;
+        this.pkg = this.getCodeDetailsFromQuorum();
+        const chaincode = this.pkg ? await this.loadRuntimeFactory(this.pkg) : new NullChaincode();
 
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go to this loader
@@ -1181,7 +1142,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this,
             this.scope,
             this.codeLoader,
-            chaincode.chaincode,
+            chaincode,
+            // back-compat: 0.14 undefinedSnapshot
             snapshot || { id: null, blobs: {}, commits: {}, trees: {} },
             attributes,
             this.blobManager,
@@ -1195,6 +1157,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             async (message) => this.snapshot(message),
             (reason?: string) => this.close(reason),
             Container.version,
+            previousRuntimeState,
         );
 
         loader.resolveContainer(this);

@@ -5,7 +5,8 @@
 
 import { strict as assert } from "assert";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { DocumentDeltaEventManager, TestHost } from "@microsoft/fluid-local-test-server";
+import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";
+import { TestHost } from "@microsoft/fluid-local-test-utils";
 import { Counter, CounterValueType } from "@microsoft/fluid-map";
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString, SharedStringFactory } from "@microsoft/fluid-sequence";

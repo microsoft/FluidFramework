@@ -92,10 +92,20 @@ export interface IDocumentStorageService {
     getRawUrl(blobId: string): string;
 
     /**
+     * DEPRECATED: use uploadSummaryWithContext instead.
      * Generates and uploads a packfile that represents the given commit. A driver generated handle to the packfile
      * is returned as a result of this call.
+     * back-compat: 0.14 uploadSummary
      */
     uploadSummary(commit: ISummaryTree): Promise<ISummaryHandle>;
+
+    /**
+     * Uploads a summary tree to storage using the given context for reference of previous summary handle.
+     * The ISummaryHandles in the uploaded tree should have paths to indicate which summary object they are
+     * referencing from the previously acked summary.
+     * Returns the uploaded summary handle.
+     */
+    uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
 
     /**
      * Retrieves the commit that matches the packfile handle. If the packfile has already been committed and the
@@ -224,4 +234,20 @@ export interface IDocumentServiceFactory {
      * Returns an instance of IDocumentService
      */
     createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService>;
+}
+
+/**
+ * Context for uploading a summary to storage.
+ * Indicates the previously acked summary.
+ */
+export interface ISummaryContext {
+    /**
+     * Parent summary proposed handle (from summary op)
+     */
+    readonly proposalHandle: string | undefined;
+
+    /**
+     * Parent summary acked handle (from summary ack)
+     */
+    readonly ackHandle: string | undefined;
 }

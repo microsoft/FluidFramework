@@ -6,45 +6,52 @@
 import { EventEmitter } from "events";
 import * as util from "util";
 import { IConsumer, IPartition, IQueuedMessage } from "@microsoft/fluid-server-services-core";
-import * as kafkaNode from "kafka-node";
+import * as kafka from "kafka-node";
 import { debug } from "./debug";
+import { ensureTopics } from "./kafkaTopics";
+
+// time before reconnecting after an error occurs
+const defaultReconnectDelay = 5000;
 
 export class KafkaNodeConsumer implements IConsumer {
-    private client: kafkaNode.Client;
-    private offset: kafkaNode.Offset;
-    private instance: kafkaNode.HighLevelConsumer;
+    private client: kafka.KafkaClient;
+    private offset: kafka.Offset;
+    private consumerGroup: kafka.ConsumerGroup;
     private readonly events = new EventEmitter();
 
     constructor(
-        private readonly endpoint: string,
-        private readonly clientId: string,
-        public groupId: string,
-        public topic: string,
-        private readonly autoCommit: boolean) {
+        private readonly clientOptions: kafka.KafkaClientOptions,
+        clientId: string,
+        public readonly groupId: string,
+        public readonly topic: string,
+        private readonly topicPartitions?: number,
+        private readonly topicReplicationFactor?: number,
+        private readonly reconnectDelay: number = defaultReconnectDelay) {
+        clientOptions.clientId = clientId;
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.connect();
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public commitCheckpoint(partitionId: number, queuedMessage: IQueuedMessage): Promise<void> {
+    public async commitCheckpoint(partitionId: number, queuedMessage: IQueuedMessage): Promise<void> {
         const commitRequest = [{
             offset: queuedMessage.offset + 1,
             partition: partitionId,
             topic: this.topic,
         }];
-        return new Promise<any>((resolve, reject) => {
+
+        return new Promise<void>((resolve, reject) => {
             this.offset.commit(this.groupId, commitRequest, (err, data) => {
                 if (err) {
                     reject(err);
                 } else {
-                    resolve(JSON.stringify(data));
+                    resolve();
                 }
             });
         });
     }
 
     public async close(): Promise<void> {
-        await util.promisify(((callback) => this.instance.close(false, callback)) as any)();
+        await util.promisify(((callback) => this.consumerGroup.close(false, callback)) as any)();
         await util.promisify(((callback) => this.client.close(callback)) as any)();
     }
 
@@ -54,59 +61,79 @@ export class KafkaNodeConsumer implements IConsumer {
     }
 
     public async pause() {
-        this.instance.pause();
+        this.consumerGroup.pause();
     }
 
     public async resume() {
-        this.instance.resume();
+        this.consumerGroup.resume();
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    private connect() {
-        this.client = new kafkaNode.Client(this.endpoint, this.clientId);
-        this.offset = new kafkaNode.Offset(this.client);
+    private async connect() {
+        this.client = new kafka.KafkaClient(this.clientOptions);
+        this.offset = new kafka.Offset(this.client);
+
         const groupId = this.groupId;
-        return new Promise<any>((resolve, reject) => {
-            this.ensureTopics(this.client, [this.topic]).then(
-                () => {
-                    this.instance = new kafkaNode.HighLevelConsumer(
-                        this.client,
-                        [{ topic: this.topic }],
-                        {
-                            autoCommit: this.autoCommit,
-                            fetchMaxBytes: 1024 * 1024,
-                            fetchMinBytes: 1,
-                            fromOffset: true,
-                            groupId,
-                            maxTickMessages: 100000,
-                        });
 
-                    this.instance.on("rebalancing", () => {
-                        const payloads = (this.instance as any).getTopicPayloads();
-                        this.events.emit("rebalancing", this.getPartitions(payloads));
-                    });
+        try {
+            await ensureTopics(this.client, [this.topic], this.topicPartitions, this.topicReplicationFactor);
+        } catch (error) {
+            // Close the client if it exists
+            if (this.client) {
+                this.client.close();
+                this.client = undefined;
+            }
 
-                    this.instance.on("rebalanced", () => {
-                        const payloads = (this.instance as any).getTopicPayloads();
-                        this.events.emit("rebalanced", this.getPartitions(payloads));
-                    });
+            debug("Kafka error - attempting reconnect", error);
 
-                    this.instance.on("message", (message: any) => {
-                        this.events.emit("data", message);
-                    });
+            this.events.emit("error", error);
 
-                    this.instance.on("error", (error) => {
-                        // Workaround to resolve rebalance partition error.
-                        // https://github.com/SOHU-Co/kafka-node/issues/90
-                        debug(`Error in kafka consumer: ${error}. Wait for 30 seconds and return error...`);
-                        setTimeout(() => {
-                            this.events.emit("error", error);
-                        }, 30000);
-                    });
+            setTimeout(() => {
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                this.connect();
+            }, this.reconnectDelay);
 
-                }, (error) => {
-                    this.handleError(error);
-                });
+            return;
+        }
+
+        this.consumerGroup = new kafka.ConsumerGroup(
+            {
+                kafkaHost: this.clientOptions.kafkaHost,
+                ssl: this.clientOptions.sslOptions,
+                sslOptions: this.clientOptions.sslOptions,
+                id: this.clientOptions.clientId,
+                autoCommit: false,
+                fetchMaxBytes: 1024 * 1024,
+                fetchMinBytes: 1,
+                fromOffset: "latest",
+                groupId,
+                maxTickMessages: 100000,
+            },
+            [this.topic]);
+
+        this.consumerGroup.on("connect", () => {
+            this.events.emit("connected");
+        });
+
+        this.consumerGroup.on("rebalancing", () => {
+            const payloads = (this.consumerGroup as any).topicPayloads;
+            this.events.emit("rebalancing", this.getPartitions(payloads));
+        });
+
+        this.consumerGroup.on("rebalanced", () => {
+            const payloads = (this.consumerGroup as any).topicPayloads;
+            this.events.emit("rebalanced", this.getPartitions(payloads));
+        });
+
+        this.consumerGroup.on("message", (message: any) => {
+            this.events.emit("data", message);
+        });
+
+        this.consumerGroup.on("error", (error) => {
+            this.events.emit("error", error);
+        });
+
+        this.consumerGroup.on("offsetOutOfRange", (error) => {
+            this.events.emit("error", error);
         });
     }
 
@@ -116,35 +143,5 @@ export class KafkaNodeConsumer implements IConsumer {
             partition: parseInt(partition.partition, 10),
             topic: partition.topic,
         }));
-    }
-
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    private ensureTopics(client: kafkaNode.Client, topics: string[]): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            // We make use of a refreshMetadata call to validate the given topics exist
-            client.refreshMetadata(
-                topics,
-                (error) => {
-                    if (error) {
-                        return reject(error);
-                    }
-                    return resolve();
-                });
-        });
-    }
-
-    /**
-     * Handles an error that requires a reconnect to Kafka
-     */
-    private handleError(error: any) {
-        // Close the client if it exists
-        if (this.client) {
-            this.client.close();
-            this.client = undefined;
-        }
-
-        debug("Kafka error - attempting reconnect", error);
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.connect();
     }
 }

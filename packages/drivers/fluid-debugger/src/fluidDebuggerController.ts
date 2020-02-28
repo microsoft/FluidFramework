@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { Deferred } from "@microsoft/fluid-core-utils";
+import { Deferred } from "@microsoft/fluid-common-utils";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import { readAndParse } from "@microsoft/fluid-driver-utils";
 import {
@@ -73,6 +73,10 @@ export class DebugReplayController extends ReplayController implements IDebugger
     protected versionCount = 0;
 
     protected storage?: ReadDocumentStorageServiceBase;
+
+    // Member to prevent repeated initialization in initStorage(...), which also
+    // returns if this controller should be used or function as a passthrough
+    private shouldUseController: boolean | undefined;
 
     public connectToUi(ui: IDebuggerUI): void {
         this.ui = ui;
@@ -182,6 +186,10 @@ export class DebugReplayController extends ReplayController implements IDebugger
     }
 
     public async initStorage(documentStorageService: IDocumentStorageService): Promise<boolean> {
+        if (this.shouldUseController !== undefined) {
+            return this.shouldUseController;
+        }
+
         assert(documentStorageService);
         assert(!this.documentStorageService);
         this.documentStorageService = documentStorageService;
@@ -224,9 +232,9 @@ export class DebugReplayController extends ReplayController implements IDebugger
             this.ui.updateVersionText(0);
         });
 
-        const useController = await this.startSeqDeferred.promise !== DebugReplayController.WindowClosedSeq;
-        assert(this.isSelectionMade() === useController);
-        return useController;
+        this.shouldUseController = await this.startSeqDeferred.promise !== DebugReplayController.WindowClosedSeq;
+        assert(this.isSelectionMade() === this.shouldUseController);
+        return this.shouldUseController;
     }
 
     public async read(blobId: string): Promise<string> {

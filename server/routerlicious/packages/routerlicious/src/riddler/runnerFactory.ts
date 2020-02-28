@@ -14,11 +14,14 @@ import { ITenantDocument } from "./tenantManager";
 
 export class RiddlerResources implements utils.IResources {
     constructor(
-        public tenantsCollectionName: string ,
-        public mongoManager: MongoManager,
-        public port: any,
-        public loggerFormat: string,
-        public baseOrdererUrl: string) {
+        public readonly tenantsCollectionName: string ,
+        public readonly mongoManager: MongoManager,
+        public readonly port: any,
+        public readonly loggerFormat: string,
+        public readonly baseOrdererUrl: string,
+        public readonly defaultHistorianUrl: string,
+        public readonly defaultInternalHistorianUrl: string,
+    ) {
     }
 
     public async dispose(): Promise<void> {
@@ -57,8 +60,17 @@ export class RiddlerResourcesFactory implements utils.IResourcesFactory<RiddlerR
         const loggerFormat = config.get("logger:morganFormat");
         const port = utils.normalizePort(process.env.PORT || "5000");
         const serverUrl = config.get("worker:serverUrl");
+        const defaultHistorianUrl = config.get("worker:blobStorageUrl");
+        const defaultInternalHistorianUrl = config.get("worker:internalBlobStorageUrl") || defaultHistorianUrl;
 
-        return new RiddlerResources(tenantsCollectionName, mongoManager, port, loggerFormat, serverUrl);
+        return new RiddlerResources(
+            tenantsCollectionName,
+            mongoManager,
+            port,
+            loggerFormat,
+            serverUrl,
+            defaultHistorianUrl,
+            defaultInternalHistorianUrl);
     }
 }
 
@@ -69,6 +81,8 @@ export class RiddlerRunnerFactory implements utils.IRunnerFactory<RiddlerResourc
             resources.port,
             resources.mongoManager,
             resources.loggerFormat,
-            resources.baseOrdererUrl);
+            resources.baseOrdererUrl,
+            resources.defaultHistorianUrl,
+            resources.defaultInternalHistorianUrl);
     }
 }

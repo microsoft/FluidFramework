@@ -10,8 +10,11 @@ import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces"
 import { IHostRuntime } from "@microsoft/fluid-runtime-definitions";
 import { RequestParser } from "@microsoft/fluid-container-runtime";
 
-import { generateContainerServicesRequestHandler, serviceRoutePathRoot } from "../";
-import { BaseContainerService } from "../helpers";
+import {
+    BaseContainerService,
+    generateContainerServicesRequestHandler,
+    serviceRoutePathRoot,
+} from "../containerServices";
 
 class ContainerServiceMock extends BaseContainerService {
 

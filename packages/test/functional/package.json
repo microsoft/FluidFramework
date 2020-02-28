@@ -1,0 +1,74 @@
+{
+  "name": "@fluid-internal/functional-tests",
+  "version": "0.14.0",
+  "description": "Functional tests",
+  "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
+  "sideEffects": "false",
+  "main": "dist/index.js",
+  "module": "lib/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "npm run build:genver && concurrently npm:build:compile npm:lint",
+    "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:compile:min": "npm run build:compile",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
+    "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
+    "build:genver": "gen-version",
+    "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+    "eslint": "eslint --ext=ts,tsx --format stylish src",
+    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "lint": "npm run eslint",
+    "lint:fix": "npm run eslint:fix",
+    "test": "npm run test:mocha",
+    "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
+    "test:mocha": "mocha --recursive dist/test --exit -r make-promises-safe",
+    "tsc": "tsc"
+  },
+  "nyc": {
+    "all": true,
+    "cache-dir": "nyc/.cache",
+    "exclude": [
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "exclude-after-remap": false,
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "report-dir": "nyc/report",
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output"
+  },
+  "devDependencies": {
+    "@microsoft/fluid-build-common": "^0.14.0",
+    "@microsoft/fluid-container-loader": "^0.14.0",
+    "@microsoft/fluid-container-runtime": "^0.14.0",
+    "@microsoft/fluid-common-utils": "^0.14.0",
+    "@microsoft/eslint-config-fluid": "^0.14.0",
+    "@microsoft/fluid-protocol-definitions": "^0.1002.0",
+    "@microsoft/fluid-sequence": "^0.14.0",
+    "@microsoft/fluid-test-loader-utils": "^0.14.0",
+    "@types/mocha": "^5.2.5",
+    "@typescript-eslint/eslint-plugin": "~2.17.0",
+    "@typescript-eslint/parser": "~2.17.0",
+    "concurrently": "^4.1.0",
+    "eslint": "~6.8.0",
+    "make-promises-safe": "^5.1.0",
+    "mocha": "^5.2.0",
+    "mocha-junit-reporter": "^1.18.0",
+    "nyc": "^14.1.1",
+    "rimraf": "^2.6.2",
+    "ts-loader": "^6.1.2",
+    "typescript": "~3.7.4",
+    "webpack": "^4.16.5",
+    "webpack-cli": "^3.1.2"
+  }
+}

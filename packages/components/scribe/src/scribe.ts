@@ -7,7 +7,7 @@ import { EventEmitter } from "events";
 import { resolve } from "url";
 import {
     IComponentHTMLOptions,
-    IComponentHTMLVisual,
+    IComponentHTMLView,
     IComponentLoadable,
     IComponentRouter,
     IRequest,
@@ -376,7 +376,7 @@ const html =
 
 export class Scribe
     extends EventEmitter
-    implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual {
+    implements IComponentLoadable, IComponentRouter, IComponentHTMLView {
 
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new Scribe(runtime, context);
@@ -387,7 +387,7 @@ export class Scribe
 
     public get IComponentLoadable() { return this; }
     public get IComponentRouter() { return this; }
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
 
     public url: string;
     private root: ISharedMap;
@@ -492,16 +492,16 @@ class ScribeFactory implements IComponentFactory, IRuntimeFactory {
         const mapFactory = SharedMap.getFactory();
         dataTypes.set(mapFactory.type, mapFactory);
 
-        ComponentRuntime.load(
+        const runtime = ComponentRuntime.load(
             context,
             dataTypes,
-            (runtime) => {
-                const progressCollectionP = Scribe.load(runtime, context);
-                runtime.registerRequestHandler(async (request: IRequest) => {
-                    const progressCollection = await progressCollectionP;
-                    return progressCollection.request(request);
-                });
-            });
+        );
+
+        const progressCollectionP = Scribe.load(runtime, context);
+        runtime.registerRequestHandler(async (request: IRequest) => {
+            const progressCollection = await progressCollectionP;
+            return progressCollection.request(request);
+        });
     }
 }
 

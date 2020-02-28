@@ -4,20 +4,30 @@
  */
 
 import { URL } from "url";
-import { BaseTelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import * as child_process from "child_process";
+import { BaseTelemetryNullLogger } from "@microsoft/fluid-common-utils";
 import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import { configurableUrlResolver } from "@microsoft/fluid-driver-utils";
 import { FluidAppOdspUrlResolver } from "@microsoft/fluid-fluidapp-odsp-urlresolver";
 import * as odsp from "@microsoft/fluid-odsp-driver";
 import { OdspUrlResolver } from "@microsoft/fluid-odsp-urlresolver";
-import { IClientConfig, refreshAccessToken } from "@microsoft/fluid-odsp-utils";
+import { IClientConfig, refreshAccessToken, getOdspScope } from "@microsoft/fluid-odsp-utils";
 import * as r11s from "@microsoft/fluid-routerlicious-driver";
 import { RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlresolver";
+import { OdspTokenManager, odspTokensCache, getMicrosoftConfiguration } from "@microsoft/fluid-tool-utils";
 import { localDataOnly, paramJWT } from "./fluidFetchArgs";
-import { getClientConfig, getODSPTokens, saveAccessToken } from "./fluidFetchODSPTokens";
 
 export let latestVersionsId: string = "";
 export let connectionInfo: any;
+
+export const fluidFetchWebNavigator = (url: string) => {
+    let message = "Please open browser and navigate to this URL:";
+    if (process.platform === "win32") {
+        child_process.exec(`start "fluid-fetch" /B "${url}"`);
+        message = "Opening browser to get authorization code.  If that doesn't open, please go to this URL manually";
+    }
+    console.log(`${message}\n  ${url}`);
+};
 
 async function initializeODSPCore(
     odspResolvedUrl: odsp.IOdspResolvedUrl,
@@ -45,12 +55,16 @@ async function initializeODSPCore(
   item:   ${itemId}
   docId:  ${docId}`);
 
+    const odspTokenManager = new OdspTokenManager(odspTokensCache);
     const getStorageTokenStub = async (siteUrl: string, refresh: boolean) => {
-        const tokens = await getODSPTokens(server, clientConfig, false);
+        const tokens = await odspTokenManager.getOdspTokens(
+            server,
+            clientConfig,
+            fluidFetchWebNavigator,
+        );
         if (refresh || !tokens.accessToken) {
             // TODO: might want to handle if refresh failed and we want to reauth here.
-            await refreshAccessToken(server, clientConfig, tokens);
-            await saveAccessToken(server, tokens);
+            await refreshAccessToken(getOdspScope(server), server, clientConfig, tokens);
         }
         return tokens.accessToken;
     };
@@ -120,7 +134,7 @@ export async function fluidFetchInit(urlStr: string) {
     const protocol = new URL(resolvedUrl.url).protocol;
     if (protocol === "fluid-odsp:") {
         const odspResolvedUrl = resolvedUrl as odsp.IOdspResolvedUrl;
-        return initializeODSPCore(odspResolvedUrl, new URL(odspResolvedUrl.siteUrl).host, getClientConfig());
+        return initializeODSPCore(odspResolvedUrl, new URL(odspResolvedUrl.siteUrl).host, getMicrosoftConfiguration());
     } else if (protocol === "fluid:") {
         const url = new URL(urlStr);
         const server = url.hostname.toLowerCase();

@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-use-before-define */
 
-import { fromUtf8ToBase64 } from "@microsoft/fluid-core-utils";
+import { fromUtf8ToBase64 } from "@microsoft/fluid-common-utils";
 import * as git from "@microsoft/fluid-gitresources";
 import { IClient, IClientJoin, ITokenClaims, ScopeType } from "@microsoft/fluid-protocol-definitions";
 import * as core from "@microsoft/fluid-server-services-core";
@@ -86,7 +86,6 @@ function sendJoin(tenantId: string, documentId: string, clientId: string, produc
     const detail: IClient = {
         permission: [],
         scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
-        type: "robot", // Back-compat: 0.11 clientType
         details: {
             capabilities: { interactive: false },
         },

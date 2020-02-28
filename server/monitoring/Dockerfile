@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-FROM node:10.16.0-slim
+FROM node:12.13.1-slim
 
 # Add Tini
 ENV TINI_VERSION v0.18.0
@@ -12,18 +12,21 @@ RUN chmod +x /tini
 WORKDIR /usr/src/server
 
 # Copy over the package and package-lock and install prior to the other code to optimize Docker's file system cache on rebuilds
-ARG NPM_TOKEN
 COPY .npmrc .
 COPY package-lock.json .
 COPY package.json .
 RUN npm install
 
+# Copy over chaincode npmrc and package.json to dynamically install packages.
+COPY chaincode/* /tmp/chaincode/
+
+# Give write permission to node user.
+RUN chown -R node:node /tmp/chaincode/
+RUN chmod -R 755 /tmp/chaincode/*
+
 # And now copy over our actual code and build
 COPY . .
-RUN npm run build
-
-# Remove the npmrc following the build
-RUN rm -f .npmrc
+RUN npm run tsc
 
 # Don't run as root user
 USER node

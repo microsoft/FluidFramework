@@ -36,7 +36,6 @@ export function getConfig(
     updatedConfig.tenantId = tenantId;
     updatedConfig.trackError = trackError;
     const client: IClient = {
-        type: "browser", // back-compat: 0.11 clientType
         details: { capabilities: { interactive: true } },
         permission: [],
         scopes: [],

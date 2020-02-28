@@ -39,10 +39,11 @@ export const readFileAsync = util.promisify(fs.readFile);
 export const writeFileAsync = util.promisify(fs.writeFile);
 export const unlinkAsync = util.promisify(fs.unlink);
 export const existsSync = fs.existsSync;
-export const realpathAsync = util.promisify(fs.realpath);
+export const realpathAsync = util.promisify(fs.realpath.native);
 export const symlinkAsync = util.promisify(fs.symlink);
 export const mkdirAsync = util.promisify(fs.mkdir);
 export const copyFileAsync = util.promisify(fs.copyFile);
+export const renameAsync = util.promisify(fs.rename);
 
 export interface ExecAsyncResult {
     error: child_process.ExecException | null;
@@ -77,7 +78,8 @@ export async function rimrafWithErrorAsync(deletePath: string, errorPrefix: stri
 
 function printExecError(ret: ExecAsyncResult, command: string, errorPrefix: string) {
     if (ret.error) {
-        console.error(`${errorPrefix}: error during command ${command}`)
+        console.error(`${errorPrefix}: error during command ${command}`);
+        console.error(`${errorPrefix}: ${ret.error.message}`);
         console.error(ret.stdout ? `${errorPrefix}: ${ret.stdout}\n${ret.stderr}` : `${errorPrefix}: ${ret.stderr}`);
     } else if (ret.stderr) {
         // no error code but still error messages, treat them is non fatal warnings

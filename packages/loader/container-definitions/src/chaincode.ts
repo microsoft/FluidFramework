@@ -119,6 +119,11 @@ export interface IFluidCodeDetails {
     config: IPackageConfig;
 }
 
+export interface IRuntimeState {
+    snapshot?: ITree,
+    state?: unknown,
+}
+
 /**
  * The IRuntime represents an instantiation of a code package within a container.
  */
@@ -143,7 +148,7 @@ export interface IRuntime {
      * Stops the runtime. Once stopped no more messages will be delivered and the context passed to the runtime
      * on creation will no longer be active
      */
-    stop(): Promise<void>;
+    stop(): Promise<IRuntimeState>;
 
     /**
      * Processes the given message
@@ -151,15 +156,17 @@ export interface IRuntime {
     process(message: ISequencedDocumentMessage, local: boolean, context: any);
 
     /**
-     * Called immediately after a message has been processed but prior to the next message being executed
-     * @deprecated being removed and replaced with only process
-     */
-    postProcess?(message: ISequencedDocumentMessage, local: boolean, context: any): Promise<void>;
-
-    /**
      * Processes the given signal
      */
     processSignal(message: any, local: boolean);
+}
+
+export interface IExperimentalRuntime {
+
+    isExperimentalRuntime: true;
+
+    // Bind the registered services once attached.
+    experimentalAttachServices(storageService: IDocumentStorageService): void;
 }
 
 export interface IMessageScheduler {
@@ -176,8 +183,6 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
     readonly options: any;
     readonly configuration: IComponentConfiguration;
     readonly clientId: string | undefined;
-    // DEPRECATED: use clientDetails.type instead
-    readonly clientType: string; // Back-compat: 0.11 clientType
     readonly clientDetails: IClientDetails;
     readonly parentBranch: string | undefined | null;
     readonly blobManager: IBlobManager | undefined;
@@ -197,6 +202,7 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
     readonly logger: ITelemetryLogger;
     readonly serviceConfiguration: IServiceConfiguration | undefined;
     readonly version: string;
+    readonly previousRuntimeState: IRuntimeState;
 
     /**
      * Ambient services provided with the context
@@ -206,6 +212,11 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
     error(err: IError): void;
     requestSnapshot(tagMessage: string): Promise<void>;
     reloadContext(): Promise<void>;
+
+    /**
+     * DEPRECATED
+     * back-compat: 0.14 uploadSummary
+     */
     refreshBaseSummary(snapshot: ISnapshotTree): void;
 }
 

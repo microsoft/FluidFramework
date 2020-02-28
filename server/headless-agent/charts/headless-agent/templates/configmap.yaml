@@ -45,11 +45,12 @@ data:
         },
         "worker": {
             "alfredUrl": "{{ .Values.endpoints.alfred }}",
+            "internalGatewayUrl": "{{ .Values.endpoints.internalGatewayUrl }}",
             "serverUrl": "{{ .Values.endpoints.alfredUrl }}",
             "packageUrl": "{{ .Values.endpoints.packageUrl }}",
             "blobStorageUrl": "{{ .Values.endpoints.historianUrl }}",
             "repository": "FluidFramework",
-            "permission": ["chain-snapshot", "chain-spell", "chain-intel", "chain-translation", "chain-cache"],
+            "permission": ["chain-snapshot", "chain-spell", "chain-intel", "chain-translation", "chain-cache", "chain-search"],
             "key": "VBQyoGpEYrTn3XQPtXW3K8fFDd"
         },
         "tmz": {
@@ -57,7 +58,9 @@ data:
             "agentExchange": "agentExchange"
         },
         "headless-agent": {
-            "queue": "headlessQueue"
+            "queue": "headlessQueue",
+            "searchEndpoint": "{{ .Values.searchInformation.searchEndpoint }}",
+            "searchContainer": "{{ .Values.searchInformation.searchContainer }}"
         },
         "rabbitmq": {
             "connectionString": "{{ .Values.endpoints.rabbitmq }}"

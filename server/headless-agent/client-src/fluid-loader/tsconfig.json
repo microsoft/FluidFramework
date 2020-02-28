@@ -1,4 +1,4 @@
-{    
+{
     "compilerOptions": {
         "target": "es6",
         "noImplicitAny": false,

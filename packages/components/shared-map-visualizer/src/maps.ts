@@ -7,11 +7,12 @@ import { EventEmitter } from "events";
 import {
     IComponent,
     IComponentHTMLOptions,
-    IComponentHTMLVisual,
+    IComponentHTMLView,
     IComponentLoadable,
     IComponentRouter,
     IRequest,
     IResponse,
+    IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
@@ -45,8 +46,9 @@ async function updateOrCreateKey(key: string, map: ISharedMap, container: JQuery
 
     if (isCollab) {
         if (newElement) {
-            const handle = (value as IComponent).IComponentHandle;
-            handle.get<SharedMap>().then((sharedMap) => {
+            // REVIEW: Is the round-trip through value -> handle -> value necessary?
+            const handle = value.IComponentHandle as IComponentHandle<SharedMap>;
+            handle.get().then((sharedMap) => {
                 // eslint-disable-next-line @typescript-eslint/no-use-before-define
                 displayMap(keyElement, key, sharedMap, map, runtime);
             });
@@ -155,7 +157,7 @@ async function displayMap(
 
 export class ProgressCollection
     extends EventEmitter
-    implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual {
+    implements IComponentLoadable, IComponentRouter, IComponentHTMLView {
 
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new ProgressCollection(runtime, context);
@@ -166,7 +168,7 @@ export class ProgressCollection
 
     public get IComponentLoadable() { return this; }
     public get IComponentRouter() { return this; }
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
 
     public url: string;
     private root: ISharedMap;
@@ -265,16 +267,16 @@ class SharedMapVisualizerFactory implements IComponentFactory, IRuntimeFactory {
         const mapFactory = SharedMap.getFactory();
         dataTypes.set(mapFactory.type, mapFactory);
 
-        ComponentRuntime.load(
+        const runtime = ComponentRuntime.load(
             context,
             dataTypes,
-            (runtime) => {
-                const progressCollectionP = ProgressCollection.load(runtime, context);
-                runtime.registerRequestHandler(async (request: IRequest) => {
-                    const progressCollection = await progressCollectionP;
-                    return progressCollection.request(request);
-                });
-            });
+        );
+
+        const progressCollectionP = ProgressCollection.load(runtime, context);
+        runtime.registerRequestHandler(async (request: IRequest) => {
+            const progressCollection = await progressCollectionP;
+            return progressCollection.request(request);
+        });
     }
 }
 

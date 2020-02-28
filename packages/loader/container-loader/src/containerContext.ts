@@ -19,6 +19,7 @@ import {
     ILoader,
     IRuntime,
     IRuntimeFactory,
+    IRuntimeState,
 } from "@microsoft/fluid-container-definitions";
 import { IDocumentStorageService, IError } from "@microsoft/fluid-driver-definitions";
 import { raiseConnectedEvent } from "@microsoft/fluid-protocol-base";
@@ -57,6 +58,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         snapshotFn: (message: string) => Promise<void>,
         closeFn: (reason?: string) => void,
         version: string,
+        previousRuntimeState: IRuntimeState,
     ): Promise<ContainerContext> {
         const context = new ContainerContext(
             container,
@@ -75,7 +77,8 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
             submitSignalFn,
             snapshotFn,
             closeFn,
-            version);
+            version,
+            previousRuntimeState);
         await context.load();
 
         return context;
@@ -89,14 +92,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
 
     public get clientId(): string | undefined {
         return this.container.clientId;
-    }
-
-    /**
-     * DEPRECATED use clientDetails.type
-     * back-compat: 0.11 clientType
-     */
-    public get clientType(): string {
-        return this.container.clientType;
     }
 
     public get clientDetails(): IClientDetails {
@@ -175,11 +170,16 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         public readonly snapshotFn: (message: string) => Promise<void>,
         public readonly closeFn: () => void,
         public readonly version: string,
+        public readonly previousRuntimeState: IRuntimeState,
     ) {
         super();
         this.logger = container.subLogger;
     }
 
+    /**
+     * DEPRECATED
+     * back-compat: 0.13 refreshBaseSummary
+     */
     public refreshBaseSummary(snapshot: ISnapshotTree) {
         this._baseSnapshot = snapshot;
         // Need to notify runtime of the update
@@ -195,29 +195,22 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         raiseConnectedEvent(this, value, clientId);
     }
 
-    public async stop(): Promise<ITree | null> {
-        const snapshot = await this.runtime!.snapshot("", false);
-        await this.runtime!.stop();
+    public async stop(): Promise<IRuntimeState> {
+        let state = await this.runtime!.stop();
+        // back-compat: 0.14 runtimeState
+        if (!state) {
+            state = { snapshot: await this.runtime!.snapshot("", false) ?? undefined };
+        }
 
         // Dispose
         this.quorum.dispose();
         this.deltaManager.dispose();
 
-        return snapshot;
+        return state;
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any) {
         this.runtime!.process(message, local, context);
-    }
-
-    public async postProcess(message: ISequencedDocumentMessage, local: boolean, context: any): Promise<void> {
-        // Included for back compat with documents created prior to postProcess deprecation
-        // eslint-disable-next-line @typescript-eslint/unbound-method
-        if (!this.runtime || !this.runtime.postProcess) {
-            return Promise.reject("Runtime must query for IMessageHandler to signal it does not implement postProcess");
-        }
-
-        return this.runtime.postProcess(message, local, context);
     }
 
     public processSignal(message: ISignalMessage, local: boolean) {
@@ -240,8 +233,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public reloadContext(): Promise<void> {
+    public async reloadContext(): Promise<void> {
         return this.container.reloadContext();
     }
 

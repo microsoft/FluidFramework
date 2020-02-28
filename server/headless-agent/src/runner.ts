@@ -4,12 +4,13 @@
  */
 
 import { Deferred } from "@microsoft/fluid-core-utils";
-import { IQueueMessage } from "@microsoft/fluid-runtime-definitions";
+import { IQueueMessage } from "@microsoft/fluid-protocol-definitions";
 import * as core from "@microsoft/fluid-server-services-core";
 import * as utils from "@microsoft/fluid-server-services-utils";
 import * as winston from "winston";
 import { ICloseEvent, PuppetMaster } from "./puppeteer";
 import { ICache } from "./redisCache";
+import { ISearchStorage } from "./searchStorage";
 
 export class HeadlessRunner implements utils.IRunner {
     private running = new Deferred<void>();
@@ -19,8 +20,9 @@ export class HeadlessRunner implements utils.IRunner {
     constructor(
         private workerConfig: any,
         private messageReceiver: core.ITaskMessageReceiver,
+        private searchStorage: ISearchStorage,
         private cache: ICache) {
-            this.permission = new Set(workerConfig.permission as string[]);
+        this.permission = new Set(workerConfig.permission as string[]);
     }
 
     public async start(): Promise<void> {
@@ -38,6 +40,7 @@ export class HeadlessRunner implements utils.IRunner {
         // Accept a task.
         this.messageReceiver.on("message", (message: core.ITaskMessage) => {
             const type = message.type;
+
             if (type === "tasks:start") {
                 const requestMessage = message.content as IQueueMessage;
                 const originalTasksToRun = requestMessage.message.tasks.filter((task) => this.permission.has(task));
@@ -64,30 +67,32 @@ export class HeadlessRunner implements utils.IRunner {
     }
 
     private launchPuppetMaster(requestMessage: IQueueMessage, task: string) {
-        const puppet = new PuppetMaster(
+        PuppetMaster.create(
             requestMessage.documentId,
-            this.workerConfig.alfredUrl,
-            this.workerConfig.blobStorageUrl,
             requestMessage.tenantId,
-            requestMessage.token,
-            this.workerConfig.key,
-            this.workerConfig.packageUrl,
+            this.workerConfig.internalGatewayUrl,
             task,
-            this.cache);
-        puppet.launch().then(() => {
-            const cacheKey = this.createKey(
-                requestMessage.tenantId,
-                requestMessage.documentId,
-                task);
-            this.puppetCache.set(cacheKey, puppet);
-            winston.info(`Launched for ${cacheKey}`);
-            puppet.on("close", (ev: ICloseEvent) => {
-                this.closePuppet(ev);
-                winston.info(`Closed for ${cacheKey}`);
+            this.workerConfig.key,
+            this.searchStorage,
+            this.cache)
+            .then((puppet) => {
+
+                puppet.launch().then(() => {
+                    const cacheKey = this.createKey(
+                        requestMessage.tenantId,
+                        requestMessage.documentId,
+                        task);
+
+                    this.puppetCache.set(cacheKey, puppet);
+                    winston.info(`Launched for ${cacheKey}`);
+                    puppet.on("close", (ev: ICloseEvent) => {
+                        this.closePuppet(ev);
+                        winston.info(`Closed for ${cacheKey}`);
+                    });
+                }, (err) => {
+                    winston.error(err);
+                });
             });
-        }, (err) => {
-            winston.error(err);
-        });
     }
 
     private closePuppet(ev: ICloseEvent) {

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { EmbeddedComponent } from "@microsoft/fluid-aqueduct-react";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { EmbeddedComponent } from "@microsoft/fluid-view-adapters";
 import * as React from "react";
 import { TodoItemSupportedComponents } from "./supportedComponent";
 import { TodoItem } from "./TodoItem";

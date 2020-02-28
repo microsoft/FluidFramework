@@ -1,0 +1,58 @@
+{
+  "name": "@microsoft/fluid-local-driver",
+  "version": "0.14.0",
+  "description": "Fluid local driver",
+  "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
+  "main": "dist/index.js",
+  "browser": {
+    "moniker": "@microsoft/fluid-server-services-client/dist/dockerNames.js"
+  },
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "npm run build:genver && concurrently npm:build:compile npm:lint",
+    "build:compile": "npm run tsc",
+    "build:compile:min": "npm run build:compile",
+    "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
+    "build:genver": "gen-version",
+    "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+    "eslint": "eslint --ext=ts,tsx --format stylish src",
+    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "lint": "npm run eslint",
+    "lint:fix": "npm run eslint:fix",
+    "tsc": "tsc"
+  },
+  "dependencies": {
+    "@microsoft/fluid-common-utils": "^0.14.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.14.0",
+    "@microsoft/fluid-container-definitions": "^0.14.0",
+    "@microsoft/fluid-driver-definitions": "^0.14.0",
+    "@microsoft/fluid-protocol-definitions": "^0.1002.0",
+    "@microsoft/fluid-routerlicious-driver": "^0.14.0",
+    "@microsoft/fluid-server-local-server": "^0.1002.0",
+    "@microsoft/fluid-server-services-client": "^0.1002.0",
+    "@microsoft/fluid-server-services-core": "^0.1002.0",
+    "@microsoft/fluid-server-test-utils": "^0.1002.0",
+    "debug": "^4.1.1"
+  },
+  "devDependencies": {
+    "@microsoft/eslint-config-fluid": "^0.14.0",
+    "@microsoft/fluid-build-common": "^0.14.0",
+    "@types/node": "^10.14.6",
+    "@typescript-eslint/eslint-plugin": "~2.17.0",
+    "@typescript-eslint/parser": "~2.17.0",
+    "concurrently": "^4.1.0",
+    "eslint": "~6.8.0",
+    "eslint-plugin-eslint-comments": "~3.1.2",
+    "eslint-plugin-import": "2.20.0",
+    "eslint-plugin-no-null": "~1.0.2",
+    "eslint-plugin-optimize-regex": "~1.1.7",
+    "eslint-plugin-prefer-arrow": "~1.1.7",
+    "eslint-plugin-react": "~7.18.0",
+    "eslint-plugin-unicorn": "~15.0.1",
+    "rimraf": "^2.6.2",
+    "typescript": "~3.7.4"
+  }
+}

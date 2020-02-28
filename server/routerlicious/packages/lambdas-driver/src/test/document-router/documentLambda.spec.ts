@@ -39,6 +39,7 @@ describe("document-router", () => {
         });
 
         afterEach(async () => {
+            await lambda.close();
             await factory.dispose();
         });
 

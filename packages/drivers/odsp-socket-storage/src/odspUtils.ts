@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { isOnline, NetworkError, ThrottlingError, OnlineStatus } from "@microsoft/fluid-driver-utils";
+import { isOnline, FatalError, NetworkError, ThrottlingError, OnlineStatus } from "@microsoft/fluid-driver-utils";
 import { default as fetch, RequestInfo as FetchRequestInfo, RequestInit as FetchRequestInit } from "node-fetch";
 import * as sha from "sha.js";
 import { IOdspSocketError } from "./contracts";
@@ -45,14 +45,16 @@ export class OdspNetworkError extends NetworkError {
 /**
  * Returns network error based on error object from ODSP socket (IOdspSocketError)
  */
-export function errorObjectFromOdspError(socketError: IOdspSocketError, canRetry: boolean) {
-    if (socketError.retryAfter) {
+export function errorObjectFromOdspError(socketError: IOdspSocketError, retryFilter?: RetryFilter) {
+    if (socketError.code === 500) {
+        return new FatalError(socketError.message);
+    } else if (socketError.retryAfter) {
         return new ThrottlingError(socketError.message, socketError.retryAfter);
     } else {
         return new OdspNetworkError(
             socketError.message,
             socketError.code,
-            canRetry,
+            retryFilter?.(socketError.code) ?? true,
         );
     }
 }
@@ -130,7 +132,7 @@ export function fetchHelper(
     requestInfo: RequestInfo,
     requestInit: RequestInit | undefined,
     retryFilter: RetryFilter = defaultRetryFilter,
-): Promise<any> {
+): Promise<IOdspResponse<any>> {
     // Node-fetch and dom have conflicting typing, force them to work by casting for now
     return fetch(requestInfo as FetchRequestInfo, requestInit as FetchRequestInit).then(async (fetchResponse) => {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
@@ -144,18 +146,20 @@ export function fetchHelper(
             throwOdspNetworkError(`Error ${response.status} from the server`, response.status, retryFilter(response.status), response);
         }
 
-        // .json() can fail and message (that goes into telemetry) would container full request URI, including tokens...
-        // It tails for me with "Unexpected end of JSON input" quite often - an attempt to download big file (many ops)
-        // almost always ends up with this error - I'd guess 1% of op request end up here... It always succeeds on
-        // retry.
+        // JSON.parse() can fail and message (that goes into telemetry) would container full request URI, including
+        // tokens... It fails for me with "Unexpected end of JSON input" quite often - an attempt to download big file
+        // (many ops) almost always ends up with this error - I'd guess 1% of op request end up here... It always
+        // succeeds on retry.
         try {
+            const text = await response.text();
+            response.headers.set("body-size", text.length.toString());
             const res = {
                 headers: response.headers,
-                content: await response.json(),
+                content: JSON.parse(text),
             };
             return res;
         } catch (e) {
-            throwOdspNetworkError(`Error while parsing fetch response`, 400, true, response);
+            throwOdspNetworkError(`Error while parsing fetch response: ${e}`, 400, true, response);
         }
     }, (error) => {
         // While we do not know for sure whether computer is offline, this error is not actionable and

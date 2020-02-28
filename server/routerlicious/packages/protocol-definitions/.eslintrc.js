@@ -5,7 +5,7 @@
 
 module.exports = {
     extends: [
-        "@microsoft/eslint-config-fluid/",
+        "@microsoft/eslint-config-fluid",
     ],
     rules: {
         "@typescript-eslint/no-use-before-define": "off",

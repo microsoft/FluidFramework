@@ -22,7 +22,7 @@ import {
 import {
     ChildLogger,
     Deferred,
-} from "@microsoft/fluid-core-utils";
+} from "@microsoft/fluid-common-utils";
 import {
     buildSnapshotTree,
     raiseConnectedEvent,
@@ -34,7 +34,6 @@ import {
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
-    ISnapshotTree,
     ITreeEntry,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
@@ -69,15 +68,13 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
      * @param context - The component context
      * @param sharedObjectRegistry - The registry of shared objects used by this component
      * @param activeCallback - The callback called when the component runtime in active
-     * @param componentRegistry - The regisitry of components created and used by this component
+     * @param componentRegistry - The registry of components created and used by this component
      */
     public static load(
         context: IComponentContext,
         sharedObjectRegistry: ISharedObjectRegistry,
-        activeCallback: (runtime: ComponentRuntime) => void,
         componentRegistry?: IComponentRegistry,
-
-    ): void {
+    ): ComponentRuntime {
         const logger = ChildLogger.create(context.hostRuntime.logger, undefined, { componentId: context.id });
         const runtime = new ComponentRuntime(
             context,
@@ -97,7 +94,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
             logger);
 
         context.bindRuntime(runtime);
-        activeCallback(runtime);
+        return runtime;
     }
 
     public get IComponentRouter() { return this; }
@@ -116,14 +113,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
 
     public get clientId(): string {
         return this.componentContext.clientId;
-    }
-
-    /**
-     * DEPRECATED use clientDetails.type instead
-     * back-compat: 0.11 clientType
-     */
-    public get clientType(): string {
-        return this.componentContext.clientType;
     }
 
     public get clientDetails(): IClientDetails {
@@ -195,6 +184,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                     this.sharedObjectRegistry,
                     new Map(),
                     componentContext.branch,
+                    this.componentContext.summaryTracker.createOrGetChild(
+                        path,
+                        this.deltaManager.referenceSequenceNumber,
+                    ),
                     undefined);
                 const deferred = new Deferred<IChannelContext>();
                 deferred.resolve(channelContext);
@@ -422,7 +415,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
 
         this.closed = true;
 
-        return this.snapshotInternal();
+        return this.snapshotInternal(true);
     }
 
     public async close(): Promise<void> {
@@ -457,6 +450,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                         this.sharedObjectRegistry,
                         flatBlobs,
                         origin,
+                        this.componentContext.summaryTracker.createOrGetChild(
+                            attachMessage.id,
+                            message.sequenceNumber,
+                        ),
                         { type: attachMessage.type });
 
                     this.contexts.set(attachMessage.id, remoteChannelContext);
@@ -616,18 +613,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         this.componentContext.on("notleader", (clientId: string) => {
             this.emit("notleader", clientId);
         });
-        this.componentContext.on("refreshBaseSummary",
-            (snapshot: ISnapshotTree) => this.refreshBaseSummary(snapshot));
-    }
-
-    private refreshBaseSummary(snapshot: ISnapshotTree) {
-        // Propogate updated tree to all channels
-        for (const key of Object.keys(snapshot.trees)) {
-            const channel = this.contexts.get(key);
-            if (channel) {
-                channel.refreshBaseSummary(snapshot.trees[key]);
-            }
-        }
     }
 
     private verifyNotClosed() {

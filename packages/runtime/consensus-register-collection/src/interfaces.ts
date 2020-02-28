@@ -46,8 +46,10 @@ export interface IConsensusRegisterCollection<T = any> extends ISharedObject {
     /**
      * Attempts to write a register with a value. Returns a promise to indicate the roundtrip completion.
      * For a non existent register, it will attempt to create a new register with the specified value.
+     *
+     * @returns Promise<true> if write was non-concurrent
      */
-    write(key: string, value: T): Promise<void>;
+    write(key: string, value: T): Promise<boolean>;
 
     /**
      * Retrieves the agreed upon value for the register based on policy. Returns undefined if not present.
@@ -67,7 +69,7 @@ export interface IConsensusRegisterCollection<T = any> extends ISharedObject {
     /**
      * Event listeners
      */
-    on(event: "atomicChanged" | "versionChanged", listener: (...args: any[]) => void): this;
+    on(event: "atomicChanged" | "versionChanged", listener: (key: string, value: any, local: boolean) => void): this;
 }
 
 /**

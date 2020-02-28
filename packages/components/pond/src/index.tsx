@@ -8,7 +8,10 @@ import {
     PrimedComponentFactory,
     SimpleModuleInstantiationFactory,
 } from "@microsoft/fluid-aqueduct";
-import { IComponent, IComponentHandle, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import {
+    IComponentHandle,
+    IComponentHTMLView,
+} from "@microsoft/fluid-component-core-interfaces";
 import { SharedDirectory } from "@microsoft/fluid-map";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 
@@ -26,15 +29,15 @@ export const PondName = pkg.name as string;
  *  - Component creation with initial state
  *  - Component creation and storage using Handles
  */
-export class Pond extends PrimedComponent implements IComponentHTMLVisual {
+export class Pond extends PrimedComponent implements IComponentHTMLView {
 
     private readonly clickerKey = "clicker";
     private readonly clickerWithInitialValueKey = "clicker-with-initial-value";
 
-    public clicker2Render: IComponentHTMLVisual | undefined;
-    public clicker3Render: IComponentHTMLVisual | undefined;
+    public clicker2Render: IComponentHTMLView | undefined;
+    public clicker3Render: IComponentHTMLView | undefined;
 
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
 
     /**
    * Do setup work here
@@ -49,7 +52,7 @@ export class Pond extends PrimedComponent implements IComponentHTMLVisual {
     }
 
     async createSubComponent<T extends PrimedComponent>(rootKey: string, pkgName: string, props?: any) {
-        const componentRuntime: IComponentRuntime = await this.context.createSubComponent(pkgName, props);
+        const componentRuntime: IComponentRuntime = await this.context.createComponent(undefined, pkgName, props);
         componentRuntime.attach();
         const response = componentRuntime.request({url: "/"});
         const responseValue = await this.asComponent<T>(response);
@@ -57,14 +60,14 @@ export class Pond extends PrimedComponent implements IComponentHTMLVisual {
     }
 
     protected async componentHasInitialized() {
-        const clicker2 = await this.root.get<IComponentHandle>(this.clickerKey).get<IComponent>();
-        this.clicker2Render = clicker2.IComponentHTMLVisual;
+        const clicker2 = await this.root.get<IComponentHandle>(this.clickerKey).get();
+        this.clicker2Render = clicker2.IComponentHTMLView;
 
-        const clicker3 = await this.root.get<IComponentHandle>(this.clickerWithInitialValueKey).get<IComponent>();
-        this.clicker3Render = clicker3.IComponentHTMLVisual;
+        const clicker3 = await this.root.get<IComponentHandle>(this.clickerWithInitialValueKey).get();
+        this.clicker3Render = clicker3.IComponentHTMLView;
     }
 
-    // start IComponentHTMLVisual
+    // start IComponentHTMLView
 
     public render(div: HTMLElement) {
         if (!this.clicker2Render || !this.clicker3Render) {
@@ -107,7 +110,7 @@ export class Pond extends PrimedComponent implements IComponentHTMLVisual {
         return div;
     }
 
-    // end IComponentHTMLVisual
+    // end IComponentHTMLView
 
     // ----- COMPONENT SETUP STUFF -----
 

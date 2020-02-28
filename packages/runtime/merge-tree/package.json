@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-merge-tree",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "description": "Merge tree",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -50,15 +50,15 @@
   },
   "dependencies": {
     "@microsoft/fluid-common-definitions": "^0.13.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.13.0",
-    "@microsoft/fluid-core-utils": "^0.13.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1001.0",
-    "@microsoft/fluid-runtime-definitions": "^0.13.0"
+    "@microsoft/fluid-common-utils": "^0.14.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.14.0",
+    "@microsoft/fluid-protocol-definitions": "^0.1002.0",
+    "@microsoft/fluid-runtime-definitions": "^0.14.0"
   },
   "devDependencies": {
-    "@microsoft/eslint-config-fluid": "^0.13.0",
-    "@microsoft/fluid-build-common": "^0.13.0",
-    "@microsoft/fluid-test-runtime-utils": "^0.13.0",
+    "@microsoft/eslint-config-fluid": "^0.14.0",
+    "@microsoft/fluid-build-common": "^0.14.0",
+    "@microsoft/fluid-test-runtime-utils": "^0.14.0",
     "@types/diff": "^3.5.1",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.14.6",
@@ -66,10 +66,11 @@
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",
     "concurrently": "^4.1.0",
+    "copyfiles": "^2.1.0",
     "diff": "^3.5.0",
     "eslint": "~6.8.0",
     "eslint-plugin-eslint-comments": "~3.1.2",
-    "eslint-plugin-import": "~2.20.0",
+    "eslint-plugin-import": "2.20.0",
     "eslint-plugin-no-null": "~1.0.2",
     "eslint-plugin-optimize-regex": "~1.1.7",
     "eslint-plugin-prefer-arrow": "~1.1.7",

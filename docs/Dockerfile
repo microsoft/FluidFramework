@@ -1,25 +1,56 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-FROM node:10.16.0-slim AS base
+FROM node:12.16-slim AS base
 
 # node-gyp dependencies
 RUN apt-get update && apt-get install -y \
-        git
+        git \
+        yarn
+
+RUN npm install -g @microsoft/api-documenter@^7.4.6 copyfiles@^2.1.0
+
+#############################
+# Use pre-release version of vuepress with a perf fix
+WORKDIR /
+RUN git clone https://github.com/itsxallwater/vuepress.git vuepress
+
+WORKDIR /vuepress
+RUN git checkout feat/implement-node-worker-threads
+#bd669ed8feeb4715ecc5fd5bcbae0d388e53c9ee
+RUN yarn
+RUN yarn tsc
+RUN yarn boot
+RUN yarn register-vuepress
+
+WORKDIR /
+RUN mkdir docs
+# Copy the root .npmrc to pull private packages
+COPY .npmrc docs/
+COPY docs/package*.json docs/
+
+WORKDIR /docs
+RUN npm install
 
 #############################
 # Copy the source and the api artifact
 FROM base AS r11s
 
+WORKDIR /
 COPY . .
+
+# Convert the json to markdown
+RUN npm run build:gendocs
 
 #############################
 FROM r11s AS docs
 
 WORKDIR /docs
-RUN npm install
 
-# Build
+# Link the forked version of vuepress
+RUN yarn link "vuepress"
+
+# Build docs
 RUN npm run build:ci
 
 #############################
@@ -35,7 +66,7 @@ RUN git clone https://%24praguedocs:$DOCSGITPASSWORD@praguedocs.scm.azurewebsite
 WORKDIR /praguedocs
 RUN git pull
 WORKDIR /
-RUN rsync docs/dist/ praguedocs/ -rv --exclude '.git'
+RUN rsync docs/dist/ praguedocs/ -rv --delete --exclude '.git'
 
 WORKDIR /praguedocs
 RUN git add .

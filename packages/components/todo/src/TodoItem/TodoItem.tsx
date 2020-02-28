@@ -5,11 +5,14 @@
 
 import { ClickerName } from "@fluid-example/clicker";
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
-import { IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
 import { ISharedCell, SharedCell } from "@microsoft/fluid-cell";
-import { IComponentHandle, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import {
+    IComponentHandle,
+    IComponentHTMLView,
+} from "@microsoft/fluid-component-core-interfaces";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
+import { IComponentReactViewable } from "@microsoft/fluid-view-adapters";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { TextBoxName } from "../TextBox";
@@ -36,14 +39,14 @@ const innerComponentKey = "innerId";
  */
 export class TodoItem extends PrimedComponent
     implements
-    IComponentHTMLVisual,
+    IComponentHTMLView,
     IComponentReactViewable {
 
     private text: SharedString;
     private innerIdCell: ISharedCell;
     private baseUrl: string = "";
 
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
     public get IComponentReactViewable() { return this; }
 
     /**
@@ -79,8 +82,8 @@ export class TodoItem extends PrimedComponent
     }
 
     protected async componentHasInitialized() {
-        const text = this.root.get<IComponentHandle>(textKey).get<SharedString>();
-        const innerIdCell = this.root.get<IComponentHandle>(innerComponentKey).get<ISharedCell>();
+        const text = this.root.get<IComponentHandle<SharedString>>(textKey).get();
+        const innerIdCell = this.root.get<IComponentHandle<ISharedCell>>(innerComponentKey).get();
         this.baseUrl = this.root.get(baseUrlKey);
 
         this.setCheckedState = this.setCheckedState.bind(this);
@@ -108,7 +111,7 @@ export class TodoItem extends PrimedComponent
         });
     }
 
-    // start IComponentHTMLVisual
+    // start IComponentHTMLView
 
     public render(div: HTMLElement) {
         ReactDOM.render(
@@ -117,7 +120,7 @@ export class TodoItem extends PrimedComponent
         );
     }
 
-    // end IComponentHTMLVisual
+    // end IComponentHTMLView
 
     // start IComponentReactViewable
 
@@ -177,16 +180,16 @@ export class TodoItem extends PrimedComponent
         let componentRuntime: IComponentRuntime;
         switch (type) {
             case "todo":
-                componentRuntime = await this.context.createSubComponent(TodoItemName, props);
+                componentRuntime = await this.context.createComponent(undefined, TodoItemName, props);
                 break;
             case "clicker":
-                componentRuntime = await this.context.createSubComponent(ClickerName, props);
+                componentRuntime = await this.context.createComponent(undefined, ClickerName, props);
                 break;
             case "textBox":
-                componentRuntime = await this.context.createSubComponent(TextBoxName, props);
+                componentRuntime = await this.context.createComponent(undefined, TextBoxName, props);
                 break;
             case "textList":
-                componentRuntime = await this.context.createSubComponent(TextListName, props);
+                componentRuntime = await this.context.createComponent(undefined, TextListName, props);
                 break;
             default:
         }

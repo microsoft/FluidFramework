@@ -121,12 +121,12 @@ Both markers and text are stored as segments in the Shared String. Text segments
 - Rich Text Editor Implementations
   - packages\components\webflow\
   - packages\components\markflow\
-  - packages\components\client-ui\src\controls\flowView.ts
+  - packages\components\client-ui-lib\src\controls\flowView.ts
 
 - Integrations with Open Source Rich Text Editors
-  - samples\chaincode\prosemirror\
-  - samples\chaincode\smde\src\
-  - samples\chaincode\draft-js\
+  - examples\components\prosemirror\
+  - examples\components\smde\src\
+  - examples\components\draft-js\
 
 - Plain Text Editor Implementations
   - packages\framework\aqueduct-react\src\react\collaborativeTextArea.tsx

@@ -3,19 +3,23 @@
  * Licensed under the MIT License.
  */
 
+import { BlobServiceClient } from "@azure/storage-blob";
 import * as commander from "commander";
-import * as jwt from "jsonwebtoken";
+import { AzureBlobService } from "../searchStorage";
 import { configureLogging } from "./cliLogger";
 import { PuppetMaster } from "./puppetMaster";
 
-const routerlicious = "https://alfred.wu2-ppe.prague.office-int.com";
-const historian = "https://historian.wu2-ppe.prague.office-int.com";
-const tenantId = "fluid";
-const secret = "43cfc3fbf04a97c0921fd23ff10f9e4b";
-const packageUrl = "https://pragueauspkn-3873244262.azureedge.net";
-const key = "VBQyoGpEYrTn3XQPtXW3K8fFDd";
+/**
+ * This is for testing puppeteer from within the docker container (?)
+ */
 
-async function launchPuppeteer(documentId: string, loaderType: string) {
+const tenantId = "fluid";
+const authSecret = "VBQyoGpEYrTn3XQPtXW3K8fFDd";
+// tslint:disable-next-line: max-line-length
+const connectionString = "DefaultEndpointsProtocol=https;AccountName=searchhtml;AccountKey=+Yf1Ab6JmGu/VfSVyBs6pyD+fYE4KlVkpVOPwsdLFpSAXy2Ex6r1caeaMobVg5bFgAwlU59XfA9+SLckSIK0xA==;EndpointSuffix=core.windows.net";
+const searchContainer = "localsearch";
+
+async function launchPuppeteer(documentId: string, agentType: string, gatewayUrl: string) {
     configureLogging({
         colorize: true,
         json: false,
@@ -23,30 +27,20 @@ async function launchPuppeteer(documentId: string, loaderType: string) {
         level: "info",
         timestamp: true,
     });
-    const user = {
-        id: "test",
-        name: "tanvir",
-    };
-    const token = jwt.sign(
-        {
-            documentId,
-            scopes: ["doc:read", "doc:write", "summary:write"],
-            tenantId,
-            user,
-        },
-        secret);
 
-    const puppetMaster = new PuppetMaster(
+    const blobServiceClient = await BlobServiceClient.fromConnectionString(connectionString);
+    const containerClient = await blobServiceClient.getContainerClient(searchContainer);
+    const azureBlobService = new AzureBlobService(containerClient);
+
+    const puppetMaster = await PuppetMaster.create(
         documentId,
-        routerlicious,
-        historian,
         tenantId,
-        token,
-        key,
-        packageUrl,
-        loaderType);
+        gatewayUrl,
+        agentType,
+        authSecret,
+        azureBlobService);
 
-    return puppetMaster.launch();
+    return puppetMaster;
 }
 
 commander
@@ -59,9 +53,13 @@ commander
         "-t, --type [type]",
         "Type of agent",
         "snapshot")
+    .option(
+        "-u, --gatewayUrl [gatewayUrl]",
+        "GatewayUrl to Render against",
+        "gateway")
     .parse(process.argv);
 
-launchPuppeteer(commander.document, commander.type).catch(
+launchPuppeteer(commander.document, commander.type, commander.gatewayUrl).catch(
     (error) => {
         console.error(error);
         process.exit(1);

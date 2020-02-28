@@ -34,7 +34,7 @@ data:
             "endpoint": "{{ .Values.kafka.url }}:9092",
             "lib": {
                 "name": "kafka-node",
-                "endpoint": "{{ .Values.zookeeper.url }}"
+                "endpoint": "{{ .Values.kafka.url }}"
             },
             "maxMessageSize": "1MB"
         },
@@ -81,7 +81,7 @@ data:
         "foreman": {
             "queues": ["paparazziQueue2", "augloopQueue2"],
             "permissions": {
-                "paparazziQueue": ["snapshot", "spell", "intel", "translation", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation"],
+                "paparazziQueue": ["snapshot", "spell", "intel", "translation", "search", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation", "chain-search"],
                 "augloopQueue": ["augmentation"]
             }
         },
@@ -100,10 +100,6 @@ data:
             },
             "scriptorium": {
                 "group": "{{ template "scriptorium.fullname" . }}",
-                "topic": "{{ .Values.kafka.topics.deltas }}"
-            },
-            "broadcaster": {
-                "group": "{{ template "broadcaster.fullname" . }}",
                 "topic": "{{ .Values.kafka.topics.deltas }}"
             }
         },
@@ -141,7 +137,7 @@ data:
             "blobStorageUrl": "{{ .Values.historian.externalUrl }}",
             "repository": "FluidFramework",
             "npm": "",
-            "permission": ["snapshot", "spell", "intel", "translation", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation"]
+            "permission": ["snapshot", "spell", "intel", "translation", "search", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation", "chain-search"]
         },
         "tenantConfig": [
         ],

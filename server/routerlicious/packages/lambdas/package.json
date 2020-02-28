@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-server-lambdas",
-  "version": "0.1001.0",
+  "version": "0.1002.0",
   "description": "Fluid service lambdas",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -48,12 +48,12 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@microsoft/fluid-core-utils": "0.13.17538",
-    "@microsoft/fluid-gitresources": "^0.1001.0",
-    "@microsoft/fluid-protocol-base": "^0.1001.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1001.0",
-    "@microsoft/fluid-server-services-client": "^0.1001.0",
-    "@microsoft/fluid-server-services-core": "^0.1001.0",
+    "@microsoft/fluid-common-utils": "^0.14.0",
+    "@microsoft/fluid-gitresources": "^0.1002.0",
+    "@microsoft/fluid-protocol-base": "^0.1002.0",
+    "@microsoft/fluid-protocol-definitions": "^0.1002.0",
+    "@microsoft/fluid-server-services-client": "^0.1002.0",
+    "@microsoft/fluid-server-services-core": "^0.1002.0",
     "@types/semver": "^6.0.1",
     "async": "^2.6.1",
     "double-ended-queue": "^2.1.0-0",
@@ -62,13 +62,12 @@
     "moniker": "^0.1.2",
     "nconf": "^0.10.0",
     "semver": "^6.3.0",
-    "uuid": "^3.3.2",
-    "winston": "^3.1.0"
+    "uuid": "^3.3.2"
   },
   "devDependencies": {
-    "@microsoft/eslint-config-fluid": "^0.13.0",
-    "@microsoft/fluid-build-common": "^0.13.0",
-    "@microsoft/fluid-server-test-utils": "^0.1001.0",
+    "@microsoft/eslint-config-fluid": "^0.14.0",
+    "@microsoft/fluid-build-common": "^0.14.0",
+    "@microsoft/fluid-server-test-utils": "^0.1002.0",
     "@types/async": "^2.0.50",
     "@types/lodash": "^4.14.118",
     "@types/mocha": "^5.2.5",
@@ -80,7 +79,7 @@
     "concurrently": "^4.1.0",
     "eslint": "~6.8.0",
     "eslint-plugin-eslint-comments": "~3.1.2",
-    "eslint-plugin-import": "~2.20.0",
+    "eslint-plugin-import": "2.20.0",
     "eslint-plugin-no-null": "~1.0.2",
     "eslint-plugin-optimize-regex": "~1.1.7",
     "eslint-plugin-prefer-arrow": "~1.1.7",

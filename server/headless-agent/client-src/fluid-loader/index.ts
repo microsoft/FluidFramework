@@ -3,110 +3,51 @@
  * Licensed under the MIT License.
  */
 
-import { registerAttach } from "@microsoft/fluid-base-host";
-import { Container, Loader } from "@microsoft/fluid-container-loader";
-import { IFluidResolvedUrl } from "@microsoft/fluid-protocol-definitions";
-import { RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
-import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
-import { WebCodeLoader } from "@microsoft/fluid-web-code-loader";
-import * as jwt from "jsonwebtoken";
-import * as url from "url";
+import { BaseHost, IBaseHostConfig } from "@microsoft/fluid-base-host";
+import { Container } from "@microsoft/fluid-container-loader";
+import { IFluidResolvedUrl, IResolvedUrl } from "@microsoft/fluid-driver-definitions";
+import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 
 interface IWindow extends Window {
+    startLoading(): Promise<void>;
     closeContainer(): void;
 }
 
-export async function startLoading(
-    id: string,
-    routerlicious: string,
-    historian: string,
-    tenantId: string,
-    token: string,
-    jwtKey: string,
-    packageUrl: string,
-    loaderType: string,
-    div: HTMLDivElement): Promise<void> {
-    console.log(`Loading ${id} as ${loaderType}`);
-
-    const hostToken = jwt.sign(
-        {
-            user: "headless-agent",
+export async function startLoading(resolvedUrl: IResolvedUrl): Promise<Container> {
+    const serviceFactory = new RouterliciousDocumentServiceFactory(
+        false,
+        new DefaultErrorTracking(),
+        false,
+        true);
+    const baseHostConfig: IBaseHostConfig = {
+        documentServiceFactory: serviceFactory,
+        urlResolver: {
+            resolve: () => Promise.resolve(resolvedUrl),
         },
-        jwtKey);
-
-    const documentUrl = `fluid://${url.parse(routerlicious).host}` +
-    `/${encodeURIComponent(tenantId)}` +
-    `/${encodeURIComponent(id)}`;
-
-    const deltaStorageUrl = routerlicious +
-    "/deltas" +
-    `/${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}`;
-
-    const storageUrl =
-    historian +
-    "/repos" +
-    `/${encodeURIComponent(tenantId)}`;
-
-    const resolved: IFluidResolvedUrl = {
-        endpoints: {
-            deltaStorageUrl,
-            ordererUrl: routerlicious,
-            storageUrl,
-        },
-        tokens: { jwt: token },
-        type: "fluid",
-        url: documentUrl,
     };
 
-    const resolver = new ContainerUrlResolver(
-        routerlicious,
-        hostToken,
-        new Map([[documentUrl, resolved]]));
-    const codeLoader = new WebCodeLoader(packageUrl);
+    const baseHost = new BaseHost(baseHostConfig, resolvedUrl, undefined, [] );
+    const container =  await baseHost.loadAndRender(
+        (resolvedUrl as IFluidResolvedUrl).url,
+        document.getElementById("content") as HTMLDivElement);
 
-    const loader = new Loader(
-        { resolver },
-        new RouterliciousDocumentServiceFactory(),
-        codeLoader,
-        { encrypted: undefined, blockUpdateMarkers: true, client: { type: loaderType } },
-        null);
-
-    const container = await loader.resolve({ url: documentUrl });
-    console.log(`Resolved ${documentUrl}`);
-
-    // Wait to be fully connected!
-    if (!container.connected) {
-        await new Promise<void>((resolve) => container.on("connected", () => resolve()));
-    }
-
-    console.log(`${container.clientId} is now fully connected to ${container.id}`);
-
-    checkContainerActivity(container);
-
-    registerAttach(loader, container, documentUrl, div);
+    return container;
 }
 
 // Checks container quorum for connected clients. Once all client leaves,
 // invokes the close function injected by puppeteer launcher.
-function checkContainerActivity(container: Container) {
+export function checkContainerActivity(container: Container) {
     const quorum = container.getQuorum();
     quorum.on("removeMember", (clientId: string) => {
         if (container.clientId === clientId) {
-            (window as IWindow).closeContainer();
+            (window as unknown as IWindow).closeContainer();
         } else {
             for (const client of quorum.getMembers()) {
-                // back-compat: 0.11 clientType
-                if (client[1].client.type === "browser") {
-                    return;
-                }
-                if (!client[1].client || (
-                    client[1].client.details // back-compat: 0.11 clientType
-                    && !client[1].client.details.capabilities.interactive
-                )) {
+                if (!client[1].client || client[1].client.details.capabilities.interactive) {
                     return;
                 }
             }
-            (window as IWindow).closeContainer();
+            (window as unknown as IWindow).closeContainer();
         }
     });
 }
