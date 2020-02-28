@@ -12,6 +12,7 @@ import {
     IComponentRouter,
     IRequest,
     IResponse,
+    IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
@@ -45,8 +46,9 @@ async function updateOrCreateKey(key: string, map: ISharedMap, container: JQuery
 
     if (isCollab) {
         if (newElement) {
-            const handle = (value as IComponent).IComponentHandle;
-            handle.get<SharedMap>().then((sharedMap) => {
+            // REVIEW: Is the round-trip through value -> handle -> value necessary?
+            const handle = value.IComponentHandle as IComponentHandle<SharedMap>;
+            handle.get().then((sharedMap) => {
                 // eslint-disable-next-line @typescript-eslint/no-use-before-define
                 displayMap(keyElement, key, sharedMap, map, runtime);
             });

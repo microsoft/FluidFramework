@@ -5,7 +5,6 @@
 
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { BaseHost, IBaseHostConfig } from "@microsoft/fluid-base-host";
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import {
     IFluidModule,
     IFluidPackage,
@@ -269,9 +268,6 @@ export async function start(
 
     // Construct a request
     const url = window.location.href;
-    const req: IRequest = {
-        url,
-    };
 
     // Create Package
     const scriptIds: string[] = [];
@@ -281,7 +277,6 @@ export async function start(
     const host1Conf: IBaseHostConfig = { documentServiceFactory, urlResolver };
     const baseHost1 = new BaseHost(
         host1Conf,
-        await urlResolver.resolve(req),
         pkg,
         scriptIds,
     );
@@ -300,7 +295,6 @@ export async function start(
         // intentional because we want to emulate two clients collaborating with each other.
         const baseHost2 = new BaseHost(
             hostConf2,
-            await urlResolver.resolve(req),
             pkg,
             scriptIds,
         );
