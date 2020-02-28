@@ -7,7 +7,7 @@ import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { Jsonable, JsonablePrimitive } from ".";
 
 /**
- * A union of the types that Fluid can instrinsically serialize, which is any type is that is
+ * A union of the types that Fluid can intrinsically serialize, which is any type is that is
  * Json serializable + Json serializable objects/arrays with IComponentHandles at the leaves.
  *
  * Convenient when declaring type constraints, such as `<T extends Serializable>`.
