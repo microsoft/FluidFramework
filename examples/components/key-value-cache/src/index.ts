@@ -129,7 +129,7 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFact
 
     }
 
-    public instantiateComponent(context: IComponentContext): void {
+    public instantiateComponent(context: IComponentContext) {
         const dataTypes = new Map<string, ISharedObjectFactory>();
         const mapFactory = SharedMap.getFactory();
         dataTypes.set(mapFactory.type, mapFactory);
@@ -144,6 +144,8 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFact
             const keyValue = await keyValueP;
             return keyValue.request(request);
         });
+
+        return runtime;
     }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {

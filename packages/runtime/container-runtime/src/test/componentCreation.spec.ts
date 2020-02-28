@@ -2,12 +2,11 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import * as assert from "assert";
 import {
-    IComponentContext,
     IComponentFactory,
     IComponentRegistry,
-    IComponentRuntime,
     ComponentRegistryEntry,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
@@ -35,7 +34,7 @@ describe("Component Creation Tests", () => {
 
         let storage: IDocumentStorageService;
         let scope: IComponent;
-        const attachCb = (mR: IComponentRuntime) => {};
+        const attachCb = () => {};
         let containerRuntime: ContainerRuntime;
         const defaultName = "default";
         const componentAName = "componentA";
@@ -49,9 +48,7 @@ describe("Component Creation Tests", () => {
             const registryEntries = new Map(entries);
             const factory: IComponentFactory = {
                 get IComponentFactory() { return factory; },
-                instantiateComponent: (context: IComponentContext) => {
-                    context.bindRuntime(new MockRuntime());
-                },
+                instantiateComponent: () => new MockRuntime(),
             };
             let registry: IComponentRegistry;
             // eslint-disable-next-line prefer-const

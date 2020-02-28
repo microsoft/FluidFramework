@@ -116,7 +116,7 @@ export class BlobManager implements IBlobManager {
 /**
  * Instantiates a new chaincode component
  */
-export function instantiateComponent(context: IComponentContext): void {
+export function instantiateComponent(context: IComponentContext) {
     const modules = new Map<string, any>();
 
     // Create channel factories
@@ -133,4 +133,6 @@ export function instantiateComponent(context: IComponentContext): void {
         async (request: IRequest) => (
             { status: 404, mimeType: "text/plain", value: `${request.url} not found` }
         ));
+
+    return runtime;
 }

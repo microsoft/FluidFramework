@@ -271,7 +271,7 @@ export class VideoPlayerFactoryComponent implements IComponentFactory {
         return VideoPlayerFactoryComponent.supportedInterfaces;
     }
 
-    public instantiateComponent(context: IComponentContext): void {
+    public instantiateComponent(context: IComponentContext) {
         const dataTypes = new Map<string, ISharedObjectFactory>();
         const mapFactory = SharedMap.getFactory();
         dataTypes.set(mapFactory.type, mapFactory);
@@ -286,6 +286,8 @@ export class VideoPlayerFactoryComponent implements IComponentFactory {
             const progressCollection = await progressCollectionP;
             return progressCollection.request(request);
         });
+
+        return runtime;
     }
 }
 

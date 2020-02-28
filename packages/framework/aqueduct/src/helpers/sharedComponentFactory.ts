@@ -45,7 +45,7 @@ export class SharedComponentFactory implements IComponentFactory, Partial<IProvi
      *
      * @param context - component context used to load a component runtime
      */
-    public instantiateComponent(context: IComponentContext): void {
+    public instantiateComponent(context: IComponentContext) {
         // Create a new runtime for our component
         // The runtime is what Fluid uses to create DDS' and route to your component
         const runtime = ComponentRuntime.load(
@@ -71,6 +71,8 @@ export class SharedComponentFactory implements IComponentFactory, Partial<IProvi
             const instance = await instanceP;
             return instance.request(request);
         });
+
+        return runtime;
     }
 
     /**

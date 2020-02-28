@@ -35,7 +35,7 @@ const insightsMapId = "insights";
 export class Chaincode implements IComponentFactory {
     public get IComponentFactory() { return this; }
 
-    public instantiateComponent(context: IComponentContext): void {
+    public instantiateComponent(context: IComponentContext) {
         // Create channel factories
         const mapFactory = map.SharedMap.getFactory();
         const sharedStringFactory = sequence.SharedString.getFactory();
@@ -91,6 +91,8 @@ export class Chaincode implements IComponentFactory {
                 value: document,
             };
         });
+
+        return runtime;
     }
 }
 

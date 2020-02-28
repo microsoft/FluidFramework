@@ -113,7 +113,7 @@ export class Persona extends EventEmitter implements
 class PersonaFactory implements IComponentFactory {
     public get IComponentFactory() { return this; }
 
-    public instantiateComponent(context: IComponentContext): void {
+    public instantiateComponent(context: IComponentContext) {
         const dataTypes = new Map<string, ISharedObjectFactory>();
         const directoryFactory = SharedDirectory.getFactory();
         const sequenceFactory = SharedString.getFactory();
@@ -133,6 +133,8 @@ class PersonaFactory implements IComponentFactory {
             const progressCollection = await progressCollectionP;
             return progressCollection.request(request);
         });
+
+        return runtime;
     }
 }
 

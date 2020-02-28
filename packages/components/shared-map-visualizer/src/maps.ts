@@ -262,7 +262,7 @@ class SharedMapVisualizerFactory implements IComponentFactory, IRuntimeFactory {
         return runtime;
     }
 
-    public instantiateComponent(context: IComponentContext): void {
+    public instantiateComponent(context: IComponentContext) {
         const dataTypes = new Map<string, ISharedObjectFactory>();
         const mapFactory = SharedMap.getFactory();
         dataTypes.set(mapFactory.type, mapFactory);
@@ -277,6 +277,8 @@ class SharedMapVisualizerFactory implements IComponentFactory, IRuntimeFactory {
             const progressCollection = await progressCollectionP;
             return progressCollection.request(request);
         });
+
+        return runtime;
     }
 }
 

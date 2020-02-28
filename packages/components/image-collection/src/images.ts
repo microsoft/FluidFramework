@@ -156,7 +156,7 @@ export class ImageCollection extends EventEmitter implements
 export class ImageCollectionFactoryComponent implements IComponentFactory {
     public get IComponentFactory() { return this; }
 
-    public instantiateComponent(context: IComponentContext): void {
+    public instantiateComponent(context: IComponentContext) {
         const dataTypes = new Map<string, ISharedObjectFactory>();
         dataTypes.set(MapFactory.Type, new MapFactory());
 
@@ -170,6 +170,8 @@ export class ImageCollectionFactoryComponent implements IComponentFactory {
             const progressCollection = await progressCollectionP;
             return progressCollection.request(request);
         });
+
+        return runtime;
     }
 }
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentContext } from "./components";
+import { IComponentContext, IComponentRuntime } from "./components";
 
 declare module "@microsoft/fluid-component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -23,5 +23,5 @@ export interface IComponentFactory extends IProvideComponentFactory {
      * Generates runtime for the component from the component context. Once created should be bound to the context.
      * @param context - Context for the component.
      */
-    instantiateComponent(context: IComponentContext): void;
+    instantiateComponent(context: IComponentContext): IComponentRuntime;
 }

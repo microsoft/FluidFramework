@@ -113,7 +113,7 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
             });
     }
 
-    public instantiateComponent(context: IComponentContext): void {
+    public instantiateComponent(context: IComponentContext) {
         return sharedTextComponent.instantiateComponent(context);
     }
 

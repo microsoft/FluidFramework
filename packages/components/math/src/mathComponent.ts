@@ -678,7 +678,7 @@ export class MathFactoryComponent implements IComponentFactory {
 
     public get IComponentFactory() { return this; }
 
-    public instantiateComponent(context: IComponentContext): void {
+    public instantiateComponent(context: IComponentContext) {
         // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-internal-modules, import/no-unassigned-import
         require("katex/dist/katex.min.css");
         // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-unassigned-import
@@ -700,6 +700,8 @@ export class MathFactoryComponent implements IComponentFactory {
             const mathCollection = await mathCollectionP;
             return mathCollection.request(request);
         });
+
+        return runtime;
     }
 }
 

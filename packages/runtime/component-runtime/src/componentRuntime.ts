@@ -93,7 +93,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
             componentRegistry,
             logger);
 
-        context.bindRuntime(runtime);
         return runtime;
     }
 

@@ -8,7 +8,6 @@ import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import { IBlob, ISnapshotTree } from "@microsoft/fluid-protocol-definitions";
 import {
-    IComponentContext,
     IComponentFactory,
     IComponentRegistry,
     IComponentRuntime,
@@ -36,7 +35,7 @@ describe("Component Context Tests", () => {
             let registry: IComponentRegistry;
             const factory: IComponentFactory = {
                 get IComponentFactory() { return factory; },
-                instantiateComponent: (context: IComponentContext) => { },
+                instantiateComponent: () => new MockRuntime(),
             };
             // eslint-disable-next-line prefer-const
             registry = {
@@ -47,7 +46,7 @@ describe("Component Context Tests", () => {
             containerRuntime = { IComponentRegistry: registry } as ContainerRuntime;
         });
 
-        it("Check LocalComponent Attributes", () => {
+        it("Check LocalComponent Attributes", async () => {
             localComponentContext = new LocalComponentContext(
                 "Test1",
                 ["TestComponent1"],
@@ -57,9 +56,7 @@ describe("Component Context Tests", () => {
                 summaryTracker,
                 attachCb);
 
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            localComponentContext.realize();
-            localComponentContext.bindRuntime(new MockRuntime());
+            await localComponentContext.realize();
             const attachMessage = localComponentContext.generateAttachMessage();
 
             const blob = attachMessage.snapshot.entries[0].value as IBlob;
@@ -101,7 +98,7 @@ describe("Component Context Tests", () => {
             registryWithSubRegistries.IComponentFactory = registryWithSubRegistries;
             registryWithSubRegistries.IComponentRegistry = registryWithSubRegistries;
             registryWithSubRegistries.get = async (pkg) => Promise.resolve(registryWithSubRegistries);
-            registryWithSubRegistries.instantiateComponent = (context: IComponentContext) => { };
+            registryWithSubRegistries.instantiateComponent = () => new MockRuntime();
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = { IComponentRegistry: registryWithSubRegistries } as ContainerRuntime;
@@ -114,9 +111,7 @@ describe("Component Context Tests", () => {
                 summaryTracker,
                 attachCb);
 
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            localComponentContext.realize();
-            localComponentContext.bindRuntime(new MockRuntime());
+            await localComponentContext.realize();
 
             const attachMessage = localComponentContext.generateAttachMessage();
             const blob = attachMessage.snapshot.entries[0].value as IBlob;
@@ -145,7 +140,7 @@ describe("Component Context Tests", () => {
         beforeEach(async () => {
             const factory: { [key: string]: any } = {};
             factory.IComponentFactory = factory;
-            factory.instantiateComponent = (context: IComponentContext) => { context.bindRuntime(new MockRuntime()); };
+            factory.instantiateComponent = () => new MockRuntime();
             const registry: { [key: string]: any } = {};
             registry.IComponentRegistry = registry;
             registry.get = async (pkg) => Promise.resolve(factory);

@@ -420,7 +420,7 @@ export class AgentSchedulerFactory implements IComponentFactory {
 
     public get IComponentFactory() { return this; }
 
-    public instantiateComponent(context: IComponentContext): void {
+    public instantiateComponent(context: IComponentContext) {
         const mapFactory = SharedMap.getFactory();
         const consensusRegisterCollectionFactory = ConsensusRegisterCollection.getFactory();
         const dataTypes = new Map<string, ISharedObjectFactory>();
@@ -437,5 +437,7 @@ export class AgentSchedulerFactory implements IComponentFactory {
             const taskManager = await taskManagerP;
             return taskManager.request(request);
         });
+
+        return runtime;
     }
 }

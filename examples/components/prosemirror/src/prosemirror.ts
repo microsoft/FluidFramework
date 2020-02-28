@@ -169,7 +169,7 @@ export class ProseMirror extends EventEmitter
 class ProseMirrorFactory implements IComponentFactory {
     public get IComponentFactory() { return this; }
 
-    public instantiateComponent(context: IComponentContext): void {
+    public instantiateComponent(context: IComponentContext) {
         const dataTypes = new Map<string, ISharedObjectFactory>();
         const mapFactory = SharedMap.getFactory();
         const sequenceFactory = SharedString.getFactory();
@@ -187,6 +187,8 @@ class ProseMirrorFactory implements IComponentFactory {
             const proseMirror = await proseMirrorP;
             return proseMirror.request(request);
         });
+
+        return runtime;
     }
 }
 

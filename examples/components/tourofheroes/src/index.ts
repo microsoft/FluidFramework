@@ -161,8 +161,8 @@ class TourOfHeroesContainerInstantiationFactory implements IRuntimeFactory, ICom
         return undefined;
     }
 
-    public instantiateComponent(context: IComponentContext): void {
-        TourOfHeroesInstantiationFactory.instantiateComponent(context);
+    public instantiateComponent(context: IComponentContext) {
+        return TourOfHeroesInstantiationFactory.instantiateComponent(context);
     }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {

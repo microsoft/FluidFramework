@@ -286,7 +286,7 @@ class TaskScheduler {
     }
 }
 
-export function instantiateComponent(context: IComponentContext): void {
+export function instantiateComponent(context: IComponentContext) {
     const modules = new Map<string, any>();
 
     // Create channel factories
@@ -315,4 +315,6 @@ export function instantiateComponent(context: IComponentContext): void {
         const runner = await runnerP;
         return runner.request(request);
     });
+
+    return runtime;
 }

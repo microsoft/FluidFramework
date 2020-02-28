@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import { strict as assert } from "assert";
 import { EventEmitter } from "events";
 import { IComponent, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
@@ -203,6 +203,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     }
 
     public async realize(): Promise<IComponentRuntime> {
+        // If the component's realization has been deferred, create the component now.
         if (!this.componentRuntimeDeferred) {
             this.componentRuntimeDeferred = new Deferred<IComponentRuntime>();
             const details = await this.getInitialSnapshotDetails();
@@ -228,9 +229,8 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
                 registry = entry.IComponentRegistry;
             }
 
-            // During this call we will invoke the instantiate method - which will call back into us
-            // via the bindRuntime call to resolve componentRuntimeDeferred
-            factory.instantiateComponent(this);
+            // Note that `bindRuntime()` will promptly resolve `componentRuntimeDeferred`.
+            this.bindRuntime(factory.instantiateComponent(this));
         }
 
         return this.componentRuntimeDeferred.promise;
@@ -391,7 +391,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         if (this.pending.length > 0) {
             // Apply all pending ops
             for (const op of this.pending) {
-                componentRuntime.process(op, false);
+                componentRuntime.process(op, /* local: */ false);
             }
         }
 
