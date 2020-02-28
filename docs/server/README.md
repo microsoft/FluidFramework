@@ -1,0 +1,5 @@
+---
+uid: architecture
+---
+
+# Architecture

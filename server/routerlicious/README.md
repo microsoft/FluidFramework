@@ -16,11 +16,7 @@ The services follow the [twelve factor](https://12factor.net) methodology and ar
 
 ## Getting Started
 
-To get started with Prague, we suggest that you [build a component](https://praguedocs.azurewebsites.net/get-started/build-a-component.html) using the [Yo Fluid](https://praguedocs.azurewebsites.net/get-started/yo-prague.html) bootstrapper.
-
-If you want a local service, but don't want to build routerlicious, you can use the standalone dockerfile located at the Fluid Framework root.
-
-If you want to dive into the Prague internals, keep reading below.
+Get up and running quickly using our [Getting Started guide](https://aka.ms/fluid).
 
 ## Help and Questions
 
@@ -47,18 +43,20 @@ Deployment Status
 ## Building and Running
 
 Note that we also provide an npm package of our client side API which allows you to program against the production
-Routerlicious service. See the [API documentation](https://praguedocs.azurewebsites.net/api/app-component.html) for more details. You only need to follow the below steps
-if you'd like to run a local version of the service or need to make changes to it.
+Routerlicious service. See the [API documentation](https://aka.ms/fluid) for more details. You only need to follow the
+below steps if you'd like to run a local version of the service or need to make changes to it.
 
 ### Prerequisities
 
-Standalone 
+#### Standalone
+
 * [Git LFS](https://git-lfs.github.com/) (comes by default with most git installations)
 * [Docker](https://www.docker.com/)
     * In Docker Settings -> Advanced Settings, give Docker at least 4GB of Memory--the more the better. You can give additional CPUs as well. 
     * In Docker Settings -> Shared Drives, check the hard drive where your repository lives.
 
-For Development
+#### For Development
+
 * [Node v8.x](https://nodejs.org/en/)
 * [Node-gyp](https://github.com/nodejs/node-gyp) dependencies
 
