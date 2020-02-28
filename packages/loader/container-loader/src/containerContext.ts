@@ -245,7 +245,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext,
         if (!(this.runtime && this.runtime.isExperimentalRuntime)) {
             throw new Error("Runtime has no experimental features");
         }
-        const tree = await (this.runtime! as IExperimentalRuntime).attachAndSummarize();
+        const tree = await (this.runtime as IExperimentalRuntime).attachAndSummarize();
         return tree;
     }
 

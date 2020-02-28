@@ -36,11 +36,7 @@ import {
     IFluidResolvedUrl,
     IExperimentalUrlResolver,
     IUrlResolver,
-<<<<<<< HEAD
     IDocumentServiceFactory,
-=======
-    IFluidResolvedUrl,
->>>>>>> b8001ca4fdf0062548f7c7b0f7385dd2e5126782
 } from "@microsoft/fluid-driver-definitions";
 import { createIError, readAndParse, OnlineStatus, isOnline } from "@microsoft/fluid-driver-utils";
 import {
@@ -166,8 +162,17 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         callback: (resolvedUrl: IFluidResolvedUrl) => IDocumentServiceFactory,
         logger?: ITelemetryBaseLogger,
     ): Promise<Container> {
-        const container =
-            new Container(options, scope, codeLoader, loader, undefined, undefined, undefined, undefined, logger, callback);
+        const container = new Container(
+            options,
+            scope,
+            codeLoader,
+            loader,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            logger,
+            callback);
         await container.createInDetachedState(source);
 
         return container;
