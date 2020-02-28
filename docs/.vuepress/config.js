@@ -263,15 +263,18 @@ module.exports = {
         lineNumbers: true,
         extractHeaders: ["h2", "h3", "h4"],
         extendMarkdown: (md) => {
+            md.set({ typographer: true });
             // use additional markdown-it plugins
             md.use(require("markdown-it-include"), "./includes/")
-                .use(require("markdown-it-deflist"));
+                .use(require("markdown-it-deflist"))
+                .use(require("markdown-it-replacements"));
         }
     },
     themeConfig: {
-        editLinks: false,
-        lastUpdated: false, // "Last Updated",
+        editLinks: true,
+        lastUpdated: true, // "Last Updated",
         repo: "microsoft/FluidFramework",
+        docsDir: "docs",
         smoothScroll: true,
         sidebarDepth: 1,
         nav: [

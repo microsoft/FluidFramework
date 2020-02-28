@@ -1,6 +1,6 @@
 ---
 home: true
-# heroImage: /hero.png
+heroImage: /images/homescreen144.png
 # heroText: Fluid Framework
 # tagline: State that flows
 # actionText: Get Started →
@@ -12,26 +12,18 @@ home: true
 #   details: Enjoy the dev experience of Vue + webpack, use Vue components in markdown, and develop custom themes with Vue.
 # - title: Performant
 #   details: VuePress generates pre-rendered static HTML for each page, and runs as an SPA once a page is loaded.
-footer: "Made with ❤ in Redmond."
+footer: Made with ❤ in Redmond.
 ---
 
 ::: tip
-The URL to this documentation is <https://aka.ms/fluid>.
-:::
 
-# Fluid Framework
+The URL to this documentation is <https://aka.ms/fluid>.
+
+:::
 
 Welcome to Fluid!
 
 We built Fluid to make it simpler for developers to build real-time collaborative experiences using Web technology.
-
-Fluid enables distributed, collaborative applications by providing developers with eventually consistent [distributed
-data structures](./guide/dds.md), a flexible component and app model, and a reference server implementation called
-[Routerlicious](./architecture/server/README.md).
-
-Teams are using Fluid for low latency collaboration, zero setup data persistance, and on-by-default cross app
-compatibility. Among other projects, our partner teams are building components for text editing, gaming, command line
-tooling, and IoT.
 
 Fluid's [distributed data structures](./guide/dds.md) make it easy to write apps that are collaborative just like you
 would build single-user applications and experiences. Fluid handles keeping your data in sync across multiple clients,
