@@ -134,7 +134,7 @@ Below is the original Routerlicious architecture diagram. The current system has
 largely remains unchanged. Detailed descriptions of the components are contained below as well as callouts
 to areas that have changed from the original picture. We will update the README with a more current diagram soon.
 
-![Routerlicious architecture diagram](../../docs/architecture/server/SystemArchitecture.JPG)
+![Routerlicious architecture diagram](../../docs/architecture/server/SystemArchitecture.jpg)
 
 ### Microservices
 
