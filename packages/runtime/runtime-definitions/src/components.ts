@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger, IDisposable } from "@microsoft/fluid-common-definitions";
 import {
     IComponent,
     IComponentHandleContext,
@@ -40,7 +40,11 @@ import { IChannel } from ".";
 /**
  * Represents the runtime for the component. Contains helper functions/state of the component.
  */
-export interface IComponentRuntime extends EventEmitter, IComponentRouter, Partial<IProvideComponentRegistry>  {
+export interface IComponentRuntime extends
+    EventEmitter,
+    IComponentRouter,
+    Partial<IProvideComponentRegistry>,
+    IDisposable {
     readonly IComponentRouter: IComponentRouter;
 
     readonly IComponentSerializer: IComponentSerializer;
@@ -228,7 +232,7 @@ export interface ISummaryTracker {
 /**
  * Represents the context for the component. This context is passed to the component runtime.
  */
-export interface IComponentContext extends EventEmitter {
+export interface IComponentContext extends EventEmitter, IDisposable {
     readonly documentId: string;
     readonly id: string;
     /**

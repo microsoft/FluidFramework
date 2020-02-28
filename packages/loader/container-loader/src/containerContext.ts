@@ -148,6 +148,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
     }
 
     private runtime: IRuntime | undefined;
+    public disposed = false;
 
     constructor(
         private readonly container: Container,
@@ -172,6 +173,16 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         this.logger = container.subLogger;
     }
 
+    public dispose(): void {
+        if (this.disposed) {
+            return;
+        }
+        this.disposed = true;
+
+        this.quorum.dispose();
+        this.deltaManager.dispose();
+    }
+
     /**
      * DEPRECATED
      * back-compat: 0.13 refreshBaseSummary
@@ -182,7 +193,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         this.emit("refreshBaseSummary", snapshot);
     }
 
-    public async snapshot(tagMessage: string, fullTree: boolean = false): Promise<ITree | null> {
+    public async snapshot(tagMessage: string = "", fullTree: boolean = false): Promise<ITree | null> {
         return this.runtime!.snapshot(tagMessage, fullTree);
     }
 
@@ -191,15 +202,10 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         raiseConnectedEvent(this, value, clientId);
     }
 
-    public async stop(): Promise<ITree | null> {
-        const snapshot = await this.runtime!.snapshot("", false);
+    public async stop(): Promise<void> {
         await this.runtime!.stop();
 
-        // Dispose
-        this.quorum.dispose();
-        this.deltaManager.dispose();
-
-        return snapshot;
+        this.dispose();
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any) {

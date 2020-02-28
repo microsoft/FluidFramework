@@ -139,6 +139,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     protected componentRuntime: IComponentRuntime;
     private closed = false;
     private loaded = false;
+    public disposed = false;
     private pending: ISequencedDocumentMessage[] = [];
     private componentRuntimeDeferred: Deferred<IComponentRuntime>;
     private _baseSnapshot: ISnapshotTree;
@@ -154,6 +155,22 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         protected pkg?: readonly string[],
     ) {
         super();
+    }
+
+    public dispose(): void {
+        if (this.disposed) {
+            return;
+        }
+        this.disposed = true;
+
+        // Wait for any pending runtime then dispose it
+        if (this.componentRuntimeDeferred) {
+            this.componentRuntimeDeferred.promise.then((runtime) => {
+                runtime.dispose();
+            }).catch((error) => {
+                throw error;
+            });
+        }
     }
 
     public async createComponent(pkgOrId: string | undefined, pkg?: string, props?: any): Promise<IComponentRuntime> {
@@ -283,13 +300,14 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this.blobManager.getBlobMetadata();
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public stop(): Promise<ITree> {
+    /**
+     * Stop and dispose the context.  snapshot() is called separately if needed
+     */
+    public stop(): void {
         this.verifyNotClosed();
-
         this.closed = true;
 
-        return this.snapshot(true);
+        this.dispose();
     }
 
     public close(): void {

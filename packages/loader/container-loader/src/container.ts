@@ -362,7 +362,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.protocolHandler.close();
         }
 
-        // context's stop() is equivalent to close
         Promise.resolve(this.context?.stop()).catch((error) => {
             this.logCriticalError(error);
         });
@@ -463,7 +462,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.deltaManager.inbound.systemPause(),
             this.deltaManager.inboundSignal.systemPause()]);
 
-        const previousContextState = await this.context!.stop();
+        const previousContextState = await this.context!.snapshot();
+        await this.context!.stop();
 
         let snapshot: ISnapshotTree | undefined;
         const blobs = new Map();

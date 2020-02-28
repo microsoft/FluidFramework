@@ -33,9 +33,14 @@ class NullRuntime extends EventEmitter implements IRuntime {
     }
 
     public ready: Promise<void> | undefined;
+    public disposed = false;
 
     constructor() {
         super();
+    }
+
+    public dispose(): void {
+        this.disposed = true;
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async

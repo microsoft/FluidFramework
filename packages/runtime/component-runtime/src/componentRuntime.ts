@@ -144,6 +144,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     private readonly contexts = new Map<string, IChannelContext>();
     private readonly contextsDeferred = new Map<string, Deferred<IChannelContext>>();
     private closed = false;
+    public disposed = false;
     private readonly pendingAttach = new Map<string, IAttachMessage>();
     private requestHandler: ((request: IRequest) => Promise<IResponse>) | undefined;
     private isLocal: boolean;
@@ -205,6 +206,15 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         if (existing) {
             this.deferredAttached.resolve();
         }
+    }
+
+    public dispose(): void {
+        if (this.disposed) {
+            return;
+        }
+        this.disposed = true;
+
+        this.emit("dispose");
     }
 
     public async createAndAttachComponent(id: string, pkg: string): Promise<IComponentRuntime> {
@@ -410,13 +420,15 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         return this.blobManager.getBlobMetadata();
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public stop(): Promise<ITreeEntry[]> {
+    /**
+     * Stop and dispose the runtime.  snapshotInternal() is called separately if needed
+     */
+    public stop(): void {
         this.verifyNotClosed();
 
         this.closed = true;
 
-        return this.snapshotInternal(true);
+        this.dispose();
     }
 
     public async close(): Promise<void> {

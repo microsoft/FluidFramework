@@ -53,7 +53,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
         this.runtimeDisposeCallback = () => {
             this.onContainerClose();
         };
-        context.hostRuntime.on("dispose", this.runtimeDisposeCallback);
+        this.runtime.on("dispose", this.runtimeDisposeCallback);
     }
 
     /**
@@ -70,7 +70,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     }
 
     public dispose(): void {
-        this.context.hostRuntime.removeListener("dispose", this.runtimeDisposeCallback);
+        this.runtime.removeListener("dispose", this.runtimeDisposeCallback);
 
         this.disposed = true;
     }

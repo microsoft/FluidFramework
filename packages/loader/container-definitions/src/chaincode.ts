@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger, IDisposable } from "@microsoft/fluid-common-definitions";
 import {
     IComponent,
     IComponentConfiguration,
@@ -122,7 +122,7 @@ export interface IFluidCodeDetails {
 /**
  * The IRuntime represents an instantiation of a code package within a container.
  */
-export interface IRuntime {
+export interface IRuntime extends IDisposable {
 
     /**
      * Executes a request against the runtime
@@ -172,7 +172,7 @@ export interface IProvideMessageScheduler {
     readonly IMessageScheduler: IMessageScheduler;
 }
 
-export interface IContainerContext extends EventEmitter, IMessageScheduler, IProvideMessageScheduler {
+export interface IContainerContext extends EventEmitter, IMessageScheduler, IProvideMessageScheduler, IDisposable {
     readonly id: string;
     readonly existing: boolean | undefined;
     readonly options: any;

@@ -221,6 +221,11 @@ export class MockRuntime extends EventEmitter
     public readonly logger: ITelemetryLogger = DebugLogger.create("fluid:MockRuntime");
     public services: ISharedObjectServices;
     private readonly activeDeferred = new Deferred<void>();
+    public disposed = false;
+
+    public dispose(): void {
+        this.disposed = true;
+    }
 
     public get active(): Promise<void> {
         return this.activeDeferred.promise;

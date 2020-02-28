@@ -516,6 +516,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
     // Components tracked by the Domain
     private closed = false;
+    public disposed = false;
     private readonly pendingAttach = new Map<string, IAttachMessage>();
     private dirtyDocument = false;
     private readonly summarizer: Summarizer;
@@ -635,6 +636,18 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.summaryManager.setConnected(this.context.clientId);
         }
     }
+
+    public dispose(): void {
+        // close/stop all component contexts
+        for (const [componentId, contextD] of this.contextsDeferred) {
+            contextD.promise.then((context) => {
+                context.dispose();
+            }).catch((error) => {
+                this.logger.sendErrorEvent({eventName: "ComponentContextDisposeError", componentId}, error);
+            });
+        }
+    }
+
     public get IComponentTokenProvider() {
 
         if (this.options && this.options.intelligence) {
@@ -704,7 +717,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.verifyNotClosed();
         this.closed = true;
 
-        this.emit("dispose");
+        this.dispose();
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string, version: string) {
