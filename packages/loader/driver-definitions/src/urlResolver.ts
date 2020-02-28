@@ -44,7 +44,7 @@ export interface IExperimentalUrlResolver extends IUrlResolver {
     isExperimentalUrlResolver: true;
 
     // Creates a new document on the host with the provided options. Returns the resolved URL.
-    create(
+    createContainer(
         summary: ISummaryTree,
         sequenceNumber: number,
         values: [string, ICommittedProposal][],

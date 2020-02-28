@@ -136,6 +136,10 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this._baseSnapshot;
     }
 
+    public get isAttached(): boolean {
+        return this._isAttached;
+    }
+
     public readonly attach: (componentRuntime: IComponentRuntime) => void;
     protected componentRuntime: IComponentRuntime;
     private closed = false;
@@ -151,7 +155,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         public readonly storage: IDocumentStorageService,
         public readonly scope: IComponent,
         public readonly summaryTracker: SummaryTracker,
-        public isAttached: boolean,
+        private _isAttached: boolean,
         attach: (componentRuntime: IComponentRuntime) => void,
         protected pkg?: readonly string[],
     ) {
@@ -159,7 +163,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
         this.attach = (componentRuntime: IComponentRuntime) => {
             attach(componentRuntime);
-            this.isAttached = true;
+            this._isAttached = true;
         };
         // back-compat: 0.14 uploadSummary
         this.summaryTracker.addRefreshHandler(async () => {

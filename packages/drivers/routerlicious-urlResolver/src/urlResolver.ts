@@ -140,7 +140,7 @@ export class RouterliciousUrlResolver implements IUrlResolver, IExperimentalUrlR
         return resolved;
     }
 
-    public async create(
+    public async createContainer(
         summary: ISummaryTree,
         sequenceNumber: number,
         values: [string, ICommittedProposal][],

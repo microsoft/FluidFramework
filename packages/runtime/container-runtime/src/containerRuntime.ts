@@ -497,7 +497,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     private readonly summaryTreeConverter: SummaryTreeConverter;
     private latestSummaryAck: ISummaryContext;
     private readonly summaryTracker: SummaryTracker;
-    private readonly roots = new Map<string, IComponentRuntime>();
+    private readonly unattachedComponentRuntimeMap = new Map<string, Promise<IComponentRuntime>>();
 
     private tasks: string[] = [];
 
@@ -836,7 +836,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         // ContainerContext is not attached. So serve the runtime from registered roots.
         if (this.context.isExperimentalContainerContext
             && !(this.context as IExperimentalContainerContext).isAttached()) {
-            return this.roots.has(id) ? this.roots.get(id) : Promise.reject("Unknown component ID");
+            return this.unattachedComponentRuntimeMap.has(id) ?
+                this.unattachedComponentRuntimeMap.get(id) : Promise.reject("Unknown component ID");
         }
 
         if (!this.contextsDeferred.has(id)) {
@@ -850,14 +851,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         const componentContext = await this.contextsDeferred.get(id).promise;
         return componentContext.realize();
-    }
-
-    public registerRoot(runtime: IComponentRuntime) {
-        if (this.context.isExperimentalContainerContext
-            && (this.context as IExperimentalContainerContext).isAttached()) {
-            throw new Error("Can only register roots when unattached");
-        }
-        this.roots.set(runtime.id, runtime);
     }
 
     public setFlushMode(mode: FlushMode): void {
@@ -940,7 +933,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.contextsDeferred.set(id, deferred);
         this.contexts.set(id, context);
 
-        return context.realize();
+        const componentRuntimeP = context.realize();
+        this.unattachedComponentRuntimeMap.set(id, componentRuntimeP);
+        return componentRuntimeP;
     }
 
     public getQuorum(): IQuorum {
@@ -1133,12 +1128,14 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         // Resolve the deferred so other local components can access it.
         const deferred = this.contextsDeferred.get(componentRuntime.id);
         deferred.resolve(context);
+        this.unattachedComponentRuntimeMap.delete(componentRuntime.id);
     }
 
     public async attachAndSummarize(): Promise<ISummaryTree> {
         // Trigger an attach on all bound contexts
-        for (const [, root] of this.roots) {
-            root.attach();
+        for (const [, compRuntimeP] of this.unattachedComponentRuntimeMap) {
+            const compRuntime = await compRuntimeP;
+            compRuntime.attach();
         }
         this.IComponentHandleContext.attach();
 

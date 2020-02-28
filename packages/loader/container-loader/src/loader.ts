@@ -31,20 +31,10 @@ import { configurableUrlResolver } from "@microsoft/fluid-driver-utils";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { Container } from "./container";
 import { debug } from "./debug";
+import { IParsedUrl, parseUrl } from "./utils";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const now = require("performance-now") as () => number;
-
-export interface IParsedUrl {
-    id: string;
-    path: string;
-    /**
-     * Null means do not use snapshots, undefined means load latest snapshot
-     * otherwise it's version ID passed to IDocumentStorageService.getVersions() to figure out what snapshot to use.
-     * If needed, can add undefined which is treated by Container.load() as load latest snapshot.
-     */
-    version: string | null | undefined;
-}
 
 export class RelativeLoader extends EventEmitter implements ILoader, IExperimentalLoader {
 
@@ -201,6 +191,9 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
             this.scope,
             this,
             source,
+            (resolvedUrl: IFluidResolvedUrl) => {
+                return selectDocumentServiceFactoryForProtocol(resolvedUrl, this.protocolToDocumentFactoryMap);
+            },
             this.logger);
     }
 
@@ -232,7 +225,7 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
         } else {
             const resolved = await this.getResolvedUrl({ url: baseUrl, headers: request.headers });
             const resolvedAsFluid = resolved as IFluidResolvedUrl;
-            const parsed = this.parseUrl(resolvedAsFluid.url);
+            const parsed = parseUrl(resolvedAsFluid.url);
             if (!parsed) {
                 return Promise.reject(`Invalid URL ${resolvedAsFluid.url}`);
             }
@@ -246,24 +239,6 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
             );
             return proxyLoader.request(request);
         }
-    }
-
-    public factoryForResolved(resolvedUrl: IFluidResolvedUrl): IDocumentServiceFactory {
-        const factory: IDocumentServiceFactory =
-            selectDocumentServiceFactoryForProtocol(resolvedUrl, this.protocolToDocumentFactoryMap);
-
-        return factory;
-    }
-
-    public parseUrl(url: string): IParsedUrl | null {
-        const parsed = parse(url, true);
-
-        const regex = /^\/([^/]*\/[^/]*)(\/?.*)$/;
-        const match = regex.exec(parsed.pathname!);
-
-        return (match && match.length === 3)
-            ? { id: match[1], path: match[2], version: parsed.query.version as string }
-            : null;
     }
 
     private async getResolvedUrl(request: IRequest): Promise<IResolvedUrl> {
@@ -299,7 +274,7 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
 
         // Parse URL into components
         const resolvedAsFluid = resolved as IFluidResolvedUrl;
-        const parsed = this.parseUrl(resolvedAsFluid.url);
+        const parsed = parseUrl(resolvedAsFluid.url);
         if (!parsed) {
             return Promise.reject(`Invalid URL ${resolvedAsFluid.url}`);
         }

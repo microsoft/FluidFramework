@@ -56,7 +56,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext,
         deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         quorum: IQuorum,
         loader: ILoader,
-        storage: IDocumentStorageService | null | undefined,
         errorFn: (err: IError) => void,
         submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         submitSignalFn: (contents: any) => void,
@@ -75,7 +74,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext,
             blobManager,
             deltaManager,
             quorum,
-            storage,
             loader,
             errorFn,
             submitFn,
@@ -117,7 +115,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext,
             blobManager,
             deltaManager,
             quorum,
-            undefined,
             loader,
             errorFn,
             submitFn,
@@ -198,7 +195,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext,
     }
 
     public get storage(): IDocumentStorageService | undefined | null {
-        return this._storage;
+        return this.container.storage;
     }
 
     private runtime: IRuntime | undefined;
@@ -213,7 +210,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext,
         public readonly blobManager: BlobManager | undefined,
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         public readonly quorum: IQuorum,
-        public _storage: IDocumentStorageService | undefined | null,
         public readonly loader: ILoader,
         private readonly errorFn: (err: IError) => void,
         public readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
@@ -248,10 +244,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext,
     public async attachAndSummarize(): Promise<ISummaryTree> {
         const tree = await (this.runtime! as IExperimentalRuntime).attachAndSummarize();
         return tree;
-    }
-
-    public attachServices(storage: IDocumentStorageService): void {
-        this._storage = storage;
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string, version?: string) {

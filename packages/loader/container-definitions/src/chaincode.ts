@@ -229,9 +229,6 @@ export interface IExperimentalContainerContext extends IContainerContext {
     isAttached(): boolean;
 
     attachAndSummarize(): Promise<ISummaryTree>;
-
-    // Bind the registered services once attached.
-    attachServices(storageService: IDocumentStorageService): void;
 }
 
 export interface IProvideComponentTokenProvider {
