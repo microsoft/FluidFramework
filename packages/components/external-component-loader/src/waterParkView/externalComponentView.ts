@@ -147,8 +147,8 @@ export class ExternalComponentView extends PrimedComponent implements
     }
 
     protected async componentHasInitialized() {
-        const seqHandle = await this.root.wait<IComponentHandle>("componentIds");
-        this.sequence = await seqHandle.get<SharedObjectSequence<string>>();
+        const seqHandle = await this.root.wait<IComponentHandle<SharedObjectSequence<string>>>("componentIds");
+        this.sequence = await seqHandle.get();
         const cacheComponentsByUrl = async (urls: string[]) => {
             const promises =
                 // eslint-disable-next-line @typescript-eslint/promise-function-async

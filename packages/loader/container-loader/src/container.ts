@@ -36,7 +36,11 @@ import {
     IFluidResolvedUrl,
     IExperimentalUrlResolver,
     IUrlResolver,
+<<<<<<< HEAD
     IDocumentServiceFactory,
+=======
+    IFluidResolvedUrl,
+>>>>>>> b8001ca4fdf0062548f7c7b0f7385dd2e5126782
 } from "@microsoft/fluid-driver-definitions";
 import { createIError, readAndParse, OnlineStatus, isOnline } from "@microsoft/fluid-driver-utils";
 import {
@@ -108,6 +112,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         scope: IComponent,
         loader: Loader,
         request: IRequest,
+        resolvedUrl: IFluidResolvedUrl,
         logger?: ITelemetryBaseLogger,
     ): Promise<Container> {
         const container = new Container(
@@ -118,6 +123,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             id,
             service,
             request,
+            resolvedUrl,
             logger);
 
         return new Promise<Container>((res, rej) => {
@@ -161,7 +167,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         logger?: ITelemetryBaseLogger,
     ): Promise<Container> {
         const container =
-            new Container(options, scope, codeLoader, loader, undefined, undefined, undefined, logger, callback);
+            new Container(options, scope, codeLoader, loader, undefined, undefined, undefined, undefined, logger, callback);
         await container.createInDetachedState(source);
 
         return container;
@@ -309,6 +315,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         id?: string,
         private service?: IDocumentService,
         private originalRequest?: IRequest,
+        resolvedUrl?: IFluidResolvedUrl,
         logger?: ITelemetryBaseLogger,
         private readonly callback?: (resolvedUrl: IFluidResolvedUrl) => IDocumentServiceFactory,
     ) {
@@ -316,7 +323,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         const [, docId] = id ? id.split("/") : ["", ""];
         this._id = decodeURI(docId);
-        this._scopes = this.getScopes(options);
+        this._scopes = this.getScopes(resolvedUrl);
         this._audience = new Audience();
         this._canReconnect = originalRequest
             ? !(originalRequest.headers && originalRequest.headers[LoaderHeader.reconnect] === false)
@@ -1243,9 +1250,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
     }
 
-    private getScopes(options: any): string[] {
-        return options && options.tokens && options.tokens.jwt ?
-            jwtDecode<ITokenClaims>(options.tokens.jwt).scopes : [];
+    private getScopes(resolvedUrl: IFluidResolvedUrl | undefined): string[] {
+        return resolvedUrl?.tokens?.jwt ?
+            jwtDecode<ITokenClaims>(resolvedUrl.tokens.jwt).scopes : [];
     }
 
     /**

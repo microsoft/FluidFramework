@@ -41,6 +41,8 @@ export class Anchor extends PrimedComponent implements IProvideComponentHTMLVisu
     }
 
     protected async componentHasInitialized() {
-        this.defaultComponentInternal = await this.root.get<IComponentHandle>(this.defaultComponentId).get();
+        this.defaultComponentInternal =
+            (await this.root.get<IComponentHandle>(this.defaultComponentId).get())
+                .IComponentHTMLVisual;
     }
 }

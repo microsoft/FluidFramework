@@ -270,10 +270,12 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
         request: IRequest,
     ): Promise<{ container: Container; parsed: IParsedUrl }> {
 
-        const resolved = await this.getResolvedUrl(request);
+        const resolvedAsFluid = await this.getResolvedUrl(request);
+        if (resolvedAsFluid.type !== "fluid") {
+            throw new Error(`Cannot resolve non fluid container request: ${JSON.stringify(resolvedAsFluid)}`);
+        }
 
         // Parse URL into components
-        const resolvedAsFluid = resolved as IFluidResolvedUrl;
         const parsed = parseUrl(resolvedAsFluid.url);
         if (!parsed) {
             return Promise.reject(`Invalid URL ${resolvedAsFluid.url}`);
@@ -300,7 +302,7 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
                         parsed.id,
                         await factory.createDocumentService(resolvedAsFluid),
                         request,
-                        resolved,
+                        resolvedAsFluid,
                         this.logger);
                 this.containers.set(versionedId, containerP);
                 container = await containerP;
@@ -311,7 +313,7 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
                     parsed.id,
                     await factory.createDocumentService(resolvedAsFluid),
                     request,
-                    resolved,
+                    resolvedAsFluid,
                     this.logger);
         }
 
@@ -372,7 +374,7 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
         id: string,
         documentService: IDocumentService,
         request: IRequest,
-        resolved: IResolvedUrl,
+        resolved: IFluidResolvedUrl,
         logger?: ITelemetryBaseLogger,
     ): Promise<Container> {
         const container = Container.load(
@@ -383,6 +385,7 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
             this.scope,
             this,
             request,
+            resolved,
             logger);
 
         return container;

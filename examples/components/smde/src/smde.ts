@@ -83,7 +83,7 @@ export class Smde extends EventEmitter implements
         }
 
         this.root = await this.runtime.getChannel("root") as ISharedMap;
-        this.text = await this.root.get<IComponentHandle>("text").get<SharedString>();
+        this.text = await this.root.get<IComponentHandle<SharedString>>("text").get();
     }
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
