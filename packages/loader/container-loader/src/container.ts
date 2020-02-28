@@ -442,7 +442,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.service = service;
         this._canReconnect = !(request.headers && request.headers[LoaderHeader.reconnect] === false);
         const parsedUrl = parseUrl(resolvedUrl.url);
-        this._id = parsedUrl!.id;
+        if (!parsedUrl) {
+            throw new Error("Unable to parse Url");
+        }
+        this._id = parsedUrl.id;
 
         this._deltaManager.attachServices(service);
         this.storageService = await this.getDocumentStorageService();

@@ -242,6 +242,9 @@ export class ContainerContext extends EventEmitter implements IContainerContext,
     }
 
     public async attachAndSummarize(): Promise<ISummaryTree> {
+        if (!(this.runtime && this.runtime.isExperimentalRuntime)) {
+            throw new Error("Runtime has no experimental features");
+        }
         const tree = await (this.runtime! as IExperimentalRuntime).attachAndSummarize();
         return tree;
     }
