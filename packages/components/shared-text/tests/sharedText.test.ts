@@ -58,14 +58,15 @@ describe("sharedText", () => {
     let textLeft = await getText(0);
     expect(textLeft).not.toEqual("");
     textLeft = textLeft.replace(/\s/g,'');
-    textLeft = textLeft.substring(0, word.length - 1);
+    textLeft = textLeft.substring(0, word.length);
 
     let textRight = await getText(1);
     expect(textRight).not.toEqual("");
     textRight = textRight.replace(/\s/g,'');
-    textRight = textRight.substring(0, word.length - 1);
+    textRight = textRight.substring(0, word.length);
 
     // Verify that the text updated for both the users.
-    expect(textLeft).toEqual(textRight);
+    expect(textLeft).toEqual(word);
+    expect(textRight).toEqual(word);
   });
 });
