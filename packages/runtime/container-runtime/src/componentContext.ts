@@ -187,7 +187,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this.hostRuntime._createComponentWithProps(packagePath, props, id);
     }
 
-    public rejectDeferredRealize(reason: string)
+    public async rejectDeferredRealize(reason: string)
     {
         const error = new Error(reason);
         // Error messages contain package names that is considered Personal Identifiable Information
@@ -195,7 +195,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         (error as any).containsPII = true;
 
         this.componentRuntimeDeferred.reject(error);
-        throw error;
+        return this.componentRuntimeDeferred.promise;
     }
 
     public async realize(): Promise<IComponentRuntime> {
@@ -213,19 +213,19 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             let lastPkg: string | undefined;
             for (const pkg of packages) {
                 if (!registry) {
-                    this.rejectDeferredRealize(`No registry for ${lastPkg} package`);
+                    return this.rejectDeferredRealize(`No registry for ${lastPkg} package`);
                 }
                 lastPkg = pkg;
                 entry = await registry.get(pkg);
                 if (!entry) {
-                    this.rejectDeferredRealize(`Registry does not contain entry for the package ${pkg}`);
+                    return this.rejectDeferredRealize(`Registry does not contain entry for the package ${pkg}`);
                 }
                 factory = entry.IComponentFactory;
                 registry = entry.IComponentRegistry;
             }
 
             if (factory === undefined) {
-                this.rejectDeferredRealize(`Can't find factory for ${lastPkg} package`);
+                return this.rejectDeferredRealize(`Can't find factory for ${lastPkg} package`);
             }
             // During this call we will invoke the instantiate method - which will call back into us
             // via the bindRuntime call to resolve componentRuntimeDeferred
