@@ -12,10 +12,11 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 
 export function ReportConnectionTelemetry(
-    deltaManager: IDeltaManager<ISequencedDocumentMessage,
-    IDocumentMessage>, logger: ITelemetryLogger)
+    clientId: string | undefined,
+    deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+    logger: ITelemetryLogger)
 {
-    new ConnectionTelemetry(deltaManager, logger);
+    new ConnectionTelemetry(clientId, deltaManager, logger);
 }
 
 class ConnectionTelemetry {
@@ -28,9 +29,9 @@ class ConnectionTelemetry {
     // To track round trip time for every %1000 client message.
     private opSendTimeForLatencyStatistics: number | undefined;
     private clientSequenceNumberForLatencyStatistics: number | undefined;
-    private clientId: string | undefined;
 
     public constructor(
+        private clientId: string | undefined,
         private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         private readonly logger: ITelemetryLogger)
     {

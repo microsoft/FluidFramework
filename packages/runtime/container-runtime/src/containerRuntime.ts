@@ -665,7 +665,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.summaryManager.setConnected(this.context.clientId);
         }
 
-        ReportConnectionTelemetry(this.deltaManager, this.logger);
+        ReportConnectionTelemetry(this.context.clientId, this.deltaManager, this.logger);
     }
 
     public get IComponentTokenProvider() {
