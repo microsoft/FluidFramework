@@ -12,7 +12,7 @@ describe("sharedText", () => {
     await page.goto(globals.PATH, { waitUntil: "load" });
   });
 
-  it ("Title of the document is same for both the users", async() => {
+  test("The title of the document is the same for both users", async() => {
     const getTitles = async (index: number) => {
       return page.evaluate((i: number) => {
         const titleElements = document.getElementsByClassName("title-bar");
@@ -30,12 +30,10 @@ describe("sharedText", () => {
     expect(titleLeft).not.toEqual("");
 
     const titleRight = await getTitles(1);
-    expect(titleRight).not.toEqual("");
-
     expect(titleLeft).toEqual(titleRight);
   });
 
-  it ("Typing text for one user updates both the users", async() => {
+  test("the text typed by one user updates the text for the other user", async() => {
     const getText = async (index: number) => {
       return page.evaluate((i: number) => {
         const titleElements = document.getElementsByClassName("flow-view");
