@@ -67,7 +67,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         }
         const clientId = this.runtime.clientId;
         assert(clientId);
-        return clientId as string;
+        return clientId;
     }
 
     public url = "/_tasks";
@@ -345,10 +345,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         if (!this.runtime.connected) {
             return false;
         }
-        const readonly = this.context.hostRuntime.deltaManager.readonly;
-        // Once we are connected, we have to know if we have r/w access or not!
-        assert(readonly !== undefined);
-        return readonly === false;
+        return this.context.hostRuntime.deltaManager.active;
     }
 
     private initializeCore() {

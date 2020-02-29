@@ -514,8 +514,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     public get leader(): boolean {
-            return this._leader;
-        }
+        return this._leader;
+    }
 
     public get summarizerClientId(): string {
         return this.summaryManager.summarizer;
@@ -1361,9 +1361,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     private updateLeader(leadership: boolean) {
-            this._leader = leadership;
+        this._leader = leadership;
         if (this.leader) {
-            assert(this.connected && this.deltaManager && !this.deltaManager.readonly);
+            assert(this.connected && this.deltaManager && !this.deltaManager.active);
             this.emit("leader", this.clientId);
         } else {
             this.emit("noleader", this.clientId);
