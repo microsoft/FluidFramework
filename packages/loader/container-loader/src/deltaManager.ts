@@ -400,7 +400,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             connectCore().then((connection) => {
                 cleanupConnectionAttempt();
                 resolve(connection.details);
-            }).catch((cleanupAndReject));
+            }).catch(cleanupAndReject);
         });
 
         return this.connectionP;
