@@ -513,14 +513,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.connectionState === ConnectionState.Connected;
     }
 
-    // Almost the same as IAgentScheduler.leader (this._leader),
-    // but returns false if disconnected
     public get leader(): boolean {
-        if (this.connected && this.deltaManager && this.deltaManager.active) {
             return this._leader;
         }
-        return false;
-    }
 
     public get summarizerClientId(): string {
         return this.summaryManager.summarizer;
@@ -771,7 +766,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         if (value === ConnectionState.Connected) {
             this.summaryManager.setConnected(clientId);
         } else {
-            this.updateLeader();
+            assert(!this._leader);
             this.summaryManager.setDisconnected();
         }
     }
@@ -1365,11 +1360,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return schedulerComponent.IAgentScheduler;
     }
 
-    private updateLeader(leadership?: boolean) {
-        if (leadership !== undefined) {
+    private updateLeader(leadership: boolean) {
             this._leader = leadership;
-        }
         if (this.leader) {
+            assert(this.connected && this.deltaManager && !this.deltaManager.readonly);
             this.emit("leader", this.clientId);
         } else {
             this.emit("noleader", this.clientId);

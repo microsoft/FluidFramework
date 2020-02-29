@@ -27,8 +27,13 @@ import {
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import * as debug from "debug";
+// eslint-disable-next-line import/no-internal-modules
+import * as uuid from "uuid/v4";
 
 const LeaderTaskId = "leader";
+
+// Note: making sure this ID is unique and does not collide with storage provided clientID
+const UnattachedClientId = `${uuid()}_unattached`;
 
 class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent, IComponentRouter {
 
@@ -56,19 +61,31 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     public get IAgentScheduler() { return this; }
     public get IComponentRouter() { return this; }
 
-    public url = "_tasks";
+    private get clientId(): string {
+        if (!this.runtime.isAttached) {
+            return UnattachedClientId;
+        }
+        const clientId = this.runtime.clientId;
+        assert(clientId);
+        return clientId as string;
+    }
+
+    public url = "/_tasks";
 
     private _leader = false;
 
-    // List of all tasks client is capable of running. This is a strict superset of tasks
-    // running in the client.
+    // List of all tasks client is capable of running (essentially expressed desire to run)
+    // Client will proactively attempt to pick them up these tasks if they are not assigned to other clients.
+    // This is a strict superset of tasks running in the client.
     private readonly localTasks = new Map<string, () => Promise<void>>();
 
-    // Set of registered tasks client not capable of running.
+    // Set of registered tasks by this client.
+    // Tasks in this set may or may not overlap with localTasks.
+    // The only requirement here - a task can be registered by a client only once.
     private readonly registeredTasks = new Set<string>();
 
-    // Set of registered tasks client not capable of running.
-    private readonly runningTasks = new Set<string>();
+    // Set of registered tasks client is running.
+    private runningTasks = new Set<string>();
 
     constructor(
         private readonly runtime: IComponentRuntime,
@@ -116,22 +133,28 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         if (this.localTasks.has(taskId)) {
             return Promise.reject(`${taskId} is already attempted`);
         }
-
         this.localTasks.set(taskId, worker);
+
         // Check the current status and express interest if it's a new one (undefined) or currently unpicked (null).
-        const currentClient = this.getTaskClientId(taskId);
-        if (currentClient === undefined || currentClient === null) {
-            debug(`Requesting ${taskId}`);
-            await this.writeCore(taskId, this.runtime.clientId);
+        if (this.isActive()) {
+            const currentClient = this.getTaskClientId(taskId);
+            if (currentClient === undefined || currentClient === null) {
+                debug(`Requesting ${taskId}`);
+                await this.writeCore(taskId, this.clientId);
+            }
         }
     }
 
     public async release(...taskUrls: string[]): Promise<void> {
+        const active = this.isActive();
         for (const taskUrl of taskUrls) {
             if (!this.localTasks.has(taskUrl)) {
                 return Promise.reject(`${taskUrl} was never registered`);
             }
-            if (this.getTaskClientId(taskUrl) !== this.runtime.clientId) {
+            // Note - the assumption is - we are connected.
+            // If not - all tasks should have been dropped already on disconnect / attachment
+            assert(active);
+            if (this.getTaskClientId(taskUrl) !== this.clientId) {
                 return Promise.reject(`${taskUrl} was never picked`);
             }
         }
@@ -139,27 +162,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     }
 
     public pickedTasks(): string[] {
-        const allPickedTasks: string[] = [];
-        for (const taskUrl of this.scheduler.keys()) {
-            if (this.getTaskClientId(taskUrl) === this.runtime.clientId) {
-                assert(this.runningTasks.has(taskUrl));
-                allPickedTasks.push(taskUrl);
-            }
-        }
-        assert(allPickedTasks.length === this.runningTasks.size);
-        return allPickedTasks;
-    }
-
-    private async pickNewTasks(taskUrls: string[]) {
-        assert(this.isActive());
-        const picksP: Promise<boolean>[] = [];
-        for (const taskUrl of taskUrls) {
-            if (this.localTasks.has(taskUrl)) {
-                debug(`Requesting ${taskUrl}`);
-                picksP.push(this.writeCore(taskUrl, this.runtime.clientId));
-            }
-        }
-        await Promise.all(picksP);
+        return Array.from(this.runningTasks.values());
     }
 
     private async registerCore(taskUrls: string[]): Promise<void> {
@@ -198,12 +201,6 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
                 releasesP.push(this.writeCore(taskUrl, null));
             }
             await Promise.all(releasesP);
-
-            // Releases are not contested by definition. So every id should have null value now.
-            for (const taskUrl of taskUrls) {
-                assert.notEqual(this.getTaskClientId(taskUrl), this.runtime.clientId, `${taskUrl} was not released`);
-                debug(`Released ${taskUrl}`);
-            }
         }
     }
 
@@ -221,71 +218,104 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         return this.scheduler.read(url);
     }
 
-    private async writeCore(key: string, value: string | null): Promise<boolean> {
-        return this.scheduler.write(key, value);
+    private async writeCore(key: string, clientId: string | null): Promise<boolean> {
+        return this.scheduler.write(key, clientId);
     }
 
     private initialize() {
-        const configuration = (this.context.hostRuntime as IComponent).IComponentConfiguration;
-        if (configuration === undefined || configuration.canReconnect) {
-            const quorum = this.runtime.getQuorum();
-            // A client left the quorum. Iterate and clear tasks held by that client.
-            // Ideally a leader should do this cleanup. But it's complicated when a leader itself leaves.
-            // Probably okay for now to have every client try to do this.
-            // eslint-disable-next-line @typescript-eslint/no-misused-promises
-            quorum.on("removeMember", async (clientId: string) => {
-                assert(this.runtime.isAttached);
-                // Cleanup only if connected. If not, cleanup will happen in initializeCore() that runs on connection.
-                if (this.isActive()) {
-                    const leftTasks: string[] = [];
-                    for (const taskUrl of this.scheduler.keys()) {
-                        if (this.getTaskClientId(taskUrl) === clientId) {
-                            leftTasks.push(taskUrl);
-                        }
-                    }
-                    await this.clearTasks(leftTasks);
-                }
-            });
-
-            // Listeners for new/released tasks. All clients will try to grab at the same time.
-            // May be we want a randomized timer (Something like raft) to reduce chattiness?
-            // eslint-disable-next-line @typescript-eslint/no-misused-promises
-            this.scheduler.on("atomicChanged", async (key: string, currentClient: string) => {
-                // Check if this client was chosen.
-                if (currentClient === this.runtime.clientId) {
-                    assert(!this.runningTasks.has(key));
-                    this.runningTasks.add(key);
-
-                    const worker = this.localTasks.get(key);
-                    if (worker === undefined) {
-                        throw new Error(`Client did not try to pick ${key}`);
-                    }
-
-                    this.emit("picked", key);
-                    await worker();
-                } else {
-                    if (this.runningTasks.has(key)) {
-                        this.runningTasks.delete(key);
-                        this.emit("released", key);
-                    }
-                    // attempt to pick up task if we are connected.
-                    // If not, initializeCore() will do it when connected
-                    if (currentClient === null && this.isActive()) {
-                        await this.pickNewTasks([key]);
-                    }
-                }
-            });
-
-            this.setupLeadership();
-
+        const quorum = this.runtime.getQuorum();
+        // A client left the quorum. Iterate and clear tasks held by that client.
+        // Ideally a leader should do this cleanup. But it's complicated when a leader itself leaves.
+        // Probably okay for now to have every client try to do this.
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
+        quorum.on("removeMember", async (clientId: string) => {
+            assert(this.runtime.isAttached);
+            // Cleanup only if connected. If not, cleanup will happen in initializeCore() that runs on connection.
             if (this.isActive()) {
-                this.initializeCore();
+                const leftTasks: string[] = [];
+                for (const taskUrl of this.scheduler.keys()) {
+                    if (this.getTaskClientId(taskUrl) === clientId) {
+                        leftTasks.push(taskUrl);
+                    }
+                }
+                await this.clearTasks(leftTasks);
             }
+        });
 
-            this.runtime.on("connected", () => {
-                assert(this.isActive());
-                this.initializeCore();
+        // Listeners for new/released tasks. All clients will try to grab at the same time.
+        // May be we want a randomized timer (Something like raft) to reduce chattiness?
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
+        this.scheduler.on("atomicChanged", async (key: string, currentClient: string | null) => {
+            // Check if this client was chosen.
+            if (this.isActive() && currentClient === this.clientId) {
+                this.onNewTaskAssigned(key);
+            } else {
+                await this.onTaskReasigned(key, currentClient);
+            }
+        });
+
+        this.setupLeadership();
+
+        if (this.isActive()) {
+            this.initializeCore();
+        }
+
+        this.runtime.on("connected", () => {
+            assert(this.isActive());
+            this.initializeCore();
+        });
+
+        if (!this.runtime.isAttached) {
+            this.runtime.waitAttached().then(() => {
+                this.clearLocalTasks();
+            }).catch((error) => {
+                this.sendErrorEvent("AgentScheduler_ClearLocalTasks", error);
             });
+        }
+
+        this.runtime.on("disconnected", () => {
+            if (this.runtime.isAttached) {
+                this.clearLocalTasks();
+            }
+        });
+    }
+
+    private onNewTaskAssigned(key: string) {
+        assert(!this.runningTasks.has(key), "task is already running");
+        this.runningTasks.add(key);
+        const worker = this.localTasks.get(key);
+        if (worker === undefined) {
+            this.sendErrorEvent("AgentScheduler_UnwantedChange", undefined, key);
+        }
+        else {
+            this.emit("picked", key);
+            worker().catch((error) => {
+                this.sendErrorEvent("AgentScheduler_FailedWork", error, key);
+            });
+        }
+    }
+
+    private async onTaskReasigned(key: string, currentClient: string | null) {
+        if (this.runningTasks.has(key)) {
+            this.runningTasks.delete(key);
+            this.emit("released", key);
+        }
+        assert(currentClient !== undefined, "client is undefined");
+        if (this.isActive()) {
+            // attempt to pick up task if we are connected.
+            // If not, initializeCore() will do it when connected
+            if (currentClient === null) {
+                if (this.localTasks.has(key)) {
+                    debug(`Requesting ${key}`);
+                    await this.writeCore(key, this.clientId);
+                }
+            }
+            // Check if the op came from dropped client
+            // This could happen when "old" ops are submitted on reconnection.
+            // They carry "old" ref seq number, but if write is not contested, it will get accepted
+            else if (this.runtime.getQuorum().getMember(currentClient) === undefined) {
+                await this.writeCore(key, null);
+            }
         }
     }
 
@@ -296,7 +326,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
             this._leader = true;
             this.emit("leader");
         }).catch((error) => {
-            this.runtime.logger.sendErrorEvent({eventName: "AgentScheduleLeaderInit"}, error);
+            this.sendErrorEvent("AgentScheduler_LeaderInit", error);
         });
 
         this.on("released", (key) => {
@@ -309,25 +339,42 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     }
 
     private isActive() {
-        return this.runtime.connected && this.context.hostRuntime.deltaManager.active ||
-            !this.runtime.isAttached;
+        if (!this.runtime.isAttached) {
+            return true;
+        }
+        if (!this.runtime.connected) {
+            return false;
+        }
+        const readonly = this.context.hostRuntime.deltaManager.readonly;
+        // Once we are connected, we have to know if we have r/w access or not!
+        assert(readonly !== undefined);
+        return readonly === false;
     }
 
     private initializeCore() {
         // Nobody released the tasks held by last client in previous session.
         // Check to see if this client needs to do this.
         const clearCandidates: string[] = [];
-        const newTasks: string[] = [];
+        const tasks: Promise<any>[] = [];
+
+        for (const [taskUrl] of this.localTasks) {
+            if (!this.getTaskClientId(taskUrl)) {
+                debug(`Requesting ${taskUrl}`);
+                tasks.push(this.writeCore(taskUrl, this.clientId));
+            }
+        }
+
         for (const taskUrl of this.scheduler.keys()) {
             const currentClient = this.getTaskClientId(taskUrl);
-            if (!currentClient) {
-                newTasks.push(taskUrl);
-            } else if (this.runtime.getQuorum().getMember(currentClient) === undefined) {
+            if (currentClient && this.runtime.getQuorum().getMember(currentClient) === undefined) {
                 clearCandidates.push(taskUrl);
             }
         }
-        Promise.all([this.clearTasks(clearCandidates), this.pickNewTasks(newTasks)]).catch((error) => {
-            this.runtime.logger.sendErrorEvent({eventName: "AgentSchedulerInitError"}, error);
+
+        tasks.push(this.clearTasks(clearCandidates));
+
+        Promise.all(tasks).catch((error) => {
+            this.sendErrorEvent("AgentScheduler_InitError", error);
         });
     }
 
@@ -347,7 +394,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         };
         const response = await this.runtime.loader.request(request);
         if (response.status !== 200 || response.mimeType !== "fluid/component") {
-            return Promise.reject("Invalid agent route");
+            return Promise.reject(`Invalid agent route: ${url}`);
         }
 
         const rawComponent = response.value as IComponent;
@@ -357,6 +404,25 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         }
 
         return agent.run();
+    }
+
+    private clearLocalTasks() {
+        const tasks = this.runningTasks;
+        this.runningTasks = new Set<string>();
+
+        if (this.isActive()) {
+            // Clear all tasks with UnattachedClientId (if was unattached) and reapply for tasks with new clientId
+            // If we are simply disconnected, then proper cleanup will be done on connection.
+            this.initializeCore();
+        }
+
+        for (const task of tasks) {
+            this.emit("released", task);
+        }
+    }
+
+    private sendErrorEvent(eventName: string, error: any, key?: string) {
+        this.runtime.logger.sendErrorEvent({eventName, key}, error);
     }
 }
 
@@ -410,7 +476,7 @@ export class TaskManager implements ITaskManager {
         } else {
             const urlWithSlash = componentUrl.startsWith("/") ? componentUrl : `/${componentUrl}`;
             return this.scheduler.pick(
-                `${urlWithSlash}/${this.url}/${taskId}`,
+                `${urlWithSlash}${this.url}/${taskId}`,
                 worker !== undefined ? worker : false);
         }
     }

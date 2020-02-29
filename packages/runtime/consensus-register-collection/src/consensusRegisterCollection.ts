@@ -325,7 +325,6 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
             } else {
                 data.atomic = atomicUpdate;
             }
-            this.emit("atomicChanged", op.key, op.value.value, local);
         }
 
         // Keep removing versions where incoming refseq is greater than or equals to current.
@@ -346,6 +345,11 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
 
         // Push the new element.
         data.versions.push(versionUpdate);
+
+        // Raise events at the end, to avoid reentrancy issues
+        if (winner) {
+            this.emit("atomicChanged", op.key, op.value.value, local);
+        }
         this.emit("versionChanged", op.key, op.value.value, local);
 
         return winner;

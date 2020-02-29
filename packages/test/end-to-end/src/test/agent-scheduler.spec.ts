@@ -9,6 +9,7 @@ import * as assert from "assert";
 import { AgentSchedulerFactory, TaskManager } from "@microsoft/fluid-agent-scheduler";
 import { TestHost } from "@microsoft/fluid-local-test-utils";
 import { IAgentScheduler } from "@microsoft/fluid-runtime-definitions";
+import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";
 
 const AgentSchedulerType = "@microsoft/fluid-agent-scheduler";
 
@@ -23,8 +24,19 @@ describe("AgentScheduler", () => {
             host = new TestHost([
                 [AgentSchedulerType, Promise.resolve(new AgentSchedulerFactory())],
             ]);
+
+
             scheduler = await host.getComponent<TaskManager>("_scheduler")
                 .then((taskmanager) => taskmanager.IAgentScheduler);
+
+            // Make sure all initial ops (around leadership) are processed.
+            // It takes a while because we start in unattached mode, and attach scheduler,
+            // which causes loss of all tasks and reassignment
+            const docScheduler = new DocumentDeltaEventManager(host.deltaConnectionServer);
+            const doc = await host.getDocumentDeltaEvent();
+            docScheduler.registerDocuments(doc);
+            await docScheduler.process(doc);
+            await docScheduler.resumeProcessing(doc);
         });
 
         afterEach(async () => { await host.close(); });
@@ -97,6 +109,16 @@ describe("AgentScheduler", () => {
                 .then((taskmanager) => taskmanager.IAgentScheduler);
             scheduler2 = await host2.getComponent<TaskManager>("_scheduler")
                 .then((taskmanager) => taskmanager.IAgentScheduler);
+
+            // Make sure all initial ops (around leadership) are processed.
+            // It takes a while because we start in unattached mode, and attach scheduler,
+            // which causes loss of all tasks and reassignment
+            const docScheduler = new DocumentDeltaEventManager(host1.deltaConnectionServer);
+            const doc1 = await host1.getDocumentDeltaEvent();
+            const doc2 = await host2.getDocumentDeltaEvent();
+            docScheduler.registerDocuments(doc1, doc2);
+            await docScheduler.process(doc1, doc2);
+            await docScheduler.resumeProcessing(doc1, doc2);
         });
 
         afterEach(async () => {
@@ -187,14 +209,15 @@ describe("AgentScheduler", () => {
             await TestHost.sync(host1, host2);
             assert.deepStrictEqual(scheduler1.pickedTasks(), [leader]);
             await TestHost.sync(host2);
-            assert.deepStrictEqual(scheduler2.pickedTasks(), ["task1", "task2", "task4", "task5", "task6"]);
+            assert.deepStrictEqual(scheduler2.pickedTasks().sort(), ["task1", "task2", "task4", "task5", "task6"]);
             await scheduler1.pick("task1", false);
             await scheduler1.pick("task2", false);
             await scheduler1.pick("task5", false);
             await scheduler1.pick("task6", false);
             await scheduler2.release("task2", "task1", "task4", "task5", "task6");
             await TestHost.sync(host1, host2);
-            assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1", "task2", "task4", "task5", "task6"]);
+            assert.deepStrictEqual(scheduler1.pickedTasks().sort(),
+                [leader, "task1", "task2", "task4", "task5", "task6"]);
         });
 
         it("Releasing leadership should automatically elect a new leader", async () => {
