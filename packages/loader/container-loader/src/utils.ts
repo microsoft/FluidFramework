@@ -16,7 +16,7 @@ export interface IParsedUrl {
     version: string | null | undefined;
 }
 
-export function parseUrl(url: string): IParsedUrl | null {
+export function parseUrl(url: string): IParsedUrl | undefined {
     const parsed = parse(url, true);
 
     const regex = /^\/([^/]*\/[^/]*)(\/?.*)$/;
@@ -24,5 +24,5 @@ export function parseUrl(url: string): IParsedUrl | null {
 
     return (match && match.length === 3)
         ? { id: match[1], path: match[2], version: parsed.query.version as string }
-        : null;
+        : undefined;
 }

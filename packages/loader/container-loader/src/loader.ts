@@ -18,6 +18,7 @@ import {
     LoaderHeader,
     IFluidCodeDetails,
     IExperimentalLoader,
+    IExperimentalContainer,
 } from "@microsoft/fluid-container-definitions";
 import { Deferred } from "@microsoft/fluid-common-utils";
 import {
@@ -36,9 +37,7 @@ import { IParsedUrl, parseUrl } from "./utils";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const now = require("performance-now") as () => number;
 
-export class RelativeLoader extends EventEmitter implements ILoader, IExperimentalLoader {
-
-    public readonly isExperimentalLoader = true;
+export class RelativeLoader extends EventEmitter implements ILoader {
 
     // Because the loader is passed to the container during construction we need to resolve the target container
     // after construction.
@@ -48,7 +47,11 @@ export class RelativeLoader extends EventEmitter implements ILoader, IExperiment
      * BaseRequest is the original request that triggered the load. This URL is used in case credentials need
      * to be fetched again.
      */
-    constructor(private readonly loader: Loader, private readonly baseRequest?: IRequest) {
+    constructor(
+        private readonly loader: Loader,
+        private readonly baseRequest: IRequest | undefined,
+        private readonly container?: Container,
+    ) {
         super();
     }
 
@@ -64,24 +67,31 @@ export class RelativeLoader extends EventEmitter implements ILoader, IExperiment
 
     public async request(request: IRequest): Promise<IResponse> {
         if (request.url.startsWith("/")) {
-            if (!this.baseRequest) {
-                throw new Error("Not available. Container detached");
+            const expContainer = this.container as IExperimentalContainer;
+            if (expContainer?.isExperimentalContainer) {
+                const container = await this.containerDeferred.promise;
+                return container.request(request);
             }
+
             if (this.needExecutionContext(request)) {
+                if (!this.baseRequest) {
+                    throw new Error("Base Request is not provided");
+                }
                 return this.loader.requestWorker(this.baseRequest.url, request);
             } else {
-                const container = this.canUseCache(request)
-                    ? await this.containerDeferred.promise
-                    : await this.loader.resolve({ url: this.baseRequest.url, headers: request.headers });
+                let container: Container;
+                if (this.canUseCache(request)) {
+                    container = await this.containerDeferred.promise;
+                } else if (!this.baseRequest) {
+                    throw new Error("Base Request is not provided");
+                } else {
+                    container = await this.loader.resolve({ url: this.baseRequest.url, headers: request.headers });
+                }
                 return container.request(request);
             }
         }
 
         return this.loader.request(request);
-    }
-
-    public async createDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
-        throw new Error("Method not implemented.");
     }
 
     public resolveContainer(container: Container) {

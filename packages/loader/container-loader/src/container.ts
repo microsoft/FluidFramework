@@ -322,7 +322,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         private originalRequest?: IRequest,
         resolvedUrl?: IFluidResolvedUrl,
         logger?: ITelemetryBaseLogger,
-        private readonly callback?: (resolvedUrl: IFluidResolvedUrl) => IDocumentServiceFactory,
+        private readonly factoryProvider?: (resolvedUrl: IFluidResolvedUrl) => IDocumentServiceFactory,
     ) {
         super();
 
@@ -330,9 +330,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this._id = decodeURI(docId);
         this._scopes = this.getScopes(resolvedUrl);
         this._audience = new Audience();
-        this._canReconnect = originalRequest
-            ? !(originalRequest.headers && originalRequest.headers[LoaderHeader.reconnect] === false)
-            : false;
+        this._canReconnect = !(originalRequest?.headers?.[LoaderHeader.reconnect] === false);
 
         // Create logger for components to use
         const type = this.client.details.type;
@@ -418,25 +416,24 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             throw new Error("Context is undefined");
         }
 
-        if (this.deltaManager !== undefined) {
-            await this.deltaManager.inbound.systemPause();
-        }
+        // Inbound queue for ops should be empty
+        assert(!this.deltaManager.inbound.length);
         // Get the document state post attach - possibly can just call attach but we need to change the semantics
         // around what the attach means as far as async code goes.
         const summary = await this.context.attachAndSummarize();
-
-        if (this.deltaManager !== undefined) {
-            this.deltaManager.inbound.systemResume();
+        if (!this.protocolHandler) {
+            throw new Error("Protocol Handler is undefined");
         }
-        const protocolHandler = this.protocolHandler!;
+        const protocolHandler = this.protocolHandler;
         const quorumSnapshot = protocolHandler.quorum.snapshot();
 
         this.originalRequest = request;
         // Actually go and create the resolved document
-        if (!resolver.isExperimentalUrlResolver) {
+        const expUrlResolver = resolver as IExperimentalUrlResolver;
+        if (!expUrlResolver?.isExperimentalUrlResolver) {
             throw new Error("Not an Experimental UrlResolver");
         }
-        const resolvedUrl = await (resolver as IExperimentalUrlResolver).createContainer(
+        const resolvedUrl = await expUrlResolver.createContainer(
             summary,
             protocolHandler.sequenceNumber,
             quorumSnapshot.values,
@@ -445,21 +442,20 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         if (resolvedUrl.type !== "fluid") {
             throw new Error("Only Fluid components currently supported");
         }
-        if (!this.callback) {
+        if (!this.factoryProvider) {
             throw new Error("Provide callback to get factory from resolved url");
         }
-        const factory = this.callback(resolvedUrl);
+        const factory = this.factoryProvider(resolvedUrl);
         const service = await factory.createDocumentService(resolvedUrl);
 
         this.service = service;
-        this._canReconnect = !(request.headers && request.headers[LoaderHeader.reconnect] === false);
+        this._canReconnect = !(request.headers?.[LoaderHeader.reconnect] === false);
         const parsedUrl = parseUrl(resolvedUrl.url);
         if (!parsedUrl) {
             throw new Error("Unable to parse Url");
         }
         this._id = parsedUrl.id;
 
-        this._deltaManager.attachServices(service);
         this.storageService = await this.getDocumentStorageService();
 
         // This we can probably just pass the storage service to the blob manager - although ideally
@@ -1001,9 +997,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             };
 
         // Client info from headers overrides client info from loader options
-        const headerClientDetails = this.originalRequest
-            ? this.originalRequest.headers && this.originalRequest.headers[LoaderHeader.clientDetails]
-            : undefined;
+        const headerClientDetails = this.originalRequest?.headers?.[LoaderHeader.clientDetails];
 
         if (headerClientDetails) {
             merge(client.details, headerClientDetails);
@@ -1014,7 +1008,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     private createDeltaManager() {
         const deltaManager = new DeltaManager(
-            this.service,
+            () => this.service,
             this.client,
             ChildLogger.create(this.subLogger, "DeltaManager"),
             this.canReconnect,
@@ -1291,7 +1285,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // are set. Global requests will still go to this loader
         const loader = new RelativeLoader(this.loader, this.originalRequest);
 
-        this.context = await ContainerContext.load(
+        this.context = await ContainerContext.createOrLoad(
             this,
             this.scope,
             this.codeLoader,
@@ -1325,9 +1319,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go to this loader
-        const loader = new RelativeLoader(this.loader, this.originalRequest);
+        const loader = new RelativeLoader(this.loader, this.originalRequest, this);
 
-        this.context = await ContainerContext.create(
+        this.context = await ContainerContext.createOrLoad(
             this,
             this.scope,
             this.codeLoader,

@@ -130,8 +130,6 @@ export interface IRuntimeState {
  */
 export interface IRuntime {
 
-    isExperimentalRuntime?: boolean;
-
     /**
      * Executes a request against the runtime
      */
@@ -180,7 +178,6 @@ export interface IProvideMessageScheduler {
 }
 
 export interface IContainerContext extends EventEmitter, IMessageScheduler, IProvideMessageScheduler {
-    isExperimentalContainerContext?: boolean;
     readonly id: string;
     readonly existing: boolean | undefined;
     readonly options: any;

@@ -45,7 +45,7 @@ import { Container } from "./container";
 export class ContainerContext extends EventEmitter implements IContainerContext, IExperimentalContainerContext {
 
     public readonly isExperimentalContainerContext = true;
-    public static async load(
+    public static async createOrLoad(
         container: Container,
         scope: IComponent,
         codeLoader: ICodeLoader,
@@ -83,48 +83,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext,
             version,
             previousRuntimeState);
         await context.load();
-        return context;
-    }
-
-    public static async create(
-        container: Container,
-        scope: IComponent,
-        codeLoader: ICodeLoader,
-        chaincode: IRuntimeFactory,
-        baseSnapshot: ISnapshotTree | null,
-        attributes: IDocumentAttributes,
-        blobManager: BlobManager | undefined,
-        deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-        quorum: IQuorum,
-        loader: ILoader,
-        errorFn: (err: IError) => void,
-        submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
-        submitSignalFn: (contents: any) => void,
-        snapshotFn: (message: string) => Promise<void>,
-        closeFn: (reason?: string) => void,
-        version: string,
-        previousRuntimeState: IRuntimeState,
-    ): Promise<ContainerContext> {
-        const context = new ContainerContext(
-            container,
-            scope,
-            codeLoader,
-            chaincode,
-            baseSnapshot,
-            attributes,
-            blobManager,
-            deltaManager,
-            quorum,
-            loader,
-            errorFn,
-            submitFn,
-            submitSignalFn,
-            snapshotFn,
-            closeFn,
-            version,
-            previousRuntimeState);
-        await context.load();
-
         return context;
     }
 
@@ -242,10 +200,11 @@ export class ContainerContext extends EventEmitter implements IContainerContext,
     }
 
     public async attachAndSummarize(): Promise<ISummaryTree> {
-        if (!(this.runtime && this.runtime.isExperimentalRuntime)) {
+        const expRuntime: IExperimentalRuntime = this.runtime as IExperimentalRuntime;
+        if (!expRuntime?.isExperimentalRuntime) {
             throw new Error("Runtime has no experimental features");
         }
-        const tree = await (this.runtime as IExperimentalRuntime).attachAndSummarize();
+        const tree = await expRuntime.attachAndSummarize();
         return tree;
     }
 

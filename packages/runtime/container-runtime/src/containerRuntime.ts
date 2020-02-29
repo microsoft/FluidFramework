@@ -497,7 +497,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     private readonly summaryTreeConverter: SummaryTreeConverter;
     private latestSummaryAck: ISummaryContext;
     private readonly summaryTracker: SummaryTracker;
-    private readonly unattachedComponentRuntimeMap = new Map<string, Promise<IComponentRuntime>>();
 
     private tasks: string[] = [];
 
@@ -565,14 +564,14 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         this.chunkMap = new Map<string, string[]>(chunks);
 
+        const expContainerContext = this.context as IExperimentalContainerContext;
         this.IComponentHandleContext = new ComponentHandleContext(
             "",
             this,
-            this.context.isExperimentalContainerContext ?
-                (this.context as IExperimentalContainerContext).isAttached() : true);
+            expContainerContext ? expContainerContext.isAttached() : true);
 
         // useContext - back-compat: 0.14 uploadSummary
-        const useContext = this.storage && this.storage.uploadSummaryWithContext !== undefined;
+        const useContext = this.storage?.uploadSummaryWithContext !== undefined;
         this.latestSummaryAck = { proposalHandle: undefined, ackHandle: undefined };
         this.summaryTracker = new SummaryTracker(
             useContext,
@@ -833,13 +832,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     public async getComponentRuntime(id: string, wait = true): Promise<IComponentRuntime> {
         this.verifyNotClosed();
 
-        // ContainerContext is not attached. So serve the runtime from registered roots.
-        if (this.context.isExperimentalContainerContext
-            && !(this.context as IExperimentalContainerContext).isAttached()) {
-            return this.unattachedComponentRuntimeMap.has(id) ?
-                this.unattachedComponentRuntimeMap.get(id) : Promise.reject("Unknown component ID");
-        }
-
         if (!this.contextsDeferred.has(id)) {
             if (!wait) {
                 return Promise.reject(`Process ${id} does not exist`);
@@ -849,6 +841,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.contextsDeferred.set(id, new Deferred<ComponentContext>());
         }
 
+        if (!(this.context as IExperimentalContainerContext).isAttached()) {
+            return this.contexts.get(id).realize();
+        }
         const componentContext = await this.contextsDeferred.get(id).promise;
         return componentContext.realize();
     }
@@ -934,7 +929,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.contexts.set(id, context);
 
         const componentRuntimeP = context.realize();
-        this.unattachedComponentRuntimeMap.set(id, componentRuntimeP);
         return componentRuntimeP;
     }
 
@@ -1128,14 +1122,16 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         // Resolve the deferred so other local components can access it.
         const deferred = this.contextsDeferred.get(componentRuntime.id);
         deferred.resolve(context);
-        this.unattachedComponentRuntimeMap.delete(componentRuntime.id);
     }
 
     public async attachAndSummarize(): Promise<ISummaryTree> {
         // Trigger an attach on all bound contexts
-        for (const [, compRuntimeP] of this.unattachedComponentRuntimeMap) {
-            const compRuntime = await compRuntimeP;
-            compRuntime.attach();
+        for (const [componentId] of this.contextsDeferred) {
+            const componentRuntime = await this.getComponentRuntime(componentId, false);
+            if (componentRuntime.isAttached) {
+                throw new Error(`Component with id ${componentId} is already attached`);
+            }
+            componentRuntime.attach();
         }
         this.IComponentHandleContext.attach();
 

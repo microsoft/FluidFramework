@@ -34,7 +34,6 @@ export interface ICodeWhiteList {
 
 export interface IContainer extends EventEmitter {
 
-    isExperimentalContainer?: boolean;
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 
     getQuorum(): IQuorum;
@@ -60,7 +59,6 @@ export interface IExperimentalContainer extends IContainer {
 
 export interface ILoader {
 
-    isExperimentalLoader?: boolean;
     /**
      * Loads the resource specified by the URL + headers contained in the request object.
      */
