@@ -40,7 +40,7 @@
         "tenants": [
             {
                 "id": "fluid",
-                "key": "43cfc3fbf04a97c0921fd23ff10f9e4b"
+                "key": "create-new-tenants-if-going-to-production"
             },
             {
                 "id": "github",
@@ -49,10 +49,6 @@
             {
                 "id": "local",
                 "key": "43cfc3fbf04a97c0921fd23ff10f9e4b"
-            },
-            {
-                "id": "test",
-                "key": "changeme"
             }
         ]
     },
@@ -192,7 +188,7 @@
     "tenantConfig": [
         {
             "_id": "fluid",
-            "key": "43cfc3fbf04a97c0921fd23ff10f9e4b",
+            "key": "create-new-tenants-if-going-to-production",
             "storage": {
                 "historianUrl": "http://localhost:3001",
                 "internalHistorianUrl": "http://historian:3000",
@@ -229,15 +225,6 @@
             "orderer": {
                 "type": "memory",
                 "url": "http://localhost:3003"
-            }
-        },
-        {
-            "_id": "test",
-            "key": "changeme",
-            "storage": {
-                "url": "http://gitrest:3000",
-                "owner": "test",
-                "repository": "test"
             }
         }
     ],

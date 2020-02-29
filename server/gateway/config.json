@@ -15,7 +15,7 @@
         "tenants": [
             {
                 "id": "fluid",
-                "key": "43cfc3fbf04a97c0921fd23ff10f9e4b"
+                "key": "create-new-tenants-if-going-to-production"
             },
             {
                 "id": "github",
@@ -28,10 +28,6 @@
             {
                 "id": "local",
                 "key": "43cfc3fbf04a97c0921fd23ff10f9e4b"
-            },
-            {
-                "id": "test",
-                "key": "changeme"
             }
         ],
         "federation": {
