@@ -13,7 +13,7 @@
     "build:full:compile": "lerna run build:full:compile --stream",
     "build:gendocs": "api-documenter markdown -i _api-extractor-temp/doc-models -o docs/api",
     "build:genver": "lerna run build:genver --stream --parallel",
-    "bump-version": "lerna version minor --no-push --no-git-tag-version && npm run build:genver",
+    "bump-version": "node ./tools/fluid-build/dist/bumpVersion/bumpVersion.js --root .",
     "ci:build": "npm run build:genver && lerna run build:compile:min --stream",
     "ci:test": "npm run test:report;t1=$?;npm run test:copyresults; exit $t1",
     "ci:test:coverage": "npm run test:coverage;t1=$?;npm run test:copyresults; exit $t1",
