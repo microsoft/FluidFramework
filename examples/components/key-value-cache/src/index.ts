@@ -134,16 +134,16 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFact
         const mapFactory = SharedMap.getFactory();
         dataTypes.set(mapFactory.type, mapFactory);
 
-        ComponentRuntime.load(
+        const runtime = ComponentRuntime.load(
             context,
             dataTypes,
-            (runtime) => {
-                const keyValueP = KeyValue.load(runtime, context);
-                runtime.registerRequestHandler(async (request: IRequest) => {
-                    const keyValue = await keyValueP;
-                    return keyValue.request(request);
-                });
-            });
+        );
+
+        const keyValueP = KeyValue.load(runtime, context);
+        runtime.registerRequestHandler(async (request: IRequest) => {
+            const keyValue = await keyValueP;
+            return keyValue.request(request);
+        });
     }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {

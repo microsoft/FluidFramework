@@ -31,6 +31,7 @@ export class ExternalComponentLoader extends PrimedComponent
         "@fluid-example/image-collection",
         "@fluid-example/pond",
         "@fluid-example/clicker",
+        "@fluid-example/primitives",
     ];
     private readonly viewComponentMapID: string = "ViewComponentUrl";
     private viewComponentP: Promise<IComponent>;
@@ -68,9 +69,12 @@ export class ExternalComponentLoader extends PrimedComponent
             const dataList = document.createElement("datalist");
             inputDiv.append(dataList);
             dataList.id = uuid();
+
+            // When locally developing, want to load the latest available patch version by default
+            const defaultVersionToLoad = pkg.version.endsWith(".0") ? `^${pkg.version}` : pkg.version;
             ExternalComponentLoader.defaultComponents.forEach((url) => {
                 const option = document.createElement("option");
-                option.value = `${url}@${pkg.version}`;
+                option.value = `${url}@${defaultVersionToLoad}`;
                 dataList.append(option);
             });
 

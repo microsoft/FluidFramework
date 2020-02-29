@@ -245,7 +245,7 @@ export class CodeMirrorComponent
         }
 
         this.root = await this.runtime.getChannel("root") as ISharedMap;
-        this.text = await this.root.get<IComponentHandle>("text").get<SharedString>();
+        this.text = await this.root.get<IComponentHandle<SharedString>>("text").get();
     }
 
     public addView(scope: IComponent): IComponentHTMLView {
@@ -264,16 +264,15 @@ class SmdeFactory implements IComponentFactory {
         dataTypes.set(mapFactory.type, mapFactory);
         dataTypes.set(sequenceFactory.type, sequenceFactory);
 
-        ComponentRuntime.load(
+        const runtime = ComponentRuntime.load(
             context,
-            dataTypes,
-            (runtime) => {
-                const progressCollectionP = CodeMirrorComponent.load(runtime, context);
-                runtime.registerRequestHandler(async (request: IRequest) => {
-                    const progressCollection = await progressCollectionP;
-                    return progressCollection.request(request);
-                });
-            });
+            dataTypes);
+
+        const progressCollectionP = CodeMirrorComponent.load(runtime, context);
+        runtime.registerRequestHandler(async (request: IRequest) => {
+            const progressCollection = await progressCollectionP;
+            return progressCollection.request(request);
+        });
     }
 }
 

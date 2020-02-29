@@ -63,37 +63,34 @@ export class Chaincode implements IComponentFactory {
         modules.set(directoryFactory.type, directoryFactory);
         modules.set(sharedIntervalFactory.type, sharedIntervalFactory);
 
-        ComponentRuntime.load(
-            context,
-            modules,
-            (runtime) => {
-                // Initialize core data structures
-                let root: map.ISharedMap;
-                if (!runtime.existing) {
-                    root = map.SharedMap.create(runtime, rootMapId);
-                    root.register();
+        const runtime = ComponentRuntime.load(context, modules);
 
-                    const insights = map.SharedMap.create(runtime, insightsMapId);
-                    root.set(insightsMapId, insights.handle);
-                }
+        // Initialize core data structures
+        let root: map.ISharedMap;
+        if (!runtime.existing) {
+            root = map.SharedMap.create(runtime, rootMapId);
+            root.register();
 
-                // Create the underlying Document
-                async function createDocument() {
-                    root = await runtime.getChannel(rootMapId) as map.ISharedMap;
-                    return new Document(runtime, context, root);
-                }
-                const documentP = createDocument();
+            const insights = map.SharedMap.create(runtime, insightsMapId);
+            root.set(insightsMapId, insights.handle);
+        }
 
-                // And then return it from requests
-                runtime.registerRequestHandler(async (request) => {
-                    const document = await documentP;
-                    return {
-                        mimeType: "fluid/component",
-                        status: 200,
-                        value: document,
-                    };
-                });
-            });
+        // Create the underlying Document
+        async function createDocument() {
+            root = await runtime.getChannel(rootMapId) as map.ISharedMap;
+            return new Document(runtime, context, root);
+        }
+        const documentP = createDocument();
+
+        // And then return it from requests
+        runtime.registerRequestHandler(async (request) => {
+            const document = await documentP;
+            return {
+                mimeType: "fluid/component",
+                status: 200,
+                value: document,
+            };
+        });
     }
 }
 

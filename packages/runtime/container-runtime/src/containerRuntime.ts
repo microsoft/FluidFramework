@@ -97,6 +97,7 @@ interface ISummaryTreeWithStats {
 
 export interface IPreviousState {
     summaryCollection?: SummaryCollection,
+    reload?: boolean,
 
     // only one (or zero) of these will be defined. the summarizing Summarizer will resolve the deferred promise, and
     // the SummaryManager that spawned it will have that deferred's promise
@@ -493,7 +494,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     public readonly logger: ITelemetryLogger;
     public readonly previousState: IPreviousState;
     private readonly summaryManager: SummaryManager;
-    private readonly summaryTreeConverter = new SummaryTreeConverter();
+    private readonly summaryTreeConverter: SummaryTreeConverter;
     private latestSummaryAck: ISummaryContext;
     private readonly summaryTracker: SummaryTracker;
 
@@ -506,12 +507,15 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     private needsFlush = false;
     private flushTrigger = false;
 
+    // Always matched IAgentScheduler.leader property
     private _leader = false;
 
     public get connected(): boolean {
         return this.connectionState === ConnectionState.Connected;
     }
 
+    // Almost the same as IAgentScheduler.leader (this._leader),
+    // but returns false if disconnected
     public get leader(): boolean {
         if (this.connected && this.deltaManager && this.deltaManager.active) {
             return this._leader;
@@ -562,14 +566,17 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         this.IComponentHandleContext = new ComponentHandleContext("", this);
 
+        // useContext - back-compat: 0.14 uploadSummary
+        const useContext = this.storage.uploadSummaryWithContext !== undefined;
         this.latestSummaryAck = { proposalHandle: undefined, ackHandle: undefined };
         this.summaryTracker = new SummaryTracker(
-            this.storage.uploadSummaryWithContext !== undefined, // useContext - back-compat: 0.14 uploadSummary
+            useContext,
             "", // fullPath - the root is unnamed
             this.deltaManager.initialSequenceNumber, // referenceSequenceNumber - last acked summary ref seq number
             this.deltaManager.initialSequenceNumber, // latestSequenceNumber - latest sequence number seen
             async () => undefined, // getSnapshotTree - this will be replaced on summary ack
         );
+        this.summaryTreeConverter = new SummaryTreeConverter(useContext);
 
         // Extract components stored inside the snapshot
         this.loadedFromSummary = context.baseSnapshot?.trees[".protocol"] ? true : false;
@@ -650,7 +657,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.runtimeOptions.enableWorker,
             this.logger,
             (summarizer) => { this.nextSummarizerP = summarizer; },
-            this.previousState.nextSummarizerP);
+            this.previousState.nextSummarizerP,
+            !!this.previousState.reload);
 
         if (this.context.connectionState === ConnectionState.Connected) {
             this.summaryManager.setConnected(this.context.clientId);
@@ -728,6 +736,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.summarizer.dispose();
         this.closed = true;
         const state: IPreviousState = {
+            reload: true,
             summaryCollection: this.summarizer.summaryCollection,
             nextSummarizerP: this.nextSummarizerP,
             nextSummarizerD: this.nextSummarizerD,
@@ -768,9 +777,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         if (value === ConnectionState.Connected) {
             this.summaryManager.setConnected(clientId);
         } else {
-            if (this._leader) {
-                this.updateLeader(false);
-            }
+            this.updateLeader();
             this.summaryManager.setDisconnected();
         }
     }
@@ -989,14 +996,18 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             tree: {},
             type: SummaryType.Tree,
         };
-        let summaryStats = this.summaryTreeConverter.mergeStats();
+        let summaryStats = SummaryTreeConverter.mergeStats();
 
         // Iterate over each component and ask it to snapshot
         await Promise.all(Array.from(this.contexts).map(async ([key, value]) => {
             const snapshot = await value.snapshot(fullTree);
-            const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(snapshot, fullTree);
+            const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
+                snapshot,
+                `/${encodeURIComponent(key)}`,
+                fullTree,
+            );
             summaryTree.tree[key] = treeWithStats.summaryTree;
-            summaryStats = this.summaryTreeConverter.mergeStats(summaryStats, treeWithStats.summaryStats);
+            summaryStats = SummaryTreeConverter.mergeStats(summaryStats, treeWithStats.summaryStats);
         }));
 
         if (this.chunkMap.size > 0) {
@@ -1339,18 +1350,18 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.getScheduler().then((scheduler) => {
                 if (scheduler.leader) {
                     this.updateLeader(true);
-                } else {
-                    scheduler.on("leader", () => {
-                        this.updateLeader(true);
-                    });
                 }
+                scheduler.on("leader", () => {
+                    this.updateLeader(true);
+                });
+                scheduler.on("notleader", () => {
+                    this.updateLeader(false);
+                });
             }, (err) => {
                 debug(err);
             });
             this.context.quorum.on("removeMember", (clientId: string) => {
-                if (clientId === this.clientId && this._leader) {
-                    this.updateLeader(false);
-                } else if (this.leader) {
+                if (this.leader) {
                     this.runTaskAnalyzer();
                 }
             });
@@ -1364,16 +1375,18 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return schedulerComponent.IAgentScheduler;
     }
 
-    private updateLeader(leadership: boolean) {
-        this._leader = leadership;
-        if (this._leader) {
+    private updateLeader(leadership?: boolean) {
+        if (leadership !== undefined) {
+            this._leader = leadership;
+        }
+        if (this.leader) {
             this.emit("leader", this.clientId);
         } else {
             this.emit("noleader", this.clientId);
         }
 
         for (const [, context] of this.contexts) {
-            context.updateLeader(this._leader);
+            context.updateLeader(this.leader);
         }
         if (this.leader) {
             this.runTaskAnalyzer();
@@ -1440,7 +1453,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         });
 
         this.latestSummaryAck = context;
-        this.summaryTracker.refreshLatestSummary(referenceSequenceNumber, async () => snapshotTree);
+        await this.summaryTracker.refreshLatestSummary(referenceSequenceNumber, async () => snapshotTree);
     }
 
     private async setOrLogError<T>(

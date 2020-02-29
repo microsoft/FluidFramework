@@ -9,7 +9,6 @@ import {
     SimpleModuleInstantiationFactory,
 } from "@microsoft/fluid-aqueduct";
 import {
-    IComponent,
     IComponentHandle,
     IComponentHTMLView,
 } from "@microsoft/fluid-component-core-interfaces";
@@ -61,10 +60,10 @@ export class Pond extends PrimedComponent implements IComponentHTMLView {
     }
 
     protected async componentHasInitialized() {
-        const clicker2 = await this.root.get<IComponentHandle>(this.clickerKey).get<IComponent>();
+        const clicker2 = await this.root.get<IComponentHandle>(this.clickerKey).get();
         this.clicker2Render = clicker2.IComponentHTMLView;
 
-        const clicker3 = await this.root.get<IComponentHandle>(this.clickerWithInitialValueKey).get<IComponent>();
+        const clicker3 = await this.root.get<IComponentHandle>(this.clickerWithInitialValueKey).get();
         this.clicker3Render = clicker3.IComponentHTMLView;
     }
 

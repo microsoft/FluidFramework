@@ -276,16 +276,16 @@ export class VideoPlayerFactoryComponent implements IComponentFactory {
         const mapFactory = SharedMap.getFactory();
         dataTypes.set(mapFactory.type, mapFactory);
 
-        ComponentRuntime.load(
+        const runtime = ComponentRuntime.load(
             context,
             dataTypes,
-            (runtime) => {
-                const progressCollectionP = VideoPlayerCollection.load(runtime, context);
-                runtime.registerRequestHandler(async (request: IRequest) => {
-                    const progressCollection = await progressCollectionP;
-                    return progressCollection.request(request);
-                });
-            });
+        );
+
+        const progressCollectionP = VideoPlayerCollection.load(runtime, context);
+        runtime.registerRequestHandler(async (request: IRequest) => {
+            const progressCollection = await progressCollectionP;
+            return progressCollection.request(request);
+        });
     }
 }
 
