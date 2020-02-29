@@ -427,7 +427,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.context.options;
     }
 
-    public get clientId(): string {
+    public get clientId(): string | undefined {
         return this.context.clientId;
     }
 

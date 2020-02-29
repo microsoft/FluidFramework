@@ -51,7 +51,7 @@ export interface IComponentRuntime extends EventEmitter, IComponentRouter, Parti
 
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 
-    readonly clientId: string;
+    readonly clientId: string | undefined;
 
     readonly id: string;
 
@@ -237,7 +237,7 @@ export interface IComponentContext extends EventEmitter {
     readonly packagePath: readonly string[];
     readonly existing: boolean;
     readonly options: any;
-    readonly clientId: string;
+    readonly clientId: string | undefined;
     readonly parentBranch: string;
     readonly connected: boolean;
     readonly leader: boolean;
@@ -348,7 +348,7 @@ export interface IHostRuntime extends
     readonly id: string;
     readonly existing: boolean;
     readonly options: any;
-    readonly clientId: string;
+    readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
     readonly parentBranch: string;
     readonly connected: boolean;

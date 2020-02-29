@@ -102,7 +102,7 @@ export class FluidSudoku extends PrimedComponent
                 <SudokuView
                     puzzle={this.puzzle}
                     clientPresence={this.clientPresence}
-                    clientId={this.runtime.clientId}
+                    clientId={this.runtime.clientId ? this.runtime.clientId : "not connected"}
                     setPresence={this.presenceSetter}
                 />
             );

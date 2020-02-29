@@ -159,8 +159,8 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
 
         // Update merge tree collaboration information with new client ID and then resend pending ops
         if (this.rows.getCollabWindow().collaborating) {
-            this.rows.updateCollaboration(this.runtime.clientId);
-            this.cols.updateCollaboration(this.runtime.clientId);
+            this.rows.updateCollaboration(this.runtime.clientId as string);
+            this.cols.updateCollaboration(this.runtime.clientId as string);
         }
 
         // TODO: Resend pending ops on reconnect
