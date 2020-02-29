@@ -399,7 +399,15 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         // Create all internal components in first load.
         if (!context.existing) {
             await runtime.createComponent(schedulerId, schedulerId)
-                .then((componentRuntime) => componentRuntime.attach());
+                .then((componentRuntime) => {
+                    const expContext = runtime.context as IExperimentalContainerContext;
+                    if (expContext?.isExperimentalContainerContext) {
+                        if (!expContext.isAttached()) {
+                            return;
+                        }
+                    }
+                    componentRuntime.attach();
+                });
         }
 
         runtime.subscribeToLeadership();
