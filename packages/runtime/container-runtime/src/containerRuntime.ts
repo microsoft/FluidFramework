@@ -88,6 +88,7 @@ import { SummaryManager } from "./summaryManager";
 import { ISummaryStats, SummaryTreeConverter } from "./summaryTreeConverter";
 import { analyzeTasks } from "./taskAnalyzer";
 import { DeltaScheduler } from "./deltaScheduler";
+import { ReportConnectionTelemetry } from "./connectionTelemetry";
 import { SummaryCollection } from "./summaryCollection";
 
 interface ISummaryTreeWithStats {
@@ -663,7 +664,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         if (this.context.connectionState === ConnectionState.Connected) {
             this.summaryManager.setConnected(this.context.clientId);
         }
+
+        ReportConnectionTelemetry(this.context.clientId, this.deltaManager, this.logger);
     }
+
     public get IComponentTokenProvider() {
 
         if (this.options && this.options.intelligence) {
