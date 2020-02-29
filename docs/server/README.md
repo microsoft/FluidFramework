@@ -1,5 +1,7 @@
 ---
-uid: architecture
+uid: server
 ---
 
-# Architecture
+# Server
+
+See <https://github.com/microsoft/FluidFramework/blob/master/server/README.md>
