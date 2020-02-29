@@ -252,6 +252,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     on(event: "pong" | "processTime", listener: (latency: number) => void);
     on(event: "connect", listener: (details: IConnectionDetails) => void);
     on(event: "disconnect", listener: (reason: string) => void);
+    on(event: "readonly", listener: (readonly: boolean) => void);
 
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
