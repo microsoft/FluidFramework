@@ -54,7 +54,9 @@ componentization of data and UX, intelligent agents, and many other elements in 
 
 Below is a diagram showing the full 'Fluid Tech Stack', followed by a description of each layer:
 
-**TODO: Add diagram**
+::: danger TODO
+Diagram
+:::
 
 ### Fluid Framework Distributed System - Total Order Broadcast & Eventual Consistency
 
@@ -78,6 +80,8 @@ The quality of eventual consistency improves performance because local changes c
 the Fluid runtime will merge the change in the appropriate way eventually. And because the system is operations-based,
 it will be possible to build a wide range of capabilities including rich version history, attribution, data validation,
 'time travel' within a document, and much more.
+
+[Read more about total order broadcast and eventual consistency](./how/tob.md)
 
 ### Distributed Data Structures
 

@@ -16,7 +16,6 @@ import {
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import { LoaderHeader } from "@microsoft/fluid-container-definitions";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
-import { ConnectionState } from "@microsoft/fluid-protocol-definitions";
 import { ConsensusRegisterCollection } from "@microsoft/fluid-register-collection";
 import {
     IAgentScheduler,
@@ -28,10 +27,6 @@ import {
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import * as debug from "debug";
-
-interface IChanged {
-    key: string;
-}
 
 const LeaderTaskId = "leader";
 
@@ -48,13 +43,11 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
             root.set("scheduler", scheduler.handle);
         } else {
             root = await runtime.getChannel("root") as ISharedMap;
-            const handle = await root.wait<IComponentHandle>("scheduler");
-            scheduler = await handle.get<ConsensusRegisterCollection<string | null>>();
+            const handle = await root.wait<IComponentHandle<ConsensusRegisterCollection<string | null>>>("scheduler");
+            scheduler = await handle.get();
         }
         const agentScheduler = new AgentScheduler(runtime, context, scheduler);
-        agentScheduler.initialize().catch((err) => {
-            debug(err as string);
-        });
+        agentScheduler.initialize();
 
         return agentScheduler;
     }
@@ -69,10 +62,13 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
 
     // List of all tasks client is capable of running. This is a strict superset of tasks
     // running in the client.
-    private readonly localTasks = new Map<string, boolean>();
+    private readonly localTasks = new Map<string, () => Promise<void>>();
 
     // Set of registered tasks client not capable of running.
     private readonly registeredTasks = new Set<string>();
+
+    // Set of registered tasks client not capable of running.
+    private readonly runningTasks = new Set<string>();
 
     constructor(
         private readonly runtime: IComponentRuntime,
@@ -95,7 +91,6 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     }
 
     public async register(...taskUrls: string[]): Promise<void> {
-        await this.waitForFullConnection();
         for (const taskUrl of taskUrls) {
             if (this.registeredTasks.has(taskUrl)) {
                 return Promise.reject(`${taskUrl} is already registered`);
@@ -114,7 +109,10 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     }
 
     public async pick(taskId: string, worker: boolean): Promise<void> {
-        await this.waitForFullConnection();
+        return this.pickCore(taskId, async () => this.runTask(taskId, worker));
+    }
+
+    public async pickCore(taskId: string, worker: () => Promise<void>): Promise<void> {
         if (this.localTasks.has(taskId)) {
             return Promise.reject(`${taskId} is already attempted`);
         }
@@ -123,12 +121,12 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         // Check the current status and express interest if it's a new one (undefined) or currently unpicked (null).
         const currentClient = this.getTaskClientId(taskId);
         if (currentClient === undefined || currentClient === null) {
-            await this.pickCore([taskId]);
+            debug(`Requesting ${taskId}`);
+            await this.writeCore(taskId, this.runtime.clientId);
         }
     }
 
     public async release(...taskUrls: string[]): Promise<void> {
-        await this.waitForFullConnection();
         for (const taskUrl of taskUrls) {
             if (!this.localTasks.has(taskUrl)) {
                 return Promise.reject(`${taskUrl} was never registered`);
@@ -144,31 +142,29 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         const allPickedTasks: string[] = [];
         for (const taskUrl of this.scheduler.keys()) {
             if (this.getTaskClientId(taskUrl) === this.runtime.clientId) {
+                assert(this.runningTasks.has(taskUrl));
                 allPickedTasks.push(taskUrl);
             }
         }
+        assert(allPickedTasks.length === this.runningTasks.size);
         return allPickedTasks;
     }
 
     private async pickNewTasks(taskUrls: string[]) {
-        if (this.runtime.connected) {
-            const possibleTasks: string[] = [];
-            for (const taskUrl of taskUrls) {
-                if (this.localTasks.has(taskUrl)) {
-                    possibleTasks.push(taskUrl);
-                }
-            }
-            try {
-                await this.pickCore(possibleTasks);
-            } catch (err) {
-                debug(err as string); // Just log the error. It will be attempted again.
+        assert(this.isActive());
+        const picksP: Promise<boolean>[] = [];
+        for (const taskUrl of taskUrls) {
+            if (this.localTasks.has(taskUrl)) {
+                debug(`Requesting ${taskUrl}`);
+                picksP.push(this.writeCore(taskUrl, this.runtime.clientId));
             }
         }
+        await Promise.all(picksP);
     }
 
     private async registerCore(taskUrls: string[]): Promise<void> {
         if (taskUrls.length > 0) {
-            const registersP: Promise<void>[] = [];
+            const registersP: Promise<boolean>[] = [];
             for (const taskUrl of taskUrls) {
                 debug(`Registering ${taskUrl}`);
                 // tslint:disable no-null-keyword
@@ -192,43 +188,9 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         }
     }
 
-    private async pickCore(taskUrls: string[]) {
-        if (taskUrls.length > 0) {
-            const picksP: Promise<void>[] = [];
-            for (const taskUrl of taskUrls) {
-                debug(`Requesting ${taskUrl}`);
-                picksP.push(this.writeCore(taskUrl, this.runtime.clientId));
-            }
-            await Promise.all(picksP);
-
-            // The registers should have up to date results now. Start the respective task if this client was chosen.
-            const runningP: Promise<IComponentRunnable | void>[] = [];
-            for (const taskUrl of taskUrls) {
-                const pickedClientId = this.getTaskClientId(taskUrl);
-
-                // At least one client should pick up.
-                assert(pickedClientId, `No client was chosen for ${taskUrl}`);
-
-                // Check if this client was chosen.
-                if (pickedClientId === this.runtime.clientId) {
-                    assert(this.localTasks.has(taskUrl), `Client did not try to pick ${taskUrl}`);
-
-                    if (taskUrl !== LeaderTaskId) {
-                        runningP.push(this.runTask(taskUrl, this.localTasks.get(taskUrl) as boolean));
-                        debug(`Picked ${taskUrl}`);
-                        this.emit("picked", taskUrl);
-                    }
-                } else {
-                    debug(`${pickedClientId} is running ${taskUrl}`);
-                }
-            }
-            return runningP;
-        }
-    }
-
     private async releaseCore(taskUrls: string[]) {
         if (taskUrls.length > 0) {
-            const releasesP: Promise<void>[] = [];
+            const releasesP: Promise<boolean>[] = [];
             for (const taskUrl of taskUrls) {
                 debug(`Releasing ${taskUrl}`);
                 // Remove from local map so that it can be picked later.
@@ -239,47 +201,42 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
 
             // Releases are not contested by definition. So every id should have null value now.
             for (const taskUrl of taskUrls) {
-                assert.equal(this.getTaskClientId(taskUrl), null, `${taskUrl} was not released`);
+                assert.notEqual(this.getTaskClientId(taskUrl), this.runtime.clientId, `${taskUrl} was not released`);
                 debug(`Released ${taskUrl}`);
             }
         }
     }
 
     private async clearTasks(taskUrls: string[]) {
-        if (this.runtime.connected && taskUrls.length > 0) {
-            const clearP: Promise<void>[] = [];
-            for (const taskUrl of taskUrls) {
-                debug(`Clearing ${taskUrl}`);
-                clearP.push(this.writeCore(taskUrl, null));
-            }
-            try {
-                await Promise.all(clearP);
-            } catch (err) {
-                debug(err as string);
-            }
+        assert(this.isActive());
+        const clearP: Promise<boolean>[] = [];
+        for (const taskUrl of taskUrls) {
+            debug(`Clearing ${taskUrl}`);
+            clearP.push(this.writeCore(taskUrl, null));
         }
+        await Promise.all(clearP);
     }
 
     private getTaskClientId(url: string): string | null | undefined {
         return this.scheduler.read(url);
     }
 
-    private async writeCore(key: string, value: string | null): Promise<void> {
+    private async writeCore(key: string, value: string | null): Promise<boolean> {
         return this.scheduler.write(key, value);
     }
 
-    private async initialize() {
+    private initialize() {
         const configuration = (this.context.hostRuntime as IComponent).IComponentConfiguration;
         if (configuration === undefined || configuration.canReconnect) {
-            await this.waitForFullConnection();
-
             const quorum = this.runtime.getQuorum();
             // A client left the quorum. Iterate and clear tasks held by that client.
             // Ideally a leader should do this cleanup. But it's complicated when a leader itself leaves.
             // Probably okay for now to have every client try to do this.
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             quorum.on("removeMember", async (clientId: string) => {
-                if (this.context.hostRuntime.deltaManager.active) {
+                assert(this.runtime.isAttached);
+                // Cleanup only if connected. If not, cleanup will happen in initializeCore() that runs on connection.
+                if (this.isActive()) {
                     const leftTasks: string[] = [];
                     for (const taskUrl of this.scheduler.keys()) {
                         if (this.getTaskClientId(taskUrl) === clientId) {
@@ -293,70 +250,84 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
             // Listeners for new/released tasks. All clients will try to grab at the same time.
             // May be we want a randomized timer (Something like raft) to reduce chattiness?
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
-            this.scheduler.on("atomicChanged", async (changed: IChanged) => {
-                if (this.context.hostRuntime.deltaManager.active) {
-                    const currentClient = this.getTaskClientId(changed.key);
-                    // Either a client registered for a new task or released a running task.
-                    if (currentClient === null) {
-                        await this.pickNewTasks([changed.key]);
+            this.scheduler.on("atomicChanged", async (key: string, currentClient: string) => {
+                // Check if this client was chosen.
+                if (currentClient === this.runtime.clientId) {
+                    assert(!this.runningTasks.has(key));
+                    this.runningTasks.add(key);
+
+                    const worker = this.localTasks.get(key);
+                    if (worker === undefined) {
+                        throw new Error(`Client did not try to pick ${key}`);
                     }
-                    // A new leader was picked. set leadership info.
-                    if (changed.key === LeaderTaskId && currentClient === this.runtime.clientId) {
-                        this._leader = true;
-                        this.emit("leader");
+
+                    this.emit("picked", key);
+                    await worker();
+                } else {
+                    if (this.runningTasks.has(key)) {
+                        this.runningTasks.delete(key);
+                        this.emit("released", key);
+                    }
+                    // attempt to pick up task if we are connected.
+                    // If not, initializeCore() will do it when connected
+                    if (currentClient === null && this.isActive()) {
+                        await this.pickNewTasks([key]);
                     }
                 }
             });
 
-            await this.initializeCore();
-            this.handleReconnection();
-        }
-    }
+            this.setupLeadership();
 
-    // Ensures that runtime and scheduler is connected.
-    private async waitForFullConnection(): Promise<void> {
-        if (!this.runtime.connected) {
-            // tslint:disable-next-line
-            await new Promise<void>((resolve) => this.runtime.on("connected", () => resolve()));
-        }
-        if (this.scheduler.state !== ConnectionState.Connected) {
-            // tslint:disable-next-line
-            await new Promise<void>((resolve) => this.scheduler.on("connected", () => resolve()));
-        }
-    }
-
-    private async initializeCore() {
-        if (this.context.hostRuntime.deltaManager.active) {
-            // Nobody released the tasks held by last client in previous session.
-            // Check to see if this client needs to do this.
-            const clearCandidates: string[] = [];
-            for (const taskUrl of this.scheduler.keys()) {
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                if (!this.runtime.getQuorum().getMembers().has(this.getTaskClientId(taskUrl)!)) {
-                    clearCandidates.push(taskUrl);
-                }
+            if (this.isActive()) {
+                this.initializeCore();
             }
-            await this.clearTasks(clearCandidates);
 
-            // Each client expresses interest to be a leader.
-            try {
-                await this.pick(LeaderTaskId, false);
-
-                // There must be a leader now.
-                const leaderClientId = this.getTaskClientId(LeaderTaskId);
-                assert(leaderClientId, "No leader present");
-                this._leader = leaderClientId === this.runtime.clientId;
-            } catch (err) {
-                debug(err as string);
-            }
+            this.runtime.on("connected", () => {
+                assert(this.isActive());
+                this.initializeCore();
+            });
         }
     }
 
-    private handleReconnection() {
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        this.runtime.on("connected", async () => {
-            await this.waitForFullConnection();
-            await this.initializeCore();
+    private setupLeadership() {
+        // Each client expresses interest to be a leader.
+        this.pickCore(LeaderTaskId, async () => {
+            assert(!this._leader);
+            this._leader = true;
+            this.emit("leader");
+        }).catch((error) => {
+            this.runtime.logger.sendErrorEvent({eventName: "AgentScheduleLeaderInit"}, error);
+        });
+
+        this.on("released", (key) => {
+            if (key === LeaderTaskId) {
+                assert(this._leader);
+                this._leader = false;
+                this.emit("notleader");
+            }
+        });
+    }
+
+    private isActive() {
+        return this.runtime.connected && this.context.hostRuntime.deltaManager.active ||
+            !this.runtime.isAttached;
+    }
+
+    private initializeCore() {
+        // Nobody released the tasks held by last client in previous session.
+        // Check to see if this client needs to do this.
+        const clearCandidates: string[] = [];
+        const newTasks: string[] = [];
+        for (const taskUrl of this.scheduler.keys()) {
+            const currentClient = this.getTaskClientId(taskUrl);
+            if (!currentClient) {
+                newTasks.push(taskUrl);
+            } else if (this.runtime.getQuorum().getMember(currentClient) === undefined) {
+                clearCandidates.push(taskUrl);
+            }
+        }
+        Promise.all([this.clearTasks(clearCandidates), this.pickNewTasks(newTasks)]).catch((error) => {
+            this.runtime.logger.sendErrorEvent({eventName: "AgentSchedulerInitError"}, error);
         });
     }
 
@@ -376,13 +347,13 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         };
         const response = await this.runtime.loader.request(request);
         if (response.status !== 200 || response.mimeType !== "fluid/component") {
-            return Promise.reject<IComponentRunnable>("Invalid agent route");
+            return Promise.reject("Invalid agent route");
         }
 
         const rawComponent = response.value as IComponent;
         const agent = rawComponent.IComponentRunnable;
         if (agent === undefined) {
-            return Promise.reject<IComponentRunnable>("Component does not implement IComponentRunnable");
+            return Promise.reject("Component does not implement IComponentRunnable");
         }
 
         return agent.run();
@@ -438,13 +409,9 @@ export class TaskManager implements ITaskManager {
             return Promise.reject("Picking not allowed on secondary copy");
         } else {
             const urlWithSlash = componentUrl.startsWith("/") ? componentUrl : `/${componentUrl}`;
-            try {
-                await this.scheduler.pick(
-                    `${urlWithSlash}/${this.url}/${taskId}`,
-                    worker !== undefined ? worker : false);
-            } catch (err) {
-                debug(err as string); // Just log the error. It will be attempted again.
-            }
+            return this.scheduler.pick(
+                `${urlWithSlash}/${this.url}/${taskId}`,
+                worker !== undefined ? worker : false);
         }
     }
 }
@@ -460,15 +427,15 @@ export class AgentSchedulerFactory implements IComponentFactory {
         dataTypes.set(mapFactory.type, mapFactory);
         dataTypes.set(consensusRegisterCollectionFactory.type, consensusRegisterCollectionFactory);
 
-        ComponentRuntime.load(
+        const runtime = ComponentRuntime.load(
             context,
             dataTypes,
-            (runtime) => {
-                const taskManagerP = TaskManager.load(runtime, context);
-                runtime.registerRequestHandler(async (request: IRequest) => {
-                    const taskManager = await taskManagerP;
-                    return taskManager.request(request);
-                });
-            });
+        );
+
+        const taskManagerP = TaskManager.load(runtime, context);
+        runtime.registerRequestHandler(async (request: IRequest) => {
+            const taskManager = await taskManagerP;
+            return taskManager.request(request);
+        });
     }
 }

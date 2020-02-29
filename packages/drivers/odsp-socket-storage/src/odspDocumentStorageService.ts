@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+import { IDocumentStorageService, ISummaryContext } from "@microsoft/fluid-driver-definitions";
 import * as api from "@microsoft/fluid-protocol-definitions";
 import { OdspDocumentStorageManager } from "./odspDocumentStorageManager";
 
@@ -13,13 +13,16 @@ import { OdspDocumentStorageManager } from "./odspDocumentStorageManager";
 export class OdspDocumentStorageService implements IDocumentStorageService {
     constructor(private readonly storageManager: OdspDocumentStorageManager) { }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public uploadSummary(commit: api.ISummaryTree): Promise<api.ISummaryHandle> {
+    // back-compat: 0.14 uploadSummary
+    public async uploadSummary(commit: api.ISummaryTree): Promise<api.ISummaryHandle> {
         return this.storageManager.uploadSummary(commit);
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree> {
+    public async uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string> {
+        return this.storageManager.uploadSummaryWithContext(summary, context);
+    }
+
+    public async downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree> {
         return this.storageManager.downloadSummary(handle);
     }
 
@@ -45,8 +48,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         return response.content;
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion> {
+    public async write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion> {
         return this.storageManager.write(tree, parents, message);
     }
 

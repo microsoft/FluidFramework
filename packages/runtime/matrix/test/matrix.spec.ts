@@ -7,7 +7,7 @@ import 'mocha';
 
 import { TestHost } from '@microsoft/fluid-local-test-utils';
 import { Serializable } from '@microsoft/fluid-runtime-definitions';
-import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from '@microsoft/fluid-test-runtime-utils';
+import { MockEmptyDeltaConnection, MockRuntime, MockStorage } from '@microsoft/fluid-test-runtime-utils';
 import { strict as assert } from 'assert';
 import { SharedMatrix, SharedMatrixFactory } from '../src';
 import { fill, check, insertFragmented } from './utils';
@@ -37,7 +37,7 @@ async function snapshot<T extends Serializable>(matrix: SharedMatrix<T>) {
     const runtime = new MockRuntime();
     const matrix2 = new SharedMatrix(runtime, `load(${matrix.id})`);
     await matrix2.load(/*branchId: */ null as any, {
-        deltaConnection: new MockDeltaConnectionFactory().createDeltaConnection(runtime),
+        deltaConnection: new MockEmptyDeltaConnection(),
         objectStorage
     });
 

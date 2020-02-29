@@ -17,7 +17,7 @@ import {
     Serializable,
 } from "@microsoft/fluid-runtime-definitions";
 import { makeHandlesSerializable, parseHandles, SharedObject } from "@microsoft/fluid-shared-object-base";
-import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
+import { fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
 import { ObjectStoragePartition } from "@microsoft/fluid-runtime-utils";
 import { IMatrixProducer, IMatrixConsumer, IMatrixReader } from "@tiny-calc/nano";
 import { debug } from "./debug";

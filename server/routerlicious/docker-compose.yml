@@ -11,8 +11,9 @@ services:
         restart: always
     alfred:
         build:
-            context: .
-            dockerfile: ./r11s-Dockerfile
+            context: ../..
+            dockerfile: server/routerlicious/r11s-Dockerfile
+            target: runner
         ports:
             - "3003:3000"
         command: node dist/alfred/www.js
@@ -22,8 +23,9 @@ services:
         restart: always
     deli:
         build:
-            context: .
-            dockerfile: ./r11s-Dockerfile
+            context: ../..
+            dockerfile: server/routerlicious/r11s-Dockerfile
+            target: runner
         command: node dist/kafka-service/index.js deli /usr/src/server/server/routerlicious/packages/routerlicious/dist/deli/index.js
         environment:
             - DEBUG=fluid:*
@@ -31,8 +33,9 @@ services:
         restart: always
     scriptorium:
         build:
-            context: .
-            dockerfile: ./r11s-Dockerfile
+            context: ../..
+            dockerfile: server/routerlicious/r11s-Dockerfile
+            target: runner
         command: node dist/kafka-service/index.js scriptorium /usr/src/server/server/routerlicious/packages/routerlicious/dist/scriptorium/index.js
         environment:
             - DEBUG=fluid:*
@@ -40,26 +43,19 @@ services:
         restart: always
     copier:
         build:
-            context: .
-            dockerfile: ./r11s-Dockerfile
+            context: ../..
+            dockerfile: server/routerlicious/r11s-Dockerfile
+            target: runner
         command: node dist/kafka-service/index.js copier /usr/src/server/server/routerlicious/packages/routerlicious/dist/copier/index.js
-        environment:
-            - DEBUG=fluid:*
-            - NODE_ENV=development
-        restart: always
-    broadcaster:
-        build:
-            context: .
-            dockerfile: ./r11s-Dockerfile
-        command: node dist/kafka-service/index.js broadcaster /usr/src/server/server/routerlicious/packages/routerlicious/dist/broadcaster/index.js
         environment:
             - DEBUG=fluid:*
             - NODE_ENV=development
         restart: always
     scribe:
         build:
-            context: .
-            dockerfile: ./r11s-Dockerfile
+            context: ../..
+            dockerfile: server/routerlicious/r11s-Dockerfile
+            target: runner
         command: node dist/kafka-service/index.js scribe /usr/src/server/server/routerlicious/packages/routerlicious/dist/scribe/index.js
         environment:
             - DEBUG=fluid:*
@@ -67,8 +63,9 @@ services:
         restart: always
     foreman:
         build:
-            context: .
-            dockerfile: ./r11s-Dockerfile
+            context: ../..
+            dockerfile: server/routerlicious/r11s-Dockerfile
+            target: runner
         command: node dist/kafka-service/index.js foreman /usr/src/server/server/routerlicious/packages/routerlicious/dist/foreman/index.js
         environment:
             - DEBUG=fluid:*
@@ -76,8 +73,9 @@ services:
         restart: always
     routemaster:
         build:
-            context: .
-            dockerfile: ./r11s-Dockerfile
+            context: ../..
+            dockerfile: server/routerlicious/r11s-Dockerfile
+            target: runner
         command: node dist/kafka-service/index.js routemaster /usr/src/server/server/routerlicious/packages/lambdas-driver/dist/document-router/index.js
         environment:
             - DEBUG=fluid:*
@@ -86,8 +84,9 @@ services:
         restart: always
     riddler:
         build:
-            context: .
-            dockerfile: ./r11s-Dockerfile
+            context: ../..
+            dockerfile: server/routerlicious/r11s-Dockerfile
+            target: runner
         ports:
             - "5000:5000"
         command: node dist/riddler/www.js

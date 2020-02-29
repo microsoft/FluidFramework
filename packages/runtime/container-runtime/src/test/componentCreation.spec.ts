@@ -14,6 +14,7 @@ import {
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import { MockRuntime } from "@microsoft/fluid-test-runtime-utils";
+import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
 import { LocalComponentContext } from "../componentContext";
 import { ContainerRuntime } from "../containerRuntime";
 
@@ -40,6 +41,7 @@ describe("Component Creation Tests", () => {
         const componentAName = "componentA";
         const componentBName = "componentB";
         const componentCName = "componentC";
+        let summaryTracker: SummaryTracker;
 
         // Helper function that creates a ComponentRegistryEntry with the registry entries
         // provided to it.
@@ -89,6 +91,7 @@ describe("Component Creation Tests", () => {
             };
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             containerRuntime = { IComponentRegistry: globalRegistry } as ContainerRuntime;
+            summaryTracker = new SummaryTracker(true, "", 0, 0, async () => undefined);
         });
 
         it("Valid global component", async () => {
@@ -100,6 +103,7 @@ describe("Component Creation Tests", () => {
                 containerRuntime,
                 storage,
                 scope,
+                summaryTracker,
                 attachCb);
 
             try {
@@ -120,6 +124,7 @@ describe("Component Creation Tests", () => {
                 containerRuntime,
                 storage,
                 scope,
+                summaryTracker,
                 attachCb);
 
             try {
@@ -140,6 +145,7 @@ describe("Component Creation Tests", () => {
                 containerRuntime,
                 storage,
                 scope,
+                summaryTracker,
                 attachCb);
 
             try {
@@ -160,6 +166,7 @@ describe("Component Creation Tests", () => {
                 containerRuntime,
                 storage,
                 scope,
+                summaryTracker,
                 attachCb);
 
             try {
@@ -180,6 +187,7 @@ describe("Component Creation Tests", () => {
                 containerRuntime,
                 storage,
                 scope,
+                summaryTracker,
                 attachCb);
 
             try {
@@ -197,6 +205,7 @@ describe("Component Creation Tests", () => {
                 containerRuntime,
                 storage,
                 scope,
+                summaryTracker,
                 attachCb);
 
             try {
@@ -217,6 +226,7 @@ describe("Component Creation Tests", () => {
                 containerRuntime,
                 storage,
                 scope,
+                summaryTracker,
                 attachCb);
 
             try {
@@ -237,6 +247,7 @@ describe("Component Creation Tests", () => {
                 containerRuntime,
                 storage,
                 scope,
+                summaryTracker,
                 attachCb);
 
             try {
@@ -257,6 +268,7 @@ describe("Component Creation Tests", () => {
                 containerRuntime,
                 storage,
                 scope,
+                summaryTracker,
                 attachCb);
 
             try {

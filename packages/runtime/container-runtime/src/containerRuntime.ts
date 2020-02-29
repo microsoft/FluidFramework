@@ -23,13 +23,16 @@ import {
     IDeltaSender,
     ILoader,
     IRuntime,
+    IRuntimeState,
+    IExperimentalRuntime,
 } from "@microsoft/fluid-container-definitions";
 import {
     Deferred,
     Trace,
+    LazyPromise,
     ChildLogger,
-} from "@microsoft/fluid-core-utils";
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+} from "@microsoft/fluid-common-utils";
+import { IDocumentStorageService, ISummaryContext } from "@microsoft/fluid-driver-definitions";
 import { readAndParse, createIError } from "@microsoft/fluid-driver-utils";
 import {
     BlobTreeEntry,
@@ -65,14 +68,14 @@ import {
     IInboundSignalMessage,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
-import { ComponentSerializer } from "@microsoft/fluid-runtime-utils";
+import { ComponentSerializer, SummaryTracker } from "@microsoft/fluid-runtime-utils";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
 import { ComponentContext, LocalComponentContext, RemotedComponentContext } from "./componentContext";
 import { ComponentHandleContext } from "./componentHandleContext";
 import { ComponentRegistry } from "./componentRegistry";
 import { debug } from "./debug";
-import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
+import { BlobCacheStorageService } from "./blobCacheStorageService";
 import {
     componentRuntimeRequestHandler,
     createLoadableComponentRuntimeRequestHandler,
@@ -86,10 +89,21 @@ import { ISummaryStats, SummaryTreeConverter } from "./summaryTreeConverter";
 import { analyzeTasks } from "./taskAnalyzer";
 import { DeltaScheduler } from "./deltaScheduler";
 import { ReportConnectionTelemetry } from "./connectionTelemetry";
+import { SummaryCollection } from "./summaryCollection";
 
 interface ISummaryTreeWithStats {
     summaryStats: ISummaryStats;
     summaryTree: ISummaryTree;
+}
+
+export interface IPreviousState {
+    summaryCollection?: SummaryCollection,
+    reload?: boolean,
+
+    // only one (or zero) of these will be defined. the summarizing Summarizer will resolve the deferred promise, and
+    // the SummaryManager that spawned it will have that deferred's promise
+    nextSummarizerP?: Promise<Summarizer>,
+    nextSummarizerD?: Deferred<Summarizer>,
 }
 
 export interface IGeneratedSummaryData {
@@ -352,7 +366,9 @@ const schedulerRuntimeRequestHandler: RuntimeRequestHandler =
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the component level mappings.
  */
-export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRuntime {
+export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRuntime, IExperimentalRuntime {
+
+    public readonly isExperimentalRuntime = true;
     /**
      * Load the components from a snapshot and returns the runtime.
      * @param context - Context of the container.
@@ -369,7 +385,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     ): Promise<ContainerRuntime> {
         const componentRegistry = new ContainerRuntimeComponentRegistry(registryEntries);
 
-        const chunkId = context.baseSnapshot.blobs[".chunks"];
+        const chunkId = context.baseSnapshot?.blobs[".chunks"];
         const chunks = chunkId
             ? await readAndParse<[string, string[]][]>(context.storage, chunkId)
             : [];
@@ -469,14 +485,19 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.registry;
     }
 
+    public nextSummarizerP?: Promise<Summarizer>;
+    public nextSummarizerD?: Deferred<Summarizer>;
+
     public readonly IComponentSerializer: IComponentSerializer = new ComponentSerializer();
 
     public readonly IComponentHandleContext: IComponentHandleContext;
 
     public readonly logger: ITelemetryLogger;
+    public readonly previousState: IPreviousState;
     private readonly summaryManager: SummaryManager;
-    private readonly summaryTreeConverter = new SummaryTreeConverter();
-    private latestSummaryAck: { handle?: string; referenceSequenceNumber: number };
+    private readonly summaryTreeConverter: SummaryTreeConverter;
+    private latestSummaryAck: ISummaryContext;
+    private readonly summaryTracker: SummaryTracker;
 
     private tasks: string[] = [];
 
@@ -487,12 +508,15 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     private needsFlush = false;
     private flushTrigger = false;
 
+    // Always matched IAgentScheduler.leader property
     private _leader = false;
 
     public get connected(): boolean {
         return this.connectionState === ConnectionState.Connected;
     }
 
+    // Almost the same as IAgentScheduler.leader (this._leader),
+    // but returns false if disconnected
     public get leader(): boolean {
         if (this.connected && this.deltaManager && this.deltaManager.active) {
             return this._leader;
@@ -543,8 +567,20 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         this.IComponentHandleContext = new ComponentHandleContext("", this);
 
+        // useContext - back-compat: 0.14 uploadSummary
+        const useContext = this.storage.uploadSummaryWithContext !== undefined;
+        this.latestSummaryAck = { proposalHandle: undefined, ackHandle: undefined };
+        this.summaryTracker = new SummaryTracker(
+            useContext,
+            "", // fullPath - the root is unnamed
+            this.deltaManager.initialSequenceNumber, // referenceSequenceNumber - last acked summary ref seq number
+            this.deltaManager.initialSequenceNumber, // latestSequenceNumber - latest sequence number seen
+            async () => undefined, // getSnapshotTree - this will be replaced on summary ack
+        );
+        this.summaryTreeConverter = new SummaryTreeConverter(useContext);
+
         // Extract components stored inside the snapshot
-        this.loadedFromSummary = context.baseSnapshot.trees[".protocol"] ? true : false;
+        this.loadedFromSummary = context.baseSnapshot?.trees[".protocol"] ? true : false;
         const components = new Map<string, ISnapshotTree | string>();
         if (this.loadedFromSummary) {
             Object.keys(context.baseSnapshot.trees).forEach((value) => {
@@ -553,7 +589,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     components.set(value, tree);
                 }
             });
-        } else {
+        } else if (context.baseSnapshot) {
             Object.keys(context.baseSnapshot.commits).forEach((key) => {
                 const moduleId = context.baseSnapshot.commits[key];
                 components.set(key, moduleId);
@@ -562,7 +598,13 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         // Create a context for each of them
         for (const [key, value] of components) {
-            const componentContext = new RemotedComponentContext(key, value, this, this.storage, this.containerScope);
+            const componentContext = new RemotedComponentContext(
+                key,
+                value,
+                this,
+                this.storage,
+                this.containerScope,
+                this.summaryTracker.createOrGetChild(key, this.summaryTracker.referenceSequenceNumber));
             const deferred = new Deferred<ComponentContext>();
             deferred.resolve(componentContext);
 
@@ -595,8 +637,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.clearPartialChunks(clientId);
         });
 
-        this.context.on("refreshBaseSummary",
-            (snapshot: ISnapshotTree) => this.refreshBaseSummary(snapshot));
+        this.previousState = this.context.previousRuntimeState.state as IPreviousState ?? {};
 
         // We always create the summarizer in the case that we are asked to generate summaries. But this may
         // want to be on demand instead.
@@ -607,19 +648,22 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this,
             () => this.summaryConfiguration,
             async (safe: boolean) => this.generateSummary(!this.loadedFromSummary, safe),
-            async (handle, refSeq) => this.refreshLatestSummaryAck(handle, refSeq));
+            async (summContext, refSeq) => this.refreshLatestSummaryAck(summContext, refSeq),
+            this.previousState.summaryCollection);
 
         // Create the SummaryManager and mark the initial state
         this.summaryManager = new SummaryManager(
             context,
             this.runtimeOptions.generateSummaries !== false || this.loadedFromSummary,
             this.runtimeOptions.enableWorker,
-            this.logger);
+            this.logger,
+            (summarizer) => { this.nextSummarizerP = summarizer; },
+            this.previousState.nextSummarizerP,
+            !!this.previousState.reload);
+
         if (this.context.connectionState === ConnectionState.Connected) {
             this.summaryManager.setConnected(this.context.clientId);
         }
-
-        this.latestSummaryAck = { referenceSequenceNumber: this.deltaManager.initialSequenceNumber };
 
         ReportConnectionTelemetry(this.deltaManager, this.logger);
     }
@@ -655,7 +699,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     public async snapshot(tagMessage: string, fullTree: boolean = false): Promise<ITree> {
         // Iterate over each component and ask it to snapshot
         const componentSnapshotsP = Array.from(this.contexts).map(async ([componentId, value]) => {
-            const snapshot = await value.snapshot();
+            const snapshot = await value.snapshot(fullTree);
 
             // If ID exists then previous commit is still valid
             return {
@@ -689,9 +733,19 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.context.requestSnapshot(tagMessage);
     }
 
-    public async stop(): Promise<void> {
+    public async stop(): Promise<IRuntimeState> {
         this.verifyNotClosed();
+        const snapshot = await this.snapshot("", false);
+        this.summaryManager.dispose();
+        this.summarizer.dispose();
         this.closed = true;
+        const state: IPreviousState = {
+            reload: true,
+            summaryCollection: this.summarizer.summaryCollection,
+            nextSummarizerP: this.nextSummarizerP,
+            nextSummarizerD: this.nextSummarizerD,
+        };
+        return { snapshot, state };
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string, version: string) {
@@ -727,9 +781,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         if (value === ConnectionState.Connected) {
             this.summaryManager.setConnected(clientId);
         } else {
-            if (this._leader) {
-                this.updateLeader(false);
-            }
+            this.updateLeader();
             this.summaryManager.setDisconnected();
         }
     }
@@ -867,6 +919,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this,
             this.storage,
             this.containerScope,
+            this.summaryTracker.createOrGetChild(id, this.deltaManager.referenceSequenceNumber),
             (cr: IComponentRuntime) => this.attachComponent(cr),
             props);
 
@@ -935,16 +988,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.context.submitSignalFn(envelope);
     }
 
-    private refreshBaseSummary(snapshot: ISnapshotTree) {
-        // Currently only is called from summaries
-        this.loadedFromSummary = true;
-        // Propagate updated tree to all components
-        for (const key of Object.keys(snapshot.trees)) {
-            if (this.contexts.has(key)) {
-                const component = this.contexts.get(key);
-                component.refreshBaseSummary(snapshot.trees[key]);
-            }
-        }
+    public experimentalAttachServices(storageService: IDocumentStorageService): void {
+        throw new Error("Method not implemented");
     }
 
     /**
@@ -955,16 +1000,18 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             tree: {},
             type: SummaryType.Tree,
         };
-        let summaryStats = this.summaryTreeConverter.mergeStats();
+        let summaryStats = SummaryTreeConverter.mergeStats();
 
         // Iterate over each component and ask it to snapshot
         await Promise.all(Array.from(this.contexts).map(async ([key, value]) => {
             const snapshot = await value.snapshot(fullTree);
             const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
                 snapshot,
-                fullTree);
+                `/${encodeURIComponent(key)}`,
+                fullTree,
+            );
             summaryTree.tree[key] = treeWithStats.summaryTree;
-            summaryStats = this.summaryTreeConverter.mergeStats(summaryStats, treeWithStats.summaryStats);
+            summaryStats = SummaryTreeConverter.mergeStats(summaryStats, treeWithStats.summaryStats);
         }));
 
         if (this.chunkMap.size > 0) {
@@ -1009,8 +1056,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     attachMessage.id,
                     snapshotTree,
                     this,
-                    new DocumentStorageServiceProxy(this.storage, flatBlobs),
+                    new BlobCacheStorageService(this.storage, flatBlobs),
                     this.containerScope,
+                    this.summaryTracker.createOrGetChild(attachMessage.id, message.sequenceNumber),
                     [attachMessage.type]);
 
                 break;
@@ -1088,11 +1136,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             return;
         }
 
-        if (!("uploadSummary" in this.context.storage)) {
-            this.logger.sendTelemetryEvent({ eventName: "SkipGenerateSummaryNotSupported" });
-            return;
-        }
-
         try {
             await this.scheduleManager.pause();
 
@@ -1108,6 +1151,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
             const trace = Trace.start();
             const treeWithStats = await this.summarize(fullTree || safe);
+
             const generateData: IGeneratedSummaryData = {
                 summaryStats: treeWithStats.summaryStats,
                 generateDuration: trace.trace().duration,
@@ -1117,24 +1161,36 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 return { ...attemptData, ...generateData };
             }
 
-            const handle = await this.context.storage.uploadSummary(treeWithStats.summaryTree);
+            let handle: string;
+            if (this.summaryTracker.useContext === true) {
+                handle = await this.context.storage.uploadSummaryWithContext(
+                    treeWithStats.summaryTree,
+                    this.latestSummaryAck);
+            } else {
+                // back-compat: 0.14 uploadSummary
+                const summaryHandle = await this.context.storage.uploadSummary(
+                    treeWithStats.summaryTree);
+                handle = summaryHandle.handle;
+            }
 
             // safe mode refreshes the latest summary ack
             if (safe) {
                 const versions = await this.storage.getVersions(this.id, 1);
                 const parents = versions.map((version) => version.id);
-                await this.refreshLatestSummaryAck(parents[0], this.deltaManager.referenceSequenceNumber);
+                await this.refreshLatestSummaryAck(
+                    { proposalHandle: undefined, ackHandle: parents[0] },
+                    this.deltaManager.referenceSequenceNumber);
             }
 
-            const parent = this.latestSummaryAck.handle;
+            const parent = this.latestSummaryAck.ackHandle;
             const summaryMessage: ISummaryContent = {
-                handle: handle.handle,
+                handle,
                 head: parent,
                 message,
                 parents: parent ? [parent] : [],
             };
             const uploadData: IUploadedSummaryData = {
-                handle: handle.handle,
+                handle,
                 uploadDuration: trace.trace().duration,
             };
 
@@ -1298,18 +1354,18 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.getScheduler().then((scheduler) => {
                 if (scheduler.leader) {
                     this.updateLeader(true);
-                } else {
-                    scheduler.on("leader", () => {
-                        this.updateLeader(true);
-                    });
                 }
+                scheduler.on("leader", () => {
+                    this.updateLeader(true);
+                });
+                scheduler.on("notleader", () => {
+                    this.updateLeader(false);
+                });
             }, (err) => {
                 debug(err);
             });
             this.context.quorum.on("removeMember", (clientId: string) => {
-                if (clientId === this.clientId && this._leader) {
-                    this.updateLeader(false);
-                } else if (this.leader) {
+                if (this.leader) {
                     this.runTaskAnalyzer();
                 }
             });
@@ -1323,16 +1379,18 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return schedulerComponent.IAgentScheduler;
     }
 
-    private updateLeader(leadership: boolean) {
-        this._leader = leadership;
-        if (this._leader) {
+    private updateLeader(leadership?: boolean) {
+        if (leadership !== undefined) {
+            this._leader = leadership;
+        }
+        if (this.leader) {
             this.emit("leader", this.clientId);
         } else {
             this.emit("noleader", this.clientId);
         }
 
         for (const [, context] of this.contexts) {
-            context.updateLeader(this._leader);
+            context.updateLeader(this.leader);
         }
         if (this.leader) {
             this.runTaskAnalyzer();
@@ -1372,40 +1430,34 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         }
     }
 
-    private async refreshLatestSummaryAck(handle: string, referenceSequenceNumber: number) {
-        if (referenceSequenceNumber < this.latestSummaryAck.referenceSequenceNumber) {
-            return;
-        } else if (
-            referenceSequenceNumber === this.latestSummaryAck.referenceSequenceNumber
-            && !this.latestSummaryAck.handle
-        ) {
-            // When first loading we may not have the ack handle (version)
-            this.latestSummaryAck.handle = handle;
+    private async refreshLatestSummaryAck(context: ISummaryContext, referenceSequenceNumber: number) {
+        if (referenceSequenceNumber < this.summaryTracker.referenceSequenceNumber) {
             return;
         }
 
-        this.latestSummaryAck = { handle, referenceSequenceNumber };
+        // Only called from summaries
+        this.loadedFromSummary = true;
 
-        // We have to call get version to get the treeId for r11s; this isnt needed
-        // for odsp currently, since their treeId is undefined
-        const versionsResult = await this.setOrLogError("FailedToGetVersion",
-            // eslint-disable-next-line @typescript-eslint/promise-function-async
-            () => this.storage.getVersions(handle, 1),
-            (versions) => !!(versions && versions.length));
+        const snapshotTree = new LazyPromise(async () => {
+            // We have to call get version to get the treeId for r11s; this isnt needed
+            // for odsp currently, since their treeId is undefined
+            const versionsResult = await this.setOrLogError("FailedToGetVersion",
+                async () => this.storage.getVersions(context.ackHandle, 1),
+                (versions) => !!(versions && versions.length));
 
-        if (versionsResult.success) {
-            const snapshotResult = await this.setOrLogError("FailedToGetSnapshot",
-                // eslint-disable-next-line @typescript-eslint/promise-function-async
-                () => this.storage.getSnapshotTree(versionsResult.result[0]),
-                (snapshot) => !!snapshot);
+            if (versionsResult.success) {
+                const snapshotResult = await this.setOrLogError("FailedToGetSnapshot",
+                    async () => this.storage.getSnapshotTree(versionsResult.result[0]),
+                    (snapshot) => !!snapshot);
 
-            if (snapshotResult.success) {
-                // Refresh base summary
-                // it might be nice to do this in the container in the future, and maybe for all
-                // clients, not just the summarizer
-                this.context.refreshBaseSummary(snapshotResult.result);
+                if (snapshotResult.success) {
+                    return snapshotResult.result;
+                }
             }
-        }
+        });
+
+        this.latestSummaryAck = context;
+        await this.summaryTracker.refreshLatestSummary(referenceSequenceNumber, async () => snapshotTree);
     }
 
     private async setOrLogError<T>(

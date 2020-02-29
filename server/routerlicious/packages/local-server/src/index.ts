@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export * from "./testDeltaConnectionServer";
-export * from "./testReservationManager";
+export * from "./localDeltaConnectionServer";
+export * from "./localReservationManager";

@@ -13,13 +13,12 @@ interface IWindow extends Window {
     closeContainer(): void;
 }
 
-export async function startLoading(resolvedUrl: IResolvedUrl): Promise<void> {
+export async function startLoading(resolvedUrl: IResolvedUrl): Promise<Container> {
     const serviceFactory = new RouterliciousDocumentServiceFactory(
         false,
         new DefaultErrorTracking(),
         false,
         true);
-
     const baseHostConfig: IBaseHostConfig = {
         documentServiceFactory: serviceFactory,
         urlResolver: {
@@ -28,9 +27,11 @@ export async function startLoading(resolvedUrl: IResolvedUrl): Promise<void> {
     };
 
     const baseHost = new BaseHost(baseHostConfig, resolvedUrl, undefined, [] );
-    baseHost.loadAndRender(
+    const container =  await baseHost.loadAndRender(
         (resolvedUrl as IFluidResolvedUrl).url,
         document.getElementById("content") as HTMLDivElement);
+
+    return container;
 }
 
 // Checks container quorum for connected clients. Once all client leaves,

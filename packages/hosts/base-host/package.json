@@ -22,7 +22,30 @@
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
+    "test": "test:mocha",
+    "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
+    "test:mocha": "mocha --recursive dist/test -r make-promises-safe",
     "tsc": "tsc"
+  },
+  "nyc": {
+    "all": true,
+    "cache-dir": "nyc/.cache",
+    "exclude": [
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "exclude-after-remap": false,
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "report-dir": "nyc/report",
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
     "@microsoft/fluid-component-core-interfaces": "^0.14.0",
@@ -35,6 +58,7 @@
     "@microsoft/api-extractor": "^7.7.2",
     "@microsoft/eslint-config-fluid": "^0.14.0",
     "@microsoft/fluid-build-common": "^0.14.0",
+    "@types/mocha": "^5.2.5",
     "@types/node": "^10.14.6",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",
@@ -48,6 +72,10 @@
     "eslint-plugin-prefer-arrow": "~1.1.7",
     "eslint-plugin-react": "~7.18.0",
     "eslint-plugin-unicorn": "~15.0.1",
+    "make-promises-safe": "^5.1.0",
+    "mocha": "^5.2.0",
+    "mocha-junit-reporter": "^1.18.0",
+    "nyc": "^14.1.1",
     "rimraf": "^2.6.2",
     "source-map-loader": "^0.2.4",
     "typescript": "~3.7.4"

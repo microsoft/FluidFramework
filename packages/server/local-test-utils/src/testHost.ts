@@ -22,7 +22,7 @@ import {
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-import { ITestDeltaConnectionServer, TestDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import {
     IDocumentDeltaEvent,
     TestDocumentServiceFactory,
@@ -55,7 +55,9 @@ class TestRootComponent extends PrimedComponent implements IComponentRunnable {
     public run = () => Promise.resolve();
 
     // Make this function public so TestHost can use them
-    public async createAndAttachComponent<T>(id: string, type: string, props?: any): Promise<T> {
+    public async createAndAttachComponent<T extends IComponentLoadable>(
+        id: string, type: string, props?: any,
+    ): Promise<T> {
         return super.createAndAttachComponent<T>(id, type, props);
     }
 
@@ -86,8 +88,8 @@ class TestRootComponent extends PrimedComponent implements IComponentRunnable {
      * @param id - ID of shared object
      */
     public async getType<T extends ISharedObject>(id: string): Promise<T> {
-        const handle = await this.root.wait<IComponentHandle>(id);
-        return handle.get<T>();
+        const handle = await this.root.wait<IComponentHandle<T>>(id);
+        return handle.get();
     }
 
     /**
@@ -147,7 +149,7 @@ export class TestHost {
         }
     }
 
-    public readonly deltaConnectionServer: ITestDeltaConnectionServer;
+    public readonly deltaConnectionServer: ILocalDeltaConnectionServer;
     private rootResolver: (accept: TestRootComponent) => void;
 
     private readonly root = new Promise<TestRootComponent>((accept) => { this.rootResolver = accept; });
@@ -160,30 +162,33 @@ export class TestHost {
     constructor(
         private readonly componentRegistry: NamedComponentRegistryEntries,
         private readonly sharedObjectFactories: readonly ISharedObjectFactory[] = [],
-        deltaConnectionServer?: ITestDeltaConnectionServer,
+        deltaConnectionServer?: ILocalDeltaConnectionServer,
         private readonly scope: IComponent = {},
         private readonly containerServiceRegistry: ContainerServiceRegistryEntries = [],
     ) {
-        this.deltaConnectionServer = deltaConnectionServer || TestDeltaConnectionServer.create();
+        this.deltaConnectionServer = deltaConnectionServer || LocalDeltaConnectionServer.create();
+
+        const runtimeFactory = {
+            IRuntimeFactory: undefined,
+            // eslint-disable-next-line @typescript-eslint/promise-function-async
+            instantiateRuntime: (context) => SimpleContainerRuntimeFactory.instantiateRuntime(
+                context,
+                TestRootComponent.type,
+                [
+                    ...componentRegistry,
+                    [TestRootComponent.type, Promise.resolve(
+                        new PrimedComponentFactory(TestRootComponent, sharedObjectFactories),
+                    )],
+                ],
+                this.containerServiceRegistry),
+        };
+        runtimeFactory.IRuntimeFactory = runtimeFactory;
 
         const store = new TestDataStore(
             new TestCodeLoader([
                 [
                     TestRootComponent.type,
-                    {
-                        IRuntimeFactory: undefined,
-                        // eslint-disable-next-line @typescript-eslint/promise-function-async
-                        instantiateRuntime: (context) => SimpleContainerRuntimeFactory.instantiateRuntime(
-                            context,
-                            TestRootComponent.type,
-                            [
-                                ...componentRegistry,
-                                [TestRootComponent.type, Promise.resolve(
-                                    new PrimedComponentFactory(TestRootComponent, sharedObjectFactories),
-                                )],
-                            ],
-                            this.containerServiceRegistry),
-                    },
+                    runtimeFactory,
                 ],
             ]),
             new TestDocumentServiceFactory(this.deltaConnectionServer),

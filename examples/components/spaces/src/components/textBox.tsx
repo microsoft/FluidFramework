@@ -8,13 +8,13 @@ import {
 } from "@microsoft/fluid-aqueduct";
 import {
     CollaborativeTextArea,
-    IComponentReactViewable,
 } from "@microsoft/fluid-aqueduct-react";
 import {
     IComponentHandle,
     IComponentHTMLView,
 } from "@microsoft/fluid-component-core-interfaces";
 import { SharedString } from "@microsoft/fluid-sequence";
+import { IComponentReactViewable } from "@microsoft/fluid-view-adapters";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
@@ -58,8 +58,8 @@ export class TextBox extends PrimedComponent implements IComponentHTMLView, ICom
 
     protected async componentHasInitialized() {
         this.text = await this.root
-            .get<IComponentHandle>("text")
-            .get<SharedString>();
+            .get<IComponentHandle<SharedString>>("text")
+            .get();
     }
 
     // start IComponentHTMLView

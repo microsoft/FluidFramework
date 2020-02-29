@@ -5,3 +5,4 @@
 
 export * from "./host";
 export * from "./hostConfig";
+export * from "./initializeContainerCode";

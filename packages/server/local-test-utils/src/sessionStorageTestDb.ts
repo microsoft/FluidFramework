@@ -204,7 +204,6 @@ class SessionStorageCollection<T> implements ICollection<T> {
                 return value;
             }
         }
-        // eslint-disable-next-line no-null/no-null
         return null;
     }
 }

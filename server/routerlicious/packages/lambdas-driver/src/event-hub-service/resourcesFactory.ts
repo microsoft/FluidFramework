@@ -51,7 +51,6 @@ export class EventHubResourcesFactory implements IResourcesFactory<EventHubResou
             clientId,
             groupId,
             receiveTopic,
-            true,
             storageEndpoint,
             storageContainer);
 

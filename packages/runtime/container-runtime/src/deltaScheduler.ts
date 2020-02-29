@@ -24,13 +24,13 @@ let inboundQueueProcessingCount = -1;
 export class DeltaScheduler {
     private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // The time for processing ops in a single turn.
-    private readonly processingTime = 20;
+    public static readonly processingTime = 20;
 
     // The increase in time for processing ops after each turn.
     private readonly processingTimeIncrement = 10;
 
     private processingStartTime: number | undefined;
-    private totalProcessingTime: number = this.processingTime;
+    private totalProcessingTime: number = DeltaScheduler.processingTime;
 
     private opProcessingLog: {
         numberOfOps: number;
@@ -114,7 +114,7 @@ export class DeltaScheduler {
             }
 
             this.processingStartTime = undefined;
-            this.totalProcessingTime = this.processingTime;
+            this.totalProcessingTime = DeltaScheduler.processingTime;
         }
     }
 }

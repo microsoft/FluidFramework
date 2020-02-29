@@ -48,8 +48,8 @@ export class OwnedMap extends PrimedComponent implements IComponentHTMLView {
      */
     protected async componentInitializingFromExisting() {
         this.counter = await this.root.wait<Counter>("clicks");
-        const ownedMapHandle = await this.root.wait<IComponentHandle>("ownedMap");
-        this.ownedMap = await ownedMapHandle.get<OwnedSharedMap>();
+        const ownedMapHandle = await this.root.wait<IComponentHandle<OwnedSharedMap>>("ownedMap");
+        this.ownedMap = await ownedMapHandle.get();
     }
 
     /**
@@ -60,8 +60,8 @@ export class OwnedMap extends PrimedComponent implements IComponentHTMLView {
         this.root.createValueType("clicks", CounterValueType.Name, 0);
         this.counter = await this.root.wait<Counter>("clicks");
         this.root.set("ownedMap", OwnedSharedMap.create(this.runtime).handle);
-        const ownedMapHandle = await this.root.wait<IComponentHandle>("ownedMap");
-        this.ownedMap = await ownedMapHandle.get<OwnedSharedMap>();
+        const ownedMapHandle = await this.root.wait<IComponentHandle<OwnedSharedMap>>("ownedMap");
+        this.ownedMap = await ownedMapHandle.get();
         this.ownedMap.set("title", "Default Title");
     }
 
