@@ -334,7 +334,7 @@ export class MockRuntime extends EventEmitter
     public clientId: string = uuid();
     public readonly parentBranch: string;
     public readonly path = "";
-    public readonly connected: boolean;
+    public readonly connected = true;
     public readonly leader: boolean;
     public deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     public readonly loader: ILoader;

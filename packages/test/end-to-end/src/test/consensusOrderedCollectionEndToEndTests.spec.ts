@@ -188,6 +188,26 @@ function generate(
                 "Unexpected wait after add resolved value in document 13added in document 2");
         });
 
+        it("Can store handles", async () => {
+            const collection1 = ctor.create(user1Document.runtime);
+            root1.set("test", "sampleValue");
+            root1.set("collection", collection1.handle);
+            await collection1.add(root1.handle);
+            await collection1.add(root1.handle);
+
+            const collection2Handle = await root2.wait<IComponentHandle<IConsensusOrderedCollection>>("collection");
+            const collection2 = await collection2Handle.get();
+
+            const root1Handle = await acquireAndComplete(collection1) as IComponentHandle<ISharedMap>;
+            const root1Prime = await root1Handle.get();
+
+            const root2Handle = await acquireAndComplete(collection2) as IComponentHandle<ISharedMap>;
+            const root2Prime = await root2Handle.get();
+            
+            assert.equal(root1Prime.get("test"), "sampleValue");
+            assert.equal(root2Prime.get("test"), "sampleValue");
+        });
+
         it("Events", async () => {
             const collection1 = ctor.create(user1Document.runtime);
             root1.set("collection", collection1.handle);

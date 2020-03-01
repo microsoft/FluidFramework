@@ -4,8 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { ITree } from "@microsoft/fluid-protocol-definitions";
-import { IComponentRuntime, IObjectStorageService, ISharedObjectServices } from "@microsoft/fluid-runtime-definitions";
+import { IComponentRuntime, ISharedObjectServices } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 
 export enum ConsensusResult {
@@ -13,6 +12,10 @@ export enum ConsensusResult {
     Complete,
 }
 
+/**
+ * Callback provided to acquire() and waitAndAcquire() methods.
+ * @returns ConsensusResult indicating whether item was completed, or releases back to the queue.
+ */
 export type ConsensusCallback<T> = (value: T) => Promise<ConsensusResult>;
 
 /**
@@ -52,8 +55,12 @@ export interface IConsensusOrderedCollectionFactory extends ISharedObjectFactory
  * the input object will not reflect the object in the collection.
  */
 export interface IConsensusOrderedCollection<T = any> extends ISharedObject, EventEmitter {
-    on(event: "add", listener: (value: T) => void);
-    on(event: "acquire" | "release", listener: (value: T, clientId?: string) => void);
+    /**
+     * Events notifying about addition, acquisition, release and completion of items
+     */
+    on(event: "add", listener: (value: T, newlyAdded: boolean) => void);
+    on(event: "complete", listener: (value: T) => void);
+    on(event: "acquire", listener: (value: T, clientId?: string) => void);
 
     /**
      * Adds a value to the collection
@@ -62,11 +69,14 @@ export interface IConsensusOrderedCollection<T = any> extends ISharedObject, Eve
 
     /**
      * Retrieves a value from the collection.
+     * @returns Returns true (and calls callback with acquired value) if collection was not empty.
+     *          Otherwise returns false.
      */
     acquire(callback: ConsensusCallback<T>): Promise<boolean>;
 
     /**
      * Wait for a value to be available and remove it from the consensus collection
+     * Calls callback with retrieved value.
      */
     waitAndAcquire(callback: ConsensusCallback<T>): Promise<void>;
 }
@@ -77,16 +87,10 @@ export interface IConsensusOrderedCollection<T = any> extends ISharedObject, Eve
  * TODO: move this to be use in other place
  * TODO: currently input and output is not symmetrical, can they become symmetrical?
  */
-export interface ISnapshotable {
-    /**
-     * Load from snapshot in the storage
-     */
-    load(runtime: IComponentRuntime, storage: IObjectStorageService): Promise<void>;
+export interface ISnapshotable<T> {
+    asArray(): T[];
 
-    /**
-     * Generate a snapshot
-     */
-    snapshot(): ITree;
+    loadFrom(values: T[]): void;
 }
 
 /**
@@ -96,7 +100,7 @@ export interface ISnapshotable {
  * Object implementing this interface can be used as the data backing
  * for the ConsensusOrderedCollection
  */
-export interface IOrderedCollection<T = any> extends ISnapshotable {
+export interface IOrderedCollection<T = any> extends ISnapshotable<T> {
     /**
      * Adds a value to the collection
      */
@@ -105,7 +109,7 @@ export interface IOrderedCollection<T = any> extends ISnapshotable {
     /**
      * Retrieves a value from the collection.
      */
-    remove(): T | undefined;
+    remove(): T;
 
     /**
      * Return the size of the collection

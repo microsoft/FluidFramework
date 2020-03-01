@@ -8,7 +8,7 @@ import { ConnectionState } from "@microsoft/fluid-protocol-definitions";
 import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
 import { ConsensusQueueFactory } from "../consensusOrderedCollectionFactory";
 import { ConsensusResult, IConsensusOrderedCollection } from "../interfaces";
-import { acquireAndComplete } from "../consensusOrderedCollection";
+import { acquireAndComplete, waitAcquireAndComplete } from "../consensusOrderedCollection";
 
 describe("Routerlicious", () => {
     const factory = new ConsensusQueueFactory();
@@ -24,6 +24,14 @@ describe("Routerlicious", () => {
 
         async function removeItem() {
             const resP = acquireAndComplete(testCollection);
+            processMessages();
+            setImmediate(() => processMessages());
+            return resP;
+        }
+
+        async function waitAndRemoveItem() {
+            processMessages();
+            const resP = waitAcquireAndComplete(testCollection);
             processMessages();
             setImmediate(() => processMessages());
             return resP;
@@ -48,6 +56,19 @@ describe("Routerlicious", () => {
                 assert.strictEqual(await removeItem(), undefined);
                 await addItem("testValue");
                 assert.strictEqual(await removeItem(), "testValue");
+                assert.strictEqual(await removeItem(), undefined);
+            });
+
+            it("Can add and release data", async () => {
+                await addItem("testValue");
+                const promise = testCollection.acquire(async (value) => {
+                    assert.strictEqual(value, "testValue");
+                    return ConsensusResult.Release;
+                });
+                processMessages();
+                await promise;
+                assert.strictEqual(await waitAndRemoveItem(), "testValue");
+                assert.strictEqual(await removeItem(), undefined);
             });
 
             it("Can wait for data", async () => {

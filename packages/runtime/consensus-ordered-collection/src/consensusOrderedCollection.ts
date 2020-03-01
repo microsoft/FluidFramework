@@ -24,38 +24,37 @@ import {
     IOrderedCollection,
 } from "./interfaces";
 
-const snapshotFileName = "jobTracking";
+const snapshotFileNameData = "header";
+const snapshotFileNameTracking = "jobTracking";
 
-interface IConsensusOrderedCollectionValue {
+interface IConsensusOrderedCollectionValue<T> {
     readonly id: string;
 
     // The actual value
-    readonly value: any;
+    readonly value: T;
 }
 
 /**
  * An operation for consensus ordered collection
  */
+interface IConsensusOrderedCollectionAddOperation {
+    opName: "add";
+    value: string;
+}
+
 interface IConsensusOrderedCollectionAcquireOperation {
     opName: "acquire";
     id: string;
 }
 
-interface IConsensusOrderedCollectionAddOperation {
-    opName: "add";
-    value: any;
-}
-
 interface IConsensusOrderedCollectionCompleteOperation {
     opName: "complete";
     id: string;
-    clientId: string;
 }
 
 interface IConsensusOrderedCollectionReleaseOperation {
     opName: "release";
     id: string;
-    clientId: string;
 }
 
 type IConsensusOrderedCollectionOperation =
@@ -71,7 +70,7 @@ interface IPendingRecord<T> {
     /**
      * The resolve function to call after the operation is ack'ed
      */
-    resolve: (value: IConsensusOrderedCollectionValue | undefined) => void;
+    resolve: (value: IConsensusOrderedCollectionValue<T> | undefined) => void;
 
     /**
      * The client sequence number of the operation. For assert only.
@@ -159,23 +158,26 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
      * Add a value to the consensus collection.
      */
     public async add(value: T): Promise<void> {
+        const valueSer = this.serializeValue(value);
+
         if (this.isLocal()) {
             // For the case where this is not attached yet, explicitly JSON
             // clone the value to match the behavior of going thru the wire.
-            const addValue = JSON.parse(JSON.stringify(value)) as T;
+            const addValue = this.deserializeValue(valueSer) as T;
             this.addCore(addValue);
             return Promise.resolve();
         }
 
         const op: IConsensusOrderedCollectionAddOperation = {
             opName: "add",
-            value,
+            value: valueSer,
         };
         await this.submit(op);
     }
 
     /**
-     * Remove a value from the consensus collection.  If the collection is empty, returns undefined.
+     * Remove a value from the consensus collection.  If the collection is empty, returns false.
+     * Otherwise calls callback with the value
      */
     public async acquire(callback: ConsensusCallback<T>): Promise<boolean> {
         const result = await this.acquireInternal();
@@ -224,13 +226,28 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
         // all checked out work!
         this.removeClient(belongsToUnattached);
 
-        const tree = this.data.snapshot();
+        const tree: ITree = {
+            entries: [
+                {
+                    mode: FileMode.File,
+                    path: snapshotFileNameData,
+                    type: TreeEntry[TreeEntry.Blob],
+                    value: {
+                        contents: this.serializeValue(this.data.asArray()),
+                        encoding: "utf-8",
+                    },
+                },
+            ],
+            // eslint-disable-next-line no-null/no-null
+            id: null,
+        };
+
         tree.entries.push({
             mode: FileMode.File,
-            path: snapshotFileName,
+            path: snapshotFileNameTracking,
             type: TreeEntry[TreeEntry.Blob],
             value: {
-                contents: JSON.stringify(Array.from(this.jobTracking.entries())),
+                contents: this.serializeValue(Array.from(this.jobTracking.entries())),
                 encoding: "utf-8",
             }});
         return tree;
@@ -242,41 +259,40 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
 
     protected async complete(id: string) {
         if (this.isLocal()) {
-            this.completeCore(id, belongsToUnattached);
+            this.completeCore(id);
             return;
         }
 
+        // if not active, this item already was released to queue (as observed by other clients)
         if (this.isActive()) {
-            assert(this.runtime.clientId);
             const work: IConsensusOrderedCollectionCompleteOperation = {
                 opName: "complete",
                 id,
-                clientId: this.runtime.clientId,
             };
             await this.submit(work);
         }
     }
 
-    protected completeCore(id: string, clientId?: string) {
+    protected completeCore(id: string) {
         // Note: item may be no longer in jobTracking and returned back to queue!
         const rec = this.jobTracking.get(id);
-        if (rec !== undefined && rec.clientId === clientId) {
+        if (rec !== undefined) {
             this.jobTracking.delete(id);
+            this.emit("complete", rec.value);
         }
     }
 
     protected release(id: string) {
         if (this.isLocal()) {
-            this.releaseCore(id, belongsToUnattached);
+            this.releaseCore(id);
             return;
         }
 
+        // if not active, this item already was released to queue (as observed by other clients)
         if (this.isActive()) {
-            assert(this.runtime.clientId);
             const work: IConsensusOrderedCollectionReleaseOperation = {
                 opName: "release",
                 id,
-                clientId: this.runtime.clientId,
             };
             this.submit(work).catch((error) => {
                 this.runtime.logger.sendErrorEvent({eventName: "ConsensusQueue_release"}, error);
@@ -284,13 +300,13 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
         }
     }
 
-    protected releaseCore(id: string, clientId?: string) {
+    protected releaseCore(id: string) {
         // Note: item may be no longer in jobTracking and returned back to queue!
         const rec = this.jobTracking.get(id);
         if (rec !== undefined) {
             this.jobTracking.delete(id);
             this.data.add(rec.value);
-            this.emit("release", rec.value, clientId);
+            this.emit("add", rec.value, false /*newlyAdded*/);
         }
     }
 
@@ -305,12 +321,19 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
         branchId: string,
         storage: IObjectStorageService): Promise<void> {
 
-        const rawContent = await storage.read(snapshotFileName);
-        if (rawContent) {
-            const content = JSON.parse(fromBase64ToUtf8(rawContent));
+        assert(this.jobTracking.size === 0);
+        const rawContentTracking = await storage.read(snapshotFileNameTracking);
+        if (rawContentTracking) {
+            const content = this.deserializeValue(fromBase64ToUtf8(rawContentTracking));
             this.jobTracking = new Map(content) as jobTrackingType<T>;
         }
-        return this.data.load(this.runtime, storage);
+
+        assert(this.data.size() === 0);
+        const rawContentData = await storage.read(snapshotFileNameData);
+        if (rawContentData) {
+            const content = this.deserializeValue(fromBase64ToUtf8(rawContentData)) as T[];
+            this.data.loadFrom(content);
+        }
     }
 
     protected registerCore() {
@@ -324,10 +347,10 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
     protected processCore(message: ISequencedDocumentMessage, local: boolean) {
         if (message.type === MessageType.Operation) {
             const op: IConsensusOrderedCollectionOperation = message.contents;
-            let value: IConsensusOrderedCollectionValue | undefined;
+            let value: IConsensusOrderedCollectionValue<T> | undefined;
             switch (op.opName) {
                 case "add":
-                    this.addCore(op.value);
+                    this.addCore(this.deserializeValue(op.value) as T);
                     break;
 
                 case "acquire":
@@ -335,11 +358,11 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
                     break;
 
                 case "complete":
-                    this.completeCore(op.id, message.clientId);
+                    this.completeCore(op.id);
                     break;
 
                 case "release":
-                    this.releaseCore(op.id, message.clientId);
+                    this.releaseCore(op.id);
                     break;
 
                 default:
@@ -360,7 +383,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
      */
     private processLocalMessage(
         message: ISequencedDocumentMessage,
-        value: IConsensusOrderedCollectionValue | undefined)
+        value: IConsensusOrderedCollectionValue<T> | undefined)
     {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const pending = this.promiseResolveQueue.shift()!;
@@ -371,7 +394,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
     }
 
     private async submit(
-        message: IConsensusOrderedCollectionOperation): Promise<IConsensusOrderedCollectionValue | undefined> {
+        message: IConsensusOrderedCollectionOperation): Promise<IConsensusOrderedCollectionValue<T> | undefined> {
 
         assert(!this.isLocal());
 
@@ -384,16 +407,16 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
 
     private addCore(value: T) {
         this.data.add(value);
-        this.emit("add", value);
+        this.emit("add", value, true /*newlyAdded*/);
     }
 
-    private acquireCore(id: string, clientId?: string): IConsensusOrderedCollectionValue | undefined {
-        const value = this.data.remove();
-        if (value === undefined) {
+    private acquireCore(id: string, clientId?: string): IConsensusOrderedCollectionValue<T> | undefined {
+        if (this.data.size() === 0) {
             return undefined;
         }
+        const value = this.data.remove();
 
-        const value2: IConsensusOrderedCollectionValue = {
+        const value2: IConsensusOrderedCollectionValue<T> = {
             id,
             value,
         };
@@ -403,7 +426,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
         return value2;
     }
 
-    private async acquireInternal(): Promise<IConsensusOrderedCollectionValue | undefined> {
+    private async acquireInternal(): Promise<IConsensusOrderedCollectionValue<T> | undefined> {
         if (this.isLocal()) {
             // can be undefined if queue is empty
             const value = this.acquireCore(uuid(), belongsToUnattached);
@@ -417,7 +440,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
         return this.submit(op);
     }
 
-    public removeClient(clientIdToRemove?: string) {
+    private removeClient(clientIdToRemove?: string) {
         const added: T[] = [];
         for (const [id, {value, clientId}] of this.jobTracking) {
             if (clientId === clientIdToRemove) {
@@ -429,6 +452,19 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
 
         // Raise all events only after all state changes are completed,
         // to guarantee same ordering of operations if collection is manipulated from events.
-        added.map((value) => this.emit("release", value, clientIdToRemove));
+        added.map((value) => this.emit("add", value, false /*newlyAdded*/));
+    }
+
+    private serializeValue(value) {
+        return this.runtime.IComponentSerializer.stringify(
+            value,
+            this.runtime.IComponentHandleContext,
+            this.handle);
+    }
+
+    private deserializeValue(content: string) {
+        return this.runtime.IComponentSerializer.parse(
+            content,
+            this.runtime.IComponentHandleContext);
     }
 }
