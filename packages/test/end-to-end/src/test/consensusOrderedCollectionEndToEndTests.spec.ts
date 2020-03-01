@@ -203,7 +203,7 @@ function generate(
 
             const root2Handle = await acquireAndComplete(collection2) as IComponentHandle<ISharedMap>;
             const root2Prime = await root2Handle.get();
-            
+
             assert.equal(root1Prime.get("test"), "sampleValue");
             assert.equal(root2Prime.get("test"), "sampleValue");
         });
