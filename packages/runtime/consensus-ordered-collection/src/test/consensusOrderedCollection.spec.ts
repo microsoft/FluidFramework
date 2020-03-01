@@ -7,7 +7,8 @@ import * as assert from "assert";
 import { ConnectionState } from "@microsoft/fluid-protocol-definitions";
 import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
 import { ConsensusQueueFactory } from "../consensusOrderedCollectionFactory";
-import { IConsensusOrderedCollection } from "../interfaces";
+import { ConsensusResult, IConsensusOrderedCollection } from "../interfaces";
+import { acquireAndComplete } from "../consensusOrderedCollection";
 
 describe("Routerlicious", () => {
     const factory = new ConsensusQueueFactory();
@@ -22,9 +23,10 @@ describe("Routerlicious", () => {
         let testCollection: IConsensusOrderedCollection;
 
         async function removeItem() {
-            const waitP = testCollection.remove();
+            const resP = acquireAndComplete(testCollection);
             processMessages();
-            return waitP;
+            setImmediate(() => processMessages());
+            return resP;
         }
 
         async function addItem(item) {
@@ -50,18 +52,22 @@ describe("Routerlicious", () => {
 
             it("Can wait for data", async () => {
                 let added = false;
-                const p = testCollection.waitAndRemove();
-                p.then((value) => {
+                let res: any;
+                const p = testCollection.waitAndAcquire(async (value) =>{
                     assert(added, "Wait resolved before value is added");
-                }).catch((reason) => {
-                    assert(false, "Unexpected promise rejection");
+                    res = value;
+                    return ConsensusResult.Complete;
                 });
 
+                const p2 = addItem("testValue");
+                processMessages();
                 added = true;
-                await addItem("testValue");
-                // There are two hops here - one "add" message, another "remove" message.
-                await Promise.resolve().then(() => processMessages());
-                assert.strictEqual(await p, "testValue");
+                await p2;
+                // There are two hops here - one "acquire" message, another "release" message.
+                processMessages();
+                setImmediate(() => processMessages());
+                await p;
+                assert.strictEqual(res, "testValue");
             });
 
             it("Data ordering", async () => {
@@ -83,7 +89,7 @@ describe("Routerlicious", () => {
                     assert.strictEqual(value, input[addCount], "Added event value not matched");
                     addCount += 1;
                 });
-                testCollection.on("remove", (value) => {
+                testCollection.on("acquire", (value) => {
                     assert.strictEqual(value, output[removeCount], "Remove event value not matched");
                     removeCount += 1;
                 });
@@ -167,14 +173,21 @@ describe("Routerlicious", () => {
         deltaConnFactory.processAllMessages();
 
         await waitP;
-        const resultP = testCollection.remove();
+
+        let res: any;
+        const resultP = testCollection.acquire(async (value) => {
+            res = value;
+            return ConsensusResult.Complete;
+        });
 
         // Drop connection one more time
         deltaConnection.state = ConnectionState.Disconnected;
         deltaConnFactory.clearMessages();
         deltaConnection.state = ConnectionState.Connected;
         deltaConnFactory.processAllMessages();
+        setImmediate(() => deltaConnFactory.processAllMessages());
 
-        assert.strictEqual(await resultP, "sample");
+        await resultP;
+        assert.equal(res, "sample");
     });
 });

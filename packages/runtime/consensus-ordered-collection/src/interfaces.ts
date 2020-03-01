@@ -3,9 +3,17 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { ITree } from "@microsoft/fluid-protocol-definitions";
 import { IComponentRuntime, IObjectStorageService, ISharedObjectServices } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+
+export enum ConsensusResult {
+    Release,
+    Complete,
+}
+
+export type ConsensusCallback<T> = (value: T) => Promise<ConsensusResult>;
 
 /**
  * Consensus Ordered Collection channel factory interface
@@ -43,7 +51,10 @@ export interface IConsensusOrderedCollectionFactory extends ISharedObjectFactory
  * They will not be references to the original input object.  Thus changed to
  * the input object will not reflect the object in the collection.
  */
-export interface IConsensusOrderedCollection<T = any> extends ISharedObject {
+export interface IConsensusOrderedCollection<T = any> extends ISharedObject, EventEmitter {
+    on(event: "add", listener: (value: T) => void);
+    on(event: "acquire" | "release", listener: (value: T, clientId?: string) => void);
+
     /**
      * Adds a value to the collection
      */
@@ -52,12 +63,12 @@ export interface IConsensusOrderedCollection<T = any> extends ISharedObject {
     /**
      * Retrieves a value from the collection.
      */
-    remove(): Promise<T>;
+    acquire(callback: ConsensusCallback<T>): Promise<boolean>;
 
     /**
      * Wait for a value to be available and remove it from the consensus collection
      */
-    waitAndRemove(): Promise<T>;
+    waitAndAcquire(callback: ConsensusCallback<T>): Promise<void>;
 }
 
 /**

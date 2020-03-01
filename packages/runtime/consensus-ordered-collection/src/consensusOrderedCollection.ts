@@ -4,36 +4,74 @@
  */
 
 import * as assert from "assert";
-import { ISequencedDocumentMessage, ITree, MessageType } from "@microsoft/fluid-protocol-definitions";
+import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
+import {
+    FileMode,
+    ISequencedDocumentMessage,
+    ITree,
+    MessageType,
+    TreeEntry,
+} from "@microsoft/fluid-protocol-definitions";
 import { IChannelAttributes, IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
-import { SharedObject, ValueType } from "@microsoft/fluid-shared-object-base";
+import { SharedObject } from "@microsoft/fluid-shared-object-base";
+// eslint-disable-next-line import/no-internal-modules
+import * as uuid from "uuid/v4";
 import { debug } from "./debug";
-import { IConsensusOrderedCollection, IOrderedCollection } from "./interfaces";
-import { IConsensusOrderedCollectionValue } from "./values";
+import {
+    ConsensusCallback,
+    ConsensusResult,
+    IConsensusOrderedCollection,
+    IOrderedCollection,
+} from "./interfaces";
+
+const snapshotFileName = "jobTracking";
+
+interface IConsensusOrderedCollectionValue {
+    readonly id: string;
+
+    // The actual value
+    readonly value: any;
+}
 
 /**
  * An operation for consensus ordered collection
  */
-interface IConsensusOrderedCollectionRemoveOperation {
-    opName: "remove";
+interface IConsensusOrderedCollectionAcquireOperation {
+    opName: "acquire";
+    id: string;
 }
 
 interface IConsensusOrderedCollectionAddOperation {
     opName: "add";
-    value: IConsensusOrderedCollectionValue;
+    value: any;
+}
+
+interface IConsensusOrderedCollectionCompleteOperation {
+    opName: "complete";
+    id: string;
+    clientId: string;
+}
+
+interface IConsensusOrderedCollectionReleaseOperation {
+    opName: "release";
+    id: string;
+    clientId: string;
 }
 
 type IConsensusOrderedCollectionOperation =
-    IConsensusOrderedCollectionAddOperation | IConsensusOrderedCollectionRemoveOperation;
+    IConsensusOrderedCollectionAddOperation |
+    IConsensusOrderedCollectionAcquireOperation |
+    IConsensusOrderedCollectionCompleteOperation |
+    IConsensusOrderedCollectionReleaseOperation;
 
 /**
  * A record of the pending operation
  */
-interface IPendingRecord {
+interface IPendingRecord<T> {
     /**
      * The resolve function to call after the operation is ack'ed
      */
-    resolve: (value: any) => void;
+    resolve: (value: IConsensusOrderedCollectionValue | undefined) => void;
 
     /**
      * The client sequence number of the operation. For assert only.
@@ -46,24 +84,47 @@ interface IPendingRecord {
     message: IConsensusOrderedCollectionOperation;
 }
 
+type jobTrackingType<T> = Map<string, {value: T, clientId: string | undefined}>;
+const belongsToUnattached = undefined;
+
 /**
- * Result of removeFull, including whether we have a value to remove
+ * Helper method to acquire and complete an item
+ * Should be used in test code only
  */
-interface IRemoveFullResult {
-    wasRemoved: boolean;
-    value: any;
+export async function acquireAndComplete<T>(collection: IConsensusOrderedCollection<T>): Promise<T | undefined> {
+    let res: T | undefined;
+    await collection.acquire(async (value: T) => {
+        res = value;
+        return ConsensusResult.Complete;
+    });
+    return res;
+}
+
+/**
+ * Helper method to acquire and complete an item
+ * Should be used in test code only
+ */
+export async function waitAcquireAndComplete<T>(collection: IConsensusOrderedCollection<T>): Promise<T> {
+    let res: T | undefined;
+    await collection.waitAndAcquire(async (value: T) => {
+        res = value;
+        return ConsensusResult.Complete;
+    });
+    return res as T;
 }
 
 /**
  * Implementation of a consensus collection shared object
  *
  * Generally not used directly. A derived type will pass in a backing data type
- * IOrderedCollection that will define the deterministic add/remove order and snapshot ability.
+ * IOrderedCollection that will define the deterministic add/acquire order and snapshot ability.
  * Implements the shared object's communication, handles the sending/processing
  * operations, provides the asynchronous API and manage the promise resolution.
  */
 export class ConsensusOrderedCollection<T = any> extends SharedObject implements IConsensusOrderedCollection<T> {
-    private readonly promiseResolveQueue: IPendingRecord[] = [];
+    private readonly promiseResolveQueue: IPendingRecord<T>[] = [];
+
+    private jobTracking: jobTrackingType<T> = new Map();
 
     /**
      * Constructs a new consensus collection. If the object is non-local an id and service interfaces will
@@ -76,6 +137,22 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
         private readonly data: IOrderedCollection<T>,
     ) {
         super(id, runtime, attributes);
+
+        // It's likely not safe to call this.removeClient(this.runtime.clientId) in here
+        // The fact that client recorded disconnect does not mean much in terms of the order
+        // server will record disconnects from multiple clients. And order matters because
+        // it defines the order items go back to the queue.
+        // So we put items back to queue only when we process our own removeMember event.
+        /*
+        runtime.on("disconnected", () => {
+            this.removeClient(this.runtime.clientId);
+        });
+        */
+
+        runtime.getQuorum().on("removeMember", (clientId: string) => {
+            assert(clientId);
+            this.removeClient(clientId);
+        });
     }
 
     /**
@@ -90,66 +167,131 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
             return Promise.resolve();
         }
 
-        let operationValue: IConsensusOrderedCollectionValue;
-
-        // TODO: Not all shared object will be derived from SharedObject
-        if (SharedObject.is(value)) {
-            if (!this.isLocal()) {
-                // Ensure a referenced shared object is attached.
-                value.register();
-            }
-
-            operationValue = {
-                type: ValueType[ValueType.Shared],
-                value: value.id,
-            };
-        } else {
-            operationValue = {
-                type: ValueType[ValueType.Plain],
-                value,
-            };
-        }
-
         const op: IConsensusOrderedCollectionAddOperation = {
             opName: "add",
-            value: operationValue,
+            value,
         };
-        return this.submit(op);
+        await this.submit(op);
     }
 
     /**
      * Remove a value from the consensus collection.  If the collection is empty, returns undefined.
      */
-    public async remove(): Promise<T> {
-        const removeFullResult = await this.removeFull();
-        return removeFullResult.value;
+    public async acquire(callback: ConsensusCallback<T>): Promise<boolean> {
+        const result = await this.acquireInternal();
+        if (result === undefined) {
+            return false;
+        }
+
+        const res = await callback(result.value);
+
+        switch (res) {
+            case ConsensusResult.Complete:
+                await this.complete(result.id);
+                break;
+            case ConsensusResult.Release:
+                this.release(result.id);
+                break;
+            default:
+                assert(false);
+        }
+
+        return true;
     }
 
     /**
-     * Wait for a value to be available and remove it from the consensus collection
+     * Wait for a value to be available and acquire it from the consensus collection
      */
-    public async waitAndRemove(): Promise<T> {
+    public async waitAndAcquire(callback: ConsensusCallback<T>): Promise<void> {
         // eslint-disable-next-line no-constant-condition
         while (true) {
             if (this.data.size() === 0) {
-                // Wait for new entry before trying to remove again
-                await new Promise((resolve, reject) => {
+                // Wait for new entry before trying to acquire again
+                await new Promise((resolve) => {
                     this.once("add", resolve);
                 });
             }
 
-            const removeFullResult = await this.removeFull();
-            if (removeFullResult.wasRemoved) {
-                // Found a value, return value
-                return removeFullResult.value;
+            const res = await this.acquire(callback);
+            if (res) {
+                return;
             }
-
-            // The collection is empty, try again
         }
     }
 
     public snapshot(): ITree {
-        return this.data.snapshot();
+        // If we are transitioning from unattached to attached mode, then we are loosing
+        // all checked out work!
+        this.removeClient(belongsToUnattached);
+
+        const tree = this.data.snapshot();
+        tree.entries.push({
+            mode: FileMode.File,
+            path: snapshotFileName,
+            type: TreeEntry[TreeEntry.Blob],
+            value: {
+                contents: JSON.stringify(Array.from(this.jobTracking.entries())),
+                encoding: "utf-8",
+            }});
+        return tree;
+    }
+
+    protected isActive() {
+        return this.runtime.connected && this.runtime.deltaManager.active;
+    }
+
+    protected async complete(id: string) {
+        if (this.isLocal()) {
+            this.completeCore(id, belongsToUnattached);
+            return;
+        }
+
+        if (this.isActive()) {
+            assert(this.runtime.clientId);
+            const work: IConsensusOrderedCollectionCompleteOperation = {
+                opName: "complete",
+                id,
+                clientId: this.runtime.clientId,
+            };
+            await this.submit(work);
+        }
+    }
+
+    protected completeCore(id: string, clientId?: string) {
+        // Note: item may be no longer in jobTracking and returned back to queue!
+        const rec = this.jobTracking.get(id);
+        if (rec !== undefined && rec.clientId === clientId) {
+            this.jobTracking.delete(id);
+        }
+    }
+
+    protected release(id: string) {
+        if (this.isLocal()) {
+            this.releaseCore(id, belongsToUnattached);
+            return;
+        }
+
+        if (this.isActive()) {
+            assert(this.runtime.clientId);
+            const work: IConsensusOrderedCollectionReleaseOperation = {
+                opName: "release",
+                id,
+                clientId: this.runtime.clientId,
+            };
+            this.submit(work).catch((error) => {
+                this.runtime.logger.sendErrorEvent({eventName: "ConsensusQueue_release"}, error);
+            });
+        }
+    }
+
+    protected releaseCore(id: string, clientId?: string) {
+        // Note: item may be no longer in jobTracking and returned back to queue!
+        const rec = this.jobTracking.get(id);
+        if (rec !== undefined) {
+            this.jobTracking.delete(id);
+            this.data.add(rec.value);
+            this.emit("release", rec.value, clientId);
+        }
     }
 
     protected onConnect(pending: any[]) {
@@ -163,6 +305,11 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
         branchId: string,
         storage: IObjectStorageService): Promise<void> {
 
+        const rawContent = await storage.read(snapshotFileName);
+        if (rawContent) {
+            const content = JSON.parse(fromBase64ToUtf8(rawContent));
+            this.jobTracking = new Map(content) as jobTrackingType<T>;
+        }
         return this.data.load(this.runtime, storage);
     }
 
@@ -177,15 +324,22 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
     protected processCore(message: ISequencedDocumentMessage, local: boolean) {
         if (message.type === MessageType.Operation) {
             const op: IConsensusOrderedCollectionOperation = message.contents;
-            let value;
+            let value: IConsensusOrderedCollectionValue | undefined;
             switch (op.opName) {
                 case "add":
-                    this.addCore(op.value.value);
+                    this.addCore(op.value);
                     break;
 
-                case "remove":
-                    const hasValue = this.data.size() !== 0;
-                    value = { wasRemoved: hasValue, value: hasValue ? this.removeCore() : undefined };
+                case "acquire":
+                    value = this.acquireCore(op.id, message.clientId);
+                    break;
+
+                case "complete":
+                    this.completeCore(op.id, message.clientId);
+                    break;
+
+                case "release":
+                    this.releaseCore(op.id, message.clientId);
                     break;
 
                 default:
@@ -204,23 +358,25 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
      * @param message - the message of the operation
      * @param value - the value related to the operation
      */
-    private processLocalMessage(message: ISequencedDocumentMessage, value: any) {
+    private processLocalMessage(
+        message: ISequencedDocumentMessage,
+        value: IConsensusOrderedCollectionValue | undefined)
+    {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const pending = this.promiseResolveQueue.shift()!;
         assert(pending);
         assert(message.contents.opName === pending.message.opName);
-        assert(message.clientSequenceNumber === -1
-            || message.clientSequenceNumber === pending.clientSequenceNumber);
+        assert(message.clientSequenceNumber === pending.clientSequenceNumber);
         pending.resolve(value);
     }
 
     private async submit(
-        message: IConsensusOrderedCollectionOperation): Promise<any> {
+        message: IConsensusOrderedCollectionOperation): Promise<IConsensusOrderedCollectionValue | undefined> {
 
         assert(!this.isLocal());
 
         const clientSequenceNumber = this.submitLocalMessage(message);
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             // Note that clientSequenceNumber and message is only used for asserts and isn't strictly necessary.
             this.promiseResolveQueue.push({ resolve, clientSequenceNumber, message });
         });
@@ -231,28 +387,48 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
         this.emit("add", value);
     }
 
-    private removeCore(): T {
-        // Caller should check if it is empty first
-        assert(this.data.size() !== 0);
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const value = this.data.remove()!;
+    private acquireCore(id: string, clientId?: string): IConsensusOrderedCollectionValue | undefined {
+        const value = this.data.remove();
+        if (value === undefined) {
+            return undefined;
+        }
 
-        // Note remove event only fires if there are value removed
-        // Not if it is empty
-        this.emit("remove", value);
-        return value;
+        const value2: IConsensusOrderedCollectionValue = {
+            id,
+            value,
+        };
+        this.jobTracking.set(value2.id, {value, clientId});
+
+        this.emit("acquire", value, clientId);
+        return value2;
     }
 
-    private async removeFull(): Promise<IRemoveFullResult> {
+    private async acquireInternal(): Promise<IConsensusOrderedCollectionValue | undefined> {
         if (this.isLocal()) {
-            const hasValue = this.data.size() !== 0;
-            const value = hasValue ? this.removeCore() : undefined;
-            return Promise.resolve({ wasRemoved: hasValue, value });
+            // can be undefined if queue is empty
+            const value = this.acquireCore(uuid(), belongsToUnattached);
+            return Promise.resolve(value);
         }
 
         const op: IConsensusOrderedCollectionOperation = {
-            opName: "remove",
+            opName: "acquire",
+            id: uuid(),
         };
         return this.submit(op);
+    }
+
+    public removeClient(clientIdToRemove?: string) {
+        const added: T[] = [];
+        for (const [id, {value, clientId}] of this.jobTracking) {
+            if (clientId === clientIdToRemove) {
+                this.jobTracking.delete(id);
+                this.data.add(value);
+                added.push(value);
+            }
+        }
+
+        // Raise all events only after all state changes are completed,
+        // to guarantee same ordering of operations if collection is manipulated from events.
+        added.map((value) => this.emit("release", value, clientIdToRemove));
     }
 }
