@@ -4,49 +4,59 @@ uid: doc-index
 
 # Big page of docs and decks
 
-## Starting Docs
+## Docs
 
-- Fluid Framework Developers Guide.docx
-
-Overviews
+### Overviews
 
 - [What is Fluid?](../what-is-fluid.md)
-- Fluid Component Model.docx
-- Anatomy of a DDS.docx
+- [Fluid Component Model](../guide/components.md)
+- [Anatomy of a DDS](../guide/dds-anatomy.md)
 
-Advanced Docs
+### Tutorials
 
-- Shared String.docx
-- Fluid_Loading_Deep_Dive.docx (slightly out of date)
-- Fluid Total Order Boradcast & Eventual Consistency.docx
+- [Component tutorials](../examples/README.md)
+- [Scoreboard tutorial](https://microsoft.sharepoint.com/:w:/t/Prague/Ec6Ox0Kak9ZBqgTcl_vgTL0Biat3iq9xKj_xqjSY7Vl-FA?e=RukAyu)
+- [Literate Host Sample](https://github.com/microsoft/FluidFramework/tree/master/examples/hosts/literate) (GitHub)
 
-Tutorials
+### Advanced
 
-- [Sudoku component tutorial](../examples/sudoku.md)
-- Fluid Tutorial.docx - Tutorial to build fluid components based on "Scoreboard"
-- Literate Host Sample (GitHub)
+- [Shared
+  String.docx](https://microsoft-my.sharepoint-df.com/:w:/p/anthonm/Eeshhh4GSslDkjLKK28lunIBwrh-7glib7Lfnw_9ixNL8A?e=wD35Yi)
+- [Fluid Framework Developer Guide](../how/developer-guide.md)
+- [Total Order Broadcast & Eventual Consistency]((../how/tob.md))
+- [Fluid Loading Deep Dive](https://microsoft.sharepoint.com/:w:/t/Prague/EY_xwXmXzXRBlnx6sMgbVp8Bbs4K3GQXhV6ERUyKhLgNbA?e=wFWoFH)
+  (slightly out of date)
 
-# Decks
+## Decks
 
-## Overview
+### Overview
 
-- Fluid Framework Overview.pptx - Primary Overview (variation used for CXE presentation) (Best Starting Deck)
-- Brief History of Fluid
+- [Fluid Framework
+  Overview](https://microsoft.sharepoint.com/:p:/t/Prague/EWRRIFxzA61Dmu2PnfNic4UBGVbmT2gJSrDAhtCUNNHm_Q?e=MyyxDI) -
+  Primary Overview (Best Starting Deck)
+- [Brief History of
+  Fluid](https://microsoft-my.sharepoint-df.com/:p:/p/skjokiel/ER0wUgs1mcVKg9pWXRXymoQBYT7GoOjdxibPgIMd2vVz6g?e=gPODB2)
 
-## Tutorial
-
-- [Fluid Roadshow Deck]()
-- [Dev
-  Kitchen](https://microsoft.sharepoint-df.com/:p:/t/MFxComponentFrameworkVTeam/EVd3JUck6aZEjgvJmQ4F9RYBlf3cH2DGimF6Rl9lpf4RCA?e=z4NLRC) (MFX Development Focused)
--
-
-## Architectural/Technical
-
-- Fluid Runtime 101.pptx - Very, very technical Fluid 101
-- Fluid Tech Stack House Diagram.pptx (or Fluid Tech Stack House.png)
-
-## Scenarios and Experiences Framing Decks
+### Scenarios and Experiences Framing Decks
 
 - Ignite 2019 BRK3075 – Learning about the Fluid Framework
-  - Deck
-  - Recording of the presentation
+  - [Deck](https://microsoft.sharepoint.com/:p:/t/M365PlatformIgnite2019/EQ-XJiw_voJOgByPHS7IBhEB1gYRUkjsewHklVqVE2mnRg?e=nUWIre)
+  - [Recording of the presentation](https://myignite.techcommunity.microsoft.com/sessions/81642?source=sessions)
+
+### Tutorial
+
+- [Fluid Roadshow
+  Deck](https://microsoft.sharepoint.com/:p:/t/Prague/Ec9E3ChMBAhGj5_INfpc1RUBRULdisHu8aplqnbcSDaz4w?e=VC4Ynv)
+- [Dev
+  Kitchen](https://microsoft.sharepoint-df.com/:p:/t/MFxComponentFrameworkVTeam/EVd3JUck6aZEjgvJmQ4F9RYBlf3cH2DGimF6Rl9lpf4RCA?e=z4NLRC)
+  October 2019
+
+### Architectural/Technical
+
+- [Fluid Runtime
+  101](https://microsoft.sharepoint.com/:p:/t/Prague/EeHuSl8Y9yFCtneBacTyWFAByQbjMXVPutsPo-7So4kv6g?e=Sr4VmI) -
+  Extremely technical Fluid 101
+- [Fluid Tech Stack House
+  Diagram](https://microsoft.sharepoint.com/:p:/t/Prague/Ee2aE1hRwwpKh2Gj_aRk-gEBYjGbxSrW1xbcSPwCNmU7-g?e=3YOGPs) (or
+  [Fluid Tech Stack
+  House.png](https://microsoft.sharepoint.com/:p:/t/Prague/EeHuSl8Y9yFCtneBacTyWFAByQbjMXVPutsPo-7So4kv6g?e=Sr4VmI))
