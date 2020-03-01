@@ -41,8 +41,8 @@ describe("LocalTestServer", () => {
         user2Document = await api.load(
             id, resolver, {}, serviceFactory);
         root = user2Document.getRoot();
-        const handle = await root.wait<IComponentHandle>("SharedString");
-        user2SharedString = await handle.get<SharedString>();
+        const handle = await root.wait<IComponentHandle<SharedString>>("SharedString");
+        user2SharedString = await handle.get();
         documentDeltaEventManager.registerDocuments(user2Document);
     });
 

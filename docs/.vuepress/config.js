@@ -152,6 +152,57 @@ const getApiSidebar = () => {
     return apiSidebar;
 };
 
+const getGuideSidebar = () => {
+    return [
+        {
+            title: "Guide",
+            collapsable: false,
+            children: [
+                "",
+                "yo-fluid",
+                "build-a-component",
+                "water-park",
+            ]
+        },
+        {
+            title: "Distributed Data Structures",
+            collapsable: false,
+            path: "dds",
+            children: [
+                "SharedDirectory",
+                "SharedMap",
+                "SharedCell",
+                {
+                    title: "Sequences",
+                    path: "sequences",
+                    children: [
+                        "SharedNumberSequence",
+                        "SharedObjectSequence",
+                        "SharedString",
+                        "SparseMatrix",
+                    ],
+                },
+                "consensus",
+            ]
+        },
+        {
+            title: "Advanced",
+            collapsable: false,
+            children: [
+                "dds-anatomy",
+            ]
+        },
+        {
+            title: "Component model",
+            collapsable: false,
+            children: [
+                "components.md",
+                "component-design-principles.md",
+            ]
+        },
+    ]
+}
+
 module.exports = {
     title: "Fluid Framework",
     description: "State that flows",
@@ -212,15 +263,18 @@ module.exports = {
         lineNumbers: true,
         extractHeaders: ["h2", "h3", "h4"],
         extendMarkdown: (md) => {
+            md.set({ typographer: true });
             // use additional markdown-it plugins
             md.use(require("markdown-it-include"), "./includes/")
-                .use(require("markdown-it-deflist"));
+                .use(require("markdown-it-deflist"))
+                .use(require("markdown-it-replacements"));
         }
     },
     themeConfig: {
-        editLinks: false,
-        lastUpdated: false, // "Last Updated",
+        editLinks: true,
+        lastUpdated: true, // "Last Updated",
         repo: "microsoft/FluidFramework",
+        docsDir: "docs",
         smoothScroll: true,
         sidebarDepth: 1,
         nav: [
@@ -232,6 +286,7 @@ module.exports = {
                 text: "🤿 Dive Deeper",
                 items: [
                     { text: "How Fluid works", link: "/how/" },
+                    { text: "Big page of docs and decks", link: "/misc/doc-index" },
                     { text: "FAQ", link: "/faq/" },
                     { text: "Terminology", link: "/misc/terminology" },
                     { text: "Concepts", link: "/misc/concepts" },
@@ -241,6 +296,7 @@ module.exports = {
                             { text: "Coding guidelines", link: "/contributing/coding-guidelines" },
                             { text: "Building documentation locally", link: "/contributing/building-documentation" },
                             { text: "Routerlicious build machine", link: "/contributing/r11s-build-machine" },
+                            { text: "Miscellaneous", link: "/contributing/misc" },
                         ]
                     },
                     { text: "Team", link: "/team/" }
@@ -263,53 +319,7 @@ module.exports = {
                 },
             ],
             "/api/": getApiSidebar(),
-            "/guide/": [
-                {
-                    title: "Guide",
-                    collapsable: false,
-                    children: [
-                        "",
-                        "yo-fluid",
-                        "build-a-component",
-                        "water-park",
-                    ]
-                },
-                {
-                    title: "Distributed Data Structures",
-                    collapsable: true,
-                    path: "dds",
-                    children: [
-                        "SharedDirectory",
-                        "SharedMap",
-                        "SharedCell",
-                        {
-                            title: "Sequences",
-                            path: "sequences",
-                            children: [
-                                "SharedNumberSequence",
-                                "SharedObjectSequence",
-                                "SharedString",
-                                "SparseMatrix",
-                            ],
-                        },
-                        "consensus",
-                        // {
-                        //     title: "Consensus",
-                        //     children: [
-                        //         "ConsensusQueue",
-                        //         "ConsensusRegisterCollection",
-                        //     ],
-                        // },
-                    ]
-                },
-                {
-                    title: "Advanced",
-                    collapsable: false,
-                    children: [
-                        "dds-anatomy",
-                    ]
-                },
-            ],
+            "/guide/": getGuideSidebar(),
             "/examples/": [
                 {
                     title: "Components",
@@ -332,9 +342,8 @@ module.exports = {
                         "singletons",
                     ]
                 },
-                "examples",
                 "sudoku",
-                "yo-fluid-breakdown",
+                "badge",
             ],
             "/how/": [
                 "",

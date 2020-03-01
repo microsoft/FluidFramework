@@ -65,7 +65,7 @@ interface IComponentViewMarker extends MergeTree.Marker {
     instance?: IComponentHTMLView;
 }
 
-interface IMathCollection {
+interface IMathCollection extends IComponentLoadable {
     createCollectionItem(options?: IMathOptions): IMathInstance;
     getInstance(id: string, options?: IMathOptions): IMathInstance;
 }
@@ -4499,8 +4499,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         if (overlappingComments && (overlappingComments.length >= 1)) {
             const commentInterval = overlappingComments[0];
 
-            const commentHandle = commentInterval.properties.story as IComponentHandle;
-            commentHandle.get<Sequence.SharedString>().then(
+            const commentHandle = commentInterval.properties.story as IComponentHandle<Sequence.SharedString>;
+            commentHandle.get().then(
                 (comment) => {
                     const commentText = comment.getText();
                     this.statusMessage("comment", `Comment Text: ${commentText}`);
@@ -4637,10 +4637,10 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         const root = this.collabDocument.getRoot();
 
         const [progressBars, math, videoPlayers, images] = await Promise.all([
-            root.get<IComponentHandle>("progressBars").get<IComponent>(),
-            root.get<IComponentHandle>("math").get<IMathCollection>(),
-            root.get<IComponentHandle>("videoPlayers").get<IComponent>(),
-            root.get<IComponentHandle>("images").get<IComponent>(),
+            root.get<IComponentHandle>("progressBars").get(),
+            root.get<IComponentHandle<IMathCollection>>("math").get(),
+            root.get<IComponentHandle>("videoPlayers").get(),
+            root.get<IComponentHandle>("images").get(),
         ]);
 
         this.math = math;
@@ -5096,8 +5096,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.commentsView = await this.comments.getView();
 
         this.sequenceTest = await this.docRoot
-            .get<IComponentHandle>("sequence-test")
-            .get<Sequence.SharedNumberSequence>();
+            .get<IComponentHandle<Sequence.SharedNumberSequence>>("sequence-test")
+            .get();
         this.sequenceTest.on("op", (op) => {
             this.showSequenceEntries();
         });

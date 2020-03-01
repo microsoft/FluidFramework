@@ -4,7 +4,7 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { IComponent, IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -36,8 +36,8 @@ export class Vltava extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
     protected async componentInitializingFirstTime(props: any) {
-        const tabsComponent = await this.createAndAttachComponent<IComponent>(uuid(), "tabs");
-        this.root.set("tabs-component-id", tabsComponent.IComponentHandle);
+        const tabsComponent = await this.createAndAttachComponent(uuid(), "tabs");
+        this.root.set("tabs-component-id", tabsComponent.handle);
     }
 
     protected async componentHasInitialized() {
