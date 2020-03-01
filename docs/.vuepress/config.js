@@ -6,6 +6,12 @@
 const fs = require("fs");
 const path = require("path");
 const process = require("process");
+const { logger, env } = require("@vuepress/shared-utils");
+const { build } = require("@vuepress/core");
+const { wrapCommand } = require("../node_modules/vuepress/lib/util");
+
+INCLUDE_PATH = ".vuepress/includes/";
+
 
 const fluidVarGroup = process.env[`FLUID_VAR_GROUP`] || "internal";
 
@@ -352,6 +358,8 @@ const getPatternsSidebar = () => {
     ];
 }
 
+logger.debug(`VUEPRESS_BASE = ${process.env.VUEPRESS_BASE}`);
+
 const getAllSidebars = () => {
     const sidebars = {
         internal: {
@@ -405,6 +413,7 @@ module.exports = {
     title: "Fluid Framework",
     description: "State that flows",
     evergreen: true,
+    base: process.env.VUEPRESS_BASE || "/",
     head: [
         ["link", { rel: "icon", href: "/images/homescreen48.png" }],
         // ["link", { rel: "manifest", crossorigin: "use-credentials", href: "/manifest.webmanifest" }],
@@ -462,10 +471,41 @@ module.exports = {
         extendMarkdown: (md) => {
             md.set({ typographer: true });
             // use additional markdown-it plugins
-            md.use(require("markdown-it-include"), "./.vuepress/includes/")
+            md.use(require("markdown-it-include"), "./includes/")
                 .use(require("markdown-it-deflist"))
                 .use(require("markdown-it-replacements"));
         }
     },
     themeConfig: getThemeConfig(),
+
+    // The below is basically a clone of the vuepress build command, but supports overridding the "base" parameter in a
+    // kind of hacky way.
+    // extendCli: (cli, options) => {
+    //     cli
+    //         .command("buildbase [targetDir]", "build dir as static site")
+    //         .option("-b, --base <base>", "override the base config option")
+    //         .option("-d, --dest <dest>", "specify build output dir (default: .vuepress/dist)")
+    //         .option("-t, --temp <temp>", "set the directory of the temporary file")
+    //         .option("-c, --cache [cache]", "set the directory of cache")
+    //         .option("-w, --workers <#>", "set the number of worker threads")
+    //         .option("--no-cache", "clean the cache before build")
+    //         .option("--debug", "build in development mode for debugging")
+    //         .option("--silent", "build static site in silent mode")
+    //         .action((sourceDir = ".", commandOptions) => {
+    //             const { debug, silent, workers } = commandOptions
+
+    //             logger.setOptions({ logLevel: silent ? 1 : debug ? 4 : 3 })
+    //             env.setOptions({ isDebug: debug, isTest: process.env.NODE_ENV === "test", workerThreads: workers || 1 })
+
+    //             let buildOptions = {
+    //                 sourceDir: path.resolve(sourceDir),
+    //                 ...options,
+    //                 ...commandOptions
+    //             };
+    //             buildOptions.siteConfig.base = buildOptions.options.base;
+    //             logger.debug("siteConfig", buildOptions.siteConfig);
+
+    //             wrapCommand(build(buildOptions));
+    //         })
+    // },
 }
