@@ -30,6 +30,7 @@ import {
     TelemetryLogger,
 } from "@microsoft/fluid-common-utils";
 import {
+    CachingPolicy,
     IDocumentService,
     IDocumentStorageService,
     IError,
@@ -691,6 +692,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     private async getDocumentStorageService(): Promise<IDocumentStorageService> {
         const storageService = await this.service.connectToStorage();
+        if (this.service.policy?.caching === CachingPolicy.Prefetch) {
+            return storageService;
+        }
         return new PrefetchDocumentStorageService(storageService);
     }
 

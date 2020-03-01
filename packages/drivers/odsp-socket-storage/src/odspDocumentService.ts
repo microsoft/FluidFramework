@@ -6,6 +6,7 @@
 import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
 import { DebugLogger, PerformanceEvent, TelemetryLogger, TelemetryNullLogger } from "@microsoft/fluid-common-utils";
 import {
+    CachingPolicy,
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
     IDocumentService,
@@ -42,6 +43,9 @@ const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
  * clients
  */
 export class OdspDocumentService implements IDocumentService {
+    readonly policy = {
+        caching: CachingPolicy.Prefetch,
+    };
 
     /**
      * @param appId - app id used for telemetry for network requests.
