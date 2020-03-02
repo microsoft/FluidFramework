@@ -2,14 +2,15 @@
 
 - [Packages move and renamed](#packages-moved-and-renamed)
 - [Top-level `type` on `IClient` removed](#top-level-type-on-iclient-removed)
-- [Remove back-compat support for loader <= 0.8](#remove-back-compat-support-for-loader-08)
+- [Remove back-compat support for loader <= 0.8](#remove-back-compat-support-for-loader--0.8)
 - [New Error types](#new-error-types)
-- [`IComponentContext` - `createSubComponent` removed, `createComponent` signature updated](#icomponentcontext-createsubcomponent-removed-createcomponent-signature-updated)
-- [`IComponentHandle` - Moved type parameter from get to interface](#icomponenthandle-type-parameter-moved)
+- [`IComponentContext` - `createSubComponent` removed, `createComponent` signature updated](#icomponentcontext---createsubcomponent-removed-createcomponent-signature-updated)
+- [`IComponentHandle` - Moved type parameter from get to interface](#icomponenthandle---type-parameter-moved)
 - [Changes to the render interfaces](#changes-to-the-render-interfaces)
 - [Old runtime container cannot load new components](#old-runtime-container-cannot-load-new-components)
+- [Container.autoReconnect & Container.reconnect changes](#Container.reconnect-Container.reconnect-changes)
 
-## Packages move and renamed
+## Packages moved and renamed
 
 ### `fluid-core-utils` package renamed
 
@@ -96,6 +97,17 @@ The rendering interfaces have undergone several changes:
 ## Old runtime container cannot load new components
 
 The way that summaries are generated has changed in such a way that the runtime container is backwards compatible with 0.13 components, but 0.13 runtime container cannot load 0.14 or later components.
+
+## Container.reconnect, Container.reconnect changes
+autReconnect getter is gone.<br/>
+reconnect() is gone. use Container.autoReconnect = true.
+
+Note that there is difference in behavior. It used to be that one needed to do
+```
+Container.autoReconnect = false;
+Container.reconnect()
+```
+in order to trigger reconnect. Now, setting Container.autoReconnect = true triggers reconnect.
 
 # 0.13 Breaking Changes
 

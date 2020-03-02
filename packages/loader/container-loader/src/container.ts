@@ -176,6 +176,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private pkg: IFluidCodeDetails | undefined;
     private protocolHandler: ProtocolOpHandler | undefined;
 
+    private resumedOpProcessingAfterLoad = false;
     private firstConnection = true;
     private manualReconnectInProgress = false;
     private readonly connectionTransitionTimes: number[] = [];
@@ -262,22 +263,35 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this._parentBranch;
     }
 
-    public set autoReconnect(value: boolean) {
-        this.logger.sendTelemetryEvent({
-            eventName: "AutoReconnect",
-            value,
-            connectionMode: this._deltaManager.connectionMode,
-            connectionState: ConnectionState[this.connectionState],
-        });
+    public set autoReconnect(reconnect: boolean) {
+        assert(this.resumedOpProcessingAfterLoad);
 
-        this._deltaManager.autoReconnect = value;
-    }
+        if (reconnect) {
+            this.logger.sendTelemetryEvent({
+                eventName: "AutoReconnectEnabled",
+                connectionMode: this._deltaManager.connectionMode,
+                connectionState: ConnectionState[this.connectionState],
+            });
 
-    /**
-     * Controls whether the container will automatically reconnect to the delta stream after receiving a disconnect.
-     */
-    public get autoReconnect() {
-        return this._deltaManager.autoReconnect;
+            if (this._connectionState === ConnectionState.Disconnected) {
+                // Only track this as a manual reconnection if we are truly the ones kicking it off.
+                this.manualReconnectInProgress = true;
+            }
+
+            this._deltaManager.autoReconnect = true;
+
+            // Ensure connection to web socket
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            this.connectToDeltaStream();
+        } else {
+            this.logger.sendTelemetryEvent({
+                eventName: "AutoReconnectDisabled",
+                connectionMode: this._deltaManager.connectionMode,
+                connectionState: ConnectionState[this.connectionState],
+            });
+
+            this._deltaManager.autoReconnect = false;
+        }
     }
 
     constructor(
@@ -427,6 +441,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     public resume() {
         assert(this.loaded);
         // Resume processing ops
+        assert(!this.resumedOpProcessingAfterLoad);
+        this.resumedOpProcessingAfterLoad = true;
         this._deltaManager.inbound.resume();
         this._deltaManager.outbound.resume();
         this._deltaManager.inboundSignal.resume();
@@ -445,17 +461,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.raiseCriticalError(createIError(error, true));
             throw error;
         });
-    }
-
-    /**
-     * Connect the deltaManager.  Useful when the autoConnect flag is set to false.
-     */
-    public async reconnect() {
-        // Only track this as a manual reconnection if we are truly the ones kicking it off.
-        if (this._connectionState === ConnectionState.Disconnected) {
-            this.manualReconnectInProgress = true;
-        }
-        return this._deltaManager.connect();
     }
 
     private async reloadContextCore(): Promise<void> {
