@@ -70,9 +70,12 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     }
 
     public dispose(): void {
-        this.runtime.removeListener("dispose", this.runtimeDisposeCallback);
-
+        if (this.disposed) {
+            return;
+        }
         this.disposed = true;
+
+        this.runtime.removeListener("dispose", this.runtimeDisposeCallback);
     }
 
     // #region IComponentRouter
