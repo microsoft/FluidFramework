@@ -14,6 +14,7 @@ RUN npm install -g @microsoft/api-documenter@^7.4.6 copyfiles@^2.1.0
 # Use pre-release version of vuepress with a perf fix
 WORKDIR /
 RUN git clone https://github.com/itsxallwater/vuepress.git vuepress
+
 WORKDIR /vuepress
 RUN git checkout feat/implement-node-worker-threads
 #bd669ed8feeb4715ecc5fd5bcbae0d388e53c9ee
@@ -21,6 +22,15 @@ RUN yarn
 RUN yarn tsc
 RUN yarn boot
 RUN yarn register-vuepress
+
+WORKDIR /
+RUN mkdir docs
+# Copy the root .npmrc to pull private packages
+COPY .npmrc docs/
+COPY docs/package*.json docs/
+
+WORKDIR /docs
+RUN npm install
 
 #############################
 # Copy the source and the api artifact
@@ -37,12 +47,10 @@ FROM r11s AS docs
 
 WORKDIR /docs
 
-# Copy the root .npmrc to pull private packages
-RUN cp ../.npmrc ./.npmrc
-RUN npm install
+# Link the forked version of vuepress
 RUN yarn link "vuepress"
 
-# Build
+# Build docs
 RUN npm run build:ci
 
 #############################
