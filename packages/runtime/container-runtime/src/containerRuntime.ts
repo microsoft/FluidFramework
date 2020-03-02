@@ -825,15 +825,16 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.verifyNotClosed();
 
         if (!this.contextsDeferred.has(id)) {
-            if (!wait) {
-                return Promise.reject(`Process ${id} does not exist`);
-            }
-
             // Add in a deferred that will resolve once the process ID arrives
             this.contextsDeferred.set(id, new Deferred<ComponentContext>());
         }
+        const deferredContext = this.contextsDeferred.get(id);
 
-        const componentContext = await this.contextsDeferred.get(id).promise;
+        if (!wait && !deferredContext.isCompleted) {
+            return Promise.reject(`Process ${id} does not exist`);
+        }
+
+        const componentContext = await deferredContext.promise;
         return componentContext.realize();
     }
 
