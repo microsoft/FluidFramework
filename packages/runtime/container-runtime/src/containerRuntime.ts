@@ -402,12 +402,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         if (!context.existing) {
             await runtime.createComponent(schedulerId, schedulerId)
                 .then((componentRuntime) => {
-                    const expContext = runtime.context as IExperimentalContainerContext;
-                    if (expContext?.isExperimentalContainerContext) {
-                        if (!expContext.isAttached()) {
-                            return;
-                        }
-                    }
                     componentRuntime.attach();
                 });
         }
@@ -860,9 +854,16 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.contextsDeferred.set(id, new Deferred<ComponentContext>());
         }
 
+        // If the component is unattached, then the context deferred promise hasn't been resolved yet.
+        // So we can realize the stored context to get the component runtime.
         if (!(this.context as IExperimentalContainerContext).isAttached()) {
-            return this.contexts.get(id).realize();
+            const compContext = this.contexts.get(id);
+            if (!compContext) {
+                throw new Error(`Process ${id} does not exist`);
+            }
+            return compContext.realize();
         }
+
         const componentContext = await this.contextsDeferred.get(id).promise;
         return componentContext.realize();
     }
@@ -947,8 +948,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.contextsDeferred.set(id, deferred);
         this.contexts.set(id, context);
 
-        const componentRuntimeP = context.realize();
-        return componentRuntimeP;
+        return context.realize();
     }
 
     public getQuorum(): IQuorum {
@@ -1147,10 +1147,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         // Trigger an attach on all bound contexts
         for (const [componentId] of this.contextsDeferred) {
             const componentRuntime = await this.getComponentRuntime(componentId, false);
-            if (componentRuntime.isAttached) {
-                throw new Error(`Component with id ${componentId} is already attached`);
+            if (!componentRuntime.isAttached) {
+                componentRuntime.attach();
             }
-            componentRuntime.attach();
         }
         this.IComponentHandleContext.attach();
 

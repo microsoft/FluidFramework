@@ -317,7 +317,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         const docService = this.serviceProvider();
         if (!docService) {
-            return Promise.reject("Delta manager is not attached");
+            throw new Error("Delta manager is not attached");
         }
 
         if (this.connection) {
@@ -483,7 +483,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     ): Promise<ISequencedDocumentMessage[]> {
         const docService = this.serviceProvider();
         if (!docService) {
-            return Promise.reject("Delta manager is not attached");
+            throw new Error("Delta manager is not attached");
         }
 
         let retry: number = 0;

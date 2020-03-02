@@ -50,7 +50,6 @@ export class RelativeLoader extends EventEmitter implements ILoader {
     constructor(
         private readonly loader: Loader,
         private readonly baseRequest: IRequest | undefined,
-        private readonly container?: Container,
     ) {
         super();
     }
@@ -67,10 +66,9 @@ export class RelativeLoader extends EventEmitter implements ILoader {
 
     public async request(request: IRequest): Promise<IResponse> {
         if (request.url.startsWith("/")) {
-            const expContainer = this.container as IExperimentalContainer;
+            const expContainer = (await this.containerDeferred.promise) as IExperimentalContainer;
             if (expContainer?.isExperimentalContainer) {
-                const container = await this.containerDeferred.promise;
-                return container.request(request);
+                return (expContainer as Container).request(request);
             }
 
             if (this.needExecutionContext(request)) {
