@@ -263,37 +263,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this._parentBranch;
     }
 
-    public set autoReconnect(reconnect: boolean) {
-        assert(this.resumedOpProcessingAfterLoad);
-
-        if (reconnect) {
-            this.logger.sendTelemetryEvent({
-                eventName: "AutoReconnectEnabled",
-                connectionMode: this._deltaManager.connectionMode,
-                connectionState: ConnectionState[this.connectionState],
-            });
-
-            if (this._connectionState === ConnectionState.Disconnected) {
-                // Only track this as a manual reconnection if we are truly the ones kicking it off.
-                this.manualReconnectInProgress = true;
-            }
-
-            this._deltaManager.autoReconnect = true;
-
-            // Ensure connection to web socket
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            this.connectToDeltaStream();
-        } else {
-            this.logger.sendTelemetryEvent({
-                eventName: "AutoReconnectDisabled",
-                connectionMode: this._deltaManager.connectionMode,
-                connectionState: ConnectionState[this.connectionState],
-            });
-
-            this._deltaManager.autoReconnect = false;
-        }
-    }
-
     constructor(
         id: string,
         public readonly options: any,
@@ -435,6 +404,30 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             if (this.deltaManager !== undefined) {
                 this.deltaManager.inbound.systemResume();
             }
+        }
+    }
+
+    public setAutoReconnect(reconnect: boolean) {
+        assert(this.resumedOpProcessingAfterLoad);
+
+        this._deltaManager.autoReconnect = reconnect;
+
+        this.logger.sendTelemetryEvent({
+            eventName: reconnect ? "AutoReconnectEnabled" : "AutoReconnectDisabled",
+            connectionMode: this._deltaManager.connectionMode,
+            connectionState: ConnectionState[this.connectionState],
+        });
+
+        if (reconnect) {
+
+            if (this._connectionState === ConnectionState.Disconnected) {
+                // Only track this as a manual reconnection if we are truly the ones kicking it off.
+                this.manualReconnectInProgress = true;
+            }
+
+            // Ensure connection to web socket
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            this.connectToDeltaStream();
         }
     }
 

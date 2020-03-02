@@ -99,15 +99,15 @@ The rendering interfaces have undergone several changes:
 The way that summaries are generated has changed in such a way that the runtime container is backwards compatible with 0.13 components, but 0.13 runtime container cannot load 0.14 or later components.
 
 ## Container.reconnect, Container.reconnect changes
-autReconnect getter is gone.<br/>
-reconnect() is gone. use Container.autoReconnect = true.
+autReconnect property is gone, as well as reconnect() method.<br/>
+Use Container.setAutoReconnect() instead.
 
 Note that there is difference in behavior. It used to be that one needed to do
 ```
 Container.autoReconnect = false;
 Container.reconnect()
 ```
-in order to trigger reconnect. Now, setting Container.autoReconnect = true triggers reconnect.
+in order to trigger reconnect. Now, calling Container.setAutoReconnect(true) is enough.
 
 # 0.13 Breaking Changes
 
