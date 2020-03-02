@@ -42,7 +42,7 @@ export async function fetchJoinSession(
         if (!token) {
             throwOdspNetworkError("Failed to acquire Vroom token", 400, true);
         }
-    
+
         const extraProps = refresh ? {secondAttempt: 1} : {};
         const joinSessionEvent = PerformanceEvent.start(logger, { eventName: "JoinSession", ...extraProps});
         try {
