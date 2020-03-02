@@ -34,8 +34,6 @@ type UntypedProduct<T> = {
 
 type Probabilities<T> = { readonly [dim in keyof T]?: number };
 
-const top = [{}, {}] as const;
-
 type ProductOperations<T> = {
     readonly [dim in keyof T]: T[dim] extends BspSet<infer TKey, infer TId> ? SetOperations<TKey, TId> : never;
 };
@@ -78,7 +76,30 @@ interface SparseProduct<T> {
     readonly root: UntypedSparseProduct<T>;
 }
 
-type Box<T> = Pair<UntypedProduct<T>, Probabilities<T>>;
+interface Box<T> {
+    box: UntypedProduct<T>;
+    probabilities: Probabilities<T>;
+    children?: Pair<Box<T>>;
+    depth: number;
+}
+
+const tops: { [poKey in string]?: Box<unknown> } = {};
+const top = <T>(productOperations: ProductOperations<T>): Box<T> => {
+    const dims: [keyof T, ProductOperations<T>[keyof T]["id"]][] = [];
+    for (const dimStr of Object.keys(productOperations)) {
+        const dim = dimStr as keyof T;
+        dims.push([dim, productOperations[dim].id]);
+    }
+
+    const poKey = JSON.stringify(dims.sort());
+    let currTop = tops[poKey];
+    if (currTop === undefined) {
+        currTop = { box: {}, probabilities: {}, depth: 1 };
+        tops[poKey] = currTop;
+    }
+
+    return currTop;
+};
 
 function subspace<T>(bounds: UntypedProduct<T>): Subspace<T> | Dense {
     let isDense = true;
@@ -88,17 +109,24 @@ function subspace<T>(bounds: UntypedProduct<T>): Subspace<T> | Dense {
             break;
         }
     }
-    if (isDense) {return dense;}
+    if (isDense) {
+        return dense;
+    }
     return { isSubspace: true as const, bounds };
 }
 
 function getUntypedSubspaceCount<T>(set: UntypedSparseProduct<T>) {
-    if (set.isSubspace) {return 1;}
+    if (set.isSubspace) {
+        return 1;
+    }
     return set.subspaceCount;
 }
 
-const union = <T>(left: UntypedSparseProduct<T>, right: UntypedSparseProduct<T>, bounds: UntypedProduct<T>):
-Union<T> => ({
+const union = <T>(
+    left: UntypedSparseProduct<T>,
+    right: UntypedSparseProduct<T>,
+    bounds: UntypedProduct<T>,
+): Union<T> => ({
     isSubspace: false as const,
     left,
     right,
@@ -110,7 +138,9 @@ function sparseProduct<T>(
     productOperations: ProductOperations<T>,
     root: UntypedSparseProduct<T> | Dense,
 ): SparseProduct<T> | Dense {
-    if (root === dense) {return root;}
+    if (root === dense) {
+        return root;
+    }
     if (root.isSubspace) {
         let hasSparseDimensions = false;
         for (const dim of Object.keys(root.bounds)) {
@@ -130,7 +160,9 @@ type UntypedProductSet<T> = Empty | Dense | UntypedSparseProduct<T>;
 export type ProductSet<T> = Empty | Dense | SparseProduct<T>;
 
 function toBspSet<T>(set: UntypedBspSet<T> | undefined) {
-    if (set === undefined) {return dense;}
+    if (set === undefined) {
+        return dense;
+    }
     return set;
 }
 
@@ -142,11 +174,16 @@ const unsafe = {
     unzip<T>(product: Product<T>): ProductSet<T> {
         const productOperations: { [dim in keyof T]?: SetOperations<unknown, unknown> } = {};
         const root: { [dim in keyof T]?: UntypedSparse<unknown> } = {};
-        for (const dim of Object.keys(product)) {
+        for (const dimStr of Object.keys(product)) {
+            const dim = dimStr as keyof T;
             if (Object.prototype.hasOwnProperty.call(product, dim)) {
                 const set: BspSet<unknown, unknown> = product[dim];
-                if (set === empty) {return empty;}
-                if (set === dense) {continue;}
+                if (set === empty) {
+                    return empty;
+                }
+                if (set === dense) {
+                    continue;
+                }
 
                 productOperations[dim] = set.setOperations;
                 root[dim] = set.root;
@@ -167,15 +204,20 @@ const unsafe = {
         ) => UntypedBspSet<Key>,
     ) {
         const res: { [dim in keyof T]?: UntypedSparse<unknown> } = {};
-        for (const dim of Object.keys(productOperations)) {
+        for (const dimStr of Object.keys(productOperations)) {
+            const dim = dimStr as keyof T;
             if (Object.prototype.hasOwnProperty.call(productOperations, dim)) {
                 const combined = combineFunc<unknown, unknown>(
                     productOperations[dim],
                     toBspSet(left[dim]),
                     toBspSet(right[dim]),
                 );
-                if (combined === empty) {return combined;}
-                if (combined === dense) {continue;}
+                if (combined === empty) {
+                    return combined;
+                }
+                if (combined === dense) {
+                    continue;
+                }
                 res[dim] = combined;
             }
         }
@@ -236,7 +278,8 @@ function compareSubspace<T>(
     right: UntypedProduct<T>,
 ) {
     let cmp: ReturnType<typeof combineCmp> = 0;
-    for (const dim of Object.keys(productOperations)) {
+    for (const dimStr of Object.keys(productOperations)) {
+        const dim = dimStr as keyof T;
         if (Object.prototype.hasOwnProperty.call(productOperations, dim)) {
             const lProj = toBspSet(left[dim]);
             const rProj = toBspSet(right[dim]);
@@ -244,7 +287,9 @@ function compareSubspace<T>(
 
             cmp = combineCmp(cmp, compareUntyped<unknown, unknown>(setOperations, lProj, rProj));
 
-            if (cmp === undefined) {return undefined;}
+            if (cmp === undefined) {
+                return undefined;
+            }
         }
     }
 
@@ -252,7 +297,7 @@ function compareSubspace<T>(
 }
 
 const tryUnionSubspaces = (() => {
-    const cache: { left?: unknown, right?: unknown, res?: unknown } = {};
+    const cache: { left?: unknown; right?: unknown; res?: unknown } = {};
     return <T>(
         productOperations: ProductOperations<T>,
         left: Subspace<T>,
@@ -266,7 +311,7 @@ const tryUnionSubspaces = (() => {
 
         const cmp = compareSubspace(productOperations, left.bounds, right.bounds);
         if (cmp !== undefined) {
-            return cache.res = cmp <= 0 ? right : left;
+            return (cache.res = cmp <= 0 ? right : left);
         }
         let differentDimension: keyof T | undefined;
 
@@ -281,7 +326,7 @@ const tryUnionSubspaces = (() => {
                 );
                 if (cmp_inner !== 0) {
                     if (differentDimension !== undefined) {
-                        return cache.res = undefined;
+                        return (cache.res = undefined);
                     }
 
                     differentDimension = dim;
@@ -295,24 +340,25 @@ const tryUnionSubspaces = (() => {
                 toBspSet(left.bounds[differentDimension]),
                 toBspSet(right.bounds[differentDimension]),
             );
-            if (newDim === empty) { return cache.res = empty; }
+            if (newDim === empty) {
+                return (cache.res = empty);
+            }
             if (newDim === dense) {
-
                 // we are actually deleting the `differentDimension`, so the variable
                 // `deleted` must be there. Hence disabling the rule here.
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 const { [differentDimension]: deleted, ...leftBoundsWithoutDifferentDimension } = left.bounds;
-                return cache.res = subspace<unknown>(leftBoundsWithoutDifferentDimension);
+                return (cache.res = subspace<unknown>(leftBoundsWithoutDifferentDimension));
             }
 
             const newBounds: UntypedProduct<T> = {
                 ...left.bounds,
                 [differentDimension]: newDim,
             };
-            return cache.res = subspace(newBounds);
+            return (cache.res = subspace(newBounds));
         }
 
-        return cache.res = undefined;
+        return (cache.res = undefined);
     };
 })();
 
@@ -321,10 +367,18 @@ function combineChildren<T>(
     left: UntypedProductSet<T>,
     right: UntypedProductSet<T>,
 ): UntypedProductSet<T> {
-    if (right === empty) {return left;}
-    if (right === dense) {return right;}
-    if (left === empty) {return right;}
-    if (left === dense) {return left;}
+    if (right === empty) {
+        return left;
+    }
+    if (right === dense) {
+        return right;
+    }
+    if (left === empty) {
+        return right;
+    }
+    if (left === dense) {
+        return left;
+    }
 
     if (!left.isSubspace || !right.isSubspace) {
         return union<T>(left, right, joinBounds(productOperations, left.bounds, right.bounds));
@@ -332,7 +386,9 @@ function combineChildren<T>(
 
     const combinedSubspace = tryUnionSubspaces<T>(productOperations, left, right);
 
-    if (combinedSubspace !== undefined) {return combinedSubspace;}
+    if (combinedSubspace !== undefined) {
+        return combinedSubspace;
+    }
     return union(left, right, joinBounds(productOperations, left.bounds, right.bounds));
 }
 
@@ -347,7 +403,9 @@ function projectUntyped<T, Props extends(keyof T)[]>(
     }
 
     const lChild = projectUntyped(productOperations, set.left, ...dims);
-    if (lChild === dense) {return dense;}
+    if (lChild === dense) {
+        return dense;
+    }
     const rChild = projectUntyped(productOperations, set.right, ...dims);
     return combineChildren(productOperations, lChild, rChild);
 }
@@ -356,14 +414,22 @@ export function project<T, Props extends(keyof T)[]>(
     set: ProductSet<T>,
     ...dims: Props
 ): ProductSet<Restrict<T, Props>> {
-    if (set === dense || set === empty) {return set;}
+    if (set === dense || set === empty) {
+        return set;
+    }
     const productOperations = unsafe.restrict(set.productOperations, ...dims);
     const root = projectUntyped(productOperations, set.root, ...dims);
-    if (root === empty) {return root;}
+    if (root === empty) {
+        return root;
+    }
     return sparseProduct(productOperations, root);
 }
 
-function splitBox<T>(productOperations: ProductOperations<T>, [box, probabilities]: Box<T>): Pair<Box<T>, Box<T>> {
+export const timeSpent = 0;
+
+function splitBox<T>(productOperations: ProductOperations<T>, currentBox: Box<T>): Pair<Box<T>> {
+    if (currentBox.children !== undefined) {return currentBox.children;}
+    const { box, probabilities } = currentBox;
     let biggestDim: keyof T | undefined;
     let biggestDimKey;
     let currentProb = 0;
@@ -392,7 +458,9 @@ function splitBox<T>(productOperations: ProductOperations<T>, [box, probabilitie
 
                     key = dimensionSet.key;
                 }
-                if (!setOperations_inner.canSplit(key)) {continue;}
+                if (!setOperations_inner.canSplit(key)) {
+                    continue;
+                }
                 biggestDim = dim;
                 currentProb = prob;
                 biggestDimKey = key;
@@ -407,16 +475,22 @@ function splitBox<T>(productOperations: ProductOperations<T>, [box, probabilitie
     const setOperations = productOperations[biggestDim];
 
     const [[leftDim, leftProb], [rightDim, rightProb]] = setOperations.split(biggestDimKey);
-    return [
-        [
-            { ...box, [biggestDim]: lazy<unknown, unknown>(setOperations, setOperations.top, leftDim) },
-            { ...probabilities, [biggestDim]: leftProb },
-        ],
-        [
-            { ...box, [biggestDim]: lazy<unknown, unknown>(setOperations, setOperations.top, rightDim) },
-            { ...probabilities, [biggestDim]: rightProb },
-        ],
+    const res: ReturnType<typeof splitBox> = [
+        {
+            box: { ...box, [biggestDim]: lazy<unknown, unknown>(setOperations, setOperations.top, leftDim) },
+            probabilities: { ...probabilities, [biggestDim]: leftProb },
+            depth: currentBox.depth + 1,
+        },
+        {
+            box: { ...box, [biggestDim]: lazy<unknown, unknown>(setOperations, setOperations.top, rightDim) },
+            probabilities: { ...probabilities, [biggestDim]: rightProb },
+            depth: currentBox.depth + 1,
+        },
     ];
+    if (currentBox.depth < 10) {
+        currentBox.children = res;
+    }
+    return res;
 }
 
 function restrictByBounds<T>(
@@ -425,17 +499,25 @@ function restrictByBounds<T>(
     leftBounds: UntypedProduct<T>,
     rightBounds: UntypedProduct<T>,
 ): Pair<UntypedProductSet<T>> {
-    if (set === empty) { return [empty, empty]; }
-    if (set === dense) { return [subspace(leftBounds), subspace(rightBounds)]; }
+    if (set === empty) {
+        return [empty, empty];
+    }
+    if (set === dense) {
+        return [subspace(leftBounds), subspace(rightBounds)];
+    }
     const cmp = compareSubspace(productOperations, set.bounds, leftBounds);
 
     // the set is fully contained in the left half, i.e. we know the pair.
-    if (cmp !== undefined && cmp <= 0) { return [set, empty]; }
+    if (cmp !== undefined && cmp <= 0) {
+        return [set, empty];
+    }
 
     const newLeftBounds = unsafe.combineProduct(productOperations, set.bounds, leftBounds, intersectUntyped);
 
     // if we know, that the left set is completely empty, then the whole set is in the right bounds.
-    if (newLeftBounds === empty) { return [empty, set]; }
+    if (newLeftBounds === empty) {
+        return [empty, set];
+    }
 
     const newRightBounds = unsafe.combineProduct(productOperations, set.bounds, rightBounds, intersectUntyped);
     if (set.isSubspace) {
@@ -450,8 +532,8 @@ function restrictByBounds<T>(
 const splitByBox = <T>(
     productOperations: ProductOperations<T>,
     set: UntypedProductSet<T>,
-    [leftBounds]: Box<T>,
-    [rightBounds]: Box<T>,
+    { box: leftBounds }: Box<T>,
+    { box: rightBounds }: Box<T>,
 ): Pair<UntypedProductSet<T>, UntypedProductSet<T>> => {
     return restrictByBounds(productOperations, set, leftBounds, rightBounds);
 };
@@ -473,7 +555,9 @@ function recurse<T>(
     const [rl, rr] = splitByBox(productOperations, right, leftBox, rightBox);
 
     const lChild = visitFunc(productOperations, ll, rl, leftBox);
-    if (lChild === dense) {return dense;}
+    if (lChild === dense) {
+        return dense;
+    }
     const rChild = visitFunc(productOperations, lr, rr, rightBox);
     return combineChildren(productOperations, lChild, rChild);
 }
@@ -484,13 +568,23 @@ function unionUntypedProduct<T>(
     right: UntypedProductSet<T>,
     currentBox: Box<T>,
 ): UntypedProductSet<T> {
-    if (right === empty) {return left;}
-    if (left === empty) {return right;}
-    if (left === dense) {return left;}
-    if (right === dense) {return right;}
+    if (right === empty) {
+        return left;
+    }
+    if (left === empty) {
+        return right;
+    }
+    if (left === dense) {
+        return left;
+    }
+    if (right === dense) {
+        return right;
+    }
     if (left.isSubspace && right.isSubspace) {
         const combinedSubspace = tryUnionSubspaces(productOperations, left, right);
-        if (combinedSubspace !== undefined) {return combinedSubspace;}
+        if (combinedSubspace !== undefined) {
+            return combinedSubspace;
+        }
     }
 
     return recurse(productOperations, left, right, currentBox, unionUntypedProduct);
@@ -500,13 +594,23 @@ export function unionProduct<T extends Compatible<U, T>, U extends Compatible<T,
     left: ProductSet<T>,
     right: ProductSet<U>,
 ): ProductSet<T & U> {
-    if (right === empty) {return left;}
-    if (right === dense) {return right;}
-    if (left === empty) {return right;}
-    if (left === dense) {return left;}
+    if (right === empty) {
+        return left;
+    }
+    if (right === dense) {
+        return right;
+    }
+    if (left === empty) {
+        return right;
+    }
+    if (left === dense) {
+        return left;
+    }
     const productOperations = { ...left.productOperations, ...right.productOperations };
-    const res = unionUntypedProduct(productOperations, left.root, right.root, top);
-    if (res === empty) {return res;}
+    const res = unionUntypedProduct(productOperations, left.root, right.root, top(productOperations));
+    if (res === empty) {
+        return res;
+    }
     return sparseProduct(productOperations, res);
 }
 
@@ -516,12 +620,20 @@ function intersectUntypedProduct<T>(
     right: UntypedProductSet<T>,
     currentBox: Box<T>,
 ): UntypedProductSet<T> {
-    if (left === empty || right === empty) {return empty;}
-    if (left === dense) {return right;}
-    if (right === dense) {return left;}
+    if (left === empty || right === empty) {
+        return empty;
+    }
+    if (left === dense) {
+        return right;
+    }
+    if (right === dense) {
+        return left;
+    }
     if (left.isSubspace && right.isSubspace) {
         const res = unsafe.combineProduct(productOperations, left.bounds, right.bounds, intersectUntyped);
-        if (res === empty) {return empty;}
+        if (res === empty) {
+            return empty;
+        }
         return subspace(res);
     }
 
@@ -532,14 +644,24 @@ export function intersectProduct<T extends Compatible<U, T>, U extends Compatibl
     left: ProductSet<T>,
     right: ProductSet<U>,
 ): ProductSet<T & U> {
-    if (left === empty) {return left;}
-    if (right === empty) {return right;}
-    if (left === dense) {return right;}
-    if (right === dense) {return left;}
+    if (left === empty) {
+        return left;
+    }
+    if (right === empty) {
+        return right;
+    }
+    if (left === dense) {
+        return right;
+    }
+    if (right === dense) {
+        return left;
+    }
 
     const productOperations = { ...left.productOperations, ...right.productOperations };
-    const res = intersectUntypedProduct(productOperations, left.root, right.root, top);
-    if (res === empty) {return res;}
+    const res = intersectUntypedProduct(productOperations, left.root, right.root, top(productOperations));
+    if (res === empty) {
+        return res;
+    }
     return sparseProduct(productOperations, res);
 }
 
@@ -549,7 +671,9 @@ function tryExceptSubspaces<T>(
     right: Subspace<T>,
 ): Subspace<T> | Dense | Empty | undefined {
     const cmp = compareSubspace(productOperations, left.bounds, right.bounds);
-    if (cmp === 0 || cmp === -1) {return empty;}
+    if (cmp === 0 || cmp === -1) {
+        return empty;
+    }
     let notContainedDimension: keyof T | undefined;
     // because Object.keys only returns string[], we need to downcast
     const po_keys = Object.keys(productOperations) as (keyof T)[];
@@ -577,7 +701,9 @@ function tryExceptSubspaces<T>(
             toBspSet(right.bounds[notContainedDimension]),
         );
 
-        if (newDim === empty) {return empty;}
+        if (newDim === empty) {
+            return empty;
+        }
         if (newDim === dense) {
             // we are actually deleting the `differentDimension`, so the variable
             // `deleted` must be there. Hence disabling the rule here.
@@ -601,9 +727,15 @@ function exceptUntypedProduct<T>(
     right: UntypedProductSet<T>,
     currentBox: Box<T>,
 ): UntypedProductSet<T> {
-    if (left === empty) {return left;}
-    if (right === dense) {return empty;}
-    if (right === empty) {return left;}
+    if (left === empty) {
+        return left;
+    }
+    if (right === dense) {
+        return empty;
+    }
+    if (right === empty) {
+        return left;
+    }
 
     if (left === dense) {
         return recurse(productOperations, left, right, currentBox, exceptUntypedProduct);
@@ -611,7 +743,9 @@ function exceptUntypedProduct<T>(
 
     if (left.isSubspace && right.isSubspace) {
         const combinedSubspace = tryExceptSubspaces(productOperations, left, right);
-        if (combinedSubspace !== undefined) {return combinedSubspace;}
+        if (combinedSubspace !== undefined) {
+            return combinedSubspace;
+        }
     }
 
     return recurse(productOperations, left, right, currentBox, exceptUntypedProduct);
@@ -621,18 +755,29 @@ export function exceptProduct<T extends Compatible<U, T>, U extends Compatible<T
     left: ProductSet<T>,
     right: ProductSet<U>,
 ): ProductSet<T & U> {
-    if (left === empty) {return left;}
-    if (right === empty) {return left;}
-    if (right === dense) {return empty;}
+    if (left === empty) {
+        return left;
+    }
+    if (right === empty) {
+        return left;
+    }
+    if (right === dense) {
+        return empty;
+    }
     if (left === dense) {
-        const res_inner = exceptUntypedProduct(right.productOperations, dense, right.root, top);
-        if (res_inner === empty) {return res_inner;}
+        const res_inner =
+            exceptUntypedProduct(right.productOperations, dense, right.root, top(right.productOperations));
+        if (res_inner === empty) {
+            return res_inner;
+        }
         return sparseProduct(right.productOperations, res_inner);
     }
 
     const productOperations = { ...left.productOperations, ...right.productOperations };
-    const res = exceptUntypedProduct(productOperations, left.root, right.root, top);
-    if (res === empty) {return res;}
+    const res = exceptUntypedProduct(productOperations, left.root, right.root, top(productOperations));
+    if (res === empty) {
+        return res;
+    }
     return sparseProduct(productOperations, res);
 }
 
@@ -642,7 +787,9 @@ function compareUntypedProduct<T>(
     right: UntypedProductSet<T>,
     boundingBox: Box<T>,
 ): -1 | 0 | 1 | undefined {
-    if (left === right) {return 0;}
+    if (left === right) {
+        return 0;
+    }
 
     if (left === empty) {
         return -1;
@@ -675,7 +822,9 @@ function compareUntypedProduct<T>(
     const [rl, rr] = splitByBox(productOperations, right, leftBox, rightBox);
 
     const leftCmp = compareUntypedProduct(productOperations, ll, rl, leftBox);
-    if (leftCmp === undefined) {return undefined;}
+    if (leftCmp === undefined) {
+        return undefined;
+    }
     return combineCmp(leftCmp, compareUntypedProduct(productOperations, lr, rr, rightBox));
 }
 
@@ -683,7 +832,9 @@ export function compareProduct<T extends Compatible<U, T>, U extends Compatible<
     left: ProductSet<T>,
     right: ProductSet<U>,
 ) {
-    if (left === right) {return 0;}
+    if (left === right) {
+        return 0;
+    }
 
     if (left === empty) {
         return -1;
@@ -706,16 +857,19 @@ export function compareProduct<T extends Compatible<U, T>, U extends Compatible<
     }
 
     const productOperations = { ...left.productOperations, ...right.productOperations };
-    return compareUntypedProduct(productOperations, left.root, right.root, top);
+    return compareUntypedProduct(productOperations, left.root, right.root, top(productOperations));
 }
 
 function meetsSubspace<T>(productOperations: ProductOperations<T>, left: UntypedProduct<T>, right: UntypedProduct<T>) {
-    for (const dim of Object.keys(productOperations)) {
+    for (const dimStr of Object.keys(productOperations)) {
+        const dim = dimStr as keyof T;
         if (Object.prototype.hasOwnProperty.call(productOperations, dim)) {
             const lProj = toBspSet(left[dim]);
             const rProj = toBspSet(right[dim]);
             const setOperations = productOperations[dim];
-            if (!meetsUntyped<unknown, unknown>(setOperations, lProj, rProj)) {return false;}
+            if (!meetsUntyped<unknown, unknown>(setOperations, lProj, rProj)) {
+                return false;
+            }
         }
     }
 
@@ -728,10 +882,18 @@ function meetsUntypedProduct<T>(
     right: UntypedProductSet<T>,
     boundingBox: Box<T>,
 ): boolean {
-    if (left === empty || right === empty) {return false;}
-    if (left === dense || right === dense) {return true;}
-    if (!meetsSubspace(productOperations, left.bounds, right.bounds)) {return false;}
-    if (left.isSubspace && right.isSubspace) {return true;}
+    if (left === empty || right === empty) {
+        return false;
+    }
+    if (left === dense || right === dense) {
+        return true;
+    }
+    if (!meetsSubspace(productOperations, left.bounds, right.bounds)) {
+        return false;
+    }
+    if (left.isSubspace && right.isSubspace) {
+        return true;
+    }
 
     const [leftBox, rightBox] = splitBox(productOperations, boundingBox);
     const [ll, lr] = splitByBox(productOperations, left, leftBox, rightBox);
@@ -747,11 +909,15 @@ export function meetsProduct<T extends Compatible<U, T>, U extends Compatible<T,
     left: ProductSet<T>,
     right: ProductSet<U>,
 ) {
-    if (left === empty || right === empty) {return false;}
-    if (left === dense || right === dense) {return true;}
+    if (left === empty || right === empty) {
+        return false;
+    }
+    if (left === dense || right === dense) {
+        return true;
+    }
 
     const productOperations = { ...left.productOperations, ...right.productOperations };
-    return meetsUntypedProduct(productOperations, left.root, right.root, top);
+    return meetsUntypedProduct(productOperations, left.root, right.root, top(productOperations));
 }
 
 export const complementProduct = <T>(set: ProductSet<T>) => exceptProduct(dense, set);
@@ -760,7 +926,9 @@ export const symmetricDiffProduct = <T>(left: ProductSet<T>, right: ProductSet<T
     unionProduct(exceptProduct(left, right), exceptProduct(right, left));
 
 export function getSubspaces<T>(set: ProductSet<T>) {
-    if (set === empty || set === dense) {return [];}
+    if (set === empty || set === dense) {
+        return [];
+    }
     const res: UntypedProduct<T>[] = [];
     function loop(root: UntypedSparseProduct<T>) {
         if (root.isSubspace) {
@@ -782,8 +950,12 @@ export function forEachProduct<T, Props extends(keyof T)[]>(
     ...dims: Props
 ): boolean {
     const newSet = project(set, ...dims);
-    if (newSet === empty) {return true;}
-    if (newSet === dense) {return f(unsafe.denseProduct(dims));}
+    if (newSet === empty) {
+        return true;
+    }
+    if (newSet === dense) {
+        return f(unsafe.denseProduct(dims));
+    }
 
     const { productOperations, root } = newSet;
 
@@ -798,6 +970,8 @@ export function forEachProduct<T, Props extends(keyof T)[]>(
 }
 
 export function getSubspaceCount<T>(set: ProductSet<T>) {
-    if (set === empty || set === dense) {return 0;}
+    if (set === empty || set === dense) {
+        return 0;
+    }
     return getUntypedSubspaceCount(set.root);
 }
