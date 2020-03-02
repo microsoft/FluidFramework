@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentStorage } from "@microsoft/fluid-server-services-core";
+import { IDocumentStorage, IExperimentalDocumentStorage } from "@microsoft/fluid-server-services-core";
 import { Router } from "express";
 import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
 import { getParam } from "../../utils";
@@ -56,6 +56,42 @@ export function create(storage: IDocumentStorage, appTenants: IAlfredTenant[]): 
                 response.status(400).json(error);
             });
     });
+
+    /**
+     * Creates a new fork for the specified document
+     */
+    router.post("/:tenantId", (request, response, next) => {
+        // Tenant and document
+        const tenantId = getParam(request.params, "tenantId");
+        const id = request.body.id;
+
+        // Summary information
+        const summary = request.body.summary;
+
+        // Protocol state
+        const sequenceNumber = request.body.sequenceNumber;
+        const values = request.body.values;
+
+        const expDocumentStorage = (storage as IExperimentalDocumentStorage);
+        if (!expDocumentStorage.isExperimentalDocumentStorage) {
+            response.status(400).json("No experimental features!!");
+        }
+        const createP = expDocumentStorage.createDocument(
+            tenantId,
+            id,
+            summary,
+            sequenceNumber,
+            values);
+
+        createP.then(
+            () => {
+                response.status(201).json(id);
+            },
+            (error) => {
+                response.status(400).json(error);
+            });
+    });
+
 
     return router;
 }

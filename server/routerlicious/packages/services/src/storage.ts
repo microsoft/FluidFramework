@@ -3,9 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { ICommit, ICommitDetails } from "@microsoft/fluid-gitresources";
-import { IDocumentAttributes, IDocumentSystemMessage, MessageType } from "@microsoft/fluid-protocol-definitions";
-import { IGitCache } from "@microsoft/fluid-server-services-client";
+import { ICommit, ICommitDetails, ICreateTreeEntry, ICreateCommitParams } from "@microsoft/fluid-gitresources";
+import {
+    IDocumentAttributes,
+    IDocumentSystemMessage,
+    MessageType,
+    FileMode,
+    TreeEntry,
+    ITreeEntry,
+    ICommittedProposal,
+    ISummaryTree,
+    SummaryObject,
+    SummaryType,
+} from "@microsoft/fluid-protocol-definitions";
+import { IGitCache, IGitManager } from "@microsoft/fluid-server-services-client";
 import {
     ICollection,
     IDatabaseManager,
@@ -17,8 +28,10 @@ import {
     IScribe,
     ITenantManager,
     RawOperationType,
+    IExperimentalDocumentStorage,
 } from "@microsoft/fluid-server-services-core";
 import * as moniker from "moniker";
+import * as winston from "winston";
 
 const StartingSequenceNumber = 0;
 // Disabling so can tag inline but keep strong typing
@@ -30,7 +43,9 @@ const DefaultScribe = JSON.stringify({
     sequenceNumber: -1,
 } as IScribe);
 
-export class DocumentStorage implements IDocumentStorage {
+export class DocumentStorage implements IDocumentStorage, IExperimentalDocumentStorage {
+
+    public readonly isExperimentalDocumentStorage = true;
     constructor(
         private readonly databaseManager: IDatabaseManager,
         private readonly tenantManager: ITenantManager,
@@ -49,6 +64,142 @@ export class DocumentStorage implements IDocumentStorage {
         const getOrCreateP = this.getOrCreateObject(tenantId, documentId);
 
         return getOrCreateP;
+    }
+
+    public async createDocument(
+        tenantId: string,
+        documentId: string,
+        summary: ISummaryTree,
+        sequenceNumber: number,
+        values: [string, ICommittedProposal][],
+    ) {
+        const tenant = await this.tenantManager.getTenant(tenantId);
+        const gitManager = tenant.gitManager;
+
+        // At this point the summary op and its data are all valid and we can perform the write to history
+        const documentAttributes: IDocumentAttributes = {
+            branch: documentId,
+            minimumSequenceNumber: sequenceNumber,
+            sequenceNumber,
+        };
+
+        const handle = await this.writeSummaryObject(gitManager, summary, "");
+
+        const entries: ITreeEntry[] = [
+            {
+                mode: FileMode.File,
+                path: "quorumMembers",
+                type: TreeEntry[TreeEntry.Blob],
+                value: {
+                    contents: JSON.stringify([]),
+                    encoding: "utf-8",
+                },
+            },
+            {
+                mode: FileMode.File,
+                path: "quorumProposals",
+                type: TreeEntry[TreeEntry.Blob],
+                value: {
+                    contents: JSON.stringify([]),
+                    encoding: "utf-8",
+                },
+            },
+            {
+                mode: FileMode.File,
+                path: "quorumValues",
+                type: TreeEntry[TreeEntry.Blob],
+                value: {
+                    contents: JSON.stringify(values),
+                    encoding: "utf-8",
+                },
+            },
+            {
+                mode: FileMode.File,
+                path: "attributes",
+                type: TreeEntry[TreeEntry.Blob],
+                value: {
+                    contents: JSON.stringify(documentAttributes),
+                    encoding: "utf-8",
+                },
+            },
+        ];
+
+        const [protocolTree, appSummaryTree] = await Promise.all([
+            gitManager.createTree({ entries, id: null }),
+            gitManager.getTree(handle, false),
+        ]);
+
+        winston.info(JSON.stringify(protocolTree));
+        winston.info(JSON.stringify(appSummaryTree));
+
+        // Combine the app summary with .protocol
+        const newTreeEntries = appSummaryTree.tree.map((value) => {
+            const createTreeEntry: ICreateTreeEntry = {
+                mode: value.mode,
+                path: value.path,
+                sha: value.sha,
+                type: value.type,
+            };
+            return createTreeEntry;
+        });
+        newTreeEntries.push({
+            mode: FileMode.Directory,
+            path: ".protocol",
+            sha: protocolTree.sha,
+            type: "tree",
+        });
+
+        const gitTree = await gitManager.createGitTree({ tree: newTreeEntries });
+        const commitParams: ICreateCommitParams = {
+            author: {
+                date: new Date().toISOString(),
+                email: "praguertdev@microsoft.com",
+                name: "Routerlicious Service",
+            },
+            message: "New document",
+            parents: [],
+            tree: gitTree.sha,
+        };
+
+        const commit = await gitManager.createCommit(commitParams);
+        await gitManager.createRef(documentId, commit.sha);
+
+        winston.info(JSON.stringify(documentId));
+        winston.info(JSON.stringify(commit.sha));
+
+        const scribe: IScribe = {
+            logOffset: -1,
+            minimumSequenceNumber: sequenceNumber,
+            protocolState: {
+                members: [],
+                minimumSequenceNumber: sequenceNumber,
+                proposals: [],
+                sequenceNumber,
+                values,
+            },
+            sequenceNumber,
+        };
+
+        const collection = await this.databaseManager.getDocumentCollection();
+        const result = await collection.findOrCreate(
+            {
+                documentId,
+                tenantId,
+            },
+            {
+                branchMap: undefined,
+                clients: undefined,
+                createTime: Date.now(),
+                documentId,
+                forks: [],
+                logOffset: undefined,
+                parent: null,
+                scribe: JSON.stringify(scribe),
+                sequenceNumber,
+                tenantId,
+            });
+
+        return result;
     }
 
     public async getLatestVersion(tenantId: string, documentId: string): Promise<ICommit> {
@@ -264,5 +415,73 @@ export class DocumentStorage implements IDocumentStorage {
         };
 
         await producer.send([integrateMessage], tenantId, id);
+    }
+
+    private async writeSummaryObject(
+        gitManager: IGitManager,
+        value: SummaryObject,
+        path: string,
+    ): Promise<string> {
+        switch (value.type) {
+            case SummaryType.Blob: {
+                const content = typeof value.content === "string" ? value.content : value.content.toString("base64");
+                const encoding = typeof value.content === "string" ? "utf-8" : "base64";
+
+                const blob = await gitManager.createBlob(content, encoding);
+                return blob.sha;
+            }
+            case SummaryType.Tree: {
+                const fullTree = value.tree;
+                const entries = await Promise.all(Object.keys(fullTree).map(async (key) => {
+                    const entry = fullTree[key];
+                    const pathHandle = await this.writeSummaryObject(
+                        gitManager,
+                        entry,
+                        `${path}/${encodeURIComponent(key)}`);
+                    const treeEntry: ICreateTreeEntry = {
+                        mode: this.getGitMode(entry),
+                        path: encodeURIComponent(key),
+                        sha: pathHandle,
+                        type: this.getGitType(entry),
+                    };
+                    return treeEntry;
+                }));
+
+                const treeHandle = await gitManager.createGitTree({ tree: entries });
+                return treeHandle.sha;
+            }
+
+            default:
+                return Promise.reject();
+        }
+    }
+
+    private getGitMode(value: SummaryObject): string {
+        const type = value.type === SummaryType.Handle ? value.handleType : value.type;
+        switch (type) {
+            case SummaryType.Blob:
+                return FileMode.File;
+            case SummaryType.Commit:
+                return FileMode.Commit;
+            case SummaryType.Tree:
+                return FileMode.Directory;
+            default:
+                throw new Error();
+        }
+    }
+
+    private getGitType(value: SummaryObject): string {
+        const type = value.type === SummaryType.Handle ? value.handleType : value.type;
+
+        switch (type) {
+            case SummaryType.Blob:
+                return "blob";
+            case SummaryType.Commit:
+                return "commit";
+            case SummaryType.Tree:
+                return "tree";
+            default:
+                throw new Error();
+        }
     }
 }
