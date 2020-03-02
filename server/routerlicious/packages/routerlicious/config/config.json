@@ -26,7 +26,7 @@
     "kafka": {
         "lib": {
             "name": "kafka-node",
-            "endpoint": "zookeeper:2181"
+            "endpoint": "kafka:9092"
         },
         "maxMessageSize": "1MB"
     },
@@ -111,10 +111,6 @@
             "group": "copier",
             "topic": "rawdeltas"
         },
-        "broadcaster": {
-            "group": "broadcaster",
-            "topic": "deltas"
-        },
         "scribe": {
             "group": "scribe",
             "topic": "deltas"
@@ -148,7 +144,7 @@
         "permissions": {
             "paparazziQueue": ["snapshot", "spell", "intel", "translation"],
             "augloopQueue": ["augmentation"],
-            "headlessQueue": ["chain-snapshot", "chain-intel", "chain-translation", "chain-spell", "chain-cache"]
+            "headlessQueue": ["chain-snapshot", "chain-intel", "chain-translation", "chain-spell", "chain-cache", "chain-search"]
         }
     },
     "paparazzi": {

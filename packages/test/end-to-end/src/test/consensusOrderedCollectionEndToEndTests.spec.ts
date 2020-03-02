@@ -11,9 +11,9 @@ import {
     TestDocumentServiceFactory,
     TestResolver,
 } from "@microsoft/fluid-local-driver";
-import { ITestDeltaConnectionServer, TestDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { ISharedMap } from "@microsoft/fluid-map";
-import { ConsensusQueue, ConsensusStack, IConsensusOrderedCollection } from "@microsoft/fluid-ordered-collection";
+import { ConsensusQueue, IConsensusOrderedCollection } from "@microsoft/fluid-ordered-collection";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 
 interface ISharedObjectConstructor<T> {
@@ -27,7 +27,7 @@ function generate(
     describe(name, () => {
         const id = "fluid://test.com/test/test";
 
-        let testDeltaConnectionServer: ITestDeltaConnectionServer;
+        let testDeltaConnectionServer: ILocalDeltaConnectionServer;
         let documentDeltaEventManager: DocumentDeltaEventManager;
         let user1Document: api.Document;
         let user2Document: api.Document;
@@ -37,7 +37,7 @@ function generate(
         let root3: ISharedMap;
 
         beforeEach(async () => {
-            testDeltaConnectionServer = TestDeltaConnectionServer.create();
+            testDeltaConnectionServer = LocalDeltaConnectionServer.create();
             documentDeltaEventManager = new DocumentDeltaEventManager(testDeltaConnectionServer);
             const documentService = new TestDocumentServiceFactory(testDeltaConnectionServer);
             const resolver = new TestResolver();
@@ -65,11 +65,11 @@ function generate(
             root1.set("collection", collection1.handle);
 
             const [collection2Handle, collection3Handle] = await Promise.all([
-                root2.wait<IComponentHandle>("collection"),
-                root3.wait<IComponentHandle>("collection"),
+                root2.wait<IComponentHandle<IConsensusOrderedCollection>>("collection"),
+                root3.wait<IComponentHandle<IConsensusOrderedCollection>>("collection"),
             ]);
-            const collection2 = await collection2Handle.get<IConsensusOrderedCollection>();
-            const collection3 = await collection3Handle.get<IConsensusOrderedCollection>();
+            const collection2 = await collection2Handle.get();
+            const collection3 = await collection3Handle.get();
 
             assert.strictEqual(await collection1.remove(), output[0], "Collection not initialize in document 1");
             assert.strictEqual(await collection2.remove(), output[1], "Collection not initialize in document 2");
@@ -83,11 +83,11 @@ function generate(
             root1.set("collection", collection1.handle);
 
             const [collection2Handle, collection3Handle] = await Promise.all([
-                root2.wait<IComponentHandle>("collection"),
-                root3.wait<IComponentHandle>("collection"),
+                root2.wait<IComponentHandle<IConsensusOrderedCollection>>("collection"),
+                root3.wait<IComponentHandle<IConsensusOrderedCollection>>("collection"),
             ]);
-            const collection2 = await collection2Handle.get<IConsensusOrderedCollection>();
-            const collection3 = await collection3Handle.get<IConsensusOrderedCollection>();
+            const collection2 = await collection2Handle.get();
+            const collection3 = await collection3Handle.get();
 
             await documentDeltaEventManager.pauseProcessing();
 
@@ -123,11 +123,11 @@ function generate(
             root1.set("collection", collection1.handle);
 
             const [collection2Handle, collection3Handle] = await Promise.all([
-                root2.wait<IComponentHandle>("collection"),
-                root3.wait<IComponentHandle>("collection"),
+                root2.wait<IComponentHandle<IConsensusOrderedCollection>>("collection"),
+                root3.wait<IComponentHandle<IConsensusOrderedCollection>>("collection"),
             ]);
-            const collection2 = await collection2Handle.get<IConsensusOrderedCollection>();
-            const collection3 = await collection3Handle.get<IConsensusOrderedCollection>();
+            const collection2 = await collection2Handle.get();
+            const collection3 = await collection3Handle.get();
 
             await documentDeltaEventManager.pauseProcessing();
 
@@ -174,11 +174,11 @@ function generate(
             const collection1 = ctor.create(user1Document.runtime);
             root1.set("collection", collection1.handle);
             const [collection2Handle, collection3Handle] = await Promise.all([
-                root2.wait<IComponentHandle>("collection"),
-                root3.wait<IComponentHandle>("collection"),
+                root2.wait<IComponentHandle<IConsensusOrderedCollection>>("collection"),
+                root3.wait<IComponentHandle<IConsensusOrderedCollection>>("collection"),
             ]);
-            const collection2 = await collection2Handle.get<IConsensusOrderedCollection>();
-            const collection3 = await collection3Handle.get<IConsensusOrderedCollection>();
+            const collection2 = await collection2Handle.get();
+            const collection3 = await collection3Handle.get();
             await documentDeltaEventManager.pauseProcessing();
 
             let addCount1 = 0;
@@ -259,4 +259,3 @@ function generate(
 }
 
 generate("ConsensusQueue", ConsensusQueue, [1, 2, 3], [1, 2, 3]);
-generate("ConsensusStack", ConsensusStack, [1, 2, 3], [3, 2, 1]);

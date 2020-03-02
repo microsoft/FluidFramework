@@ -148,14 +148,14 @@ export class TableDocument extends PrimedComponent implements ITable {
 
     protected async componentHasInitialized() {
         const [maybeMatrixHandle, maybeRowsHandle, maybeColsHandle] = await Promise.all([
-            this.root.wait<IComponentHandle>("matrix"),
-            this.root.wait<IComponentHandle>("rows"),
-            this.root.wait<IComponentHandle>("cols"),
+            this.root.wait<IComponentHandle<SparseMatrix>>("matrix"),
+            this.root.wait<IComponentHandle<SharedNumberSequence>>("rows"),
+            this.root.wait<IComponentHandle<SharedNumberSequence>>("cols"),
         ]);
 
-        this.maybeMatrix = await maybeMatrixHandle.get<SparseMatrix>();
-        this.maybeRows = await maybeRowsHandle.get<SharedNumberSequence>();
-        this.maybeCols = await maybeColsHandle.get<SharedNumberSequence>();
+        this.maybeMatrix = await maybeMatrixHandle.get();
+        this.maybeRows = await maybeRowsHandle.get();
+        this.maybeCols = await maybeColsHandle.get();
 
         this.matrix.on("op", (op, local, target) => {
             if (!local) {

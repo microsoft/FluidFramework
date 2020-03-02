@@ -24,10 +24,6 @@ scriptorium:
   name: scriptorium2
   replicas: 1
 
-broadcaster:
-  name: broadcaster2
-  replicas: 1
-
 riddler:
   url: http://angry-dog-riddler
 
@@ -56,7 +52,7 @@ redis:
   tls: false
 
 kafka:
-  url: youngling-heron-kafka
+  url: youngling-heron-kafka:9092
   topics:
     rawdeltas: rawdeltas2
     deltas: deltas2

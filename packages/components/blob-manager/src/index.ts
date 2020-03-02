@@ -124,13 +124,13 @@ export function instantiateComponent(context: IComponentContext): void {
     modules.set(MapFactory.Type, mapFactory);
 
     // TODO custom blob specific runtime
-    ComponentRuntime.load(
+    const runtime = ComponentRuntime.load(
         context,
         modules,
-        (runtime) => {
-            runtime.registerRequestHandler(
-                async (request: IRequest) => (
-                    { status: 404, mimeType: "text/plain", value: `${request.url} not found` }
-                ));
-        });
+    );
+
+    runtime.registerRequestHandler(
+        async (request: IRequest) => (
+            { status: 404, mimeType: "text/plain", value: `${request.url} not found` }
+        ));
 }

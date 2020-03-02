@@ -11,14 +11,14 @@ import {
     TestDocumentServiceFactory,
     TestResolver,
 } from "@microsoft/fluid-local-driver";
-import { ITestDeltaConnectionServer, TestDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { MessageType } from "@microsoft/fluid-protocol-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 
 describe("LocalTestServer", () => {
     const id = "fluid://test.com/test/test";
 
-    let testDeltaConnectionServer: ITestDeltaConnectionServer;
+    let testDeltaConnectionServer: ILocalDeltaConnectionServer;
     let documentDeltaEventManager: DocumentDeltaEventManager;
     let user1Document: api.Document;
     let user2Document: api.Document;
@@ -26,7 +26,7 @@ describe("LocalTestServer", () => {
     let user2SharedString: SharedString;
 
     beforeEach(async () => {
-        testDeltaConnectionServer = TestDeltaConnectionServer.create();
+        testDeltaConnectionServer = LocalDeltaConnectionServer.create();
         documentDeltaEventManager = new DocumentDeltaEventManager(testDeltaConnectionServer);
 
         const resolver = new TestResolver();
@@ -41,8 +41,8 @@ describe("LocalTestServer", () => {
         user2Document = await api.load(
             id, resolver, {}, serviceFactory);
         root = user2Document.getRoot();
-        const handle = await root.wait<IComponentHandle>("SharedString");
-        user2SharedString = await handle.get<SharedString>();
+        const handle = await root.wait<IComponentHandle<SharedString>>("SharedString");
+        user2SharedString = await handle.get();
         documentDeltaEventManager.registerDocuments(user2Document);
     });
 

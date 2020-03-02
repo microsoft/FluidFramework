@@ -5,7 +5,6 @@
 
 import { ClickerName } from "@fluid-example/clicker";
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
-import { IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
 import { ISharedCell, SharedCell } from "@microsoft/fluid-cell";
 import {
     IComponentHandle,
@@ -13,6 +12,7 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
+import { IComponentReactViewable } from "@microsoft/fluid-view-adapters";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { TextBoxName } from "../TextBox";
@@ -82,8 +82,8 @@ export class TodoItem extends PrimedComponent
     }
 
     protected async componentHasInitialized() {
-        const text = this.root.get<IComponentHandle>(textKey).get<SharedString>();
-        const innerIdCell = this.root.get<IComponentHandle>(innerComponentKey).get<ISharedCell>();
+        const text = this.root.get<IComponentHandle<SharedString>>(textKey).get();
+        const innerIdCell = this.root.get<IComponentHandle<ISharedCell>>(innerComponentKey).get();
         this.baseUrl = this.root.get(baseUrlKey);
 
         this.setCheckedState = this.setCheckedState.bind(this);

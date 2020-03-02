@@ -6,7 +6,7 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { IDeltaQueue } from "@microsoft/fluid-container-definitions";
-import { Deferred } from "@microsoft/fluid-core-utils";
+import { Deferred } from "@microsoft/fluid-common-utils";
 import * as Deque from "double-ended-queue";
 
 export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {

@@ -4,9 +4,8 @@
  */
 
 import * as assert from "assert";
-import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
+import { fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
 import {
-    ConnectionState,
     FileMode,
     ISequencedDocumentMessage,
     ITree,
@@ -54,6 +53,12 @@ interface IRegisterOperation {
     key: string;
     type: "write";
     value: IRegisterValue;
+
+    // Message can be delivered with delay - resubmitted on reconnect.
+    // As such, refSeq needs to reference seq # at the time op was created (here),
+    // not when op was actually sent over wire (as client can ingest ops in between)
+    // in other words, we can't use ISequencedDocumentMessage.referenceSequenceNumber
+    refSeq: number;
 }
 
 /**
@@ -63,12 +68,7 @@ interface IPendingRecord {
     /**
      * The resolve function to call after the local operation is ack'ed
      */
-    resolve: () => void;
-
-    /**
-     * The reject function to call if disconnection happens before local operation is ack'ed
-     */
-    reject: (reason?: string) => void;
+    resolve: (winner: boolean) => void;
 
     /**
      * The client sequence number of the operation. For assert only.
@@ -76,9 +76,9 @@ interface IPendingRecord {
     clientSequenceNumber: number;
 
     /**
-     * Operation key. For assert only.
+     * Pending Message
      */
-    key: string;
+    message: IRegisterOperation;
 }
 
 const snapshotFileName = "header";
@@ -121,18 +121,23 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
         super(id, runtime, attributes);
     }
 
+    public on(
+        event: "atomicChanged" | "versionChanged",
+        listener: (key: string, value: any, local: boolean) => void): this;
+    public on(event: string | symbol, listener: (...args: any[]) => void): this;
+
+    public on(event: string, listener: (...args: any[]) => void): this
+    {
+        return super.on(event, listener);
+    }
+
     /**
      * Creates a new register or writes a new value.
      * Returns a promise that will resolve when the write is acked.
      *
-     * TODO: Right now we will only allow connected clients to write.
-     * The correct answer for this should become more clear as we build more scenarios on top of this.
+     * @returns Promise<true> if write was non-concurrent
      */
-    public async write(key: string, value: T): Promise<void> {
-        if (this.state !== ConnectionState.Connected) {
-            return Promise.reject(`Client is not connected`);
-        }
-
+    public async write(key: string, value: T): Promise<boolean> {
         let operationValue: IRegisterValue;
 
         if (SharedObject.is(value)) {
@@ -152,6 +157,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
             key,
             type: "write",
             value: operationValue,
+            refSeq: this.runtime.deltaManager.referenceSequenceNumber,
         };
         return this.submit(op);
     }
@@ -255,10 +261,9 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
     }
 
     protected onConnect(pending: any[]) {
-        while (this.promiseResolveQueue.length > 0) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const pendingP = this.promiseResolveQueue.shift()!;
-            pendingP.reject(`Client was disconnected before ${pendingP.key} was acked`);
+        // resubmit non-acked messages
+        for (const record of this.promiseResolveQueue) {
+            record.clientSequenceNumber = this.submitLocalMessage(record.message);
         }
     }
 
@@ -267,15 +272,24 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
             const op: IRegisterOperation = message.contents;
             switch (op.type) {
                 case "write":
-                    this.processInboundWrite(message, op, local);
+                    // Message can be delivered with delay - resubmitted on reconnect.
+                    // As such, refSeq needs to reference seq # at the time op was created (here),
+                    // not when op was actually sent over wire (as client can ingest ops in between)
+                    // in other words, we can't use ISequencedDocumentMessage.referenceSequenceNumber
+                    assert(op.refSeq <= message.referenceSequenceNumber);
+                    const winner = this.processInboundWrite(
+                        op.refSeq,
+                        message.sequenceNumber,
+                        op,
+                        local);
+                    // If it is local operation, resolve the promise.
+                    if (local) {
+                        this.processLocalMessage(message, winner);
+                    }
                     break;
 
                 default:
                     throw new Error("Unknown operation");
-            }
-            // If it is local operation, resolve the promise.
-            if (local) {
-                this.processLocalMessage(message);
             }
         }
     }
@@ -287,13 +301,19 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
         }
     }
 
-    private processInboundWrite(message: ISequencedDocumentMessage, op: IRegisterOperation, local: boolean) {
+    private processInboundWrite(
+        refSeq: number,
+        sequenceNumber: number,
+        op: IRegisterOperation,
+        local: boolean): boolean
+    {
         let data = this.data.get(op.key);
-        const refSeq = message.referenceSequenceNumber;
         // Atomic update if it's a new register or the write attempt was not concurrent (ref seq >= sequence number)
+        let winner = false;
         if (data === undefined || refSeq >= data.atomic.sequenceNumber) {
+            winner = true;
             const atomicUpdate: ILocalRegister = {
-                sequenceNumber: message.sequenceNumber,
+                sequenceNumber,
                 value: op.value,
             };
             if (data === undefined) {
@@ -305,7 +325,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
             } else {
                 data.atomic = atomicUpdate;
             }
-            this.emit("atomicChanged", { key: op.key }, local, message);
+            this.emit("atomicChanged", op.key, op.value.value, local);
         }
 
         // Keep removing versions where incoming refseq is greater than or equals to current.
@@ -314,21 +334,24 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
         }
 
         const versionUpdate: ILocalRegister = {
-            sequenceNumber: message.sequenceNumber,
+            sequenceNumber,
             value: op.value,
         };
 
         assert(
             data.versions.length === 0 ||
-            versionUpdate.sequenceNumber > data.versions[data.versions.length - 1].sequenceNumber,
+            (this.isLocal() && sequenceNumber === 0) ||
+            sequenceNumber > data.versions[data.versions.length - 1].sequenceNumber,
             "Invalid incoming sequence number");
 
         // Push the new element.
         data.versions.push(versionUpdate);
-        this.emit("versionChanged", { key: op.key }, local, message);
+        this.emit("versionChanged", op.key, op.value.value, local);
+
+        return winner;
     }
 
-    private processLocalMessage(message: ISequencedDocumentMessage) {
+    private processLocalMessage(message: ISequencedDocumentMessage, winner: boolean) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const pending = this.promiseResolveQueue.shift()!;
         assert(pending);
@@ -337,14 +360,19 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
             || message.clientSequenceNumber === pending.clientSequenceNumber,
             `${message.clientSequenceNumber} !== ${pending.clientSequenceNumber}`);
         /* eslint-enable @typescript-eslint/indent */
-        pending.resolve();
+        pending.resolve(winner);
     }
 
-    private async submit(message: IRegisterOperation): Promise<void> {
+    private async submit(message: IRegisterOperation): Promise<boolean> {
+        if (this.isLocal()) {
+            this.processInboundWrite(0, 0, message, true);
+            return true;
+        }
+
         const clientSequenceNumber = this.submitLocalMessage(message);
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             // Note that clientSequenceNumber and key is only used for asserts and isn't strictly necessary.
-            this.promiseResolveQueue.push({ resolve, reject, clientSequenceNumber, key: message.key });
+            this.promiseResolveQueue.push({ resolve, clientSequenceNumber, message });
         });
     }
 

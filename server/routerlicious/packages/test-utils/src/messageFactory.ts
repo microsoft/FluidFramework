@@ -77,7 +77,7 @@ export class MessageFactory {
 
     public createDocumentMessage(referenceSequenceNumber = 0): IDocumentMessage {
         const operation: IDocumentMessage = {
-            clientSequenceNumber: this.clientSequenceNumber++,
+            clientSequenceNumber: ++this.clientSequenceNumber,
             contents: null,
             metadata: undefined,
             referenceSequenceNumber,

@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-
 export interface IOdspCache {
     get(key: string): any;
     remove(key: string);
@@ -28,7 +26,6 @@ export class OdspCache implements IOdspCache {
     }
 
     public put(key: string, value: any, expiryTime?: number) {
-        assert(!this.odspCache.has(key), "Insertion rejected because cache already has that key!!");
         this.odspCache.set(key, value);
         if (expiryTime) {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
