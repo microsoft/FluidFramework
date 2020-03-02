@@ -160,7 +160,6 @@ const getGuideSidebar = () => {
             children: [
                 "",
                 "yo-fluid",
-                "build-a-component",
                 "water-park",
             ]
         },
