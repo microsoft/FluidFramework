@@ -14,8 +14,6 @@ import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";
 const AgentSchedulerType = "@microsoft/fluid-agent-scheduler";
 
 describe("AgentScheduler", () => {
-    const leader = "leader";
-
     describe("Single client", () => {
         let host: TestHost;
         let scheduler: IAgentScheduler;
@@ -29,7 +27,7 @@ describe("AgentScheduler", () => {
             scheduler = await host.getComponent<TaskManager>("_scheduler")
                 .then((taskmanager) => taskmanager.IAgentScheduler);
 
-            // Make sure all initial ops (around leadership) are processed.
+            // Make sure all initial ops are processed.
             // It takes a while because we start in unattached mode, and attach scheduler,
             // which causes loss of all tasks and reassignment
             const docScheduler = new DocumentDeltaEventManager(host.deltaConnectionServer);
@@ -42,29 +40,29 @@ describe("AgentScheduler", () => {
         afterEach(async () => { await host.close(); });
 
         it("No tasks initially", async () => {
-            assert.deepStrictEqual(scheduler.pickedTasks(), [leader]);
+            assert.deepStrictEqual(scheduler.pickedTasks(), []);
         });
 
         it("Can pick tasks", async () => {
             await scheduler.pick("task1", false);
-            assert.deepStrictEqual(scheduler.pickedTasks() , [leader, "task1"]);
+            assert.deepStrictEqual(scheduler.pickedTasks() , ["task1"]);
         });
 
         it("Can pick and release tasks", async () => {
             await scheduler.pick("task1", false);
-            assert.deepStrictEqual(scheduler.pickedTasks() , [leader, "task1"]);
+            assert.deepStrictEqual(scheduler.pickedTasks() , ["task1"]);
             await scheduler.release("task1");
-            assert.deepStrictEqual(scheduler.pickedTasks(), [leader]);
+            assert.deepStrictEqual(scheduler.pickedTasks(), []);
         });
 
         it("Can register task without picking up", async () => {
             await scheduler.register("task1");
-            assert.deepStrictEqual(scheduler.pickedTasks() , [leader]);
+            assert.deepStrictEqual(scheduler.pickedTasks() , []);
         });
 
         it("Duplicate picking fails", async () => {
             await scheduler.pick("task1", false);
-            assert.deepStrictEqual(scheduler.pickedTasks() , [leader, "task1"]);
+            assert.deepStrictEqual(scheduler.pickedTasks() , ["task1"]);
             await scheduler.pick("task1", false).catch((err) => {
                 assert.deepStrictEqual(err, "task1 is already attempted");
             });
@@ -79,18 +77,11 @@ describe("AgentScheduler", () => {
 
         it("Should pick previously released task", async () => {
             await scheduler.pick("task1", false);
-            assert.deepStrictEqual(scheduler.pickedTasks() , [leader, "task1"]);
+            assert.deepStrictEqual(scheduler.pickedTasks() , ["task1"]);
             await scheduler.release("task1");
-            assert.deepStrictEqual(scheduler.pickedTasks(), [leader]);
+            assert.deepStrictEqual(scheduler.pickedTasks(), []);
             await scheduler.pick("task1", false);
-            assert.deepStrictEqual(scheduler.pickedTasks() , [leader, "task1"]);
-        });
-
-        it("Single client must be the leader", async () => {
-            assert(scheduler.leader, "No leader present");
-            await scheduler.pick("task1", false);
-            await scheduler.release("task1");
-            assert(scheduler.leader, "No leader present");
+            assert.deepStrictEqual(scheduler.pickedTasks() , ["task1"]);
         });
     });
 
@@ -110,7 +101,7 @@ describe("AgentScheduler", () => {
             scheduler2 = await host2.getComponent<TaskManager>("_scheduler")
                 .then((taskmanager) => taskmanager.IAgentScheduler);
 
-            // Make sure all initial ops (around leadership) are processed.
+            // Make sure all initial ops are processed.
             // It takes a while because we start in unattached mode, and attach scheduler,
             // which causes loss of all tasks and reassignment
             const docScheduler = new DocumentDeltaEventManager(host1.deltaConnectionServer);
@@ -128,18 +119,18 @@ describe("AgentScheduler", () => {
         });
 
         it("No tasks initially", async () => {
-            assert.deepStrictEqual(scheduler1.pickedTasks(), [leader]);
+            assert.deepStrictEqual(scheduler1.pickedTasks(), []);
             assert.deepStrictEqual(scheduler2.pickedTasks(), []);
         });
 
         it("Clients agree on picking tasks sequentially", async () => {
             await scheduler1.pick("task1", false);
             await TestHost.sync(host1, host2);
-            assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1"]);
+            assert.deepStrictEqual(scheduler1.pickedTasks(), ["task1"]);
             assert.deepStrictEqual(scheduler2.pickedTasks(), []);
             await scheduler2.pick("task2", false);
             await TestHost.sync(host1, host2);
-            assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1"]);
+            assert.deepStrictEqual(scheduler1.pickedTasks(), ["task1"]);
             assert.deepStrictEqual(scheduler2.pickedTasks(), ["task2"]);
         });
 
@@ -151,7 +142,7 @@ describe("AgentScheduler", () => {
             await scheduler2.pick("task3", false);
             await scheduler2.pick("task4", false);
             await TestHost.sync(host1, host2);
-            assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1", "task2", "task3"]);
+            assert.deepStrictEqual(scheduler1.pickedTasks(), ["task1", "task2", "task3"]);
             assert.deepStrictEqual(scheduler2.pickedTasks(), ["task4"]);
         });
 
@@ -166,7 +157,7 @@ describe("AgentScheduler", () => {
             await scheduler2.pick("task5", false);
             await scheduler2.pick("task6", false);
             await TestHost.sync(host1, host2);
-            assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1", "task2", "task5"]);
+            assert.deepStrictEqual(scheduler1.pickedTasks(), ["task1", "task2", "task5"]);
             assert.deepStrictEqual(scheduler2.pickedTasks(), ["task4", "task6"]);
         });
 
@@ -203,11 +194,11 @@ describe("AgentScheduler", () => {
             await scheduler2.pick("task5", false);
             await scheduler2.pick("task6", false);
             await TestHost.sync(host1, host2);
-            assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1", "task2", "task5"]);
+            assert.deepStrictEqual(scheduler1.pickedTasks(), ["task1", "task2", "task5"]);
             assert.deepStrictEqual(scheduler2.pickedTasks(), ["task4", "task6"]);
             await scheduler1.release("task2", "task1", "task5");
             await TestHost.sync(host1, host2);
-            assert.deepStrictEqual(scheduler1.pickedTasks(), [leader]);
+            assert.deepStrictEqual(scheduler1.pickedTasks(), []);
             await TestHost.sync(host2);
             assert.deepStrictEqual(scheduler2.pickedTasks().sort(), ["task1", "task2", "task4", "task5", "task6"]);
             await scheduler1.pick("task1", false);
@@ -217,14 +208,7 @@ describe("AgentScheduler", () => {
             await scheduler2.release("task2", "task1", "task4", "task5", "task6");
             await TestHost.sync(host1, host2);
             assert.deepStrictEqual(scheduler1.pickedTasks().sort(),
-                [leader, "task1", "task2", "task4", "task5", "task6"]);
-        });
-
-        it("Releasing leadership should automatically elect a new leader", async () => {
-            await scheduler1.release(leader);
-            await TestHost.sync(host1, host2);
-            assert.deepStrictEqual(scheduler1.pickedTasks(), []);
-            assert.deepStrictEqual(scheduler2.pickedTasks(), [leader]);
+                ["task1", "task2", "task4", "task5", "task6"]);
         });
     });
 });

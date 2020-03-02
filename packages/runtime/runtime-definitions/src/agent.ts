@@ -54,11 +54,6 @@ export interface IProvideAgentScheduler {
  */
 export interface IAgentScheduler extends IProvideAgentScheduler, IComponentRouter, IComponentLoadable {
     /**
-     * Whether this instance is the leader.
-     */
-    leader: boolean;
-
-    /**
      * Registers a set of new tasks to distribute amongst connected clients. Only use this if a client wants
      * a new agent to run but does not have the capability to run the agent inside the host.
      * Client can call pick() later if the capability changes.
@@ -76,6 +71,8 @@ export interface IAgentScheduler extends IProvideAgentScheduler, IComponentRoute
      * @param worker - Flag that will execute tasks in web worker if connected to a service that supports them.
      */
     pick(taskId: string, worker: boolean): Promise<void>;
+
+    pickCore(taskId: string, worker: () => Promise<void>): Promise<void>;
 
     /**
      * Releases a set of tasks for other clients to grab. Resolves when the tasks are released.

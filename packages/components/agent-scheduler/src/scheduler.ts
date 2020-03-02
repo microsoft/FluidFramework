@@ -30,8 +30,6 @@ import * as debug from "debug";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
 
-const LeaderTaskId = "leader";
-
 // Note: making sure this ID is unique and does not collide with storage provided clientID
 const UnattachedClientId = `${uuid()}_unattached`;
 
@@ -72,8 +70,6 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
 
     public url = "/_tasks";
 
-    private _leader = false;
-
     // List of all tasks client is capable of running (essentially expressed desire to run)
     // Client will proactively attempt to pick them up these tasks if they are not assigned to other clients.
     // This is a strict superset of tasks running in the client.
@@ -101,10 +97,6 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
             status: 200,
             value: this,
         };
-    }
-
-    public get leader(): boolean {
-        return this._leader;
     }
 
     public async register(...taskUrls: string[]): Promise<void> {
@@ -254,8 +246,6 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
             }
         });
 
-        this.setupLeadership();
-
         if (this.isActive()) {
             this.initializeCore();
         }
@@ -317,25 +307,6 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
                 await this.writeCore(key, null);
             }
         }
-    }
-
-    private setupLeadership() {
-        // Each client expresses interest to be a leader.
-        this.pickCore(LeaderTaskId, async () => {
-            assert(!this._leader);
-            this._leader = true;
-            this.emit("leader");
-        }).catch((error) => {
-            this.sendErrorEvent("AgentScheduler_LeaderInit", error);
-        });
-
-        this.on("released", (key) => {
-            if (key === LeaderTaskId) {
-                assert(this._leader);
-                this._leader = false;
-                this.emit("notleader");
-            }
-        });
     }
 
     private isActive() {
@@ -467,8 +438,7 @@ export class TaskManager implements ITaskManager {
     }
 
     public async pick(componentUrl: string, taskId: string, worker?: boolean): Promise<void> {
-        const configuration = (this.context.hostRuntime as IComponent).IComponentConfiguration;
-        if (configuration && !configuration.canReconnect) {
+        if (!this.context.deltaManager.clientDetails.capabilities.interactive) {
             return Promise.reject("Picking not allowed on secondary copy");
         } else {
             const urlWithSlash = componentUrl.startsWith("/") ? componentUrl : `/${componentUrl}`;
