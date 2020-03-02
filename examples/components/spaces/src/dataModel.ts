@@ -32,12 +32,6 @@ export interface ISpacesDataModel extends EventEmitter {
     componentToolbarId: string;
 }
 
-export interface IComponentType {
-    type: string;
-    friendlyName: string;
-    fabricIconName: string;
-}
-
 /**
  * The Data Model is an abstraction layer so the React View doesn't need to interact directly with fluid.
  */
