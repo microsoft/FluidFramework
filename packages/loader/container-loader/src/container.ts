@@ -419,7 +419,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         });
 
         if (reconnect) {
-
             if (this._connectionState === ConnectionState.Disconnected) {
                 // Only track this as a manual reconnection if we are truly the ones kicking it off.
                 this.manualReconnectInProgress = true;
