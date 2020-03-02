@@ -4,13 +4,9 @@
  */
 
 import * as React from "react";
-/* eslint-disable import/no-internal-modules */
-import { FocusZone } from "office-ui-fabric-react/lib/FocusZone";
-import { List } from "office-ui-fabric-react/lib/List";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { ITheme, getTheme, mergeStyleSets } from "@uifabric/styling";
-import { IRectangle } from "office-ui-fabric-react";
-/* eslint-enable import/no-internal-modules */
+import { IRectangle, FocusZone, List } from "office-ui-fabric-react";
 
 export interface IListGridExampleProps {
     items: any[];
