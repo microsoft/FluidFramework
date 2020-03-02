@@ -43,8 +43,8 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
             root.set("scheduler", scheduler.handle);
         } else {
             root = await runtime.getChannel("root") as ISharedMap;
-            const handle = await root.wait<IComponentHandle>("scheduler");
-            scheduler = await handle.get<ConsensusRegisterCollection<string | null>>();
+            const handle = await root.wait<IComponentHandle<ConsensusRegisterCollection<string | null>>>("scheduler");
+            scheduler = await handle.get();
         }
         const agentScheduler = new AgentScheduler(runtime, context, scheduler);
         agentScheduler.initialize();
@@ -262,7 +262,9 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
                     }
 
                     this.emit("picked", key);
-                    await worker();
+                    await worker().catch((error) => {
+                        debug(error as string);
+                    });
                 } else {
                     if (this.runningTasks.has(key)) {
                         this.runningTasks.delete(key);
@@ -427,15 +429,15 @@ export class AgentSchedulerFactory implements IComponentFactory {
         dataTypes.set(mapFactory.type, mapFactory);
         dataTypes.set(consensusRegisterCollectionFactory.type, consensusRegisterCollectionFactory);
 
-        ComponentRuntime.load(
+        const runtime = ComponentRuntime.load(
             context,
             dataTypes,
-            (runtime) => {
-                const taskManagerP = TaskManager.load(runtime, context);
-                runtime.registerRequestHandler(async (request: IRequest) => {
-                    const taskManager = await taskManagerP;
-                    return taskManager.request(request);
-                });
-            });
+        );
+
+        const taskManagerP = TaskManager.load(runtime, context);
+        runtime.registerRequestHandler(async (request: IRequest) => {
+            const taskManager = await taskManagerP;
+            return taskManager.request(request);
+        });
     }
 }

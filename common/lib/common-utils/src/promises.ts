@@ -12,12 +12,19 @@ export class Deferred<T> {
     private readonly p: Promise<T>;
     private res: ((value?: T | PromiseLike<T>) => void) | undefined;
     private rej: ((reason?: any) => void) | undefined;
+    private completed: boolean = false;
 
     constructor() {
         this.p = new Promise<T>((resolve, reject) => {
             this.res = resolve;
             this.rej = reject;
         });
+    }
+    /**
+     * Returns whether the underlying promise has been completed
+     */
+    public get isCompleted() {
+        return this.completed;
     }
 
     /**
@@ -36,6 +43,7 @@ export class Deferred<T> {
      */
     public resolve(value?: T | PromiseLike<T>) {
         if (this.res !== undefined) {
+            this.completed = true;
             this.res(value);
         }
     }
@@ -47,6 +55,7 @@ export class Deferred<T> {
      */
     public reject(error: any) {
         if (this.rej !== undefined) {
+            this.completed = true;
             this.rej(error);
         }
     }

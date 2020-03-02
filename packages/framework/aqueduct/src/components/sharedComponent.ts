@@ -14,9 +14,7 @@ import {
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
-
 import { ComponentHandle } from "@microsoft/fluid-component-runtime";
-
 import { serviceRoutePathRoot } from "../containerServices";
 
 /**
@@ -26,7 +24,7 @@ import { serviceRoutePathRoot } from "../containerServices";
 // eslint-disable-next-line max-len
 export abstract class SharedComponent extends EventEmitter implements IComponentLoadable, IComponentRouter, IProvideComponentHandle {
     private initializeP: Promise<void> | undefined;
-    private readonly innerHandle: IComponentHandle;
+    private readonly innerHandle: IComponentHandle<this>;
 
     public get id() { return this.runtime.id; }
     public get IComponentRouter() { return this; }
@@ -34,9 +32,9 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     public get IComponentHandle() { return this.innerHandle; }
 
     /**
-     * {@inheritDoc IComponentHandle.handle}
+     * Handle to a shared component
      */
-    public get handle(): IComponentHandle { return this.innerHandle; }
+    public get handle(): IComponentHandle<this> { return this.innerHandle; }
 
     public constructor(
         protected readonly runtime: IComponentRuntime,
@@ -84,7 +82,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     // #region IComponentLoadable
 
     /**
-     * {@inheritDoc IComponentLoadable.url}
+     * Absolute URL to the component within the document
      */
     public get url() { return this.context.id; }
 
@@ -159,7 +157,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
      */
     protected async getService<T extends IComponent>(id: string): Promise<T> {
         const request = {
-            url:`/${serviceRoutePathRoot}/${id}`,
+            url: `/${serviceRoutePathRoot}/${id}`,
         };
 
         return this.asComponent<T>(this.context.hostRuntime.request(request));

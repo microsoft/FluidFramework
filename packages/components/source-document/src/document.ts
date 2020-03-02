@@ -170,7 +170,7 @@ export class SourceDocument extends PrimedComponent {
     }
 
     protected async componentHasInitialized() {
-        this.maybeSharedString = await (await this.root.wait<IComponentHandle>("text")).get<SharedString>();
+        this.maybeSharedString = await (await this.root.wait<IComponentHandle<SharedString>>("text")).get();
     }
 
     private ensureIntervalBoundary(position: number) {

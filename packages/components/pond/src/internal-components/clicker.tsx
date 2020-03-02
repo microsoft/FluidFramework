@@ -44,7 +44,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
 
     protected async componentHasInitialized() {
         this.counter = this.root.get<Counter>("clicks");
-        this.storedMap = await this.root.get<IComponentHandle>("storedMap").get<ISharedMap>();
+        this.storedMap = await this.root.get<IComponentHandle<ISharedMap>>("storedMap").get();
     }
 
     // start IComponentHTMLView

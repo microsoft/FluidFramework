@@ -160,16 +160,16 @@ export class ImageCollectionFactoryComponent implements IComponentFactory {
         const dataTypes = new Map<string, ISharedObjectFactory>();
         dataTypes.set(MapFactory.Type, new MapFactory());
 
-        ComponentRuntime.load(
+        const runtime = ComponentRuntime.load(
             context,
             dataTypes,
-            (runtime) => {
-                const progressCollectionP = ImageCollection.load(runtime, context);
-                runtime.registerRequestHandler(async (request: IRequest) => {
-                    const progressCollection = await progressCollectionP;
-                    return progressCollection.request(request);
-                });
-            });
+        );
+
+        const progressCollectionP = ImageCollection.load(runtime, context);
+        runtime.registerRequestHandler(async (request: IRequest) => {
+            const progressCollection = await progressCollectionP;
+            return progressCollection.request(request);
+        });
     }
 }
 

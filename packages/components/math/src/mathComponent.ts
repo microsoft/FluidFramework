@@ -690,16 +690,16 @@ export class MathFactoryComponent implements IComponentFactory {
         dataTypes.set(mapFactory.type, mapFactory);
         dataTypes.set(sharedStringFactory.type, sharedStringFactory);
 
-        ComponentRuntime.load(
+        const runtime = ComponentRuntime.load(
             context,
             dataTypes,
-            (runtime) => {
-                const mathCollectionP = MathCollection.load(runtime, context);
-                runtime.registerRequestHandler(async (request: IRequest) => {
-                    const mathCollection = await mathCollectionP;
-                    return mathCollection.request(request);
-                });
-            });
+        );
+
+        const mathCollectionP = MathCollection.load(runtime, context);
+        runtime.registerRequestHandler(async (request: IRequest) => {
+            const mathCollection = await mathCollectionP;
+            return mathCollection.request(request);
+        });
     }
 }
 

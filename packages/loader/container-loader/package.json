@@ -51,10 +51,14 @@
   },
   "dependencies": {
     "@microsoft/fluid-common-definitions": "^0.13.0",
+    "@microsoft/fluid-common-utils": "^0.14.0",
     "@microsoft/fluid-component-core-interfaces": "^0.14.0",
     "@microsoft/fluid-container-definitions": "^0.14.0",
+<<<<<<< HEAD
     "@microsoft/fluid-common-utils": "^0.14.0",
     "@microsoft/fluid-core-utils": "^0.14.0",
+=======
+>>>>>>> e92688ea5a665ea28a56199ee1838042bfc74b62
     "@microsoft/fluid-driver-definitions": "^0.14.0",
     "@microsoft/fluid-driver-utils": "^0.14.0",
     "@microsoft/fluid-protocol-base": "^0.1002.0",

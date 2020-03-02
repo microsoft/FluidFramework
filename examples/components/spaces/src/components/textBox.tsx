@@ -59,8 +59,8 @@ export class TextBox extends PrimedComponent implements IComponentHTMLView, ICom
 
     protected async componentHasInitialized() {
         this.text = await this.root
-            .get<IComponentHandle>("text")
-            .get<SharedString>();
+            .get<IComponentHandle<SharedString>>("text")
+            .get();
     }
 
     // start IComponentHTMLView

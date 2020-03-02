@@ -53,9 +53,9 @@ export class DdsCollectionComponent extends React.Component<IDdsCollectionProps,
     private async getMapsCore(): Promise<IMapProps[]> {
         const maps: IMapProps[] = [];
         await Promise.all(Array.from(this.props.mapDir.keys()).map(async (name) => {
-            const handle = await this.props.mapDir.wait<IComponentHandle>(name);
+            const handle = await this.props.mapDir.wait<IComponentHandle<ISharedMap>>(name);
             if (handle !== undefined) {
-                const map = await handle.get<ISharedMap>();
+                const map = await handle.get();
                 maps.push({ name, map });
             }
         }));
