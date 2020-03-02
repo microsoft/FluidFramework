@@ -15,12 +15,11 @@ import {
     initializeIcons,
 } from "office-ui-fabric-react";
 import { ISharedDirectory } from "@microsoft/fluid-map";
-import { IContainerComponentDetails } from "@microsoft/fluid-runtime-definitions";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { SupportedComponent } from "../dataModel";
-import { InternalRegistry } from "..";
+import { InternalRegistry, IContainerComponentDetails } from "..";
 
 const componentToolbarStyle: React.CSSProperties = { position: "absolute", top: 10, left: 10, zIndex: 1000 };
 

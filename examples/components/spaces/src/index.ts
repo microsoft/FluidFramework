@@ -12,11 +12,15 @@ import {
     IProvideComponentFactory,
     NamedComponentRegistryEntries,
     IComponentRegistry,
-    IContainerComponentDetails,
 } from "@microsoft/fluid-runtime-definitions";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 
+import {
+    IContainerComponentDetails,
+} from "./componentRegistryDetails";
+
 export * from "./spaces";
+export * from "./componentRegistryDetails";
 
 import {
     ComponentToolbar,
