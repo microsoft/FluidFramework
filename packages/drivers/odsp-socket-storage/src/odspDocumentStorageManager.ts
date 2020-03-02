@@ -266,6 +266,12 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             this.firstVersionCall = false;
 
             return getWithRetryForTokenRefresh(async (refresh) => {
+                if (refresh) {
+                    // This is the most critical code path for boot.
+                    // If we get incorrect / expired token first time, that adds up to latency of boot
+                    this.logger.sendErrorEvent({eventName: "TreeLatest_SecondCall"});
+                }
+
                 const odspCacheKey: string = `${this.documentId}/getlatest`;
                 let odspSnapshot: IOdspSnapshot = this.odspCache.get(odspCacheKey);
                 if (!odspSnapshot) {
