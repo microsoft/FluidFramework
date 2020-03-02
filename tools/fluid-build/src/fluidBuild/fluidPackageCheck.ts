@@ -4,13 +4,8 @@
  */
 
 import { FluidRepo } from "./fluidRepo";
+import { MonoRepo } from "../common/fluidRepoBase";
 import { Package } from "../common/npmPackage";
-
-export enum MonoRepo {
-    None,
-    Client,
-    Server,
-};
 
 export class FluidPackageCheck {
     constructor(private readonly repoType: MonoRepo) {

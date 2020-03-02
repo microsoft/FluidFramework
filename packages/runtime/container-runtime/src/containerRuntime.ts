@@ -88,6 +88,7 @@ import { SummaryManager } from "./summaryManager";
 import { ISummaryStats, SummaryTreeConverter } from "./summaryTreeConverter";
 import { analyzeTasks } from "./taskAnalyzer";
 import { DeltaScheduler } from "./deltaScheduler";
+import { ReportConnectionTelemetry } from "./connectionTelemetry";
 import { SummaryCollection } from "./summaryCollection";
 
 interface ISummaryTreeWithStats {
@@ -97,6 +98,7 @@ interface ISummaryTreeWithStats {
 
 export interface IPreviousState {
     summaryCollection?: SummaryCollection,
+    reload?: boolean,
 
     // only one (or zero) of these will be defined. the summarizing Summarizer will resolve the deferred promise, and
     // the SummaryManager that spawned it will have that deferred's promise
@@ -635,7 +637,11 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.clearPartialChunks(clientId);
         });
 
-        this.previousState = this.context.previousRuntimeState.state as IPreviousState ?? {};
+        if (this.context.previousRuntimeState === undefined || this.context.previousRuntimeState.state === undefined) {
+            this.previousState = {};
+        } else {
+            this.previousState = this.context.previousRuntimeState.state as IPreviousState;
+        }
 
         // We always create the summarizer in the case that we are asked to generate summaries. But this may
         // want to be on demand instead.
@@ -656,12 +662,16 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.runtimeOptions.enableWorker,
             this.logger,
             (summarizer) => { this.nextSummarizerP = summarizer; },
-            this.previousState.nextSummarizerP);
+            this.previousState.nextSummarizerP,
+            !!this.previousState.reload);
 
         if (this.context.connectionState === ConnectionState.Connected) {
             this.summaryManager.setConnected(this.context.clientId);
         }
+
+        ReportConnectionTelemetry(this.context.clientId, this.deltaManager, this.logger);
     }
+
     public get IComponentTokenProvider() {
 
         if (this.options && this.options.intelligence) {
@@ -734,6 +744,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.summarizer.dispose();
         this.closed = true;
         const state: IPreviousState = {
+            reload: true,
             summaryCollection: this.summarizer.summaryCollection,
             nextSummarizerP: this.nextSummarizerP,
             nextSummarizerD: this.nextSummarizerD,

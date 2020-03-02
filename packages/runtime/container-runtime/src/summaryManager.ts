@@ -62,7 +62,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     private readonly logger: ITelemetryLogger;
     private readonly quorumHeap = new QuorumHeap();
     private readonly initialDelayP: Promise<void>;
-    private readonly initialDelayTimer: PromiseTimer;
+    private readonly initialDelayTimer?: PromiseTimer;
     private summarizerClientId?: string;
     private clientId?: string;
     private connected = false;
@@ -89,6 +89,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         parentLogger: ITelemetryLogger,
         private readonly setNextSummarizer: (summarizer: Promise<Summarizer>) => void,
         private readonly nextSummarizerP?: Promise<Summarizer>,
+        immediateSummary: boolean = false,
         private readonly maxRestarts: number = defaultMaxRestarts,
         initialDelayMs: number = defaultInitialDelayMs,
     ) {
@@ -116,8 +117,9 @@ export class SummaryManager extends EventEmitter implements IDisposable {
             this.refreshSummarizer();
         });
 
-        this.initialDelayTimer = new PromiseTimer(initialDelayMs, () => {});
-        this.initialDelayP = this.initialDelayTimer.start().catch(() => {});
+        this.initialDelayTimer = immediateSummary ? undefined : new PromiseTimer(initialDelayMs, () => {});
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
+        this.initialDelayP = this.initialDelayTimer?.start().catch(() => {}) ?? Promise.resolve();
 
         this.refreshSummarizer();
     }
@@ -316,7 +318,8 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     }
 
     public dispose() {
-        this.initialDelayTimer.clear();
+        // eslint-disable-next-line no-unused-expressions
+        this.initialDelayTimer?.clear();
         this._disposed = true;
     }
 }

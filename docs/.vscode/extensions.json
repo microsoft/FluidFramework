@@ -3,7 +3,7 @@
   // Extension identifier format: ${publisher}.${name}. Example: vscode.csharp
   // List of extensions which should be recommended for users of this workspace.
   "recommendations": [
-    "docsmsft.docs-authoring-pack",
+    // "docsmsft.docs-authoring-pack",
     "davidanson.vscode-markdownlint",
     "stkb.rewrap"
   ],
