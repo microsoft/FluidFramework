@@ -3,30 +3,51 @@
  * Licensed under the MIT License.
  */
 
-export interface IOdspCache {
-    get(key: string): any;
+export interface ICache {
+    /**
+     * Get the cache value of the key
+     */
+    get(key: string): Promise<any>;
+
+    /**
+     * Deletes value in storage
+     */
     remove(key: string);
+
+    /**
+     * puts value into cache
+     */
     put(key: string, value: any, expiryTime?: number);
 }
 
-export class OdspCache implements IOdspCache {
-    private readonly odspCache: Map<string, any>;
+/**
+ * Internal cache interface used within driver only
+ */
+export interface IOdspCache {
+    /**
+     * permanent cache - only serializable content is allowed
+     */
+    readonly localStorage: ICache;
 
-    constructor() {
-        this.odspCache = new Map<string, any>();
-    }
+    /**
+     * session cache - non-serializable content is allowed
+     */
+    readonly sessionStorage: ICache;
+}
 
-    public get(key: string) {
-        const val = this.odspCache.get(key);
-        return val;
+class LocalCache implements ICache {
+    private readonly cache = new Map<string, any>();
+
+    public async get(key: string) {
+        return this.cache.get(key);
     }
 
     public remove(key: string) {
-        return this.odspCache.delete(key);
+        this.cache.delete(key);
     }
 
     public put(key: string, value: any, expiryTime?: number) {
-        this.odspCache.set(key, value);
+        this.cache.set(key, value);
         if (expiryTime) {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.gc(key, expiryTime);
@@ -37,8 +58,18 @@ export class OdspCache implements IOdspCache {
         // eslint-disable-next-line @typescript-eslint/promise-function-async
         const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
         await delay(expiryTime);
-        if (this.odspCache.has(key)) {
-            this.odspCache.delete(key);
+        if (this.cache.has(key)) {
+            this.cache.delete(key);
         }
+    }
+
+}
+
+export class OdspCache implements IOdspCache {
+    public readonly localStorage: ICache;
+    public readonly sessionStorage = new LocalCache();
+
+    constructor(permanentCache?: ICache) {
+        this.localStorage = permanentCache !== undefined ? permanentCache : new LocalCache();
     }
 }

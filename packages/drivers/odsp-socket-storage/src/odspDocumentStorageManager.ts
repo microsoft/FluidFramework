@@ -87,7 +87,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         private readonly getStorageToken: (refresh: boolean, name?: string) => Promise<string | null>,
         private readonly logger: ITelemetryLogger,
         private readonly fetchFullSnapshot: boolean,
-        private readonly odspCache: IOdspCache,
+        private readonly cache: IOdspCache,
         private readonly isFirstTimeDocumentOpened: boolean,
     ) {
         this.queryString = getQueryString(queryParams);
@@ -267,7 +267,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
             return getWithRetryForTokenRefresh(async (refresh) => {
                 const odspCacheKey: string = `${this.documentId}/getlatest`;
-                let odspSnapshot: IOdspSnapshot = this.odspCache.get(odspCacheKey);
+                let odspSnapshot: IOdspSnapshot = await this.cache.localStorage.get(odspCacheKey);
                 if (!odspSnapshot) {
                     const storageToken = await this.getStorageToken(refresh, "TreesLatest");
 
@@ -300,7 +300,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     // We are storing the getLatest response in cache for 10s so that other containers initializing in the same timeframe can use this
                     // result. We are choosing a small time period as the summarizes are generated frequently and if that is the case then we don't
                     // want to use the same getLatest result.
-                    this.odspCache.put(odspCacheKey, odspSnapshot, 10000);
+                    this.cache.localStorage.put(odspCacheKey, odspSnapshot, 10000);
                 }
                 const { trees, blobs, ops, sha } = odspSnapshot;
                 const blobsIdToPathMap: Map<string, string> = new Map();
@@ -320,23 +320,25 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
                 if (blobs) {
                     this.initBlobsCache(blobs);
-                    // Populate the cache with paths from id-to-path mapping.
-                    for (const blob of this.blobCache.values()) {
-                        const path = blobsIdToPathMap.get(blob.sha);
-                        // If this is the first container that was created for the service, it cannot be
-                        // the summarizing container (becauase the summarizing container is always created
-                        // after the main container). In this case, we do not need to do any hashing
-                        if (!this.isFirstTimeDocumentOpened && path) {
-                            // Schedule the hashes for later, but keep track of the tasks
-                            // to ensure they finish before they might be used
-                            const hashP = hashFile(Buffer.from(blob.content, blob.encoding)).then((hash: string) => {
-                                this.blobsShaToPathCache.set(hash, path);
-                            });
-                            this.blobsCachePendingHashes.add(hashP);
-                            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                            hashP.finally(() => {
-                                this.blobsCachePendingHashes.delete(hashP);
-                            });
+                    if (!this.isFirstTimeDocumentOpened) {
+                        // Populate the cache with paths from id-to-path mapping.
+                        for (const blob of this.blobCache.values()) {
+                            const path = blobsIdToPathMap.get(blob.sha);
+                            // If this is the first container that was created for the service, it cannot be
+                            // the summarizing container (becauase the summarizing container is always created
+                            // after the main container). In this case, we do not need to do any hashing
+                            if (path) {
+                                // Schedule the hashes for later, but keep track of the tasks
+                                // to ensure they finish before they might be used
+                                const hashP = hashFile(Buffer.from(blob.content, blob.encoding)).then((hash: string) => {
+                                    this.blobsShaToPathCache.set(hash, path);
+                                });
+                                this.blobsCachePendingHashes.add(hashP);
+                                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                                hashP.finally(() => {
+                                    this.blobsCachePendingHashes.delete(hashP);
+                                });
+                            }
                         }
                     }
                 }

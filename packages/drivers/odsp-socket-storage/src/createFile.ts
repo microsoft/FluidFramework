@@ -40,7 +40,7 @@ export function getKeyFromFileInfo(fileInfo: INewFileInfo): string {
 export async function createNewFluidFile(
     getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
     newFileInfoPromise: Promise<INewFileInfo> | undefined,
-    fileInfoToCreateNewResponseCache: IOdspCache,
+    cache: IOdspCache,
 ): Promise<IOdspResolvedUrl> {
     if (!newFileInfoPromise) {
         throw new Error("Odsp driver needs to create a new file but no newFileInfo supplied");
@@ -48,7 +48,7 @@ export async function createNewFluidFile(
     const newFileInfo = await newFileInfoPromise;
 
     const key = getKeyFromFileInfo(newFileInfo);
-    const responseP: Promise<IOdspResolvedUrl> = fileInfoToCreateNewResponseCache.get(key);
+    const responseP: Promise<IOdspResolvedUrl> = await cache.sessionStorage.get(key);
     let resolvedUrl: IOdspResolvedUrl;
     if (responseP !== undefined) {
         return responseP;
@@ -61,7 +61,7 @@ export async function createNewFluidFile(
     // response of previous create request as a deferred promise because this is async and we don't
     // know the order of execution of this code by driver instances.
     const odspResolvedUrlDeferred = new Deferred<IOdspResolvedUrl>();
-    fileInfoToCreateNewResponseCache.put(key, odspResolvedUrlDeferred.promise);
+    cache.sessionStorage.put(key, odspResolvedUrlDeferred.promise);
     let fileResponse: IFileCreateResponse;
     try {
         fileResponse = await createNewFluidFileHelper(newFileInfo, getStorageToken);
@@ -70,7 +70,7 @@ export async function createNewFluidFile(
         resolvedUrl = await resolver.resolve({ url: odspUrl });
     } catch (error) {
         odspResolvedUrlDeferred.reject(error);
-        fileInfoToCreateNewResponseCache.remove(key);
+        cache.sessionStorage.remove(key);
         throw error;
     }
     odspResolvedUrlDeferred.resolve(resolvedUrl);
