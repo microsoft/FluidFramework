@@ -79,7 +79,6 @@ export interface IValueOperation<T> {
 
 /**
  * Defines a value type that can be registered on a container type.
- * @alpha
  */
 export interface IValueType<T> {
     /**
@@ -103,7 +102,6 @@ export interface IValueType<T> {
 
 /**
  * Container types that are able to create value types as contained values.
- * @alpha
  */
 export interface IValueTypeCreator {
     /**

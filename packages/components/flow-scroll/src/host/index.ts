@@ -79,8 +79,8 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
     }
 
     protected async componentHasInitialized() {
-        const handle = await this.root.wait<IComponentHandle>(insightsMapId);
-        const insights = await handle.get<SharedMap>();
+        const handle = await this.root.wait<IComponentHandle<SharedMap>>(insightsMapId);
+        const insights = await handle.get();
 
         this.context.hostRuntime.setFlushMode(FlushMode.Manual);
 

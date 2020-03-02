@@ -5,7 +5,9 @@
 - [Remove back-compat support for loader <= 0.8](#remove-back-compat-support-for-loader-08)
 - [New Error types](#new-error-types)
 - [`IComponentContext` - `createSubComponent` removed, `createComponent` signature updated](#icomponentcontext-createsubcomponent-removed-createcomponent-signature-updated)
+- [`IComponentHandle` - Moved type parameter from get to interface](#icomponenthandle-type-parameter-moved)
 - [Changes to the render interfaces](#changes-to-the-render-interfaces)
+- [Old runtime container cannot load new components](#old-runtime-container-cannot-load-new-components)
 
 ## Packages move and renamed
 
@@ -71,6 +73,18 @@ It does not acccept a package path anymore but just a package name. To pass in p
 
 For creating a component with a specific package path, use `createComponent` or `_createComponentWithProps` in `IHostRuntime`.
 
+## `IComponentHandle` - Type parameter moved
+The type parameter previously on the `get()` method has moved to the `IComponentHandle` type.
+
+Old:
+```ts
+    map.get<IComponentHandle>(..).get<ISharedMap>();
+```
+New:
+```ts
+    map.get<IComponentHandle<ISharedMap>>(..).get();
+```
+
 ## Changes to the render interfaces
 
 The rendering interfaces have undergone several changes:
@@ -78,6 +92,10 @@ The rendering interfaces have undergone several changes:
 - Since `IComponentHTMLVisual` now only has the member `addView()`, it is mandatory.  If your component does not already implement `addView`, it should not be an `IComponentHTMLVisual`.
 - On `IComponentHTMLView`, `remove()` is now optional.  If your view component needs to perform cleanup when removed from the DOM, do it in `remove()` - otherwise there is no need to implement it.
 - `IComponentHTMLView` now extends the new `IProvideComponentHTMLView`, so you can query for whether a component is a view.  You must implement the `IComponentHTMLView` member if you implement the interface.
+
+## Old runtime container cannot load new components
+
+The way that summaries are generated has changed in such a way that the runtime container is backwards compatible with 0.13 components, but 0.13 runtime container cannot load 0.14 or later components.
 
 # 0.13 Breaking Changes
 

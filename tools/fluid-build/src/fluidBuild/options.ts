@@ -151,7 +151,7 @@ export function parseOptions(argv: string[]) {
             options.force = true;
             continue;
         }
-        
+
         if (arg === "--nosamples") {
             options.samples = false;
             continue;

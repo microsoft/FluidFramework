@@ -60,9 +60,9 @@ describe("Cell", () => {
         root1.set(cellId, user1Document.createCell().handle);
         await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
 
-        root1Cell = await root1.get<IComponentHandle>(cellId).get<ISharedCell>();
-        root2Cell = await root2.get<IComponentHandle>(cellId).get<ISharedCell>();
-        root3Cell = await root3.get<IComponentHandle>(cellId).get<ISharedCell>();
+        root1Cell = await root1.get<IComponentHandle<ISharedCell>>(cellId).get();
+        root2Cell = await root2.get<IComponentHandle<ISharedCell>>(cellId).get();
+        root3Cell = await root3.get<IComponentHandle<ISharedCell>>(cellId).get();
 
         // Set a starting value in the cell
         root1Cell.set(initialCellValue);
@@ -210,8 +210,8 @@ describe("Cell", () => {
 
         async function getCellComponent(cellP: Promise<ISharedCell>): Promise<ISharedCell> {
             const cell = await cellP;
-            const handle = cell.get() as IComponentHandle;
-            return handle.get<ISharedCell>();
+            const handle = cell.get() as IComponentHandle<ISharedCell>;
+            return handle.get();
         }
 
         verifyCellValue(await getCellComponent(getCellComponent(Promise.resolve(root2Cell))), cellValue, 2);

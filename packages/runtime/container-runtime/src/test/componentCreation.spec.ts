@@ -10,7 +10,6 @@ import {
     IComponentRuntime,
     ComponentRegistryEntry,
     NamedComponentRegistryEntries,
-    ISummaryTracker,
 } from "@microsoft/fluid-runtime-definitions";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
@@ -42,7 +41,7 @@ describe("Component Creation Tests", () => {
         const componentAName = "componentA";
         const componentBName = "componentB";
         const componentCName = "componentC";
-        let summaryTracker: ISummaryTracker;
+        let summaryTracker: SummaryTracker;
 
         // Helper function that creates a ComponentRegistryEntry with the registry entries
         // provided to it.

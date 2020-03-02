@@ -27,18 +27,35 @@ export interface IConvertedSummaryResults {
 }
 
 export class SummaryTreeConverter {
-    public convertToSummaryTree(snapshot: ITree, fullTree: boolean = false): IConvertedSummaryResults {
-        const summaryStats = this.mergeStats();
-        const summaryTree = this.convertToSummaryTreeCore(
+    constructor(public readonly useContext: boolean) {}
+
+    /**
+     * Converts snapshot ITree to ISummaryTree format.
+     * back-compat: 0.14 uploadSummary
+     * If useContext is set to true, it will ensure that the handles
+     * are the full path.  This is required, because individual components
+     * may still be sending the id instead of the path.
+     * @param snapshot - snapshot in ITree format
+     * @param fullTree - true to never use handles, even if id is specified
+     */
+    public convertToSummaryTree(
+        snapshot: ITree,
+        basePath: string,
+        fullTree: boolean = false,
+    ): IConvertedSummaryResults {
+        const summaryStats = SummaryTreeConverter.mergeStats();
+        const summaryTree = SummaryTreeConverter.convertToSummaryTreeCore(
             snapshot,
             summaryStats,
+            basePath,
+            this.useContext,
             fullTree);
 
         return { summaryStats, summaryTree };
     }
 
     // No args will generate empty stats
-    public mergeStats(...stats: ISummaryStats[]): ISummaryStats {
+    public static mergeStats(...stats: ISummaryStats[]): ISummaryStats {
         const results = {
             treeNodeCount: 0,
             blobNodeCount: 0,
@@ -54,15 +71,21 @@ export class SummaryTreeConverter {
         return results;
     }
 
-    protected convertToSummaryTreeCore(
+    protected static appendPath(existingPath: string, newPathPart: string): string {
+        return `${existingPath}/${encodeURIComponent(newPathPart)}`;
+    }
+
+    protected static convertToSummaryTreeCore(
         snapshot: ITree,
         summaryStats: ISummaryStats,
-        fullTree: boolean = false,
+        path: string,
+        useContext: boolean,
+        fullTree: boolean,
     ): SummaryTree {
         if (snapshot.id && !fullTree) {
             summaryStats.handleNodeCount++;
             return {
-                handle: snapshot.id,
+                handle: useContext ? path : snapshot.id,
                 handleType: SummaryType.Tree,
                 type: SummaryType.Handle,
             };
@@ -95,18 +118,22 @@ export class SummaryTreeConverter {
                         break;
 
                     case TreeEntry[TreeEntry.Tree]:
-                        value = this.convertToSummaryTreeCore(
+                        value = SummaryTreeConverter.convertToSummaryTreeCore(
                             entry.value as ITree,
                             summaryStats,
+                            SummaryTreeConverter.appendPath(path, entry.path),
+                            useContext,
                             fullTree);
                         break;
 
                     case TreeEntry[TreeEntry.Commit]:
                         // Probably should not reach this case and assert so,
                         // when snapshotting the commits become strings not ITrees
-                        value = this.convertToSummaryTreeCore(
+                        value = SummaryTreeConverter.convertToSummaryTreeCore(
                             entry.value as ITree,
                             summaryStats,
+                            SummaryTreeConverter.appendPath(path, entry.path),
+                            useContext,
                             fullTree);
                         break;
 
