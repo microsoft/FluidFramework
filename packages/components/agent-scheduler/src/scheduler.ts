@@ -262,7 +262,9 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
                     }
 
                     this.emit("picked", key);
-                    await worker();
+                    await worker().catch((error) => {
+                        debug(error as string);
+                    });
                 } else {
                     if (this.runningTasks.has(key)) {
                         this.runningTasks.delete(key);
