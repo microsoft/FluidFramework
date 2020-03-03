@@ -405,38 +405,36 @@ export class GridView {
     private refreshNumberSummary() {
         const [rowStart, colStart] = this.selection.start;
         const [rowEnd, colEnd] = this.selection.end;
-        const minRow = Math.min(rowStart, rowEnd);
-        const maxRow = Math.max(rowStart, rowEnd);
-        const minCol = Math.min(colStart, colEnd);
-        const maxCol = Math.max(colStart, colEnd);
 
-        let count:number = 0;
-        let sum:number = 0;
-        for (let row  = minRow; row <= maxRow; row++) {
-            for (let col = minCol; col <= maxCol; col++) {
-                const currentCell = this.getTdFromRowCol(row, col) as HTMLTableDataCellElement;
-                if (currentCell.textContent) {
-                    const cellValue = this.parseInput(this.sanitizeNumberString(currentCell.textContent));
-                    if (typeof(cellValue) === "number") {
-                        count++;
-                        sum+= cellValue;
-                    }
-                }
-            }
-        }
+        const colStartLetter = this.numberToColumnLetter(colStart);
+        const colEndLetter = this.numberToColumnLetter(colEnd);
 
-        if (count > 1) {
-            this.tableView.selectionSummary = `Average:${sum/count} Count:${count} Sum:${sum}`;
+        const averageFormula = `=AVERAGE(${colStartLetter}${rowStart}:${colEndLetter}${rowEnd})`;
+        const countFormula = `=COUNT(${colStartLetter}${rowStart}:${colEndLetter}${rowEnd})`;
+        const sumFormula = `=SUM(${colStartLetter}${rowStart}:${colEndLetter}${rowEnd})`;
+
+        const avg = this.doc.evaluateFormula(averageFormula);
+        const count = this.doc.evaluateFormula(countFormula);
+        const sum = this.doc.evaluateFormula(sumFormula);
+
+        if (count as number > 1) {
+            this.tableView.selectionSummary = `Average:${avg} Count:${count} Sum:${sum}`;
         } else {
             this.tableView.selectionSummary = "\u200B";
         }
     }
 
-    private sanitizeNumberString(input: string):string {
-        // Remove a prefix zero width space
-        if (input.length > 0 && input[0] === "\u200B") {
-            return input.substr(1);
+    private numberToColumnLetter(index: number):string {
+        if (index < 1) {
+            return "A";
         }
-        return input;
+
+        let colString = "";
+        while (index >= 1) {
+            colString += String.fromCharCode((index % 26) + 65);
+            index = index / 26;
+        }
+
+        return colString;
     }
 }
