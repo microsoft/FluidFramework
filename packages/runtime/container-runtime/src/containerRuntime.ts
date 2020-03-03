@@ -538,7 +538,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     public get disposed() { return this._disposed; }
 
     // Components tracked by the Domain
-    private closed = false;
     private readonly pendingAttach = new Map<string, IAttachMessage>();
     private dirtyDocument = false;
     private readonly summarizer: Summarizer;
@@ -681,11 +680,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         }
         this._disposed = true;
 
-        /**
-         * DEPRECATED in 0.14 async stop()
-         * Converge closed with _disposed when removing async stop()
-         */
-        this.closed = true;
+        this.summaryManager.dispose();
+        this.summarizer.dispose();
 
         // close/stop all component contexts
         for (const [componentId, contextD] of this.contextsDeferred) {
@@ -764,16 +760,17 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
     public async stop(): Promise<IRuntimeState> {
         this.verifyNotClosed();
+
         const snapshot = await this.snapshot("", false);
-        this.summaryManager.dispose();
-        this.summarizer.dispose();
-        this.closed = true;
         const state: IPreviousState = {
             reload: true,
             summaryCollection: this.summarizer.summaryCollection,
             nextSummarizerP: this.nextSummarizerP,
             nextSummarizerD: this.nextSummarizerD,
         };
+
+        this.dispose();
+
         return { snapshot, state };
     }
 
@@ -1351,11 +1348,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     private verifyNotClosed() {
-        /**
-         * DEPRECATED in 0.14 async stop()
-         * Converge closed with _disposed when removing async stop()
-         */
-        if (this.closed || this._disposed) {
+        if (this._disposed) {
             throw new Error("Runtime is closed");
         }
     }

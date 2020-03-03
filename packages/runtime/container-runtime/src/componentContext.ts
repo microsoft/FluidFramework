@@ -141,7 +141,6 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     public get disposed() { return this._disposed; }
 
     protected componentRuntime: IComponentRuntime;
-    private closed = false;
     private loaded = false;
     private pending: ISequencedDocumentMessage[] = [];
     private componentRuntimeDeferred: Deferred<IComponentRuntime>;
@@ -181,12 +180,12 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         }
         this._disposed = true;
 
-        // Wait for any pending runtime then dispose it
+        // Dispose any pending runtime after it gets fulfilled
         if (this.componentRuntimeDeferred) {
             this.componentRuntimeDeferred.promise.then((runtime) => {
                 runtime.dispose();
             }).catch((error) => {
-                throw error;
+                this.hostRuntime.logger.sendErrorEvent({eventName: "ComponentRuntimeDisposeError", componentId: this.id}, error);
             });
         }
     }
@@ -332,16 +331,6 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this.blobManager.getBlobMetadata();
     }
 
-    /**
-     * Stop and dispose the context.  snapshot() is called separately if needed
-     */
-    public stop(): void {
-        this.verifyNotClosed();
-        this.closed = true;
-
-        this.dispose();
-    }
-
     public close(): void {
         this._hostRuntime.closeFn();
     }
@@ -461,7 +450,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     }
 
     private verifyNotClosed() {
-        if (this.closed) {
+        if (this._disposed) {
             throw new Error("Runtime is closed");
         }
     }

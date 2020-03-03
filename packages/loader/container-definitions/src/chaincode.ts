@@ -145,8 +145,8 @@ export interface IRuntime extends IDisposable {
     changeConnectionState(value: ConnectionState, clientId: string, version?: string);
 
     /**
-     * DEPRECATED in 0.14 async stop()
-     * Call dispose instead
+     * @deprecated in 0.14 async stop()
+     * Use snapshot to get a snapshot for an IRuntimeState as needed, followed by dispose
      *
      * Stops the runtime. Once stopped no more messages will be delivered and the context passed to the runtime
      * on creation will no longer be active

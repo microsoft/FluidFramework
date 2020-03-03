@@ -97,6 +97,9 @@ export interface IComponentRuntime extends
     changeConnectionState(value: ConnectionState, clientId: string);
 
     /**
+     * @deprecated in 0.14 async close()
+     * Call snapshot separately if needed, then call dispose
+     *
      * Closes the component. Once closed the component will not receive any new ops and should
      * not attempt to generate them.
      */

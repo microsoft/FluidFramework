@@ -215,6 +215,12 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         }
         this._disposed = true;
 
+        /**
+         * @deprecated in 0.14 async stop()
+         * Converge closed with _disposed when removing async stop()
+         */
+        this.closed = true;
+
         this.emit("dispose");
     }
 
@@ -422,14 +428,12 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     }
 
     /**
-     * Stop and dispose the runtime.  snapshotInternal() is called separately if needed
+     * Stop the runtime.  snapshotInternal() is called separately if needed
      */
     public stop(): void {
         this.verifyNotClosed();
 
         this.closed = true;
-
-        this.dispose();
     }
 
     public async close(): Promise<void> {
