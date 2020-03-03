@@ -116,11 +116,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             scope,
             codeLoader,
             loader,
-            id,
-            service,
-            request,
-            resolvedUrl,
             logger);
+
+        const [, docId] = id.split("/");
+        container._id = decodeURI(docId);
+        container._scopes = container.getScopes(resolvedUrl);
+        container._canReconnect = !(request.headers?.[LoaderHeader.reconnect] === false);
+        container._service = service;
+        container._originalRequest = request;
 
         return new Promise<Container>((res, rej) => {
             let alreadyRaisedError = false;
@@ -167,10 +170,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             scope,
             codeLoader,
             loader,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
             logger,
             factoryProvider);
         await container.createInDetachedState(source);
@@ -179,7 +178,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
 
     public subLogger: TelemetryLogger;
-    private _canReconnect: boolean;
+    private _canReconnect: boolean = true;
     private readonly logger: ITelemetryLogger;
 
     private pendingClientId: string | undefined;
@@ -194,7 +193,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private _scopes: string[] | undefined;
     private readonly _deltaManager: DeltaManager;
     private _existing: boolean | undefined;
-    private _id: string;
+    private _id: string = "";
+    private _originalRequest: IRequest | undefined;
+    private _service: IDocumentService | undefined;
     private _parentBranch: string | undefined | null;
     private _connectionState = ConnectionState.Disconnected;
     private _serviceConfiguration: IServiceConfiguration | undefined;
@@ -317,20 +318,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         private readonly scope: IComponent,
         private readonly codeLoader: ICodeLoader,
         private readonly loader: Loader,
-        id?: string,
-        private service?: IDocumentService,
-        private originalRequest?: IRequest,
-        resolvedUrl?: IFluidResolvedUrl,
         logger?: ITelemetryBaseLogger,
         private readonly factoryProvider?: (resolvedUrl: IFluidResolvedUrl) => IDocumentServiceFactory,
     ) {
         super();
-
-        const [, docId] = id ? id.split("/") : ["", ""];
-        this._id = decodeURI(docId);
-        this._scopes = this.getScopes(resolvedUrl);
         this._audience = new Audience();
-        this._canReconnect = !(originalRequest?.headers?.[LoaderHeader.reconnect] === false);
 
         // Create logger for components to use
         const type = this.client.details.type;
@@ -427,7 +419,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const protocolHandler = this.protocolHandler;
         const quorumSnapshot = protocolHandler.quorum.snapshot();
 
-        this.originalRequest = request;
+        this._originalRequest = request;
         // Actually go and create the resolved document
         const expUrlResolver = resolver as IExperimentalUrlResolver;
         if (!expUrlResolver?.isExperimentalUrlResolver) {
@@ -448,7 +440,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const factory = this.factoryProvider(resolvedUrl);
         const service = await factory.createDocumentService(resolvedUrl);
 
-        this.service = service;
+        this._service = service;
         this._canReconnect = !(request.headers?.[LoaderHeader.reconnect] === false);
         const parsedUrl = parseUrl(resolvedUrl.url);
         if (!parsedUrl) {
@@ -466,7 +458,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         const startConnectionP = this.connectToDeltaStream();
         startConnectionP.catch((error) => {
-            throw new Error(`Error in connecting to delta stream from unpaused case ${error}`);
+            debug(`Error in connecting to delta stream from unpaused case ${error}`);
         });
     }
 
@@ -820,10 +812,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
 
     private async getDocumentStorageService(): Promise<IDocumentStorageService> {
-        if (!this.service) {
+        if (!this._service) {
             throw new Error("Not attached");
         }
-        const storageService = await this.service.connectToStorage();
+        const storageService = await this._service.connectToStorage();
         return new PrefetchDocumentStorageService(storageService);
     }
 
@@ -997,7 +989,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             };
 
         // Client info from headers overrides client info from loader options
-        const headerClientDetails = this.originalRequest?.headers?.[LoaderHeader.clientDetails];
+        const headerClientDetails = this._originalRequest?.headers?.[LoaderHeader.clientDetails];
 
         if (headerClientDetails) {
             merge(client.details, headerClientDetails);
@@ -1008,7 +1000,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     private createDeltaManager() {
         const deltaManager = new DeltaManager(
-            () => this.service,
+            () => this._service,
             this.client,
             ChildLogger.create(this.subLogger, "DeltaManager"),
             this.canReconnect,
@@ -1283,7 +1275,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go to this loader
-        const loader = new RelativeLoader(this.loader, this.originalRequest);
+        const loader = new RelativeLoader(this.loader, this._originalRequest);
 
         this.context = await ContainerContext.createOrLoad(
             this,
@@ -1319,7 +1311,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go to this loader
-        const loader = new RelativeLoader(this.loader, this.originalRequest);
+        const loader = new RelativeLoader(this.loader, this._originalRequest);
 
         this.context = await ContainerContext.createOrLoad(
             this,
