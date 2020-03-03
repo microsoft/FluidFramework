@@ -226,10 +226,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
 
     public get id(): string {
-        if (!this._id) {
-            throw new Error("No id generated yet!!");
-        }
-        return this._id;
+        return this._id || "";
     }
 
     public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
