@@ -19,6 +19,7 @@ import {
     IGenericBlob,
     IRuntimeFactory,
     LoaderHeader,
+    IRuntimeState,
     IExperimentalContainer,
 } from "@microsoft/fluid-container-definitions";
 import {
@@ -33,6 +34,7 @@ import {
     IDocumentStorageService,
     IError,
     IUrlResolver,
+    IFluidResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
 import { createIError, readAndParse, OnlineStatus, isOnline } from "@microsoft/fluid-driver-utils";
 import {
@@ -103,6 +105,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         scope: IComponent,
         loader: Loader,
         request: IRequest,
+        resolvedUrl: IFluidResolvedUrl,
         logger?: ITelemetryBaseLogger,
     ): Promise<Container> {
         const container = new Container(
@@ -113,6 +116,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             codeLoader,
             loader,
             request,
+            resolvedUrl,
             logger);
 
         return new Promise<Container>((res, rej) => {
@@ -284,13 +288,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         private readonly codeLoader: ICodeLoader,
         private readonly loader: Loader,
         private readonly originalRequest: IRequest,
+        resolvedUrl: IFluidResolvedUrl,
         logger?: ITelemetryBaseLogger,
     ) {
         super();
 
         const [, docId] = id.split("/");
         this._id = decodeURI(docId);
-        this._scopes = this.getScopes(options);
+        this._scopes = this.getScopes(resolvedUrl);
         this._audience = new Audience();
         this.canReconnect = !(originalRequest.headers && originalRequest.headers[LoaderHeader.reconnect] === false);
 
@@ -466,8 +471,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         let snapshot: ISnapshotTree | undefined;
         const blobs = new Map();
-        if (previousContextState) {
-            snapshot = buildSnapshotTree(previousContextState.entries, blobs);
+        if (previousContextState.snapshot) {
+            snapshot = buildSnapshotTree(previousContextState.snapshot.entries, blobs);
         }
 
         const storage = blobs.size > 0
@@ -480,7 +485,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             sequenceNumber: this._deltaManager.referenceSequenceNumber,
         };
 
-        await this.loadContext(attributes, storage, snapshot);
+        await this.loadContext(attributes, storage, snapshot, previousContextState);
 
         this.deltaManager.inbound.systemResume();
         this.deltaManager.inboundSignal.systemResume();
@@ -1101,9 +1106,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
     }
 
-    private getScopes(options: any): string[] {
-        return options && options.tokens && options.tokens.jwt ?
-            jwtDecode<ITokenClaims>(options.tokens.jwt).scopes : [];
+    private getScopes(resolvedUrl: IFluidResolvedUrl): string[] {
+        return resolvedUrl?.tokens?.jwt ?
+            jwtDecode<ITokenClaims>(resolvedUrl.tokens.jwt).scopes : [];
     }
 
     /**
@@ -1128,6 +1133,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         attributes: IDocumentAttributes,
         storage: IDocumentStorageService,
         snapshot?: ISnapshotTree,
+        previousRuntimeState: IRuntimeState = {},
     ) {
         this.pkg = this.getCodeDetailsFromQuorum();
         const chaincode = this.pkg ? await this.loadRuntimeFactory(this.pkg) : new NullChaincode();
@@ -1141,6 +1147,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.scope,
             this.codeLoader,
             chaincode,
+            // back-compat: 0.14 undefinedSnapshot
             snapshot || { id: null, blobs: {}, commits: {}, trees: {} },
             attributes,
             this.blobManager,
@@ -1154,6 +1161,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             async (message) => this.snapshot(message),
             (reason?: string) => this.close(reason),
             Container.version,
+            previousRuntimeState,
         );
 
         loader.resolveContainer(this);

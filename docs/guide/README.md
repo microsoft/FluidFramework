@@ -6,32 +6,59 @@ uid: get-started
 
 If you are new to the Fluid Framework, we recommend reading [What is Fluid?](../what-is-fluid.md) to orient yourself.
 
-The quickest way to get started with Fluid is to build a component. First, you'll need to clone the Fluid Framework
-repository and install [yo fluid](./yo-fluid.md).
+## Set up your development environment
 
-## Clone the Fluid repo
+First, you'll need to configure your development environment. You can use Visual Studio Code or your own custom
+development environment to build Fluid Framework solutions. You can use a Windows, macOS, or Linux.
 
-The repository is located at <https://github.com/Microsoft/FluidFramework/>.
+### Install developer tools
 
-::: important
-To gain access to the repo you must be part of the Microsoft organization on GitHub. You can do that by following the
-steps provided at [https://repos.opensource.microsoft.com/link](https://repos.opensource.microsoft.com/link).
+#### Install NodeJS
+
+Install NodeJS **version 10** or **version 12**.
+
+- If you are using Windows, you can use the msi installers
+  ([x86](https://nodejs.org/dist/latest-v10.x/node-v10.19.0-x86.msi) or
+  [x64](https://nodejs.org/dist/latest-v10.x/node-v10.19.0-x64.msi)) for the easiest way to set up NodeJS
+  (notice that these direct links evolve over time, so check the latest v10 from the above directory).
+- If you have NodeJS already installed, check that you have the correct version by using `node -v`. It should return
+  version 10.19.0 or 12.16.1.
+
+::: tip
+
+If you do not have NodeJS already installed, we stringly recommend using nvm to simplify installing and managing
+multiple NodeJS versions.
+
+* [nvm for Windows](https://github.com/coreybutler/nvm-windows)
+* [nvm for macOS/Linux](https://github.com/nvm-sh/nvm)
+
 :::
 
-After linking your accounts you should be added to the <https://github.com/orgs/Microsoft/teams/everyone> group which
-will grant you access to the Fluid Framework repo. If for some reason you are not automatically added to that group
-request to join at <https://repos.opensource.microsoft.com/Microsoft/teams/pragueread>.
+#### Install vsts-npm-auth (Windows only)
 
+If you are using Windows, install vsts-npm-auth globally using the following command:
 
-## Install and run yo fluid
+`npm install -g vsts-npm-auth --registry https://registry.npmjs.com --always-auth false`
 
-1. [Install and run yo fluid](./yo-fluid.md) to create a scaffold for your component, which you will build upon.
-1. While implementing your component, you'll [use Fluid's local dev server to test your
-   component.](./build-a-component.md#development-process)
-1. Once you're ready to share your component, you'll [publish it to
-   Verdaccio,](./build-a-component.md#publish-your-package) the Fluid team's local NPM repository.
-1. You can [use the Fluid Water Park](./water-park.md) to load any Fluid component from Verdaccio, including your own.
+This tool is used to simplify the use of [authenticated NPM feeds](./package-feed.md).
 
-## Useful stuff
+#### Install a code editor
 
-The Fluid packages are published to our [private NPM feed](../misc/package-feed.md)
+You can use any code editor or IDE that supports TypeScript to build with Fluid, such as:
+
+- [Visual Studio Code](https://code.visualstudio.com/)
+- [Atom](https://atom.io)
+- [Webstorm](https://www.jetbrains.com/webstorm)
+
+#### Install Git
+
+You'll need [Git](https://git-scm.com/) to use the [Fluid tutorials](../examples/README.md).
+
+#### Install a Chromium-based browser
+
+!!!include(../includes/browsers.md)!!!
+
+## Next steps
+
+Now that your development environment is set up, try [one of the tutorials](../examples/README.md), or read more about
+[distributed data structures](./dds.md) and the [Fluid component model](./components.md).

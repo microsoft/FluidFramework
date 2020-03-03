@@ -36,8 +36,8 @@ import {
     IEnvelope,
     IHostRuntime,
     IInboundSignalMessage,
-    ISummaryTracker,
 } from "@microsoft/fluid-runtime-definitions";
+import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
 
@@ -153,11 +153,26 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         public readonly existing: boolean,
         public readonly storage: IDocumentStorageService,
         public readonly scope: IComponent,
-        public readonly summaryTracker: ISummaryTracker,
+        public readonly summaryTracker: SummaryTracker,
         public readonly attach: (componentRuntime: IComponentRuntime) => void,
         protected pkg?: readonly string[],
     ) {
         super();
+
+        // back-compat: 0.14 uploadSummary
+        this.summaryTracker.addRefreshHandler(async () => {
+            // We do not want to get the snapshot unless we have to.
+            // If the component runtime is listening on refreshBaseSummary
+            // event, then that means it is older version and requires the
+            // component context to emit this event.
+            if (this.listeners("refreshBaseSummary")?.length > 0) {
+                const subtree = await this.summaryTracker.getSnapshotTree();
+                if (subtree) {
+                    // This subtree may not yet exist in acked summary, so only emit if found.
+                    this.emit("refreshBaseSummary", subtree);
+                }
+            }
+        });
     }
 
     public dispose(): void {
@@ -207,6 +222,17 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this.hostRuntime._createComponentWithProps(packagePath, props, id);
     }
 
+    public async rejectDeferredRealize(reason: string)
+    {
+        const error = new Error(reason);
+        // Error messages contain package names that is considered Personal Identifiable Information
+        // Mark it as such, so that if it ever reaches telemetry pipeline, it has a chance to remove it.
+        (error as any).containsPII = true;
+
+        this.componentRuntimeDeferred.reject(error);
+        return this.componentRuntimeDeferred.promise;
+    }
+
     public async realize(): Promise<IComponentRuntime> {
         if (!this.componentRuntimeDeferred) {
             this.componentRuntimeDeferred = new Deferred<IComponentRuntime>();
@@ -219,20 +245,23 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             let entry: ComponentRegistryEntry;
             let registry = this._hostRuntime.IComponentRegistry;
             let factory: IComponentFactory;
+            let lastPkg: string | undefined;
             for (const pkg of packages) {
                 if (!registry) {
-                    this.componentRuntimeDeferred.reject("Factory does not supply the component Registry");
-                    return this.componentRuntimeDeferred.promise;
+                    return this.rejectDeferredRealize(`No registry for ${lastPkg} package`);
                 }
+                lastPkg = pkg;
                 entry = await registry.get(pkg);
                 if (!entry) {
-                    this.componentRuntimeDeferred.reject(`Registry does not contain entry for package '${pkg}'`);
-                    return this.componentRuntimeDeferred.promise;
+                    return this.rejectDeferredRealize(`Registry does not contain entry for the package ${pkg}`);
                 }
                 factory = entry.IComponentFactory;
                 registry = entry.IComponentRegistry;
             }
 
+            if (factory === undefined) {
+                return this.rejectDeferredRealize(`Can't find factory for ${lastPkg} package`);
+            }
             // During this call we will invoke the instantiate method - which will call back into us
             // via the bindRuntime call to resolve componentRuntimeDeferred
             factory.instantiateComponent(this);
@@ -447,7 +476,7 @@ export class RemotedComponentContext extends ComponentContext {
         runtime: IHostRuntime,
         storage: IDocumentStorageService,
         scope: IComponent,
-        summaryTracker: ISummaryTracker,
+        summaryTracker: SummaryTracker,
         pkg?: string[],
     ) {
         super(
@@ -520,7 +549,7 @@ export class LocalComponentContext extends ComponentContext {
         runtime: IHostRuntime,
         storage: IDocumentStorageService,
         scope: IComponent,
-        summaryTracker: ISummaryTracker,
+        summaryTracker: SummaryTracker,
         attachCb: (componentRuntime: IComponentRuntime) => void,
         public readonly createProps?: any,
     ) {

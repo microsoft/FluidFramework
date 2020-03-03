@@ -68,14 +68,13 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
      * @param context - The component context
      * @param sharedObjectRegistry - The registry of shared objects used by this component
      * @param activeCallback - The callback called when the component runtime in active
-     * @param componentRegistry - The regisitry of components created and used by this component
+     * @param componentRegistry - The registry of components created and used by this component
      */
     public static load(
         context: IComponentContext,
         sharedObjectRegistry: ISharedObjectRegistry,
-        activeCallback: (runtime: ComponentRuntime) => void,
         componentRegistry?: IComponentRegistry,
-    ): void {
+    ): ComponentRuntime {
         const logger = ChildLogger.create(context.hostRuntime.logger, undefined, { componentId: context.id });
         const runtime = new ComponentRuntime(
             context,
@@ -95,7 +94,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
             logger);
 
         context.bindRuntime(runtime);
-        activeCallback(runtime);
+        return runtime;
     }
 
     public get IComponentRouter() { return this; }

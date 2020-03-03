@@ -25,8 +25,8 @@ export class Pollster extends PrimedComponent implements IComponentHTMLView {
     }
 
     public async render(div: HTMLDivElement) {
-        const optionsMap = await this.root.get<IComponentHandle>(pollOptionsMapKey).get<ISharedMap>();
-        const votersMap = await this.root.get<IComponentHandle>(pollVotersMapKey).get<ISharedMap>();
+        const optionsMap = await this.root.get<IComponentHandle<ISharedMap>>(pollOptionsMapKey).get();
+        const votersMap = await this.root.get<IComponentHandle<ISharedMap>>(pollVotersMapKey).get();
 
         // Render Component
         ReactDOM.render(

@@ -14,6 +14,7 @@ import {
     IContainerContext,
     IRuntime,
     IRuntimeFactory,
+    IRuntimeState,
 } from "@microsoft/fluid-container-definitions";
 import {
     ConnectionState,
@@ -63,8 +64,8 @@ class NullRuntime extends EventEmitter implements IRuntime {
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public stop(): Promise<void> {
-        return Promise.resolve();
+    public stop(): Promise<IRuntimeState> {
+        return Promise.resolve({});
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async

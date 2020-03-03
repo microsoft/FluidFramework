@@ -49,8 +49,8 @@ export class Canvas extends PrimedComponent implements IComponentHTMLView {
 
     protected async componentHasInitialized() {
         // Wait here for the ink
-        const handle = await this.root.wait<IComponentHandle>("pageInk");
-        this.ink = await handle.get<IInk>();
+        const handle = await this.root.wait<IComponentHandle<IInk>>("pageInk");
+        this.ink = await handle.get();
     }
 
     private createCanvasDom() {

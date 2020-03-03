@@ -69,7 +69,7 @@ export abstract class PrimedComponent extends SharedComponent {
      * on map doing proper snapshot blob partitioning to reuse non-changing big properties.
      * In future blobs would be implemented as first class citizen, using blob storage APIs
      */
-    protected async writeBlob(blob: string): Promise<IComponentHandle> {
+    protected async writeBlob(blob: string): Promise<IComponentHandle<string>> {
         this.runtime.logger.sendTelemetryEvent({
             eventName: "WriteBlob",
             size: blob.length,

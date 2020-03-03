@@ -4,7 +4,7 @@
  */
 
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import * as map from "@microsoft/fluid-map";
+import { ISharedMap } from "@microsoft/fluid-map";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import * as Sequence from "@microsoft/fluid-sequence";
@@ -15,10 +15,10 @@ export class SharedStringTranslator {
     private translating = false;
     // eslint-disable-next-line no-null/no-null
     private translationTimer: NodeJS.Timeout | null = null;
-    private typeInsights!: map.ISharedMap;
+    private typeInsights!: ISharedMap;
 
     constructor(
-        private readonly insights: map.ISharedMap,
+        private readonly insights: ISharedMap,
         private readonly sharedString: Sequence.SharedString,
         private readonly apiKey: string) {
     }
@@ -28,8 +28,8 @@ export class SharedStringTranslator {
     }
 
     public async start(): Promise<void> {
-        const handle = await this.insights.wait<IComponentHandle>(this.sharedString.id);
-        this.typeInsights = await handle.get<map.ISharedMap>();
+        const handle = await this.insights.wait<IComponentHandle<ISharedMap>>(this.sharedString.id);
+        this.typeInsights = await handle.get();
 
         this.sharedString.on("op", (op: ISequencedDocumentMessage) => {
             if (this.needsTranslation(op)) {

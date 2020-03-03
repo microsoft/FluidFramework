@@ -19,6 +19,7 @@ import {
     ILoader,
     IRuntime,
     IRuntimeFactory,
+    IRuntimeState,
 } from "@microsoft/fluid-container-definitions";
 import { IDocumentStorageService, IError } from "@microsoft/fluid-driver-definitions";
 import { raiseConnectedEvent } from "@microsoft/fluid-protocol-base";
@@ -57,6 +58,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         snapshotFn: (message: string) => Promise<void>,
         closeFn: (reason?: string) => void,
         version: string,
+        previousRuntimeState: IRuntimeState,
     ): Promise<ContainerContext> {
         const context = new ContainerContext(
             container,
@@ -75,7 +77,8 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
             submitSignalFn,
             snapshotFn,
             closeFn,
-            version);
+            version,
+            previousRuntimeState);
         await context.load();
 
         return context;
@@ -172,6 +175,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         public readonly snapshotFn: (message: string) => Promise<void>,
         public readonly closeFn: () => void,
         public readonly version: string,
+        public readonly previousRuntimeState: IRuntimeState,
     ) {
         super();
         this.logger = container.subLogger;
@@ -231,8 +235,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public reloadContext(): Promise<void> {
+    public async reloadContext(): Promise<void> {
         return this.container.reloadContext();
     }
 

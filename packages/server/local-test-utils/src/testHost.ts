@@ -55,7 +55,9 @@ class TestRootComponent extends PrimedComponent implements IComponentRunnable {
     public run = () => Promise.resolve();
 
     // Make this function public so TestHost can use them
-    public async createAndAttachComponent<T>(id: string, type: string, props?: any): Promise<T> {
+    public async createAndAttachComponent<T extends IComponentLoadable>(
+        id: string, type: string, props?: any,
+    ): Promise<T> {
         return super.createAndAttachComponent<T>(id, type, props);
     }
 
@@ -86,8 +88,8 @@ class TestRootComponent extends PrimedComponent implements IComponentRunnable {
      * @param id - ID of shared object
      */
     public async getType<T extends ISharedObject>(id: string): Promise<T> {
-        const handle = await this.root.wait<IComponentHandle>(id);
-        return handle.get<T>();
+        const handle = await this.root.wait<IComponentHandle<T>>(id);
+        return handle.get();
     }
 
     /**

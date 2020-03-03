@@ -82,6 +82,7 @@ async function main() {
                 "---",
                 `id: ${id}`,
                 `title: ${title}`,
+                `editLink: false # Will overwrite 'editLinks' from themeConfig`,
                 // `hide_title: true`,
                 "---"
             ];
