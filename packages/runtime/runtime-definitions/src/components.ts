@@ -297,13 +297,6 @@ export interface IComponentContext extends EventEmitter {
     createComponent(pkgOrId: string | undefined, pkg?: string, props?: any): Promise<IComponentRuntime>;
 
     /**
-     * Returns the runtime of the component.
-     * @param id - Id supplied during creating the component.
-     * @param wait - True if you want to wait for it.
-     */
-    getComponentRuntime(id: string, wait: boolean): Promise<IComponentRuntime>;
-
-    /**
      * Make request to the component.
      * @param request - Request.
      */
