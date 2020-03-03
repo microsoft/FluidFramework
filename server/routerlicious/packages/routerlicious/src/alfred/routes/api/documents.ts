@@ -58,7 +58,7 @@ export function create(storage: IDocumentStorage, appTenants: IAlfredTenant[]): 
     });
 
     /**
-     * Creates a new fork for the specified document
+     * Creates a new document with initial summary.
      */
     router.post("/:tenantId", (request, response, next) => {
         // Tenant and document
