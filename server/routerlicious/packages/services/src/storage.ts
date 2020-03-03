@@ -32,6 +32,7 @@ import {
 } from "@microsoft/fluid-server-services-core";
 import * as moniker from "moniker";
 import * as winston from "winston";
+import { gitHashFile } from "@microsoft/fluid-common-utils";
 
 const StartingSequenceNumber = 0;
 // Disabling so can tag inline but keep strong typing
@@ -83,7 +84,8 @@ export class DocumentStorage implements IDocumentStorage, IExperimentalDocumentS
             sequenceNumber,
         };
 
-        const handle = await this.writeSummaryObject(gitManager, summary, "");
+        const blobsShaCache = new Set<string>();
+        const handle = await this.writeSummaryObject(gitManager, summary, blobsShaCache);
 
         const entries: ITreeEntry[] = [
             {
@@ -420,15 +422,20 @@ export class DocumentStorage implements IDocumentStorage, IExperimentalDocumentS
     private async writeSummaryObject(
         gitManager: IGitManager,
         value: SummaryObject,
-        path: string,
+        blobsShaCache: Set<string>,
     ): Promise<string> {
         switch (value.type) {
             case SummaryType.Blob: {
                 const content = typeof value.content === "string" ? value.content : value.content.toString("base64");
                 const encoding = typeof value.content === "string" ? "utf-8" : "base64";
 
-                const blob = await gitManager.createBlob(content, encoding);
-                return blob.sha;
+                // The gitHashFile would return the same hash as returned by the server for blob.sha
+                const hash = gitHashFile(Buffer.from(content, encoding));
+                if (!blobsShaCache.has(hash)) {
+                    const blob = await gitManager.createBlob(content, encoding);
+                    blobsShaCache.add(blob.sha);
+                }
+                return hash;
             }
             case SummaryType.Tree: {
                 const fullTree = value.tree;
@@ -437,7 +444,7 @@ export class DocumentStorage implements IDocumentStorage, IExperimentalDocumentS
                     const pathHandle = await this.writeSummaryObject(
                         gitManager,
                         entry,
-                        `${path}/${encodeURIComponent(key)}`);
+                        blobsShaCache);
                     const treeEntry: ICreateTreeEntry = {
                         mode: this.getGitMode(entry),
                         path: encodeURIComponent(key),
