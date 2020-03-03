@@ -13,15 +13,22 @@ import {
 import { IPackage } from "@microsoft/fluid-container-definitions";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import * as uuid from "uuid";
+import { IComponentCallable } from "@fluid-example/spaces";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pkg = require("../../package.json") as IPackage;
 export const WaterParkLoaderName = `${pkg.name}-loader`;
 
+export interface ComponentLoaderCallbacks {
+    addComponent?(type: string, w?: number, h?: number): void;
+    saveLayout?(): void;
+    toggleEditable?(isEditable: boolean): void;
+}
+
 /**
  * Component that loads extneral components via their url
  */
-export class ExternalComponentLoader extends PrimedComponent implements IComponentHTMLView {
+export class ExternalComponentLoader extends PrimedComponent implements IComponentHTMLView, IComponentCallable<ComponentLoaderCallbacks> {
 
     private static readonly defaultComponents = [
         "@fluid-example/todo",
@@ -37,6 +44,7 @@ export class ExternalComponentLoader extends PrimedComponent implements ICompone
 
     private savedElement: HTMLElement;
     private error: string;
+    private callbacks: ComponentLoaderCallbacks;
 
     public get IComponentHTMLView() { return this; }
 
@@ -45,6 +53,10 @@ export class ExternalComponentLoader extends PrimedComponent implements ICompone
     public setViewComponent(component: IComponentLoadable) {
         this.root.set(this.viewComponentMapID, component.IComponentLoadable.url);
         this.viewComponentP = Promise.resolve(component);
+    }
+
+    public setComponentCallbacks(callbacks: ComponentLoaderCallbacks) {
+        this.callbacks = callbacks;
     }
 
     public render(element: HTMLElement) {
@@ -95,7 +107,7 @@ export class ExternalComponentLoader extends PrimedComponent implements ICompone
             const editableButton = document.createElement("button");
             inputDiv.append(editableButton);
             editableButton.textContent = "Toggle Edit";
-            editableButton.onclick = () => this.emit("toggleEditable");
+            editableButton.onclick = () => this.callbacks.toggleEditable();
 
             if (this.error) {
                 const errorDiv = document.createElement("div");
