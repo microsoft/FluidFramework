@@ -573,7 +573,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             "",
             this,
             expContainerContext.isExperimentalContainerContext ? expContainerContext.isAttached() : true);
-        
+
         // useContext - back-compat: 0.14 uploadSummary
         let useContext: boolean;
         if (expContainerContext.isExperimentalContainerContext) {
