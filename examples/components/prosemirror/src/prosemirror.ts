@@ -177,16 +177,16 @@ class ProseMirrorFactory implements IComponentFactory {
         dataTypes.set(mapFactory.type, mapFactory);
         dataTypes.set(sequenceFactory.type, sequenceFactory);
 
-        ComponentRuntime.load(
+        const runtime = ComponentRuntime.load(
             context,
             dataTypes,
-            (runtime) => {
-                const proseMirrorP = ProseMirror.load(runtime, context);
-                runtime.registerRequestHandler(async (request: IRequest) => {
-                    const proseMirror = await proseMirrorP;
-                    return proseMirror.request(request);
-                });
-            });
+        );
+
+        const proseMirrorP = ProseMirror.load(runtime, context);
+        runtime.registerRequestHandler(async (request: IRequest) => {
+            const proseMirror = await proseMirrorP;
+            return proseMirror.request(request);
+        });
     }
 }
 

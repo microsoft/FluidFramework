@@ -22,7 +22,7 @@ import { IOdspResolvedUrl, ISocketStorageDiscovery } from "./contracts";
 import { createNewFluidFile } from "./createFile";
 import { debug } from "./debug";
 import { IFetchWrapper } from "./fetchWrapper";
-import { OdspCache } from "./odspCache";
+import { IOdspCache } from "./odspCache";
 import { OdspDeltaStorageService } from "./odspDeltaStorageService";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
 import { OdspDocumentStorageManager } from "./odspDocumentStorageManager";
@@ -53,10 +53,8 @@ export class OdspDocumentService implements IDocumentService {
      * @param storageFetchWrapper - if not provided FetchWrapper will be used
      * @param deltasFetchWrapper - if not provided FetchWrapper will be used
      * @param socketIOClientP - promise to the socket io library required by the driver
-     * @param odspCache - This caches response for joinSession.
+     * @param cache - This caches response for joinSession.
      * @param newFileInfoPromise - promise to supply info needed to create a new file.
-     * New file is not created until this promise resolves.
-     * @param fileInfoToCreateNewResponseCache - This caches response of new file creation.
      */
     public static async create(
         appId: string,
@@ -67,16 +65,15 @@ export class OdspDocumentService implements IDocumentService {
         storageFetchWrapper: IFetchWrapper,
         deltasFetchWrapper: IFetchWrapper,
         socketIOClientP: Promise<SocketIOClientStatic>,
-        odspCache: OdspCache,
+        cache: IOdspCache,
         isFirstTimeDocumentOpened = true,
-        fileInfoToCreateNewResponseCache = new OdspCache(),
     ): Promise<IDocumentService> {
         let odspResolvedUrl: IOdspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
         if (odspResolvedUrl.openMode === OpenMode.CreateNew && odspResolvedUrl.newFileInfoPromise) {
             odspResolvedUrl = await createNewFluidFile(
                 getStorageToken,
                 odspResolvedUrl.newFileInfoPromise,
-                fileInfoToCreateNewResponseCache);
+                cache);
         }
         return new OdspDocumentService(
             appId,
@@ -91,7 +88,7 @@ export class OdspDocumentService implements IDocumentService {
             storageFetchWrapper,
             deltasFetchWrapper,
             socketIOClientP,
-            odspCache,
+            cache,
             isFirstTimeDocumentOpened,
         );
     }
@@ -139,7 +136,7 @@ export class OdspDocumentService implements IDocumentService {
         private readonly storageFetchWrapper: IFetchWrapper,
         private readonly deltasFetchWrapper: IFetchWrapper,
         private readonly socketIOClientP: Promise<SocketIOClientStatic>,
-        private readonly odspCache: OdspCache,
+        private readonly cache: IOdspCache,
         private readonly isFirstTimeDocumentOpened = true,
     ) {
 
@@ -204,7 +201,7 @@ export class OdspDocumentService implements IDocumentService {
             this.getStorageToken,
             this.logger,
             true,
-            this.odspCache,
+            this.cache,
             this.isFirstTimeDocumentOpened,
         );
 
@@ -268,7 +265,7 @@ export class OdspDocumentService implements IDocumentService {
                 websocketEndpoint.deltaStreamSocketUrl,
                 websocketEndpoint.deltaStreamSocketUrl2,
             ).catch((error) => {
-                this.odspCache.remove(this.joinSessionKey);
+                this.cache.sessionStorage.remove(this.joinSessionKey);
                 throw error;
             });
         });
@@ -296,7 +293,7 @@ export class OdspDocumentService implements IDocumentService {
             this.siteUrl,
             this.logger,
             this.getStorageToken,
-            this.odspCache,
+            this.cache,
             this.joinSessionKey);
 
         try {

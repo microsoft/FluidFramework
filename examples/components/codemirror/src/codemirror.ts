@@ -264,16 +264,15 @@ class SmdeFactory implements IComponentFactory {
         dataTypes.set(mapFactory.type, mapFactory);
         dataTypes.set(sequenceFactory.type, sequenceFactory);
 
-        ComponentRuntime.load(
+        const runtime = ComponentRuntime.load(
             context,
-            dataTypes,
-            (runtime) => {
-                const progressCollectionP = CodeMirrorComponent.load(runtime, context);
-                runtime.registerRequestHandler(async (request: IRequest) => {
-                    const progressCollection = await progressCollectionP;
-                    return progressCollection.request(request);
-                });
-            });
+            dataTypes);
+
+        const progressCollectionP = CodeMirrorComponent.load(runtime, context);
+        runtime.registerRequestHandler(async (request: IRequest) => {
+            const progressCollection = await progressCollectionP;
+            return progressCollection.request(request);
+        });
     }
 }
 

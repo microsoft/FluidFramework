@@ -32,7 +32,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     public get IComponentHandle() { return this.innerHandle; }
 
     /**
-     * {@inheritDoc IComponentHandle.handle}
+     * Handle to a shared component
      */
     public get handle(): IComponentHandle<this> { return this.innerHandle; }
 
@@ -82,7 +82,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     // #region IComponentLoadable
 
     /**
-     * {@inheritDoc IComponentLoadable.url}
+     * Absolute URL to the component within the document
      */
     public get url() { return this.context.id; }
 
@@ -157,7 +157,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
      */
     protected async getService<T extends IComponent>(id: string): Promise<T> {
         const request = {
-            url:`/${serviceRoutePathRoot}/${id}`,
+            url: `/${serviceRoutePathRoot}/${id}`,
         };
 
         return this.asComponent<T>(this.context.hostRuntime.request(request));
