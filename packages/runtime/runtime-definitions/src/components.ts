@@ -232,7 +232,7 @@ export interface ISummaryTracker {
 /**
  * Represents the context for the component. This context is passed to the component runtime.
  */
-export interface IComponentContext extends EventEmitter, IDisposable {
+export interface IComponentContext extends EventEmitter {
     readonly documentId: string;
     readonly id: string;
     /**

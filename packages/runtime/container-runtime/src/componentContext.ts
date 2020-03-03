@@ -5,6 +5,7 @@
 
 import * as assert from "assert";
 import { EventEmitter } from "events";
+import { IDisposable } from "@microsoft/fluid-common-definitions";
 import { IComponent, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
     IAudience,
@@ -61,7 +62,7 @@ interface ISnapshotDetails {
 /**
  * Represents the context for the component. This context is passed to the component runtime.
  */
-export abstract class ComponentContext extends EventEmitter implements IComponentContext {
+export abstract class ComponentContext extends EventEmitter implements IComponentContext, IDisposable {
     public get documentId(): string {
         return this._hostRuntime.id;
     }
