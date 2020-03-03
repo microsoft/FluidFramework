@@ -4,7 +4,7 @@
  */
 
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { IProvideComponentFactory } from "./componentFactory";
+import { IProvideComponentFactory } from "@microsoft/fluid-runtime-definitions";
 
 declare module "@microsoft/fluid-component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface

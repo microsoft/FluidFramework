@@ -77,8 +77,8 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView, IComp
 
     protected async componentInitializingFirstTime(props?: any) {
         this.root.createSubDirectory("component-list");
-        await this.initializeDataModel();
         this.root.set("componentToolbarId", this.componentToolbarId);
+        this.initializeDataModel();
         this.componentToolbar =
             await this.dataModel.addComponent<ComponentToolbar>(
                 ComponentToolbarName,

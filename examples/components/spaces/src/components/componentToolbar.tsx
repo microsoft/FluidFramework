@@ -8,9 +8,10 @@ import {
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import {
-    IComponentHTMLView, IComponent, IComponentCallable,
+    IComponentHTMLView,
+    IComponent,
+    IComponentCallable,
 } from "@microsoft/fluid-component-core-interfaces";
-import { IContainerComponentDetails } from "@microsoft/fluid-runtime-definitions";
 import {
     DefaultButton as Button,
     initializeIcons,
@@ -19,7 +20,7 @@ import { ISharedDirectory } from "@microsoft/fluid-map";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { InternalRegistry } from "..";
+import { InternalRegistry, IContainerComponentDetails } from "..";
 
 const componentToolbarStyle: React.CSSProperties = { position: "absolute", top: 10, left: 10, zIndex: 1000 };
 
@@ -54,8 +55,10 @@ export class ComponentToolbar extends PrimedComponent implements IComponentHTMLV
         const registry = await this.context.hostRuntime.IComponentRegistry.get("");
         if (registry) {
             const registryDetails = (registry as IComponent).IComponentRegistryDetails;
-            this.supportedComponentList = (registryDetails as InternalRegistry)
-                .getFromCapabilities("IComponentHTMLVisual");
+            if (registryDetails) {
+                this.supportedComponentList = (registryDetails as InternalRegistry)
+                    .getFromCapabilities("IComponentHTMLView");
+            }
         }
     }
 
@@ -120,12 +123,6 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
         }
     }
 
-    public emitSaveLayout() {
-        if (this.props.callbacks.saveLayout) {
-            this.props.callbacks.saveLayout();
-        }
-    }
-
     public emitToggleEditable() {
         const newIsEditable = !this.state.isEditable;
         this.setState({ isEditable: newIsEditable });
@@ -159,12 +156,6 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
                     {`Edit: ${this.state.isEditable}`}
                 </Button>
                 {this.state.isEditable ? editableButtons : undefined}
-                <Button
-                    iconProps={{ iconName: "Save" }}
-                    onClick={() => this.emitSaveLayout()}
-                >
-                    {"Save Layout"}
-                </Button>
             </div>
         );
     }

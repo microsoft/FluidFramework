@@ -4,19 +4,24 @@
  */
 
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
-
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
+import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
+import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
 import {
     IProvideComponentFactory,
     NamedComponentRegistryEntries,
     IComponentRegistry,
-    IContainerComponentDetails,
 } from "@microsoft/fluid-runtime-definitions";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+
+import {
+    IContainerComponentDetails,
+} from "./componentRegistryDetails";
 
 export * from "./spaces";
 export * from "./components";
 export * from "./interfaces";
+export * from "./componentRegistryDetails";
 
 import {
     ComponentToolbar,
@@ -71,35 +76,49 @@ const generateFactory = () => {
             factory: Promise.resolve(ClickerInstantiationFactory),
             friendlyName: "Clicker",
             fabricIconName: "Touch",
-            capabilities: ["IComponentHTMLVisual"],
+            capabilities: ["IComponentHTMLView"],
         },
         {
             type: ButtonName as string,
             factory: Promise.resolve(Button.getFactory()),
             friendlyName: FriendlyButtonName,
             fabricIconName: "ButtonControl",
-            capabilities: ["IComponentHTMLVisual"],
+            capabilities: ["IComponentHTMLView"],
         },
         {
             type: NumberName as string,
             factory: Promise.resolve(Number.getFactory()),
             friendlyName: FriendlyNumberName,
             fabricIconName: "NumberField",
-            capabilities: ["IComponentHTMLVisual"],
+            capabilities: ["IComponentHTMLView"],
         },
         {
             type: FacePileName as string,
             factory: Promise.resolve(FacePile.getFactory()),
             friendlyName: FriendlyFacePileName,
             fabricIconName: "People",
-            capabilities: ["IComponentHTMLVisual"],
+            capabilities: ["IComponentHTMLView"],
         },
         {
             type: TextBoxName as string,
             factory: Promise.resolve(TextBox.getFactory()),
             friendlyName: FriendlyTextBoxName,
             fabricIconName: "TextField",
-            capabilities: ["IComponentHTMLVisual"],
+            capabilities: ["IComponentHTMLView"],
+        },
+        {
+            type: "codemirror",
+            factory: Promise.resolve(cmfe),
+            friendlyName: "Code Mirror",
+            fabricIconName: "Code",
+            capabilities: ["IComponentHTMLView"],
+        },
+        {
+            type: "prosemirror",
+            factory: Promise.resolve(pmfe),
+            friendlyName: "Prose Mirror",
+            fabricIconName: "Edit",
+            capabilities: ["IComponentHTMLView"],
         },
     ];
 
