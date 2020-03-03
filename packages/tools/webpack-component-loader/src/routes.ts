@@ -32,7 +32,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
             options.tenantId = options.tenantId || config.get("fluid:webpack:tenantId") || "fluid";
             if (options.mode === "docker") {
                 options.tenantSecret = options.tenantSecret
-                    || config.get("fluid:webpack:dockerTenantSecret")
+                    || config.get("fluid:webpack:docker:tenantSecret")
                     || "create-new-tenants-if-going-to-production";
             } else {
                 options.tenantSecret = options.tenantSecret || config.get("fluid:webpack:tenantSecret");
