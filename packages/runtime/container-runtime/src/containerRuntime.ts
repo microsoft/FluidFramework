@@ -572,10 +572,15 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.IComponentHandleContext = new ComponentHandleContext(
             "",
             this,
-            expContainerContext ? expContainerContext.isAttached() : true);
-
+            expContainerContext.isExperimentalContainerContext ? expContainerContext.isAttached() : true);
+        
         // useContext - back-compat: 0.14 uploadSummary
-        const useContext = this.storage?.uploadSummaryWithContext !== undefined;
+        let useContext: boolean;
+        if (expContainerContext.isExperimentalContainerContext) {
+            useContext = true;
+        } else {
+            useContext = this.storage.uploadSummaryWithContext !== undefined;
+        }
         this.latestSummaryAck = { proposalHandle: undefined, ackHandle: undefined };
         this.summaryTracker = new SummaryTracker(
             useContext,
@@ -853,16 +858,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         if (!wait && !deferredContext.isCompleted) {
             return Promise.reject(`Process ${id} does not exist`);
-        }
-
-        // If the component is unattached, then the context deferred promise hasn't been resolved yet.
-        // So we can realize the stored context to get the component runtime.
-        if (!(this.context as IExperimentalContainerContext).isAttached()) {
-            const compContext = this.contexts.get(id);
-            if (!compContext) {
-                throw new Error(`Process ${id} does not exist`);
-            }
-            return compContext.realize();
         }
 
         const componentContext = await deferredContext.promise;
@@ -1145,13 +1140,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     public async attachAndSummarize(): Promise<ISummaryTree> {
-        // Trigger an attach on all bound contexts
-        for (const [componentId] of this.contextsDeferred) {
-            const componentRuntime = await this.getComponentRuntime(componentId, false);
-            if (!componentRuntime.isAttached) {
-                componentRuntime.attach();
-            }
-        }
         this.IComponentHandleContext.attach();
 
         const treeWithStats = await this.summarize(true);

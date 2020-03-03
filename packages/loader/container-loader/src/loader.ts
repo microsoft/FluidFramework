@@ -18,7 +18,6 @@ import {
     LoaderHeader,
     IFluidCodeDetails,
     IExperimentalLoader,
-    IExperimentalContainer,
 } from "@microsoft/fluid-container-definitions";
 import { Deferred } from "@microsoft/fluid-common-utils";
 import {
@@ -66,11 +65,6 @@ export class RelativeLoader extends EventEmitter implements ILoader {
 
     public async request(request: IRequest): Promise<IResponse> {
         if (request.url.startsWith("/")) {
-            const expContainer = (await this.containerDeferred.promise) as IExperimentalContainer;
-            if (expContainer?.isExperimentalContainer) {
-                return (expContainer as Container).request(request);
-            }
-
             if (this.needExecutionContext(request)) {
                 if (!this.baseRequest) {
                     throw new Error("Base Request is not provided");

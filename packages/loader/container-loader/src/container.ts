@@ -72,7 +72,6 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import * as jwtDecode from "jwt-decode";
 import { Audience } from "./audience";
-import { BlobCacheStorageService } from "./blobCacheStorageService";
 import { BlobManager } from "./blobManager";
 import { ContainerContext } from "./containerContext";
 import { debug } from "./debug";
@@ -83,6 +82,7 @@ import { NullChaincode } from "./nullRuntime";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 import { parseUrl } from "./utils";
+import { BlobCacheStorageService } from "./blobCacheStorageService";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const performanceNow = require("performance-now") as (() => number);
@@ -172,7 +172,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             loader,
             logger);
         container.factoryProvider = factoryProvider;
-        await container.createInDetachedState(source);
+        await container.createDetached(source);
 
         return container;
     }
@@ -183,17 +183,19 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     private pendingClientId: string | undefined;
     private loaded = false;
+    private attached = false;
     private blobManager: BlobManager | undefined;
 
     // Active chaincode and associated runtime
     private storageService: IDocumentStorageService | undefined | null;
+    private blobsCacheStorageService: IDocumentStorageService | undefined;
 
     private _version: string | undefined;
     private _clientId: string | undefined;
     private _scopes: string[] | undefined;
     private readonly _deltaManager: DeltaManager;
     private _existing: boolean | undefined;
-    private _id: string = "";
+    private _id: string | undefined;
     private originalRequest: IRequest | undefined;
     private service: IDocumentService | undefined;
     private factoryProvider: ((resolvedUrl: IFluidResolvedUrl) => IDocumentServiceFactory) | undefined;
@@ -224,6 +226,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
 
     public get id(): string {
+        if (!this._id) {
+            throw new Error("No id generated yet!!");
+        }
         return this._id;
     }
 
@@ -400,7 +405,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
 
     public isAttached(): boolean {
-        return this.loaded;
+        return this.attached;
     }
 
     public async attach(resolver: IUrlResolver, request: IRequest): Promise<void> {
@@ -446,7 +451,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         if (!parsedUrl) {
             throw new Error("Unable to parse Url");
         }
-        this._id = parsedUrl.id;
+        this._id = decodeURI(parsedUrl.id);
 
         this.storageService = await this.getDocumentStorageService();
 
@@ -454,7 +459,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // there just isn't a blob manager
         this.blobManager = await this.loadBlobManager(this.storageService, undefined);
 
-        this.loaded = true;
+        this.attached = true;
 
         const startConnectionP = this.connectToDeltaStream();
         startConnectionP.catch((error) => {
@@ -517,7 +522,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
 
     public get storage(): IDocumentStorageService | null | undefined {
-        return this.storageService;
+        return this.blobsCacheStorageService || this.storageService;
     }
 
     public raiseCriticalError(error: IError) {
@@ -555,17 +560,16 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             snapshot = buildSnapshotTree(previousContextState.snapshot.entries, blobs);
         }
 
-        const storage = blobs.size > 0
-            ? new BlobCacheStorageService(this.storageService!, blobs)
-            : this.storageService!;
-
+        if (blobs.size > 0) {
+            this.blobsCacheStorageService = new BlobCacheStorageService(this.storageService!, blobs);
+        }
         const attributes: IDocumentAttributes = {
             branch: this.id,
             minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
             sequenceNumber: this._deltaManager.referenceSequenceNumber,
         };
 
-        await this.loadContext(attributes, storage, snapshot, previousContextState);
+        await this.loadContext(attributes, snapshot, previousContextState);
 
         this.deltaManager.inbound.systemResume();
         this.deltaManager.inboundSignal.systemResume();
@@ -703,6 +707,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
 
         this.storageService = await this.getDocumentStorageService();
+        this.attached = true;
 
         // Fetch specified snapshot, but intentionally do not load from snapshot if specifiedVersion is null
         const maybeSnapshotTree = specifiedVersion === null ? undefined
@@ -751,7 +756,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // instantiateRuntime which will want to know existing state.  Wait for these promises to finish.
         [this.blobManager, this.protocolHandler] = await Promise.all([blobManagerP, protocolHandlerP, loadDetailsP]);
 
-        await this.loadContext(attributes, this.storageService, maybeSnapshotTree);
+        await this.loadContext(attributes, maybeSnapshotTree);
 
         this.context!.changeConnectionState(this.connectionState, this.clientId!, this._version);
 
@@ -774,9 +779,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
     }
 
-    private async createInDetachedState(source: IFluidCodeDetails) {
-        const perfEvent = PerformanceEvent.start(this.logger, { eventName: "Create" });
-
+    private async createDetached(source: IFluidCodeDetails) {
         const attributes: IDocumentAttributes = {
             branch: "",
             sequenceNumber: 0,
@@ -806,9 +809,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             values);
 
         // The load context - given we seeded the quorum - will be great
-        await this.createContext(attributes);
-
-        perfEvent.end();
+        await this.createDetachedContext(attributes);
+        this.loaded = true;
     }
 
     private async getDocumentStorageService(): Promise<IDocumentStorageService> {
@@ -1266,7 +1268,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     private async loadContext(
         attributes: IDocumentAttributes,
-        storage: IDocumentStorageService,
         snapshot?: ISnapshotTree,
         previousRuntimeState: IRuntimeState = {},
     ) {
@@ -1305,7 +1306,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     /**
      * Creates a new, unattached container context
      */
-    private async createContext(attributes: IDocumentAttributes) {
+    private async createDetachedContext(attributes: IDocumentAttributes) {
         this.pkg = this.getCodeDetailsFromQuorum();
         const chaincode = this.pkg ? await this.loadRuntimeFactory(this.pkg) : new NullChaincode();
 

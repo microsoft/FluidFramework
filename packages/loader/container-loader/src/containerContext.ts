@@ -204,8 +204,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext,
         if (!expRuntime?.isExperimentalRuntime) {
             throw new Error("Runtime has no experimental features");
         }
-        const tree = await expRuntime.attachAndSummarize();
-        return tree;
+        return expRuntime.attachAndSummarize();
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string, version?: string) {
