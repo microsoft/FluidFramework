@@ -341,6 +341,7 @@ module.exports = {
                         "singletons",
                     ]
                 },
+                "dice-roller",
                 "sudoku",
                 "badge",
             ],
