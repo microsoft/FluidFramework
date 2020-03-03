@@ -46,7 +46,8 @@ export class ComponentToolbar extends PrimedComponent implements IComponentHTMLV
         if (registry) {
             const registryDetails = (registry as IComponent).IComponentRegistryDetails;
             if (registryDetails) {
-                this.supportedComponentList = (registryDetails as InternalRegistry).getFromCapabilities("IComponentHTMLView");
+                this.supportedComponentList = (registryDetails as InternalRegistry)
+                    .getFromCapabilities("IComponentHTMLView");
             }
         }
     }

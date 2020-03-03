@@ -47,7 +47,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
 
     protected async componentInitializingFirstTime(props?: any) {
         this.root.createSubDirectory("component-list");
-        await this.initializeDataModel();
+        this.initializeDataModel();
         this.componentToolbar =
             await this.dataModel.addComponent<ComponentToolbar>(
                 ComponentToolbarName,
@@ -63,18 +63,8 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
     }
 
     protected async componentInitializingFromExisting() {
-        await this.initializeDataModel();
+        this.initializeDataModel();
         this.componentToolbar = await this.getComponent<ComponentToolbar>(Spaces.componentToolbarId);
-    }
-
-    private async initializeDataModel() {
-        this.dataModelInternal =
-            new SpacesDataModel(
-                this.root,
-                this.createAndAttachComponent.bind(this),
-                this.getComponent.bind(this),
-                Spaces.componentToolbarId,
-            );
     }
 
     protected async componentHasInitialized() {
@@ -88,6 +78,16 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
             });
             this.componentToolbar.changeEditState(this.dataModel.componentList.size - 1 === 0);
         }
+    }
+
+    private initializeDataModel() {
+        this.dataModelInternal =
+            new SpacesDataModel(
+                this.root,
+                this.createAndAttachComponent.bind(this),
+                this.getComponent.bind(this),
+                Spaces.componentToolbarId,
+            );
     }
 
     /**
