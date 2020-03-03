@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import * as React from "react";
+import * as ReactDOM from "react-dom";
 import {
     PrimedComponent,
     PrimedComponentFactory,
@@ -10,17 +12,17 @@ import {
 import {
     IComponentHTMLView,
     IComponent,
-    IComponentCallable,
 } from "@microsoft/fluid-component-core-interfaces";
 import {
     DefaultButton as Button,
     initializeIcons,
 } from "office-ui-fabric-react";
 import { ISharedDirectory } from "@microsoft/fluid-map";
-
-import * as React from "react";
-import * as ReactDOM from "react-dom";
-import { InternalRegistry, IContainerComponentDetails } from "..";
+import {
+    InternalRegistry,
+    IContainerComponentDetails,
+    IComponentCallable,
+} from "..";
 
 const componentToolbarStyle: React.CSSProperties = { position: "absolute", top: 10, left: 10, zIndex: 1000 };
 
@@ -37,7 +39,8 @@ export interface ComponentToolbarCallbacks {
 /**
  * A component to allow you to add and manipulate components
  */
-export class ComponentToolbar extends PrimedComponent implements IComponentHTMLView, IComponentCallable<ComponentToolbarCallbacks> {
+export class ComponentToolbar extends PrimedComponent
+    implements IComponentHTMLView, IComponentCallable<ComponentToolbarCallbacks> {
     public get IComponentHTMLView() { return this; }
     public get IComponentCallable() { return this; }
 
@@ -100,7 +103,7 @@ interface IComponentToolbarViewState {
     isEditable: boolean;
 }
 
-class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, IComponentToolbarViewState>{
+class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, IComponentToolbarViewState> {
 
     private readonly supportedComponentList: IContainerComponentDetails[];
 

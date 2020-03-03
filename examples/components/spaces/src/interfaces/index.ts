@@ -3,4 +3,5 @@
  * Licensed under the MIT License.
  */
 
- export * from "./componentCallable";
+export * from "./componentCallable";
+export * from "./componentRegistryDetails";

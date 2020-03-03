@@ -16,12 +16,11 @@ import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 
 import {
     IContainerComponentDetails,
-} from "./componentRegistryDetails";
+} from "./interfaces";
 
 export * from "./spaces";
 export * from "./components";
 export * from "./interfaces";
-export * from "./componentRegistryDetails";
 
 import {
     ComponentToolbar,

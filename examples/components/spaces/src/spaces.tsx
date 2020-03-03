@@ -95,7 +95,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView, IComp
     }
 
     protected async componentInitializingFromExisting() {
-        await this.initializeDataModel();
+        this.initializeDataModel();
         this.componentToolbar = await this.dataModel.getComponentToolbar();
     }
 
@@ -120,17 +120,17 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView, IComp
     private addToolbarListeners() {
         if (this.componentToolbar && this.componentToolbar.IComponentCallable) {
             this.componentToolbar.IComponentCallable.setComponentCallbacks({
-                addCompponent: (type: string, w?: number, h?: number) => {
+                addComponent: (type: string, w?: number, h?: number) => {
                     /* eslint-disable-next-line @typescript-eslint/no-floating-promises */
                     this.dataModel.addComponent(type, w, h);
                 },
                 saveLayout: () => this.dataModel.saveLayout(),
-                toggleEditable: (isEditable: boolean) =>  this.dataModel.emit("editableUpdated", isEditable)
+                toggleEditable: (isEditable: boolean) =>  this.dataModel.emit("editableUpdated", isEditable),
             });
         }
     }
 
-    private async initializeDataModel() {
+    private initializeDataModel() {
         this.dataModelInternal =
             new SpacesDataModel(
                 this.root,
