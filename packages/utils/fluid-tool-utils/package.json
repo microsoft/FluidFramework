@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-tool-utils",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "description": "Common utilities for Fluid tools",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -23,7 +23,7 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@microsoft/fluid-odsp-utils": "^0.14.0"
+    "@microsoft/fluid-odsp-utils": "^0.15.0"
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.14.0",

@@ -18,7 +18,7 @@ class Component extends PrimedComponent {
     public get root(): ISharedDirectory {
         return super.root;
     }
-    public async writeBlob(blob: string): Promise<IComponentHandle> {
+    public async writeBlob(blob: string): Promise<IComponentHandle<string>> {
         return super.writeBlob(blob);
     }
 }
@@ -42,17 +42,17 @@ describe("PrimedComponent", () => {
 
         it("Blob support", async () => {
             const handle = await component.writeBlob("aaaa");
-            assert(await handle.get<string>() === "aaaa");
+            assert(await handle.get() === "aaaa");
             component.root.set("key", handle);
 
-            const handle2 = component.root.get<IComponentHandle>("key");
-            const value2 = await handle2.get<string>();
+            const handle2 = component.root.get<IComponentHandle<string>>("key");
+            const value2 = await handle2.get();
             assert(value2 === "aaaa");
 
             const host2 = host.clone();
             await TestHost.sync(host, host2);
             const component2 = await host2.getComponent<Component>(componentId);
-            const value = await component2.root.get<IComponentHandle>("key").get<string>();
+            const value = await component2.root.get<IComponentHandle<string>>("key").get();
             assert(value === "aaaa");
             await host2.close();
         });

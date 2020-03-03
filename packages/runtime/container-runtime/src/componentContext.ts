@@ -202,6 +202,17 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this.hostRuntime._createComponentWithProps(packagePath, props, id);
     }
 
+    public async rejectDeferredRealize(reason: string)
+    {
+        const error = new Error(reason);
+        // Error messages contain package names that is considered Personal Identifiable Information
+        // Mark it as such, so that if it ever reaches telemetry pipeline, it has a chance to remove it.
+        (error as any).containsPII = true;
+
+        this.componentRuntimeDeferred.reject(error);
+        return this.componentRuntimeDeferred.promise;
+    }
+
     public async realize(): Promise<IComponentRuntime> {
         if (!this.componentRuntimeDeferred) {
             this.componentRuntimeDeferred = new Deferred<IComponentRuntime>();
@@ -214,20 +225,23 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             let entry: ComponentRegistryEntry;
             let registry = this._hostRuntime.IComponentRegistry;
             let factory: IComponentFactory;
+            let lastPkg: string | undefined;
             for (const pkg of packages) {
                 if (!registry) {
-                    this.componentRuntimeDeferred.reject("Factory does not supply the component Registry");
-                    return this.componentRuntimeDeferred.promise;
+                    return this.rejectDeferredRealize(`No registry for ${lastPkg} package`);
                 }
+                lastPkg = pkg;
                 entry = await registry.get(pkg);
                 if (!entry) {
-                    this.componentRuntimeDeferred.reject(`Registry does not contain entry for package '${pkg}'`);
-                    return this.componentRuntimeDeferred.promise;
+                    return this.rejectDeferredRealize(`Registry does not contain entry for the package ${pkg}`);
                 }
                 factory = entry.IComponentFactory;
                 registry = entry.IComponentRegistry;
             }
 
+            if (factory === undefined) {
+                return this.rejectDeferredRealize(`Can't find factory for ${lastPkg} package`);
+            }
             // During this call we will invoke the instantiate method - which will call back into us
             // via the bindRuntime call to resolve componentRuntimeDeferred
             factory.instantiateComponent(this);

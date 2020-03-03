@@ -62,7 +62,8 @@ describe("Errors Types", () => {
                 {},
                 {},
                 loader,
-                testRequest);
+                testRequest,
+                testResolved);
         } catch (error) {
             assert.equal(error.errorType, ErrorType.generalError, "Error is not a general error");
         }

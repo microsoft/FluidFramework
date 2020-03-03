@@ -260,15 +260,12 @@ export async function typeChunk(
             pingCounter.increment(latency);
         });
 
-        runtime.deltaManager.on("op", () => {
-            totalOps++;
-        });
-
         runtime.deltaManager.on("processTime", (time) => {
             processCounter.increment(time);
         });
 
         a.ss.on("op", (message: ISequencedDocumentMessage, local) => {
+            totalOps++;
             if (message.traces &&
                 message.clientSequenceNumber &&
                 message.clientSequenceNumber > 100 &&
