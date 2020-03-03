@@ -16,6 +16,7 @@ import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 
 export * from "./spaces";
 export * from "./components";
+export * from "./interfaces";
 
 import {
     ComponentToolbar,

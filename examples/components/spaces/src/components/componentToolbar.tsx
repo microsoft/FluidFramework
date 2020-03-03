@@ -8,7 +8,7 @@ import {
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import {
-    IComponentHTMLView, IComponent, IComponentEventable,
+    IComponentHTMLView, IComponent, IComponentCallable,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerComponentDetails } from "@microsoft/fluid-runtime-definitions";
 import {
@@ -27,12 +27,20 @@ export const ComponentToolbarName = "componentToolbar";
 
 initializeIcons();
 
+export interface ComponentToolbarCallbacks {
+    addComponent?(type: string, w?: number, h?: number): void;
+    saveLayout?(): void;
+    toggleEditable?(isEditable: boolean): void;
+}
+
 /**
  * A component to allow you to add and manipulate components
  */
-export class ComponentToolbar extends PrimedComponent implements IComponentHTMLView, IComponentEventable {
+export class ComponentToolbar extends PrimedComponent implements IComponentHTMLView, IComponentCallable<ComponentToolbarCallbacks> {
     public get IComponentHTMLView() { return this; }
-    public get IComponentEventable() { return this; }
+    public get IComponentCallable() { return this; }
+
+    private callbacks: ComponentToolbarCallbacks;
 
     private static readonly factory = new PrimedComponentFactory(ComponentToolbar, []);
 
@@ -59,6 +67,9 @@ export class ComponentToolbar extends PrimedComponent implements IComponentHTMLV
         this.root.set("isEditable", true);
     }
 
+    public setComponentCallbacks(callbacks: ComponentToolbarCallbacks) {
+        this.callbacks = callbacks;
+    }
 
     /**
      * Will return a new ComponentToolbarView
@@ -66,7 +77,7 @@ export class ComponentToolbar extends PrimedComponent implements IComponentHTMLV
     public render(div: HTMLElement) {
         ReactDOM.render(
             <ComponentToolbarView
-                emit={this.emit.bind(this)}
+                callbacks={this.callbacks}
                 root={this.root}
                 supportedComponentList={this.supportedComponentList}
             />,
@@ -77,7 +88,7 @@ export class ComponentToolbar extends PrimedComponent implements IComponentHTMLV
 }
 
 interface IComponentToolbarViewProps {
-    emit: (event: string | symbol, ...args: any[]) => boolean;
+    callbacks: ComponentToolbarCallbacks
     supportedComponentList: IContainerComponentDetails[];
     root: ISharedDirectory;
 }
@@ -104,17 +115,23 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
     }
 
     public emitAddComponentEvent(type: string, w?: number, h?: number) {
-        this.props.emit("addComponent", type, w, h);
+        if (this.props.callbacks.addComponent) {
+            this.props.callbacks.addComponent(type, w, h);
+        }
     }
 
     public emitSaveLayout() {
-        this.props.emit("saveLayout");
+        if (this.props.callbacks.saveLayout) {
+            this.props.callbacks.saveLayout();
+        }
     }
 
     public emitToggleEditable() {
         const newIsEditable = !this.state.isEditable;
-        this.props.emit("toggleEditable", newIsEditable);
         this.setState({ isEditable: newIsEditable });
+        if (this.props.callbacks.addComponent) {
+            this.props.callbacks.toggleEditable(newIsEditable);
+        }
     }
 
     render(){

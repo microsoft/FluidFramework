@@ -9,7 +9,6 @@ import {
     IComponentHTMLView,
     IComponentLoadable,
     IResponse,
-    IComponentEventable,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IPackage } from "@microsoft/fluid-container-definitions";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
@@ -22,8 +21,7 @@ export const WaterParkLoaderName = `${pkg.name}-loader`;
 /**
  * Component that loads extneral components via their url
  */
-export class ExternalComponentLoader extends PrimedComponent
-    implements IComponentHTMLView , IComponentEventable {
+export class ExternalComponentLoader extends PrimedComponent implements IComponentHTMLView {
 
     private static readonly defaultComponents = [
         "@fluid-example/todo",
@@ -42,7 +40,7 @@ export class ExternalComponentLoader extends PrimedComponent
 
     public get IComponentHTMLView() { return this; }
 
-    public get IComponentEventable() { return this; }
+    public get IComponentCallable() { return this; }
 
     public setViewComponent(component: IComponentLoadable) {
         this.root.set(this.viewComponentMapID, component.IComponentLoadable.url);

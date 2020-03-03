@@ -4,14 +4,13 @@
  */
 
 export interface IProvideComponentCallable {
-    readonly IComponentCallable: IComponentCallable;
+    IComponentCallable: IComponentCallable<any>;
 }
 
 /**
  * An IComponentCallable is a component that has a roster of functions defined by T that other compnents can use
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface IComponentCallable  {
-    getComponentCallbacks<T>(): T;
- }
+export interface IComponentCallable<T>  {
+    setComponentCallbacks(callbacks: T): void;
+}
 
