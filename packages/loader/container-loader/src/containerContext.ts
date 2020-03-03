@@ -148,7 +148,11 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
     }
 
     private runtime: IRuntime | undefined;
-    public disposed = false;
+
+    private _disposed = false;
+    public get disposed() {
+        return this._disposed;
+    }
 
     constructor(
         private readonly container: Container,
@@ -174,11 +178,12 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
     }
 
     public dispose(): void {
-        if (this.disposed) {
+        if (this._disposed) {
             return;
         }
-        this.disposed = true;
+        this._disposed = true;
 
+        this.runtime!.dispose();
         this.quorum.dispose();
         this.deltaManager.dispose();
     }
@@ -200,12 +205,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
     public changeConnectionState(value: ConnectionState, clientId: string, version?: string) {
         this.runtime!.changeConnectionState(value, clientId, version);
         raiseConnectedEvent(this, value, clientId);
-    }
-
-    public async stop(): Promise<void> {
-        await this.runtime!.stop();
-
-        this.dispose();
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any) {

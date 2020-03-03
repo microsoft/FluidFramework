@@ -136,10 +136,12 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this._baseSnapshot;
     }
 
+    private _disposed = false;
+    public get disposed() { return this._disposed; }
+
     protected componentRuntime: IComponentRuntime;
     private closed = false;
     private loaded = false;
-    public disposed = false;
     private pending: ISequencedDocumentMessage[] = [];
     private componentRuntimeDeferred: Deferred<IComponentRuntime>;
     private _baseSnapshot: ISnapshotTree;
@@ -158,10 +160,10 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     }
 
     public dispose(): void {
-        if (this.disposed) {
+        if (this._disposed) {
             return;
         }
-        this.disposed = true;
+        this._disposed = true;
 
         // Wait for any pending runtime then dispose it
         if (this.componentRuntimeDeferred) {

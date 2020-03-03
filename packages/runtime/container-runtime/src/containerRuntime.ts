@@ -514,9 +514,11 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             : DefaultSummaryConfiguration;
     }
 
+    private _disposed = false;
+    public get disposed() { return this._disposed; }
+
     // Components tracked by the Domain
     private closed = false;
-    public disposed = false;
     private readonly pendingAttach = new Map<string, IAttachMessage>();
     private dirtyDocument = false;
     private readonly summarizer: Summarizer;
@@ -638,6 +640,17 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     public dispose(): void {
+        if (this._disposed) {
+            return;
+        }
+        this._disposed = true;
+
+        /**
+         * DEPRECATED in 0.14 async stop()
+         * Converge closed with _disposed when removing async stop()
+         */
+        this.closed = true;
+
         // close/stop all component contexts
         for (const [componentId, contextD] of this.contextsDeferred) {
             contextD.promise.then((context) => {
@@ -716,8 +729,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     public async stop(): Promise<void> {
         this.verifyNotClosed();
         this.closed = true;
-
-        this.dispose();
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string, version: string) {
@@ -1291,7 +1302,11 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     private verifyNotClosed() {
-        if (this.closed) {
+        /**
+         * DEPRECATED in 0.14 async stop()
+         * Converge closed with _disposed when removing async stop()
+         */
+        if (this.closed || this._disposed) {
             throw new Error("Runtime is closed");
         }
     }

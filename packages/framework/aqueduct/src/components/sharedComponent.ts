@@ -4,7 +4,6 @@
  */
 
 import { EventEmitter } from "events";
-import { IDisposable } from "@microsoft/fluid-common-definitions";
 import {
     IComponent,
     IComponentHandle,
@@ -25,12 +24,11 @@ import { serviceRoutePathRoot } from "../containerServices";
  * You probably don't want to inherit from this component directly unless you are creating another base component class
  */
 // eslint-disable-next-line max-len
-export abstract class SharedComponent extends EventEmitter implements IComponentLoadable, IComponentRouter, IProvideComponentHandle, IDisposable {
+export abstract class SharedComponent extends EventEmitter implements IComponentLoadable, IComponentRouter, IProvideComponentHandle {
     private initializeP: Promise<void> | undefined;
     private readonly innerHandle: IComponentHandle;
-    public disposed = false;
-
-    private readonly runtimeDisposeCallback: () => void;
+    private _disposed = false;
+    public get disposed() { return this._disposed; }
 
     public get id() { return this.runtime.id; }
     public get IComponentRouter() { return this; }
@@ -50,10 +48,10 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
         this.innerHandle = new ComponentHandle(this, this.url, runtime.IComponentHandleContext);
 
         // Container event handlers
-        this.runtimeDisposeCallback = () => {
-            this.onContainerClose();
-        };
-        this.runtime.on("dispose", this.runtimeDisposeCallback);
+        this.runtime.once("dispose", () => {
+            this._disposed = true;
+            this.dispose();
+        });
     }
 
     /**
@@ -67,15 +65,6 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
         }
 
         await this.initializeP;
-    }
-
-    public dispose(): void {
-        if (this.disposed) {
-            return;
-        }
-        this.disposed = true;
-
-        this.runtime.removeListener("dispose", this.runtimeDisposeCallback);
     }
 
     // #region IComponentRouter
@@ -204,5 +193,5 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     /**
      * Called when the host container closes and disposes itself
      */
-    protected onContainerClose(): void { }
+    protected dispose(): void { }
 }

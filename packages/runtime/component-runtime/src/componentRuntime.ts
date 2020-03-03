@@ -141,10 +141,12 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     public get IComponentHandleContext() { return this; }
     public get IComponentRegistry() { return this.componentRegistry; }
 
+    private _disposed = false;
+    public get disposed() { return this._disposed; }
+
     private readonly contexts = new Map<string, IChannelContext>();
     private readonly contextsDeferred = new Map<string, Deferred<IChannelContext>>();
     private closed = false;
-    public disposed = false;
     private readonly pendingAttach = new Map<string, IAttachMessage>();
     private requestHandler: ((request: IRequest) => Promise<IResponse>) | undefined;
     private isLocal: boolean;
@@ -209,10 +211,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     }
 
     public dispose(): void {
-        if (this.disposed) {
+        if (this._disposed) {
             return;
         }
-        this.disposed = true;
+        this._disposed = true;
 
         this.emit("dispose");
     }

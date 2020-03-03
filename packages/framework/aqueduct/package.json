@@ -48,7 +48,6 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@microsoft/fluid-common-definitions": "^0.13.0",
     "@microsoft/fluid-component-core-interfaces": "^0.14.0",
     "@microsoft/fluid-component-runtime": "^0.14.0",
     "@microsoft/fluid-container-definitions": "^0.14.0",

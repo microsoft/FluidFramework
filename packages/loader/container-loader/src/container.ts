@@ -362,9 +362,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.protocolHandler.close();
         }
 
-        Promise.resolve(this.context?.stop()).catch((error) => {
-            this.logCriticalError(error);
-        });
+        // eslint-disable-next-line no-unused-expressions
+        this.context?.dispose();
 
         assert(this.connectionState === ConnectionState.Disconnected, "disconnect event was not raised!");
 
@@ -463,7 +462,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.deltaManager.inboundSignal.systemPause()]);
 
         const previousContextState = await this.context!.snapshot();
-        await this.context!.stop();
+        this.context!.dispose();
 
         let snapshot: ISnapshotTree | undefined;
         const blobs = new Map();
