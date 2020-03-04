@@ -11,7 +11,6 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
     "build:compile": "npm run tsc",
-    "build:compile:min": "npm run build:compile",
     "build:full": "concurrently npm:build npm:webpack",
     "build:full:compile": "concurrently npm:build:compile npm:webpack",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
@@ -21,6 +20,7 @@
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
+    "prepack": "npm run webpack",
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
     "start:docker": "webpack-dev-server --config webpack.config.js --package package.json --env.mode docker",
     "start:local": "webpack-dev-server --config webpack.config.js --package package.json --env.mode local",

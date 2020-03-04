@@ -127,6 +127,7 @@ COPY examples/components/textarea-noreact/package*.json examples/components/text
 COPY examples/components/tourofheroes/package*.json examples/components/tourofheroes/
 COPY examples/components/type-race/package*.json examples/components/type-race/
 COPY examples/components/vltava/package*.json examples/components/vltava/
+COPY examples/hosts/iframe-host/package*.json examples/hosts/iframe-host/
 
 FROM node:10.16.0-slim AS base
 
@@ -176,6 +177,7 @@ RUN npm install --unsafe-perm
 # And now copy over our actual code and build
 COPY packages/ packages/
 COPY examples/components/ examples/components/
+COPY examples/hosts/iframe-host/ examples/hosts/iframe-host/
 
 # Set the version number
 ARG VERSION_BUILDNUMBER=0

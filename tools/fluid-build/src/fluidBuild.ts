@@ -78,7 +78,7 @@ async function main() {
                 } else if (options.build) {
                     errorStep = "build";
                 }
-                if (!errorStep) {
+                if (errorStep) {
                     console.warn(`WARNING: Skipping ${errorStep} after uninstall`);
                 }
                 process.exit(0);

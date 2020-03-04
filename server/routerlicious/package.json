@@ -5,7 +5,7 @@
   "author": "Microsoft",
   "scripts": {
     "build": "npm run policy-check && npm run build:genver && npm run build:compile && npm run lint && npm run build:docs",
-    "build:ci": "npm run build:genver && lerna run build:compile:min --stream",
+    "build:ci": "npm run build:genver && lerna run build:compile --stream",
     "build:compile": "lerna run build:compile --stream",
     "build:docs": "lerna run build:docs --stream --parallel",
     "build:fast": "node ../../tools/fluid-build/dist/fluidBuild.js --root ../.. --server",
@@ -73,7 +73,7 @@
     "concurrently": "^4.1.0",
     "copyfiles": "^2.1.0",
     "lerna": "^3.14.1",
-    "nyc": "^14.1.1",
+    "nyc": "^15.0.0",
     "rimraf": "^2.6.2",
     "sort-package-json": "1.40.0",
     "typescript": "~3.7.4"
