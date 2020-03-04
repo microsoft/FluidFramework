@@ -22,6 +22,36 @@ const listPages = (dirPath, includeIndex = false) => {
     return pages;
 };
 
+const getNav = () => {
+    return [
+        { text: "What is Fluid?", link: "/what-is-fluid" },
+        { text: "Guide", link: "/guide/" },
+        { text: "Tutorials", link: "/examples/" },
+        { text: "Patterns", link: "/patterns/" },
+        { text: "API", link: "/api/overview" },
+        {
+            text: "🤿 Dive Deeper",
+            items: [
+                { text: "How Fluid works", link: "/how/" },
+                { text: "Big page of docs and decks", link: "/misc/doc-index" },
+                { text: "FAQ", link: "/faq/" },
+                { text: "Terminology", link: "/misc/terminology" },
+                { text: "Concepts", link: "/misc/concepts" },
+                {
+                    text: "Contributing",
+                    items: [
+                        { text: "Coding guidelines", link: "/contributing/coding-guidelines" },
+                        { text: "Building documentation locally", link: "/contributing/building-documentation" },
+                        { text: "Routerlicious build machine", link: "/contributing/r11s-build-machine" },
+                        { text: "Miscellaneous", link: "/contributing/misc" },
+                    ]
+                },
+                { text: "Team", link: "/team/" }
+            ]
+        },
+    ];
+}
+
 /**
  * The API docs are built separately from the core docs, and if the API files aren't present but are linked in a
  * sidebar, there's a build error. This function only adds API sidebar items if the files are present. This allows local
@@ -199,7 +229,7 @@ const getGuideSidebar = () => {
                 "dds-anatomy",
             ]
         },
-    ]
+    ];
 }
 
 const getExamplesSidebar = () => {
@@ -229,7 +259,51 @@ const getExamplesSidebar = () => {
                 "singletons",
             ]
         },
-    ]
+    ];
+}
+
+const getTeamSidebar = () => {
+    return [
+        {
+            title: "Team",
+            collapsable: false,
+            children: [
+                ""
+            ]
+        },
+        {
+            title: "Updates",
+            collapsable: false,
+            children: listPages("../team/")
+        },
+    ];
+}
+
+const getHowSidebar = () => {
+    return [
+        "",
+        "tob",
+        "developer-guide",
+    ];
+}
+
+const getAdvancedSidebar = () => {
+    return [
+        "",
+        "loading-deep-dive",
+    ];
+}
+
+const getPatternsSidebar = () => {
+    return [
+        {
+            title: "Patterns",
+            collapsable: false,
+            children: [
+                "leader-election",
+            ]
+        },
+    ];
 }
 
 module.exports = {
@@ -306,59 +380,15 @@ module.exports = {
         docsDir: "docs",
         smoothScroll: true,
         sidebarDepth: 1,
-        nav: [
-            { text: "What is Fluid?", link: "/what-is-fluid" },
-            { text: "Guide", link: "/guide/" },
-            { text: "Tutorials", link: "/examples/" },
-            { text: "API", link: "/api/overview" },
-            {
-                text: "🤿 Dive Deeper",
-                items: [
-                    { text: "How Fluid works", link: "/how/" },
-                    { text: "Big page of docs and decks", link: "/misc/doc-index" },
-                    { text: "FAQ", link: "/faq/" },
-                    { text: "Terminology", link: "/misc/terminology" },
-                    { text: "Concepts", link: "/misc/concepts" },
-                    {
-                        text: "Contributing",
-                        items: [
-                            { text: "Coding guidelines", link: "/contributing/coding-guidelines" },
-                            { text: "Building documentation locally", link: "/contributing/building-documentation" },
-                            { text: "Routerlicious build machine", link: "/contributing/r11s-build-machine" },
-                            { text: "Miscellaneous", link: "/contributing/misc" },
-                        ]
-                    },
-                    { text: "Team", link: "/team/" }
-                ]
-            },
-        ],
+        nav: getNav(),
         sidebar: {
-            "/team/": [
-                {
-                    title: "Team",
-                    collapsable: false,
-                    children: [
-                        ""
-                    ]
-                },
-                {
-                    title: "Updates",
-                    collapsable: false,
-                    children: listPages("../team/")
-                },
-            ],
-            "/api/": getApiSidebar(),
             "/guide/": getGuideSidebar(),
             "/examples/": getExamplesSidebar(),
-            "/how/": [
-                "",
-                "tob",
-                "developer-guide",
-            ],
-            "/advanced/": [
-                "",
-                "loading-deep-dive",
-            ],
+            "/patterns/": getPatternsSidebar(),
+            "/api/": getApiSidebar(),
+            "/how/": getHowSidebar(),
+            "/advanced/": getAdvancedSidebar(),
+            "/team/": getTeamSidebar(),
         },
     }
 }

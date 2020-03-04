@@ -36,7 +36,7 @@ distributed data structures.
 - Current release version: `0.14.x`
 - Supported releases: `>=0.13.x, <=0.14.x`
 
-[Learn more about Fluid's release process.](./release-process.md)
+[Learn more about Fluid's release process.](./contributing/release-process.md)
 
 :::
 

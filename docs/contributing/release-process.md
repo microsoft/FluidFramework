@@ -1,9 +1,13 @@
+---
+sidebar: auto
+---
+
 # Fluid releases
 
 ## Compatibility and supportability
 
 - Fluid is not yet at 1.0.
-- Every release will contain breaking changes; however, breaking changes will **not*- be
+- Every release will contain breaking changes; however, breaking changes will **not** be
   introduced into a released version.
 - Breaking changes are [tracked in our docs](./breaking-changes.md) and in
   [BREAKING.md](https://github.com/microsoft/FluidFramework/blob/master/BREAKING.md) at the root of our repo.
