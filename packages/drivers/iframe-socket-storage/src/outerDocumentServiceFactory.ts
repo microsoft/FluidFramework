@@ -15,7 +15,10 @@ import {
     IResolvedUrl,
     IUrlResolver,
 } from "@microsoft/fluid-driver-definitions";
-import { configurableUrlResolver } from "@microsoft/fluid-driver-utils";
+import {
+    configurableUrlResolver,
+    DocumentServiceFactoryProtocolMatcher,
+} from "@microsoft/fluid-driver-utils";
 import {
     ConnectionMode,
     IClient,
@@ -59,7 +62,7 @@ export interface IDocumentServiceFactoryProxy {
 export class IFrameDocumentServiceProxyFactory {
 
     public static async create(
-        documentServiceFactory: IDocumentServiceFactory,
+        documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[],
         frame: HTMLIFrameElement,
         options: any,
         urlResolver: IUrlResolver | IUrlResolver[],
@@ -71,7 +74,7 @@ export class IFrameDocumentServiceProxyFactory {
     private documentServiceProxy: DocumentServiceFactoryProxy | undefined;
 
     constructor(
-        private readonly documentServiceFactory: IDocumentServiceFactory,
+        private readonly documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[],
         private readonly frame: HTMLIFrameElement,
         private readonly options: any,
         private readonly urlResolver: IUrlResolver | IUrlResolver[],
@@ -80,7 +83,6 @@ export class IFrameDocumentServiceProxyFactory {
     }
 
     public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<void> {
-
         // eslint-disable-next-line @typescript-eslint/no-use-before-define
         this.documentServiceProxy = new DocumentServiceFactoryProxy(
             this.documentServiceFactory,
@@ -137,22 +139,25 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
     private readonly tokens: {
         [name: string]: string;
     };
+    private readonly driverProtocolMappings: DocumentServiceFactoryProtocolMatcher;
 
     constructor(
-        private readonly documentServiceFactory: IDocumentServiceFactory,
+        documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[],
         private readonly options: any,
         private readonly resolvedUrl: IFluidResolvedUrl,
     ) {
-
+        this.driverProtocolMappings = new DocumentServiceFactoryProtocolMatcher(documentServiceFactory);
         this.tokens = this.resolvedUrl.tokens;
         this.clients = {};
     }
 
     public async createDocumentService(resolvedUrl: IFluidResolvedUrl): Promise<string> {
-        resolvedUrl.tokens = this.tokens;
 
+        const documentServiceFactory = this.driverProtocolMappings.getFactory(resolvedUrl);
+
+        resolvedUrl.tokens = this.tokens;
         const connectedDocumentService: IDocumentService =
-            await this.documentServiceFactory.createDocumentService(resolvedUrl);
+            await documentServiceFactory.createDocumentService(resolvedUrl);
 
         const clientDetails = this.options ? (this.options.client as IClient) : null;
         const mode: ConnectionMode = "write";
