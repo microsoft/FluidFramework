@@ -7,3 +7,4 @@ export * from "./blobs";
 export * from "./protocol";
 export * from "./quorum";
 export * from "./utils";
+export * from "./scribeHelper";

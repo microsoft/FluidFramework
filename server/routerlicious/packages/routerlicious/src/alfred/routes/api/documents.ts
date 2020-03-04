@@ -74,7 +74,7 @@ export function create(storage: IDocumentStorage, appTenants: IAlfredTenant[]): 
 
         const expDocumentStorage = (storage as IExperimentalDocumentStorage);
         if (!expDocumentStorage.isExperimentalDocumentStorage) {
-            response.status(400).json("No experimental features!!");
+            return response.status(400).json("No experimental features!!");
         }
         const createP = expDocumentStorage.createDocument(
             tenantId,

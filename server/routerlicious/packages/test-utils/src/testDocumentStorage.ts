@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ICommit, ICommitDetails } from "@microsoft/fluid-gitresources";
+import { ICommit, ICommitDetails, ICreateCommitParams } from "@microsoft/fluid-gitresources";
 import { IGitCache } from "@microsoft/fluid-server-services-client";
 import {
     IDatabaseManager,
@@ -11,12 +11,21 @@ import {
     IDocumentStorage,
     IScribe,
     ITenantManager,
+    IExperimentalDocumentStorage,
 } from "@microsoft/fluid-server-services-core";
+import {
+    ISummaryTree,
+    ICommittedProposal,
+    ITreeEntry,
+} from "@microsoft/fluid-protocol-definitions";
+import { IQuorumSnapshot, getQuorumTreeEntries, mergeAppAndProtocolTree } from "@microsoft/fluid-protocol-base";
+import { writeSummaryTree } from "@microsoft/fluid-server-services";
 
 const StartingSequenceNumber = 0;
 
 // Forked from DocumentStorage to remove to server dependencies and enable testing of other components.
-export class TestDocumentStorage implements IDocumentStorage {
+export class TestDocumentStorage implements IDocumentStorage, IExperimentalDocumentStorage {
+    public readonly isExperimentalDocumentStorage = true;
     constructor(
         private readonly databaseManager: IDatabaseManager,
         private readonly tenantManager: ITenantManager) {
@@ -34,6 +43,86 @@ export class TestDocumentStorage implements IDocumentStorage {
         const getOrCreateP = this.getOrCreateObject(tenantId, documentId);
 
         return getOrCreateP;
+    }
+
+    public async createDocument(
+        tenantId: string,
+        documentId: string,
+        summary: ISummaryTree,
+        sequenceNumber: number,
+        values: [string, ICommittedProposal][],
+    ): Promise<IDocumentDetails> {
+        const tenant = await this.tenantManager.getTenant(tenantId);
+        const gitManager = tenant.gitManager;
+
+        const blobsShaCache = new Set<string>();
+        const handle = await writeSummaryTree(gitManager, summary, blobsShaCache, undefined);
+
+        // At this point the summary op and its data are all valid and we can perform the write to history
+        const quorumSnapshot: IQuorumSnapshot = {
+            members: [],
+            proposals: [],
+            values,
+        };
+        const entries: ITreeEntry[] =
+            getQuorumTreeEntries(documentId, sequenceNumber, sequenceNumber, quorumSnapshot);
+
+        const [protocolTree, appSummaryTree] = await Promise.all([
+            gitManager.createTree({ entries, id: null }),
+            gitManager.getTree(handle, false),
+        ]);
+
+        // Combine the app summary with .protocol
+        const newTreeEntries = mergeAppAndProtocolTree(appSummaryTree, protocolTree);
+
+        const gitTree = await gitManager.createGitTree({ tree: newTreeEntries });
+        const commitParams: ICreateCommitParams = {
+            author: {
+                date: new Date().toISOString(),
+                email: "praguertdev@microsoft.com",
+                name: "Routerlicious Service",
+            },
+            message: "New document",
+            parents: [],
+            tree: gitTree.sha,
+        };
+
+        const commit = await gitManager.createCommit(commitParams);
+        await gitManager.createRef(documentId, commit.sha);
+
+        const scribe: IScribe = {
+            logOffset: -1,
+            minimumSequenceNumber: sequenceNumber,
+            protocolState: {
+                members: [],
+                minimumSequenceNumber: sequenceNumber,
+                proposals: [],
+                sequenceNumber,
+                values,
+            },
+            sequenceNumber,
+        };
+
+        const collection = await this.databaseManager.getDocumentCollection();
+        const result = await collection.findOrCreate(
+            {
+                documentId,
+                tenantId,
+            },
+            {
+                branchMap: undefined,
+                clients: undefined,
+                createTime: Date.now(),
+                documentId,
+                forks: [],
+                logOffset: undefined,
+                parent: null,
+                scribe: JSON.stringify(scribe),
+                sequenceNumber,
+                tenantId,
+            });
+
+        return result;
     }
 
     public async getLatestVersion(tenantId: string, documentId: string): Promise<ICommit> {

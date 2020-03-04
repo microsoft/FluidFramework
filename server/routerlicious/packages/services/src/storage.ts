@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { ICommit, ICommitDetails, ICreateTreeEntry, ICreateCommitParams } from "@microsoft/fluid-gitresources";
+/* eslint-disable @typescript-eslint/no-use-before-define */
+import { ICommit, ICommitDetails, ICreateCommitParams, ICreateTreeEntry } from "@microsoft/fluid-gitresources";
 import {
     IDocumentAttributes,
     IDocumentSystemMessage,
     MessageType,
-    FileMode,
-    TreeEntry,
     ITreeEntry,
     ICommittedProposal,
     ISummaryTree,
-    SummaryObject,
     SummaryType,
+    SummaryObject,
+    ISnapshotTree,
 } from "@microsoft/fluid-protocol-definitions";
 import { IGitCache, IGitManager } from "@microsoft/fluid-server-services-client";
 import {
@@ -30,6 +30,13 @@ import {
     RawOperationType,
     IExperimentalDocumentStorage,
 } from "@microsoft/fluid-server-services-core";
+import {
+    getQuorumTreeEntries,
+    IQuorumSnapshot,
+    getGitType,
+    getGitMode,
+    mergeAppAndProtocolTree,
+} from "@microsoft/fluid-protocol-base";
 import * as moniker from "moniker";
 import * as winston from "winston";
 import { gitHashFile } from "@microsoft/fluid-common-utils";
@@ -77,54 +84,17 @@ export class DocumentStorage implements IDocumentStorage, IExperimentalDocumentS
         const tenant = await this.tenantManager.getTenant(tenantId);
         const gitManager = tenant.gitManager;
 
-        // At this point the summary op and its data are all valid and we can perform the write to history
-        const documentAttributes: IDocumentAttributes = {
-            branch: documentId,
-            minimumSequenceNumber: sequenceNumber,
-            sequenceNumber,
-        };
-
         const blobsShaCache = new Set<string>();
-        const handle = await this.writeSummaryObject(gitManager, summary, blobsShaCache);
+        const handle = await writeSummaryTree(gitManager, summary, blobsShaCache, undefined);
 
-        const entries: ITreeEntry[] = [
-            {
-                mode: FileMode.File,
-                path: "quorumMembers",
-                type: TreeEntry[TreeEntry.Blob],
-                value: {
-                    contents: JSON.stringify([]),
-                    encoding: "utf-8",
-                },
-            },
-            {
-                mode: FileMode.File,
-                path: "quorumProposals",
-                type: TreeEntry[TreeEntry.Blob],
-                value: {
-                    contents: JSON.stringify([]),
-                    encoding: "utf-8",
-                },
-            },
-            {
-                mode: FileMode.File,
-                path: "quorumValues",
-                type: TreeEntry[TreeEntry.Blob],
-                value: {
-                    contents: JSON.stringify(values),
-                    encoding: "utf-8",
-                },
-            },
-            {
-                mode: FileMode.File,
-                path: "attributes",
-                type: TreeEntry[TreeEntry.Blob],
-                value: {
-                    contents: JSON.stringify(documentAttributes),
-                    encoding: "utf-8",
-                },
-            },
-        ];
+        // At this point the summary op and its data are all valid and we can perform the write to history
+        const quorumSnapshot: IQuorumSnapshot = {
+            members: [],
+            proposals: [],
+            values,
+        };
+        const entries: ITreeEntry[] =
+            getQuorumTreeEntries(documentId, sequenceNumber, sequenceNumber, quorumSnapshot);
 
         const [protocolTree, appSummaryTree] = await Promise.all([
             gitManager.createTree({ entries, id: null }),
@@ -135,21 +105,7 @@ export class DocumentStorage implements IDocumentStorage, IExperimentalDocumentS
         winston.info(JSON.stringify(appSummaryTree));
 
         // Combine the app summary with .protocol
-        const newTreeEntries = appSummaryTree.tree.map((value) => {
-            const createTreeEntry: ICreateTreeEntry = {
-                mode: value.mode,
-                path: value.path,
-                sha: value.sha,
-                type: value.type,
-            };
-            return createTreeEntry;
-        });
-        newTreeEntries.push({
-            mode: FileMode.Directory,
-            path: ".protocol",
-            sha: protocolTree.sha,
-            type: "tree",
-        });
+        const newTreeEntries = mergeAppAndProtocolTree(appSummaryTree, protocolTree);
 
         const gitTree = await gitManager.createGitTree({ tree: newTreeEntries });
         const commitParams: ICreateCommitParams = {
@@ -418,77 +374,121 @@ export class DocumentStorage implements IDocumentStorage, IExperimentalDocumentS
 
         await producer.send([integrateMessage], tenantId, id);
     }
+}
 
-    private async writeSummaryObject(
-        gitManager: IGitManager,
-        value: SummaryObject,
-        blobsShaCache: Set<string>,
-    ): Promise<string> {
-        switch (value.type) {
+/**
+ * Writes the summary tree to storage.
+ * @param manager - Git manager to write.
+ * @param summaryTree - summary tree to be written to storage.
+ * @param blobsShaCache - cache so that duplicate blobs are written only once.
+ * @param snapshot - snapshot tree.
+ */
+export async function writeSummaryTree(
+    manager: IGitManager,
+    summaryTree: ISummaryTree,
+    blobsShaCache: Set<string>,
+    snapshot: ISnapshotTree | undefined,
+): Promise<string> {
+    const entries = await Promise.all(Object.keys(summaryTree.tree).map(async (key) => {
+        const entry = summaryTree.tree[key];
+        const pathHandle = await writeSummaryTreeObject(manager, blobsShaCache, key, entry, snapshot);
+        const treeEntry: ICreateTreeEntry = {
+            mode: getGitMode(entry),
+            path: encodeURIComponent(key),
+            sha: pathHandle,
+            type: getGitType(entry),
+        };
+        return treeEntry;
+    }));
+
+    const treeHandle = await manager.createGitTree({ tree: entries });
+    return treeHandle.sha;
+}
+
+async function writeSummaryTreeObject(
+    manager: IGitManager,
+    blobsShaCache: Set<string>,
+    key: string,
+    object: SummaryObject,
+    snapshot: ISnapshotTree | undefined,
+    currentPath = "",
+): Promise<string> {
+    switch (object.type) {
+        case SummaryType.Blob: {
+            return writeSummaryBlob(object.content, blobsShaCache, manager);
+        }
+        case SummaryType.Handle: {
+            if (snapshot === undefined) {
+                throw Error("Parent summary does not exist to reference by handle.");
+            }
+            return getIdFromPath(object.handleType, object.handle, snapshot);
+        }
+        case SummaryType.Tree: {
+            return writeSummaryTree(manager, object, blobsShaCache, snapshot?.trees[key]);
+        }
+
+        default:
+            throw Error(`Unexpected summary object type: "${object.type}".`);
+    }
+}
+
+function getIdFromPath(
+    handleType: SummaryType,
+    handlePath: string,
+    fullSnapshot: ISnapshotTree,
+): string {
+    const path = handlePath.split("/").map((part) => decodeURIComponent(part));
+    if (path[0] === "") {
+        // root of tree should be unnamed
+        path.shift();
+    }
+
+    return getIdFromPathCore(handleType, path, fullSnapshot);
+}
+
+function getIdFromPathCore(
+    handleType: SummaryType,
+    path: string[],
+    snapshot: ISnapshotTree,
+): string {
+    const key = path[0];
+    if (path.length === 1) {
+        switch (handleType) {
             case SummaryType.Blob: {
-                const content = typeof value.content === "string" ? value.content : value.content.toString("base64");
-                const encoding = typeof value.content === "string" ? "utf-8" : "base64";
-
-                // The gitHashFile would return the same hash as returned by the server for blob.sha
-                const hash = gitHashFile(Buffer.from(content, encoding));
-                if (!blobsShaCache.has(hash)) {
-                    const blob = await gitManager.createBlob(content, encoding);
-                    blobsShaCache.add(blob.sha);
+                const tryId = snapshot.blobs[key];
+                if (!tryId) {
+                    throw Error("Parent summary does not have blob handle for specified path.");
                 }
-                return hash;
+                return tryId;
             }
             case SummaryType.Tree: {
-                const fullTree = value.tree;
-                const entries = await Promise.all(Object.keys(fullTree).map(async (key) => {
-                    const entry = fullTree[key];
-                    const pathHandle = await this.writeSummaryObject(
-                        gitManager,
-                        entry,
-                        blobsShaCache);
-                    const treeEntry: ICreateTreeEntry = {
-                        mode: this.getGitMode(entry),
-                        path: encodeURIComponent(key),
-                        sha: pathHandle,
-                        type: this.getGitType(entry),
-                    };
-                    return treeEntry;
-                }));
-
-                const treeHandle = await gitManager.createGitTree({ tree: entries });
-                return treeHandle.sha;
+                const tryId = snapshot.trees[key]?.id;
+                if (!tryId) {
+                    throw Error("Parent summary does not have tree handle for specified path.");
+                }
+                return tryId;
             }
-
             default:
-                return Promise.reject();
+                throw Error(`Unexpected handle summary object type: "${handleType}".`);
         }
     }
+    return getIdFromPathCore(handleType, path.slice(1), snapshot);
+}
 
-    private getGitMode(value: SummaryObject): string {
-        const type = value.type === SummaryType.Handle ? value.handleType : value.type;
-        switch (type) {
-            case SummaryType.Blob:
-                return FileMode.File;
-            case SummaryType.Commit:
-                return FileMode.Commit;
-            case SummaryType.Tree:
-                return FileMode.Directory;
-            default:
-                throw new Error();
-        }
+async function writeSummaryBlob(
+    content: string | Buffer,
+    blobsShaCache: Set<string>,
+    manager: IGitManager,
+): Promise<string> {
+    const { parsedContent, encoding } = typeof content === "string"
+        ? { parsedContent: content, encoding: "utf-8" }
+        : { parsedContent: content.toString("base64"), encoding: "base64" };
+
+    // The gitHashFile would return the same hash as returned by the server as blob.sha
+    const hash = gitHashFile(Buffer.from(parsedContent, encoding));
+    if (!blobsShaCache.has(hash)) {
+        const blob = await manager.createBlob(parsedContent, encoding);
+        blobsShaCache.add(blob.sha);
     }
-
-    private getGitType(value: SummaryObject): string {
-        const type = value.type === SummaryType.Handle ? value.handleType : value.type;
-
-        switch (type) {
-            case SummaryType.Blob:
-                return "blob";
-            case SummaryType.Commit:
-                return "commit";
-            case SummaryType.Tree:
-                return "tree";
-            default:
-                throw new Error();
-        }
-    }
+    return hash;
 }
