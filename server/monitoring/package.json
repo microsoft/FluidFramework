@@ -32,7 +32,6 @@
     "@microsoft/fluid-routerlicious-driver": "0.13.19189",
     "@microsoft/fluid-routerlicious-host": "0.13.19189",
     "@microsoft/fluid-driver-definitions": "0.13.19189",
-    "@microsoft/fluid-base-host": "0.13.19189",
     "@microsoft/fluid-server-services": "0.1002.20282",
     "@sentry/node": "^5.6.2",
     "debug": "^4.1.1",

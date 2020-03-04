@@ -66,6 +66,14 @@
                     "Driver-Definitions"
                 ]
             },
+            "Framework-Utils": {
+                "packages": [
+                    "@microsoft/fluid-view-adapters"
+                ],
+                "deps": [
+                    "Base-Definitions"
+                ]
+            },
             "Other-Utils": {
                 "dot": false,
                 "packages": [
@@ -131,7 +139,8 @@
                     "@microsoft/fluid-host-service-interfaces"
                 ],
                 "deps": [
-                    "Loader"
+                    "Loader",
+                    "Framework-Utils"
                 ]
             },
             "Runtime": {
