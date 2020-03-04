@@ -15,7 +15,7 @@ import { InsecureUrlResolver } from "./insecureUrlResolver";
 
 
 const createRequest = (): IRequest => ({
-    url: `${window.location.origin}/testdoc31`,
+    url: `${window.location.origin}/testdoc41`,
 });
 
 const getTinyliciousResolver =
@@ -74,7 +74,7 @@ export async function loadDiv(divId: string){
 
     const pkgResp =
         await fetch(
-            "https://pragueauspkn-3873244262.azureedge.net/@fluid-example/todo@^0.14.0/package.json");
+            "https://pragueauspkn-3873244262.azureedge.net/@fluid-example/todo@^0.15.0/package.json");
     const pkg: IFluidCodeDetails = {
         package: await pkgResp.json(),
         config:{

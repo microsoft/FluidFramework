@@ -83,6 +83,9 @@ export class IFrameOuterHost {
         await proxy.createDocumentServiceFromRequest(request);
 
         // don't try to connect until the iframe does, so they get existing false
+
+        await new Promise((resolve)=>setTimeout(() => resolve(), 200));
+
         const container = await this.loader.resolve(request);
         if(!container.getQuorum().has("code")){
             // we'll never propose the code, so wait for them to do it

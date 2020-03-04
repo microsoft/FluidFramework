@@ -41,8 +41,8 @@ export class InnerDocumentDeltaConnection extends EventEmitter implements IDocum
 
         const tempEmitter = new EventEmitter();
 
-        const forwardEvent = (event: string, ... args) =>{
-            tempEmitter.emit(event, args);
+        const forwardEvent = (event: string, args: any[]) =>{
+            tempEmitter.emit(event, ... args);
             return;
         };
 
