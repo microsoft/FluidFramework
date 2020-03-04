@@ -24,6 +24,7 @@ import * as jwt from "jsonwebtoken";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
 import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
+import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 import {InsecureUrlResolver} from "@microsoft/fluid-test-runtime-utils";
 import { OdspUrlResolver } from "./odspUrlResolver";
 
@@ -333,18 +334,9 @@ async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLD
         return;
     }
 
-    // First try to get it as a view
-    let renderable = component.IComponentHTMLView;
-    if (!renderable) {
-        // Otherwise get the visual, which is a view factory
-        const visual = component.IComponentHTMLVisual;
-        if (visual) {
-            renderable = visual.addView();
-        }
-    }
-    if (renderable) {
-        renderable.render(div, { display: "block" });
-    }
+    // Render the component with an HTMLViewAdapter to abstract the UI framework used by the component
+    const view = new HTMLViewAdapter(component);
+    view.render(div, { display: "block" });
 }
 
 export function getUserToken(bearerSecret: string) {
