@@ -425,8 +425,6 @@ export function project<T, Props extends(keyof T)[]>(
     return sparseProduct(productOperations, root);
 }
 
-export const timeSpent = 0;
-
 function splitBox<T>(productOperations: ProductOperations<T>, currentBox: Box<T>): Pair<Box<T>> {
     if (currentBox.children !== undefined) {return currentBox.children;}
     const { box, probabilities } = currentBox;
