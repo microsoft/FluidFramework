@@ -266,7 +266,7 @@ export class ScribeLambda extends SequencedLambda {
             },
             null);
 
-        // And then delete messagse we no longer will need
+        // And then delete messagse we no longer will reference
         const removeSequenceNumber = Math.min(checkpoint.protocolState.sequenceNumber, this.protocolHead);
         await this.messageCollection
             .deleteMany({
@@ -302,7 +302,7 @@ export class ScribeLambda extends SequencedLambda {
         if (content.head) {
             // In usual case, client always refers to last summaryAck so lastClientSummaryHead should always match.
             // However, the ack itself might be lost If scribe dies right after creating the summary. In that case,
-            // the client code just fetches the last summary which should be the same as existingRef.object.sha.
+            // the client code just fetches the last summary which should be the same as existingRef sha.
             if (!existingRef ||
                 (this.lastClientSummaryHead !== content.head && existingRef.object.sha !== content.head)) {
                 await this.sendSummaryNack(
@@ -448,7 +448,6 @@ export class ScribeLambda extends SequencedLambda {
             },
         };
         const logTail = this.messageCollection.find(query, { "operation.sequenceNumber": 1 });
-
         const entries: ITreeEntry[] = [
             {
                 mode: FileMode.File,
