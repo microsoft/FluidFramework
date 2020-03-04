@@ -390,6 +390,7 @@ export class LocalOrderer implements IOrderer {
             protocolHandler,
             protocolHead,
             scribeMessages,
+            false,
             this.scribeNackOnSummarizeException);
     }
 
