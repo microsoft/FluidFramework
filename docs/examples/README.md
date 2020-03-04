@@ -1,6 +1,8 @@
 ---
-uid: examples
+title: Tutorials
+sidebarDepth: 0
 ---
+
 
 # Tutorials
 
@@ -11,6 +13,8 @@ uid: examples
 - SharedDirectory
 
 Dice roller is a simple example to familiarize yourself with Fluid's component scaffolding. It uses React for rendering.
+
+[Dice roller tutorial](./dice-roller.md)
 
 <style>
   iframe#diceroller {
@@ -29,6 +33,8 @@ Dice roller is a simple example to familiarize yourself with Fluid's component s
 
 Sudoku is a collaborative Sudoku game.
 
+[Sudoku tutorial](./sudoku.md)
+
 <style>
   iframe#sudoku {
     height: 500px;
@@ -44,6 +50,8 @@ Sudoku is a collaborative Sudoku game.
 
 Badge is a Fluid component that allows users to create an in-line badge within a document to represent the status
 of the overall document or a section of it.
+
+[Badge tutorial](./badge.md)
 
 **Distributed data structures:**
 

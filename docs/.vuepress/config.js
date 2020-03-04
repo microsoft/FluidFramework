@@ -185,18 +185,48 @@ const getGuideSidebar = () => {
             ]
         },
         {
+            title: "Component model",
+            collapsable: false,
+            children: [
+                "components.md",
+                "component-design-principles.md",
+            ]
+        },
+        {
             title: "Advanced",
             collapsable: false,
             children: [
                 "dds-anatomy",
             ]
         },
+    ]
+}
+
+const getExamplesSidebar = () => {
+    return [
+        "",
+        "dice-roller",
+        "sudoku",
+        "badge",
         {
-            title: "Component model",
-            collapsable: false,
+            title: "Components",
+            collapsable: true,
             children: [
-                "components.md",
-                "component-design-principles.md",
+                "visual-component",
+                "data-component",
+                "embed-components",
+                "cross-component",
+                "component-patterns",
+                "component-collections",
+                "bots",
+                "component-best-practices",
+            ]
+        },
+        {
+            title: "Containers",
+            collapsable: true,
+            children: [
+                "singletons",
             ]
         },
     ]
@@ -319,32 +349,7 @@ module.exports = {
             ],
             "/api/": getApiSidebar(),
             "/guide/": getGuideSidebar(),
-            "/examples/": [
-                "dice-roller",
-                "sudoku",
-                "badge",
-                {
-                    title: "Components",
-                    collapsable: true,
-                    children: [
-                        "visual-component",
-                        "data-component",
-                        "embed-components",
-                        "cross-component",
-                        "component-patterns",
-                        "component-collections",
-                        "bots",
-                        "component-best-practices",
-                    ]
-                },
-                {
-                    title: "Containers",
-                    collapsable: true,
-                    children: [
-                        "singletons",
-                    ]
-                },
-            ],
+            "/examples/": getExamplesSidebar(),
             "/how/": [
                 "",
                 "tob",
