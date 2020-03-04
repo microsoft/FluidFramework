@@ -243,7 +243,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             if (factory === undefined) {
                 return this.rejectDeferredRealize(`Can't find factory for ${lastPkg} package`);
             }
-            
+
             // Note that `bindRuntime()` will promptly resolve `componentRuntimeDeferred`.
             this.bindRuntime(factory.instantiateComponent(this));
         }
