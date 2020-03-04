@@ -16,6 +16,7 @@ import { ISharedMap } from "@microsoft/fluid-map";
 import {
     acquireAndComplete,
     ConsensusQueue,
+    ConsensusResult,
     IConsensusOrderedCollection,
     waitAcquireAndComplete,
 } from "@microsoft/fluid-ordered-collection";
@@ -206,6 +207,25 @@ function generate(
 
             assert.equal(root1Prime.get("test"), "sampleValue");
             assert.equal(root2Prime.get("test"), "sampleValue");
+        });
+
+        it("Can add and release data", async () => {
+            const collection1 = ctor.create(user1Document.runtime);
+            root1.set("collection", collection1.handle);
+
+            const collection2Handle =
+                await root2.wait<IComponentHandle<IConsensusOrderedCollection>>("collection");
+            const collection2 = await collection2Handle.get();
+
+            await collection1.add("testValue");
+            await collection1.acquire(async (value) => {
+                assert.strictEqual(value, "testValue");
+                return ConsensusResult.Release;
+            });
+
+            assert.equal(await waitAcquireAndComplete(collection2), "testValue");
+            assert.equal(await acquireAndComplete(collection1), undefined);
+            assert.equal(await acquireAndComplete(collection2), undefined);
         });
 
         it("Events", async () => {

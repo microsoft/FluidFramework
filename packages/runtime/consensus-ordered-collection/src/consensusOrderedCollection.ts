@@ -16,7 +16,6 @@ import { IChannelAttributes, IComponentRuntime, IObjectStorageService } from "@m
 import { SharedObject } from "@microsoft/fluid-shared-object-base";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
-import { debug } from "./debug";
 import {
     ConsensusCallback,
     ConsensusResult,
@@ -28,7 +27,9 @@ const snapshotFileNameData = "header";
 const snapshotFileNameTracking = "jobTracking";
 
 interface IConsensusOrderedCollectionValue<T> {
-    readonly id: string;
+    // an ID used to indicate acquired item.
+    // Used in acquire/release/complete ops.
+    readonly acquireId: string;
 
     // The actual value
     readonly value: T;
@@ -39,22 +40,29 @@ interface IConsensusOrderedCollectionValue<T> {
  */
 interface IConsensusOrderedCollectionAddOperation {
     opName: "add";
+    // serialized value
     value: string;
 }
 
 interface IConsensusOrderedCollectionAcquireOperation {
     opName: "acquire";
-    id: string;
+    // an ID used to indicate acquired item.
+    // Used in acquire/release/complete ops.
+    acquireId: string;
 }
 
 interface IConsensusOrderedCollectionCompleteOperation {
     opName: "complete";
-    id: string;
+    // an ID used to indicate acquired item.
+    // Used in acquire/release/complete ops.
+    acquireId: string;
 }
 
 interface IConsensusOrderedCollectionReleaseOperation {
     opName: "release";
-    id: string;
+    // an ID used to indicate acquired item.
+    // Used in acquire/release/complete ops.
+    acquireId: string;
 }
 
 type IConsensusOrderedCollectionOperation =
@@ -85,32 +93,6 @@ interface IPendingRecord<T> {
 
 type jobTrackingType<T> = Map<string, {value: T, clientId: string | undefined}>;
 const belongsToUnattached = undefined;
-
-/**
- * Helper method to acquire and complete an item
- * Should be used in test code only
- */
-export async function acquireAndComplete<T>(collection: IConsensusOrderedCollection<T>): Promise<T | undefined> {
-    let res: T | undefined;
-    await collection.acquire(async (value: T) => {
-        res = value;
-        return ConsensusResult.Complete;
-    });
-    return res;
-}
-
-/**
- * Helper method to acquire and complete an item
- * Should be used in test code only
- */
-export async function waitAcquireAndComplete<T>(collection: IConsensusOrderedCollection<T>): Promise<T> {
-    let res: T | undefined;
-    await collection.waitAndAcquire(async (value: T) => {
-        res = value;
-        return ConsensusResult.Complete;
-    });
-    return res as T;
-}
 
 /**
  * Implementation of a consensus collection shared object
@@ -189,10 +171,11 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
 
         switch (res) {
             case ConsensusResult.Complete:
-                await this.complete(result.id);
+                await this.complete(result.acquireId);
                 break;
             case ConsensusResult.Release:
-                this.release(result.id);
+                this.release(result.acquireId);
+                this.emit("localRelease", result.value, true /*intentional*/);
                 break;
             default:
                 assert(false);
@@ -257,9 +240,9 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
         return this.runtime.connected && this.runtime.deltaManager.active;
     }
 
-    protected async complete(id: string) {
+    protected async complete(acquireId: string) {
         if (this.isLocal()) {
-            this.completeCore(id);
+            this.completeCore(acquireId);
             return;
         }
 
@@ -267,24 +250,24 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
         if (this.isActive()) {
             const work: IConsensusOrderedCollectionCompleteOperation = {
                 opName: "complete",
-                id,
+                acquireId,
             };
             await this.submit(work);
         }
     }
 
-    protected completeCore(id: string) {
+    protected completeCore(acquireId: string) {
         // Note: item may be no longer in jobTracking and returned back to queue!
-        const rec = this.jobTracking.get(id);
+        const rec = this.jobTracking.get(acquireId);
         if (rec !== undefined) {
-            this.jobTracking.delete(id);
+            this.jobTracking.delete(acquireId);
             this.emit("complete", rec.value);
         }
     }
 
-    protected release(id: string) {
+    protected release(acquireId: string) {
         if (this.isLocal()) {
-            this.releaseCore(id);
+            this.releaseCore(acquireId);
             return;
         }
 
@@ -292,7 +275,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
         if (this.isActive()) {
             const work: IConsensusOrderedCollectionReleaseOperation = {
                 opName: "release",
-                id,
+                acquireId,
             };
             this.submit(work).catch((error) => {
                 this.runtime.logger.sendErrorEvent({eventName: "ConsensusQueue_release"}, error);
@@ -300,11 +283,11 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
         }
     }
 
-    protected releaseCore(id: string) {
+    protected releaseCore(acquireId: string) {
         // Note: item may be no longer in jobTracking and returned back to queue!
-        const rec = this.jobTracking.get(id);
+        const rec = this.jobTracking.get(acquireId);
         if (rec !== undefined) {
-            this.jobTracking.delete(id);
+            this.jobTracking.delete(acquireId);
             this.data.add(rec.value);
             this.emit("add", rec.value, false /*newlyAdded*/);
         }
@@ -341,7 +324,11 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
     }
 
     protected onDisconnect() {
-        debug(`ConsensusCollection ${this.id} is now disconnected`);
+        for (const [, {value, clientId}] of this.jobTracking) {
+            if (clientId === this.runtime.clientId) {
+                this.emit("localRelease", value, false /*intentional*/);
+            }
+        }
     }
 
     protected processCore(message: ISequencedDocumentMessage, local: boolean) {
@@ -354,15 +341,15 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
                     break;
 
                 case "acquire":
-                    value = this.acquireCore(op.id, message.clientId);
+                    value = this.acquireCore(op.acquireId, message.clientId);
                     break;
 
                 case "complete":
-                    this.completeCore(op.id);
+                    this.completeCore(op.acquireId);
                     break;
 
                 case "release":
-                    this.releaseCore(op.id);
+                    this.releaseCore(op.acquireId);
                     break;
 
                 default:
@@ -410,17 +397,17 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
         this.emit("add", value, true /*newlyAdded*/);
     }
 
-    private acquireCore(id: string, clientId?: string): IConsensusOrderedCollectionValue<T> | undefined {
+    private acquireCore(acquireId: string, clientId?: string): IConsensusOrderedCollectionValue<T> | undefined {
         if (this.data.size() === 0) {
             return undefined;
         }
         const value = this.data.remove();
 
         const value2: IConsensusOrderedCollectionValue<T> = {
-            id,
+            acquireId,
             value,
         };
-        this.jobTracking.set(value2.id, {value, clientId});
+        this.jobTracking.set(value2.acquireId, {value, clientId});
 
         this.emit("acquire", value, clientId);
         return value2;
@@ -435,16 +422,16 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
 
         const op: IConsensusOrderedCollectionOperation = {
             opName: "acquire",
-            id: uuid(),
+            acquireId: uuid(),
         };
         return this.submit(op);
     }
 
     private removeClient(clientIdToRemove?: string) {
         const added: T[] = [];
-        for (const [id, {value, clientId}] of this.jobTracking) {
+        for (const [acquireId, {value, clientId}] of this.jobTracking) {
             if (clientId === clientIdToRemove) {
-                this.jobTracking.delete(id);
+                this.jobTracking.delete(acquireId);
                 this.data.add(value);
                 added.push(value);
             }

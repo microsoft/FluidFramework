@@ -8,7 +8,7 @@ import { ConnectionState } from "@microsoft/fluid-protocol-definitions";
 import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
 import { ConsensusQueueFactory } from "../consensusOrderedCollectionFactory";
 import { ConsensusResult, IConsensusOrderedCollection } from "../interfaces";
-import { acquireAndComplete, waitAcquireAndComplete } from "../consensusOrderedCollection";
+import { acquireAndComplete, waitAcquireAndComplete } from "../testUtils";
 
 describe("Routerlicious", () => {
     const factory = new ConsensusQueueFactory();

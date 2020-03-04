@@ -58,9 +58,32 @@ export interface IConsensusOrderedCollection<T = any> extends ISharedObject, Eve
     /**
      * Events notifying about addition, acquisition, release and completion of items
      */
-    on(event: "add", listener: (value: T, newlyAdded: boolean) => void);
-    on(event: "complete", listener: (value: T) => void);
-    on(event: "acquire", listener: (value: T, clientId?: string) => void);
+
+    /**
+     * Event fires when new item is added to the queue or
+     * an item previously acquired is returned back to a queue (including client loosing connection)
+     * @param newlyAdded indicates if it's newly added item of previously acquired item
+     */
+    on(event: "add", listener: (value: T, newlyAdded: boolean) => void): this;
+    /**
+     * Event fires when a client acquired an item
+     * Fires both for locally acquired items, as well as items acquired by remote clients
+     */
+    on(event: "acquire", listener: (value: T, clientId?: string) => void): this;
+
+    /**
+     * "Complete event fires when a client completes an item.
+     */
+    on(event: "complete", listener: (value: T) => void): this;
+
+    /**
+     * Event fires when locally acquired item is being released back to the queue.
+     * Please note that release process is asynchronous, so it takes a while for it to happen
+     * ("add" event will be fired as result of it)
+     * @param intentional - indicates whether release was intentional (result of returning
+     * ConsensusResult.Release from callback) or it happened as result of lost connection.
+     */
+    on(event: "localRelease", listener: (value: T, intentional: boolean) => void): this;
 
     /**
      * Adds a value to the collection
