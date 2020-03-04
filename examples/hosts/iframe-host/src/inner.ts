@@ -25,7 +25,6 @@ export async function runInner(divId: string){
             urlResolver: documentServiceFactory.urlResolver,
             config: {},
         },
-        documentServiceFactory.resolvedUrl,
         undefined,
         []);
 

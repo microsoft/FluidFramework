@@ -15,7 +15,7 @@ import { InsecureUrlResolver } from "./insecureUrlResolver";
 
 
 const createRequest = (): IRequest => ({
-    url: `${window.location.origin}/testdoc27`,
+    url: `${window.location.origin}/testdoc31`,
 });
 
 const getTinyliciousResolver =
@@ -87,7 +87,6 @@ export async function loadDiv(divId: string){
             urlResolver,
             config: {},
         },
-        await urlResolver.resolve(createRequest()),
         undefined,
         []);
 
