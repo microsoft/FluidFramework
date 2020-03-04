@@ -7,7 +7,7 @@ sidebarDepth: 2
 
 Welcome to 2020! The Fluid Runtime team has hit the ground running this year, and with our first sprint closing down and
 another about to start, it's a great time to take stock of where we are and what's next. But first, if you're wondering
-who the Fluid Runtime team is and what we do, [we've got you covered](../team.md).
+who the Fluid Runtime team is and what we do, [we've got you covered](../README.md).
 
 
 ## January: A brief look back

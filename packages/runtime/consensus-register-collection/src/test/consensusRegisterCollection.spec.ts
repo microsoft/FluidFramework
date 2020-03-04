@@ -6,6 +6,7 @@
 import * as assert from "assert";
 import { ConnectionState } from "@microsoft/fluid-protocol-definitions";
 import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
+import { IDeltaConnection } from "@microsoft/fluid-runtime-definitions";
 import { ConsensusRegisterCollectionFactory } from "../consensusRegisterCollectionFactory";
 import { IConsensusRegisterCollection, IConsensusRegisterCollectionFactory } from "../interfaces";
 
@@ -16,10 +17,10 @@ describe("Routerlicious", () => {
             name: string,
             factory: IConsensusRegisterCollectionFactory) {
 
-            describe(name, () => {
-                let testCollection: IConsensusRegisterCollection;
-                let runtime: MockRuntime;
+            let testCollection: IConsensusRegisterCollection;
+            let runtime: MockRuntime;
 
+            describe(name, () => {
                 beforeEach(async () => {
                     runtime = new MockRuntime();
                     testCollection = factory.create(runtime, "consensus-register-collection");
@@ -34,16 +35,41 @@ describe("Routerlicious", () => {
     });
 
     describe("reconnect", () => {
-        it("message sent before reconnect", async () => {
+        let testCollection: IConsensusRegisterCollection;
+        let runtime: MockRuntime;
+        let deltaConnFactory: MockDeltaConnectionFactory;
+        let deltaConnection: IDeltaConnection;
+
+        beforeEach(async () => {
             const factory = new ConsensusRegisterCollectionFactory();
-            const runtime = new MockRuntime();
-            const deltaConnFactory = new MockDeltaConnectionFactory();
-            const deltaConnection = deltaConnFactory.createDeltaConnection(runtime);
+            runtime = new MockRuntime();
+            deltaConnFactory = new MockDeltaConnectionFactory();
+            deltaConnection = deltaConnFactory.createDeltaConnection(runtime);
             runtime.services = {
                 deltaConnection,
                 objectStorage: new MockStorage(),
             };
-            const testCollection = factory.create(runtime, "consensus-ordered-collection");
+            testCollection = factory.create(runtime, "consensus-register-collection");
+        });
+
+        it("message not sent before attach", async () => {
+            const writeP =  testCollection.write("test", "test");
+            const res = await writeP;
+            assert(res);
+        });
+
+        it("message not sent before connect", async () => {
+            testCollection.connect(runtime.services);
+
+            deltaConnection.state = ConnectionState.Disconnected;
+            const writeP =  testCollection.write("test", "test");
+            deltaConnection.state = ConnectionState.Connected;
+            deltaConnFactory.processAllMessages();
+            const res = await writeP;
+            assert(res);
+        });
+
+        it("message sent before reconnect", async () => {
             testCollection.connect(runtime.services);
 
             const writeP = testCollection.write("test", "test");
@@ -52,19 +78,11 @@ describe("Routerlicious", () => {
             deltaConnFactory.processAllMessages();
             deltaConnection.state = ConnectionState.Connected;
             deltaConnFactory.processAllMessages();
-            await writeP;
+            const res = await writeP;
+            assert(res);
         });
 
         it("message not sent before reconnect", async () => {
-            const factory = new ConsensusRegisterCollectionFactory();
-            const runtime = new MockRuntime();
-            const deltaConnFactory = new MockDeltaConnectionFactory();
-            const deltaConnection = deltaConnFactory.createDeltaConnection(runtime);
-            runtime.services = {
-                deltaConnection,
-                objectStorage: new MockStorage(),
-            };
-            const testCollection = factory.create(runtime, "consensus-ordered-collection");
             testCollection.connect(runtime.services);
 
             const writeP =  testCollection.write("test", "test");
@@ -73,10 +91,8 @@ describe("Routerlicious", () => {
             deltaConnFactory.clearMessages();
             deltaConnection.state = ConnectionState.Connected;
             deltaConnFactory.processAllMessages();
-            try {
-                await writeP;
-                assert.fail("expected to fail");
-            } catch { }
+            const res = await writeP;
+            assert(res);
         });
     });
 });

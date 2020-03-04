@@ -8,7 +8,7 @@ import * as api from "@fluid-internal/client-api";
 import {
     IComponent,
     IComponentHandle,
-    IComponentHTMLVisual,
+    IComponentHTMLView,
     IComponentLoadable,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IGenericBlob } from "@microsoft/fluid-container-definitions";
@@ -56,16 +56,16 @@ function getComponentBlock(marker: MergeTree.Marker): IBlockViewMarker {
 }
 
 interface IBlockViewMarker extends MergeTree.Marker {
-    instanceP?: Promise<IComponentHTMLVisual>;
-    instance?: IComponentHTMLVisual & IComponent;
+    instanceP?: Promise<IComponentHTMLView>;
+    instance?: IComponentHTMLView & IComponent;
 }
 
 interface IComponentViewMarker extends MergeTree.Marker {
-    instanceP?: Promise<IComponentHTMLVisual>;
-    instance?: IComponentHTMLVisual;
+    instanceP?: Promise<IComponentHTMLView>;
+    instance?: IComponentHTMLView;
 }
 
-interface IMathCollection {
+interface IMathCollection extends IComponentLoadable {
     createCollectionItem(options?: IMathOptions): IMathInstance;
     getInstance(id: string, options?: IMathOptions): IMathInstance;
 }
@@ -77,10 +77,9 @@ interface IMathOptions {
     display: string;
 }
 
-export interface IMathInstance extends IComponentLoadable, IComponentHTMLVisual, IComponentCursor,
+export interface IMathInstance extends IComponentLoadable, IComponentHTMLView, IComponentCursor,
     IComponentKeyHandlers, IComponentLayout, SearchMenu.ISearchMenuClient {
     IComponentLoadable: IComponentLoadable;
-    IComponentHTMLVisual: IComponentHTMLVisual;
     IComponentCursor: IComponentCursor;
     IComponentKeyHandlers: IComponentKeyHandlers;
     IComponentLayout: IComponentLayout;
@@ -823,7 +822,7 @@ function renderSegmentIntoLine(
                                 }
 
                                 const component = response.value as IComponent;
-                                const viewable = component.IComponentHTMLVisual;
+                                const viewable = component.IComponentHTMLView;
                                 if (!viewable) {
                                     return Promise.reject("component is not viewable");
                                 }
@@ -2332,9 +2331,9 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                         newBlock.instanceP = newBlock.properties.leafId.get()
                             .then(async (component: IComponent) => {
                                 // TODO below is a temporary workaround. Should every QI interface also implement
-                                // IComponent. Then you can go from IComponentHTMLVisual to IComponentLayout.
+                                // IComponent. Then you can go from IComponentHTMLView to IComponentLayout.
                                 // Or should you query for each one individually.
-                                const viewable = component.IComponentHTMLVisual;
+                                const viewable = component.IComponentHTMLView;
                                 if (!viewable) {
                                     return Promise.reject("component is not viewable");
                                 }
@@ -4500,8 +4499,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         if (overlappingComments && (overlappingComments.length >= 1)) {
             const commentInterval = overlappingComments[0];
 
-            const commentHandle = commentInterval.properties.story as IComponentHandle;
-            commentHandle.get<Sequence.SharedString>().then(
+            const commentHandle = commentInterval.properties.story as IComponentHandle<Sequence.SharedString>;
+            commentHandle.get().then(
                 (comment) => {
                     const commentText = comment.getText();
                     this.statusMessage("comment", `Comment Text: ${commentText}`);
@@ -4638,10 +4637,10 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         const root = this.collabDocument.getRoot();
 
         const [progressBars, math, videoPlayers, images] = await Promise.all([
-            root.get<IComponentHandle>("progressBars").get<IComponent>(),
-            root.get<IComponentHandle>("math").get<IMathCollection>(),
-            root.get<IComponentHandle>("videoPlayers").get<IComponent>(),
-            root.get<IComponentHandle>("images").get<IComponent>(),
+            root.get<IComponentHandle>("progressBars").get(),
+            root.get<IComponentHandle<IMathCollection>>("math").get(),
+            root.get<IComponentHandle>("videoPlayers").get(),
+            root.get<IComponentHandle>("images").get(),
         ]);
 
         this.math = math;
@@ -5097,8 +5096,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.commentsView = await this.comments.getView();
 
         this.sequenceTest = await this.docRoot
-            .get<IComponentHandle>("sequence-test")
-            .get<Sequence.SharedNumberSequence>();
+            .get<IComponentHandle<Sequence.SharedNumberSequence>>("sequence-test")
+            .get();
         this.sequenceTest.on("op", (op) => {
             this.showSequenceEntries();
         });

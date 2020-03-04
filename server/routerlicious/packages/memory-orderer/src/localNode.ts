@@ -15,6 +15,7 @@ import {
     ITaskMessageSender,
     ITenantManager,
     IWebSocketServer,
+    ILogger,
 } from "@microsoft/fluid-server-services-core";
 import * as _ from "lodash";
 import * as moniker from "moniker";
@@ -75,7 +76,8 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         taskMessageSender: ITaskMessageSender,
         tenantManager: ITenantManager,
         permission: any,
-        maxMessageSize: number) {
+        maxMessageSize: number,
+        logger: ILogger) {
 
         // Look up any existing information for the node or create a new one
         const node = await LocalNode.create(
@@ -93,7 +95,8 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
             taskMessageSender,
             tenantManager,
             permission,
-            maxMessageSize);
+            maxMessageSize,
+            logger);
     }
 
     private static async create(
@@ -160,7 +163,8 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         private readonly taskMessageSender: ITaskMessageSender,
         private readonly tenantManager: ITenantManager,
         private readonly permission: any,
-        private readonly maxMessageSize: number) {
+        private readonly maxMessageSize: number,
+        private readonly logger: ILogger) {
         super();
 
         // Schedule the first heartbeat to update the reservation
@@ -247,7 +251,8 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
             this.taskMessageSender,
             this.tenantManager,
             this.permission,
-            this.maxMessageSize);
+            this.maxMessageSize,
+            this.logger);
         assert(!this.orderMap.has(fullId));
         this.orderMap.set(fullId, orderer);
 

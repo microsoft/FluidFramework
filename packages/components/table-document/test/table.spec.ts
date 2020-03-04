@@ -6,7 +6,7 @@
 /* eslint-disable no-shadow */
 
 import * as assert from "assert";
-import { TestHost } from "@microsoft/fluid-local-test-server";
+import { TestHost } from "@microsoft/fluid-local-test-utils";
 import {
     TableDocument,
     TableDocumentType,

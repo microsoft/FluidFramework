@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/chat",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "description": "Fluid Framework Chat with minimal runtime",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -21,15 +21,15 @@
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
     "start:docker": "webpack-dev-server --config webpack.config.js --package package.json --env.mode docker",
     "start:r11s": "webpack-dev-server --config webpack.config.js --package package.json --env.mode r11s",
-    "start:spo-df": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo-df",
     "start:spo": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo",
+    "start:spo-df": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo-df",
     "tsc": "tsc",
     "webpack": "webpack --env=\"production\""
   },
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.14.0",
-    "@microsoft/fluid-container-definitions": "^0.14.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1001.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.15.0",
+    "@microsoft/fluid-container-definitions": "^0.15.0",
+    "@microsoft/fluid-protocol-definitions": "^0.1002.0",
     "@stardust-ui/react": "^0.17.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2",
@@ -37,7 +37,7 @@
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.14.0",
-    "@microsoft/fluid-webpack-component-loader": "^0.14.0",
+    "@microsoft/fluid-webpack-component-loader": "^0.15.0",
     "@types/node": "^10.14.6",
     "@types/react-dom": "^16.9.4",
     "@types/request": "^2.47.1",

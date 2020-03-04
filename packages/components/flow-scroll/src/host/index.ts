@@ -11,7 +11,6 @@ import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aquedu
 import {
     IComponent,
     IComponentHandle,
-    IComponentHTMLOptions,
     IComponentHTMLView,
     IComponentHTMLVisual,
     IResponse,
@@ -60,10 +59,6 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
         return response.value as T;
     }
 
-    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
-        this.addView().render(elm, options);
-    }
-
     protected async componentInitializingFirstTime() {
         await Promise.all([
             this.createSubComponent(this.docId, FlowDocumentType),
@@ -84,8 +79,8 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
     }
 
     protected async componentHasInitialized() {
-        const handle = await this.root.wait<IComponentHandle>(insightsMapId);
-        const insights = await handle.get<SharedMap>();
+        const handle = await this.root.wait<IComponentHandle<SharedMap>>(insightsMapId);
+        const insights = await handle.get();
 
         this.context.hostRuntime.setFlushMode(FlushMode.Manual);
 
@@ -173,7 +168,7 @@ class TaskScheduler {
         this.taskManager.pick(this.componentUrl, "intel").then(() => {
             console.log(`Picked text analyzer`);
         }, (err) => {
-            console.log(err);
+            console.log(JSON.stringify(err));
         });
     }
 }

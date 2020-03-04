@@ -5,20 +5,17 @@
 
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { BaseHost, IBaseHostConfig } from "@microsoft/fluid-base-host";
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import {
     IFluidModule,
     IFluidPackage,
     IPackage,
     isFluidPackage,
 } from "@microsoft/fluid-container-definitions";
+import { Container } from "@microsoft/fluid-container-loader";
 import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
-import {
-    ITestDeltaConnectionServer,
-    TestDeltaConnectionServer,
-    TestDocumentServiceFactory,
-    TestResolver,
-} from "@microsoft/fluid-local-test-server";
+import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { SessionStorageDbFactory } from "@microsoft/fluid-local-test-utils";
 import { IUser } from "@microsoft/fluid-protocol-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { getRandomName } from "@microsoft/fluid-server-services-client";
@@ -28,7 +25,6 @@ import * as jwt from "jsonwebtoken";
 import * as uuid from "uuid/v4";
 import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
 import { InsecureUrlResolver } from "./insecureUrlResolver";
-import { SessionStorageDbFactory } from "./sessionStorageTestDb";
 import { OdspUrlResolver } from "./odspUrlResolver";
 
 export interface IDevServerUser extends IUser {
@@ -236,25 +232,12 @@ export async function start(
     options: RouteOptions,
     div: HTMLDivElement,
 ): Promise<void> {
-    const url = window.location.href;
-
-    // Create Package
-    const scriptIds: string[] = [];
-    const pkg = await getResolvedPackage(packageJson, scriptIds);
-
-    // Construct a request
-    const req: IRequest = {
-        url,
-    };
-
-    const urlResolver = getUrlResolver(documentId, options);
-
     let documentServiceFactory: IDocumentServiceFactory;
-    let deltaConn: ITestDeltaConnectionServer;
+    let deltaConn: ILocalDeltaConnectionServer;
 
     switch (options.mode) {
         case "local": {
-            deltaConn = TestDeltaConnectionServer.create(new SessionStorageDbFactory(documentId));
+            deltaConn = LocalDeltaConnectionServer.create(new SessionStorageDbFactory(documentId));
             documentServiceFactory = new TestDocumentServiceFactory(deltaConn);
             break;
         }
@@ -280,44 +263,88 @@ export async function start(
         }
     }
 
-    const hostConf: IBaseHostConfig = { documentServiceFactory, urlResolver };
+    const urlResolver = getUrlResolver(documentId, options);
 
-    const double = (options.mode === "local") && !options.single;
-    let leftDiv: HTMLDivElement;
-    let rightDiv: HTMLDivElement;
-    if (double) {
-        leftDiv = makeSideBySideDiv("sbs-left");
-        rightDiv = makeSideBySideDiv("sbs-right");
-        div.append(leftDiv, rightDiv);
-    }
+    // Construct a request
+    const url = window.location.href;
 
-    const start1Promise = BaseHost.start(
-        hostConf,
-        url,
-        await urlResolver.resolve(req),
+    // Create Package
+    const scriptIds: string[] = [];
+    const pkg = await getResolvedPackage(packageJson, scriptIds);
+    const codeDetails = pkg ? pkg.details : undefined;
+
+    const host1Conf: IBaseHostConfig = { documentServiceFactory, urlResolver };
+    const baseHost1 = new BaseHost(
+        host1Conf,
         pkg,
         scriptIds,
-        double ? leftDiv : div,
+    );
+    const container1Promise = baseHost1.initializeContainer(
+        url,
+        codeDetails,
     );
 
-    let start2Promise: Promise<any> = Promise.resolve();
-    if (double) {
+    // Side-by-side mode
+    if (options.mode === "local" && !options.single) {
         // New documentServiceFactory for right div, same everything else
         const docServFac2: IDocumentServiceFactory = new TestDocumentServiceFactory(deltaConn);
         const hostConf2 = { documentServiceFactory: docServFac2, urlResolver };
 
-        // BaseHost.start will create a new Loader/Container/Component from the startCore above. This is
+        // This will create a new Loader/Container/Component from the BaseHost above. This is
         // intentional because we want to emulate two clients collaborating with each other.
-        start2Promise = BaseHost.start(
+        const baseHost2 = new BaseHost(
             hostConf2,
-            url,
-            await urlResolver.resolve(req),
             pkg,
             scriptIds,
-            rightDiv,
         );
+        const container2Promise = baseHost2.initializeContainer(
+            url,
+            codeDetails,
+        );
+
+        const leftDiv = makeSideBySideDiv("sbs-left");
+        const rightDiv = makeSideBySideDiv("sbs-right");
+        div.append(leftDiv, rightDiv);
+
+        await Promise.all([
+            container1Promise.then(async (container) => {
+                await startRendering(container, baseHost1, url, leftDiv);
+            }),
+            container2Promise.then(async (container) => {
+                await startRendering(container, baseHost2, url, rightDiv);
+            }),
+        ]);
+    } else {
+        const container = await container1Promise;
+        await startRendering(container, baseHost1, url, div);
     }
-    await Promise.all([start1Promise, start2Promise]);
+}
+
+async function startRendering(container: Container, baseHost: BaseHost, url: string, div: HTMLDivElement) {
+    container.on("contextChanged", (value) => {
+        getComponentAndRender(baseHost, url, div).catch(() => { });
+    });
+    await getComponentAndRender(baseHost, url, div);
+}
+
+async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
+    const component = await baseHost.getComponent(url);
+    if (component === undefined) {
+        return;
+    }
+
+    // First try to get it as a view
+    let renderable = component.IComponentHTMLView;
+    if (!renderable) {
+        // Otherwise get the visual, which is a view factory
+        const visual = component.IComponentHTMLVisual;
+        if (visual) {
+            renderable = visual.addView();
+        }
+    }
+    if (renderable) {
+        renderable.render(div, { display: "block" });
+    }
 }
 
 export function getUserToken(bearerSecret: string) {

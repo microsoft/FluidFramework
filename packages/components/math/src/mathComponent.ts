@@ -433,7 +433,6 @@ export class MathInstance extends EventEmitter implements IComponentLoadable, IC
     public startMarker: MergeTree.Marker;
     public solnText = "x=0";
     public solnVar = "x";
-    private defaultView: MathView;
 
     constructor(
         public url: string,
@@ -451,17 +450,6 @@ export class MathInstance extends EventEmitter implements IComponentLoadable, IC
     public addView(scope?: IComponent) {
         console.warn("Instead of using {mathView = mathInstance.addView(scope)}, consider using {mathView = new MathView(mathInstance, scope)}");
         return new MathView(this, scope);
-    }
-
-    public render(elm: HTMLElement, options?: IComponentHTMLOptions) {
-        if (!this.defaultView) {
-            this.defaultView = this.addView();
-        }
-        let localOptions = this.options;
-        if (options) {
-            localOptions = options;
-        }
-        this.defaultView.render(elm, localOptions);
     }
 
     public insertText(text: string, pos: number) {
@@ -702,16 +690,16 @@ export class MathFactoryComponent implements IComponentFactory {
         dataTypes.set(mapFactory.type, mapFactory);
         dataTypes.set(sharedStringFactory.type, sharedStringFactory);
 
-        ComponentRuntime.load(
+        const runtime = ComponentRuntime.load(
             context,
             dataTypes,
-            (runtime) => {
-                const mathCollectionP = MathCollection.load(runtime, context);
-                runtime.registerRequestHandler(async (request: IRequest) => {
-                    const mathCollection = await mathCollectionP;
-                    return mathCollection.request(request);
-                });
-            });
+        );
+
+        const mathCollectionP = MathCollection.load(runtime, context);
+        runtime.registerRequestHandler(async (request: IRequest) => {
+            const mathCollection = await mathCollectionP;
+            return mathCollection.request(request);
+        });
     }
 }
 

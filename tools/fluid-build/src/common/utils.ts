@@ -39,10 +39,11 @@ export const readFileAsync = util.promisify(fs.readFile);
 export const writeFileAsync = util.promisify(fs.writeFile);
 export const unlinkAsync = util.promisify(fs.unlink);
 export const existsSync = fs.existsSync;
-export const realpathAsync = util.promisify(fs.realpath);
+export const realpathAsync = util.promisify(fs.realpath.native);
 export const symlinkAsync = util.promisify(fs.symlink);
 export const mkdirAsync = util.promisify(fs.mkdir);
 export const copyFileAsync = util.promisify(fs.copyFile);
+export const renameAsync = util.promisify(fs.rename);
 
 export interface ExecAsyncResult {
     error: child_process.ExecException | null;
@@ -57,9 +58,9 @@ export async function execAsync(command: string, options: child_process.ExecOpti
     });
 }
 
-export async function execWithErrorAsync(command: string, options: child_process.ExecOptions, errorPrefix: string): Promise<ExecAsyncResult> {
+export async function execWithErrorAsync(command: string, options: child_process.ExecOptions, errorPrefix: string, warning: boolean = true): Promise<ExecAsyncResult> {
     const ret = await execAsync(command, options);
-    printExecError(ret, command, errorPrefix);
+    printExecError(ret, command, errorPrefix, warning);
     return ret;
 }
 
@@ -71,15 +72,16 @@ async function rimrafAsync(deletePath: string) {
 
 export async function rimrafWithErrorAsync(deletePath: string, errorPrefix: string) {
     const ret = await rimrafAsync(deletePath);
-    printExecError(ret, `rimraf ${deletePath}`, errorPrefix);
+    printExecError(ret, `rimraf ${deletePath}`, errorPrefix, true);
     return ret;
 }
 
-function printExecError(ret: ExecAsyncResult, command: string, errorPrefix: string) {
+function printExecError(ret: ExecAsyncResult, command: string, errorPrefix: string, warning: boolean) {
     if (ret.error) {
-        console.error(`${errorPrefix}: error during command ${command}`)
+        console.error(`${errorPrefix}: error during command ${command}`);
+        console.error(`${errorPrefix}: ${ret.error.message}`);
         console.error(ret.stdout ? `${errorPrefix}: ${ret.stdout}\n${ret.stderr}` : `${errorPrefix}: ${ret.stderr}`);
-    } else if (ret.stderr) {
+    } else if (warning && ret.stderr) {
         // no error code but still error messages, treat them is non fatal warnings
         console.warn(`${errorPrefix}: warning during command ${command}`);
         console.warn(`${errorPrefix}: ${ret.stderr}`);

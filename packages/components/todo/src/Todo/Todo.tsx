@@ -4,11 +4,14 @@
  */
 
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
-import { IComponentReactViewable } from "@microsoft/fluid-aqueduct-react";
-import { IComponentHandle, IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import {
+    IComponentHandle,
+    IComponentHTMLView,
+} from "@microsoft/fluid-component-core-interfaces";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
+import { IComponentReactViewable } from "@microsoft/fluid-view-adapters";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { TodoItem, TodoItemName } from "../TodoItem/index";
@@ -25,7 +28,9 @@ export const TodoName = `${pkg.name as string}-todo`;
  * - New todo item entry
  * - List of todo items
  */
-export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComponentReactViewable {
+export class Todo extends PrimedComponent implements
+    IComponentHTMLView,
+    IComponentReactViewable {
 
     // DDS ids stored as variables to minimize simple string mistakes
     private readonly todoItemsKey = "todo-items";
@@ -33,12 +38,12 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
 
     private todoItemsMap: ISharedMap;
 
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
     public get IComponentReactViewable() { return this; }
 
     // Would prefer not to hand this out, and instead give back a title component?
     public async getTodoTitleString() {
-        return this.root.get<IComponentHandle>(this.todoTitleKey).get<SharedString>();
+        return this.root.get<IComponentHandle<SharedString>>(this.todoTitleKey).get();
     }
 
     /**
@@ -56,7 +61,7 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
     }
 
     protected async componentHasInitialized() {
-        this.todoItemsMap = await this.root.get<IComponentHandle>(this.todoItemsKey).get<ISharedMap>();
+        this.todoItemsMap = await this.root.get<IComponentHandle<ISharedMap>>(this.todoItemsKey).get();
         // Hide the DDS eventing used by the model, expose a model-specific event interface.
         this.todoItemsMap.on("op", (op, local) => {
             if (!local) {
@@ -65,7 +70,7 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
         });
     }
 
-    // start IComponentHTMLVisual
+    // start IComponentHTMLView
 
     /**
      * Creates a new view for a caller that doesn't directly support React
@@ -81,7 +86,7 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
         );
     }
 
-    // end IComponentHTMLVisual
+    // end IComponentHTMLView
 
     // start IComponentReactViewable
 

@@ -1,0 +1,92 @@
+{
+  "name": "@microsoft/fluid-local-test-utils",
+  "version": "0.15.0",
+  "description": "Local test utils implementation",
+  "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
+  "sideEffects": "false",
+  "main": "dist/index.js",
+  "module": "lib/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "npm run build:genver && concurrently npm:build:compile npm:lint",
+    "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:compile:min": "npm run build:compile",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
+    "build:full": "concurrently npm:build npm:webpack",
+    "build:full:compile": "concurrently npm:build:compile npm:webpack",
+    "build:genver": "gen-version",
+    "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+    "eslint": "eslint --ext=ts,tsx --format stylish src",
+    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "lint": "npm run eslint",
+    "lint:fix": "npm run eslint:fix",
+    "tsc": "tsc",
+    "webpack": "webpack --config webpack.config.js"
+  },
+  "nyc": {
+    "all": true,
+    "cache-dir": "nyc/.cache",
+    "exclude": [
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "exclude-after-remap": false,
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "report-dir": "nyc/report",
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output"
+  },
+  "dependencies": {
+    "@microsoft/fluid-aqueduct": "^0.15.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.15.0",
+    "@microsoft/fluid-container-definitions": "^0.15.0",
+    "@microsoft/fluid-container-loader": "^0.15.0",
+    "@microsoft/fluid-driver-definitions": "^0.15.0",
+    "@microsoft/fluid-local-driver": "^0.15.0",
+    "@microsoft/fluid-runtime-definitions": "^0.15.0",
+    "@microsoft/fluid-server-local-server": "^0.1002.0",
+    "@microsoft/fluid-server-services-core": "^0.1002.0",
+    "@microsoft/fluid-server-test-utils": "^0.1002.0",
+    "@microsoft/fluid-shared-object-base": "^0.15.0",
+    "debug": "^4.1.1",
+    "uuid": "^3.3.2"
+  },
+  "devDependencies": {
+    "@microsoft/eslint-config-fluid": "^0.14.0",
+    "@microsoft/fluid-build-common": "^0.14.0",
+    "@types/debug": "^0.0.31",
+    "@types/mocha": "^5.2.5",
+    "@types/nock": "^9.3.0",
+    "@types/node": "^10.14.6",
+    "@typescript-eslint/eslint-plugin": "~2.17.0",
+    "@typescript-eslint/parser": "~2.17.0",
+    "concurrently": "^4.1.0",
+    "copyfiles": "^2.1.0",
+    "eslint": "~6.8.0",
+    "eslint-plugin-eslint-comments": "~3.1.2",
+    "eslint-plugin-import": "2.20.0",
+    "eslint-plugin-no-null": "~1.0.2",
+    "eslint-plugin-optimize-regex": "~1.1.7",
+    "eslint-plugin-prefer-arrow": "~1.1.7",
+    "eslint-plugin-react": "~7.18.0",
+    "eslint-plugin-unicorn": "~15.0.1",
+    "mocha": "^5.2.0",
+    "mocha-junit-reporter": "^1.18.0",
+    "nock": "^10.0.1",
+    "nyc": "^14.1.1",
+    "rimraf": "^2.6.2",
+    "ts-loader": "^6.1.2",
+    "typescript": "~3.7.4",
+    "webpack": "^4.16.5",
+    "webpack-cli": "^3.1.2"
+  }
+}

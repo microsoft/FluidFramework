@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-protocol-definitions",
-  "version": "0.1002.0",
+  "version": "0.1003.0",
   "description": "Fluid protocol definitions",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -26,7 +26,7 @@
     "tsc:watch": "tsc --watch"
   },
   "dependencies": {
-    "@microsoft/fluid-common-definitions": "0.13.17538"
+    "@microsoft/fluid-common-definitions": "^0.13.0"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",

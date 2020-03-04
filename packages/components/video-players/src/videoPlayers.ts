@@ -7,7 +7,7 @@ import { EventEmitter } from "events";
 import {
     IComponent,
     IComponentHandleContext,
-    IComponentHTMLVisual,
+    IComponentHTMLView,
     IComponentLoadable,
     IComponentRouter,
     IRequest,
@@ -75,12 +75,12 @@ interface IYouTubePlayer {
 }
 
 export class VideoPlayer implements
-    IComponentLoadable, IComponentHTMLVisual, IComponentRouter, IComponentLayout {
+    IComponentLoadable, IComponentHTMLView, IComponentRouter, IComponentLayout {
 
     private player: IYouTubePlayer;
     private playerDiv: HTMLDivElement;
 
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
     public get IComponentRouter() { return this; }
     public get IComponentLayout() { return this; }
     public get IComponentLoadable() { return this; }
@@ -276,16 +276,16 @@ export class VideoPlayerFactoryComponent implements IComponentFactory {
         const mapFactory = SharedMap.getFactory();
         dataTypes.set(mapFactory.type, mapFactory);
 
-        ComponentRuntime.load(
+        const runtime = ComponentRuntime.load(
             context,
             dataTypes,
-            (runtime) => {
-                const progressCollectionP = VideoPlayerCollection.load(runtime, context);
-                runtime.registerRequestHandler(async (request: IRequest) => {
-                    const progressCollection = await progressCollectionP;
-                    return progressCollection.request(request);
-                });
-            });
+        );
+
+        const progressCollectionP = VideoPlayerCollection.load(runtime, context);
+        runtime.registerRequestHandler(async (request: IRequest) => {
+            const progressCollection = await progressCollectionP;
+            return progressCollection.request(request);
+        });
     }
 }
 

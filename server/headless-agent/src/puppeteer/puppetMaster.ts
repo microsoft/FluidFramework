@@ -10,6 +10,7 @@ import * as puppeteer from "puppeteer";
 import * as request from "request";
 import * as winston from "winston";
 import { ICache } from "../redisCache";
+import { ISearchStorage } from "../searchStorage";
 
 export interface ICloseEvent {
     documentId: string;
@@ -25,6 +26,7 @@ export class PuppetMaster extends EventEmitter {
         gatewayUrl: string,
         agentType: string,
         jwtKey: string,
+        searchStorage: ISearchStorage,
         cache?: ICache): Promise<PuppetMaster> {
 
         const browser = await puppeteer.launch({
@@ -51,6 +53,7 @@ export class PuppetMaster extends EventEmitter {
             browser,
             page,
             token,
+            searchStorage,
             cache);
         await puppetMaster.launch();
 
@@ -66,6 +69,7 @@ export class PuppetMaster extends EventEmitter {
         private browser: puppeteer.Browser,
         private page: puppeteer.Page,
         private token: string,
+        private searchStorage: ISearchStorage,
         private cache?: ICache,
     ) {
         super();
@@ -78,7 +82,6 @@ export class PuppetMaster extends EventEmitter {
     }
 
     private async launchPage(): Promise<void> {
-
         const consoleFn = (msg: puppeteer.ConsoleMessage) => {
             const text = msg.text();
             winston.info(text);
@@ -87,7 +90,6 @@ export class PuppetMaster extends EventEmitter {
         this.page.on("console", consoleFn);
 
         const resolvedUrl = await this.getResolvedUrl();
-
         this.page.on("load", (e, args) => {
             this.emit("load", args);
         });
@@ -105,16 +107,23 @@ export class PuppetMaster extends EventEmitter {
         // Joining the gateway hostname to allow for localstorage
         await this.page.goto(`${this.gatewayUrl}/public/images/`);
         await this.page.addScriptTag({path: "client/fluid-loader.bundle.js"});
-        this.page.evaluate((resolvedUrlString) => {
+        await this.page.evaluate((resolvedUrlString) => {
+
             const resolvedUrlInternal = JSON.parse(resolvedUrlString) as IResolvedUrl;
             document.body.innerHTML = `
             <div id="content" style="flex: 1 1 auto; position: relative"></div>
             `;
-            (window as any).loader.startLoading(resolvedUrlInternal);
-            }, JSON.stringify(resolvedUrl));
+
+            return (window as any).loader.startLoading(resolvedUrlInternal);
+        }, JSON.stringify(resolvedUrl));
 
         if (this.agentType === "cache") {
-            this.upsertPageCache();
+            await this.upsertPageCache();
+        } else if (this.agentType === "search") {
+            const html = await this.getPageHTML();
+            await this.searchStorage.upload(this.getSearchKey(), html);
+            await this.page.close();
+            await this.browser.close();
         }
     }
 
@@ -142,6 +151,18 @@ export class PuppetMaster extends EventEmitter {
         });
     }
 
+    private async getPageHTML() {
+        const htmlContent = await this.page.evaluate(() => {
+            return document.body.outerHTML;
+        });
+        return htmlContent;
+    }
+
+    private getSearchKey() {
+        const hostname = new URL(this.gatewayUrl).hostname;
+        return `${hostname}/${this.tenantId}/${this.documentId}.html`;
+    }
+
     /**
      * Code running inside Browser will invoke cachePage with the generated cached HTML.
      * Puppeteer caches this HTML to redis
@@ -160,9 +181,9 @@ export class PuppetMaster extends EventEmitter {
     }
 
     private async getResolvedUrl() {
-        // Doesn't work
         const path =
         `${this.gatewayUrl}/loader/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(this.documentId)}`;
+
         const options = {
             form: {
                 url: path,

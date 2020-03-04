@@ -31,7 +31,7 @@ export async function getConfig(
     if (direct) {
         const tenant = await tenantManager.getTenant(tenantId);
         updatedConfig.credentials = tenant.storage.credentials;
-        updatedConfig.blobStorageUrl = `${tenant.storage.direct}/${tenant.storage.owner}/${tenant.storage.repository}`;
+        updatedConfig.blobStorageUrl = `${tenant.storage.url}/${tenant.storage.owner}/${tenant.storage.repository}`;
         updatedConfig.historianApi = false;
     } else {
         updatedConfig.blobStorageUrl = updatedConfig.blobStorageUrl.replace("historian:3000", "localhost:3001");

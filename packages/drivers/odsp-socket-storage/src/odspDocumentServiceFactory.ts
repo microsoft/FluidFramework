@@ -12,7 +12,7 @@ import {
 import { IOdspResolvedUrl } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import { getSocketIo } from "./getSocketIo";
-import { OdspCache } from "./odspCache";
+import { ICache, IOdspCache, OdspCache } from "./odspCache";
 import { OdspDocumentService } from "./odspDocumentService";
 
 /**
@@ -21,6 +21,10 @@ import { OdspDocumentService } from "./odspDocumentService";
  */
 export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
     public readonly protocolName = "fluid-odsp:";
+
+    private readonly documentsOpened = new Set<string>();
+    private readonly cache: IOdspCache;
+
     /**
    * @param appId - app id used for telemetry for network requests.
    * @param getStorageToken - function that can provide the storage token for a given site. This is
@@ -30,6 +34,7 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
    * @param logger - a logger that can capture performance and diagnostic information
    * @param storageFetchWrapper - if not provided FetchWrapper will be used
    * @param deltasFetchWrapper - if not provided FetchWrapper will be used
+   * @param odspCache - This caches response for joinSession.
    */
     constructor(
         private readonly appId: string,
@@ -38,25 +43,30 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
         private readonly logger: ITelemetryBaseLogger,
         private readonly storageFetchWrapper: IFetchWrapper = new FetchWrapper(),
         private readonly deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),
-        private readonly odspCache: OdspCache = new OdspCache(),
-    ) { }
+        permanentCache?: ICache,
+    ) {
+        this.cache = new OdspCache(permanentCache);
+    }
 
     public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
         const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
-        return new OdspDocumentService(
+
+        // A hint for driver if document was opened before by this factory
+        const docId = odspResolvedUrl.hashedDocumentId;
+        const isFirstTimeDocumentOpened = !this.documentsOpened.has(docId);
+        this.documentsOpened.add(docId);
+
+        return OdspDocumentService.create(
             this.appId,
-            odspResolvedUrl.hashedDocumentId,
-            odspResolvedUrl.siteUrl,
-            odspResolvedUrl.driveId,
-            odspResolvedUrl.itemId,
-            odspResolvedUrl.endpoints.snapshotStorageUrl,
+            resolvedUrl,
             this.getStorageToken,
             this.getWebsocketToken,
             this.logger,
             this.storageFetchWrapper,
             this.deltasFetchWrapper,
             Promise.resolve(getSocketIo()),
-            this.odspCache,
+            this.cache,
+            isFirstTimeDocumentOpened,
         );
     }
 }

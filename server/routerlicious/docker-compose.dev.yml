@@ -12,9 +12,6 @@ services:
     copier:
         volumes:
             - .:/usr/src/server/server/routerlicious
-    broadcaster:
-        volumes:
-            - .:/usr/src/server/server/routerlicious
     scribe:
         volumes:
             - .:/usr/src/server/server/routerlicious

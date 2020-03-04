@@ -16,8 +16,10 @@ import {
     ILoader,
     IProxyLoaderFactory,
     LoaderHeader,
+    IFluidCodeDetails,
+    IExperimentalLoader,
 } from "@microsoft/fluid-container-definitions";
-import { Deferred } from "@microsoft/fluid-core-utils";
+import { Deferred } from "@microsoft/fluid-common-utils";
 import {
     IDocumentService,
     IDocumentServiceFactory,
@@ -44,7 +46,9 @@ interface IParsedUrl {
     version: string | null | undefined;
 }
 
-export class RelativeLoader extends EventEmitter implements ILoader {
+export class RelativeLoader extends EventEmitter implements ILoader, IExperimentalLoader {
+
+    public readonly isExperimentalLoader = true;
 
     // Because the loader is passed to the container during construction we need to resolve the target container
     // after construction.
@@ -81,6 +85,10 @@ export class RelativeLoader extends EventEmitter implements ILoader {
         }
 
         return this.loader.request(request);
+    }
+
+    public async experimentalCreateDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
+        throw new Error("Method not implemented.");
     }
 
     public resolveContainer(container: Container) {
@@ -147,11 +155,13 @@ export function createProtocolToFactoryMapping(
 /**
  * Manages Fluid resource loading
  */
-export class Loader extends EventEmitter implements ILoader {
+export class Loader extends EventEmitter implements ILoader, IExperimentalLoader {
 
     private readonly containers = new Map<string, Promise<Container>>();
     private readonly resolveCache = new Map<string, IResolvedUrl>();
     private readonly protocolToDocumentFactoryMap: Map<string, IDocumentServiceFactory>;
+
+    public readonly isExperimentalLoader = true;
 
     constructor(
         private readonly resolver: IUrlResolver | IUrlResolver[],
@@ -177,6 +187,10 @@ export class Loader extends EventEmitter implements ILoader {
         }
 
         this.protocolToDocumentFactoryMap = createProtocolToFactoryMapping(documentServiceFactories);
+    }
+
+    public async experimentalCreateDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
+        throw new Error("Method not implemented.");
     }
 
     public async resolve(request: IRequest): Promise<Container> {
@@ -263,10 +277,12 @@ export class Loader extends EventEmitter implements ILoader {
         request: IRequest,
     ): Promise<{ container: Container; parsed: IParsedUrl }> {
 
-        const resolved = await this.getResolvedUrl(request);
+        const resolvedAsFluid = await this.getResolvedUrl(request);
+        if (resolvedAsFluid.type !== "fluid") {
+            throw new Error(`Cannot resolve non fluid container request: ${JSON.stringify(resolvedAsFluid)}`);
+        }
 
         // Parse URL into components
-        const resolvedAsFluid = resolved as IFluidResolvedUrl;
         const parsed = this.parseUrl(resolvedAsFluid.url);
         if (!parsed) {
             return Promise.reject(`Invalid URL ${resolvedAsFluid.url}`);
@@ -293,7 +309,7 @@ export class Loader extends EventEmitter implements ILoader {
                         parsed.id,
                         await factory.createDocumentService(resolvedAsFluid),
                         request,
-                        resolved,
+                        resolvedAsFluid,
                         this.logger);
                 this.containers.set(versionedId, containerP);
                 container = await containerP;
@@ -304,7 +320,7 @@ export class Loader extends EventEmitter implements ILoader {
                     parsed.id,
                     await factory.createDocumentService(resolvedAsFluid),
                     request,
-                    resolved,
+                    resolvedAsFluid,
                     this.logger);
         }
 
@@ -365,7 +381,7 @@ export class Loader extends EventEmitter implements ILoader {
         id: string,
         documentService: IDocumentService,
         request: IRequest,
-        resolved: IResolvedUrl,
+        resolved: IFluidResolvedUrl,
         logger?: ITelemetryBaseLogger,
     ): Promise<Container> {
         const container = Container.load(
@@ -376,6 +392,7 @@ export class Loader extends EventEmitter implements ILoader {
             this.scope,
             this,
             request,
+            resolved,
             logger);
 
         return container;
