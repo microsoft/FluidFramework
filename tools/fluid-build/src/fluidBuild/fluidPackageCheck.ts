@@ -141,10 +141,9 @@ export class FluidPackageCheck {
             // all build steps (build:compile + webpack)
             const buildFullCompile: string[] = ["build:compile"];
 
+            // prepack scripts
             const prepack: string[] = [];
 
-            // all build steps prod
-            const buildCompileMin: string[] = ["build:compile"];
             const buildPrefix = pkg.packageJson.scripts["build:genver"] ? "npm run build:genver && " : "";
             if (pkg.getScript("tsc")) {
                 buildCompile.push("tsc");
@@ -182,7 +181,9 @@ export class FluidPackageCheck {
                     buildFull.push("webpack");
                     buildFullCompile.push("webpack");
                 }
-                prepack.push("webpack");
+                if (monoRepo !== MonoRepo.Server) {
+                    prepack.push("webpack");
+                }
             }
 
             if (buildCompile.length === 0) {
@@ -191,8 +192,8 @@ export class FluidPackageCheck {
             }
 
             const check = (scriptName: string, parts: string[], prefix = "") => {
-                const expected = prefix +
-                    (parts.length > 1 ? `concurrently npm:${parts.join(" npm:")}` : `npm run ${parts[0]}`);
+                const expected = parts.length === 0? undefined :
+                    prefix + (parts.length > 1 ? `concurrently npm:${parts.join(" npm:")}` : `npm run ${parts[0]}`);
                 if (pkg.packageJson.scripts[scriptName] !== expected) {
                     console.warn(`${pkg.nameColored}: warning: non-conformant script ${scriptName}`);
                     console.warn(`${pkg.nameColored}: warning:   expect: ${expected}`);
@@ -207,16 +208,12 @@ export class FluidPackageCheck {
             check("build:compile", buildCompile);
             check("build:full", buildFull);
             check("build:full:compile", buildFullCompile);
-            if (monoRepo !== MonoRepo.None) {
-                check("build:compile:min", buildCompileMin);
-            }
             check("prepack", prepack);
 
             if (!pkg.getScript("clean")) {
                 console.warn(`${pkg.nameColored}: warning: package has "build" script without "clean" script`);
             }
         }
-        console.log(fixed);
         return fixed;
     }
 };

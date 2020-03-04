@@ -20,6 +20,7 @@
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
+    "prepack": "npm run webpack",
     "start": "npm run start:local",
     "start:docker": "webpack-dev-server --config webpack.config.js --package package.json --env.mode docker",
     "start:local": "webpack-dev-server --config webpack.config.js --package package.json --env.mode local",

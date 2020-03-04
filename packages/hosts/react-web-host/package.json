@@ -18,6 +18,7 @@
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
+    "prepack": "npm run webpack",
     "start": "webpack-dev-server",
     "tsc": "tsc",
     "webpack": "webpack --env build"
