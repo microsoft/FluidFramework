@@ -191,7 +191,7 @@ export class FlowContainer extends ui.Component {
         if (this.activeLayers[id]) {
             this.activeLayers[id].active = true;
         }
-        const inkLayerData = await this.overlayInkMap.get<IComponentHandle>(id).get<IInk>();
+        const inkLayerData = await this.overlayInkMap.get<IComponentHandle<IInk>>(id).get();
 
         if (!(id in this.layerCache)) {
             const layer = new InkLayer(this.size, inkLayerData);

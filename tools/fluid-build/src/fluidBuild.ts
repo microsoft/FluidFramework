@@ -57,17 +57,32 @@ async function main() {
     }
 
     try {
+        if (options.depcheck) {
+            repo.depcheck();
+            timer.time("Dependencies check completed", true)
+        }
+
         if (options.uninstall) {
             if (!await repo.uninstall()) {
                 console.error(`ERROR: uninstall failed`);
                 process.exit(-8);
             }
             timer.time("Uninstall completed", true);
-        }
 
-        if (options.depcheck) {
-            repo.depcheck();
-            timer.time("Dependencies check completed", true)
+            if (!options.install) {
+                let errorStep: string | undefined = undefined;
+                if (options.symlink) {
+                    errorStep = "symlink";
+                } else if (options.clean) {
+                    errorStep = "clean";
+                } else if (options.build) {
+                    errorStep = "build";
+                }
+                if (errorStep) {
+                    console.warn(`WARNING: Skipping ${errorStep} after uninstall`);
+                }
+                process.exit(0);
+            }
         }
 
         if (options.install) {
