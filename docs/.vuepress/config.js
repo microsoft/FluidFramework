@@ -160,7 +160,6 @@ const getGuideSidebar = () => {
             children: [
                 "",
                 "yo-fluid",
-                "build-a-component",
                 "water-park",
             ]
         },
@@ -286,6 +285,7 @@ module.exports = {
                 text: "🤿 Dive Deeper",
                 items: [
                     { text: "How Fluid works", link: "/how/" },
+                    { text: "Big page of docs and decks", link: "/misc/doc-index" },
                     { text: "FAQ", link: "/faq/" },
                     { text: "Terminology", link: "/misc/terminology" },
                     { text: "Concepts", link: "/misc/concepts" },

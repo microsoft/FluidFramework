@@ -281,7 +281,7 @@ class TaskScheduler {
         this.taskManager.pick(this.componentUrl, "intel").then(() => {
             console.log(`Picked text analyzer`);
         }, (err) => {
-            console.log(err);
+            console.log(JSON.stringify(err));
         });
     }
 }

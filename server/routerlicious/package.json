@@ -73,7 +73,7 @@
     "concurrently": "^4.1.0",
     "copyfiles": "^2.1.0",
     "lerna": "^3.14.1",
-    "nyc": "^14.1.1",
+    "nyc": "^15.0.0",
     "rimraf": "^2.6.2",
     "sort-package-json": "1.40.0",
     "typescript": "~3.7.4"
