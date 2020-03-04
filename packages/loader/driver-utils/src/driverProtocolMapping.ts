@@ -10,7 +10,7 @@ import { IDocumentServiceFactory, IFluidResolvedUrl } from "@microsoft/fluid-dri
  * Api that creates the protocol to factory map.
  * @param documentServiceFactories - A single factory or array of document factories.
  */
-export function createProtocolToFactoryMapping(
+function createProtocolToFactoryMapping(
     documentServiceFactories: IDocumentServiceFactory | IDocumentServiceFactory[],
 ): Map<string, IDocumentServiceFactory> {
     const protocolToDocumentFactoryMap: Map<string, IDocumentServiceFactory> = new Map();
@@ -31,7 +31,7 @@ export function createProtocolToFactoryMapping(
  * @param protocolToDocumentFactoryMap - Map of protocol name to factories from which one factory
  * is selected according to protocol.
  */
-export function selectDocumentServiceFactoryForProtocol(
+function selectDocumentServiceFactoryForProtocol(
     resolvedAsFluid: IFluidResolvedUrl,
     protocolToDocumentFactoryMap: Map<string, IDocumentServiceFactory>,
 ): IDocumentServiceFactory {
