@@ -410,6 +410,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     public setAutoReconnect(reconnect: boolean) {
         assert(this.resumedOpProcessingAfterLoad);
 
+        if (reconnect && this.closed) {
+            throw new Error("Attempting to setAutoReconnect() a closed DeltaManager");
+        }
+
         this._deltaManager.autoReconnect = reconnect;
 
         this.logger.sendTelemetryEvent({
@@ -425,8 +429,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             }
 
             // Ensure connection to web socket
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            this.connectToDeltaStream();
+            this.ensureDeltaStreamConnection();
         }
     }
 
@@ -440,8 +443,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this._deltaManager.inboundSignal.resume();
 
         // Ensure connection to web socket
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.connectToDeltaStream();
+        this.ensureDeltaStreamConnection();
     }
 
     public raiseCriticalError(error: IError) {
@@ -592,6 +594,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this._deltaManager.connect();
     }
 
+    private ensureDeltaStreamConnection() {
+        // All errors are reported through events ("error" / "disconnected") and telemetry in DeltaManager
+        this.connectToDeltaStream().catch(() => {});
+    }
+
     /**
      * Load container.
      *
@@ -604,15 +611,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private async load(specifiedVersion: string | null | undefined, pause: boolean): Promise<void> {
         const perfEvent = PerformanceEvent.start(this.logger, { eventName: "Load" });
 
-        let startConnectionP: Promise<IConnectionDetails> | undefined;
-
         // Start websocket connection as soon as possible.  Note that there is no op handler attached yet, but the
         // DeltaManager is resilient to this and will wait to start processing ops until after it is attached.
         if (!pause) {
-            startConnectionP = this.connectToDeltaStream();
-            startConnectionP.catch((error) => {
-                debug(`Error in connecting to delta stream from unpaused case ${error}`);
-            });
+            this.ensureDeltaStreamConnection();
         }
 
         this.storageService = await this.getDocumentStorageService();
@@ -622,11 +624,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             : await this.fetchSnapshotTree(specifiedVersion);
 
         // If pause, and there's no tree, then we'll start the websocket connection here (we'll need the details later)
-        if (!maybeSnapshotTree && !startConnectionP) {
-            startConnectionP = this.connectToDeltaStream();
-            startConnectionP.catch((error) => {
-                debug(`Error in connecting to delta stream from no snapshot tree case ${error}`);
-            });
+        if (!maybeSnapshotTree) {
+            this.ensureDeltaStreamConnection();
         }
 
         const blobManagerP = this.loadBlobManager(this.storageService, maybeSnapshotTree);
@@ -649,11 +648,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this._parentBranch = attributes.branch !== this.id ? attributes.branch : null;
             loadDetailsP = Promise.resolve();
         } else {
-            if (!startConnectionP) {
-                startConnectionP = this.connectToDeltaStream();
-            }
             // Intentionally don't .catch on this promise - we'll let any error throw below in the await.
-            loadDetailsP = startConnectionP.then((details) => {
+            loadDetailsP = this.connectToDeltaStream().then((details) => {
                 this._existing = details.existing;
                 this._parentBranch = details.parentBranch;
             });
