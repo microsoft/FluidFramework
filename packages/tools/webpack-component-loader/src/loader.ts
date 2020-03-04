@@ -24,7 +24,7 @@ import * as jwt from "jsonwebtoken";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
 import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
-import { InsecureUrlResolver } from "./insecureUrlResolver";
+import {InsecureUrlResolver} from "@microsoft/fluid-test-runtime-utils";
 import { OdspUrlResolver } from "./odspUrlResolver";
 
 export interface IDevServerUser extends IUser {
