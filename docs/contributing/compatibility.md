@@ -29,12 +29,13 @@ It does not guarantee that driver version `1.x` will work with loader/runtime ve
 ### Loader
 The loader version will also come from the hosting application, and loader implementations are meant to be very slim, only providing enough functionality to load the runtime code and connect to the server.  The loader contract (also called container definitions) is consumed by the runtime layer, and currently Fluid maintains this boundary as backwards and forwards compatible by at least 1 version.
 
-Loader || 1.x | 2.x | 3.x
--:|-|:-:|:-:|:-:
-Runtime ||||
-1.x || C | BC | X
-2.x || FC | C | BC
-3.x || X | FC | C
+ Loader | | 1.x | 2.x | 3.x
+-------:|-|:---:|:---:|:---:
+Runtime | |     |     |
+1.x     | | C   | BC  | X
+2.x     | | FC  | C   | BC
+3.x     | | X   | FC  | C
+
 - C - Fully compatible
 - BC - Loader backwards compatible with runtime
 - FC - Loader forwards compatible with runtime (runtime backwards compatible with loader)
