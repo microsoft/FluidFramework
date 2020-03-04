@@ -147,6 +147,11 @@ export class FluidPackageCheck {
             if (pkg.getScript("tsc")) {
                 buildCompile.push("tsc");
             }
+
+            if (pkg.getScript("build:es5")) {
+                buildCompile.push("build:es5");
+            }
+
             if (pkg.getScript("build:esnext")) {
                 buildCompile.push("build:esnext");
             }
