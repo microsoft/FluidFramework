@@ -101,6 +101,7 @@ export class TestDocumentStorage implements IDocumentStorage, IExperimentalDocum
                 values,
             },
             sequenceNumber,
+            lastClientSummaryHead: "",
         };
 
         const collection = await this.databaseManager.getDocumentCollection();

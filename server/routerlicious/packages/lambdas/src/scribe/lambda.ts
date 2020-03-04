@@ -5,7 +5,7 @@
 
 /* eslint-disable no-null/no-null */
 
-import { ICreateCommitParams } from "@microsoft/fluid-gitresources";
+import { ICreateCommitParams, ICreateTreeEntry } from "@microsoft/fluid-gitresources";
 import {
     IQuorumSnapshot,
     ProtocolOpHandler,
@@ -20,6 +20,8 @@ import {
     ISummaryNack,
     ITreeEntry,
     MessageType,
+    TreeEntry,
+    FileMode,
 } from "@microsoft/fluid-protocol-definitions";
 import { IGitManager } from "@microsoft/fluid-server-services-client";
 import {
