@@ -6,7 +6,7 @@
   "author": "Microsoft",
   "scripts": {
     "build": "npm run policy-check && npm run layer-check && npm run build:genver && npm run build:compile && npm run lint && npm run build:docs",
-    "build:ci": "npm run build:genver && lerna run build:compile:min --stream",
+    "build:ci": "npm run build:genver && lerna run build:compile --stream",
     "build:compile": "lerna run build:compile --stream",
     "build:docs": "lerna run build:docs --stream --parallel",
     "build:fast": "node ./tools/fluid-build/dist/fluidBuild.js --root .",
@@ -15,7 +15,7 @@
     "build:gendocs": "api-documenter markdown -i _api-extractor-temp/doc-models -o docs/api",
     "build:genver": "lerna run build:genver --stream --parallel",
     "bump-version": "node ./tools/fluid-build/dist/bumpVersion/bumpVersion.js --root .",
-    "ci:build": "npm run build:genver && lerna run build:compile:min --stream",
+    "ci:build": "npm run build:genver && lerna run build:compile --stream",
     "ci:test": "npm run test:report;t1=$?;npm run test:copyresults; exit $t1",
     "ci:test:coverage": "npm run test:coverage;t1=$?;npm run test:copyresults; exit $t1",
     "clean": "lerna run clean --stream --parallel && npm run clean:docs && npm run clean:nyc",

@@ -141,6 +141,8 @@ export class FluidPackageCheck {
             // all build steps (build:compile + webpack)
             const buildFullCompile: string[] = ["build:compile"];
 
+            const prepack: string[] = [];
+
             // all build steps prod
             const buildCompileMin: string[] = ["build:compile"];
             const buildPrefix = pkg.packageJson.scripts["build:genver"] ? "npm run build:genver && " : "";
@@ -169,18 +171,18 @@ export class FluidPackageCheck {
             }
 
             let implicitWebpack = true;
-            if (pkg.getScript("build:webpack:min")) {
-                buildCompileMin.push("build:webpack:min");
-                implicitWebpack = false;
-            }
+
             if (pkg.getScript("build:webpack")) {
                 buildCompile.push("build:webpack");
                 implicitWebpack = false;
             }
 
-            if (implicitWebpack && pkg.getScript("webpack")) {
-                buildFull.push("webpack");
-                buildFullCompile.push("webpack");
+            if (pkg.getScript("webpack")) {
+                if (implicitWebpack) {
+                    buildFull.push("webpack");
+                    buildFullCompile.push("webpack");
+                }
+                prepack.push("webpack");
             }
 
             if (buildCompile.length === 0) {
@@ -208,11 +210,13 @@ export class FluidPackageCheck {
             if (monoRepo !== MonoRepo.None) {
                 check("build:compile:min", buildCompileMin);
             }
+            check("prepack", prepack);
 
             if (!pkg.getScript("clean")) {
                 console.warn(`${pkg.nameColored}: warning: package has "build" script without "clean" script`);
             }
         }
+        console.log(fixed);
         return fixed;
     }
 };
