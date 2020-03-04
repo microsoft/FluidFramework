@@ -41,13 +41,8 @@ export class InnerDocumentDeltaConnection extends EventEmitter implements IDocum
 
         const tempEmitter = new EventEmitter();
 
-        const forwardEvent = (event: string, args: any[]) => {
-            tempEmitter.emit(event, ...args);
-            return;
-        };
-
         const innerProxy = {
-            forwardEvent,
+            forwardEvent: tempEmitter.emit.bind(tempEmitter),
         };
 
         await outerProxy.handshake.resolve((Comlink.proxy(innerProxy)));
