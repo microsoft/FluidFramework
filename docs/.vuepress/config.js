@@ -320,6 +320,9 @@ module.exports = {
             "/api/": getApiSidebar(),
             "/guide/": getGuideSidebar(),
             "/examples/": [
+                "dice-roller",
+                "sudoku",
+                "badge",
                 {
                     title: "Components",
                     collapsable: true,
@@ -341,9 +344,6 @@ module.exports = {
                         "singletons",
                     ]
                 },
-                "dice-roller",
-                "sudoku",
-                "badge",
             ],
             "/how/": [
                 "",

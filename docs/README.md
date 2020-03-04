@@ -3,11 +3,11 @@ home: true
 heroImage: /images/homescreen144.png
 # heroText: Fluid Framework
 # tagline: State that flows
-# actionText: Get Started →
-# actionLink: /guide/
-# features:
-# - title: Simplicity First
-#   details: Minimal setup with markdown-centered project structure helps you focus on writing.
+actionText: Get Started →
+actionLink: /guide/
+features:
+- title: Current version
+  details: "0.14"
 # - title: Vue-Powered
 #   details: Enjoy the dev experience of Vue + webpack, use Vue components in markdown, and develop custom themes with Vue.
 # - title: Performant
