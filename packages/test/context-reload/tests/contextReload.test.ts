@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred } from "@microsoft/fluid-core-utils";
+import { Deferred } from "@microsoft/fluid-common-utils";
 import { globals } from "../jest.config";
 
 describe("context reload", () => {
@@ -12,7 +12,6 @@ describe("context reload", () => {
     });
 
     it("has a dice roller on the new version", async () => {
-      // jest.setTimeout(20 * 1000);
       const getDiceValue = async (div: "left" | "right") => {
         return await page.$eval(`#sbs-${div} .dicevalue`, (el) => (el as HTMLDivElement).innerText);
       }
@@ -30,7 +29,6 @@ describe("context reload", () => {
     });
 
     it("is followed immediately by a summary", async () => {
-      jest.setTimeout(20 * 1000);
       page.evaluate(() => localStorage.debug = "fluid:telemetry:Summarizer");
       // await page.reload({ waitUntil: "load" });
       await page.goto(globals.PATH, { waitUntil: "load" });
