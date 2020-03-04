@@ -125,7 +125,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView, IComp
                     this.dataModel.addComponent(type, w, h);
                 },
                 saveLayout: () => this.dataModel.saveLayout(),
-                toggleEditable: (isEditable: boolean) =>  this.dataModel.emit("editableUpdated", isEditable),
+                toggleEditable: (isEditable?: boolean) =>  this.dataModel.emit("editableUpdated", isEditable),
             });
         }
     }

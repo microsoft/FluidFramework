@@ -30,21 +30,21 @@ export const ComponentToolbarName = "componentToolbar";
 
 initializeIcons();
 
-export interface ComponentToolbarCallbacks {
+export interface IComponentToolbarCallbacks {
     addComponent?(type: string, w?: number, h?: number): void;
     saveLayout?(): void;
-    toggleEditable?(isEditable: boolean): void;
+    toggleEditable?(isEditable?: boolean): void;
 }
 
 /**
  * A component to allow you to add and manipulate components
  */
 export class ComponentToolbar extends PrimedComponent
-    implements IComponentHTMLView, IComponentCallable<ComponentToolbarCallbacks> {
+    implements IComponentHTMLView, IComponentCallable<IComponentToolbarCallbacks> {
     public get IComponentHTMLView() { return this; }
     public get IComponentCallable() { return this; }
 
-    private callbacks: ComponentToolbarCallbacks;
+    private callbacks: IComponentToolbarCallbacks;
 
     private static readonly factory = new PrimedComponentFactory(ComponentToolbar, []);
 
@@ -73,7 +73,7 @@ export class ComponentToolbar extends PrimedComponent
         this.root.set("isEditable", true);
     }
 
-    public setComponentCallbacks(callbacks: ComponentToolbarCallbacks) {
+    public setComponentCallbacks(callbacks: IComponentToolbarCallbacks) {
         this.callbacks = callbacks;
     }
 
@@ -94,7 +94,7 @@ export class ComponentToolbar extends PrimedComponent
 }
 
 interface IComponentToolbarViewProps {
-    callbacks: ComponentToolbarCallbacks
+    callbacks: IComponentToolbarCallbacks
     supportedComponentList: IContainerComponentDetails[];
     root: ISharedDirectory;
 }
