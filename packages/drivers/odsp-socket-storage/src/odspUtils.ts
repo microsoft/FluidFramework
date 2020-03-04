@@ -4,7 +4,12 @@
  */
 
 import { isOnline, FatalError, NetworkError, ThrottlingError, OnlineStatus } from "@microsoft/fluid-driver-utils";
-import { default as fetch, RequestInfo as FetchRequestInfo, RequestInit as FetchRequestInit } from "node-fetch";
+import {
+    default as fetch,
+    RequestInfo as FetchRequestInfo,
+    RequestInit as FetchRequestInit,
+    Headers as FetchHeaders,
+} from "node-fetch";
 import * as sha from "sha.js";
 import { IOdspSocketError } from "./contracts";
 import { debug } from "./debug";
@@ -152,9 +157,9 @@ export function fetchHelper(
         // succeeds on retry.
         try {
             const text = await response.text();
-            response.headers.set("body-size", text.length.toString());
+
             const res = {
-                headers: response.headers,
+                headers: new FetchHeaders({ ...response.headers, "body-size": text.length }),
                 content: JSON.parse(text),
             };
             return res;
