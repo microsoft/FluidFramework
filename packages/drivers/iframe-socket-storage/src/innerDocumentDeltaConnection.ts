@@ -37,9 +37,22 @@ export class InnerDocumentDeltaConnection extends EventEmitter implements IDocum
      */
     public static async create(
         connection: IConnected,
-        outerProxy: IOuterDocumentDeltaConnectionProxy): Promise<IDocumentDeltaConnection> {
+        outerProxy: Comlink.Remote<IOuterDocumentDeltaConnectionProxy>): Promise<IDocumentDeltaConnection> {
 
-        const deltaConnection = new InnerDocumentDeltaConnection(connection, outerProxy);
+        const tempEmitter = new EventEmitter();
+
+        const forwardEvent = (event: string, args: any[]) =>{
+            tempEmitter.emit(event, ... args);
+            return;
+        };
+
+        const innerProxy = {
+            forwardEvent,
+        };
+
+        await outerProxy.handshake.resolve((Comlink.proxy(innerProxy)));
+
+        const deltaConnection = new InnerDocumentDeltaConnection(connection, outerProxy, tempEmitter);
 
         return deltaConnection;
     }
@@ -148,30 +161,16 @@ export class InnerDocumentDeltaConnection extends EventEmitter implements IDocum
         return this.details.initialClients ? this.details.initialClients : [];
     }
 
-    private readonly tempEmitter: EventEmitter;
-
     /**
      * @param socket - websocket to be used
      * @param documentId - ID of the document
      * @param details - details of the websocket connection
      */
-    constructor(
+    private constructor(
         public details: IConnected,
-        public outerProxy: IOuterDocumentDeltaConnectionProxy) {
+        public outerProxy: Comlink.Remote<IOuterDocumentDeltaConnectionProxy>,
+        private readonly tempEmitter: EventEmitter) {
         super();
-
-        this.tempEmitter = new EventEmitter();
-
-        const forwardEvent = (event: string, args: any[]) => {
-            this.tempEmitter.emit(event, ...args);
-            return;
-        };
-
-        const innerProxy = {
-            forwardEvent,
-        };
-
-        outerProxy.handshake.resolve((Comlink.proxy(innerProxy)));
     }
 
     /**

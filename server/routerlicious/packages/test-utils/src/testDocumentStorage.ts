@@ -190,6 +190,7 @@ export class TestDocumentStorage implements IDocumentStorage, IExperimentalDocum
                 logOffset: undefined,
                 parent: null,
                 scribe: JSON.stringify({
+                    lastClientSummaryHead: undefined,
                     logOffset: -1,
                     minimumSequenceNumber: -1,
                     protocolState: undefined,

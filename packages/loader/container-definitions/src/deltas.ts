@@ -5,10 +5,12 @@
 
 import { EventEmitter } from "events";
 import { IDisposable } from "@microsoft/fluid-common-definitions";
+import { IError } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionMode,
     IClientDetails,
     IContentMessage,
+    IDocumentMessage,
     IProcessMessageResult,
     ISequencedDocumentMessage,
     IServiceConfiguration,
@@ -17,7 +19,6 @@ import {
     ITokenClaims,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
-
 export interface IConnectionDetails {
     clientId: string;
     claims: ITokenClaims;
@@ -118,6 +119,16 @@ export interface IDeltaManager<T, U> extends EventEmitter, IDeltaSender, IDispos
         resume: boolean);
 
     submitSignal(content: any): void;
+
+    on(event: "error", listener: (error: IError) => void);
+    on(event: "prepareSend", listener: (messageBuffer: any[]) => void);
+    on(event: "submitOp", listener: (message: IDocumentMessage) => void);
+    on(event: "beforeOpProcessing", listener: (message: ISequencedDocumentMessage) => void);
+    on(event: "allSentOpsAckd" | "caughtUp", listener: () => void);
+    on(event: "closed", listener: (error?: IError) => void);
+    on(event: "pong" | "processTime", listener: (latency: number) => void);
+    on(event: "connect", listener: (details: IConnectionDetails) => void);
+    on(event: "disconnect", listener: (reason: string) => void);
 }
 
 export interface IDeltaQueue<T> extends EventEmitter, IDisposable {

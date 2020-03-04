@@ -45,6 +45,7 @@ const StartingSequenceNumber = 0;
 // Disabling so can tag inline but keep strong typing
 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 const DefaultScribe = JSON.stringify({
+    lastClientSummaryHead: undefined,
     logOffset: -1,
     minimumSequenceNumber: -1,
     protocolState: undefined,

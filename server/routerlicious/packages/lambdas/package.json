@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-server-lambdas",
-  "version": "0.1002.0",
+  "version": "0.1003.0",
   "description": "Fluid service lambdas",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -15,7 +15,6 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
     "build:compile": "npm run tsc",
-    "build:compile:min": "npm run build:compile",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
@@ -49,11 +48,11 @@
   },
   "dependencies": {
     "@microsoft/fluid-common-utils": "^0.14.0",
-    "@microsoft/fluid-gitresources": "^0.1002.0",
-    "@microsoft/fluid-protocol-base": "^0.1002.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1002.0",
-    "@microsoft/fluid-server-services-client": "^0.1002.0",
-    "@microsoft/fluid-server-services-core": "^0.1002.0",
+    "@microsoft/fluid-gitresources": "^0.1003.0",
+    "@microsoft/fluid-protocol-base": "^0.1003.0",
+    "@microsoft/fluid-protocol-definitions": "^0.1003.0",
+    "@microsoft/fluid-server-services-client": "^0.1003.0",
+    "@microsoft/fluid-server-services-core": "^0.1003.0",
     "@types/semver": "^6.0.1",
     "async": "^2.6.1",
     "double-ended-queue": "^2.1.0-0",
@@ -67,7 +66,7 @@
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.14.0",
     "@microsoft/fluid-build-common": "^0.14.0",
-    "@microsoft/fluid-server-test-utils": "^0.1002.0",
+    "@microsoft/fluid-server-test-utils": "^0.1003.0",
     "@types/async": "^2.0.50",
     "@types/lodash": "^4.14.118",
     "@types/mocha": "^5.2.5",
@@ -87,7 +86,7 @@
     "eslint-plugin-unicorn": "~15.0.1",
     "make-promises-safe": "^5.1.0",
     "mocha": "^5.2.0",
-    "nyc": "^14.1.1",
+    "nyc": "^15.0.0",
     "rimraf": "^2.6.2",
     "typescript": "~3.7.4",
     "webpack": "^4.16.5"

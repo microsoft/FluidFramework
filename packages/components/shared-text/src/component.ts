@@ -281,7 +281,7 @@ class TaskScheduler {
         this.taskManager.pick(this.componentUrl, "intel").then(() => {
             console.log(`Picked text analyzer`);
         }, (err) => {
-            console.log(err);
+            console.log(JSON.stringify(err));
         });
     }
 }
@@ -304,15 +304,15 @@ export function instantiateComponent(context: IComponentContext): void {
     modules.set(objectSequenceFactory.type, objectSequenceFactory);
     modules.set(numberSequenceFactory.type, numberSequenceFactory);
 
-    ComponentRuntime.load(
+    const runtime = ComponentRuntime.load(
         context,
         modules,
-        (runtime) => {
-            const runnerP = SharedTextRunner.load(runtime, context);
-            runtime.registerRequestHandler(async (request: IRequest) => {
-                debug(`request(url=${request.url})`);
-                const runner = await runnerP;
-                return runner.request(request);
-            });
-        });
+    );
+
+    const runnerP = SharedTextRunner.load(runtime, context);
+    runtime.registerRequestHandler(async (request: IRequest) => {
+        debug(`request(url=${request.url})`);
+        const runner = await runnerP;
+        return runner.request(request);
+    });
 }

@@ -10,7 +10,7 @@ import {
 } from "@microsoft/fluid-driver-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
-import { OdspCache } from "./odspCache";
+import { ICache, IOdspCache, OdspCache } from "./odspCache";
 import { OdspDocumentService } from "./odspDocumentService";
 
 /**
@@ -24,6 +24,7 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
     public readonly protocolName = "fluid-odsp:";
 
     private readonly documentsOpened = new Set<string>();
+    private readonly cache: IOdspCache;
 
     /**
    * @param appId - app id used for telemetry for network requests.
@@ -35,7 +36,6 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
    * @param storageFetchWrapper - if not provided FetchWrapper will be used
    * @param deltasFetchWrapper - if not provided FetchWrapper will be used
    * @param odspCache - This caches response for joinSession.
-   * @param fileInfoToCreateNewResponseCache - This caches response of new file creation.
    */
     constructor(
         private readonly appId: string,
@@ -44,9 +44,10 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
         private readonly logger: ITelemetryBaseLogger,
         private readonly storageFetchWrapper: IFetchWrapper = new FetchWrapper(),
         private readonly deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),
-        private readonly odspCache: OdspCache = new OdspCache(),
-        private readonly fileInfoToCreateNewResponseCache = new OdspCache(),
-    ) {}
+        permanentCache?: ICache,
+    ) {
+        this.cache = new OdspCache(permanentCache);
+    }
 
     public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
         const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
@@ -65,9 +66,8 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
             this.storageFetchWrapper,
             this.deltasFetchWrapper,
             import("./getSocketIo").then((m) => m.getSocketIo()),
-            this.odspCache,
+            this.cache,
             isFirstTimeDocumentOpened,
-            this.fileInfoToCreateNewResponseCache,
         );
     }
 }

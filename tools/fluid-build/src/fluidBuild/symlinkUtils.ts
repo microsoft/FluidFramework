@@ -126,7 +126,7 @@ export interface ISymlinkOptions {
 export async function symlinkPackage(repo: FluidRepo, pkg: Package, buildPackages: Map<string, Package>, options: ISymlinkOptions) {
     let changed = 0;
     const monoRepo = repo.getMonoRepo(pkg);
-    const monoRepoNodeModulePath = repo.getMonoRepoNodeModePath(monoRepo);
+    const monoRepoNodeModulePath = repo.getMonoRepoNodeModulePath(monoRepo);
     for (const { name: dep, version } of pkg.combinedDependencies) {
         const depBuildPackage = buildPackages.get(dep);
         // Check and fix link if it is a known package and version satisfy the version.

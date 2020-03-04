@@ -5,7 +5,6 @@
 
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { BaseHost, IBaseHostConfig } from "@microsoft/fluid-base-host";
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import {
     IFluidModule,
     IFluidPackage,
@@ -25,6 +24,7 @@ import * as jwt from "jsonwebtoken";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
 import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
+import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 import { InsecureUrlResolver } from "./insecureUrlResolver";
 import { OdspUrlResolver } from "./odspUrlResolver";
 
@@ -268,9 +268,6 @@ export async function start(
 
     // Construct a request
     const url = window.location.href;
-    const req: IRequest = {
-        url,
-    };
 
     // Create Package
     const scriptIds: string[] = [];
@@ -280,7 +277,6 @@ export async function start(
     const host1Conf: IBaseHostConfig = { documentServiceFactory, urlResolver };
     const baseHost1 = new BaseHost(
         host1Conf,
-        await urlResolver.resolve(req),
         pkg,
         scriptIds,
     );
@@ -299,7 +295,6 @@ export async function start(
         // intentional because we want to emulate two clients collaborating with each other.
         const baseHost2 = new BaseHost(
             hostConf2,
-            await urlResolver.resolve(req),
             pkg,
             scriptIds,
         );
@@ -339,18 +334,9 @@ async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLD
         return;
     }
 
-    // First try to get it as a view
-    let renderable = component.IComponentHTMLView;
-    if (!renderable) {
-        // Otherwise get the visual, which is a view factory
-        const visual = component.IComponentHTMLVisual;
-        if (visual) {
-            renderable = visual.addView();
-        }
-    }
-    if (renderable) {
-        renderable.render(div, { display: "block" });
-    }
+    // Render the component with an HTMLViewAdapter to abstract the UI framework used by the component
+    const view = new HTMLViewAdapter(component);
+    view.render(div, { display: "block" });
 }
 
 export function getUserToken(bearerSecret: string) {
