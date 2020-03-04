@@ -1,5 +1,6 @@
 # 0.14 Breaking Changes
 
+- [`getComponentRuntime` no longer on `IComponentContext`](#getComponentRuntime-no-longer-on-IComponentContext)
 - [Packages move and renamed](#packages-moved-and-renamed)
 - [Top-level `type` on `IClient` removed](#top-level-type-on-iclient-removed)
 - [Remove back-compat support for loader <= 0.8](#remove-back-compat-support-for-loader-08)
@@ -9,7 +10,17 @@
 - [Changes to the render interfaces](#changes-to-the-render-interfaces)
 - [Old runtime container cannot load new components](#old-runtime-container-cannot-load-new-components)
 
-## Packages move and renamed
+## `getComponentRuntime` no longer on `IComponentContext`
+
+We've removed `getComponentRuntime` on `IComponentContext` and subsequently `ComponentContext`. Developers should not be getting the
+`ComponentRuntime` of other components. If you want to get another component you can currently store a `handle` to that component or you
+can get it via a `request(...)` to the ContainerRuntime.
+
+If for some reason you do this and continue to need this functional; it is still exposed on the `ContainerRuntime`. You can access it via
+`...context.hostRuntime.getComponentRuntime`. If you are doing this please reach out to the runtime team so we can better understand your
+scenario.
+
+## Packages moved and renamed
 
 ### `fluid-core-utils` package renamed
 
