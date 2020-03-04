@@ -1,5 +1,5 @@
 # Compatibility
-Because Fluid Framework is a platform, maintaining predictable backwards/forwards compatibility is an important part of development and documentation.  Any breaking changes should be placed in the [BREAKING.md](/BREAKING.md) file in the root of the repository.  Understanding the different parts of the Fluid Framework can help with making sure contributions are acceptably compatible and the code is reasonably clean.
+Because the Fluid Framework is a platform, maintaining predictable backwards/forwards compatibility is an important part of development and documentation.  Any breaking changes should be placed in the [BREAKING.md](./breaking-changes.md) file in the root of the repository.  Understanding the different parts of the Fluid Framework can help with making sure contributions are acceptably compatible and the code is reasonably clean.
 
 ## Breakdown
 The following overview shows the various levels and their corresponding contracts:
@@ -22,7 +22,7 @@ This document will focus on a few specific layer boundaries.
 Changes to the protocol definitions should be vetted highly, and ideally should always be backwards compatible.  These changes require synchronization between servers and clients, and are meant to be slim and well thought out.
 
 ### Driver
-The driver version will come from the hosting application, and driver implementations depend on the corresponding server version.  Changes to driver definitions must be applied to all driver implementations, and so they should be infrequent as well.  The driver contract is consumed by both the loader and the runtime layers, and currently Fluid maintains these boundaries as backwards _and_ forwards compatible at least 1 version.  This means that driver version `2.x` should work with loader and runtime versions `1.x` and `2.x` (backwards compatible), and driver version `1.x` shoudl work with laoder and runtime versions `1.x` and `2.x` (forwards compatible).
+The driver version will come from the hosting application, and driver implementations depend on the corresponding server version.  Changes to driver definitions must be applied to all driver implementations, and so they should be infrequent as well.  The driver contract is consumed by both the loader and the runtime layers, and currently Fluid maintains these boundaries as backwards _and_ forwards compatible at least 1 version.  This means that driver version `2.x` should work with loader and runtime versions `1.x` and `2.x` (backwards compatible), and driver version `1.x` shoudl work with loader and runtime versions `1.x` and `2.x` (forwards compatible).
 
 It does not guarantee that driver version `1.x` will work with loader/runtime version `3.x` or driver version `3.x` will work with loader/runtime version `1.x`, however.
 
@@ -59,12 +59,12 @@ There are many approaches to writing backwards/forwards compatible code.  For la
 It is required to make the changes backwards/forwards compatible at least 1 version where indicated above.  This means splitting the logic in some way to handle the old API as well as comfortably handling the new API.  2+ versions later, the code can be revisited and the specialized back-compat code can be removed.
 
 ### Isolate back-compat code
-Typically, it is nice to isolate the back-compat code as much as possible, rather than inline it.  This will help make it clear to readers of the code that they should not rely on that code, and it will simplify removing it in the future.
+Typically, it is best to isolate the back-compat code as much as possible, rather than inline it.  This will help make it clear to readers of the code that they should not rely on that code, and it will simplify removing it in the future.
 
 One strategy is to write the code as it should be without being backwards compatible first, and then add extra code to handle the old API.
 
 ### Comment appropriately
-Add comments to indicate important changes in APIs; for example add a comment to indicate if an API is deprecated.
+Add comments to indicate important changes in APIs; for example add a comment to indicate if an API is deprecated.  Use the tsdocs `@deprecated` comment keyword where appropriate.
 
 In addition to isolating back-compat code, adding comments can also help identify all places to change when revisiting in the future for cleanup.  Using a consistent comment format can make it easier to identify these places.
 ```typescript
@@ -77,4 +77,4 @@ It is a good idea to track the follow-up work to remove this back-compat code to
 
 ### Update the docs
 During the initial change, it is important to make sure the API changes are indicated somewhere in the docs.
-After making the follow-up change to remove the backwards compatible code, it should be documented in the [BREAKING.md](/BREAKING.md) file so that it is clear that it will break.
+After making the follow-up change to remove the backwards compatible code, it should be documented in the [BREAKING.md](./breaking-changes.md) file so that it is clear that it will break.
