@@ -27,7 +27,10 @@ import {
     IResolvedUrl,
     IUrlResolver,
 } from "@microsoft/fluid-driver-definitions";
-import { configurableUrlResolver } from "@microsoft/fluid-driver-utils";
+import {
+    configurableUrlResolver,
+    DocumentServiceFactoryProtocolMatcher,
+} from "@microsoft/fluid-driver-utils";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { Container } from "./container";
 import { debug } from "./debug";
@@ -113,53 +116,13 @@ export class RelativeLoader extends EventEmitter implements ILoader, IExperiment
 }
 
 /**
- * Api that selects a document service factory from the factory map provided according to protocol
- * in resolved URL.
- * @param resolvedAsFluid - Resolved fluid URL containing driver protocol
- * @param protocolToDocumentFactoryMap - Map of protocol name to factories from which one factory
- * is selected according to protocol.
- */
-export function selectDocumentServiceFactoryForProtocol(
-    resolvedAsFluid: IFluidResolvedUrl,
-    protocolToDocumentFactoryMap: Map<string, IDocumentServiceFactory>,
-): IDocumentServiceFactory {
-    const urlObj = parse(resolvedAsFluid.url);
-    if (!urlObj.protocol) {
-        throw new Error("No protocol provided");
-    }
-    const factory: IDocumentServiceFactory | undefined = protocolToDocumentFactoryMap.get(urlObj.protocol);
-    if (!factory) {
-        throw new Error("Unknown fluid protocol");
-    }
-    return factory;
-}
-
-/**
- * Api that creates the protocol to factory map.
- * @param documentServiceFactories - A single factory or array of document factories.
- */
-export function createProtocolToFactoryMapping(
-    documentServiceFactories: IDocumentServiceFactory | IDocumentServiceFactory[],
-): Map<string, IDocumentServiceFactory> {
-    const protocolToDocumentFactoryMap: Map<string, IDocumentServiceFactory> = new Map();
-    if (Array.isArray(documentServiceFactories)) {
-        documentServiceFactories.forEach((factory: IDocumentServiceFactory) => {
-            protocolToDocumentFactoryMap.set(factory.protocolName, factory);
-        });
-    } else {
-        protocolToDocumentFactoryMap.set(documentServiceFactories.protocolName, documentServiceFactories);
-    }
-    return protocolToDocumentFactoryMap;
-}
-
-/**
  * Manages Fluid resource loading
  */
 export class Loader extends EventEmitter implements ILoader, IExperimentalLoader {
 
     private readonly containers = new Map<string, Promise<Container>>();
     private readonly resolveCache = new Map<string, IResolvedUrl>();
-    private readonly protocolToDocumentFactoryMap: Map<string, IDocumentServiceFactory>;
+    private readonly protocolToDocumentFactoryMap: DocumentServiceFactoryProtocolMatcher;
 
     public readonly isExperimentalLoader = true;
 
@@ -186,7 +149,7 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
             throw new Error("An ICodeLoader must be provided");
         }
 
-        this.protocolToDocumentFactoryMap = createProtocolToFactoryMapping(documentServiceFactories);
+        this.protocolToDocumentFactoryMap = new DocumentServiceFactoryProtocolMatcher(documentServiceFactories);
     }
 
     public async experimentalCreateDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
@@ -293,7 +256,7 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
 
         debug(`${canCache} ${request.headers[LoaderHeader.pause]} ${request.headers[LoaderHeader.version]}`);
         const factory: IDocumentServiceFactory =
-            selectDocumentServiceFactoryForProtocol(resolvedAsFluid, this.protocolToDocumentFactoryMap);
+            this.protocolToDocumentFactoryMap.getFactory(resolvedAsFluid);
 
         let container: Container;
         if (canCache) {
