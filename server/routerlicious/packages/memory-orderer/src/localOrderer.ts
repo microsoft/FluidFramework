@@ -47,6 +47,7 @@ export interface ISubscriber {
 }
 
 const DefaultScribe: IScribe = {
+    lastClientSummaryHead: undefined,
     logOffset: -1,
     minimumSequenceNumber: -1,
     protocolState: undefined,
