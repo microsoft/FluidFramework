@@ -332,11 +332,11 @@ export class GridView {
         if (e.code === KeyCode.enter) {
             this.updateSelectionFromFormulaInput();
         }
-    }
+    };
 
     public readonly formulaFocusOut = () => {
         this.updateSelectionFromFormulaInput();
-    }
+    };
 
     private getCellFromEvent(e: Event) {
         const target = e.target as HTMLElement;
@@ -409,9 +409,9 @@ export class GridView {
         const colStartLetter = this.numberToColumnLetter(colStart);
         const colEndLetter = this.numberToColumnLetter(colEnd);
 
-        const averageFormula = `=AVERAGE(${colStartLetter}${rowStart}:${colEndLetter}${rowEnd})`;
-        const countFormula = `=COUNT(${colStartLetter}${rowStart}:${colEndLetter}${rowEnd})`;
-        const sumFormula = `=SUM(${colStartLetter}${rowStart}:${colEndLetter}${rowEnd})`;
+        const averageFormula = `=AVERAGE(${colStartLetter}${rowStart+1}:${colEndLetter}${+1})`;
+        const countFormula = `=COUNT(${colStartLetter}${rowStart+1}:${colEndLetter}${rowEnd+1})`;
+        const sumFormula = `=SUM(${colStartLetter}${rowStart+1}:${colEndLetter}${rowEnd+1})`;
 
         const avg = this.doc.evaluateFormula(averageFormula);
         const count = this.doc.evaluateFormula(countFormula);
@@ -424,14 +424,12 @@ export class GridView {
         }
     }
 
-    private numberToColumnLetter(index: number):string {
-        if (index < 1) {
-            return "A";
-        }
+    private numberToColumnLetter(index: number): string {
+        let colString = String.fromCharCode((index % 26) + 65);
+        index = index / 26;
 
-        let colString = "";
         while (index >= 1) {
-            colString += String.fromCharCode((index % 26) + 65);
+            colString = String.fromCharCode((index % 26) + 64) + colString;
             index = index / 26;
         }
 
