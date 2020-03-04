@@ -60,7 +60,7 @@ describe("pond", () => {
       const postValue2_010 = await getValue(1, "clicker-value-class-0+10");
       expect(postValue2_010).toEqual("10");
 
-      // Validate both users have 10 as their value
+      // Validate both users have 100 as their value
       const preValue_1005 = await getValue(0, "clicker-value-class-100+5");
       expect(preValue_1005).toEqual("100");
       const preValue2_1005 = await getValue(1, "clicker-value-class-100+5");
@@ -69,7 +69,7 @@ describe("pond", () => {
       // Click the button
       await expect(page).toClick("button", { text: "+5" });
 
-      // Validate both users have 6 as their value
+      // Validate both users have 105 as their value
       const postValue_1005 = await getValue(0, "clicker-value-class-100+5");
       expect(postValue_1005).toEqual("105");
       const postValue2_1005 = await getValue(1, "clicker-value-class-100+5");
