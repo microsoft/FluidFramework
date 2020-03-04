@@ -185,7 +185,9 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             this.componentRuntimeDeferred.promise.then((runtime) => {
                 runtime.dispose();
             }).catch((error) => {
-                this.hostRuntime.logger.sendErrorEvent({eventName: "ComponentRuntimeDisposeError", componentId: this.id}, error);
+                this.hostRuntime.logger.sendErrorEvent(
+                    {eventName: "ComponentRuntimeDisposeError", componentId: this.id},
+                    error);
             });
         }
     }
