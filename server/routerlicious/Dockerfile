@@ -105,6 +105,8 @@ COPY packages/tools/fluid-fetch/package*.json packages/tools/fluid-fetch/
 COPY packages/tools/replay-tool/package*.json packages/tools/replay-tool/
 COPY packages/tools/webpack-component-loader/package*.json packages/tools/webpack-component-loader/
 COPY packages/tools/merge-tree-client-replay/package*.json packages/tools/merge-tree-client-replay/
+COPY packages/test/context-reload/package*.json packages/test/context-reload/
+COPY packages/test/context-reload/@fluid-example/version-test-2/package*.json packages/test/context-reload/@fluid-example/version-test-2/
 COPY examples/components/badge/package*.json examples/components/badge/
 COPY examples/components/chat/package*.json examples/components/chat/
 COPY examples/components/codemirror/package*.json examples/components/codemirror/
