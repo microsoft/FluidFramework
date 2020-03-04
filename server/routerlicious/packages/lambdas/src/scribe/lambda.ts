@@ -110,7 +110,6 @@ export class ScribeLambda extends SequencedLambda {
 
                 if (msnChanged) {
                     // When the MSN changes we can process up to it to save space
-                    // winston.info(`MSN changed to ${this.minSequenceNumber}@${this.sequenceNumber}`);
                     this.processFromPending(this.minSequenceNumber);
                 }
 
@@ -156,8 +155,6 @@ export class ScribeLambda extends SequencedLambda {
     private processFromPending(target: number) {
         while (this.pendingMessages.length > 0 && this.pendingMessages.peekFront().sequenceNumber <= target) {
             const message = this.pendingMessages.shift();
-            // Winston.info(`Handle message ${JSON.stringify(message)}`);
-
             if (message.contents && typeof message.contents === "string" && message.type !== MessageType.ClientLeave) {
                 const clonedMessage = _.cloneDeep(message);
                 clonedMessage.contents = JSON.parse(clonedMessage.contents);
@@ -274,9 +271,6 @@ export class ScribeLambda extends SequencedLambda {
         quorumSnapshot: IQuorumSnapshot,
         summarySequenceNumber: number,
     ): Promise<void> {
-        // TODO: Issue-3547 Logger abstraction in lambdas for routerlicious and Push
-        // winston.info(`START Summary! ${JSON.stringify(content)}`);
-
         // If the sequence number for the protocol head is greater than current sequence number then we
         // have already captured this summary and are processing this message due to a replay of the stream.
         // As such we can skip it.
@@ -370,12 +364,6 @@ export class ScribeLambda extends SequencedLambda {
             this.storage.getTree(content.handle, false),
         ]);
 
-        // Winston.info("SUMMARY IS");
-        // winston.info(JSON.stringify(entries, null, 2));
-
-        // winston.info("TREE");
-        // winston.info(JSON.stringify(appSummaryTree, null, 2));
-
         // Combine the app summary with .protocol
         const newTreeEntries = appSummaryTree.tree.map((value) => {
             const createTreeEntry: ICreateTreeEntry = {
@@ -414,9 +402,6 @@ export class ScribeLambda extends SequencedLambda {
         }
 
         await this.sendSummaryAck(commit.sha, summarySequenceNumber);
-
-        // TODO: Issue-3547 Logger abstraction in lambdas for routerlicious and Push
-        // winston.info(`END Summary! ${JSON.stringify(content)}`);
     }
 
     private async sendSummaryAck(handle: string, summarySequenceNumber: number) {

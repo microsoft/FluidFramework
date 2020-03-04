@@ -6,7 +6,7 @@
 /* eslint-disable no-null/no-null */
 
 import * as assert from "assert";
-import { RangeTracker } from "@microsoft/fluid-core-utils";
+import { RangeTracker } from "@microsoft/fluid-common-utils";
 import { isSystemType } from "@microsoft/fluid-protocol-base";
 import {
     IBranchOrigin,
@@ -36,9 +36,14 @@ import {
     SequencedOperationType,
     IQueuedMessage,
 } from "@microsoft/fluid-server-services-core";
-import * as winston from "winston";
 import { CheckpointContext, ICheckpoint, IClientSequenceNumber } from "./checkpointContext";
 import { ClientSequenceNumberManager } from "./clientSeqManager";
+
+enum IncomingMessageOrder {
+    Duplicate,
+    Gap,
+    ConsecutiveOrSystem,
+}
 
 enum SendType {
     Immediate,
@@ -197,7 +202,7 @@ export class DeliLambda implements IPartitionLambda {
                 this.checkpointContext.checkpoint(checkpoint);
             },
             (error) => {
-                winston.error("Could not send message to scriptorium", error);
+                this.context.log.error(`Could not send message to scriptorium: ${JSON.stringify(error)}`);
                 this.context.error(error, true);
             });
 
@@ -224,8 +229,12 @@ export class DeliLambda implements IPartitionLambda {
         let message = rawMessage as IRawOperationMessage;
         let systemContent = this.extractSystemContent(message);
 
-        if (this.isDuplicate(message, systemContent)) {
+        // Check incoming message order. Nack if there is any gap so that the client can resend.
+        const messageOrder = this.checkOrder(message, systemContent);
+        if (messageOrder === IncomingMessageOrder.Duplicate) {
             return;
+        } else if (messageOrder === IncomingMessageOrder.Gap) {
+            return this.createNackMessage(message);
         }
 
         // Cases only applies to non-integration messages
@@ -248,7 +257,7 @@ export class DeliLambda implements IPartitionLambda {
                         clientJoinMessage.detail.scopes);
                     this.canClose = false;
                 } else if (message.operation.type === MessageType.Fork) {
-                    winston.info(`Fork ${message.documentId} -> ${systemContent.name}`);
+                    this.context.log.info(`Fork ${message.documentId} -> ${systemContent.name}`);
                 }
             } else {
                 // Nack inexistent client.
@@ -482,9 +491,9 @@ export class DeliLambda implements IPartitionLambda {
         }
     }
 
-    private isDuplicate(message: IRawOperationMessage, content: any): boolean {
+    private checkOrder(message: IRawOperationMessage, content: any): IncomingMessageOrder {
         if (message.operation.type !== MessageType.Integrate && !message.clientId) {
-            return false;
+            return IncomingMessageOrder.ConsecutiveOrSystem;
         }
 
         let clientId: string;
@@ -497,20 +506,24 @@ export class DeliLambda implements IPartitionLambda {
             clientSequenceNumber = message.operation.clientSequenceNumber;
         }
 
-        // TODO second check is to maintain back compat - can remove after deployment
         const client = this.clientSeqManager.get(clientId);
-        if (!client || (client.clientSequenceNumber === undefined)) {
-            return false;
+        if (!client) {
+            return IncomingMessageOrder.ConsecutiveOrSystem;
         }
 
-        // Perform duplicate detection on client IDs - Check that we have an increasing CID
-        // For back compat ignore the 0/undefined message
-        if (clientSequenceNumber && (client.clientSequenceNumber + 1 !== clientSequenceNumber)) {
-            winston.info(`Duplicate ${client.clientId}:${client.clientSequenceNumber + 1} !== ${clientSequenceNumber}`);
-            return true;
+        // Perform duplicate and gap detection - Check that we have a monotonically increasing CID
+        const expectedClientSequenceNumber = client.clientSequenceNumber + 1;
+        if (clientSequenceNumber === expectedClientSequenceNumber) {
+            return IncomingMessageOrder.ConsecutiveOrSystem;
+        } else if (clientSequenceNumber > expectedClientSequenceNumber) {
+            this.context.log.info(
+                `Gap ${clientId}:${expectedClientSequenceNumber} > ${clientSequenceNumber}`);
+            return IncomingMessageOrder.Gap;
+        } else {
+            this.context.log.info(
+                `Duplicate ${clientId}:${expectedClientSequenceNumber} < ${clientSequenceNumber}`);
+            return IncomingMessageOrder.Duplicate;
         }
-
-        return false;
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -520,7 +533,7 @@ export class DeliLambda implements IPartitionLambda {
 
     private sendToAlfred(message: IRawOperationMessage) {
         this.reverseProducer.send([message], message.tenantId, message.documentId).catch((error) => {
-            winston.error("Could not send message to alfred", error);
+            this.context.log.error(`Could not send message to alfred: ${JSON.stringify(error)}`);
             this.context.error(error, true);
         });
     }

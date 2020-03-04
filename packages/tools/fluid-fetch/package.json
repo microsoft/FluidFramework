@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-fetch",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "description": "",
   "license": "MIT",
   "author": "Microsoft",
@@ -22,18 +22,18 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@microsoft/fluid-core-utils": "^0.14.0",
-    "@microsoft/fluid-driver-definitions": "^0.14.0",
-    "@microsoft/fluid-driver-utils": "^0.14.0",
-    "@microsoft/fluid-fluidapp-odsp-urlresolver": "^0.14.0",
-    "@microsoft/fluid-odsp-driver": "^0.14.0",
-    "@microsoft/fluid-odsp-urlresolver": "^0.14.0",
-    "@microsoft/fluid-odsp-utils": "^0.14.0",
+    "@microsoft/fluid-common-utils": "^0.14.0",
+    "@microsoft/fluid-driver-definitions": "^0.15.0",
+    "@microsoft/fluid-driver-utils": "^0.15.0",
+    "@microsoft/fluid-fluidapp-odsp-urlresolver": "^0.15.0",
+    "@microsoft/fluid-odsp-driver": "^0.15.0",
+    "@microsoft/fluid-odsp-urlresolver": "^0.15.0",
+    "@microsoft/fluid-odsp-utils": "^0.15.0",
     "@microsoft/fluid-protocol-definitions": "^0.1002.0",
-    "@microsoft/fluid-routerlicious-driver": "^0.14.0",
-    "@microsoft/fluid-routerlicious-urlresolver": "^0.14.0",
-    "@microsoft/fluid-runtime-definitions": "^0.14.0",
-    "@microsoft/fluid-tool-utils": "^0.14.0"
+    "@microsoft/fluid-routerlicious-driver": "^0.15.0",
+    "@microsoft/fluid-routerlicious-urlresolver": "^0.15.0",
+    "@microsoft/fluid-runtime-definitions": "^0.15.0",
+    "@microsoft/fluid-tool-utils": "^0.15.0"
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.14.0",

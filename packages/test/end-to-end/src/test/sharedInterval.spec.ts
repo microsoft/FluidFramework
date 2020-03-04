@@ -12,7 +12,7 @@ import {
     TestResolver,
 } from "@microsoft/fluid-local-driver";
 import { TestHost } from "@microsoft/fluid-local-test-utils";
-import { ITestDeltaConnectionServer, TestDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import { IntervalType, LocalReference } from "@microsoft/fluid-merge-tree";
 import { IBlob } from "@microsoft/fluid-protocol-definitions";
@@ -208,7 +208,7 @@ describe("SharedInterval", () => {
     describe("Handles in value types", () => {
         const id = "fluid://test.com/test/test";
 
-        let testDeltaConnectionServer: ITestDeltaConnectionServer;
+        let testDeltaConnectionServer: ILocalDeltaConnectionServer;
         let documentDeltaEventManager: DocumentDeltaEventManager;
         let user1Document: api.Document;
         let user2Document: api.Document;
@@ -218,7 +218,7 @@ describe("SharedInterval", () => {
         let root3: ISharedMap;
 
         beforeEach(async () => {
-            testDeltaConnectionServer = TestDeltaConnectionServer.create();
+            testDeltaConnectionServer = LocalDeltaConnectionServer.create();
             documentDeltaEventManager = new DocumentDeltaEventManager(testDeltaConnectionServer);
             const serviceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
             const resolver = new TestResolver();
@@ -244,9 +244,9 @@ describe("SharedInterval", () => {
             root1.set("outerString", user1Document.createString().handle);
             await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
 
-            const outerString1 = await root1.get<IComponentHandle>("outerString").get<SharedString>();
-            const outerString2 = await root2.get<IComponentHandle>("outerString").get<SharedString>();
-            const outerString3 = await root3.get<IComponentHandle>("outerString").get<SharedString>();
+            const outerString1 = await root1.get<IComponentHandle<SharedString>>("outerString").get();
+            const outerString2 = await root2.get<IComponentHandle<SharedString>>("outerString").get();
+            const outerString3 = await root3.get<IComponentHandle<SharedString>>("outerString").get();
             assert.ok(outerString1);
             assert.ok(outerString2);
             assert.ok(outerString3);
@@ -281,10 +281,10 @@ describe("SharedInterval", () => {
             assert.equal(serialized3.length, 3);
 
             const interval1From3 = serialized3[0] as ISerializedInterval;
-            const comment1From3 = await (interval1From3.properties.story as IComponentHandle).get<SharedString>();
+            const comment1From3 = await (interval1From3.properties.story as IComponentHandle<SharedString>).get();
             assert.equal(comment1From3.getText(0, 12), "a comment...");
             const interval3From3 = serialized3[2] as ISerializedInterval;
-            const mapFrom3 = await (interval3From3.properties.story as IComponentHandle).get<SharedMap>();
+            const mapFrom3 = await (interval3From3.properties.story as IComponentHandle<SharedMap>).get();
             assert.equal(mapFrom3.get("nestedKey"), "nestedValue");
 
             // SharedString snapshots as a blob

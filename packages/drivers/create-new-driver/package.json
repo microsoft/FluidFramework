@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-experimental-creation-driver",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "description": "A driver that imitates actual driver but stores everthing in memory.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -50,9 +50,9 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.14.0",
-    "@microsoft/fluid-core-utils": "^0.14.0",
-    "@microsoft/fluid-driver-definitions": "^0.14.0",
+    "@microsoft/fluid-common-utils": "^0.14.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.15.0",
+    "@microsoft/fluid-driver-definitions": "^0.15.0",
     "@microsoft/fluid-protocol-definitions": "^0.1002.0"
   },
   "devDependencies": {
@@ -74,7 +74,7 @@
     "eslint-plugin-unicorn": "~15.0.1",
     "make-promises-safe": "^5.1.0",
     "mocha": "^5.2.0",
-    "nyc": "^14.1.1",
+    "nyc": "^15.0.0",
     "rimraf": "^2.6.2",
     "typescript": "~3.7.4"
   }

@@ -18,12 +18,12 @@ import {
     ErrorType,
 } from "@microsoft/fluid-driver-definitions";
 import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
-import { ITestDeltaConnectionServer, TestDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { MockDocumentDeltaConnection } from "@microsoft/fluid-test-loader-utils";
 import { ConnectionState } from "@microsoft/fluid-protocol-definitions";
 
 describe("Container", () => {
-    let testDeltaConnectionServer: ITestDeltaConnectionServer;
+    let testDeltaConnectionServer: ILocalDeltaConnectionServer;
     let testResolver: TestResolver;
     let testResolved: IFluidResolvedUrl;
     let deltaConnection: MockDocumentDeltaConnection;
@@ -33,7 +33,7 @@ describe("Container", () => {
     let loader: Loader;
 
     beforeEach(async () => {
-        testDeltaConnectionServer = TestDeltaConnectionServer.create();
+        testDeltaConnectionServer = LocalDeltaConnectionServer.create();
         testResolver = new TestResolver();
         testResolved = await testResolver.resolve(testRequest) as IFluidResolvedUrl;
         const serviceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
@@ -62,7 +62,8 @@ describe("Container", () => {
                 {},
                 {},
                 loader,
-                testRequest);
+                testRequest,
+                testResolved);
             success = true;
         } catch (error) {
             success = false;
@@ -85,7 +86,8 @@ describe("Container", () => {
                 {},
                 {},
                 loader,
-                testRequest);
+                testRequest,
+                testResolved);
         } catch (error) {
             const err = error as IGeneralError;
             success = err.error as boolean;
@@ -108,7 +110,8 @@ describe("Container", () => {
                 {},
                 {},
                 loader,
-                testRequest);
+                testRequest,
+                testResolved);
         } catch (error) {
             assert.equal(error.errorType, ErrorType.generalError, "Error is not a general error");
             const generalError = error as IGeneralError;
@@ -134,7 +137,8 @@ describe("Container", () => {
             {},
             {},
             loader,
-            testRequest);
+            testRequest,
+            testResolved);
         assert.equal(container.connectionState, ConnectionState.Connecting,
             "Container should be in Connecting state");
         deltaConnection.disconnect();
@@ -160,7 +164,8 @@ describe("Container", () => {
             {},
             {},
             loader,
-            testRequest);
+            testRequest,
+            testResolved);
         assert.equal(container.connectionState, ConnectionState.Connecting,
             "Container should be in Connecting state");
         deltaConnection.emitError("Test Error");
@@ -187,7 +192,8 @@ describe("Container", () => {
             {},
             {},
             loader,
-            testRequest);
+            testRequest,
+            testResolved);
         container.on("error", (error) => {
             errorRaised = true;
         });
@@ -221,7 +227,8 @@ describe("Container", () => {
             {},
             {},
             loader,
-            testRequest);
+            testRequest,
+            testResolved);
         container.on("error", (error) => {
             assert.ok(false, "Error event should not be raised.");
         });
