@@ -1,26 +1,34 @@
 {
   "name": "@fluid-example/version-test-2",
-  "description": "Component to test version conversion.",
   "version": "0.2.0",
-  "author": "Microsoft",
+  "private": true,
+  "description": "Component to test version conversion.",
   "repository": "microsoft/prague",
+  "license": "MIT",
+  "author": "Microsoft",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "npm run build:compile",
     "build:compile": "npm run tsc",
+    "build:compile:min": "npm run build:compile",
     "build:full": "concurrently npm:build npm:webpack",
     "build:full:compile": "concurrently npm:build:compile npm:webpack",
-    "build:compile:min": "npm run build:compile",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
-    "start:r11s": "webpack-dev-server --config webpack.config.js --package package.json --env.mode r11s",
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
+    "start:r11s": "webpack-dev-server --config webpack.config.js --package package.json --env.mode r11s",
     "tsc": "tsc",
     "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "webpack": "webpack --env.production && npm run tsc",
     "webpack:dev": "webpack --env.development"
+  },
+  "dependencies": {
+    "@microsoft/fluid-aqueduct": "^0.14.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.14.0",
+    "react": "^16.10.2",
+    "react-dom": "^16.10.2"
   },
   "devDependencies": {
     "@microsoft/fluid-webpack-component-loader": "^0.14.0",
@@ -34,12 +42,6 @@
     "webpack-dev-server": "^3.8.0",
     "webpack-merge": "^4.1.4"
   },
-  "dependencies": {
-    "@microsoft/fluid-aqueduct": "^0.14.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.14.0",
-    "react": "^16.10.2",
-    "react-dom": "^16.10.2"
-  },
   "fluid": {
     "browser": {
       "umd": {
@@ -49,7 +51,5 @@
         "library": "main"
       }
     }
-  },
-  "license": "MIT",
-  "private": true
+  }
 }
