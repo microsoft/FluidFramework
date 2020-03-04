@@ -9,6 +9,7 @@ import {
     ITaskMessageSender,
     ITenantManager,
     IWebSocketServer,
+    ILogger,
 } from "@microsoft/fluid-server-services-core";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
@@ -26,7 +27,8 @@ export class LocalNodeFactory implements IConcreteNodeFactory {
         private readonly taskMessageSender: ITaskMessageSender,
         private readonly tenantManager: ITenantManager,
         private readonly permission: any,
-        private readonly maxMessageSize: number) {
+        private readonly maxMessageSize: number,
+        private readonly logger: ILogger) {
     }
 
     public async create(): Promise<LocalNode> {
@@ -40,7 +42,8 @@ export class LocalNodeFactory implements IConcreteNodeFactory {
             this.taskMessageSender,
             this.tenantManager,
             this.permission,
-            this.maxMessageSize);
+            this.maxMessageSize,
+            this.logger);
 
         return node;
     }

@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { fromBase64ToUtf8 } from "@microsoft/fluid-core-utils";
+import { fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -325,7 +325,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
             } else {
                 data.atomic = atomicUpdate;
             }
-            this.emit("atomicChanged", op.key, op.value, local);
+            this.emit("atomicChanged", op.key, op.value.value, local);
         }
 
         // Keep removing versions where incoming refseq is greater than or equals to current.
@@ -346,7 +346,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
 
         // Push the new element.
         data.versions.push(versionUpdate);
-        this.emit("versionChanged", op.key, op.value, local);
+        this.emit("versionChanged", op.key, op.value.value, local);
 
         return winner;
     }

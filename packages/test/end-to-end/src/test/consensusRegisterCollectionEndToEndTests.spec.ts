@@ -11,7 +11,7 @@ import {
     TestDocumentServiceFactory,
     TestResolver,
 } from "@microsoft/fluid-local-driver";
-import { ITestDeltaConnectionServer, TestDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { ISharedMap } from "@microsoft/fluid-map";
 import {
     ConsensusRegisterCollection,
@@ -28,7 +28,7 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
     describe(name, () => {
         const id = "fluid://test.com/test/test";
 
-        let testDeltaConnectionServer: ITestDeltaConnectionServer;
+        let testDeltaConnectionServer: ILocalDeltaConnectionServer;
         let documentDeltaEventManager: DocumentDeltaEventManager;
         let user1Document: api.Document;
         let user2Document: api.Document;
@@ -38,7 +38,7 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
         let root3: ISharedMap;
 
         beforeEach(async () => {
-            testDeltaConnectionServer = TestDeltaConnectionServer.create();
+            testDeltaConnectionServer = LocalDeltaConnectionServer.create();
             documentDeltaEventManager = new DocumentDeltaEventManager(testDeltaConnectionServer);
             const documentService = new TestDocumentServiceFactory(testDeltaConnectionServer);
             const resolver = new TestResolver();
@@ -74,11 +74,11 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
             await collection1.write("key2", "value2");
 
             const [collection2Handle, collection3Handle] = await Promise.all([
-                root2.wait<IComponentHandle>("collection"),
-                root3.wait<IComponentHandle>("collection"),
+                root2.wait<IComponentHandle<IConsensusRegisterCollection>>("collection"),
+                root3.wait<IComponentHandle<IConsensusRegisterCollection>>("collection"),
             ]);
-            const collection2 = await collection2Handle.get<IConsensusRegisterCollection>();
-            const collection3 = await collection3Handle.get<IConsensusRegisterCollection>();
+            const collection2 = await collection2Handle.get();
+            const collection3 = await collection3Handle.get();
 
             assert.strictEqual(collection1.read("key1"), "value1", "Collection not initialize in document 1");
             assert.strictEqual(collection2.read("key1"), "value1", "Collection not initialize in document 2");
@@ -97,11 +97,11 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
             root1.set("collection", collection1.handle);
 
             const [collection2Handle, collection3Handle] = await Promise.all([
-                root2.wait<IComponentHandle>("collection"),
-                root3.wait<IComponentHandle>("collection"),
+                root2.wait<IComponentHandle<IConsensusRegisterCollection>>("collection"),
+                root3.wait<IComponentHandle<IConsensusRegisterCollection>>("collection"),
             ]);
-            const collection2 = await collection2Handle.get<IConsensusRegisterCollection>();
-            const collection3 = await collection3Handle.get<IConsensusRegisterCollection>();
+            const collection2 = await collection2Handle.get();
+            const collection3 = await collection3Handle.get();
 
             const write1P = collection1.write("key1", "value1");
             const write2P = collection2.write("key1", "value2");
@@ -123,11 +123,11 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
             root1.set("collection", collection1.handle);
 
             const [collection2Handle, collection3Handle] = await Promise.all([
-                root2.wait<IComponentHandle>("collection"),
-                root3.wait<IComponentHandle>("collection"),
+                root2.wait<IComponentHandle<IConsensusRegisterCollection>>("collection"),
+                root3.wait<IComponentHandle<IConsensusRegisterCollection>>("collection"),
             ]);
-            const collection2 = await collection2Handle.get<IConsensusRegisterCollection>();
-            const collection3 = await collection3Handle.get<IConsensusRegisterCollection>();
+            const collection2 = await collection2Handle.get();
+            const collection3 = await collection3Handle.get();
 
             const write1P = collection1.write("key1", "value1");
             const write2P = collection2.write("key1", "value2");

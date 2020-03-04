@@ -4,7 +4,7 @@
  */
 
 import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
-import { TestDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
 import {
@@ -19,6 +19,7 @@ import { IProvideComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { initializeContainerCode } from "@microsoft/fluid-base-host";
+import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 
 export async function createLocalContainerFactory(
     entryPoint: Partial<IProvideRuntimeFactory & IProvideComponentFactory & IFluidModule>,
@@ -28,7 +29,7 @@ export async function createLocalContainerFactory(
 
     const urlResolver = new TestResolver(documentId);
 
-    const deltaConn = TestDeltaConnectionServer.create();
+    const deltaConn = LocalDeltaConnectionServer.create();
     const documentServiceFactory = new TestDocumentServiceFactory(deltaConn);
 
 
@@ -74,18 +75,8 @@ export async function renderDefaultComponent(container: Container, div: HTMLElem
         return;
     }
 
-    // Check if the component is viewable
+    // Render the component with an HTMLViewAdapter to abstract the UI framework used by the component
     const component = response.value as IComponent;
-    // First try to get it as a view
-    let renderable = component.IComponentHTMLView;
-    if (!renderable) {
-        // Otherwise get the visual, which is a view factory
-        const visual = component.IComponentHTMLVisual;
-        if (visual) {
-            renderable = visual.addView();
-        }
-    }
-    if (renderable) {
-        renderable.render(div, { display: "block" });
-    }
+    const embed = new HTMLViewAdapter(component);
+    embed.render(div, { display: "block" });
 }

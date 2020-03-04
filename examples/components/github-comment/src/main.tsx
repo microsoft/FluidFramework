@@ -70,8 +70,8 @@ export class GithubComment extends TextareaNoReact implements IComponentHTMLView
 
         // Update textareaState and register listener:
         const textareaString =
-            await this.root.get<IComponentHandle>(this.textareaRootKey)
-                .get<SharedString>();
+            await this.root.get<IComponentHandle<SharedString>>(this.textareaRootKey)
+                .get();
         this.textareaState.text = textareaString.getText();
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         textareaString.on("sequenceDelta", this.handleIncomingChange);

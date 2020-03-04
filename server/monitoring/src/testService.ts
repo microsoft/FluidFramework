@@ -5,7 +5,6 @@
 
 /* eslint-disable prefer-template */
 import * as url from "url";
-import { IBaseHostConfig } from "@microsoft/fluid-base-host";
 import { IFluidCodeDetails, IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { IFluidResolvedUrl } from "@microsoft/fluid-driver-definitions";
@@ -129,14 +128,9 @@ export async function testFluidService(config: Provider): Promise<void> {
         hostToken,
         new Map([[documentUrl, resolved]]));
 
-    const hostConfig: IBaseHostConfig = {
-        documentServiceFactory: new RouterliciousDocumentServiceFactory(),
-        urlResolver: resolver,
-    };
-
     const loader = new Loader(
-        hostConfig.urlResolver,
-        hostConfig.documentServiceFactory,
+        resolver,
+        new RouterliciousDocumentServiceFactory(),
         new NodeCodeLoader(packageManagerUrl, installLocation, waitTimeoutMS, new NodeWhiteList()),
         config,
         {},

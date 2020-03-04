@@ -12,6 +12,7 @@ import {
     IFluidCodeDetails,
     IRuntime,
     IRuntimeFactory,
+    IFluidModule,
 } from "@microsoft/fluid-container-definitions";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@microsoft/fluid-container-runtime";
 import * as ink from "@microsoft/fluid-ink";
@@ -62,37 +63,34 @@ export class Chaincode implements IComponentFactory {
         modules.set(directoryFactory.type, directoryFactory);
         modules.set(sharedIntervalFactory.type, sharedIntervalFactory);
 
-        ComponentRuntime.load(
-            context,
-            modules,
-            (runtime) => {
-                // Initialize core data structures
-                let root: map.ISharedMap;
-                if (!runtime.existing) {
-                    root = map.SharedMap.create(runtime, rootMapId);
-                    root.register();
+        const runtime = ComponentRuntime.load(context, modules);
 
-                    const insights = map.SharedMap.create(runtime, insightsMapId);
-                    root.set(insightsMapId, insights.handle);
-                }
+        // Initialize core data structures
+        let root: map.ISharedMap;
+        if (!runtime.existing) {
+            root = map.SharedMap.create(runtime, rootMapId);
+            root.register();
 
-                // Create the underlying Document
-                async function createDocument() {
-                    root = await runtime.getChannel(rootMapId) as map.ISharedMap;
-                    return new Document(runtime, context, root);
-                }
-                const documentP = createDocument();
+            const insights = map.SharedMap.create(runtime, insightsMapId);
+            root.set(insightsMapId, insights.handle);
+        }
 
-                // And then return it from requests
-                runtime.registerRequestHandler(async (request) => {
-                    const document = await documentP;
-                    return {
-                        mimeType: "fluid/component",
-                        status: 200,
-                        value: document,
-                    };
-                });
-            });
+        // Create the underlying Document
+        async function createDocument() {
+            root = await runtime.getChannel(rootMapId) as map.ISharedMap;
+            return new Document(runtime, context, root);
+        }
+        const documentP = createDocument();
+
+        // And then return it from requests
+        runtime.registerRequestHandler(async (request) => {
+            const document = await documentP;
+            return {
+                mimeType: "fluid/component",
+                status: 200,
+                value: document,
+            };
+        });
     }
 }
 
@@ -149,17 +147,20 @@ export class ChaincodeFactory implements IRuntimeFactory {
 }
 
 export class CodeLoader implements ICodeLoader {
-    private readonly factory: IRuntimeFactory;
+    private readonly fluidModule: IFluidModule;
 
     constructor(
         runtimeOptions: IContainerRuntimeOptions,
         registries?: NamedComponentRegistryEntries,
     ) {
-        this.factory = new ChaincodeFactory(runtimeOptions,
-            registries ? registries : []);
+        this.fluidModule = {
+            fluidExport: new ChaincodeFactory(
+                runtimeOptions,
+                registries ? registries : []),
+        };
     }
 
-    public async load<T>(source: IFluidCodeDetails): Promise<T> {
-        return Promise.resolve(this.factory as any);
+    public async load(source: IFluidCodeDetails): Promise<IFluidModule> {
+        return Promise.resolve(this.fluidModule);
     }
 }

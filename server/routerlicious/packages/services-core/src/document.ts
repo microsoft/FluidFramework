@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRangeTrackerSnapshot } from "@microsoft/fluid-core-utils";
+import { IRangeTrackerSnapshot } from "@microsoft/fluid-common-utils";
 import { ICommit, ICommitDetails } from "@microsoft/fluid-gitresources";
 import { IProtocolState } from "@microsoft/fluid-protocol-definitions";
 import { IGitCache } from "@microsoft/fluid-server-services-client";
@@ -58,6 +58,9 @@ export interface IScribe {
     // Stored protocol state within the window. This is either the state at the MSN or the state at the
     // sequence number of the head summary.
     protocolState: IProtocolState;
+
+    // Ref of the last client generated summary
+    lastClientSummaryHead: string;
 }
 
 export interface IDocument {

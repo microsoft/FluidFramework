@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 // tslint:disable: no-unsafe-any
+import * as assert from "assert";
 import { ErrorType, IError } from "@microsoft/fluid-driver-definitions";
 
 /**
@@ -10,6 +11,8 @@ import { ErrorType, IError } from "@microsoft/fluid-driver-definitions";
  * @param error - Error to be converted.
  */
 export function createIError(error: any, critical: boolean = false): IError {
+    assert(error !== undefined);
+
     // eslint-disable-next-line no-null/no-null
     if (typeof error === "object" && error !== null) {
         if (Object.isFrozen(error)) {

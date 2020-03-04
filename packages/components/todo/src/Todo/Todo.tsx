@@ -30,7 +30,7 @@ export class Todo extends PrimedComponent {
 
     // Would prefer not to hand this out, and instead give back a title component?
     public async getTodoTitleString() {
-        return this.root.get<IComponentHandle>(this.todoTitleKey).get<SharedString>();
+        return this.root.get<IComponentHandle<SharedString>>(this.todoTitleKey).get();
     }
 
     /**
@@ -47,7 +47,7 @@ export class Todo extends PrimedComponent {
     }
 
     protected async componentHasInitialized() {
-        this.todoItemsMap = await this.root.get<IComponentHandle>(this.todoItemsKey).get<ISharedMap>();
+        this.todoItemsMap = await this.root.get<IComponentHandle<ISharedMap>>(this.todoItemsKey).get();
         // Hide the DDS eventing used by the model, expose a model-specific event interface.
         this.todoItemsMap.on("op", (op, local) => {
             if (!local) {

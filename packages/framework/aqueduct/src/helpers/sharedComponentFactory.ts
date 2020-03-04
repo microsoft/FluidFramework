@@ -48,30 +48,29 @@ export class SharedComponentFactory implements IComponentFactory, Partial<IProvi
     public instantiateComponent(context: IComponentContext): void {
         // Create a new runtime for our component
         // The runtime is what Fluid uses to create DDS' and route to your component
-        ComponentRuntime.load(
+        const runtime = ComponentRuntime.load(
             context,
             this.sharedObjectRegistry,
-            (runtime: ComponentRuntime) => {
-                let instanceP: Promise<SharedComponent>;
-                // For new runtime, we need to force the component instance to be create
-                // run the initialization.
-                if (!this.onDemandInstantiation || !runtime.existing) {
-                    // Create a new instance of our component up front
-                    instanceP = this.instantiateInstance(runtime, context);
-                }
-
-                runtime.registerRequestHandler(async (request: IRequest) => {
-                    // eslint-disable-next-line @typescript-eslint/no-misused-promises
-                    if (!instanceP) {
-                        // Create a new instance of our component on demand
-                        instanceP = this.instantiateInstance(runtime, context);
-                    }
-                    const instance = await instanceP;
-                    return instance.request(request);
-                });
-            },
             this.registry,
         );
+
+        let instanceP: Promise<SharedComponent>;
+        // For new runtime, we need to force the component instance to be create
+        // run the initialization.
+        if (!this.onDemandInstantiation || !runtime.existing) {
+            // Create a new instance of our component up front
+            instanceP = this.instantiateInstance(runtime, context);
+        }
+
+        runtime.registerRequestHandler(async (request: IRequest) => {
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
+            if (!instanceP) {
+                // Create a new instance of our component on demand
+                instanceP = this.instantiateInstance(runtime, context);
+            }
+            const instance = await instanceP;
+            return instance.request(request);
+        });
     }
 
     /**

@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { DebugLogger } from "@microsoft/fluid-core-utils";
+import { DebugLogger } from "@microsoft/fluid-common-utils";
 import { ISequencedDocumentMessage, ITree, MessageType } from "@microsoft/fluid-protocol-definitions";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 // eslint-disable-next-line import/no-extraneous-dependencies

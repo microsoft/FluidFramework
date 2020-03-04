@@ -78,7 +78,7 @@ export class FluidSudoku extends PrimedComponent
         // Our "puzzle" SharedMap is stored as a handle on the "root" SharedDirectory. To get it we must make a
         // synchronous call to get the IComponentHandle, then an asynchronous call to get the ISharedMap from the
         // handle.
-        this.puzzle = await this.root.get<IComponentHandle>(this.sudokuMapKey).get<ISharedMap>();
+        this.puzzle = await this.root.get<IComponentHandle<ISharedMap>>(this.sudokuMapKey).get();
 
         // Since we're using a Fluid distributed data structure to store our Sudoku data, we need to render whenever a
         // value in our map changes. Recall that distributed data structures can be changed by both local and remote
@@ -88,8 +88,8 @@ export class FluidSudoku extends PrimedComponent
         });
 
         this.clientPresence = await this.root
-            .get<IComponentHandle>(this.presenceMapKey)
-            .get<ISharedMap>();
+            .get<IComponentHandle<ISharedMap>>(this.presenceMapKey)
+            .get();
 
         this.clientPresence.on("valueChanged", (changed, local, op) => {
             this.render();

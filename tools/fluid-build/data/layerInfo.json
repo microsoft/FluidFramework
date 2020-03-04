@@ -42,7 +42,7 @@
         "layers": {
             "Base-Utils": {
                 "packages": [
-                    "@microsoft/fluid-core-utils"
+                    "@microsoft/fluid-common-utils"
                 ],
                 "deps": [
                     "Base-Definitions"
@@ -64,6 +64,14 @@
                 "deps": [
                     "Protocol-Utils",
                     "Driver-Definitions"
+                ]
+            },
+            "Framework-Utils": {
+                "packages": [
+                    "@microsoft/fluid-view-adapters"
+                ],
+                "deps": [
+                    "Base-Definitions"
                 ]
             },
             "Other-Utils": {
@@ -131,7 +139,8 @@
                     "@microsoft/fluid-host-service-interfaces"
                 ],
                 "deps": [
-                    "Loader"
+                    "Loader",
+                    "Framework-Utils"
                 ]
             },
             "Runtime": {

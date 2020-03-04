@@ -4,7 +4,8 @@
  */
 
 import { EventEmitter } from "events";
-import { IContext, IQueuedMessage } from "@microsoft/fluid-server-services-core";
+import { IContext, IQueuedMessage, ILogger } from "@microsoft/fluid-server-services-core";
+import * as winston from "winston";
 import { CheckpointManager } from "./checkpointManager";
 
 export class Context extends EventEmitter implements IContext {
@@ -35,6 +36,10 @@ export class Context extends EventEmitter implements IContext {
      */
     public error(error: any, restart: boolean) {
         this.emit("error", error, restart);
+    }
+
+    public get log(): ILogger {
+        return winston;
     }
 
     /**
