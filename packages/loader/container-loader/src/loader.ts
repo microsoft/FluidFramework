@@ -114,20 +114,8 @@ export class RelativeLoader extends EventEmitter implements ILoader, IExperiment
         return (request.headers !== undefined && request.headers[LoaderHeader.executionContext] !== undefined);
     }
 }
-export function selectDocumentServiceFactoryForProtocol(
-    resolvedAsFluid: IFluidResolvedUrl,
-    protocolToDocumentFactoryMap: Map<string, IDocumentServiceFactory>,
-): IDocumentServiceFactory {
-    const urlObj = parse(resolvedAsFluid.url);
-    if (!urlObj.protocol) {
-        throw new Error("No protocol provided");
-    }
-    const factory: IDocumentServiceFactory | undefined = protocolToDocumentFactoryMap.get(urlObj.protocol);
-    if (!factory) {
-        throw new Error("Unknown fluid protocol");
-    }
-    return factory;
-}/**
+
+/**
  * Manages Fluid resource loading
  */
 export class Loader extends EventEmitter implements ILoader, IExperimentalLoader {
