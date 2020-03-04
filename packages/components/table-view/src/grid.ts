@@ -409,7 +409,7 @@ export class GridView {
         const colStartLetter = this.numberToColumnLetter(colStart);
         const colEndLetter = this.numberToColumnLetter(colEnd);
 
-        const averageFormula = `=AVERAGE(${colStartLetter}${rowStart+1}:${colEndLetter}${+1})`;
+        const averageFormula = `=AVERAGE(${colStartLetter}${rowStart+1}:${colEndLetter}${rowEnd+1})`;
         const countFormula = `=COUNT(${colStartLetter}${rowStart+1}:${colEndLetter}${rowEnd+1})`;
         const sumFormula = `=SUM(${colStartLetter}${rowStart+1}:${colEndLetter}${rowEnd+1})`;
 
