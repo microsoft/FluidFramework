@@ -73,8 +73,7 @@ export class HTMLViewAdapter implements IComponentHTMLView {
         }
 
         // Either it's an unrenderable component, or using some framework we don't support.
-        console.warn("Attempting to render an unsupported component via HTMLViewAdapter");
-        elm.appendChild(document.createElement("span"));
+        // In that case, we render nothing.
     }
 
     public remove() {
