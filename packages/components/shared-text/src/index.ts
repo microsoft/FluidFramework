@@ -109,7 +109,7 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
         return component.request(
             {
                 headers: request.headers,
-                url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash),
+                url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash + 1),
             });
     }
 
