@@ -56,6 +56,61 @@ export interface IDocumentServiceFactoryProxy {
 }
 
 /**
+ * Creates a proxy outerdocumentservice from either a resolvedURL or a request
+ * Remotes the real connection to an iframe
+ */
+export class IFrameDocumentServiceProxyFactory {
+
+    public static async create(
+        documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[],
+        frame: HTMLIFrameElement,
+        options: any,
+        urlResolver: IUrlResolver | IUrlResolver[],
+    ) {
+        return new IFrameDocumentServiceProxyFactory(documentServiceFactory, frame, options, urlResolver);
+    }
+
+    public readonly protocolName = "fluid-outer:";
+
+    constructor(
+        private readonly documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[],
+        private readonly frame: HTMLIFrameElement,
+        private readonly options: any,
+        private readonly urlResolver: IUrlResolver | IUrlResolver[],
+    ) {
+
+    }
+
+    public async createDocumentService(resolvedUrl: IFluidResolvedUrl): Promise<IDocumentServiceFactoryProxy> {
+        return Promise.resolve(
+            new DocumentServiceFactoryProxy(
+                this.documentServiceFactory,
+                this.options,
+                resolvedUrl,
+                this.frame,
+            ));
+    }
+
+    public async createDocumentServiceFromRequest(request: IRequest): Promise<IDocumentServiceFactoryProxy> {
+        // Simplify this with either https://github.com/microsoft/FluidFramework/pull/448
+        // or https://github.com/microsoft/FluidFramework/issues/447
+        const resolvers: IUrlResolver[] = [];
+        if (!(Array.isArray(this.urlResolver))) {
+            resolvers.push(this.urlResolver);
+        } else {
+            resolvers.push(... this.urlResolver);
+        }
+
+        const resolvedUrl = await configurableUrlResolver(resolvers, request);
+        if (!resolvedUrl  || resolvedUrl.type !== "fluid") {
+            return Promise.reject("No Resolver for request");
+        }
+
+        return this.createDocumentService(resolvedUrl);
+    }
+}
+
+/**
  * Proxy of the Document Service Factory that gets sent to the innerFrame
  */
 export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy {
@@ -252,60 +307,3 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
         return outerMethodsToProxy;
     }
 }
-
-/**
- * Creates a proxy outerdocumentservice from either a resolvedURL or a request
- * Remotes the real connection to an iframe
- */
-export class IFrameDocumentServiceProxyFactory {
-
-    public static async create(
-        documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[],
-        frame: HTMLIFrameElement,
-        options: any,
-        urlResolver: IUrlResolver | IUrlResolver[],
-    ) {
-        return new IFrameDocumentServiceProxyFactory(documentServiceFactory, frame, options, urlResolver);
-    }
-
-    public readonly protocolName = "fluid-outer:";
-
-    constructor(
-        private readonly documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[],
-        private readonly frame: HTMLIFrameElement,
-        private readonly options: any,
-        private readonly urlResolver: IUrlResolver | IUrlResolver[],
-    ) {
-
-    }
-
-    public async createDocumentService(resolvedUrl: IFluidResolvedUrl): Promise<IDocumentServiceFactoryProxy> {
-        return Promise.resolve(
-            new DocumentServiceFactoryProxy(
-                this.documentServiceFactory,
-                this.options,
-                resolvedUrl,
-                this.frame,
-            ));
-    }
-
-    public async createDocumentServiceFromRequest(request: IRequest): Promise<IDocumentServiceFactoryProxy> {
-        // Simplify this with either https://github.com/microsoft/FluidFramework/pull/448
-        // or https://github.com/microsoft/FluidFramework/issues/447
-        const resolvers: IUrlResolver[] = [];
-        if (!(Array.isArray(this.urlResolver))) {
-            resolvers.push(this.urlResolver);
-        } else {
-            resolvers.push(... this.urlResolver);
-        }
-
-        const resolvedUrl = await configurableUrlResolver(resolvers, request);
-        if (!resolvedUrl  || resolvedUrl.type !== "fluid") {
-            return Promise.reject("No Resolver for request");
-        }
-
-        return this.createDocumentService(resolvedUrl);
-    }
-}
-
-
