@@ -19,10 +19,10 @@ The following overview shows the various levels and their corresponding contract
 This document will focus on a few specific layer boundaries.
 
 ### Protocol
-Changes to the protocol definitions should be vetted highly, and ideally should always be backwards compatible.  These changes require synchronization between servers and clients, and are meant to be slim and well thought out.
+Changes to the protocol definitions should be vetted highly, and ideally should always be backwards compatible.  These changes require synchronization between servers and clients, and are meant to be minimal and well-designed.
 
 ### Driver
-The driver version will come from the hosting application, and driver implementations depend on the corresponding server version.  Changes to driver definitions must be applied to all driver implementations, and so they should be infrequent as well.  The driver contract is consumed by both the loader and the runtime layers, and currently Fluid maintains these boundaries as backwards _and_ forwards compatible at least 1 version.  This means that driver version `2.x` should work with loader and runtime versions `1.x` and `2.x` (backwards compatible), and driver version `1.x` shoudl work with loader and runtime versions `1.x` and `2.x` (forwards compatible).
+The driver version will come from the hosting application, and driver implementations depend on the corresponding server version.  Changes to driver definitions must be applied to all driver implementations, and so they should be infrequent as well.  The driver contract is consumed by both the loader and the runtime layers, and currently Fluid maintains these boundaries as backwards _and_ forwards compatible at least 1 version.  This means that driver version `2.x` is compatible with loader and runtime versions `1.x` and `2.x` (backwards compatible), and driver version `1.x` is compatible with loader and runtime versions `1.x` and `2.x` (forwards compatible).
 
 It does not guarantee that driver version `1.x` will work with loader/runtime version `3.x` or driver version `3.x` will work with loader/runtime version `1.x`, however.
 
