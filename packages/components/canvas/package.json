@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/canvas",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "description": "Fluid ink canvas",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -11,7 +11,6 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
-    "build:compile:min": "npm run build:compile",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "concurrently npm:build npm:webpack",
     "build:full:compile": "concurrently npm:build:compile npm:webpack",
@@ -21,6 +20,7 @@
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
+    "prepack": "npm run webpack",
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
     "start:docker": "webpack-dev-server --config webpack.config.js --package package.json --env.mode docker",
     "start:r11s": "webpack-dev-server --config webpack.config.js --package package.json --env.mode r11s",
@@ -32,17 +32,17 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluid-example/client-ui-lib": "^0.14.0",
-    "@microsoft/fluid-aqueduct": "^0.14.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.14.0",
-    "@microsoft/fluid-ink": "^0.14.0",
-    "@microsoft/fluid-map": "^0.14.0",
-    "@microsoft/fluid-runtime-definitions": "^0.14.0"
+    "@fluid-example/client-ui-lib": "^0.15.0",
+    "@microsoft/fluid-aqueduct": "^0.15.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.15.0",
+    "@microsoft/fluid-ink": "^0.15.0",
+    "@microsoft/fluid-map": "^0.15.0",
+    "@microsoft/fluid-runtime-definitions": "^0.15.0"
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.14.0",
     "@microsoft/fluid-build-common": "^0.14.0",
-    "@microsoft/fluid-webpack-component-loader": "^0.14.0",
+    "@microsoft/fluid-webpack-component-loader": "^0.15.0",
     "@types/expect-puppeteer": "2.2.1",
     "@types/jest": "22.2.3",
     "@types/jest-environment-puppeteer": "2.2.0",

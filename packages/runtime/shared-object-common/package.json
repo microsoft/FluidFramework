@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-shared-object-base",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "description": "Fluid document loader",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -12,7 +12,6 @@
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
-    "build:compile:min": "npm run build:compile",
     "build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
@@ -28,10 +27,10 @@
   "dependencies": {
     "@microsoft/fluid-common-definitions": "^0.13.0",
     "@microsoft/fluid-common-utils": "^0.14.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.14.0",
-    "@microsoft/fluid-container-definitions": "^0.14.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.15.0",
+    "@microsoft/fluid-container-definitions": "^0.15.0",
     "@microsoft/fluid-protocol-definitions": "^0.1002.0",
-    "@microsoft/fluid-runtime-definitions": "^0.14.0",
+    "@microsoft/fluid-runtime-definitions": "^0.15.0",
     "@types/debug": "^0.0.31",
     "@types/double-ended-queue": "^2.1.0",
     "@types/node": "^10.14.6",

@@ -25,6 +25,7 @@ import { NoOpLambda } from "../utils";
 import { ScribeLambda } from "./lambda";
 
 const DefaultScribe: IScribe = {
+    lastClientSummaryHead: undefined,
     logOffset: -1,
     minimumSequenceNumber: 0,
     protocolState: undefined,
@@ -63,11 +64,8 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             return new NoOpLambda(context);
         }
 
-        // Check of scribe being a non-string included for back compat when we would store as JSON. We now store
-        // as a string given Mongo has issues with certain JSON values. Will be removed in 0.8.
-        const scribe: IScribe = document.scribe
-            ? typeof document.scribe === "string" ? JSON.parse(document.scribe) : document.scribe
-            : DefaultScribe;
+        const scribe: IScribe = document.scribe ? JSON.parse(document.scribe) : DefaultScribe;
+
         if (!scribe.protocolState) {
             scribe.protocolState = {
                 members: [],
@@ -89,8 +87,6 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             () => { return; },
         );
 
-        context.log.info(`Proposals ${tenantId}/${documentId}: ${JSON.stringify(document)}`);
-
         return new ScribeLambda(
             context,
             this.documentCollection,
@@ -102,7 +98,8 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             this.producer,
             protocolHandler,
             protocolHead,
-            messages);
+            messages,
+            true);
     }
 
     public async dispose(): Promise<void> {
@@ -115,7 +112,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
         logger: ILogger): Promise<number> {
         const existingRef = await gitManager.getRef(encodeURIComponent(documentId));
         if (!existingRef) {
-            return -1;
+            return 0;
         }
 
         try {

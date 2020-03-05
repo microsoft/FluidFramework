@@ -47,6 +47,7 @@ export interface ISubscriber {
 }
 
 const DefaultScribe: IScribe = {
+    lastClientSummaryHead: undefined,
     logOffset: -1,
     minimumSequenceNumber: -1,
     protocolState: undefined,
@@ -389,6 +390,7 @@ export class LocalOrderer implements IOrderer {
             protocolHandler,
             protocolHead,
             scribeMessages,
+            false,
             this.scribeNackOnSummarizeException);
     }
 

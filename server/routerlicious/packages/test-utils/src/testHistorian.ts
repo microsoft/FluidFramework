@@ -16,11 +16,13 @@ export class TestHistorian implements IHistorian {
     private readonly blobs: ICollection<{ _id: string; value: git.ICreateBlobParams }>;
     private readonly commits: ICollection<{ _id: string; value: git.ICreateCommitParams }>;
     private readonly trees: ICollection<{ _id: string; value: git.ICreateTreeParams }>;
+    private readonly refs: ICollection<{ _id: string; value: git.ICreateRefParams }>;
 
     constructor(db: IDb = new TestDb({})) {
         this.blobs = db.collection("blobs");
         this.commits = db.collection("commits");
         this.trees = db.collection("trees");
+        this.refs = db.collection("refs");
     }
 
     public async getHeader(sha: string): Promise<any> {
@@ -121,14 +123,28 @@ export class TestHistorian implements IHistorian {
         throw new Error("Not Supported");
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public getRef(ref: string): Promise<git.IRef> {
-        throw new Error("Not Supported");
+    public async getRef(ref: string): Promise<git.IRef> {
+        const val = await this.refs.findOne(ref);
+        return {
+            ref: val._id,
+            url: val.value.ref,
+            object: { sha: val._id,
+                url: val.value.ref,
+                type: "ref" },
+        };
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public createRef(params: git.ICreateRefParams): Promise<git.IRef> {
-        throw new Error("Not Supported");
+    public async createRef(params: git.ICreateRefParams): Promise<git.IRef> {
+        const _id = gitHashFile(Buffer.from(params.ref));
+        await this.refs.insertOne({_id, value: params});
+        const ref: git.IRef = {
+            ref: _id,
+            url: params.ref,
+            object: { sha: _id,
+                url: params.ref,
+                type: "ref" },
+        };
+        return ref;
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
