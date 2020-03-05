@@ -125,6 +125,13 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         }
         this.locallyRunnableTasks.set(taskId, worker);
 
+        // Note: we are not checking for this.context.deltaManager.clientDetails.capabilities.interactive
+        // in isActive(). This check is done by users of this class - containerRuntime.ts (for "leader") and
+        // TaskManager. In the future, as new usage shows up, we may need to reconsider that.
+        // I'm adding assert here to catch that case and make decision on which way we go - push requirements
+        // to consumers to make a choice, or centrally make this call here.
+        assert(this.context.deltaManager.clientDetails.capabilities.interactive);
+
         // Check the current status and express interest if it's a new one (undefined) or currently unpicked (null).
         if (this.isActive()) {
             const currentClient = this.getTaskClientId(taskId);
@@ -249,8 +256,9 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         }
 
         this.runtime.on("connected", () => {
-            assert(this.isActive());
-            this.initializeCore();
+            if (this.isActive()) {
+                this.initializeCore();
+            }
         });
 
         if (!this.runtime.isAttached) {
@@ -315,7 +323,12 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
             return false;
         }
 
-        // this.context.deltaManager.clientDetails.capabilities.interactive - ?
+        // Note: we are not checking for this.context.deltaManager.clientDetails.capabilities.interactive
+        // here. This is done by users of this class - containerRuntime.ts (for "leader") and TaskManager.
+        // In the future, as new usage shows up, we may need to reconsider that.
+        // I'm adding assert in pick() to catch that case and make decision on which way we go - push requirements
+        // to consumers to make a choice, or centrally make this call here.
+
         return this.context.hostRuntime.deltaManager.active;
     }
 
