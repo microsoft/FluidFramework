@@ -5,7 +5,8 @@
 
 import * as assert from "assert";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IUrlResolver, OpenMode } from "@microsoft/fluid-driver-definitions";
+import { IUrlResolver, OpenMode, IExperimentalUrlResolver } from "@microsoft/fluid-driver-definitions";
+import { ISummaryTree, ICommittedProposal } from "@microsoft/fluid-protocol-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { getHashedDocumentId } from "./odspUtils";
 import { isOdcOrigin } from "./isOdc";
@@ -46,7 +47,9 @@ function removeBeginningSlash(str: string): string {
     return str;
 }
 
-export class OdspDriverUrlResolver implements IUrlResolver {
+export class OdspDriverUrlResolver implements IUrlResolver, IExperimentalUrlResolver {
+
+    public readonly isExperimentalUrlResolver = true;
     constructor() { }
 
     public async resolve(request: IRequest): Promise<IOdspResolvedUrl> {
@@ -100,6 +103,39 @@ export class OdspDriverUrlResolver implements IUrlResolver {
             driveId,
             itemId,
         };
+    }
+
+    public async createContainer(
+        summary: ISummaryTree,
+        sequenceNumber: number,
+        values: [string, ICommittedProposal][],
+        request: IRequest,
+    ): Promise<IOdspResolvedUrl> {
+        if (request.headers && request.headers.openMode === OpenMode.CreateNew && request.headers.newFileInfoPromise) {
+            const [, queryString] = request.url.split("?");
+
+            const searchParams = new URLSearchParams(queryString);
+
+            const uniqueId = searchParams.get("uniqueId");
+            if (uniqueId === null) {
+                throw new Error("ODSP URL for new file should contain the uniqueId");
+            }
+            return {
+                type: "fluid",
+                endpoints: {
+                    snapshotStorageUrl: "",
+                },
+                openMode: OpenMode.CreateNew,
+                newFileInfoPromise: request.headers.newFileInfoPromise,
+                tokens: {},
+                url: `fluid-odsp://placeholder/placeholder/${uniqueId}?version=null`,
+                hashedDocumentId: "",
+                siteUrl: "",
+                driveId: "",
+                itemId: "",
+            };
+        }
+        throw new Error("Request is not for create new!!");
     }
 
     private decodeOdspUrl(url: string): { siteUrl: string; driveId: string; itemId: string; path: string } {
