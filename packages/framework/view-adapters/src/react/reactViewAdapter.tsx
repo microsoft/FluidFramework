@@ -18,7 +18,7 @@ export interface IEmbeddedComponentProps {
  *
  * If the component is none of these, we render an empty <span />
  */
-export class EmbeddedComponent extends React.Component<IEmbeddedComponentProps> {
+export class ReactViewAdapter extends React.Component<IEmbeddedComponentProps> {
     private readonly element: JSX.Element;
 
     constructor(props: IEmbeddedComponentProps) {

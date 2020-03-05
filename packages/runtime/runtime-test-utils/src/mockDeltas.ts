@@ -121,7 +121,7 @@ export class MockDeltaManager extends EventEmitter
     }
 
     public get active(): boolean {
-        return false;
+        return true;
     }
 
     public close(): void {}

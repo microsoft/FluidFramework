@@ -6,6 +6,9 @@
 import { FluidRepo } from "./fluidRepo";
 import { MonoRepo } from "../common/fluidRepoBase";
 import { Package } from "../common/npmPackage";
+import * as path from "path";
+import { existsSync, readFileAsync, writeFileAsync } from "../common/utils";
+import { fstat } from "fs";
 
 export class FluidPackageCheck {
     constructor(private readonly repoType: MonoRepo) {
@@ -141,8 +144,9 @@ export class FluidPackageCheck {
             // all build steps (build:compile + webpack)
             const buildFullCompile: string[] = ["build:compile"];
 
-            // all build steps prod
-            const buildCompileMin: string[] = ["build:compile"];
+            // prepack scripts
+            const prepack: string[] = [];
+
             const buildPrefix = pkg.packageJson.scripts["build:genver"] ? "npm run build:genver && " : "";
             if (pkg.getScript("tsc")) {
                 buildCompile.push("tsc");
@@ -169,18 +173,20 @@ export class FluidPackageCheck {
             }
 
             let implicitWebpack = true;
-            if (pkg.getScript("build:webpack:min")) {
-                buildCompileMin.push("build:webpack:min");
-                implicitWebpack = false;
-            }
+
             if (pkg.getScript("build:webpack")) {
                 buildCompile.push("build:webpack");
                 implicitWebpack = false;
             }
 
-            if (implicitWebpack && pkg.getScript("webpack")) {
-                buildFull.push("webpack");
-                buildFullCompile.push("webpack");
+            if (pkg.getScript("webpack")) {
+                if (implicitWebpack) {
+                    buildFull.push("webpack");
+                    buildFullCompile.push("webpack");
+                }
+                if (monoRepo !== MonoRepo.Server) {
+                    prepack.push("webpack");
+                }
             }
 
             if (buildCompile.length === 0) {
@@ -189,8 +195,8 @@ export class FluidPackageCheck {
             }
 
             const check = (scriptName: string, parts: string[], prefix = "") => {
-                const expected = prefix +
-                    (parts.length > 1 ? `concurrently npm:${parts.join(" npm:")}` : `npm run ${parts[0]}`);
+                const expected = parts.length === 0? undefined :
+                    prefix + (parts.length > 1 ? `concurrently npm:${parts.join(" npm:")}` : `npm run ${parts[0]}`);
                 if (pkg.packageJson.scripts[scriptName] !== expected) {
                     console.warn(`${pkg.nameColored}: warning: non-conformant script ${scriptName}`);
                     console.warn(`${pkg.nameColored}: warning:   expect: ${expected}`);
@@ -205,14 +211,50 @@ export class FluidPackageCheck {
             check("build:compile", buildCompile);
             check("build:full", buildFull);
             check("build:full:compile", buildFullCompile);
-            if (monoRepo !== MonoRepo.None) {
-                check("build:compile:min", buildCompileMin);
-            }
+            check("prepack", prepack);
 
             if (!pkg.getScript("clean")) {
                 console.warn(`${pkg.nameColored}: warning: package has "build" script without "clean" script`);
             }
         }
         return fixed;
+    }
+    
+    public static async checkNpmIgnore(pkg: Package, fix: boolean) {
+        const filename = path.join(pkg.directory, ".npmignore");
+        const expected = [ 
+            "nyc",
+            "*.log",
+            "**/*.tsbuildinfo"
+        ];
+        if (!existsSync(filename)) {
+            console.warn(`${pkg.nameColored}: warning: .npmignore not exist`);
+            if (fix) {
+                await writeFileAsync(filename, expected.join("\n"), "utf8");
+            }
+        } else {
+            const content = await readFileAsync(filename, "utf8");
+            const split = content.split("\n");
+            if (split.length !== 0 && split[split.length - 1] === "") {
+                split.pop();
+            }
+            for (const v of expected) {
+                if (!split.includes(v)) {
+                    console.warn(`${pkg.nameColored}: warning: .npmignore missing "${v}"`);
+                    if (fix) {
+                        split.push(v);
+                    }
+                }
+            }
+            if (fix) {
+                if (split.length !== 0 && split[split.length -1] !== "") {
+                    split.push("");
+                }
+                const ret = split.join("\n");
+                if (ret !== content) {
+                    await writeFileAsync(filename, ret, "utf8");
+                }
+            }
+        }
     }
 };
