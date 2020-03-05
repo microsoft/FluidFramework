@@ -4,7 +4,6 @@
  */
 
 import { EventEmitter } from "events";
-import { parse } from "url";
 import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
 import {
     IComponent,
@@ -157,7 +156,7 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
             this,
             source,
             (resolvedUrl: IFluidResolvedUrl) => {
-                return selectDocumentServiceFactoryForProtocol(resolvedUrl, this.protocolToDocumentFactoryMap);
+                return this.protocolToDocumentFactoryMap.getFactory(resolvedUrl);
             },
             this.logger);
     }
