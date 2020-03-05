@@ -4,12 +4,8 @@ import {
   PrimedComponent,
   PrimedComponentFactory
 } from "@microsoft/fluid-aqueduct";
-import {
-  IComponentHTMLVisual,
-  IComponentHandle
-} from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
 import { App } from "./App";
-import { PrimedContext } from "./provider";
 import { SharedMap } from "@microsoft/fluid-map";
 
 class PrimedReactComponent extends PrimedComponent
@@ -22,21 +18,11 @@ class PrimedReactComponent extends PrimedComponent
 
   protected async componentInitializingFirstTime() {}
 
-  protected async componentHasInitialized() {
-    this.optionsMap = await this.root
-      .get<IComponentHandle>(this.optionsId)
-      .get();
-  }
-
   public render(div: HTMLElement) {
-    const actions = {};
-
     const rerender = () => {
-      const selectors = {};
       ReactDOM.render(
-        <PrimedContext.Provider value={{ selectors, actions }}>
-          <App />
-        </PrimedContext.Provider>,
+        <App />,
+
         div
       );
     };
