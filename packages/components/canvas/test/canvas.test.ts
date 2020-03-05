@@ -7,6 +7,7 @@ import { ElementHandle } from "puppeteer";
 import { globals } from "../jest.config";
 
 describe("canvas", () => {
+    jest.setTimeout(10000);
     beforeEach(async () => {
         await page.goto(globals.PATH, { waitUntil: "load" });
     });

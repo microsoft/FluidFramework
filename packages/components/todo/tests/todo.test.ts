@@ -6,7 +6,7 @@
 import { globals } from "../jest.config";
 
 describe("ToDo", () => {
-  jest.setTimeout(10000);
+  jest.setTimeout(15000);
 
   beforeEach(async () => {
     await page.goto(globals.PATH, { waitUntil: "load" });
