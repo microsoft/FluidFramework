@@ -105,7 +105,7 @@ async function loadScripts(files: string[], origin: string) {
     return Promise.all(scriptLoadP);
 }
 
-function wrapIfComponentPackage(packageName: string, packageJson: IFluidPackage) {
+function wrapIfComponentPackage(packageJson: IFluidPackage) {
     // Wrap the core component in a runtime
     const loadedComponentRaw = window[packageJson.fluid.browser.umd.library];
     const fluidModule = loadedComponentRaw as IFluidModule;
@@ -113,9 +113,9 @@ function wrapIfComponentPackage(packageName: string, packageJson: IFluidPackage)
         const componentFactory = fluidModule.fluidExport.IComponentFactory;
 
         const runtimeFactory = new SimpleModuleInstantiationFactory(
-            packageName,
+            componentFactory.type,
             new Map([
-                [packageName, Promise.resolve(componentFactory)],
+                [componentFactory.type, Promise.resolve(componentFactory)],
             ]),
         );
         // eslint-disable-next-line dot-notation
@@ -141,15 +141,15 @@ async function getResolvedPackage(
         return Promise.reject(new Error(`Package ${packageJson.name} not a fluid module.`));
     }
 
-    const details = extractDetails(`${packageJson.name}@${packageJson.version}`);
-    const legacyPackage = `${packageJson.name}@${packageJson.version}`;
+    const full = `${packageJson.name}@${packageJson.version}`;
+    const details = extractDetails(full);
 
     const loadedScriptIds = await loadScripts(packageJson.fluid.browser.umd.files, window.location.origin);
     loadedScriptIds.forEach((scriptId) => {
         scriptIds.push(scriptId);
     });
 
-    wrapIfComponentPackage(legacyPackage, packageJson);
+    wrapIfComponentPackage(packageJson);
 
     return {
         pkg: packageJson,
@@ -160,7 +160,7 @@ async function getResolvedPackage(
             package: packageJson,
         },
         parsed: {
-            full: legacyPackage,
+            full,
             pkg: "NA",
             name: "NA",
             version: "NA",
