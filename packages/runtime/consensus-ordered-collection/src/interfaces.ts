@@ -62,7 +62,7 @@ export interface IConsensusOrderedCollection<T = any> extends ISharedObject, Eve
     /**
      * Event fires when new item is added to the queue or
      * an item previously acquired is returned back to a queue (including client loosing connection)
-     * @param newlyAdded indicates if it's newly added item of previously acquired item
+     * @param newlyAdded - indicates if it's newly added item of previously acquired item
      */
     on(event: "add", listener: (value: T, newlyAdded: boolean) => void): this;
     /**
