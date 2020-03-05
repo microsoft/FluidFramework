@@ -106,6 +106,9 @@ export interface IDeltaManager<T, U> extends EventEmitter, IDeltaSender, IDispos
     // Flag to indicate whether the client can write or not.
     active: boolean;
 
+    // Tells if user has no permissions to change document
+    readonly?: boolean;
+
     close(): void;
 
     connect(requestedMode?: ConnectionMode): Promise<IConnectionDetails>;

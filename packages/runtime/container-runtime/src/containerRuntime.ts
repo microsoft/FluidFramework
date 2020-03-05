@@ -518,13 +518,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.connectionState === ConnectionState.Connected;
     }
 
-    // Almost the same as IAgentScheduler.leader (this._leader),
-    // but returns false if disconnected
     public get leader(): boolean {
-        if (this.connected && this.deltaManager && this.deltaManager.active) {
-            return this._leader;
-        }
-        return false;
+        return this._leader;
     }
 
     public get summarizerClientId(): string {
@@ -790,7 +785,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         if (value === ConnectionState.Connected) {
             this.summaryManager.setConnected(clientId);
         } else {
-            this.updateLeader();
+            assert(!this._leader);
             this.summaryManager.setDisconnected();
         }
     }
@@ -1370,18 +1365,26 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     private subscribeToLeadership() {
         if (this.context.clientDetails.capabilities.interactive) {
             this.getScheduler().then((scheduler) => {
-                if (scheduler.leader) {
-                    this.updateLeader(true);
-                }
-                scheduler.on("leader", () => {
+                const LeaderTaskId = "leader";
+
+                // Each client expresses interest to be a leader.
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                scheduler.pick(LeaderTaskId, async () => {
+                    assert(!this._leader);
                     this.updateLeader(true);
                 });
-                scheduler.on("notleader", () => {
-                    this.updateLeader(false);
+
+                scheduler.on("lost", (key) => {
+                    if (key === LeaderTaskId) {
+                        assert(this._leader);
+                        this._leader = false;
+                        this.updateLeader(false);
+                    }
                 });
-            }, (err) => {
-                debug(err);
+            }).catch((err) => {
+                this.logger.sendErrorEvent({eventName: "ContainerRuntime_getScheduler"}, err);
             });
+
             this.context.quorum.on("removeMember", (clientId: string) => {
                 if (this.leader) {
                     this.runTaskAnalyzer();
@@ -1397,11 +1400,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return schedulerComponent.IAgentScheduler;
     }
 
-    private updateLeader(leadership?: boolean) {
-        if (leadership !== undefined) {
-            this._leader = leadership;
-        }
+    private updateLeader(leadership: boolean) {
+        this._leader = leadership;
         if (this.leader) {
+            assert(this.connected && this.deltaManager && this.deltaManager.active);
             this.emit("leader", this.clientId);
         } else {
             this.emit("noleader", this.clientId);

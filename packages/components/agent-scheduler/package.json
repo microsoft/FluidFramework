@@ -55,7 +55,8 @@
     "@microsoft/fluid-register-collection": "^0.15.0",
     "@microsoft/fluid-runtime-definitions": "^0.15.0",
     "@microsoft/fluid-shared-object-base": "^0.15.0",
-    "debug": "^4.1.1"
+    "debug": "^4.1.1",
+    "uuid": "^3.3.2"
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.14.0",
