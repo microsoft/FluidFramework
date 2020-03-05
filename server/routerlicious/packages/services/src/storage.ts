@@ -112,7 +112,7 @@ export class DocumentStorage implements IDocumentStorage, IExperimentalDocumentS
         const commitParams: ICreateCommitParams = {
             author: {
                 date: new Date().toISOString(),
-                email: "praguertdev@microsoft.com",
+                email: "dummy@microsoft.com",
                 name: "Routerlicious Service",
             },
             message: "New document",

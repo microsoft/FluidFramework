@@ -29,7 +29,6 @@
     "@microsoft/fluid-server-services-client": "^0.1003.0",
     "@microsoft/fluid-server-services-core": "^0.1003.0",
     "@microsoft/fluid-protocol-base": "^0.1003.0",
-    "@microsoft/fluid-server-services": "^0.1003.0",
     "debug": "^4.1.1",
     "lodash": "^4.17.11",
     "moniker": "^0.1.2",
