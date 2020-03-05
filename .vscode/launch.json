@@ -13,28 +13,6 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "SourceDocument Tests",
-            "cwd": "${workspaceFolder}/packages/components/source-document",
-            "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
-            "args": [
-                "-r",
-                "ts-node/register",
-                "--no-timeouts",
-                "test/**/*.spec.ts",
-                "--exit"
-            ],
-            "env": {
-                // "DEBUG": "flow:*",
-                "TS_NODE_PROJECT": "tsconfig.json",
-            },
-            "console": "integratedTerminal",
-            "skipFiles": [
-                "<node_internals>/**/*.js"
-            ]
-        },
-        {
-            "type": "node",
-            "request": "launch",
             "name": "MarkFlow Tests",
             "cwd": "${workspaceFolder}/packages/components/markflow",
             "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
