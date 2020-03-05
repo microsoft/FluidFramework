@@ -199,12 +199,12 @@ export class ContainerContext extends EventEmitter implements IContainerContext,
         return this.container.isAttached();
     }
 
-    public async attachAndSummarize(): Promise<ISummaryTree> {
+    public async createSummary(): Promise<ISummaryTree> {
         const expRuntime: IExperimentalRuntime = this.runtime as IExperimentalRuntime;
         if (!expRuntime?.isExperimentalRuntime) {
             throw new Error("Runtime has no experimental features");
         }
-        return expRuntime.attachAndSummarize();
+        return expRuntime.createSummary();
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string, version?: string) {

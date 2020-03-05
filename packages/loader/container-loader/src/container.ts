@@ -226,7 +226,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
 
     public get id(): string {
-        return this._id || "";
+        return this._id ?? "";
     }
 
     public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
@@ -414,7 +414,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         assert(!this.deltaManager.inbound.length);
         // Get the document state post attach - possibly can just call attach but we need to change the semantics
         // around what the attach means as far as async code goes.
-        const summary = await this.context.attachAndSummarize();
+        const summary = await this.context.createSummary();
         if (!this.protocolHandler) {
             throw new Error("Protocol Handler is undefined");
         }
@@ -439,6 +439,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         if (!this.factoryProvider) {
             throw new Error("Provide callback to get factory from resolved url");
         }
+        // TODO - https://github.com/microsoft/FluidFramework/issues/1427
         const factory = this.factoryProvider(resolvedUrl);
         const service = await factory.createDocumentService(resolvedUrl);
 
@@ -1305,7 +1306,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
      */
     private async createDetachedContext(attributes: IDocumentAttributes) {
         this.pkg = this.getCodeDetailsFromQuorum();
-        const chaincode = this.pkg ? await this.loadRuntimeFactory(this.pkg) : new NullChaincode();
+        if (!this.pkg) {
+            throw new Error("pkg should be provided in create flow!!");
+        }
+        const chaincode = await this.loadRuntimeFactory(this.pkg);
 
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go to this loader

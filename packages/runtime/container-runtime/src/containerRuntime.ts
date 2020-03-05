@@ -569,18 +569,11 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.chunkMap = new Map<string, string[]>(chunks);
 
         const expContainerContext = this.context as IExperimentalContainerContext;
-        this.IComponentHandleContext = new ComponentHandleContext(
-            "",
-            this,
-            expContainerContext.isExperimentalContainerContext ? expContainerContext.isAttached() : true);
+        this.IComponentHandleContext = new ComponentHandleContext("", this);
 
         // useContext - back-compat: 0.14 uploadSummary
-        let useContext: boolean;
-        if (expContainerContext.isExperimentalContainerContext) {
-            useContext = true;
-        } else {
-            useContext = this.storage.uploadSummaryWithContext !== undefined;
-        }
+        const useContext: boolean = expContainerContext.isExperimentalContainerContext ?
+            true : this.storage.uploadSummaryWithContext !== undefined;
         this.latestSummaryAck = { proposalHandle: undefined, ackHandle: undefined };
         this.summaryTracker = new SummaryTracker(
             useContext,
@@ -1125,7 +1118,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         const context = this.contexts.get(componentRuntime.id);
         // If storage is not available then we are not yet fully attached and so will defer to the initial snapshot
-        if (this.IComponentHandleContext.isAttached) {
+        const expContainerContext = this.context as IExperimentalContainerContext;
+        if (expContainerContext?.isExperimentalContainerContext ? expContainerContext.isAttached() : true) {
             const message = context.generateAttachMessage();
 
             this.pendingAttach.set(componentRuntime.id, message);
@@ -1139,9 +1133,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         deferred.resolve(context);
     }
 
-    public async attachAndSummarize(): Promise<ISummaryTree> {
-        this.IComponentHandleContext.attach();
-
+    public async createSummary(): Promise<ISummaryTree> {
+        // TODO - https://github.com/microsoft/FluidFramework/issues/1430
+        // TODO - https://github.com/microsoft/FluidFramework/issues/1431
         const treeWithStats = await this.summarize(true);
 
         return treeWithStats.summaryTree;

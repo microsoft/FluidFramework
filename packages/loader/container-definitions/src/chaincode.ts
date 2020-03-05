@@ -166,7 +166,7 @@ export interface IExperimentalRuntime extends IRuntime {
 
     isExperimentalRuntime: true;
 
-    attachAndSummarize(): Promise<ISummaryTree>;
+    createSummary(): Promise<ISummaryTree>;
 }
 
 export interface IMessageScheduler {
@@ -225,7 +225,7 @@ export interface IExperimentalContainerContext extends IContainerContext {
 
     isAttached(): boolean;
 
-    attachAndSummarize(): Promise<ISummaryTree>;
+    createSummary(): Promise<ISummaryTree>;
 }
 
 export interface IProvideComponentTokenProvider {
