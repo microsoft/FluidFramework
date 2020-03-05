@@ -21,24 +21,23 @@ This document will focus on a few specific layer boundaries.
 ### Protocol
 Changes to the protocol definitions should be vetted highly, and ideally should always be backwards compatible.  These changes require synchronization between servers and clients, and are meant to be minimal and well-designed.
 
-### Driver
-The driver version will come from the hosting application, and driver implementations depend on the corresponding server version.  Changes to driver definitions must be applied to all driver implementations, and so they should be infrequent as well.  The driver contract is consumed by both the loader and the runtime layers, and currently Fluid maintains these boundaries as backwards _and_ forwards compatible at least 1 version.  This means that driver version `2.x` is compatible with loader and runtime versions `1.x` and `2.x` (backwards compatible), and driver version `1.x` is compatible with loader and runtime versions `1.x` and `2.x` (forwards compatible).
+### Driver and Loader
+The driver and loader versions will come from the hosting applications.  Driver implementations depend on the corresponding server version.  Changes to driver definitions must be applied to all driver implementations, and so they should be infrequent.  The loader implementations are meant to be very slim, only providing enough functionality to load the runtime code and connect to the server.
 
-It does not guarantee that driver version `1.x` will work with loader/runtime version `3.x` or driver version `3.x` will work with loader/runtime version `1.x`, however.
+The driver contract is consumed by both the loader and the runtime layers.  Since the driver and loader come from the same source, it is not necessary to maintain compatibility between the driver-to-loader boundary for now.  As number of drivers increase and become external, this may change in the future.
 
-### Loader
-The loader version will also come from the hosting application, and loader implementations are meant to be very slim, only providing enough functionality to load the runtime code and connect to the server.  The loader contract (also called container definitions) is consumed by the runtime layer, and currently Fluid maintains this boundary as backwards and forwards compatible by at least 1 version.
+The loader contract (also called container definitions) is consumed by the runtime layer.  Consumers of the Fluid Framework may have different frequencies for releasing their host (with driver and loader) as their runtime code, so this compatibility across this boundary is important.  Currently Fluid maintains that the driver/loader will be backwards _and_ forwards compatible with the runtime by at least 1 version.  For a given driver or loader version `2.x`, it should be compatible with runtime versions `1.x`, `2.x`, and `3.x`.  This is illustrated by the table below:
 
- Loader | | 1.x | 2.x | 3.x
--------:|-|:---:|:---:|:---:
-Runtime | |     |     |
-1.x     | | C   | BC  | X
-2.x     | | FC  | C   | BC
-3.x     | | X   | FC  | C
+Driver/Loader | | 1.x | 2.x | 3.x
+-------------:|-|:---:|:---:|:---:
+Runtime       | |     |     |
+1.x           | | C   | BC  | X
+2.x           | | FC  | C   | BC
+3.x           | | X   | FC  | C
 
 - C - Fully compatible
-- BC - Loader backwards compatible with runtime
-- FC - Loader forwards compatible with runtime (runtime backwards compatible with loader)
+- BC - Driver/loader backwards compatible with runtime
+- FC - Driver/loader forwards compatible with runtime (runtime backwards compatible with driver and loader)
 - X - May not be compatible
 
 ### Runtime
@@ -74,7 +73,7 @@ In addition to isolating back-compat code, adding comments can also help identif
 The above format contains the breaking version and a brief tag, making it easy to find all references in the code later.  Liberally adding these near back-compat code can help with the later cleanup step significantly, as well as concisely give readers of the code insight into why the forked code is there.
 
 ### Track the follow-up work
-It is a good idea to track the follow-up work to remove this back-compat code to keep the code pruned.  The code complexity will creep up as more back-compat code comes in.  A good strategy is to create a GitHub issue and include information that provides context for the change and makes it easy for someone to cleanup in the future.
+It is necessary to track the follow-up work to remove this back-compat code to keep the code pruned.  The code complexity will creep up as more back-compat code comes in.  The strategy is to create a GitHub issue and include information that provides context for the change and makes it easy for someone to cleanup in the future.
 
 ### Update the docs
 During the initial change, it is important to make sure the API changes are indicated somewhere in the docs.
