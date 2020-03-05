@@ -7,6 +7,7 @@ import { Deferred } from "@microsoft/fluid-common-utils";
 import { globals } from "../jest.config";
 
 describe("context reload", () => {
+    jest.setTimeout(10000);
     beforeEach(async () => {
       await page.goto(globals.PATH, { waitUntil: "load" });
     });
