@@ -10,9 +10,8 @@ import {
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import { BaseHost } from "@microsoft/fluid-base-host";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { InsecureUrlResolver } from "@microsoft/fluid-test-runtime-utils";
 import { IFrameOuterHost } from "./inframehost";
-import { InsecureUrlResolver } from "./insecureUrlResolver";
-
 
 const createRequest = (): IRequest => ({
     url: `${window.location.origin}/testdoc41`,
@@ -25,7 +24,8 @@ const getTinyliciousResolver =
         "http://localhost:3000",
         "tinylicious",
         "12345",
-        { id: "userid0" });
+        { id: "userid0" },
+        "bearer");
 
 const getTinyliciousDocumentServiceFactory =
     () => new RouterliciousDocumentServiceFactory(

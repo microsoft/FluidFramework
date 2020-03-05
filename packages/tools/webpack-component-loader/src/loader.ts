@@ -25,7 +25,7 @@ import * as jwt from "jsonwebtoken";
 import * as uuid from "uuid/v4";
 import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
 import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
-import { InsecureUrlResolver } from "./insecureUrlResolver";
+import { InsecureUrlResolver } from "@microsoft/fluid-test-runtime-utils";
 import { OdspUrlResolver } from "./odspUrlResolver";
 
 export interface IDevServerUser extends IUser {
