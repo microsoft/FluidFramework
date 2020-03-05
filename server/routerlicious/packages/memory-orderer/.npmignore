@@ -2,3 +2,6 @@ public/images/*.pdf
 public/literature
 public/scripts/dist/*.stats.*
 .cache-loader/
+nyc
+*.log
+**/*.tsbuildinfo

@@ -6,8 +6,8 @@ heroImage: /images/homescreen144.png
 # actionText: Get Started →
 # actionLink: /guide/
 # features:
-# - title: Simplicity First
-#   details: Minimal setup with markdown-centered project structure helps you focus on writing.
+# - title: Current version
+#   details: "0.14"
 # - title: Vue-Powered
 #   details: Enjoy the dev experience of Vue + webpack, use Vue components in markdown, and develop custom themes with Vue.
 # - title: Performant
@@ -31,11 +31,12 @@ so you can focus on your app's business logic. Fluid's data synchronization is f
 bandwidth. Fluid is extensible, too. You can write components which can be re-used or you can even create new
 distributed data structures.
 
-::: note What about Prague?
+::: danger Supported versions
 
-Prague was the code name for the Fluid Framework. Fluid is the name we'll use going forward.
+- Current release version: `0.14.x`
+- Supported releases: `>=0.13.x, <=0.14.x`
 
-`"Prague" === "Fluid" === "Fluid Framework"`
+[Learn more about Fluid's release process.](./contributing/release-process.md)
 
 :::
 

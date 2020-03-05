@@ -6,10 +6,13 @@
 /* eslint-disable no-null/no-null */
 
 import { ICreateCommitParams, ICreateTreeEntry } from "@microsoft/fluid-gitresources";
-import { IQuorumSnapshot, ProtocolOpHandler } from "@microsoft/fluid-protocol-base";
 import {
-    FileMode,
-    IDocumentAttributes,
+    IQuorumSnapshot,
+    ProtocolOpHandler,
+    getQuorumTreeEntries,
+    mergeAppAndProtocolTree,
+} from "@microsoft/fluid-protocol-base";
+import {
     IDocumentMessage,
     ISequencedDocumentMessage,
     ISummaryAck,
@@ -18,6 +21,7 @@ import {
     ITreeEntry,
     MessageType,
     TreeEntry,
+    FileMode,
 } from "@microsoft/fluid-protocol-definitions";
 import { IGitManager } from "@microsoft/fluid-server-services-client";
 import {
@@ -54,6 +58,9 @@ export class ScribeLambda extends SequencedLambda {
     private sequenceNumber = 0;
     private minSequenceNumber = 0;
 
+    // Ref of the last client generated summary
+    private lastClientSummaryHead: string;
+
     constructor(
         context: IContext,
         private readonly documentCollection: ICollection<IDocument>,
@@ -64,8 +71,9 @@ export class ScribeLambda extends SequencedLambda {
         private readonly storage: IGitManager,
         private readonly producer: IProducer,
         private readonly protocolHandler: ProtocolOpHandler,
-        private readonly protocolHead: number,
+        private protocolHead: number,
         messages: ISequencedOperationMessage[],
+        private readonly generateServiceSummary: boolean,
         private readonly nackOnSummarizeException?: boolean,
     ) {
         super(context);
@@ -73,8 +81,9 @@ export class ScribeLambda extends SequencedLambda {
         this.lastOffset = scribe.logOffset;
         this.sequenceNumber = scribe.sequenceNumber;
         this.minSequenceNumber = scribe.minimumSequenceNumber;
+        this.lastClientSummaryHead = scribe.lastClientSummaryHead;
 
-        // Filter messages in case they were not deleted after the last checkpoint.
+        // Filter and keep messages up to protocol state.
         this.pendingMessages = new Deque<ISequencedDocumentMessage>(
             messages
                 .filter((message) => message.operation.sequenceNumber > scribe.protocolState.sequenceNumber)
@@ -128,6 +137,7 @@ export class ScribeLambda extends SequencedLambda {
                             this.protocolHandler.sequenceNumber,
                             this.protocolHandler.quorum.snapshot(),
                             summarySequenceNumber);
+                        this.protocolHead = summarySequenceNumber;
                     } catch (ex) {
                         if (this.nackOnSummarizeException) {
                             // SPO wants to nack when summarize fails
@@ -141,6 +151,15 @@ export class ScribeLambda extends SequencedLambda {
                             throw ex;
                         }
                     }
+                } else if (value.operation.type === MessageType.NoClient) {
+                    if (this.generateServiceSummary) {
+                        const summarySequenceNumber = value.operation.sequenceNumber;
+                        await this.createServiceSummary(summarySequenceNumber);
+                        this.protocolHead = summarySequenceNumber;
+                    }
+                } else if (value.operation.type === MessageType.SummaryAck) {
+                    const content = value.operation.contents as ISummaryAck;
+                    this.lastClientSummaryHead = content.handle;
                 }
             }
         }
@@ -169,6 +188,7 @@ export class ScribeLambda extends SequencedLambda {
         const protocolState = this.protocolHandler.getProtocolState();
 
         const checkpoint: IScribe = {
+            lastClientSummaryHead: this.lastClientSummaryHead,
             logOffset: queuedMessage.offset,
             minimumSequenceNumber: this.minSequenceNumber,
             protocolState,
@@ -251,10 +271,11 @@ export class ScribeLambda extends SequencedLambda {
             null);
 
         // And then delete messagse we no longer will reference
+        const removeSequenceNumber = Math.min(checkpoint.protocolState.sequenceNumber, this.protocolHead);
         await this.messageCollection
             .deleteMany({
                 "documentId": this.documentId,
-                "operation.sequenceNumber": { $lte: checkpoint.protocolState.sequenceNumber },
+                "operation.sequenceNumber": { $lte: removeSequenceNumber },
                 "tenantId": this.tenantId,
             });
     }
@@ -283,7 +304,11 @@ export class ScribeLambda extends SequencedLambda {
         const existingRef = await this.storage.getRef(encodeURIComponent(this.documentId));
 
         if (content.head) {
-            if (!existingRef || existingRef.object.sha !== content.head) {
+            // In usual case, client always refers to last summaryAck so lastClientSummaryHead should always match.
+            // However, the ack itself might be lost If scribe dies right after creating the summary. In that case,
+            // the client code just fetches the last summary which should be the same as existingRef sha.
+            if (!existingRef ||
+                (this.lastClientSummaryHead !== content.head && existingRef.object.sha !== content.head)) {
                 await this.sendSummaryNack(
                     summarySequenceNumber,
                     // eslint-disable-next-line max-len
@@ -314,50 +339,8 @@ export class ScribeLambda extends SequencedLambda {
         }
 
         // At this point the summary op and its data are all valid and we can perform the write to history
-        const documentAttributes: IDocumentAttributes = {
-            branch: this.documentId,
-            minimumSequenceNumber,
-            sequenceNumber,
-        };
-
-        const entries: ITreeEntry[] = [
-            {
-                mode: FileMode.File,
-                path: "quorumMembers",
-                type: TreeEntry[TreeEntry.Blob],
-                value: {
-                    contents: JSON.stringify(quorumSnapshot.members),
-                    encoding: "utf-8",
-                },
-            },
-            {
-                mode: FileMode.File,
-                path: "quorumProposals",
-                type: TreeEntry[TreeEntry.Blob],
-                value: {
-                    contents: JSON.stringify(quorumSnapshot.proposals),
-                    encoding: "utf-8",
-                },
-            },
-            {
-                mode: FileMode.File,
-                path: "quorumValues",
-                type: TreeEntry[TreeEntry.Blob],
-                value: {
-                    contents: JSON.stringify(quorumSnapshot.values),
-                    encoding: "utf-8",
-                },
-            },
-            {
-                mode: FileMode.File,
-                path: "attributes",
-                type: TreeEntry[TreeEntry.Blob],
-                value: {
-                    contents: JSON.stringify(documentAttributes),
-                    encoding: "utf-8",
-                },
-            },
-        ];
+        const entries: ITreeEntry[] =
+            getQuorumTreeEntries(this.documentId, minimumSequenceNumber, sequenceNumber, quorumSnapshot);
 
         const [protocolTree, appSummaryTree] = await Promise.all([
             this.storage.createTree({ entries, id: null }),
@@ -365,21 +348,7 @@ export class ScribeLambda extends SequencedLambda {
         ]);
 
         // Combine the app summary with .protocol
-        const newTreeEntries = appSummaryTree.tree.map((value) => {
-            const createTreeEntry: ICreateTreeEntry = {
-                mode: value.mode,
-                path: value.path,
-                sha: value.sha,
-                type: value.type,
-            };
-            return createTreeEntry;
-        });
-        newTreeEntries.push({
-            mode: FileMode.Directory,
-            path: ".protocol",
-            sha: protocolTree.sha,
-            type: "tree",
-        });
+        const newTreeEntries = mergeAppAndProtocolTree(appSummaryTree, protocolTree);
 
         const gitTree = await this.storage.createGitTree({ tree: newTreeEntries });
         const commitParams: ICreateCommitParams = {
@@ -402,6 +371,82 @@ export class ScribeLambda extends SequencedLambda {
         }
 
         await this.sendSummaryAck(commit.sha, summarySequenceNumber);
+    }
+
+    private async createServiceSummary(sequenceNumber: number): Promise<void> {
+        if (this.protocolHead >= sequenceNumber) {
+            return;
+        }
+
+        const existingRef = await this.storage.getRef(encodeURIComponent(this.documentId));
+
+        // Client assumes at least one app generated summary. To keep compatibility for now, service summary requires
+        // at least one prior client generated summary.
+        if (!existingRef) {
+            return;
+        }
+
+        // Fetch the logtail starting from the last protocol state
+        const query = {
+            "documentId": this.documentId,
+            "tenantId": this.tenantId,
+            "operation.sequenceNumber": {
+                $gt: this.protocolHead,
+                $lt: sequenceNumber + 1,
+            },
+        };
+        const logTail = this.messageCollection.find(query, { "operation.sequenceNumber": 1 });
+        const entries: ITreeEntry[] = [
+            {
+                mode: FileMode.File,
+                path: "logTail",
+                type: TreeEntry[TreeEntry.Blob],
+                value: {
+                    contents: JSON.stringify(logTail),
+                    encoding: "utf-8",
+                },
+            },
+        ];
+
+        // Fetch the last commit and summary tree. Create a new tree with logTail.
+        const lastCommit = await this.storage.getCommit(existingRef.object.sha);
+        const [logTailTree, lastSummaryTree] = await Promise.all([
+            this.storage.createTree({ entries, id: null }),
+            this.storage.getTree(lastCommit.tree.sha, false),
+        ]);
+
+        // Combine the last summary tree with .logTail tree
+        const newTreeEntries = lastSummaryTree.tree.map((value) => {
+            const createTreeEntry: ICreateTreeEntry = {
+                mode: value.mode,
+                path: value.path,
+                sha: value.sha,
+                type: value.type,
+            };
+            return createTreeEntry;
+        });
+        newTreeEntries.push({
+            mode: FileMode.Directory,
+            path: ".logTail",
+            sha: logTailTree.sha,
+            type: "tree",
+        });
+
+        const gitTree = await this.storage.createGitTree({ tree: newTreeEntries });
+        const commitParams: ICreateCommitParams = {
+            author: {
+                date: new Date().toISOString(),
+                email: "praguertdev@microsoft.com",
+                name: "Routerlicious Service",
+            },
+            message: "Service_Summary",
+            parents: lastCommit.parents.map((parent) => parent.sha),
+            tree: gitTree.sha,
+        };
+
+        // Finally commit the service summary and update the ref.
+        const commit = await this.storage.createCommit(commitParams);
+        await this.storage.upsertRef(this.documentId, commit.sha);
     }
 
     private async sendSummaryAck(handle: string, summarySequenceNumber: number) {

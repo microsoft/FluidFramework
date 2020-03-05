@@ -25,7 +25,6 @@
     "dev-server-port": 3000
   },
   "dependencies": {
-    "@microsoft/fluid-base-host": "^0.11.14879",
     "@microsoft/fluid-routerlicious-driver": "^0.11.14879",
     "@microsoft/fluid-routerlicious-host": "^0.11.14879",
     "jsonwebtoken": "^8.5.1"

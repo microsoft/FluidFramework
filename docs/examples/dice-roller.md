@@ -11,11 +11,11 @@ If you haven't already, [set up your Fluid Framework development
 environment](../guide/README.md#set-up-your-development-environment).
 
 
-First, clone [the tutorial
-repository](https://dev.azure.com/FluidDeveloperProgram/Developer%20Preview/_git/fluid-dice-roller-react-tutorial).
+First, clone one of the tutorial repositories below. One repository uses React for rendering, and the other uses
+JavaScript directly.
 
-Since the Git repository is authenticated, it is easiest to visit the link above and click the "Clone" button in the
-top-right corner of the UI. Follow the resulting instructions to clone the repo.
+* [Dice roller tutorial - Vanilla JavaScript](https://github.com/microsoft/fluid-tutorial-dice-roller)
+* [Dice roller tutorial - React](https://github.com/microsoft/fluid-tutorial-dice-roller-react)
 
 Once you've cloned the repo, you'll need to set up access to the [private Fluid NPM feed](../guide/package-feed.md). On
 Windows, you can run the `npm run auth` command to automate this process.
