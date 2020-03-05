@@ -17,6 +17,7 @@
     "build:full": "concurrently npm:build npm:webpack",
     "build:full:compile": "concurrently npm:build:compile npm:webpack",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+    "prepack": "npm run webpack",
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
     "start:r11s": "webpack-dev-server --config webpack.config.js --package package.json --env.mode r11s",
