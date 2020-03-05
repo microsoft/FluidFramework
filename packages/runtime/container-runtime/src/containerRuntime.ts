@@ -25,6 +25,7 @@ import {
     IRuntime,
     IRuntimeState,
     IExperimentalRuntime,
+    IExperimentalContainerContext,
 } from "@microsoft/fluid-container-definitions";
 import {
     Deferred,
@@ -400,7 +401,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         // Create all internal components in first load.
         if (!context.existing) {
             await runtime.createComponent(schedulerId, schedulerId)
-                .then((componentRuntime) => componentRuntime.attach());
+                .then((componentRuntime) => {
+                    componentRuntime.attach();
+                });
         }
 
         runtime.subscribeToLeadership();
@@ -565,10 +568,12 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         this.chunkMap = new Map<string, string[]>(chunks);
 
+        const expContainerContext = this.context as IExperimentalContainerContext;
         this.IComponentHandleContext = new ComponentHandleContext("", this);
 
         // useContext - back-compat: 0.14 uploadSummary
-        const useContext = this.storage.uploadSummaryWithContext !== undefined;
+        const useContext: boolean = expContainerContext.isExperimentalContainerContext ?
+            true : this.storage.uploadSummaryWithContext !== undefined;
         this.latestSummaryAck = { proposalHandle: undefined, ackHandle: undefined };
         this.summaryTracker = new SummaryTracker(
             useContext,
@@ -993,10 +998,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.context.submitSignalFn(envelope);
     }
 
-    public experimentalAttachServices(storageService: IDocumentStorageService): void {
-        throw new Error("Method not implemented");
-    }
-
     /**
      * Returns a summary of the runtime at the current sequence number.
      */
@@ -1116,16 +1117,28 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.verifyNotClosed();
 
         const context = this.contexts.get(componentRuntime.id);
-        const message = context.generateAttachMessage();
+        // If storage is not available then we are not yet fully attached and so will defer to the initial snapshot
+        const expContainerContext = this.context as IExperimentalContainerContext;
+        if (expContainerContext?.isExperimentalContainerContext ? expContainerContext.isAttached() : true) {
+            const message = context.generateAttachMessage();
 
-        this.pendingAttach.set(componentRuntime.id, message);
-        if (this.connected) {
-            this.submit(MessageType.Attach, message);
+            this.pendingAttach.set(componentRuntime.id, message);
+            if (this.connected) {
+                this.submit(MessageType.Attach, message);
+            }
         }
 
         // Resolve the deferred so other local components can access it.
         const deferred = this.contextsDeferred.get(componentRuntime.id);
         deferred.resolve(context);
+    }
+
+    public async createSummary(): Promise<ISummaryTree> {
+        // TODO - https://github.com/microsoft/FluidFramework/issues/1430
+        // TODO - https://github.com/microsoft/FluidFramework/issues/1431
+        const treeWithStats = await this.summarize(true);
+
+        return treeWithStats.summaryTree;
     }
 
     private async generateSummary(fullTree: boolean = false, safe: boolean = false): Promise<GenerateSummaryData> {
