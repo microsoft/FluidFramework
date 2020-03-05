@@ -6,6 +6,9 @@
 import { FluidRepo } from "./fluidRepo";
 import { MonoRepo } from "../common/fluidRepoBase";
 import { Package } from "../common/npmPackage";
+import * as path from "path";
+import { existsSync, readFileAsync, writeFileAsync } from "../common/utils";
+import { fstat } from "fs";
 
 export class FluidPackageCheck {
     constructor(private readonly repoType: MonoRepo) {
@@ -215,5 +218,43 @@ export class FluidPackageCheck {
             }
         }
         return fixed;
+    }
+    
+    public static async checkNpmIgnore(pkg: Package, fix: boolean) {
+        const filename = path.join(pkg.directory, ".npmignore");
+        const expected = [ 
+            "nyc",
+            "*.log",
+            "**/*.tsbuildinfo"
+        ];
+        if (!existsSync(filename)) {
+            console.warn(`${pkg.nameColored}: warning: .npmignore not exist`);
+            if (fix) {
+                await writeFileAsync(filename, expected.join("\n"), "utf8");
+            }
+        } else {
+            const content = await readFileAsync(filename, "utf8");
+            const split = content.split("\n");
+            if (split.length !== 0 && split[split.length - 1] === "") {
+                split.pop();
+            }
+            for (const v of expected) {
+                if (!split.includes(v)) {
+                    console.warn(`${pkg.nameColored}: warning: .npmignore missing "${v}"`);
+                    if (fix) {
+                        split.push(v);
+                    }
+                }
+            }
+            if (fix) {
+                if (split.length !== 0 && split[split.length -1] !== "") {
+                    split.push("");
+                }
+                const ret = split.join("\n");
+                if (ret !== content) {
+                    await writeFileAsync(filename, ret, "utf8");
+                }
+            }
+        }
     }
 };

@@ -311,15 +311,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     public async connect(requestedMode: ConnectionMode = "write"): Promise<IConnectionDetails> {
-        if (this.closed) {
-            throw new Error("Attempting to connect a closed DeltaManager");
-        }
-
         const docService = this.serviceProvider();
         if (!docService) {
-            throw new Error("Delta manager is not attached");
+            throw new Error("Container is not attached");
         }
-
         if (this.connection) {
             return this.connection.details;
         }

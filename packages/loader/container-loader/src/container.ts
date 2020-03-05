@@ -208,6 +208,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private pkg: IFluidCodeDetails | undefined;
     private protocolHandler: ProtocolOpHandler | undefined;
 
+    private resumedOpProcessingAfterLoad = false;
     private firstConnection = true;
     private manualReconnectInProgress = false;
     private readonly connectionTransitionTimes: number[] = [];
@@ -296,24 +297,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
      */
     public get parentBranch(): string | undefined | null {
         return this._parentBranch;
-    }
-
-    public set autoReconnect(value: boolean) {
-        this.logger.sendTelemetryEvent({
-            eventName: "AutoReconnect",
-            value,
-            connectionMode: this._deltaManager.connectionMode,
-            connectionState: ConnectionState[this.connectionState],
-        });
-
-        this._deltaManager.autoReconnect = value;
-    }
-
-    /**
-     * Controls whether the container will automatically reconnect to the delta stream after receiving a disconnect.
-     */
-    public get autoReconnect() {
-        return this._deltaManager.autoReconnect;
     }
 
     constructor(
@@ -507,16 +490,50 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
     }
 
+    public setAutoReconnect(reconnect: boolean) {
+        assert(this.resumedOpProcessingAfterLoad);
+
+        if (reconnect && this.closed) {
+            throw new Error("Attempting to setAutoReconnect() a closed DeltaManager");
+        }
+
+        this._deltaManager.autoReconnect = reconnect;
+
+        this.logger.sendTelemetryEvent({
+            eventName: reconnect ? "AutoReconnectEnabled" : "AutoReconnectDisabled",
+            connectionMode: this._deltaManager.connectionMode,
+            connectionState: ConnectionState[this.connectionState],
+        });
+
+        if (reconnect) {
+            if (this._connectionState === ConnectionState.Disconnected) {
+                // Only track this as a manual reconnection if we are truly the ones kicking it off.
+                this.manualReconnectInProgress = true;
+            }
+
+            // Ensure connection to web socket
+            // All errors are reported through events ("error" / "disconnected") and telemetry in DeltaManager
+            this.connectToDeltaStream().catch(() => {});
+        }
+    }
+
     public resume() {
         assert(this.loaded);
+
+        if (this.closed) {
+            throw new Error("Attempting to setAutoReconnect() a closed DeltaManager");
+        }
+
         // Resume processing ops
+        assert(!this.resumedOpProcessingAfterLoad);
+        this.resumedOpProcessingAfterLoad = true;
         this._deltaManager.inbound.resume();
         this._deltaManager.outbound.resume();
         this._deltaManager.inboundSignal.resume();
 
         // Ensure connection to web socket
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.connectToDeltaStream();
+        // All errors are reported through events ("error" / "disconnected") and telemetry in DeltaManager
+        this.connectToDeltaStream().catch(() => {});
     }
 
     public get storage(): IDocumentStorageService | null | undefined {
@@ -532,17 +549,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.raiseCriticalError(createIError(error, true));
             throw error;
         });
-    }
-
-    /**
-     * Connect the deltaManager.  Useful when the autoConnect flag is set to false.
-     */
-    public async reconnect() {
-        // Only track this as a manual reconnection if we are truly the ones kicking it off.
-        if (this._connectionState === ConnectionState.Disconnected) {
-            this.manualReconnectInProgress = true;
-        }
-        return this._deltaManager.connect();
     }
 
     private async reloadContextCore(): Promise<void> {
@@ -699,9 +705,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // DeltaManager is resilient to this and will wait to start processing ops until after it is attached.
         if (!pause) {
             startConnectionP = this.connectToDeltaStream();
-            startConnectionP.catch((error) => {
-                debug(`Error in connecting to delta stream from unpaused case ${error}`);
-            });
+            startConnectionP.catch((error) => {});
         }
 
         this.storageService = await this.getDocumentStorageService();
@@ -714,9 +718,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // If pause, and there's no tree, then we'll start the websocket connection here (we'll need the details later)
         if (!maybeSnapshotTree && !startConnectionP) {
             startConnectionP = this.connectToDeltaStream();
-            startConnectionP.catch((error) => {
-                debug(`Error in connecting to delta stream from no snapshot tree case ${error}`);
-            });
+            startConnectionP.catch((error) => {});
         }
 
         const blobManagerP = this.loadBlobManager(this.storageService, maybeSnapshotTree);
