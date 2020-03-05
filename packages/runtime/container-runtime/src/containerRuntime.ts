@@ -550,8 +550,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     // on its creation). This is a superset of contexts.
     private readonly contextsDeferred = new Map<string, Deferred<ComponentContext>>();
 
-    private loadedFromSummary: boolean;
-
     private constructor(
         private readonly context: IContainerContext,
         private readonly registry: IComponentRegistry,
@@ -580,19 +578,13 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.summaryTreeConverter = new SummaryTreeConverter(useContext);
 
         // Extract components stored inside the snapshot
-        this.loadedFromSummary = context.baseSnapshot?.trees[".protocol"] ? true : false;
         const components = new Map<string, ISnapshotTree | string>();
-        if (this.loadedFromSummary) {
+        if (context.baseSnapshot) {
             Object.keys(context.baseSnapshot.trees).forEach((value) => {
                 if (value !== ".protocol") {
                     const tree = context.baseSnapshot.trees[value];
                     components.set(value, tree);
                 }
-            });
-        } else if (context.baseSnapshot) {
-            Object.keys(context.baseSnapshot.commits).forEach((key) => {
-                const moduleId = context.baseSnapshot.commits[key];
-                components.set(key, moduleId);
             });
         }
 
@@ -651,14 +643,14 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             "/_summarizer",
             this,
             () => this.summaryConfiguration,
-            async (safe: boolean) => this.generateSummary(!this.loadedFromSummary, safe),
+            async (safe: boolean) => this.generateSummary(false, safe),
             async (summContext, refSeq) => this.refreshLatestSummaryAck(summContext, refSeq),
             this.previousState.summaryCollection);
 
         // Create the SummaryManager and mark the initial state
         this.summaryManager = new SummaryManager(
             context,
-            this.runtimeOptions.generateSummaries !== false || this.loadedFromSummary,
+            this.runtimeOptions.generateSummaries !== false,
             this.runtimeOptions.enableWorker,
             this.logger,
             (summarizer) => { this.nextSummarizerP = summarizer; },
@@ -739,7 +731,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
     public async stop(): Promise<IRuntimeState> {
         this.verifyNotClosed();
-        const snapshot = await this.snapshot("", false);
+        const snapshot = await this.snapshot("", true);
         this.summaryManager.dispose();
         this.summarizer.dispose();
         this.closed = true;
@@ -1454,9 +1446,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         if (referenceSequenceNumber < this.summaryTracker.referenceSequenceNumber) {
             return;
         }
-
-        // Only called from summaries
-        this.loadedFromSummary = true;
 
         const snapshotTree = new LazyPromise(async () => {
             // We have to call get version to get the treeId for r11s; this isnt needed

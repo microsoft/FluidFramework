@@ -24,14 +24,21 @@ export class VersionTest extends PrimedComponent implements IComponentHTMLView {
   private upgradeToVersion: string = "0.3.x";
 
   protected async componentInitializingFirstTime() {
-    this.root.set("title", "version 2");
+    // this.root.set("title", "version 2");
     this.root.set("diceValue", 0);
+  }
+
+  protected async componentHasInitialized() {
+    // if (!this.root.get("diceValue")) {
+    //   this.root.set("diceValue", 0);
+    // }
+    // this.root.set("title", "version 2");
   }
 
   public render(div: HTMLElement) {
     const rerender = () => {
       const title = this.root.get("title");
-      const diceValue = this.root.get<number>("diceValue");
+      const diceValue = this.root.get<number>("diceValue") || 0;
 
       ReactDOM.render(
         <div>
@@ -60,7 +67,7 @@ export class VersionTest extends PrimedComponent implements IComponentHTMLView {
     return div;
   }
   private rollDice() {
-    this.root.set("diceValue", this.root.get("diceValue") + 1);
+    this.root.set("diceValue", (this.root.get("diceValue") || 0) + 1);
   }
 
   private getDiceChar(value: number) {
