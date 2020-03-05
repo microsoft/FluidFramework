@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EmbeddedComponent } from "@microsoft/fluid-view-adapters";
+import { ReactViewAdapter } from "@microsoft/fluid-view-adapters";
 import * as React from "react";
 
 import { IVltavaDataModel } from "./dataModel";
@@ -36,7 +36,7 @@ export class VltavaView extends React.Component<IVltavaViewProps,IVltavaViewStat
     async componentDidMount() {
         const component = await this.props.dataModel.getDefaultComponent();
         this.setState({
-            view: <EmbeddedComponent component={component} />,
+            view: <ReactViewAdapter component={component} />,
         });
 
     }
