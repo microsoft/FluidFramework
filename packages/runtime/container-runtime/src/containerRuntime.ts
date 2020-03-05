@@ -1356,19 +1356,19 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
                 // Each client expresses interest to be a leader.
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                scheduler.pickCore(LeaderTaskId, async () => {
+                scheduler.pick(LeaderTaskId, async () => {
                     assert(!this._leader);
                     this.updateLeader(true);
                 });
 
-                this.on("released", (key) => {
+                scheduler.on("lost", (key) => {
                     if (key === LeaderTaskId) {
                         assert(this._leader);
                         this._leader = false;
                         this.updateLeader(false);
                     }
                 });
-            }, (err) => {
+            }).catch((err) => {
                 this.logger.sendErrorEvent({eventName: "ContainerRuntime_getScheduler"}, err);
             });
 
@@ -1390,7 +1390,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     private updateLeader(leadership: boolean) {
         this._leader = leadership;
         if (this.leader) {
-            assert(this.connected && this.deltaManager && !this.deltaManager.active);
+            assert(this.connected && this.deltaManager && this.deltaManager.active);
             this.emit("leader", this.clientId);
         } else {
             this.emit("noleader", this.clientId);

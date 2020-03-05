@@ -70,17 +70,19 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
 
     public url = "/_tasks";
 
+    // Set of tasks registered by this client.
+    // Has no relationship with lists below.
+    // The only requirement here - a task can be registered by a client only once.
+    // Other clients can pick these tasks.
+    private readonly registeredTasks = new Set<string>();
+
     // List of all tasks client is capable of running (essentially expressed desire to run)
     // Client will proactively attempt to pick them up these tasks if they are not assigned to other clients.
     // This is a strict superset of tasks running in the client.
-    private readonly localTasks = new Map<string, () => Promise<void>>();
+    private readonly locallyRunnableTasks = new Map<string, () => Promise<void>>();
 
-    // Set of registered tasks by this client.
-    // Tasks in this set may or may not overlap with localTasks.
-    // The only requirement here - a task can be registered by a client only once.
-    private readonly registeredTasks = new Set<string>();
-
-    // Set of registered tasks client is running.
+    // Set of registered tasks client is currently running.
+    // It's subset of this.locallyRunnableTasks
     private runningTasks = new Set<string>();
 
     constructor(
@@ -117,15 +119,11 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         return this.registerCore(unregisteredTasks);
     }
 
-    public async pick(taskId: string, worker: boolean): Promise<void> {
-        return this.pickCore(taskId, async () => this.runTask(taskId, worker));
-    }
-
-    public async pickCore(taskId: string, worker: () => Promise<void>): Promise<void> {
-        if (this.localTasks.has(taskId)) {
+    public async pick(taskId: string, worker: () => Promise<void>): Promise<void> {
+        if (this.locallyRunnableTasks.has(taskId)) {
             return Promise.reject(`${taskId} is already attempted`);
         }
-        this.localTasks.set(taskId, worker);
+        this.locallyRunnableTasks.set(taskId, worker);
 
         // Check the current status and express interest if it's a new one (undefined) or currently unpicked (null).
         if (this.isActive()) {
@@ -140,7 +138,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     public async release(...taskUrls: string[]): Promise<void> {
         const active = this.isActive();
         for (const taskUrl of taskUrls) {
-            if (!this.localTasks.has(taskUrl)) {
+            if (!this.locallyRunnableTasks.has(taskUrl)) {
                 return Promise.reject(`${taskUrl} was never registered`);
             }
             // Note - the assumption is - we are connected.
@@ -189,7 +187,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
             for (const taskUrl of taskUrls) {
                 debug(`Releasing ${taskUrl}`);
                 // Remove from local map so that it can be picked later.
-                this.localTasks.delete(taskUrl);
+                this.locallyRunnableTasks.delete(taskUrl);
                 releasesP.push(this.writeCore(taskUrl, null));
             }
             await Promise.all(releasesP);
@@ -257,15 +255,15 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
 
         if (!this.runtime.isAttached) {
             this.runtime.waitAttached().then(() => {
-                this.clearLocalTasks();
+                this.clearRunningTasks();
             }).catch((error) => {
-                this.sendErrorEvent("AgentScheduler_ClearLocalTasks", error);
+                this.sendErrorEvent("AgentScheduler_clearRunningTasks", error);
             });
         }
 
         this.runtime.on("disconnected", () => {
             if (this.runtime.isAttached) {
-                this.clearLocalTasks();
+                this.clearRunningTasks();
             }
         });
     }
@@ -273,7 +271,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     private onNewTaskAssigned(key: string) {
         assert(!this.runningTasks.has(key), "task is already running");
         this.runningTasks.add(key);
-        const worker = this.localTasks.get(key);
+        const worker = this.locallyRunnableTasks.get(key);
         if (worker === undefined) {
             this.sendErrorEvent("AgentScheduler_UnwantedChange", undefined, key);
         }
@@ -295,7 +293,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
             // attempt to pick up task if we are connected.
             // If not, initializeCore() will do it when connected
             if (currentClient === null) {
-                if (this.localTasks.has(key)) {
+                if (this.locallyRunnableTasks.has(key)) {
                     debug(`Requesting ${key}`);
                     await this.writeCore(key, this.clientId);
                 }
@@ -316,6 +314,8 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         if (!this.runtime.connected) {
             return false;
         }
+
+        // this.context.deltaManager.clientDetails.capabilities.interactive - ?
         return this.context.hostRuntime.deltaManager.active;
     }
 
@@ -325,7 +325,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         const clearCandidates: string[] = [];
         const tasks: Promise<any>[] = [];
 
-        for (const [taskUrl] of this.localTasks) {
+        for (const [taskUrl] of this.locallyRunnableTasks) {
             if (!this.getTaskClientId(taskUrl)) {
                 debug(`Requesting ${taskUrl}`);
                 tasks.push(this.writeCore(taskUrl, this.clientId));
@@ -346,35 +346,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         });
     }
 
-    private async runTask(url: string, worker: boolean) {
-        const request: IRequest = {
-            headers: {
-                [LoaderHeader.cache]: false,
-                [LoaderHeader.clientDetails]: {
-                    capabilities: { interactive: false },
-                    type: "agent",
-                },
-                [LoaderHeader.reconnect]: false,
-                [LoaderHeader.sequenceNumber]: this.context.deltaManager.referenceSequenceNumber,
-                [LoaderHeader.executionContext]: worker ? "worker" : undefined,
-            },
-            url,
-        };
-        const response = await this.runtime.loader.request(request);
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
-            return Promise.reject(`Invalid agent route: ${url}`);
-        }
-
-        const rawComponent = response.value as IComponent;
-        const agent = rawComponent.IComponentRunnable;
-        if (agent === undefined) {
-            return Promise.reject("Component does not implement IComponentRunnable");
-        }
-
-        return agent.run();
-    }
-
-    private clearLocalTasks() {
+    private clearRunningTasks() {
         const tasks = this.runningTasks;
         this.runningTasks = new Set<string>();
 
@@ -385,7 +357,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         }
 
         for (const task of tasks) {
-            this.emit("released", task);
+            this.emit("lost", task);
         }
     }
 
@@ -398,7 +370,7 @@ export class TaskManager implements ITaskManager {
 
     public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<TaskManager> {
         const agentScheduler = await AgentScheduler.load(runtime, context);
-        return new TaskManager(agentScheduler, context);
+        return new TaskManager(agentScheduler, runtime, context);
     }
 
     public get IAgentScheduler() { return this.scheduler; }
@@ -409,9 +381,11 @@ export class TaskManager implements ITaskManager {
     public get url() { return this.scheduler.url; }
 
     private readonly taskMap = new Map<string, IComponentRunnable>();
-    constructor(private readonly scheduler: IAgentScheduler, private readonly context: IComponentContext) {
-
-    }
+    constructor(
+        private readonly scheduler: IAgentScheduler,
+        private readonly runtime: IComponentRuntime,
+        private readonly context: IComponentContext)
+    { }
 
     public async request(request: IRequest): Promise<IResponse> {
         if (request.url === "" || request.url === "/") {
@@ -444,8 +418,36 @@ export class TaskManager implements ITaskManager {
             const urlWithSlash = componentUrl.startsWith("/") ? componentUrl : `/${componentUrl}`;
             return this.scheduler.pick(
                 `${urlWithSlash}${this.url}/${taskId}`,
-                worker !== undefined ? worker : false);
+                async () => this.runTask(taskId, worker !== undefined ? worker : false));
         }
+    }
+
+    private async runTask(url: string, worker: boolean) {
+        const request: IRequest = {
+            headers: {
+                [LoaderHeader.cache]: false,
+                [LoaderHeader.clientDetails]: {
+                    capabilities: { interactive: false },
+                    type: "agent",
+                },
+                [LoaderHeader.reconnect]: false,
+                [LoaderHeader.sequenceNumber]: this.context.deltaManager.referenceSequenceNumber,
+                [LoaderHeader.executionContext]: worker ? "worker" : undefined,
+            },
+            url,
+        };
+        const response = await this.runtime.loader.request(request);
+        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+            return Promise.reject(`Invalid agent route: ${url}`);
+        }
+
+        const rawComponent = response.value as IComponent;
+        const agent = rawComponent.IComponentRunnable;
+        if (agent === undefined) {
+            return Promise.reject("Component does not implement IComponentRunnable");
+        }
+
+        return agent.run();
     }
 }
 
