@@ -41,22 +41,10 @@ export const App = () => {
 
   // People
   const defaultPeople = [
-    {
-      name: "Bruno",
-      availability: [0, 1, 2]
-    },
-    {
-      name: "Tamine",
-      availability: [0, 1, 2]
-    },
-    {
-      name: "Jodom",
-      availability: [0, 1, 2]
-    },
-    {
-      name: "Michelle",
-      availability: [0, 1, 2]
-    }
+    { name: "Bruno", availability: [0, 1, 2] },
+    { name: "Tamine", availability: [0, 1, 2] },
+    { name: "Jodom", availability: [0, 1, 2] },
+    { name: "Michelle", availability: [0, 1, 2] }
   ];
 
   const setPeopleReducer = (state, action) => {
