@@ -6,10 +6,13 @@
 /* eslint-disable no-null/no-null */
 
 import { ICreateCommitParams, ICreateTreeEntry } from "@microsoft/fluid-gitresources";
-import { IQuorumSnapshot, ProtocolOpHandler } from "@microsoft/fluid-protocol-base";
 import {
-    FileMode,
-    IDocumentAttributes,
+    IQuorumSnapshot,
+    ProtocolOpHandler,
+    getQuorumTreeEntries,
+    mergeAppAndProtocolTree,
+} from "@microsoft/fluid-protocol-base";
+import {
     IDocumentMessage,
     ISequencedDocumentMessage,
     ISummaryAck,
@@ -18,6 +21,7 @@ import {
     ITreeEntry,
     MessageType,
     TreeEntry,
+    FileMode,
 } from "@microsoft/fluid-protocol-definitions";
 import { IGitManager } from "@microsoft/fluid-server-services-client";
 import {
@@ -335,50 +339,8 @@ export class ScribeLambda extends SequencedLambda {
         }
 
         // At this point the summary op and its data are all valid and we can perform the write to history
-        const documentAttributes: IDocumentAttributes = {
-            branch: this.documentId,
-            minimumSequenceNumber,
-            sequenceNumber,
-        };
-
-        const entries: ITreeEntry[] = [
-            {
-                mode: FileMode.File,
-                path: "quorumMembers",
-                type: TreeEntry[TreeEntry.Blob],
-                value: {
-                    contents: JSON.stringify(quorumSnapshot.members),
-                    encoding: "utf-8",
-                },
-            },
-            {
-                mode: FileMode.File,
-                path: "quorumProposals",
-                type: TreeEntry[TreeEntry.Blob],
-                value: {
-                    contents: JSON.stringify(quorumSnapshot.proposals),
-                    encoding: "utf-8",
-                },
-            },
-            {
-                mode: FileMode.File,
-                path: "quorumValues",
-                type: TreeEntry[TreeEntry.Blob],
-                value: {
-                    contents: JSON.stringify(quorumSnapshot.values),
-                    encoding: "utf-8",
-                },
-            },
-            {
-                mode: FileMode.File,
-                path: "attributes",
-                type: TreeEntry[TreeEntry.Blob],
-                value: {
-                    contents: JSON.stringify(documentAttributes),
-                    encoding: "utf-8",
-                },
-            },
-        ];
+        const entries: ITreeEntry[] =
+            getQuorumTreeEntries(this.documentId, minimumSequenceNumber, sequenceNumber, quorumSnapshot);
 
         const [protocolTree, appSummaryTree] = await Promise.all([
             this.storage.createTree({ entries, id: null }),
@@ -386,21 +348,7 @@ export class ScribeLambda extends SequencedLambda {
         ]);
 
         // Combine the app summary with .protocol
-        const newTreeEntries = appSummaryTree.tree.map((value) => {
-            const createTreeEntry: ICreateTreeEntry = {
-                mode: value.mode,
-                path: value.path,
-                sha: value.sha,
-                type: value.type,
-            };
-            return createTreeEntry;
-        });
-        newTreeEntries.push({
-            mode: FileMode.Directory,
-            path: ".protocol",
-            sha: protocolTree.sha,
-            type: "tree",
-        });
+        const newTreeEntries = mergeAppAndProtocolTree(appSummaryTree, protocolTree);
 
         const gitTree = await this.storage.createGitTree({ tree: newTreeEntries });
         const commitParams: ICreateCommitParams = {

@@ -5,7 +5,7 @@
 
 import { IRangeTrackerSnapshot } from "@microsoft/fluid-common-utils";
 import { ICommit, ICommitDetails } from "@microsoft/fluid-gitresources";
-import { IProtocolState } from "@microsoft/fluid-protocol-definitions";
+import { IProtocolState, ISummaryTree, ICommittedProposal } from "@microsoft/fluid-protocol-definitions";
 import { IGitCache } from "@microsoft/fluid-server-services-client";
 
 export interface IDocumentDetails {
@@ -29,6 +29,17 @@ export interface IDocumentStorage {
     getForks(tenantId: string, documentId: string): Promise<string[]>;
 
     createFork(tenantId: string, id: string): Promise<string>;
+}
+
+export interface IExperimentalDocumentStorage extends IDocumentStorage {
+    isExperimentalDocumentStorage: true;
+
+    createDocument(
+        tenantId: string,
+        documentId: string,
+        summary: ISummaryTree,
+        sequenceNumber: number,
+        values: [string, ICommittedProposal][]);
 }
 
 export interface IFork {
