@@ -4,31 +4,35 @@ import {
   PrimedComponent,
   PrimedComponentFactory
 } from "@microsoft/fluid-aqueduct";
-import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import {
+  IComponentHTMLVisual,
+  IComponentHandle
+} from "@microsoft/fluid-component-core-interfaces";
 import { App } from "./App";
 import { PrimedContext } from "./provider";
+import { SharedMap } from "@microsoft/fluid-map";
 
 class PrimedReactComponent extends PrimedComponent
   implements IComponentHTMLVisual {
+  optionsMap: SharedMap;
+
   public get IComponentHTMLVisual() {
     return this;
   }
 
-  protected async componentInitializingFirstTime() {
-    this.root.set("diceValue", 1);
-    this.root.set("clicked", 0);
+  protected async componentInitializingFirstTime() {}
+
+  protected async componentHasInitialized() {
+    this.optionsMap = await this.root
+      .get<IComponentHandle>(this.optionsId)
+      .get();
   }
 
   public render(div: HTMLElement) {
-    const actions = {
-      rollDice: this.rollDice
-    };
+    const actions = {};
 
     const rerender = () => {
-      const selectors = {
-        diceValue: this.diceValue(),
-        clicked: this.clicked()
-      };
+      const selectors = {};
       ReactDOM.render(
         <PrimedContext.Provider value={{ selectors, actions }}>
           <App />
@@ -42,20 +46,13 @@ class PrimedReactComponent extends PrimedComponent
       rerender();
     });
   }
-
-  private diceValue = () => {
-    return this.root.get("diceValue");
-  };
-  private clicked = () => {
-    return this.root.get("clicked");
-  };
-
-  private rollDice = value => {
-    if (value >= 1 && value <= 6) {
-      this.root.set("diceValue", value);
-      this.root.set("clicked", this.root.get("clicked") + 1);
-    }
-  };
 }
 
-export const fluidExport = new PrimedComponentFactory(PrimedReactComponent, []);
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+export const fluidExport = new PrimedComponentFactory(PrimedReactComponent, [
+  SharedMap.getFactory()
+]);

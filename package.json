@@ -21,6 +21,7 @@
   "dependencies": {
     "@microsoft/fluid-aqueduct": "^0.13.0",
     "@microsoft/fluid-component-core-interfaces": "^0.13.0",
+    "@microsoft/fluid-sequence": "^0.14.21378",
     "@types/react": "^16.9.23",
     "office-ui-fabric-react": "^7.89.0",
     "react": "^16.8.3",
