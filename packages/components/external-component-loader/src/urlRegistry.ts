@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidModule, IFluidPackage, isFluidPackage } from "@microsoft/fluid-container-definitions";
+import { IFluidPackage, isFluidPackage } from "@microsoft/fluid-container-definitions";
 import { Deferred } from "@microsoft/fluid-common-utils";
 import {
     ComponentRegistryEntry,
     IComponentRegistry,
+    IComponentFactory,
+    IProvideComponentRegistry,
 } from "@microsoft/fluid-runtime-definitions";
 
 /**
@@ -58,9 +60,19 @@ export class UrlRegistry implements IComponentRegistry {
                 }
             });
 
-            this.urlRegistryMap.set(
-                name,
-                entryPointPromise.then(async (entrypoint: IFluidModule) => entrypoint.fluidExport));
+            // To satisfy the constraint that the component context's pkg must match the resolved factory's
+            // type, create a proxy factory that renames the factory `type` to `name`.
+            const factoryP = entryPointPromise.then(({ fluidExport }) => {
+                let f: IComponentFactory & IProvideComponentRegistry;
+                return f = {
+                    type: name,
+                    instantiateComponent: (...args) => fluidExport.instantiateComponent(...args),
+                    get IComponentFactory() { return f; },
+                    IComponentRegistry: fluidExport.IComponentRegistry,
+                };
+            });
+
+            this.urlRegistryMap.set(name, factoryP);
         }
 
         return this.urlRegistryMap.get(name);
