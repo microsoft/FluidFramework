@@ -436,6 +436,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     public resume() {
         assert(this.loaded);
+
+        if (this.closed) {
+            throw new Error("Attempting to setAutoReconnect() a closed DeltaManager");
+        }
+
         // Resume processing ops
         assert(!this.resumedOpProcessingAfterLoad);
         this.resumedOpProcessingAfterLoad = true;
