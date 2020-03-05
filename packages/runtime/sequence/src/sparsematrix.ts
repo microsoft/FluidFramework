@@ -11,6 +11,7 @@ import {
     ISegment,
     PropertySet,
     LocalReferenceCollection,
+    ICombiningOp,
 } from "@microsoft/fluid-merge-tree";
 import {
     IChannelAttributes,
@@ -285,6 +286,16 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
 
     public removeCols(col: number, numCols: number) {
         this.moveAsPadding(col, maxCol - numCols, numCols);
+    }
+
+    public annotatePosition(row: number, col: number, props: PropertySet, op?: ICombiningOp) {
+        const pos = rowColToPosition(row, col);
+        this.annotateRange(pos, pos + 1, props, op);
+    }
+
+    public getPositionProperties(row: number, col: number) {
+        const pos = rowColToPosition(row, col);
+        return this.getPropertiesAtPosition(pos);
     }
 
     // For each row, moves 'numCols' items starting from 'srcCol' and inserts 'numCols' padding
