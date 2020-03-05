@@ -9,7 +9,9 @@ import {
 
 import { VersiontestInstantiationFactory } from "./main";
 
-const chaincodeName = VersiontestInstantiationFactory.type;
+// tslint:disable-next-line: no-var-requires no-require-imports
+const pkg = require("../package.json");
+const chaincodeName = pkg.name as string;
 
 export const fluidExport = new SimpleModuleInstantiationFactory(
   chaincodeName,
