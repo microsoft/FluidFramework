@@ -2,58 +2,127 @@ import * as React from "react";
 import {
   Stack,
   FocusZone,
-  Checkbox,
+  Dropdown,
   initializeIcons,
+  TextField,
   FocusZoneDirection
 } from "office-ui-fabric-react";
+import { DatePicker, defaultDayPickerStrings } from "@uifabric/date-time";
+import { PrimedContext } from "./provider";
 initializeIcons();
 
 export interface IAppProps {
-  dates: { date: string }[];
+  dates: Date[];
   people: {
     name: string;
     availability: boolean[];
   }[];
 }
 
-const {setDate(id, date), setPeople(key, name, availability[0, 1, 2])} = action;
+// const {setDate(id, date), setPeople(key, name, availability[0, 1, 2])} = action;
 
-const {getDates, getPeople: {name, availability[]}} = selectors;
+// const {getDates, getPeople: {name, availability[]}} = selectors;
 
-const appProps: IAppProps = {
-  dates: [
-    { date: "Monday 3pm" },
-    { date: "Tuesday 9am" },
-    { date: "Wednesday 4pm" }
-  ],
-  people: [
+export const App = () => {
+  // Dates
+  const today = new Date();
+  const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+  const dayAfter = new Date(today.getTime() + 24 * 60 * 60 * 1000 * 2);
+  const defaultDates = [today, tomorrow, dayAfter];
+  const setDateReducer = (
+    state: Date[],
+    action: { key: number; date: Date }
+  ): Date[] => {
+    const newState = [...state];
+    newState[action.key] = action.date;
+    return newState;
+  };
+
+  // People
+  const defaultPeople = [
     {
       name: "Bruno",
-      availability: [false, true, true]
+      availability: [0, 1, 2]
     },
     {
       name: "Tamine",
-      availability: [false, true, true]
+      availability: [0, 1, 2]
     },
     {
       name: "Jodom",
-      availability: [false, true, true]
+      availability: [0, 1, 2]
     },
     {
       name: "Michelle",
-      availability: [false, true, true]
+      availability: [0, 1, 2]
     }
-  ]
+  ];
+
+  const setPeopleReducer = (state, action) => {
+    const newState = [...state];
+    switch (action.type) {
+      case "name":
+        const newPerson = {
+          ...state[action.personKey],
+          name: action.name
+        };
+        newState[action.personKey] = newPerson;
+        return newState;
+      case "availability":
+        const person = newState[action.personKey];
+        person.availability[action.dayKey] = action.availability;
+
+        newState[action.personKey] = person;
+        return newState;
+    }
+    return state;
+  };
+
+  // Reducers
+  const [dates, setDate] = React.useReducer(setDateReducer, defaultDates);
+  const [people, setPerson] = React.useReducer(setPeopleReducer, defaultPeople);
+
+  const setAvailability = (personKey, dayKey, availability) => {
+    setPerson({
+      type: "availability",
+      personKey: personKey,
+      dayKey: dayKey,
+      availability: availability
+    });
+  };
+
+  const setName = (personKey, name) => {
+    setPerson({
+      type: "name",
+      personKey: personKey,
+      name: name
+    });
+  };
+
+  const actions = { setAvailability, setName, setDate };
+  const selectors = { dates, people };
+  return (
+    <PrimedContext.Provider value={{ actions, selectors }}>
+      <ScheduleIt />
+    </PrimedContext.Provider>
+  );
 };
 
-export const App = () => {
-  const { dates, people } = appProps;
+const ScheduleIt = () => {
+  const {
+    actions: { setAvailability, setName, setDate },
+    selectors: { dates, people }
+  } = React.useContext(PrimedContext);
 
-  const onRenderHeader = (columns: IAppProps["dates"]) => {
-    const content = columns.map((column, i) => {
+  const onRenderHeader = (dates: IAppProps["dates"]) => {
+    const content = dates.map((date, i) => {
       return (
         <div className="headerCell" key={i} style={{ width: "25%" }}>
-          {column.date}
+          <DatePicker
+            strings={defaultDayPickerStrings}
+            value={date}
+            onSelectDate={d => setDate({ key: i, date: d })}
+          />
         </div>
       );
     });
@@ -79,7 +148,17 @@ export const App = () => {
     let checkmarks = item.availability.map((value, i) => {
       return (
         <div className="cell" key={i} style={{ width: "25%" }}>
-          <Checkbox value={value} />
+          <Dropdown
+            options={[
+              { key: 0, text: "No" },
+              { key: 1, text: "Maybe" },
+              { key: 2, text: "Yes" }
+            ]}
+            selectedKey={value}
+            onChange={(e, o) => {
+              setAvailability(key, i, o.key);
+            }}
+          />
         </div>
       );
     });
@@ -87,7 +166,7 @@ export const App = () => {
     return (
       <Stack className="row" key={key} horizontal tokens={{ childrenGap: 10 }}>
         <div className="cell" key="name" style={{ width: "25%" }}>
-          {item.name}
+          <TextField value={item.name} onChange={(e, v) => setName(key, v)} />
         </div>
         {checkmarks}
       </Stack>
