@@ -101,6 +101,7 @@ export class FluidRepo extends FluidRepoBase {
             if (FluidPackageCheck.checkScripts(this, pkg, fix)) {
                 await pkg.savePackageJson();
             }
+            await FluidPackageCheck.checkNpmIgnore(pkg, fix);
         }
     }
     public async depcheck() {
