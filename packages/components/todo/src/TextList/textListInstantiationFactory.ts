@@ -6,9 +6,10 @@
 import { PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { IComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
-import { TextList } from "./index";
+import { TextList, TextListName } from "./index";
 
 export const TextListInstantiationFactory: IComponentFactory = new PrimedComponentFactory(
+    TextListName,
     TextList,
     [
         SharedString.getFactory(),

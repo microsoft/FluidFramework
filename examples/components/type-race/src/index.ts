@@ -6,9 +6,7 @@
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { TyperaceInstantiationFactory as ComponentInstantiationFactory } from "./main";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../package.json");
-const chaincodeName = pkg.name as string;
+const chaincodeName = ComponentInstantiationFactory.type;
 
 /**
  * This does setup for the Container. The SimpleModuleInstantiationFactory also enables dynamic loading in the

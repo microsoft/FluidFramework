@@ -30,9 +30,12 @@ import/no-unassigned-import */
 import * as tabSelector from "./utils/githubMissingJs";
 import "./styles/github-css-full-rip.css";
 const mdit = require("markdown-it")("commonmark");
+const pkg = require("../package.json");
 const divHTML = require("./styles/github-comment-only.html");
 /* eslint-enable @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, import/no-internal-modules,
 import/no-unassigned-import */
+
+export const chaincodeName = pkg.name as string;
 
 export class GithubComment extends TextareaNoReact implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
@@ -119,6 +122,7 @@ export class GithubComment extends TextareaNoReact implements IComponentHTMLView
  */
 export const GithubCommentInstantiationFactory =
     new PrimedComponentFactory(
+        chaincodeName,
         GithubComment,
         [
             SharedString.getFactory(),

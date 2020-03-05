@@ -15,7 +15,7 @@ import { TabsView } from "./view";
 export class TabsComponent extends PrimedComponent implements IComponentHTMLView {
     private dataModelInternal: ITabsDataModel | undefined;
 
-    private static readonly factory = new PrimedComponentFactory(TabsComponent, []);
+    private static readonly factory = new PrimedComponentFactory("tabs", TabsComponent, []);
 
     public static getFactory() {
         return TabsComponent.factory;

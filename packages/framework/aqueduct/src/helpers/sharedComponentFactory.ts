@@ -23,6 +23,7 @@ export class SharedComponentFactory implements IComponentFactory, Partial<IProvi
     private readonly registry: IComponentRegistry | undefined;
 
     constructor(
+        public readonly type: string,
         private readonly ctor: new (runtime: IComponentRuntime, context: IComponentContext) => SharedComponent,
         sharedObjects: readonly ISharedObjectFactory[],
         registryEntries?: NamedComponentRegistryEntries,

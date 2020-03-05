@@ -29,7 +29,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
 
     // TODO #1188 - Component registry should automatically add ComponentToolbar
     // to the registry since it's required for the spaces component
-    private static readonly factory = new PrimedComponentFactory(Spaces, []);
+    private static readonly factory = new PrimedComponentFactory("spaces", Spaces, []);
 
     public static getFactory() {
         return Spaces.factory;

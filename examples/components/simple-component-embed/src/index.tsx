@@ -40,15 +40,18 @@ export class SimpleComponentEmbed extends PrimedComponent implements IComponentH
     }
 }
 
+const componentName = "@fluid-example/simple-component-embed";
+
 export const SimpleComponentEmbedInstantiationFactory = new PrimedComponentFactory(
+    componentName,
     SimpleComponentEmbed,
     [],
 );
 
 export const fluidExport = new SimpleModuleInstantiationFactory(
-    "@fluid-example/simple-component-embed",
+    componentName,
     new Map([
-        ["@fluid-example/simple-component-embed", Promise.resolve(SimpleComponentEmbedInstantiationFactory)],
-        ["@fluid-example/clicker", Promise.resolve(ClickerInstantiationFactory)],
+        [componentName, Promise.resolve(SimpleComponentEmbedInstantiationFactory)],
+        [ClickerInstantiationFactory.type, Promise.resolve(ClickerInstantiationFactory)],
     ]),
 );

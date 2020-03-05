@@ -13,6 +13,7 @@ import {
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { GridView } from "./grid";
 import * as styles from "./index.css";
+import { tableViewType } from "./runtime";
 
 const template = new Template({
     tag: "div",
@@ -37,6 +38,7 @@ export class TableView extends PrimedComponent implements IComponentHTMLView {
     public static getFactory() { return TableView.factory; }
 
     private static readonly factory = new PrimedComponentFactory(
+        tableViewType,
         TableView,
         [],
     );

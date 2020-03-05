@@ -9,9 +9,7 @@ import {
 
 import { DiceRollerInstantiationFactory } from "./main";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../package.json");
-const componentName = pkg.name as string;
+const componentName = DiceRollerInstantiationFactory.type;
 
 /**
  * This does setup for the Container. The SimpleModuleInstantiationFactory also enables dynamic loading in the

@@ -6,8 +6,8 @@
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 
 import { ClickerName, ClickerInstantiationFactory } from "@fluid-example/clicker";
-import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
-import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
+import { fluidExport as cmfe } from "@fluid-example/codemirror";
+import { fluidExport as pmfe } from "@fluid-example/prosemirror";
 
 import {
     ComponentToolbar,
@@ -26,7 +26,7 @@ import {
 } from "./container-services";
 import { Spaces } from "./spaces";
 
-const componentName = "spaces";
+const componentName = Spaces.getFactory().type;
 
 /**
  * This does setup for the Container. The SimpleModuleInstantiationFactory also enables dynamic loading in the
@@ -42,8 +42,8 @@ export const fluidExport = new SimpleModuleInstantiationFactory(
         [NumberName, Promise.resolve(Number.getFactory())],
         [TextBoxName, Promise.resolve(TextBox.getFactory())],
         [FacePileName, Promise.resolve(FacePile.getFactory())],
-        ["codemirror", Promise.resolve(cmfe)],
-        ["prosemirror", Promise.resolve(pmfe)],
+        [cmfe.type, Promise.resolve(cmfe)],
+        [pmfe.type, Promise.resolve(pmfe)],
     ]),
     [["manager", async (r) => new Manager(r)]],
 );

@@ -43,6 +43,7 @@ export class Incrementor extends PrimedComponent {
 }
 
 export const IncrementorInstantiationFactory = new PrimedComponentFactory(
+    chaincodeName,
     Incrementor,
     [],
 );

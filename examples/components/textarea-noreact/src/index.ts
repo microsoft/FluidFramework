@@ -9,9 +9,7 @@ import {
 
 import { TextareaNoReactInstantiationFactory } from "./main";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../package.json");
-export const chaincodeName = pkg.name as string;
+const chaincodeName = TextareaNoReactInstantiationFactory.type;
 
 /**
  * This does setup for the Container. The SimpleModuleInstantiationFactory also

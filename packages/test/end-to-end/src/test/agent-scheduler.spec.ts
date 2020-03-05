@@ -23,7 +23,7 @@ describe("AgentScheduler", () => {
             host = new TestHost([
                 [AgentSchedulerType, Promise.resolve(new AgentSchedulerFactory())],
             ]);
-            scheduler = await host.getComponent<TaskManager>("_scheduler")
+            scheduler = await host.getComponent<TaskManager>(AgentSchedulerFactory.type)
                 .then((taskmanager) => taskmanager.IAgentScheduler);
         });
 

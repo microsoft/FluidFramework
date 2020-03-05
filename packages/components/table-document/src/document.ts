@@ -18,7 +18,7 @@ import {
 } from "@microsoft/fluid-sequence";
 import { createSheetlet, ISheetlet } from "@tiny-calc/micro";
 import { CellRange } from "./cellrange";
-import { TableSliceType } from "./componentTypes";
+import { TableSliceType, TableDocumentType } from "./componentTypes";
 import { debug } from "./debug";
 import { TableSlice } from "./slice";
 import { ITable, TableDocumentItem } from "./table";
@@ -27,6 +27,7 @@ export class TableDocument extends PrimedComponent implements ITable {
     public static getFactory() { return TableDocument.factory; }
 
     private static readonly factory = new PrimedComponentFactory(
+        TableDocumentType,
         TableDocument, [
             SparseMatrix.getFactory(),
             SharedNumberSequence.getFactory(),

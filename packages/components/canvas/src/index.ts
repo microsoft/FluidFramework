@@ -12,6 +12,7 @@ const pkg = require("../package.json");
 export const CanvasName = pkg.name as string;
 
 export const CanvasInstantiationFactory = new PrimedComponentFactory(
+    CanvasName,
     Canvas,
     [
         Ink.getFactory(),

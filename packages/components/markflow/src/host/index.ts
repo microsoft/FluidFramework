@@ -12,7 +12,7 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { FlowDocument } from "../document";
-import { FlowDocumentType } from "../runtime";
+import { FlowDocumentType, webflowType } from "../runtime";
 import { WebflowView } from "./host";
 import { importDoc } from "./import";
 
@@ -58,6 +58,6 @@ export class WebFlow extends PrimedComponent implements IComponentHTMLVisual {
     }
 }
 
-export const webFlowFactory = new PrimedComponentFactory(WebFlow, [], new Map([
+export const webFlowFactory = new PrimedComponentFactory(webflowType, WebFlow, [], new Map([
     [FlowDocumentType, import(/* webpackChunkName: "flowdoc", webpackPreload: true */ "../document").then((m) => m.flowDocumentFactory)],
 ]));

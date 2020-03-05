@@ -20,6 +20,11 @@ export interface IProvideComponentFactory {
  */
 export interface IComponentFactory extends IProvideComponentFactory {
     /**
+     * Unique id that identifies the type of component created by this IComponentFactory.
+     */
+    readonly type: string;
+
+    /**
      * Generates runtime for the component from the component context. Once created should be bound to the context.
      * @param context - Context for the component.
      */

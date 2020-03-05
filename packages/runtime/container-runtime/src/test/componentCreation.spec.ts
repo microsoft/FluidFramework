@@ -48,6 +48,7 @@ describe("Component Creation Tests", () => {
         function createComponentRegistryEntry(entries: NamedComponentRegistryEntries): ComponentRegistryEntry {
             const registryEntries = new Map(entries);
             const factory: IComponentFactory = {
+                type: "MockFactory",
                 get IComponentFactory() { return factory; },
                 instantiateComponent: (context: IComponentContext) => {
                     context.bindRuntime(new MockRuntime());

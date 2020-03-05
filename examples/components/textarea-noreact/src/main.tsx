@@ -28,6 +28,10 @@ import {
     SequenceDeltaEvent,
     SharedString,
 } from "@microsoft/fluid-sequence";
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+const pkg = require("../package.json");
+
 /******************************************************************************/
 
 /**
@@ -404,6 +408,7 @@ export class TextareaNoReact extends PrimedComponent implements IComponentHTMLVi
  */
 export const TextareaNoReactInstantiationFactory =
     new PrimedComponentFactory(
+        pkg.name,
         TextareaNoReact,
         [
             SharedString.getFactory(),

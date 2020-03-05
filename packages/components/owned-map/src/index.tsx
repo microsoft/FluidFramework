@@ -19,6 +19,7 @@ export class OwnedMap extends PrimedComponent implements IComponentHTMLView {
     public static getFactory() { return OwnedMap.factory; }
 
     private static readonly factory = new PrimedComponentFactory(
+        "@fluid-example/owned-map",
         OwnedMap,
         [
             OwnedSharedMap.getFactory(),
@@ -106,8 +107,8 @@ export class OwnedMap extends PrimedComponent implements IComponentHTMLView {
 }
 
 export const fluidExport = new SimpleModuleInstantiationFactory(
-    "@fluid-example/owned-map",
+    OwnedMap.getFactory().type,
     new Map([
-        ["@fluid-example/owned-map", Promise.resolve(OwnedMap.getFactory())],
+        [OwnedMap.getFactory().type, Promise.resolve(OwnedMap.getFactory())],
     ]),
 );

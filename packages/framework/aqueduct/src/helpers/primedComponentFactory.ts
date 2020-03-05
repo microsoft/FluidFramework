@@ -15,6 +15,7 @@ import { SharedComponentFactory } from "./sharedComponentFactory";
 
 export class PrimedComponentFactory extends SharedComponentFactory {
     constructor(
+        type: string,
         ctor: new (runtime: IComponentRuntime, context: IComponentContext) => SharedComponent,
         sharedObjects: readonly ISharedObjectFactory[] = [],
         registryEntries?: NamedComponentRegistryEntries,
@@ -33,6 +34,6 @@ export class PrimedComponentFactory extends SharedComponentFactory {
             mergedObjects.push(SharedMap.getFactory());
         }
 
-        super(ctor, mergedObjects, registryEntries, onDemandInstantiation);
+        super(type, ctor, mergedObjects, registryEntries, onDemandInstantiation);
     }
 }

@@ -10,9 +10,10 @@ import { IComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { TextBoxInstantiationFactory, TextBoxName } from "../TextBox";
 import { TextListInstantiationFactory, TextListName } from "../TextList";
-import { TodoItem } from "./index";
+import { TodoItem, TodoItemName } from "./index";
 
 export const TodoItemInstantiationFactory: IComponentFactory = new PrimedComponentFactory(
+    TodoItemName,
     TodoItem,
     [
         SharedString.getFactory(),

@@ -33,7 +33,7 @@ import {
 } from "@microsoft/fluid-sequence";
 import { clamp, emptyArray } from "../util";
 import { IHTMLAttributes } from "../util/attr";
-
+import { FlowDocumentType } from "../runtime";
 import { debug } from "./debug";
 import { SegmentSpan } from "./segmentspan";
 
@@ -502,4 +502,4 @@ export class FlowDocument extends PrimedComponent {
     }
 }
 
-export const flowDocumentFactory = new PrimedComponentFactory(FlowDocument, [new SharedStringFactory()]);
+export const flowDocumentFactory = new PrimedComponentFactory(FlowDocumentType, FlowDocument, [new SharedStringFactory()]);

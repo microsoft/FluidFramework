@@ -10,6 +10,7 @@ import * as sequence from "@microsoft/fluid-sequence";
 import { MonacoRunner } from "./chaincode";
 
 const componentFactory = new PrimedComponentFactory(
+    "@fluid-example/monaco",
     MonacoRunner,
     [
         sequence.SharedString.getFactory(),
@@ -19,9 +20,9 @@ const componentFactory = new PrimedComponentFactory(
 );
 
 const runtimeFactory = new SimpleModuleInstantiationFactory(
-    "@fluid-example/monaco",
+    componentFactory.type,
     new Map([
-        ["@fluid-example/monaco", Promise.resolve(componentFactory)],
+        [componentFactory.type, Promise.resolve(componentFactory)],
     ]),
 );
 

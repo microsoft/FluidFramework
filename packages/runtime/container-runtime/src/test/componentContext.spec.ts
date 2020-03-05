@@ -35,6 +35,7 @@ describe("Component Context Tests", () => {
         beforeEach(async () => {
             let registry: IComponentRegistry;
             const factory: IComponentFactory = {
+                type: "MockFactory",
                 get IComponentFactory() { return factory; },
                 instantiateComponent: (context: IComponentContext) => { },
             };

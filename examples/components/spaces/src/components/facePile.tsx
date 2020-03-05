@@ -15,10 +15,12 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { IQuorum } from "@microsoft/fluid-protocol-definitions";
 
+export const FacePileName = "facepile";
+
 export class FacePile extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
-    private static readonly factory = new PrimedComponentFactory(FacePile, []);
+    private static readonly factory = new PrimedComponentFactory(FacePileName, FacePile, []);
 
     public static getFactory() {
         return FacePile.factory;
@@ -40,8 +42,6 @@ interface IFacepileAddFaceExampleProps {
 interface IFacepileAddFaceExampleState {
     users: string[];
 }
-
-export const FacePileName = "facepile";
 
 export class FacepileAddFaceExample extends React.Component<IFacepileAddFaceExampleProps,IFacepileAddFaceExampleState> {
     constructor(props: IFacepileAddFaceExampleProps) {

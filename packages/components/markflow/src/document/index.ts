@@ -34,6 +34,7 @@ import {
 import { clamp, emptyArray } from "../util";
 import { IHTMLAttributes } from "../util/attr";
 import { Tag } from "../util/tag";
+import { FlowDocumentType } from "../runtime";
 import { debug } from "./debug";
 import { SegmentSpan } from "./segmentspan";
 
@@ -510,4 +511,4 @@ export class FlowDocument extends PrimedComponent {
     }
 }
 
-export const flowDocumentFactory = new PrimedComponentFactory(FlowDocument, [new SharedStringFactory()]);
+export const flowDocumentFactory = new PrimedComponentFactory(FlowDocumentType, FlowDocument, [new SharedStringFactory()]);

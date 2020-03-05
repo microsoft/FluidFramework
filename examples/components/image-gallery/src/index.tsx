@@ -90,14 +90,17 @@ export class ImageGalleryComponent extends PrimedComponent implements IComponent
     }
 }
 
+export const componentName = "@fluid-example/image-gallery";
+
 export const ImageGalleryInstantiationFactory = new PrimedComponentFactory(
+    componentName,
     ImageGalleryComponent,
     [],
 );
 
 export const fluidExport = new SimpleModuleInstantiationFactory(
-    "@fluid-example/image-gallery",
+    componentName,
     new Map([
-        ["@fluid-example/image-gallery", Promise.resolve(ImageGalleryInstantiationFactory)],
+        [componentName, Promise.resolve(ImageGalleryInstantiationFactory)],
     ]),
 );

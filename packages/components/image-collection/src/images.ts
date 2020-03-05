@@ -154,6 +154,9 @@ export class ImageCollection extends EventEmitter implements
 }
 
 export class ImageCollectionFactoryComponent implements IComponentFactory {
+    public static readonly type = "@fluid-example/image-collection";
+    public readonly type = ImageCollectionFactoryComponent.type;
+
     public get IComponentFactory() { return this; }
 
     public instantiateComponent(context: IComponentContext): void {

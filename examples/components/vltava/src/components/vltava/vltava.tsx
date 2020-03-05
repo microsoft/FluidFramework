@@ -19,7 +19,7 @@ import { VltavaView } from "./view";
 export class Vltava extends PrimedComponent implements IComponentHTMLView {
     private dataModelInternal: IVltavaDataModel | undefined;
 
-    private static readonly factory = new PrimedComponentFactory(Vltava, []);
+    private static readonly factory = new PrimedComponentFactory("vltava", Vltava, []);
 
     public static getFactory() {
         return Vltava.factory;

@@ -94,13 +94,16 @@ export class Musica extends PrimedComponent implements IComponentHTMLView {
     }
 }
 
+const componentName = "@fluid-example/musica";
+
 export const MusicaInstantiationFactory = new PrimedComponentFactory(
+    componentName,
     Musica,
     [],
 );
 
 export const fluidExport = new SimpleModuleInstantiationFactory(
-    "@fluid-example/musica",
+    componentName,
     new Map([
         ["@fluid-example/musica", Promise.resolve(MusicaInstantiationFactory)],
     ]),

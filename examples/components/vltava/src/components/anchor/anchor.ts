@@ -27,7 +27,7 @@ export class Anchor extends PrimedComponent implements IProvideComponentHTMLVisu
         return this.defaultComponentInternal;
     }
 
-    private static readonly factory = new PrimedComponentFactory(Anchor, []);
+    private static readonly factory = new PrimedComponentFactory("anchor", Anchor, []);
 
     public static getFactory() {
         return Anchor.factory;

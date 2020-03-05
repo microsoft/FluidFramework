@@ -173,14 +173,18 @@ class TaskScheduler {
     }
 }
 
-export const webFlowHostFactory = new PrimedComponentFactory(WebFlowHost, [SharedMap.getFactory()], new Map([
-    [FlowDocumentType, Promise.resolve(flowDocumentFactory)],
-    // eslint-disable-next-line max-len
-    ["@fluid-example/video-players", import(/* webpackChunkName: "video-players", webpackPrefetch: true */ "@fluid-example/video-players").then((m) => m.fluidExport)],
-    // eslint-disable-next-line max-len
-    ["@fluid-example/image-collection", import(/* webpackChunkName: "image-collection", webpackPrefetch: true */ "@fluid-example/image-collection").then((m) => m.fluidExport)],
-    ["@fluid-example/math", import("@fluid-example/math").then((m) => m.fluidExport)],
-    [TableDocumentType, import("@fluid-example/table-document").then((m) => m.TableDocument.getFactory())],
-    [TableSliceType, import("@fluid-example/table-document").then((m) => m.TableSlice.getFactory())],
-    ["@fluid-example/table-view", import("@fluid-example/table-view").then((m) => m.TableView.getFactory())],
-]));
+export const webFlowHostFactory = new PrimedComponentFactory(
+    WebFlowHost.type,
+    WebFlowHost,
+    [SharedMap.getFactory()],
+    [
+        [FlowDocumentType, Promise.resolve(flowDocumentFactory)],
+        // eslint-disable-next-line max-len
+        ["@fluid-example/video-players", import(/* webpackChunkName: "video-players", webpackPrefetch: true */ "@fluid-example/video-players").then((m) => m.fluidExport)],
+        // eslint-disable-next-line max-len
+        ["@fluid-example/image-collection", import(/* webpackChunkName: "image-collection", webpackPrefetch: true */ "@fluid-example/image-collection").then((m) => m.fluidExport)],
+        ["@fluid-example/math", import("@fluid-example/math").then((m) => m.fluidExport)],
+        [TableDocumentType, import("@fluid-example/table-document").then((m) => m.TableDocument.getFactory())],
+        [TableSliceType, import("@fluid-example/table-document").then((m) => m.TableSlice.getFactory())],
+        ["@fluid-example/table-view", import("@fluid-example/table-view").then((m) => m.TableView.getFactory())],
+    ]);

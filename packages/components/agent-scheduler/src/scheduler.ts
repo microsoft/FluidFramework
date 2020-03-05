@@ -419,6 +419,8 @@ export class TaskManager implements ITaskManager {
 }
 
 export class AgentSchedulerFactory implements IComponentFactory {
+    public static readonly type = "_scheduler";
+    public readonly type = AgentSchedulerFactory.type;
 
     public get IComponentFactory() { return this; }
 

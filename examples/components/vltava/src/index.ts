@@ -55,35 +55,35 @@ export class InternalRegistry implements IComponentRegistry, IComponentRegistryD
 const generateFactory = () => {
     const containerComponentsDefinition: IContainerComponentDetails[] = [
         {
-            type: "clicker",
+            type: ClickerInstantiationFactory.type,
             factory: Promise.resolve(ClickerInstantiationFactory),
             capabilities: ["IComponentHTMLVisual"],
             friendlyName: "Clicker",
             fabricIconName: "NumberField",
         },
         {
-            type: "tabs",
+            type: TabsComponent.getFactory().type,
             factory: Promise.resolve(TabsComponent.getFactory()),
             capabilities: ["IComponentHTMLVisual"],
             friendlyName: "Tabs",
             fabricIconName: "BrowserTab",
         },
         {
-            type: "spaces",
+            type: Spaces.getFactory().type,
             factory: Promise.resolve(Spaces.getFactory()),
             capabilities: ["IComponentHTMLVisual"],
             friendlyName: "Spaces",
             fabricIconName: "SnapToGrid",
         },
         {
-            type: "codemirror",
+            type: cmfe.type,
             factory: Promise.resolve(cmfe),
             capabilities: ["IComponentHTMLVisual"],
             friendlyName: "Codemirror",
             fabricIconName: "Code",
         },
         {
-            type: "prosemirror",
+            type: pmfe.type,
             factory: Promise.resolve(pmfe),
             capabilities: ["IComponentHTMLVisual"],
             friendlyName: "Prosemirror",

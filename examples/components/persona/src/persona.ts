@@ -111,6 +111,9 @@ export class Persona extends EventEmitter implements
 }
 
 class PersonaFactory implements IComponentFactory {
+    public static readonly type = "@fluid-example/persona";
+    public readonly type = PersonaFactory.type;
+
     public get IComponentFactory() { return this; }
 
     public instantiateComponent(context: IComponentContext): void {

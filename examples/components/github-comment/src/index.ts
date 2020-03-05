@@ -7,11 +7,7 @@ import {
     SimpleModuleInstantiationFactory,
 } from "@microsoft/fluid-aqueduct";
 
-import { GithubCommentInstantiationFactory } from "./main";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../package.json");
-export const chaincodeName = pkg.name as string;
+import { GithubCommentInstantiationFactory, chaincodeName } from "./main";
 
 /**
  * This does setup for the Container. The SimpleModuleInstantiationFactory also

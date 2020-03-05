@@ -69,6 +69,7 @@ class TextDisplayView extends React.Component<TextDisplayProps, TextDisplayState
 }
 
 export const TextDisplayInstantiationFactory = new PrimedComponentFactory(
+    chaincodeName,
     TextDisplay,
     [],
 );

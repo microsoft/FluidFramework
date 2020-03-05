@@ -9,7 +9,10 @@ import { SharedMap } from "@microsoft/fluid-map";
 import { SharedObjectSequence } from "@microsoft/fluid-sequence";
 import { Badge } from "./Badge";
 
+export const componentName = "@fluid-example/badge";
+
 export const BadgeInstantiationFactory = new PrimedComponentFactory(
+    componentName,
     Badge,
     [
         SharedMap.getFactory(),

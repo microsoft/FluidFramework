@@ -27,7 +27,7 @@ export const ComponentToolbarName = "componentToolbar";
 export class ComponentToolbar extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
-    private static readonly factory = new PrimedComponentFactory(ComponentToolbar, []);
+    private static readonly factory = new PrimedComponentFactory(ComponentToolbarName, ComponentToolbar, []);
 
     public static getFactory() {
         return ComponentToolbar.factory;
