@@ -9,15 +9,25 @@ import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import { IBlob, ISnapshotTree } from "@microsoft/fluid-protocol-definitions";
 import {
     IComponentContext,
-    IComponentFactory,
     IComponentRegistry,
     IComponentRuntime,
+    IComponentFactory,
 } from "@microsoft/fluid-runtime-definitions";
 import { MockRuntime } from "@microsoft/fluid-test-runtime-utils";
 import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
 import { IComponentAttributes, LocalComponentContext, RemotedComponentContext } from "../componentContext";
 import { ContainerRuntime } from "../containerRuntime";
 import { BlobCacheStorageService } from "../blobCacheStorageService";
+
+function createFactory(type: string) {
+    let factory: IComponentFactory;
+
+    return factory = {
+        type,
+        get IComponentFactory() { return factory; },
+        instantiateComponent: (context: IComponentContext) => { context.bindRuntime(new MockRuntime()); },
+    };
+}
 
 describe("Component Context Tests", () => {
     let summaryTracker: SummaryTracker;
@@ -34,11 +44,8 @@ describe("Component Context Tests", () => {
         let containerRuntime: ContainerRuntime;
         beforeEach(async () => {
             let registry: IComponentRegistry;
-            const factory: IComponentFactory = {
-                type: "MockFactory",
-                get IComponentFactory() { return factory; },
-                instantiateComponent: (context: IComponentContext) => { },
-            };
+            const factory = createFactory("MockFactory");
+
             // eslint-disable-next-line prefer-const
             registry = {
                 IComponentRegistry: registry,
@@ -144,9 +151,7 @@ describe("Component Context Tests", () => {
         let scope: IComponent;
         let containerRuntime: ContainerRuntime;
         beforeEach(async () => {
-            const factory: { [key: string]: any } = {};
-            factory.IComponentFactory = factory;
-            factory.instantiateComponent = (context: IComponentContext) => { context.bindRuntime(new MockRuntime()); };
+            const factory = createFactory("TestComponent1");
             const registry: { [key: string]: any } = {};
             registry.IComponentRegistry = registry;
             registry.get = async (pkg) => Promise.resolve(factory);

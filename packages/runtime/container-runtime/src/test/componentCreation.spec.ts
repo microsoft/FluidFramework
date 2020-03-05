@@ -43,17 +43,24 @@ describe("Component Creation Tests", () => {
         const componentCName = "componentC";
         let summaryTracker: SummaryTracker;
 
+        function createFactory(type: string) {
+            let factory: IComponentFactory;
+
+            return factory = {
+                type,
+                get IComponentFactory() { return factory; },
+                instantiateComponent: (context: IComponentContext) => { context.bindRuntime(new MockRuntime()); },
+            };
+        }
+
         // Helper function that creates a ComponentRegistryEntry with the registry entries
         // provided to it.
-        function createComponentRegistryEntry(entries: NamedComponentRegistryEntries): ComponentRegistryEntry {
+        function createComponentRegistryEntry(
+            name: string,
+            entries: NamedComponentRegistryEntries,
+        ): ComponentRegistryEntry {
             const registryEntries = new Map(entries);
-            const factory: IComponentFactory = {
-                type: "MockFactory",
-                get IComponentFactory() { return factory; },
-                instantiateComponent: (context: IComponentContext) => {
-                    context.bindRuntime(new MockRuntime());
-                },
-            };
+
             let registry: IComponentRegistry;
             // eslint-disable-next-line prefer-const
             registry = {
@@ -63,7 +70,7 @@ describe("Component Creation Tests", () => {
             };
 
             const entry: ComponentRegistryEntry = {
-                get IComponentFactory() { return factory; },
+                IComponentFactory: createFactory(name),
                 get IComponentRegistry() { return registry; },
             };
             return entry;
@@ -71,16 +78,18 @@ describe("Component Creation Tests", () => {
 
         beforeEach(async () => {
             // Component B is a leaf component and itss registry does not have any entries.
-            const entryB = createComponentRegistryEntry([]);
+            const entryB = createComponentRegistryEntry(componentBName, []);
             // Component C is a leaf component and itss registry does not have any entries.
-            const entryC = createComponentRegistryEntry([]);
+            const entryC = createComponentRegistryEntry(componentCName, []);
             // Component A's registry has entries for component B and component C.
-            const entryA = createComponentRegistryEntry([
-                [componentBName, Promise.resolve(entryB)],
-                [componentCName, Promise.resolve(entryC)],
-            ]);
+            const entryA = createComponentRegistryEntry(
+                componentAName,
+                [
+                    [componentBName, Promise.resolve(entryB)],
+                    [componentCName, Promise.resolve(entryC)],
+                ]);
             // The default component's registry has entry for only component A.
-            const entryDefault = createComponentRegistryEntry([[componentAName, Promise.resolve(entryA)]]);
+            const entryDefault = createComponentRegistryEntry(defaultName, [[componentAName, Promise.resolve(entryA)]]);
 
             // Create the global registry for the container that can only create the default component.
             const globalRegistryEntries = new Map([[defaultName, Promise.resolve(entryDefault)]]);
