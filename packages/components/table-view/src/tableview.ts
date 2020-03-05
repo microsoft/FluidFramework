@@ -32,6 +32,9 @@ export class TableView extends PrimedComponent implements IComponentHTMLView {
     private static readonly factory = new PrimedComponentFactory(
         TableView,
         [],
+        new Map([
+            [TableDocumentType, import("@fluid-example/table-document").then((m) => m.TableDocument.getFactory())],
+        ]),
     );
 
     public get IComponentHTMLView() { return this; }
@@ -80,7 +83,10 @@ export class TableView extends PrimedComponent implements IComponentHTMLView {
     // #endregion IComponentHTMLView
 
     protected async componentInitializingFirstTime() {
-        const doc = await this.createAndAttachComponent<TableDocument>(this.docId, TableDocumentType);
+        const componentRuntime: IComponentRuntime = await this.context.createComponent(this.docId, TableDocumentType);
+        const doc = await this.asComponent<TableDocument>(componentRuntime.request({ url: "/" }));
+        componentRuntime.attach();
+
         doc.insertRows(0, 5);
         doc.insertCols(0, 8);
     }
