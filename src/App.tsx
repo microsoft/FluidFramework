@@ -5,7 +5,8 @@ import {
   Dropdown,
   initializeIcons,
   TextField,
-  FocusZoneDirection
+  FocusZoneDirection,
+  IconButton
 } from "office-ui-fabric-react";
 import { DatePicker, defaultDayPickerStrings } from "@uifabric/date-time";
 import { PrimedContext } from "./provider";
@@ -59,7 +60,7 @@ export const App = () => {
   ];
 
   const setPeopleReducer = (state, action) => {
-    const newState = [...state];
+    let newState = [...state];
     switch (action.type) {
       case "name":
         const newPerson = {
@@ -67,15 +68,22 @@ export const App = () => {
           name: action.name
         };
         newState[action.personKey] = newPerson;
-        return newState;
+        break;
       case "availability":
         const person = newState[action.personKey];
         person.availability[action.dayKey] = action.availability;
 
         newState[action.personKey] = person;
-        return newState;
+        break;
+      case "add":
+        newState.push({ name: "", availability: [0, 0, 0] });
+        break;
+      case "remove":
+        newState.pop();
+        break;
     }
-    return state;
+
+    return newState;
   };
 
   // Reducers
@@ -99,7 +107,17 @@ export const App = () => {
     });
   };
 
-  const actions = { setAvailability, setName, setDate };
+  const addRow = () => {
+    setPerson({
+      type: "add"
+    });
+  };
+  const removeRow = () => {
+    setPerson({
+      type: "remove"
+    });
+  };
+  const actions = { setAvailability, setName, setDate, addRow, removeRow };
   const selectors = { dates, people };
   return (
     <PrimedContext.Provider value={{ actions, selectors }}>
@@ -110,7 +128,7 @@ export const App = () => {
 
 const ScheduleIt = () => {
   const {
-    actions: { setAvailability, setName, setDate },
+    actions: { setAvailability, setName, setDate, addRow, removeRow },
     selectors: { dates, people }
   } = React.useContext(PrimedContext);
 
@@ -174,9 +192,19 @@ const ScheduleIt = () => {
   };
   return (
     <FocusZone direction={FocusZoneDirection.bidirectional}>
-      <Stack>
+      <Stack tokens={{ childrenGap: 10 }}>
         {onRenderHeader(dates)}
         {onRenderRows(people)}
+        <Stack horizontal tokens={{ childrenGap: 10 }}>
+          <IconButton
+            onClick={() => removeRow()}
+            iconProps={{ iconName: "CalculatorSubtract" }}
+          />
+          <IconButton
+            onClick={() => addRow()}
+            iconProps={{ iconName: "Add" }}
+          />
+        </Stack>
       </Stack>
     </FocusZone>
   );
