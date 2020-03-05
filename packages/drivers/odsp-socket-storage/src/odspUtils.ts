@@ -158,12 +158,12 @@ export function fetchHelper(
         try {
             const text = await response.text();
 
-            const clonedHeadersObj = { "body-size": text.length.toString() };
+            const newHeaders = new FetchHeaders({ "body-size": text.length.toString() });
             for (const [key, value] of response.headers.entries()) {
-                clonedHeadersObj[key] = value;
+                newHeaders.set(key, value);
             }
             const res = {
-                headers: new FetchHeaders(clonedHeadersObj),
+                headers: newHeaders,
                 content: JSON.parse(text),
             };
             return res;
