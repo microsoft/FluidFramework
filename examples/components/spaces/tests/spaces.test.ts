@@ -6,13 +6,12 @@
 import { globals } from "../jest.config";
 
 describe("spaces", () => {
-
+    jest.setTimeout(15000);
     beforeEach(async () => {
         await page.goto(globals.PATH, { waitUntil: "load" });
-    }, 10000);
+    });
 
     it("There's a button to be clicked", async () => {
-        jest.setTimeout(10000);
         await expect(page).toClick("button", { text: "Edit: true" });
-    }, 10000);
+    });
   });
