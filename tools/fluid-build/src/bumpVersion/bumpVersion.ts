@@ -64,15 +64,37 @@ function parseOptions(argv: string[]) {
 
 parseOptions(process.argv);
 
-async function bumpGeneratorFluid(repoRoot: string, buildPackages: Map<string, Package>) {
-    const pkgDir = path.join(repoRoot, "tools", "generator-fluid");
-    await execWithErrorAsync("npm version minor", { cwd: pkgDir }, pkgDir, false);
+function saveVersion(versions: { [key: string]: string }, name: string, version: string, monoRepo: MonoRepo = MonoRepo.None) {
+    if (monoRepo == MonoRepo.None) {
+        versions[name] = version;
+    } else if (name.startsWith("@fluid-example/version-test")) {
+        // Ignore example packages
+        return;
+    } else if (versions[MonoRepo[monoRepo]]) {
+        if (versions[MonoRepo[monoRepo]] !== version) {
+            throw new Error(`Inconsistent version within Monorepo ${name} ${version}`);
+        }
+    } else {
+        versions[MonoRepo[monoRepo]] = version;
+    }
+}
 
-    const templateDir = path.join(pkgDir, "app", "templates");
-    await execWithErrorAsync("npm version minor", { cwd: templateDir }, templateDir, false);
+function collectVersions(repo: FluidRepoBase, generatorPackage: Package, templatePackage: Package) {
+    const versions: { [key: string]: string } = {};
 
-    const templatePackage = new Package(require(path.join(templateDir, "package.json")));
-    
+    repo.packages.packages.forEach(pkg => {
+        const monoRepo = repo.getMonoRepo(pkg);
+        saveVersion(versions, pkg.name, pkg.version, monoRepo);
+    });
+
+    saveVersion(versions, generatorPackage.name, generatorPackage.version);
+    saveVersion(versions, templatePackage.name, templatePackage.version);
+    return versions;
+}
+
+async function bumpGeneratorFluid(buildPackages: Map<string, Package>, generatorPackage: Package, templatePackage: Package) {
+    console.log("Bumping generator version");
+
     for (const { name, dev } of templatePackage.combinedDependencies) {
         const pkg = buildPackages.get(name);
         if (pkg) {
@@ -83,7 +105,9 @@ async function bumpGeneratorFluid(repoRoot: string, buildPackages: Map<string, P
             }
         }
     }
-    return templatePackage.savePackageJson();
+    await templatePackage.savePackageJson();
+    await execWithErrorAsync("npm version minor", { cwd: templatePackage.directory }, templatePackage.directory, false);
+    await execWithErrorAsync("npm version minor", { cwd: generatorPackage.directory }, generatorPackage.directory, false);
 }
 
 async function main() {
@@ -95,34 +119,36 @@ async function main() {
 
     // Load the package
     const repo = new FluidRepoBase(resolvedRoot);
-    const packages = repo.packages;
     timer.time("Package scan completed");
 
     const packageNeedBump = new Set<Package>();
     let serverNeedBump = false;
     const buildPackages = repo.createPackageMap();
 
+    const depVersions: { [key: string]: string } = {};
     const checkPackageNeedBump = (pkg: Package) => {
         for (const { name: dep, version } of pkg.combinedDependencies) {
             const depBuildPackage = buildPackages.get(dep);
-            if (depBuildPackage && semver.satisfies(depBuildPackage.version, version)) {
+            if (depBuildPackage) {
                 const depMonoRepo = repo.getMonoRepo(depBuildPackage);
-
-                if (depMonoRepo === MonoRepo.None) {
-                    if (!packageNeedBump.has(depBuildPackage)) {
-                        packageNeedBump.add(depBuildPackage);
-                        logVerbose(`${depBuildPackage.nameColored}: Add from ${pkg.nameColored} ${version}`)
-                        checkPackageNeedBump(depBuildPackage);
+                saveVersion(depVersions, dep, semver.minVersion(version)!.version, depMonoRepo);
+                if (semver.satisfies(depBuildPackage.version, version)) {
+                    if (depMonoRepo === MonoRepo.None) {
+                        if (!packageNeedBump.has(depBuildPackage)) {
+                            packageNeedBump.add(depBuildPackage);
+                            logVerbose(`${depBuildPackage.nameColored}: Add from ${pkg.nameColored} ${version}`)
+                            checkPackageNeedBump(depBuildPackage);
+                        }
+                    } else if (depMonoRepo === MonoRepo.Server) {
+                        serverNeedBump = true;
                     }
-                } else if (depMonoRepo === MonoRepo.Server) {
-                    serverNeedBump = true;
                 }
             }
         }
     };
 
     const checkMonoRepoNeedBump = (checkRepo: MonoRepo) => {
-        packages.packages.forEach(pkg => {
+        repo.packages.packages.forEach(pkg => {
             const monoRepo = repo.getMonoRepo(pkg);
             if (monoRepo !== checkRepo) {
                 return;
@@ -131,14 +157,24 @@ async function main() {
         });
     };
 
-
-
     checkMonoRepoNeedBump(MonoRepo.Client);
 
     if (serverNeedBump) {
         checkMonoRepoNeedBump(MonoRepo.Server);
     }
 
+    const generatorDir = path.join(resolvedRoot, "tools", "generator-fluid");
+    const generatorPackage = new Package(path.join(generatorDir, "package.json"));
+    const templatePackage = new Package(path.join(generatorDir, "app", "templates", "package.json"));
+    saveVersion(depVersions, generatorPackage.name, generatorPackage.version);
+    saveVersion(depVersions, templatePackage.name, templatePackage.version);
+
+    const oldVersions = collectVersions(repo, generatorPackage, templatePackage);
+    console.log("Release Versions:");
+    for (const name in oldVersions) {
+        console.log(`${name.padStart(40)}: ${depVersions[name].padStart(10)} ${!oldVersions || oldVersions[name] !== depVersions[name] ? "(old)" : "(new)"}`);
+    }
+    console.log();
 
     const bumpMonoRepo = async (monoRepo: MonoRepo) => {
         const repoPath = repo.getMonoRepoPath(monoRepo)!;
@@ -164,7 +200,24 @@ async function main() {
         await execWithErrorAsync(cmd, { cwd: pkg.directory }, pkg.directory, false);
     }
 
-    return bumpGeneratorFluid(resolvedRoot, buildPackages);
+    // Package json has changed. Reload.
+    repo.reload();
+
+    await bumpGeneratorFluid(buildPackages, generatorPackage, templatePackage);
+
+    // Generate has changed. Reload.
+    generatorPackage.reload();
+    templatePackage.reload();
+
+    console.log("\nRepo Versions:");
+    const newVersions = collectVersions(repo, generatorPackage, templatePackage);
+    for (const name in newVersions) {
+        if (!oldVersions || oldVersions[name] !== newVersions[name]) {
+            console.log(`${name.padStart(40)}: ${oldVersions[name].padStart(10)} -> ${newVersions[name].padEnd(10)}`);
+        } else {
+            console.log(`${name.padStart(40)}: ${newVersions[name].padStart(10)} (unchanged)`);
+        }
+    }
 }
 
 main().catch(e => {
