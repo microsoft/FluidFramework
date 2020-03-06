@@ -287,6 +287,16 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
         this.moveAsPadding(col, maxCol - numCols, numCols);
     }
 
+    public annotatePosition(row: number, col: number, props: PropertySet) {
+        const pos = rowColToPosition(row, col);
+        this.annotateRange(pos, pos + 1, props);
+    }
+
+    public getPositionProperties(row: number, col: number) {
+        const pos = rowColToPosition(row, col);
+        return this.getPropertiesAtPosition(pos);
+    }
+
     // For each row, moves 'numCols' items starting from 'srcCol' and inserts 'numCols' padding
     // at 'destCol'.  Used by insertCols and removeCols.
     private moveAsPadding(srcCol: number, destCol: number, numCols: number) {
