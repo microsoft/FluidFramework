@@ -11,8 +11,8 @@ export interface IDataModel {
 }
 
 export class DataModel extends PrimedComponent implements IDataModel {
-    private datesKey = "dates";
-    private peopleKey = "people";
+    private _datesKey = "dates";
+    private _peopleKey = "people";
 
     private _dates: BadArray<number>;
     private _people: BadArray<Person>;
@@ -23,19 +23,20 @@ export class DataModel extends PrimedComponent implements IDataModel {
         for (let date of defaultDates) {
             dates.add(date.valueOf());
         }
-        let people = BadArray.create(this.runtime);
+
+        let people = BadArray.create<Person>(this.runtime);
         for (let p of defaultPeople) {
             people.add(p);
         }
 
-        this.root.set(this.datesKey, dates.getHandle());
-        this.root.set(this.peopleKey, people.getHandle());
+        this.root.set(this._datesKey, dates.getHandle());
+        this.root.set(this._peopleKey, people.getHandle());
     }
 
     protected async componentHasInitialized() {
         // set up local refs to the DDSes so they're easily accessible from synchronous code
-        this._dates = await this.root.get<IComponentHandle>(this.datesKey).get<BadArray<number>>();
-        this._people = await this.root.get<IComponentHandle>(this.peopleKey).get<BadArray<Person>>();
+        this._dates = await this.root.get<IComponentHandle>(this._datesKey).get<BadArray<number>>();
+        this._people = await this.root.get<IComponentHandle>(this._peopleKey).get<BadArray<Person>>();
     }
 
     public setDate = (id: number, value: Date): void => {

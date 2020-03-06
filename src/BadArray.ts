@@ -20,12 +20,16 @@ export class BadArray<T extends BadArrayItem> {
     public get(index: number): T {
         const len = this.store.getLength();
         if (index >= len) {
-            throw new Error(`index ${index} out of range (len: ${len})`);
+            throw new Error(`index out of range (${index} >= ${len})`);
         }
         return this.store.getItem(rowNum, index) as T;
     }
 
     public set(index: number, value: T) {
+        const len = this.store.getLength();
+        if (index >= len) {
+            throw new Error(`index out of range (${index} >= ${len})`);
+        }
         this.store.setItems(rowNum, index, [value]);
     }
 
