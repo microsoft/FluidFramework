@@ -64,6 +64,28 @@ function parseOptions(argv: string[]) {
 
 parseOptions(process.argv);
 
+async function bumpGeneratorFluid(repoRoot: string, buildPackages: Map<string, Package>) {
+    const pkgDir = path.join(repoRoot, "tools", "generator-fluid");
+    await execWithErrorAsync("npm version minor", { cwd: pkgDir }, pkgDir, false);
+
+    const templateDir = path.join(pkgDir, "app", "templates");
+    await execWithErrorAsync("npm version minor", { cwd: templateDir }, templateDir, false);
+
+    const templatePackage = new Package(require(path.join(templateDir, "package.json")));
+    
+    for (const { name, dev } of templatePackage.combinedDependencies) {
+        const pkg = buildPackages.get(name);
+        if (pkg) {
+            if (dev) {
+                templatePackage.packageJson.devDependencies[name] = `^${pkg.version}`;
+            } else {
+                templatePackage.packageJson.dependencies[name] = `^${pkg.version}`;
+            }
+        }
+    }
+    return templatePackage.savePackageJson();
+}
+
 async function main() {
     const timer = new Timer(commonOptions.timer);
 
@@ -80,7 +102,6 @@ async function main() {
     let serverNeedBump = false;
     const buildPackages = repo.createPackageMap();
 
-    
     const checkPackageNeedBump = (pkg: Package) => {
         for (const { name: dep, version } of pkg.combinedDependencies) {
             const depBuildPackage = buildPackages.get(dep);
@@ -134,7 +155,7 @@ async function main() {
         await bumpMonoRepo(MonoRepo.Server);
     }
 
-    for (const pkg of packageNeedBump) {    
+    for (const pkg of packageNeedBump) {
         console.log(`Bumping ${pkg.name}`);
         let cmd = "npm version minor";
         if (pkg.getScript("build:genver")) {
@@ -142,6 +163,10 @@ async function main() {
         }
         await execWithErrorAsync(cmd, { cwd: pkg.directory }, pkg.directory, false);
     }
+
+    return bumpGeneratorFluid(resolvedRoot, buildPackages);
 }
 
-main();
+main().catch(e =>
+    console.error("ERROR: unexpected error", JSON.stringify(e, undefined, 2))
+);

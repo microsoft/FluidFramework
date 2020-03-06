@@ -122,10 +122,10 @@ export class Package {
     public get combinedDependencies() {
         const it = function* (packageJson: IPackage) {
             for (const item in packageJson.dependencies) {
-                yield ({ name: item, version: packageJson.dependencies[item] });
+                yield ({ name: item, version: packageJson.dependencies[item], dev: false });
             }
             for (const item in packageJson.devDependencies) {
-                yield ({ name: item, version: packageJson.devDependencies[item] });
+                yield ({ name: item, version: packageJson.devDependencies[item], dev: true });
             }
         }
         return it(this.packageJson);
