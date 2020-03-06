@@ -255,7 +255,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
             if (lastPkg !== factory.type) {
                 this.hostRuntime.logger.sendErrorEvent({
-                    eventName: "ComponentFactoryTypeError"
+                    eventName: "ComponentFactoryTypeError",
                 }, `Expected package name '${factory.type}', but got '${lastPkg}'.`);
             }
 
