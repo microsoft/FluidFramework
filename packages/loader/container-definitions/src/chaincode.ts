@@ -22,6 +22,7 @@ import {
     ISnapshotTree,
     ITree,
     MessageType,
+    ISummaryTree,
 } from "@microsoft/fluid-protocol-definitions";
 import { IAudience } from "./audience";
 import { IBlobManager } from "./blobs";
@@ -161,12 +162,11 @@ export interface IRuntime {
     processSignal(message: any, local: boolean);
 }
 
-export interface IExperimentalRuntime {
+export interface IExperimentalRuntime extends IRuntime {
 
     isExperimentalRuntime: true;
 
-    // Bind the registered services once attached.
-    experimentalAttachServices(storageService: IDocumentStorageService): void;
+    createSummary(): Promise<ISummaryTree>;
 }
 
 export interface IMessageScheduler {
@@ -218,6 +218,14 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
      * back-compat: 0.14 uploadSummary
      */
     refreshBaseSummary(snapshot: ISnapshotTree): void;
+}
+
+export interface IExperimentalContainerContext extends IContainerContext {
+    isExperimentalContainerContext: true;
+
+    isAttached(): boolean;
+
+    createSummary(): Promise<ISummaryTree>;
 }
 
 export interface IProvideComponentTokenProvider {

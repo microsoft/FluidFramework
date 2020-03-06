@@ -193,10 +193,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     constructor(
-        private readonly service: IDocumentService,
+        private readonly serviceProvider: () => IDocumentService | undefined,
         private readonly client: IClient,
         private readonly logger: ITelemetryLogger,
-        private readonly reconnect: boolean) {
+        private readonly reconnect: boolean,
+    ) {
         super();
 
         this.clientDetails = this.client.details;
@@ -310,6 +311,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     public async connect(requestedMode: ConnectionMode = "write"): Promise<IConnectionDetails> {
+        const docService = this.serviceProvider();
+        if (!docService) {
+            throw new Error("Container is not attached");
+        }
         if (this.connection) {
             return this.connection.details;
         }
@@ -333,7 +338,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 connectRepeatCount++;
 
                 try {
-                    connection = await DeltaConnection.connect(this.service, this.client, requestedMode);
+                    connection = await DeltaConnection.connect(docService, this.client, requestedMode);
                 } catch (error) {
                     // Socket.io error when we connect to wrong socket, or hit some multiplexing bug
                     if (!canRetryOnError(error)) {
@@ -471,6 +476,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         fromInitial: number,
         to?: number,
     ): Promise<ISequencedDocumentMessage[]> {
+        const docService = this.serviceProvider();
+        if (!docService) {
+            throw new Error("Delta manager is not attached");
+        }
+
         let retry: number = 0;
         let from: number = fromInitial;
         const allDeltas: ISequencedDocumentMessage[] = [];
@@ -495,7 +505,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             try {
                 // Connect to the delta storage endpoint
                 if (!this.deltaStorageP) {
-                    this.deltaStorageP = this.service.connectToDeltaStorage();
+                    this.deltaStorageP = docService.connectToDeltaStorage();
                 }
 
                 const deltaStorage = await this.deltaStorageP;

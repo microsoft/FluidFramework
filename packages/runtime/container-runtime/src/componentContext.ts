@@ -136,6 +136,11 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this._baseSnapshot;
     }
 
+    public get isAttached(): boolean {
+        return this._isAttached;
+    }
+
+    public readonly attach: (componentRuntime: IComponentRuntime) => void;
     protected componentRuntime: IComponentRuntime;
     private closed = false;
     private loaded = false;
@@ -150,11 +155,16 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         public readonly storage: IDocumentStorageService,
         public readonly scope: IComponent,
         public readonly summaryTracker: SummaryTracker,
-        public readonly attach: (componentRuntime: IComponentRuntime) => void,
+        private _isAttached: boolean,
+        attach: (componentRuntime: IComponentRuntime) => void,
         protected pkg?: readonly string[],
     ) {
         super();
 
+        this.attach = (componentRuntime: IComponentRuntime) => {
+            attach(componentRuntime);
+            this._isAttached = true;
+        };
         // back-compat: 0.14 uploadSummary
         this.summaryTracker.addRefreshHandler(async () => {
             // We do not want to get the snapshot unless we have to.
@@ -472,6 +482,7 @@ export class RemotedComponentContext extends ComponentContext {
             storage,
             scope,
             summaryTracker,
+            true,
             () => {
                 throw new Error("Already attached");
             },
@@ -539,7 +550,7 @@ export class LocalComponentContext extends ComponentContext {
         attachCb: (componentRuntime: IComponentRuntime) => void,
         public readonly createProps?: any,
     ) {
-        super(runtime, id, false, storage, scope, summaryTracker, attachCb, pkg);
+        super(runtime, id, false, storage, scope, summaryTracker, false, attachCb, pkg);
     }
 
     public generateAttachMessage(): IAttachMessage {

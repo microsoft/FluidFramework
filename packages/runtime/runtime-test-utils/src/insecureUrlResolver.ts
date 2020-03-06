@@ -13,6 +13,7 @@ import {
 import { ITokenClaims, IUser, ISummaryTree, ICommittedProposal } from "@microsoft/fluid-protocol-definitions";
 import Axios from "axios";
 import * as jwt from "jsonwebtoken";
+import { getRandomName } from "@microsoft/fluid-server-services-client";
 
 /**
  * As the name implies this is not secure and should not be used in production. It simply makes the example easier
@@ -51,25 +52,7 @@ export class InsecureUrlResolver implements IUrlResolver, IExperimentalUrlResolv
         if (parsedUrl.host === window.location.host) {
             const documentId = parsedUrl.pathname.substr(1).split("/")[0];
 
-            const encodedTenantId = encodeURIComponent(this.tenantId);
-            const encodedDocId = encodeURIComponent(documentId);
-
-            const documentUrl = `fluid://${new URL(this.ordererUrl).host}/${encodedTenantId}${parsedUrl.pathname}`;
-            const deltaStorageUrl = `${this.ordererUrl}/deltas/${encodedTenantId}/${encodedDocId}`;
-            const storageUrl = `${this.storageUrl}/repos/${encodedTenantId}`;
-
-            const response: IFluidResolvedUrl = {
-                endpoints: {
-                    deltaStorageUrl,
-                    ordererUrl: this.ordererUrl,
-                    storageUrl,
-                },
-                tokens: { jwt: this.auth(this.tenantId, documentId) },
-                type: "fluid",
-                url: documentUrl,
-            };
-
-            return response;
+            return this.resolveHelper(documentId);
         } else {
             const maybeResolvedUrl = this.cache.get(request.url);
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -94,13 +77,45 @@ export class InsecureUrlResolver implements IUrlResolver, IExperimentalUrlResolv
         }
     }
 
-    public async experimentalCreate(
+    private resolveHelper(documentId: string) {
+        const encodedTenantId = encodeURIComponent(this.tenantId);
+        const encodedDocId = encodeURIComponent(documentId);
+
+        const documentUrl = `fluid://${new URL(this.ordererUrl).host}/${encodedTenantId}/${encodedDocId}`;
+        const deltaStorageUrl = `${this.ordererUrl}/deltas/${encodedTenantId}/${encodedDocId}`;
+        const storageUrl = `${this.storageUrl}/repos/${encodedTenantId}`;
+
+        const response: IFluidResolvedUrl = {
+            endpoints: {
+                deltaStorageUrl,
+                ordererUrl: this.ordererUrl,
+                storageUrl,
+            },
+            tokens: { jwt: this.auth(this.tenantId, documentId) },
+            type: "fluid",
+            url: documentUrl,
+        };
+        return response;
+    }
+
+    public async createContainer(
         summary: ISummaryTree,
         sequenceNumber: number,
         values: [string, ICommittedProposal][],
-        options: any,
+        request: IRequest,
     ): Promise<IResolvedUrl> {
-        throw new Error("Method not implemented.");
+        const id = getRandomName("-", false);
+
+        await Axios.post(
+            `${this.ordererUrl}/documents/${this.tenantId}`,
+            {
+                id,
+                summary,
+                sequenceNumber,
+                values,
+            });
+
+        return this.resolveHelper(id);
     }
 
     private auth(tenantId: string, documentId: string) {

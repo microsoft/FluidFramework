@@ -43,6 +43,7 @@ const getNav = () => {
                         { text: "Coding guidelines", link: "/contributing/coding-guidelines" },
                         { text: "Building documentation locally", link: "/contributing/building-documentation" },
                         { text: "Routerlicious build machine", link: "/contributing/r11s-build-machine" },
+                        { text: "Compatibility", link: "/contributing/compatibility" },
                         { text: "Miscellaneous", link: "/contributing/misc" },
                     ]
                 },

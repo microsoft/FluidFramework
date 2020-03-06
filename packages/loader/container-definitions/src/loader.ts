@@ -33,19 +33,20 @@ export interface ICodeWhiteList {
 }
 
 export interface IContainer extends EventEmitter {
+
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 
     getQuorum(): IQuorum;
 }
 
-export interface IExperimentalContainer {
+export interface IExperimentalContainer extends IContainer {
 
-    readonly isExperimentalContainer: true;
+    isExperimentalContainer: true;
 
     /**
      * Flag indicating if the given container has been attached to a host service.
      */
-    experimentalIsAttached(): boolean;
+    isAttached(): boolean;
 
     /**
      * Attaches the container to the provided host.
@@ -53,10 +54,11 @@ export interface IExperimentalContainer {
      * TODO - in the case of failure options should give a retry policy. Or some continuation function
      * that allows attachment to a secondary document.
      */
-    experimentalAttach(resolver: IUrlResolver, options: any): Promise<void>;
+    attach(resolver: IUrlResolver, request: IRequest): Promise<void>;
 }
 
 export interface ILoader {
+
     /**
      * Loads the resource specified by the URL + headers contained in the request object.
      */
@@ -72,7 +74,7 @@ export interface ILoader {
     resolve(request: IRequest): Promise<IContainer>;
 }
 
-export interface IExperimentalLoader {
+export interface IExperimentalLoader extends ILoader {
 
     isExperimentalLoader: true;
 
@@ -80,7 +82,7 @@ export interface IExperimentalLoader {
      * Creates a new contanier using the specified chaincode but in an unattached state. While unattached all
      * updates will only be local until the user explciitly attaches the container to a service provider.
      */
-    experimentalCreateDetachedContainer(source: IFluidCodeDetails): Promise<IContainer>;
+    createDetachedContainer(source: IFluidCodeDetails): Promise<IContainer>;
 }
 
 export enum LoaderHeader {
