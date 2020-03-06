@@ -1,15 +1,29 @@
+# 0.15 Breaking Changes
+- [Container.autoReconnect & Container.reconnect changes](#Container.reconnect-Container.reconnect-changes)
+
+## Container.reconnect, Container.reconnect changes
+autReconnect property is gone, as well as reconnect() method.<br/>
+Use Container.setAutoReconnect() instead.
+
+Note that there is difference in behavior. It used to be that one needed to do
+```
+Container.autoReconnect = false;
+Container.reconnect()
+```
+in order to trigger reconnect. Now, calling Container.setAutoReconnect(true) is enough.
+
 # 0.14 Breaking Changes
 
 - [Packages move and renamed](#packages-moved-and-renamed)
 - [Top-level `type` on `IClient` removed](#top-level-type-on-iclient-removed)
-- [Remove back-compat support for loader <= 0.8](#remove-back-compat-support-for-loader-08)
+- [Remove back-compat support for loader <= 0.8](#remove-back-compat-support-for-loader--0.8)
 - [New Error types](#new-error-types)
-- [`IComponentContext` - `createSubComponent` removed, `createComponent` signature updated](#icomponentcontext-createsubcomponent-removed-createcomponent-signature-updated)
-- [`IComponentHandle` - Moved type parameter from get to interface](#icomponenthandle-type-parameter-moved)
+- [`IComponentContext` - `createSubComponent` removed, `createComponent` signature updated](#icomponentcontext---createsubcomponent-removed-createcomponent-signature-updated)
+- [`IComponentHandle` - Moved type parameter from get to interface](#icomponenthandle---type-parameter-moved)
 - [Changes to the render interfaces](#changes-to-the-render-interfaces)
 - [Old runtime container cannot load new components](#old-runtime-container-cannot-load-new-components)
 
-## Packages move and renamed
+## Packages moved and renamed
 
 ### `fluid-core-utils` package renamed
 

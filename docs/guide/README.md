@@ -54,7 +54,7 @@ You can use any code editor or IDE that supports TypeScript to build with Fluid,
 
 You'll need [Git](https://git-scm.com/) to use the [Fluid tutorials](../examples/README.md).
 
-#### Install a Chromium-based browser
+#### Install a modern browser
 
 !!!include(../includes/browsers.md)!!!
 

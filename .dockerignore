@@ -1,10 +1,12 @@
 *
 !*.json
+!*.md
 !.npmrc
 !_api-extractor-temp/**
 !LICENSE.txt
 !packages/**
 !examples/components/**
+!examples/hosts/iframe-host/**
 !server/routerlicious
 !docs/**
 !tools/build-server-resources/**

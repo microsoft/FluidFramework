@@ -226,6 +226,8 @@ export class ProgressCollection
 }
 
 class ProgressBarsFactory implements IComponentFactory {
+    public static readonly type = "@fluid-example/progress-bars";
+    public readonly type = ProgressBarsFactory.type;
 
     public get IComponentFactory() { return this; }
 

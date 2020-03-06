@@ -6,7 +6,7 @@
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { PerformanceEvent, Deferred } from "@microsoft/fluid-common-utils";
 import { ISocketStorageDiscovery } from "./contracts";
-import { OdspCache } from "./odspCache";
+import { IOdspCache } from "./odspCache";
 import { fetchHelper, getWithRetryForTokenRefresh, throwOdspNetworkError } from "./odspUtils";
 import { isOdcOrigin } from "./isOdc";
 
@@ -43,7 +43,8 @@ export async function fetchJoinSession(
             throwOdspNetworkError("Failed to acquire Vroom token", 400, true);
         }
 
-        const joinSessionEvent = PerformanceEvent.start(logger, { eventName: "JoinSession" });
+        const extraProps = refresh ? {secondAttempt: 1} : {};
+        const joinSessionEvent = PerformanceEvent.start(logger, { eventName: "JoinSession", ...extraProps});
         try {
             // TODO Extract the auth header-vs-query logic out
             const siteOrigin = getOrigin(siteUrl);
@@ -95,7 +96,7 @@ export async function getSocketStorageDiscovery(
     siteUrl: string,
     logger: ITelemetryLogger,
     getVroomToken: (refresh: boolean, name?: string) => Promise<string | undefined | null>,
-    odspCache: OdspCache,
+    cache: IOdspCache,
     joinSessionKey: string,
 ): Promise<ISocketStorageDiscovery> {
     // We invalidate the cache here because we will take the decision to put the joinsession result
@@ -104,19 +105,16 @@ export async function getSocketStorageDiscovery(
     // consecutive join session calls because the server moved. If there is nothing in cache or the
     // response was cached an hour ago, then we make the join session call again. Never expire the
     // joinsession result. On error, the delta connection will invalidate it.
-    const cachedResultP: Promise<IOdspJoinSessionCachedItem> = odspCache.get(joinSessionKey);
+    const cachedResultP: Promise<ISocketStorageDiscovery> = await cache.sessionStorage.get(joinSessionKey);
     if (cachedResultP !== undefined) {
-        const cachedResult = await cachedResultP;
-        if (Date.now() - cachedResult.timestamp <= 3600000 && cachedResult.content) {
-            odspCache.put(joinSessionKey, Promise.resolve({ content: cachedResult.content, timestamp: Date.now() }));
-            return cachedResult.content;
-        }
-        // Invalidating the cache because it is stale.
-        odspCache.remove(joinSessionKey);
+        const content = await cachedResultP;
+        // Update result to keep it alive for another hour
+        cache.sessionStorage.put(joinSessionKey, Promise.resolve(content), 3600000);
+        return content;
     }
 
-    const responseDeferredP = new Deferred<IOdspJoinSessionCachedItem>();
-    odspCache.put(joinSessionKey, responseDeferredP.promise);
+    const responseDeferredP = new Deferred<ISocketStorageDiscovery>();
+    cache.sessionStorage.put(joinSessionKey, responseDeferredP.promise);
     let response: ISocketStorageDiscovery;
     try {
         response = await fetchJoinSession(
@@ -136,15 +134,10 @@ export async function getSocketStorageDiscovery(
         }
     } catch (error) {
         responseDeferredP.reject(error);
-        odspCache.remove(joinSessionKey);
-        throw error;
+        cache.sessionStorage.remove(joinSessionKey);
+        return responseDeferredP.promise;
     }
-    responseDeferredP.resolve({ content: response, timestamp: Date.now() });
+    responseDeferredP.resolve(response);
 
     return response;
-}
-
-interface IOdspJoinSessionCachedItem {
-    content: ISocketStorageDiscovery;
-    timestamp: number;
 }

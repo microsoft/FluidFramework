@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/table-document",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "description": "Chaincode component containing a table's data",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -12,7 +12,6 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
-    "build:compile:min": "npm run build:compile",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
@@ -21,7 +20,7 @@
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
-    "test": "test:mocha",
+    "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml --exit",
     "test:mocha": "mocha -r ts-node/register -r source-map-support/register -r ignore-styles --recursive test/**/*.spec.ts --exit -r make-promises-safe",
     "tsc": "tsc"
@@ -43,18 +42,18 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@microsoft/fluid-aqueduct": "^0.14.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.14.0",
-    "@microsoft/fluid-merge-tree": "^0.14.0",
-    "@microsoft/fluid-runtime-definitions": "^0.14.0",
-    "@microsoft/fluid-sequence": "^0.14.0",
+    "@microsoft/fluid-aqueduct": "^0.15.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.15.0",
+    "@microsoft/fluid-merge-tree": "^0.15.0",
+    "@microsoft/fluid-runtime-definitions": "^0.15.0",
+    "@microsoft/fluid-sequence": "^0.15.0",
     "@tiny-calc/micro": "0.0.18374",
     "debug": "^4.1.1"
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.14.0",
     "@microsoft/fluid-build-common": "^0.14.0",
-    "@microsoft/fluid-local-test-utils": "^0.14.0",
+    "@microsoft/fluid-local-test-utils": "^0.15.0",
     "@types/debug": "^0.0.31",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.14.6",
@@ -72,7 +71,7 @@
     "make-promises-safe": "^5.1.0",
     "mocha": "^5.2.0",
     "mocha-junit-reporter": "^1.18.0",
-    "nyc": "^14.1.1",
+    "nyc": "^15.0.0",
     "rimraf": "^2.6.2",
     "ts-node": "^7.0.1",
     "typescript": "~3.7.4"
