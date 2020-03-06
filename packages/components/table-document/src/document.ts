@@ -68,8 +68,8 @@ export class TableDocument extends PrimedComponent implements ITable {
         return this.matrix.getItem(row, col);
     }
 
-    public setCellValue(row: number, col: number, value: TableDocumentItem, props?: PropertySet) {
-        this.matrix.setItems(row, col, [value], props);
+    public setCellValue(row: number, col: number, value: TableDocumentItem, properties?: PropertySet) {
+        this.matrix.setItems(row, col, [value], properties);
         this.workbook.invalidate(row, col);
     }
 
@@ -106,8 +106,8 @@ export class TableDocument extends PrimedComponent implements ITable {
         return this.maybeCols.getPropertiesAtPosition(col);
     }
 
-    public annotateCell(row: number, col: number, properties: PropertySet, op?: ICombiningOp) {
-        this.matrix.annotatePosition(row, col, properties, op);
+    public annotateCell(row: number, col: number, properties: PropertySet) {
+        this.matrix.annotatePosition(row, col, properties);
     }
 
     public getCellProperties(row: number, col: number): PropertySet {
