@@ -244,7 +244,9 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             }
 
             if (lastPkg !== factory.type) {
-                return this.rejectDeferredRealize(`Expected package name '${factory.type}', but got '${lastPkg}'.`);
+                this.hostRuntime.logger.sendErrorEvent({
+                    eventName: "ComponentFactoryTypeError"
+                }, `Expected package name '${factory.type}', but got '${lastPkg}'.`);
             }
 
             // During this call we will invoke the instantiate method - which will call back into us
