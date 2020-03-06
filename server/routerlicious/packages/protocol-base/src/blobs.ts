@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { gitHashFile } from "@microsoft/fluid-core-utils";
+import { gitHashFile } from "@microsoft/fluid-common-utils";
 import * as git from "@microsoft/fluid-gitresources";
 import {
     FileMode,
@@ -13,6 +13,8 @@ import {
     ITree,
     ITreeEntry,
     TreeEntry,
+    SummaryType,
+    SummaryObject,
 } from "@microsoft/fluid-protocol-definitions";
 
 /**
@@ -80,6 +82,47 @@ function flattenCore(path: string, treeEntries: ITreeEntry[], blobMap: Map<strin
     }
 
     return entries;
+}
+
+/**
+ * Take a summary object and returns its git mode.
+ *
+ * @param value - summary object
+ * @returns the git mode of summary object
+ */
+export function getGitMode(value: SummaryObject): string {
+    const type = value.type === SummaryType.Handle ? value.handleType : value.type;
+    switch (type) {
+        case SummaryType.Blob:
+            return FileMode.File;
+        case SummaryType.Commit:
+            return FileMode.Commit;
+        case SummaryType.Tree:
+            return FileMode.Directory;
+        default:
+            throw new Error();
+    }
+}
+
+/**
+ * Take a summary object and returns its type.
+ *
+ * @param value - summary object
+ * @returns the type of summary object
+ */
+export function getGitType(value: SummaryObject): string {
+    const type = value.type === SummaryType.Handle ? value.handleType : value.type;
+
+    switch (type) {
+        case SummaryType.Blob:
+            return "blob";
+        case SummaryType.Commit:
+            return "commit";
+        case SummaryType.Tree:
+            return "tree";
+        default:
+            throw new Error();
+    }
 }
 
 /**

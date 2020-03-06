@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/sudoku",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "description": "Fluid Sudoku",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -11,7 +11,6 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
-    "build:compile:min": "npm run build:compile",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "concurrently npm:build npm:webpack",
     "build:full:compile": "concurrently npm:build:compile npm:webpack",
@@ -21,10 +20,13 @@
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
+    "prepack": "npm run webpack",
     "start": "npm run start:local",
     "start:docker": "webpack-dev-server --config webpack.config.js --package package.json --env.mode docker",
-    "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
     "start:local": "webpack-dev-server --config webpack.config.js --package package.json --env.mode local",
+    "start:r11s": "webpack-dev-server --config webpack.config.js --package package.json --env.mode r11s",
+    "start:spo": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo",
+    "start:spo-df": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo-df",
     "tsc": "tsc",
     "webpack": "webpack --env.production",
     "webpack:dev": "webpack --env.development"
@@ -33,10 +35,10 @@
     "*.spec.ts"
   ],
   "dependencies": {
-    "@microsoft/fluid-aqueduct": "^0.14.0",
-    "@microsoft/fluid-aqueduct-react": "^0.14.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.14.0",
-    "@microsoft/fluid-map": "^0.14.0",
+    "@microsoft/fluid-aqueduct": "^0.15.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.15.0",
+    "@microsoft/fluid-map": "^0.15.0",
+    "@microsoft/fluid-view-adapters": "^0.15.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2",
     "sudokus": "^1.0.2"
@@ -44,7 +46,7 @@
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.14.0",
     "@microsoft/fluid-build-common": "^0.14.0",
-    "@microsoft/fluid-webpack-component-loader": "^0.14.0",
+    "@microsoft/fluid-webpack-component-loader": "^0.15.0",
     "@prague/url-generator": "^1.0.4",
     "@types/node": "^10.14.6",
     "@types/react": "^16.9.15",

@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-odsp-utils",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "description": "ODSP utilities",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -12,7 +12,6 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
-    "build:compile:min": "npm run build:compile",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
@@ -24,12 +23,11 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "request": "^2.88.0"
+    "axios": "^0.18.0"
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.14.0",
     "@microsoft/fluid-build-common": "^0.14.0",
-    "@types/request": "^2.47.1",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",
     "concurrently": "^4.1.0",

@@ -121,7 +121,7 @@ Both markers and text are stored as segments in the Shared String. Text segments
 - Rich Text Editor Implementations
   - packages\components\webflow\
   - packages\components\markflow\
-  - packages\components\client-ui\src\controls\flowView.ts
+  - packages\components\client-ui-lib\src\controls\flowView.ts
 
 - Integrations with Open Source Rich Text Editors
   - examples\components\prosemirror\

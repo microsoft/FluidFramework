@@ -1,3 +1,6 @@
+<!-- Copyright (c) Microsoft Corporation. All rights reserved. -->
+<!-- Licensed under the MIT License. -->
+
 <html>
 <header>
 
@@ -15,20 +18,29 @@ this will place the localLoader entrypoint on the page
 
 
 <body>
-    <div id="content1" style="width: 48%; min-height: 100vh; display: inline-block; position: relative"></div>
-    <div id="content2" style="width: 48%; min-height: 100vh; display: inline-block; position: relative"></div>
-
+    <table width="100%" border="1">
+        <tr>
+            <td width="50%"><div id="content1"></div></td>
+            <td width="50%"><div id="content2"></div></td>
+        </tr>
+    </table>
     <script>
-        localLoader.createContainer(main)
-            .then((container)=>{
+        localLoader.createLocalContainerFactory(main)
+            .then((containerFactory)=>{
 
-                localLoader.renderDefaultComponent(
-                    container,
-                    document.getElementById("content1"))
+                containerFactory()
+                    .then((container)=>{
+                        localLoader.renderDefaultComponent(
+                            container,
+                            document.getElementById("content1"));
+                    });
 
-                localLoader.renderDefaultComponent(
-                    container,
-                    document.getElementById("content2"))
+                containerFactory()
+                    .then((container)=>{
+                        localLoader.renderDefaultComponent(
+                            container,
+                            document.getElementById("content2"));
+                    });
             });
     </script>
 </body>

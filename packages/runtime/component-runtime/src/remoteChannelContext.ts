@@ -18,8 +18,8 @@ import {
     IChannelAttributes,
     IComponentContext,
     IComponentRuntime,
+    ISummaryTracker,
 } from "@microsoft/fluid-runtime-definitions";
-import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ISharedObjectRegistry } from "./componentRuntime";
@@ -29,7 +29,6 @@ type RequiredIChannelAttributes = Pick<IChannelAttributes, "type"> & Partial<ICh
 
 export class RemoteChannelContext implements IChannelContext {
     private connection: ChannelDeltaConnection | undefined;
-    private readonly summaryTracker = new SummaryTracker();
     private isLoaded = false;
     private pending: ISequencedDocumentMessage[] | undefined = [];
     private channelP: Promise<IChannel> | undefined;
@@ -45,6 +44,7 @@ export class RemoteChannelContext implements IChannelContext {
         private readonly registry: ISharedObjectRegistry,
         private readonly extraBlobs: Map<string, string>,
         private readonly branch: string,
+        private readonly summaryTracker: ISummaryTracker,
         private readonly attributes: RequiredIChannelAttributes | undefined,
     ) {}
 
@@ -73,7 +73,7 @@ export class RemoteChannelContext implements IChannelContext {
     }
 
     public processOp(message: ISequencedDocumentMessage, local: boolean): void {
-        this.summaryTracker.invalidate();
+        this.summaryTracker.updateLatestSequenceNumber(message.sequenceNumber);
 
         if (this.isLoaded) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -86,18 +86,15 @@ export class RemoteChannelContext implements IChannelContext {
     }
 
     public async snapshot(fullTree: boolean = false): Promise<ITree> {
-        const baseId = this.summaryTracker.getBaseId();
-        // eslint-disable-next-line no-null/no-null
-        if (baseId !== null && !fullTree) {
-            return { id: baseId, entries: [] };
+        if (!fullTree) {
+            const id = await this.summaryTracker.getId();
+            if (id !== undefined) {
+                return { id, entries: [] };
+            }
         }
-        this.summaryTracker.reset();
-        const channel = await this.getChannel();
-        return snapshotChannel(channel, baseId);
-    }
 
-    public refreshBaseSummary(snapshot: ISnapshotTree) {
-        this.summaryTracker.setBaseTree(snapshot);
+        const channel = await this.getChannel();
+        return snapshotChannel(channel);
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async

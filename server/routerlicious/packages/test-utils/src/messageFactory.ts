@@ -77,7 +77,7 @@ export class MessageFactory {
 
     public createDocumentMessage(referenceSequenceNumber = 0): IDocumentMessage {
         const operation: IDocumentMessage = {
-            clientSequenceNumber: this.clientSequenceNumber++,
+            clientSequenceNumber: ++this.clientSequenceNumber,
             contents: null,
             metadata: undefined,
             referenceSequenceNumber,
@@ -98,7 +98,6 @@ export class MessageFactory {
             detail: {
                 permission: [],
                 scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
-                type: "browser", // Back-compat: 0.11 clientType
                 details: {
                     capabilities: { interactive: true },
                 },

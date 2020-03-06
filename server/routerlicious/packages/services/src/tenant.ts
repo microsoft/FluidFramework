@@ -32,13 +32,13 @@ export class Tenant implements core.ITenant {
  * Manages a collection of tenants
  */
 export class TenantManager implements core.ITenantManager {
-    constructor(private readonly endpoint: string, private readonly historianEndpoint: string) {
+    constructor(private readonly endpoint: string) {
     }
 
     public async getTenant(tenantId: string): Promise<core.ITenant> {
         const details = await Axios.get<core.ITenantConfig>(`${this.endpoint}/api/tenants/${tenantId}`);
         const historian = new Historian(
-            `${this.historianEndpoint}/repos/${encodeURIComponent(tenantId)}`,
+            `${details.data.storage.internalHistorianUrl}/repos/${encodeURIComponent(tenantId)}`,
             true,
             false);
         const gitManager = new GitManager(historian);

@@ -4,7 +4,7 @@
  */
 
 import * as http from "http";
-import { Deferred } from "@microsoft/fluid-core-utils";
+import { Deferred } from "@microsoft/fluid-common-utils";
 import { MongoManager } from "@microsoft/fluid-server-services-core";
 import * as utils from "@microsoft/fluid-server-services-utils";
 import * as winston from "winston";
@@ -19,7 +19,10 @@ export class RiddlerRunner implements utils.IRunner {
         private readonly port: string | number,
         private readonly mongoManager: MongoManager,
         private readonly loggerFormat: string,
-        private readonly baseOrdererUrl: string) {
+        private readonly baseOrdererUrl: string,
+        private readonly defaultHistorianUrl: string,
+        private readonly defaultInternalHistorianUrl: string,
+    ) {
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -27,7 +30,13 @@ export class RiddlerRunner implements utils.IRunner {
         this.runningDeferred = new Deferred<void>();
 
         // Create the HTTP server and attach alfred to it
-        const riddler = app.create(this.collectionName, this.mongoManager, this.loggerFormat, this.baseOrdererUrl);
+        const riddler = app.create(
+            this.collectionName,
+            this.mongoManager,
+            this.loggerFormat,
+            this.baseOrdererUrl,
+            this.defaultHistorianUrl,
+            this.defaultInternalHistorianUrl);
         riddler.set("port", this.port);
 
         this.server = http.createServer(riddler);

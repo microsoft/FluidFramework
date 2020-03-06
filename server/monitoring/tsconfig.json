@@ -1,19 +1,16 @@
 {    
+    "extends": "@microsoft/fluid-build-common/ts-common-config.json",
     "exclude": [
         "dist",
         "node_modules"
     ],
     "compilerOptions": {
-        "target": "es6",
-        "declaration": false,
-        "moduleResolution": "node",
-        "module": "commonjs",
-        "noImplicitAny": true,
-        "noUnusedLocals": true,
-        "outDir": "dist",
+        "strict": true,
+        "strictNullChecks": false,
         "rootDir": "./src",
-        "sourceMap": true,
-        "inlineSources": true
+        "outDir": "./dist",
+        "types": [ "mocha" ],
+        "skipLibCheck": true
     },
     "include": [
         "src/**/*"

@@ -194,20 +194,50 @@ export interface IComponentRuntime extends EventEmitter, IComponentRouter, Parti
     error(err: any): void;
 }
 
+export interface ISummaryTracker {
+    /**
+     * The reference sequence number of the most recent acked summary.
+     */
+    readonly referenceSequenceNumber: number;
+    /**
+     * The latest sequence number of change to this node or subtree.
+     */
+    readonly latestSequenceNumber: number;
+    /**
+     * Gets the id to use when summarizing, or undefined if it has changed.
+     */
+    getId(): Promise<string | undefined>;
+    /**
+     * Fetches the snapshot tree of the previously acked summary.
+     * back-compat: 0.14 uploadSummary
+     */
+    getSnapshotTree(): Promise<ISnapshotTree | undefined>;
+    /**
+     * Updates the latest sequence number representing change to this node or subtree.
+     * @param latestSequenceNumber - new latest sequence number
+     */
+    updateLatestSequenceNumber(latestSequenceNumber: number): void;
+    /**
+     * Creates a child ISummaryTracker node based off information from its parent.
+     * @param key - key of node for newly created child ISummaryTracker
+     * @param latestSequenceNumber - inital value for latest sequence number of change
+     */
+    createOrGetChild(key: string, latestSequenceNumber: number): ISummaryTracker;
+}
+
 /**
  * Represents the context for the component. This context is passed to the component runtime.
  */
 export interface IComponentContext extends EventEmitter {
     readonly documentId: string;
     readonly id: string;
+    /**
+     * The package path of the component as per the package factory.
+     */
+    readonly packagePath: readonly string[];
     readonly existing: boolean;
     readonly options: any;
     readonly clientId: string;
-    /**
-     * DEPRECATED use hostRuntime.clientDetails.type instead
-     * back-compat: 0.11 clientType
-     */
-    readonly clientType: string;
     readonly parentBranch: string;
     readonly connected: boolean;
     readonly leader: boolean;
@@ -227,6 +257,8 @@ export interface IComponentContext extends EventEmitter {
      * Ambient services provided with the context
      */
     readonly scope: IComponent;
+
+    readonly summaryTracker: ISummaryTracker;
 
     /**
      * Returns the current quorum.
@@ -255,18 +287,14 @@ export interface IComponentContext extends EventEmitter {
     submitSignal(type: string, content: any): void;
 
     /**
-     * Creates a new component.
-     * @param pkgOrId - Package name if a second parameter is not provided. Otherwise an explicit ID.
-     * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
-     */
-    createComponent(pkgOrId: string, pkg?: string | string[]): Promise<IComponentRuntime>;
-
-    /**
      * Creates a new component by using subregistries.
-     * @param pkg - Package name of the component.
-     * @param props - properties to be passed to the instantiateComponent thru the context.
+     * @param pkgOrId - Package name if a second parameter is not provided. Otherwise an explicit ID.
+     *                  ID is being deprecated, so prefer passing undefined instead (the runtime will
+     *                  generate an ID in this case).
+     * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
+     * @param props - Properties to be passed to the instantiateComponent through the context.
      */
-    createSubComponent(pkg: string | string[], props?: any): Promise<IComponentRuntime>;
+    createComponent(pkgOrId: string | undefined, pkg?: string, props?: any): Promise<IComponentRuntime>;
 
     /**
      * Returns the runtime of the component.
@@ -321,11 +349,6 @@ export interface IHostRuntime extends
     readonly existing: boolean;
     readonly options: any;
     readonly clientId: string;
-    /**
-     * DEPRECATED use clientDetails.type instead
-     * back-compat: 0.11 clientType
-     */
-    readonly clientType: string;
     readonly clientDetails: IClientDetails;
     readonly parentBranch: string;
     readonly connected: boolean;
@@ -342,6 +365,7 @@ export interface IHostRuntime extends
     readonly submitSignalFn: (contents: any) => void;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly closeFn: () => void;
+    readonly scope: IComponent;
 
     /**
      * Returns the runtime of the component.

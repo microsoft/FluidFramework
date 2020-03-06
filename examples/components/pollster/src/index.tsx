@@ -4,7 +4,7 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
-import { IComponentHTMLVisual, IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHTMLView, IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -16,8 +16,8 @@ import { Poll } from "./view/Poll";
 const pkg = require("../package.json");
 const chaincodeName = pkg.name;
 
-export class Pollster extends PrimedComponent implements IComponentHTMLVisual {
-    public get IComponentHTMLVisual() { return this; }
+export class Pollster extends PrimedComponent implements IComponentHTMLView {
+    public get IComponentHTMLView() { return this; }
 
     protected async componentInitializingFirstTime() {
         this.root.set(pollOptionsMapKey, SharedMap.create(this.runtime).handle);
@@ -25,8 +25,8 @@ export class Pollster extends PrimedComponent implements IComponentHTMLVisual {
     }
 
     public async render(div: HTMLDivElement) {
-        const optionsMap = await this.root.get<IComponentHandle>(pollOptionsMapKey).get<ISharedMap>();
-        const votersMap = await this.root.get<IComponentHandle>(pollVotersMapKey).get<ISharedMap>();
+        const optionsMap = await this.root.get<IComponentHandle<ISharedMap>>(pollOptionsMapKey).get();
+        const votersMap = await this.root.get<IComponentHandle<ISharedMap>>(pollVotersMapKey).get();
 
         // Render Component
         ReactDOM.render(

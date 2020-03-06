@@ -8,9 +8,8 @@ import {
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import {
-    IComponentHTMLVisual,
+    IComponentHTMLView,
     IComponentHandle,
-    IComponentHTMLRender,
 } from "@microsoft/fluid-component-core-interfaces";
 import {
     IComponentContext,
@@ -35,11 +34,8 @@ const divHTML = require("./styles/github-comment-only.html");
 /* eslint-enable @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, import/no-internal-modules,
 import/no-unassigned-import */
 
-export class GithubComment
-    extends TextareaNoReact
-    implements IComponentHTMLVisual, IComponentHTMLRender {
-    public get IComponentHTMLVisual() { return this; }
-    public get IComponentHTMLRender() { return this; }
+export class GithubComment extends TextareaNoReact implements IComponentHTMLView {
+    public get IComponentHTMLView() { return this; }
 
     /**
    * Extension of the parent class function that also forces the innerHTML of
@@ -74,8 +70,8 @@ export class GithubComment
 
         // Update textareaState and register listener:
         const textareaString =
-            await this.root.get<IComponentHandle>(this.textareaRootKey)
-                .get<SharedString>();
+            await this.root.get<IComponentHandle<SharedString>>(this.textareaRootKey)
+                .get();
         this.textareaState.text = textareaString.getText();
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         textareaString.on("sequenceDelta", this.handleIncomingChange);

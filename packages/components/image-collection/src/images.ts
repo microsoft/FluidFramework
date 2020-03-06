@@ -8,7 +8,7 @@ import {
     IComponent,
     IComponentHandleContext,
     IComponentHTMLOptions,
-    IComponentHTMLVisual,
+    IComponentHTMLView,
     IComponentLoadable,
     IComponentRouter,
     IRequest,
@@ -22,9 +22,9 @@ import { IComponentContext, IComponentFactory, IComponentRuntime } from "@micros
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 
 export class ImageComponent implements
-    IComponentLoadable, IComponentHTMLVisual, IComponentRouter, IComponentLayout {
+    IComponentLoadable, IComponentHTMLView, IComponentRouter, IComponentLayout {
     public get IComponentLoadable() { return this; }
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
     public get IComponentRouter() { return this; }
     public get IComponentLayout() { return this; }
 
@@ -160,16 +160,16 @@ export class ImageCollectionFactoryComponent implements IComponentFactory {
         const dataTypes = new Map<string, ISharedObjectFactory>();
         dataTypes.set(MapFactory.Type, new MapFactory());
 
-        ComponentRuntime.load(
+        const runtime = ComponentRuntime.load(
             context,
             dataTypes,
-            (runtime) => {
-                const progressCollectionP = ImageCollection.load(runtime, context);
-                runtime.registerRequestHandler(async (request: IRequest) => {
-                    const progressCollection = await progressCollectionP;
-                    return progressCollection.request(request);
-                });
-            });
+        );
+
+        const progressCollectionP = ImageCollection.load(runtime, context);
+        runtime.registerRequestHandler(async (request: IRequest) => {
+            const progressCollection = await progressCollectionP;
+            return progressCollection.request(request);
+        });
     }
 }
 

@@ -8,7 +8,7 @@ import {
     PrimedComponentFactory,
     SimpleModuleInstantiationFactory,
 } from "@microsoft/fluid-aqueduct";
-import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
 import { SharedMap } from "@microsoft/fluid-map";
 import { SharedString } from "@microsoft/fluid-sequence";
 
@@ -22,8 +22,8 @@ import { MemberList } from "./MemberList";
 const pkg = require("../package.json");
 export const DraftJsName = pkg.name as string;
 
-export class DraftJsExample extends PrimedComponent implements IComponentHTMLVisual {
-    public get IComponentHTMLVisual() { return this; }
+export class DraftJsExample extends PrimedComponent implements IComponentHTMLView {
+    public get IComponentHTMLView() { return this; }
 
     /**
      * Do setup work here

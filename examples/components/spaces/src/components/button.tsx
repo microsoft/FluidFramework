@@ -8,7 +8,7 @@ import {
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import {
-    IComponentHTMLVisual,
+    IComponentHTMLView,
 } from "@microsoft/fluid-component-core-interfaces";
 
 import * as React from "react";
@@ -34,12 +34,19 @@ const textStyle: React.CSSProperties = {
     cursor: "pointer",
 };
 
+export const ButtonName = "button";
+
 /**
  * Clicker example using view interfaces and stock component classes.
  */
-export class Button extends PrimedComponent implements IComponentHTMLVisual {
+export class Button extends PrimedComponent implements IComponentHTMLView {
+    public get IComponentHTMLView() { return this; }
 
-    public get IComponentHTMLVisual() { return this; }
+    private static readonly factory = new PrimedComponentFactory(Button, []);
+
+    public static getFactory() {
+        return Button.factory;
+    }
 
     protected async componentHasInitialized() {
         // Register with our manager to say that we support clicks
@@ -58,11 +65,3 @@ export class Button extends PrimedComponent implements IComponentHTMLVisual {
             div);
     }
 }
-
-/**
- * This is where you define all your Distributed Data Structures and Value Types
- */
-export const ButtonInstantiationFactory = new PrimedComponentFactory(
-    Button,
-    [],
-);

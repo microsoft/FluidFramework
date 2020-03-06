@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-build-common",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "description": "Package containing common configs",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -11,7 +11,7 @@
   },
   "scripts": {},
   "peerDependencies": {
-    "typescript": ">=3.7.4",
-    "api-extractor": ">=7.7.2"
+    "api-extractor": ">=7.7.2",
+    "typescript": ">=3.7.4"
   }
 }

@@ -11,7 +11,7 @@
         "permissions": {
             "paparazziQueue": ["snapshot", "spell", "intel", "translation"],
             "augloopQueue": ["augmentation"],
-            "headlessQueue": ["chain-snapshot", "chain-intel", "chain-translation", "chain-spell", "chain-cache"]
+            "headlessQueue": ["chain-snapshot", "chain-intel", "chain-translation", "chain-spell", "chain-cache", "chain-search"]
         }
     },
     "alfred": {
@@ -31,6 +31,10 @@
         }
     },
     "storage": "/var/lib/tinylicious",
+    "db": {
+        "inMemory": false,
+        "path": "/var/lib/db"
+    },
     "error": {
         "track": false,
         "endpoint" : ""

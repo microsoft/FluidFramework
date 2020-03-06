@@ -10,7 +10,7 @@ import {
     IDeltaQueue,
     IDeltaSender,
 } from "@microsoft/fluid-container-definitions";
-import { EventForwarder } from "@microsoft/fluid-core-utils";
+import { EventForwarder } from "@microsoft/fluid-common-utils";
 import {
     ConnectionMode,
     IClientDetails,
@@ -106,14 +106,6 @@ export class DeltaManagerProxy
         return this.deltaManager.initialSequenceNumber;
     }
 
-    /**
-     * DEPRECATED use clientDetails.type
-     * back-compat: 0.11 clientType
-     */
-    public get clientType(): string {
-        return this.deltaManager.clientType;
-    }
-
     public get clientDetails(): IClientDetails {
         return this.deltaManager.clientDetails;
     }
@@ -132,6 +124,10 @@ export class DeltaManagerProxy
 
     public get active(): boolean {
         return this.deltaManager.active;
+    }
+
+    public get readonly(): boolean | undefined {
+        return this.deltaManager.readonly;
     }
 
     constructor(private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>) {

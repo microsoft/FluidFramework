@@ -42,8 +42,8 @@
             "type": "node",
             "request": "launch",
             "name": "Flow-Util Tests",
-            "cwd": "${workspaceFolder}/packages/components/flow-util",
-            "program": "${workspaceFolder}/packages/components/flow-util/node_modules/ts-mocha/bin/ts-mocha",
+            "cwd": "${workspaceFolder}/packages/components/flow-util-lib",
+            "program": "${workspaceFolder}/packages/components/flow-util-lib/node_modules/ts-mocha/bin/ts-mocha",
             "args": [
                 // Note: 'ignore-styles' must be after 'ts-node', otherwise 'ignore-styles' will intercept
                 //       'index.ts' files if there is an 'index.css' in the same directory.
@@ -64,7 +64,7 @@
             "type": "node",
             "request": "launch",
             "name": "Table Tests",
-            "cwd": "${workspaceFolder}/packages/components/table-test",
+            "cwd": "${workspaceFolder}/packages/components/table-test-lib",
             "program": "${workspaceFolder}/packages/components/webflow/node_modules/mocha/bin/_mocha",
             "args": [
                 "-r",
@@ -73,30 +73,6 @@
                 "src/**/*.spec.ts",
                 // "src/**/table.spec.ts",
                 // "src/**/sparsematrix.spec.ts",
-                "--exit"
-            ],
-            "env": {
-                // "DEBUG": "*,-socket.io*,-engine.io*,-follow-redirects",
-                "RUSH_ROOT": "${workspaceFolder}",
-                "TS_NODE_PROJECT": "tsconfig.json"
-            },
-            "console": "integratedTerminal",
-            "skipFiles": [
-                "<node_internals>/**/*.js"
-            ]
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Local Server Tests",
-            "cwd": "${workspaceFolder}/packages/server/local-test-server",
-            "program": "${workspaceFolder}/common/tools/node_modules/mocha/bin/_mocha",
-            "args": [
-                "-r",
-                "${workspaceFolder}/common/tools/node_modules/ts-node/register",
-                "--no-timeouts",
-                "src/test/**/*.ts",
-                // "src/test/**/sharedInterval.spec.ts",
                 "--exit"
             ],
             "env": {
@@ -319,26 +295,6 @@
             },
             "args": ["--no-timeouts", "--exit", "--require", "ts-node/register","${file}", ],
             "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Local Test Server",
-            "cwd": "${workspaceFolder}/packages/server/local-test-server",
-            "program": "${workspaceFolder}/packages/server/local-test-server/node_modules/.bin/_mocha",
-            "args": [
-                "--require", "ts-node/register",
-                "-u", "tdd",
-                "--colors",
-                "--no-timeouts",
-                "--recursive",
-                "src/test/**/*.spec.ts",
-                "--exit"
-            ],
-            "env": {
-                "TS_NODE_PROJECT": "tsconfig.json"
-            },
-            "internalConsoleOptions": "openOnSessionStart"
         }
 
     ]

@@ -70,8 +70,8 @@ class MyRegistry implements IComponentRegistry {
             package: name,
             config,
         };
-        return this.context.codeLoader.load<IComponentFactory>(codeDetails);
-
+        const fluidModule = await this.context.codeLoader.load(codeDetails);
+        return fluidModule.fluidExport.IComponentFactory;
     }
 }
 
@@ -109,7 +109,7 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
         return component.request(
             {
                 headers: request.headers,
-                url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash),
+                url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash + 1),
             });
     }
 

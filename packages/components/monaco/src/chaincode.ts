@@ -8,7 +8,7 @@ import { PrimedComponent } from "@microsoft/fluid-aqueduct";
 import {
     IComponentHandle,
     IComponentHTMLOptions,
-    IComponentHTMLVisual,
+    IComponentHTMLView,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentLayout } from "@microsoft/fluid-framework-experimental";
 import {
@@ -63,7 +63,7 @@ const defaultCompilerOptions = {
  * Component for using the Monaco text editor.
  */
 export class MonacoRunner extends PrimedComponent implements
-    IComponentHTMLVisual, IComponentLayout {
+    IComponentHTMLView, IComponentLayout {
 
     /**
      * Get a new MonacoRunner with the given runtime.
@@ -77,7 +77,7 @@ export class MonacoRunner extends PrimedComponent implements
         return runner;
     }
 
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
     public get IComponentLoadable() { return this; }
     public get IComponentLayout() { return this; }
 
@@ -147,8 +147,8 @@ export class MonacoRunner extends PrimedComponent implements
         // outputDiv.style.width = "50%";
         // hostWrapper.appendChild(outputDiv);
 
-        const textHandle = await this.root.wait<IComponentHandle>("text");
-        const text = await textHandle.get<SharedString>();
+        const textHandle = await this.root.wait<IComponentHandle<SharedString>>("text");
+        const text = await textHandle.get();
 
         monaco.languages.typescript.typescriptDefaults.setCompilerOptions(defaultCompilerOptions);
         if (hostDts) {

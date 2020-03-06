@@ -164,7 +164,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             mongoManager,
             config.get("mongo:collectionNames:reservations"));
 
-        const tenantManager = new services.TenantManager(authEndpoint, config.get("worker:blobStorageUrl"));
+        const tenantManager = new services.TenantManager(authEndpoint);
 
         const databaseManager = new core.MongoDatabaseManager(
             mongoManager,
@@ -197,7 +197,8 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             taskMessageSender,
             tenantManager,
             foremanConfig.permissions,
-            maxSendMessageSize);
+            maxSendMessageSize,
+            winston);
         const localOrderManager = new LocalOrderManager(nodeFactory, reservationManager);
         const kafkaOrdererFactory = new KafkaOrdererFactory(
             producer,

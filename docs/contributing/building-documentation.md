@@ -23,4 +23,4 @@ npm install
 npm start
 ```
 
-`npm start` will serve the local documentation from http://localhost:8080/.
+`npm start` will serve the local documentation from <http://localhost:8080/>.

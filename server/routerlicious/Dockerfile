@@ -23,7 +23,7 @@ COPY packages/components/agent-scheduler/package*.json packages/components/agent
 COPY packages/components/blob-manager/package*.json packages/components/blob-manager/
 COPY packages/components/canvas/package*.json packages/components/canvas/
 COPY packages/components/clicker/package*.json packages/components/clicker/
-COPY packages/components/client-ui/package*.json packages/components/client-ui/
+COPY packages/components/client-ui-lib/package*.json packages/components/client-ui-lib/
 COPY packages/components/dice-roller/package*.json packages/components/dice-roller/
 COPY packages/components/external-component-loader/package*.json packages/components/external-component-loader/
 COPY packages/components/image-collection/package*.json packages/components/image-collection/
@@ -32,11 +32,12 @@ COPY packages/components/progress-bars/package*.json packages/components/progres
 COPY packages/components/shared-map-visualizer/package*.json packages/components/shared-map-visualizer/
 COPY packages/components/video-players/package*.json packages/components/video-players/
 COPY packages/components/flow-scroll/package*.json packages/components/flow-scroll/
-COPY packages/components/flow-util/package*.json packages/components/flow-util/
+COPY packages/components/flow-util-lib/package*.json packages/components/flow-util-lib/
 COPY packages/components/markflow/package*.json packages/components/markflow/
 COPY packages/components/math/package*.json packages/components/math/
 COPY packages/components/monaco/package*.json packages/components/monaco/
 COPY packages/components/owned-map/package*.json packages/components/owned-map/
+COPY packages/components/primitives/package*.json packages/components/primitives/
 COPY packages/components/scoreboard/package*.json packages/components/scoreboard/
 COPY packages/components/scribe/package*.json packages/components/scribe/
 COPY packages/components/shared-text/package*.json packages/components/shared-text/
@@ -55,14 +56,15 @@ COPY packages/drivers/iframe-socket-storage/package*.json packages/drivers/ifram
 COPY packages/drivers/socket-storage-shared/package*.json packages/drivers/socket-storage-shared/
 COPY packages/drivers/odsp-urlResolver/package*.json packages/drivers/odsp-urlResolver/
 COPY packages/drivers/fluidapp-odsp-urlResolver/package*.json packages/drivers/fluidapp-odsp-urlResolver/
+COPY packages/drivers/local-driver/package*.json packages/drivers/local-driver/
 COPY packages/drivers/routerlicious-urlResolver/package*.json packages/drivers/routerlicious-urlResolver/
-COPY packages/drivers/test-driver/package*.json packages/drivers/test-driver/
 COPY packages/drivers/create-new-driver/package*.json packages/drivers/create-new-driver/
 COPY packages/framework/aqueduct/package*.json packages/framework/aqueduct/
 COPY packages/framework/aqueduct-react/package*.json packages/framework/aqueduct-react/
 COPY packages/framework/experimental/package*.json packages/framework/experimental/
 COPY packages/framework/framework-definitions/package*.json packages/framework/framework-definitions/
 COPY packages/framework/undo-redo/package*.json packages/framework/undo-redo/
+COPY packages/framework/view-adapters/package*.json packages/framework/view-adapters/
 COPY packages/loader/component-core-interfaces/package*.json packages/loader/component-core-interfaces/
 COPY packages/loader/container-definitions/package*.json packages/loader/container-definitions/
 COPY packages/loader/container-loader/package*.json packages/loader/container-loader/
@@ -84,21 +86,26 @@ COPY packages/runtime/cell/package*.json packages/runtime/cell/
 COPY packages/runtime/client-api/package*.json packages/runtime/client-api/
 COPY packages/runtime/ink/package*.json packages/runtime/ink/
 COPY packages/runtime/map/package*.json packages/runtime/map/
+COPY packages/runtime/matrix/package*.json packages/runtime/matrix/
 COPY packages/runtime/merge-tree/package*.json packages/runtime/merge-tree/
 COPY packages/runtime/container-runtime/package*.json packages/runtime/container-runtime/
 COPY packages/runtime/runtime-definitions/package*.json packages/runtime/runtime-definitions/
 COPY packages/runtime/runtime-utils/package*.json packages/runtime/runtime-utils/
 COPY packages/runtime/runtime-test-utils/package*.json packages/runtime/runtime-test-utils/
 COPY packages/runtime/sequence/package*.json packages/runtime/sequence/
-COPY packages/server/local-test-server/package*.json packages/server/local-test-server/
+COPY packages/server/local-test-utils/package*.json packages/server/local-test-utils/
 COPY packages/utils/odsp-utils/package*.json packages/utils/odsp-utils/
+COPY packages/utils/fluid-tool-utils/package*.json packages/utils/fluid-tool-utils/
 COPY packages/server/tools-core/package*.json packages/server/tools-core/
+COPY packages/test/functional/package*.json packages/test/functional/
+COPY packages/test/end-to-end/package*.json packages/test/end-to-end/
 COPY packages/test/snapshots/package*.json packages/test/snapshots/
 COPY packages/tools/fluid-fetch/package*.json packages/tools/fluid-fetch/
 COPY packages/tools/replay-tool/package*.json packages/tools/replay-tool/
 COPY packages/tools/webpack-component-loader/package*.json packages/tools/webpack-component-loader/
 COPY packages/tools/merge-tree-client-replay/package*.json packages/tools/merge-tree-client-replay/
-COPY packages/test/end-to-end/package*.json packages/test/end-to-end/
+COPY packages/test/context-reload/package*.json packages/test/context-reload/
+COPY packages/test/context-reload/@fluid-example/version-test-2/package*.json packages/test/context-reload/@fluid-example/version-test-2/
 COPY examples/components/badge/package*.json examples/components/badge/
 COPY examples/components/chat/package*.json examples/components/chat/
 COPY examples/components/codemirror/package*.json examples/components/codemirror/
@@ -121,6 +128,7 @@ COPY examples/components/textarea-noreact/package*.json examples/components/text
 COPY examples/components/tourofheroes/package*.json examples/components/tourofheroes/
 COPY examples/components/type-race/package*.json examples/components/type-race/
 COPY examples/components/vltava/package*.json examples/components/vltava/
+COPY examples/hosts/iframe-host/package*.json examples/hosts/iframe-host/
 
 FROM node:10.16.0-slim AS base
 
@@ -170,6 +178,7 @@ RUN npm install --unsafe-perm
 # And now copy over our actual code and build
 COPY packages/ packages/
 COPY examples/components/ examples/components/
+COPY examples/hosts/iframe-host/ examples/hosts/iframe-host/
 
 # Set the version number
 ARG VERSION_BUILDNUMBER=0

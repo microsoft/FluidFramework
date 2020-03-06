@@ -26,11 +26,11 @@ export async function waitForFullConnection(runtime: any): Promise<void> {
 }
 
 export async function getInsights(map: ISharedMap, id: string): Promise<ISharedMap> {
-    const insightsHandle = await map.wait<IComponentHandle>("insights");
-    const insights = await insightsHandle.get<ISharedMap>();
+    const insightsHandle = await map.wait<IComponentHandle<ISharedMap>>("insights");
+    const insights = await insightsHandle.get();
 
-    const handle = await insights.wait<IComponentHandle>(id);
-    return handle.get<ISharedMap>();
+    const handle = await insights.wait<IComponentHandle<ISharedMap>>(id);
+    return handle.get();
 }
 
 export async function setTranslation(
@@ -40,11 +40,11 @@ export async function setTranslation(
     toLanguage: string,
 ): Promise<void> {
     // Create the translations map
-    const handle = await document.getRoot().wait<IComponentHandle>("insights");
-    const insights = await handle.get<ISharedMap>();
+    const handle = await document.getRoot().wait<IComponentHandle<ISharedMap>>("insights");
+    const insights = await handle.get();
 
-    const idMapHandle = await insights.wait<IComponentHandle>(id);
-    const idMap = await idMapHandle.get<ISharedMap>();
+    const idMapHandle = await insights.wait<IComponentHandle<ISharedMap>>(id);
+    const idMap = await idMapHandle.get();
 
     if (!document.existing) {
         idMap.set("translationFrom", fromLanguage);

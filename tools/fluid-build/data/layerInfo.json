@@ -42,7 +42,7 @@
         "layers": {
             "Base-Utils": {
                 "packages": [
-                    "@microsoft/fluid-core-utils"
+                    "@microsoft/fluid-common-utils"
                 ],
                 "deps": [
                     "Base-Definitions"
@@ -66,10 +66,27 @@
                     "Driver-Definitions"
                 ]
             },
+            "Framework-Utils": {
+                "packages": [
+                    "@microsoft/fluid-view-adapters"
+                ],
+                "deps": [
+                    "Base-Definitions"
+                ]
+            },
             "Other-Utils": {
                 "dot": false,
                 "packages": [
                     "@microsoft/fluid-odsp-utils"
+                ]
+            },
+            "Tool-Utils": {
+                "dot": false,
+                "packages": [
+                    "@microsoft/fluid-tool-utils"
+                ],
+                "deps": [
+                    "Other-Utils"
                 ]
             }
         }
@@ -122,7 +139,8 @@
                     "@microsoft/fluid-host-service-interfaces"
                 ],
                 "deps": [
-                    "Loader"
+                    "Loader",
+                    "Framework-Utils"
                 ]
             },
             "Runtime": {
@@ -176,16 +194,17 @@
                 "deps": [
                     "Framework",
                     "Routerlicious-Driver",
-                    "Other-Utils"
+                    "Other-Utils",
+                    "Tool-Utils"
                 ]
             },
             "Test": {
                 "dev": true,
                 "packages": [
                     "@microsoft/fluid-local-web-host",
-                    "@microsoft/fluid-test-driver",
+                    "@microsoft/fluid-local-driver",
                     "@microsoft/fluid-test-runtime-utils",
-                    "@microsoft/fluid-local-test-server",
+                    "@microsoft/fluid-local-test-utils",
                     "@microsoft/fluid-webpack-component-loader"
                 ],
                 "dirs": [

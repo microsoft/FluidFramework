@@ -6,13 +6,14 @@
 import { Node } from "prosemirror-model";
 import { EditorView, NodeView } from "prosemirror-view";
 import { ILoader } from "@microsoft/fluid-container-definitions";
-import { IComponent, IComponentHTMLRender, IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 
 export class ComponentView implements NodeView {
     public dom: HTMLElement;
     public innerView;
 
-    private renderable: IComponentHTMLView | IComponentHTMLRender;
+    private visual: HTMLViewAdapter | undefined;
 
     constructor(
         public node: Node,
@@ -60,12 +61,12 @@ export class ComponentView implements NodeView {
         const componentP = loadP.then(
             (result) => {
                 if (result.mimeType !== "fluid/component") {
-                    return Promise.reject<IComponent>();
+                    throw new Error("Can't insert a non-fluid component");
                 }
 
                 const component = result.value as IComponent;
-                if (!component.IComponentHTMLVisual) {
-                    return Promise.reject<IComponent>();
+                if (!HTMLViewAdapter.canAdapt(component)) {
+                    throw new Error("Don't know how to render this component");
                 }
 
                 return component;
@@ -73,17 +74,16 @@ export class ComponentView implements NodeView {
 
         componentP.then(
             (component) => {
+                // Remove the previous view
+                if (this.visual) {
+                    this.visual.remove();
+                }
+
                 // Clear any previous content
                 this.dom.innerHTML = "";
 
-                // Remove the previous view
-                if (this.renderable && "remove" in this.renderable) {
-                    this.renderable.remove();
-                }
-
-                const visual = component.IComponentHTMLVisual;
-                this.renderable = visual.addView ? visual.addView() : visual;
-                this.renderable.render(this.dom);
+                this.visual = new HTMLViewAdapter(component);
+                this.visual.render(this.dom);
             },
             (error) => {
                 // Fall back to URL if can't load

@@ -5,7 +5,6 @@
 
 export * from "./innerDocumentDeltaConnection";
 export * from "./innerDocumentService";
-export * from "./innerDocumentStorageService";
 export * from "./innerDocumentServiceFactory";
 export * from "./outerDocumentServiceFactory";
-export * from "./simpleUrlResolver";
+export * from "./innerUrlResolver";

@@ -24,13 +24,13 @@ let inboundQueueProcessingCount = -1;
 export class DeltaScheduler {
     private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // The time for processing ops in a single turn.
-    private readonly processingTime = 20;
+    public static readonly processingTime = 20;
 
     // The increase in time for processing ops after each turn.
     private readonly processingTimeIncrement = 10;
 
     private processingStartTime: number | undefined;
-    private totalProcessingTime: number = this.processingTime;
+    private totalProcessingTime: number = DeltaScheduler.processingTime;
 
     private opProcessingLog: {
         numberOfOps: number;
@@ -47,7 +47,7 @@ export class DeltaScheduler {
         this.deltaManager.inbound.on("idle", () => { this.inboundQueueIdle(); });
     }
 
-    public batchBegin(message: ISequencedDocumentMessage) {
+    public batchBegin() {
         if (this.deltaManager.inbound.length > 0 && !this.processingStartTime) {
             // Start the timer that keeps track of how long we have processed ops in the delta queue
             // in this call.
@@ -65,7 +65,7 @@ export class DeltaScheduler {
         }
     }
 
-    public batchEnd(message: ISequencedDocumentMessage) {
+    public batchEnd() {
         // If we have processed ops for more than the total processing time, we pause the
         // queue, yield the thread and schedule a resume. This ensures that we don't block
         // the JS threads for a long time (for example, when catching up ops right after
@@ -114,7 +114,7 @@ export class DeltaScheduler {
             }
 
             this.processingStartTime = undefined;
-            this.totalProcessingTime = this.processingTime;
+            this.totalProcessingTime = DeltaScheduler.processingTime;
         }
     }
 }

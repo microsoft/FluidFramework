@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/monaco-container",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "description": "Monaco chaincode container",
   "license": "MIT",
   "author": "Microsoft",
@@ -13,7 +13,6 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
-    "build:compile:min": "npm run build:compile",
     "build:esnext": "tsc --outDir lib --m esnext",
     "build:full": "concurrently npm:build npm:webpack",
     "build:full:compile": "concurrently npm:build:compile npm:webpack",
@@ -22,23 +21,26 @@
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
+    "prepack": "npm run webpack",
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
     "start:docker": "webpack-dev-server --config webpack.config.js --package package.json --env.mode docker",
-    "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.mode live",
+    "start:r11s": "webpack-dev-server --config webpack.config.js --package package.json --env.mode r11s",
+    "start:spo": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo",
+    "start:spo-df": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo-df",
     "tsc": "tsc",
     "webpack": "webpack --config webpack.config.js --env.production",
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluid-example/monaco": "^0.14.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.14.0",
-    "@microsoft/fluid-container-definitions": "^0.14.0",
-    "@microsoft/fluid-container-runtime": "^0.14.0",
-    "@microsoft/fluid-runtime-definitions": "^0.14.0"
+    "@fluid-example/monaco": "^0.15.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.15.0",
+    "@microsoft/fluid-container-definitions": "^0.15.0",
+    "@microsoft/fluid-container-runtime": "^0.15.0",
+    "@microsoft/fluid-runtime-definitions": "^0.15.0"
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.14.0",
-    "@microsoft/fluid-webpack-component-loader": "^0.14.0",
+    "@microsoft/fluid-webpack-component-loader": "^0.15.0",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",
     "concurrently": "^4.1.0",

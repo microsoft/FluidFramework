@@ -11,6 +11,7 @@ import {
     IPackage,
     IPackageConfig,
     isFluidPackage,
+    IFluidModule,
 } from "@microsoft/fluid-container-definitions";
 import * as fetch from "isomorphic-fetch";
 
@@ -87,10 +88,11 @@ class ScriptManager {
         }
         return window.document !== undefined;
     }
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public loadScript(scriptUrl: string, scriptId?: string): Promise<void> {
-        if (!this.loadCache.has(scriptUrl)) {
-            const scriptP = new Promise<void>((resolve, reject) => {
+
+    public async loadScript(scriptUrl: string, scriptId?: string): Promise<void> {
+        let scriptP = this.loadCache.get(scriptUrl);
+        if (!scriptP) {
+            scriptP = new Promise<void>((resolve, reject) => {
                 if (this.isBrowser) {
                     const script = document.createElement("script");
                     script.src = scriptUrl;
@@ -104,7 +106,6 @@ class ScriptManager {
                     // executed after all of its dependencies have been loaded and executed.
                     script.async = false;
 
-                    // Call signatures don't match and so need to wrap the method
                     script.onload = () => resolve();
                     script.onerror = () =>
                         reject(new Error(`Failed to download the script at url: ${scriptUrl}`));
@@ -123,8 +124,7 @@ class ScriptManager {
             this.loadCache.set(scriptUrl, scriptP);
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this.loadCache.get(scriptUrl)!;
+        return scriptP;
     }
 
     public loadScripts(
@@ -177,31 +177,30 @@ class FluidPackage {
             }
 
             const scriptFound = scriptIds.find((scriptId) => {
-                const script = document.getElementById(scriptId) as HTMLScriptElement;
+                const scriptElement = document.getElementById(scriptId);
                 // eslint-disable-next-line no-null/no-null
-                return (script !== null);
+                return (scriptElement !== null);
             });
 
-            // If the script hasn't been attached, attach it now.
+            // If the script hasn't been attached, attach it now, kicking off the load.
             // This could cause a double load of the script, but scriptManager handles duplicates
             if (scriptFound === undefined) {
                 this.scriptManager.loadScripts(umdDetails, this.details.packageUrl, scriptIds);
             }
 
             // ScriptIds are needed here in case the script hasn't loaded yet
-            // if there's no script, fetch and load it
             scriptIds.forEach((scriptId) => {
-                const script = document.getElementById(scriptId) as HTMLScriptElement;
+                const scriptElement = document.getElementById(scriptId);
 
                 // eslint-disable-next-line no-null/no-null
-                if (script !== undefined && script !== null) {
-                    script.onload = () => {
+                if (scriptElement !== null) {
+                    scriptElement.onload = () => {
                         if (entrypoint in window) {
                             resolve(window[entrypoint]);
                         }
                     };
 
-                    script.onerror = (error) => {
+                    scriptElement.onerror = (error) => {
                         reject(error);
                     };
                 }
@@ -209,20 +208,20 @@ class FluidPackage {
         });
     }
 
-    public async resolve(): Promise<IResolvedPackage> {
-        if (!this.resolveP) {
-            this.resolveP = this.resolveCore();
-        }
-
-        return this.resolveP;
-    }
-
-    public async load<T>(): Promise<T> {
+    public async load(): Promise<IFluidModule> {
         if (!this.loadP) {
             this.loadP = this.loadCore();
         }
 
         return this.loadP;
+    }
+
+    private async resolve(): Promise<IResolvedPackage> {
+        if (!this.resolveP) {
+            this.resolveP = this.resolveCore();
+        }
+
+        return this.resolveP;
     }
 
     private async resolveCore(): Promise<IResolvedPackage> {
@@ -246,11 +245,11 @@ class FluidPackage {
         };
     }
 
-    private async loadCore<T>(): Promise<T> {
-        const resolved = await this.resolve();
+    private async loadCore(): Promise<IFluidModule> {
+        const resolvedPackage = await this.resolve();
 
         // Currently only support UMD package loads
-        const umdDetails = resolved.pkg.fluid.browser.umd;
+        const umdDetails = resolvedPackage.pkg.fluid.browser.umd;
 
         await Promise.all(this.scriptManager.loadScripts(umdDetails, this.details.packageUrl));
 
@@ -260,7 +259,7 @@ class FluidPackage {
 
 export class WebCodeLoader implements ICodeLoader {
     // Cache goes CDN -> package -> entrypoint
-    private readonly resolvedCache = new Map<string, FluidPackage>();
+    private readonly fluidPackageCache = new Map<string, FluidPackage>();
     private readonly scriptManager = new ScriptManager();
 
     constructor(private readonly whiteList?: ICodeWhiteList) { }
@@ -275,21 +274,11 @@ export class WebCodeLoader implements ICodeLoader {
     }
 
     /**
-     * Resolves the input data structures to the resolved details
-     */
-    // Disabled to verify function sets cache synchronously
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public resolve(input: IFluidCodeDetails): Promise<IResolvedPackage> {
-        const fluidPackage = this.getFluidPackage(input);
-        return fluidPackage.resolve();
-    }
-
-    /**
      * @param source - Details of where to find chaincode
      */
-    public async load<T>(
+    public async load(
         source: IFluidCodeDetails,
-    ): Promise<T> {
+    ): Promise<IFluidModule> {
         if (this.whiteList && !(await this.whiteList.testSource(source))) {
             return Promise.reject("Attempted to load invalid package");
         }
@@ -298,37 +287,36 @@ export class WebCodeLoader implements ICodeLoader {
     }
 
     private getFluidPackage(input: IFluidCodeDetails): FluidPackage {
-        const details = this.getPackageDetails(input);
+        const details = getPackageDetails(input);
 
-        if (!this.resolvedCache.has(details.packageUrl)) {
+        if (!this.fluidPackageCache.has(details.packageUrl)) {
             const resolved = new FluidPackage(details, this.scriptManager);
-            this.resolvedCache.set(details.packageUrl, resolved);
+            this.fluidPackageCache.set(details.packageUrl, resolved);
         }
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return this.resolvedCache.get(details.packageUrl)!;
+        return this.fluidPackageCache.get(details.packageUrl)!;
     }
+}
 
-    private getPackageDetails(details: IFluidCodeDetails): IPackageDetails {
+function getPackageDetails(details: IFluidCodeDetails): IPackageDetails {
+    const fullPkg = typeof details.package === "string"
+        ? details.package // Just return it if it's a string e.g. "@fluid-example/clicker@0.1.1"
+        : !details.package.version // If it doesn't exist, let's make it from the package details
+            ? `${details.package.name}` // E.g. @fluid-example/clicker
+            : `${details.package.name}@${details.package.version}`; // Rebuild e.g. @fluid-example/clicker@0.1.1
+    const parsed = extractDetails(fullPkg);
 
-        const fullPkg = typeof details.package === "string"
-            ? details.package // Just return it if it's a string e.g. "@fluid-example/clicker@0.1.1"
-            : !details.package.version // If it doesn't exist, let's make it from the package details
-                ? `${details.package.name}` // E.g. @fluid-example/clicker
-                : `${details.package.name}@${details.package.version}`; // Rebuild e.g. @fluid-example/clicker@0.1.1
-        const parsed = extractDetails(fullPkg);
+    const scriptCdnTag = `${parsed.scope ? `@${parsed.scope}:` : ""}cdn`;
+    const cdn = details.config[scriptCdnTag];
+    const scopePath = parsed.scope ? `@${encodeURI(parsed.scope)}/` : "";
+    const packageUrl = parsed.version !== undefined
+        ? `${cdn}/${scopePath}${encodeURI(`${parsed.name}@${parsed.version}`)}`
+        : `${cdn}/${scopePath}${encodeURI(`${parsed.name}`)}`;
 
-        const scriptCdnTag = `${parsed.scope ? `@${parsed.scope}:` : ""}cdn`;
-        const cdn = details.config[scriptCdnTag];
-        const scopePath = parsed.scope ? `@${encodeURI(parsed.scope)}/` : "";
-        const packageUrl = parsed.version !== undefined
-            ? `${cdn}/${scopePath}${encodeURI(`${parsed.name}@${parsed.version}`)}`
-            : `${cdn}/${scopePath}${encodeURI(`${parsed.name}`)}`;
-
-        return {
-            details,
-            packageUrl,
-            parsed,
-        };
-    }
+    return {
+        details,
+        packageUrl,
+        parsed,
+    };
 }

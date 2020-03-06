@@ -1,0 +1,48 @@
+<!-- Copyright (c) Microsoft Corporation. All rights reserved. -->
+<!-- Licensed under the MIT License. -->
+
+<html>
+<header>
+
+<!--
+this will load the component's entry point on the to page
+that entrypoint should be passed to the localLoader
+-->
+<script src="diceroller/main.bundle.js" ></script>
+
+<!--
+this will place the localLoader entrypoint on the page
+-->
+<script src="fluid-local-web-host/main.bundle.js" ></script>
+</header>
+
+
+<body>
+    <table width="100%" border="0">
+        <tr>
+            <td width="50%"><div id="content1"></div></td>
+            <td width="50%"><div id="content2"></div></td>
+        </tr>
+    </table>
+    <script>
+        localLoader.createLocalContainerFactory(main)
+            .then((containerFactory)=>{
+
+                containerFactory()
+                    .then((container)=>{
+                        localLoader.renderDefaultComponent(
+                            container,
+                            document.getElementById("content1"));
+                    });
+
+                containerFactory()
+                    .then((container)=>{
+                        localLoader.renderDefaultComponent(
+                            container,
+                            document.getElementById("content2"));
+                    });
+            });
+    </script>
+</body>
+
+</html>

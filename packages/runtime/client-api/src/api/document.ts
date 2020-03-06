@@ -8,12 +8,13 @@ import * as cell from "@microsoft/fluid-cell";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import {
     IDeltaManager,
+    IFluidCodeDetails,
     IGenericBlob,
     IProxyLoaderFactory,
 } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { IContainerRuntimeOptions } from "@microsoft/fluid-container-runtime";
-import { Deferred } from "@microsoft/fluid-core-utils";
+import { Deferred } from "@microsoft/fluid-common-utils";
 import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import * as ink from "@microsoft/fluid-ink";
 import { ISharedDirectory, ISharedMap, SharedDirectory, SharedMap } from "@microsoft/fluid-map";
@@ -211,7 +212,7 @@ export class Document extends EventEmitter {
     }
 }
 
-async function initializeChaincode(container: Container, pkg: string): Promise<void> {
+async function initializeChaincode(container: Container, pkg: IFluidCodeDetails): Promise<void> {
     const quorum = container.getQuorum();
 
     // Wait for connection so that proposals can be sent
@@ -220,11 +221,18 @@ async function initializeChaincode(container: Container, pkg: string): Promise<v
     }
 
     // And then make the proposal if a code proposal has not yet been made
-    if (!quorum.has("code2")) {
-        await quorum.propose("code2", pkg);
+    if (!quorum.has("code") && !quorum.has("code2")) {
+        await quorum.propose("code", pkg);
     }
 
-    debug(`Code is ${quorum.get("code2")}`);
+    let code = quorum.get("code");
+
+    // Back compat
+    if (!code) {
+        code = quorum.get("code2");
+    }
+
+    debug(`Code is ${code}`);
 }
 
 function attach(loader: Loader, url: string, deferred: Deferred<Document>): void {
@@ -283,8 +291,14 @@ export async function load(
     );
     const container = await loader.resolve({ url });
 
+    // The client-api CodeLoader doesn't actually read the proposed code details, so this doesn't really matter.
+    const codeDetails: IFluidCodeDetails = {
+        package: `@fluid-internal/client-api@${apiVersion}`,
+        config: {},
+    };
+
     if (!container.existing) {
-        await initializeChaincode(container, `@fluid-internal/client-api@${apiVersion}`);
+        await initializeChaincode(container, codeDetails);
     }
 
     return requestDocument(loader, container, url);

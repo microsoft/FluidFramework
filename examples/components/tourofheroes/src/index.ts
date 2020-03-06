@@ -8,8 +8,9 @@ import { APP_BASE_HREF } from "@angular/common";
 import { platformBrowserDynamic } from "@angular/platform-browser-dynamic";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
-import { IComponentHTMLVisual, IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHTMLView, IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
+import { ISharedDirectory } from "@microsoft/fluid-map";
 import {
     IComponentContext,
     IComponentFactory,
@@ -23,9 +24,12 @@ import { AppModule } from "./app/app.module";
 import { PRAGUE_PATH, PRAGUE_ROOT } from "./app/tokens";
 import { GraphQLService } from "./app/hero.service";
 
-export class TourOfHeroes extends PrimedComponent implements IComponentHTMLVisual {
+export class TourOfHeroes extends PrimedComponent implements IComponentHTMLView {
+    public get IComponentHTMLView() { return this; }
 
-    public get IComponentHTMLVisual() { return this; }
+    public get root(): ISharedDirectory {
+        return super.root;
+    }
 
     // Create the component's schema and perform other initialization tasks
     // (only called when document is initially created).
@@ -72,8 +76,8 @@ export class TourOfHeroes extends PrimedComponent implements IComponentHTMLVisua
     }
 }
 
-class TourOfHeroesComponentView implements IComponentHTMLVisual {
-    public get IComponentHTMLVisual() { return this; }
+class TourOfHeroesComponentView implements IComponentHTMLView {
+    public get IComponentHTMLView() { return this; }
 
     public get id() {
         return this.path;
@@ -105,8 +109,8 @@ class TourOfHeroesComponentView implements IComponentHTMLVisual {
 
 // Note on defining components - snapshotting does not seem like it should be part of an IChaincodeComponent given
 // these synthetic components don't need it. We may want this to just be "attach"
-class GraphIQLView implements IComponentHTMLVisual {
-    public get IComponentHTMLVisual() { return this; }
+class GraphIQLView implements IComponentHTMLView {
+    public get IComponentHTMLView() { return this; }
 
     public readonly id = "graphiql";
 

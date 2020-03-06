@@ -4,7 +4,10 @@
  */
 
 export * from "./containerRuntime";
+export * from "./deltaScheduler";
 export * from "./summaryTreeConverter";
 export * from "./requestHandlers";
 export * from "./requestParser";
 export * from "./componentRegistry";
+export * from "./summarizer";
+export * from "./summaryCollection";

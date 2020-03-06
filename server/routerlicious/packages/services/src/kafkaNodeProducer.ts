@@ -5,10 +5,11 @@
 
 import { EventEmitter } from "events";
 import * as util from "util";
-import { Deferred } from "@microsoft/fluid-core-utils";
+import { Deferred } from "@microsoft/fluid-common-utils";
 import { BoxcarType, IBoxcarMessage, IPendingBoxcar, IProducer } from "@microsoft/fluid-server-services-core";
-import * as kafkaNode from "kafka-node";
+import * as kafka from "kafka-node";
 import { debug } from "./debug";
+import { ensureTopics } from "./kafkaTopics";
 
 // 1MB batch size / (16KB max message size + overhead)
 const MaxBatchSize = 32;
@@ -26,17 +27,20 @@ class PendingBoxcar implements IPendingBoxcar {
  */
 export class KafkaNodeProducer implements IProducer {
     private readonly messages = new Map<string, IPendingBoxcar[]>();
-    private client: any;
-    private producer: any;
+    private client: kafka.KafkaClient;
+    private producer: kafka.Producer;
     private sendPending: NodeJS.Immediate;
     private readonly events = new EventEmitter();
     private connecting = false;
     private connected = false;
 
     constructor(
-        private readonly endpoint: string,
-        private readonly clientId: string,
-        private readonly topic: string) {
+        private readonly clientOptions: kafka.KafkaClientOptions,
+        clientId: string,
+        private readonly topic: string,
+        private readonly topicPartitions?: number,
+        private readonly topicReplicationFactor?: number) {
+        clientOptions.clientId = clientId;
         this.connect();
     }
 
@@ -77,14 +81,16 @@ export class KafkaNodeProducer implements IProducer {
     }
 
     public async close(): Promise<void> {
-        const producer = this.producer as kafkaNode.Producer;
-        const client = this.client as kafkaNode.Client;
-
-        await util.promisify(((callback) => producer.close(callback)) as any)();
-        await util.promisify(((callback) => client.close(callback)) as any)();
+        await util.promisify(((callback) => this.producer.close(callback)) as any)();
+        await util.promisify(((callback) => this.client.close(callback)) as any)();
     }
 
-    public once(event: "producerError", listener: (...args: any[]) => void): this {
+    public on(event: "connected" | "produced" | "error", listener: (...args: any[]) => void): this {
+        this.events.on(event, listener);
+        return this;
+    }
+
+    public once(event: "connected" | "produced" | "error", listener: (...args: any[]) => void): this {
         this.events.once(event, listener);
         return this;
     }
@@ -139,6 +145,7 @@ export class KafkaNodeProducer implements IProducer {
                         this.handleError(error);
                         boxcar.deferred.reject(error);
                     } else {
+                        this.events.emit("produced");
                         boxcar.deferred.resolve();
                     }
                 });
@@ -155,23 +162,28 @@ export class KafkaNodeProducer implements IProducer {
         }
 
         this.connecting = true;
-        this.client = new kafkaNode.Client(this.endpoint, this.clientId);
-        this.producer = new kafkaNode.Producer(this.client, { partitionerType: 3 });
 
-        (this.client).on("error", (error) => {
+        this.client = new kafka.KafkaClient(this.clientOptions);
+        this.producer = new kafka.Producer(this.client, { partitionerType: 3 });
+
+        this.client.on("error", (error) => {
             this.handleError(error);
         });
 
-        this.producer.on("ready", () => {
-            this.ensureTopics(this.client, [this.topic]).then(
-                () => {
-                    this.connected = true;
-                    this.connecting = false;
-                    this.sendPendingMessages();
-                },
-                (error) => {
-                    this.handleError(error);
-                });
+        this.producer.on("ready", async () => {
+            try {
+                await ensureTopics(this.client, [this.topic], this.topicPartitions, this.topicReplicationFactor);
+
+                this.connected = true;
+                this.connecting = false;
+
+                this.events.emit("connected");
+
+                this.sendPendingMessages();
+
+            } catch (error) {
+                this.handleError(error);
+            }
         });
 
         this.producer.on("error", (error) => {
@@ -185,35 +197,14 @@ export class KafkaNodeProducer implements IProducer {
     private handleError(error: any) {
         // Close the client if it exists
         if (this.client) {
-            this.client.close((closeError) => {
-                if (closeError) {
-                    debug(closeError);
-                }
-            });
+            this.client.close();
             this.client = undefined;
         }
 
         this.connecting = this.connected = false;
         debug("Kafka error - closing", error);
-        this.events.emit("producerError", error);
+        this.events.emit("error", error);
         this.connect();
     }
-    /**
-     * Ensures that the provided topics are ready
-     */
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    private ensureTopics(client: kafkaNode.Client, topics: string[]): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            // We make use of a refreshMetadata call to validate the given topics exist
-            client.refreshMetadata(
-                topics,
-                (error) => {
-                    if (error) {
-                        return reject(error);
-                    }
 
-                    return resolve();
-                });
-        });
-    }
 }

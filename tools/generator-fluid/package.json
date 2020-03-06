@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/generator-fluid",
-  "version": "0.13.0",
+  "version": "0.15.0",
   "description": "A yeoman project generator for fluid components",
   "keywords": [
     "yeoman-generator"
