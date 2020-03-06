@@ -427,7 +427,7 @@ export class ScribeLambda extends SequencedLambda {
                 path: "logTail",
                 type: TreeEntry[TreeEntry.Blob],
                 value: {
-                    contents: JSON.stringify(logTail),
+                    contents: JSON.stringify(logTail.map((log) => log.operation)),
                     encoding: "utf-8",
                 },
             },
