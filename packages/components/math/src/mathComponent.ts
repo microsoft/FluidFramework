@@ -675,6 +675,8 @@ export class MathCollection implements IComponentLoadable, IComponentCollection,
 }
 
 export class MathFactoryComponent implements IComponentFactory {
+    public static readonly type = "@fluid-example/math";
+    public readonly type = MathFactoryComponent.type;
 
     public get IComponentFactory() { return this; }
 

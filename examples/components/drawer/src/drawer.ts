@@ -125,6 +125,9 @@ export class Drawer extends EventEmitter implements
 }
 
 class DrawerFactory implements IComponentFactory {
+    public static readonly type = "@fluid-example/drawer";
+    public readonly type = DrawerFactory.type;
+
     public get IComponentFactory() { return this; }
 
     public instantiateComponent(context: IComponentContext): void {
