@@ -33,6 +33,8 @@ const rootMapId = "root";
 const insightsMapId = "insights";
 
 export class Chaincode implements IComponentFactory {
+    public readonly type = "@fluid-internal/client-api";
+
     public get IComponentFactory() { return this; }
 
     public instantiateComponent(context: IComponentContext): void {
@@ -125,7 +127,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
         const runtime = await ContainerRuntime.load(
             context,
             [
-                ["@fluid-internal/client-api", Promise.resolve(chaincode)],
+                [chaincode.type, Promise.resolve(chaincode)],
                 ...this.registries,
             ],
             [ChaincodeFactory.containerRequestHandler],

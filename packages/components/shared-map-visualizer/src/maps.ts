@@ -213,16 +213,18 @@ export class ProgressCollection
 }
 
 class SharedMapVisualizerFactory implements IComponentFactory, IRuntimeFactory {
+    public static readonly type = "@fluid-example/shared-map-visualizer";
+    public readonly type = SharedMapVisualizerFactory.type;
+
     public get IComponentFactory() { return this; }
     public get IRuntimeFactory() { return this; }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const registry = new Map<string, Promise<IComponentFactory>>([
-            ["@fluid-example/shared-map-visualizer", Promise.resolve(this)],
+            [SharedMapVisualizerFactory.type, Promise.resolve(this)],
         ]);
 
         const defaultComponentId = "default";
-        const defaultComponent = "@fluid-example/shared-map-visualizer";
 
         const runtime = await ContainerRuntime.load(
             context,
@@ -250,7 +252,10 @@ class SharedMapVisualizerFactory implements IComponentFactory, IRuntimeFactory {
         // On first boot create the base component
         if (!runtime.existing) {
             await Promise.all([
-                runtime.createComponent(defaultComponentId, defaultComponent).then((componentRuntime) => {
+                runtime.createComponent(
+                    defaultComponentId,
+                    SharedMapVisualizerFactory.type,
+                ).then((componentRuntime) => {
                     componentRuntime.attach();
                 }),
             ])
