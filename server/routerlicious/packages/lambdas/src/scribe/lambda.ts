@@ -22,6 +22,7 @@ import {
     MessageType,
     TreeEntry,
     FileMode,
+    ISequencedDocumentAugmentedMessage,
 } from "@microsoft/fluid-protocol-definitions";
 import { IGitManager } from "@microsoft/fluid-server-services-client";
 import {
@@ -123,7 +124,6 @@ export class ScribeLambda extends SequencedLambda {
                 }
 
                 if (value.operation.type === MessageType.Summarize) {
-                    const content = JSON.parse(value.operation.contents) as ISummaryContent;
                     const summarySequenceNumber = value.operation.sequenceNumber;
 
                     // Process up to the summary op value to get the protocol state at the summary op.
@@ -132,7 +132,7 @@ export class ScribeLambda extends SequencedLambda {
 
                     try {
                         await this.summarize(
-                            content,
+                            value.operation as ISequencedDocumentAugmentedMessage,
                             this.protocolHandler.minimumSequenceNumber,
                             this.protocolHandler.sequenceNumber,
                             this.protocolHandler.quorum.snapshot(),
@@ -154,7 +154,8 @@ export class ScribeLambda extends SequencedLambda {
                 } else if (value.operation.type === MessageType.NoClient) {
                     if (this.generateServiceSummary) {
                         const summarySequenceNumber = value.operation.sequenceNumber;
-                        await this.createServiceSummary(summarySequenceNumber);
+                        const deliContent = (value.operation as ISequencedDocumentAugmentedMessage).additionalContent;
+                        await this.createServiceSummary(summarySequenceNumber, deliContent);
                         this.protocolHead = summarySequenceNumber;
                     }
                 } else if (value.operation.type === MessageType.SummaryAck) {
@@ -286,7 +287,7 @@ export class ScribeLambda extends SequencedLambda {
      * by the summary.
      */
     private async summarize(
-        content: ISummaryContent,
+        op: ISequencedDocumentAugmentedMessage,
         minimumSequenceNumber: number,
         sequenceNumber: number,
         quorumSnapshot: IQuorumSnapshot,
@@ -298,6 +299,8 @@ export class ScribeLambda extends SequencedLambda {
         if (this.protocolHead >= sequenceNumber) {
             return;
         }
+
+        const content = JSON.parse(op.contents) as ISummaryContent;
 
         // The summary must reference the existing summary to be valid. This guards against accidental sends of
         // two summaries at the same time. In this case the first one wins.
@@ -339,16 +342,38 @@ export class ScribeLambda extends SequencedLambda {
         }
 
         // At this point the summary op and its data are all valid and we can perform the write to history
-        const entries: ITreeEntry[] =
+        const protocolEntries: ITreeEntry[] =
             getQuorumTreeEntries(this.documentId, minimumSequenceNumber, sequenceNumber, quorumSnapshot);
 
-        const [protocolTree, appSummaryTree] = await Promise.all([
-            this.storage.createTree({ entries, id: null }),
+        // Create service protocol entries forwarded from deli
+        const serviceProtocolEntries: ITreeEntry[] = [
+            {
+                mode: FileMode.File,
+                path: "serviceProtocol",
+                type: TreeEntry[TreeEntry.Blob],
+                value: {
+                    contents: op.additionalContent,
+                    encoding: "utf-8",
+                },
+            },
+        ];
+
+        const [protocolTree, serviceProtocolTree, appSummaryTree] = await Promise.all([
+            this.storage.createTree({ entries: protocolEntries, id: null }),
+            this.storage.createTree({ entries: serviceProtocolEntries, id: null }),
             this.storage.getTree(content.handle, false),
         ]);
 
         // Combine the app summary with .protocol
         const newTreeEntries = mergeAppAndProtocolTree(appSummaryTree, protocolTree);
+
+        // Now combine with .serviceProtocol
+        newTreeEntries.push({
+            mode: FileMode.Directory,
+            path: ".serviceProtocol",
+            sha: serviceProtocolTree.sha,
+            type: "tree",
+        });
 
         const gitTree = await this.storage.createGitTree({ tree: newTreeEntries });
         const commitParams: ICreateCommitParams = {
@@ -373,7 +398,7 @@ export class ScribeLambda extends SequencedLambda {
         await this.sendSummaryAck(commit.sha, summarySequenceNumber);
     }
 
-    private async createServiceSummary(sequenceNumber: number): Promise<void> {
+    private async createServiceSummary(sequenceNumber: number, serviceContent: string): Promise<void> {
         if (this.protocolHead >= sequenceNumber) {
             return;
         }
@@ -395,8 +420,8 @@ export class ScribeLambda extends SequencedLambda {
                 $lt: sequenceNumber + 1,
             },
         };
-        const logTail = this.messageCollection.find(query, { "operation.sequenceNumber": 1 });
-        const entries: ITreeEntry[] = [
+        const logTail = await this.messageCollection.find(query, { "operation.sequenceNumber": 1 });
+        const logTailEntries: ITreeEntry[] = [
             {
                 mode: FileMode.File,
                 path: "logTail",
@@ -408,14 +433,28 @@ export class ScribeLambda extends SequencedLambda {
             },
         ];
 
-        // Fetch the last commit and summary tree. Create a new tree with logTail.
+        // Create service protocol entries forwarded from deli
+        const serviceProtocolEntries: ITreeEntry[] = [
+            {
+                mode: FileMode.File,
+                path: "serviceProtocol",
+                type: TreeEntry[TreeEntry.Blob],
+                value: {
+                    contents: serviceContent,
+                    encoding: "utf-8",
+                },
+            },
+        ];
+
+        // Fetch the last commit and summary tree. Create new trees with logTail and serviceProtocol.
         const lastCommit = await this.storage.getCommit(existingRef.object.sha);
-        const [logTailTree, lastSummaryTree] = await Promise.all([
-            this.storage.createTree({ entries, id: null }),
+        const [logTailTree, serviceProtocolTree, lastSummaryTree] = await Promise.all([
+            this.storage.createTree({ entries: logTailEntries, id: null }),
+            this.storage.createTree({ entries: serviceProtocolEntries, id: null }),
             this.storage.getTree(lastCommit.tree.sha, false),
         ]);
 
-        // Combine the last summary tree with .logTail tree
+        // Combine the last summary tree with .logTail and .serviceProtocol
         const newTreeEntries = lastSummaryTree.tree.map((value) => {
             const createTreeEntry: ICreateTreeEntry = {
                 mode: value.mode,
@@ -429,6 +468,12 @@ export class ScribeLambda extends SequencedLambda {
             mode: FileMode.Directory,
             path: ".logTail",
             sha: logTailTree.sha,
+            type: "tree",
+        });
+        newTreeEntries.push({
+            mode: FileMode.Directory,
+            path: ".serviceProtocol",
+            sha: serviceProtocolTree.sha,
             type: "tree",
         });
 

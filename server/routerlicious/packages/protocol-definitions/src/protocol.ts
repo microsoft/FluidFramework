@@ -182,6 +182,10 @@ export interface ISequencedDocumentSystemMessage extends ISequencedDocumentMessa
     data: string;
 }
 
+export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMessage {
+    additionalContent: string;
+}
+
 export interface IContentMessage {
 
     clientId: string;
