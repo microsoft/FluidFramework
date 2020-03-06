@@ -167,6 +167,9 @@ async function main() {
     return bumpGeneratorFluid(resolvedRoot, buildPackages);
 }
 
-main().catch(e =>
+main().catch(e => {
     console.error("ERROR: unexpected error", JSON.stringify(e, undefined, 2))
-);
+    if (e.stack) {
+        console.error(`Stack:\n${e.stack}`);
+    }
+});
