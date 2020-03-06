@@ -6,7 +6,7 @@
 import { globals } from "../jest.config";
 
 describe("vltava", () => {
-
+    jest.setTimeout(10000);
     beforeEach(async () => {
       await page.goto(globals.PATH, { waitUntil: "load" });
     });

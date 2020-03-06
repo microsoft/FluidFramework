@@ -5,7 +5,7 @@
   "author": "Microsoft",
   "scripts": {
     "build": "npm run policy-check && npm run build:genver && npm run build:compile && npm run lint && npm run build:docs",
-    "build:ci": "npm run build:genver && lerna run build:compile:min --stream",
+    "build:ci": "npm run build:genver && lerna run build:compile --stream",
     "build:compile": "lerna run build:compile --stream",
     "build:docs": "lerna run build:docs --stream --parallel",
     "build:fast": "node ../../tools/fluid-build/dist/fluidBuild.js --root ../.. --server",

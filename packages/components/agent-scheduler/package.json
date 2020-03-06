@@ -12,7 +12,6 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
-    "build:compile:min": "npm run build:compile",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
@@ -56,7 +55,8 @@
     "@microsoft/fluid-register-collection": "^0.15.0",
     "@microsoft/fluid-runtime-definitions": "^0.15.0",
     "@microsoft/fluid-shared-object-base": "^0.15.0",
-    "debug": "^4.1.1"
+    "debug": "^4.1.1",
+    "uuid": "^3.3.2"
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.14.0",

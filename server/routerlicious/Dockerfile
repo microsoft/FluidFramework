@@ -105,6 +105,8 @@ COPY packages/tools/fluid-fetch/package*.json packages/tools/fluid-fetch/
 COPY packages/tools/replay-tool/package*.json packages/tools/replay-tool/
 COPY packages/tools/webpack-component-loader/package*.json packages/tools/webpack-component-loader/
 COPY packages/tools/merge-tree-client-replay/package*.json packages/tools/merge-tree-client-replay/
+COPY packages/test/context-reload/package*.json packages/test/context-reload/
+COPY packages/test/context-reload/@fluid-example/version-test-2/package*.json packages/test/context-reload/@fluid-example/version-test-2/
 COPY examples/components/badge/package*.json examples/components/badge/
 COPY examples/components/chat/package*.json examples/components/chat/
 COPY examples/components/codemirror/package*.json examples/components/codemirror/
@@ -127,6 +129,7 @@ COPY examples/components/textarea-noreact/package*.json examples/components/text
 COPY examples/components/tourofheroes/package*.json examples/components/tourofheroes/
 COPY examples/components/type-race/package*.json examples/components/type-race/
 COPY examples/components/vltava/package*.json examples/components/vltava/
+COPY examples/hosts/iframe-host/package*.json examples/hosts/iframe-host/
 
 FROM node:10.16.0-slim AS base
 
@@ -176,6 +179,7 @@ RUN npm install --unsafe-perm
 # And now copy over our actual code and build
 COPY packages/ packages/
 COPY examples/components/ examples/components/
+COPY examples/hosts/iframe-host/ examples/hosts/iframe-host/
 
 # Set the version number
 ARG VERSION_BUILDNUMBER=0

@@ -131,8 +131,14 @@ export async function symlinkPackage(repo: FluidRepo, pkg: Package, buildPackage
         const depBuildPackage = buildPackages.get(dep);
         // Check and fix link if it is a known package and version satisfy the version.
         // TODO: check of extranous symlinks
-        if (depBuildPackage && semver.satisfies(depBuildPackage.version, version)) {
+        if (depBuildPackage) {
             const sameMonoRepo = repo.isSameMonoRepo(monoRepo, depBuildPackage);
+            if (!semver.satisfies(depBuildPackage.version, version)) {
+                if (sameMonoRepo) {
+                    console.warn(`${pkg.nameColored}: Mismatch version ${depBuildPackage.version} for dependency ${depBuildPackage.nameColored} in the same mono repo`)
+                }
+                continue;
+            }
             const localSymlinkPath = path.join(pkg.directory, "node_modules", dep);
             const monoRepoSymlinkPath = monoRepoNodeModulePath ? path.join(monoRepoNodeModulePath, dep) : undefined;
 
