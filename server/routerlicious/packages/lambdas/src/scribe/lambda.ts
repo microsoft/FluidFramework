@@ -136,7 +136,8 @@ export class ScribeLambda extends SequencedLambda {
                             this.protocolHandler.minimumSequenceNumber,
                             this.protocolHandler.sequenceNumber,
                             this.protocolHandler.quorum.snapshot(),
-                            summarySequenceNumber);
+                            summarySequenceNumber,
+                            message.offset);
                         this.protocolHead = summarySequenceNumber;
                     } catch (ex) {
                         if (this.nackOnSummarizeException) {
@@ -155,7 +156,7 @@ export class ScribeLambda extends SequencedLambda {
                     if (this.generateServiceSummary) {
                         const summarySequenceNumber = value.operation.sequenceNumber;
                         const deliContent = (value.operation as ISequencedDocumentAugmentedMessage).additionalContent;
-                        await this.createServiceSummary(summarySequenceNumber, deliContent);
+                        await this.createServiceSummary(summarySequenceNumber, deliContent, message.offset);
                         this.protocolHead = summarySequenceNumber;
                     }
                 } else if (value.operation.type === MessageType.SummaryAck) {
@@ -186,17 +187,20 @@ export class ScribeLambda extends SequencedLambda {
     }
 
     private checkpoint(queuedMessage: IQueuedMessage) {
-        const protocolState = this.protocolHandler.getProtocolState();
+        const checkpoint = this.generateCheckpoint(queuedMessage.offset);
+        this.checkpointCore(checkpoint, queuedMessage);
+    }
 
+    private generateCheckpoint(logOffset: number): IScribe {
+        const protocolState = this.protocolHandler.getProtocolState();
         const checkpoint: IScribe = {
             lastClientSummaryHead: this.lastClientSummaryHead,
-            logOffset: queuedMessage.offset,
+            logOffset,
             minimumSequenceNumber: this.minSequenceNumber,
             protocolState,
             sequenceNumber: this.sequenceNumber,
         };
-
-        this.checkpointCore(checkpoint, queuedMessage);
+        return checkpoint;
     }
 
     private checkpointCore(checkpoint: IScribe, queuedMessage: IQueuedMessage) {
@@ -292,6 +296,7 @@ export class ScribeLambda extends SequencedLambda {
         sequenceNumber: number,
         quorumSnapshot: IQuorumSnapshot,
         summarySequenceNumber: number,
+        logOffset: number,
     ): Promise<void> {
         // If the sequence number for the protocol head is greater than current sequence number then we
         // have already captured this summary and are processing this message due to a replay of the stream.
@@ -349,7 +354,7 @@ export class ScribeLambda extends SequencedLambda {
         const serviceProtocolEntries: ITreeEntry[] = [
             {
                 mode: FileMode.File,
-                path: "serviceProtocol",
+                path: "deli",
                 type: TreeEntry[TreeEntry.Blob],
                 value: {
                     contents: op.additionalContent,
@@ -357,6 +362,18 @@ export class ScribeLambda extends SequencedLambda {
                 },
             },
         ];
+        // Combine with scribe state
+        serviceProtocolEntries.push(
+            {
+                mode: FileMode.File,
+                path: "scribe",
+                type: TreeEntry[TreeEntry.Blob],
+                value: {
+                    contents: JSON.stringify(this.generateCheckpoint(logOffset)),
+                    encoding: "utf-8",
+                },
+            },
+        );
 
         const [protocolTree, serviceProtocolTree, appSummaryTree] = await Promise.all([
             this.storage.createTree({ entries: protocolEntries, id: null }),
@@ -398,7 +415,10 @@ export class ScribeLambda extends SequencedLambda {
         await this.sendSummaryAck(commit.sha, summarySequenceNumber);
     }
 
-    private async createServiceSummary(sequenceNumber: number, serviceContent: string): Promise<void> {
+    private async createServiceSummary(
+        sequenceNumber: number,
+        serviceContent: string,
+        logOffset: number): Promise<void> {
         if (this.protocolHead >= sequenceNumber) {
             return;
         }
@@ -437,7 +457,7 @@ export class ScribeLambda extends SequencedLambda {
         const serviceProtocolEntries: ITreeEntry[] = [
             {
                 mode: FileMode.File,
-                path: "serviceProtocol",
+                path: "deli",
                 type: TreeEntry[TreeEntry.Blob],
                 value: {
                     contents: serviceContent,
@@ -445,6 +465,19 @@ export class ScribeLambda extends SequencedLambda {
                 },
             },
         ];
+
+        // Combine with scribe state
+        serviceProtocolEntries.push(
+            {
+                mode: FileMode.File,
+                path: "scribe",
+                type: TreeEntry[TreeEntry.Blob],
+                value: {
+                    contents: JSON.stringify(this.generateCheckpoint(logOffset)),
+                    encoding: "utf-8",
+                },
+            },
+        );
 
         // Fetch the last commit and summary tree. Create new trees with logTail and serviceProtocol.
         const lastCommit = await this.storage.getCommit(existingRef.object.sha);
