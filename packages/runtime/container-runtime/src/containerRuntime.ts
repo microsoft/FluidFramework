@@ -643,7 +643,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             "/_summarizer",
             this,
             () => this.summaryConfiguration,
-            async (safe: boolean) => this.generateSummary(false, safe),
+            async (full: boolean, safe: boolean) => this.generateSummary(full, safe),
             async (summContext, refSeq) => this.refreshLatestSummaryAck(summContext, refSeq),
             this.previousState.summaryCollection);
 
