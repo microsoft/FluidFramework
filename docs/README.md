@@ -36,7 +36,7 @@ distributed data structures.
 
 Consumers of the Fluid Framework NPM packages **must use a TypeScript version >= 3.6.**
 
-[Read more.](./contributing/breaking-changes.md#fluid-packages-require-consumers-on-typescript-3-6)
+[Read more](./contributing/breaking-changes.md#fluid-packages-require-consumers-on-typescript-3-6)
 
 :::
 
@@ -45,7 +45,7 @@ Consumers of the Fluid Framework NPM packages **must use a TypeScript version >=
 - Current release version: `0.14.x`
 - Supported releases: `>=0.13.x, <=0.14.x`
 
-[Learn more about Fluid's release process.](./contributing/release-process.md)
+[Learn more about Fluid's release process](./contributing/release-process.md)
 
 :::
 
