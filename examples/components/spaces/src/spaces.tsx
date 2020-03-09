@@ -47,13 +47,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
 
     protected async componentInitializingFirstTime(props?: any) {
         this.root.createSubDirectory("component-list");
-        this.dataModelInternal =
-            new SpacesDataModel(
-                this.root,
-                this.createAndAttachComponent.bind(this),
-                this.getComponent.bind(this),
-                Spaces.componentToolbarId,
-            );
+        this.initializeDataModel();
         this.componentToolbar =
             await this.dataModel.addComponent<ComponentToolbar>(
                 ComponentToolbarName,
@@ -69,13 +63,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
     }
 
     protected async componentInitializingFromExisting() {
-        this.dataModelInternal =
-            new SpacesDataModel(
-                this.root,
-                this.createAndAttachComponent.bind(this),
-                this.getComponent.bind(this),
-                Spaces.componentToolbarId,
-            );
+        this.initializeDataModel();
         this.componentToolbar = await this.getComponent<ComponentToolbar>(Spaces.componentToolbarId);
     }
 
@@ -85,9 +73,6 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
                 /* eslint-disable-next-line @typescript-eslint/no-floating-promises */
                 this.dataModel.addComponent(type, w, h);
             });
-            this.componentToolbar.addListener("saveLayout", () => {
-                this.dataModel.saveLayout();
-            });
             this.componentToolbar.addListener("toggleEditable", (isEditable: boolean) => {
                 this.dataModel.emit("editableUpdated", isEditable);
             });
@@ -95,12 +80,22 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
         }
     }
 
+    private initializeDataModel() {
+        this.dataModelInternal =
+            new SpacesDataModel(
+                this.root,
+                this.createAndAttachComponent.bind(this),
+                this.getComponent.bind(this),
+                Spaces.componentToolbarId,
+            );
+    }
+
     /**
      * Will return a new Spaces View
      */
     public render(div: HTMLElement) {
         ReactDOM.render(
-            <SpacesGridView dataModel={this.dataModel} />,
+            <SpacesGridView dataModel={this.dataModel}/>,
             div);
     }
 }
