@@ -32,6 +32,7 @@ export class ExternalComponentLoader extends PrimedComponent
         "@fluid-example/pond",
         "@fluid-example/clicker",
         "@fluid-example/primitives",
+        "@fluid-example/table-view",
     ];
     private readonly viewComponentMapID: string = "ViewComponentUrl";
     private viewComponentP: Promise<IComponent>;
