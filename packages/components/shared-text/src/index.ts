@@ -76,6 +76,8 @@ class MyRegistry implements IComponentRegistry {
 }
 
 class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
+    public static readonly type = "@fluid-example/shared-text";
+    public readonly type = SharedTextFactoryComponent.type;
 
     public get IComponentFactory() { return this; }
     public get IRuntimeFactory() { return this; }
@@ -125,7 +127,7 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
             context,
             [
                 ...defaultRegistryEntries,
-                ["@fluid-example/shared-text", Promise.resolve(this)],
+                [SharedTextFactoryComponent.type, Promise.resolve(this)],
                 [
                     "verdaccio",
                     Promise.resolve(new MyRegistry(context, "https://pragueauspkn-3873244262.azureedge.net")),
@@ -136,7 +138,7 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
         // On first boot create the base component
         if (!runtime.existing) {
             await Promise.all([
-                runtime.createComponent(DefaultComponentName, "@fluid-example/shared-text")
+                runtime.createComponent(DefaultComponentName, SharedTextFactoryComponent.type)
                     .then((componentRuntime) => componentRuntime.attach()),
             ])
                 .catch((error) => {

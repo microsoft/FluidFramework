@@ -104,6 +104,8 @@ class KeyValue implements IKeyValue, IComponent, IComponentRouter {
 }
 
 export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFactory {
+    public static readonly type = "@fluid-example/key-value-cache";
+    public readonly type = KeyValueFactoryComponent.type;
 
     public get IRuntimeFactory() { return this; }
     public get IComponentFactory() { return this; }

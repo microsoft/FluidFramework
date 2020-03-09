@@ -167,6 +167,9 @@ export class ProseMirror extends EventEmitter
 }
 
 class ProseMirrorFactory implements IComponentFactory {
+    public static readonly type = "@chaincode/prosemirror";
+    public readonly type = ProseMirrorFactory.type;
+
     public get IComponentFactory() { return this; }
 
     public instantiateComponent(context: IComponentContext): void {

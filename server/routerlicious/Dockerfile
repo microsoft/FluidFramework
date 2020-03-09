@@ -42,7 +42,6 @@ COPY packages/components/scoreboard/package*.json packages/components/scoreboard
 COPY packages/components/scribe/package*.json packages/components/scribe/
 COPY packages/components/shared-text/package*.json packages/components/shared-text/
 COPY packages/components/search-menu/package*.json packages/components/search-menu/
-COPY packages/components/source-document/package*.json packages/components/source-document/
 COPY packages/components/table-document/package*.json packages/components/table-document/
 COPY packages/components/table-view/package*.json packages/components/table-view/
 COPY packages/components/todo/package*.json packages/components/todo/
