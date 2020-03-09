@@ -40,7 +40,7 @@
         "tenants": [
             {
                 "id": "fluid",
-                "key": "43cfc3fbf04a97c0921fd23ff10f9e4b"
+                "key": "create-new-tenants-if-going-to-production"
             },
             {
                 "id": "github",
@@ -188,7 +188,7 @@
     "tenantConfig": [
         {
             "_id": "fluid",
-            "key": "43cfc3fbf04a97c0921fd23ff10f9e4b",
+            "key": "create-new-tenants-if-going-to-production",
             "storage": {
                 "historianUrl": "http://localhost:3001",
                 "internalHistorianUrl": "http://historian:3000",
