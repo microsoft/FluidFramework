@@ -509,7 +509,10 @@ export class RunningSummarizer implements IDisposable {
         // Update for success
         if (ackNack.type === MessageType.SummaryAck) {
             this.heuristics.ackLastSent();
+
+            // since we need a full summary after context reload, we only clear this on ack
             this.immediateSummary = false;
+
             return true;
         } else {
             return false;
