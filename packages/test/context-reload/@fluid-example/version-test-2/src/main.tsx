@@ -23,20 +23,28 @@ export class VersionTest extends PrimedComponent implements IComponentHTMLView {
   private upgradeToPkg: string = "@fluid-example/version-test-3";
   private upgradeToVersion: string = "0.3.x";
 
-  protected async componentInitializingFirstTime() {
-    this.root.set("title", "version 2");
-    this.root.set("diceValue", 0);
+  protected async componentHasInitialized() {
+    if (!this.root.get("diceValue")) {
+      this.root.set("diceValue", 0);
+    }
+    this.root.set("title2", "version 2");
   }
 
   public render(div: HTMLElement) {
     const rerender = () => {
       const title = this.root.get("title");
+      const title2 = this.root.get("title2");
       const diceValue = this.root.get<number>("diceValue");
 
       ReactDOM.render(
         <div>
-          <p>{title}</p>
-          <input type={"text"} onChange={e => this.root.set("title", e.target.value)} />
+          old title:
+          <p className="title">{title}</p>
+          <input className="titleInput" type={"text"} onChange={e => this.root.set("title", e.target.value)} />
+          <br />
+          new title:
+          <p className="title2">{title2}</p>
+          <input className="title2Input" type={"text"} onChange={e => this.root.set("title2", e.target.value)} />
           <br />
           <p><span style={{backgroundColor: "springgreen"}}>version {pkgversion}</span></p>
           <br />
@@ -47,8 +55,8 @@ export class VersionTest extends PrimedComponent implements IComponentHTMLView {
           <button onClick={() => this.quorumProposeCode()}>Upgrade Version</button>
           <div>
           cool dice roller:
-          <span className="dicevalue" style={{ fontSize: 50 }}>{this.getDiceChar(diceValue)}</span>
-          <button className="diceroller" onClick={this.rollDice.bind(this)}>Roll</button>
+          <span className="diceValue" style={{ fontSize: 50 }}>{this.getDiceChar(diceValue)}</span>
+          <button className="diceRoller" onClick={this.rollDice.bind(this)}>Roll</button>
           </div>
         </div>,
         div
