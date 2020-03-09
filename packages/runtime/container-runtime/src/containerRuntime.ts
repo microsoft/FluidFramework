@@ -25,6 +25,7 @@ import {
     IRuntime,
     IRuntimeState,
     IExperimentalRuntime,
+    IExperimentalContainerContext,
 } from "@microsoft/fluid-container-definitions";
 import {
     Deferred,
@@ -400,7 +401,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         // Create all internal components in first load.
         if (!context.existing) {
             await runtime.createComponent(schedulerId, schedulerId)
-                .then((componentRuntime) => componentRuntime.attach());
+                .then((componentRuntime) => {
+                    componentRuntime.attach();
+                });
         }
 
         runtime.subscribeToLeadership();
@@ -515,13 +518,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.connectionState === ConnectionState.Connected;
     }
 
-    // Almost the same as IAgentScheduler.leader (this._leader),
-    // but returns false if disconnected
     public get leader(): boolean {
-        if (this.connected && this.deltaManager && this.deltaManager.active) {
-            return this._leader;
-        }
-        return false;
+        return this._leader;
     }
 
     public get summarizerClientId(): string {
@@ -567,10 +565,12 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         this.chunkMap = new Map<string, string[]>(chunks);
 
+        const expContainerContext = this.context as IExperimentalContainerContext;
         this.IComponentHandleContext = new ComponentHandleContext("", this);
 
         // useContext - back-compat: 0.14 uploadSummary
-        const useContext = this.storage.uploadSummaryWithContext !== undefined;
+        const useContext: boolean = expContainerContext.isExperimentalContainerContext ?
+            true : this.storage.uploadSummaryWithContext !== undefined;
         this.latestSummaryAck = { proposalHandle: undefined, ackHandle: undefined };
         this.summaryTracker = new SummaryTracker(
             useContext,
@@ -807,7 +807,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         if (value === ConnectionState.Connected) {
             this.summaryManager.setConnected(clientId);
         } else {
-            this.updateLeader();
+            assert(!this._leader);
             this.summaryManager.setDisconnected();
         }
     }
@@ -1015,10 +1015,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.context.submitSignalFn(envelope);
     }
 
-    public experimentalAttachServices(storageService: IDocumentStorageService): void {
-        throw new Error("Method not implemented");
-    }
-
     /**
      * Returns a summary of the runtime at the current sequence number.
      */
@@ -1138,16 +1134,28 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.verifyNotClosed();
 
         const context = this.contexts.get(componentRuntime.id);
-        const message = context.generateAttachMessage();
+        // If storage is not available then we are not yet fully attached and so will defer to the initial snapshot
+        const expContainerContext = this.context as IExperimentalContainerContext;
+        if (expContainerContext?.isExperimentalContainerContext ? expContainerContext.isAttached() : true) {
+            const message = context.generateAttachMessage();
 
-        this.pendingAttach.set(componentRuntime.id, message);
-        if (this.connected) {
-            this.submit(MessageType.Attach, message);
+            this.pendingAttach.set(componentRuntime.id, message);
+            if (this.connected) {
+                this.submit(MessageType.Attach, message);
+            }
         }
 
         // Resolve the deferred so other local components can access it.
         const deferred = this.contextsDeferred.get(componentRuntime.id);
         deferred.resolve(context);
+    }
+
+    public async createSummary(): Promise<ISummaryTree> {
+        // TODO - https://github.com/microsoft/FluidFramework/issues/1430
+        // TODO - https://github.com/microsoft/FluidFramework/issues/1431
+        const treeWithStats = await this.summarize(true);
+
+        return treeWithStats.summaryTree;
     }
 
     private async generateSummary(fullTree: boolean = false, safe: boolean = false): Promise<GenerateSummaryData> {
@@ -1379,18 +1387,26 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     private subscribeToLeadership() {
         if (this.context.clientDetails.capabilities.interactive) {
             this.getScheduler().then((scheduler) => {
-                if (scheduler.leader) {
-                    this.updateLeader(true);
-                }
-                scheduler.on("leader", () => {
+                const LeaderTaskId = "leader";
+
+                // Each client expresses interest to be a leader.
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                scheduler.pick(LeaderTaskId, async () => {
+                    assert(!this._leader);
                     this.updateLeader(true);
                 });
-                scheduler.on("notleader", () => {
-                    this.updateLeader(false);
+
+                scheduler.on("lost", (key) => {
+                    if (key === LeaderTaskId) {
+                        assert(this._leader);
+                        this._leader = false;
+                        this.updateLeader(false);
+                    }
                 });
-            }, (err) => {
-                debug(err);
+            }).catch((err) => {
+                this.logger.sendErrorEvent({eventName: "ContainerRuntime_getScheduler"}, err);
             });
+
             this.context.quorum.on("removeMember", (clientId: string) => {
                 if (this.leader) {
                     this.runTaskAnalyzer();
@@ -1406,11 +1422,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return schedulerComponent.IAgentScheduler;
     }
 
-    private updateLeader(leadership?: boolean) {
-        if (leadership !== undefined) {
-            this._leader = leadership;
-        }
+    private updateLeader(leadership: boolean) {
+        this._leader = leadership;
         if (this.leader) {
+            assert(this.connected && this.deltaManager && this.deltaManager.active);
             this.emit("leader", this.clientId);
         } else {
             this.emit("noleader", this.clientId);

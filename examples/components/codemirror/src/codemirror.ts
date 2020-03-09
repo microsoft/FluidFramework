@@ -254,6 +254,9 @@ export class CodeMirrorComponent
 }
 
 class SmdeFactory implements IComponentFactory {
+    public static readonly type = "@fluid-example/codemirror";
+    public readonly type = SmdeFactory.type;
+
     public get IComponentFactory() { return this; }
 
     public instantiateComponent(context: IComponentContext): void {

@@ -12,7 +12,6 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
-    "build:compile:min": "npm run build:compile",
     "build:docs": "echo \"Skipping @microsoft/fluid-merge-tree; see https://github.com/microsoft/Prague/issues/2270\"",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
@@ -79,7 +78,7 @@
     "make-promises-safe": "^5.1.0",
     "mocha": "^5.2.0",
     "mocha-junit-reporter": "^1.18.0",
-    "nyc": "^14.1.1",
+    "nyc": "^15.0.0",
     "random-js": "^1.0.8",
     "rimraf": "^2.6.2",
     "typescript": "~3.7.4"

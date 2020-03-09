@@ -1,0 +1,21 @@
+<!-- Copyright (c) Microsoft Corporation. All rights reserved. -->
+<!-- Licensed under the MIT License. -->
+<html>
+    <head>
+        <script src="/main.bundle.js"></script>
+    </head>
+    <body>
+        <table width=100% height=100%>
+            <tr>
+                <td width=50% height=50%><iframe width=100% height=100% src="/inner.html" id="content_frame"></iframe></td>
+                <td width=50% height=50%><div width=100% height=100% id="content"></iframe></td>
+            </tr>
+            <tr>
+                <td colspan="2" width=100% height=300px><div id="logs" width=100% height=300px style="overflow-y: scroll;"></div></td>
+            </tr>
+        </table>
+        <script>
+            Loader.runOuter("content_frame", "content", "logs");
+        </script>
+    </body>
+</html>

@@ -20,6 +20,8 @@ import {
     IRuntime,
     IRuntimeFactory,
     IRuntimeState,
+    IExperimentalRuntime,
+    IExperimentalContainerContext,
 } from "@microsoft/fluid-container-definitions";
 import { IDocumentStorageService, IError } from "@microsoft/fluid-driver-definitions";
 import { raiseConnectedEvent } from "@microsoft/fluid-protocol-base";
@@ -35,12 +37,15 @@ import {
     ISnapshotTree,
     ITree,
     MessageType,
+    ISummaryTree,
 } from "@microsoft/fluid-protocol-definitions";
 import { BlobManager } from "./blobManager";
 import { Container } from "./container";
 
-export class ContainerContext extends EventEmitter implements IContainerContext {
-    public static async load(
+export class ContainerContext extends EventEmitter implements IContainerContext, IExperimentalContainerContext {
+
+    public readonly isExperimentalContainerContext = true;
+    public static async createOrLoad(
         container: Container,
         scope: IComponent,
         codeLoader: ICodeLoader,
@@ -51,7 +56,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         quorum: IQuorum,
         loader: ILoader,
-        storage: IDocumentStorageService | null | undefined,
         errorFn: (err: IError) => void,
         submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         submitSignalFn: (contents: any) => void,
@@ -70,7 +74,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
             blobManager,
             deltaManager,
             quorum,
-            storage,
             loader,
             errorFn,
             submitFn,
@@ -80,7 +83,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
             version,
             previousRuntimeState);
         await context.load();
-
         return context;
     }
 
@@ -150,6 +152,10 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         return this._baseSnapshot;
     }
 
+    public get storage(): IDocumentStorageService | undefined | null {
+        return this.container.storage;
+    }
+
     private runtime: IRuntime | undefined;
 
     private _disposed = false;
@@ -167,7 +173,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         public readonly blobManager: BlobManager | undefined,
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         public readonly quorum: IQuorum,
-        public readonly storage: IDocumentStorageService | undefined | null,
         public readonly loader: ILoader,
         private readonly errorFn: (err: IError) => void,
         public readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
@@ -204,6 +209,18 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
 
     public async snapshot(tagMessage: string = "", fullTree: boolean = false): Promise<ITree | null> {
         return this.runtime!.snapshot(tagMessage, fullTree);
+    }
+
+    public isAttached(): boolean {
+        return this.container.isAttached();
+    }
+
+    public async createSummary(): Promise<ISummaryTree> {
+        const expRuntime: IExperimentalRuntime = this.runtime as IExperimentalRuntime;
+        if (!expRuntime?.isExperimentalRuntime) {
+            throw new Error("Runtime has no experimental features");
+        }
+        return expRuntime.createSummary();
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string, version?: string) {

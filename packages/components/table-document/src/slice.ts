@@ -57,9 +57,9 @@ export class TableSlice extends PrimedComponent implements ITable {
         return this.doc.getCellValue(row, col);
     }
 
-    public setCellValue(row: number, col: number, value: TableDocumentItem) {
+    public setCellValue(row: number, col: number, value: TableDocumentItem, properties?: PropertySet) {
         this.validateInSlice(row, col);
-        this.doc.setCellValue(row, col, value);
+        this.doc.setCellValue(row, col, value, properties);
     }
 
     public annotateRows(startRow: number, endRow: number, properties: PropertySet, op?: ICombiningOp) {
@@ -82,6 +82,16 @@ export class TableSlice extends PrimedComponent implements ITable {
     public getColProperties(col: number): PropertySet {
         this.validateInSlice(undefined, col);
         return this.doc.getColProperties(col);
+    }
+
+    public annotateCell(row: number, col: number, properties: PropertySet) {
+        this.validateInSlice(row, col);
+        this.doc.annotateCell(row, col, properties);
+    }
+
+    public getCellProperties(row: number, col: number): PropertySet {
+        this.validateInSlice(row, col);
+        return this.doc.getCellProperties(row, col);
     }
 
     public insertRows(startRow: number, numRows: number) {

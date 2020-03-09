@@ -62,4 +62,8 @@ export class FluidRepoBase {
     public createPackageMap() {
         return new Map<string, Package>(this.packages.packages.map(pkg => [pkg.name, pkg]));
     }
+
+    public reload() {
+        this.packages.packages.forEach(pkg => pkg.reload());
+    }
 };

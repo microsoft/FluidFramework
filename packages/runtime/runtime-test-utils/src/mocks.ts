@@ -27,8 +27,10 @@ import * as git from "@microsoft/fluid-gitresources";
 import {
     ConnectionState,
     IBlob,
+    ICommittedProposal,
     IDocumentMessage,
     IQuorum,
+    ISequencedClient,
     ISequencedDocumentMessage,
     ITree,
     ITreeEntry,
@@ -196,6 +198,124 @@ class MockDeltaConnection implements IDeltaConnection {
     }
 }
 
+export class MockQuorum implements IQuorum, EventEmitter{
+
+    private readonly map = new Map<string, any>();
+    private readonly members: Map<string, ISequencedClient>;
+    private readonly eventEmitter = new EventEmitter();
+
+    constructor(... members: [string, Partial<ISequencedClient>][]) {
+        this.members = new Map(members as [string, ISequencedClient][] ?? []);
+    }
+
+    async propose(key: string, value: any) {
+        if (this.map.has(key)) {
+            assert.fail(`${key} exists`);
+        }
+        this.map.set(key, value);
+        this.eventEmitter.emit("approveProposal", 0, key, value);
+        this.eventEmitter.emit("commitProposal", 0, key, value);
+    }
+
+    has(key: string): boolean {
+        return this.map.has(key);
+    }
+
+    get(key: string) {
+        return this.map.get(key);
+    }
+
+    getApprovalData(key: string): ICommittedProposal | undefined {
+        throw new Error("Method not implemented.");
+    }
+
+    addMember(id: string, client: ISequencedClient) {
+        this.members.set(id, client);
+        this.eventEmitter.emit("addMember");
+    }
+
+    removeMember(id: string) {
+        if (this.members.delete(id)) {
+            this.eventEmitter.emit("removeMember");
+        }
+    }
+
+
+    getMembers(): Map<string, ISequencedClient> {
+        return this.members;
+    }
+    getMember(clientId: string): ISequencedClient | undefined {
+        return this.getMembers().get(clientId);
+    }
+    disposed: boolean = false;
+
+    dispose(): void {
+        throw new Error("Method not implemented.");
+    }
+
+
+    addListener(event: string | symbol, listener: (...args: any[]) => void): this {
+        throw new Error("Method not implemented.");
+    }
+    on(event: string | symbol, listener: (...args: any[]) => void): this {
+        switch (event) {
+            case "afterOn":
+                this.eventEmitter.on(event, listener);
+                return this;
+
+            case "addMember":
+            case "removeMember":
+            case "approveProposal":
+            case "commitProposal":
+                this.eventEmitter.on(event, listener);
+                this.eventEmitter.emit("afterOn", event);
+                return this;
+            default:
+                throw new Error("Method not implemented.");
+        }
+    }
+    once(event: string | symbol, listener: (...args: any[]) => void): this {
+        throw new Error("Method not implemented.");
+    }
+    prependListener(event: string | symbol, listener: (...args: any[]) => void): this {
+        throw new Error("Method not implemented.");
+    }
+    prependOnceListener(event: string | symbol, listener: (...args: any[]) => void): this {
+        throw new Error("Method not implemented.");
+    }
+    removeListener(event: string | symbol, listener: (...args: any[]) => void): this {
+        this.eventEmitter.removeListener(event, listener);
+        return this;
+    }
+    off(event: string | symbol, listener: (...args: any[]) => void): this {
+        throw new Error("Method not implemented.");
+    }
+    removeAllListeners(event?: string | symbol | undefined): this {
+        throw new Error("Method not implemented.");
+    }
+    setMaxListeners(n: number): this {
+        throw new Error("Method not implemented.");
+    }
+    getMaxListeners(): number {
+        throw new Error("Method not implemented.");
+    }
+    listeners(event: string | symbol): Function[] {
+        throw new Error("Method not implemented.");
+    }
+    rawListeners(event: string | symbol): Function[] {
+        throw new Error("Method not implemented.");
+    }
+    emit(event: string | symbol, ...args: any[]): boolean {
+        throw new Error("Method not implemented.");
+    }
+    eventNames(): (string | symbol)[] {
+        throw new Error("Method not implemented.");
+    }
+    listenerCount(type: string | symbol): number {
+        throw new Error("Method not implemented.");
+    }
+}
+
 /**
  * Mock implementation of IRuntime for testing that does nothing
  */
@@ -214,13 +334,14 @@ export class MockRuntime extends EventEmitter
     public clientId: string = uuid();
     public readonly parentBranch: string;
     public readonly path = "";
-    public readonly connected: boolean;
+    public readonly connected = true;
     public readonly leader: boolean;
     public deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     public readonly loader: ILoader;
     public readonly logger: ITelemetryLogger = DebugLogger.create("fluid:MockRuntime");
     public services: ISharedObjectServices;
     private readonly activeDeferred = new Deferred<void>();
+    public readonly quorum = new MockQuorum();
 
     private _disposed = false;
     public get disposed() { return this._disposed; }
@@ -261,7 +382,7 @@ export class MockRuntime extends EventEmitter
     }
 
     public getQuorum(): IQuorum {
-        return null;
+        return this.quorum;
     }
 
     public getAudience(): IAudience {
