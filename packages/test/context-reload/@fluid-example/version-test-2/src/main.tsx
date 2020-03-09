@@ -38,9 +38,13 @@ export class VersionTest extends PrimedComponent implements IComponentHTMLView {
 
       ReactDOM.render(
         <div>
-          <p>old title:{title}</p>
-          <p>new title:{title2}</p>
-          <input type={"text"} onChange={e => this.root.set("title", e.target.value)} />
+          old title:
+          <p className="title">{title}</p>
+          <input className="titleInput" type={"text"} onChange={e => this.root.set("title", e.target.value)} />
+          <br />
+          new title:
+          <p className="title2">{title2}</p>
+          <input className="title2Input" type={"text"} onChange={e => this.root.set("title2", e.target.value)} />
           <br />
           <p><span style={{backgroundColor: "springgreen"}}>version {pkgversion}</span></p>
           <br />
@@ -51,8 +55,8 @@ export class VersionTest extends PrimedComponent implements IComponentHTMLView {
           <button onClick={() => this.quorumProposeCode()}>Upgrade Version</button>
           <div>
           cool dice roller:
-          <span className="dicevalue" style={{ fontSize: 50 }}>{this.getDiceChar(diceValue)}</span>
-          <button className="diceroller" onClick={this.rollDice.bind(this)}>Roll</button>
+          <span className="diceValue" style={{ fontSize: 50 }}>{this.getDiceChar(diceValue)}</span>
+          <button className="diceRoller" onClick={this.rollDice.bind(this)}>Roll</button>
           </div>
         </div>,
         div
