@@ -4,15 +4,21 @@
  */
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
-import { ScopeType } from "@microsoft/fluid-protocol-definitions";
+import {
+    IFluidResolvedUrl,
+    IResolvedUrl,
+    IUrlResolver,
+    IExperimentalUrlResolver,
+} from "@microsoft/fluid-driver-definitions";
+import { ScopeType, ISummaryTree, ICommittedProposal } from "@microsoft/fluid-protocol-definitions";
 import { generateToken } from "@microsoft/fluid-server-services-client";
 
 /**
  * Resolves URLs by providing fake URLs which succeed with the other
  * related test classes.
  */
-export class TestResolver implements IUrlResolver {
+export class TestResolver implements IUrlResolver, IExperimentalUrlResolver {
+    public readonly isExperimentalUrlResolver = true;
     private readonly tenantId = "tenantId";
     private readonly tokenKey = "tokenKey";
 
@@ -26,6 +32,27 @@ export class TestResolver implements IUrlResolver {
      * @param request - request to handle; not used
      */
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
+        const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
+        const resolved: IFluidResolvedUrl = {
+            endpoints: {
+                deltaStorageUrl: "test.com",
+                ordererUrl: "test.com",
+                storageUrl: "test.com",
+            },
+            tokens: { jwt: generateToken(this.tenantId, this.id, this.tokenKey, scopes) },
+            type: "fluid",
+            url: `fluid-test://test.com/${this.tenantId}/${this.id}`,
+        };
+
+        return resolved;
+    }
+
+    public async createContainer(
+        summary: ISummaryTree,
+        sequenceNumber: number,
+        values: [string, ICommittedProposal][],
+        request: IRequest,
+    ): Promise<IResolvedUrl> {
         const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
         const resolved: IFluidResolvedUrl = {
             endpoints: {
