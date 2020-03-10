@@ -4,7 +4,6 @@
  */
 
 import { EventEmitter } from "events";
-import { parse } from "url";
 import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
 import {
     IComponent,
@@ -34,24 +33,12 @@ import {
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { Container } from "./container";
 import { debug } from "./debug";
+import { IParsedUrl, parseUrl } from "./utils";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const now = require("performance-now") as () => number;
 
-interface IParsedUrl {
-    id: string;
-    path: string;
-    /**
-     * Null means do not use snapshots, undefined means load latest snapshot
-     * otherwise it's version ID passed to IDocumentStorageService.getVersions() to figure out what snapshot to use.
-     * If needed, can add undefined which is treated by Container.load() as load latest snapshot.
-     */
-    version: string | null | undefined;
-}
-
-export class RelativeLoader extends EventEmitter implements ILoader, IExperimentalLoader {
-
-    public readonly isExperimentalLoader = true;
+export class RelativeLoader extends EventEmitter implements ILoader {
 
     // Because the loader is passed to the container during construction we need to resolve the target container
     // after construction.
@@ -61,7 +48,10 @@ export class RelativeLoader extends EventEmitter implements ILoader, IExperiment
      * BaseRequest is the original request that triggered the load. This URL is used in case credentials need
      * to be fetched again.
      */
-    constructor(private readonly loader: Loader, private readonly baseRequest: IRequest) {
+    constructor(
+        private readonly loader: Loader,
+        private readonly baseRequest: IRequest | undefined,
+    ) {
         super();
     }
 
@@ -78,20 +68,24 @@ export class RelativeLoader extends EventEmitter implements ILoader, IExperiment
     public async request(request: IRequest): Promise<IResponse> {
         if (request.url.startsWith("/")) {
             if (this.needExecutionContext(request)) {
+                if (!this.baseRequest) {
+                    throw new Error("Base Request is not provided");
+                }
                 return this.loader.requestWorker(this.baseRequest.url, request);
             } else {
-                const container = this.canUseCache(request)
-                    ? await this.containerDeferred.promise
-                    : await this.loader.resolve({ url: this.baseRequest.url, headers: request.headers });
+                let container: Container;
+                if (this.canUseCache(request)) {
+                    container = await this.containerDeferred.promise;
+                } else if (!this.baseRequest) {
+                    throw new Error("Base Request is not provided");
+                } else {
+                    container = await this.loader.resolve({ url: this.baseRequest.url, headers: request.headers });
+                }
                 return container.request(request);
             }
         }
 
         return this.loader.request(request);
-    }
-
-    public async experimentalCreateDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
-        throw new Error("Method not implemented.");
     }
 
     public resolveContainer(container: Container) {
@@ -152,8 +146,19 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
         this.protocolToDocumentFactoryMap = new DocumentServiceFactoryProtocolMatcher(documentServiceFactories);
     }
 
-    public async experimentalCreateDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
-        throw new Error("Method not implemented.");
+    public async createDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
+        debug(`Container creating in detached state: ${now()} `);
+
+        return Container.create(
+            this.codeLoader,
+            this.options,
+            this.scope,
+            this,
+            source,
+            (resolvedUrl: IFluidResolvedUrl) => {
+                return this.protocolToDocumentFactoryMap.getFactory(resolvedUrl);
+            },
+            this.logger);
     }
 
     public async resolve(request: IRequest): Promise<Container> {
@@ -184,7 +189,7 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
         } else {
             const resolved = await this.getResolvedUrl({ url: baseUrl, headers: request.headers });
             const resolvedAsFluid = resolved as IFluidResolvedUrl;
-            const parsed = this.parseUrl(resolvedAsFluid.url);
+            const parsed = parseUrl(resolvedAsFluid.url);
             if (!parsed) {
                 return Promise.reject(`Invalid URL ${resolvedAsFluid.url}`);
             }
@@ -198,17 +203,6 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
             );
             return proxyLoader.request(request);
         }
-    }
-
-    private parseUrl(url: string): IParsedUrl | null {
-        const parsed = parse(url, true);
-
-        const regex = /^\/([^/]*\/[^/]*)(\/?.*)$/;
-        const match = regex.exec(parsed.pathname!);
-
-        return (match && match.length === 3)
-            ? { id: match[1], path: match[2], version: parsed.query.version as string }
-            : null;
     }
 
     private async getResolvedUrl(request: IRequest): Promise<IResolvedUrl> {
@@ -246,7 +240,7 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
         }
 
         // Parse URL into components
-        const parsed = this.parseUrl(resolvedAsFluid.url);
+        const parsed = parseUrl(resolvedAsFluid.url);
         if (!parsed) {
             return Promise.reject(`Invalid URL ${resolvedAsFluid.url}`);
         }

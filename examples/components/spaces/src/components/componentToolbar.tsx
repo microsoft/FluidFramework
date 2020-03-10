@@ -107,6 +107,8 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
 
     private readonly supportedComponentList: IContainerComponentDetails[];
 
+    private readonly supportedComponentList: IContainerComponentDetails[];
+
     constructor(props: IComponentToolbarViewProps){
         super(props);
         this.supportedComponentList = props.supportedComponentList;
@@ -119,7 +121,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
             }
         });
     }
-
+    
     public emitAddComponentEvent(type: string, w?: number, h?: number) {
         if (this.props.callbacks.addComponent) {
             this.props.callbacks.addComponent(type, w, h);

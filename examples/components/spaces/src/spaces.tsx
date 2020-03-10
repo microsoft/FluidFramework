@@ -141,12 +141,22 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView, IComp
             );
     }
 
+    private initializeDataModel() {
+        this.dataModelInternal =
+            new SpacesDataModel(
+                this.root,
+                this.createAndAttachComponent.bind(this),
+                this.getComponent.bind(this),
+                Spaces.componentToolbarId,
+            );
+    }
+
     /**
      * Will return a new Spaces View
      */
     public render(div: HTMLElement) {
         ReactDOM.render(
-            <div><SpacesGridView dataModel={this.dataModel}/></div>,
+            <SpacesGridView dataModel={this.dataModel}/>,
             div);
     }
 }

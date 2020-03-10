@@ -24,18 +24,22 @@ The following environment variables can be defined when running webpack-dev-serv
 | `spo-df` | Use SharePoint DogFood server with your personal OneDrive for storage |
 | `spo` | Use SharePoint server with your personal OneDrive for storage |
 
-To connect to a remote server, a host, tenant ID, tenant secret, and npm registry must be provided. These can be at the command line:
+To connect to a remote server, a host, tenant ID, tenant secret, and npm registry must be provided. These can be
+provided in the following ways (looked for in the following order):
+
+### command line:
 ```
 npm run start -- --env.fluidHost https://fluidhost.com --env.tenantId my_tenant --env.tenantSecret my_secret --env.bearerSecret bear_secret --env.npm npm.com
 ```
 
-in environment variables:
+### environment variables:
 - `fluid__webpack__fluidHost`
 - `fluid__webpack__tenantId`
 - `fluid__webpack__tenantSecret`
 - `fluid__webpack__bearerSecret`
 - `fluid__webpack__npm`
 
+### config file:
 or in an optional `config.json` file in the `baseDir` passed into `webpack-component-loader.after()` that looks like this:
 ``` json
 {

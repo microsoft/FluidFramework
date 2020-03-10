@@ -259,17 +259,10 @@ export class VideoPlayerCollection extends EventEmitter implements
 }
 
 export class VideoPlayerFactoryComponent implements IComponentFactory {
-    public static supportedInterfaces = ["IComponentFactory"];
+    public static readonly type = "@fluid-example/video-players";
+    public readonly type = VideoPlayerFactoryComponent.type;
 
     public get IComponentFactory() { return this; }
-
-    public query(id: string): any {
-        return VideoPlayerFactoryComponent.supportedInterfaces.includes(id) ? this : undefined;
-    }
-
-    public list(): string[] {
-        return VideoPlayerFactoryComponent.supportedInterfaces;
-    }
 
     public instantiateComponent(context: IComponentContext): void {
         const dataTypes = new Map<string, ISharedObjectFactory>();
