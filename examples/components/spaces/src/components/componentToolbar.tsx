@@ -107,8 +107,6 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
 
     private readonly supportedComponentList: IContainerComponentDetails[];
 
-    private readonly supportedComponentList: IContainerComponentDetails[];
-
     constructor(props: IComponentToolbarViewProps){
         super(props);
         this.supportedComponentList = props.supportedComponentList;
