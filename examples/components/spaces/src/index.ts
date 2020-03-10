@@ -4,12 +4,6 @@
  */
 
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
-import { ClickerInstantiationFactory } from "@fluid-example/clicker";
-import {
-    IProvideComponentFactory,
-    NamedComponentRegistryEntries,
-    IComponentRegistry,
-} from "@microsoft/fluid-runtime-definitions";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
 import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
@@ -19,7 +13,6 @@ import {
     NamedComponentRegistryEntries,
     IComponentRegistry,
 } from "@microsoft/fluid-runtime-definitions";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import {
     ComponentToolbar,
     ComponentToolbarName,
@@ -37,7 +30,6 @@ import {
     FriendlyTextBoxName,
 } from "./components";
 import { Spaces } from "./spaces";
-import { SupportedComponent } from "./dataModel";
 import {
     IContainerComponentDetails,
 } from "./interfaces";
