@@ -6,18 +6,32 @@ import {
   initializeIcons,
   TextField,
   FocusZoneDirection,
-  IconButton
+  IconButton,
+  PrimaryButton
 } from "office-ui-fabric-react";
 import { DatePicker, defaultDayPickerStrings } from "@uifabric/date-time";
 import { PrimedContext } from "./provider";
-import { AvailabilityType, IPersonType, IViewSelectors } from "./View.types";
+import {
+  AvailabilityType,
+  IPersonType,
+  IViewSelectors
+} from "./provider.types";
 initializeIcons();
 
 export const ScheduleIt = () => {
   const {
-    actions: { setAvailability, setName, setDate, addRow, removeRow },
-    selectors: { dates, people }
+    actions: {
+      setAvailability,
+      setName,
+      setDate,
+      addRow,
+      removeRow,
+      addComment
+    },
+    selectors: { dates, people, comments }
   } = React.useContext(PrimedContext);
+
+  const [currentComment, setCurrentComment] = React.useState("");
 
   const onRenderHeader = (dates: IViewSelectors["dates"]) => {
     const content = dates.map((date, i) => {
@@ -77,22 +91,52 @@ export const ScheduleIt = () => {
       </Stack>
     );
   };
-  return (
-    <FocusZone direction={FocusZoneDirection.bidirectional}>
-      <Stack tokens={{ childrenGap: 10 }}>
-        {onRenderHeader(dates)}
-        {onRenderRows(people)}
-        <Stack horizontal tokens={{ childrenGap: 10 }}>
-          <IconButton
-            onClick={() => removeRow()}
-            iconProps={{ iconName: "CalculatorSubtract" }}
-          />
-          <IconButton
-            onClick={() => addRow()}
-            iconProps={{ iconName: "Add" }}
+
+  const onRenderComments = (items: IViewSelectors["comments"]): JSX.Element => {
+    const comments = items.map((item, key) => {
+      return (
+        <li>
+          [{item.name}]: {item.message}
+        </li>
+      );
+    });
+    return (
+      <Stack>
+        <Stack horizontal verticalAlign="end">
+          <Stack.Item grow={true}>
+            <TextField
+              value={currentComment}
+              onChange={(e, v) => setCurrentComment(v)}
+              label="Add Comment"
+            />
+          </Stack.Item>
+          <PrimaryButton
+            text="Submit"
+            onClick={() => {
+              addComment("name", currentComment);
+              setCurrentComment("");
+            }}
           />
         </Stack>
+        <ul>{comments}</ul>
       </Stack>
-    </FocusZone>
+    );
+  };
+  return (
+    <Stack tokens={{ childrenGap: 10 }}>
+      <FocusZone direction={FocusZoneDirection.bidirectional}>
+        {onRenderHeader(dates)}
+        {onRenderRows(people)}
+      </FocusZone>
+
+      <Stack horizontal tokens={{ childrenGap: 10 }}>
+        <IconButton
+          onClick={() => removeRow()}
+          iconProps={{ iconName: "CalculatorSubtract" }}
+        />
+        <IconButton onClick={() => addRow()} iconProps={{ iconName: "Add" }} />
+      </Stack>
+      {onRenderComments(comments)}
+    </Stack>
   );
 };
