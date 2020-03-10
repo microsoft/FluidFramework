@@ -45,6 +45,7 @@
     "jest-junit": "^10.0.0",
     "jest-puppeteer": "^4.3.0",
     "puppeteer": "^1.20.0",
+    "rimraf": "^2.6.2",
     "ts-jest": "24.1.0",
     "ts-loader": "^6.1.2",
     "typescript": "~3.7.4",
