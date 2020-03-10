@@ -559,7 +559,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.deltaManager.inbound.systemPause(),
             this.deltaManager.inboundSignal.systemPause()]);
 
-        const previousContextState = { snapshot: await this.context!.snapshot() ?? undefined };
+        const previousContextState = await this.context!.snapshotRuntimeState();
         this.context!.dispose();
 
         let snapshot: ISnapshotTree | undefined;
