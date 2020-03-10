@@ -1,7 +1,11 @@
 import * as React from "react";
 import { ScheduleIt } from "./View";
 import { PrimedContext } from "./provider";
-import { IViewActions, IViewSelectors, AvailabilityType } from "./View.types";
+import {
+  IViewActions,
+  IViewSelectors,
+  AvailabilityType
+} from "./provider.types";
 
 export const App = () => {
   // Default Dates
@@ -46,11 +50,25 @@ export const App = () => {
     }
   ];
 
+  // Default Comments
+  const defaultComments = [];
+
+  // Comments Reducer
+  const commentsReducer: React.Reducer<any, any> = (state, action) => {
+    let newState = [...state];
+    switch (action.type) {
+      case "add":
+        newState.push({ name: action.name, message: action.message });
+        break;
+    }
+    return newState;
+  };
+
   // Date reducer
-  const dateReducer = (
-    state: IViewSelectors["dates"],
-    action: { key: number; date: Date }
-  ): Date[] => {
+  const dateReducer: React.Reducer<Date[], { key: number; date: Date }> = (
+    state,
+    action
+  ) => {
     const newState = [...state];
     newState[action.key] = action.date;
     return newState;
@@ -90,8 +108,20 @@ export const App = () => {
   // Reducers
   const [dates, updateDate] = React.useReducer(dateReducer, defaultDates);
   const [people, updatePerson] = React.useReducer(peopleReducer, defaultPeople);
+  const [comments, updateComments] = React.useReducer(
+    commentsReducer,
+    defaultComments
+  );
 
   // Actions
+
+  const addComment: IViewActions["addComment"] = (name, message) => {
+    updateComments({
+      type: "add",
+      name,
+      message
+    });
+  };
   const setDate: IViewActions["setDate"] = (dateKey, date) => {
     updateDate({
       key: dateKey,
@@ -131,8 +161,15 @@ export const App = () => {
     });
   };
 
-  const actions = { setAvailability, setName, setDate, addRow, removeRow };
-  const selectors = { dates, people };
+  const actions = {
+    setAvailability,
+    setName,
+    setDate,
+    addRow,
+    removeRow,
+    addComment
+  };
+  const selectors = { dates, people, comments };
 
   return (
     <PrimedContext.Provider value={{ actions, selectors }}>

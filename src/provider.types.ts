@@ -19,6 +19,7 @@ export interface IViewActions {
   setDate: (dateKey: number, date: Date) => void;
   addRow: () => void;
   removeRow: () => void;
+  addComment: (name: string, message: string) => void;
 }
 
 export interface IPersonType {
@@ -29,4 +30,10 @@ export interface IPersonType {
 export interface IViewSelectors {
   dates: Date[];
   people: IPersonType[];
+  comments: ICommentType[];
+}
+
+export interface ICommentType {
+  name: string;
+  message: string;
 }
