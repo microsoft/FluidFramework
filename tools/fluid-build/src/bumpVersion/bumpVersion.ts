@@ -67,9 +67,6 @@ parseOptions(process.argv);
 function saveVersion(versions: { [key: string]: string }, name: string, version: string, monoRepo: MonoRepo = MonoRepo.None) {
     if (monoRepo == MonoRepo.None) {
         versions[name] = version;
-    } else if (name.startsWith("@fluid-example/version-test")) {
-        // Ignore example packages
-        return;
     } else if (versions[MonoRepo[monoRepo]]) {
         if (versions[MonoRepo[monoRepo]] !== version) {
             throw new Error(`Inconsistent version within Monorepo ${name} ${version}`);

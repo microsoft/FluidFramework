@@ -1,7 +1,6 @@
 {
   "name": "@fluid-example/version-test-2",
-  "version": "0.2.0",
-  "private": true,
+  "version": "0.15.0",
   "description": "Component to test version conversion.",
   "repository": "microsoft/prague",
   "license": "MIT",
