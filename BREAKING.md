@@ -1,5 +1,6 @@
 # 0.15 Breaking Changes
 - [Container.autoReconnect & Container.reconnect changes](#Container.reconnect-Container.reconnect-changes)
+- [0.14 backwards compatibility removed](#014-backwards-compatibility-removed)
 
 ## Container.reconnect, Container.reconnect changes
 autReconnect property is gone, as well as reconnect() method.<br/>
@@ -11,6 +12,12 @@ Container.autoReconnect = false;
 Container.reconnect()
 ```
 in order to trigger reconnect. Now, calling Container.setAutoReconnect(true) is enough.
+
+## 0.14 backwards compatibility removed
+The following backwards-compatibility features have been removed:
+- external-component-loader now expects components to implement `IComponentHTMLView`. See [changes to the render interfaces](#changes-to-the-render-interfaces) from 0.14 changes
+- While `IContainerContext.baseSnapshot` was defined to be possibly `null`, `ContainerContext` would not correctly handle being passed `baseSnapshot` as `null` before 0.14, and `Container` would not pass it as `null`, passing an empty snapshot instead. `Container` will now potentially pass `baseSnapshot` as `null`.
+- `ContainerRuntime.stop()` is now expected to return an `IRuntimeState`, rather than `void` as previously returned before 0.14. This `IRuntimeState` can be an empty object, but cannot be null.
 
 # 0.14 Breaking Changes
 
