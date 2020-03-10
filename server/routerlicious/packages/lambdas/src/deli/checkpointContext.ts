@@ -19,12 +19,15 @@ export interface IClientSequenceNumber {
     scopes: string[];
 }
 
-export interface ICheckpoint {
+export interface ICheckpoint extends IDeliCheckpoint {
+    queuedMessage: IQueuedMessage;
+}
+
+export interface IDeliCheckpoint {
     branchMap: IRangeTrackerSnapshot;
     clients: IClientSequenceNumber[];
     logOffset: number;
     sequenceNumber: number;
-    queuedMessage: IQueuedMessage;
 }
 
 export class CheckpointContext {

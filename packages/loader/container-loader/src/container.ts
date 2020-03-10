@@ -581,6 +581,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         this.deltaManager.inbound.systemResume();
         this.deltaManager.inboundSignal.systemResume();
+
+        this._existing = true;
     }
 
     private async snapshotCore(tagMessage: string, fullTree: boolean = false) {

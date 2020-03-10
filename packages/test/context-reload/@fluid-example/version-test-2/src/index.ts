@@ -17,5 +17,6 @@ export const fluidExport = new SimpleModuleInstantiationFactory(
   chaincodeName,
   new Map([
       [chaincodeName, Promise.resolve(VersiontestInstantiationFactory)],
+      ["@fluid-example/version-test-1", Promise.resolve(VersiontestInstantiationFactory)],
   ]),
 );
