@@ -119,7 +119,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
             }
         });
     }
-    
+
     public emitAddComponentEvent(type: string, w?: number, h?: number) {
         if (this.props.callbacks.addComponent) {
             this.props.callbacks.addComponent(type, w, h);

@@ -95,6 +95,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView, IComp
     }
 
     protected async componentInitializingFromExisting() {
+        this.componentToolbarId = this.root.get("componentToolbarId");
         this.initializeDataModel();
         this.componentToolbar = await this.dataModel.getComponentToolbar();
     }
@@ -136,7 +137,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView, IComp
                 this.root,
                 this.createAndAttachComponent.bind(this),
                 this.getComponent.bind(this),
-                this.root.get("componentToolbarId") || this.componentToolbarId,
+                this.componentToolbarId,
                 this.sequence,
             );
     }
