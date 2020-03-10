@@ -257,6 +257,12 @@ export interface IComponentContext extends EventEmitter {
     createComponent(pkgOrId: string, pkg?: string | string[]): Promise<IComponentRuntime>;
 
     /**
+     * Creates a new component but with no defined ID
+     * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
+     */
+    createComponent_NEW(pkg: string | string[]): Promise<IComponentRuntime>;
+
+    /**
      * Creates a new component by using subregistries.
      * @param pkg - Package name of the component.
      * @param props - properties to be passed to the instantiateComponent thru the context.
@@ -347,6 +353,12 @@ export interface IHostRuntime extends
      * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
      */
     createComponent(pkgOrId: string, pkg?: string | string[]): Promise<IComponentRuntime>;
+
+    /**
+     * Creates a new component with no explicit ID.
+     * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
+     */
+    createComponent_NEW(pkg: string | string[]): Promise<IComponentRuntime>;
 
     /**
      * Creates a new component with props

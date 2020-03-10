@@ -150,6 +150,10 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         super();
     }
 
+    public async createComponent_NEW(pkg: string | string[]): Promise<IComponentRuntime> {
+        return this.hostRuntime.createComponent_NEW(pkg);
+    }
+
     public async createComponent(pkgOrId: string, pkg?: string | string[]): Promise<IComponentRuntime> {
         return this.hostRuntime.createComponent(pkgOrId, pkg);
     }
