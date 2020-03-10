@@ -98,7 +98,7 @@ export class ExternalComponentView extends PrimedComponent implements
                     if (component) {
                         const renderable = component.IComponentHTMLView;
 
-                        if (renderable && renderable.render !== undefined) {
+                        if (renderable) {
                             const containerDiv = document.createElement("div");
                             mainDiv.appendChild(containerDiv);
                             const style = containerDiv.style;
