@@ -532,8 +532,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             : DefaultSummaryConfiguration;
     }
 
+    private _disposed = false;
+    public get disposed() { return this._disposed; }
+
     // Components tracked by the Domain
-    private closed = false;
     private readonly pendingAttach = new Map<string, IAttachMessage>();
     private dirtyDocument = false;
     private readonly summarizer: Summarizer;
@@ -664,6 +666,25 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         ReportConnectionTelemetry(this.context.clientId, this.deltaManager, this.logger);
     }
 
+    public dispose(): void {
+        if (this._disposed) {
+            return;
+        }
+        this._disposed = true;
+
+        this.summaryManager.dispose();
+        this.summarizer.dispose();
+
+        // close/stop all component contexts
+        for (const [componentId, contextD] of this.contextsDeferred) {
+            contextD.promise.then((context) => {
+                context.dispose();
+            }).catch((error) => {
+                this.logger.sendErrorEvent({eventName: "ComponentContextDisposeError", componentId}, error);
+            });
+        }
+    }
+
     public get IComponentTokenProvider() {
 
         if (this.options && this.options.intelligence) {
@@ -731,16 +752,17 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
     public async stop(): Promise<IRuntimeState> {
         this.verifyNotClosed();
+
         const snapshot = await this.snapshot("", true);
-        this.summaryManager.dispose();
-        this.summarizer.dispose();
-        this.closed = true;
         const state: IPreviousState = {
             reload: true,
             summaryCollection: this.summarizer.summaryCollection,
             nextSummarizerP: this.nextSummarizerP,
             nextSummarizerD: this.nextSummarizerD,
         };
+
+        this.dispose();
+
         return { snapshot, state };
     }
 
@@ -1326,7 +1348,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     private verifyNotClosed() {
-        if (this.closed) {
+        if (this._disposed) {
             throw new Error("Runtime is closed");
         }
     }

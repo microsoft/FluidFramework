@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger, IDisposable } from "@microsoft/fluid-common-definitions";
 import {
     IComponent,
     IComponentConfiguration,
@@ -128,7 +128,7 @@ export interface IRuntimeState {
 /**
  * The IRuntime represents an instantiation of a code package within a container.
  */
-export interface IRuntime {
+export interface IRuntime extends IDisposable {
 
     /**
      * Executes a request against the runtime
@@ -146,6 +146,9 @@ export interface IRuntime {
     changeConnectionState(value: ConnectionState, clientId: string, version?: string);
 
     /**
+     * @deprecated in 0.14 async stop()
+     * Use snapshot to get a snapshot for an IRuntimeState as needed, followed by dispose
+     *
      * Stops the runtime. Once stopped no more messages will be delivered and the context passed to the runtime
      * on creation will no longer be active
      */
@@ -177,7 +180,7 @@ export interface IProvideMessageScheduler {
     readonly IMessageScheduler: IMessageScheduler;
 }
 
-export interface IContainerContext extends EventEmitter, IMessageScheduler, IProvideMessageScheduler {
+export interface IContainerContext extends EventEmitter, IMessageScheduler, IProvideMessageScheduler, IDisposable {
     readonly id: string;
     readonly existing: boolean | undefined;
     readonly options: any;
