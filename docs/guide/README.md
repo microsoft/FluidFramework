@@ -33,35 +33,13 @@ later Node versions.
 
 ::: tip
 
-If you do not have NodeJS already installed, we strongly recommend using nvm to simplify installing and managing
+If you do not have NodeJS already installed, we stringly recommend using nvm to simplify installing and managing
 multiple NodeJS versions.
 
 * [nvm for Windows](https://github.com/coreybutler/nvm-windows)
 * [nvm for macOS/Linux](https://github.com/nvm-sh/nvm)
 
 :::
-
-#### Install additional build dependencies
-
-Some [Fluid tutorials](../examples/README.md) require additional native build tools.
-
-##### Python
-
-If you're using Windows, [install Python 3.8 from the Microsoft
-Store](https://www.microsoft.com/store/productId/9MSSZTT1N39L).
-
-##### windows-build-tools
-
-Install all the required tools and configurations with Microsoft's
-[windows-build-tools](https://github.com/felixrieseberg/windows-build-tools) by running the following command as an
-Administrator:
-
-`npm install --global --production windows-build-tools`
-
-##### macOS/Linux
-
-See the [node-gyp installation instructions](https://github.com/nodejs/node-gyp#installation) for instructions for
-installing these dependencies on macOS and Linux.
 
 #### Install vsts-npm-auth (Windows only)
 
