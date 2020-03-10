@@ -908,11 +908,15 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     public async _createComponentWithProps(pkg: string | string[], props: any, id: string): Promise<IComponentRuntime> {
+        return this.createComponentContext(Array.isArray(pkg) ? pkg : [pkg], props, id).realize();
+    }
+
+    public createComponentContext(pkg: string[], props?: any, id = uuid()) {
         this.verifyNotClosed();
 
         const context = new LocalComponentContext(
             id,
-            Array.isArray(pkg) ? pkg : [pkg],
+            pkg,
             this,
             this.storage,
             this.containerScope,
@@ -924,7 +928,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.contextsDeferred.set(id, deferred);
         this.contexts.set(id, context);
 
-        return context.realize();
+        return context;
     }
 
     public getQuorum(): IQuorum {

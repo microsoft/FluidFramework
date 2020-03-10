@@ -43,7 +43,7 @@
     "@fluid-example/table-view": "^0.15.0",
     "@fluid-example/video-players": "^0.15.0",
     "@fluid-example/webflow": "^0.15.0",
-    "@microsoft/fluid-aqueduct": "^0.15.0",
+    "@microsoft/fluid-component-base": "^0.15.0",
     "@microsoft/fluid-component-core-interfaces": "^0.15.0",
     "@microsoft/fluid-container-definitions": "^0.15.0",
     "@microsoft/fluid-framework-interfaces": "^0.15.0",

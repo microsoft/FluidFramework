@@ -19,6 +19,8 @@ export interface IProvideComponentFactory {
  * The interface implemented by a component module.
  */
 export interface IComponentFactory extends IProvideComponentFactory {
+    type?: string;
+
     /**
      * Generates runtime for the component from the component context. Once created should be bound to the context.
      * @param context - Context for the component.

@@ -3,61 +3,57 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import {
     IComponent,
     IComponentHTMLView,
     IComponentHTMLVisual,
-    IResponse,
+    IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
-import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
+import { SharedComponentFactory, SharedComponent } from "@microsoft/fluid-component-base";
+import { ISharedDirectory, SharedDirectory } from "@microsoft/fluid-map";
 import { FlowDocument } from "../document";
-import { FlowDocumentType } from "../runtime";
+import { hostType } from "../package";
 import { WebflowView } from "./host";
 import { importDoc } from "./import";
 
-export class WebFlow extends PrimedComponent implements IComponentHTMLVisual {
-    public constructor(runtime: IComponentRuntime, context: IComponentContext) {
-        super(runtime, context);
+export class WebFlow extends SharedComponent<ISharedDirectory> implements IComponentHTMLVisual {
+    public static create(parentContext: IComponentContext, props?: any) {
+        return webFlowFactory.create(parentContext, props);
     }
 
-    public get IComponentHTMLVisual() { return this; }
+    public static getFactory(): IComponentFactory { return webFlowFactory; }
 
-    // #region IComponentHTMLVisual
-    public addView(scope?: IComponent): IComponentHTMLView {
-        return new WebflowView(this.getComponent<FlowDocument>(this.docId));
-    }
-    // #endregion IComponentHTMLVisual
+    public create() {
+        const doc = FlowDocument.create(this.context);
+        this.root.set("doc", doc.handle);
 
-    protected async componentInitializingFirstTime() {
-        const componentRuntime: IComponentRuntime = await this.context.createComponent(FlowDocumentType);
-        const response: IResponse = await componentRuntime.request({ url: "/" });
-        componentRuntime.attach();
-        this.docId = `${componentRuntime.id}`;
-        const doc = response.value as FlowDocument;
         const url = new URL(window.location.href);
         const template = url.searchParams.get("template");
         if (template) {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            importDoc(Promise.resolve(doc), template);
+            importDoc(doc, template);
         }
     }
 
-    private get docId() {
-        const componentId = this.root.get("docId");
-        // For backward compatibility, if the component id is not stored on the root, then we get the component id
-        // the way it was stored in previous version.
-        if (!componentId) {
-            return `${this.runtime.id}-doc`;
-        }
-        return componentId;
+    public async load() { }
+
+    public get IComponentHTMLVisual() { return this; }
+
+    // #region IComponentHTMLVisual
+
+    public addView(scope?: IComponent): IComponentHTMLView {
+        return new WebflowView(this.root.get<IComponentHandle<FlowDocument>>("doc").get());
     }
 
-    private set docId(id: string) {
-        this.root.set("docId", id);
-    }
+    // #endregion IComponentHTMLVisual
+
+    protected async componentInitializingFirstTime() { this.create(); }
 }
 
-export const webFlowFactory = new PrimedComponentFactory(WebFlow, [], new Map([
-    [FlowDocumentType, import(/* webpackChunkName: "flowdoc", webpackPreload: true */ "../document").then((m) => m.flowDocumentFactory)],
-]));
+const webFlowFactory = new SharedComponentFactory(
+    hostType,
+    WebFlow,
+    SharedDirectory.getFactory(),
+    [],
+    [FlowDocument.getFactory()]);
