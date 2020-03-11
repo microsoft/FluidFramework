@@ -24,9 +24,7 @@
     "lint:fix": "npm run eslint:fix",
     "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
-    "test:mocha": "mocha --recursive dist/test/**/*.spec.js -r make-promises-safe",
-    "test:newsnapfiles": "node dist/test/createSnapshotFiles.js",
-    "testfarm": "node dist/test/testFarm.js",
+    "test:mocha": "mocha --recursive dist/test -r make-promises-safe",
     "tsc": "tsc"
   },
   "nyc": {
