@@ -199,7 +199,7 @@ export class Client {
     }
 
     /**
-     * @param leftSibling - The segment that should be the left sibling of the inserted segment
+     * @param refPos - The reference position to insert the segment at
      * @param segment - The segment to insert
      */
     public insertAtReferencePositionLocal(refPos: ReferencePosition, segment: ISegment): ops.IMergeTreeInsertMsg {
