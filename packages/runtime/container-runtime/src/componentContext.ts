@@ -5,6 +5,7 @@
 
 import * as assert from "assert";
 import { EventEmitter } from "events";
+import { IDisposable } from "@microsoft/fluid-common-definitions";
 import { IComponent, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
     IAudience,
@@ -61,7 +62,7 @@ interface ISnapshotDetails {
 /**
  * Represents the context for the component. This context is passed to the component runtime.
  */
-export abstract class ComponentContext extends EventEmitter implements IComponentContext {
+export abstract class ComponentContext extends EventEmitter implements IComponentContext, IDisposable {
     public get documentId(): string {
         return this._hostRuntime.id;
     }
@@ -136,8 +137,15 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this._baseSnapshot;
     }
 
+    private _disposed = false;
+    public get disposed() { return this._disposed; }
+
+    public get isAttached(): boolean {
+        return this._isAttached;
+    }
+
+    public readonly attach: (componentRuntime: IComponentRuntime) => void;
     protected componentRuntime: IComponentRuntime;
-    private closed = false;
     private loaded = false;
     private pending: ISequencedDocumentMessage[] = [];
     private componentRuntimeDeferred: Deferred<IComponentRuntime>;
@@ -150,11 +158,16 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         public readonly storage: IDocumentStorageService,
         public readonly scope: IComponent,
         public readonly summaryTracker: SummaryTracker,
-        public readonly attach: (componentRuntime: IComponentRuntime) => void,
+        private _isAttached: boolean,
+        attach: (componentRuntime: IComponentRuntime) => void,
         protected pkg?: readonly string[],
     ) {
         super();
 
+        this.attach = (componentRuntime: IComponentRuntime) => {
+            attach(componentRuntime);
+            this._isAttached = true;
+        };
         // back-compat: 0.14 uploadSummary
         this.summaryTracker.addRefreshHandler(async () => {
             // We do not want to get the snapshot unless we have to.
@@ -169,6 +182,24 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
                 }
             }
         });
+    }
+
+    public dispose(): void {
+        if (this._disposed) {
+            return;
+        }
+        this._disposed = true;
+
+        // Dispose any pending runtime after it gets fulfilled
+        if (this.componentRuntimeDeferred) {
+            this.componentRuntimeDeferred.promise.then((runtime) => {
+                runtime.dispose();
+            }).catch((error) => {
+                this.hostRuntime.logger.sendErrorEvent(
+                    {eventName: "ComponentRuntimeDisposeError", componentId: this.id},
+                    error);
+            });
+        }
     }
 
     public async createComponent(pkgOrId: string | undefined, pkg?: string, props?: any): Promise<IComponentRuntime> {
@@ -312,15 +343,6 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this.blobManager.getBlobMetadata();
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public stop(): Promise<ITree> {
-        this.verifyNotClosed();
-
-        this.closed = true;
-
-        return this.snapshot(true);
-    }
-
     public close(): void {
         this._hostRuntime.closeFn();
     }
@@ -440,7 +462,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     }
 
     private verifyNotClosed() {
-        if (this.closed) {
+        if (this._disposed) {
             throw new Error("Runtime is closed");
         }
     }
@@ -465,6 +487,7 @@ export class RemotedComponentContext extends ComponentContext {
             storage,
             scope,
             summaryTracker,
+            true,
             () => {
                 throw new Error("Already attached");
             },
@@ -532,7 +555,7 @@ export class LocalComponentContext extends ComponentContext {
         attachCb: (componentRuntime: IComponentRuntime) => void,
         public readonly createProps?: any,
     ) {
-        super(runtime, id, false, storage, scope, summaryTracker, attachCb, pkg);
+        super(runtime, id, false, storage, scope, summaryTracker, false, attachCb, pkg);
     }
 
     public generateAttachMessage(): IAttachMessage {

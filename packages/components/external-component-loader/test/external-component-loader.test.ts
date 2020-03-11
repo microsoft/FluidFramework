@@ -7,6 +7,8 @@ import * as path from "path";
 import { globals } from "../jest.config";
 
 describe("external-component-loader", () => {
+    jest.setTimeout(10000);
+
     beforeEach(async () => {
         await page.goto(globals.PATH, { waitUntil: "load" });
     });

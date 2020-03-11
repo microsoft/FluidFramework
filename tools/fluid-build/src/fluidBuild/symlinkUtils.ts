@@ -127,12 +127,27 @@ export async function symlinkPackage(repo: FluidRepo, pkg: Package, buildPackage
     let changed = 0;
     const monoRepo = repo.getMonoRepo(pkg);
     const monoRepoNodeModulePath = repo.getMonoRepoNodeModulePath(monoRepo);
+
+    if (monoRepoNodeModulePath && !existsSync(monoRepoNodeModulePath)) {
+        // If the node_modules isn't install at all, just don't check
+        if (options.symlink) {
+            console.warn(`${pkg.nameColored}: node_modules not installed.  Can't fix symlink.`)
+        }
+        return 0;
+    }
+
     for (const { name: dep, version } of pkg.combinedDependencies) {
         const depBuildPackage = buildPackages.get(dep);
         // Check and fix link if it is a known package and version satisfy the version.
         // TODO: check of extranous symlinks
-        if (depBuildPackage && semver.satisfies(depBuildPackage.version, version)) {
+        if (depBuildPackage) {
             const sameMonoRepo = repo.isSameMonoRepo(monoRepo, depBuildPackage);
+            if (!semver.satisfies(depBuildPackage.version, version)) {
+                if (sameMonoRepo) {
+                    console.warn(`${pkg.nameColored}: Mismatch version ${depBuildPackage.version} for dependency ${depBuildPackage.nameColored} in the same mono repo`)
+                }
+                continue;
+            }
             const localSymlinkPath = path.join(pkg.directory, "node_modules", dep);
             const monoRepoSymlinkPath = monoRepoNodeModulePath ? path.join(monoRepoNodeModulePath, dep) : undefined;
 

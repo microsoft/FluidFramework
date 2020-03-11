@@ -81,7 +81,7 @@ describe("Loader", () => {
                 const client: Partial<IClient> = { mode: "write", details: { capabilities: { interactive: true } } };
 
                 deltaManager = new DeltaManager(
-                    service,
+                    () => service,
                     client as IClient,
                     logger,
                     false,
