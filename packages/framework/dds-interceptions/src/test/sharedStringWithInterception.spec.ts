@@ -21,10 +21,16 @@ describe("Shared String with Interception", () => {
         const documentId = "fakeId";
         let deltaConnectionFactory: MockDeltaConnectionFactory;
         let sharedString: SharedString;
+        let sharedStringWithInterception: SharedString;
         let componentContext: IComponentContext;
 
         function orderSequentially(callback: () => void): void {
             callback();
+        }
+
+        function propertyInterceptionCb(props?: MergeTree.PropertySet): MergeTree.PropertySet {
+            const newProps = { ...props, userId };
+            return newProps;
         }
 
         beforeEach(() => {
@@ -39,17 +45,11 @@ describe("Shared String with Interception", () => {
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             componentContext = { hostRuntime: { orderSequentially } } as IComponentContext;
+            sharedStringWithInterception =
+                createSharedStringWithInterception(sharedString, componentContext, propertyInterceptionCb);
         });
 
-        function propertyInterceptionCb(props?: MergeTree.PropertySet): MergeTree.PropertySet {
-            const newProps = { ...props, userId };
-            return newProps;
-        }
-
         it("should be able to intercept SharedString methods by the interception", async () => {
-            const sharedStringWithInterception =
-                createSharedStringWithInterception(sharedString, componentContext, propertyInterceptionCb);
-
             // Insert text into shared string.
             sharedStringWithInterception.insertText(0, "123", { style: "bold" });
             assert.equal(sharedStringWithInterception.getText(), "123", "The text should match the inserted text");
@@ -76,9 +76,6 @@ describe("Shared String with Interception", () => {
         });
 
         it("should be able to see changes made by the interception from the underlying shared string", async () => {
-            const sharedStringWithInterception =
-                createSharedStringWithInterception(sharedString, componentContext, propertyInterceptionCb);
-
             // Insert text via the shared string with interception.
             sharedStringWithInterception.insertText(0, "123", { style: "bold" });
 
@@ -108,9 +105,6 @@ describe("Shared String with Interception", () => {
         });
 
         it("should be able to see changes made by the underlying shared string from the interception", async () => {
-            const sharedStringWithInterception =
-                createSharedStringWithInterception(sharedString, componentContext, propertyInterceptionCb);
-
             // Insert text via the underlying shared string.
             sharedString.insertText(0, "123", { style: "bold" });
 
