@@ -216,7 +216,7 @@ class FluidPackage {
         return this.loadP;
     }
 
-    private async resolve(): Promise<IResolvedPackage> {
+    public async resolve(): Promise<IResolvedPackage> {
         if (!this.resolveP) {
             this.resolveP = this.resolveCore();
         }
@@ -271,6 +271,10 @@ export class WebCodeLoader implements ICodeLoader {
         }
         const fluidPackage = this.getFluidPackage({ config: seedable.config, package: seedable.package });
         fluidPackage.seed(seedable.scriptIds);
+    }
+
+    public async resolve(source: IFluidCodeDetails): Promise<IResolvedPackage> {
+        return this.getFluidPackage(source).resolve();
     }
 
     /**
