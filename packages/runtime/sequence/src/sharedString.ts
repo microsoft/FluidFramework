@@ -7,7 +7,7 @@
 import { } from "@microsoft/fluid-component-core-interfaces";
 import { EventEmitter } from "events";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
-import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IComponentRuntime, IChannelAttributes } from "@microsoft/fluid-runtime-definitions";
 import { SharedSegmentSequence } from "./sequence";
 import { SharedStringFactory } from "./sequenceFactory";
 
@@ -60,8 +60,8 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
 
     private readonly mergeTreeTextHelper: MergeTree.MergeTreeTextHelper;
 
-    constructor(document: IComponentRuntime, public id: string) {
-        super(document, id, SharedStringFactory.Attributes, SharedStringFactory.segmentFromSpec);
+    constructor(document: IComponentRuntime, public id: string, attributes: IChannelAttributes) {
+        super(document, id, attributes, SharedStringFactory.segmentFromSpec);
         this.mergeTreeTextHelper = this.client.createTextHelper();
     }
 

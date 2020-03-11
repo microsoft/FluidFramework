@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IComponentRuntime, IChannelAttributes } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { ConsensusOrderedCollection } from "./consensusOrderedCollection";
 import { ConsensusQueueFactory } from "./consensusOrderedCollectionFactory";
@@ -53,7 +53,7 @@ export class ConsensusQueue<T = any> extends ConsensusOrderedCollection<T> {
      * Constructs a new consensus queue. If the object is non-local an id and service interfaces will
      * be provided
      */
-    public constructor(id: string, runtime: IComponentRuntime) {
-        super(id, runtime, ConsensusQueueFactory.Attributes, new SnapshotableQueue<T>());
+    public constructor(id: string, runtime: IComponentRuntime, attributes: IChannelAttributes) {
+        super(id, runtime, attributes, new SnapshotableQueue<T>());
     }
 }

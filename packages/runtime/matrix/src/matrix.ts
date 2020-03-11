@@ -15,6 +15,7 @@ import {
     IComponentRuntime,
     IObjectStorageService,
     Serializable,
+    IChannelAttributes,
 } from "@microsoft/fluid-runtime-definitions";
 import { makeHandlesSerializable, parseHandles, SharedObject } from "@microsoft/fluid-shared-object-base";
 import { fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
@@ -55,8 +56,8 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
     // Map 'cliSeq' of pending cell write (if any).
     private cellKeyToPendingCliSeq = new Map<number | undefined, number>();
 
-    constructor(runtime: IComponentRuntime, public id: string) {
-        super(id, runtime, SharedMatrixFactory.Attributes);
+    constructor(runtime: IComponentRuntime, public id: string, attributes: IChannelAttributes) {
+        super(id, runtime, attributes);
 
         this.rows = new PermutationVector(SnapshotPath.rows, this.logger, runtime.options, this.onRowDelta);
         this.cols = new PermutationVector(SnapshotPath.cols, this.logger, runtime.options, this.onColDelta);

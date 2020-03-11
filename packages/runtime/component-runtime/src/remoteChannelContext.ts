@@ -25,8 +25,6 @@ import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ISharedObjectRegistry } from "./componentRuntime";
 import { debug } from "./debug";
 
-type RequiredIChannelAttributes = Pick<IChannelAttributes, "type"> & Partial<IChannelAttributes>;
-
 export class RemoteChannelContext implements IChannelContext {
     private connection: ChannelDeltaConnection | undefined;
     private isLoaded = false;
@@ -45,7 +43,6 @@ export class RemoteChannelContext implements IChannelContext {
         private readonly extraBlobs: Map<string, string>,
         private readonly branch: string,
         private readonly summaryTracker: ISummaryTracker,
-        private readonly attributes: RequiredIChannelAttributes | undefined,
     ) {}
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -98,8 +95,8 @@ export class RemoteChannelContext implements IChannelContext {
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
-    private getAttributesFromBaseTree(): Promise<RequiredIChannelAttributes> {
-        return readAndParse<RequiredIChannelAttributes>(
+    private getAttributesFromBaseTree(): Promise<IChannelAttributes> {
+        return readAndParse<IChannelAttributes>(
             this.storageService,
             this.baseSnapshot.blobs[".attributes"]);
     }
@@ -108,24 +105,24 @@ export class RemoteChannelContext implements IChannelContext {
         assert(!this.isLoaded);
 
         // Create the channel if it hasn't already been passed in the constructor
-        const { type, snapshotFormatVersion, packageVersion } = this.attributes
-            ? this.attributes
-            : await this.getAttributesFromBaseTree();
+        const attributes = await this.getAttributesFromBaseTree();
 
         // Pass the transformedMessages - but the object really should be storing this
-        const factory = this.registry.get(type);
+        const factory = this.registry.get(attributes.type);
         if (!factory) {
-            throw new Error(`Channel Factory ${type} not registered`);
+            throw new Error(`Channel Factory ${attributes.type} not registered`);
         }
 
         // Compare snapshot version to collaborative object version
-        if (snapshotFormatVersion !== undefined && snapshotFormatVersion !== factory.attributes.snapshotFormatVersion) {
-            debug(`Snapshot version mismatch. Type: ${type}, ` +
-                `Snapshot format version: ${snapshotFormatVersion}, ` +
+        if (attributes.snapshotFormatVersion !== undefined
+            && attributes.snapshotFormatVersion !== factory.attributes.snapshotFormatVersion) {
+            debug(`Snapshot version mismatch. Type: ${attributes.type}, ` +
+                `Snapshot format version: ${attributes.snapshotFormatVersion}, ` +
                 `client format version: ${factory.attributes.snapshotFormatVersion}`);
         }
 
-        debug(`Loading channel ${type}@${packageVersion}, snapshot format version: ${snapshotFormatVersion}`);
+        // eslint-disable-next-line max-len
+        debug(`Loading channel ${attributes.type}@${attributes.packageVersion}, snapshot format version: ${attributes.snapshotFormatVersion}`);
 
         const services = createServiceEndpoints(
             this.id,
@@ -138,7 +135,8 @@ export class RemoteChannelContext implements IChannelContext {
             this.runtime,
             this.id,
             services,
-            this.branch);
+            this.branch,
+            attributes);
 
         const connection = services.deltaConnection;
         this.connection = connection;

@@ -3,6 +3,14 @@
  * Licensed under the MIT License.
  */
 
+export interface IChannelMetadata{
+    lastOp: {
+        timestamp: number,
+        userId: string,
+    } | undefined
+}
+
+
 /**
  * Represents the attributes of a channel/DDS.
  */
@@ -22,4 +30,6 @@ export interface IChannelAttributes {
      * The package version of the code of the DDS, for debug only
      */
     readonly packageVersion?: string;
+
+    metadata: IChannelMetadata | undefined;
 }

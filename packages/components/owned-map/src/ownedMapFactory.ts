@@ -14,9 +14,10 @@ import { OwnedSharedMap } from "./ownedMap";
 export class OwnedMapFactory implements ISharedObjectFactory {
     public static Type = "https://graph.microsoft.com/types/ownedmap";
 
-    public static Attributes: IChannelAttributes = {
+    public static readonly Attributes: IChannelAttributes = {
         type: OwnedMapFactory.Type,
         snapshotFormatVersion: "0.1",
+        metadata: undefined,
     };
 
     public get type() {
@@ -31,9 +32,10 @@ export class OwnedMapFactory implements ISharedObjectFactory {
         runtime: IComponentRuntime,
         id: string,
         services: ISharedObjectServices,
-        branchId: string): Promise<ISharedMap> {
+        branchId: string,
+        attributes: IChannelAttributes): Promise<ISharedMap> {
 
-        const map = new OwnedSharedMap(id, runtime, OwnedMapFactory.Attributes);
+        const map = new OwnedSharedMap(id, runtime, attributes);
         await map.load(branchId, services);
 
         return map;

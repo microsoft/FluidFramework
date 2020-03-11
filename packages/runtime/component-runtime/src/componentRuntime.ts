@@ -187,8 +187,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                     this.componentContext.summaryTracker.createOrGetChild(
                         path,
                         this.deltaManager.referenceSequenceNumber,
-                    ),
-                    undefined);
+                    ));
                 const deferred = new Deferred<IChannelContext>();
                 deferred.resolve(channelContext);
 
@@ -453,8 +452,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                         this.componentContext.summaryTracker.createOrGetChild(
                             attachMessage.id,
                             message.sequenceNumber,
-                        ),
-                        { type: attachMessage.type });
+                        ));
 
                     this.contexts.set(attachMessage.id, remoteChannelContext);
                     if (this.contextsDeferred.has(attachMessage.id)) {

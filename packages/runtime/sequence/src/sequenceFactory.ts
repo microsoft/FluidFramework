@@ -17,10 +17,11 @@ export class SharedStringFactory implements ISharedObjectFactory {
     // load code
     public static Type = "https://graph.microsoft.com/types/mergeTree";
 
-    public static Attributes: IChannelAttributes = {
+    public static readonly Attributes: IChannelAttributes = {
         type: SharedStringFactory.Type,
         snapshotFormatVersion: "0.1",
         packageVersion: pkgVersion,
+        metadata: undefined,
     };
 
     public static segmentFromSpec(spec: any) {
@@ -40,18 +41,19 @@ export class SharedStringFactory implements ISharedObjectFactory {
     }
 
     public async load(
-        document: IComponentRuntime,
+        runtime: IComponentRuntime,
         id: string,
         services: ISharedObjectServices,
-        branchId: string): Promise<ISharedObject> {
+        branchId: string,
+        attributes: IChannelAttributes): Promise<ISharedObject> {
 
-        const sharedString = new SharedString(document, id);
+        const sharedString = new SharedString(runtime, id, attributes);
         await sharedString.load(branchId, services);
         return sharedString;
     }
 
     public create(document: IComponentRuntime, id: string): ISharedObject {
-        const sharedString = new SharedString(document, id);
+        const sharedString = new SharedString(document, id, this.attributes);
         sharedString.initializeLocal();
         return sharedString;
     }
@@ -60,10 +62,11 @@ export class SharedStringFactory implements ISharedObjectFactory {
 export class SharedObjectSequenceFactory implements ISharedObjectFactory {
     public static Type = "https://graph.microsoft.com/types/mergeTree/object-sequence";
 
-    public static Attributes: IChannelAttributes = {
+    public static readonly Attributes: IChannelAttributes = {
         type: SharedObjectSequenceFactory.Type,
         snapshotFormatVersion: "0.1",
         packageVersion: pkgVersion,
+        metadata: undefined,
     };
 
     public static segmentFromSpec(segSpec: MergeTree.IJSONSegment) {
@@ -86,18 +89,19 @@ export class SharedObjectSequenceFactory implements ISharedObjectFactory {
     }
 
     public async load(
-        document: IComponentRuntime,
+        runtime: IComponentRuntime,
         id: string,
         services: ISharedObjectServices,
-        branchId: string): Promise<ISharedObject> {
+        branchId: string,
+        attributes: IChannelAttributes): Promise<ISharedObject> {
 
-        const sharedSeq = new SharedObjectSequence<object>(document, id);
+        const sharedSeq = new SharedObjectSequence<object>(runtime, id, attributes);
         await sharedSeq.load(branchId, services);
         return sharedSeq;
     }
 
     public create(document: IComponentRuntime, id: string): ISharedObject {
-        const sharedString = new SharedObjectSequence(document, id);
+        const sharedString = new SharedObjectSequence(document, id, this.attributes);
         sharedString.initializeLocal();
         return sharedString;
     }
@@ -106,10 +110,11 @@ export class SharedObjectSequenceFactory implements ISharedObjectFactory {
 export class SharedNumberSequenceFactory implements ISharedObjectFactory {
     public static Type = "https://graph.microsoft.com/types/mergeTree/number-sequence";
 
-    public static Attributes: IChannelAttributes = {
+    public static readonly Attributes: IChannelAttributes = {
         type: SharedNumberSequenceFactory.Type,
         snapshotFormatVersion: "0.1",
         packageVersion: pkgVersion,
+        metadata: undefined,
     };
 
     public static segmentFromSpec(segSpec: MergeTree.IJSONSegment) {
@@ -132,18 +137,19 @@ export class SharedNumberSequenceFactory implements ISharedObjectFactory {
     }
 
     public async load(
-        document: IComponentRuntime,
+        runtime: IComponentRuntime,
         id: string,
         services: ISharedObjectServices,
-        branchId: string): Promise<ISharedObject> {
+        branchId: string,
+        attributes: IChannelAttributes): Promise<ISharedObject> {
 
-        const sharedSeq = new SharedNumberSequence(document, id);
+        const sharedSeq = new SharedNumberSequence(runtime, id, attributes);
         await sharedSeq.load(branchId, services);
         return sharedSeq;
     }
 
     public create(document: IComponentRuntime, id: string): ISharedObject {
-        const sharedString = new SharedNumberSequence(document, id);
+        const sharedString = new SharedNumberSequence(document, id, this.attributes);
         sharedString.initializeLocal();
         return sharedString;
     }

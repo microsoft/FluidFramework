@@ -44,6 +44,7 @@ export interface ISharedObjectFactory {
         id: string,
         services: ISharedObjectServices,
         branchId: string,
+        channelAttributes: Readonly<IChannelAttributes>,
     ): Promise<IChannel>;
 
     /**

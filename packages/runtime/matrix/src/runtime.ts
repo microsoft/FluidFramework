@@ -16,10 +16,11 @@ import { SharedMatrix } from "./matrix";
 export class SharedMatrixFactory implements ISharedObjectFactory {
     public static Type = "https://graph.microsoft.com/types/sharedmatrix";
 
-    public static Attributes: IChannelAttributes = {
+    public static readonly Attributes: IChannelAttributes = {
         type: SharedMatrixFactory.Type,
         snapshotFormatVersion: "0.1",
         packageVersion: pkgVersion,
+        metadata: undefined,
     };
 
     public get type() {
@@ -31,18 +32,19 @@ export class SharedMatrixFactory implements ISharedObjectFactory {
     }
 
     public async load(
-        document: IComponentRuntime,
+        runtime: IComponentRuntime,
         id: string,
         services: ISharedObjectServices,
         branchId: string,
+        attributes: IChannelAttributes,
     ): Promise<IChannel> {
-        const matrix = new SharedMatrix(document, id);
+        const matrix = new SharedMatrix(runtime, id, attributes);
         await matrix.load(branchId, services);
         return matrix;
     }
 
     public create(document: IComponentRuntime, id: string): IChannel {
-        const matrix = new SharedMatrix(document, id);
+        const matrix = new SharedMatrix(document, id, this.attributes);
         matrix.initializeLocal();
         return matrix;
     }

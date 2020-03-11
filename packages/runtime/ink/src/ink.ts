@@ -11,7 +11,7 @@ import {
     MessageType,
     TreeEntry,
 } from "@microsoft/fluid-protocol-definitions";
-import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+import { IComponentRuntime, IObjectStorageService, IChannelAttributes } from "@microsoft/fluid-runtime-definitions";
 import { SharedObject } from "@microsoft/fluid-shared-object-base";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
@@ -66,8 +66,8 @@ export class Ink extends SharedObject implements IInk {
      * @param runtime - The runtime the Ink will be associated with
      * @param id - Unique ID for the Ink
      */
-    constructor(runtime: IComponentRuntime, id: string) {
-        super(id, runtime, InkFactory.Attributes);
+    constructor(runtime: IComponentRuntime, id: string, attributes: IChannelAttributes) {
+        super(id, runtime, attributes);
     }
 
     /**

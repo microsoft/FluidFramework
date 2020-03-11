@@ -12,7 +12,7 @@ import {
     MessageType,
     TreeEntry,
 } from "@microsoft/fluid-protocol-definitions";
-import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+import { IComponentRuntime, IObjectStorageService, IChannelAttributes } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory, SharedObject, ValueType } from "@microsoft/fluid-shared-object-base";
 import { CellFactory } from "./cellFactory";
 import { debug } from "./debug";
@@ -82,8 +82,8 @@ export class SharedCell extends SharedObject implements ISharedCell {
      * @param runtime - component runtime the shared map belongs to
      * @param id - optional name of the shared map
      */
-    constructor(id: string, runtime: IComponentRuntime) {
-        super(id, runtime, CellFactory.Attributes);
+    constructor(id: string, runtime: IComponentRuntime, attributes: IChannelAttributes) {
+        super(id, runtime, attributes);
         this.pendingClientSequenceNumber = -1;
     }
 

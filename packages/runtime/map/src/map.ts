@@ -55,6 +55,7 @@ export class MapFactory implements ISharedObjectFactory {
         type: MapFactory.Type,
         snapshotFormatVersion: "0.2",
         packageVersion: pkgVersion,
+        metadata: undefined,
     };
 
     /**
@@ -78,9 +79,10 @@ export class MapFactory implements ISharedObjectFactory {
         runtime: IComponentRuntime,
         id: string,
         services: ISharedObjectServices,
-        branchId: string): Promise<ISharedMap> {
+        branchId: string,
+        attributes: IChannelAttributes): Promise<ISharedMap> {
 
-        const map = new SharedMap(id, runtime);
+        const map = new SharedMap(id, runtime, attributes);
         await map.load(branchId, services);
 
         return map;
@@ -90,7 +92,7 @@ export class MapFactory implements ISharedObjectFactory {
    * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory.create}
    */
     public create(runtime: IComponentRuntime, id: string): ISharedMap {
-        const map = new SharedMap(id, runtime);
+        const map = new SharedMap(id, runtime, MapFactory.Attributes);
         map.initializeLocal();
 
         return map;
@@ -138,7 +140,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
     constructor(
         id: string,
         runtime: IComponentRuntime,
-        attributes = MapFactory.Attributes,
+        attributes: IChannelAttributes,
     ) {
         super(id, runtime, attributes);
         this.kernel = new MapKernel(
