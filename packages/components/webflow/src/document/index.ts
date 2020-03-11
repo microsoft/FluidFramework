@@ -510,5 +510,5 @@ export class FlowDocument extends SharedComponent<ISharedDirectory> {
 const flowDocumentFactory = new SharedComponentFactory(
     documentType,
     FlowDocument,
-    SharedDirectory.getFactory(),
+    /* root: */ SharedDirectory.getFactory(),
     [SharedString.getFactory()]);

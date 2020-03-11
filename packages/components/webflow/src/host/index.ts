@@ -54,6 +54,6 @@ export class WebFlow extends SharedComponent<ISharedDirectory> implements ICompo
 const webFlowFactory = new SharedComponentFactory(
     hostType,
     WebFlow,
-    SharedDirectory.getFactory(),
+    /* root: */ SharedDirectory.getFactory(),
     [],
     [FlowDocument.getFactory()]);
