@@ -1,6 +1,21 @@
 # 0.15 Breaking Changes
 - [Container.autoReconnect & Container.reconnect changes](#Container.reconnect-Container.reconnect-changes)
 - [0.13 backwards compatibility removed](#013-backwards-compatibility-removed)
+- [PrimedComponent and SharedComponent interfaces are now more restrictive](#restricted-component-interfaces)
+
+## PrimedComponent and SharedComponent interfaces are now more restrictive
+The following class variables have been changed from public -> protected
+
+In PrimedComponent:
+- root
+- taskManager
+- writeBlob
+In SharedComponent:
+- asComponent
+
+If you still need to access these methods, you can still do so by overloading the needed method in your class
+and making it public.
+An example of this can be seen in primedComponent.spec.ts 
 
 ## Container.reconnect, Container.reconnect changes
 autReconnect property is gone, as well as reconnect() method.<br/>
