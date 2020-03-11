@@ -215,13 +215,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext,
      * Snapshot and close the runtime, and return its state if available
      */
     public async snapshotRuntimeState(): Promise<IRuntimeState> {
-        let state = await this.runtime!.stop();
-        // back-compat: 0.14 runtimeState
-        if (!state) {
-            state = { snapshot: await this.runtime!.snapshot("", false) ?? undefined };
-        }
-
-        return state;
+        return this.runtime!.stop();
     }
 
     public isAttached(): boolean {
