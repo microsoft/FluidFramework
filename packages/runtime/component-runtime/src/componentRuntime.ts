@@ -49,7 +49,7 @@ import {
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
-import { IChannelContext } from "./channelContext";
+import { IChannelContext, snapshotChannel } from "./channelContext";
 import { LocalChannelContext } from "./localChannelContext";
 import { RemoteChannelContext } from "./remoteChannelContext";
 
@@ -554,7 +554,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         channel.handle!.attach();
 
         // Get the object snapshot and include it in the initial attach
-        const snapshot = channel.snapshot();
+        const snapshot = snapshotChannel(channel);
 
         const message: IAttachMessage = {
             id: channel.id,

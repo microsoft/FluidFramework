@@ -24,26 +24,38 @@ import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./chan
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ISharedObjectRegistry } from "./componentRuntime";
 import { debug } from "./debug";
+import { ChannelStorageService } from "./channelStorageService";
 
 export class RemoteChannelContext implements IChannelContext {
-    private connection: ChannelDeltaConnection | undefined;
     private isLoaded = false;
     private pending: ISequencedDocumentMessage[] | undefined = [];
     private channelP: Promise<IChannel> | undefined;
     private channel: IChannel | undefined;
-
+    private readonly services: {
+        readonly deltaConnection: ChannelDeltaConnection,
+        readonly objectStorage: ChannelStorageService,
+    };
     constructor(
         private readonly runtime: IComponentRuntime,
         private readonly componentContext: IComponentContext,
-        private readonly storageService: IDocumentStorageService,
-        private readonly submitFn: (type: MessageType, content: any) => number,
+        storageService: IDocumentStorageService,
+        submitFn: (type: MessageType, content: any) => number,
         private readonly id: string,
-        private readonly baseSnapshot: ISnapshotTree,
+        baseSnapshot: ISnapshotTree,
         private readonly registry: ISharedObjectRegistry,
-        private readonly extraBlobs: Map<string, string>,
+        extraBlobs: Map<string, string>,
         private readonly branch: string,
         private readonly summaryTracker: ISummaryTracker,
-    ) {}
+    ) {
+
+        this.services = createServiceEndpoints(
+            this.id,
+            this.componentContext.connectionState,
+            submitFn,
+            storageService,
+            baseSnapshot,
+            extraBlobs);
+    }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public getChannel(): Promise<IChannel> {
@@ -65,16 +77,14 @@ export class RemoteChannelContext implements IChannelContext {
             return;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.connection!.setConnectionState(value);
+        this.services.deltaConnection.setConnectionState(value);
     }
 
     public processOp(message: ISequencedDocumentMessage, local: boolean): void {
         this.summaryTracker.updateLatestSequenceNumber(message.sequenceNumber);
 
         if (this.isLoaded) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.connection!.process(message, local);
+            this.services.deltaConnection.process(message, local);
         } else {
             assert(!local);
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -94,18 +104,14 @@ export class RemoteChannelContext implements IChannelContext {
         return snapshotChannel(channel);
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    private getAttributesFromBaseTree(): Promise<IChannelAttributes> {
-        return readAndParse<IChannelAttributes>(
-            this.storageService,
-            this.baseSnapshot.blobs[".attributes"]);
-    }
 
     private async loadChannel(): Promise<IChannel> {
         assert(!this.isLoaded);
 
         // Create the channel if it hasn't already been passed in the constructor
-        const attributes = await this.getAttributesFromBaseTree();
+        const attributes =  await readAndParse<IChannelAttributes>(
+            this.services.objectStorage,
+            ".attributes");
 
         // Pass the transformedMessages - but the object really should be storing this
         const factory = this.registry.get(attributes.type);
@@ -124,34 +130,24 @@ export class RemoteChannelContext implements IChannelContext {
         // eslint-disable-next-line max-len
         debug(`Loading channel ${attributes.type}@${attributes.packageVersion}, snapshot format version: ${attributes.snapshotFormatVersion}`);
 
-        const services = createServiceEndpoints(
-            this.id,
-            this.componentContext.connectionState,
-            this.submitFn,
-            this.storageService,
-            this.baseSnapshot,
-            this.extraBlobs);
         this.channel = await factory.load(
             this.runtime,
             this.id,
-            services,
+            this.services,
             this.branch,
             attributes);
-
-        const connection = services.deltaConnection;
-        this.connection = connection;
 
         // Send all pending messages to the channel
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         for (const message of this.pending!) {
-            connection.process(message, false);
+            this.services.deltaConnection.process(message, false);
         }
         this.pending = undefined;
         this.isLoaded = true;
 
         // Because have some await between we created the service and here, the connection state might have changed
         // and we don't propagate the connection state when we are not loaded.  So we have to set it again here.
-        this.connection.setConnectionState(this.componentContext.connectionState);
+        this.services.deltaConnection.setConnectionState(this.componentContext.connectionState);
         return this.channel;
     }
 }
