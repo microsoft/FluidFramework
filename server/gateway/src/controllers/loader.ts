@@ -5,7 +5,7 @@
 
 import { BaseHost, IBaseHostConfig } from "@microsoft/fluid-base-host";
 import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
-import { BaseTelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import { BaseTelemetryNullLogger } from "@microsoft/fluid-common-utils";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
@@ -158,7 +158,7 @@ export async function initialize(
     // eslint-disable-next-line dot-notation
     window["allServices"] = services;
 
-    const baseHost = new BaseHost(hostConfig, resolved, pkg, scriptIds);
+    const baseHost = new BaseHost(hostConfig, pkg, scriptIds);
     const loader = await baseHost.getLoader();
     documentFactory.resolveLoader(loader);
 
