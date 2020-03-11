@@ -140,6 +140,20 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     }
 
     /**
+     * Calls create, initialize, and attach on a new component without a predefined ID. 
+     * Optional props will be passed in if the component being created supports IComponentForge
+     *
+     * @param pkg - package name for the new component
+     * @param props - optional props to be passed in
+     */
+    protected async createAndAttachComponent_NEW<T>(pkg: string, props?: any): Promise<T> {
+        const componentRuntime = await this.context.hostRuntime._createComponentWithProps_NEW(pkg, props);
+        const component = await this.asComponent<IComponent>(componentRuntime.request({ url: "/" }));
+        componentRuntime.attach();
+        return component as T;
+    }
+
+    /**
      * Gets the component of a given id. Will follow the pattern of the container for waiting.
      * @param id - component id
      */

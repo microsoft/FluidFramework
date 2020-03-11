@@ -119,7 +119,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
         let componentToolbar: JSX.Element | undefined;
 
         this.state.componentMap.forEach((layout, id) => {
-            const editable = this.state.isEditable && id !== this.props.dataModel.componentToolbarId;
+            const editable = this.state.isEditable && id !== this.props.dataModel.defaultComponentToolbarId;
             // Do some CSS stuff depending on if the user is editing or not
             const editableStyle: React.CSSProperties = { overflow: "hidden", padding: 2 };
             const embeddedComponentStyle: React.CSSProperties = {
@@ -161,7 +161,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                         <EmbeddedComponentWrapper id={id} getComponent={this.props.dataModel.getComponent} />
                     </div>
                 </div>;
-            if (id !== this.props.dataModel.componentToolbarId) {
+            if (id !== this.props.dataModel.defaultComponentToolbarId) {
                 components.push(element);
             } else {
                 componentToolbar = element;

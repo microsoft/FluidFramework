@@ -374,6 +374,18 @@ export interface IHostRuntime extends
     _createComponentWithProps(pkg: string | string[], props: any, id: string): Promise<IComponentRuntime>;
 
     /**
+     * Creates a new component with props with no predefined ID
+     * @param pkg - Package name of the component
+     * @param props - properties to be passed to the instantiateComponent thru the context
+     *
+     * @remarks
+     * Only used by aqueduct PrimedComponent to pass param to the instantiateComponent function thru the context.
+     * Further change to the component create flow to split the local create vs remote instantiate make this deprecated.
+     * @internal
+     */
+    _createComponentWithProps_NEW(pkg: string | string[], props: any): Promise<IComponentRuntime>;
+
+    /**
      * Returns the current quorum.
      */
     getQuorum(): IQuorum;

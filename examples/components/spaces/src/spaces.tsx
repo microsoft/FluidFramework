@@ -51,6 +51,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
             new SpacesDataModel(
                 this.root,
                 this.createAndAttachComponent.bind(this),
+                this.createAndAttachComponent_NEW.bind(this),
                 this.getComponent.bind(this),
                 Spaces.componentToolbarId,
             );
@@ -73,6 +74,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
             new SpacesDataModel(
                 this.root,
                 this.createAndAttachComponent.bind(this),
+                this.createAndAttachComponent_NEW.bind(this),
                 this.getComponent.bind(this),
                 Spaces.componentToolbarId,
             );
