@@ -343,6 +343,13 @@ export class MockRuntime extends EventEmitter
     private readonly activeDeferred = new Deferred<void>();
     public readonly quorum = new MockQuorum();
 
+    private _disposed = false;
+    public get disposed() { return this._disposed; }
+
+    public dispose(): void {
+        this._disposed = true;
+    }
+
     public get active(): Promise<void> {
         return this.activeDeferred.promise;
     }
