@@ -14,9 +14,12 @@ import { CreationServerMessagesHandler } from "./creationDriverServer";
  * The DocumentService connects to in memory endpoints for storage/socket for faux document service.
  */
 export class CreationDocumentService implements api.IDocumentService {
+
+    private readonly creationServer: CreationServerMessagesHandler;
     constructor(
         private readonly documentId: string,
         private readonly tenantId: string) {
+        this.creationServer = CreationServerMessagesHandler.getInstance(this.documentId);
     }
 
     public async connectToStorage(): Promise<api.IDocumentStorageService> {
@@ -24,7 +27,7 @@ export class CreationDocumentService implements api.IDocumentService {
     }
 
     public async connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService> {
-        return new CreationDeltaStorageService();
+        return new CreationDeltaStorageService(this.creationServer);
     }
 
     /**
@@ -35,8 +38,7 @@ export class CreationDocumentService implements api.IDocumentService {
     public async connectToDeltaStream(
         client: IClient,
         mode: ConnectionMode): Promise<api.IDocumentDeltaConnection> {
-        const creationServer = CreationServerMessagesHandler.getInstance(this.documentId);
-        return new CreationDocumentDeltaConnection(client, mode, this.documentId, this.tenantId, creationServer);
+        return new CreationDocumentDeltaConnection(client, mode, this.documentId, this.tenantId, this.creationServer);
     }
 
     public async branch(): Promise<string> {

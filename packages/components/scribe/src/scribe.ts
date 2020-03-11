@@ -7,7 +7,7 @@ import { EventEmitter } from "events";
 import { resolve } from "url";
 import {
     IComponentHTMLOptions,
-    IComponentHTMLVisual,
+    IComponentHTMLView,
     IComponentLoadable,
     IComponentRouter,
     IRequest,
@@ -376,7 +376,7 @@ const html =
 
 export class Scribe
     extends EventEmitter
-    implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual {
+    implements IComponentLoadable, IComponentRouter, IComponentHTMLView {
 
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new Scribe(runtime, context);
@@ -387,7 +387,7 @@ export class Scribe
 
     public get IComponentLoadable() { return this; }
     public get IComponentRouter() { return this; }
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
 
     public url: string;
     private root: ISharedMap;
@@ -441,16 +441,18 @@ export class Scribe
 }
 
 class ScribeFactory implements IComponentFactory, IRuntimeFactory {
+    public static readonly type = "@fluid-example/scribe";
+    public readonly type = ScribeFactory.type;
+
     public get IComponentFactory() { return this; }
     public get IRuntimeFactory() { return this; }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const registry = new Map<string, Promise<IComponentFactory>>([
-            ["@fluid-example/scribe", Promise.resolve(this)],
+            [ScribeFactory.type, Promise.resolve(this)],
         ]);
 
         const defaultComponentId = "default";
-        const defaultComponent = "@fluid-example/scribe";
 
         const runtime = await ContainerRuntime.load(
             context,
@@ -475,7 +477,7 @@ class ScribeFactory implements IComponentFactory, IRuntimeFactory {
         // On first boot create the base component
         if (!runtime.existing) {
             await Promise.all([
-                runtime.createComponent(defaultComponentId, defaultComponent).then((componentRuntime) => {
+                runtime.createComponent(defaultComponentId, ScribeFactory.type).then((componentRuntime) => {
                     componentRuntime.attach();
                 }),
             ])
@@ -492,16 +494,16 @@ class ScribeFactory implements IComponentFactory, IRuntimeFactory {
         const mapFactory = SharedMap.getFactory();
         dataTypes.set(mapFactory.type, mapFactory);
 
-        ComponentRuntime.load(
+        const runtime = ComponentRuntime.load(
             context,
             dataTypes,
-            (runtime) => {
-                const progressCollectionP = Scribe.load(runtime, context);
-                runtime.registerRequestHandler(async (request: IRequest) => {
-                    const progressCollection = await progressCollectionP;
-                    return progressCollection.request(request);
-                });
-            });
+        );
+
+        const progressCollectionP = Scribe.load(runtime, context);
+        runtime.registerRequestHandler(async (request: IRequest) => {
+            const progressCollection = await progressCollectionP;
+            return progressCollection.request(request);
+        });
     }
 }
 

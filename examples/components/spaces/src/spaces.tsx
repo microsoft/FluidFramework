@@ -8,7 +8,7 @@ import {
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import {
-    IComponentHTMLVisual,
+    IComponentHTMLView,
 } from "@microsoft/fluid-component-core-interfaces";
 
 import * as React from "react";
@@ -22,7 +22,7 @@ import { ComponentToolbar, ComponentToolbarName } from "./components";
 /**
  * Spaces is the Fluid
  */
-export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
+export class Spaces extends PrimedComponent implements IComponentHTMLView {
     private dataModelInternal: ISpacesDataModel | undefined;
     private componentToolbar: ComponentToolbar | undefined;
     private static readonly componentToolbarId = "spaces-component-toolbar";
@@ -43,18 +43,11 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
         return this.dataModelInternal;
     }
 
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
 
     protected async componentInitializingFirstTime(props?: any) {
         this.root.createSubDirectory("component-list");
-        this.dataModelInternal =
-            new SpacesDataModel(
-                this.root,
-                this.createAndAttachComponent.bind(this),
-                this.createAndAttachComponent_NEW.bind(this),
-                this.getComponent.bind(this),
-                Spaces.componentToolbarId,
-            );
+        this.initializeDataModel();
         this.componentToolbar =
             await this.dataModel.addComponent(
                 ComponentToolbarName,
@@ -70,14 +63,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
     }
 
     protected async componentInitializingFromExisting() {
-        this.dataModelInternal =
-            new SpacesDataModel(
-                this.root,
-                this.createAndAttachComponent.bind(this),
-                this.createAndAttachComponent_NEW.bind(this),
-                this.getComponent.bind(this),
-                Spaces.componentToolbarId,
-            );
+        this.initializeDataModel();
         this.componentToolbar = await this.getComponent<ComponentToolbar>(Spaces.componentToolbarId);
     }
 
@@ -87,13 +73,22 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
                 /* eslint-disable-next-line @typescript-eslint/no-floating-promises */
                 this.dataModel.addComponent(type, w, h);
             });
-            this.componentToolbar.addListener("saveLayout", () => {
-                this.dataModel.saveLayout();
-            });
             this.componentToolbar.addListener("toggleEditable", (isEditable: boolean) => {
                 this.dataModel.emit("editableUpdated", isEditable);
             });
+            this.componentToolbar.changeEditState(this.dataModel.componentList.size - 1 === 0);
         }
+    }
+
+    private initializeDataModel() {
+        this.dataModelInternal =
+            new SpacesDataModel(
+                this.root,
+                this.createAndAttachComponent.bind(this),
+                this.createAndAttachComponent_NEW.bind(this),
+                this.getComponent.bind(this),
+                Spaces.componentToolbarId,
+            );
     }
 
     /**

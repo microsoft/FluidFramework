@@ -5,13 +5,11 @@
         "node_modules"
     ],
     "compilerOptions": {
-        "target": "es6",
         "strict": true,
         "strictNullChecks": false,
-        "moduleResolution": "node",
-        "module": "commonjs",
         "rootDir": "./src",
-        "outDir": "dist",
+        "outDir": "./dist",
+        "types": [ "mocha" ],
         "skipLibCheck": true
     },
     "include": [

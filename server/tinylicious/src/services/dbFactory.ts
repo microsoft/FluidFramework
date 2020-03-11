@@ -4,10 +4,16 @@
  */
 
 import { IDb, IDbFactory } from "@microsoft/fluid-server-services-core";
-import { DB } from "./db";
+import { Provider } from "nconf";
+import { InMemoryDb } from "./inMemorydb";
+import { LevelDb } from "./levelDb";
 
 export class DbFactory implements IDbFactory {
-    private readonly db = new DB();
+    private readonly db;
+
+    constructor(config: Provider) {
+        this.db = config.get("db:inMemory") ? new InMemoryDb() : new LevelDb(config.get("db:path"));
+    }
 
     public async connect(): Promise<IDb> {
         return this.db;

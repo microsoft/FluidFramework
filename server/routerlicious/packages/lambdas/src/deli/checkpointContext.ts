@@ -5,9 +5,8 @@
 
 /* eslint-disable no-null/no-null */
 
-import { IRangeTrackerSnapshot } from "@microsoft/fluid-core-utils";
+import { IRangeTrackerSnapshot } from "@microsoft/fluid-common-utils";
 import { ICollection, IContext, IDocument, IQueuedMessage } from "@microsoft/fluid-server-services-core";
-import * as winston from "winston";
 
 export interface IClientSequenceNumber {
     // Whether or not the object can expire
@@ -20,12 +19,15 @@ export interface IClientSequenceNumber {
     scopes: string[];
 }
 
-export interface ICheckpoint {
+export interface ICheckpoint extends IDeliCheckpoint {
+    queuedMessage: IQueuedMessage;
+}
+
+export interface IDeliCheckpoint {
     branchMap: IRangeTrackerSnapshot;
     clients: IClientSequenceNumber[];
     logOffset: number;
     sequenceNumber: number;
-    queuedMessage: IQueuedMessage;
 }
 
 export class CheckpointContext {
@@ -69,7 +71,7 @@ export class CheckpointContext {
             },
             (error) => {
                 // TODO flag context as error
-                winston.error("Error writing checkpoint to MongoDB", error);
+                this.context.log.error(`Error writing checkpoint to MongoDB: ${JSON.stringify(error)}`);
             });
     }
 
@@ -95,7 +97,7 @@ export class CheckpointContext {
         // Retry the checkpoint on error
         // eslint-disable-next-line @typescript-eslint/promise-function-async
         return updateP.catch((error) => {
-            winston.error("Error writing checkpoint to MongoDB", error);
+            this.context.log.error(`Error writing checkpoint to MongoDB: ${JSON.stringify(error)}`);
             return new Promise<void>((resolve, reject) => {
                 resolve(this.checkpointCore(checkpoint));
             });

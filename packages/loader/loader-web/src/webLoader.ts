@@ -11,6 +11,7 @@ import {
     IPackage,
     IPackageConfig,
     isFluidPackage,
+    IFluidModule,
 } from "@microsoft/fluid-container-definitions";
 import * as fetch from "isomorphic-fetch";
 
@@ -207,7 +208,7 @@ class FluidPackage {
         });
     }
 
-    public async load<T>(): Promise<T> {
+    public async load(): Promise<IFluidModule> {
         if (!this.loadP) {
             this.loadP = this.loadCore();
         }
@@ -215,7 +216,7 @@ class FluidPackage {
         return this.loadP;
     }
 
-    private async resolve(): Promise<IResolvedPackage> {
+    public async resolve(): Promise<IResolvedPackage> {
         if (!this.resolveP) {
             this.resolveP = this.resolveCore();
         }
@@ -244,7 +245,7 @@ class FluidPackage {
         };
     }
 
-    private async loadCore<T>(): Promise<T> {
+    private async loadCore(): Promise<IFluidModule> {
         const resolvedPackage = await this.resolve();
 
         // Currently only support UMD package loads
@@ -272,12 +273,16 @@ export class WebCodeLoader implements ICodeLoader {
         fluidPackage.seed(seedable.scriptIds);
     }
 
+    public async resolve(source: IFluidCodeDetails): Promise<IResolvedPackage> {
+        return this.getFluidPackage(source).resolve();
+    }
+
     /**
      * @param source - Details of where to find chaincode
      */
-    public async load<T>(
+    public async load(
         source: IFluidCodeDetails,
-    ): Promise<T> {
+    ): Promise<IFluidModule> {
         if (this.whiteList && !(await this.whiteList.testSource(source))) {
             return Promise.reject("Attempted to load invalid package");
         }

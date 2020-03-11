@@ -71,10 +71,6 @@ scriptorium:
   name: scriptorium
   replicas: 8
 
-broadcaster:
-  name: broadcaster
-  replicas: 8
-
 scribe:
   name: scribe
   replicas: 8
@@ -142,6 +138,7 @@ kafka:
   topics:
     rawdeltas: rawdeltas
     deltas: deltas
+  url: left-numbat-kafka:9092
 
 minio:
   externalUrl: https://minio.wu2.prague.office-int.com

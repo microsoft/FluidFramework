@@ -24,7 +24,6 @@ import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 require("bootstrap/dist/css/bootstrap.min.css");
 
 class ProgressBarView implements IComponentHTMLView {
-
     public parent: HTMLElement;
     private barElem: HTMLDivElement;
 
@@ -78,9 +77,10 @@ class ProgressBarView implements IComponentHTMLView {
 }
 
 // The "model" side of a progress bar
-export class ProgressBar extends EventEmitter implements IComponentLoadable, IComponentHTMLVisual, IComponentRouter {
-    private defaultView: ProgressBarView;
-
+export class ProgressBar extends EventEmitter implements
+    IComponentLoadable,
+    IComponentHTMLVisual,
+    IComponentRouter {
     public handle: ComponentHandle;
 
     constructor(
@@ -98,14 +98,7 @@ export class ProgressBar extends EventEmitter implements IComponentLoadable, ICo
     public get IComponentHTMLVisual() { return this; }
     public get IComponentRouter() { return this; }
 
-    public render(elm: HTMLElement) {
-        if (!this.defaultView) {
-            this.defaultView = new ProgressBarView(this);
-        }
-        this.defaultView.render(elm);
-    }
-
-    public addView(host: IComponent) {
+    public addView(scope?: IComponent) {
         return new ProgressBarView(this);
     }
 
@@ -233,6 +226,8 @@ export class ProgressCollection
 }
 
 class ProgressBarsFactory implements IComponentFactory {
+    public static readonly type = "@fluid-example/progress-bars";
+    public readonly type = ProgressBarsFactory.type;
 
     public get IComponentFactory() { return this; }
 
@@ -241,16 +236,16 @@ class ProgressBarsFactory implements IComponentFactory {
         const mapFactory = SharedMap.getFactory();
         dataTypes.set(mapFactory.type, mapFactory);
 
-        ComponentRuntime.load(
+        const runtime = ComponentRuntime.load(
             context,
             dataTypes,
-            (runtime) => {
-                const progressCollectionP = ProgressCollection.load(runtime, context);
-                runtime.registerRequestHandler(async (request: IRequest) => {
-                    const progressCollection = await progressCollectionP;
-                    return progressCollection.request(request);
-                });
-            });
+        );
+
+        const progressCollectionP = ProgressCollection.load(runtime, context);
+        runtime.registerRequestHandler(async (request: IRequest) => {
+            const progressCollection = await progressCollectionP;
+            return progressCollection.request(request);
+        });
     }
 }
 

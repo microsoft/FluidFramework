@@ -23,20 +23,24 @@ import {
     IDeltaSender,
     ILoader,
     IRuntime,
+    IRuntimeState,
+    IExperimentalRuntime,
+    IExperimentalContainerContext,
 } from "@microsoft/fluid-container-definitions";
 import {
     Deferred,
     Trace,
+    LazyPromise,
     ChildLogger,
-} from "@microsoft/fluid-core-utils";
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
+} from "@microsoft/fluid-common-utils";
+import { IDocumentStorageService, ISummaryContext } from "@microsoft/fluid-driver-definitions";
 import { readAndParse, createIError } from "@microsoft/fluid-driver-utils";
 import {
     BlobTreeEntry,
     buildSnapshotTree,
-    CommitTreeEntry,
     isSystemType,
     raiseConnectedEvent,
+    TreeTreeEntry,
 } from "@microsoft/fluid-protocol-base";
 import {
     ConnectionState,
@@ -65,14 +69,14 @@ import {
     IInboundSignalMessage,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
-import { ComponentSerializer } from "@microsoft/fluid-runtime-utils";
+import { ComponentSerializer, SummaryTracker } from "@microsoft/fluid-runtime-utils";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
 import { ComponentContext, LocalComponentContext, RemotedComponentContext } from "./componentContext";
 import { ComponentHandleContext } from "./componentHandleContext";
 import { ComponentRegistry } from "./componentRegistry";
 import { debug } from "./debug";
-import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
+import { BlobCacheStorageService } from "./blobCacheStorageService";
 import {
     componentRuntimeRequestHandler,
     createLoadableComponentRuntimeRequestHandler,
@@ -85,10 +89,22 @@ import { SummaryManager } from "./summaryManager";
 import { ISummaryStats, SummaryTreeConverter } from "./summaryTreeConverter";
 import { analyzeTasks } from "./taskAnalyzer";
 import { DeltaScheduler } from "./deltaScheduler";
+import { ReportConnectionTelemetry } from "./connectionTelemetry";
+import { SummaryCollection } from "./summaryCollection";
 
 interface ISummaryTreeWithStats {
     summaryStats: ISummaryStats;
     summaryTree: ISummaryTree;
+}
+
+export interface IPreviousState {
+    summaryCollection?: SummaryCollection,
+    reload?: boolean,
+
+    // only one (or zero) of these will be defined. the summarizing Summarizer will resolve the deferred promise, and
+    // the SummaryManager that spawned it will have that deferred's promise
+    nextSummarizerP?: Promise<Summarizer>,
+    nextSummarizerD?: Deferred<Summarizer>,
 }
 
 export interface IGeneratedSummaryData {
@@ -351,7 +367,9 @@ const schedulerRuntimeRequestHandler: RuntimeRequestHandler =
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the component level mappings.
  */
-export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRuntime {
+export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRuntime, IExperimentalRuntime {
+
+    public readonly isExperimentalRuntime = true;
     /**
      * Load the components from a snapshot and returns the runtime.
      * @param context - Context of the container.
@@ -364,15 +382,16 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         registryEntries: NamedComponentRegistryEntries,
         requestHandlers: RuntimeRequestHandler[] = [],
         runtimeOptions?: IContainerRuntimeOptions,
+        containerScope: IComponent = context.scope,
     ): Promise<ContainerRuntime> {
         const componentRegistry = new ContainerRuntimeComponentRegistry(registryEntries);
 
-        const chunkId = context.baseSnapshot.blobs[".chunks"];
+        const chunkId = context.baseSnapshot?.blobs[".chunks"];
         const chunks = chunkId
             ? await readAndParse<[string, string[]][]>(context.storage, chunkId)
             : [];
 
-        const runtime = new ContainerRuntime(context, componentRegistry, chunks, runtimeOptions);
+        const runtime = new ContainerRuntime(context, componentRegistry, chunks, runtimeOptions, containerScope);
         runtime.requestHandler = new RuntimeRequestHandlerBuilder();
         runtime.requestHandler.pushHandler(
             createLoadableComponentRuntimeRequestHandler(runtime.summarizer),
@@ -382,7 +401,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         // Create all internal components in first load.
         if (!context.existing) {
             await runtime.createComponent(schedulerId, schedulerId)
-                .then((componentRuntime) => componentRuntime.attach());
+                .then((componentRuntime) => {
+                    componentRuntime.attach();
+                });
         }
 
         runtime.subscribeToLeadership();
@@ -460,21 +481,26 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     public get scope(): IComponent {
-        return this.context.scope;
+        return this.containerScope;
     }
 
     public get IComponentRegistry(): IComponentRegistry {
         return this.registry;
     }
 
+    public nextSummarizerP?: Promise<Summarizer>;
+    public nextSummarizerD?: Deferred<Summarizer>;
+
     public readonly IComponentSerializer: IComponentSerializer = new ComponentSerializer();
 
     public readonly IComponentHandleContext: IComponentHandleContext;
 
     public readonly logger: ITelemetryLogger;
+    public readonly previousState: IPreviousState;
     private readonly summaryManager: SummaryManager;
-    private readonly summaryTreeConverter = new SummaryTreeConverter();
-    private latestSummaryAck: { handle?: string; referenceSequenceNumber: number };
+    private readonly summaryTreeConverter: SummaryTreeConverter;
+    private latestSummaryAck: ISummaryContext;
+    private readonly summaryTracker: SummaryTracker;
 
     private tasks: string[] = [];
 
@@ -485,6 +511,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     private needsFlush = false;
     private flushTrigger = false;
 
+    // Always matched IAgentScheduler.leader property
     private _leader = false;
 
     public get connected(): boolean {
@@ -492,10 +519,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     public get leader(): boolean {
-        if (this.connected && this.deltaManager && this.deltaManager.active) {
-            return this._leader;
-        }
-        return false;
+        return this._leader;
     }
 
     public get summarizerClientId(): string {
@@ -508,8 +532,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             : DefaultSummaryConfiguration;
     }
 
+    private _disposed = false;
+    public get disposed() { return this._disposed; }
+
     // Components tracked by the Domain
-    private closed = false;
     private readonly pendingAttach = new Map<string, IAttachMessage>();
     private dirtyDocument = false;
     private readonly summarizer: Summarizer;
@@ -526,40 +552,53 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     // on its creation). This is a superset of contexts.
     private readonly contextsDeferred = new Map<string, Deferred<ComponentContext>>();
 
-    private loadedFromSummary: boolean;
-
     private constructor(
         private readonly context: IContainerContext,
         private readonly registry: IComponentRegistry,
         readonly chunks: [string, string[]][],
         private readonly runtimeOptions: IContainerRuntimeOptions = { generateSummaries: true, enableWorker: false },
+        private readonly containerScope: IComponent,
     ) {
         super();
 
         this.chunkMap = new Map<string, string[]>(chunks);
 
+        const expContainerContext = this.context as IExperimentalContainerContext;
         this.IComponentHandleContext = new ComponentHandleContext("", this);
 
+        // useContext - back-compat: 0.14 uploadSummary
+        const useContext: boolean = expContainerContext.isExperimentalContainerContext ?
+            true : this.storage.uploadSummaryWithContext !== undefined;
+        this.latestSummaryAck = { proposalHandle: undefined, ackHandle: undefined };
+        this.summaryTracker = new SummaryTracker(
+            useContext,
+            "", // fullPath - the root is unnamed
+            this.deltaManager.initialSequenceNumber, // referenceSequenceNumber - last acked summary ref seq number
+            this.deltaManager.initialSequenceNumber, // latestSequenceNumber - latest sequence number seen
+            async () => undefined, // getSnapshotTree - this will be replaced on summary ack
+        );
+        this.summaryTreeConverter = new SummaryTreeConverter(useContext);
+
         // Extract components stored inside the snapshot
-        this.loadedFromSummary = context.baseSnapshot.trees[".protocol"] ? true : false;
         const components = new Map<string, ISnapshotTree | string>();
-        if (this.loadedFromSummary) {
+        if (context.baseSnapshot) {
             Object.keys(context.baseSnapshot.trees).forEach((value) => {
                 if (value !== ".protocol") {
                     const tree = context.baseSnapshot.trees[value];
                     components.set(value, tree);
                 }
             });
-        } else {
-            Object.keys(context.baseSnapshot.commits).forEach((key) => {
-                const moduleId = context.baseSnapshot.commits[key];
-                components.set(key, moduleId);
-            });
         }
 
         // Create a context for each of them
         for (const [key, value] of components) {
-            const componentContext = new RemotedComponentContext(key, value, this, this.storage, this.context.scope);
+            const componentContext = new RemotedComponentContext(
+                key,
+                value,
+                this,
+                this.storage,
+                this.containerScope,
+                this.summaryTracker.createOrGetChild(key, this.summaryTracker.referenceSequenceNumber));
             const deferred = new Deferred<ComponentContext>();
             deferred.resolve(componentContext);
 
@@ -592,8 +631,11 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.clearPartialChunks(clientId);
         });
 
-        this.context.on("refreshBaseSummary",
-            (snapshot: ISnapshotTree) => this.refreshBaseSummary(snapshot));
+        if (this.context.previousRuntimeState === undefined || this.context.previousRuntimeState.state === undefined) {
+            this.previousState = {};
+        } else {
+            this.previousState = this.context.previousRuntimeState.state as IPreviousState;
+        }
 
         // We always create the summarizer in the case that we are asked to generate summaries. But this may
         // want to be on demand instead.
@@ -603,21 +645,46 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             "/_summarizer",
             this,
             () => this.summaryConfiguration,
-            async (safe: boolean) => this.generateSummary(!this.loadedFromSummary, safe),
-            async (handle, refSeq) => this.refreshLatestSummaryAck(handle, refSeq));
+            async (full: boolean, safe: boolean) => this.generateSummary(full, safe),
+            async (summContext, refSeq) => this.refreshLatestSummaryAck(summContext, refSeq),
+            this.previousState.summaryCollection);
 
         // Create the SummaryManager and mark the initial state
         this.summaryManager = new SummaryManager(
             context,
-            this.runtimeOptions.generateSummaries !== false || this.loadedFromSummary,
+            this.runtimeOptions.generateSummaries !== false,
             this.runtimeOptions.enableWorker,
-            this.logger);
+            this.logger,
+            (summarizer) => { this.nextSummarizerP = summarizer; },
+            this.previousState.nextSummarizerP,
+            !!this.previousState.reload);
+
         if (this.context.connectionState === ConnectionState.Connected) {
             this.summaryManager.setConnected(this.context.clientId);
         }
 
-        this.latestSummaryAck = { referenceSequenceNumber: this.deltaManager.initialSequenceNumber };
+        ReportConnectionTelemetry(this.context.clientId, this.deltaManager, this.logger);
     }
+
+    public dispose(): void {
+        if (this._disposed) {
+            return;
+        }
+        this._disposed = true;
+
+        this.summaryManager.dispose();
+        this.summarizer.dispose();
+
+        // close/stop all component contexts
+        for (const [componentId, contextD] of this.contextsDeferred) {
+            contextD.promise.then((context) => {
+                context.dispose();
+            }).catch((error) => {
+                this.logger.sendErrorEvent({eventName: "ComponentContextDisposeError", componentId}, error);
+            });
+        }
+    }
+
     public get IComponentTokenProvider() {
 
         if (this.options && this.options.intelligence) {
@@ -647,67 +714,34 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
      * @param tagMessage - Message to supply to storage service for writing the snapshot.
      */
     public async snapshot(tagMessage: string, fullTree: boolean = false): Promise<ITree> {
-        // Pull in the prior version and snapshot tree to store against
-        const lastVersion = fullTree ? [] : await this.storage.getVersions(this.id, 1);
-        const tree = lastVersion.length > 0
-            ? await this.storage.getSnapshotTree(lastVersion[0])
-            : { blobs: {}, commits: {}, trees: {} };
-
         // Iterate over each component and ask it to snapshot
-        const componentVersionsP = Array.from(this.contexts).map(async ([componentId, value]) => {
-            const snapshot = await value.snapshot();
+        const componentSnapshotsP = Array.from(this.contexts).map(async ([componentId, value]) => {
+            const snapshot = await value.snapshot(fullTree);
 
             // If ID exists then previous commit is still valid
-            const commit = tree.commits[componentId] as string;
-            if (snapshot.id && commit && !fullTree) {
-                return {
-                    id: componentId,
-                    version: commit,
-                };
-            } else {
-                if (snapshot.id && !commit && !fullTree) {
-                    this.logger.sendErrorEvent({
-                        componentId,
-                        eventName: "MissingCommit",
-                        id: snapshot.id,
-                    });
-                }
-                const parent = commit ? [commit] : [];
-                const version = await this.storage.write(
-                    snapshot, parent, `${componentId} commit ${tagMessage}`, componentId);
-
-                return {
-                    id: componentId,
-                    version: version.id,
-                };
-            }
+            return {
+                componentId,
+                snapshot,
+            };
         });
 
         const root: ITree = { entries: [], id: null };
 
         // Add in module references to the component snapshots
-        const componentVersions = await Promise.all(componentVersionsP);
+        const componentSnapshots = await Promise.all(componentSnapshotsP);
 
         // Sort for better diffing of snapshots (in replay tool, used to find bugs in snapshotting logic)
         if (fullTree) {
-            componentVersions.sort((a, b) => a.id.localeCompare(b.id));
+            componentSnapshots.sort((a, b) => a.componentId.localeCompare(b.componentId));
         }
 
-        let gitModules = "";
-        for (const componentVersion of componentVersions) {
-            root.entries.push(new CommitTreeEntry(componentVersion.id, componentVersion.version));
-
-            const repoUrl = "https://github.com/kurtb/praguedocs.git"; // this.storageService.repositoryUrl
-            // eslint-disable-next-line max-len
-            gitModules += `[submodule "${componentVersion.id}"]\n\tpath = ${componentVersion.id}\n\turl = ${repoUrl}\n\n`;
+        for (const componentSnapshot of componentSnapshots) {
+            root.entries.push(new TreeTreeEntry(componentSnapshot.componentId, componentSnapshot.snapshot));
         }
 
         if (this.chunkMap.size > 0) {
             root.entries.push(new BlobTreeEntry(".chunks", JSON.stringify([...this.chunkMap])));
         }
-
-        // Write the module lookup details
-        root.entries.push(new BlobTreeEntry(".gitmodules", gitModules));
 
         return root;
     }
@@ -716,9 +750,20 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.context.requestSnapshot(tagMessage);
     }
 
-    public async stop(): Promise<void> {
+    public async stop(): Promise<IRuntimeState> {
         this.verifyNotClosed();
-        this.closed = true;
+
+        const snapshot = await this.snapshot("", true);
+        const state: IPreviousState = {
+            reload: true,
+            summaryCollection: this.summarizer.summaryCollection,
+            nextSummarizerP: this.nextSummarizerP,
+            nextSummarizerD: this.nextSummarizerD,
+        };
+
+        this.dispose();
+
+        return { snapshot, state };
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string, version: string) {
@@ -754,9 +799,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         if (value === ConnectionState.Connected) {
             this.summaryManager.setConnected(clientId);
         } else {
-            if (this._leader) {
-                this.updateLeader(false);
-            }
+            assert(!this._leader);
             this.summaryManager.setDisconnected();
         }
     }
@@ -810,15 +853,16 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.verifyNotClosed();
 
         if (!this.contextsDeferred.has(id)) {
-            if (!wait) {
-                return Promise.reject(`Process ${id} does not exist`);
-            }
-
             // Add in a deferred that will resolve once the process ID arrives
             this.contextsDeferred.set(id, new Deferred<ComponentContext>());
         }
+        const deferredContext = this.contextsDeferred.get(id);
 
-        const componentContext = await this.contextsDeferred.get(id).promise;
+        if (!wait && !deferredContext.isCompleted) {
+            return Promise.reject(`Process ${id} does not exist`);
+        }
+
+        const componentContext = await deferredContext.promise;
         return componentContext.realize();
     }
 
@@ -880,7 +924,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     public async createComponent_NEW(pkg: string | string[]) {
-        return this._createComponentWithProps_NEW(pkg, undefined);
+        const id = uuid();
+        return this._createComponentWithProps(pkg, undefined, id);
     }
 
     public async createComponent(idOrPkg: string, maybePkg?: string | string[]) {
@@ -889,7 +934,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this._createComponentWithProps(pkg, undefined, id);
     }
 
-    public async _createComponentWithProps_NEW(pkg: string | string[], props: any): Promise<IComponentRuntime> {
+    public async _createComponentWithProps_NEW(pkg: string | string[], props: any) {
         return this._createComponentWithProps(pkg, props, uuid());
     }
 
@@ -901,7 +946,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             Array.isArray(pkg) ? pkg : [pkg],
             this,
             this.storage,
-            this.context.scope,
+            this.containerScope,
+            this.summaryTracker.createOrGetChild(id, this.deltaManager.referenceSequenceNumber),
             (cr: IComponentRuntime) => this.attachComponent(cr),
             props);
 
@@ -970,18 +1016,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.context.submitSignalFn(envelope);
     }
 
-    private refreshBaseSummary(snapshot: ISnapshotTree) {
-        // Currently only is called from summaries
-        this.loadedFromSummary = true;
-        // Propagate updated tree to all components
-        for (const key of Object.keys(snapshot.trees)) {
-            if (this.contexts.has(key)) {
-                const component = this.contexts.get(key);
-                component.refreshBaseSummary(snapshot.trees[key]);
-            }
-        }
-    }
-
     /**
      * Returns a summary of the runtime at the current sequence number.
      */
@@ -990,16 +1024,18 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             tree: {},
             type: SummaryType.Tree,
         };
-        let summaryStats = this.summaryTreeConverter.mergeStats();
+        let summaryStats = SummaryTreeConverter.mergeStats();
 
         // Iterate over each component and ask it to snapshot
         await Promise.all(Array.from(this.contexts).map(async ([key, value]) => {
             const snapshot = await value.snapshot(fullTree);
             const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
                 snapshot,
-                fullTree);
+                `/${encodeURIComponent(key)}`,
+                fullTree,
+            );
             summaryTree.tree[key] = treeWithStats.summaryTree;
-            summaryStats = this.summaryTreeConverter.mergeStats(summaryStats, treeWithStats.summaryStats);
+            summaryStats = SummaryTreeConverter.mergeStats(summaryStats, treeWithStats.summaryStats);
         }));
 
         if (this.chunkMap.size > 0) {
@@ -1044,8 +1080,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     attachMessage.id,
                     snapshotTree,
                     this,
-                    new DocumentStorageServiceProxy(this.storage, flatBlobs),
-                    this.context.scope,
+                    new BlobCacheStorageService(this.storage, flatBlobs),
+                    this.containerScope,
+                    this.summaryTracker.createOrGetChild(attachMessage.id, message.sequenceNumber),
                     [attachMessage.type]);
 
                 break;
@@ -1098,16 +1135,28 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.verifyNotClosed();
 
         const context = this.contexts.get(componentRuntime.id);
-        const message = context.generateAttachMessage();
+        // If storage is not available then we are not yet fully attached and so will defer to the initial snapshot
+        const expContainerContext = this.context as IExperimentalContainerContext;
+        if (expContainerContext?.isExperimentalContainerContext ? expContainerContext.isAttached() : true) {
+            const message = context.generateAttachMessage();
 
-        this.pendingAttach.set(componentRuntime.id, message);
-        if (this.connected) {
-            this.submit(MessageType.Attach, message);
+            this.pendingAttach.set(componentRuntime.id, message);
+            if (this.connected) {
+                this.submit(MessageType.Attach, message);
+            }
         }
 
         // Resolve the deferred so other local components can access it.
         const deferred = this.contextsDeferred.get(componentRuntime.id);
         deferred.resolve(context);
+    }
+
+    public async createSummary(): Promise<ISummaryTree> {
+        // TODO - https://github.com/microsoft/FluidFramework/issues/1430
+        // TODO - https://github.com/microsoft/FluidFramework/issues/1431
+        const treeWithStats = await this.summarize(true);
+
+        return treeWithStats.summaryTree;
     }
 
     private async generateSummary(fullTree: boolean = false, safe: boolean = false): Promise<GenerateSummaryData> {
@@ -1120,11 +1169,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 eventName: "SkipGenerateSummaryParentBranch",
                 parentBranch: this.parentBranch,
             });
-            return;
-        }
-
-        if (!("uploadSummary" in this.context.storage)) {
-            this.logger.sendTelemetryEvent({ eventName: "SkipGenerateSummaryNotSupported" });
             return;
         }
 
@@ -1143,6 +1187,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
             const trace = Trace.start();
             const treeWithStats = await this.summarize(fullTree || safe);
+
             const generateData: IGeneratedSummaryData = {
                 summaryStats: treeWithStats.summaryStats,
                 generateDuration: trace.trace().duration,
@@ -1152,24 +1197,36 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 return { ...attemptData, ...generateData };
             }
 
-            const handle = await this.context.storage.uploadSummary(treeWithStats.summaryTree);
+            let handle: string;
+            if (this.summaryTracker.useContext === true) {
+                handle = await this.context.storage.uploadSummaryWithContext(
+                    treeWithStats.summaryTree,
+                    this.latestSummaryAck);
+            } else {
+                // back-compat: 0.14 uploadSummary
+                const summaryHandle = await this.context.storage.uploadSummary(
+                    treeWithStats.summaryTree);
+                handle = summaryHandle.handle;
+            }
 
             // safe mode refreshes the latest summary ack
             if (safe) {
                 const versions = await this.storage.getVersions(this.id, 1);
                 const parents = versions.map((version) => version.id);
-                await this.refreshLatestSummaryAck(parents[0], this.deltaManager.referenceSequenceNumber);
+                await this.refreshLatestSummaryAck(
+                    { proposalHandle: undefined, ackHandle: parents[0] },
+                    this.deltaManager.referenceSequenceNumber);
             }
 
-            const parent = this.latestSummaryAck.handle;
+            const parent = this.latestSummaryAck.ackHandle;
             const summaryMessage: ISummaryContent = {
-                handle: handle.handle,
+                handle,
                 head: parent,
                 message,
                 parents: parent ? [parent] : [],
             };
             const uploadData: IUploadedSummaryData = {
-                handle: handle.handle,
+                handle,
                 uploadDuration: trace.trace().duration,
             };
 
@@ -1300,7 +1357,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     private verifyNotClosed() {
-        if (this.closed) {
+        if (this._disposed) {
             throw new Error("Runtime is closed");
         }
     }
@@ -1331,20 +1388,28 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     private subscribeToLeadership() {
         if (this.context.clientDetails.capabilities.interactive) {
             this.getScheduler().then((scheduler) => {
-                if (scheduler.leader) {
+                const LeaderTaskId = "leader";
+
+                // Each client expresses interest to be a leader.
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                scheduler.pick(LeaderTaskId, async () => {
+                    assert(!this._leader);
                     this.updateLeader(true);
-                } else {
-                    scheduler.on("leader", () => {
-                        this.updateLeader(true);
-                    });
-                }
-            }, (err) => {
-                debug(err);
+                });
+
+                scheduler.on("lost", (key) => {
+                    if (key === LeaderTaskId) {
+                        assert(this._leader);
+                        this._leader = false;
+                        this.updateLeader(false);
+                    }
+                });
+            }).catch((err) => {
+                this.logger.sendErrorEvent({eventName: "ContainerRuntime_getScheduler"}, err);
             });
+
             this.context.quorum.on("removeMember", (clientId: string) => {
-                if (clientId === this.clientId && this._leader) {
-                    this.updateLeader(false);
-                } else if (this.leader) {
+                if (this.leader) {
                     this.runTaskAnalyzer();
                 }
             });
@@ -1360,14 +1425,15 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
     private updateLeader(leadership: boolean) {
         this._leader = leadership;
-        if (this._leader) {
+        if (this.leader) {
+            assert(this.connected && this.deltaManager && this.deltaManager.active);
             this.emit("leader", this.clientId);
         } else {
             this.emit("noleader", this.clientId);
         }
 
         for (const [, context] of this.contexts) {
-            context.updateLeader(this._leader);
+            context.updateLeader(this.leader);
         }
         if (this.leader) {
             this.runTaskAnalyzer();
@@ -1407,40 +1473,31 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         }
     }
 
-    private async refreshLatestSummaryAck(handle: string, referenceSequenceNumber: number) {
-        if (referenceSequenceNumber < this.latestSummaryAck.referenceSequenceNumber) {
-            return;
-        } else if (
-            referenceSequenceNumber === this.latestSummaryAck.referenceSequenceNumber
-            && !this.latestSummaryAck.handle
-        ) {
-            // When first loading we may not have the ack handle (version)
-            this.latestSummaryAck.handle = handle;
+    private async refreshLatestSummaryAck(context: ISummaryContext, referenceSequenceNumber: number) {
+        if (referenceSequenceNumber < this.summaryTracker.referenceSequenceNumber) {
             return;
         }
 
-        this.latestSummaryAck = { handle, referenceSequenceNumber };
+        const snapshotTree = new LazyPromise(async () => {
+            // We have to call get version to get the treeId for r11s; this isnt needed
+            // for odsp currently, since their treeId is undefined
+            const versionsResult = await this.setOrLogError("FailedToGetVersion",
+                async () => this.storage.getVersions(context.ackHandle, 1),
+                (versions) => !!(versions && versions.length));
 
-        // We have to call get version to get the treeId for r11s; this isnt needed
-        // for odsp currently, since their treeId is undefined
-        const versionsResult = await this.setOrLogError("FailedToGetVersion",
-            // eslint-disable-next-line @typescript-eslint/promise-function-async
-            () => this.storage.getVersions(handle, 1),
-            (versions) => !!(versions && versions.length));
+            if (versionsResult.success) {
+                const snapshotResult = await this.setOrLogError("FailedToGetSnapshot",
+                    async () => this.storage.getSnapshotTree(versionsResult.result[0]),
+                    (snapshot) => !!snapshot);
 
-        if (versionsResult.success) {
-            const snapshotResult = await this.setOrLogError("FailedToGetSnapshot",
-                // eslint-disable-next-line @typescript-eslint/promise-function-async
-                () => this.storage.getSnapshotTree(versionsResult.result[0]),
-                (snapshot) => !!snapshot);
-
-            if (snapshotResult.success) {
-                // Refresh base summary
-                // it might be nice to do this in the container in the future, and maybe for all
-                // clients, not just the summarizer
-                this.context.refreshBaseSummary(snapshotResult.result);
+                if (snapshotResult.success) {
+                    return snapshotResult.result;
+                }
             }
-        }
+        });
+
+        this.latestSummaryAck = context;
+        await this.summaryTracker.refreshLatestSummary(referenceSequenceNumber, async () => snapshotTree);
     }
 
     private async setOrLogError<T>(

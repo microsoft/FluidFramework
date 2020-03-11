@@ -11,8 +11,9 @@ import {
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
+    IExperimentalUrlResolver,
 } from "@microsoft/fluid-driver-definitions";
-import { IUser, ScopeType } from "@microsoft/fluid-protocol-definitions";
+import { IUser, ScopeType, ISummaryTree, ICommittedProposal } from "@microsoft/fluid-protocol-definitions";
 import { generateToken, IAlfredTenant } from "@microsoft/fluid-server-services-client";
 import { Provider } from "nconf";
 
@@ -22,7 +23,9 @@ const r11sServers = [
     "www.eu.prague.office-int.com",
 ];
 
-export class RouterliciousUrlResolver implements IUrlResolver {
+export class RouterliciousUrlResolver implements IUrlResolver, IExperimentalUrlResolver {
+
+    public readonly isExperimentalUrlResolver = true;
 
     constructor(
         private readonly config: { provider: Provider, tenantId: string, documentId: string } | undefined,
@@ -135,6 +138,15 @@ export class RouterliciousUrlResolver implements IUrlResolver {
             url: fluidUrl,
         };
         return resolved;
+    }
+
+    public async createContainer(
+        summary: ISummaryTree,
+        sequenceNumber: number,
+        values: [string, ICommittedProposal][],
+        request: IRequest,
+    ): Promise<IResolvedUrl> {
+        throw new Error("Method not implemented.");
     }
 }
 

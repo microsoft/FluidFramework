@@ -22,13 +22,15 @@ import {
     DebugLogger,
     Deferred,
     fromUtf8ToBase64,
-} from "@microsoft/fluid-core-utils";
+} from "@microsoft/fluid-common-utils";
 import * as git from "@microsoft/fluid-gitresources";
 import {
     ConnectionState,
     IBlob,
+    ICommittedProposal,
     IDocumentMessage,
     IQuorum,
+    ISequencedClient,
     ISequencedDocumentMessage,
     ITree,
     ITreeEntry,
@@ -47,6 +49,21 @@ import { ComponentSerializer } from "@microsoft/fluid-runtime-utils";
 import { IHistorian } from "@microsoft/fluid-server-services-client";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
+import { MockDeltaManager } from "./mockDeltas";
+
+export class MockDeltaManagerWithConnectionFactory extends MockDeltaManager {
+    public get minimumSequenceNumber(): number {
+        return this.connectionFactory.getMinSeq();
+    }
+
+    public get referenceSequenceNumber(): number {
+        return this.connectionFactory.sequenceNumber;
+    }
+
+    constructor(readonly connectionFactory?: MockDeltaConnectionFactory) {
+        super();
+    }
+}
 
 /**
  * Factory to create MockDeltaConnection for testing
@@ -56,10 +73,28 @@ export class MockDeltaConnectionFactory {
     public minSeq = new Map<string, number>();
     private readonly messages: ISequencedDocumentMessage[] = [];
     private readonly deltaConnections: MockDeltaConnection[] = [];
+
+    public getMinSeq(): number {
+        let minSeq: number;
+        for (const [, clientSeq] of this.minSeq) {
+            if (!minSeq) {
+                minSeq = clientSeq;
+            } else {
+                minSeq = Math.min(minSeq, clientSeq);
+            }
+        }
+        return minSeq ? minSeq : 0;
+    }
+
     public createDeltaConnection(runtime: MockRuntime): IDeltaConnection {
         // eslint-disable-next-line @typescript-eslint/no-use-before-define
         const delta = new MockDeltaConnection(this, runtime);
         this.deltaConnections.push(delta);
+
+        assert(runtime.deltaManager === undefined ||
+            runtime.deltaManager instanceof MockDeltaManagerWithConnectionFactory &&
+            runtime.deltaManager.connectionFactory === this);
+        runtime.deltaManager = new MockDeltaManagerWithConnectionFactory(this);
         return delta;
     }
 
@@ -76,7 +111,11 @@ export class MockDeltaConnectionFactory {
 
     public processAllMessages() {
         while (this.messages.length > 0) {
-            const msg = this.messages.shift();
+            let msg = this.messages.shift();
+
+            // Explicitly JSON clone the value to match the behavior of going thru the wire.
+            msg = JSON.parse(JSON.stringify(msg));
+
             this.minSeq.set(msg.clientId, msg.referenceSequenceNumber);
             msg.sequenceNumber = ++this.sequenceNumber;
             msg.minimumSequenceNumber = this.getMinSeq();
@@ -86,18 +125,6 @@ export class MockDeltaConnectionFactory {
                 }
             }
         }
-    }
-
-    private getMinSeq(): number {
-        let minSeq: number;
-        for (const [, clientSeq] of this.minSeq) {
-            if (!minSeq) {
-                minSeq = clientSeq;
-            } else {
-                minSeq = Math.min(minSeq, clientSeq);
-            }
-        }
-        return minSeq ? minSeq : 0;
     }
 }
 
@@ -171,6 +198,124 @@ class MockDeltaConnection implements IDeltaConnection {
     }
 }
 
+export class MockQuorum implements IQuorum, EventEmitter{
+
+    private readonly map = new Map<string, any>();
+    private readonly members: Map<string, ISequencedClient>;
+    private readonly eventEmitter = new EventEmitter();
+
+    constructor(... members: [string, Partial<ISequencedClient>][]) {
+        this.members = new Map(members as [string, ISequencedClient][] ?? []);
+    }
+
+    async propose(key: string, value: any) {
+        if (this.map.has(key)) {
+            assert.fail(`${key} exists`);
+        }
+        this.map.set(key, value);
+        this.eventEmitter.emit("approveProposal", 0, key, value);
+        this.eventEmitter.emit("commitProposal", 0, key, value);
+    }
+
+    has(key: string): boolean {
+        return this.map.has(key);
+    }
+
+    get(key: string) {
+        return this.map.get(key);
+    }
+
+    getApprovalData(key: string): ICommittedProposal | undefined {
+        throw new Error("Method not implemented.");
+    }
+
+    addMember(id: string, client: ISequencedClient) {
+        this.members.set(id, client);
+        this.eventEmitter.emit("addMember");
+    }
+
+    removeMember(id: string) {
+        if (this.members.delete(id)) {
+            this.eventEmitter.emit("removeMember");
+        }
+    }
+
+
+    getMembers(): Map<string, ISequencedClient> {
+        return this.members;
+    }
+    getMember(clientId: string): ISequencedClient | undefined {
+        return this.getMembers().get(clientId);
+    }
+    disposed: boolean = false;
+
+    dispose(): void {
+        throw new Error("Method not implemented.");
+    }
+
+
+    addListener(event: string | symbol, listener: (...args: any[]) => void): this {
+        throw new Error("Method not implemented.");
+    }
+    on(event: string | symbol, listener: (...args: any[]) => void): this {
+        switch (event) {
+            case "afterOn":
+                this.eventEmitter.on(event, listener);
+                return this;
+
+            case "addMember":
+            case "removeMember":
+            case "approveProposal":
+            case "commitProposal":
+                this.eventEmitter.on(event, listener);
+                this.eventEmitter.emit("afterOn", event);
+                return this;
+            default:
+                throw new Error("Method not implemented.");
+        }
+    }
+    once(event: string | symbol, listener: (...args: any[]) => void): this {
+        throw new Error("Method not implemented.");
+    }
+    prependListener(event: string | symbol, listener: (...args: any[]) => void): this {
+        throw new Error("Method not implemented.");
+    }
+    prependOnceListener(event: string | symbol, listener: (...args: any[]) => void): this {
+        throw new Error("Method not implemented.");
+    }
+    removeListener(event: string | symbol, listener: (...args: any[]) => void): this {
+        this.eventEmitter.removeListener(event, listener);
+        return this;
+    }
+    off(event: string | symbol, listener: (...args: any[]) => void): this {
+        throw new Error("Method not implemented.");
+    }
+    removeAllListeners(event?: string | symbol | undefined): this {
+        throw new Error("Method not implemented.");
+    }
+    setMaxListeners(n: number): this {
+        throw new Error("Method not implemented.");
+    }
+    getMaxListeners(): number {
+        throw new Error("Method not implemented.");
+    }
+    listeners(event: string | symbol): Function[] {
+        throw new Error("Method not implemented.");
+    }
+    rawListeners(event: string | symbol): Function[] {
+        throw new Error("Method not implemented.");
+    }
+    emit(event: string | symbol, ...args: any[]): boolean {
+        throw new Error("Method not implemented.");
+    }
+    eventNames(): (string | symbol)[] {
+        throw new Error("Method not implemented.");
+    }
+    listenerCount(type: string | symbol): number {
+        throw new Error("Method not implemented.");
+    }
+}
+
 /**
  * Mock implementation of IRuntime for testing that does nothing
  */
@@ -189,13 +334,21 @@ export class MockRuntime extends EventEmitter
     public clientId: string = uuid();
     public readonly parentBranch: string;
     public readonly path = "";
-    public readonly connected: boolean;
+    public readonly connected = true;
     public readonly leader: boolean;
-    public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    public deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     public readonly loader: ILoader;
     public readonly logger: ITelemetryLogger = DebugLogger.create("fluid:MockRuntime");
     public services: ISharedObjectServices;
     private readonly activeDeferred = new Deferred<void>();
+    public readonly quorum = new MockQuorum();
+
+    private _disposed = false;
+    public get disposed() { return this._disposed; }
+
+    public dispose(): void {
+        this._disposed = true;
+    }
 
     public get active(): Promise<void> {
         return this.activeDeferred.promise;
@@ -229,7 +382,7 @@ export class MockRuntime extends EventEmitter
     }
 
     public getQuorum(): IQuorum {
-        return null;
+        return this.quorum;
     }
 
     public getAudience(): IAudience {

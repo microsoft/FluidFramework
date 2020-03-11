@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred } from "@microsoft/fluid-core-utils";
+import { Deferred } from "@microsoft/fluid-common-utils";
 import {
     IClientJoin,
     IConnect,
@@ -12,6 +12,9 @@ import {
     ISequencedDocumentSystemMessage,
     MessageType,
     ScopeType,
+    ISummaryTree,
+    SummaryType,
+    ICommittedProposal,
 } from "@microsoft/fluid-protocol-definitions";
 import { KafkaOrdererFactory } from "@microsoft/fluid-server-kafka-orderer";
 import * as services from "@microsoft/fluid-server-services";
@@ -25,10 +28,11 @@ import {
     TestTenantManager,
     TestWebSocket,
     TestWebSocketServer,
+    DebugLogger,
 } from "@microsoft/fluid-server-test-utils";
 import * as assert from "assert";
 import { OrdererManager } from "../../alfred/runnerFactory";
-import { DefaultMetricClient } from "@microsoft/fluid-server-services-core";
+import { DefaultMetricClient, IScribe } from "@microsoft/fluid-server-services-core";
 import { generateToken } from "@microsoft/fluid-server-services-client";
 import { configureWebSocketServices, DefaultServiceConfiguration } from "@microsoft/fluid-server-lambdas";
 
@@ -84,7 +88,8 @@ describe("Routerlicious", () => {
                         testStorage,
                         contentCollection,
                         testClientManager,
-                        new DefaultMetricClient());
+                        new DefaultMetricClient(),
+                        DebugLogger.create("fluid-server:TestAlfredIO"));
                 });
 
                 function connectToServer(
@@ -215,6 +220,53 @@ describe("Routerlicious", () => {
                     });
                 });
             });
+        });
+    });
+
+    describe("storage", () => {
+        const testTenantId = "test";
+        const testId = "test";
+        const url = "http://test";
+
+        let deliKafka: TestKafka;
+        let testTenantManager: TestTenantManager;
+        let testStorage: services.DocumentStorage; 
+        beforeEach(() => {
+            const collectionNames = "test";
+            const testData: { [key: string]: any[] } = {};
+
+            deliKafka = new TestKafka();
+            const producer = deliKafka.createProducer();
+            testTenantManager = new TestTenantManager(url);
+            const testDbFactory = new TestDbFactory(testData);
+            const mongoManager = new core.MongoManager(testDbFactory);
+            const databaseManager = new core.MongoDatabaseManager(
+                mongoManager,
+                collectionNames,
+                collectionNames,
+                collectionNames,
+                collectionNames);
+            testStorage = new services.DocumentStorage(
+                databaseManager,
+                testTenantManager,
+                producer);
+        });
+
+        it("create document with summary", async () => {
+            const summaryTree: ISummaryTree = {type: SummaryType.Tree, tree: {}};
+            const proposal: ICommittedProposal = {
+                key: "code",
+                value: "empty",
+                approvalSequenceNumber: 0,
+                commitSequenceNumber: 0,
+                sequenceNumber: 0,
+            };
+            const docDetails = await testStorage.createDocument(testTenantId, testId, summaryTree, 10, [["code", proposal]]);
+            assert.equal(docDetails.existing, false, "Doc should not be existing!!");
+            assert.equal(docDetails.value.documentId, testId, "Docid should be the provided one!!");
+            assert.equal(docDetails.value.sequenceNumber, 10, "Seq number should be 10 at which the summary was generated!!");
+            const scribe: IScribe = JSON.parse(docDetails.value.scribe);
+            assert.equal(scribe.protocolState.values[0][1]["value"], "empty", "Code proposal value should be equal!!");
         });
     });
 });

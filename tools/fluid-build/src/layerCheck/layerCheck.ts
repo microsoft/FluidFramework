@@ -3,19 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { Packages } from "../npmPackage";
 import { LayerGraph } from "./layerGraph";
 import { commonOptions, commonOptionString, parseOption } from "../common/commonOptions";
 import { Timer } from "../common/timer";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
 import * as path from "path";
 import { writeFileAsync } from "../common/utils";
+import { FluidRepoBase } from "../common/fluidRepoBase";
 
 function printUsage() {
     console.log(
         `
 Usage: fluid-layer-check <options>
 Options:
+     --dot <path>     Generate *.dot for GraphViz
 ${commonOptionString}
 `);
 }
@@ -65,9 +66,9 @@ function parseOptions(argv: string[]) {
 
 function versionCheck() {
     const pkg = require(path.join(__dirname, "..", "..", "package.json"));
-    const builtVersion = "0.0.4";
+    const builtVersion = "0.0.5";
     if (pkg.version > builtVersion) {
-        console.warn(`WARNING: layer-check is out of date, please rebuild (built: ${builtVersion}, package: ${pkg.version})\n`);
+        console.warn(`WARNING: fluid-layer-check is out of date, please rebuild (built: ${builtVersion}, package: ${pkg.version})\n`);
     }
 }
 
@@ -80,15 +81,8 @@ async function main() {
 
     const resolvedRoot = await getResolvedFluidRoot();
 
-    const baseDirectories = [
-        path.join(resolvedRoot, "common"),
-        path.join(resolvedRoot, "packages"),
-        path.join(resolvedRoot, "examples/components"),
-        path.join(resolvedRoot, "server/routerlicious/packages")
-    ];
-
     // Load the package
-    const packages = Packages.load(baseDirectories);
+    const packages = new FluidRepoBase(resolvedRoot).packages;
     timer.time("Package scan completed");
 
     try {

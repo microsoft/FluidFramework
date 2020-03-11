@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EmbeddedComponent } from "@microsoft/fluid-aqueduct-react";
+import { ReactViewAdapter } from "@microsoft/fluid-view-adapters";
 import { IComponent, IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 
 import * as React from "react";
@@ -31,11 +31,16 @@ const buttonContainerStyle: React.CSSProperties = {
     left: 0,
 };
 
-const gridContainerStyle: React.CSSProperties = {paddingTop: "25px"};
+const buttonStyle: React.CSSProperties = {
+    width: "2rem",
+    height: "2rem",
+};
+
+const gridContainerStyle: React.CSSProperties = { paddingTop: "5rem" };
 
 /**
  * This wrapper handles the async-ness of loading a component.
- * This ideally shouldn't be here but is here for now to unblock me not knowing how to use EmbeddedComponent.
+ * This ideally shouldn't be here but is here for now to unblock me not knowing how to use ReactViewAdapter.
  */
 class EmbeddedComponentWrapper extends React.Component<IEmbeddedComponentWrapperProps, IEmbeddedComponentWrapperState>{
     constructor(props) {
@@ -47,7 +52,7 @@ class EmbeddedComponentWrapper extends React.Component<IEmbeddedComponentWrapper
 
     async componentDidMount() {
         const component = await this.props.getComponent(this.props.id);
-        const element = <EmbeddedComponent component={component} />;
+        const element = <ReactViewAdapter component={component} />;
         this.setState({ element });
     }
 
@@ -74,7 +79,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
     constructor(props) {
         super(props);
         this.state = {
-            isEditable: true,
+            isEditable: this.props.dataModel.componentList.size - 1 === 0,
             componentMap: this.props.dataModel.componentList,
         };
 
@@ -148,20 +153,45 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                     {
                         editable &&
                         <div style={buttonContainerStyle}>
-                            <button onClick={() => this.props.dataModel.removeComponent(id)}>❌</button>
-                            <button onClick={() => {
-                                navigator.clipboard.writeText(componentUrl).then(() => {
-                                    console.log("Async: Copying to clipboard was successful!");
-                                }, (err) => {
-                                    console.error("Async: Could not copy text: ", err);
-                                });
-                            }}>📎</button>
-                            <button onClick={() => window.open(componentUrl, "_blank")}>↗</button>
+                            <button
+                                style={buttonStyle}
+                                onClick={() => this.props.dataModel.removeComponent(id)}
+                                onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
+                                    event.stopPropagation();
+                                }}
+                            >
+                                {"❌"}
+                            </button>
+                            <button
+                                style={buttonStyle}
+                                onClick={
+                                    () => {
+                                        navigator.clipboard.writeText(componentUrl).then(() => {
+                                            console.log("Async: Copying to clipboard was successful!");
+                                        }, (err) => {
+                                            console.error("Async: Could not copy text: ", err);
+                                        });
+                                    }}
+                                onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
+                                    event.stopPropagation();
+                                }}
+                            >
+                                {"📎"}
+                            </button>
+                            <button
+                                style={buttonStyle}
+                                onClick={() => window.open(componentUrl, "_blank")}
+                                onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
+                                    event.stopPropagation();
+                                }}
+                            >
+                                {"↗️"}
+                            </button>
                         </div>
                     }
                     <div style={embeddedComponentStyle}>
                         <EmbeddedComponentWrapper id={id} getComponent={async (id: string) => {
-                                return await this.props.root.get<IComponentHandle>(id).get<IComponent>();
+                                return await this.props.root.get<IComponentHandle>(id).get();
                             }} />
                     </div>
                 </div>;

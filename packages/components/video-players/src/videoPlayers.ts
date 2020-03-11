@@ -7,7 +7,7 @@ import { EventEmitter } from "events";
 import {
     IComponent,
     IComponentHandleContext,
-    IComponentHTMLVisual,
+    IComponentHTMLView,
     IComponentLoadable,
     IComponentRouter,
     IRequest,
@@ -75,12 +75,12 @@ interface IYouTubePlayer {
 }
 
 export class VideoPlayer implements
-    IComponentLoadable, IComponentHTMLVisual, IComponentRouter, IComponentLayout {
+    IComponentLoadable, IComponentHTMLView, IComponentRouter, IComponentLayout {
 
     private player: IYouTubePlayer;
     private playerDiv: HTMLDivElement;
 
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
     public get IComponentRouter() { return this; }
     public get IComponentLayout() { return this; }
     public get IComponentLoadable() { return this; }
@@ -259,33 +259,26 @@ export class VideoPlayerCollection extends EventEmitter implements
 }
 
 export class VideoPlayerFactoryComponent implements IComponentFactory {
-    public static supportedInterfaces = ["IComponentFactory"];
+    public static readonly type = "@fluid-example/video-players";
+    public readonly type = VideoPlayerFactoryComponent.type;
 
     public get IComponentFactory() { return this; }
-
-    public query(id: string): any {
-        return VideoPlayerFactoryComponent.supportedInterfaces.includes(id) ? this : undefined;
-    }
-
-    public list(): string[] {
-        return VideoPlayerFactoryComponent.supportedInterfaces;
-    }
 
     public instantiateComponent(context: IComponentContext): void {
         const dataTypes = new Map<string, ISharedObjectFactory>();
         const mapFactory = SharedMap.getFactory();
         dataTypes.set(mapFactory.type, mapFactory);
 
-        ComponentRuntime.load(
+        const runtime = ComponentRuntime.load(
             context,
             dataTypes,
-            (runtime) => {
-                const progressCollectionP = VideoPlayerCollection.load(runtime, context);
-                runtime.registerRequestHandler(async (request: IRequest) => {
-                    const progressCollection = await progressCollectionP;
-                    return progressCollection.request(request);
-                });
-            });
+        );
+
+        const progressCollectionP = VideoPlayerCollection.load(runtime, context);
+        runtime.registerRequestHandler(async (request: IRequest) => {
+            const progressCollection = await progressCollectionP;
+            return progressCollection.request(request);
+        });
     }
 }
 

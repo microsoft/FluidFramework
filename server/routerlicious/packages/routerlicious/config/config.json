@@ -26,7 +26,7 @@
     "kafka": {
         "lib": {
             "name": "kafka-node",
-            "endpoint": "zookeeper:2181"
+            "endpoint": "kafka:9092"
         },
         "maxMessageSize": "1MB"
     },
@@ -40,7 +40,7 @@
         "tenants": [
             {
                 "id": "fluid",
-                "key": "43cfc3fbf04a97c0921fd23ff10f9e4b"
+                "key": "create-new-tenants-if-going-to-production"
             },
             {
                 "id": "github",
@@ -111,10 +111,6 @@
             "group": "copier",
             "topic": "rawdeltas"
         },
-        "broadcaster": {
-            "group": "broadcaster",
-            "topic": "deltas"
-        },
         "scribe": {
             "group": "scribe",
             "topic": "deltas"
@@ -148,7 +144,7 @@
         "permissions": {
             "paparazziQueue": ["snapshot", "spell", "intel", "translation"],
             "augloopQueue": ["augmentation"],
-            "headlessQueue": ["chain-snapshot", "chain-intel", "chain-translation", "chain-spell", "chain-cache"]
+            "headlessQueue": ["chain-snapshot", "chain-intel", "chain-translation", "chain-spell", "chain-cache", "chain-search"]
         }
     },
     "paparazzi": {
@@ -192,7 +188,7 @@
     "tenantConfig": [
         {
             "_id": "fluid",
-            "key": "43cfc3fbf04a97c0921fd23ff10f9e4b",
+            "key": "create-new-tenants-if-going-to-production",
             "storage": {
                 "historianUrl": "http://localhost:3001",
                 "internalHistorianUrl": "http://historian:3000",

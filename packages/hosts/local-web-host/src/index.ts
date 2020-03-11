@@ -3,11 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-    TestDeltaConnectionServer,
-    TestDocumentServiceFactory,
-    TestResolver,
-} from "@microsoft/fluid-local-test-server";
+import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
+import { LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
 import {
@@ -15,12 +12,14 @@ import {
     ICodeLoader,
     IProvideRuntimeFactory,
     IFluidModule,
+    IFluidCodeDetails,
 } from "@microsoft/fluid-container-definitions";
 import {  Loader, Container } from "@microsoft/fluid-container-loader";
 import { IProvideComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
-
+import { initializeContainerCode } from "@microsoft/fluid-base-host";
+import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 
 export async function createLocalContainerFactory(
     entryPoint: Partial<IProvideRuntimeFactory & IProvideComponentFactory & IFluidModule>,
@@ -30,7 +29,7 @@ export async function createLocalContainerFactory(
 
     const urlResolver = new TestResolver(documentId);
 
-    const deltaConn = TestDeltaConnectionServer.create();
+    const deltaConn = LocalDeltaConnectionServer.create();
     const documentServiceFactory = new TestDocumentServiceFactory(deltaConn);
 
 
@@ -58,21 +57,7 @@ export async function createLocalContainerFactory(
 
         const container = await loader.resolve({ url: documentId });
 
-        const quorum = container.getQuorum();
-
-        const maybeContextChangedP = new Promise((resolve) => {
-            if (!quorum.has("code")) {
-                container.once("contextChanged", () => resolve());
-            } else {
-                resolve();
-            }
-        });
-
-        if (!container.existing) {
-            await quorum.propose("code", {});
-        }
-
-        await maybeContextChangedP;
+        await initializeContainerCode(container, {} as any as IFluidCodeDetails);
 
         return container;
     };
@@ -90,15 +75,8 @@ export async function renderDefaultComponent(container: Container, div: HTMLElem
         return;
     }
 
-    // Check if the component is viewable
+    // Render the component with an HTMLViewAdapter to abstract the UI framework used by the component
     const component = response.value as IComponent;
-    const viewable = component.IComponentHTMLVisual;
-
-    if (viewable) {
-        const renderable =
-            viewable.addView ? viewable.addView() : viewable;
-
-        renderable.render(div, { display: "block" });
-        return;
-    }
+    const embed = new HTMLViewAdapter(component);
+    embed.render(div, { display: "block" });
 }

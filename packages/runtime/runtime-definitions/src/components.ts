@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger, IDisposable } from "@microsoft/fluid-common-definitions";
 import {
     IComponent,
     IComponentHandleContext,
@@ -40,7 +40,11 @@ import { IChannel } from ".";
 /**
  * Represents the runtime for the component. Contains helper functions/state of the component.
  */
-export interface IComponentRuntime extends EventEmitter, IComponentRouter, Partial<IProvideComponentRegistry>  {
+export interface IComponentRuntime extends
+    EventEmitter,
+    IComponentRouter,
+    Partial<IProvideComponentRegistry>,
+    IDisposable {
     readonly IComponentRouter: IComponentRouter;
 
     readonly IComponentSerializer: IComponentSerializer;
@@ -93,6 +97,9 @@ export interface IComponentRuntime extends EventEmitter, IComponentRouter, Parti
     changeConnectionState(value: ConnectionState, clientId: string);
 
     /**
+     * @deprecated in 0.14 async close()
+     * Call snapshot separately if needed, then call dispose
+     *
      * Closes the component. Once closed the component will not receive any new ops and should
      * not attempt to generate them.
      */
@@ -194,12 +201,47 @@ export interface IComponentRuntime extends EventEmitter, IComponentRouter, Parti
     error(err: any): void;
 }
 
+export interface ISummaryTracker {
+    /**
+     * The reference sequence number of the most recent acked summary.
+     */
+    readonly referenceSequenceNumber: number;
+    /**
+     * The latest sequence number of change to this node or subtree.
+     */
+    readonly latestSequenceNumber: number;
+    /**
+     * Gets the id to use when summarizing, or undefined if it has changed.
+     */
+    getId(): Promise<string | undefined>;
+    /**
+     * Fetches the snapshot tree of the previously acked summary.
+     * back-compat: 0.14 uploadSummary
+     */
+    getSnapshotTree(): Promise<ISnapshotTree | undefined>;
+    /**
+     * Updates the latest sequence number representing change to this node or subtree.
+     * @param latestSequenceNumber - new latest sequence number
+     */
+    updateLatestSequenceNumber(latestSequenceNumber: number): void;
+    /**
+     * Creates a child ISummaryTracker node based off information from its parent.
+     * @param key - key of node for newly created child ISummaryTracker
+     * @param latestSequenceNumber - inital value for latest sequence number of change
+     */
+    createOrGetChild(key: string, latestSequenceNumber: number): ISummaryTracker;
+}
+
 /**
  * Represents the context for the component. This context is passed to the component runtime.
  */
 export interface IComponentContext extends EventEmitter {
     readonly documentId: string;
     readonly id: string;
+    /**
+     * The package path of the component as per the package factory.
+     */
+    readonly packagePath: readonly string[];
     readonly existing: boolean;
     readonly options: any;
     readonly clientId: string;
@@ -222,6 +264,8 @@ export interface IComponentContext extends EventEmitter {
      * Ambient services provided with the context
      */
     readonly scope: IComponent;
+
+    readonly summaryTracker: ISummaryTracker;
 
     /**
      * Returns the current quorum.
@@ -250,24 +294,12 @@ export interface IComponentContext extends EventEmitter {
     submitSignal(type: string, content: any): void;
 
     /**
-     * Creates a new component.
-     * @param pkgOrId - Package name if a second parameter is not provided. Otherwise an explicit ID.
-     * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
-     */
-    createComponent(pkgOrId: string, pkg?: string | string[]): Promise<IComponentRuntime>;
-
-    /**
      * Creates a new component but with no defined ID
      * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
      */
-    createComponent_NEW(pkg: string | string[]): Promise<IComponentRuntime>;
+    createComponent_NEW(pkg: string | string[], props?: any): Promise<IComponentRuntime>;
 
-    /**
-     * Creates a new component by using subregistries.
-     * @param pkg - Package name of the component.
-     * @param props - properties to be passed to the instantiateComponent thru the context.
-     */
-    createSubComponent(pkg: string | string[], props?: any): Promise<IComponentRuntime>;
+    createComponent(pkgOrId: string | undefined, pkg?: string, props?: any): Promise<IComponentRuntime>;
 
     /**
      * Returns the runtime of the component.
@@ -355,7 +387,7 @@ export interface IHostRuntime extends
     createComponent(pkgOrId: string, pkg?: string | string[]): Promise<IComponentRuntime>;
 
     /**
-     * Creates a new component with no explicit ID.
+     * Creates a new component but with no defined ID
      * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
      */
     createComponent_NEW(pkg: string | string[]): Promise<IComponentRuntime>;
@@ -373,16 +405,6 @@ export interface IHostRuntime extends
      */
     _createComponentWithProps(pkg: string | string[], props: any, id: string): Promise<IComponentRuntime>;
 
-    /**
-     * Creates a new component with props with no predefined ID
-     * @param pkg - Package name of the component
-     * @param props - properties to be passed to the instantiateComponent thru the context
-     *
-     * @remarks
-     * Only used by aqueduct PrimedComponent to pass param to the instantiateComponent function thru the context.
-     * Further change to the component create flow to split the local create vs remote instantiate make this deprecated.
-     * @internal
-     */
     _createComponentWithProps_NEW(pkg: string | string[], props: any): Promise<IComponentRuntime>;
 
     /**

@@ -4,10 +4,13 @@
  */
 
 import { IComponentRouter } from "./componentRouter";
+import { IComponent } from "./components";
+import { IComponentLoadable } from "./componentLoadable";
 
 export interface IProvideComponentHandleContext {
     readonly IComponentHandleContext: IComponentHandleContext;
 }
+
 /**
  * An IComponentHandleContext describes a routing context from which other IComponentHandleContexts are defined
  */
@@ -43,12 +46,16 @@ export interface IComponentHandleContext extends IComponentRouter, IProvideCompo
 export interface IProvideComponentHandle {
     readonly IComponentHandle: IComponentHandle;
 }
+
 /**
  * Handle to a shared component
  */
-export interface IComponentHandle extends IComponentHandleContext, IProvideComponentHandle {
+export interface IComponentHandle<
+    // REVIEW: Constrain `T` to `IComponent & IComponentLoadable`?
+    T = IComponent & IComponentLoadable
+> extends IComponentHandleContext, IProvideComponentHandle {
     /**
      * Returns a promise to the component referenced by the handle.
      */
-    get<T>(): Promise<T>;
+    get(): Promise<T>;
 }

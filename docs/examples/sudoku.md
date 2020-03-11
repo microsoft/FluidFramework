@@ -1,25 +1,35 @@
 ---
-title: "Sudoku: An Example Fluid Framework component"
+title: "Sudoku"
 uid: sudoku-example
+sidebarDepth: 2
 ---
 
 In this example we will build a collaborative Sudoku game. We will use Fluid distributed data structures to store and
 synchronize the Sudoku data.
 
-# Acknowledgements
+## Set up your dev environment
+
+If you haven't already, [set up your Fluid Framework development
+environment](../guide/README.md#set-up-your-development-environment).
+
+### Clone the tutorial repository
+
+First, clone [the tutorial repository](https://github.com/microsoft/fluid-tutorial-sudoku).
+
+Once you've cloned the repo, you'll need to set up access to the [private Fluid NPM feed](../guide/package-feed.md). On
+Windows, you can run the `npm run auth` command to automate this process.
+
+Now that you have access to the private feed, run `npm install` in the root of the repository to install dependencies.
+
+Finally, you can open the folder in Visual Studio Code.
+
+## Acknowledgements
 
 This example uses the [sudokus](https://github.com/Moeriki/node-sudokus) NPM package by Dieter Luypaert
 (<https://github.com/Moeriki>) and the [@types/sudokus](https://www.npmjs.com/package/@types/sudokus) package by Florian
 Keller (<https://github.com/ffflorian>).
 
-# Set up your dev environment
-
-1. Install Node.js 10 and VS Code
-1. Clone the tutorial repository here: <https://offnet.visualstudio.com/officenet/_git/fluid-sudoku-tutorial>
-1. Run `npm install` in the root of the repository to install dependencies.
-1. Open the folder in VS Code.
-
-## Folder layout
+### Folder layout
 
 The project has the following folder layout:
 
@@ -38,14 +48,16 @@ The project has the following folder layout:
 
 The _src_ folder contains the source files for the Sudoku Fluid component.
 
-## Run the sample
+### Run the sample
 
-After you've cloned the sample, install all the dependencies using `npm install`. You can then use `npm start` to start
+After you've cloned the sample repo and installed dependencies using `npm install`, you can then use `npm start` to start
 a local dev environment for testing and debugging. Visit <http://localhost:8080/> in a browser to load the Fluid
 development server, which will load two instances of the component side by side.
 
+!!!include(../includes/browsers.md)!!!
+
 <style>
-  #sudoku {
+  iframe#sudoku {
     height: 500px;
     width: 910px;
   }
@@ -62,9 +74,9 @@ empty schema, by reloading <http://localhost:8080/>. This will redirect you to a
 
 :::
 
-# Deep dive
+## Deep dive
 
-## Data model
+### Data model
 
 For our Sudoku data model, we will use a map-like data structure with string keys. Each key in the map is a coordinate
 (row, column) of a cell in the Sudoku puzzle. The top left cell has coordinate `"0,0"`, the cell to its right has
@@ -90,7 +102,7 @@ the `SudokuCell` class in `/src/helpers/sudokuCell.ts` for an example of this pa
 
 :::
 
-## Rendering
+### Rendering
 
 In order to render the Sudoku data, we use a React component called `SudokuView` This component is defined in
 `src/react/sudokuView.tsx` and accepts the map of Sudoku cell data as a prop. It then renders the Sudoku and
@@ -99,7 +111,7 @@ accompanying UI.
 The `SudokuView` React component is also responsible for handling UI interaction from the user; we'll examine that in
 more detail later.
 
-## The Fluid component
+### The Fluid component
 
 The React component described above does not itself represent a Fluid component. Rather, the Fluid component is defined
 in `src/fluidSudoku.tsx`.
@@ -118,9 +130,9 @@ container to use this component both with and without React. A host using React 
 and use the JSX directly, while a non-React hot would just give the component a hosting element and let it render
 itself.
 
-### Implementing interfaces
+#### Implementing interfaces
 
-#### IComponentReactViewable
+##### IComponentReactViewable
 
 [IComponentReactViewable][] requires us to implement a method that will return the JSX that represents the component.
 The implementation is as follows:
@@ -143,7 +155,7 @@ public createJSXElement(props?: any): JSX.Element {
 Notice that we pass the puzzle data, a `SharedMap` distributed data structure that we will discuss more below, to the
 SudokuView React component as props.
 
-#### IComponentHTMLVisual
+##### IComponentHTMLVisual
 
 [IComponentHTMLVisual][] requires us to implement the `render()` method, which is straightforward since we're using the
 `SudokuView` React component to do the heavy lifting.
@@ -161,7 +173,7 @@ public render(element?: HTMLElement): void {
 
 As you can see, the render method uses React to render the `SudokuView` React component.
 
-### Creating Fluid distributed data structures
+#### Creating Fluid distributed data structures
 
 How does the `puzzle` property get populated? How are distributed data structures created and used?
 
@@ -211,7 +223,7 @@ protected async componentHasInitialized() {
 The `componentHasInitialized` method is called once after the component has completed initialization, be it the first
 time or subsequent times.
 
-#### A note about component handles
+##### A note about component handles
 
 You probably noticed some confusing code above. What are handles? Why do we store the SharedMap's _handle_ in the `root`
 SharedDirectory instead of the SharedMap itself? The underlying reasons are beyond the scope of this example, but the
@@ -225,7 +237,7 @@ handle, then get the full DDS from the handle.**
 await this.root.get<IComponentHandle>(this.sudokuMapKey).get<ISharedMap>();
 ```
 
-### Handling events from distributed data structures
+#### Handling events from distributed data structures
 
 Distributed data structures can be changed by both local code and remote clients. In the `componentHasInitialized`
 method, we also connect a method to be called each time the Sudoku data - the [SharedMap][] - is changed. In our case we
@@ -237,7 +249,7 @@ this.puzzle.on("valueChanged", (changed, local, op) => {
 });
 ```
 
-### Updating distributed data structures
+#### Updating distributed data structures
 
 In the previous step we showed how to use event listeners with distributed data structures to respond to remote data
 changes. But how do we update the data based on _user_ input? To do that, we need to listen to some DOM events as users
@@ -294,7 +306,7 @@ render based on this event, because all clients are running the same code.
 In other words, it is very rare that there is a need for the handling to differ, and we recommend a unidirectional data
 flow.
 
-# Lab: Adding "presence" to the Fluid Sudoku component
+## Lab: Adding "presence" to the Fluid Sudoku component
 
 The Sudoku component is collaborative; multiple clients can update the cells in real time. However, there's no
 indication of where other clients are - which cells they're in. In this lab we'll add basic 'presence' to our Sudoku
@@ -310,7 +322,7 @@ particularly interesting, and Fluid provides an alternative mechanism, _signals_
 isn't necessary. That said, this serves as a useful example of how to use Fluid to solve complex problems with very
 little code.
 
-## Create a SharedMap to contain presence data
+### Create a SharedMap to contain presence data
 
 First, you need to create a `SharedMap` for your presence data.
 
@@ -346,7 +358,7 @@ You now have a `SharedMap` to store presence data. When the component is first c
 will be called and the presence map will be created. When the component is loaded, `componentHasInitialized` will be
 called, which retrieves the `SharedMap` instance.
 
-## Rendering presence
+### Rendering presence
 
 Now that you have a presence map, you need to render some indication that a remote user is in a cell. We're going to
 take a shortcut here because our SudokuView React component can already display presence information when provided two
@@ -362,7 +374,7 @@ you've completed this tutorial, you should consider reviewing the implementation
 SudokuView in detail. For now, however, we'll skip that and focus on implementing the two necessary props - a SharedMap
 for storing the presence data, and a function to update the map with presence data.
 
-## Setting presence data
+### Setting presence data
 
 1. Open `src/fluidSudoku.tsx`.
 1. Add the following function at the bottom of the `FluidSudoku` class:
@@ -415,7 +427,7 @@ for storing the presence data, and a function to update the map with presence da
 
    Notice that we're now passing the `clientPresence` SharedMap and the `setPresence` function as props.
 
-## Listening to distributed data structure events
+### Listening to distributed data structure events
 
 1. Still in `src/fluidSudoku.tsx`, add the following code to the bottom of the `componentHasInitialized` method to call
    render whenever a remote change is made to the presence map:
@@ -426,19 +438,17 @@ for storing the presence data, and a function to update the map with presence da
    });
    ```
 
-## Testing the changes
+### Testing the changes
 
 Now run `npm start` again and notice that your selected cell is now highlighted on the other side.
 
-## What's next
+## Next steps
 
 Now that you have some experience with Fluid, are there other features you could add to the Sudoku component? Perhaps
 you could extend it to display a client name in the cell to show client-specific presence. Or you could use the
 [undo-redo][] package to add undo/redo support!
 
-If you want to build your own component, check out [yo fluid](../guide/yo-fluid.md).
-
-See [Examples](./examples.md) for more examples.
+Or check out [other examples](./README.md).
 
 <!-- Links -->
 

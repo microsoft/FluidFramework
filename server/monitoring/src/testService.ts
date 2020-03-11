@@ -5,15 +5,20 @@
 
 /* eslint-disable prefer-template */
 import * as url from "url";
-import { BaseHost, IBaseHostConfig } from "@microsoft/fluid-base-host";
+import { IFluidCodeDetails, IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { IFluidResolvedUrl } from "@microsoft/fluid-driver-definitions";
 import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import { RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
+import { NodeCodeLoader, NodeWhiteList } from "@microsoft/fluid-server-services";
 import * as jwt from "jsonwebtoken";
 import { Provider } from "nconf";
 import * as uuid from "uuid/v4";
 import * as winston from "winston";
+
+const packageManagerUrl = "https://packages.wu2.prague.office-int.com";
+const installLocation = "/tmp/chaincode";
+const waitTimeoutMS = 60000;
 
 interface ILoadParams {
     jwtKey: string;
@@ -23,6 +28,11 @@ interface ILoadParams {
     tenant: string;
     user: string;
     waitMSec: number;
+    docId: string;
+    proposal: {
+        propose: boolean,
+        package: string,
+    }
 }
 
 // Wait for the container to get fully connected.
@@ -38,22 +48,32 @@ async function waitForFullConnection(container: Container): Promise<void> {
     }
 }
 
-async function runInternal(loader: Loader, docUrl: string): Promise<void> {
+async function runInternal(loader: Loader, docUrl: string, params: ILoadParams): Promise<void> {
     winston.info(`Resolving ${docUrl}`);
     const container = await loader.resolve({ url: docUrl });
     winston.info(`Resolved ${docUrl}`);
     await waitForFullConnection(container);
     winston.info(`Fully connected to ${docUrl}`);
+    if (params.proposal.propose) {
+        const codePackage: IFluidCodeDetails = {
+            config: {
+                "@fluid-example:cdn": packageManagerUrl,
+            },
+            package: params.proposal.package,
+        };
+        await initializeChaincode(container, codePackage);
+        winston.info(`Proposed code`);
+    }
 }
 
-async function run(loader: Loader, docUrl: string, timeoutMS: number) {
+async function run(loader: Loader, docUrl: string, params: ILoadParams) {
     return new Promise<void>((resolve, reject) => {
         const waitTimer = setTimeout(() => {
             clearTimeout(waitTimer);
-            reject(`Timeout (${timeoutMS} ms) expired while loading ${docUrl}`);
-        }, timeoutMS);
+            reject(`Timeout (${params.waitMSec} ms) expired while loading ${docUrl}`);
+        }, params.waitMSec);
 
-        runInternal(loader, docUrl).then(() => {
+        runInternal(loader, docUrl, params).then(() => {
             clearTimeout(waitTimer);
             resolve();
         }, (err) => {
@@ -65,7 +85,7 @@ async function run(loader: Loader, docUrl: string, timeoutMS: number) {
 
 export async function testFluidService(config: Provider): Promise<void> {
     const params = config.get("loader") as ILoadParams;
-    const documentId = uuid();
+    const documentId = params.docId.length > 0 ? params.docId : uuid();
     const hostToken = jwt.sign(
         {
             user: params.user,
@@ -108,17 +128,30 @@ export async function testFluidService(config: Provider): Promise<void> {
         hostToken,
         new Map([[documentUrl, resolved]]));
 
-    const hostConfig: IBaseHostConfig = {
-        documentServiceFactory: new RouterliciousDocumentServiceFactory(),
-        urlResolver: resolver,
+    const loader = new Loader(
+        resolver,
+        new RouterliciousDocumentServiceFactory(),
+        new NodeCodeLoader(packageManagerUrl, installLocation, waitTimeoutMS, new NodeWhiteList()),
         config,
-        scope: null,
-        proxyLoaderFactories: new Map<string, any>(),
-    };
+        {},
+        new Map<string, IProxyLoaderFactory>(),
+    );
 
-    const baseHost = new BaseHost(hostConfig, resolved, null, []);
+    return run(loader, documentUrl, params);
+}
 
-    const loader = await baseHost.getLoader();
+async function initializeChaincode(container: Container, pkg?: IFluidCodeDetails): Promise<void> {
+    if (!pkg) {
+        return;
+    }
 
-    return run(loader, documentUrl, params.waitMSec);
+    const quorum = container.getQuorum();
+    if (!container.connected) {
+        await new Promise<void>((resolve) => container.on("connected", () => resolve()));
+    }
+    if (!quorum.has("code")) {
+        await quorum.propose("code", pkg);
+    }
+
+    winston.info(`Code is ${quorum.get("code")}`);
 }

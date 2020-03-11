@@ -22,7 +22,7 @@ import {
 import {
     ChildLogger,
     Deferred,
-} from "@microsoft/fluid-core-utils";
+} from "@microsoft/fluid-common-utils";
 import {
     buildSnapshotTree,
     raiseConnectedEvent,
@@ -34,7 +34,6 @@ import {
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
-    ISnapshotTree,
     ITreeEntry,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
@@ -69,15 +68,13 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
      * @param context - The component context
      * @param sharedObjectRegistry - The registry of shared objects used by this component
      * @param activeCallback - The callback called when the component runtime in active
-     * @param componentRegistry - The regisitry of components created and used by this component
+     * @param componentRegistry - The registry of components created and used by this component
      */
     public static load(
         context: IComponentContext,
         sharedObjectRegistry: ISharedObjectRegistry,
-        activeCallback: (runtime: ComponentRuntime) => void,
         componentRegistry?: IComponentRegistry,
-
-    ): void {
+    ): ComponentRuntime {
         const logger = ChildLogger.create(context.hostRuntime.logger, undefined, { componentId: context.id });
         const runtime = new ComponentRuntime(
             context,
@@ -97,7 +94,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
             logger);
 
         context.bindRuntime(runtime);
-        activeCallback(runtime);
+        return runtime;
     }
 
     public get IComponentRouter() { return this; }
@@ -143,6 +140,9 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     public get IComponentHandleContext() { return this; }
     public get IComponentRegistry() { return this.componentRegistry; }
 
+    private _disposed = false;
+    public get disposed() { return this._disposed; }
+
     private readonly contexts = new Map<string, IChannelContext>();
     private readonly contextsDeferred = new Map<string, Deferred<IChannelContext>>();
     private closed = false;
@@ -187,6 +187,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                     this.sharedObjectRegistry,
                     new Map(),
                     componentContext.branch,
+                    this.componentContext.summaryTracker.createOrGetChild(
+                        path,
+                        this.deltaManager.referenceSequenceNumber,
+                    ),
                     undefined);
                 const deferred = new Deferred<IChannelContext>();
                 deferred.resolve(channelContext);
@@ -205,14 +209,29 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         }
     }
 
-    public async createAndAttachComponent_NEW(pkg: string): Promise<IComponentRuntime> {
-        const newComponentRuntime = await this.componentContext.createComponent_NEW(pkg);
-        newComponentRuntime.attach();
-        return newComponentRuntime;
+    public dispose(): void {
+        if (this._disposed) {
+            return;
+        }
+        this._disposed = true;
+
+        /**
+         * @deprecated in 0.14 async stop()
+         * Converge closed with _disposed when removing async stop()
+         */
+        this.closed = true;
+
+        this.emit("dispose");
     }
 
     public async createAndAttachComponent(id: string, pkg: string): Promise<IComponentRuntime> {
         const newComponentRuntime = await this.componentContext.createComponent(id, pkg);
+        newComponentRuntime.attach();
+        return newComponentRuntime;
+    }
+
+    public async createAndAttachComponent_NEW(pkg: string): Promise<IComponentRuntime> {
+        const newComponentRuntime = await this.componentContext.createComponent_NEW(pkg);
         newComponentRuntime.attach();
         return newComponentRuntime;
     }
@@ -414,13 +433,13 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         return this.blobManager.getBlobMetadata();
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public stop(): Promise<ITreeEntry[]> {
+    /**
+     * Stop the runtime.  snapshotInternal() is called separately if needed
+     */
+    public stop(): void {
         this.verifyNotClosed();
 
         this.closed = true;
-
-        return this.snapshotInternal();
     }
 
     public async close(): Promise<void> {
@@ -455,6 +474,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                         this.sharedObjectRegistry,
                         flatBlobs,
                         origin,
+                        this.componentContext.summaryTracker.createOrGetChild(
+                            attachMessage.id,
+                            message.sequenceNumber,
+                        ),
                         { type: attachMessage.type });
 
                     this.contexts.set(attachMessage.id, remoteChannelContext);
@@ -614,18 +637,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         this.componentContext.on("notleader", (clientId: string) => {
             this.emit("notleader", clientId);
         });
-        this.componentContext.on("refreshBaseSummary",
-            (snapshot: ISnapshotTree) => this.refreshBaseSummary(snapshot));
-    }
-
-    private refreshBaseSummary(snapshot: ISnapshotTree) {
-        // Propogate updated tree to all channels
-        for (const key of Object.keys(snapshot.trees)) {
-            const channel = this.contexts.get(key);
-            if (channel) {
-                channel.refreshBaseSummary(snapshot.trees[key]);
-            }
-        }
     }
 
     private verifyNotClosed() {

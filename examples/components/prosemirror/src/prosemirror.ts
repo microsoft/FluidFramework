@@ -65,6 +65,8 @@ class ProseMirrorView implements IComponentHTMLView {
     private textArea: HTMLDivElement;
     private readonly collabManager: FluidCollabManager;
 
+    public get IComponentHTMLView() { return this; }
+
     public constructor(
         private readonly text: SharedString,
         private readonly runtime: IComponentRuntime,
@@ -118,7 +120,6 @@ export class ProseMirror extends EventEmitter
     public text: SharedString;
     private root: ISharedMap;
     private collabManager: FluidCollabManager;
-    private defaultView: ProseMirrorView;
 
     constructor(
         private readonly runtime: IComponentRuntime,
@@ -151,7 +152,7 @@ export class ProseMirror extends EventEmitter
         }
 
         this.root = await this.runtime.getChannel("root") as ISharedMap;
-        this.text = await this.root.get<IComponentHandle>("text").get<SharedString>();
+        this.text = await this.root.get<IComponentHandle<SharedString>>("text").get();
 
         this.collabManager = new FluidCollabManager(this.text, this.runtime.loader);
 
@@ -163,17 +164,12 @@ export class ProseMirror extends EventEmitter
     public addView(): IComponentHTMLView {
         return new ProseMirrorView(this.text, this.runtime);
     }
-
-    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
-        if (!this.defaultView) {
-            this.defaultView = new ProseMirrorView(this.text, this.runtime);
-        }
-
-        this.defaultView.render(elm, options);
-    }
 }
 
 class ProseMirrorFactory implements IComponentFactory {
+    public static readonly type = "@chaincode/prosemirror";
+    public readonly type = ProseMirrorFactory.type;
+
     public get IComponentFactory() { return this; }
 
     public instantiateComponent(context: IComponentContext): void {
@@ -184,16 +180,16 @@ class ProseMirrorFactory implements IComponentFactory {
         dataTypes.set(mapFactory.type, mapFactory);
         dataTypes.set(sequenceFactory.type, sequenceFactory);
 
-        ComponentRuntime.load(
+        const runtime = ComponentRuntime.load(
             context,
             dataTypes,
-            (runtime) => {
-                const proseMirrorP = ProseMirror.load(runtime, context);
-                runtime.registerRequestHandler(async (request: IRequest) => {
-                    const proseMirror = await proseMirrorP;
-                    return proseMirror.request(request);
-                });
-            });
+        );
+
+        const proseMirrorP = ProseMirror.load(runtime, context);
+        runtime.registerRequestHandler(async (request: IRequest) => {
+            const proseMirror = await proseMirrorP;
+            return proseMirror.request(request);
+        });
     }
 }
 

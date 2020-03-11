@@ -12,11 +12,12 @@ import {
     IFluidCodeDetails,
     IRuntime,
     IRuntimeFactory,
+    IFluidModule,
 } from "@microsoft/fluid-container-definitions";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@microsoft/fluid-container-runtime";
 import * as ink from "@microsoft/fluid-ink";
 import * as map from "@microsoft/fluid-map";
-import { ConsensusQueue, ConsensusStack } from "@microsoft/fluid-ordered-collection";
+import { ConsensusQueue } from "@microsoft/fluid-ordered-collection";
 import { ConsensusRegisterCollection } from "@microsoft/fluid-register-collection";
 import {
     IComponentContext,
@@ -32,6 +33,8 @@ const rootMapId = "root";
 const insightsMapId = "insights";
 
 export class Chaincode implements IComponentFactory {
+    public readonly type = "@fluid-internal/client-api";
+
     public get IComponentFactory() { return this; }
 
     public instantiateComponent(context: IComponentContext): void {
@@ -43,7 +46,6 @@ export class Chaincode implements IComponentFactory {
         const objectSequenceFactory = sequence.SharedObjectSequence.getFactory();
         const numberSequenceFactory = sequence.SharedNumberSequence.getFactory();
         const consensusQueueFactory = ConsensusQueue.getFactory();
-        const consensusStackFactory = ConsensusStack.getFactory();
         const consensusRegisterCollectionFactory = ConsensusRegisterCollection.getFactory();
         const sparseMatrixFactory = sequence.SparseMatrix.getFactory();
         const directoryFactory = map.SharedDirectory.getFactory();
@@ -58,43 +60,39 @@ export class Chaincode implements IComponentFactory {
         modules.set(objectSequenceFactory.type, objectSequenceFactory);
         modules.set(numberSequenceFactory.type, numberSequenceFactory);
         modules.set(consensusQueueFactory.type, consensusQueueFactory);
-        modules.set(consensusStackFactory.type, consensusStackFactory);
         modules.set(consensusRegisterCollectionFactory.type, consensusRegisterCollectionFactory);
         modules.set(sparseMatrixFactory.type, sparseMatrixFactory);
         modules.set(directoryFactory.type, directoryFactory);
         modules.set(sharedIntervalFactory.type, sharedIntervalFactory);
 
-        ComponentRuntime.load(
-            context,
-            modules,
-            (runtime) => {
-                // Initialize core data structures
-                let root: map.ISharedMap;
-                if (!runtime.existing) {
-                    root = map.SharedMap.create(runtime, rootMapId);
-                    root.register();
+        const runtime = ComponentRuntime.load(context, modules);
 
-                    const insights = map.SharedMap.create(runtime, insightsMapId);
-                    root.set(insightsMapId, insights.handle);
-                }
+        // Initialize core data structures
+        let root: map.ISharedMap;
+        if (!runtime.existing) {
+            root = map.SharedMap.create(runtime, rootMapId);
+            root.register();
 
-                // Create the underlying Document
-                async function createDocument() {
-                    root = await runtime.getChannel(rootMapId) as map.ISharedMap;
-                    return new Document(runtime, context, root);
-                }
-                const documentP = createDocument();
+            const insights = map.SharedMap.create(runtime, insightsMapId);
+            root.set(insightsMapId, insights.handle);
+        }
 
-                // And then return it from requests
-                runtime.registerRequestHandler(async (request) => {
-                    const document = await documentP;
-                    return {
-                        mimeType: "fluid/component",
-                        status: 200,
-                        value: document,
-                    };
-                });
-            });
+        // Create the underlying Document
+        async function createDocument() {
+            root = await runtime.getChannel(rootMapId) as map.ISharedMap;
+            return new Document(runtime, context, root);
+        }
+        const documentP = createDocument();
+
+        // And then return it from requests
+        runtime.registerRequestHandler(async (request) => {
+            const document = await documentP;
+            return {
+                mimeType: "fluid/component",
+                status: 200,
+                value: document,
+            };
+        });
     }
 }
 
@@ -129,7 +127,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
         const runtime = await ContainerRuntime.load(
             context,
             [
-                ["@fluid-internal/client-api", Promise.resolve(chaincode)],
+                [chaincode.type, Promise.resolve(chaincode)],
                 ...this.registries,
             ],
             [ChaincodeFactory.containerRequestHandler],
@@ -151,17 +149,20 @@ export class ChaincodeFactory implements IRuntimeFactory {
 }
 
 export class CodeLoader implements ICodeLoader {
-    private readonly factory: IRuntimeFactory;
+    private readonly fluidModule: IFluidModule;
 
     constructor(
         runtimeOptions: IContainerRuntimeOptions,
         registries?: NamedComponentRegistryEntries,
     ) {
-        this.factory = new ChaincodeFactory(runtimeOptions,
-            registries ? registries : []);
+        this.fluidModule = {
+            fluidExport: new ChaincodeFactory(
+                runtimeOptions,
+                registries ? registries : []),
+        };
     }
 
-    public async load<T>(source: IFluidCodeDetails): Promise<T> {
-        return Promise.resolve(this.factory as any);
+    public async load(source: IFluidCodeDetails): Promise<IFluidModule> {
+        return Promise.resolve(this.fluidModule);
     }
 }

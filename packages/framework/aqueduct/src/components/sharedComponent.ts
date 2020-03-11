@@ -14,9 +14,7 @@ import {
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
-
 import { ComponentHandle } from "@microsoft/fluid-component-runtime";
-
 import { serviceRoutePathRoot } from "../containerServices";
 
 /**
@@ -26,7 +24,9 @@ import { serviceRoutePathRoot } from "../containerServices";
 // eslint-disable-next-line max-len
 export abstract class SharedComponent extends EventEmitter implements IComponentLoadable, IComponentRouter, IProvideComponentHandle {
     private initializeP: Promise<void> | undefined;
-    private readonly innerHandle: IComponentHandle;
+    private readonly innerHandle: IComponentHandle<this>;
+    private _disposed = false;
+    public get disposed() { return this._disposed; }
 
     public get id() { return this.runtime.id; }
     public get IComponentRouter() { return this; }
@@ -34,9 +34,9 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     public get IComponentHandle() { return this.innerHandle; }
 
     /**
-     * {@inheritDoc IComponentHandle.handle}
+     * Handle to a shared component
      */
-    public get handle(): IComponentHandle { return this.innerHandle; }
+    public get handle(): IComponentHandle<this> { return this.innerHandle; }
 
     public constructor(
         protected readonly runtime: IComponentRuntime,
@@ -44,6 +44,12 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     ) {
         super();
         this.innerHandle = new ComponentHandle(this, this.url, runtime.IComponentHandleContext);
+
+        // Container event handlers
+        this.runtime.once("dispose", () => {
+            this._disposed = true;
+            this.dispose();
+        });
     }
 
     /**
@@ -58,6 +64,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
 
         await this.initializeP;
     }
+
     // #region IComponentRouter
 
     /**
@@ -84,7 +91,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     // #region IComponentLoadable
 
     /**
-     * {@inheritDoc IComponentLoadable.url}
+     * Absolute URL to the component within the document
      */
     public get url() { return this.context.id; }
 
@@ -93,7 +100,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     /**
      * Given a request response will return a component if a component was in the response.
      */
-    public async asComponent<T>(response: Promise<IResponse>): Promise<T> {
+    protected async asComponent<T extends IComponent>(response: Promise<IResponse>): Promise<T> {
         const result = await response;
 
         if (result.status === 200 && result.mimeType === "fluid/component") {
@@ -124,23 +131,23 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     }
 
     /**
-     * Calls create, initialize, and attach on a new component. Optional props will be passed in if the
-     * component being created supports IComponentForge
+     * Calls create, initialize, and attach on a new component.
      *
      * @param id - unique component id for the new component
      * @param pkg - package name for the new component
      * @param props - optional props to be passed in
      */
-    protected async createAndAttachComponent<T>(id: string, pkg: string, props?: any): Promise<T> {
-        const componentRuntime = await this.context.hostRuntime._createComponentWithProps(pkg, props, id);
-        const component = await this.asComponent<IComponent>(componentRuntime.request({ url: "/" }));
+    protected async createAndAttachComponent<T extends IComponent & IComponentLoadable>(
+        id: string | undefined, pkg: string, props?: any,
+    ): Promise<T> {
+        const componentRuntime = await this.context.createComponent(id, pkg, props);
+        const component = await this.asComponent<T>(componentRuntime.request({ url: "/" }));
         componentRuntime.attach();
-
-        return component as T;
+        return component;
     }
 
     /**
-     * Calls create, initialize, and attach on a new component without a predefined ID. 
+     * Calls create, initialize, and attach on a new component without a predefined ID.
      * Optional props will be passed in if the component being created supports IComponentForge
      *
      * @param pkg - package name for the new component
@@ -157,25 +164,25 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
      * Gets the component of a given id. Will follow the pattern of the container for waiting.
      * @param id - component id
      */
-    protected async getComponent<T>(id: string, wait: boolean = true): Promise<T> {
+    protected async getComponent<T extends IComponent>(id: string, wait: boolean = true): Promise<T> {
         const request = {
             headers: [[wait]],
             url: `/${id}`,
         };
 
-        return this.asComponent(this.context.hostRuntime.request(request));
+        return this.asComponent<T>(this.context.hostRuntime.request(request));
     }
 
     /**
      * Gets the service at a given id.
      * @param id - service id
      */
-    protected async getService<T>(id: string): Promise<T> {
+    protected async getService<T extends IComponent>(id: string): Promise<T> {
         const request = {
-            url:`/${serviceRoutePathRoot}/${id}`,
+            url: `/${serviceRoutePathRoot}/${id}`,
         };
 
-        return this.asComponent(this.context.hostRuntime.request(request));
+        return this.asComponent<T>(this.context.hostRuntime.request(request));
     }
 
     /**
@@ -194,4 +201,9 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
      * Called every time the component is initialized after create or existing.
      */
     protected async componentHasInitialized(): Promise<void> { }
+
+    /**
+     * Called when the host container closes and disposes itself
+     */
+    protected dispose(): void { }
 }

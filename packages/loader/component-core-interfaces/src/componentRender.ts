@@ -5,31 +5,46 @@
 
 import { IComponent } from "./components";
 
-// Following is what loosely-coupled hosts need to show a component
-
-/**
- * Render the component into an HTML element. In the case of Block display,
- * elm.getBoundingClientRect() defines the dimensions of the viewport in which
- * to render. Typically, this means that elm should already be placed into the DOM.
- * If elm has an empty client rect, then it is assumed that it will expand to hold the
- * rendered component.
- */
-export interface IComponentHTMLRender {
-    render(elm: HTMLElement, options?: IComponentHTMLOptions): void;
-}
-
 export interface IComponentHTMLOptions {
     display?: "block" | "inline";
 }
 
-export interface IComponentHTMLView extends IComponentHTMLRender {
-    remove(): void;
+export interface IProvideComponentHTMLView {
+    readonly IComponentHTMLView: IComponentHTMLView;
+}
+
+/**
+ * An IComponentHTMLView is a renderable component, which may or may not also be its own model.
+ * If it is its own model, it is a "thick" view, otherwise it is a "thin" view.
+ */
+export interface IComponentHTMLView extends IProvideComponentHTMLView {
+    /**
+     * Render the component into an HTML element. In the case of Block display,
+     * elm.getBoundingClientRect() defines the dimensions of the viewport in which
+     * to render. Typically, this means that elm should already be placed into the DOM.
+     * If elm has an empty client rect, then it is assumed that it will expand to hold the
+     * rendered component.
+     */
+    render(elm: HTMLElement, options?: IComponentHTMLOptions): void;
+
+    /**
+     * Views which need to perform cleanup (e.g. remove event listeners, timers, etc.) when
+     * removed from the DOM should implement remove() and perform that cleanup within.
+     * Components which wish to remove views from the DOM should call remove() on the view
+     * before removing it from the DOM.
+     */
+    remove?(): void;
 }
 
 export interface IProvideComponentHTMLVisual {
     readonly IComponentHTMLVisual: IComponentHTMLVisual;
 }
 
-export interface IComponentHTMLVisual extends IComponentHTMLRender, IProvideComponentHTMLVisual {
-    addView?(scope?: IComponent): IComponentHTMLView;
+/**
+ * An IComponentHTMLVisual is a view factory.  Typically (though not necessarily) it will be a model,
+ * binding itself to the views it creates.
+ * TODO: Consider renaming to IComponentHTMLViewFactory
+ */
+export interface IComponentHTMLVisual extends IProvideComponentHTMLVisual {
+    addView(scope?: IComponent): IComponentHTMLView;
 }

@@ -7,7 +7,7 @@ import { PrimedComponent } from "@microsoft/fluid-aqueduct";
 import {
     IComponent,
     IComponentHandle,
-    IComponentHTMLVisual,
+    IComponentHTMLView,
     IComponentLoadable,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IPackage } from "@microsoft/fluid-container-definitions";
@@ -22,9 +22,11 @@ export const WaterParkViewName = `${pkg.name}-view`;
 /**
  * Component that loads extneral components via their url
  */
-export class ExternalComponentView extends PrimedComponent implements IComponentHTMLVisual, IComponentCollection {
+export class ExternalComponentView extends PrimedComponent implements
+    IComponentHTMLView,
+    IComponentCollection {
 
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
     public get IComponentCollection() { return this; }
 
     private sequence: SharedObjectSequence<string>;
@@ -94,7 +96,7 @@ export class ExternalComponentView extends PrimedComponent implements IComponent
                 this.sequence.getItems(0).forEach((url) => {
                     const component = this.urlToComponent.get(url);
                     if (component) {
-                        const renderable = component.IComponentHTMLVisual;
+                        const renderable = component.IComponentHTMLView;
 
                         if (renderable) {
                             const containerDiv = document.createElement("div");
@@ -143,8 +145,8 @@ export class ExternalComponentView extends PrimedComponent implements IComponent
     }
 
     protected async componentHasInitialized() {
-        const seqHandle = await this.root.wait<IComponentHandle>("componentIds");
-        this.sequence = await seqHandle.get<SharedObjectSequence<string>>();
+        const seqHandle = await this.root.wait<IComponentHandle<SharedObjectSequence<string>>>("componentIds");
+        this.sequence = await seqHandle.get();
         const cacheComponentsByUrl = async (urls: string[]) => {
             const promises =
                 // eslint-disable-next-line @typescript-eslint/promise-function-async

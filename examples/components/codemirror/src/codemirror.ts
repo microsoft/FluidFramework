@@ -51,6 +51,8 @@ class CodemirrorView implements IComponentHTMLView {
 
     private sequenceDeltaCb: any;
 
+    public get IComponentHTMLView() { return this; }
+
     constructor(private readonly text: SharedString, private readonly runtime: IComponentRuntime) {
     }
 
@@ -211,8 +213,6 @@ export class CodeMirrorComponent
     private text: SharedString;
     private root: ISharedMap;
 
-    private defaultView: CodemirrorView;
-
     constructor(
         private readonly runtime: IComponentRuntime,
         /* Private */ context: IComponentContext,
@@ -245,23 +245,18 @@ export class CodeMirrorComponent
         }
 
         this.root = await this.runtime.getChannel("root") as ISharedMap;
-        this.text = await this.root.get<IComponentHandle>("text").get<SharedString>();
+        this.text = await this.root.get<IComponentHandle<SharedString>>("text").get();
     }
 
     public addView(scope: IComponent): IComponentHTMLView {
         return new CodemirrorView(this.text, this.runtime);
     }
-
-    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
-        if (!this.defaultView) {
-            this.defaultView = new CodemirrorView(this.text, this.runtime);
-        }
-
-        this.defaultView.render(elm, options);
-    }
 }
 
 class SmdeFactory implements IComponentFactory {
+    public static readonly type = "@fluid-example/codemirror";
+    public readonly type = SmdeFactory.type;
+
     public get IComponentFactory() { return this; }
 
     public instantiateComponent(context: IComponentContext): void {
@@ -272,16 +267,15 @@ class SmdeFactory implements IComponentFactory {
         dataTypes.set(mapFactory.type, mapFactory);
         dataTypes.set(sequenceFactory.type, sequenceFactory);
 
-        ComponentRuntime.load(
+        const runtime = ComponentRuntime.load(
             context,
-            dataTypes,
-            (runtime) => {
-                const progressCollectionP = CodeMirrorComponent.load(runtime, context);
-                runtime.registerRequestHandler(async (request: IRequest) => {
-                    const progressCollection = await progressCollectionP;
-                    return progressCollection.request(request);
-                });
-            });
+            dataTypes);
+
+        const progressCollectionP = CodeMirrorComponent.load(runtime, context);
+        runtime.registerRequestHandler(async (request: IRequest) => {
+            const progressCollection = await progressCollectionP;
+            return progressCollection.request(request);
+        });
     }
 }
 

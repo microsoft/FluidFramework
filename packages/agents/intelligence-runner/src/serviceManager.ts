@@ -35,8 +35,8 @@ export class IntelligentServicesManager {
                 this.rateLimiter = new RateLimiter(
                     async () => {
                         const output = await this.documentInsights
-                            .get<IComponentHandle>(this.sharedString.id)
-                            .get<ISharedMap>();
+                            .get<IComponentHandle<ISharedMap>>(this.sharedString.id)
+                            .get();
 
                         // Run the shared services
                         const text = this.sharedString.getText();

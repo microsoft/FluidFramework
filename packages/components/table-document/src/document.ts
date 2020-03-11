@@ -68,8 +68,8 @@ export class TableDocument extends PrimedComponent implements ITable {
         return this.matrix.getItem(row, col);
     }
 
-    public setCellValue(row: number, col: number, value: TableDocumentItem) {
-        this.matrix.setItems(row, col, [value]);
+    public setCellValue(row: number, col: number, value: TableDocumentItem, properties?: PropertySet) {
+        this.matrix.setItems(row, col, [value], properties);
         this.workbook.invalidate(row, col);
     }
 
@@ -104,6 +104,14 @@ export class TableDocument extends PrimedComponent implements ITable {
 
     public getColProperties(col: number): PropertySet {
         return this.maybeCols.getPropertiesAtPosition(col);
+    }
+
+    public annotateCell(row: number, col: number, properties: PropertySet) {
+        this.matrix.annotatePosition(row, col, properties);
+    }
+
+    public getCellProperties(row: number, col: number): PropertySet {
+        return this.matrix.getPositionProperties(row, col);
     }
 
     // For internal use by TableSlice: Please do not use.
@@ -148,14 +156,14 @@ export class TableDocument extends PrimedComponent implements ITable {
 
     protected async componentHasInitialized() {
         const [maybeMatrixHandle, maybeRowsHandle, maybeColsHandle] = await Promise.all([
-            this.root.wait<IComponentHandle>("matrix"),
-            this.root.wait<IComponentHandle>("rows"),
-            this.root.wait<IComponentHandle>("cols"),
+            this.root.wait<IComponentHandle<SparseMatrix>>("matrix"),
+            this.root.wait<IComponentHandle<SharedNumberSequence>>("rows"),
+            this.root.wait<IComponentHandle<SharedNumberSequence>>("cols"),
         ]);
 
-        this.maybeMatrix = await maybeMatrixHandle.get<SparseMatrix>();
-        this.maybeRows = await maybeRowsHandle.get<SharedNumberSequence>();
-        this.maybeCols = await maybeColsHandle.get<SharedNumberSequence>();
+        this.maybeMatrix = await maybeMatrixHandle.get();
+        this.maybeRows = await maybeRowsHandle.get();
+        this.maybeCols = await maybeColsHandle.get();
 
         this.matrix.on("op", (op, local, target) => {
             if (!local) {

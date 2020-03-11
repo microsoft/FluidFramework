@@ -6,7 +6,7 @@
 import { BaseHost, IBaseHostConfig } from "@microsoft/fluid-base-host";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import { Container } from "@microsoft/fluid-container-loader";
-import { BaseTelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import { BaseTelemetryNullLogger } from "@microsoft/fluid-common-utils";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
@@ -19,6 +19,7 @@ import { OdspUrlResolver } from "@microsoft/fluid-odsp-urlresolver";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import { RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlresolver";
+import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 import { extractDetails, IResolvedPackage } from "@microsoft/fluid-web-code-loader";
 import { v4 } from "uuid";
 import { IOdspTokenApi, IRouterliciousTokenApi, ITokenApis } from "./utils";
@@ -179,14 +180,33 @@ async function loadContainer(
         documentServiceFactory,
         urlResolver: resolver,
     };
-    return BaseHost.start(
+
+    const baseHost = new BaseHost(
         hostConf,
-        href,
-        resolved, // resolved, IResolvedUrl,
-        pkg, // pkg, IResolvedPackage, (gateway/routes/loader has an example (pkgP))
-        scriptIds, // scriptIds, string[], defines the id of the script tag added to the page
-        div,
+        pkg,
+        scriptIds,
     );
+    const container = await baseHost.initializeContainer(
+        href,
+        pkg ? pkg.details : undefined,
+    );
+    container.on("contextChanged", (value) => {
+        getComponentAndRender(baseHost, href, div).catch(() => { });
+    });
+    await getComponentAndRender(baseHost, href, div);
+
+    return container;
+}
+
+async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
+    const component = await baseHost.getComponent(url);
+    if (component === undefined) {
+        return;
+    }
+
+    // Render the component with an HTMLViewAdapter to abstract the UI framework used by the component
+    const view = new HTMLViewAdapter(component);
+    view.render(div, { display: "block" });
 }
 
 const routerliciousRegex = /^(http(s)?:\/\/)?www\..{3,9}\.prague\.office-int\.com\/loader\/.*/;
@@ -240,7 +260,7 @@ export async function loadIFramedFluidContainer(
         scriptUrl = `https://pragueauspkn-3873244262.azureedge.net/@fluid-example/tiny-web-host@${packageJson.version}/dist/main.bundle.js`;
     }
 
-    // As per IComponentHTMLVisual, if the div has a size already, the render is expected to fill the space
+    // As per IComponentHTMLView, if the div has a size already, the render is expected to fill the space
     // it has been given. If not, the render should grow based on its own content.
     const divRect = div.getBoundingClientRect();
     const expandToGivenSize = divRect.height && divRect.width;

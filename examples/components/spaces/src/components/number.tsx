@@ -8,7 +8,7 @@ import {
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import {
-    IComponentHTMLVisual,
+    IComponentHTMLView,
 } from "@microsoft/fluid-component-core-interfaces";
 import { CounterValueType, Counter } from "@microsoft/fluid-map";
 
@@ -17,13 +17,13 @@ import * as ReactDOM from "react-dom";
 import { Manager } from "../container-services";
 
 export const NumberName = "number";
+export const FriendlyNumberName = "Number";
 
 /**
  * Number clicker example using view interfaces and stock component classes.
  */
-export class Number extends PrimedComponent implements IComponentHTMLVisual {
-
-    public get IComponentHTMLVisual() { return this; }
+export class Number extends PrimedComponent implements IComponentHTMLView {
+    public get IComponentHTMLView() { return this; }
 
     private static readonly factory = new PrimedComponentFactory(Number, []);
 

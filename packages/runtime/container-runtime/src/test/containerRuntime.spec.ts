@@ -5,7 +5,7 @@
 
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { DebugLogger } from "@microsoft/fluid-core-utils";
+import { DebugLogger } from "@microsoft/fluid-common-utils";
 import { BlobTreeEntry, TreeTreeEntry } from "@microsoft/fluid-protocol-base";
 import {
     ISummaryBlob,
@@ -20,7 +20,9 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import { IDeltaManager } from "@microsoft/fluid-container-definitions";
 import { MockDeltaManager } from "@microsoft/fluid-test-runtime-utils";
-import { IConvertedSummaryResults, SummaryTreeConverter } from "../summaryTreeConverter";
+import {
+    SummaryTreeConverter,
+} from "../summaryTreeConverter";
 import { ScheduleManager } from "../containerRuntime";
 
 describe("Runtime", () => {
@@ -49,18 +51,13 @@ describe("Runtime", () => {
             }
 
             describe("Convert to Summary Tree", () => {
-                let summaryResults: IConvertedSummaryResults;
                 let bufferLength: number;
-                let converter: SummaryTreeConverter;
-
-                before(() => {
-                    converter = new SummaryTreeConverter();
-                });
+                let inputTree: ITree;
 
                 beforeEach(() => {
                     const base64Content = Buffer.from("test-b64").toString("base64");
                     bufferLength = Buffer.from(base64Content, "base64").byteLength;
-                    const inputTree: ITree = {
+                    inputTree = {
                         id: null,
                         entries: [
                             new TreeTreeEntry("t", {
@@ -76,10 +73,11 @@ describe("Runtime", () => {
                             ] }),
                         ],
                     };
-                    summaryResults = converter.convertToSummaryTree(inputTree);
                 });
 
                 it("Should convert correctly", () => {
+                    const converter = new SummaryTreeConverter(false);
+                    const summaryResults = converter.convertToSummaryTree(inputTree, "");
                     const summaryTree = assertSummaryTree(summaryResults.summaryTree);
 
                     // blobs should parse
@@ -99,7 +97,31 @@ describe("Runtime", () => {
                     assert.strictEqual(subBlobBase64.content.toString("utf-8"), "test-b64");
                 });
 
+                it("Should convert correctly with context converting to paths", () => {
+                    const converter = new SummaryTreeConverter(true);
+                    const summaryResults = converter.convertToSummaryTree(inputTree, "");
+                    const summaryTree = assertSummaryTree(summaryResults.summaryTree);
+
+                    // blobs should parse
+                    const blob = assertSummaryBlob(summaryTree.tree.b);
+                    assert.strictEqual(blob.content, "test-blob");
+
+                    // trees with ids should become handles
+                    const handle = assertSummaryHandle(summaryTree.tree.h);
+                    assert.strictEqual(handle.handleType, SummaryType.Tree);
+                    assert.strictEqual(handle.handle, "/h");
+
+                    // subtrees should recurse
+                    const subTree = assertSummaryTree(summaryTree.tree.t);
+                    const subBlobUtf8 = assertSummaryBlob(subTree.tree.bu8);
+                    assert.strictEqual(subBlobUtf8.content, "test-u8");
+                    const subBlobBase64 = assertSummaryBlob(subTree.tree.b64);
+                    assert.strictEqual(subBlobBase64.content.toString("utf-8"), "test-b64");
+                });
+
                 it("Should calculate summary data correctly", () => {
+                    const converter = new SummaryTreeConverter(false);
+                    const summaryResults = converter.convertToSummaryTree(inputTree, "");
                     // nodes should count
                     assert.strictEqual(summaryResults.summaryStats.blobNodeCount, 3);
                     assert.strictEqual(summaryResults.summaryStats.handleNodeCount, 1);

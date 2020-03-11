@@ -6,7 +6,7 @@
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
 import {
     IComponent,
-    IComponentHTMLVisual,
+    IComponentHTMLView,
     IComponentLoadable,
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
@@ -22,7 +22,7 @@ export const WaterParkLoaderName = `${pkg.name}-loader`;
  * Component that loads extneral components via their url
  */
 export class ExternalComponentLoader extends PrimedComponent
-    implements IComponentHTMLVisual {
+    implements IComponentHTMLView {
 
     private static readonly defaultComponents = [
         "@fluid-example/todo",
@@ -31,6 +31,8 @@ export class ExternalComponentLoader extends PrimedComponent
         "@fluid-example/image-collection",
         "@fluid-example/pond",
         "@fluid-example/clicker",
+        "@fluid-example/primitives",
+        "@fluid-example/table-view",
     ];
     private readonly viewComponentMapID: string = "ViewComponentUrl";
     private viewComponentP: Promise<IComponent>;
@@ -38,7 +40,7 @@ export class ExternalComponentLoader extends PrimedComponent
     private savedElement: HTMLElement;
     private error: string;
 
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
 
     public setViewComponent(component: IComponentLoadable) {
         this.root.set(this.viewComponentMapID, component.IComponentLoadable.url);
@@ -68,9 +70,12 @@ export class ExternalComponentLoader extends PrimedComponent
             const dataList = document.createElement("datalist");
             inputDiv.append(dataList);
             dataList.id = uuid();
+
+            // When locally developing, want to load the latest available patch version by default
+            const defaultVersionToLoad = pkg.version.endsWith(".0") ? `^${pkg.version}` : pkg.version;
             ExternalComponentLoader.defaultComponents.forEach((url) => {
                 const option = document.createElement("option");
-                option.value = `${url}@${pkg.version}`;
+                option.value = `${url}@${defaultVersionToLoad}`;
                 dataList.append(option);
             });
 
@@ -121,11 +126,22 @@ export class ExternalComponentLoader extends PrimedComponent
                         const pkgReg = await urlReg.IComponentRegistry.get(url) as IComponent;
                         let componentRuntime: IComponentRuntime;
                         if (pkgReg.IComponentDefaultFactoryName) {
-                            componentRuntime = await this.context.createSubComponent(
-                                ["url", url, pkgReg.IComponentDefaultFactoryName.getDefaultFactoryName()]);
+                            componentRuntime = await this.context.hostRuntime.createComponent(
+                                uuid(),
+                                [
+                                    ...this.context.packagePath,
+                                    "url",
+                                    url,
+                                    pkgReg.IComponentDefaultFactoryName.getDefaultFactoryName(),
+                                ]);
                         } else if (pkgReg.IComponentFactory) {
-                            componentRuntime = await this.context.createSubComponent(
-                                ["url", url]);
+                            componentRuntime = await this.context.hostRuntime.createComponent(
+                                uuid(),
+                                [
+                                    ...this.context.packagePath,
+                                    "url",
+                                    url,
+                                ]);
                         } else {
                             throw new Error(`${url} is not a factory, and does not provide default component name`);
                         }

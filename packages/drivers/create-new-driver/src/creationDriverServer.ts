@@ -18,7 +18,7 @@ import {
     MessageType,
     ISignalMessage,
 } from "@microsoft/fluid-protocol-definitions";
-import { BatchManager } from "@microsoft/fluid-core-utils";
+import { BatchManager } from "@microsoft/fluid-common-utils";
 import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
 
 interface IAugmentedDocumentMessage {
@@ -31,7 +31,20 @@ interface IAugmentedDocumentMessage {
  */
 export class CreationServerMessagesHandler {
 
-    private static instance: CreationServerMessagesHandler;
+    public static getInstance(documentId: string): CreationServerMessagesHandler {
+        if (CreationServerMessagesHandler.urlMap.has(documentId)) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            return CreationServerMessagesHandler.urlMap.get(documentId)!;
+        } else {
+            const instance = new CreationServerMessagesHandler(documentId);
+            CreationServerMessagesHandler.urlMap.set(documentId, instance);
+            return instance;
+        }
+    }
+
+    // This map is from url to instance of server for that url. So this leads to creation of only 1 server instance
+    // for different clients of same file but different instances for different files.
+    private static readonly urlMap: Map<string, CreationServerMessagesHandler> = new Map();
 
     private sequenceNumber: number = 1;
     private minSequenceNumber: number = 0;
@@ -39,7 +52,7 @@ export class CreationServerMessagesHandler {
 
     private readonly opSubmitManager: BatchManager<IAugmentedDocumentMessage[]>;
 
-    private readonly connections: IDocumentDeltaConnection[]= [];
+    private readonly connections: IDocumentDeltaConnection[] = [];
 
     // These are the queues for messages, signals, contents that will be pushed to server when
     // an actual connection is created.
@@ -61,12 +74,6 @@ export class CreationServerMessagesHandler {
             }, Number.MAX_VALUE);
     }
 
-    public static getInstance(documentId?: string): CreationServerMessagesHandler {
-        if (CreationServerMessagesHandler.instance === undefined && documentId !== undefined) {
-            CreationServerMessagesHandler.instance = new CreationServerMessagesHandler(documentId);
-        }
-        return CreationServerMessagesHandler.instance;
-    }
 
     private createClientId() {
         return `newFileCreationClient${this.totalClients}`;

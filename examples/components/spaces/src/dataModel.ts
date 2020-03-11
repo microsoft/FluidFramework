@@ -8,7 +8,6 @@ import { ISharedDirectory, IDirectory, IDirectoryValueChanged } from "@microsoft
 import {
     IComponent, IComponentLoadable,
 } from "@microsoft/fluid-component-core-interfaces";
-import { ClickerName } from "@fluid-example/clicker";
 import { Layout } from "react-grid-layout";
 
 export type SupportedComponent =
@@ -130,15 +129,6 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
         type: SupportedComponent,
         layout: Layout,
         id = `${type}-${Date.now()}`): Promise<IComponentLoadable> {
-        let pkg = "";
-        switch (type) {
-            case "clicker":
-                pkg = ClickerName;
-                break;
-            default:
-                pkg = type;
-                break;
-        }
 
         const defaultModel: ISpacesModel = {
             type,
@@ -147,9 +137,9 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
         this.componentSubDirectory.set(id, defaultModel);
         let component: IComponentLoadable;
         if (id === this.defaultComponentToolbarId) {
-            component = await this.createAndAttachComponent<IComponentLoadable>(id, pkg);
+            component = await this.createAndAttachComponent<IComponentLoadable>(id, type);
         } else {
-            component = await this.createAndAttachComponent_NEW<IComponentLoadable>(pkg);
+            component = await this.createAndAttachComponent_NEW<IComponentLoadable>(type);
         }
         this.root.set(id, component.handle); 
         return component;

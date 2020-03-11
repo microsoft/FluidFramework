@@ -4,7 +4,7 @@
  */
 
 import { Caret as CaretUtil, Direction, getDeltaX, getDeltaY, KeyCode, Scheduler } from "@fluid-example/flow-util-lib";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
 import { paste } from "../clipboard/paste";
 import { DocSegmentKind, FlowDocument, getDocSegmentKind } from "../document";
 import { ownsNode } from "../util/event";
@@ -14,15 +14,23 @@ import { Caret } from "./caret";
 import { debug } from "./debug";
 import * as styles from "./index.css";
 
+/**
+ * The Host provides the Editor with a registry of view factories which will be used to render components that have
+ * been inserted into the document.
+ */
+export interface IComponentHTMLViewFactory {
+    createView(model: IComponent, scope?: IComponent): IComponentHTMLView;
+}
+
 export class Editor {
     private readonly layout: Layout;
     private readonly caret: Caret;
     private readonly caretSync: () => void;
     private get doc() { return this.layout.doc; }
 
-    constructor(doc: FlowDocument, private readonly root: HTMLElement, formatter: Readonly<RootFormatter<IFormatterState>>, scope?: IComponent) {
+    constructor(doc: FlowDocument, private readonly root: HTMLElement, formatter: Readonly<RootFormatter<IFormatterState>>, viewFactoryRegistry?: Map<string, IComponentHTMLViewFactory>, scope?: IComponent) {
         const scheduler = new Scheduler();
-        this.layout = new Layout(doc, root, formatter, scheduler, scope);
+        this.layout = new Layout(doc, root, formatter, scheduler, viewFactoryRegistry, scope);
         this.caret = new Caret(this.layout);
         this.caretSync = scheduler.coalesce(scheduler.onTurnEnd, () => { this.caret.sync(); });
         this.layout.on("render", this.caretSync);

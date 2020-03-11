@@ -36,9 +36,6 @@ const options: webpack.Configuration = {
         library: 'FluidLambdasTest',
         libraryTarget: 'umd',
     },
-    node: {
-        fs: "empty",
-    },
 };
 
 

@@ -104,6 +104,8 @@ class KeyValue implements IKeyValue, IComponent, IComponentRouter {
 }
 
 export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFactory {
+    public static readonly type = "@fluid-example/key-value-cache";
+    public readonly type = KeyValueFactoryComponent.type;
 
     public get IRuntimeFactory() { return this; }
     public get IComponentFactory() { return this; }
@@ -134,16 +136,16 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFact
         const mapFactory = SharedMap.getFactory();
         dataTypes.set(mapFactory.type, mapFactory);
 
-        ComponentRuntime.load(
+        const runtime = ComponentRuntime.load(
             context,
             dataTypes,
-            (runtime) => {
-                const keyValueP = KeyValue.load(runtime, context);
-                runtime.registerRequestHandler(async (request: IRequest) => {
-                    const keyValue = await keyValueP;
-                    return keyValue.request(request);
-                });
-            });
+        );
+
+        const keyValueP = KeyValue.load(runtime, context);
+        runtime.registerRequestHandler(async (request: IRequest) => {
+            const keyValue = await keyValueP;
+            return keyValue.request(request);
+        });
     }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {

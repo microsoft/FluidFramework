@@ -22,6 +22,37 @@ const listPages = (dirPath, includeIndex = false) => {
     return pages;
 };
 
+const getNav = () => {
+    return [
+        { text: "What is Fluid?", link: "/what-is-fluid" },
+        { text: "Guide", link: "/guide/" },
+        { text: "Tutorials", link: "/examples/" },
+        { text: "Patterns", link: "/patterns/" },
+        { text: "API", link: "/api/overview" },
+        {
+            text: "🤿 Dive Deeper",
+            items: [
+                { text: "How Fluid works", link: "/how/" },
+                { text: "Big page of docs and decks", link: "/misc/doc-index" },
+                { text: "FAQ", link: "/faq/" },
+                { text: "Terminology", link: "/misc/terminology" },
+                { text: "Concepts", link: "/misc/concepts" },
+                {
+                    text: "Contributing",
+                    items: [
+                        { text: "Coding guidelines", link: "/contributing/coding-guidelines" },
+                        { text: "Building documentation locally", link: "/contributing/building-documentation" },
+                        { text: "Routerlicious build machine", link: "/contributing/r11s-build-machine" },
+                        { text: "Compatibility", link: "/contributing/compatibility" },
+                        { text: "Miscellaneous", link: "/contributing/misc" },
+                    ]
+                },
+                { text: "Team", link: "/team/" }
+            ]
+        },
+    ];
+}
+
 /**
  * The API docs are built separately from the core docs, and if the API files aren't present but are linked in a
  * sidebar, there's a build error. This function only adds API sidebar items if the files are present. This allows local
@@ -152,6 +183,130 @@ const getApiSidebar = () => {
     return apiSidebar;
 };
 
+const getGuideSidebar = () => {
+    return [
+        {
+            title: "Guide",
+            collapsable: false,
+            children: [
+                "",
+                "yo-fluid",
+                "water-park",
+            ]
+        },
+        {
+            title: "Distributed Data Structures",
+            collapsable: false,
+            path: "dds",
+            children: [
+                "SharedDirectory",
+                "SharedMap",
+                "SharedCell",
+                {
+                    title: "Sequences",
+                    path: "sequences",
+                    children: [
+                        "SharedNumberSequence",
+                        "SharedObjectSequence",
+                        "SharedString",
+                        "SparseMatrix",
+                    ],
+                },
+                "consensus",
+            ]
+        },
+        {
+            title: "Component model",
+            collapsable: false,
+            children: [
+                "components.md",
+                "component-design-principles.md",
+            ]
+        },
+        {
+            title: "Advanced",
+            collapsable: false,
+            children: [
+                "dds-anatomy",
+            ]
+        },
+    ];
+}
+
+const getExamplesSidebar = () => {
+    return [
+        "",
+        "dice-roller",
+        "sudoku",
+        "badge",
+        {
+            title: "Components",
+            collapsable: true,
+            children: [
+                "visual-component",
+                "data-component",
+                "embed-components",
+                "cross-component",
+                "component-patterns",
+                "component-collections",
+                "bots",
+                "component-best-practices",
+            ]
+        },
+        {
+            title: "Containers",
+            collapsable: true,
+            children: [
+                "singletons",
+            ]
+        },
+    ];
+}
+
+const getTeamSidebar = () => {
+    return [
+        {
+            title: "Team",
+            collapsable: false,
+            children: [
+                ""
+            ]
+        },
+        {
+            title: "Updates",
+            collapsable: false,
+            children: listPages("../team/")
+        },
+    ];
+}
+
+const getHowSidebar = () => {
+    return [
+        "",
+        "tob",
+        "developer-guide",
+    ];
+}
+
+const getAdvancedSidebar = () => {
+    return [
+        "",
+        "loading-deep-dive",
+    ];
+}
+
+const getPatternsSidebar = () => {
+    return [
+        {
+            title: "Patterns",
+            collapsable: false,
+            children: [
+                "leader-election",
+            ]
+        },
+    ];
+}
+
 module.exports = {
     title: "Fluid Framework",
     description: "State that flows",
@@ -212,140 +367,29 @@ module.exports = {
         lineNumbers: true,
         extractHeaders: ["h2", "h3", "h4"],
         extendMarkdown: (md) => {
+            md.set({ typographer: true });
             // use additional markdown-it plugins
             md.use(require("markdown-it-include"), "./includes/")
-                .use(require("markdown-it-deflist"));
+                .use(require("markdown-it-deflist"))
+                .use(require("markdown-it-replacements"));
         }
     },
     themeConfig: {
-        editLinks: false,
-        lastUpdated: false, // "Last Updated",
+        editLinks: true,
+        lastUpdated: true, // "Last Updated",
         repo: "microsoft/FluidFramework",
+        docsDir: "docs",
         smoothScroll: true,
         sidebarDepth: 1,
-        nav: [
-            { text: "What is Fluid?", link: "/what-is-fluid" },
-            { text: "Guide", link: "/guide/" },
-            { text: "Tutorials", link: "/examples/" },
-            { text: "API", link: "/api/overview" },
-            {
-                text: "🤿 Dive Deeper",
-                items: [
-                    { text: "How Fluid works", link: "/how/" },
-                    { text: "FAQ", link: "/faq/" },
-                    { text: "Terminology", link: "/misc/terminology" },
-                    { text: "Concepts", link: "/misc/concepts" },
-                    {
-                        text: "Contributing",
-                        items: [
-                            { text: "Coding guidelines", link: "/contributing/coding-guidelines" },
-                            { text: "Building documentation locally", link: "/contributing/building-documentation" },
-                            { text: "Routerlicious build machine", link: "/contributing/r11s-build-machine" },
-                        ]
-                    },
-                    { text: "Team", link: "/team/" }
-                ]
-            },
-        ],
+        nav: getNav(),
         sidebar: {
-            "/team/": [
-                {
-                    title: "Team",
-                    collapsable: false,
-                    children: [
-                        ""
-                    ]
-                },
-                {
-                    title: "Updates",
-                    collapsable: false,
-                    children: listPages("../team/")
-                },
-            ],
+            "/guide/": getGuideSidebar(),
+            "/examples/": getExamplesSidebar(),
+            "/patterns/": getPatternsSidebar(),
             "/api/": getApiSidebar(),
-            "/guide/": [
-                {
-                    title: "Guide",
-                    collapsable: false,
-                    children: [
-                        "",
-                        "yo-fluid",
-                        "build-a-component",
-                        "water-park",
-                    ]
-                },
-                {
-                    title: "Distributed Data Structures",
-                    collapsable: true,
-                    path: "dds",
-                    children: [
-                        "SharedDirectory",
-                        "SharedMap",
-                        "SharedCell",
-                        {
-                            title: "Sequences",
-                            path: "sequences",
-                            children: [
-                                "SharedNumberSequence",
-                                "SharedObjectSequence",
-                                "SharedString",
-                                "SparseMatrix",
-                            ],
-                        },
-                        "consensus",
-                        // {
-                        //     title: "Consensus",
-                        //     children: [
-                        //         "ConsensusQueue",
-                        //         "ConsensusRegisterCollection",
-                        //         "ConsensusStack",
-                        //     ],
-                        // },
-                    ]
-                },
-                {
-                    title: "Advanced",
-                    collapsable: false,
-                    children: [
-                        "dds-anatomy",
-                    ]
-                },
-            ],
-            "/examples/": [
-                {
-                    title: "Components",
-                    collapsable: true,
-                    children: [
-                        "visual-component",
-                        "data-component",
-                        "embed-components",
-                        "cross-component",
-                        "component-patterns",
-                        "component-collections",
-                        "bots",
-                        "component-best-practices",
-                    ]
-                },
-                {
-                    title: "Containers",
-                    collapsable: true,
-                    children: [
-                        "singletons",
-                    ]
-                },
-                "examples",
-                "sudoku",
-                "yo-fluid-breakdown",
-            ],
-            "/how/": [
-                "",
-                "tob",
-                "developer-guide",
-            ],
-            "/advanced/": [
-                "",
-                "loading-deep-dive",
-            ],
+            "/how/": getHowSidebar(),
+            "/advanced/": getAdvancedSidebar(),
+            "/team/": getTeamSidebar(),
         },
     }
 }

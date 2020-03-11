@@ -19,6 +19,9 @@ import {
     ILoader,
     IRuntime,
     IRuntimeFactory,
+    IRuntimeState,
+    IExperimentalRuntime,
+    IExperimentalContainerContext,
 } from "@microsoft/fluid-container-definitions";
 import { IDocumentStorageService, IError } from "@microsoft/fluid-driver-definitions";
 import { raiseConnectedEvent } from "@microsoft/fluid-protocol-base";
@@ -34,12 +37,15 @@ import {
     ISnapshotTree,
     ITree,
     MessageType,
+    ISummaryTree,
 } from "@microsoft/fluid-protocol-definitions";
 import { BlobManager } from "./blobManager";
 import { Container } from "./container";
 
-export class ContainerContext extends EventEmitter implements IContainerContext {
-    public static async load(
+export class ContainerContext extends EventEmitter implements IContainerContext, IExperimentalContainerContext {
+
+    public readonly isExperimentalContainerContext = true;
+    public static async createOrLoad(
         container: Container,
         scope: IComponent,
         codeLoader: ICodeLoader,
@@ -50,13 +56,13 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         quorum: IQuorum,
         loader: ILoader,
-        storage: IDocumentStorageService | null | undefined,
         errorFn: (err: IError) => void,
         submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         submitSignalFn: (contents: any) => void,
         snapshotFn: (message: string) => Promise<void>,
         closeFn: (reason?: string) => void,
         version: string,
+        previousRuntimeState: IRuntimeState,
     ): Promise<ContainerContext> {
         const context = new ContainerContext(
             container,
@@ -68,16 +74,15 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
             blobManager,
             deltaManager,
             quorum,
-            storage,
             loader,
             errorFn,
             submitFn,
             submitSignalFn,
             snapshotFn,
             closeFn,
-            version);
+            version,
+            previousRuntimeState);
         await context.load();
-
         return context;
     }
 
@@ -147,7 +152,16 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         return this._baseSnapshot;
     }
 
+    public get storage(): IDocumentStorageService | undefined | null {
+        return this.container.storage;
+    }
+
     private runtime: IRuntime | undefined;
+
+    private _disposed = false;
+    public get disposed() {
+        return this._disposed;
+    }
 
     constructor(
         private readonly container: Container,
@@ -159,7 +173,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         public readonly blobManager: BlobManager | undefined,
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         public readonly quorum: IQuorum,
-        public readonly storage: IDocumentStorageService | undefined | null,
         public readonly loader: ILoader,
         private readonly errorFn: (err: IError) => void,
         public readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
@@ -167,35 +180,59 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         public readonly snapshotFn: (message: string) => Promise<void>,
         public readonly closeFn: () => void,
         public readonly version: string,
+        public readonly previousRuntimeState: IRuntimeState,
     ) {
         super();
         this.logger = container.subLogger;
     }
 
+    public dispose(): void {
+        if (this._disposed) {
+            return;
+        }
+        this._disposed = true;
+
+        this.runtime!.dispose();
+        this.quorum.dispose();
+        this.deltaManager.dispose();
+    }
+
+    /**
+     * DEPRECATED
+     * back-compat: 0.13 refreshBaseSummary
+     */
     public refreshBaseSummary(snapshot: ISnapshotTree) {
         this._baseSnapshot = snapshot;
         // Need to notify runtime of the update
         this.emit("refreshBaseSummary", snapshot);
     }
 
-    public async snapshot(tagMessage: string, fullTree: boolean = false): Promise<ITree | null> {
+    public async snapshot(tagMessage: string = "", fullTree: boolean = false): Promise<ITree | null> {
         return this.runtime!.snapshot(tagMessage, fullTree);
+    }
+
+    /**
+     * Snapshot and close the runtime, and return its state if available
+     */
+    public async snapshotRuntimeState(): Promise<IRuntimeState> {
+        return this.runtime!.stop();
+    }
+
+    public isAttached(): boolean {
+        return this.container.isAttached();
+    }
+
+    public async createSummary(): Promise<ISummaryTree> {
+        const expRuntime: IExperimentalRuntime = this.runtime as IExperimentalRuntime;
+        if (!expRuntime?.isExperimentalRuntime) {
+            throw new Error("Runtime has no experimental features");
+        }
+        return expRuntime.createSummary();
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string, version?: string) {
         this.runtime!.changeConnectionState(value, clientId, version);
         raiseConnectedEvent(this, value, clientId);
-    }
-
-    public async stop(): Promise<ITree | null> {
-        const snapshot = await this.runtime!.snapshot("", false);
-        await this.runtime!.stop();
-
-        // Dispose
-        this.quorum.dispose();
-        this.deltaManager.dispose();
-
-        return snapshot;
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any) {
@@ -222,8 +259,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public reloadContext(): Promise<void> {
+    public async reloadContext(): Promise<void> {
         return this.container.reloadContext();
     }
 
