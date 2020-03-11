@@ -11,7 +11,7 @@ describe("pond", () => {
       await page.goto(globals.PATH, { waitUntil: "load" });
     });
 
-    it("There's are 3 buttons to be clicked", async () => {
+    it("There should be 3 buttons to be clicked", async () => {
         await expect(page).toClick("button", { text: "+1" });
         await expect(page).toClick("button", { text: "+10" });
         await expect(page).toClick("button", { text: "+5" });
