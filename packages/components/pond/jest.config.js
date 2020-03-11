@@ -6,7 +6,7 @@
 module.exports = {
   preset: "jest-puppeteer",
   globals: {
-    PATH: "http://localhost:8087"
+    PATH: "http://localhost:8718"
   },
   testMatch: ["**/?(*.)+(spec|test).[t]s"],
   testPathIgnorePatterns: ['/node_modules/', 'dist'],
