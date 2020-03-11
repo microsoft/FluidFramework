@@ -4,7 +4,7 @@
  */
 
 import { EmbeddedComponent } from "@microsoft/fluid-aqueduct-react";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 
 import * as React from "react";
 import GridLayout, { Layout } from "react-grid-layout";
@@ -12,6 +12,7 @@ import GridLayout, { Layout } from "react-grid-layout";
 import "../../../../node_modules/react-grid-layout/css/styles.css";
 import "../../../../node_modules/react-resizable/css/styles.css";
 import { ISpacesDataModel } from "./dataModel";
+import { ISharedDirectory } from "@microsoft/fluid-map";
 
 interface IEmbeddedComponentWrapperProps {
     id: string;
@@ -57,6 +58,7 @@ class EmbeddedComponentWrapper extends React.Component<IEmbeddedComponentWrapper
 
 interface ISpaceGridViewProps {
     dataModel: ISpacesDataModel;
+    root: ISharedDirectory;
 }
 
 interface ISpaceGridViewState {
@@ -158,7 +160,9 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                         </div>
                     }
                     <div style={embeddedComponentStyle}>
-                        <EmbeddedComponentWrapper id={id} getComponent={this.props.dataModel.getComponent} />
+                        <EmbeddedComponentWrapper id={id} getComponent={async (id: string) => {
+                                return await this.props.root.get<IComponentHandle>(id).get<IComponent>();
+                            }} />
                     </div>
                 </div>;
             if (id !== this.props.dataModel.defaultComponentToolbarId) {

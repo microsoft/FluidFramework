@@ -6,7 +6,7 @@
 import { EventEmitter } from "events";
 import { ISharedDirectory, IDirectory, IDirectoryValueChanged } from "@microsoft/fluid-map";
 import {
-    IComponent,
+    IComponent, IComponentLoadable,
 } from "@microsoft/fluid-component-core-interfaces";
 import { ClickerName } from "@fluid-example/clicker";
 import { Layout } from "react-grid-layout";
@@ -23,7 +23,7 @@ export type SupportedComponent =
 
 export interface ISpacesDataModel extends EventEmitter {
     componentList: Map<string, Layout>;
-    addComponent<T>(type: SupportedComponent, w?: number, h?: number, id?: string): Promise<T>;
+    addComponent(type: SupportedComponent, w?: number, h?: number, id?: string): Promise<IComponentLoadable>;
     getComponent<T>(id: string): Promise<T>;
     removeComponent(id: string): void;
     updateGridItem(id: string, newLayout: Layout): void;
@@ -79,9 +79,9 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
         return response;
     }
 
-    public async addComponent<T>(type: SupportedComponent, w: number = 1, h: number = 1, id?: string): Promise<T> {
+    public async addComponent(type: SupportedComponent, w: number = 1, h: number = 1, id?: string): Promise<IComponentLoadable> {
         const defaultLayout = { x: 0, y: 0, w, h };
-        return this.addComponentInternal<T>(type, defaultLayout, id);
+        return this.addComponentInternal(type, defaultLayout, id);
     }
 
     public async removeComponent(id: string) {
@@ -126,10 +126,10 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
         }
     }
 
-    private async addComponentInternal<T>(
+    private async addComponentInternal(
         type: SupportedComponent,
         layout: Layout,
-        id = `${type}-${Date.now()}`): Promise<T> {
+        id = `${type}-${Date.now()}`): Promise<IComponentLoadable> {
         let pkg = "";
         switch (type) {
             case "clicker":
@@ -145,12 +145,13 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
             layout,
         };
         this.componentSubDirectory.set(id, defaultModel);
-        let component: T;
+        let component: IComponentLoadable;
         if (id === this.defaultComponentToolbarId) {
-            component = await this.createAndAttachComponent<T>(id, pkg);
+            component = await this.createAndAttachComponent<IComponentLoadable>(id, pkg);
         } else {
-            component = await this.createAndAttachComponent_NEW<T>(pkg);
+            component = await this.createAndAttachComponent_NEW<IComponentLoadable>(pkg);
         }
+        this.root.set(id, component.handle); 
         return component;
     }
 }

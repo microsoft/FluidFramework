@@ -56,12 +56,12 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
                 Spaces.componentToolbarId,
             );
         this.componentToolbar =
-            await this.dataModel.addComponent<ComponentToolbar>(
+            await this.dataModel.addComponent(
                 ComponentToolbarName,
                 4,
                 4,
                 Spaces.componentToolbarId,
-            );
+            ) as ComponentToolbar;
         // Set the saved template if there is a template query param
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has("template")) {
@@ -101,7 +101,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLVisual {
      */
     public render(div: HTMLElement) {
         ReactDOM.render(
-            <SpacesGridView dataModel={this.dataModel} />,
+            <SpacesGridView dataModel={this.dataModel} root={this.root}/>,
             div);
     }
 }
