@@ -18,7 +18,6 @@ export class ConsensusRegisterCollectionFactory implements IConsensusRegisterCol
         type: ConsensusRegisterCollectionFactory.Type,
         snapshotFormatVersion: "0.1",
         packageVersion: pkgVersion,
-        metadata: undefined,
     };
 
     public get type() {

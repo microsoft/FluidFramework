@@ -17,7 +17,6 @@ export class OwnedMapFactory implements ISharedObjectFactory {
     public static readonly Attributes: IChannelAttributes = {
         type: OwnedMapFactory.Type,
         snapshotFormatVersion: "0.1",
-        metadata: undefined,
     };
 
     public get type() {

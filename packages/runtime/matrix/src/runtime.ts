@@ -20,7 +20,6 @@ export class SharedMatrixFactory implements ISharedObjectFactory {
         type: SharedMatrixFactory.Type,
         snapshotFormatVersion: "0.1",
         packageVersion: pkgVersion,
-        metadata: undefined,
     };
 
     public get type() {

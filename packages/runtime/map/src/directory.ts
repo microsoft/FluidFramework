@@ -306,7 +306,6 @@ export class DirectoryFactory {
         type: DirectoryFactory.Type,
         snapshotFormatVersion: "0.1",
         packageVersion: pkgVersion,
-        metadata: undefined,
     };
 
     /**

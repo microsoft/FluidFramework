@@ -40,7 +40,6 @@ export class SharedIntervalCollectionFactory implements ISharedObjectFactory {
         type: SharedIntervalCollectionFactory.Type,
         snapshotFormatVersion: "0.1",
         packageVersion: pkgVersion,
-        metadata: undefined,
     };
 
     public get type() {

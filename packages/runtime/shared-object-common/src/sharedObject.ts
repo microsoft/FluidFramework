@@ -83,10 +83,6 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
         return this.handle.path;
     }
 
-    public get attributes(): Readonly<IChannelAttributes>{
-        return this._attributes;
-    }
-
     /**
      * @param id - The id of the shared object
      * @param runtime - The IComponentRuntime which contains the shared object
@@ -95,7 +91,7 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     constructor(
         public id: string,
         protected runtime: IComponentRuntime,
-        private readonly _attributes: IChannelAttributes) {
+        public readonly attributes: IChannelAttributes) {
 
         super();
 
@@ -394,21 +390,6 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
         this.emit("pre-op", message, local);
         this.processCore(message, local);
         this.emit("op", message, local);
-        const userId = this.runtime.getQuorum().getMember(message.clientId)?.client.user.id;
-
-        if(userId !== undefined){
-            const lastOp = {
-                timestamp: message.timestamp,
-                userId,
-            };
-            if(this._attributes.metadata === undefined){
-                this._attributes.metadata = {
-                    lastOp,
-                };
-            }else{
-                this._attributes.metadata.lastOp = lastOp;
-            }
-        }
     }
 
     /**

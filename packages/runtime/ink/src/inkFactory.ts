@@ -25,7 +25,6 @@ export class InkFactory implements ISharedObjectFactory {
         type: InkFactory.Type,
         snapshotFormatVersion: "0.2",
         packageVersion: pkgVersion,
-        metadata: undefined,
     };
 
     /**

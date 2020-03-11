@@ -327,7 +327,6 @@ export class SparseMatrixFactory implements ISharedObjectFactory {
         type: SparseMatrixFactory.Type,
         snapshotFormatVersion: "0.1",
         packageVersion: pkgVersion,
-        metadata: undefined,
     };
 
     public static segmentFromSpec(spec: IJSONSegment): ISegment {

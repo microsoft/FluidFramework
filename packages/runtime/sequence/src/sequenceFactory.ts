@@ -21,7 +21,6 @@ export class SharedStringFactory implements ISharedObjectFactory {
         type: SharedStringFactory.Type,
         snapshotFormatVersion: "0.1",
         packageVersion: pkgVersion,
-        metadata: undefined,
     };
 
     public static segmentFromSpec(spec: any) {
@@ -66,7 +65,7 @@ export class SharedObjectSequenceFactory implements ISharedObjectFactory {
         type: SharedObjectSequenceFactory.Type,
         snapshotFormatVersion: "0.1",
         packageVersion: pkgVersion,
-        metadata: undefined,
+
     };
 
     public static segmentFromSpec(segSpec: MergeTree.IJSONSegment) {
@@ -114,7 +113,7 @@ export class SharedNumberSequenceFactory implements ISharedObjectFactory {
         type: SharedNumberSequenceFactory.Type,
         snapshotFormatVersion: "0.1",
         packageVersion: pkgVersion,
-        metadata: undefined,
+
     };
 
     public static segmentFromSpec(segSpec: MergeTree.IJSONSegment) {

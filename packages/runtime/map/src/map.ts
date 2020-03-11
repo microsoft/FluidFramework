@@ -55,7 +55,6 @@ export class MapFactory implements ISharedObjectFactory {
         type: MapFactory.Type,
         snapshotFormatVersion: "0.2",
         packageVersion: pkgVersion,
-        metadata: undefined,
     };
 
     /**

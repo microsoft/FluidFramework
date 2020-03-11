@@ -18,7 +18,6 @@ export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory
         type: ConsensusQueueFactory.Type,
         snapshotFormatVersion: "0.1",
         packageVersion : pkgVersion,
-        metadata: undefined,
     };
 
     public get type() {
