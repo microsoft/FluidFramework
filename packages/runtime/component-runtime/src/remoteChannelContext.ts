@@ -46,7 +46,7 @@ export class RemoteChannelContext implements IChannelContext {
         extraBlobs: Map<string, string>,
         private readonly branch: string,
         private readonly summaryTracker: ISummaryTracker,
-        private readonly backCompatFactoryType?: string,
+        private readonly attachMessageType?: string,
     ) {
 
         this.services = createServiceEndpoints(
@@ -114,7 +114,7 @@ export class RemoteChannelContext implements IChannelContext {
             ".attributes");
 
         // Pass the transformedMessages - but the object really should be storing this
-        const factory = this.registry.get(attributes?.type ?? this.backCompatFactoryType);
+        const factory = this.registry.get(attributes?.type ?? this.attachMessageType);
         if (!factory) {
             throw new Error(`Channel Factory ${attributes.type} not registered`);
         }
