@@ -48,7 +48,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     /**
      * Get a factory for SharedString to register with the component.
      *
-     * @returns a factory that creates and load SharedMap
+     * @returns a factory that creates and load SharedString
      */
     public static getFactory() {
         return new SharedStringFactory();
@@ -116,7 +116,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     /**
      * Inserts the text at the postition
      *
-     * @param relativePos1 - The  postition to insert the text at
+     * @param relativePos1 - The relative postition to insert the text at
      * @param text - The text to insert
      * @param props - The properties of text
      */
