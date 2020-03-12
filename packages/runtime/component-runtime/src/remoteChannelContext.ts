@@ -46,6 +46,7 @@ export class RemoteChannelContext implements IChannelContext {
         extraBlobs: Map<string, string>,
         private readonly branch: string,
         private readonly summaryTracker: ISummaryTracker,
+        private readonly backCompatFactoryType?: string,
     ) {
 
         this.services = createServiceEndpoints(
@@ -108,15 +109,17 @@ export class RemoteChannelContext implements IChannelContext {
     private async loadChannel(): Promise<IChannel> {
         assert(!this.isLoaded);
 
-        // Create the channel if it hasn't already been passed in the constructor
-        const attributes =  await readAndParse<IChannelAttributes>(
+        let attributes =  await readAndParse<IChannelAttributes>(
             this.services.objectStorage,
             ".attributes");
 
         // Pass the transformedMessages - but the object really should be storing this
-        const factory = this.registry.get(attributes.type);
+        const factory = this.registry.get(attributes?.type ?? this.backCompatFactoryType);
         if (!factory) {
             throw new Error(`Channel Factory ${attributes.type} not registered`);
+        }
+        if(attributes === undefined){
+            attributes = factory.attributes;
         }
 
         // Compare snapshot version to collaborative object version

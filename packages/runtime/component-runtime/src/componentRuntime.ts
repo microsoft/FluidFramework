@@ -452,7 +452,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                         this.componentContext.summaryTracker.createOrGetChild(
                             attachMessage.id,
                             message.sequenceNumber,
-                        ));
+                        ),
+                        attachMessage.type);
 
                     this.contexts.set(attachMessage.id, remoteChannelContext);
                     if (this.contextsDeferred.has(attachMessage.id)) {
