@@ -11,6 +11,7 @@ import {
 import {
     DefaultMetricClient,
     IDatabaseManager,
+    IDocumentStorage,
     IOrderer,
     IOrdererManager,
     IWebSocketServer,
@@ -143,14 +144,24 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
             new DefaultMetricClient(),
             logger);
 
-        return new LocalDeltaConnectionServer(webSocketServer, databaseManager, testOrderer, testDbFactory);
+        return new LocalDeltaConnectionServer(
+            webSocketServer,
+            databaseManager,
+            testOrderer,
+            testDbFactory,
+            testStorage);
     }
 
     private constructor(
         public webSocketServer: IWebSocketServer,
         public databaseManager: IDatabaseManager,
         private readonly testOrdererManager: TestOrderManager,
-        public testDbFactory: ITestDbFactory) { }
+        public testDbFactory: ITestDbFactory,
+        private readonly _documentStorage: IDocumentStorage) { }
+
+    public get documentStorage(): IDocumentStorage {
+        return this._documentStorage;
+    }
 
     /**
      * Returns true if there are any received ops that are not yet ordered.
