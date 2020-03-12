@@ -65,7 +65,6 @@ export class SharedObjectSequenceFactory implements ISharedObjectFactory {
         type: SharedObjectSequenceFactory.Type,
         snapshotFormatVersion: "0.1",
         packageVersion: pkgVersion,
-
     };
 
     public static segmentFromSpec(segSpec: MergeTree.IJSONSegment) {
@@ -113,7 +112,6 @@ export class SharedNumberSequenceFactory implements ISharedObjectFactory {
         type: SharedNumberSequenceFactory.Type,
         snapshotFormatVersion: "0.1",
         packageVersion: pkgVersion,
-
     };
 
     public static segmentFromSpec(segSpec: MergeTree.IJSONSegment) {
