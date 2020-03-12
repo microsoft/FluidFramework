@@ -48,8 +48,7 @@ export class RemoteChannelContext implements IChannelContext {
         private readonly branch: string,
         private readonly summaryTracker: ISummaryTracker,
         private readonly attachMessageType?: string,
-    ) {
-
+    ){
         this.services = createServiceEndpoints(
             this.id,
             this.componentContext.connectionState,
@@ -110,7 +109,7 @@ export class RemoteChannelContext implements IChannelContext {
     private async loadChannel(): Promise<IChannel> {
         assert(!this.isLoaded);
 
-        let attributes =  await readAndParse<IChannelAttributes | undefined>(
+        let attributes = await readAndParse<IChannelAttributes | undefined>(
             this.services.objectStorage,
             ".attributes");
 
@@ -125,16 +124,15 @@ export class RemoteChannelContext implements IChannelContext {
                 throw new Error("Channel type not available");
             }
             factory = this.registry.get(this.attachMessageType);
-            attributes = factory?.attributes;
+            if (factory === undefined) {
+                throw new Error(`Channel Factory ${this.attachMessageType} for attach not registered`);
+            }
+            attributes = factory.attributes;
         } else {
             factory = this.registry.get(attributes.type);
-        }
-        if (attributes === undefined) {
-            throw new Error(`Channel attributes not available for type: ${this.attachMessageType}`);
-        }
-
-        if (factory === undefined) {
-            throw new Error(`Channel Factory ${attributes.type} not registered`);
+            if (factory === undefined) {
+                throw new Error(`Channel Factory ${attributes.type} not registered`);
+            }
         }
 
         // Compare snapshot version to collaborative object version

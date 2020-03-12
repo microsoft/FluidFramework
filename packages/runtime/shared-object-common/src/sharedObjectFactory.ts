@@ -32,6 +32,7 @@ export interface ISharedObjectFactory {
      * @param id - ID of the shared object.
      * @param services - Services to read objects at a given path using the delta connection.
      * @param branchId - The branch ID.
+     * @param channelAttributes - The attributes for the the channel to be loaded.
      * @returns The loaded object
      *
      * @privateRemarks
