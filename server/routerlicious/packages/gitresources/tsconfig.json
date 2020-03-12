@@ -5,7 +5,6 @@
         "node_modules"
     ],
     "compilerOptions": {
-        "strict": true,
         "rootDir": "./src",
         "outDir": "./dist"
     },

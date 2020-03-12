@@ -7,7 +7,7 @@ import { FluidRepo } from "./fluidRepo";
 import { MonoRepo } from "../common/fluidRepoBase";
 import { Package } from "../common/npmPackage";
 import * as path from "path";
-import { existsSync, readFileAsync, writeFileAsync } from "../common/utils";
+import { existsSync, readFileAsync, writeFileAsync, resolveNodeModule } from "../common/utils";
 import * as TscUtils from "./tscUtils";
 
 export class FluidPackageCheck {
@@ -268,13 +268,43 @@ export class FluidPackageCheck {
             const configFile = TscUtils.findConfigFile(pkg.directory, parsedCommand);
             const configJson = TscUtils.readConfigFile(configFile);
 
-            const expectedSourceRoot = configJson.compilerOptions.rootDir ? path.posix.join(pkg.name, configJson.compilerOptions.rootDir) : pkg.name;
-            if (configJson.compilerOptions.sourceRoot !== expectedSourceRoot) {
-                console.warn(`${pkg.nameColored}: warning: tsc config compilerOptions.sourceRoot is '${configJson.compilerOptions.sourceRoot}', expected '${expectedSourceRoot}'`);
+            const commonConfig = "@microsoft/fluid-build-common/ts-common-config.json";
+            let changed = false;
+            if (configJson.extends !== commonConfig) {
+                console.warn(`${pkg.nameColored}: warning: tsc config not extending ts-common-config.json`);
                 if (fix) {
-                    configJson.compilerOptions.sourceRoot = expectedSourceRoot;
-                    await writeFileAsync(configFile, JSON.stringify(configJson, undefined, 4));
+                    configJson.extends = commonConfig;
+                    changed = true;
                 }
+            } 
+
+            if (configJson.extends === commonConfig) {
+                let loaded = false;
+                const commonConfigFullPath = resolveNodeModule(pkg.directory, commonConfig);
+                if (commonConfigFullPath) {
+                    const commonConfigJson = TscUtils.readConfigFile(commonConfigFullPath);
+                    if (commonConfigJson) {
+                        loaded = true;
+                        for (const option in configJson.compilerOptions) {
+                            if (configJson.compilerOptions[option] === commonConfigJson.compilerOptions[option]) {
+                                console.warn(`${pkg.nameColored}: warning: duplicate compilerOptions ${option}: ${configJson.compilerOptions[option]}`);
+                                if (fix) {
+                                    delete configJson.compilerOptions[option];
+                                    changed = true;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (!loaded) {
+                    console.warn(`${pkg.nameColored}: warning: can't found ${commonConfig}`);
+                }
+            }
+            
+
+            if (changed) {
+                await writeFileAsync(configFile, JSON.stringify(configJson, undefined, 4));
             }
         }
     }

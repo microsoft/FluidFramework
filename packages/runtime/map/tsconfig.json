@@ -1,16 +1,17 @@
-{    
+{
     "extends": "@microsoft/fluid-build-common/ts-common-config.json",
     "exclude": [
         "dist",
         "node_modules"
     ],
     "compilerOptions": {
-        "strict": true,
         "strictNullChecks": false,
         "stripInternal": true,
         "rootDir": "./src",
         "outDir": "./dist",
-        "types": [ "mocha" ]
+        "types": [
+            "mocha"
+        ]
     },
     "include": [
         "src/**/*"
