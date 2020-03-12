@@ -20,6 +20,7 @@ import {
     IComponentRuntime,
     ISummaryTracker,
 } from "@microsoft/fluid-runtime-definitions";
+import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ISharedObjectRegistry } from "./componentRuntime";
@@ -109,29 +110,44 @@ export class RemoteChannelContext implements IChannelContext {
     private async loadChannel(): Promise<IChannel> {
         assert(!this.isLoaded);
 
-        let attributes =  await readAndParse<IChannelAttributes>(
+        let attributes =  await readAndParse<IChannelAttributes | undefined>(
             this.services.objectStorage,
             ".attributes");
 
-        // Pass the transformedMessages - but the object really should be storing this
-        const factory = this.registry.get(attributes?.type ?? this.attachMessageType);
-        if (!factory) {
-            throw new Error(`Channel Factory ${attributes.type} not registered`);
+        let factory: ISharedObjectFactory | undefined;
+        // this is a back-compat case where
+        // the attach message doesn't include
+        // the attributes. Since old attach messages
+        // will not have attributes we need to keep
+        // this as long as we support attach messages
+        if (attributes === undefined){
+            if(this.attachMessageType === undefined){
+                throw new Error("Channel type not available");
+            }
+            this.registry.get(this.attachMessageType);
+            attributes = factory?.attributes;
+        } else {
+            factory = this.registry.get(attributes.type);
         }
-        if(attributes === undefined){
-            attributes = factory.attributes;
+        if (attributes === undefined) {
+            throw new Error(`Channel attributes not available for type: ${this.attachMessageType}`);
+        }
+
+        if (factory === undefined) {
+            throw new Error(`Channel Factory ${attributes.type} not registered`);
         }
 
         // Compare snapshot version to collaborative object version
         if (attributes.snapshotFormatVersion !== undefined
             && attributes.snapshotFormatVersion !== factory.attributes.snapshotFormatVersion) {
             debug(`Snapshot version mismatch. Type: ${attributes.type}, ` +
-                `Snapshot format version: ${attributes.snapshotFormatVersion}, ` +
-                `client format version: ${factory.attributes.snapshotFormatVersion}`);
+                `Snapshot format@pkg version: ${attributes.snapshotFormatVersion}@${attributes.packageVersion}, ` +
+                // eslint-disable-next-line max-len
+                `client format@pkg version: ${factory.attributes.snapshotFormatVersion}@${factory.attributes.packageVersion}`);
         }
 
         // eslint-disable-next-line max-len
-        debug(`Loading channel ${attributes.type}@${attributes.packageVersion}, snapshot format version: ${attributes.snapshotFormatVersion}`);
+        debug(`Loading channel ${attributes.type}@${factory.attributes.packageVersion}, snapshot format version: ${attributes.snapshotFormatVersion}`);
 
         this.channel = await factory.load(
             this.runtime,
