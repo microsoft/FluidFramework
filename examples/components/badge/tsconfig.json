@@ -1,4 +1,5 @@
 {
+    "extends": "@microsoft/fluid-build-common/ts-common-config.json",
     "exclude": [
         "dist",
         "node_modules"
@@ -6,12 +7,12 @@
     "compilerOptions": {
         "target": "es6",
         "module": "esnext",
+        "strictNullChecks": false,
         "outDir": "dist",
         "jsx": "react",
         "types": []
     },
     "include": [
         "src/**/*"
-    ],
-    "extends": "@microsoft/fluid-build-common/ts-common-config.json"
+    ]
 }

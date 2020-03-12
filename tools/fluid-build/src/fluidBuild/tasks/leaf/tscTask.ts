@@ -46,11 +46,15 @@ export class TscTask extends LeafTask {
 
         // Using tsc incremental information
         const tsBuildInfo = await this.readTsBuildInfo();
-        if (tsBuildInfo === undefined) { return false; }
+        if (tsBuildInfo === undefined) { 
+            this.logVerboseTrigger("tsBuildInfo not found");
+            return false; 
+        }
 
         // Check previous build errors
         const diag: any[] = tsBuildInfo.program.semanticDiagnosticsPerFile;
         if (diag.some(item => Array.isArray(item))) {
+            this.logVerboseTrigger("previous build error");
             return false;
         }
         // Check dependencies file hashes
@@ -61,11 +65,11 @@ export class TscTask extends LeafTask {
                 const fullPath = path.resolve(tsBuildInfoFileDirectory, key);
                 const hash = await this.node.buildContext.fileHashCache.getFileHash(fullPath);
                 if (hash !== fileInfos[key].version) {
-                    logVerbose(`${this.node.pkg.nameColored}: version mismatch for ${key}, ${hash}, ${fileInfos[key].version}`);
+                    this.logVerboseTrigger(`version mismatch for ${key}, ${hash}, ${fileInfos[key].version}`);
                     return false;
                 }
             } catch (e) {
-                logVerbose(`${this.node.pkg.nameColored}: exception generating hash for ${key}`);
+                this.logVerboseTrigger(`exception generating hash for ${key}`);
                 logVerbose(e.stack);
                 return false;
             }
