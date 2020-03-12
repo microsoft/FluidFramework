@@ -41,20 +41,18 @@ export function isSpoUrl(url: string): boolean {
  * @param url The URL to check
  */
 export function isOdcUrl(url: string|URL): boolean {
-    if (typeof url === 'string') {
-        url = new URL(url);
-    }
+    const urlObj = typeof url === "string" ? new URL(url) : url;
 
-    const hostname = url.hostname.toLowerCase();
-    const path = url.pathname.toLowerCase();
+    const hostname = urlObj.hostname.toLowerCase();
+    const path = urlObj.pathname.toLowerCase();
 
     if (!(
         // Primary API endpoint and several test endpoints
-        hostname.endsWith('onedrive.com') ||
+        hostname.endsWith("onedrive.com") ||
         // *storage.live.com hostnames
-        hostname.endsWith('storage.live.com') ||
+        hostname.endsWith("storage.live.com") ||
         // Test endpoints
-        hostname.endsWith('onedrive-tst.com')
+        hostname.endsWith("onedrive-tst.com")
     )) {
         return false;
     }
@@ -70,7 +68,8 @@ export function isOdcUrl(url: string|URL): boolean {
 }
 
 /**
- * Breaks an ODSP URL into its parts, extracting the site, drive ID, and item ID. Returns undefined for invalid/malformed URLs.
+ * Breaks an ODSP URL into its parts, extracting the site, drive ID, and item ID.
+ * Returns undefined for invalid/malformed URLs.
  * @param url The (raw) URL to parse
  */
 export function getOdspUrlParts(url: URL): IOdspUrlParts|undefined {
