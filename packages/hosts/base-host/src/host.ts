@@ -8,7 +8,7 @@ import {
     IFluidCodeDetails,
     IProxyLoaderFactory,
 } from "@microsoft/fluid-container-definitions";
-import { Container, Loader } from "@microsoft/fluid-container-loader";
+import { Loader } from "@microsoft/fluid-container-loader";
 import { IResolvedPackage, WebCodeLoader } from "@microsoft/fluid-web-code-loader";
 import { IBaseHostConfig } from "./hostConfig";
 import { initializeContainerCode } from "./initializeContainerCode";
@@ -63,26 +63,6 @@ async function createWebLoader(
 }
 
 export class BaseHost {
-    /**
-     * Function to load the container from the given url and initialize the chaincode.
-     * @param hostConfig - Config specifying the resolver/factory and other loader settings to be used.
-     * @param url - Url of the Fluid component to be loaded.
-     * @param resolved - A resolved url from a url resolver.
-     * @param pkg - A resolved package with cdn links.
-     * @param scriptIds - The script tags the chaincode are attached to the view with.
-     * @param div - The div to load the component into.
-     */
-    public static async start(
-        hostConfig: IBaseHostConfig,
-        url: string,
-        pkg: IResolvedPackage | undefined,
-        scriptIds: string[],
-        div: HTMLDivElement,
-    ): Promise<Container> {
-        const baseHost = new BaseHost(hostConfig, pkg, scriptIds);
-        return baseHost.loadAndRender(url, div, pkg ? pkg.details : undefined);
-    }
-
     private readonly loaderP: Promise<Loader>;
     public constructor(
         hostConfig: IBaseHostConfig,
@@ -128,36 +108,5 @@ export class BaseHost {
         }
 
         return response.value as IComponent;
-    }
-
-    private async getComponentAndRender(url: string, div: HTMLDivElement) {
-        const component = await this.getComponent(url);
-        if (component === undefined) {
-            return;
-        }
-
-        // First try to get it as a view
-        let renderable = component.IComponentHTMLView;
-        if (!renderable) {
-            // Otherwise get the visual, which is a view factory
-            const visual = component.IComponentHTMLVisual;
-            if (visual) {
-                renderable = visual.addView();
-            }
-        }
-        if (renderable) {
-            renderable.render(div, { display: "block" });
-        }
-    }
-
-    public async loadAndRender(url: string, div: HTMLDivElement, pkg?: IFluidCodeDetails) {
-        const container = await this.initializeContainer(url, pkg);
-
-        container.on("contextChanged", (value) => {
-            this.getComponentAndRender(url, div).catch(() => { });
-        });
-        await this.getComponentAndRender(url, div);
-
-        return container;
     }
 }
