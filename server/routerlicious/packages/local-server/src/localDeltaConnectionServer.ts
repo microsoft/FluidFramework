@@ -157,11 +157,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
         public databaseManager: IDatabaseManager,
         private readonly testOrdererManager: TestOrderManager,
         public testDbFactory: ITestDbFactory,
-        private readonly _documentStorage: IDocumentStorage) { }
-
-    public get documentStorage(): IDocumentStorage {
-        return this._documentStorage;
-    }
+        public documentStorage: IDocumentStorage) { }
 
     /**
      * Returns true if there are any received ops that are not yet ordered.
