@@ -6,6 +6,8 @@
 import { Button, Modal } from "antd";
 import * as React from "react";
 
+// tslint:disable:max-line-length
+
 export interface ITenantInfoProps {
     visible: boolean;
     record: any;
