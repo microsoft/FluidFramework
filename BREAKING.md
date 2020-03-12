@@ -1,6 +1,7 @@
 # 0.15 Breaking Changes
 - [Container.autoReconnect & Container.reconnect changes](#Container.reconnect-Container.reconnect-changes)
 - [0.13 backwards compatibility removed](#013-backwards-compatibility-removed)
+- [Base host no longer renders](#Base-host-no-longer-renders)
 
 ## Container.reconnect, Container.reconnect changes
 autReconnect property is gone, as well as reconnect() method.<br/>
@@ -18,6 +19,13 @@ in order to trigger reconnect. Now, calling Container.setAutoReconnect(true) is 
 - The following changes break compatibility between loader and runtime, meaning 0.15 loader cannot load 0.13 runtime and 0.13 loader cannot load 0.15 runtime:
     - While `IContainerContext.baseSnapshot` was defined to be possibly `null`, `ContainerContext` and `ContainerRuntime` would not correctly handle being passed `baseSnapshot` as `null` in 0.13 and below, and `Container` would not pass it as `null`, passing an empty snapshot instead. `Container` will now potentially pass `baseSnapshot` as `null`.
     - `ContainerRuntime.stop()` is now expected to return an `IRuntimeState`, rather than `void` as previously returned in 0.13 and below. This `IRuntimeState` can be an empty object, but cannot be null.
+
+## Base host no longer renders
+`BaseHost.start()` and `BaseHost.loadAndRender()` have been removed.  They have been replaced by `initializeContainer()`, which similarly resolves a container at the url provided and initializes it with the package provided if needed, but does not perform any rendering.
+
+To facilitate rendering `getComponent()` has also been added, which requests the component at the given url.  Once you've requested a component, you can take whatever steps you would like to render it (e.g. querying its interfaces or passing it into an adapter like `ReactAdapter` or `HTMLViewAdapter` from `@microsoft/fluid-view-adapters`).
+
+Do be cautious about when you `getComponent()` - in the case that an existing container is loaded from ops (no summary yet) the component will not exist before the code proposal.  To support this flow, listen to the `"contextChanged"` event on the `Container` and re-render at that time.
 
 # 0.14 Breaking Changes
 
