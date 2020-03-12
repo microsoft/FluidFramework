@@ -92,7 +92,7 @@ class CounterReactView extends React.Component<CounterProps, CounterState> {
                 <h3>Clicker With Initial Value</h3>
                 <h5>Created with initial value of 100. Increments 5.</h5>
                 <div>
-                    <span>{this.state.value}</span>
+                    <span className="clicker-value-class-100+5">{this.state.value}</span>
                     <button onClick={() => { this.props.counter.increment(5); }}>+5</button>
                 </div>
             </div>
