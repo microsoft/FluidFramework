@@ -119,12 +119,12 @@ export class RemoteChannelContext implements IChannelContext {
         // the attach message doesn't include
         // the attributes. Since old attach messages
         // will not have attributes we need to keep
-        // this as long as we support attach messages
+        // this as long as we support old attach messages
         if (attributes === undefined){
             if(this.attachMessageType === undefined){
                 throw new Error("Channel type not available");
             }
-            this.registry.get(this.attachMessageType);
+            factory = this.registry.get(this.attachMessageType);
             attributes = factory?.attributes;
         } else {
             factory = this.registry.get(attributes.type);
