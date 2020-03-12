@@ -15,7 +15,7 @@ import {
 } from "@microsoft/fluid-runtime-definitions";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 
-const defaultComponentId = "default";
+const defaultComponentId = "" as const;
 
 export class RuntimeFactory implements IRuntimeFactory {
     private readonly registry: NamedComponentRegistryEntries;
@@ -49,16 +49,20 @@ export class RuntimeFactory implements IRuntimeFactory {
 
                     const trailingSlash = requestUrl.indexOf("/");
 
-                    const componentId = requestUrl
-                        ? requestUrl.substr(0,
-                            trailingSlash === -1
-                                ? requestUrl.length
-                                : trailingSlash)
-                        : defaultComponentId;
+                    let componentId: string;
+                    let remainingUrl: string;
+                    
+                    if (trailingSlash >= 0) {
+                        componentId = requestUrl.slice(0, trailingSlash);
+                        remainingUrl = requestUrl.slice(trailingSlash + 1)
+                    } else {
+                        componentId = requestUrl;
+                        remainingUrl = "";
+                    }
 
                     const component = await containerRuntime.getComponentRuntime(componentId, true);
 
-                    return component.request({ url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash + 1) });
+                    return component.request({ url: remainingUrl });
                 },
             ]);
 
