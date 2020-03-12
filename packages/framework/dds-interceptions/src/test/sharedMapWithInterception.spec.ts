@@ -5,7 +5,7 @@
 
 import * as assert from "assert";
 import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
-import { SharedMap } from "@microsoft/fluid-map";
+import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 import { createSharedMapWithInterception } from "../map";
 
@@ -28,7 +28,7 @@ describe("Shared Map with Interception", () => {
             callback();
         }
 
-        function interceptionCb(map: SharedMap, key: string, value: any): void {
+        function interceptionCb(map: ISharedMap, key: string, value: any): void {
             map.set(attributionKey(key), userId);
         }
 

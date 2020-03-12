@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SharedMap } from "@microsoft/fluid-map";
+import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 
 /**
@@ -21,14 +21,14 @@ import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 export function createSharedMapWithInterception(
     sharedMap: SharedMap,
     context: IComponentContext,
-    setInterceptionCallback: (sharedMap: SharedMap, key: string, value: any) => void): SharedMap {
+    setInterceptionCallback: (sharedMap: ISharedMap, key: string, value: any) => void): SharedMap {
     const sharedMapWithInterception = Object.create(sharedMap);
 
     sharedMapWithInterception.set = (key: string, value: any) => {
         let map;
         context.hostRuntime.orderSequentially(() => {
-            setInterceptionCallback(sharedMap, key, value);
             map = sharedMap.set(key, value);
+            setInterceptionCallback(sharedMap, key, value);
         });
         return map;
     };
