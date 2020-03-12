@@ -8,7 +8,14 @@ import { IOdspUrlParts } from "./contracts";
 // Centralized store for all ODC/SPO logic
 
 function isOdcOrigin(origin: string): boolean {
-    return origin.includes("api.onedrive.com");
+    return (
+        // Primary API endpoint and several test endpoints
+        origin.includes("onedrive.com") ||
+        // *storage.live.com hostnames
+        origin.includes("storage.live.com") ||
+        // Test endpoints
+        origin.includes("onedrive-tst.com")
+    );
 }
 
 /**
@@ -43,19 +50,11 @@ export function isSpoUrl(url: string): boolean {
 export function isOdcUrl(url: string|URL): boolean {
     const urlObj = typeof url === "string" ? new URL(url) : url;
 
-    const hostname = urlObj.hostname.toLowerCase();
-    const path = urlObj.pathname.toLowerCase();
-
-    if (!(
-        // Primary API endpoint and several test endpoints
-        hostname.endsWith("onedrive.com") ||
-        // *storage.live.com hostnames
-        hostname.endsWith("storage.live.com") ||
-        // Test endpoints
-        hostname.endsWith("onedrive-tst.com")
-    )) {
+    if (!isOdcOrigin(urlObj.origin)) {
         return false;
     }
+
+    const path = urlObj.pathname.toLowerCase();
 
     // Splitting the regexes so we don't have regex soup
     // Format: /v2.1/drive/items/ABC123!123 and /v2.1/drives/ABC123/items/ABC123!123
