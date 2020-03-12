@@ -1,22 +1,6 @@
 # 0.15 Breaking Changes
 - [Container.autoReconnect & Container.reconnect changes](#Container.reconnect-Container.reconnect-changes)
 - [0.13 backwards compatibility removed](#013-backwards-compatibility-removed)
-- [PrimedComponent and SharedComponent interfaces are now more restrictive](#restricted-component-interfaces)
-
-## PrimedComponent and SharedComponent interfaces are now more restrictive
-The following class variables have been changed from public -> protected
-
-In PrimedComponent:
-- root
-- taskManager
-- writeBlob
-
-In SharedComponent:
-- asComponent
-
-If you still need to access these methods, you can still do so by overloading the needed method in your class
-and making it public.
-An example of this can be seen in primedComponent.spec.ts 
 
 ## Container.reconnect, Container.reconnect changes
 autReconnect property is gone, as well as reconnect() method.<br/>
@@ -45,6 +29,7 @@ in order to trigger reconnect. Now, calling Container.setAutoReconnect(true) is 
 - [`IComponentHandle` - Moved type parameter from get to interface](#icomponenthandle---type-parameter-moved)
 - [Changes to the render interfaces](#changes-to-the-render-interfaces)
 - [Old runtime container cannot load new components](#old-runtime-container-cannot-load-new-components)
+- [PrimedComponent and SharedComponent interfaces are now more restrictive](#restricted-component-interfaces)
 
 ## Packages moved and renamed
 
@@ -133,6 +118,21 @@ The rendering interfaces have undergone several changes:
 ## Old runtime container cannot load new components
 
 The way that summaries are generated has changed in such a way that the runtime container is backwards compatible with 0.13 components, but 0.13 runtime container cannot load 0.14 or later components.
+
+## PrimedComponent and SharedComponent interfaces are now more restrictive
+The following class variables have been changed from public -> protected
+
+In PrimedComponent:
+- root
+- taskManager
+- writeBlob
+
+In SharedComponent:
+- asComponent
+
+If you still need to access these methods, you can still do so by overloading the needed method in your class
+and making it public.
+An example of this can be seen in primedComponent.spec.ts 
 
 # 0.13 Breaking Changes
 
