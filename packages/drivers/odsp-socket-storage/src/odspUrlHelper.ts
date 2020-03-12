@@ -7,7 +7,11 @@ import { IOdspUrlParts } from "./contracts";
 
 // Centralized store for all ODC/SPO logic
 
-function isOdcOrigin(origin: string): boolean {
+/**
+ * Checks whether or not the given URL origin is an ODC origin
+ * @param origin The URL origin to check
+ */
+export function isOdcOrigin(origin: string): boolean {
     return (
         // Primary API endpoint and several test endpoints
         origin.includes("onedrive.com") ||
