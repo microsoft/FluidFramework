@@ -29,12 +29,12 @@ export class TypeRace extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
     private readonly textGenerator = new TextGenerator();
-    private username: string;
+    private username: string = "<unknown>";
     private readonly otherUsernames: Set<string> = new Set<string>();
     private wpm: number = 0;
     private finished: boolean = false;
     private countdown: number = 0;
-    private textMatch: TextMatch;
+    private _textMatch: TextMatch | undefined;
 
     private readonly targetTextKey = "target-text";
 
@@ -90,11 +90,14 @@ export class TypeRace extends PrimedComponent implements IComponentHTMLView {
         this.root.set("players finished count", 0);
     }
 
-    public render(div: HTMLElement) {
-        if (!this.textMatch) {
-            this.textMatch = new TextMatch(this.targetText);
+    private get textMatch() {
+        if (!this._textMatch) {
+            this._textMatch = new TextMatch(this.targetText);
         }
+        return this._textMatch;
+    }
 
+    public render(div: HTMLElement) {
         // Render
         const rerender = () => {
             const otherTextViews = [...this.otherUsernames].map((value) => (
@@ -248,7 +251,9 @@ export class TypeRace extends PrimedComponent implements IComponentHTMLView {
 
     private connectedSetup(clientId: string, rerender: () => void): void {
         const user = this.runtime.getQuorum().getMember(clientId);
-        this.username = (user.client.user as any).name;
+        if (user) {
+            this.username = (user.client.user as any).name;
+        }
         this.setThisPlayerText("");
         this.setThisPlayerWPM("0");
 

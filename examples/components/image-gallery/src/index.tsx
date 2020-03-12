@@ -47,8 +47,8 @@ export class ImageGalleryComponent extends PrimedComponent implements IComponent
         lazyLoad: false,
     };
 
-    imageGallery: ImageGallery;
-    images: ISharedMap;
+    imageGallery: ImageGallery | undefined;
+    images: ISharedMap | undefined;
 
     private readonly onSlide = (index) => {
         this.root.set("position", index);
@@ -57,7 +57,8 @@ export class ImageGalleryComponent extends PrimedComponent implements IComponent
     private readonly reactRender = (div, onSlide = this.onSlide) => {
         ReactDOM.render(
             <ImageGallery
-                ref={(gallery) => (this.imageGallery = gallery)}
+                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+                ref={(gallery) => (this.imageGallery = gallery? gallery : undefined)}
                 items={this.imageList}
                 onSlide={onSlide}
                 slideDuration={10}
@@ -73,15 +74,16 @@ export class ImageGalleryComponent extends PrimedComponent implements IComponent
         div.className = "app-sandbox";
 
         this.reactRender(div);
-        this.imageGallery.slideToIndex(this.root.get("position"));
+        if (this.imageGallery !== undefined) {
+            this.imageGallery.slideToIndex(this.root.get("position"));
+        }
 
         this.root.on("valueChanged", (_, local) => {
             if (local) {
                 return;
             }
             const position = this.root.get<number>("position");
-            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-            if (this.imageGallery) {
+            if (this.imageGallery !== undefined) {
                 // This is a result of a remote slide, don't trigger onSlide for this slide
                 this.reactRender(div, () => this.reactRender(div));
                 this.imageGallery.slideToIndex(position);
