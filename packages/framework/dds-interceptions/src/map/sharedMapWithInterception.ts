@@ -21,13 +21,13 @@ import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 export function createSharedMapWithInterception(
     sharedMap: SharedMap,
     context: IComponentContext,
-    interceptionCallback: (key: string) => void): SharedMap {
+    interceptionCallback: (sharedMap: SharedMap, key: string, value: any) => void): SharedMap {
     const sharedMapWithInterception = Object.create(sharedMap);
 
     sharedMapWithInterception.set = (key: string, value: any) => {
         let map;
         context.hostRuntime.orderSequentially(() => {
-            interceptionCallback(key);
+            interceptionCallback(sharedMap, key, value);
             map = sharedMap.set(key, value);
         });
         return map;

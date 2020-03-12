@@ -28,8 +28,8 @@ describe("Shared Map with Interception", () => {
             callback();
         }
 
-        function interceptionCb(key: string): void {
-            sharedMap.set(attributionKey(key), userId);
+        function interceptionCb(map: SharedMap, key: string, value: any): void {
+            map.set(attributionKey(key), userId);
         }
 
         beforeEach(() => {
