@@ -79,6 +79,7 @@
     "@microsoft/fluid-server-services-client": "^0.1001.0",
     "@microsoft/fluid-server-services-core": "^0.1001.0",
     "@microsoft/fluid-server-services-utils": "^0.1001.0",
+    "@microsoft/fluid-view-adapters": "0.15.21948",
     "@microsoft/fluid-web-code-loader": "0.15.21948",
     "axios": "^0.18.0",
     "body-parser": "^1.17.1",

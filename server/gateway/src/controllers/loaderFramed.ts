@@ -15,8 +15,20 @@ import {
     InnerDocumentServiceFactory,
     InnerUrlResolver,
 } from "@microsoft/fluid-iframe-driver";
+import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 import { IResolvedPackage } from "@microsoft/fluid-web-code-loader";
 import { DocumentFactory } from "./documentFactory";
+
+async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
+    const component = await baseHost.getComponent(url);
+    if (component === undefined) {
+        return;
+    }
+
+    // Render the component with an HTMLViewAdapter to abstract the UI framework used by the component
+    const view = new HTMLViewAdapter(component);
+    view.render(div, { display: "block" });
+}
 
 export async function initialize(
     url: string,
@@ -47,6 +59,12 @@ export async function initialize(
         config.url);
 
     documentFactory.resolveLoader(loader);
+
     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-    await baseHost.loadAndRender(url, div, pkg ? pkg.details : undefined);
+    const container = await baseHost.initializeContainer(url, pkg ? pkg.details : undefined);
+
+    container.on("contextChanged", (value) => {
+        getComponentAndRender(baseHost, url, div).catch(() => { });
+    });
+    await getComponentAndRender(baseHost, url, div);
 }

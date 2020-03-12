@@ -15,6 +15,7 @@ import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import { IGitCache } from "@microsoft/fluid-server-services-client";
+import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 import { IResolvedPackage } from "@microsoft/fluid-web-code-loader";
 import Axios from "axios";
 import { DocumentFactory } from "./documentFactory";
@@ -91,6 +92,17 @@ class MailServices {
     }
 }
 
+async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
+    const component = await baseHost.getComponent(url);
+    if (component === undefined) {
+        return;
+    }
+
+    // Render the component with an HTMLViewAdapter to abstract the UI framework used by the component
+    const view = new HTMLViewAdapter(component);
+    view.render(div, { display: "block" });
+}
+
 export async function initialize(
     url: string,
     resolved: IFluidResolvedUrl,
@@ -165,8 +177,14 @@ export async function initialize(
     console.log(`Loading ${url}`);
 
     const div = document.getElementById("content") as HTMLDivElement;
+
     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-    const container = await baseHost.loadAndRender(url, div, pkg ? pkg.details : undefined);
+    const container = await baseHost.initializeContainer(url, pkg ? pkg.details : undefined);
+
+    container.on("contextChanged", (value) => {
+        getComponentAndRender(baseHost, url, div).catch(() => { });
+    });
+    await getComponentAndRender(baseHost, url, div);
 
     // Move the div hosting components into a shadow so it doesn't catch external formatting
     const shadowHostDiv = document.createElement("div");
