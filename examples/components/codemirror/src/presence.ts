@@ -148,13 +148,15 @@ export class CodeMirrorPresenceManager extends EventEmitter {
             if (this.presenceMap.has(presenceInfo.userId)) {
                 const previousUserInfo = this.presenceMap.get(presenceInfo.userId);
 
-                // Clean all the previous markers
-                previousUserInfo.markers.forEach((marker) => {
-                    marker.clear();
-                });
+                if (previousUserInfo) {
+                    // Clean all the previous markers
+                    previousUserInfo.markers.forEach((marker) => {
+                        marker.clear();
+                    });
 
-                // Clean the previous cursor
-                previousUserInfo.cursor.remove();
+                    // Clean the previous cursor
+                    previousUserInfo.cursor.remove();
+                }
             }
 
             // Selection highlighting
