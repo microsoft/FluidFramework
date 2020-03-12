@@ -1282,7 +1282,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go to this loader
-        const loader = new RelativeLoader(this.loader, this.originalRequest);
+        const loader = new RelativeLoader(this.loader, () => this.originalRequest);
 
         this.context = await ContainerContext.createOrLoad(
             this,
@@ -1320,7 +1320,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go to this loader
-        const loader = new RelativeLoader(this.loader, this.originalRequest);
+        const loader = new RelativeLoader(this.loader, () => this.originalRequest);
 
         this.context = await ContainerContext.createOrLoad(
             this,
