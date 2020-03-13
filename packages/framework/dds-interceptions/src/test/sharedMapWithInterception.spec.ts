@@ -56,37 +56,55 @@ describe("Shared Map with Interception", () => {
             const key: string = "color";
             const value: string = "green";
             sharedMapWithInterception.set(key, value);
-            assert.equal(sharedMapWithInterception.get(key), value);
-            assert.equal(sharedMapWithInterception.get(attributionKey(key)), userId);
+            assert.equal(sharedMapWithInterception.get(key), value, "The value should match the value that was set");
+            assert.equal(
+                sharedMapWithInterception.get(attributionKey(key)),
+                userId,
+                "The userId set via interception callback should exist");
         });
 
         it("should be able to see changes made by the wrapper from the underlying shared map", async () => {
             const key: string = "style";
             const value: string = "bold";
             sharedMapWithInterception.set(key, value);
-            assert.equal(sharedMap.get(key), value);
-            assert.equal(sharedMap.get(attributionKey(key)), userId);
+            assert.equal(sharedMap.get(key), value, "The value should match the value that was set by the wrapper");
+            assert.equal(
+                sharedMap.get(attributionKey(key)),
+                userId,
+                "The userId set via wrapper's interception callback should exist");
         });
 
         it("should be able to see changes made by the underlying shared map from the wrapper", async () => {
             const key: string = "font";
             const value: string = "Arial";
             sharedMap.set(key, value);
-            assert.equal(sharedMapWithInterception.get(key), value);
-            // The userId should not exist because there should be no interception.
-            assert.equal(sharedMapWithInterception.get(attributionKey(key)), undefined);
+            assert.equal(
+                sharedMapWithInterception.get(key),
+                value,
+                "The value should match the value that was set by the unwrapper map");
+            assert.equal(
+                sharedMapWithInterception.get(attributionKey(key)),
+                undefined,
+                "The userId should not be set because the interception is not called");
         });
 
-        it("should not create an infinite recursion if set is called on the wrapper from the callback", async () => {
-            // Create the interception wrapper with a callback that calls set on the wrapper. This should not result
-            // in calling set in infinite recursion.
+        it("should assert it set is called from the callback as it will cause infinite recursion", async () => {
+            // Create the interception wrapper with a callback that calls set on the wrapper. The set method should
+            // throw an assertion as this will cause infinite recursion.
             sharedMapWithInterception =
                 createSharedMapWithInterception(sharedMap, componentContext, recursiveInterceptionCb);
             const key: string = "font";
             const value: string = "Arial";
-            sharedMapWithInterception.set(key, value);
-            assert.equal(sharedMapWithInterception.get(key), value);
-            assert.equal(sharedMapWithInterception.get(attributionKey(key)), userId);
+            let asserted: boolean = false;
+
+            try {
+                sharedMapWithInterception.set(key, value);
+            } catch (error) {
+                assert(error instanceof assert.AssertionError,
+                    "We should have caught an assert in the set method because it detects an infinite recursion");
+                asserted = true;
+            }
+            assert.equal(asserted, true, "The set call should have asserted because it detects inifinite recursion");
         });
     });
 });
