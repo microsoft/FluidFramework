@@ -29,7 +29,7 @@ export class Runtime extends EventEmitter {
         return this.context.connectionState;
     }
 
-    public get clientId(): string {
+    public get clientId(): string | undefined {
         return this.context.clientId;
     }
 
@@ -38,7 +38,7 @@ export class Runtime extends EventEmitter {
     }
 
     private closed = false;
-    private requestHandler: (request: IRequest) => Promise<IResponse>;
+    private requestHandler: ((request: IRequest) => Promise<IResponse>) | undefined;
     private readonly bufferedOpsUntilConnection: ISequencedDocumentMessage[] = [];
 
     private constructor(private readonly context: IContainerContext) {

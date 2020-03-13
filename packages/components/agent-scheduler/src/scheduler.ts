@@ -65,7 +65,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         }
         const clientId = this.runtime.clientId;
         assert(clientId);
-        return clientId;
+        return clientId as string;
     }
 
     public url = "_tasks";

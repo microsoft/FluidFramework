@@ -7,8 +7,8 @@ import { FluidRepo } from "./fluidRepo";
 import { MonoRepo } from "../common/fluidRepoBase";
 import { Package } from "../common/npmPackage";
 import * as path from "path";
-import { existsSync, readFileAsync, writeFileAsync } from "../common/utils";
-import { fstat } from "fs";
+import { existsSync, readFileAsync, writeFileAsync, resolveNodeModule } from "../common/utils";
+import * as TscUtils from "./tscUtils";
 
 export class FluidPackageCheck {
     constructor(private readonly repoType: MonoRepo) {
@@ -195,7 +195,7 @@ export class FluidPackageCheck {
             }
 
             const check = (scriptName: string, parts: string[], prefix = "") => {
-                const expected = parts.length === 0? undefined :
+                const expected = parts.length === 0 ? undefined :
                     prefix + (parts.length > 1 ? `concurrently npm:${parts.join(" npm:")}` : `npm run ${parts[0]}`);
                 if (pkg.packageJson.scripts[scriptName] !== expected) {
                     console.warn(`${pkg.nameColored}: warning: non-conformant script ${scriptName}`);
@@ -219,10 +219,10 @@ export class FluidPackageCheck {
         }
         return fixed;
     }
-    
+
     public static async checkNpmIgnore(pkg: Package, fix: boolean) {
         const filename = path.join(pkg.directory, ".npmignore");
-        const expected = [ 
+        const expected = [
             "nyc",
             "*.log",
             "**/*.tsbuildinfo"
@@ -247,13 +247,64 @@ export class FluidPackageCheck {
                 }
             }
             if (fix) {
-                if (split.length !== 0 && split[split.length -1] !== "") {
+                if (split.length !== 0 && split[split.length - 1] !== "") {
                     split.push("");
                 }
                 const ret = split.join("\n");
                 if (ret !== content) {
                     await writeFileAsync(filename, ret, "utf8");
                 }
+            }
+        }
+    }
+
+    public static async checkTsConfig(pkg: Package, fix: boolean) {
+        const command = pkg.getScript("tsc");
+        if (command) {
+            const parsedCommand = TscUtils.parseCommandLine(command);
+            if (!parsedCommand) { return undefined; }
+
+            // Assume tsc with no argument.
+            const configFile = TscUtils.findConfigFile(pkg.directory, parsedCommand);
+            const configJson = TscUtils.readConfigFile(configFile);
+
+            const commonConfig = "@microsoft/fluid-build-common/ts-common-config.json";
+            let changed = false;
+            if (configJson.extends !== commonConfig) {
+                console.warn(`${pkg.nameColored}: warning: tsc config not extending ts-common-config.json`);
+                if (fix) {
+                    configJson.extends = commonConfig;
+                    changed = true;
+                }
+            } 
+
+            if (configJson.extends === commonConfig) {
+                let loaded = false;
+                const commonConfigFullPath = resolveNodeModule(pkg.directory, commonConfig);
+                if (commonConfigFullPath) {
+                    const commonConfigJson = TscUtils.readConfigFile(commonConfigFullPath);
+                    if (commonConfigJson) {
+                        loaded = true;
+                        for (const option in configJson.compilerOptions) {
+                            if (configJson.compilerOptions[option] === commonConfigJson.compilerOptions[option]) {
+                                console.warn(`${pkg.nameColored}: warning: duplicate compilerOptions ${option}: ${configJson.compilerOptions[option]}`);
+                                if (fix) {
+                                    delete configJson.compilerOptions[option];
+                                    changed = true;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (!loaded) {
+                    console.warn(`${pkg.nameColored}: warning: can't found ${commonConfig}`);
+                }
+            }
+            
+
+            if (changed) {
+                await writeFileAsync(configFile, JSON.stringify(configJson, undefined, 4));
             }
         }
     }

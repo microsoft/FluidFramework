@@ -124,7 +124,7 @@ export class ChatContainer extends React.Component<IChatContainerProps, IChatCon
         });
     };
 
-    private convertMessage(op: ISequencedDocumentMessage): IChatProps {
+    private convertMessage(op: ISequencedDocumentMessage): IChatProps | undefined {
         const message: IMessage = op.contents;
         if (message.content.startsWith(transPrefix)) {
             const lang = message.content.substr(transPrefix.length);
