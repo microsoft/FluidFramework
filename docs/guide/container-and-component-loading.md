@@ -8,7 +8,7 @@ This doc provides an in-depth outline of how Container and Component loading wor
 fluid packages are partitioned. While the system is not overly complex, looking at it as a whole can be overwhelming,
 and difficult to rationalize. As we go through the doc we will build a clear picture of the entirety of the system.
 
-If you want to look at the entire system in one picture see [Appendix 1](##Appendix-1) at the bottom of the doc.
+If you want to look at the entire system in one picture see [Appendix 1](#appendix-1) at the bottom of the doc.
 
 The complete loading flow in Fluid can follow multiple paths, and this can create complexities when attempting to explain
 the flow in a single Document. For simplicity, this document follows the Create from Existing flow with minor notes about
@@ -20,7 +20,7 @@ these simplifications are negligible and help provide clarity. But if you find a
 please point them out.
 
 If you see a bolded number – Ex. **(2)** – it represents a line in the diagram. This number will be in the next diagram
-as well as the finished diagram in [Appendix 1](##Appendix-1).
+as well as the finished diagram in [Appendix 1](#appendix-1).
 
 Finally, as you read through this doc you will find yourself having lots of questions. This is good, and intentional!
 Keep reading as it's likely explained later.
