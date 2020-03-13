@@ -4,7 +4,12 @@
  */
 
 import { ITree } from "@microsoft/fluid-protocol-definitions";
-import { IComponentRuntime, IObjectStorageService, ISharedObjectServices } from "@microsoft/fluid-runtime-definitions";
+import {
+    IComponentRuntime,
+    IObjectStorageService,
+    ISharedObjectServices,
+    IChannelAttributes,
+} from "@microsoft/fluid-runtime-definitions";
 import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 
 /**
@@ -18,7 +23,8 @@ export interface IConsensusOrderedCollectionFactory extends ISharedObjectFactory
         document: IComponentRuntime,
         id: string,
         services: ISharedObjectServices,
-        branchId: string): Promise<IConsensusOrderedCollection>;
+        branchId: string,
+        attributes: IChannelAttributes): Promise<IConsensusOrderedCollection>;
 
     create(document: IComponentRuntime, id: string): IConsensusOrderedCollection;
 }

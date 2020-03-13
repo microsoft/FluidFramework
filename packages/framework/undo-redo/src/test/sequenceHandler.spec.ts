@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { SharedString } from "@microsoft/fluid-sequence";
+import { SharedString, SharedStringFactory } from "@microsoft/fluid-sequence";
 import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
 import { SharedSegmentSequenceUndoRedoHandler } from "../sequenceHandler";
 import { UndoRedoStackManager } from "../undoRedoStackManager";
@@ -45,7 +45,7 @@ describe("SharedSegmentSequenceUndoRedoHandler", () => {
     beforeEach(() => {
         const runtime = new MockRuntime();
         deltaConnectionFactory = new MockDeltaConnectionFactory();
-        sharedString = new SharedString(runtime, documentId);
+        sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
         runtime.services = {
             deltaConnection: deltaConnectionFactory.createDeltaConnection(runtime),
             objectStorage: new MockStorage(undefined),

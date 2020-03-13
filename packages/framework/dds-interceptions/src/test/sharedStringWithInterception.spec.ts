@@ -6,7 +6,7 @@
 import * as assert from "assert";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
-import { SharedString } from "@microsoft/fluid-sequence";
+import { SharedString, SharedStringFactory } from "@microsoft/fluid-sequence";
 import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 import { createSharedStringWithInterception } from "../sequence";
 
@@ -30,7 +30,7 @@ describe("Shared String with Interception", () => {
         beforeEach(() => {
             const runtime = new MockRuntime();
             deltaConnectionFactory = new MockDeltaConnectionFactory();
-            sharedString = new SharedString(runtime, documentId);
+            sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
             runtime.services = {
                 deltaConnection: deltaConnectionFactory.createDeltaConnection(runtime),
                 objectStorage: new MockStorage(undefined),

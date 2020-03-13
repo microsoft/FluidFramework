@@ -329,9 +329,10 @@ export class DirectoryFactory {
         runtime: IComponentRuntime,
         id: string,
         services: ISharedObjectServices,
-        branchId: string): Promise<ISharedDirectory> {
+        branchId: string,
+        attributes: IChannelAttributes): Promise<ISharedDirectory> {
 
-        const directory = new SharedDirectory(id, runtime);
+        const directory = new SharedDirectory(id, runtime, attributes);
         await directory.load(branchId, services);
 
         return directory;
@@ -341,7 +342,7 @@ export class DirectoryFactory {
      * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory.create}
      */
     public create(runtime: IComponentRuntime, id: string): ISharedDirectory {
-        const directory = new SharedDirectory(id, runtime);
+        const directory = new SharedDirectory(id, runtime, DirectoryFactory.Attributes);
         directory.initializeLocal();
 
         return directory;
@@ -420,8 +421,9 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
     constructor(
         id: string,
         runtime: IComponentRuntime,
+        attributes: IChannelAttributes,
     ) {
-        super(id, runtime, DirectoryFactory.Attributes);
+        super(id, runtime, attributes);
         this.localValueMaker = new LocalValueMaker(runtime);
         this.setMessageHandlers();
         for (const type of valueTypes) {

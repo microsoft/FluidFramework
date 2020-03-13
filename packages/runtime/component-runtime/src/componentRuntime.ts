@@ -49,7 +49,7 @@ import {
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
-import { IChannelContext } from "./channelContext";
+import { IChannelContext, snapshotChannel } from "./channelContext";
 import { LocalChannelContext } from "./localChannelContext";
 import { RemoteChannelContext } from "./remoteChannelContext";
 
@@ -187,8 +187,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                     this.componentContext.summaryTracker.createOrGetChild(
                         path,
                         this.deltaManager.referenceSequenceNumber,
-                    ),
-                    undefined);
+                    ));
                 const deferred = new Deferred<IChannelContext>();
                 deferred.resolve(channelContext);
 
@@ -454,7 +453,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                             attachMessage.id,
                             message.sequenceNumber,
                         ),
-                        { type: attachMessage.type });
+                        attachMessage.type);
 
                     this.contexts.set(attachMessage.id, remoteChannelContext);
                     if (this.contextsDeferred.has(attachMessage.id)) {
@@ -556,7 +555,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         channel.handle!.attach();
 
         // Get the object snapshot and include it in the initial attach
-        const snapshot = channel.snapshot();
+        const snapshot = snapshotChannel(channel);
 
         const message: IAttachMessage = {
             id: channel.id,
