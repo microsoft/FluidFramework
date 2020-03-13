@@ -11,11 +11,6 @@ import { createDirectoryWithInterception } from "../map";
 
 describe("Shared Directory with Interception", () => {
     describe("Simple User Attribution", () => {
-        /**
-         * The following tests test simple user attribution in SharedDirecory with interception.
-         * In the callback function of the SharedDirectory with interception, it sets the user
-         * attribution information in a sub-directory of the underlying SharedDirectory against the same key.
-         */
         const userId = "Fake User";
         const documentId = "fakeId";
         const attributionDirectoryName = "attribution";
@@ -128,7 +123,7 @@ describe("Shared Directory with Interception", () => {
             const key: string = "level";
             let value: string = "root";
             root.set(key, value);
-            assert.equal(root.get(value), "root", "The value should match the value that was set");
+            assert.equal(root.get(key), value, "The value should match the value that was set");
 
             // Verify that attribution directory `/attribution` was created for root and the user attribute
             // set on it.
@@ -237,11 +232,11 @@ describe("Shared Directory with Interception", () => {
         });
 
         /**
-         * This test creates a wrapper shared directory. It then creates a subdirectory and creates another wrapper
+         * This test creates a wrapped shared directory. It then creates a subdirectory and creates another wrapper
          * from the subdirectory. It verifies that the callback for both the root directory and subdirectory is
          * called on a set on the wrapped subdirectory.
          */
-        it("should be able to get a wrapped subDirectory via getSubDirectory and getWorkingDirectory", async () => {
+        it("should be able to wrap a subDirectory in another interception wrapper", async () => {
             const root = createDirectoryWithInterception(sharedDirectory, componentContext, setInterceptionCb);
 
             // Create a sub directory via the wrapper and wrap it in another interception wrapper.
