@@ -38,7 +38,7 @@ export class TextBox extends PrimedComponent implements IComponentHTMLView, ICom
         return TextBox.factory;
     }
 
-    private text: SharedString;
+    private text: SharedString | undefined;
 
     /**
      * Do creation work
@@ -78,7 +78,8 @@ export class TextBox extends PrimedComponent implements IComponentHTMLView, ICom
      * Since this returns a JSX.Element it allows for an easier model.
      */
     public createJSXElement(): JSX.Element {
-        return <CollaborativeTextArea sharedString={this.text} />;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return <CollaborativeTextArea sharedString={this.text!} />;
     }
 
     // end IComponentReactViewable

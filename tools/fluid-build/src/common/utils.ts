@@ -87,3 +87,19 @@ function printExecError(ret: ExecAsyncResult, command: string, errorPrefix: stri
         console.warn(`${errorPrefix}: ${ret.stderr}`);
     }
 }
+
+export function resolveNodeModule(basePath: string, lookupPath: string) {
+    let currentBasePath = basePath;
+    while (true) {
+        const tryPath = path.join(currentBasePath, "node_modules", lookupPath);
+        if (existsSync(tryPath)) {
+            return tryPath;
+        }
+        const nextBasePath = path.resolve(currentBasePath, "..");
+        if (nextBasePath === currentBasePath) {
+            break;
+        }
+        currentBasePath = nextBasePath;
+    }
+    return undefined;
+}

@@ -268,7 +268,7 @@ export class DAW extends React.Component<DAWProps, DAWState> {
     }
 
     private startPlaySong(loop: boolean) {
-        let song: Song;
+        let song: Song | undefined;
 
         if (this.state.songSelection === SongSelection.Custom) {
             const savedSongs = this.recorder.getSavedSongs();
@@ -282,7 +282,9 @@ export class DAW extends React.Component<DAWProps, DAWState> {
             song = songLibrary[this.state.songSelection];
         }
 
-        this.postPlaySong(song, 0, loop);
+        if (song) {
+            this.postPlaySong(song, 0, loop);
+        }
     }
 
     private stopPlaySong() {
