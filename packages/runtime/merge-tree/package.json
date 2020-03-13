@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-merge-tree",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "description": "Merge tree",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -12,7 +12,6 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
-    "build:compile:min": "npm run build:compile",
     "build:docs": "echo \"Skipping @microsoft/fluid-merge-tree; see https://github.com/microsoft/Prague/issues/2270\"",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
@@ -51,14 +50,14 @@
   "dependencies": {
     "@microsoft/fluid-common-definitions": "^0.13.0",
     "@microsoft/fluid-common-utils": "^0.14.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.14.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.15.0",
     "@microsoft/fluid-protocol-definitions": "^0.1002.0",
-    "@microsoft/fluid-runtime-definitions": "^0.14.0"
+    "@microsoft/fluid-runtime-definitions": "^0.15.0"
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.14.0",
     "@microsoft/fluid-build-common": "^0.14.0",
-    "@microsoft/fluid-test-runtime-utils": "^0.14.0",
+    "@microsoft/fluid-test-runtime-utils": "^0.15.0",
     "@types/diff": "^3.5.1",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.14.6",
@@ -79,7 +78,7 @@
     "make-promises-safe": "^5.1.0",
     "mocha": "^5.2.0",
     "mocha-junit-reporter": "^1.18.0",
-    "nyc": "^14.1.1",
+    "nyc": "^15.0.0",
     "random-js": "^1.0.8",
     "rimraf": "^2.6.2",
     "typescript": "~3.7.4"

@@ -8,7 +8,6 @@ import { ISharedDirectory, IDirectory, IDirectoryValueChanged } from "@microsoft
 import {
     IComponent,
 } from "@microsoft/fluid-component-core-interfaces";
-import { ClickerName } from "@fluid-example/clicker";
 import { Layout } from "react-grid-layout";
 
 export type SupportedComponent =
@@ -129,22 +128,13 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
         type: SupportedComponent,
         layout: Layout,
         id = `${type}-${Date.now()}`): Promise<T> {
-        let pkg = "";
-        switch (type) {
-            case "clicker":
-                pkg = ClickerName;
-                break;
-            default:
-                pkg = type;
-                break;
-        }
 
         const defaultModel: ISpacesModel = {
             type,
             layout,
         };
         this.componentSubDirectory.set(id, defaultModel);
-        return this.createAndAttachComponent<T>(id, pkg);
+        return this.createAndAttachComponent<T>(id, type);
     }
 }
 

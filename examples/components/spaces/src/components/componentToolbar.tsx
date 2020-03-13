@@ -8,18 +8,24 @@ import {
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import {
-    IComponentHTMLView,
+    IComponentHTMLView, IComponent,
 } from "@microsoft/fluid-component-core-interfaces";
+import {
+    DefaultButton as Button,
+    initializeIcons,
+} from "office-ui-fabric-react";
 import { ISharedDirectory } from "@microsoft/fluid-map";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { SupportedComponent } from "../dataModel";
-import { ButtonName, FacePileName, NumberName, TextBoxName } from ".";
+import { InternalRegistry, IContainerComponentDetails } from "..";
 
 const componentToolbarStyle: React.CSSProperties = { position: "absolute", top: 10, left: 10, zIndex: 1000 };
 
 export const ComponentToolbarName = "componentToolbar";
+
+initializeIcons();
 
 /**
  * A component to allow you to add and manipulate components
@@ -29,8 +35,21 @@ export class ComponentToolbar extends PrimedComponent implements IComponentHTMLV
 
     private static readonly factory = new PrimedComponentFactory(ComponentToolbar, []);
 
+    private supportedComponentList: IContainerComponentDetails[];
+
     public static getFactory() {
         return ComponentToolbar.factory;
+    }
+
+    protected async componentHasInitialized() {
+        const registry = await this.context.hostRuntime.IComponentRegistry.get("");
+        if (registry) {
+            const registryDetails = (registry as IComponent).IComponentRegistryDetails;
+            if (registryDetails) {
+                this.supportedComponentList = (registryDetails as InternalRegistry)
+                    .getFromCapabilities("IComponentHTMLView");
+            }
+        }
     }
 
     public changeEditState(isEditable: boolean){
@@ -50,6 +69,7 @@ export class ComponentToolbar extends PrimedComponent implements IComponentHTMLV
             <ComponentToolbarView
                 emit={this.emit.bind(this)}
                 root={this.root}
+                supportedComponentList={this.supportedComponentList}
             />,
             div,
         );
@@ -59,6 +79,7 @@ export class ComponentToolbar extends PrimedComponent implements IComponentHTMLV
 
 interface IComponentToolbarViewProps {
     emit: (event: string | symbol, ...args: any[]) => boolean;
+    supportedComponentList: IContainerComponentDetails[];
     root: ISharedDirectory;
 }
 
@@ -68,8 +89,11 @@ interface IComponentToolbarViewState {
 
 class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, IComponentToolbarViewState>{
 
+    private readonly supportedComponentList: IContainerComponentDetails[];
+
     constructor(props: IComponentToolbarViewProps){
         super(props);
+        this.supportedComponentList = props.supportedComponentList;
         this.state = {
             isEditable: props.root.get("isEditable"),
         };
@@ -84,10 +108,6 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
         this.props.emit("addComponent", type, w, h);
     }
 
-    public emitSaveLayout() {
-        this.props.emit("saveLayout");
-    }
-
     public emitToggleEditable() {
         const newIsEditable = !this.state.isEditable;
         this.props.emit("toggleEditable", newIsEditable);
@@ -95,41 +115,30 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
     }
 
     render(){
-        const { isEditable } = this.state;
-        const editableButtons =
-            <>
-                <button onClick={async () => this.emitAddComponentEvent("clicker", 2, 2)}>
-                    Clicker
-                </button>
-                <button onClick={async () => this.emitAddComponentEvent(ButtonName, 2, 2)}>
-                    Button
-                </button>
-                <button onClick={async () => this.emitAddComponentEvent(NumberName, 2, 2)}>
-                    Number
-                </button>
-                <button onClick={async () => this.emitAddComponentEvent(TextBoxName, 9, 6)}>
-                    TextBox
-                </button>
-                <button onClick={async () => this.emitAddComponentEvent(FacePileName, 2, 4)}>
-                    FacePile
-                </button>
-                <button onClick={async () => this.emitAddComponentEvent("codemirror", 12, 8)}>
-                    CodeMirror
-                </button>
-                <button onClick={async () => this.emitAddComponentEvent("prosemirror", 16, 12)}>
-                    ProseMirror
-                </button>
-                <button onClick={() => this.emitSaveLayout()}>Save Layout</button>
-            </>;
+        const editableButtons: JSX.Element[] = [];
+        this.supportedComponentList.forEach(((supportedComponent: IContainerComponentDetails) => {
+            editableButtons.push(
+                <Button
+                    key={`componentToolbarButton-${supportedComponent.type}`}
+                    iconProps={{ iconName: supportedComponent.fabricIconName }}
+                    onClick={async () =>
+                        this.emitAddComponentEvent(supportedComponent.type as SupportedComponent, 4, 4)}
+                >
+                    {supportedComponent.friendlyName}
+                </Button>,
+            );
+        }));
+
         return (
             <div style={componentToolbarStyle}>
-                <button
+                <Button
                     id="edit"
+                    iconProps={{ iconName: "BullseyeTargetEdit"}}
                     onClick={() => this.emitToggleEditable()}
                 >
-                    {`Edit: ${ isEditable }`}
-                </button>
-                { isEditable ? editableButtons : undefined }
+                    {`Edit: ${this.state.isEditable}`}
+                </Button>
+                {this.state.isEditable ? editableButtons : undefined}
             </div>
         );
     }

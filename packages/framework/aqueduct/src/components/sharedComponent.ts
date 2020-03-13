@@ -25,6 +25,8 @@ import { serviceRoutePathRoot } from "../containerServices";
 export abstract class SharedComponent extends EventEmitter implements IComponentLoadable, IComponentRouter, IProvideComponentHandle {
     private initializeP: Promise<void> | undefined;
     private readonly innerHandle: IComponentHandle<this>;
+    private _disposed = false;
+    public get disposed() { return this._disposed; }
 
     public get id() { return this.runtime.id; }
     public get IComponentRouter() { return this; }
@@ -32,7 +34,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     public get IComponentHandle() { return this.innerHandle; }
 
     /**
-     * {@inheritDoc IComponentHandle.handle}
+     * Handle to a shared component
      */
     public get handle(): IComponentHandle<this> { return this.innerHandle; }
 
@@ -42,6 +44,12 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     ) {
         super();
         this.innerHandle = new ComponentHandle(this, this.url, runtime.IComponentHandleContext);
+
+        // Container event handlers
+        this.runtime.once("dispose", () => {
+            this._disposed = true;
+            this.dispose();
+        });
     }
 
     /**
@@ -56,6 +64,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
 
         await this.initializeP;
     }
+
     // #region IComponentRouter
 
     /**
@@ -82,7 +91,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     // #region IComponentLoadable
 
     /**
-     * {@inheritDoc IComponentLoadable.url}
+     * Absolute URL to the component within the document
      */
     public get url() { return this.context.id; }
 
@@ -122,17 +131,16 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     }
 
     /**
-     * Calls create, initialize, and attach on a new component. Optional props will be passed in if the
-     * component being created supports IComponentForge
+     * Calls create, initialize, and attach on a new component.
      *
      * @param id - unique component id for the new component
      * @param pkg - package name for the new component
      * @param props - optional props to be passed in
      */
     protected async createAndAttachComponent<T extends IComponent & IComponentLoadable>(
-        id: string, pkg: string, props?: any,
+        id: string | undefined, pkg: string, props?: any,
     ): Promise<T> {
-        const componentRuntime = await this.context.hostRuntime._createComponentWithProps(pkg, props, id);
+        const componentRuntime = await this.context.createComponent(id, pkg, props);
         const component = await this.asComponent<T>(componentRuntime.request({ url: "/" }));
         componentRuntime.attach();
         return component;
@@ -157,7 +165,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
      */
     protected async getService<T extends IComponent>(id: string): Promise<T> {
         const request = {
-            url:`/${serviceRoutePathRoot}/${id}`,
+            url: `/${serviceRoutePathRoot}/${id}`,
         };
 
         return this.asComponent<T>(this.context.hostRuntime.request(request));
@@ -179,4 +187,9 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
      * Called every time the component is initialized after create or existing.
      */
     protected async componentHasInitialized(): Promise<void> { }
+
+    /**
+     * Called when the host container closes and disposes itself
+     */
+    protected dispose(): void { }
 }

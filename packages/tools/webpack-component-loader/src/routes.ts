@@ -29,8 +29,14 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
     if (options.mode === "docker" || options.mode === "r11s" || options.mode === "tinylicious") {
         options.bearerSecret = options.bearerSecret || config.get("fluid:webpack:bearerSecret");
         if (options.mode !== "tinylicious") {
-            options.tenantId = options.tenantId || config.get("fluid:webpack:tenantId");
-            options.tenantSecret = options.tenantSecret || config.get("fluid:webpack:tenantSecret");
+            options.tenantId = options.tenantId || config.get("fluid:webpack:tenantId") || "fluid";
+            if (options.mode === "docker") {
+                options.tenantSecret = options.tenantSecret
+                    || config.get("fluid:webpack:docker:tenantSecret")
+                    || "create-new-tenants-if-going-to-production";
+            } else {
+                options.tenantSecret = options.tenantSecret || config.get("fluid:webpack:tenantSecret");
+            }
             if (options.mode === "r11s") {
                 options.fluidHost = options.fluidHost || config.get("fluid:webpack:fluidHost");
             }

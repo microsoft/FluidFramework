@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger, IDisposable } from "@microsoft/fluid-common-definitions";
 import {
     IComponent,
     IComponentHandleContext,
@@ -40,7 +40,11 @@ import { IChannel } from ".";
 /**
  * Represents the runtime for the component. Contains helper functions/state of the component.
  */
-export interface IComponentRuntime extends EventEmitter, IComponentRouter, Partial<IProvideComponentRegistry>  {
+export interface IComponentRuntime extends
+    EventEmitter,
+    IComponentRouter,
+    Partial<IProvideComponentRegistry>,
+    IDisposable {
     readonly IComponentRouter: IComponentRouter;
 
     readonly IComponentSerializer: IComponentSerializer;
@@ -93,6 +97,9 @@ export interface IComponentRuntime extends EventEmitter, IComponentRouter, Parti
     changeConnectionState(value: ConnectionState, clientId: string);
 
     /**
+     * @deprecated in 0.14 async close()
+     * Call snapshot separately if needed, then call dispose
+     *
      * Closes the component. Once closed the component will not receive any new ops and should
      * not attempt to generate them.
      */

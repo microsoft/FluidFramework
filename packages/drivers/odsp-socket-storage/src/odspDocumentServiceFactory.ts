@@ -12,7 +12,7 @@ import {
 import { IOdspResolvedUrl } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import { getSocketIo } from "./getSocketIo";
-import { OdspCache } from "./odspCache";
+import { ICache, IOdspCache, OdspCache } from "./odspCache";
 import { OdspDocumentService } from "./odspDocumentService";
 
 /**
@@ -23,6 +23,7 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
     public readonly protocolName = "fluid-odsp:";
 
     private readonly documentsOpened = new Set<string>();
+    private readonly cache: IOdspCache;
 
     /**
    * @param appId - app id used for telemetry for network requests.
@@ -34,7 +35,6 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
    * @param storageFetchWrapper - if not provided FetchWrapper will be used
    * @param deltasFetchWrapper - if not provided FetchWrapper will be used
    * @param odspCache - This caches response for joinSession.
-   * @param fileInfoToCreateNewResponseCache - This caches response of new file creation.
    */
     constructor(
         private readonly appId: string,
@@ -43,9 +43,10 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
         private readonly logger: ITelemetryBaseLogger,
         private readonly storageFetchWrapper: IFetchWrapper = new FetchWrapper(),
         private readonly deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),
-        private readonly odspCache: OdspCache = new OdspCache(),
-        private readonly fileInfoToCreateNewResponseCache = new OdspCache(),
-    ) { }
+        permanentCache?: ICache,
+    ) {
+        this.cache = new OdspCache(permanentCache);
+    }
 
     public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
         const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
@@ -64,9 +65,8 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
             this.storageFetchWrapper,
             this.deltasFetchWrapper,
             Promise.resolve(getSocketIo()),
-            this.odspCache,
+            this.cache,
             isFirstTimeDocumentOpened,
-            this.fileInfoToCreateNewResponseCache,
         );
     }
 }

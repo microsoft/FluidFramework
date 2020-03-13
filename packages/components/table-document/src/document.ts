@@ -68,8 +68,8 @@ export class TableDocument extends PrimedComponent implements ITable {
         return this.matrix.getItem(row, col);
     }
 
-    public setCellValue(row: number, col: number, value: TableDocumentItem) {
-        this.matrix.setItems(row, col, [value]);
+    public setCellValue(row: number, col: number, value: TableDocumentItem, properties?: PropertySet) {
+        this.matrix.setItems(row, col, [value], properties);
         this.workbook.invalidate(row, col);
     }
 
@@ -104,6 +104,14 @@ export class TableDocument extends PrimedComponent implements ITable {
 
     public getColProperties(col: number): PropertySet {
         return this.maybeCols.getPropertiesAtPosition(col);
+    }
+
+    public annotateCell(row: number, col: number, properties: PropertySet) {
+        this.matrix.annotatePosition(row, col, properties);
+    }
+
+    public getCellProperties(row: number, col: number): PropertySet {
+        return this.matrix.getPositionProperties(row, col);
     }
 
     // For internal use by TableSlice: Please do not use.
