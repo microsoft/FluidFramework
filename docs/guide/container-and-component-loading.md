@@ -11,8 +11,8 @@ and difficult to rationalize. As we go through the doc we will build a clear pic
 If you want to look at the entire system in one picture see [Appendix 1](#appendix-1) at the bottom of the doc.
 
 The complete loading flow in Fluid can follow multiple paths, and this can create complexities when attempting to explain
-the flow in a single Document. For simplicity, this document follows the Create from Existing flow with minor notes about
-how the Create New flow differs.
+the flow in a single Document. For simplicity, this document follows the *Create from Existing* flow with minor notes about
+how the *Create New* flow differs.
 
 It should also be noted that this doc contains intentional simplifications. So, while this document attempts to provide
 a detailed representation of the loading flow there may be areas where it does not 100% reflect the truth. Hopefully,
@@ -29,13 +29,13 @@ Keep reading as it's likely explained later.
 
 The Hosting Application is a webpage that loads a Fluid Container. This has also been referred to as an "Fluid
 Enlightened Canvas" and currently consists of: FluidPreview, Teams, OWA, Waterpark, and a handful more. To load any
-Fluid Container, the Hosting Application needs the Fluid Loader Package. This is a small package who’s only
+Fluid Container, the Hosting Application needs the Fluid Loader Package. This is a small package whose only
 responsibility is to load Fluid Containers. The Fluid Loader has no knowledge of the `ContainerRuntime` or `Component`
 specific code.
 
 The `Loader` object has a method `resolve(...)` **(1)** that can load a `Container` when provided the following:
 
-- `url` to Operation Stream (op steam)
+- `url` to Operation Stream (op stream)
 - `Driver` **(1.1)** - used for talking to the Fluid Server
 - `CodeLoader` **(1.2)** - used for resolving the `ContainerRuntime` code
 
@@ -48,9 +48,13 @@ object **(2)**.
 
 The `Container` will use the provided `url` and `Driver` to connect, and start processing, the op stream **(3)**.
 
-> The Operation Steam (op stream) is how fluid stores state. State, including, connected clients, the code to load, as
-> well as Distributed Data Structure modifications, are stored as a series of operations that when played in order produce
-> the current state. I don’t go into further details about it here.
+::: tip
+
+The Operation Stream (op stream) is how fluid stores state. State, including, connected clients, the code to load, as
+well as Distributed Data Structure modifications, are stored as a series of operations that when played in order produce
+the current state. I don’t go into further details about it here.
+
+:::
 
 Connecting and processing the op stream includes:
 
@@ -66,18 +70,22 @@ a `Driver` model to allow for different servers to optimize for their own infras
 
 ![Image 3](./container-and-component-loading-3.jpg)
 
-The `Container` object itself does not actually do much. Once it has established a connection via the `Driver` it's other
+The `Container` object itself does not actually do much. Once it has established a connection via the `Driver` its other
 responsibility is to listen specifically for one event emitted from the `Quorum`. This is the
 `"code"` proposal.
 
-> The `Quorum` is a special key/value Distributed Data Structure that requires all current members to agree on the value
-> before the it is accepted. I don’t go into further details about it here.
+::: tip
+
+The `Quorum` is a special key/value Distributed Data Structure that requires all current members to agree on the value
+before the it is accepted. I don’t go into further details about it here.
+
+:::
 
 There are a few different ways that the `Container` will get this `"code"` value:
 
-1. In the Create New flow this `"code"` value needs to be proposed by the Hosting Application. Once the value is accepted
+1. In the *Create New* flow this `"code"` value needs to be proposed by the Hosting Application. Once the value is accepted
 by everyone connected (only you) the `Container` will get the event and have the value.
-2. In the Create from Existing flow there are two scenarios.
+2. In the *Create from Existing* flow there are two scenarios.
     1. In the Snapshot/Summary flow the `"code"` value is written into the Summary itself.
     2. In the load from op stream flow (no Snapshot/Summary) the `"code"` value will be played as an op.
 
@@ -85,8 +93,8 @@ In any case, once the `Container` has the `"code"` value it asks the `CodeLoader
 the Loader Package does not know anything about the `ContainerRuntime`, or Components, it needs someone to tell it
 where that code lives. This is the responsibility of the `CodeLoader`. The `CodeLoader` can dynamically pull this code
 from some source (CDN) or in some cases the code already exists on the page. Either way the `CodeLoader` needs to
-include the code on the page and return a pointer to that code to the `Container`. In Browser scenario, this pointer is
-an entry point to a webpacked bundle that is usually on the `window` object. In the nodejs case it's a pointer to a package.
+include the code on the page and return a pointer to that code to the `Container`. In the Browser, this pointer
+is an entry point to a webpacked bundle that is usually on the `window` object. In NodeJS, it's a pointer to a package.
 
 ![Image 4](./container-and-component-loading-4.jpg)
 
@@ -134,15 +142,15 @@ A `Component` is created by calling `createComponent("packageName")` on the `Con
 
 ![Image 7](./container-and-component-loading-7.jpg)
 
-You might be noticing a lot of similarities between the `ContainerRuntime` creation flow and the `ComponentRuntime`
+You might notice a lot of similarities between the `ContainerRuntime` creation flow and the `ComponentRuntime`
 creation flow.
 
 In the `instantiateComponent` call **(8.1)** the following is performed:
 
 1. `ComponentRuntime` object is created **(8.2)**
 2. Sets the `request` handler on the `ComponentRuntime` **(8.2)**
-    - Requests that are sent to the `ComponentRuntime` are proxied to the `Component` obj. (more on this later)
-3. Provides a registry of Distributed Data Structures (DDS), and Sub-Component, Factories to the `ComponentRuntime` **(8.2)**
+    - Requests that are sent to the `ComponentRuntime` are proxied to the `Component` object (more on this later).
+3. Provides a registry of Distributed Data Structures (DDS) / Sub-Component factories to the `ComponentRuntime` **(8.2)**
     - This can be used to create new DDSs
     - This can be used to create new Components that are not defined in the `ContainerRegistry`
 4. Create the `Component` object **(8.3)**
@@ -161,6 +169,13 @@ the `ComponentRuntime` to manage Fluid state of itself; mainly creating DDSs **(
 The `Component` will use the DDS objects directly **(9.1)** and will persist/`attach` them using the
 `ComponentRuntime` **(9.2)**. When storing a DDS `handle` on another already attached DDS, the `ComponentRuntime`
 will automatically `attach` the new DDS.
+
+::: tip
+
+`attach` sends an op on the op stream that persists the DDS and notifies all users it is live for editing. More on this in
+[Anatomy of a Distributed Data Structure](./dds-anatomy)
+
+:::
 
 ![Image 10](./container-and-component-loading-10.jpg)
 
@@ -206,9 +221,14 @@ it a `request` it will return itself.
 
 So now by simply requesting `"/"`, the Hosting Application has retrieved the default `Component` object.
 
-Without getting to deep into how our interface discovery works the Hosting Application can now check to see if the
-`Component` it got supports a view by doing `component.IComponentHTMLView` and calling `render(...)` if
-`IComponentHTMLView` returns an object.
+The Hosting Application can now use Interface Discovery to check if the `Component` it got supports a view by doing
+`component.IComponentHTMLView` and calling `render(...)` if `IComponentHTMLView` returns an object.
+
+::: tip
+
+More on Interface Discovery in [Feature detection and delegation](./components.md#feature-detection-and-delegation)
+
+:::
 
 That was a lot to unpack in a lot of text. The overall principal of the request pattern is that requests are delegated
 through the system to the place where they are meant to go.
