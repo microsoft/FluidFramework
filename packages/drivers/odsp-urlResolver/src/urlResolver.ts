@@ -5,12 +5,12 @@
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
-import { 
+import {
     createOdspUrl,
     OdspDriverUrlResolver,
     isSpoUrl,
     isOdcUrl,
-    getOdspUrlParts
+    getOdspUrlParts,
 } from "@microsoft/fluid-odsp-driver";
 
 export class OdspUrlResolver implements IUrlResolver {
@@ -32,4 +32,4 @@ export class OdspUrlResolver implements IUrlResolver {
 
 export const isOdspUrl = (url: string) => {
     return isSpoUrl(url) || isOdcUrl(url);
-}
+};
