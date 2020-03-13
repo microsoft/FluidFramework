@@ -204,7 +204,8 @@ export class TypeRace extends PrimedComponent implements IComponentHTMLView {
         });
 
         if (this.runtime.connected) {
-            this.connectedSetup(this.runtime.clientId, rerender);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            this.connectedSetup(this.runtime.clientId!, rerender);
         }
         this.runtime.on("connected", (clientId) => this.connectedSetup(clientId, rerender));
 
