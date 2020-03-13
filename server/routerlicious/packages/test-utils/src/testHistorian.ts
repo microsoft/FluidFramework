@@ -113,7 +113,7 @@ export class TestHistorian implements IHistorian {
     }
 
     public async createCommit(commit: git.ICreateCommitParams): Promise<git.ICommit> {
-        const _id = gitHashFile(Buffer.from(commit.tree));
+        const _id = commit.message ?? gitHashFile(Buffer.from(commit.tree));
         await this.commits.insertOne({ _id, value: commit });
         return this.getCommit(_id);
     }
