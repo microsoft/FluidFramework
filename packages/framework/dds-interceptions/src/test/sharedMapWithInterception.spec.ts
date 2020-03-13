@@ -21,7 +21,6 @@ describe("Shared Map with Interception", () => {
         const attributionKey = (key: string) => `${key}.attribution`;
         let deltaConnectionFactory: MockDeltaConnectionFactory;
         let sharedMap: SharedMap;
-        let sharedMapWithInterception: SharedMap;
         let componentContext: IComponentContext;
 
         function orderSequentially(callback: () => void): void {
@@ -29,11 +28,7 @@ describe("Shared Map with Interception", () => {
         }
 
         function interceptionCb(map: ISharedMap, key: string, value: any): void {
-            map.set(attributionKey(key), userId);
-        }
-
-        function recursiveInterceptionCb(map: ISharedMap, key: string, value: any): void {
-            sharedMapWithInterception.set(attributionKey(key), userId);
+            map.set(attributionKey(key), { userId });
         }
 
         beforeEach(() => {
@@ -48,33 +43,37 @@ describe("Shared Map with Interception", () => {
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             componentContext = { hostRuntime: { orderSequentially } } as IComponentContext;
-            sharedMapWithInterception =
-                createSharedMapWithInterception(sharedMap, componentContext, interceptionCb);
         });
 
         it("should be able to intercept SharedMap set method in the wrapper", async () => {
+            const sharedMapWithInterception =
+                createSharedMapWithInterception(sharedMap, componentContext, interceptionCb);
             const key: string = "color";
             const value: string = "green";
             sharedMapWithInterception.set(key, value);
             assert.equal(sharedMapWithInterception.get(key), value, "The value should match the value that was set");
             assert.equal(
-                sharedMapWithInterception.get(attributionKey(key)),
+                sharedMapWithInterception.get(attributionKey(key)).userId,
                 userId,
                 "The userId set via interception callback should exist");
         });
 
         it("should be able to see changes made by the wrapper from the underlying shared map", async () => {
+            const sharedMapWithInterception =
+                createSharedMapWithInterception(sharedMap, componentContext, interceptionCb);
             const key: string = "style";
             const value: string = "bold";
             sharedMapWithInterception.set(key, value);
             assert.equal(sharedMap.get(key), value, "The value should match the value that was set by the wrapper");
             assert.equal(
-                sharedMap.get(attributionKey(key)),
+                sharedMap.get(attributionKey(key)).userId,
                 userId,
                 "The userId set via wrapper's interception callback should exist");
         });
 
         it("should be able to see changes made by the underlying shared map from the wrapper", async () => {
+            const sharedMapWithInterception =
+                createSharedMapWithInterception(sharedMap, componentContext, interceptionCb);
             const key: string = "font";
             const value: string = "Arial";
             sharedMap.set(key, value);
@@ -89,16 +88,21 @@ describe("Shared Map with Interception", () => {
         });
 
         it("should assert it set is called from the callback as it will cause infinite recursion", async () => {
+            // eslint-disable-next-line prefer-const
+            let sharedMapWithInterception: SharedMap;
+            // Interception callback that calls a set on the wrapped object causing an infinite recursion.
+            function recursiveInterceptionCb(map: ISharedMap, key: string, value: any): void {
+                sharedMapWithInterception.set(attributionKey(key), userId);
+            }
+
             // Create the interception wrapper with a callback that calls set on the wrapper. The set method should
             // throw an assertion as this will cause infinite recursion.
             sharedMapWithInterception =
                 createSharedMapWithInterception(sharedMap, componentContext, recursiveInterceptionCb);
-            const key: string = "font";
-            const value: string = "Arial";
-            let asserted: boolean = false;
 
+            let asserted: boolean = false;
             try {
-                sharedMapWithInterception.set(key, value);
+                sharedMapWithInterception.set("color", "green");
             } catch (error) {
                 assert(error instanceof assert.AssertionError,
                     "We should have caught an assert in the set method because it detects an infinite recursion");
