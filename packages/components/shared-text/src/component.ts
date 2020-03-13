@@ -273,16 +273,21 @@ class TaskScheduler {
         const intelTokens = hostTokens && hostTokens.intelligence
             ? hostTokens.intelligence.textAnalytics
             : undefined;
-        const intelTask: ITask = {
-            id: "intel",
-            instance: new TextAnalyzer(this.sharedString, this.insightsMap, intelTokens),
-        };
-        this.taskManager.register(intelTask);
-        this.taskManager.pick(this.componentUrl, "intel").then(() => {
-            console.log(`Picked text analyzer`);
-        }, (err) => {
-            console.log(JSON.stringify(err));
-        });
+
+        if (intelTokens?.key?.length > 0) {
+            const intelTask: ITask = {
+                id: "intel",
+                instance: new TextAnalyzer(this.sharedString, this.insightsMap, intelTokens),
+            };
+            this.taskManager.register(intelTask);
+            this.taskManager.pick(this.componentUrl, "intel").then(() => {
+                console.log(`Picked text analyzer`);
+            }, (err) => {
+                console.log(JSON.stringify(err));
+            });
+        } else {
+            console.log("No intel key provided.");
+        }
     }
 }
 
