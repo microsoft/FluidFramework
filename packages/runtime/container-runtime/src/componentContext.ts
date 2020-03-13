@@ -281,11 +281,6 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this.componentRuntimeDeferred.promise;
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public getComponentRuntime(id: string, wait: boolean): Promise<IComponentRuntime> {
-        return this._hostRuntime.getComponentRuntime(id, wait);
-    }
-
     /**
      * Notifies this object about changes in the connection state.
      * @param value - New connection state.

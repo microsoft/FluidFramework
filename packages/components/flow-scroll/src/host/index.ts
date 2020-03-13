@@ -134,7 +134,7 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
     private get docId() { return `${this.runtime.id}-doc`; }
 
     private async openCollection(id: string): Promise<IComponentCollection> {
-        const runtime = await this.context.getComponentRuntime(this.root.get(id), true);
+        const runtime = await this.context.hostRuntime.getComponentRuntime(this.root.get(id), true);
         const request = await runtime.request({ url: "/" });
 
         if (request.status !== 200 || request.mimeType !== "fluid/component") {
