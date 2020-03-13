@@ -75,7 +75,7 @@ export function isOdcUrl(url: string|URL): boolean {
  * Returns undefined for invalid/malformed URLs.
  * @param url The (raw) URL to parse
  */
-export function getOdspUrlParts(url: URL): IOdspUrlParts|undefined {
+export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts|undefined> {
     const pathname = url.pathname;
 
     // Joinsession like URL

@@ -18,7 +18,7 @@ export class OdspUrlResolver implements IUrlResolver {
     public async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
         if (isOdspUrl(request.url)) {
             const reqUrl = new URL(request.url);
-            const contents = getOdspUrlParts(reqUrl);
+            const contents = await getOdspUrlParts(reqUrl);
             if (!contents) {
                 return undefined;
             }
