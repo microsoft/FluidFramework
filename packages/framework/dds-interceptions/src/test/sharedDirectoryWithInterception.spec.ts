@@ -5,7 +5,7 @@
 
 import * as assert from "assert";
 import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
-import { SharedDirectory, IDirectory } from "@microsoft/fluid-map";
+import { IDirectory, SharedDirectory, DirectoryFactory } from "@microsoft/fluid-map";
 import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 import { createDirectoryWithInterception } from "../map";
 
@@ -90,7 +90,7 @@ describe("Shared Directory with Interception", () => {
         beforeEach(() => {
             const runtime = new MockRuntime();
             deltaConnectionFactory = new MockDeltaConnectionFactory();
-            sharedDirectory = new SharedDirectory(documentId, runtime);
+            sharedDirectory = new SharedDirectory(documentId, runtime, DirectoryFactory.Attributes);
             runtime.services = {
                 deltaConnection: deltaConnectionFactory.createDeltaConnection(runtime),
                 objectStorage: new MockStorage(undefined),
@@ -261,7 +261,7 @@ describe("Shared Directory with Interception", () => {
                 userAttribution.userEmail, userEmail, "The email set via foo's interception callback should exist");
         });
 
-        it("should be able to see changes made by the underlying shared directory from the wrapper", async () => {
+        it("should be able to see changes made by the wrapper from the underlying shared directory", async () => {
             const sharedDirectoryWithInterception =
                 createDirectoryWithInterception(sharedDirectory, componentContext, setInterceptionCb);
             const key: string = "style";
