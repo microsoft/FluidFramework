@@ -110,7 +110,7 @@ export class TestDocumentStorage implements IDocumentStorage, IExperimentalDocum
                 values,
             },
             sequenceNumber,
-            lastClientSummaryHead: "",
+            lastClientSummaryHead: undefined,
         };
 
         const collection = await this.databaseManager.getDocumentCollection();
@@ -123,6 +123,7 @@ export class TestDocumentStorage implements IDocumentStorage, IExperimentalDocum
                 branchMap: undefined,
                 clients: undefined,
                 createTime: Date.now(),
+                deli: undefined,
                 documentId,
                 forks: [],
                 logOffset: undefined,
@@ -130,6 +131,7 @@ export class TestDocumentStorage implements IDocumentStorage, IExperimentalDocum
                 scribe: JSON.stringify(scribe),
                 sequenceNumber,
                 tenantId,
+                version: "0.1",
             });
 
         return result;
@@ -195,19 +197,15 @@ export class TestDocumentStorage implements IDocumentStorage, IExperimentalDocum
                 branchMap: undefined,
                 clients: undefined,
                 createTime: Date.now(),
+                deli: undefined,
                 documentId,
                 forks: [],
                 logOffset: undefined,
                 parent: null,
-                scribe: JSON.stringify({
-                    lastClientSummaryHead: undefined,
-                    logOffset: -1,
-                    minimumSequenceNumber: -1,
-                    protocolState: undefined,
-                    sequenceNumber: -1,
-                } as IScribe),
+                scribe: undefined,
                 sequenceNumber: StartingSequenceNumber,
                 tenantId,
+                version: "0.1",
             });
 
         return result;

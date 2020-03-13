@@ -75,6 +75,10 @@ export interface IScribe {
 }
 
 export interface IDocument {
+
+    // Schema version
+    version: string;
+
     createTime: number;
 
     documentId: string;
@@ -96,8 +100,7 @@ export interface IDocument {
         minimumSequenceNumber: number;
     };
 
-    // TODO package up the below under some kind of deli object
-    // Deli specific information - we might want to consolidate this into a field to separate it
+    // This field will be deprecated when all documents are updated to latest schema.
     clients: [{
         // Whether deli is allowed to evict the client from the MSN queue (i.e. due to timeouts, etc...)
         canEvict: boolean,
@@ -115,12 +118,18 @@ export interface IDocument {
         scopes: string[],
     }];
 
+    // This field will be deprecated when all documents are updated to latest schema.
     branchMap: IRangeTrackerSnapshot;
 
+    // This field will be deprecated when all documents are updated to latest schema.
     sequenceNumber: number;
 
+    // This field will be deprecated when all documents are updated to latest schema.
     logOffset: number;
 
-    // Scribe tracked summary context
+    // Scribe state
     scribe: string;
+
+    // Deli state
+    deli: string;
 }

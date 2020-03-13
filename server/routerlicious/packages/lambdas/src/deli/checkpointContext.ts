@@ -21,6 +21,7 @@ export interface IClientSequenceNumber {
 
 export interface ICheckpoint extends IDeliCheckpoint {
     queuedMessage: IQueuedMessage;
+    clear?: boolean;
 }
 
 export interface IDeliCheckpoint {
@@ -81,16 +82,21 @@ export class CheckpointContext {
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     private checkpointCore(checkpoint: ICheckpoint) {
+        const deli: string = checkpoint.clear ?
+            "" :
+            JSON.stringify({
+                branchMap: checkpoint.branchMap,
+                clients: checkpoint.clients,
+                logOffset: checkpoint.logOffset,
+                sequenceNumber: checkpoint.sequenceNumber,
+            });
         const updateP = this.collection.update(
             {
                 documentId: this.id,
                 tenantId: this.tenantId,
             },
             {
-                branchMap: checkpoint.branchMap,
-                clients: checkpoint.clients,
-                logOffset: checkpoint.logOffset,
-                sequenceNumber: checkpoint.sequenceNumber,
+                deli,
             },
             null);
 

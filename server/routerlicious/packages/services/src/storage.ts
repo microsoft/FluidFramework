@@ -42,15 +42,6 @@ import * as winston from "winston";
 import { gitHashFile } from "@microsoft/fluid-common-utils";
 
 const StartingSequenceNumber = 0;
-// Disabling so can tag inline but keep strong typing
-// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-const DefaultScribe = JSON.stringify({
-    lastClientSummaryHead: undefined,
-    logOffset: -1,
-    minimumSequenceNumber: -1,
-    protocolState: undefined,
-    sequenceNumber: -1,
-} as IScribe);
 
 export class DocumentStorage implements IDocumentStorage, IExperimentalDocumentStorage {
 
@@ -137,7 +128,7 @@ export class DocumentStorage implements IDocumentStorage, IExperimentalDocumentS
                 values,
             },
             sequenceNumber,
-            lastClientSummaryHead: "",
+            lastClientSummaryHead: undefined,
         };
 
         const collection = await this.databaseManager.getDocumentCollection();
@@ -150,13 +141,15 @@ export class DocumentStorage implements IDocumentStorage, IExperimentalDocumentS
                 branchMap: undefined,
                 clients: undefined,
                 createTime: Date.now(),
+                deli: undefined,
                 documentId,
                 forks: [],
-                logOffset: undefined,
+                logOffset: 0,
                 parent: null,
                 scribe: JSON.stringify(scribe),
                 sequenceNumber,
                 tenantId,
+                version: "0.1",
             });
 
         return result;
@@ -279,18 +272,20 @@ export class DocumentStorage implements IDocumentStorage, IExperimentalDocumentS
                 branchMap: undefined,
                 clients: undefined,
                 createTime: Date.now(),
+                deli: undefined,
                 documentId: name,
                 forks: [],
-                logOffset: undefined,
+                logOffset: 0,
                 parent: {
                     documentId: id,
                     minimumSequenceNumber,
                     sequenceNumber,
                     tenantId,
                 },
-                scribe: DefaultScribe,
+                scribe: undefined,
                 sequenceNumber,
                 tenantId,
+                version: "0.1",
             });
         const updateParent = await collection.update(
             {
@@ -326,13 +321,15 @@ export class DocumentStorage implements IDocumentStorage, IExperimentalDocumentS
                 branchMap: undefined,
                 clients: undefined,
                 createTime: Date.now(),
+                deli: undefined,
                 documentId,
                 forks: [],
-                logOffset: undefined,
+                logOffset: 0,
                 parent: null,
-                scribe: DefaultScribe,
+                scribe: undefined,
                 sequenceNumber: StartingSequenceNumber,
                 tenantId,
+                version: "0.1",
             });
 
         return result;

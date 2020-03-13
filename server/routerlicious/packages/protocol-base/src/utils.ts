@@ -19,7 +19,8 @@ export const isSystemType = (type: string) => (
         type === MessageType.Integrate ||
         type === MessageType.ClientJoin ||
         type === MessageType.ClientLeave ||
-        type === MessageType.Fork);
+        type === MessageType.Fork ||
+        type === MessageType.Control);
 
 export function raiseConnectedEvent(emitter: EventEmitter, state: ConnectionState, clientId: string) {
     if (state === ConnectionState.Connected) {
