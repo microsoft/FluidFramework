@@ -43,8 +43,8 @@ const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
  * clients
  */
 export class OdspDocumentService implements IDocumentService {
-    readonly policy = {
-        caching: CachingPolicy.Prefetch,
+    readonly servicePolicy = {
+        serviceCachingImpl: CachingPolicy.Prefetch,
     };
 
     /**

@@ -824,11 +824,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         if (!this.service) {
             throw new Error("Not attached");
         }
-        const storageService = await this.service.connectToStorage();
-        if (this.service.policy?.caching === CachingPolicy.Prefetch) {
-            return storageService;
+        let storageService = await this.service.connectToStorage();
+        if (this.service.servicePolicy?.serviceCachingImpl !== CachingPolicy.Prefetch) {
+            storageService = new PrefetchDocumentStorageService(storageService);
         }
-        return new PrefetchDocumentStorageService(storageService);
+        return storageService;
     }
 
     private async getDocumentAttributes(

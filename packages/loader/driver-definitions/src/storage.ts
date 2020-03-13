@@ -211,7 +211,7 @@ export enum CachingPolicy {
 }
 
 export interface IDocumentServicePolicy {
-    readonly caching: CachingPolicy;
+    readonly serviceCachingImpl: CachingPolicy;
 }
 
 export interface IDocumentService {
@@ -243,7 +243,7 @@ export interface IDocumentService {
     /**
      * Get policies implemented by driver
      */
-    policy?: IDocumentServicePolicy;
+    servicePolicy?: IDocumentServicePolicy;
 }
 
 export interface IDocumentServiceFactory {
