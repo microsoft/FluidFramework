@@ -5,7 +5,7 @@
 
 import * as assert from "assert";
 import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
-import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
+import { ISharedMap, SharedMap, MapFactory } from "@microsoft/fluid-map";
 import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 import { createSharedMapWithInterception } from "../map";
 
@@ -34,7 +34,7 @@ describe("Shared Map with Interception", () => {
         beforeEach(() => {
             const runtime = new MockRuntime();
             deltaConnectionFactory = new MockDeltaConnectionFactory();
-            sharedMap = new SharedMap(documentId, runtime);
+            sharedMap = new SharedMap(documentId, runtime, MapFactory.Attributes);
             runtime.services = {
                 deltaConnection: deltaConnectionFactory.createDeltaConnection(runtime),
                 objectStorage: new MockStorage(undefined),
