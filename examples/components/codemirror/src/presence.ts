@@ -146,17 +146,16 @@ export class CodeMirrorPresenceManager extends EventEmitter {
 
         this.presenceManager.on("newPresence", (presenceInfo: IPresenceInfo) => {
             if (this.presenceMap.has(presenceInfo.userId)) {
-                const previousUserInfo = this.presenceMap.get(presenceInfo.userId);
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                const previousUserInfo = this.presenceMap.get(presenceInfo.userId)!;
 
-                if (previousUserInfo) {
-                    // Clean all the previous markers
-                    previousUserInfo.markers.forEach((marker) => {
-                        marker.clear();
-                    });
+                // Clean all the previous markers
+                previousUserInfo.markers.forEach((marker) => {
+                    marker.clear();
+                });
 
-                    // Clean the previous cursor
-                    previousUserInfo.cursor.remove();
-                }
+                // Clean the previous cursor
+                previousUserInfo.cursor.remove();
             }
 
             // Selection highlighting

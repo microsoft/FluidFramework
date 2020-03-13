@@ -58,7 +58,7 @@ export class ImageGalleryComponent extends PrimedComponent implements IComponent
         ReactDOM.render(
             <ImageGallery
                 // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-                ref={(gallery) => (this.imageGallery = gallery? gallery : undefined)}
+                ref={(gallery) => (this.imageGallery = gallery ?? undefined)}
                 items={this.imageList}
                 onSlide={onSlide}
                 slideDuration={10}
