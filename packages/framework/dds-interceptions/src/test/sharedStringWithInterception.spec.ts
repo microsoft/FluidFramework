@@ -49,7 +49,7 @@ describe("Shared String with Interception", () => {
                 createSharedStringWithInterception(sharedString, componentContext, propertyInterceptionCb);
         });
 
-        it("should be able to intercept SharedString methods by the interception", async () => {
+        it("should be able to intercept SharedString methods by the wrapper", async () => {
             // Insert text into shared string.
             sharedStringWithInterception.insertText(0, "123", { style: "bold" });
             assert.equal(sharedStringWithInterception.getText(), "123", "The text should match the inserted text");
@@ -75,8 +75,8 @@ describe("Shared String with Interception", () => {
             assert.equal(propsAfterAnnotate.userId, userId, "The userId set via interception callback should exist");
         });
 
-        it("should be able to see changes made by the interception from the underlying shared string", async () => {
-            // Insert text via the shared string with interception.
+        it("should be able to see changes made by the wrapper from the underlying shared string", async () => {
+            // Insert text via the shared string with interception wrapper.
             sharedStringWithInterception.insertText(0, "123", { style: "bold" });
 
             // Get the text and properties via the underlying shared string.
@@ -85,7 +85,7 @@ describe("Shared String with Interception", () => {
             assert.equal(props.style, "bold", "The style set via insertText should exist");
             assert.equal(props.userId, userId, "The userId set via interception callback should exist");
 
-            // Replace text via the shared string with interception.
+            // Replace text via the shared string with interception wrapper.
             sharedStringWithInterception.replaceText(2, 3, "aaa", { style: "italics" });
 
             // Get the text and properties via the underlying shared string.
@@ -94,7 +94,7 @@ describe("Shared String with Interception", () => {
             assert.equal(propsAfterReplace.style, "italics", "The new style set via replaceText should exist");
             assert.equal(propsAfterReplace.userId, userId, "The userId set via interception callback should exist");
 
-            // Annotate via the shared string with interception.
+            // Annotate via the shared string with interception wrapper.
             sharedStringWithInterception.annotateRange(0, 5, { color: "green" });
 
             // Get the text and properties via the underlying shared string.
@@ -104,11 +104,11 @@ describe("Shared String with Interception", () => {
             assert.equal(propsAfterAnnotate.userId, userId, "The userId set via interception callback should exist");
         });
 
-        it("should be able to see changes made by the underlying shared string from the interception", async () => {
+        it("should be able to see changes made by the underlying shared string from the wrapper", async () => {
             // Insert text via the underlying shared string.
             sharedString.insertText(0, "123", { style: "bold" });
 
-            // Get the text and properties via the shared string interception.
+            // Get the text and properties via the shared string with interception wrapper.
             assert.equal(sharedStringWithInterception.getText(), "123", "The text should match the inserted text");
             const props = sharedStringWithInterception.getPropertiesAtPosition(2);
             assert.equal(props.style, "bold", "The style set via insertText should exist");
@@ -118,7 +118,7 @@ describe("Shared String with Interception", () => {
             // Replace text via the underlying shared string.
             sharedString.replaceText(2, 3, "aaa", { style: "italics" });
 
-            // Get the text and properties via the shared string interception.
+            // Get the text and properties via the shared string wtih interception wrapper.
             assert.equal(sharedStringWithInterception.getText(), "12aaa", "The text should match the replaced text");
             const propsAfterReplace = sharedStringWithInterception.getPropertiesAtPosition(2);
             assert.equal(propsAfterReplace.style, "italics", "The new style set via replaceText should exist");
@@ -128,7 +128,7 @@ describe("Shared String with Interception", () => {
             // Annotate via the underlying shared string.
             sharedString.annotateRange(0, 5, { color: "green" });
 
-            // Get the text and properties via the shared string with interception.
+            // Get the text and properties via the shared string with interception wrapper.
             const propsAfterAnnotate = sharedStringWithInterception.getPropertiesAtPosition(2);
             assert.equal(propsAfterAnnotate.style, "italics", "The previous style should exist");
             assert.equal(propsAfterAnnotate.color, "green", "The color set via annotateRange should exist");

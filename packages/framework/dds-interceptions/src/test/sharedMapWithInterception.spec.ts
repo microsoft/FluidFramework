@@ -32,6 +32,10 @@ describe("Shared Map with Interception", () => {
             map.set(attributionKey(key), userId);
         }
 
+        function recursiveInterceptionCb(map: ISharedMap, key: string, value: any): void {
+            sharedMapWithInterception.set(attributionKey(key), userId);
+        }
+
         beforeEach(() => {
             const runtime = new MockRuntime();
             deltaConnectionFactory = new MockDeltaConnectionFactory();
@@ -48,7 +52,7 @@ describe("Shared Map with Interception", () => {
                 createSharedMapWithInterception(sharedMap, componentContext, interceptionCb);
         });
 
-        it("should be able to intercept SharedMap set method in the interception", async () => {
+        it("should be able to intercept SharedMap set method in the wrapper", async () => {
             const key: string = "color";
             const value: string = "green";
             sharedMapWithInterception.set(key, value);
@@ -56,7 +60,7 @@ describe("Shared Map with Interception", () => {
             assert.equal(sharedMapWithInterception.get(attributionKey(key)), userId);
         });
 
-        it("should be able to see changes made by the interception from the underlying shared map", async () => {
+        it("should be able to see changes made by the wrapper from the underlying shared map", async () => {
             const key: string = "style";
             const value: string = "bold";
             sharedMapWithInterception.set(key, value);
@@ -64,13 +68,25 @@ describe("Shared Map with Interception", () => {
             assert.equal(sharedMap.get(attributionKey(key)), userId);
         });
 
-        it("should be able to see changes made by the underlying shared map from the interception", async () => {
+        it("should be able to see changes made by the underlying shared map from the wrapper", async () => {
             const key: string = "font";
             const value: string = "Arial";
             sharedMap.set(key, value);
             assert.equal(sharedMapWithInterception.get(key), value);
             // The userId should not exist because there should be no interception.
             assert.equal(sharedMapWithInterception.get(attributionKey(key)), undefined);
+        });
+
+        it("should not create an infinite recursion if set is called on the wrapper from the callback", async () => {
+            // Create the interception wrapper with a callback that calls set on the wrapper. This should not result
+            // in calling set in infinite recursion.
+            sharedMapWithInterception =
+                createSharedMapWithInterception(sharedMap, componentContext, recursiveInterceptionCb);
+            const key: string = "font";
+            const value: string = "Arial";
+            sharedMapWithInterception.set(key, value);
+            assert.equal(sharedMapWithInterception.get(key), value);
+            assert.equal(sharedMapWithInterception.get(attributionKey(key)), userId);
         });
     });
 });

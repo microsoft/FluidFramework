@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+//import * as assert from "assert";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 
@@ -24,11 +25,21 @@ export function createSharedMapWithInterception(
     setInterceptionCallback: (sharedMap: ISharedMap, key: string, value: any) => void): SharedMap {
     const sharedMapWithInterception = Object.create(sharedMap);
 
+    // executingCallback keeps track of whether set is called from the setInterceptionCallback. In that case,
+    // we do not call the callback again because that would result in infinite recursion. We will still set
+    // the key to keep the behavior similar to if set was called on the underlying SharedMap.
+    let executingCallback: boolean = false;
+
     sharedMapWithInterception.set = (key: string, value: any) => {
         let map;
         context.hostRuntime.orderSequentially(() => {
             map = sharedMap.set(key, value);
-            setInterceptionCallback(sharedMap, key, value);
+            // If we are in the middle of executing a previous callback, do not call it again.
+            if (!executingCallback) {
+                executingCallback = true;
+                setInterceptionCallback(sharedMap, key, value);
+                executingCallback = false;
+            }
         });
         return map;
     };
