@@ -9,7 +9,7 @@ import { IOdspUrlParts } from "./contracts";
 
 /**
  * Checks whether or not the given URL origin is an ODC origin
- * @param origin The URL origin to check
+ * @param origin - The URL origin to check
  */
 export function isOdcOrigin(origin: string): boolean {
     return (
@@ -24,7 +24,7 @@ export function isOdcOrigin(origin: string): boolean {
 
 /**
  * Gets the correct API root for the given ODSP url, e.g. 'https://foo-my.sharepoint.com/_api/v2.1'
- * @param origin The URL origin
+ * @param origin - The URL origin
  */
 export function getApiRoot(origin: string): string {
     let prefix = "_api/";
@@ -37,7 +37,7 @@ export function getApiRoot(origin: string): string {
 
 /**
  * Whether or not the given URL is a valid SPO/ODB URL
- * @param url The URL to check
+ * @param url - The URL to check
  */
 export function isSpoUrl(url: string): boolean {
     const urlLower = url.toLowerCase();
@@ -49,7 +49,7 @@ export function isSpoUrl(url: string): boolean {
 
 /**
  * Whether or not the given URL is a valid ODC URL
- * @param url The URL to check
+ * @param url - The URL to check
  */
 export function isOdcUrl(url: string|URL): boolean {
     const urlObj = typeof url === "string" ? new URL(url) : url;
@@ -73,7 +73,7 @@ export function isOdcUrl(url: string|URL): boolean {
 /**
  * Breaks an ODSP URL into its parts, extracting the site, drive ID, and item ID.
  * Returns undefined for invalid/malformed URLs.
- * @param url The (raw) URL to parse
+ * @param url - The (raw) URL to parse
  */
 export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts|undefined> {
     const pathname = url.pathname;
