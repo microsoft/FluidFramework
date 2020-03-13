@@ -17,6 +17,8 @@ export function isOdcOrigin(origin: string): boolean {
         origin.includes("onedrive.com") ||
         // *storage.live.com hostnames
         origin.includes("storage.live.com") ||
+        // live-int
+        origin.includes("storage.live-int.com") ||
         // Test endpoints
         origin.includes("onedrive-tst.com")
     );
