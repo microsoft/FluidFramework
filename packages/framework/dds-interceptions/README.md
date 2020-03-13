@@ -26,7 +26,7 @@ function createSharedMapWithInterception(
     setInterceptionCallback: (sharedMap: ISharedMap, key: string, value: any) => void): SharedMap;
 ```
 
-When set is called on the SharedMap, it calls setInterceptionCallback with the underlying SharedMap, the given key and value. The callback funtion can then perform operations on either the underlying SharedMap or any other DDS. The original set operation and any operations in the callback are batched, i.e., they are guaranteed to be in order and will be applied together.
+When set is called on the SharedMap, it calls setInterceptionCallback with the underlying SharedMap, the key and value that the set was called with. The callback funtion can then perform operations on either the underlying SharedMap or any other DDS. The original set operation and any operations in the callback are batched, i.e., they are guaranteed to be in order and will be applied together.
 
 ## Shared Directory / Sub Directory With Interception
 
