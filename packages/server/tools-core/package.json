@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-server-tools-core",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "description": "Fluid service lambdas",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -11,7 +11,6 @@
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint",
     "build:compile": "npm run tsc",
-    "build:compile:min": "npm run build:compile",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "build:genver": "gen-version",
@@ -23,14 +22,14 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluid-internal/client-api": "^0.14.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.14.0",
-    "@microsoft/fluid-container-definitions": "^0.14.0",
-    "@microsoft/fluid-map": "^0.14.0",
-    "@microsoft/fluid-merge-tree": "^0.14.0",
+    "@fluid-internal/client-api": "^0.15.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.15.0",
+    "@microsoft/fluid-container-definitions": "^0.15.0",
+    "@microsoft/fluid-map": "^0.15.0",
+    "@microsoft/fluid-merge-tree": "^0.15.0",
     "@microsoft/fluid-protocol-definitions": "^0.1002.0",
-    "@microsoft/fluid-runtime-definitions": "^0.14.0",
-    "@microsoft/fluid-sequence": "^0.14.0",
+    "@microsoft/fluid-runtime-definitions": "^0.15.0",
+    "@microsoft/fluid-sequence": "^0.15.0",
     "async": "^2.6.1",
     "debug": "^4.1.1",
     "lodash": "^4.17.11"

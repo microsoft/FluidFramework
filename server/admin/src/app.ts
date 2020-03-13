@@ -19,6 +19,7 @@ import * as passport from "passport";
 import * as passportOpenIdConnect from "passport-openidconnect";
 import * as path from "path";
 import * as redis from "redis";
+import * as favicon from "serve-favicon";
 import split = require("split");
 import * as expiry from "static-expiry";
 import * as winston from "winston";
@@ -156,6 +157,7 @@ export function create(config: Provider, mongoManager: core.MongoManager) {
     app.set("view engine", "hjs");
 
     app.use(compression());
+    app.use(favicon(path.join(__dirname, "../public", "favicon.ico")));
     // TODO we probably want to switch morgan to use the common format in prod
     app.use(morgan(config.get("logger:morganFormat"), { stream }));
 
@@ -195,9 +197,6 @@ export function create(config: Provider, mongoManager: core.MongoManager) {
     const routes = appRoutes.create(config, mongoManager, tenantManager);
     app.use("/api", routes.api);
     app.use("/", routes.home);
-
-    // No favicon is served.
-    app.get("/favicon.ico", (req, res) => res.status(204));
 
     // catch 404 and forward to error handler
     app.use((req, res, next) => {

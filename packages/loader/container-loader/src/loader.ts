@@ -4,7 +4,6 @@
  */
 
 import { EventEmitter } from "events";
-import { parse } from "url";
 import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
 import {
     IComponent,
@@ -27,28 +26,19 @@ import {
     IResolvedUrl,
     IUrlResolver,
 } from "@microsoft/fluid-driver-definitions";
-import { configurableUrlResolver } from "@microsoft/fluid-driver-utils";
+import {
+    configurableUrlResolver,
+    DocumentServiceFactoryProtocolMatcher,
+} from "@microsoft/fluid-driver-utils";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { Container } from "./container";
 import { debug } from "./debug";
+import { IParsedUrl, parseUrl } from "./utils";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const now = require("performance-now") as () => number;
 
-interface IParsedUrl {
-    id: string;
-    path: string;
-    /**
-     * Null means do not use snapshots, undefined means load latest snapshot
-     * otherwise it's version ID passed to IDocumentStorageService.getVersions() to figure out what snapshot to use.
-     * If needed, can add undefined which is treated by Container.load() as load latest snapshot.
-     */
-    version: string | null | undefined;
-}
-
-export class RelativeLoader extends EventEmitter implements ILoader, IExperimentalLoader {
-
-    public readonly isExperimentalLoader = true;
+export class RelativeLoader extends EventEmitter implements ILoader {
 
     // Because the loader is passed to the container during construction we need to resolve the target container
     // after construction.
@@ -58,7 +48,10 @@ export class RelativeLoader extends EventEmitter implements ILoader, IExperiment
      * BaseRequest is the original request that triggered the load. This URL is used in case credentials need
      * to be fetched again.
      */
-    constructor(private readonly loader: Loader, private readonly baseRequest: IRequest) {
+    constructor(
+        private readonly loader: Loader,
+        private readonly baseRequest: () => IRequest | undefined,
+    ) {
         super();
     }
 
@@ -73,22 +66,27 @@ export class RelativeLoader extends EventEmitter implements ILoader, IExperiment
     }
 
     public async request(request: IRequest): Promise<IResponse> {
+        const baseRequest = this.baseRequest();
         if (request.url.startsWith("/")) {
             if (this.needExecutionContext(request)) {
-                return this.loader.requestWorker(this.baseRequest.url, request);
+                if (!baseRequest) {
+                    throw new Error("Base Request is not provided");
+                }
+                return this.loader.requestWorker(baseRequest.url, request);
             } else {
-                const container = this.canUseCache(request)
-                    ? await this.containerDeferred.promise
-                    : await this.loader.resolve({ url: this.baseRequest.url, headers: request.headers });
+                let container: Container;
+                if (this.canUseCache(request)) {
+                    container = await this.containerDeferred.promise;
+                } else if (!baseRequest) {
+                    throw new Error("Base Request is not provided");
+                } else {
+                    container = await this.loader.resolve({ url: baseRequest.url, headers: request.headers });
+                }
                 return container.request(request);
             }
         }
 
         return this.loader.request(request);
-    }
-
-    public async experimentalCreateDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
-        throw new Error("Method not implemented.");
     }
 
     public resolveContainer(container: Container) {
@@ -113,53 +111,13 @@ export class RelativeLoader extends EventEmitter implements ILoader, IExperiment
 }
 
 /**
- * Api that selects a document service factory from the factory map provided according to protocol
- * in resolved URL.
- * @param resolvedAsFluid - Resolved fluid URL containing driver protocol
- * @param protocolToDocumentFactoryMap - Map of protocol name to factories from which one factory
- * is selected according to protocol.
- */
-export function selectDocumentServiceFactoryForProtocol(
-    resolvedAsFluid: IFluidResolvedUrl,
-    protocolToDocumentFactoryMap: Map<string, IDocumentServiceFactory>,
-): IDocumentServiceFactory {
-    const urlObj = parse(resolvedAsFluid.url);
-    if (!urlObj.protocol) {
-        throw new Error("No protocol provided");
-    }
-    const factory: IDocumentServiceFactory | undefined = protocolToDocumentFactoryMap.get(urlObj.protocol);
-    if (!factory) {
-        throw new Error("Unknown fluid protocol");
-    }
-    return factory;
-}
-
-/**
- * Api that creates the protocol to factory map.
- * @param documentServiceFactories - A single factory or array of document factories.
- */
-export function createProtocolToFactoryMapping(
-    documentServiceFactories: IDocumentServiceFactory | IDocumentServiceFactory[],
-): Map<string, IDocumentServiceFactory> {
-    const protocolToDocumentFactoryMap: Map<string, IDocumentServiceFactory> = new Map();
-    if (Array.isArray(documentServiceFactories)) {
-        documentServiceFactories.forEach((factory: IDocumentServiceFactory) => {
-            protocolToDocumentFactoryMap.set(factory.protocolName, factory);
-        });
-    } else {
-        protocolToDocumentFactoryMap.set(documentServiceFactories.protocolName, documentServiceFactories);
-    }
-    return protocolToDocumentFactoryMap;
-}
-
-/**
  * Manages Fluid resource loading
  */
 export class Loader extends EventEmitter implements ILoader, IExperimentalLoader {
 
     private readonly containers = new Map<string, Promise<Container>>();
     private readonly resolveCache = new Map<string, IResolvedUrl>();
-    private readonly protocolToDocumentFactoryMap: Map<string, IDocumentServiceFactory>;
+    private readonly protocolToDocumentFactoryMap: DocumentServiceFactoryProtocolMatcher;
 
     public readonly isExperimentalLoader = true;
 
@@ -186,11 +144,22 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
             throw new Error("An ICodeLoader must be provided");
         }
 
-        this.protocolToDocumentFactoryMap = createProtocolToFactoryMapping(documentServiceFactories);
+        this.protocolToDocumentFactoryMap = new DocumentServiceFactoryProtocolMatcher(documentServiceFactories);
     }
 
-    public async experimentalCreateDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
-        throw new Error("Method not implemented.");
+    public async createDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
+        debug(`Container creating in detached state: ${now()} `);
+
+        return Container.create(
+            this.codeLoader,
+            this.options,
+            this.scope,
+            this,
+            source,
+            (resolvedUrl: IFluidResolvedUrl) => {
+                return this.protocolToDocumentFactoryMap.getFactory(resolvedUrl);
+            },
+            this.logger);
     }
 
     public async resolve(request: IRequest): Promise<Container> {
@@ -221,7 +190,7 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
         } else {
             const resolved = await this.getResolvedUrl({ url: baseUrl, headers: request.headers });
             const resolvedAsFluid = resolved as IFluidResolvedUrl;
-            const parsed = this.parseUrl(resolvedAsFluid.url);
+            const parsed = parseUrl(resolvedAsFluid.url);
             if (!parsed) {
                 return Promise.reject(`Invalid URL ${resolvedAsFluid.url}`);
             }
@@ -235,17 +204,6 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
             );
             return proxyLoader.request(request);
         }
-    }
-
-    private parseUrl(url: string): IParsedUrl | null {
-        const parsed = parse(url, true);
-
-        const regex = /^\/([^/]*\/[^/]*)(\/?.*)$/;
-        const match = regex.exec(parsed.pathname!);
-
-        return (match && match.length === 3)
-            ? { id: match[1], path: match[2], version: parsed.query.version as string }
-            : null;
     }
 
     private async getResolvedUrl(request: IRequest): Promise<IResolvedUrl> {
@@ -283,7 +241,7 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
         }
 
         // Parse URL into components
-        const parsed = this.parseUrl(resolvedAsFluid.url);
+        const parsed = parseUrl(resolvedAsFluid.url);
         if (!parsed) {
             return Promise.reject(`Invalid URL ${resolvedAsFluid.url}`);
         }
@@ -293,7 +251,7 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
 
         debug(`${canCache} ${request.headers[LoaderHeader.pause]} ${request.headers[LoaderHeader.version]}`);
         const factory: IDocumentServiceFactory =
-            selectDocumentServiceFactoryForProtocol(resolvedAsFluid, this.protocolToDocumentFactoryMap);
+            this.protocolToDocumentFactoryMap.getFactory(resolvedAsFluid);
 
         let container: Container;
         if (canCache) {

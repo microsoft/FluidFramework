@@ -25,6 +25,7 @@ import {
     IRuntime,
     IRuntimeState,
     IExperimentalRuntime,
+    IExperimentalContainerContext,
 } from "@microsoft/fluid-container-definitions";
 import {
     Deferred,
@@ -400,7 +401,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         // Create all internal components in first load.
         if (!context.existing) {
             await runtime.createComponent(schedulerId, schedulerId)
-                .then((componentRuntime) => componentRuntime.attach());
+                .then((componentRuntime) => {
+                    componentRuntime.attach();
+                });
         }
 
         runtime.subscribeToLeadership();
@@ -428,7 +431,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.context.options;
     }
 
-    public get clientId(): string {
+    public get clientId(): string | undefined {
         return this.context.clientId;
     }
 
@@ -515,13 +518,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.connectionState === ConnectionState.Connected;
     }
 
-    // Almost the same as IAgentScheduler.leader (this._leader),
-    // but returns false if disconnected
     public get leader(): boolean {
-        if (this.connected && this.deltaManager && this.deltaManager.active) {
-            return this._leader;
-        }
-        return false;
+        return this._leader;
     }
 
     public get summarizerClientId(): string {
@@ -534,8 +532,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             : DefaultSummaryConfiguration;
     }
 
+    private _disposed = false;
+    public get disposed() { return this._disposed; }
+
     // Components tracked by the Domain
-    private closed = false;
     private readonly pendingAttach = new Map<string, IAttachMessage>();
     private dirtyDocument = false;
     private readonly summarizer: Summarizer;
@@ -552,8 +552,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     // on its creation). This is a superset of contexts.
     private readonly contextsDeferred = new Map<string, Deferred<ComponentContext>>();
 
-    private loadedFromSummary: boolean;
-
     private constructor(
         private readonly context: IContainerContext,
         private readonly registry: IComponentRegistry,
@@ -565,10 +563,12 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         this.chunkMap = new Map<string, string[]>(chunks);
 
+        const expContainerContext = this.context as IExperimentalContainerContext;
         this.IComponentHandleContext = new ComponentHandleContext("", this);
 
         // useContext - back-compat: 0.14 uploadSummary
-        const useContext = this.storage.uploadSummaryWithContext !== undefined;
+        const useContext: boolean = expContainerContext.isExperimentalContainerContext ?
+            true : this.storage.uploadSummaryWithContext !== undefined;
         this.latestSummaryAck = { proposalHandle: undefined, ackHandle: undefined };
         this.summaryTracker = new SummaryTracker(
             useContext,
@@ -580,19 +580,13 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.summaryTreeConverter = new SummaryTreeConverter(useContext);
 
         // Extract components stored inside the snapshot
-        this.loadedFromSummary = context.baseSnapshot?.trees[".protocol"] ? true : false;
         const components = new Map<string, ISnapshotTree | string>();
-        if (this.loadedFromSummary) {
+        if (context.baseSnapshot) {
             Object.keys(context.baseSnapshot.trees).forEach((value) => {
                 if (value !== ".protocol") {
                     const tree = context.baseSnapshot.trees[value];
                     components.set(value, tree);
                 }
-            });
-        } else if (context.baseSnapshot) {
-            Object.keys(context.baseSnapshot.commits).forEach((key) => {
-                const moduleId = context.baseSnapshot.commits[key];
-                components.set(key, moduleId);
             });
         }
 
@@ -637,7 +631,11 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.clearPartialChunks(clientId);
         });
 
-        this.previousState = this.context.previousRuntimeState.state as IPreviousState ?? {};
+        if (this.context.previousRuntimeState === undefined || this.context.previousRuntimeState.state === undefined) {
+            this.previousState = {};
+        } else {
+            this.previousState = this.context.previousRuntimeState.state as IPreviousState;
+        }
 
         // We always create the summarizer in the case that we are asked to generate summaries. But this may
         // want to be on demand instead.
@@ -647,14 +645,14 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             "/_summarizer",
             this,
             () => this.summaryConfiguration,
-            async (safe: boolean) => this.generateSummary(!this.loadedFromSummary, safe),
+            async (full: boolean, safe: boolean) => this.generateSummary(full, safe),
             async (summContext, refSeq) => this.refreshLatestSummaryAck(summContext, refSeq),
             this.previousState.summaryCollection);
 
         // Create the SummaryManager and mark the initial state
         this.summaryManager = new SummaryManager(
             context,
-            this.runtimeOptions.generateSummaries !== false || this.loadedFromSummary,
+            this.runtimeOptions.generateSummaries !== false,
             this.runtimeOptions.enableWorker,
             this.logger,
             (summarizer) => { this.nextSummarizerP = summarizer; },
@@ -666,6 +664,25 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         }
 
         ReportConnectionTelemetry(this.context.clientId, this.deltaManager, this.logger);
+    }
+
+    public dispose(): void {
+        if (this._disposed) {
+            return;
+        }
+        this._disposed = true;
+
+        this.summaryManager.dispose();
+        this.summarizer.dispose();
+
+        // close/stop all component contexts
+        for (const [componentId, contextD] of this.contextsDeferred) {
+            contextD.promise.then((context) => {
+                context.dispose();
+            }).catch((error) => {
+                this.logger.sendErrorEvent({eventName: "ComponentContextDisposeError", componentId}, error);
+            });
+        }
     }
 
     public get IComponentTokenProvider() {
@@ -735,16 +752,17 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
     public async stop(): Promise<IRuntimeState> {
         this.verifyNotClosed();
-        const snapshot = await this.snapshot("", false);
-        this.summaryManager.dispose();
-        this.summarizer.dispose();
-        this.closed = true;
+
+        const snapshot = await this.snapshot("", true);
         const state: IPreviousState = {
             reload: true,
             summaryCollection: this.summarizer.summaryCollection,
             nextSummarizerP: this.nextSummarizerP,
             nextSummarizerD: this.nextSummarizerD,
         };
+
+        this.dispose();
+
         return { snapshot, state };
     }
 
@@ -781,7 +799,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         if (value === ConnectionState.Connected) {
             this.summaryManager.setConnected(clientId);
         } else {
-            this.updateLeader();
+            assert(!this._leader);
             this.summaryManager.setDisconnected();
         }
     }
@@ -835,15 +853,16 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.verifyNotClosed();
 
         if (!this.contextsDeferred.has(id)) {
-            if (!wait) {
-                return Promise.reject(`Process ${id} does not exist`);
-            }
-
             // Add in a deferred that will resolve once the process ID arrives
             this.contextsDeferred.set(id, new Deferred<ComponentContext>());
         }
+        const deferredContext = this.contextsDeferred.get(id);
 
-        const componentContext = await this.contextsDeferred.get(id).promise;
+        if (!wait && !deferredContext.isCompleted) {
+            return Promise.reject(`Process ${id} does not exist`);
+        }
+
+        const componentContext = await deferredContext.promise;
         return componentContext.realize();
     }
 
@@ -988,10 +1007,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.context.submitSignalFn(envelope);
     }
 
-    public experimentalAttachServices(storageService: IDocumentStorageService): void {
-        throw new Error("Method not implemented");
-    }
-
     /**
      * Returns a summary of the runtime at the current sequence number.
      */
@@ -1111,16 +1126,28 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.verifyNotClosed();
 
         const context = this.contexts.get(componentRuntime.id);
-        const message = context.generateAttachMessage();
+        // If storage is not available then we are not yet fully attached and so will defer to the initial snapshot
+        const expContainerContext = this.context as IExperimentalContainerContext;
+        if (expContainerContext?.isExperimentalContainerContext ? expContainerContext.isAttached() : true) {
+            const message = context.generateAttachMessage();
 
-        this.pendingAttach.set(componentRuntime.id, message);
-        if (this.connected) {
-            this.submit(MessageType.Attach, message);
+            this.pendingAttach.set(componentRuntime.id, message);
+            if (this.connected) {
+                this.submit(MessageType.Attach, message);
+            }
         }
 
         // Resolve the deferred so other local components can access it.
         const deferred = this.contextsDeferred.get(componentRuntime.id);
         deferred.resolve(context);
+    }
+
+    public async createSummary(): Promise<ISummaryTree> {
+        // TODO - https://github.com/microsoft/FluidFramework/issues/1430
+        // TODO - https://github.com/microsoft/FluidFramework/issues/1431
+        const treeWithStats = await this.summarize(true);
+
+        return treeWithStats.summaryTree;
     }
 
     private async generateSummary(fullTree: boolean = false, safe: boolean = false): Promise<GenerateSummaryData> {
@@ -1321,7 +1348,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     private verifyNotClosed() {
-        if (this.closed) {
+        if (this._disposed) {
             throw new Error("Runtime is closed");
         }
     }
@@ -1352,18 +1379,26 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     private subscribeToLeadership() {
         if (this.context.clientDetails.capabilities.interactive) {
             this.getScheduler().then((scheduler) => {
-                if (scheduler.leader) {
-                    this.updateLeader(true);
-                }
-                scheduler.on("leader", () => {
+                const LeaderTaskId = "leader";
+
+                // Each client expresses interest to be a leader.
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                scheduler.pick(LeaderTaskId, async () => {
+                    assert(!this._leader);
                     this.updateLeader(true);
                 });
-                scheduler.on("notleader", () => {
-                    this.updateLeader(false);
+
+                scheduler.on("lost", (key) => {
+                    if (key === LeaderTaskId) {
+                        assert(this._leader);
+                        this._leader = false;
+                        this.updateLeader(false);
+                    }
                 });
-            }, (err) => {
-                debug(err);
+            }).catch((err) => {
+                this.logger.sendErrorEvent({eventName: "ContainerRuntime_getScheduler"}, err);
             });
+
             this.context.quorum.on("removeMember", (clientId: string) => {
                 if (this.leader) {
                     this.runTaskAnalyzer();
@@ -1379,11 +1414,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return schedulerComponent.IAgentScheduler;
     }
 
-    private updateLeader(leadership?: boolean) {
-        if (leadership !== undefined) {
-            this._leader = leadership;
-        }
+    private updateLeader(leadership: boolean) {
+        this._leader = leadership;
         if (this.leader) {
+            assert(this.connected && this.deltaManager && this.deltaManager.active);
             this.emit("leader", this.clientId);
         } else {
             this.emit("noleader", this.clientId);
@@ -1434,9 +1468,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         if (referenceSequenceNumber < this.summaryTracker.referenceSequenceNumber) {
             return;
         }
-
-        // Only called from summaries
-        this.loadedFromSummary = true;
 
         const snapshotTree = new LazyPromise(async () => {
             // We have to call get version to get the treeId for r11s; this isnt needed

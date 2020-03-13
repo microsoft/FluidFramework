@@ -76,13 +76,17 @@ export class Package {
         chalk.default.whiteBright,
     ];
 
-    public readonly packageJson: Readonly<IPackage>;
+    public get packageJson(): Readonly<IPackage> {
+        return this._packageJson;
+    }
     private readonly packageId = Package.packageCount++;
     private _matched: boolean = false;
     private _markForBuild: boolean = false;
 
+    private _packageJson: IPackage;
+
     constructor(private readonly packageJsonFileName: string) {
-        this.packageJson = require(packageJsonFileName);
+        this._packageJson = require(packageJsonFileName);
         logVerbose(`Package Loaded: ${this.nameColored}`);
     }
 
@@ -122,10 +126,10 @@ export class Package {
     public get combinedDependencies() {
         const it = function* (packageJson: IPackage) {
             for (const item in packageJson.dependencies) {
-                yield ({ name: item, version: packageJson.dependencies[item] });
+                yield ({ name: item, version: packageJson.dependencies[item], dev: false });
             }
             for (const item in packageJson.devDependencies) {
-                yield ({ name: item, version: packageJson.devDependencies[item] });
+                yield ({ name: item, version: packageJson.devDependencies[item], dev: true });
             }
         }
         return it(this.packageJson);
@@ -151,6 +155,11 @@ export class Package {
         return writeFileAsync(this.packageJsonFileName, `${JSON.stringify(sortPackageJson(this.packageJson), undefined, 2)}\n`);
     }
 
+    public reload() {
+        delete require.cache[this.packageJsonFileName];
+        this._packageJson = require(this.packageJsonFileName);
+    }
+    
     public async noHoistInstall(repoRoot: string) {
         // Fluid specific
         const rootNpmRC = path.join(repoRoot, ".npmrc")

@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-server-local-server",
-  "version": "0.1002.0",
+  "version": "0.1003.0",
   "description": "Local server implementation",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -12,7 +12,6 @@
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
-    "build:compile:min": "npm run build:compile",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "concurrently npm:build npm:webpack",
     "build:full:compile": "concurrently npm:build:compile npm:webpack",
@@ -46,10 +45,10 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@microsoft/fluid-server-lambdas": "^0.1002.0",
-    "@microsoft/fluid-server-memory-orderer": "^0.1002.0",
-    "@microsoft/fluid-server-services-core": "^0.1002.0",
-    "@microsoft/fluid-server-test-utils": "^0.1002.0"
+    "@microsoft/fluid-server-lambdas": "^0.1003.0",
+    "@microsoft/fluid-server-memory-orderer": "^0.1003.0",
+    "@microsoft/fluid-server-services-core": "^0.1003.0",
+    "@microsoft/fluid-server-test-utils": "^0.1003.0"
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.14.0",
@@ -73,7 +72,7 @@
     "mocha": "^5.2.0",
     "mocha-junit-reporter": "^1.18.0",
     "nock": "^10.0.1",
-    "nyc": "^14.1.1",
+    "nyc": "^15.0.0",
     "rimraf": "^2.6.2",
     "ts-loader": "^6.1.2",
     "typescript": "~3.7.4",

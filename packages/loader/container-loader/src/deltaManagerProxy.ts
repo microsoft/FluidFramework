@@ -126,6 +126,10 @@ export class DeltaManagerProxy
         return this.deltaManager.active;
     }
 
+    public get readonly(): boolean | undefined {
+        return this.deltaManager.readonly;
+    }
+
     constructor(private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>) {
         super(deltaManager);
 

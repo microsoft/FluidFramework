@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger, IDisposable } from "@microsoft/fluid-common-definitions";
 import {
     IComponent,
     IComponentConfiguration,
@@ -22,6 +22,7 @@ import {
     ISnapshotTree,
     ITree,
     MessageType,
+    ISummaryTree,
 } from "@microsoft/fluid-protocol-definitions";
 import { IAudience } from "./audience";
 import { IBlobManager } from "./blobs";
@@ -127,7 +128,7 @@ export interface IRuntimeState {
 /**
  * The IRuntime represents an instantiation of a code package within a container.
  */
-export interface IRuntime {
+export interface IRuntime extends IDisposable {
 
     /**
      * Executes a request against the runtime
@@ -145,6 +146,9 @@ export interface IRuntime {
     changeConnectionState(value: ConnectionState, clientId: string, version?: string);
 
     /**
+     * @deprecated in 0.14 async stop()
+     * Use snapshot to get a snapshot for an IRuntimeState as needed, followed by dispose
+     *
      * Stops the runtime. Once stopped no more messages will be delivered and the context passed to the runtime
      * on creation will no longer be active
      */
@@ -161,12 +165,11 @@ export interface IRuntime {
     processSignal(message: any, local: boolean);
 }
 
-export interface IExperimentalRuntime {
+export interface IExperimentalRuntime extends IRuntime {
 
     isExperimentalRuntime: true;
 
-    // Bind the registered services once attached.
-    experimentalAttachServices(storageService: IDocumentStorageService): void;
+    createSummary(): Promise<ISummaryTree>;
 }
 
 export interface IMessageScheduler {
@@ -177,7 +180,7 @@ export interface IProvideMessageScheduler {
     readonly IMessageScheduler: IMessageScheduler;
 }
 
-export interface IContainerContext extends EventEmitter, IMessageScheduler, IProvideMessageScheduler {
+export interface IContainerContext extends EventEmitter, IMessageScheduler, IProvideMessageScheduler, IDisposable {
     readonly id: string;
     readonly existing: boolean | undefined;
     readonly options: any;
@@ -218,6 +221,14 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
      * back-compat: 0.14 uploadSummary
      */
     refreshBaseSummary(snapshot: ISnapshotTree): void;
+}
+
+export interface IExperimentalContainerContext extends IContainerContext {
+    isExperimentalContainerContext: true;
+
+    isAttached(): boolean;
+
+    createSummary(): Promise<ISummaryTree>;
 }
 
 export interface IProvideComponentTokenProvider {

@@ -99,6 +99,7 @@ module.exports = {
         "@typescript-eslint/no-parameter-properties": "off",
         "@typescript-eslint/no-require-imports": "error",
         "@typescript-eslint/no-this-alias": "error",
+        "@typescript-eslint/no-unused-expressions": "error",
         "@typescript-eslint/no-unused-vars": [
             "error",
             {
@@ -140,7 +141,7 @@ module.exports = {
             }
         ],
         "@typescript-eslint/triple-slash-reference": "error",
-        "@typescript-eslint/type-annotation-spacing": "error", 
+        "@typescript-eslint/type-annotation-spacing": "error",
         "@typescript-eslint/unbound-method": [
             "error",
             {
@@ -283,7 +284,7 @@ module.exports = {
         "no-undef-init": "error",
         "no-underscore-dangle": "off",
         "no-unsafe-finally": "error",
-        "no-unused-expressions": "error",
+        "no-unused-expressions": "off",
         "no-unused-labels": "error",
         "no-unused-vars": "off",
         "no-var": "error",

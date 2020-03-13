@@ -3,11 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-    createProtocolToFactoryMapping,
-    selectDocumentServiceFactoryForProtocol,
-} from "@microsoft/fluid-container-loader";
-import { BaseTelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import { DocumentServiceFactoryProtocolMatcher } from "@microsoft/fluid-driver-utils";
+import { BaseTelemetryNullLogger } from "@microsoft/fluid-common-utils";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
@@ -52,7 +49,6 @@ export async function initialize(
         false,
         true,
         cache));
-    const factoryMap = createProtocolToFactoryMapping(documentServiceFactories);
 
     config.moniker = (await Axios.get("/api/v1/moniker")).data;
     config.url = url;
@@ -67,10 +63,11 @@ export async function initialize(
         config,
         tokens: resolved.tokens,
     };
+    const serviceFactoryMatcher = new DocumentServiceFactoryProtocolMatcher(documentServiceFactories);
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     (await IFrameDocumentServiceProxyFactory.create(
-        selectDocumentServiceFactoryForProtocol(resolved, factoryMap),
+        serviceFactoryMatcher.getFactory(resolved),
         document.getElementById("ifr") as HTMLIFrameElement,
         options,
         resolver,

@@ -8,6 +8,7 @@
   "main": "dist/fluidBuild.js",
   "bin": {
     "fluid-build": "bin/fluid-build",
+    "fluid-bump-version": "bin/fluid-bump-version",
     "fluid-layer-check": "bin/fluid-layer-check"
   },
   "scripts": {

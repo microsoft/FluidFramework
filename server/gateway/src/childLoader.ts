@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 import { parse } from "url";
-import { IBaseHostConfig } from "@microsoft/fluid-base-host";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
-import { BaseTelemetryNullLogger, Deferred } from "@microsoft/fluid-core-utils";
+import { BaseTelemetryNullLogger, Deferred } from "@microsoft/fluid-common-utils";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
@@ -96,12 +95,11 @@ class KeyValueLoader {
             hostToken,
             new Map<string, IResolvedUrl>([[documentUrl, result.data]]));
 
-        const hostConf: IBaseHostConfig = { documentServiceFactory: documentServiceFactories, urlResolver: resolver };
         config.tokens = (result.data as IFluidResolvedUrl).tokens;
 
         const loader = new Loader(
-            hostConf.urlResolver,
-            hostConf.documentServiceFactory,
+            resolver,
+            documentServiceFactories,
             new NodeCodeLoader(packageUrl, installLocation, waitTimeoutMS, new NodeWhiteList()),
             config,
             {},

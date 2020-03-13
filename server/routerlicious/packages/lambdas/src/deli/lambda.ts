@@ -9,6 +9,7 @@ import * as assert from "assert";
 import { RangeTracker } from "@microsoft/fluid-common-utils";
 import { isSystemType } from "@microsoft/fluid-protocol-base";
 import {
+    ISequencedDocumentAugmentedMessage,
     IBranchOrigin,
     IClientJoin,
     IDocumentMessage,
@@ -36,7 +37,7 @@ import {
     SequencedOperationType,
     IQueuedMessage,
 } from "@microsoft/fluid-server-services-core";
-import { CheckpointContext, ICheckpoint, IClientSequenceNumber } from "./checkpointContext";
+import { CheckpointContext, ICheckpoint, IClientSequenceNumber, IDeliCheckpoint } from "./checkpointContext";
 import { ClientSequenceNumberManager } from "./clientSeqManager";
 
 enum IncomingMessageOrder {
@@ -482,7 +483,12 @@ export class DeliLambda implements IPartitionLambda {
             traces: message.operation.traces,
             type: message.operation.type,
         };
-        if (systemContent !== undefined) {
+        if (message.operation.type === MessageType.Summarize || message.operation.type === MessageType.NoClient) {
+            const augmentedOutputMessage = outputMessage as ISequencedDocumentAugmentedMessage;
+            const checkpointData = JSON.stringify(this.generateDeliCheckpoint());
+            augmentedOutputMessage.additionalContent = checkpointData;
+            return augmentedOutputMessage;
+        } else if (systemContent !== undefined) { // TODO to consolidate the logic here
             const systemOutputMessage = outputMessage as ISequencedDocumentSystemMessage;
             systemOutputMessage.data = JSON.stringify(systemContent);
             return systemOutputMessage;
@@ -632,12 +638,18 @@ export class DeliLambda implements IPartitionLambda {
      * Generates a checkpoint of the current ticketing state
      */
     private generateCheckpoint(queuedMessage: IQueuedMessage): ICheckpoint {
+        const deliCheckpoint = this.generateDeliCheckpoint();
+        const checkpoint = deliCheckpoint as ICheckpoint;
+        checkpoint.queuedMessage = queuedMessage;
+        return checkpoint;
+    }
+
+    private generateDeliCheckpoint(): IDeliCheckpoint {
         return {
             branchMap: this.branchMap ? this.branchMap.serialize() : undefined,
             clients: this.clientSeqManager.cloneValues(),
             logOffset: this.logOffset,
             sequenceNumber: this.sequenceNumber,
-            queuedMessage,
         };
     }
 
