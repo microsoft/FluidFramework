@@ -489,6 +489,7 @@ export class ScribeLambda extends SequencedLambda {
 
         // Client assumes at least one app generated summary. To keep compatibility for now, service summary requires
         // at least one prior client generated summary.
+        // TODO: Once clients are updated, we can remove this check.
         if (!existingRef) {
             return;
         }
