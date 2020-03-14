@@ -294,7 +294,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             // based on missing ops - catchUp() will do just that.
             // Otherwise proactively ask storage for ops
             if (this.pending.length > 0) {
-                this.catchUp("DocumentOpen", []);
+                this.catchUp([], "DocumentOpen");
             } else {
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 this.fetchMissingDeltas("DocumentOpen", sequenceNumber);
@@ -471,19 +471,21 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
     }
 
-    public async getDeltas(
+    private async getDeltas(
         telemetryEventSuffix: string,
         fromInitial: number,
-        to?: number,
-    ): Promise<ISequencedDocumentMessage[]> {
+        to: number | undefined,
+        callback: (messages: ISequencedDocumentMessage[]) => void)
+    {
+        let retry: number = 0;
+        let from: number = fromInitial;
+        let deltas: ISequencedDocumentMessage[] = [];
+        let deltasRetrievedTotal = 0;
+
         const docService = this.serviceProvider();
         if (!docService) {
             throw new Error("Delta manager is not attached");
         }
-
-        let retry: number = 0;
-        let from: number = fromInitial;
-        const allDeltas: ISequencedDocumentMessage[] = [];
 
         const telemetryEvent = PerformanceEvent.start(this.logger, {
             eventName: `GetDeltas_${telemetryEventSuffix}`,
@@ -492,6 +494,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         });
 
         let requests = 0;
+        let deltaStorage: IDocumentDeltaStorageService | undefined;
 
         while (!this.closed) {
             const maxFetchTo = from + MaxBatchDeltas;
@@ -504,23 +507,31 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
             try {
                 // Connect to the delta storage endpoint
-                if (!this.deltaStorageP) {
-                    this.deltaStorageP = docService.connectToDeltaStorage();
+                if (!deltaStorage) {
+                    if (!this.deltaStorageP) {
+                        this.deltaStorageP = docService.connectToDeltaStorage();
+                    }
+                    deltaStorage = await this.deltaStorageP;
                 }
-
-                const deltaStorage = await this.deltaStorageP;
 
                 requests++;
 
-                // Grab a chunk of deltas - limit the number fetched to MaxBatchDeltas
+                // Issue async request for deltas - limit the number fetched to MaxBatchDeltas
                 canRetry = true;
-                const deltas = await deltaStorage.get(from, fetchTo);
+                const deltasP = deltaStorage.get(from, fetchTo);
+
+                // Return previously fetched deltas, for processing while we are waiting for new request.
+                if (deltas.length > 0) {
+                    callback(deltas);
+                }
+
+                // Now wait for request to come back
+                deltas = await deltasP;
 
                 // Note that server (or driver code) can push here something unexpected, like undefined
                 // Exception thrown as result of it will result in us retrying
-                allDeltas.push(...deltas);
-
                 deltasRetrievedLast = deltas.length;
+                deltasRetrievedTotal += deltasRetrievedLast;
                 const lastFetch = deltasRetrievedLast > 0 ? deltas[deltasRetrievedLast - 1].sequenceNumber : from;
 
                 // If we have no upper bound and fetched less than the max deltas - meaning we got as many as exit -
@@ -532,8 +543,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 //    any more, thus it's time to leave
                 // 2) else case: if we got what we asked (to - 1) or more, then time to leave.
                 if (to === undefined ? lastFetch < maxFetchTo - 1 : to - 1 <= lastFetch) {
-                    telemetryEvent.end({ lastFetch, totalDeltas: allDeltas.length, requests });
-                    return allDeltas;
+                    callback(deltas);
+                    telemetryEvent.end({ lastFetch, deltasRetrievedTotal, requests });
+                    return;
                 }
 
                 // Attempt to fetch more deltas. If we didn't receive any in the previous call we up our retry
@@ -555,7 +567,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     // It's game over scenario.
                     telemetryEvent.cancel({ category: "error" }, error);
                     this.close(error);
-                    return [];
+                    return;
                 }
                 success = false;
                 retryAfter = this.getRetryDelayFromError(error);
@@ -581,19 +593,19 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                         error: "too many retries",
                         retry,
                         requests,
-                        deltasRetrievedTotal: allDeltas.length,
+                        deltasRetrievedTotal,
                         replayFrom: from,
                         to,
                     });
                     this.close(new Error("Failed to retrieve ops from storage: giving up after too many retries"));
-                    return [];
+                    return;
                 }
             }
 
             telemetryEvent.reportProgress({
                 delay,
                 deltasRetrievedLast,
-                deltasRetrievedTotal: allDeltas.length,
+                deltasRetrievedTotal,
                 replayFrom: from,
                 requests,
                 retry,
@@ -610,7 +622,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // Might need to change to non-error event
         this.logger.sendErrorEvent({ eventName: "GetDeltasClosedConnection" });
         telemetryEvent.cancel({ error: "container closed" });
-        return [];
     }
 
     /**
@@ -912,7 +923,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             }
         }
         if (messages && messages.length > 0) {
-            this.catchUp(firstConnection ? "InitialOps" : "ReconnectOps", messages);
+            this.catchUp(messages, firstConnection ? "InitialOps" : "ReconnectOps");
         }
     }
 
@@ -1033,16 +1044,15 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         this.fetching = true;
 
-        await this.getDeltas(telemetryEventSuffix, from, to).then(
-            (messages) => {
-                this.emitDelayInfo(retryFor.DELTASTORAGE, -1);
-                this.fetching = false;
-                this.emit("caughtUp");
-                this.catchUp(telemetryEventSuffix, messages);
-            });
+        await this.getDeltas(telemetryEventSuffix, from, to, (messages) => {
+            this.emitDelayInfo(retryFor.DELTASTORAGE, -1);
+            this.catchUpCore(messages, telemetryEventSuffix);
+        });
+
+        this.fetching = false;
     }
 
-    private catchUp(telemetryEventSuffix: string, messages: ISequencedDocumentMessage[]): void {
+    private catchUp(messages: ISequencedDocumentMessage[], telemetryEventSuffix: string): void {
         const props: {
             eventName: string;
             messageCount: number;
@@ -1061,6 +1071,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             props.messageGap = this.handler ? props.from - this.lastQueuedSequenceNumber - 1 : undefined;
         }
         this.logger.sendPerformanceEvent(props);
+
+        this.catchUpCore(messages, telemetryEventSuffix);
+    }
+
+    private catchUpCore(messages: ISequencedDocumentMessage[], telemetryEventSuffix?: string): void {
 
         // Apply current operations
         this.enqueueMessages(messages, telemetryEventSuffix);
