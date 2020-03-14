@@ -153,9 +153,6 @@ export class BaseHost {
     public async loadAndRender(url: string, div: HTMLDivElement, pkg?: IFluidCodeDetails) {
         const container = await this.initializeContainer(url, pkg);
 
-        container.on("contextChanged", (value) => {
-            this.getComponentAndRender(url, div).catch(() => { });
-        });
         await this.getComponentAndRender(url, div);
 
         return container;
