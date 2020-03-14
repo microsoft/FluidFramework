@@ -471,7 +471,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
     }
 
-    public async getDeltasCore(
+    private async getDeltas(
         telemetryEventSuffix: string,
         fromInitial: number,
         to: number | undefined,
@@ -1044,9 +1044,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         this.fetching = true;
 
-        await this.getDeltasCore(telemetryEventSuffix, from, to, (messages) => {
+        await this.getDeltas(telemetryEventSuffix, from, to, (messages) => {
             this.emitDelayInfo(retryFor.DELTASTORAGE, -1);
-            this.catchUpCore(messages);
+            this.catchUpCore(messages, telemetryEventSuffix);
         });
 
         this.fetching = false;
@@ -1072,7 +1072,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
         this.logger.sendPerformanceEvent(props);
 
-        this.catchUpCore(messages);
+        this.catchUpCore(messages, telemetryEventSuffix);
     }
 
     private catchUpCore(messages: ISequencedDocumentMessage[], telemetryEventSuffix?: string): void {
