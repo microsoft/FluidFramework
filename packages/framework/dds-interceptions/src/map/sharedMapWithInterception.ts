@@ -37,8 +37,11 @@ export function createSharedMapWithInterception(
         context.hostRuntime.orderSequentially(() => {
             map = sharedMap.set(key, value);
             executingCallback = true;
-            setInterceptionCallback(sharedMap, key, value);
-            executingCallback = false;
+            try {
+                setInterceptionCallback(sharedMap, key, value);
+            } finally {
+                executingCallback = false;
+            }
         });
         return map;
     };
