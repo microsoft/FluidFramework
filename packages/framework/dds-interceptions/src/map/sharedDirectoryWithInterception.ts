@@ -47,8 +47,11 @@ function createSubDirectoryWithInterception(
         context.hostRuntime.orderSequentially(() => {
             directory = subDirectory.set(key, value);
             executingCallback = true;
-            setInterceptionCallback(baseDirectory, subDirectory, key, value);
-            executingCallback = false;
+            try {
+                setInterceptionCallback(baseDirectory, subDirectory, key, value);
+            } finally {
+                executingCallback = false;
+            }
         });
         return directory;
     };
