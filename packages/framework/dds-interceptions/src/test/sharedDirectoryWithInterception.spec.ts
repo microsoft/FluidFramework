@@ -104,7 +104,8 @@ describe("Shared Directory with Interception", () => {
         // Verifies that the props are stored correctly in the attribution sub directory - a sub directory
         // of the given directory with name `attributionDirectoryName`.
         function verifySubDirectoryArrtibution(directory: IDirectory, key: string, value: string, props?: any) {
-            assert.equal(directory.get(key), value);
+            assert.equal(directory.get(key), value, "The retrieved value should match the value that was set");
+
             const attributionDir = directory.getSubDirectory(attributionDirectoryName);
             if (props === undefined) {
                 assert.equal(
@@ -122,7 +123,8 @@ describe("Shared Directory with Interception", () => {
         // Verifies that the props are stored correctly in the given directory under a key derived from the
         // given key - under attributionKey(key).
         function verifyDirectoryAttribution(directory: IDirectory, key: string, value: string, props?: any) {
-            assert.equal(directory.get(key), value);
+            assert.equal(directory.get(key), value, "The retrieved value should match the value that was set");
+
             if (props === undefined) {
                 assert.equal(
                     directory.get(attributionKey(key)),
@@ -158,7 +160,7 @@ describe("Shared Directory with Interception", () => {
             const key: string = "level";
             let value: string = "root";
             root.set(key, value);
-            assert.equal(root.get(key), value, "The value should match the value that was set");
+            assert.equal(root.get(key), value, "The retrieved value should match the value that was set");
 
             // Verify that attribution directory `/attribution` was created for root and the user attribute
             // set on it.
@@ -170,7 +172,7 @@ describe("Shared Directory with Interception", () => {
             const foo = root.createSubDirectory("foo");
             value = "level1";
             foo.set(key, value);
-            assert.equal(foo.get(key), value, "The value should match the value that was set");
+            assert.equal(foo.get(key), value, "The retrieved value should match the value that was set");
 
             // Verify that attribution directory `/attribution/foo` was created for /foo and the user attribute
             // set on it.
@@ -182,7 +184,7 @@ describe("Shared Directory with Interception", () => {
             const bar = foo.createSubDirectory("bar");
             value = "level2";
             bar.set(key, value);
-            assert.equal(bar.get(key), value, "The value should match the value that was set");
+            assert.equal(bar.get(key), value, "The retrieved value should match the value that was set");
 
             // Verify that attribution directory `/attribution/foo/bar` was created for /foo/bar and the user
             // attribute set on it.
@@ -290,7 +292,12 @@ describe("Shared Directory with Interception", () => {
             verifyDirectoryAttribution(sharedDirectoryWithInterception, key, value);
         });
 
-        it("should assert if set is called from the callback as it will cause infinite recursion", async () => {
+        /**
+         * This test calls set on the wrapper from the interception callback which will cause an infinite
+         * recursion. Verify that the wrapper detects this and asserts.
+         * Also, verify that the object is not unusable after the assert.
+         */
+        it("should assert if set is called on the wrapper from the callback causing infinite recursion", async () => {
             // eslint-disable-next-line prefer-const
             let sharedDirectoryWithInterception: SharedDirectory;
 
