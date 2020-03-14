@@ -116,71 +116,9 @@ function createSubDirectoryWithInterception(
 export function createDirectoryWithInterception<T extends IDirectory>(
     baseDirectory: T,
     context: IComponentContext,
-    setInterceptionCallback: (
-        baseDirectory: IDirectory,
-        subDirectory: IDirectory,
-        key: string,
-        value: any) => void): T {
-    const directoryWithInterception = Object.create(baseDirectory);
-
-    // executingCallback keeps track of whether set is called recursively from the setInterceptionCallback.
-    let executingCallback: boolean = false;
-
-    directoryWithInterception.set = (key: string, value: any) => {
-        let directory;
-        // Set should not be called on the wrapped object from the interception callback as this will lead to
-        // infinite recursion.
-        assert(executingCallback === false, "set called recursively from the interception callback");
-
-        context.hostRuntime.orderSequentially(() => {
-            directory = baseDirectory.set(key, value);
-            executingCallback = true;
-            setInterceptionCallback(baseDirectory, baseDirectory, key, value);
-            executingCallback = false;
-        });
-        return directory;
-    };
-
-    directoryWithInterception.createSubDirectory = (subdirName: string): IDirectory => {
-        const subDirectory = baseDirectory.createSubDirectory(subdirName);
-        return createSubDirectoryWithInterception(baseDirectory, subDirectory, context, setInterceptionCallback);
-    };
-
-    directoryWithInterception.getSubDirectory = (subdirName: string): IDirectory => {
-        const subDirectory = baseDirectory.getSubDirectory(subdirName);
-        return subDirectory === undefined ?
-            subDirectory :
-            createSubDirectoryWithInterception(baseDirectory, subDirectory, context, setInterceptionCallback);
-    };
-
-    directoryWithInterception.subdirectories = (): IterableIterator<[string, IDirectory]> => {
-        const localDirectoriesIterator = baseDirectory.subdirectories();
-        const iterator = {
-            next(): IteratorResult<[string, IDirectory]> {
-                const nextVal = localDirectoriesIterator.next();
-                if (nextVal.done) {
-                    return { value: undefined, done: true };
-                } else {
-                    // Wrap the stored subdirectory in the interception wrapper.
-                    const subDir = createSubDirectoryWithInterception(
-                        baseDirectory,
-                        nextVal.value[1],
-                        context,
-                        setInterceptionCallback);
-                    return { value: [nextVal.value[0], subDir], done: false };
-                }
-            },
-            [Symbol.iterator]() {
-                return this;
-            },
-        };
-        return iterator;
-    };
-
-    directoryWithInterception.getWorkingDirectory = (relativePath: string): IDirectory => {
-        const subDirectory = baseDirectory.getWorkingDirectory(relativePath);
-        return createSubDirectoryWithInterception(baseDirectory, subDirectory, context, setInterceptionCallback);
-    };
-
-    return directoryWithInterception as T;
+    setInterceptionCallback: (baseDirectory: IDirectory, subDirectory: IDirectory, key: string, value: any) => void):
+    T {
+    const directory =
+        createSubDirectoryWithInterception(baseDirectory, baseDirectory, context, setInterceptionCallback);
+    return directory as T;
 }
