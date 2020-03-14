@@ -91,7 +91,7 @@ export class TestDocumentStorage implements IDocumentStorage, IExperimentalDocum
                 email: "dummy@microsoft.com",
                 name: "Routerlicious Service",
             },
-            message: documentId,
+            message: "New document",
             parents: [],
             tree: gitTree.sha,
         };
