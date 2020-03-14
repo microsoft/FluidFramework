@@ -24,7 +24,7 @@ export const ControlledInput = React.memo((props: InputProps) => {
     }, []);
 
     const onKeyDown = React.useCallback((ev: React.KeyboardEvent<HTMLInputElement>) => {
-        if (ev.keyCode === KeyCodes.enter) {
+        if (inputRef?.current && ev.keyCode === KeyCodes.enter) {
             submitValue(inputRef.current.value);
             updateInputValue("");
         }

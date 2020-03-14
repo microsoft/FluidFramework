@@ -651,6 +651,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         this.emit("closed", iError);
 
+        // Notify everyone we are in read-only state.
+        // Useful for components in case we hit some critical error,
+        // to switch to a mode where user edits are not accepted
+        this.setReadonlyState(true);
+
         this.removeAllListeners();
     }
 
@@ -693,6 +698,14 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
     }
 
+    private setReadonlyState(readonly: boolean) {
+        const oldValue = this._readonly;
+        this._readonly = readonly;
+        if (oldValue !== this._readonly) {
+            this.emit("readonly", this._readonly);
+        }
+    }
+
     /**
      * Once we've successfully gotten a DeltaConnection, we need to set up state, attach event listeners, and process
      * initial messages.
@@ -706,13 +719,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         if (requestedMode === "write") {
             // if we ask for write and get read it means we don't have write permissions
-            const oldValue = this._readonly;
-            this._readonly = this._connectionMode !== requestedMode;
-            if (oldValue !== this._readonly) {
-                this.emit("readonly", this._readonly);
-            }
+            this.setReadonlyState(this._connectionMode !== requestedMode);
         }
-
 
         this.emitDelayInfo(retryFor.DELTASTREAM, -1);
 

@@ -228,6 +228,7 @@ const getGuideSidebar = () => {
             collapsable: false,
             children: [
                 "dds-anatomy",
+                "container-and-component-loading",
             ]
         },
     ];

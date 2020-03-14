@@ -1,16 +1,31 @@
 # 0.15 Breaking Changes
+
+- [`getComponentRuntime` no longer on `IComponentContext`](#getComponentRuntime-no-longer-on-IComponentContext)
 - [Container.autoReconnect & Container.reconnect changes](#Container.reconnect-Container.reconnect-changes)
 - [0.13 backwards compatibility removed](#013-backwards-compatibility-removed)
 
+## `getComponentRuntime` no longer on `IComponentContext`
+
+We've removed `getComponentRuntime` on `IComponentContext` and subsequently `ComponentContext`. Developers should not be getting the
+`ComponentRuntime` of other components. If you want to get another component you can currently store a `handle` to that component or you
+can get it via a `request(...)` to the ContainerRuntime.
+
+If for some reason you do this and continue to need this functional; it is still exposed on the `ContainerRuntime`. You can access it via
+`...context.hostRuntime.getComponentRuntime`. If you are doing this please reach out to the runtime team so we can better understand your
+scenario.
+
 ## Container.reconnect, Container.reconnect changes
-autReconnect property is gone, as well as reconnect() method.<br/>
+
+autoReconnect property is gone, as well as reconnect() method.  
 Use Container.setAutoReconnect() instead.
 
 Note that there is difference in behavior. It used to be that one needed to do
-```
+
+```typescript
 Container.autoReconnect = false;
 Container.reconnect()
 ```
+
 in order to trigger reconnect. Now, calling Container.setAutoReconnect(true) is enough.
 
 ## 0.13 backwards compatibility removed

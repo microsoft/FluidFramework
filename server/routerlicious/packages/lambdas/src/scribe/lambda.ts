@@ -572,7 +572,7 @@ export class ScribeLambda extends SequencedLambda {
                 name: "Routerlicious Service",
             },
             message: "Service_Summary",
-            parents: lastCommit.parents.map((parent) => parent.sha),
+            parents: [lastCommit.sha],
             tree: gitTree.sha,
         };
 
