@@ -76,7 +76,7 @@ export class Runtime extends EventEmitter {
         this.closed = true;
     }
 
-    public changeConnectionState(value: ConnectionState, clientId: string) {
+    public changeConnectionState(value: ConnectionState, clientId?: string) {
         this.verifyNotClosed();
         if (value === ConnectionState.Connected) {
             this.emit("connected", this.clientId);

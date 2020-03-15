@@ -827,6 +827,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         // The load context - given we seeded the quorum - will be great
         await this.createDetachedContext(attributes);
+
         this.loaded = true;
 
         this.propagateConnectionState();
@@ -1193,12 +1194,12 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.pendingClientId = undefined;
         }
 
-        // Report telemetry after we set client id!
-        this.logConnectionStateChangeTelemetry(value, oldState, reason);
-
         if (this.loaded) {
             this.propagateConnectionState();
         }
+
+        // Report telemetry after we set client id!
+        this.logConnectionStateChangeTelemetry(value, oldState, reason);
     }
 
     private propagateConnectionState() {
@@ -1207,8 +1208,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         if (logOpsOnReconnect) {
             this.messageCountAfterDisconnection = 0;
         }
-        this.context!.changeConnectionState(this._connectionState, this.clientId!, this._version);
-        this.protocolHandler!.quorum.changeConnectionState(this._connectionState, this.clientId!);
+        this.context!.changeConnectionState(this._connectionState, this.clientId, this._version);
+        this.protocolHandler!.quorum.changeConnectionState(this._connectionState, this.clientId);
         raiseConnectedEvent(this, this._connectionState, this.clientId!);
         if (logOpsOnReconnect) {
             this.logger.sendTelemetryEvent(
