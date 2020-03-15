@@ -991,7 +991,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 details: {
                     capabilities: { interactive: true },
                 },
-                mode: "read",
+                mode: "read", // default reconnection mode on lost connection / connection error
                 permission: [],
                 scopes: [],
                 user: { id: "" },
