@@ -288,7 +288,8 @@ export class MockQuorum implements IQuorum, EventEmitter{
         return this;
     }
     off(event: string | symbol, listener: (...args: any[]) => void): this {
-        throw new Error("Method not implemented.");
+        this.eventEmitter.off(event, listener);
+        return this;
     }
     removeAllListeners(event?: string | symbol | undefined): this {
         throw new Error("Method not implemented.");
