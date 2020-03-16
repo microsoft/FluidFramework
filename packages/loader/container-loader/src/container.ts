@@ -997,13 +997,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     }
 
-    private get client() {
+    private get client(): IClient {
         const client: IClient = this.options && this.options.client
             ? (this.options.client as IClient)
             : {
                 details: {
                     capabilities: { interactive: true },
                 },
+                mode: "read", // default reconnection mode on lost connection / connection error
                 permission: [],
                 scopes: [],
                 user: { id: "" },
