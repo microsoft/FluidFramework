@@ -1,7 +1,8 @@
 ---
 home: true
-heroImage: /images/homescreen144.png
-# heroText: Fluid Framework
+# heroImage: /images/homescreen144.png
+heroText: "Fluid Framework"
+showHeroSymbol: true
 # tagline: State that flows
 # actionText: Get Started →
 # actionLink: /guide/
@@ -35,7 +36,7 @@ distributed data structures.
 
 Consumers of the Fluid Framework NPM packages **must use a TypeScript version >= 3.6.**
 
-[Read more.](./contributing/breaking-changes/#fluid-packages-require-consumers-on-typescript-3-6)
+[Read more.](./contributing/breaking-changes.md#fluid-packages-require-consumers-on-typescript-3-6)
 
 :::
 
@@ -70,5 +71,4 @@ Logistical questions can be directed to our [Teams group](https://teams.microsof
 
 ### Additional resources
 
-* [Demo videos](./team/videos.md)
-* [Further reading](./architecture/README.md#read-more)
+- [Demo videos](./team/videos.md)
