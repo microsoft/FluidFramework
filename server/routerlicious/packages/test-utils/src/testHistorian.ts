@@ -129,13 +129,15 @@ export class TestHistorian implements IHistorian {
 
     public async getRef(ref: string): Promise<git.IRef> {
         const val = await this.refs.findOne({ _id: ref});
-        return {
-            ref: val.value.ref,
-            url: "",
-            object: { sha: val.value.sha,
+        if (val) {
+            return {
+                ref: val.value.ref,
                 url: "",
-                type: "" },
-        };
+                object: { sha: val.value.sha,
+                    url: "",
+                    type: "" },
+            };
+        }
     }
 
     public async createRef(params: git.ICreateRefParams): Promise<git.IRef> {
