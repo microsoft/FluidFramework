@@ -31,12 +31,13 @@ function isOldestClient(container: Container) {
     return false;
 }
 
-export async function containerCodeAvailable(
+export async function containerContextReady(
     container: Container,
 ) {
     const quorum = container.getQuorum();
 
-    // Resolve if the proposal is already available
+    // Resolve if the proposal is already available - either the code came in the snapshot or the contextChanged will
+    // have already fired in response to the proposal being approved
     if (quorum.has(currentCodeProposalKey)) {
         return;
     }
@@ -51,19 +52,31 @@ export async function initializeContainerCode(
 ): Promise<void> {
     const quorum = container.getQuorum();
 
-    // Nothing to do if the proposal exists
+    // Nothing to do if the code has been proposed
     if (quorum.has(currentCodeProposalKey)) {
         return;
     }
 
-    // Since we don't have a proposal, establish the promise that will resolve once the container is ready
-    const contextChangedP = new Promise<void>((resolve) => container.once("contextChanged", () => resolve()));
+    // Since we don't have a proposal, establish the promise that will resolve once the proposal is approved
+    const codeApprovedP = new Promise<void>((resolve) => {
+        if (quorum.has(currentCodeProposalKey)) {
+            resolve();
+        } else {
+            const approveProposalHandler = (sequenceNumber: number, key: string) => {
+                if (key === currentCodeProposalKey) {
+                    quorum.off("approveProposal", approveProposalHandler);
+                    resolve();
+                }
+            };
+            quorum.on("approveProposal", approveProposalHandler);
+        }
+    });
 
     if (!container.connected) {
         // Wait for us to connect (so we can figure out if we are the oldest)
-        // Or a proposal to show up (which could happen during the connecting phase)
+        // Or an approved proposal to show up (which could happen during the connecting phase)
         await Promise.race([
-            contextChangedP,
+            codeApprovedP,
             new Promise<void>((resolve) => container.once("connected", () => resolve())),
         ]);
     }
@@ -90,7 +103,7 @@ export async function initializeContainerCode(
 
     // Wait for the oldest client to make the proposal, or for us to become the oldest
     await Promise.race([
-        contextChangedP,
+        codeApprovedP,
         becameOldestP,
     ]);
 
