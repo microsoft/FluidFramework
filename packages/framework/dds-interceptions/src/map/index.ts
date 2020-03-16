@@ -3,4 +3,6 @@
  * Licensed under the MIT License.
  */
 
+export * from "./sharedDirectoryWithInterception";
 export * from "./sharedMapWithInterception";
+

@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import * as MergeTree from "@microsoft/fluid-merge-tree";
+import { PropertySet } from "@microsoft/fluid-merge-tree";
 import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
 import { SharedString, SharedStringFactory } from "@microsoft/fluid-sequence";
 import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
@@ -17,7 +17,7 @@ describe("Shared String with Interception", () => {
      * information to the passed properties and returns it.
      */
     describe("Simple User Attribution", () => {
-        const userId = "Fake User";
+        const userAttributes = { userId: "Fake User"};
         const documentId = "fakeId";
         let deltaConnectionFactory: MockDeltaConnectionFactory;
         let sharedString: SharedString;
@@ -28,9 +28,20 @@ describe("Shared String with Interception", () => {
             callback();
         }
 
-        function propertyInterceptionCb(props?: MergeTree.PropertySet): MergeTree.PropertySet {
-            const newProps = { ...props, userId };
+        // Interception function that adds userProps to the passed props and returns.
+        function propertyInterceptionCb(props?: PropertySet): PropertySet {
+            const newProps = { ...props, ...userAttributes };
             return newProps;
+        }
+
+        // Function that verifies that the given shared string has correct value and the right properties at
+        // the given position.
+        function verifyString(ss: SharedString, text: string, props: PropertySet, position: number) {
+            assert.equal(ss.getText(), text, "The retrieved text should match the inserted text");
+            assert.deepEqual(
+                ss.getPropertiesAtPosition(position),
+                props,
+                "The properties set via the interception callback should exist");
         }
 
         beforeEach(() => {
@@ -51,89 +62,65 @@ describe("Shared String with Interception", () => {
 
         it("should be able to intercept SharedString methods by the wrapper", async () => {
             // Insert text into shared string.
-            sharedStringWithInterception.insertText(0, "123", { style: "bold" });
-            assert.equal(sharedStringWithInterception.getText(), "123", "The text should match the inserted text");
-
-            const props = sharedStringWithInterception.getPropertiesAtPosition(2);
-            assert.equal(props.style, "bold", "The style set via insertText should exist");
-            assert.equal(props.userId, userId, "The userId set via interception callback should exist");
+            let text: string = "123";
+            let syleProps: PropertySet = { style: "bold" };
+            sharedStringWithInterception.insertText(0, text, syleProps);
+            verifyString(sharedStringWithInterception, text, { ...syleProps, ...userAttributes }, 2);
 
             // Replace text in the shared string.
-            sharedStringWithInterception.replaceText(2, 3, "aaa", { style: "italics" });
-            assert.equal(sharedStringWithInterception.getText(), "12aaa", "The text should match the replaced text");
-
-            const propsAfterReplace = sharedStringWithInterception.getPropertiesAtPosition(2);
-            assert.equal(propsAfterReplace.style, "italics", "The new style set via replaceText should exist");
-            assert.equal(propsAfterReplace.userId, userId, "The userId set via interception callback should exist");
+            text = "aaa";
+            syleProps = { style: "italics "};
+            sharedStringWithInterception.replaceText(2, 3, "aaa", syleProps);
+            verifyString(sharedStringWithInterception, "12aaa", { ...syleProps, ...userAttributes }, 2);
 
             // Annotate the shared string.
-            sharedStringWithInterception.annotateRange(0, 5, { color: "green" });
-
-            const propsAfterAnnotate = sharedStringWithInterception.getPropertiesAtPosition(2);
-            assert.equal(propsAfterAnnotate.style, "italics", "The previous style should exist");
-            assert.equal(propsAfterAnnotate.color, "green", "The color set via annotateRange should exist");
-            assert.equal(propsAfterAnnotate.userId, userId, "The userId set via interception callback should exist");
+            const colorProps = { color: "green" };
+            sharedStringWithInterception.annotateRange(0, 5, colorProps);
+            verifyString(sharedStringWithInterception, "12aaa", { ...syleProps, ...colorProps,...userAttributes }, 2);
         });
 
         it("should be able to see changes made by the wrapper from the underlying shared string", async () => {
             // Insert text via the shared string with interception wrapper.
-            sharedStringWithInterception.insertText(0, "123", { style: "bold" });
-
-            // Get the text and properties via the underlying shared string.
-            assert.equal(sharedString.getText(), "123", "The text should match the inserted text");
-            const props = sharedString.getPropertiesAtPosition(2);
-            assert.equal(props.style, "bold", "The style set via insertText should exist");
-            assert.equal(props.userId, userId, "The userId set via interception callback should exist");
+            let text: string = "123";
+            let syleProps: PropertySet = { style: "bold" };
+            sharedStringWithInterception.insertText(0, text, syleProps);
+            // Verify the text and properties via the underlying shared string.
+            verifyString(sharedString, text, { ...syleProps, ...userAttributes }, 2);
 
             // Replace text via the shared string with interception wrapper.
-            sharedStringWithInterception.replaceText(2, 3, "aaa", { style: "italics" });
+            text = "aaa";
+            syleProps = { style: "italics "};
+            sharedStringWithInterception.replaceText(2, 3, "aaa", syleProps);
+            // Verify the text and properties via the underlying shared string.
+            verifyString(sharedString, "12aaa", { ...syleProps, ...userAttributes }, 2);
 
-            // Get the text and properties via the underlying shared string.
-            assert.equal(sharedString.getText(), "12aaa", "The text should match the replaced text");
-            const propsAfterReplace = sharedString.getPropertiesAtPosition(2);
-            assert.equal(propsAfterReplace.style, "italics", "The new style set via replaceText should exist");
-            assert.equal(propsAfterReplace.userId, userId, "The userId set via interception callback should exist");
-
-            // Annotate via the shared string with interception wrapper.
-            sharedStringWithInterception.annotateRange(0, 5, { color: "green" });
-
-            // Get the text and properties via the underlying shared string.
-            const propsAfterAnnotate = sharedString.getPropertiesAtPosition(2);
-            assert.equal(propsAfterAnnotate.style, "italics", "The previous style should exist");
-            assert.equal(propsAfterAnnotate.color, "green", "The color set via annotateRange should exist");
-            assert.equal(propsAfterAnnotate.userId, userId, "The userId set via interception callback should exist");
+            // Annotate the shared string.
+            const colorProps = { color: "green" };
+            sharedStringWithInterception.annotateRange(0, 5, colorProps);
+            // Verify the text and properties via the underlying shared string.
+            verifyString(sharedString, "12aaa", { ...syleProps, ...colorProps, ...userAttributes }, 2);
         });
 
         it("should be able to see changes made by the underlying shared string from the wrapper", async () => {
             // Insert text via the underlying shared string.
-            sharedString.insertText(0, "123", { style: "bold" });
-
-            // Get the text and properties via the shared string with interception wrapper.
-            assert.equal(sharedStringWithInterception.getText(), "123", "The text should match the inserted text");
-            const props = sharedStringWithInterception.getPropertiesAtPosition(2);
-            assert.equal(props.style, "bold", "The style set via insertText should exist");
-            // The userId should not exist because there should be no interception.
-            assert.equal(props.userId, undefined, "The userId should not exist because there was no interception");
+            let text: string = "123";
+            let syleProps: PropertySet = { style: "bold" };
+            sharedString.insertText(0, text, syleProps);
+            // Verify the text and properties via the interception wrapper. It should not have the user attributes.
+            verifyString(sharedStringWithInterception, text, syleProps, 2);
 
             // Replace text via the underlying shared string.
-            sharedString.replaceText(2, 3, "aaa", { style: "italics" });
+            text = "aaa";
+            syleProps = { style: "italics "};
+            sharedString.replaceText(2, 3, "aaa", syleProps);
+            // Verify the text and properties via the interception wrapper. It should not have the user attributes.
+            verifyString(sharedStringWithInterception, "12aaa", syleProps, 2);
 
-            // Get the text and properties via the shared string wtih interception wrapper.
-            assert.equal(sharedStringWithInterception.getText(), "12aaa", "The text should match the replaced text");
-            const propsAfterReplace = sharedStringWithInterception.getPropertiesAtPosition(2);
-            assert.equal(propsAfterReplace.style, "italics", "The new style set via replaceText should exist");
-            // The userId should not exist because there should be no interception.
-            assert.equal(props.userId, undefined, "The userId should not exist because there was no interception");
-
-            // Annotate via the underlying shared string.
-            sharedString.annotateRange(0, 5, { color: "green" });
-
-            // Get the text and properties via the shared string with interception wrapper.
-            const propsAfterAnnotate = sharedStringWithInterception.getPropertiesAtPosition(2);
-            assert.equal(propsAfterAnnotate.style, "italics", "The previous style should exist");
-            assert.equal(propsAfterAnnotate.color, "green", "The color set via annotateRange should exist");
-            // The userId should not exist because there should be no interception.
-            assert.equal(props.userId, undefined, "The userId should not exist because there was no interception");
+            // Annotate the shared string via the underlying shared string.
+            const colorProps = { color: "green" };
+            sharedString.annotateRange(0, 5, colorProps);
+            // Verify the text and properties via the interception wrapper. It should not have the user attributes.
+            verifyString(sharedStringWithInterception, "12aaa", { ...syleProps, ...colorProps}, 2);
         });
     });
 });

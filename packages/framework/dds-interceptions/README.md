@@ -28,6 +28,8 @@ function createSharedMapWithInterception(
 
 When set is called on the SharedMap, it calls setInterceptionCallback with the underlying SharedMap, the key and value that the set was called with. The callback funtion can then perform operations on either the underlying SharedMap or any other DDS. The original set operation and any operations in the callback are batched, i.e., they are guaranteed to be in order and will be applied together.
 
+Example: To support a feature like simple user attribution, in the callback, the app can set the user information in the underlying SharedMap against a key dervied from the original key - say against "key.attribute". Or, it could use a separate SharedMap to store the user information against the same key.
+
 ## Shared Directory / Sub Directory With Interception
 
 It provides `createdDirectoryWithInterception` that accepts an IDirectory object, the component context and a callback, and returns an IDirectory object:
@@ -44,3 +46,5 @@ It can be used to wrap a SharedDirectory or one of it's subdirectories to get an
 - value: They value that set was called with.
 
 The original set operation and any operations in the callback function are batched, i.e., they are guaranteed to in order and will be applied together.
+
+Example: To support a feature like simple user attribution, in the callback, the app can set the user information in a sub directory of the original object against the same key.

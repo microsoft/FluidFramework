@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-<<<<<<< HEAD
 import * as assert from "assert";
 import { IDirectory } from "@microsoft/fluid-map";
 import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
@@ -53,39 +52,10 @@ function createSubDirectoryWithInterception<T extends IDirectory>(
             } finally {
                 executingCallback = false;
             }
-=======
-import { SharedDirectory } from "@microsoft/fluid-map";
-import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
-
-/**
- * - Create a new object from the passed ShareDirectory.
- * - Modify the set method to call the interceptionCallback before calling set on the underlying SharedDirectory.
- * - The interceptionCallback and the call to the underlying SharedDirectory are wrapped around an
- *   orderSequentially call to batch any operations that might happen in the callback.
- *
- * @param sharedDirectory - The underlying SharedDirectory
- * @param context - The IComponentContext that will be used to call orderSequentially
- * @param interceptionCallback - The interception callback to be called
- *
- * @returns A new SharedDirectory that intercepts the set method and calls the interceptionCallback.
- */
-export function createSharedDirectoryWithInterception(
-    sharedDirectory: SharedDirectory,
-    context: IComponentContext,
-    interceptionCallback: (key: string) => void): SharedDirectory {
-    const sharedDirectoryWithInterception = Object.create(sharedDirectory);
-
-    sharedDirectoryWithInterception.set = (key: string, value: any) => {
-        let directory;
-        context.hostRuntime.orderSequentially(() => {
-            interceptionCallback(key);
-            directory = sharedDirectory.set(key, value);
->>>>>>> SharedMap and SharedDirectory with Interception that creates a wrapper to support features like user attribution.
         });
         return directory;
     };
 
-<<<<<<< HEAD
     subDirectoryWithInterception.createSubDirectory = (subdirName: string): IDirectory => {
         const subSubDirectory = subDirectory.createSubDirectory(subdirName);
         return createSubDirectoryWithInterception(baseDirectory, subSubDirectory, context, setInterceptionCallback);
@@ -156,7 +126,4 @@ export function createDirectoryWithInterception<T extends IDirectory>(
         key: string,
         value: any) => void): T {
     return createSubDirectoryWithInterception(baseDirectory, baseDirectory, context, setInterceptionCallback);
-=======
-    return sharedDirectoryWithInterception as SharedDirectory;
->>>>>>> SharedMap and SharedDirectory with Interception that creates a wrapper to support features like user attribution.
 }
