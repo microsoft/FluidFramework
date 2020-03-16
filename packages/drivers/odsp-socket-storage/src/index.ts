@@ -17,3 +17,4 @@ export * from "./odspDocumentServiceFactoryWithCodeSplit";
 export * from "./odspDocumentDeltaConnection";
 export * from "./odspCache";
 export * from "./createFile";
+export * from "./odspUrlHelper";

@@ -29,7 +29,7 @@ import { OdspDocumentStorageManager } from "./odspDocumentStorageManager";
 import { OdspDocumentStorageService } from "./odspDocumentStorageService";
 import { getWithRetryForTokenRefresh, isLocalStorageAvailable } from "./odspUtils";
 import { getSocketStorageDiscovery } from "./vroom";
-import { isOdcUrl } from "./isOdc";
+import { isOdcOrigin } from "./odspUrlHelper";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const performanceNow = require("performance-now") as (() => number);
@@ -145,7 +145,7 @@ export class OdspDocumentService implements IDocumentService {
         this.logger = DebugLogger.mixinDebugLogger(
             "fluid:telemetry:OdspDriver",
             logger,
-            { docId: hashedDocumentId, odc: isOdcUrl(snapshotStorageUrl) });
+            { docId: hashedDocumentId, odc: isOdcOrigin(new URL(snapshotStorageUrl).origin) });
 
         this.getStorageToken = async (refresh: boolean, name?: string) => {
             if (refresh) {
