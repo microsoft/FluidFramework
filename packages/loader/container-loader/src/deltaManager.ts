@@ -33,6 +33,7 @@ import {
     ISignalMessage,
     ITrace,
     MessageType,
+    ScopeType,
 } from "@microsoft/fluid-protocol-definitions";
 import { createIError, WriteError } from "@microsoft/fluid-driver-utils";
 import { ContentCache } from "./contentCache";
@@ -311,7 +312,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.inQuorum = false;
     }
 
-    public async connect(requestedMode: ConnectionMode = "write"): Promise<IConnectionDetails> {
+    public async connect(requestedMode: ConnectionMode = this.defaultReconnectionMode): Promise<IConnectionDetails> {
         const docService = this.serviceProvider();
         if (!docService) {
             throw new Error("Container is not attached");
@@ -727,10 +728,13 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private setupNewSuccessfulConnection(connection: DeltaConnection, requestedMode: ConnectionMode) {
         this.connection = connection;
 
-        if (requestedMode === "write") {
-            // if we ask for write and get read it means we don't have write permissions
-            this.setReadonlyState(this.connectionMode !== requestedMode);
-        }
+        // Does information in scopes & mode matches?
+        // If we asked for "write" and got "read", then file is read-only
+        // But if we ask read, server can still give us write.
+        const readonly = !connection.details.claims.scopes.includes(ScopeType.DocWrite);
+        assert(requestedMode === "read" || readonly === (this.connectionMode === "read"));
+        assert(!readonly || this.connectionMode === "read");
+        this.setReadonlyState(readonly);
 
         this.emitDelayInfo(retryFor.DELTASTREAM, -1);
 
