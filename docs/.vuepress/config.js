@@ -40,14 +40,21 @@ const getNav = () => {
                 {
                     text: "Contributing",
                     items: [
+                        { text: "Release process", link: "/contributing/release-process" },
+                        { text: "Breaking changes", link: "/contributing/breaking-changes" },
+                        { text: "Compatibility", link: "/contributing/compatibility" },
                         { text: "Coding guidelines", link: "/contributing/coding-guidelines" },
                         { text: "Building documentation locally", link: "/contributing/building-documentation" },
-                        { text: "Routerlicious build machine", link: "/contributing/r11s-build-machine" },
-                        { text: "Compatibility", link: "/contributing/compatibility" },
                         { text: "Miscellaneous", link: "/contributing/misc" },
                     ]
                 },
-                { text: "Team", link: "/team/" }
+                {
+                    text: "Team",
+                    items: [
+                        { text: "Updates", link: "/team/" },
+                        { text: "Routerlicious build machine", link: "/contributing/r11s-build-machine" },
+                    ]
+                }
             ]
         },
     ];
