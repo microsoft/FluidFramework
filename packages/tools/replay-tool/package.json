@@ -33,7 +33,7 @@
     "@microsoft/fluid-container-loader": "^0.15.0",
     "@microsoft/fluid-driver-definitions": "^0.15.0",
     "@microsoft/fluid-file-driver": "^0.15.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1002.0",
+    "@microsoft/fluid-protocol-definitions": "^0.1003.0",
     "@microsoft/fluid-replay-driver": "^0.15.0"
   },
   "devDependencies": {

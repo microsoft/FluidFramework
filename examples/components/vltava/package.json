@@ -41,7 +41,7 @@
     "@microsoft/fluid-container-definitions": "^0.15.0",
     "@microsoft/fluid-framework-interfaces": "^0.15.0",
     "@microsoft/fluid-map": "^0.15.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1002.0",
+    "@microsoft/fluid-protocol-definitions": "^0.1003.0",
     "@microsoft/fluid-runtime-definitions": "^0.15.0",
     "@microsoft/fluid-sequence": "^0.15.0",
     "@microsoft/fluid-shared-object-base": "^0.15.0",

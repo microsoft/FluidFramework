@@ -81,7 +81,7 @@ export class DocumentStorage implements IDocumentStorage, IExperimentalDocumentS
         summary: ISummaryTree,
         sequenceNumber: number,
         values: [string, ICommittedProposal][],
-    ) {
+    ): Promise<IDocumentDetails> {
         const tenant = await this.tenantManager.getTenant(tenantId);
         const gitManager = tenant.gitManager;
 

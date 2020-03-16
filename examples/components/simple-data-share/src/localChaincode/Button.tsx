@@ -20,7 +20,7 @@ export class Button extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
     public static readonly chaincodeName = `${chaincodeName}/button`;
-    public counter: Counter;
+    public counter: Counter | undefined;
 
     public render(div: HTMLDivElement) {
         // This.counter should be set by the root component. If it isn't defined yet, just return

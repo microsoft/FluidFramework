@@ -45,7 +45,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@microsoft/fluid-protocol-definitions": "^0.1002.0",
+    "@microsoft/fluid-protocol-definitions": "^0.1003.0",
     "@microsoft/fluid-replay-tool": "^0.15.0"
   },
   "devDependencies": {
