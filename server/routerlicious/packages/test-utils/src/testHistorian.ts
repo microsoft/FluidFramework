@@ -95,8 +95,7 @@ export class TestHistorian implements IHistorian {
     }
 
     public async getCommit(sha: string): Promise<git.ICommit> {
-        const ref = await this.getRef(sha);
-        const commit = await this.commits.findOne({ _id: ref.object.sha });
+        const commit = await this.commits.findOne({ _id: sha });
         if (commit) {
             return {
                 author: {} as Partial<git.IAuthor> as git.IAuthor,
@@ -125,8 +124,8 @@ export class TestHistorian implements IHistorian {
     }
 
     public async getRef(ref: string): Promise<git.IRef> {
-        const id = gitHashFile(Buffer.from(`refs/heads/${ref}`));
-        const val = await this.refs.findOne(id);
+        const _id = ref.split("/").pop();
+        const val = await this.refs.findOne({ _id});
         return {
             ref,
             url: val.value.ref,
@@ -137,16 +136,9 @@ export class TestHistorian implements IHistorian {
     }
 
     public async createRef(params: git.ICreateRefParams): Promise<git.IRef> {
-        const _id = gitHashFile(Buffer.from(params.ref));
+        const _id = params.ref.split("/").pop();
         await this.refs.insertOne({_id, value: params});
-        const ref: git.IRef = {
-            ref: _id,
-            url: params.ref,
-            object: { sha: _id,
-                url: params.ref,
-                type: "ref" },
-        };
-        return ref;
+        return this.getRef(_id);
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
