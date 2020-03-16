@@ -95,7 +95,11 @@ export class TestHistorian implements IHistorian {
     }
 
     public async getCommit(sha: string): Promise<git.ICommit> {
-        const commit = await this.commits.findOne({ _id: sha });
+        let commit = await this.commits.findOne({ _id: sha });
+        if (!commit) {
+            const ref = await this.getRef(gitHashFile(Buffer.from(`refs/heads/${sha}`)));
+            commit = await this.commits.findOne({ _id: ref.object.sha });
+        }
         if (commit) {
             return {
                 author: {} as Partial<git.IAuthor> as git.IAuthor,
@@ -124,19 +128,18 @@ export class TestHistorian implements IHistorian {
     }
 
     public async getRef(ref: string): Promise<git.IRef> {
-        const _id = ref.split("/").pop();
-        const val = await this.refs.findOne({ _id});
+        const val = await this.refs.findOne({ _id: ref});
         return {
-            ref,
-            url: val.value.ref,
+            ref: val.value.ref,
+            url: "",
             object: { sha: val.value.sha,
-                url: val.value.ref,
-                type: "ref" },
+                url: "",
+                type: "" },
         };
     }
 
     public async createRef(params: git.ICreateRefParams): Promise<git.IRef> {
-        const _id = params.ref.split("/").pop();
+        const _id = gitHashFile(Buffer.from(params.ref));
         await this.refs.insertOne({_id, value: params});
         return this.getRef(_id);
     }
