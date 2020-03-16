@@ -27,6 +27,6 @@ describe("Test for TestUtils", () => {
         await gitManager.createRef(documentId, putCommit.sha);
         const getCommit = await gitManager.getCommit(documentId);
         assert.equal(getCommit.sha, putCommit.sha, "Sha not equal of commits!!");
-        assert.equal(getCommit.message, commitParams.message, "Sha not equal of commits!!");
+        assert.equal(getCommit.message, commitParams.message, "Message not equal of commits!!");
     });
 });
