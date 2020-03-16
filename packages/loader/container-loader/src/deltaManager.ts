@@ -33,6 +33,7 @@ import {
     ISignalMessage,
     ITrace,
     MessageType,
+    ScopeType,
 } from "@microsoft/fluid-protocol-definitions";
 import { createIError, WriteError } from "@microsoft/fluid-driver-utils";
 import { ContentCache } from "./contentCache";
@@ -201,7 +202,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         super();
 
         this.clientDetails = this.client.details;
-        this.defaultReconnectionMode = this.client.mode === "write" ? "write" : "read";
+        this.defaultReconnectionMode = "read";
 
         this._inbound = new DeltaQueue<ISequencedDocumentMessage>(
             (op) => {
@@ -310,7 +311,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.inQuorum = false;
     }
 
-    public async connect(requestedMode: ConnectionMode = "write"): Promise<IConnectionDetails> {
+    public async connect(requestedMode: ConnectionMode = this.defaultReconnectionMode): Promise<IConnectionDetails> {
         const docService = this.serviceProvider();
         if (!docService) {
             throw new Error("Container is not attached");
@@ -728,10 +729,13 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // Back-compat for newer clients and old server. If the server does not have mode, we reset to write.
         this._connectionMode = connection.details.mode ? connection.details.mode : "write";
 
-        if (requestedMode === "write") {
-            // if we ask for write and get read it means we don't have write permissions
-            this.setReadonlyState(this._connectionMode !== requestedMode);
-        }
+        // Does information in scopes & mode matches?
+        // If we asked for "write" and got "read", then file is read-only
+        // But if we ask read, server can still give us write.
+        const readonly = !connection.details.claims.scopes.includes(ScopeType.DocWrite);
+        assert(requestedMode === "read" || readonly === (this._connectionMode === "read"));
+        assert(!readonly || this._connectionMode === "read");
+        this.setReadonlyState(readonly);
 
         this.emitDelayInfo(retryFor.DELTASTREAM, -1);
 

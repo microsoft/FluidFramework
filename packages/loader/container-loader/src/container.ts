@@ -47,6 +47,7 @@ import {
     raiseConnectedEvent,
 } from "@microsoft/fluid-protocol-base";
 import {
+    ConnectionMode,
     ConnectionState,
     FileMode,
     IClient,
@@ -688,9 +689,15 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
     }
 
-    private async connectToDeltaStream() {
+    private async connectToDeltaStream(mode?: ConnectionMode) {
         this.recordConnectStartTime();
-        return this._deltaManager.connect();
+
+        // All agents need "write" access, including summarizer.
+        if (!this.canReconnect || !this.client.details.capabilities.interactive) {
+            mode = "write";
+        }
+
+        return this._deltaManager.connect(mode);
     }
 
     /**
@@ -707,10 +714,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         let startConnectionP: Promise<IConnectionDetails> | undefined;
 
-        // Start websocket connection as soon as possible.  Note that there is no op handler attached yet, but the
+        // Start websocket connection as soon as possible. Note that there is no op handler attached yet, but the
         // DeltaManager is resilient to this and will wait to start processing ops until after it is attached.
         if (!pause) {
-            startConnectionP = this.connectToDeltaStream();
+            startConnectionP = this.connectToDeltaStream("write");
             startConnectionP.catch((error) => {});
         }
 
@@ -720,12 +727,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // Fetch specified snapshot, but intentionally do not load from snapshot if specifiedVersion is null
         const maybeSnapshotTree = specifiedVersion === null ? undefined
             : await this.fetchSnapshotTree(specifiedVersion);
-
-        // If pause, and there's no tree, then we'll start the websocket connection here (we'll need the details later)
-        if (!maybeSnapshotTree && !startConnectionP) {
-            startConnectionP = this.connectToDeltaStream();
-            startConnectionP.catch((error) => {});
-        }
 
         const blobManagerP = this.loadBlobManager(this.storageService, maybeSnapshotTree);
 
@@ -749,7 +750,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             loadDetailsP = Promise.resolve();
         } else {
             if (!startConnectionP) {
-                startConnectionP = this.connectToDeltaStream();
+                startConnectionP = this.connectToDeltaStream("write");
             }
             // Intentionally don't .catch on this promise - we'll let any error throw below in the await.
             loadDetailsP = startConnectionP.then((details) => {
@@ -763,8 +764,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         [this.blobManager, this.protocolHandler] = await Promise.all([blobManagerP, protocolHandlerP, loadDetailsP]);
 
         await this.loadContext(attributes, maybeSnapshotTree);
-
-        this.context!.changeConnectionState(this.connectionState, this.clientId!, this._version);
 
         // Internal context is fully loaded at this point
         this.loaded = true;
@@ -817,6 +816,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // The load context - given we seeded the quorum - will be great
         await this.createDetachedContext(attributes);
         this.loaded = true;
+
+        this.propagateConnectionState();
     }
 
     private async getDocumentStorageService(): Promise<IDocumentStorageService> {
