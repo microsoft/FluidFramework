@@ -191,7 +191,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private storageService: IDocumentStorageService | undefined | null;
     private blobsCacheStorageService: IDocumentStorageService | undefined;
 
-    private _version: string | undefined;
     private _clientId: string | undefined;
     private _scopes: string[] | undefined;
     private readonly _deltaManager: DeltaManager;
@@ -917,7 +916,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     ConnectionState.Connected,
                     `joined @ ${details.sequenceNumber}`,
                     this.pendingClientId,
-                    this._deltaManager.version,
                     details.client.scopes,
                     this._deltaManager.serviceConfiguration);
             }
@@ -1034,7 +1032,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 ConnectionState.Connecting,
                 "websocket established",
                 details.clientId,
-                details.version,
                 details.claims.scopes,
                 details.serviceConfiguration);
 
@@ -1043,7 +1040,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     ConnectionState.Connected,
                     `joined as readonly`,
                     details.clientId,
-                    deltaManager.version,
                     details.claims.scopes,
                     deltaManager.serviceConfiguration);
             }
@@ -1156,14 +1152,12 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         value: ConnectionState,
         reason: string,
         clientId: string,
-        version: string,
         scopes: string[],
         configuration: IServiceConfiguration);
     private setConnectionState(
         value: ConnectionState,
         reason: string,
-        context?: string,
-        version?: string,
+        clientId?: string,
         scopes?: string[],
         configuration?: IServiceConfiguration) {
         if (this.connectionState === value) {
@@ -1174,7 +1168,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         const oldState = this._connectionState;
         this._connectionState = value;
-        this._version = version;
         this._scopes = scopes;
         this._serviceConfiguration = configuration;
 
@@ -1185,7 +1178,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // join message. after we see the join message for out new connection with our new client id,
         // we know there can no longer be outstanding ops that we sent with the previous client id.
         if (value === ConnectionState.Connecting) {
-            this.pendingClientId = context;
+            this.pendingClientId = clientId;
         } else if (value === ConnectionState.Connected) {
             this._clientId = this.pendingClientId;
             this._deltaManager.updateQuorumJoin();
@@ -1208,7 +1201,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         if (logOpsOnReconnect) {
             this.messageCountAfterDisconnection = 0;
         }
-        this.context!.changeConnectionState(this._connectionState, this.clientId, this._version);
+        this.context!.changeConnectionState(this._connectionState, this.clientId);
         this.protocolHandler!.quorum.changeConnectionState(this._connectionState, this.clientId);
         raiseConnectedEvent(this, this._connectionState, this.clientId!);
         if (logOpsOnReconnect) {
