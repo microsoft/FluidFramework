@@ -1,7 +1,8 @@
 ---
 home: true
-heroImage: /images/homescreen144.png
-# heroText: Fluid Framework
+# heroImage: /images/homescreen144.png
+heroText: "Fluid Framework"
+showHeroSymbol: true
 # tagline: State that flows
 # actionText: Get Started →
 # actionLink: /guide/

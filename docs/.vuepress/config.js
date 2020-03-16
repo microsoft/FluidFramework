@@ -308,6 +308,14 @@ const getPatternsSidebar = () => {
     ];
 }
 
+function permalinkSymbol() {
+    const now = new Date(Date.now());
+    const start = new Date(2020, 2 /* 0-based because javascript */, 15);
+    const end = new Date(2020, 2 /* 0-based because javascript */, 16);
+    const symbol = start < now && now < end ? "🍀" : "💧";
+    return symbol;
+}
+
 module.exports = {
     title: "Fluid Framework",
     description: "State that flows",
@@ -363,7 +371,7 @@ module.exports = {
         anchor: {
             permalink: true,
             permalinkBefore: true,
-            permalinkSymbol: "💧"
+            permalinkSymbol: permalinkSymbol(),
         },
         lineNumbers: true,
         extractHeaders: ["h2", "h3", "h4"],
@@ -377,9 +385,10 @@ module.exports = {
     },
     themeConfig: {
         editLinks: true,
-        lastUpdated: true, // "Last Updated",
+        lastUpdated: false, // "Last Updated",
         repo: "microsoft/FluidFramework",
         docsDir: "docs",
+        heroSymbol: permalinkSymbol(),
         smoothScroll: true,
         sidebarDepth: 1,
         nav: getNav(),
