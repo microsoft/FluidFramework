@@ -309,10 +309,12 @@ const getPatternsSidebar = () => {
 }
 
 function permalinkSymbol() {
-    const now = new Date(Date.now());
-    const start = new Date(2020, 2 /* 0-based because javascript */, 15);
-    const end = new Date(2020, 2 /* 0-based because javascript */, 16);
-    const symbol = start < now && now < end ? "🍀" : "💧";
+    const now = new Date(new Date().getTime());
+    const start = new Date(Date.UTC(2020, 2 /* 0-based because javascript */, 17));
+    const end = new Date(Date.UTC(2020, 2 /* 0-based because javascript */, 18));
+    const inRange = start < now && now < end;
+    // console.log(`${inRange}: ${start} < ${now} < ${end}`);
+    const symbol = inRange ? "🍀" : "💧";
     return symbol;
 }
 
