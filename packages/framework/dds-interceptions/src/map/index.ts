@@ -4,3 +4,5 @@
  */
 
 export * from "./sharedDirectoryWithInterception";
+export * from "./sharedMapWithInterception";
+
