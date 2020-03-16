@@ -11,7 +11,7 @@ import {
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { IResolvedPackage, WebCodeLoader } from "@microsoft/fluid-web-code-loader";
 import { IBaseHostConfig } from "./hostConfig";
-import { initializeContainerCode } from "./initializeContainerCode";
+import { containerCodeAvailable, initializeContainerCode } from "./initializeContainerCode";
 
 /**
  * Create a loader and return it.
@@ -110,6 +110,8 @@ export class BaseHost {
         if (pkg) {
             await initializeContainerCode(container, pkg)
                 .catch((error) => console.error("code proposal error", error));
+        } else {
+            await containerCodeAvailable(container);
         }
 
         return container;
