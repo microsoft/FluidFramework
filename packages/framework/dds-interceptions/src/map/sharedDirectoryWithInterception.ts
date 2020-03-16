@@ -24,15 +24,15 @@ import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
  *
  * @returns A new sub directory that intercepts the set method and calls the setInterceptionCallback.
  */
-function createSubDirectoryWithInterception(
-    baseDirectory: IDirectory,
-    subDirectory: IDirectory,
+function createSubDirectoryWithInterception<T extends IDirectory>(
+    baseDirectory: T,
+    subDirectory: T,
     context: IComponentContext,
     setInterceptionCallback: (
         baseDirectory: IDirectory,
         subDirectory: IDirectory,
         key: string,
-        value: any) => void): IDirectory {
+        value: any) => void): T {
     const subDirectoryWithInterception = Object.create(subDirectory);
 
     // executingCallback keeps track of whether set is called recursively from the setInterceptionCallback.
@@ -97,7 +97,7 @@ function createSubDirectoryWithInterception(
         return createSubDirectoryWithInterception(baseDirectory, subSubDirectory, context, setInterceptionCallback);
     };
 
-    return subDirectoryWithInterception as IDirectory;
+    return subDirectoryWithInterception;
 }
 
 /**
@@ -116,12 +116,14 @@ function createSubDirectoryWithInterception(
  *
  * @returns A new IDirectory object that intercepts the set method and calls the setInterceptionCallback.
  */
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function createDirectoryWithInterception<T extends IDirectory>(
     baseDirectory: T,
     context: IComponentContext,
-    setInterceptionCallback: (baseDirectory: IDirectory, subDirectory: IDirectory, key: string, value: any) => void):
-    T {
-    const directory =
-        createSubDirectoryWithInterception(baseDirectory, baseDirectory, context, setInterceptionCallback);
-    return directory as T;
+    setInterceptionCallback: (
+        baseDirectory: IDirectory,
+        subDirectory: IDirectory,
+        key: string,
+        value: any) => void): T {
+    return createSubDirectoryWithInterception(baseDirectory, baseDirectory, context, setInterceptionCallback);
 }
