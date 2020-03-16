@@ -689,9 +689,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
     }
 
-    private async connectToDeltaStream(mode?: ConnectionMode) {
+    private async connectToDeltaStream(modeArg: ConnectionMode = "read") {
         this.recordConnectStartTime();
 
+        let mode = modeArg;
         // All agents need "write" access, including summarizer.
         if (!this.canReconnect || !this.client.details.capabilities.interactive) {
             mode = "write";
@@ -714,10 +715,21 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         let startConnectionP: Promise<IConnectionDetails> | undefined;
 
+        // Ideally we always connect as "read" by default.
+        // Currently that works with SPO & r11s, because we get "write" connection when connecting to non-existing file.
+        // We should not rely on it by (one of them will address the issue, but we need to address both)
+        // 1) switching create new flow to one where we create file by posting snapshot
+        // 2) Fixing quorum workflows (have retry logic)
+        // That all said, "read" does not work with memorylicious workflows (that opens two simultaneous
+        // connections to same file) in two ways:
+        // A) creation flow breaks (as one of the clients "sees" file as existing, and hits #2 above)
+        // B) Once file is created, transition from view-only connection to write does not work - some bugs to be fixed.
+        const defaultConnectionMode = "write";
+
         // Start websocket connection as soon as possible. Note that there is no op handler attached yet, but the
         // DeltaManager is resilient to this and will wait to start processing ops until after it is attached.
         if (!pause) {
-            startConnectionP = this.connectToDeltaStream("write");
+            startConnectionP = this.connectToDeltaStream(defaultConnectionMode);
             startConnectionP.catch((error) => {});
         }
 
@@ -750,7 +762,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             loadDetailsP = Promise.resolve();
         } else {
             if (!startConnectionP) {
-                startConnectionP = this.connectToDeltaStream("write");
+                startConnectionP = this.connectToDeltaStream(defaultConnectionMode);
             }
             // Intentionally don't .catch on this promise - we'll let any error throw below in the await.
             loadDetailsP = startConnectionP.then((details) => {
