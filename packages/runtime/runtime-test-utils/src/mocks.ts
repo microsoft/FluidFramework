@@ -331,7 +331,7 @@ export class MockRuntime extends EventEmitter
     public readonly id: string;
     public readonly existing: boolean;
     public readonly options: any = {};
-    public clientId: string = uuid();
+    public clientId: string | undefined = uuid();
     public readonly parentBranch: string;
     public readonly path = "";
     public readonly connected = true;

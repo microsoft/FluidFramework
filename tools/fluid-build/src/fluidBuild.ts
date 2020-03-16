@@ -8,7 +8,7 @@ import { FluidRepo } from "./fluidBuild/fluidRepo";
 import { getResolvedFluidRoot } from "./common/fluidUtils";
 import { logStatus } from "./common/logging";
 import { Timer } from "./common/timer";
-import { existsSync, rimrafWithErrorAsync } from "./common/utils";
+import { existsSync } from "./common/utils";
 import { BuildResult } from "./fluidBuild/buildGraph";
 import { parseOptions, options } from "./fluidBuild/options";
 import * as path from "path";
@@ -39,7 +39,7 @@ async function main() {
     timer.time("Package scan completed");
 
     // Check scripts
-    repo.checkScripts(options.fixScripts);
+    await repo.checkPackages(options.fix);
     timer.time("Check scripts completed");
 
     const matched = repo.setMatched(options);
@@ -150,6 +150,9 @@ function buildResultString(buildResult: BuildResult) {
     }
 }
 
-main();
+main().catch(error => {
+    console.error("ERROR: Unexpected error");
+    console.error(error.stack);
+});
 
 

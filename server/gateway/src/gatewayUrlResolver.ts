@@ -6,7 +6,7 @@
 import { isSpoTenant, resolveFluidUrl, spoGetResolvedUrl } from "@fluid-example/tiny-web-host";
 import { IClientConfig } from "@microsoft/fluid-odsp-utils";
 import { ScopeType } from "@microsoft/fluid-protocol-definitions";
-import { IAlfredUser, IConfig, RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlresolver";
+import { IAlfredUser, RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlresolver";
 import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
 import { chooseCelaName } from "@microsoft/fluid-server-services-core";
 import { Request } from "express";
@@ -47,14 +47,15 @@ export function resolveUrl(
                 name: request.user.name,
             };
         }
-        const endPointConfig: IConfig = {
-            blobStorageUrl: config.get("worker:blobStorageUrl"),
-            serverUrl: config.get("worker:serverUrl"),
+
+        const endPointConfig: { provider: Provider, tenantId: string, documentId: string } = {
+            provider: config,
             tenantId,
             documentId,
         };
+
         const resolverList = [new RouterliciousUrlResolver(endPointConfig, undefined, appTenants, scopes, user)];
-        const resolvedP = resolveFluidUrl(request.originalUrl, resolverList);
+        const resolvedP = resolveFluidUrl(request, resolverList);
         const fullTreeP = alfred.getFullTree(tenantId, documentId);
         return [resolvedP, fullTreeP];
     }

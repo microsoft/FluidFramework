@@ -6,17 +6,12 @@
     ],
     "compilerOptions": {
         "allowSyntheticDefaultImports": true,
-        "inlineSources": true,
         "jsx": "react",
         "module": "esnext",
-        "moduleResolution": "node",
         "noImplicitAny": true,
-        "noUnusedLocals": true,
         "outDir": "dist",
-        "sourceMap": true,
         "strictPropertyInitialization": true,
-        "target": "es6",
-        "incremental": true
+        "target": "es6"
     },
     "include": [
         "src/**/*"

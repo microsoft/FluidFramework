@@ -152,7 +152,7 @@ export class ExternalComponentView extends PrimedComponent implements
                 urls.map((url) => {
                     const urlSplit = url.split("/");
                     if (urlSplit.length > 0) {
-                        return this.context.getComponentRuntime(urlSplit.shift(), true)
+                        return this.context.hostRuntime.getComponentRuntime(urlSplit.shift(), true)
                             .then(
                                 async (componentRuntime) => componentRuntime.request({ url: `/${urlSplit.join("/")}` }),
                             ).then((request) => {
