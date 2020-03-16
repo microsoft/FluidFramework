@@ -387,7 +387,7 @@ export class Quorum extends EventEmitter implements IQuorum {
         return immediateNoOp;
     }
 
-    public changeConnectionState(value: ConnectionState, clientId: string) {
+    public changeConnectionState(value: ConnectionState, clientId?: string) {
         if (value === ConnectionState.Disconnected) {
             this.localProposals.forEach((deferral) => {
                 deferral.reject("Client got disconnected");
