@@ -94,7 +94,7 @@ export interface IComponentRuntime extends
      * @param clientId - ID of the client. It's old ID when in disconnected state and
      * it's new client ID when we are connecting or connected.
      */
-    changeConnectionState(value: ConnectionState, clientId: string);
+    changeConnectionState(value: ConnectionState, clientId?: string);
 
     /**
      * @deprecated in 0.14 async close()

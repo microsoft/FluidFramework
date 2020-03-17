@@ -770,7 +770,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return { snapshot, state };
     }
 
-    public changeConnectionState(value: ConnectionState, clientId: string, version: string) {
+    public changeConnectionState(value: ConnectionState, clientId?: string) {
         this.verifyNotClosed();
 
         assert(this.connectionState === value);
