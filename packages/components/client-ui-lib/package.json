@@ -58,6 +58,7 @@
     "@microsoft/fluid-runtime-definitions": "^0.15.0",
     "@microsoft/fluid-sequence": "^0.15.0",
     "@microsoft/fluid-undo-redo": "^0.15.0",
+    "@microsoft/fluid-view-adapters": "^0.15.0",
     "debug": "^4.1.1",
     "performance-now": "^2.1.0",
     "shape-detector": "^0.2.1"
