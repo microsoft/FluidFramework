@@ -229,8 +229,8 @@ export class MockQuorum implements IQuorum, EventEmitter{
         throw new Error("Method not implemented.");
     }
 
-    addMember(id: string, client: ISequencedClient) {
-        this.members.set(id, client);
+    addMember(id: string, client: Partial<ISequencedClient>) {
+        this.members.set(id, client as ISequencedClient);
         this.eventEmitter.emit("addMember");
     }
 
