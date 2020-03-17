@@ -1,9 +1,0 @@
-.vs
-Debug/**
-Release/**
-test/Debug/**
-test/Release/**
-test/x64/**
-x64/**
-*.vcxproj.user
-Emscripten_Build/**
