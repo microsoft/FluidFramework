@@ -32,7 +32,6 @@ in order to trigger reconnect. Now, calling Container.setAutoReconnect(true) is 
 
 ### 0.13 backwards compatibility removed
 
-- external-component-loader now expects components to implement `IComponentHTMLView`. See [changes to the render interfaces](#changes-to-the-render-interfaces) from 0.14 changes
 - The following changes break compatibility between loader and runtime, meaning 0.15 loader cannot load 0.13 runtime and 0.13 loader cannot load 0.15 runtime:
     - While `IContainerContext.baseSnapshot` was defined to be possibly `null`, `ContainerContext` and `ContainerRuntime` would not correctly handle being passed `baseSnapshot` as `null` in 0.13 and below, and `Container` would not pass it as `null`, passing an empty snapshot instead. `Container` will now potentially pass `baseSnapshot` as `null`.
     - `ContainerRuntime.stop()` is now expected to return an `IRuntimeState`, rather than `void` as previously returned in 0.13 and below. This `IRuntimeState` can be an empty object, but cannot be null.
