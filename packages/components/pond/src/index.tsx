@@ -14,6 +14,7 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { SharedDirectory } from "@microsoft/fluid-map";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 
 import { Clicker, ClickerName, ClickerWithInitialValue, ClickerWithInitialValueName } from "./internal-components";
 
@@ -34,8 +35,8 @@ export class Pond extends PrimedComponent implements IComponentHTMLView {
     private readonly clickerKey = "clicker";
     private readonly clickerWithInitialValueKey = "clicker-with-initial-value";
 
-    public clicker2Render: IComponentHTMLView | undefined;
-    public clicker3Render: IComponentHTMLView | undefined;
+    public clicker2Render: HTMLViewAdapter | undefined;
+    public clicker3Render: HTMLViewAdapter | undefined;
 
     public get IComponentHTMLView() { return this; }
 
@@ -61,10 +62,10 @@ export class Pond extends PrimedComponent implements IComponentHTMLView {
 
     protected async componentHasInitialized() {
         const clicker2 = await this.root.get<IComponentHandle>(this.clickerKey).get();
-        this.clicker2Render = clicker2.IComponentHTMLView;
+        this.clicker2Render = new HTMLViewAdapter(clicker2);
 
         const clicker3 = await this.root.get<IComponentHandle>(this.clickerWithInitialValueKey).get();
-        this.clicker3Render = clicker3.IComponentHTMLView;
+        this.clicker3Render = new HTMLViewAdapter(clicker3);
     }
 
     // start IComponentHTMLView

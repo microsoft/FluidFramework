@@ -213,10 +213,15 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private manualReconnectInProgress = false;
     private readonly connectionTransitionTimes: number[] = [];
     private messageCountAfterDisconnection: number = 0;
+    private _loadedFromVersion: IVersion | undefined;
 
     private lastVisible: number | undefined;
 
     private _closed = false;
+
+    public get loadedFromVersion(): IVersion | undefined {
+        return this._loadedFromVersion;
+    }
 
     public get readonly(): boolean | undefined {
         return this._deltaManager.readonly;
@@ -377,7 +382,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.protocolHandler.close();
         }
 
-        // eslint-disable-next-line no-unused-expressions
         this.context?.dispose();
 
         assert(this.connectionState === ConnectionState.Disconnected, "disconnect event was not raised!");
@@ -1271,6 +1275,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const version = await this.getVersion(specifiedVersion || this.id);
 
         if (version) {
+            this._loadedFromVersion = version;
             return await this.storageService!.getSnapshotTree(version) || undefined;
         } else if (specifiedVersion) {
             // We should have a defined version to load from if specified version requested

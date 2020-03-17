@@ -60,7 +60,7 @@
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",
-    "@microsoft/eslint-config-fluid": "^0.14.0",
+    "@microsoft/eslint-config-fluid": "^0.15.0",
     "@microsoft/fluid-build-common": "^0.14.0",
     "@microsoft/fluid-local-test-utils": "^0.15.0",
     "@microsoft/fluid-test-runtime-utils": "^0.15.0",
