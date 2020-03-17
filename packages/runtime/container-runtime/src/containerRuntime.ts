@@ -571,8 +571,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             true : this.storage.uploadSummaryWithContext !== undefined;
         this.latestSummaryAck = {
             proposalHandle: undefined,
-            ackHandle: expContainerContext.isExperimentalContainerContext && expContainerContext.loadedFromVersion()
-                ? expContainerContext.loadedFromVersion().id : undefined };
+            ackHandle: expContainerContext.isExperimentalContainerContext && expContainerContext.getLoadedFromVersion()
+                ? expContainerContext.getLoadedFromVersion().id : undefined };
         this.summaryTracker = new SummaryTracker(
             useContext,
             "", // fullPath - the root is unnamed

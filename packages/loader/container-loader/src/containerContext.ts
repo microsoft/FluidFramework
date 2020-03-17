@@ -212,7 +212,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext,
         return this.runtime!.snapshot(tagMessage, fullTree);
     }
 
-    public loadedFromVersion(): IVersion | undefined {
+    public getLoadedFromVersion(): IVersion | undefined {
         return this.container.loadedFromVersion;
     }
 

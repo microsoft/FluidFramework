@@ -229,7 +229,7 @@ export interface IExperimentalContainerContext extends IContainerContext {
 
     isAttached(): boolean;
 
-    loadedFromVersion(): IVersion | undefined;
+    getLoadedFromVersion(): IVersion | undefined;
 
     createSummary(): Promise<ISummaryTree>;
 }
