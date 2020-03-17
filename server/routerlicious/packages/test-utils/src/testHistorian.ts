@@ -98,7 +98,9 @@ export class TestHistorian implements IHistorian {
         let commit = await this.commits.findOne({ _id: sha });
         if (!commit) {
             const ref = await this.getRef(`refs/heads/${sha}`);
-            commit = await this.commits.findOne({ _id: ref.object.sha });
+            if (ref !== undefined) {
+                commit = await this.commits.findOne({ _id: ref.object.sha });
+            }
         }
         if (commit) {
             return {
