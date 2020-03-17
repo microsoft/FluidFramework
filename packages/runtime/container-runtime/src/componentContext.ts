@@ -81,7 +81,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this._hostRuntime.options;
     }
 
-    public get clientId(): string {
+    public get clientId(): string | undefined {
         return this._hostRuntime.clientId;
     }
 
@@ -281,18 +281,13 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this.componentRuntimeDeferred.promise;
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public getComponentRuntime(id: string, wait: boolean): Promise<IComponentRuntime> {
-        return this._hostRuntime.getComponentRuntime(id, wait);
-    }
-
     /**
      * Notifies this object about changes in the connection state.
      * @param value - New connection state.
      * @param clientId - ID of the client. It's old ID when in disconnected state and
      * it's new client ID when we are connecting or connected.
      */
-    public changeConnectionState(value: ConnectionState, clientId: string) {
+    public changeConnectionState(value: ConnectionState, clientId?: string) {
         this.verifyNotClosed();
 
         // Connection events are ignored if the component is not yet loaded

@@ -95,7 +95,13 @@ export class TestHistorian implements IHistorian {
     }
 
     public async getCommit(sha: string): Promise<git.ICommit> {
-        const commit = await this.commits.findOne({ _id: sha });
+        let commit = await this.commits.findOne({ _id: sha });
+        if (!commit) {
+            const ref = await this.getRef(`refs/heads/${sha}`);
+            if (ref !== undefined) {
+                commit = await this.commits.findOne({ _id: ref.object.sha });
+            }
+        }
         if (commit) {
             return {
                 author: {} as Partial<git.IAuthor> as git.IAuthor,
@@ -124,27 +130,21 @@ export class TestHistorian implements IHistorian {
     }
 
     public async getRef(ref: string): Promise<git.IRef> {
-        const val = await this.refs.findOne(ref);
-        return {
-            ref: val._id,
-            url: val.value.ref,
-            object: { sha: val._id,
-                url: val.value.ref,
-                type: "ref" },
-        };
+        const val = await this.refs.findOne({ _id: ref});
+        if (val) {
+            return {
+                ref: val.value.ref,
+                url: "",
+                object: { sha: val.value.sha,
+                    url: "",
+                    type: "" },
+            };
+        }
     }
 
     public async createRef(params: git.ICreateRefParams): Promise<git.IRef> {
-        const _id = gitHashFile(Buffer.from(params.ref));
-        await this.refs.insertOne({_id, value: params});
-        const ref: git.IRef = {
-            ref: _id,
-            url: params.ref,
-            object: { sha: _id,
-                url: params.ref,
-                type: "ref" },
-        };
-        return ref;
+        await this.refs.insertOne({_id: params.ref, value: params});
+        return this.getRef(params.ref);
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IComponentContext, ITaskManager, ITask } from "@microsoft/fluid-runtime-definitions";
 import { FlowDocument } from "@fluid-example/webflow";
 import { SharedMap } from "@microsoft/fluid-map";
@@ -18,15 +23,19 @@ export class TaskScheduler {
     public start() {
         const hostTokens = (this.componentContext.hostRuntime as IComponent).IComponentTokenProvider;
         const intelTokens = hostTokens && hostTokens.intelligence ? hostTokens.intelligence.textAnalytics : undefined;
-        const intelTask: ITask = {
-            id: "intel",
-            instance: new TextAnalyzer(this.flowDocument, this.insightsMap, intelTokens),
-        };
-        this.taskManager.register(intelTask);
-        this.taskManager.pick(this.componentUrl, "intel").then(() => {
-            console.log(`Picked text analyzer`);
-        }, (err) => {
-            console.log(JSON.stringify(err));
-        });
+        if (intelTokens?.key?.length > 0) {
+            const intelTask: ITask = {
+                id: "intel",
+                instance: new TextAnalyzer(this.flowDocument, this.insightsMap, intelTokens),
+            };
+            this.taskManager.register(intelTask);
+            this.taskManager.pick(this.componentUrl, "intel").then(() => {
+                console.log(`Picked text analyzer`);
+            }, (err) => {
+                console.log(JSON.stringify(err));
+            });
+        } else {
+            console.log("No intel key provided.");
+        }
     }
 }

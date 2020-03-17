@@ -34,7 +34,7 @@ class ProxyRuntime implements IRuntime{
     async snapshot(tagMessage: string, fullTree?: boolean | undefined): Promise<ITree | null> {
         throw new Error("Method not implemented.");
     }
-    async changeConnectionState(value: ConnectionState, clientId: string, version?: string | undefined) {
+    async changeConnectionState(value: ConnectionState, clientId?: string) {
     }
     async stop(): Promise<IRuntimeState> {
         throw new Error("Method not implemented.");

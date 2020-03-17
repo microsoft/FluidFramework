@@ -98,7 +98,9 @@ async function* loadAllSequencedMessages(
 
     if (connectToWebSocket) {
         let logMsg = "";
+        const mode: ConnectionMode = "write";
         const client: IClient = {
+            mode,
             permission: [],
             scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
             details: {
@@ -108,7 +110,6 @@ async function* loadAllSequencedMessages(
         };
         console.log("Retrieving messages from web socket");
         timeStart = Date.now();
-        const mode: ConnectionMode = "write";
         const deltaStream = await documentService.connectToDeltaStream(client, mode);
         const initialMessages = deltaStream.initialMessages;
         deltaStream.disconnect();

@@ -41,9 +41,9 @@ export class SimpleDataSharing extends PrimedComponent implements IComponentHTML
     private readonly textDisplayId = "textDisplay-12345";
     private readonly incrementorId = "incrementor-12345";
 
-    private button: Button;
-    private textDisplay: TextDisplay;
-    private incrementor: Incrementor;
+    private button: Button | undefined;
+    private textDisplay: TextDisplay | undefined;
+    private incrementor: Incrementor | undefined;
 
     protected async componentInitializingFirstTime() {
     // Create a counter that will live on the SimpleDataSharing component
@@ -81,8 +81,10 @@ export class SimpleDataSharing extends PrimedComponent implements IComponentHTML
         div.append(textDisplayDiv, buttonDiv);
 
         // Render button and textDisplay
-        this.button.render(buttonDiv);
-        this.textDisplay.render(textDisplayDiv);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.button!.render(buttonDiv);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.textDisplay!.render(textDisplayDiv);
     }
 }
 

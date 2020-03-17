@@ -62,6 +62,7 @@ COPY packages/drivers/create-new-driver/package*.json packages/drivers/create-ne
 COPY packages/framework/aqueduct/package*.json packages/framework/aqueduct/
 COPY packages/framework/aqueduct-react/package*.json packages/framework/aqueduct-react/
 COPY packages/framework/component-base/package*.json packages/framework/component-base/
+COPY packages/framework/dds-interceptions/package*.json packages/framework/dds-interceptions/
 COPY packages/framework/experimental/package*.json packages/framework/experimental/
 COPY packages/framework/framework-definitions/package*.json packages/framework/framework-definitions/
 COPY packages/framework/undo-redo/package*.json packages/framework/undo-redo/

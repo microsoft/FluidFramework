@@ -431,7 +431,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.context.options;
     }
 
-    public get clientId(): string {
+    public get clientId(): string | undefined {
         return this.context.clientId;
     }
 
@@ -569,7 +569,11 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         // useContext - back-compat: 0.14 uploadSummary
         const useContext: boolean = expContainerContext.isExperimentalContainerContext ?
             true : this.storage.uploadSummaryWithContext !== undefined;
-        this.latestSummaryAck = { proposalHandle: undefined, ackHandle: undefined };
+        this.latestSummaryAck = {
+            proposalHandle: undefined,
+            ackHandle: expContainerContext.isExperimentalContainerContext && expContainerContext.getLoadedFromVersion
+                && expContainerContext.getLoadedFromVersion()
+                ? expContainerContext.getLoadedFromVersion().id : undefined };
         this.summaryTracker = new SummaryTracker(
             useContext,
             "", // fullPath - the root is unnamed
@@ -766,7 +770,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return { snapshot, state };
     }
 
-    public changeConnectionState(value: ConnectionState, clientId: string, version: string) {
+    public changeConnectionState(value: ConnectionState, clientId?: string) {
         this.verifyNotClosed();
 
         assert(this.connectionState === value);

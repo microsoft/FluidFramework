@@ -11,7 +11,7 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { IContainer, ILoader } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
-import { BaseTelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import { BaseTelemetryNullLogger } from "@microsoft/fluid-common-utils";
 import {
     IDocumentService,
     IDocumentServiceFactory,
@@ -65,6 +65,7 @@ class WorkerLoader implements ILoader, IComponentRunnable {
             {},
             (this as unknown) as Loader,
             request,
+            this.resolved,
             new BaseTelemetryNullLogger());
 
         if (this.container.deltaManager.referenceSequenceNumber <= this.fromSequenceNumber) {

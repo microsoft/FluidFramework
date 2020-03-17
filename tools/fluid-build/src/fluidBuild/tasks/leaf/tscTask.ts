@@ -9,6 +9,7 @@ import { logVerbose } from "../../../common/logging";
 import { readFileAsync, existsSync } from "../../../common/utils";
 import path from "path";
 import * as ts from "typescript";
+import * as TscUtils from "../../tscUtils";
 const isEqual = require("lodash.isequal");
 
 interface ITsBuildInfo {
@@ -45,11 +46,15 @@ export class TscTask extends LeafTask {
 
         // Using tsc incremental information
         const tsBuildInfo = await this.readTsBuildInfo();
-        if (tsBuildInfo === undefined) { return false; }
+        if (tsBuildInfo === undefined) { 
+            this.logVerboseTrigger("tsBuildInfo not found");
+            return false; 
+        }
 
         // Check previous build errors
         const diag: any[] = tsBuildInfo.program.semanticDiagnosticsPerFile;
         if (diag.some(item => Array.isArray(item))) {
+            this.logVerboseTrigger("previous build error");
             return false;
         }
         // Check dependencies file hashes
@@ -60,11 +65,11 @@ export class TscTask extends LeafTask {
                 const fullPath = path.resolve(tsBuildInfoFileDirectory, key);
                 const hash = await this.node.buildContext.fileHashCache.getFileHash(fullPath);
                 if (hash !== fileInfos[key].version) {
-                    logVerbose(`${this.node.pkg.nameColored}: version mismatch for ${key}, ${hash}, ${fileInfos[key].version}`);
+                    this.logVerboseTrigger(`version mismatch for ${key}, ${hash}, ${fileInfos[key].version}`);
                     return false;
                 }
             } catch (e) {
-                logVerbose(`${this.node.pkg.nameColored}: exception generating hash for ${key}`);
+                this.logVerboseTrigger(`exception generating hash for ${key}`);
                 logVerbose(e.stack);
                 return false;
             }
@@ -112,20 +117,18 @@ export class TscTask extends LeafTask {
 
     private readTsConfig() {
         if (this._tsConfig == undefined) {
-            const args = this.command.split(" ");
-
             const parsedCommand = this.parsedCommandLine;
             if (!parsedCommand) { return undefined; }
                 
             const configFileFullPath = this.configFileFullPath;
             if (!configFileFullPath) { return undefined; }
 
-            const configFile = ts.readConfigFile(configFileFullPath, ts.sys.readFile);
-            if (configFile.error) {
+            const config = TscUtils.readConfigFile(configFileFullPath);
+            if (!config) {
                 logVerbose(`${this.node.pkg.nameColored}: ts fail to parse ${configFileFullPath}`);
                 return undefined;
             }
-            const options = ts.parseJsonConfigFileContent(configFile.config, ts.sys, this.node.pkg.directory, parsedCommand.options, configFileFullPath);
+            const options = ts.parseJsonConfigFileContent(config, ts.sys, this.node.pkg.directory, parsedCommand.options, configFileFullPath);
             if (options.errors.length) {
                 logVerbose(`${this.node.pkg.nameColored}: ts fail to parse file content ${configFileFullPath}`);
                 return undefined;
@@ -148,31 +151,17 @@ export class TscTask extends LeafTask {
             const parsedCommand = this.parsedCommandLine;
             if (!parsedCommand) { return undefined; }
 
-            const project = parsedCommand.options.project;
-            if (project !== undefined) {
-                this._tsConfigFullPath = path.resolve(this.node.pkg.directory, project);
-            } else {
-                const foundConfigFile = ts.findConfigFile(this.node.pkg.directory, ts.sys.fileExists, "tsconfig.json");
-                if (foundConfigFile) {
-                    this._tsConfigFullPath = foundConfigFile;
-                } else {
-                    this._tsConfigFullPath = path.join(this.node.pkg.directory, "tsconfig.json");
-                }
-            }
+            this._tsConfigFullPath = TscUtils.findConfigFile(this.node.pkg.directory, parsedCommand);
         }
         return this._tsConfigFullPath;
     }
 
     private get parsedCommandLine() {
-         // TODO: parse the command line for real, split space for now.
-         const args = this.command.split(" ");
-
-         const parsedCommand = ts.parseCommandLine(args);
-         if (parsedCommand.errors.length) {
+        const parsedCommand = TscUtils.parseCommandLine(this.command);
+        if (!parsedCommand) {
             logVerbose(`${this.node.pkg.nameColored}: ts fail to parse command line ${this.command}`);
-            return undefined;
         }
-         return parsedCommand;
+        return parsedCommand;
     }
 
     private get tsBuildInfoFileName() {
