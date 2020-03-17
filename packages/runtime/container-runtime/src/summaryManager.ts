@@ -318,7 +318,6 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     }
 
     public dispose() {
-        // eslint-disable-next-line no-unused-expressions
         this.initialDelayTimer?.clear();
         this._disposed = true;
     }

@@ -67,7 +67,7 @@ export class FacepileAddFaceExample extends React.Component<IFacepileAddFaceExam
     }
 
     public render(): JSX.Element {
-        const array = [];
+        const array: JSX.Element[] = [];
         this.state.users.forEach((value) => {
             array.push(
                 <span>

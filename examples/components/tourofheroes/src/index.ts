@@ -12,10 +12,11 @@ import { IComponentHTMLView, IRequest } from "@microsoft/fluid-component-core-in
 import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
 import { ISharedDirectory } from "@microsoft/fluid-map";
 import {
+    ComponentRegistryEntry,
     IComponentContext,
     IComponentFactory,
     IComponentRegistry,
-    ComponentRegistryEntry,
+    IHostRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 import * as GraphiQL from "graphiql";
 import * as React from "react";
@@ -180,7 +181,7 @@ class TourOfHeroesContainerInstantiationFactory implements IRuntimeFactory, ICom
         return runtime;
     }
 
-    private static async containerRequestHandler(request: IRequest, runtime: ContainerRuntime) {
+    private static async containerRequestHandler(request: IRequest, runtime: IHostRuntime) {
         const componentRuntime = await runtime.getComponentRuntime("app", true);
         const tourOfHeroes = (await componentRuntime.request({ url: "/" })).value as TourOfHeroes;
 

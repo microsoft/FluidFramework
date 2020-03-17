@@ -26,7 +26,7 @@ interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
     uninstall: boolean;
     concurrency: number;
     samples: boolean;
-    fixScripts: boolean;
+    fix: boolean;
 }
 
 // defaults
@@ -48,7 +48,7 @@ export const options: FastBuildOptions = {
     uninstall: false,
     concurrency: os.cpus().length, // TODO: argument?
     samples: true,
-    fixScripts: false,
+    fix: false,
     all: false,
     server: false,
 };
@@ -157,8 +157,8 @@ export function parseOptions(argv: string[]) {
             continue;
         }
 
-        if (arg === "--fixscripts") {
-            options.fixScripts = true;
+        if (arg === "--fix") {
+            options.fix = true;
             setBuild(false);
             continue;
         }

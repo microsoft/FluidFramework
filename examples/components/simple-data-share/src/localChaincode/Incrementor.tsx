@@ -19,7 +19,7 @@ const chaincodeName = pkg.name;
  */
 export class Incrementor extends PrimedComponent {
     public static readonly chaincodeName = `${chaincodeName}/incrementor`;
-    public counter: Counter;
+    public counter: Counter | undefined;
 
     protected async componentInitializingFirstTime() {
         this.setupTimer();

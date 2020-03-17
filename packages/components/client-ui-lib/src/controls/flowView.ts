@@ -27,6 +27,7 @@ import { IClient, ISequencedDocumentMessage, IUser } from "@microsoft/fluid-prot
 import { IInboundSignalMessage } from "@microsoft/fluid-runtime-definitions";
 import * as Sequence from "@microsoft/fluid-sequence";
 import { SharedSegmentSequenceUndoRedoHandler, UndoRedoStackManager } from "@microsoft/fluid-undo-redo";
+import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 import { blobUploadHandler } from "../blob";
 import { CharacterCodes, Paragraph, Table } from "../text";
 import * as ui from "../ui";
@@ -822,12 +823,11 @@ function renderSegmentIntoLine(
                                 }
 
                                 const component = response.value as IComponent;
-                                const viewable = component.IComponentHTMLView;
-                                if (!viewable) {
+                                if (!HTMLViewAdapter.canAdapt(component)) {
                                     return Promise.reject("component is not viewable");
                                 }
 
-                                return viewable;
+                                return new HTMLViewAdapter(component);
                             });
 
                         // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -2333,12 +2333,11 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                                 // TODO below is a temporary workaround. Should every QI interface also implement
                                 // IComponent. Then you can go from IComponentHTMLView to IComponentLayout.
                                 // Or should you query for each one individually.
-                                const viewable = component.IComponentHTMLView;
-                                if (!viewable) {
+                                if (!HTMLViewAdapter.canAdapt(component)) {
                                     return Promise.reject("component is not viewable");
                                 }
 
-                                return viewable;
+                                return new HTMLViewAdapter(component);
                             });
 
                         // eslint-disable-next-line @typescript-eslint/no-floating-promises

@@ -73,12 +73,14 @@ export class Player {
         } else if (instrument === Instrument.Custom) {
             waveProperties = {
                 ...waveProperties,
-                modulation: note.customModulation,
-                decay: note.customDecay,
-                overtone1: note.overtone1,
-                overtone2: note.overtone2,
-                overtone3: note.overtone3,
-                overtone4: note.overtone4,
+                /* eslint-disable @typescript-eslint/no-non-null-assertion */
+                modulation: note.customModulation!,
+                decay: note.customDecay!,
+                overtone1: note.overtone1!,
+                overtone2: note.overtone2!,
+                overtone3: note.overtone3!,
+                overtone4: note.overtone4!,
+                /* eslint-enable @typescript-eslint/no-non-null-assertion */
                 amplitude: 1,
             };
         }

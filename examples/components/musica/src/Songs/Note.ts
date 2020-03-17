@@ -30,6 +30,8 @@ export class Note {
         } else if (note.noteType === NoteType.sixteenth) {
             return 0.25;
         }
+        // default to quarter
+        return 1;
     }
 }
 

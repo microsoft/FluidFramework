@@ -34,7 +34,7 @@ export class InternalRegistry implements IComponentRegistry, IComponentRegistryD
     ) {
     }
 
-    public async get(name: string): Promise<Readonly<IProvideComponentFactory>>
+    public async get(name: string): Promise<Readonly<IProvideComponentFactory | undefined>>
     {
         const index = this.containerComponentArray.findIndex(
             (containerComponent) => name === containerComponent.type,

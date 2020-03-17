@@ -18,7 +18,7 @@ interface ITranslatorOutput {
     translations: ITranslatorOutputUnit[];
 }
 
-function createRequestUri(from: string, to: string[]): string {
+function createRequestUri(from: string, to: string[]): string | undefined {
     const uri = `https://api.cognitive.microsofttranslator.com/translate?api-version=3.0`;
     const fromLanguage = `&from=${from}&to=`;
     const toSubset = to.filter((lang: string) => lang !== from);
@@ -43,13 +43,19 @@ function processTranslationOutput(input: ITranslatorOutput[]): Map<string, strin
             if (!languageText.has(translation.to)) {
                 languageText.set(translation.to, []);
             }
-            languageText.get(translation.to).push(translation.text);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            languageText.get(translation.to)!.push(translation.text);
         }
     }
     return languageText;
 }
 
-async function translateCore(key: string, from: string, to: string[], text: string[]): Promise<ITranslatorOutput[]> {
+async function translateCore(
+    key: string,
+    from: string,
+    to: string[],
+    text: string[],
+): Promise<ITranslatorOutput[] | undefined> {
     const uri = createRequestUri(from, to);
     if (uri) {
         const requestBody = createRequestBody(text);
@@ -80,7 +86,8 @@ export async function translate(
     key: string,
     from: string,
     to: string[],
-    text: string[]): Promise<Map<string, string[]>> {
+    text: string[],
+): Promise<Map<string, string[]> | undefined> {
     const rawTranslation = await translateCore(key, from, to, text);
     if (rawTranslation) {
         return processTranslationOutput(rawTranslation);
