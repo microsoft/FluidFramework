@@ -419,6 +419,8 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             throw new Error("runtime already bound");
         }
 
+        // If this ComponentContext was created via `IHostRuntime.createComponentContext`, the `componentRuntimeDeferred`
+        // promise hasn't yet been initialized.  Do so now.
         if (!this.componentRuntimeDeferred) {
             this.componentRuntimeDeferred = new Deferred();
         }

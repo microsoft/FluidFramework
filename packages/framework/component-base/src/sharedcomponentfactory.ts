@@ -46,9 +46,15 @@ export class SharedComponentFactory<T extends SharedComponent> implements ICompo
     public instantiateComponent(context: IComponentContext): void {
         const runtime = this.createRuntime(context);
 
+        // Note this may synchronously return an instance or a deferred LazyPromise,
+        // depending of if a new component is being created or an existing component
+        // is being loaded.
         let instance = this.instantiate(context, runtime);
 
         runtime.registerRequestHandler(async (request: IRequest) => {
+            // If the instance has not yet been resolved, await it now.  Once the instance is
+            // resolved, we replace the value of `instance` with the resolved component, at which
+            // point we begin processing requests synchronously.
             if ("then" in instance) {
                 instance = await instance;
             }
@@ -68,9 +74,19 @@ export class SharedComponentFactory<T extends SharedComponent> implements ICompo
     }
 
     private instantiate(context: IComponentContext, runtime: IComponentRuntime) {
+        // New component instances are synchronously created.  Loading a previously created
+        // component is deferred (via a LazyPromise) until requested by invoking `.then()`.
         return runtime.existing
             ? new LazyPromise(async () => this.load(context, runtime))
             : this.createCore(context, runtime);
+    }
+
+    private createCore(context: IComponentContext, runtime: IComponentRuntime, props?: any) {
+        const root = runtime.createChannel("root", this.root.type) as ISharedObject;
+        const instance = new this.ctor(context, runtime, root);
+        instance.create(props);
+        root.register();
+        return instance;
     }
 
     private async load(context: IComponentContext, runtime: IComponentRuntime) {
@@ -80,14 +96,6 @@ export class SharedComponentFactory<T extends SharedComponent> implements ICompo
             await runtime.getChannel("root") as ISharedObject);
 
         await instance.load();
-        return instance;
-    }
-
-    private createCore(context: IComponentContext, runtime: IComponentRuntime, props?: any) {
-        const root = runtime.createChannel("root", this.root.type) as ISharedObject;
-        const instance = new this.ctor(context, runtime, root);
-        instance.create(props);
-        root.register();
         return instance;
     }
 

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// import { strict as assert } from "assert";
 import { EventEmitter } from "events";
 import {
     IComponentHandle,
@@ -52,6 +51,7 @@ export abstract class SharedComponent<
     // #region IComponentLoadable
 
     public get handle(): IComponentHandle<this> {
+        // Lazily create the ComponentHandle when requested.
         if (!this._handle) {
             this._handle = new ComponentHandle(
                 this,
