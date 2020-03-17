@@ -11,6 +11,7 @@ import {
     IFluidCodeDetails,
     IFluidPackageResolver,
     IResolvedPackage,
+    isFluidPackage,
 } from "@microsoft/fluid-container-definitions";
 import { Container } from "@microsoft/fluid-container-loader";
 import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
@@ -169,6 +170,9 @@ class WebPackPackageResolver implements IFluidPackageResolver{
         if(typeof pkg === "string"){
             const resp = await fetch(`http://localhost:${this.options.port}/package.json`);
             pkg = await resp.json() as IFluidPackage;
+        }
+        if(!isFluidPackage(pkg)){
+            throw new Error("Not a fluid package");
         }
         return{
             details,
