@@ -30,7 +30,12 @@ const buttonContainerStyle: React.CSSProperties = {
     left: 0,
 };
 
-const gridContainerStyle: React.CSSProperties = { paddingTop: "25px" };
+const buttonStyle: React.CSSProperties = {
+    width: "2rem",
+    height: "2rem",
+};
+
+const gridContainerStyle: React.CSSProperties = { paddingTop: "5rem" };
 
 /**
  * This wrapper handles the async-ness of loading a component.
@@ -72,7 +77,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
     constructor(props) {
         super(props);
         this.state = {
-            isEditable: true,
+            isEditable: this.props.dataModel.componentList.size - 1 === 0,
             componentMap: this.props.dataModel.componentList,
         };
 
@@ -114,7 +119,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
     }
 
     generateViewState(): [JSX.Element, any[], Layout[]] {
-        const components = [];
+        const components: JSX.Element[] = [];
         const layouts: Layout[] = [];
         let componentToolbar: JSX.Element | undefined;
 
@@ -147,31 +152,38 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                         editable &&
                         <div style={buttonContainerStyle}>
                             <button
+                                style={buttonStyle}
                                 onClick={() => this.props.dataModel.removeComponent(id)}
                                 onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
                                     event.stopPropagation();
-                                }}>
-                                ❌
+                                }}
+                            >
+                                {"❌"}
                             </button>
                             <button
-                                onClick={() => {
-                                    navigator.clipboard.writeText(componentUrl).then(() => {
-                                        console.log("Async: Copying to clipboard was successful!");
-                                    }, (err) => {
-                                        console.error("Async: Could not copy text: ", err);
-                                    });
-                                }}
+                                style={buttonStyle}
+                                onClick={
+                                    () => {
+                                        navigator.clipboard.writeText(componentUrl).then(() => {
+                                            console.log("Async: Copying to clipboard was successful!");
+                                        }, (err) => {
+                                            console.error("Async: Could not copy text: ", err);
+                                        });
+                                    }}
                                 onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
                                     event.stopPropagation();
-                                }}>
-                                📎
+                                }}
+                            >
+                                {"📎"}
                             </button>
                             <button
+                                style={buttonStyle}
                                 onClick={() => window.open(componentUrl, "_blank")}
                                 onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
                                     event.stopPropagation();
-                                }}>
-                                ↗
+                                }}
+                            >
+                                {"↗️"}
                             </button>
                         </div>
                     }
@@ -186,7 +198,8 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
             }
         });
 
-        return [componentToolbar, components, layouts];
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return [componentToolbar!, components, layouts];
     }
 
     render() {

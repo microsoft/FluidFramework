@@ -295,7 +295,7 @@ function initialize(
         }
 
         const buttonText = startButton.innerText;
-        // eslint-disable-next-line no-unused-expressions
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         buttonText === "Start" ? startButton.innerText = "Pause" : startButton.innerText = "Start";
 
         event.preventDefault();
@@ -441,16 +441,18 @@ export class Scribe
 }
 
 class ScribeFactory implements IComponentFactory, IRuntimeFactory {
+    public static readonly type = "@fluid-example/scribe";
+    public readonly type = ScribeFactory.type;
+
     public get IComponentFactory() { return this; }
     public get IRuntimeFactory() { return this; }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const registry = new Map<string, Promise<IComponentFactory>>([
-            ["@fluid-example/scribe", Promise.resolve(this)],
+            [ScribeFactory.type, Promise.resolve(this)],
         ]);
 
         const defaultComponentId = "default";
-        const defaultComponent = "@fluid-example/scribe";
 
         const runtime = await ContainerRuntime.load(
             context,
@@ -475,7 +477,7 @@ class ScribeFactory implements IComponentFactory, IRuntimeFactory {
         // On first boot create the base component
         if (!runtime.existing) {
             await Promise.all([
-                runtime.createComponent(defaultComponentId, defaultComponent).then((componentRuntime) => {
+                runtime.createComponent(defaultComponentId, ScribeFactory.type).then((componentRuntime) => {
                     componentRuntime.attach();
                 }),
             ])

@@ -14,7 +14,8 @@
         "rootDir": "./src",
         "sourceMap": true,
         "inlineSources": true,
-        "jsx": "react"
+        "jsx": "react",
+        "skipLibCheck": true
     },
     "include": [
         "src/**/*"

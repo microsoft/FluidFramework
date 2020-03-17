@@ -69,7 +69,7 @@ export class Summarizer implements ISummarizer {
         public readonly url: string,
         private readonly runtime: ContainerRuntime,
         private readonly configurationGetter: () => ISummaryConfiguration,
-        private readonly generateSummaryCore: (safe: boolean) => Promise<GenerateSummaryData>,
+        private readonly generateSummaryCore: (full: boolean, safe: boolean) => Promise<GenerateSummaryData>,
         private readonly refreshLatestAck: (context: ISummaryContext, referenceSequenceNumber: number) => Promise<void>,
         private readonly _summaryCollection?: SummaryCollection,
     ) {
@@ -84,7 +84,6 @@ export class Summarizer implements ISummarizer {
         this.runtime.deltaManager.inbound.on("op",
             (op) => this.summaryCollection.handleOp(op as ISequencedDocumentMessage));
 
-        // eslint-disable-next-line no-unused-expressions
         this.runtime.previousState.nextSummarizerD?.resolve(this);
     }
 
@@ -165,7 +164,7 @@ export class Summarizer implements ISummarizer {
             this.logger,
             this.summaryCollection.createWatcher(this.runtime.clientId),
             this.configurationGetter(),
-            async (safe: boolean) => this.generateSummary(safe),
+            async (full: boolean, safe: boolean) => this.generateSummary(full, safe),
             this.runtime.deltaManager.referenceSequenceNumber,
             initialAttempt,
             this.immediateSummary,
@@ -212,14 +211,14 @@ export class Summarizer implements ISummarizer {
         return this.runtime.nextSummarizerD.promise;
     }
 
-    private async generateSummary(safe: boolean): Promise<GenerateSummaryData | undefined> {
+    private async generateSummary(full: boolean, safe: boolean): Promise<GenerateSummaryData | undefined> {
         if (this.onBehalfOfClientId !== this.runtime.summarizerClientId) {
             // We are no longer the summarizer, we should stop ourself
             this.stop("parentNoLongerSummarizer");
             return undefined;
         }
 
-        return this.generateSummaryCore(safe);
+        return this.generateSummaryCore(full, safe);
     }
 
     private async handleSummaryAcks() {
@@ -275,7 +274,7 @@ export class RunningSummarizer implements IDisposable {
         logger: ITelemetryLogger,
         summaryWatcher: IClientSummaryWatcher,
         configuration: ISummaryConfiguration,
-        generateSummary: (safe: boolean) => Promise<GenerateSummaryData | undefined>,
+        generateSummary: (full: boolean, safe: boolean) => Promise<GenerateSummaryData | undefined>,
         lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
         immediateSummary: boolean,
@@ -288,7 +287,8 @@ export class RunningSummarizer implements IDisposable {
             configuration,
             generateSummary,
             lastOpSeqNumber,
-            firstAck);
+            firstAck,
+            immediateSummary);
 
         await summarizer.waitStart();
 
@@ -317,9 +317,10 @@ export class RunningSummarizer implements IDisposable {
         private readonly logger: ITelemetryLogger,
         private readonly summaryWatcher: IClientSummaryWatcher,
         private readonly configuration: ISummaryConfiguration,
-        private readonly generateSummary: (safe: boolean) => Promise<GenerateSummaryData | undefined>,
+        private readonly generateSummary: (full: boolean, safe: boolean) => Promise<GenerateSummaryData | undefined>,
         lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
+        private immediateSummary: boolean = false,
     ) {
         this.heuristics = new SummarizerHeuristics(
             configuration,
@@ -507,6 +508,10 @@ export class RunningSummarizer implements IDisposable {
         // Update for success
         if (ackNack.type === MessageType.SummaryAck) {
             this.heuristics.ackLastSent();
+
+            // since we need a full summary after context reload, we only clear this on ack
+            this.immediateSummary = false;
+
             return true;
         } else {
             return false;
@@ -525,7 +530,7 @@ export class RunningSummarizer implements IDisposable {
         // Wait for generate/send summary
         let summaryData: GenerateSummaryData | undefined;
         try {
-            summaryData = await this.generateSummary(safe);
+            summaryData = await this.generateSummary(this.immediateSummary, safe);
         } catch (error) {
             summarizingEvent.cancel({ category: "error" }, error);
             return;

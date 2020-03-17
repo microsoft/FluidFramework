@@ -111,7 +111,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         return this.componentContext.leader;
     }
 
-    public get clientId(): string {
+    public get clientId(): string | undefined {
         return this.componentContext.clientId;
     }
 
@@ -139,6 +139,9 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
 
     public get IComponentHandleContext() { return this; }
     public get IComponentRegistry() { return this.componentRegistry; }
+
+    private _disposed = false;
+    public get disposed() { return this._disposed; }
 
     private readonly contexts = new Map<string, IChannelContext>();
     private readonly contextsDeferred = new Map<string, Deferred<IChannelContext>>();
@@ -204,6 +207,21 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         if (existing) {
             this.deferredAttached.resolve();
         }
+    }
+
+    public dispose(): void {
+        if (this._disposed) {
+            return;
+        }
+        this._disposed = true;
+
+        /**
+         * @deprecated in 0.14 async stop()
+         * Converge closed with _disposed when removing async stop()
+         */
+        this.closed = true;
+
+        this.emit("dispose");
     }
 
     public async createAndAttachComponent(id: string, pkg: string): Promise<IComponentRuntime> {
@@ -409,13 +427,13 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         return this.blobManager.getBlobMetadata();
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public stop(): Promise<ITreeEntry[]> {
+    /**
+     * Stop the runtime.  snapshotInternal() is called separately if needed
+     */
+    public stop(): void {
         this.verifyNotClosed();
 
         this.closed = true;
-
-        return this.snapshotInternal(true);
     }
 
     public async close(): Promise<void> {

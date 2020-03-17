@@ -105,7 +105,7 @@ export async function getSocketStorageDiscovery(
     // consecutive join session calls because the server moved. If there is nothing in cache or the
     // response was cached an hour ago, then we make the join session call again. Never expire the
     // joinsession result. On error, the delta connection will invalidate it.
-    const cachedResultP: Promise<ISocketStorageDiscovery> = cache.sessionStorage.get(joinSessionKey);
+    const cachedResultP: Promise<ISocketStorageDiscovery> = await cache.sessionStorage.get(joinSessionKey);
     if (cachedResultP !== undefined) {
         const content = await cachedResultP;
         // Update result to keep it alive for another hour

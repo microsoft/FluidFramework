@@ -34,8 +34,9 @@ export class VersionTest extends PrimedComponent implements IComponentHTMLView {
 
       ReactDOM.render(
         <div>
-          <p>{title}</p>
-          <input type={"text"} onChange={e => this.root.set("title", e.target.value)} />
+          old title:
+          <p className="title">{title}</p>
+          <input className="titleInput" type={"text"} onChange={e => this.root.set("title", e.target.value)} />
           <br />
           <p><span style={{backgroundColor: "salmon"}}>version {pkgversion}</span></p>
           <br />

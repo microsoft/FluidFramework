@@ -38,6 +38,7 @@ import {
     ITree,
     MessageType,
     ISummaryTree,
+    IVersion,
 } from "@microsoft/fluid-protocol-definitions";
 import { BlobManager } from "./blobManager";
 import { Container } from "./container";
@@ -158,6 +159,11 @@ export class ContainerContext extends EventEmitter implements IContainerContext,
 
     private runtime: IRuntime | undefined;
 
+    private _disposed = false;
+    public get disposed() {
+        return this._disposed;
+    }
+
     constructor(
         private readonly container: Container,
         public readonly scope: IComponent,
@@ -181,6 +187,17 @@ export class ContainerContext extends EventEmitter implements IContainerContext,
         this.logger = container.subLogger;
     }
 
+    public dispose(): void {
+        if (this._disposed) {
+            return;
+        }
+        this._disposed = true;
+
+        this.runtime!.dispose();
+        this.quorum.dispose();
+        this.deltaManager.dispose();
+    }
+
     /**
      * DEPRECATED
      * back-compat: 0.13 refreshBaseSummary
@@ -191,8 +208,19 @@ export class ContainerContext extends EventEmitter implements IContainerContext,
         this.emit("refreshBaseSummary", snapshot);
     }
 
-    public async snapshot(tagMessage: string, fullTree: boolean = false): Promise<ITree | null> {
+    public async snapshot(tagMessage: string = "", fullTree: boolean = false): Promise<ITree | null> {
         return this.runtime!.snapshot(tagMessage, fullTree);
+    }
+
+    public getLoadedFromVersion(): IVersion | undefined {
+        return this.container.loadedFromVersion;
+    }
+
+    /**
+     * Snapshot and close the runtime, and return its state if available
+     */
+    public async snapshotRuntimeState(): Promise<IRuntimeState> {
+        return this.runtime!.stop();
     }
 
     public isAttached(): boolean {
@@ -210,20 +238,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext,
     public changeConnectionState(value: ConnectionState, clientId: string, version?: string) {
         this.runtime!.changeConnectionState(value, clientId, version);
         raiseConnectedEvent(this, value, clientId);
-    }
-
-    public async stop(): Promise<IRuntimeState> {
-        let state = await this.runtime!.stop();
-        // back-compat: 0.14 runtimeState
-        if (!state) {
-            state = { snapshot: await this.runtime!.snapshot("", false) ?? undefined };
-        }
-
-        // Dispose
-        this.quorum.dispose();
-        this.deltaManager.dispose();
-
-        return state;
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any) {

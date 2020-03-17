@@ -431,7 +431,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.context.options;
     }
 
-    public get clientId(): string {
+    public get clientId(): string | undefined {
         return this.context.clientId;
     }
 
@@ -532,8 +532,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             : DefaultSummaryConfiguration;
     }
 
+    private _disposed = false;
+    public get disposed() { return this._disposed; }
+
     // Components tracked by the Domain
-    private closed = false;
     private readonly pendingAttach = new Map<string, IAttachMessage>();
     private dirtyDocument = false;
     private readonly summarizer: Summarizer;
@@ -549,8 +551,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     // List of pending contexts (for the case where a client knows a component will exist and is waiting
     // on its creation). This is a superset of contexts.
     private readonly contextsDeferred = new Map<string, Deferred<ComponentContext>>();
-
-    private loadedFromSummary: boolean;
 
     private constructor(
         private readonly context: IContainerContext,
@@ -569,7 +569,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         // useContext - back-compat: 0.14 uploadSummary
         const useContext: boolean = expContainerContext.isExperimentalContainerContext ?
             true : this.storage.uploadSummaryWithContext !== undefined;
-        this.latestSummaryAck = { proposalHandle: undefined, ackHandle: undefined };
+        this.latestSummaryAck = {
+            proposalHandle: undefined,
+            ackHandle: expContainerContext.isExperimentalContainerContext && expContainerContext.getLoadedFromVersion()
+                ? expContainerContext.getLoadedFromVersion().id : undefined };
         this.summaryTracker = new SummaryTracker(
             useContext,
             "", // fullPath - the root is unnamed
@@ -580,19 +583,13 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.summaryTreeConverter = new SummaryTreeConverter(useContext);
 
         // Extract components stored inside the snapshot
-        this.loadedFromSummary = context.baseSnapshot?.trees[".protocol"] ? true : false;
         const components = new Map<string, ISnapshotTree | string>();
-        if (this.loadedFromSummary) {
+        if (context.baseSnapshot) {
             Object.keys(context.baseSnapshot.trees).forEach((value) => {
                 if (value !== ".protocol") {
                     const tree = context.baseSnapshot.trees[value];
                     components.set(value, tree);
                 }
-            });
-        } else if (context.baseSnapshot) {
-            Object.keys(context.baseSnapshot.commits).forEach((key) => {
-                const moduleId = context.baseSnapshot.commits[key];
-                components.set(key, moduleId);
             });
         }
 
@@ -651,14 +648,14 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             "/_summarizer",
             this,
             () => this.summaryConfiguration,
-            async (safe: boolean) => this.generateSummary(!this.loadedFromSummary, safe),
+            async (full: boolean, safe: boolean) => this.generateSummary(full, safe),
             async (summContext, refSeq) => this.refreshLatestSummaryAck(summContext, refSeq),
             this.previousState.summaryCollection);
 
         // Create the SummaryManager and mark the initial state
         this.summaryManager = new SummaryManager(
             context,
-            this.runtimeOptions.generateSummaries !== false || this.loadedFromSummary,
+            this.runtimeOptions.generateSummaries !== false,
             this.runtimeOptions.enableWorker,
             this.logger,
             (summarizer) => { this.nextSummarizerP = summarizer; },
@@ -670,6 +667,25 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         }
 
         ReportConnectionTelemetry(this.context.clientId, this.deltaManager, this.logger);
+    }
+
+    public dispose(): void {
+        if (this._disposed) {
+            return;
+        }
+        this._disposed = true;
+
+        this.summaryManager.dispose();
+        this.summarizer.dispose();
+
+        // close/stop all component contexts
+        for (const [componentId, contextD] of this.contextsDeferred) {
+            contextD.promise.then((context) => {
+                context.dispose();
+            }).catch((error) => {
+                this.logger.sendErrorEvent({eventName: "ComponentContextDisposeError", componentId}, error);
+            });
+        }
     }
 
     public get IComponentTokenProvider() {
@@ -739,16 +755,17 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
     public async stop(): Promise<IRuntimeState> {
         this.verifyNotClosed();
-        const snapshot = await this.snapshot("", false);
-        this.summaryManager.dispose();
-        this.summarizer.dispose();
-        this.closed = true;
+
+        const snapshot = await this.snapshot("", true);
         const state: IPreviousState = {
             reload: true,
             summaryCollection: this.summarizer.summaryCollection,
             nextSummarizerP: this.nextSummarizerP,
             nextSummarizerD: this.nextSummarizerD,
         };
+
+        this.dispose();
+
         return { snapshot, state };
     }
 
@@ -1334,7 +1351,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     private verifyNotClosed() {
-        if (this.closed) {
+        if (this._disposed) {
             throw new Error("Runtime is closed");
         }
     }
@@ -1454,9 +1471,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         if (referenceSequenceNumber < this.summaryTracker.referenceSequenceNumber) {
             return;
         }
-
-        // Only called from summaries
-        this.loadedFromSummary = true;
 
         const snapshotTree = new LazyPromise(async () => {
             // We have to call get version to get the treeId for r11s; this isnt needed

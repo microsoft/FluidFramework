@@ -1,7 +1,8 @@
 ---
 home: true
-heroImage: /images/homescreen144.png
-# heroText: Fluid Framework
+# heroImage: /images/homescreen144.png
+heroText: "Fluid Framework"
+showHeroSymbol: true
 # tagline: State that flows
 # actionText: Get Started →
 # actionLink: /guide/
@@ -30,6 +31,14 @@ would build single-user applications and experiences. Fluid handles keeping your
 so you can focus on your app's business logic. Fluid's data synchronization is fast, efficient, and requires very little
 bandwidth. Fluid is extensible, too. You can write components which can be re-used or you can even create new
 distributed data structures.
+
+::: danger TypeScript 3.6+ required
+
+Consumers of the Fluid Framework NPM packages **must use a TypeScript version >= 3.6.**
+
+[Read more.](./contributing/breaking-changes.md#fluid-packages-require-consumers-on-typescript-3-6)
+
+:::
 
 ::: danger Supported versions
 
@@ -62,5 +71,4 @@ Logistical questions can be directed to our [Teams group](https://teams.microsof
 
 ### Additional resources
 
-* [Demo videos](./team/videos.md)
-* [Further reading](./architecture/README.md#read-more)
+- [Demo videos](./team/videos.md)

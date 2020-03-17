@@ -331,7 +331,7 @@ export class MockRuntime extends EventEmitter
     public readonly id: string;
     public readonly existing: boolean;
     public readonly options: any = {};
-    public clientId: string = uuid();
+    public clientId: string | undefined = uuid();
     public readonly parentBranch: string;
     public readonly path = "";
     public readonly connected = true;
@@ -342,6 +342,13 @@ export class MockRuntime extends EventEmitter
     public services: ISharedObjectServices;
     private readonly activeDeferred = new Deferred<void>();
     public readonly quorum = new MockQuorum();
+
+    private _disposed = false;
+    public get disposed() { return this._disposed; }
+
+    public dispose(): void {
+        this._disposed = true;
+    }
 
     public get active(): Promise<void> {
         return this.activeDeferred.promise;

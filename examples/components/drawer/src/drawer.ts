@@ -62,7 +62,7 @@ export class Drawer extends EventEmitter implements
     ) {
         super();
 
-        // eslint-disable-next-line no-unused-expressions
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         this.context.clientId;
 
         this.url = context.id;
@@ -125,6 +125,9 @@ export class Drawer extends EventEmitter implements
 }
 
 class DrawerFactory implements IComponentFactory {
+    public static readonly type = "@fluid-example/drawer";
+    public readonly type = DrawerFactory.type;
+
     public get IComponentFactory() { return this; }
 
     public instantiateComponent(context: IComponentContext): void {

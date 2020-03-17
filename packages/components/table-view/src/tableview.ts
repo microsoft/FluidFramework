@@ -39,6 +39,9 @@ export class TableView extends PrimedComponent implements IComponentHTMLView {
     private static readonly factory = new PrimedComponentFactory(
         TableView,
         [],
+        new Map([
+            [TableDocumentType, import("@fluid-example/table-document").then((m) => m.TableDocument.getFactory())],
+        ]),
     );
 
     public get IComponentHTMLView() { return this; }

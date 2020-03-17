@@ -19,6 +19,7 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 export const TextBoxName = `textbox`;
+export const FriendlyTextBoxName = "Text Box";
 
 /**
  * TextBox is a really simple component that uses the CollaborativeTextArea to provide a
@@ -37,7 +38,7 @@ export class TextBox extends PrimedComponent implements IComponentHTMLView, ICom
         return TextBox.factory;
     }
 
-    private text: SharedString;
+    private text: SharedString | undefined;
 
     /**
      * Do creation work
@@ -77,7 +78,8 @@ export class TextBox extends PrimedComponent implements IComponentHTMLView, ICom
      * Since this returns a JSX.Element it allows for an easier model.
      */
     public createJSXElement(): JSX.Element {
-        return <CollaborativeTextArea sharedString={this.text} />;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return <CollaborativeTextArea sharedString={this.text!} />;
     }
 
     // end IComponentReactViewable

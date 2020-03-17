@@ -42,7 +42,6 @@ COPY packages/components/scoreboard/package*.json packages/components/scoreboard
 COPY packages/components/scribe/package*.json packages/components/scribe/
 COPY packages/components/shared-text/package*.json packages/components/shared-text/
 COPY packages/components/search-menu/package*.json packages/components/search-menu/
-COPY packages/components/source-document/package*.json packages/components/source-document/
 COPY packages/components/table-document/package*.json packages/components/table-document/
 COPY packages/components/table-view/package*.json packages/components/table-view/
 COPY packages/components/todo/package*.json packages/components/todo/
@@ -62,6 +61,7 @@ COPY packages/drivers/routerlicious-urlResolver/package*.json packages/drivers/r
 COPY packages/drivers/create-new-driver/package*.json packages/drivers/create-new-driver/
 COPY packages/framework/aqueduct/package*.json packages/framework/aqueduct/
 COPY packages/framework/aqueduct-react/package*.json packages/framework/aqueduct-react/
+COPY packages/framework/dds-interceptions/package*.json packages/framework/dds-interceptions/
 COPY packages/framework/experimental/package*.json packages/framework/experimental/
 COPY packages/framework/framework-definitions/package*.json packages/framework/framework-definitions/
 COPY packages/framework/undo-redo/package*.json packages/framework/undo-redo/

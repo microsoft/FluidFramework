@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { SourceDocument } from "./document";
+export * from "./sharedStringWithInterception";

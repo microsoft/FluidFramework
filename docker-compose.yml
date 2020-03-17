@@ -32,9 +32,9 @@ services:
             - DEBUG=fluid:*
             - NODE_ENV=development
         restart: always
-    broadcaster:
+    copier:
         image: prague.azurecr.io/prague-server:latest
-        command: node dist/kafka-service/index.js broadcaster /usr/src/server/server/routerlicious/packages/routerlicious/dist/broadcaster/index.js
+        command: node dist/kafka-service/index.js copier /usr/src/server/server/routerlicious/packages/routerlicious/dist/copier/index.js
         environment:
             - DEBUG=fluid:*
             - NODE_ENV=development
@@ -97,6 +97,7 @@ services:
         image: wurstmeister/zookeeper:latest
         ports:
             - "2181:2181"
+        restart: always
     kafka:
         image: wurstmeister/kafka:2.11-1.1.1
         ports:
@@ -107,6 +108,7 @@ services:
             KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
             KAFKA_CREATE_TOPICS: "deltas:8:1,rawdeltas:8:1,testtopic:8:1,deltas2:8:1,rawdeltas2:8:1"
             KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+        restart: always
     redis:
         image: "redis:alpine"
     mongodb:

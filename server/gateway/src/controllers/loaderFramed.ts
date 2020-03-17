@@ -32,14 +32,14 @@ export async function initialize(
     const div = document.getElementById("content") as HTMLDivElement;
 
     const hostConf: IBaseHostConfig = {
-        documentServiceFactory: new InnerDocumentServiceFactory(),
+        documentServiceFactory: await InnerDocumentServiceFactory.create(),
         urlResolver: new InnerUrlResolver(resolved),
         config,
         scope,
         proxyLoaderFactories: new Map<string, IProxyLoaderFactory>([["webworker", new WebWorkerLoaderFactory()]]),
     };
 
-    const baseHost = new BaseHost(hostConf, resolved, pkg, scriptIds);
+    const baseHost = new BaseHost(hostConf, pkg, scriptIds);
     const loader = await baseHost.getLoader();
 
     const documentFactory = new DocumentFactory(config.tenantId,

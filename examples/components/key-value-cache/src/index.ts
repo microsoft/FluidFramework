@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import {
     IComponent,
     IComponentRouter,
@@ -57,7 +58,13 @@ class KeyValue implements IKeyValue, IComponent, IComponentRouter {
     public get IComponentRouter() { return this; }
     public get IKeyValue() { return this; }
 
-    private root: ISharedMap;
+    private _root: ISharedMap | undefined;
+
+    public get root() {
+        assert(this._root);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return this._root!;
+    }
 
     constructor(private readonly runtime: IComponentRuntime, private readonly context: IComponentContext) {
     }
@@ -88,10 +95,10 @@ class KeyValue implements IKeyValue, IComponent, IComponentRouter {
 
     private async initialize() {
         if (!this.runtime.existing) {
-            this.root = SharedMap.create(this.runtime, "root");
-            this.root.register();
+            this._root = SharedMap.create(this.runtime, "root");
+            this._root.register();
         } else {
-            this.root = await this.runtime.getChannel("root") as ISharedMap;
+            this._root = await this.runtime.getChannel("root") as ISharedMap;
         }
         if (this.context.leader) {
             console.log(`INITIAL LEADER`);
@@ -104,6 +111,8 @@ class KeyValue implements IKeyValue, IComponent, IComponentRouter {
 }
 
 export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFactory {
+    public static readonly type = "@fluid-example/key-value-cache";
+    public readonly type = KeyValueFactoryComponent.type;
 
     public get IRuntimeFactory() { return this; }
     public get IComponentFactory() { return this; }
