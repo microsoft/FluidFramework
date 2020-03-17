@@ -7,14 +7,9 @@
 
 import * as assert from "assert";
 import { TestHost } from "@microsoft/fluid-local-test-utils";
-import {
-    TableDocument,
-    TableDocumentType,
-    TableSliceType,
-    TableSlice,
-} from "..";
-// eslint-disable-next-line import/no-unassigned-import
-import "mocha";
+import { TableDocument } from "../document";
+import { TableSlice } from "../slice";
+import { TableDocumentType, TableSliceType } from "../componentTypes";
 import { TableDocumentItem } from "../table";
 
 describe("TableDocument", () => {
