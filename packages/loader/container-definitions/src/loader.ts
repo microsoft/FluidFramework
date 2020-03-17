@@ -12,7 +12,7 @@ import {
     ISequencedDocumentMessage,
 } from "@microsoft/fluid-protocol-definitions";
 import { IUrlResolver } from "@microsoft/fluid-driver-definitions";
-import { IFluidCodeDetails, IFluidModule } from "./chaincode";
+import { IFluidCodeDetails, IFluidModule, IFluidPackage } from "./chaincode";
 import { IDeltaManager } from "./deltas";
 
 /**
@@ -25,11 +25,21 @@ export interface ICodeLoader {
     load(source: IFluidCodeDetails): Promise<IFluidModule>;
 }
 
+export interface IResolvedPackage {
+    details: IFluidCodeDetails;
+    pkg: IFluidPackage;
+    packageUrl: string;
+}
+
+export interface IFluidPackageResolver{
+    resolve(details: IFluidCodeDetails): Promise<IResolvedPackage | undefined>;
+}
+
 /**
  * Code WhiteListing Interface
  */
 export interface ICodeWhiteList {
-    testSource(source: IFluidCodeDetails): Promise<boolean>;
+    testSource(source: IResolvedPackage): Promise<boolean>;
 }
 
 export interface IContainer extends EventEmitter {

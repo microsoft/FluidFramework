@@ -38,6 +38,7 @@
     "@microsoft/fluid-routerlicious-driver": "^0.15.0",
     "@microsoft/fluid-test-runtime-utils": "^0.15.0",
     "@microsoft/fluid-web-code-loader": "^0.15.0",
+    "@fluid-example/tiny-web-host": "^0.15.0",
     "jsonwebtoken": "^8.4.0"
   },
   "devDependencies": {

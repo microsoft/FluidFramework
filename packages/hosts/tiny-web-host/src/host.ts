@@ -20,9 +20,9 @@ import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@micr
 import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import { RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlresolver";
 import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
-import { extractDetails, IResolvedPackage } from "@microsoft/fluid-web-code-loader";
 import { v4 } from "uuid";
 import { IOdspTokenApi, IRouterliciousTokenApi, ITokenApis } from "./utils";
+import { VerdaccioPackageResolver } from "./verdaccioPackageResolver";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const packageJson = require("../package.json");
@@ -54,13 +54,12 @@ export async function loadFluidContainer(
     tokenApiConfig: ITokenApis,
     clientId?: string,
     clientSecret?: string,
-    pkg?: IResolvedPackage,
-    scriptIds?: string[],
+    pkg?: IFluidCodeDetails,
 ): Promise<Container> {
 
     let resolved: IResolvedUrl;
 
-    const resolvedPackage = pkg === undefined ? parseUrlToResolvedPackage(url) : pkg;
+    const codeDetails = pkg ?? parseUrlToResolvedPackage(url);
 
     if (isRouterliciousUrl(url)) {
         const routerliciousApiConfig = tokenApiConfig as IRouterliciousTokenApi;
@@ -91,14 +90,11 @@ export async function loadFluidContainer(
         div,
         clientId,
         clientSecret,
-        resolvedPackage,
-        scriptIds);
+        codeDetails);
     return containerP;
 }
 
-export function parseUrlToResolvedPackage(url: string): IResolvedPackage {
-    const pkg: IResolvedPackage = {} as any;
-
+export function parseUrlToResolvedPackage(url: string): IFluidCodeDetails {
     const urlRequest = new URL(url);
     const searchParams = urlRequest.searchParams;
     const chaincode = searchParams.get("chaincode");
@@ -127,17 +123,15 @@ export function parseUrlToResolvedPackage(url: string): IResolvedPackage {
             },
         };
     } else {
-        const details = extractDetails(chaincode);
         codeDetails = {
             config: {
-                [`@${details.scope}:cdn`]: cdn,
+                cdn,
             },
             package: chaincode,
         };
     }
-    pkg.details = codeDetails;
 
-    return pkg;
+    return codeDetails;
 }
 
 async function loadContainer(
@@ -147,8 +141,7 @@ async function loadContainer(
     div: HTMLDivElement,
     clientId: string,
     secret: string,
-    pkg?: IResolvedPackage,
-    scriptIds?: string[],
+    pkg?: IFluidCodeDetails,
 ): Promise<Container> {
 
     let documentServiceFactory: IDocumentServiceFactory;
@@ -177,18 +170,15 @@ async function loadContainer(
         new Map<string, IResolvedUrl>([[href, resolved]]));
 
     const hostConf: IBaseHostConfig = {
+        packageResolver: new VerdaccioPackageResolver(),
         documentServiceFactory,
         urlResolver: resolver,
     };
 
-    const baseHost = new BaseHost(
-        hostConf,
-        pkg,
-        scriptIds,
-    );
+    const baseHost = new BaseHost(hostConf, undefined);
     const container = await baseHost.initializeContainer(
         href,
-        pkg ? pkg.details : undefined,
+        pkg,
     );
     container.on("contextChanged", (value) => {
         getComponentAndRender(baseHost, href, div).catch(() => { });

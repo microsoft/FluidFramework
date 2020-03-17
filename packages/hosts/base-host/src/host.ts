@@ -7,9 +7,10 @@ import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import {
     IFluidCodeDetails,
     IProxyLoaderFactory,
+    IFluidModule,
 } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
-import { IResolvedPackage, WebCodeLoader } from "@microsoft/fluid-web-code-loader";
+import { WebCodeLoader } from "@microsoft/fluid-web-code-loader";
 import { IBaseHostConfig } from "./hostConfig";
 import { initializeContainerCode } from "./initializeContainerCode";
 
@@ -21,26 +22,19 @@ import { initializeContainerCode } from "./initializeContainerCode";
  */
 async function createWebLoader(
     hostConfig: IBaseHostConfig,
-    pkg: IResolvedPackage | undefined,
-    scriptIds: string[],
-): Promise<Loader> {
+    packages: Iterable<[IFluidCodeDetails, IFluidModule]> | undefined): Promise<Loader> {
 
     // Create the web loader and prefetch the chaincode we will need
-    const codeLoader = new WebCodeLoader(hostConfig.whiteList);
-    if (pkg) {
-        if (pkg.pkg) { // This is an IFluidPackage
-            await codeLoader.seed({
-                package: pkg.pkg,
-                config: pkg.details.config,
-                scriptIds,
-            });
-            if (pkg.details.package === pkg.pkg.name) {
-                pkg.details.package = `${pkg.pkg.name}@${pkg.pkg.version}`;
-            }
-        }
+    const codeLoader = new WebCodeLoader(hostConfig.packageResolver, hostConfig.whiteList);
 
-        // The load takes in an IFluidCodeDetails
-        codeLoader.load(pkg.details).catch((error) => console.error("script load error", error));
+    if (packages !== undefined) {
+        for(const pkg of packages){
+            const resolved = await hostConfig.packageResolver.resolve(pkg[0]);
+            if(resolved === undefined){
+                throw new Error("Failed to resolve package");
+            }
+            codeLoader.seed(resolved?.pkg, pkg[1]);
+        }
     }
 
     const config = hostConfig.config ? hostConfig.config : {};
@@ -75,25 +69,23 @@ export class BaseHost {
     public static async start(
         hostConfig: IBaseHostConfig,
         url: string,
-        pkg: IResolvedPackage | undefined,
-        scriptIds: string[],
+        pkg: IFluidCodeDetails,
         div: HTMLDivElement,
+        seedPackages: Iterable<[IFluidCodeDetails, IFluidModule]> | undefined,
     ): Promise<Container> {
-        const baseHost = new BaseHost(hostConfig, pkg, scriptIds);
-        return baseHost.loadAndRender(url, div, pkg ? pkg.details : undefined);
+        const baseHost = new BaseHost(hostConfig, seedPackages);
+        return baseHost.loadAndRender(url, div, pkg);
     }
 
     private readonly loaderP: Promise<Loader>;
     public constructor(
         hostConfig: IBaseHostConfig,
-        seedPackage: IResolvedPackage | undefined,
-        scriptIds: string[],
+        packages: Iterable<[IFluidCodeDetails, IFluidModule]> | undefined,
     ) {
 
         this.loaderP = createWebLoader(
             hostConfig,
-            seedPackage,
-            scriptIds,
+            packages,
         );
     }
 

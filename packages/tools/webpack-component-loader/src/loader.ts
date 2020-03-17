@@ -8,8 +8,9 @@ import { BaseHost, IBaseHostConfig } from "@microsoft/fluid-base-host";
 import {
     IFluidModule,
     IFluidPackage,
-    IPackage,
-    isFluidPackage,
+    IFluidCodeDetails,
+    IFluidPackageResolver,
+    IResolvedPackage,
 } from "@microsoft/fluid-container-definitions";
 import { Container } from "@microsoft/fluid-container-loader";
 import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
@@ -19,7 +20,6 @@ import { SessionStorageDbFactory } from "@microsoft/fluid-local-test-utils";
 import { IUser } from "@microsoft/fluid-protocol-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { getRandomName } from "@microsoft/fluid-server-services-client";
-import { extractDetails, IResolvedPackage } from "@microsoft/fluid-web-code-loader";
 import * as jwt from "jsonwebtoken";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
@@ -82,30 +82,7 @@ const getUser = (): IDevServerUser => ({
     name: getRandomName(),
 });
 
-async function loadScripts(files: string[], origin: string) {
-    // Add script to page, rather than load bundle directly
-    const scriptLoadP: Promise<string>[] = [];
-    const scriptIdPrefix = "fluidDevServerScriptToLoad";
-    let scriptIndex = 0;
-    files.forEach((file: string) => {
-        const script = document.createElement("script");
-        // Translate URLs to be webpack-dev-server relative URLs
-        script.src = `${origin}/${file}`;
-        const scriptId = `${scriptIdPrefix}_${scriptIndex++}`;
-        script.id = scriptId;
-
-        scriptLoadP.push(new Promise((resolve) => {
-            script.onload = () => {
-                resolve(scriptId);
-            };
-        }));
-
-        document.body.appendChild(script);
-    });
-    return Promise.all(scriptLoadP);
-}
-
-function wrapIfComponentPackage(packageName: string, packageJson: IFluidPackage) {
+export function wrapIfComponentPackage(packageName: string, packageJson: IFluidPackage) {
     // Wrap the core component in a runtime
     const loadedComponentRaw = window[packageJson.fluid.browser.umd.library];
     const fluidModule = loadedComponentRaw as IFluidModule;
@@ -126,48 +103,6 @@ function wrapIfComponentPackage(packageName: string, packageJson: IFluidPackage)
         packageJson.fluid.browser.umd.library = "componentMain";
         packageJson.name = `${packageJson.name}-dev-server`;
     }
-}
-
-async function getResolvedPackage(
-    packageJson: IPackage,
-    scriptIds: string[],
-): Promise<IResolvedPackage> {
-    // Start the creation of pkg.
-    if (!packageJson) {
-        return Promise.reject(new Error("No package specified"));
-    }
-
-    if (!isFluidPackage(packageJson)) {
-        return Promise.reject(new Error(`Package ${packageJson.name} not a fluid module.`));
-    }
-
-    const details = extractDetails(`${packageJson.name}@${packageJson.version}`);
-    const legacyPackage = `${packageJson.name}@${packageJson.version}`;
-
-    const loadedScriptIds = await loadScripts(packageJson.fluid.browser.umd.files, window.location.origin);
-    loadedScriptIds.forEach((scriptId) => {
-        scriptIds.push(scriptId);
-    });
-
-    wrapIfComponentPackage(legacyPackage, packageJson);
-
-    return {
-        pkg: packageJson,
-        details: {
-            config: {
-                [`@${details.scope}:cdn`]: window.location.origin,
-            },
-            package: packageJson,
-        },
-        parsed: {
-            full: legacyPackage,
-            pkg: "NA",
-            name: "NA",
-            version: "NA",
-            scope: "NA",
-        },
-        packageUrl: "NA",
-    };
 }
 
 function getUrlResolver(documentId: string, options: RouteOptions): IUrlResolver {
@@ -227,9 +162,24 @@ function makeSideBySideDiv(divId?: string) {
     return div;
 }
 
+class WebPackPackageResolver implements IFluidPackageResolver{
+    async resolve(details: IFluidCodeDetails): Promise<IResolvedPackage> {
+        const pkg = details.package;
+        if(typeof pkg === "string"){
+            throw new Error();
+        }
+        return{
+            details,
+            packageUrl:"http://localhost:8080",
+            pkg,
+        };
+    }
+
+}
+
 export async function start(
     documentId: string,
-    packageJson: IPackage,
+    packageJson: IFluidPackage,
     options: RouteOptions,
     div: HTMLDivElement,
 ): Promise<void> {
@@ -269,16 +219,18 @@ export async function start(
     // Construct a request
     const url = window.location.href;
 
-    // Create Package
-    const scriptIds: string[] = [];
-    const pkg = await getResolvedPackage(packageJson, scriptIds);
-    const codeDetails = pkg ? pkg.details : undefined;
+    const codeDetails: IFluidCodeDetails ={
+        package:packageJson,
+        config:{
+            cdn: "http://localhost:8080",
+        },
+    };
 
-    const host1Conf: IBaseHostConfig = { documentServiceFactory, urlResolver };
+    const host1Conf: IBaseHostConfig =
+        { packageResolver: new WebPackPackageResolver(), documentServiceFactory, urlResolver };
     const baseHost1 = new BaseHost(
         host1Conf,
-        pkg,
-        scriptIds,
+        undefined,
     );
     const container1Promise = baseHost1.initializeContainer(
         url,
@@ -289,14 +241,14 @@ export async function start(
     if (options.mode === "local" && !options.single) {
         // New documentServiceFactory for right div, same everything else
         const docServFac2: IDocumentServiceFactory = new TestDocumentServiceFactory(deltaConn);
-        const hostConf2 = { documentServiceFactory: docServFac2, urlResolver };
+        const hostConf2 =
+            { packageResolver: new WebPackPackageResolver(), documentServiceFactory: docServFac2, urlResolver };
 
         // This will create a new Loader/Container/Component from the BaseHost above. This is
         // intentional because we want to emulate two clients collaborating with each other.
         const baseHost2 = new BaseHost(
             hostConf2,
-            pkg,
-            scriptIds,
+            undefined,
         );
         const container2Promise = baseHost2.initializeContainer(
             url,
