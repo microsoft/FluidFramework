@@ -51,10 +51,10 @@ export class RuntimeFactory implements IRuntimeFactory {
 
                     let componentId: string;
                     let remainingUrl: string;
-                    
+
                     if (trailingSlash >= 0) {
                         componentId = requestUrl.slice(0, trailingSlash);
-                        remainingUrl = requestUrl.slice(trailingSlash + 1)
+                        remainingUrl = requestUrl.slice(trailingSlash + 1);
                     } else {
                         componentId = requestUrl;
                         remainingUrl = "";

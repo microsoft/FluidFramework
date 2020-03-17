@@ -16,7 +16,7 @@ export class LazyComponentFactory implements IComponentFactory {
     constructor(
         public readonly type: string,
         fetch: () => Promise<IComponentFactory>,
-    ) { 
+    ) {
         this.factoryP = new LazyPromise(fetch);
     }
 
