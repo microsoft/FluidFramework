@@ -5,8 +5,9 @@
 
 import * as assert from "assert";
 import { PropertySet } from "@microsoft/fluid-merge-tree";
-import { ITable, TableDocument, TableDocumentItem } from "@fluid-example/table-document";
 import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
+import { ITable, TableDocumentItem } from "../table";
+import { TableDocument } from "../document";
 
 /**
  * - Create a new object from the passed ITable object.

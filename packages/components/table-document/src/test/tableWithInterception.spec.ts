@@ -5,17 +5,14 @@
 
 import * as assert from "assert";
 import { PropertySet } from "@microsoft/fluid-merge-tree";
-import {
-    ITable,
-    TableDocument,
-    TableDocumentType,
-    TableSlice,
-    TableSliceType,
-} from "@fluid-example/table-document";
 import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 import { createLocalContainerFactory } from "@microsoft/fluid-local-web-host";
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
-import { createTableWithInterception } from "../document";
+import { ITable } from "../table";
+import { TableDocument } from "../document";
+import { TableSlice } from "../slice";
+import { TableDocumentType, TableSliceType } from "../componentTypes";
+import { createTableWithInterception } from "../interception";
 
 describe("Table Document with Interception", () => {
     describe("Simple User Attribution", () => {

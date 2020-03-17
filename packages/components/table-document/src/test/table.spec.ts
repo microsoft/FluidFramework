@@ -12,10 +12,10 @@ import {
     TableDocumentType,
     TableSliceType,
     TableSlice,
-} from "../src";
+} from "..";
 // eslint-disable-next-line import/no-unassigned-import
 import "mocha";
-import { TableDocumentItem } from "../src/table";
+import { TableDocumentItem } from "../table";
 
 describe("TableDocument", () => {
     let host: TestHost;

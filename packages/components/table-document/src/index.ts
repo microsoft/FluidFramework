@@ -5,6 +5,7 @@
 
 export { TableDocument } from "./document";
 export { TableSlice } from "./slice";
-export { ITable, TableDocumentItem } from "./table";
+export { ITable } from "./table";
 export * from "./componentTypes";
 export { parseRange, colIndexToName } from "./cellrange";
+export * from "./interception";
