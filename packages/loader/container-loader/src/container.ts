@@ -1203,7 +1203,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
         this.context!.changeConnectionState(this._connectionState, this.clientId);
         this.protocolHandler!.quorum.changeConnectionState(this._connectionState, this.clientId);
-        raiseConnectedEvent(this, this._connectionState, this.clientId!);
+        raiseConnectedEvent(this, this._connectionState, this.clientId);
         if (logOpsOnReconnect) {
             this.logger.sendTelemetryEvent(
                 { eventName: "OpsSentOnReconnect", count: this.messageCountAfterDisconnection });
