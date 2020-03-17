@@ -39,7 +39,7 @@ export interface IExperimentalDocumentStorage extends IDocumentStorage {
         documentId: string,
         summary: ISummaryTree,
         sequenceNumber: number,
-        values: [string, ICommittedProposal][]);
+        values: [string, ICommittedProposal][]): Promise<IDocumentDetails>;
 }
 
 export interface IFork {

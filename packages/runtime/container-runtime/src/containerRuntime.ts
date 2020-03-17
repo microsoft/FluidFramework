@@ -569,7 +569,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         // useContext - back-compat: 0.14 uploadSummary
         const useContext: boolean = expContainerContext.isExperimentalContainerContext ?
             true : this.storage.uploadSummaryWithContext !== undefined;
-        this.latestSummaryAck = { proposalHandle: undefined, ackHandle: undefined };
+        this.latestSummaryAck = {
+            proposalHandle: undefined,
+            ackHandle: expContainerContext.isExperimentalContainerContext && expContainerContext.getLoadedFromVersion()
+                ? expContainerContext.getLoadedFromVersion().id : undefined };
         this.summaryTracker = new SummaryTracker(
             useContext,
             "", // fullPath - the root is unnamed

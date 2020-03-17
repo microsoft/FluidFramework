@@ -1,5 +1,5 @@
 ---
-# sidebar: auto
+sidebar: auto
 ---
 
 !!!include(../../BREAKING.md)!!!

@@ -22,7 +22,7 @@ export const isSystemType = (type: string) => (
         type === MessageType.Fork ||
         type === MessageType.Control);
 
-export function raiseConnectedEvent(emitter: EventEmitter, state: ConnectionState, clientId: string) {
+export function raiseConnectedEvent(emitter: EventEmitter, state: ConnectionState, clientId?: string) {
     if (state === ConnectionState.Connected) {
         emitter.emit("connected", clientId);
     } else if (state === ConnectionState.Connecting) {

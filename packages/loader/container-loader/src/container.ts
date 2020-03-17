@@ -47,6 +47,7 @@ import {
     raiseConnectedEvent,
 } from "@microsoft/fluid-protocol-base";
 import {
+    ConnectionMode,
     ConnectionState,
     FileMode,
     IClient,
@@ -213,10 +214,15 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private manualReconnectInProgress = false;
     private readonly connectionTransitionTimes: number[] = [];
     private messageCountAfterDisconnection: number = 0;
+    private _loadedFromVersion: IVersion | undefined;
 
     private lastVisible: number | undefined;
 
     private _closed = false;
+
+    public get loadedFromVersion(): IVersion | undefined {
+        return this._loadedFromVersion;
+    }
 
     public get readonly(): boolean | undefined {
         return this._deltaManager.readonly;
@@ -377,7 +383,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.protocolHandler.close();
         }
 
-        // eslint-disable-next-line no-unused-expressions
         this.context?.dispose();
 
         assert(this.connectionState === ConnectionState.Disconnected, "disconnect event was not raised!");
@@ -688,9 +693,16 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
     }
 
-    private async connectToDeltaStream() {
+    private async connectToDeltaStream(modeArg: ConnectionMode = "read") {
         this.recordConnectStartTime();
-        return this._deltaManager.connect();
+
+        let mode = modeArg;
+        // All agents need "write" access, including summarizer.
+        if (!this.canReconnect || !this.client.details.capabilities.interactive) {
+            mode = "write";
+        }
+
+        return this._deltaManager.connect(mode);
     }
 
     /**
@@ -707,10 +719,21 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         let startConnectionP: Promise<IConnectionDetails> | undefined;
 
-        // Start websocket connection as soon as possible.  Note that there is no op handler attached yet, but the
+        // Ideally we always connect as "read" by default.
+        // Currently that works with SPO & r11s, because we get "write" connection when connecting to non-existing file.
+        // We should not rely on it by (one of them will address the issue, but we need to address both)
+        // 1) switching create new flow to one where we create file by posting snapshot
+        // 2) Fixing quorum workflows (have retry logic)
+        // That all said, "read" does not work with memorylicious workflows (that opens two simultaneous
+        // connections to same file) in two ways:
+        // A) creation flow breaks (as one of the clients "sees" file as existing, and hits #2 above)
+        // B) Once file is created, transition from view-only connection to write does not work - some bugs to be fixed.
+        const defaultConnectionMode = "write";
+
+        // Start websocket connection as soon as possible. Note that there is no op handler attached yet, but the
         // DeltaManager is resilient to this and will wait to start processing ops until after it is attached.
         if (!pause) {
-            startConnectionP = this.connectToDeltaStream();
+            startConnectionP = this.connectToDeltaStream(defaultConnectionMode);
             startConnectionP.catch((error) => {});
         }
 
@@ -720,12 +743,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // Fetch specified snapshot, but intentionally do not load from snapshot if specifiedVersion is null
         const maybeSnapshotTree = specifiedVersion === null ? undefined
             : await this.fetchSnapshotTree(specifiedVersion);
-
-        // If pause, and there's no tree, then we'll start the websocket connection here (we'll need the details later)
-        if (!maybeSnapshotTree && !startConnectionP) {
-            startConnectionP = this.connectToDeltaStream();
-            startConnectionP.catch((error) => {});
-        }
 
         const blobManagerP = this.loadBlobManager(this.storageService, maybeSnapshotTree);
 
@@ -749,7 +766,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             loadDetailsP = Promise.resolve();
         } else {
             if (!startConnectionP) {
-                startConnectionP = this.connectToDeltaStream();
+                startConnectionP = this.connectToDeltaStream(defaultConnectionMode);
             }
             // Intentionally don't .catch on this promise - we'll let any error throw below in the await.
             loadDetailsP = startConnectionP.then((details) => {
@@ -763,8 +780,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         [this.blobManager, this.protocolHandler] = await Promise.all([blobManagerP, protocolHandlerP, loadDetailsP]);
 
         await this.loadContext(attributes, maybeSnapshotTree);
-
-        this.context!.changeConnectionState(this.connectionState, this.clientId!, this._version);
 
         // Internal context is fully loaded at this point
         this.loaded = true;
@@ -817,6 +832,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // The load context - given we seeded the quorum - will be great
         await this.createDetachedContext(attributes);
         this.loaded = true;
+
+        this.propagateConnectionState();
     }
 
     private async getDocumentStorageService(): Promise<IDocumentStorageService> {
@@ -984,13 +1001,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     }
 
-    private get client() {
+    private get client(): IClient {
         const client: IClient = this.options && this.options.client
             ? (this.options.client as IClient)
             : {
                 details: {
                     capabilities: { interactive: true },
                 },
+                mode: "read", // default reconnection mode on lost connection / connection error
                 permission: [],
                 scopes: [],
                 user: { id: "" },
@@ -1263,6 +1281,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const version = await this.getVersion(specifiedVersion || this.id);
 
         if (version) {
+            this._loadedFromVersion = version;
             return await this.storageService!.getSnapshotTree(version) || undefined;
         } else if (specifiedVersion) {
             // We should have a defined version to load from if specified version requested
