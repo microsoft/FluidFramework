@@ -23,7 +23,8 @@
     "lint:fix": "npm run eslint:fix",
     "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
-    "test:mocha": "mocha --recursive dist/test --exit -r make-promises-safe",
+    "test:mocha": "mocha --recursive dist/test --exit -r make-promises-safe -g Detached --inspect-brk=9229",
+    "test1": "mocha --recursive dist/test --exit -r make-promises-safe -g Detached",
     "tsc": "tsc"
   },
   "nyc": {

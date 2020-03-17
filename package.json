@@ -98,7 +98,9 @@
     ],
     "temp-directory": "nyc/.nyc_output"
   },
-  "dependencies": {},
+  "dependencies": {
+    "install": "^0.13.0"
+  },
   "devDependencies": {
     "@microsoft/api-documenter": "^7.4.6",
     "@microsoft/api-extractor": "^7.7.2",

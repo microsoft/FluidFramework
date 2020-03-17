@@ -1280,7 +1280,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
      */
     private async fetchSnapshotTree(specifiedVersion?: string): Promise<ISnapshotTree | undefined> {
         const version = await this.getVersion(specifiedVersion || this.id);
-
+        console.log("version ", version);
         if (version) {
             this._loadedFromVersion = version;
             return await this.storageService!.getSnapshotTree(version) || undefined;
