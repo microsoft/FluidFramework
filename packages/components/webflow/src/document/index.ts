@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { randomId, TokenList, TagName } from "@fluid-example/flow-util-lib";
 import { SharedComponent, SharedComponentFactory } from "@microsoft/fluid-component-base";
-import { IComponent, IComponentHandle, IComponentHTMLOptions } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHandle, IComponentHTMLOptions } from "@microsoft/fluid-component-core-interfaces";
 import {
     createInsertSegmentOp,
     createRemoveRangeOp,
@@ -165,14 +165,7 @@ export class FlowDocument extends SharedComponent<ISharedDirectory> {
     }
 
     public async getComponentFromMarker(marker: Marker) {
-        const url = marker.properties.url as string;
-
-        const response = await this.context.hostRuntime.request({ url });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
-            return Promise.reject("Not found");
-        }
-
-        return response.value as IComponent;
+        return marker.properties.handle.get();
     }
 
     public getSegmentAndOffset(position: number) {
@@ -305,10 +298,10 @@ export class FlowDocument extends SharedComponent<ISharedDirectory> {
         this.sharedString.insertMarker(position, ReferenceType.Tile, FlowDocument.lineBreakProperties);
     }
 
-    public insertComponent(position: number, url: string, view: string, componentOptions: object, style?: string, classList?: string[]) {
+    public insertComponent(position: number, handle: IComponentHandle, view: string, componentOptions: object, style?: string, classList?: string[]) {
         this.sharedString.insertMarker(position, ReferenceType.Tile, Object.freeze({
             ...FlowDocument.inclusionProperties,
-            componentOptions, url, style, classList: classList && classList.join(" "), view,
+            componentOptions, handle, style, classList: classList && classList.join(" "), view,
         }));
     }
 

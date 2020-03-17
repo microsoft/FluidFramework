@@ -31,6 +31,7 @@
     "@fluid-example/client-ui-lib": "^0.15.0",
     "@fluid-example/flow-util-lib": "^0.15.0",
     "@fluid-example/search-menu": "^0.15.0",
+    "@microsoft/fluid-component-base": "^0.15.0",
     "@microsoft/fluid-component-core-interfaces": "^0.15.0",
     "@microsoft/fluid-component-runtime": "^0.15.0",
     "@microsoft/fluid-framework-experimental": "^0.15.0",

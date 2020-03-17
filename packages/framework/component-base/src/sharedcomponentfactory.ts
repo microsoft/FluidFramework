@@ -25,7 +25,7 @@ export class SharedComponentFactory<T extends SharedComponent> implements ICompo
         public readonly type: string,
         private readonly ctor: new (context: IComponentContext, runtime: IComponentRuntime, root: ISharedObject) => T,
         public readonly root: ISharedObjectFactory,
-        sharedObjects: readonly ISharedObjectFactory[],
+        sharedObjects: readonly ISharedObjectFactory[] = [],
         components?: readonly IComponentFactory[],
     ) {
         if (components !== undefined) {

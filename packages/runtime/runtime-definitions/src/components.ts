@@ -401,7 +401,7 @@ export interface IHostRuntime extends
      */
     _createComponentWithProps(pkg: string | string[], props: any, id: string): Promise<IComponentRuntime>;
 
-    createComponentContext(pkg: string[], props: any): IComponentContext;
+    createComponentContext(pkg: string[], props?: any): IComponentContext;
 
     /**
      * Returns the current quorum.

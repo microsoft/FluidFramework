@@ -55,7 +55,7 @@ export abstract class SharedComponent<
         if (!this._handle) {
             this._handle = new ComponentHandle(
                 this,
-                this.context.id,
+                "",
                 this.runtime.IComponentHandleContext);
         }
 
@@ -65,7 +65,7 @@ export abstract class SharedComponent<
     /**
      * Absolute URL to the component within the document
      */
-    public get url() { return this.context.id; }
+    public get url() { return this.runtime.IComponentHandleContext.path; }
 
     // #endregion IComponentLoadable
 

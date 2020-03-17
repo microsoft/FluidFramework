@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import {
     IComponent,
     IComponentHandleContext,
@@ -14,12 +13,12 @@ import {
     IRequest,
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
-import { ComponentHandle, ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { ComponentHandle } from "@microsoft/fluid-component-runtime";
 import { IComponentLayout } from "@microsoft/fluid-framework-experimental";
 import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
-import { ISharedMap, MapFactory } from "@microsoft/fluid-map";
-import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
-import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+import { ISharedDirectory, SharedDirectory } from "@microsoft/fluid-map";
+import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
+import { SharedComponent, SharedComponentFactory } from "@microsoft/fluid-component-base";
 
 export class ImageComponent implements
     IComponentLoadable, IComponentHTMLView, IComponentRouter, IComponentLayout {
@@ -55,15 +54,19 @@ export class ImageComponent implements
     }
 }
 
-export class ImageCollection extends EventEmitter implements
+export class ImageCollection extends SharedComponent<ISharedDirectory> implements
     IComponentLoadable, IComponentRouter, IComponentCollection {
 
-    public static async load(runtime: IComponentRuntime, context: IComponentContext) {
-        const collection = new ImageCollection(runtime, context);
-        await collection.initialize();
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+    public static getFactory() { return fluidExport; }
 
-        return collection;
+    public static create(parentContext: IComponentContext, props?: any) {
+        // eslint-disable-next-line @typescript-eslint/no-use-before-define
+        return factory.create(parentContext, props);
     }
+
+    public create() { this.initialize(); }
+    public async load() { this.initialize(); }
 
     public get IComponentLoadable() { return this; }
     public get IComponentCollection() { return this; }
@@ -73,14 +76,6 @@ export class ImageCollection extends EventEmitter implements
     public handle: ComponentHandle;
 
     private readonly images = new Map<string, ImageComponent>();
-    private root: ISharedMap;
-
-    constructor(private readonly runtime: IComponentRuntime, context: IComponentContext) {
-        super();
-
-        this.url = context.id;
-        this.handle = new ComponentHandle(this, "", runtime.IComponentHandleContext);
-    }
 
     public createCollectionItem(): ImageComponent {
         const id = `image-${Date.now()}`;
@@ -119,14 +114,7 @@ export class ImageCollection extends EventEmitter implements
         return this.images.get(trimmed).request({ url: trimmed.substr(1 + trimmed.length) });
     }
 
-    private async initialize() {
-        if (!this.runtime.existing) {
-            this.root = this.runtime.createChannel("root", MapFactory.Type) as ISharedMap;
-            this.root.register();
-        } else {
-            this.root = await this.runtime.getChannel("root") as ISharedMap;
-        }
-
+    private initialize() {
         for (const key of this.root.keys()) {
             this.images.set(
                 key,
@@ -137,7 +125,7 @@ export class ImageCollection extends EventEmitter implements
                     this.runtime.IComponentHandleContext));
         }
 
-        this.root.on("valueChanged", (changed, local) => {
+        this.root.on("valueChanged", (changed) => {
             if (this.images.has(changed.key)) {
                 // TODO add support for video playback values
                 // this.videoPlayers.get(changed.key).update(this.root.get(changed.key));
@@ -153,27 +141,10 @@ export class ImageCollection extends EventEmitter implements
     }
 }
 
-export class ImageCollectionFactoryComponent implements IComponentFactory {
-    public static readonly type = "@fluid-example/image-collection";
-    public readonly type = ImageCollectionFactoryComponent.type;
+const factory = new SharedComponentFactory(
+    "@fluid-example/image-collection",
+    ImageCollection,
+    SharedDirectory.getFactory(),
+);
 
-    public get IComponentFactory() { return this; }
-
-    public instantiateComponent(context: IComponentContext): void {
-        const dataTypes = new Map<string, ISharedObjectFactory>();
-        dataTypes.set(MapFactory.Type, new MapFactory());
-
-        const runtime = ComponentRuntime.load(
-            context,
-            dataTypes,
-        );
-
-        const progressCollectionP = ImageCollection.load(runtime, context);
-        runtime.registerRequestHandler(async (request: IRequest) => {
-            const progressCollection = await progressCollectionP;
-            return progressCollection.request(request);
-        });
-    }
-}
-
-export const fluidExport: IComponentFactory = new ImageCollectionFactoryComponent();
+export const fluidExport: IComponentFactory = factory;

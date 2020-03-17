@@ -7,11 +7,7 @@ export { FlowDocument } from "./document";
 export { Editor, IComponentHTMLViewFactory } from "./editor";
 export { htmlFormatter } from "./html/formatters";
 
-import { RuntimeFactory, LazyComponentFactory } from "@microsoft/fluid-component-base";
-import { hostType } from "./package";
+import { RuntimeFactory } from "@microsoft/fluid-component-base";
+import { WebFlow } from "./host";
 
-export const fluidExport = new RuntimeFactory(
-    new LazyComponentFactory(
-        hostType,
-        async () => import("./host").then((m) => m.WebFlow.getFactory()),
-    ));
+export const fluidExport = new RuntimeFactory(WebFlow.getFactory());

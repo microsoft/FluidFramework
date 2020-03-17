@@ -3,85 +3,93 @@
  * Licensed under the MIT License.
  */
 
-import { TextAnalyzer } from "@fluid-example/flow-intel";
+import { strict as assert } from "assert";
 import { FlowIntelViewer } from "@fluid-example/flow-intel-viewer";
-import { TableDocumentType, TableSliceType } from "@fluid-example/table-document";
-import { FlowDocument, flowDocumentFactory, FlowDocumentType } from "@fluid-example/webflow";
-import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { FlowDocument } from "@fluid-example/webflow";
+import { TableView } from "@fluid-example/table-view";
 import {
     IComponent,
     IComponentHandle,
     IComponentHTMLView,
     IComponentHTMLVisual,
-    IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
-import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
-import { SharedMap } from "@microsoft/fluid-map";
 import {
     FlushMode,
-    IComponentContext,
-    IComponentRuntime,
-    ITask,
-    ITaskManager,
 } from "@microsoft/fluid-runtime-definitions";
-import { HostView } from "./host";
+import { IProvideComponentCollection } from "@microsoft/fluid-framework-interfaces";
+import { SharedMap, ISharedDirectory, SharedDirectory } from "@microsoft/fluid-map";
+import { MathCollection } from "@fluid-example/math";
+import { VideoPlayerCollection } from "@fluid-example/video-players";
+import { ImageCollection } from "@fluid-example/image-collection";
+import { SharedComponentFactory, SharedComponent } from "@microsoft/fluid-component-base";
+import { hostType } from "../package";
 import { importDoc } from "./template";
+import { HostView } from "./host";
+import { TaskScheduler } from "./taskscheduler";
 
-const insightsMapId = "insights";
+const enum RootKey {
+    doc = "doc",
+    images = "images",
+    insights = "insights",
+    math = "math",
+    videos = "videos",
+}
 
-export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual {
-    public static readonly type = "@fluid-example/webflow-host";
-
+export class WebFlowHost extends SharedComponent<ISharedDirectory> implements IComponentHTMLVisual {
     private intelViewer: FlowIntelViewer;
-    constructor(runtime: IComponentRuntime, context: IComponentContext) {
-        super(runtime, context);
-    }
+
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+    public static getFactory() { return webFlowHostFactory; }
 
     public get IComponentHTMLVisual() { return this; }
 
     public addView(scope?: IComponent): IComponentHTMLView {
         return new HostView(
-            // eslint-disable-next-line @typescript-eslint/promise-function-async
-            (rootkey: string, pkg: string, props?: any) => this.createSubComponent(rootkey, pkg, props),
-            this.getComponent<FlowDocument>(this.root.get(this.docId)),
-            this.openCollection("math"),
-            this.openCollection("video-players"),
-            this.openCollection("images"),
-            this.intelViewer,
-            this.root);
+            this.createSubComponent,
+            this.root.wait<IComponentHandle<FlowDocument>>(RootKey.doc).then(async (handle) => handle.get()),
+            this.openCollection(RootKey.math),
+            this.openCollection(RootKey.videos),
+            this.openCollection(RootKey.images),
+            this.intelViewer);
     }
 
-    public async createSubComponent<T>(rootkey: string, pkg: string, props?: any) {
-        const componentRuntime: IComponentRuntime = await this.context.createComponent(pkg);
-        const response: IResponse = await componentRuntime.request({ url: "/" });
+    public readonly createSubComponent = async (pkg: string, props?: any) => {
+        const componentRuntime = await this.context.createComponent(pkg);
+        const response = await componentRuntime.request({ url: "/" });
         componentRuntime.attach();
-        this.root.set(rootkey, componentRuntime.id);
-        return response.value as T;
-    }
+        return response.value.handle;
+    };
 
-    protected async componentInitializingFirstTime() {
-        await Promise.all([
-            this.createSubComponent(this.docId, FlowDocumentType),
-            this.createSubComponent("math", "@fluid-example/math"),
-            this.createSubComponent("video-players", "@fluid-example/video-players"),
-            this.createSubComponent("images", "@fluid-example/image-collection"),
-        ]);
+    public create() {
+        const doc = FlowDocument.create(this.context);
+        this.root.set(RootKey.doc, doc.handle);
+        this.root.set(RootKey.images, ImageCollection.create(this.context).handle);
+        this.root.set(RootKey.videos, VideoPlayerCollection.create(this.context).handle);
+        this.root.set(RootKey.math, MathCollection.create(this.context).handle);
 
-        const insights = SharedMap.create(this.runtime, insightsMapId);
-        this.root.set(insightsMapId, insights.handle);
+        const insights = SharedMap.create(this.runtime, RootKey.insights);
+        this.root.set(RootKey.insights, insights.handle);
 
         const url = new URL(window.location.href);
         const template = url.searchParams.get("template");
         if (template) {
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            importDoc(this.getComponent(this.root.get(this.docId)), template);
+            importDoc(doc, template).catch((error) => console.error(error));
         }
+
+        this.init(insights, doc);
     }
 
-    protected async componentHasInitialized() {
-        const handle = await this.root.wait<IComponentHandle<SharedMap>>(insightsMapId);
-        const insights = await handle.get();
+    public async load() {
+        const insightsH = await this.root.wait<IComponentHandle<SharedMap>>(RootKey.insights);
+        const insights = await insightsH.get();
 
+        const docH = await this.root.wait<IComponentHandle<FlowDocument>>(RootKey.doc);
+        const doc = await docH.get();
+
+        this.init(insights, doc);
+    }
+
+    private init(insights: SharedMap, doc: FlowDocument) {
         this.context.hostRuntime.setFlushMode(FlushMode.Manual);
 
         const runtimeEmitter = this.context.hostRuntime;
@@ -119,68 +127,38 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
 
         this.intelViewer = new FlowIntelViewer(insights);
 
-        const flowDocument = await this.getComponent<FlowDocument>(this.root.get(this.docId));
-        // eslint-disable-next-line @typescript-eslint/no-use-before-define
-        const taskScheduler = new TaskScheduler(
-            this.context,
-            this.taskManager,
-            this.url,
-            flowDocument,
-            insights,
-        );
-        taskScheduler.start();
+        this.context.hostRuntime.request({ url: "_scheduler" }).then((response) => {
+            assert.equal(response.status, 200);
+            assert.equal(response.mimeType, "fluid/component");
+
+            const taskScheduler = new TaskScheduler(
+                this.context,
+                response.value,
+                this.url,
+                doc,
+                insights,
+            );
+
+            taskScheduler.start();
+        }).catch((error) => console.error(error));
     }
 
-    private get docId() { return `${this.runtime.id}-doc`; }
-
-    private async openCollection(id: string): Promise<IComponentCollection> {
-        const runtime = await this.context.getComponentRuntime(this.root.get(id), true);
-        const request = await runtime.request({ url: "/" });
-
-        if (request.status !== 200 || request.mimeType !== "fluid/component") {
-            return Promise.reject("Not found");
-        }
-
-        const component = request.value;
+    private async openCollection<T extends IProvideComponentCollection>(key: RootKey) {
+        const handle = await this.root.wait<IComponentHandle<T>>(key);
+        const component = await handle.get();
         return component.IComponentCollection;
     }
 }
 
-class TaskScheduler {
-    constructor(
-        private readonly componentContext: IComponentContext,
-        private readonly taskManager: ITaskManager,
-        private readonly componentUrl: string,
-        private readonly flowDocument: FlowDocument,
-        private readonly insightsMap: SharedMap,
-    ) {
-
-    }
-
-    public start() {
-        const hostTokens = (this.componentContext.hostRuntime as IComponent).IComponentTokenProvider;
-        const intelTokens = hostTokens && hostTokens.intelligence ? hostTokens.intelligence.textAnalytics : undefined;
-        const intelTask: ITask = {
-            id: "intel",
-            instance: new TextAnalyzer(this.flowDocument, this.insightsMap, intelTokens),
-        };
-        this.taskManager.register(intelTask);
-        this.taskManager.pick(this.componentUrl, "intel").then(() => {
-            console.log(`Picked text analyzer`);
-        }, (err) => {
-            console.log(JSON.stringify(err));
-        });
-    }
-}
-
-export const webFlowHostFactory = new PrimedComponentFactory(WebFlowHost, [SharedMap.getFactory()], new Map([
-    [FlowDocumentType, Promise.resolve(flowDocumentFactory)],
-    // eslint-disable-next-line max-len
-    ["@fluid-example/video-players", import(/* webpackChunkName: "video-players", webpackPrefetch: true */ "@fluid-example/video-players").then((m) => m.fluidExport)],
-    // eslint-disable-next-line max-len
-    ["@fluid-example/image-collection", import(/* webpackChunkName: "image-collection", webpackPrefetch: true */ "@fluid-example/image-collection").then((m) => m.fluidExport)],
-    ["@fluid-example/math", import("@fluid-example/math").then((m) => m.fluidExport)],
-    [TableDocumentType, import("@fluid-example/table-document").then((m) => m.TableDocument.getFactory())],
-    [TableSliceType, import("@fluid-example/table-document").then((m) => m.TableSlice.getFactory())],
-    ["@fluid-example/table-view", import("@fluid-example/table-view").then((m) => m.TableView.getFactory())],
-]));
+export const webFlowHostFactory = new SharedComponentFactory(
+    hostType,
+    WebFlowHost,
+    /* root: */ SharedDirectory.getFactory(),
+    [SharedMap.getFactory()],
+    [
+        FlowDocument.getFactory(),
+        VideoPlayerCollection.getFactory(),
+        ImageCollection.getFactory(),
+        MathCollection.getFactory(),
+        TableView.getFactory(),
+    ]);
