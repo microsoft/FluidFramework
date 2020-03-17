@@ -383,7 +383,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.protocolHandler.close();
         }
 
-        // eslint-disable-next-line no-unused-expressions
         this.context?.dispose();
 
         assert(this.connectionState === ConnectionState.Disconnected, "disconnect event was not raised!");

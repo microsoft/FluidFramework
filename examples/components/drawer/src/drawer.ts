@@ -62,7 +62,7 @@ export class Drawer extends EventEmitter implements
     ) {
         super();
 
-        // eslint-disable-next-line no-unused-expressions
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         this.context.clientId;
 
         this.url = context.id;

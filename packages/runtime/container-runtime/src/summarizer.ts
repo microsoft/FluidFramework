@@ -84,7 +84,6 @@ export class Summarizer implements ISummarizer {
         this.runtime.deltaManager.inbound.on("op",
             (op) => this.summaryCollection.handleOp(op as ISequencedDocumentMessage));
 
-        // eslint-disable-next-line no-unused-expressions
         this.runtime.previousState.nextSummarizerD?.resolve(this);
     }
 
