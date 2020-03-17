@@ -163,14 +163,16 @@ function makeSideBySideDiv(divId?: string) {
 }
 
 class WebPackPackageResolver implements IFluidPackageResolver{
+    constructor(private readonly options: IBaseRouteOptions){}
     async resolve(details: IFluidCodeDetails): Promise<IResolvedPackage> {
-        const pkg = details.package;
+        let pkg = details.package;
         if(typeof pkg === "string"){
-            throw new Error();
+            const resp = await fetch(`http://localhost:${this.options.port}/package.json`);
+            pkg = await resp.json() as IFluidPackage;
         }
         return{
             details,
-            packageUrl:"http://localhost:8080",
+            packageUrl:`http://localhost:${this.options.port}`,
             pkg,
         };
     }
@@ -227,7 +229,7 @@ export async function start(
     };
 
     const host1Conf: IBaseHostConfig =
-        { packageResolver: new WebPackPackageResolver(), documentServiceFactory, urlResolver };
+        { packageResolver: new WebPackPackageResolver(options), documentServiceFactory, urlResolver };
     const baseHost1 = new BaseHost(
         host1Conf,
         undefined,
@@ -242,7 +244,7 @@ export async function start(
         // New documentServiceFactory for right div, same everything else
         const docServFac2: IDocumentServiceFactory = new TestDocumentServiceFactory(deltaConn);
         const hostConf2 =
-            { packageResolver: new WebPackPackageResolver(), documentServiceFactory: docServFac2, urlResolver };
+            { packageResolver: new WebPackPackageResolver(options), documentServiceFactory: docServFac2, urlResolver };
 
         // This will create a new Loader/Container/Component from the BaseHost above. This is
         // intentional because we want to emulate two clients collaborating with each other.
