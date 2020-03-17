@@ -23,6 +23,7 @@ import {
     ITree,
     MessageType,
     ISummaryTree,
+    IVersion,
 } from "@microsoft/fluid-protocol-definitions";
 import { IAudience } from "./audience";
 import { IBlobManager } from "./blobs";
@@ -227,6 +228,8 @@ export interface IExperimentalContainerContext extends IContainerContext {
     isExperimentalContainerContext: true;
 
     isAttached(): boolean;
+
+    getLoadedFromVersion(): IVersion | undefined;
 
     createSummary(): Promise<ISummaryTree>;
 }
