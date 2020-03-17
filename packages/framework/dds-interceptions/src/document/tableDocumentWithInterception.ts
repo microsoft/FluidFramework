@@ -4,14 +4,14 @@
  */
 
 import * as assert from "assert";
-import { ICombiningOp, PropertySet } from "@microsoft/fluid-merge-tree";
+import { PropertySet } from "@microsoft/fluid-merge-tree";
 import { ITable, TableDocument, TableDocumentItem } from "@fluid-example/table-document";
 import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 
 /**
  * - Create a new object from the passed ITable object.
- * - Modify the methods that change properties of cells, rows or columns to call the
- *   propertyInterceptionCallback to get new properties.
+ * - Modify the methods that sets a cell value or annotates a cell to call the  propertyInterceptionCallback
+ *   to get new properties.
  * - Use these new properties to call the underlying TableDocument.
  * - The propertyInterceptionCallback and the call to the underlying TableDocument are wrapped around an
  *   orderSequentially call to batch any operations that might happen in the callback.
@@ -48,46 +48,6 @@ export function createTableWithInterception<T extends ITable>(
             executingCallback = true;
             try {
                 table.setCellValue(row, col, value, propertyInterceptionCallback(properties));
-            } finally {
-                executingCallback = false;
-            }
-        });
-    };
-
-    tableWithInterception.annotateRows = (
-        startRow: number,
-        endRow: number,
-        properties: PropertySet,
-        op?: ICombiningOp) => {
-        // Wrapper methods should not be called from the interception callback as this will lead to
-        // infinite recursion.
-        assert(executingCallback === false,
-            "Interception wrapper method called recursively from the interception callback");
-
-        context.hostRuntime.orderSequentially(() => {
-            executingCallback = true;
-            try {
-                table.annotateRows(startRow, endRow, propertyInterceptionCallback(properties), op);
-            } finally {
-                executingCallback = false;
-            }
-        });
-    };
-
-    tableWithInterception.annotateCols = (
-        startCol: number,
-        endCol: number,
-        properties: PropertySet,
-        op?: ICombiningOp) => {
-        // Wrapper methods should not be called from the interception callback as this will lead to
-        // infinite recursion.
-        assert(executingCallback === false,
-            "Interception wrapper method called recursively from the interception callback");
-
-        context.hostRuntime.orderSequentially(() => {
-            executingCallback = true;
-            try {
-                table.annotateCols(startCol, endCol, propertyInterceptionCallback(properties), op);
             } finally {
                 executingCallback = false;
             }

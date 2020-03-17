@@ -60,19 +60,6 @@ describe("Table Document with Interception", () => {
             }
         }
 
-        // Function that verifies that the given table has correct properties for the row and column
-        // in the given cell.
-        function verifyRowAndCol(table: ITable, cell: ICellType, props: PropertySet) {
-            assert.deepEqual(
-                table.getRowProperties(cell.row),
-                props,
-                "The properties in the row set via annotation and the callback should exist");
-            assert.deepEqual(
-                table.getColProperties(cell.col),
-                props,
-                "The properties in the column set via annotation and the callback should exist");
-        }
-
         beforeEach(async () => {
             const fluidExport = new SimpleModuleInstantiationFactory(
                 TableDocumentType,
@@ -104,11 +91,10 @@ describe("Table Document with Interception", () => {
             tableDocumentWithInterception.setCellValue(cell.row, cell.col, cell.value);
             verifyCell(tableDocumentWithInterception, cell, userAttributes);
 
-            // Annotate a row and a column. Verify that they have user properties added by the interception callback.
+            // Annotate the cell. Verify that it has user properties added by the interception callback.
             const props = { style: "bold" };
-            tableDocumentWithInterception.annotateRows(cell.row, cell.row + 1, props);
-            tableDocumentWithInterception.annotateCols(cell.col, cell.col + 1, props);
-            verifyRowAndCol(tableDocumentWithInterception, cell, { ...props, ...userAttributes });
+            tableDocumentWithInterception.annotateCell(cell.row, cell.col, props);
+            verifyCell(tableDocumentWithInterception, cell, { ...props, ...userAttributes });
         });
 
         it("should be able to see changes made by the wrapper from the underlying table document", async () => {
@@ -125,12 +111,11 @@ describe("Table Document with Interception", () => {
             tableDocumentWithInterception.setCellValue(cell.row, cell.col, cell.value);
             verifyCell(tableDocument, cell, userAttributes);
 
-            // Annotate a row and a column via the wrapper. Verify that the properties can be retrieved by
-            // the underlying table document and it should have the user properties.
+            // Annotate the cell via the wrapper. Verify that the underlying table document can retrieve it and
+            // the user properties added by the interception callback.
             const props = { style: "bold" };
-            tableDocumentWithInterception.annotateRows(cell.row, cell.row + 1, props);
-            tableDocumentWithInterception.annotateCols(cell.col, cell.col + 1, props);
-            verifyRowAndCol(tableDocument, cell, { ...props, ...userAttributes });
+            tableDocumentWithInterception.annotateCell(cell.row, cell.col, props);
+            verifyCell(tableDocument, cell, { ...props, ...userAttributes });
         });
 
         it("should be able to see changes made by the underlying table document from the interception", async () => {
@@ -147,12 +132,11 @@ describe("Table Document with Interception", () => {
             tableDocument.setCellValue(cell.row, cell.col, cell.value);
             verifyCell(tableDocumentWithInterception, cell);
 
-            // Annotate a row and a column via the underlying table document. Verify that the properties can be
-            // retrieved by the wrapper and it should NOT have the user properties.
+            // Annotate the cell via the underlying table document. Verify that the wrapper can retrieve it and the
+            // user properties should not exist.
             const props = { style: "bold" };
-            tableDocument.annotateRows(cell.row, cell.row + 1, props);
-            tableDocument.annotateCols(cell.col, cell.col + 1, props);
-            verifyRowAndCol(tableDocumentWithInterception, cell, props);
+            tableDocument.annotateCell(cell.row, cell.col, props);
+            verifyCell(tableDocument, cell, props);
         });
 
         it("should be able to create a wrapped table slice from the table document wrapper", async () => {
@@ -182,14 +166,13 @@ describe("Table Document with Interception", () => {
             // Verify that the table document can see the values and properties.
             verifyCell(tableDocumentWithInterception, cell2, userAttributes);
 
-            // Annotate a row and column via the table slice.
+            // Annotate a cell via the table slice.
             const props = { style: "bold" };
-            tableSlice.annotateRows(cell2.row, cell2.row + 1, props);
-            tableSlice.annotateCols(cell2.col, cell2.col + 1, props);
-            // Verify that they have the above properties and user properties added by the interception callback.
-            verifyRowAndCol(tableSlice, cell2, { ...props, ...userAttributes });
+            tableSlice.annotateCell(cell2.row, cell2.col, props);
+            // Verify that the cell has the above properties and user properties added by the interception callback.
+            verifyCell(tableSlice, cell2, { ...props, ...userAttributes });
             // Verify that the table document can also retrieve these properties.
-            verifyRowAndCol(tableDocumentWithInterception, cell2, { ...props, ...userAttributes });
+            verifyCell(tableDocumentWithInterception, cell2, { ...props, ...userAttributes });
         });
 
         /**
@@ -201,7 +184,7 @@ describe("Table Document with Interception", () => {
             // eslint-disable-next-line prefer-const
             let tableDocumentWithInterception: TableDocument;
 
-            const propsInRecursiveCb = { fromRecursiveCb: "true" };
+            const cellInRecursiveCb: ICellType = { row: 0, col: 0, value: "CellInRecursiveCb" };
             let useWrapper: boolean = true;
             // If useWrapper above is true, this interception callback calls a method on the wrapped object
             // causing an infinite recursion.
@@ -209,8 +192,7 @@ describe("Table Document with Interception", () => {
             function recursiveInterceptionCb(properties?: PropertySet) {
                 const ss = useWrapper ? tableDocumentWithInterception : tableDocument;
                 // Annotate the first row and column.
-                ss.annotateRows(0, 1, propsInRecursiveCb);
-                ss.annotateCols(0, 1, propsInRecursiveCb);
+                ss.setCellValue(cellInRecursiveCb.row, cellInRecursiveCb.col, cellInRecursiveCb.value);
                 return { ...properties, ...userAttributes };
             }
 
@@ -220,10 +202,10 @@ describe("Table Document with Interception", () => {
                 createTableWithInterception(tableDocument, componentContext, recursiveInterceptionCb);
 
             // Insert a row and a column via the underlying table document.
-            tableDocument.insertRows(0, 1);
-            tableDocument.insertCols(0, 1);
+            tableDocument.insertRows(0, 2);
+            tableDocument.insertCols(0, 2);
 
-            const cell: ICellType = { row: 0, col: 0, value: "testCell" };
+            const cell: ICellType = { row: 1, col: 1, value: "testCell" };
             let asserted: boolean = false;
             try {
                 tableDocumentWithInterception.setCellValue(cell.row, cell.col, cell.value);
@@ -241,8 +223,8 @@ describe("Table Document with Interception", () => {
             tableDocumentWithInterception.setCellValue(cell.row, cell.col, cell.value);
             verifyCell(tableDocumentWithInterception, cell, userAttributes);
 
-            // Verify that the annotate in the recursiveInterceptionCb annotated the row and column.
-            verifyRowAndCol(tableDocumentWithInterception, cell, propsInRecursiveCb);
+            // Verify that the cell value set in the recursive callback is correct and it does not have user attributes.
+            verifyCell(tableDocumentWithInterception, cellInRecursiveCb);
         });
     });
 });
