@@ -83,27 +83,24 @@ const getUser = (): IDevServerUser => ({
     name: getRandomName(),
 });
 
-export function wrapIfComponentPackage(packageName: string, packageJson: IFluidPackage) {
-    // Wrap the core component in a runtime
-    const loadedComponentRaw = window[packageJson.fluid.browser.umd.library];
-    const fluidModule = loadedComponentRaw as IFluidModule;
+function wrapIfComponentPackage(packageJson: IFluidPackage, fluidModule: IFluidModule): IFluidModule {
     if (fluidModule.fluidExport.IRuntimeFactory === undefined) {
         const componentFactory = fluidModule.fluidExport.IComponentFactory;
 
         const runtimeFactory = new SimpleModuleInstantiationFactory(
-            packageName,
+            packageJson.name,
             new Map([
-                [packageName, Promise.resolve(componentFactory)],
+                [packageJson.name, Promise.resolve(componentFactory)],
             ]),
         );
-        // eslint-disable-next-line dot-notation
-        window["componentMain"] = {
-            fluidExport: runtimeFactory,
+        return {
+            fluidExport:{
+                IRuntimeFactory: runtimeFactory,
+                IComponentFactory: componentFactory,
+            },
         };
-
-        packageJson.fluid.browser.umd.library = "componentMain";
-        packageJson.name = `${packageJson.name}-dev-server`;
     }
+    return fluidModule;
 }
 
 function getUrlResolver(documentId: string, options: RouteOptions): IUrlResolver {
@@ -186,6 +183,7 @@ class WebPackPackageResolver implements IFluidPackageResolver{
 export async function start(
     documentId: string,
     packageJson: IFluidPackage,
+    fluidModule: IFluidModule,
     options: RouteOptions,
     div: HTMLDivElement,
 ): Promise<void> {
@@ -231,12 +229,14 @@ export async function start(
             cdn: "http://localhost:8080",
         },
     };
+    const packageSeed: [IFluidCodeDetails, IFluidModule] =
+        [codeDetails, wrapIfComponentPackage(packageJson, fluidModule)];
 
     const host1Conf: IBaseHostConfig =
         { packageResolver: new WebPackPackageResolver(options), documentServiceFactory, urlResolver };
     const baseHost1 = new BaseHost(
         host1Conf,
-        undefined,
+        [packageSeed],
     );
     const container1Promise = baseHost1.initializeContainer(
         url,
@@ -254,7 +254,7 @@ export async function start(
         // intentional because we want to emulate two clients collaborating with each other.
         const baseHost2 = new BaseHost(
             hostConf2,
-            undefined,
+            [packageSeed],
         );
         const container2Promise = baseHost2.initializeContainer(
             url,
