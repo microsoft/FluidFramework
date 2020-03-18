@@ -30,8 +30,8 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
     resolvedPackageUrl: string;
 }
 
-export interface IFluidPackageResolver{
-    resolve(details: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails>;
+export interface IFluidCodeResolver{
+    resolveCodeDetails(details: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails>;
 }
 
 /**

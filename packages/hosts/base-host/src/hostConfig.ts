@@ -4,7 +4,7 @@
  */
 
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { ICodeWhiteList, IProxyLoaderFactory, IFluidPackageResolver } from "@microsoft/fluid-container-definitions";
+import { ICodeWhiteList, IProxyLoaderFactory, IFluidCodeResolver } from "@microsoft/fluid-container-definitions";
 import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 
 /**
@@ -28,5 +28,5 @@ export interface IBaseHostConfig {
     // White List for the code loader
     whiteList?: ICodeWhiteList;
 
-    packageResolver: IFluidPackageResolver;
+    packageResolver: IFluidCodeResolver;
 }

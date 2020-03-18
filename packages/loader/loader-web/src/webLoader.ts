@@ -8,8 +8,7 @@ import {
     ICodeWhiteList,
     IFluidCodeDetails,
     IFluidModule,
-    IFluidPackageResolver,
-    IResolvedFluidCodeDetails,
+    IFluidCodeResolver,
 } from "@microsoft/fluid-container-definitions";
 /**
  * Helper class to manage loading of script elements. Only loads a given script once.
@@ -85,12 +84,12 @@ export class WebCodeLoader implements ICodeLoader {
     private readonly scriptManager = new ScriptManager();
 
     constructor(
-        private readonly packageResolver: IFluidPackageResolver,
+        private readonly codeResolver: IFluidCodeResolver,
         private readonly whiteList?: ICodeWhiteList) { }
 
 
-    public async cacheFiles(source: IFluidCodeDetails, tryPreload: boolean = false): Promise<IResolvedFluidCodeDetails>{
-        const resolved = await this.packageResolver.resolve(source);
+    public async cacheFiles(source: IFluidCodeDetails, tryPreload: boolean = false): Promise<void>{
+        const resolved = await this.codeResolver.resolveCodeDetails(source);
         resolved.resolvedPackage.fluid.browser.umd.files.forEach((file)=>{
             const cacheLink = document.createElement("link");
             cacheLink.href = `${resolved.resolvedPackageUrl}/${file}`;
@@ -102,17 +101,15 @@ export class WebCodeLoader implements ICodeLoader {
             }
             document.head.appendChild(cacheLink);
         });
-        return resolved;
     }
 
     public async seedModule(
         source: IFluidCodeDetails,
         maybeFluidModule?: IFluidModule,
-    ): Promise<IResolvedFluidCodeDetails>{
-        const resolvedPackage = await this.packageResolver.resolve(source);
+    ): Promise<void>{
+        const resolvedPackage = await this.codeResolver.resolveCodeDetails(source);
         const fluidModule = maybeFluidModule ?? await this.load(source);
         this.loadedModules.set(resolvedPackage.resolvedPackageUrl, fluidModule);
-        return resolvedPackage;
     }
 
     /**
@@ -121,7 +118,7 @@ export class WebCodeLoader implements ICodeLoader {
     public async load(
         source: IFluidCodeDetails,
     ): Promise<IFluidModule> {
-        const resolved = await this.packageResolver.resolve(source);
+        const resolved = await this.codeResolver.resolveCodeDetails(source);
         const maybePkg = this.loadedModules.get(resolved.resolvedPackageUrl);
         if(maybePkg !== undefined){
             return maybePkg;
