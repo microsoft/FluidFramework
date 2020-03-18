@@ -19,7 +19,8 @@ import { IJWTClaims } from "../../utils";
 
 // Although probably the case we want a default behavior here. Maybe just the URL?
 async function getWebComponent(url: UrlWithStringQuery): Promise<IWebResolvedUrl> {
-    const result = await Axios.get(url.href);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const result = await Axios.get(url.href!);
 
     return {
         data: result.data,

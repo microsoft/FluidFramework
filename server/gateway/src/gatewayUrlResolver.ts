@@ -7,13 +7,20 @@ import { isSpoTenant, resolveFluidUrl, spoGetResolvedUrl } from "@fluid-example/
 import { IClientConfig } from "@microsoft/fluid-odsp-utils";
 import { ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { IAlfredUser, RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlresolver";
-import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
+import { IAlfredTenant, IGitCache } from "@microsoft/fluid-server-services-client";
 import { chooseCelaName } from "@microsoft/fluid-server-services-core";
 import { Request } from "express";
 import { Provider } from "nconf";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
 import { IAlfred } from "./interfaces";
+import { IFluidResolvedUrl, IResolvedUrl } from "@microsoft/fluid-driver-definitions";
+import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
+
+type FullTree = {
+    cache: IGitCache,
+    code: IFluidCodeDetails | null,
+}
 
 export function resolveUrl(
     config: Provider,
@@ -23,7 +30,7 @@ export function resolveUrl(
     documentId: string,
     scopes: ScopeType[],
     request: Request,
-) {
+): [Promise<IFluidResolvedUrl | IResolvedUrl>, Promise<undefined | FullTree>] {
     if (isSpoTenant(tenantId)) {
         const microsoftConfiguration = config.get("login:microsoft");
         const clientConfig: IClientConfig = {

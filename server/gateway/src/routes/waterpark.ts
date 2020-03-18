@@ -54,7 +54,8 @@ export function create(
             },
             jwtKey);
 
-        const documentId = getParam(request.params, "id");
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const documentId = getParam(request.params, "id")!;
         const path = request.params[0];
         const tenantId = appTenants[0].id;
         const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
