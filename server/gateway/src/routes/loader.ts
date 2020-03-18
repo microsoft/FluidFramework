@@ -72,7 +72,8 @@ export function create(
                 const documentId = rawPath.substring(0, slash !== -1 ? slash : rawPath.length);
                 const path = rawPath.substring(slash !== -1 ? slash : rawPath.length);
 
-                const tenantId = getParam(request.params, "tenantId");
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                const tenantId = getParam(request.params, "tenantId")!;
 
                 const search = parse(request.url).search;
                 const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];

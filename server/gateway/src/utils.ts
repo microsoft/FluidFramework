@@ -59,8 +59,8 @@ export function getVersion() {
     return `${version.endsWith(".0") ? "^" : ""}${version}`;
 }
 
-// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-const getUser = (request: Request) => request.user ? request.user : request.session.guest;
+// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-non-null-assertion
+const getUser = (request: Request) => request.user ? request.user : request.session!.guest;
 
 export function getJWTClaims(request: Request): IJWTClaims {
     const user = getUser(request);

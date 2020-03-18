@@ -160,14 +160,16 @@ process.on("message", async (message: IIncomingMessage) => {
                 status: true,
                 type: message.type,
             };
-            process.send(initSuccessMessage);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            process.send!(initSuccessMessage);
         }, (err) => {
             const initFailMessage: IOutgoingMessage = {
                 status: false,
                 type: message.type,
                 value: err,
             };
-            process.send(initFailMessage);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            process.send!(initFailMessage);
         });
     } else {
         if (cache === undefined) {
@@ -176,14 +178,16 @@ process.on("message", async (message: IIncomingMessage) => {
                 type: message.type,
                 value: `Called before initialization`,
             };
-            process.send(getFailMessage);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            process.send!(getFailMessage);
         } else {
             const getSuccessMessage: IOutgoingMessage = {
                 status: true,
                 type: message.type,
                 value: cache.get(message.param as string),
             };
-            process.send(getSuccessMessage);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            process.send!(getSuccessMessage);
         }
     }
 });
