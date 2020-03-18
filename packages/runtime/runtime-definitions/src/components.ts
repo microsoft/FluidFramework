@@ -397,7 +397,7 @@ export interface IHostRuntime extends
     /**
      * Creates a new IComponentContext instance.  The caller completes construction of the the component by
      * calling IComponentContext.bindRuntime() when the component is prepared to begin processing ops.
-     * 
+     *
      * @param pkg Package path for the component to be created
      * @param props Properties to be passed to the instantiateComponent thru the context
      */
