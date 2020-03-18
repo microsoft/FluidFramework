@@ -67,7 +67,6 @@ export function create(
             tenantId,
             config.get("error:track"));
 
-        // eslint-disable-next-line @typescript-eslint/promise-function-async
         const pkgP = fullTreeP.then((fullTree) => {
             // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (path) {
@@ -127,13 +126,16 @@ export function create(
             .then(([resolved, fullTree, pkg, scripts, timings]) => {
                 // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                 if (!pkg) {
-                    resolved.url += `${path}`;
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    resolved!.url += `${path}`;
                 } else {
-                    resolved.url += `?chaincode=${chaincode}`;
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    resolved!.url += `?chaincode=${chaincode}`;
                 }
                 winston.info(`render ${tenantId}/${documentId} +${Date.now() - start}`);
 
-                timings.push(Date.now() - start);
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                timings!.push(Date.now() - start);
 
                 response.render(
                     "loader",

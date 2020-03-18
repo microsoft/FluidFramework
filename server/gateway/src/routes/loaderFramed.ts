@@ -87,7 +87,6 @@ export function create(
                     tenantId,
                     config.get("error:track"));
 
-                // eslint-disable-next-line @typescript-eslint/promise-function-async
                 const pkgP = fullTreeP.then((fullTree) => {
                     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     if (fullTree && fullTree.code) {
@@ -167,11 +166,13 @@ export function create(
 
                 Promise.all([resolvedP, fullTreeP, pkgP, scriptsP, timingsP])
                     .then(([resolved, fullTree, pkg, scripts, timings]) => {
-                        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-                        resolved.url += path + (search ? search : "");
+                        // eslint-disable-next-line max-len
+                        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-non-null-assertion
+                        resolved!.url += path + (search ? search : "");
                         winston.info(`render ${tenantId}/${documentId} +${Date.now() - start}`);
 
-                        timings.push(Date.now() - start);
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        timings!.push(Date.now() - start);
 
                         response.render(
                             "loaderHost",

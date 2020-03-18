@@ -44,7 +44,7 @@ export class Alfred implements IAlfred {
         const gitManager = this.getGitManager(tenantId);
         const versions = await gitManager.getCommits(documentId, 1);
         if (versions.length === 0) {
-            // eslint-disable-next-line no-null/no-null
+            // eslint-disable-next-line no-null/no-null, max-len
             return { cache: { blobs: [], commits: [], refs: { [documentId]: null as unknown as string }, trees: [] }, code: null };
         }
 
