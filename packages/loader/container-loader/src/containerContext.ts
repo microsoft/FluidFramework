@@ -38,6 +38,7 @@ import {
     ITree,
     MessageType,
     ISummaryTree,
+    IVersion,
 } from "@microsoft/fluid-protocol-definitions";
 import { BlobManager } from "./blobManager";
 import { Container } from "./container";
@@ -211,6 +212,10 @@ export class ContainerContext extends EventEmitter implements IContainerContext,
         return this.runtime!.snapshot(tagMessage, fullTree);
     }
 
+    public getLoadedFromVersion(): IVersion | undefined {
+        return this.container.loadedFromVersion;
+    }
+
     /**
      * Snapshot and close the runtime, and return its state if available
      */
@@ -230,8 +235,8 @@ export class ContainerContext extends EventEmitter implements IContainerContext,
         return expRuntime.createSummary();
     }
 
-    public changeConnectionState(value: ConnectionState, clientId: string, version?: string) {
-        this.runtime!.changeConnectionState(value, clientId, version);
+    public changeConnectionState(value: ConnectionState, clientId?: string) {
+        this.runtime!.changeConnectionState(value, clientId);
         raiseConnectedEvent(this, value, clientId);
     }
 

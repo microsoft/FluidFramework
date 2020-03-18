@@ -14,6 +14,7 @@ import { IPackage } from "@microsoft/fluid-container-definitions";
 import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { MergeTreeDeltaType } from "@microsoft/fluid-merge-tree";
 import { SharedObjectSequence, SubSequence } from "@microsoft/fluid-sequence";
+import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pkg = require("../../package.json") as IPackage;
@@ -95,43 +96,41 @@ export class ExternalComponentView extends PrimedComponent implements
             if (this.sequence !== undefined) {
                 this.sequence.getItems(0).forEach((url) => {
                     const component = this.urlToComponent.get(url);
-                    if (component) {
-                        const renderable = component.IComponentHTMLView;
+                    if (component && HTMLViewAdapter.canAdapt(component)) {
+                        const renderable = new HTMLViewAdapter(component);
 
-                        if (renderable) {
-                            const containerDiv = document.createElement("div");
-                            mainDiv.appendChild(containerDiv);
-                            const style = containerDiv.style;
-                            style.border = "1px solid lightgray";
-                            style.maxWidth = "800px";
-                            style.width = "800px";
-                            style.margin = "5px";
-                            style.overflow = "hidden";
-                            style.position = "relative";
+                        const containerDiv = document.createElement("div");
+                        mainDiv.appendChild(containerDiv);
+                        const style = containerDiv.style;
+                        style.border = "1px solid lightgray";
+                        style.maxWidth = "800px";
+                        style.width = "800px";
+                        style.margin = "5px";
+                        style.overflow = "hidden";
+                        style.position = "relative";
 
-                            const componentDiv = document.createElement("div");
-                            containerDiv.appendChild(componentDiv);
-                            componentDiv.style.margin = "5px";
-                            componentDiv.style.overflow = "hidden";
-                            componentDiv.style.zIndex = "0";
-                            componentDiv.style.position = "relative";
-                            renderable.render(
-                                componentDiv,
-                                {
-                                    display: "block",
-                                });
-                            if (!this.root.has(`${url}-height`)) {
-                                requestAnimationFrame(() => {
-                                    if (componentDiv.getBoundingClientRect().height < 100) {
-                                        this.root.set(`${url}-height`, 100);
-                                    }
-                                });
-                            } else {
-                                componentDiv.style.height = `${this.root.get(`${url}-height`)}px`;
-                            }
-                            this.renderSubComponentButton(url, containerDiv);
-                            this.renderResize(url, containerDiv);
+                        const componentDiv = document.createElement("div");
+                        containerDiv.appendChild(componentDiv);
+                        componentDiv.style.margin = "5px";
+                        componentDiv.style.overflow = "hidden";
+                        componentDiv.style.zIndex = "0";
+                        componentDiv.style.position = "relative";
+                        renderable.render(
+                            componentDiv,
+                            {
+                                display: "block",
+                            });
+                        if (!this.root.has(`${url}-height`)) {
+                            requestAnimationFrame(() => {
+                                if (componentDiv.getBoundingClientRect().height < 100) {
+                                    this.root.set(`${url}-height`, 100);
+                                }
+                            });
+                        } else {
+                            componentDiv.style.height = `${this.root.get(`${url}-height`)}px`;
                         }
+                        this.renderSubComponentButton(url, containerDiv);
+                        this.renderResize(url, containerDiv);
                     }
                 });
             }

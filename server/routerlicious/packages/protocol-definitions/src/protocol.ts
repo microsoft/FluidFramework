@@ -60,6 +60,9 @@ export enum MessageType {
 
     // Message to indicate successful round trip.
     RoundTrip = "tripComplete",
+
+    // Service specific control messages that are never sequenced.
+    Control = "control",
 }
 
 export interface IChunkedOp {
