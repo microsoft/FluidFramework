@@ -1,4 +1,3 @@
-
 /*!
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
@@ -7,12 +6,12 @@
 /**
  * This script is used by the build server to compute the version number of the packages.
  * The release version number is based on what's in the lerna.json/package.json.
- * The CI will supply the build number and branch to determin the prerelease suffix if it is not a tagged build
+ * The CI will supply the build number and branch to determine the prerelease suffix if it is not a tagged build
  * 
  * Input:
  *      ./lerna.json or ./package.json - base version number to use
- *      env:VERSION_BUILDNUMBER        - use the in the environment and the value of it is added to 
- *      env:VERSION_BUILDBRANCH - use the  in the environment and the value of it is added to 
+ *      env:VERSION_BUILDNUMBER        - monotonically increasing build number from the CI
+ *      env:VERSION_BUILDBRANCH        - the build branch/tags that triggered the build 
  * Output:
  *      The computed version output to the console.
  */
@@ -53,6 +52,7 @@ function parseFileVersion(file_version, build_num) {
 
     return { release_version, prerelease_version };
 }
+
 /**
  * Compute the build suffix
  *
@@ -82,7 +82,6 @@ function getBuildSuffix(env_build_branch, build_num) {
 
     return build_suffix;
 }
-
 
 function generateFullVersion(release_version, prerelease_version, build_suffix) {
     // Generate the full version string
