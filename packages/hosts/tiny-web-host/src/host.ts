@@ -22,7 +22,7 @@ import { RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlreso
 import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 import { v4 } from "uuid";
 import { IOdspTokenApi, IRouterliciousTokenApi, ITokenApis } from "./utils";
-import { VerdaccioPackageResolver } from "./verdaccioPackageResolver";
+import { VerdaccioCodeResolver } from "./verdaccioCodeResolver";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const packageJson = require("../package.json");
@@ -170,7 +170,7 @@ async function loadContainer(
         new Map<string, IResolvedUrl>([[href, resolved]]));
 
     const hostConf: IBaseHostConfig = {
-        packageResolver: new VerdaccioPackageResolver(),
+        packageResolver: new VerdaccioCodeResolver(),
         documentServiceFactory,
         urlResolver: resolver,
     };

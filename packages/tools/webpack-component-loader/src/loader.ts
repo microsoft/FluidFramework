@@ -9,7 +9,7 @@ import {
     IFluidModule,
     IFluidPackage,
     IFluidCodeDetails,
-    IFluidPackageResolver,
+    IFluidCodeResolver,
     IResolvedFluidCodeDetails,
     isFluidPackage,
 } from "@microsoft/fluid-container-definitions";
@@ -160,9 +160,9 @@ function makeSideBySideDiv(divId?: string) {
     return div;
 }
 
-class WebPackPackageResolver implements IFluidPackageResolver{
+class WebpackCodeResolver implements IFluidCodeResolver{
     constructor(private readonly options: IBaseRouteOptions){}
-    async resolve(details: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails> {
+    async resolveCodeDetails(details: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails> {
         let pkg = details.package;
         if(typeof pkg === "string"){
             const resp = await fetch(`http://localhost:${this.options.port}/package.json`);
@@ -234,7 +234,7 @@ export async function start(
         [codeDetails, wrapIfComponentPackage(packageJson, fluidModule)];
 
     const host1Conf: IBaseHostConfig =
-        { packageResolver: new WebPackPackageResolver(options), documentServiceFactory, urlResolver };
+        { packageResolver: new WebpackCodeResolver(options), documentServiceFactory, urlResolver };
     const baseHost1 = new BaseHost(
         host1Conf,
         [packageSeed],
@@ -249,7 +249,7 @@ export async function start(
         // New documentServiceFactory for right div, same everything else
         const docServFac2: IDocumentServiceFactory = new TestDocumentServiceFactory(deltaConn);
         const hostConf2 =
-            { packageResolver: new WebPackPackageResolver(options), documentServiceFactory: docServFac2, urlResolver };
+            { packageResolver: new WebpackCodeResolver(options), documentServiceFactory: docServFac2, urlResolver };
 
         // This will create a new Loader/Container/Component from the BaseHost above. This is
         // intentional because we want to emulate two clients collaborating with each other.

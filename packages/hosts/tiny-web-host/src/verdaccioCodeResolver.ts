@@ -4,7 +4,7 @@
  */
 
 import {
-    IFluidCodeDetails,IFluidPackageResolver, IPackage, IResolvedFluidCodeDetails, isFluidPackage,
+    IFluidCodeDetails, IFluidCodeResolver, IPackage, IResolvedFluidCodeDetails, isFluidPackage,
 } from "@microsoft/fluid-container-definitions";
 import {extractPackageIdentifierDetails} from "@microsoft/fluid-web-code-loader";
 import * as fetch from "isomorphic-fetch";
@@ -45,11 +45,11 @@ class FluidPackage {
     }
 }
 
-export class VerdaccioPackageResolver implements IFluidPackageResolver{
+export class VerdaccioCodeResolver implements IFluidCodeResolver{
     // Cache goes CDN -> package -> entrypoint
     private readonly fluidPackageCache = new Map<string, FluidPackage>();
 
-    public async resolve(details: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails> {
+    public async resolveCodeDetails(details: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails> {
         const parsed = extractPackageIdentifierDetails(details.package);
 
         const cdn = details.config[`@${parsed.scope}:cdn`] ?? details.config.cdn;
