@@ -22,18 +22,14 @@ import { initializeContainerCode } from "./initializeContainerCode";
  */
 async function createWebLoader(
     hostConfig: IBaseHostConfig,
-    packages: Iterable<[IFluidCodeDetails, IFluidModule]> | undefined): Promise<Loader> {
+    seedPackages?: Iterable<[IFluidCodeDetails, IFluidModule]>): Promise<Loader> {
 
     // Create the web loader and prefetch the chaincode we will need
     const codeLoader = new WebCodeLoader(hostConfig.packageResolver, hostConfig.whiteList);
 
-    if (packages !== undefined) {
-        for(const pkg of packages){
-            const resolved = await hostConfig.packageResolver.resolve(pkg[0]);
-            if(resolved === undefined){
-                throw new Error("Failed to resolve package");
-            }
-            codeLoader.seed(resolved?.pkg, pkg[1]);
+    if (seedPackages !== undefined) {
+        for(const pkg of seedPackages){
+            await codeLoader.seed(pkg[0], pkg[1]);
         }
     }
 
@@ -71,7 +67,7 @@ export class BaseHost {
         url: string,
         pkg: IFluidCodeDetails,
         div: HTMLDivElement,
-        seedPackages: Iterable<[IFluidCodeDetails, IFluidModule]> | undefined,
+        seedPackages?: Iterable<[IFluidCodeDetails, IFluidModule]>,
     ): Promise<Container> {
         const baseHost = new BaseHost(hostConfig, seedPackages);
         return baseHost.loadAndRender(url, div, pkg);
@@ -80,12 +76,12 @@ export class BaseHost {
     private readonly loaderP: Promise<Loader>;
     public constructor(
         hostConfig: IBaseHostConfig,
-        packages: Iterable<[IFluidCodeDetails, IFluidModule]> | undefined,
+        seedPackages?: Iterable<[IFluidCodeDetails, IFluidModule]>,
     ) {
 
         this.loaderP = createWebLoader(
             hostConfig,
-            packages,
+            seedPackages,
         );
     }
 

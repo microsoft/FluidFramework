@@ -27,7 +27,7 @@ export interface ICodeLoader {
 
 export interface IResolvedPackage {
     details: IFluidCodeDetails;
-    pkg: IFluidPackage;
+    package: IFluidPackage;
     packageUrl: string;
 }
 

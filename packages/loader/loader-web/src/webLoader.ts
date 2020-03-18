@@ -9,9 +9,7 @@ import {
     IFluidCodeDetails,
     IFluidModule,
     IFluidPackageResolver,
-    IFluidPackage,
 } from "@microsoft/fluid-container-definitions";
-import { extractPackageIdentifierDetails } from "./utils";
 /**
  * Helper class to manage loading of script elements. Only loads a given script once.
  */
@@ -89,9 +87,12 @@ export class WebCodeLoader implements ICodeLoader {
         private readonly packageResolver: IFluidPackageResolver,
         private readonly whiteList?: ICodeWhiteList) { }
 
-    public seed(pkg: IFluidPackage, fluidModule: IFluidModule){
-        const details = extractPackageIdentifierDetails(pkg);
-        this.loadedModules.set(details.fullId, fluidModule);
+    public async seed(source: IFluidCodeDetails, fluidModule: IFluidModule){
+        const resolvedPackage = await this.packageResolver.resolve(source);
+        if(resolvedPackage === undefined){
+            throw new Error("Failed to resolve package");
+        }
+        this.loadedModules.set(resolvedPackage.packageUrl, fluidModule);
         return fluidModule;
     }
 
@@ -101,12 +102,11 @@ export class WebCodeLoader implements ICodeLoader {
     public async load(
         source: IFluidCodeDetails,
     ): Promise<IFluidModule> {
-        const details = extractPackageIdentifierDetails(source.package);
         const resolvedPackage = await this.packageResolver.resolve(source);
         if (resolvedPackage === undefined){
             throw new Error("Failed to resolve code package");
         }
-        const maybePkg = this.loadedModules.get(details.fullId);
+        const maybePkg = this.loadedModules.get(resolvedPackage.packageUrl);
         if(maybePkg !== undefined){
             return maybePkg;
         }
@@ -115,13 +115,13 @@ export class WebCodeLoader implements ICodeLoader {
         }
 
         const fluidModule = await this.scriptManager.loadScripts(
-            resolvedPackage.pkg.fluid.browser.umd,
+            resolvedPackage.package.fluid.browser.umd,
             resolvedPackage.packageUrl,
         ) as IFluidModule;
 
         if(fluidModule?.fluidExport === undefined){
             throw new Error("Entry point of loaded code package not a fluid module");
         }
-        return this.seed(resolvedPackage.pkg, fluidModule);
+        return this.seed(source, fluidModule);
     }
 }

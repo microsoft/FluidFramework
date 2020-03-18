@@ -174,7 +174,7 @@ class WebPackPackageResolver implements IFluidPackageResolver{
         return{
             details,
             packageUrl:`http://localhost:${this.options.port}`,
-            pkg,
+            package: pkg,
         };
     }
 

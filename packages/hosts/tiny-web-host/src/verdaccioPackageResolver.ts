@@ -39,7 +39,7 @@ class FluidPackage {
         return {
             details: this.codeDetails,
             packageUrl: this.packageUrl,
-            pkg: packageJson,
+            package: packageJson,
         };
     }
 }
