@@ -94,21 +94,11 @@ export class WebCodeLoader implements ICodeLoader {
         resolved.resolvedPackage.fluid.browser.umd.files.forEach((file)=>{
             const cacheLink = document.createElement("link");
             cacheLink.href = `${resolved.resolvedPackageUrl}/${file}`;
+            cacheLink.as = "script";
             if(tryPreload && cacheLink.relList && cacheLink.relList.contains("preload")){
                 cacheLink.rel = "preload";
             }else{
                 cacheLink.rel = "prefetch";
-            }
-
-            switch(file.substr(file.lastIndexOf("."))){
-                case ".js":
-                    cacheLink.as = "script";
-                    break;
-                case ".css":
-                    cacheLink.as = "style";
-                    break;
-                default:
-                    break;
             }
             document.head.appendChild(cacheLink);
         });
