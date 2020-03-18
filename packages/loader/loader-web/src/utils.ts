@@ -1,24 +1,24 @@
-import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
+import { IFluidPackage } from "@microsoft/fluid-container-definitions";
 
 export interface IPackageIdentifierDetails {
-    readonly full: string;
-    readonly pkg: string;
+    readonly fullId: string;
+    readonly nameAndVersion: string;
     readonly name: string;
     readonly version: string | undefined;
     readonly scope: string;
 }
 
-export function extractPackageIdentifierDetails(details: IFluidCodeDetails): IPackageIdentifierDetails {
+export function extractPackageIdentifierDetails(codeDetailsPackage: string | IFluidPackage): IPackageIdentifierDetails {
 
-    const packageString = typeof details.package === "string"
-        ? details.package // Just return it if it's a string e.g. "@fluid-example/clicker@0.1.1"
-        : !details.package.version // If it doesn't exist, let's make it from the package details
-            ? `${details.package.name}` // E.g. @fluid-example/clicker
-            : `${details.package.name}@${details.package.version}`; // Rebuild e.g. @fluid-example/clicker@0.1.1
+    const packageString = typeof codeDetailsPackage === "string"
+        ? codeDetailsPackage // Just return it if it's a string e.g. "@fluid-example/clicker@0.1.1"
+        : !codeDetailsPackage.version // If it doesn't exist, let's make it from the package details
+            ? `${codeDetailsPackage.name}` // E.g. @fluid-example/clicker
+            : `${codeDetailsPackage.name}@${codeDetailsPackage.version}`; // Rebuild e.g. @fluid-example/clicker@0.1.1
 
-    let full: string;
+    let fullId: string;
     let scope: string;
-    let pkg: string;
+    let nameAndVersion: string;
     let name: string;
     let version: string | undefined;
 
@@ -29,20 +29,20 @@ export function extractPackageIdentifierDetails(details: IFluidCodeDetails): IPa
         if ((!componentsWithVersion || componentsWithVersion.length !== 6)) {
             throw new Error("Invalid package");
         }
-        [full, , scope, pkg, name, version] = componentsWithVersion;
+        [fullId, , scope, nameAndVersion, name, version] = componentsWithVersion;
     } else {
         // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
         const componentsWithoutVersion = packageString.match(/(@(.*)\/)?((.*))/);
         if ((!componentsWithoutVersion || componentsWithoutVersion.length !== 5)) {
             throw new Error("Invalid package");
         }
-        [full, , scope, pkg, name] = componentsWithoutVersion;
+        [fullId, , scope, nameAndVersion, name] = componentsWithoutVersion;
     }
 
     return {
-        full,
+        fullId,
         name,
-        pkg,
+        nameAndVersion,
         scope,
         version,
     };

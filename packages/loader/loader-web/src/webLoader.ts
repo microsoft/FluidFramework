@@ -11,6 +11,7 @@ import {
     IFluidPackageResolver,
     IFluidPackage,
 } from "@microsoft/fluid-container-definitions";
+import { extractPackageIdentifierDetails } from "./utils";
 /**
  * Helper class to manage loading of script elements. Only loads a given script once.
  */
@@ -81,7 +82,7 @@ class ScriptManager {
 }
 
 export class WebCodeLoader implements ICodeLoader {
-    private readonly loadedModules = new Map<string, Map<string, IFluidModule>>();
+    private readonly loadedModules = new Map<string, IFluidModule>();
     private readonly scriptManager = new ScriptManager();
 
     constructor(
@@ -89,11 +90,8 @@ export class WebCodeLoader implements ICodeLoader {
         private readonly whiteList?: ICodeWhiteList) { }
 
     public seed(pkg: IFluidPackage, fluidModule: IFluidModule){
-        if(!this.loadedModules.has(pkg.name)){
-            this.loadedModules.set(pkg.name, new Map<string, IFluidModule>());
-        }
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.loadedModules.get(pkg.name)!.set(pkg.version, fluidModule);
+        const details = extractPackageIdentifierDetails(pkg);
+        this.loadedModules.set(details.fullId, fluidModule);
         return fluidModule;
     }
 
@@ -103,16 +101,14 @@ export class WebCodeLoader implements ICodeLoader {
     public async load(
         source: IFluidCodeDetails,
     ): Promise<IFluidModule> {
+        const details = extractPackageIdentifierDetails(source.package);
         const resolvedPackage = await this.packageResolver.resolve(source);
         if (resolvedPackage === undefined){
             throw new Error("Failed to resolve code package");
         }
-        const maybePkg = this.loadedModules.get(resolvedPackage.pkg.name);
+        const maybePkg = this.loadedModules.get(details.fullId);
         if(maybePkg !== undefined){
-            const maybeVersion = maybePkg.get(resolvedPackage.pkg.version);
-            if(maybeVersion !== undefined){
-                return maybeVersion;
-            }
+            return maybePkg;
         }
         if (this.whiteList && !(await this.whiteList.testSource(resolvedPackage))) {
             throw new Error("Attempted to load invalid code package url");

@@ -49,7 +49,7 @@ export class VerdaccioPackageResolver implements IFluidPackageResolver{
     private readonly fluidPackageCache = new Map<string, FluidPackage>();
 
     public async resolve(details: IFluidCodeDetails): Promise<IResolvedPackage | undefined> {
-        const parsed = extractPackageIdentifierDetails(details);
+        const parsed = extractPackageIdentifierDetails(details.package);
 
         const cdn = details.config[`@${parsed.scope}:cdn`] ?? details.config.cdn;
         const scopePath = parsed.scope ? `@${encodeURI(parsed.scope)}/` : "";
