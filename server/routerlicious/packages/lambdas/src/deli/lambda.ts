@@ -216,7 +216,7 @@ export class DeliLambda implements IPartitionLambda {
         this.lastSendP.then(
             () => {
                 if (this.lastInstruction === InstructionType.ClearCache) {
-                    this.checkpointContext.checkpoint(checkpoint);
+                    checkpoint.clear = true;
                 }
                 this.checkpointContext.checkpoint(checkpoint);
             },
