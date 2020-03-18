@@ -200,7 +200,9 @@ export class TestHistorian implements IHistorian {
                 finalTree.tree.push(treeEntry);
                 if (entry.type === "tree" && recursive) {
                     const childTree = await this.getTreeHelper(entry.sha, recursive, entryPath);
-                    finalTree.tree = finalTree.tree.concat(childTree.tree);
+                    if (childTree) {
+                        finalTree.tree = finalTree.tree.concat(childTree.tree);
+                    }
                 }
             }
             return finalTree;
