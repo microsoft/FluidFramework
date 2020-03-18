@@ -14,7 +14,9 @@ import { IDeliCheckpoint } from "./checkpointContext";
 // One time migration script per document for updating to latest schema.
 // Eventually we can remove it along with legacy fields.
 export async function migrateSchema(object: IDocument, collection: ICollection<IDocument>) {
-    if (object.version === undefined) {
+    if (object.version !== undefined) {
+        return;
+    } else {
         const deliState: IDeliCheckpoint = {
             branchMap: object.branchMap,
             clients: object.clients,

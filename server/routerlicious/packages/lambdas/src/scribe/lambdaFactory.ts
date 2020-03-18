@@ -164,7 +164,6 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
     }
 
     // When scribe cache is cleared, we need to hydrate from last summary.
-    // We should fail when no service summary is present. For now we are just logging it for better telemetry.
     private async loadStateFromSummary(
         tenantId: string,
         documentId: string,
@@ -189,6 +188,8 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
                     messages,
                 };
             } catch (exception) {
+                // We should fail when no service summary is present.
+                // For now we are just logging it for better telemetry.
                 logger.error(`Error fetching scribe state from summary: ${tenantId}/${documentId}`);
                 logger.error(JSON.stringify(exception));
                 return {

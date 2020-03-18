@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable no-null/no-null */
-
 import { EventEmitter } from "events";
 import {
     ICollection,
@@ -66,6 +64,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 
         // Restore deli state if not present in the cache. Mongodb casts undefined as null so we are checking
         // both to be safe. Empty sring denotes a cache that was cleared due to a service summary
+        // eslint-disable-next-line no-null/no-null
         if (dbObject.deli === undefined || dbObject.deli === null) {
             context.log.info(`New document. Setting empty deli checkpoint for ${tenantId}/${documentId}`);
             dbObject.deli = JSON.stringify(DefaultDeliCheckpoint);
@@ -105,7 +104,6 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 
         const existingRef = await gitManager.getRef(encodeURIComponent(documentId));
 
-        // We should fail when no service summary is present. For now we are just logging it for better telemetry.
         if (!existingRef) {
             logger.error(`No service summary present for ${tenantId}/${documentId}`);
             return JSON.stringify(DefaultDeliCheckpoint);
@@ -115,6 +113,8 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                 const deliState = Buffer.from(content.content, content.encoding).toString();
                 return deliState;
             } catch (exception) {
+                // We should really fail when no service summary is present.
+                // For now we are just logging it for better telemetry.
                 logger.error(`Error fetching deli state from summary: ${tenantId}/${documentId}`);
                 logger.error(JSON.stringify(exception));
                 return JSON.stringify(DefaultDeliCheckpoint);

@@ -289,9 +289,8 @@ export class ScribeLambda extends SequencedLambda {
         //
         // And last we delete all mesages in the list prior to the protocol sequence number. From now on these
         // will no longer be referenced.
-        const inserts = this.pendingCheckpointMessages.toArray();
-        this.pendingCheckpointMessages.clear();
 
+        const inserts = this.pendingCheckpointMessages.toArray();
         if (inserts.length > 0) {
             await this.messageCollection
                 .insertMany(inserts, false)
@@ -304,6 +303,13 @@ export class ScribeLambda extends SequencedLambda {
                         return Promise.reject(error);
                     }
                 });
+            // Since we are storing logTails with every summary, we need to make sure that messages are either in mongo
+            // or in memory.
+            const lastInsertedSeqNumber = inserts[inserts.length - 1].operation.sequenceNumber;
+            while (this.pendingCheckpointMessages.length > 0 &&
+                this.pendingCheckpointMessages.peekFront().operation.sequenceNumber <= lastInsertedSeqNumber) {
+                this.pendingCheckpointMessages.removeFront();
+            }
         }
 
         // Write out the full state first that we require

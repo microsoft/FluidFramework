@@ -39,7 +39,7 @@ import {
     SequencedOperationType,
     IQueuedMessage,
 } from "@microsoft/fluid-server-services-core";
-import { CheckpointContext, ICheckpoint, IClientSequenceNumber, IDeliCheckpoint } from "./checkpointContext";
+import { CheckpointContext, ICheckpointParams, IClientSequenceNumber, IDeliCheckpoint } from "./checkpointContext";
 import { ClientSequenceNumberManager } from "./clientSeqManager";
 
 enum IncomingMessageOrder {
@@ -216,7 +216,7 @@ export class DeliLambda implements IPartitionLambda {
         this.lastSendP.then(
             () => {
                 if (this.lastInstruction === InstructionType.ClearCache) {
-                    checkpoint.clear = true;
+                    this.checkpointContext.checkpoint(checkpoint);
                 }
                 this.checkpointContext.checkpoint(checkpoint);
             },
@@ -681,9 +681,9 @@ export class DeliLambda implements IPartitionLambda {
     /**
      * Generates a checkpoint of the current ticketing state
      */
-    private generateCheckpoint(queuedMessage: IQueuedMessage): ICheckpoint {
+    private generateCheckpoint(queuedMessage: IQueuedMessage): ICheckpointParams {
         const deliCheckpoint = this.generateDeliCheckpoint();
-        const checkpoint = deliCheckpoint as ICheckpoint;
+        const checkpoint = deliCheckpoint as ICheckpointParams;
         checkpoint.queuedMessage = queuedMessage;
         return checkpoint;
     }
