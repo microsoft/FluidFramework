@@ -11,6 +11,7 @@ import {
     IPartitionLambdaFactory,
 } from "@microsoft/fluid-server-services-core";
 import { AsyncQueue, queue } from "async";
+import * as _ from "lodash";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { CheckpointManager } from "./checkpointManager";
@@ -29,10 +30,16 @@ export class Partition extends EventEmitter {
 
     constructor(
         id: number,
+        leaderEpoch: number,
         factory: IPartitionLambdaFactory,
         consumer: IConsumer,
         config: Provider) {
         super();
+
+        // Should we pass epoch with the context?
+        const clonedConfig = _.cloneDeep((config as any).get());
+        clonedConfig.leaderEpoch = leaderEpoch;
+        const partitionConfig = new Provider({}).defaults(clonedConfig).use("memory");
 
         this.checkpointManager = new CheckpointManager(id, consumer);
         this.context = new Context(this.checkpointManager);
@@ -53,7 +60,7 @@ export class Partition extends EventEmitter {
             1);
         this.q.pause();
 
-        this.lambdaP = factory.create(config, this.context);
+        this.lambdaP = factory.create(partitionConfig, this.context);
         this.lambdaP.then(
             (lambda) => {
                 this.lambda = lambda;

@@ -20,3 +20,4 @@ export * from "./socketIoRedisPublisher";
 export * from "./storage";
 export * from "./tenant";
 export * from "./webServer";
+export * from "./zookeeperClient";
