@@ -2,8 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import * as moniker from "moniker";
+import * as uuid from "uuid";
 
 export const generateClientId = (): string =>
-    moniker.choose();
+    `trevor${uuid()}`;
