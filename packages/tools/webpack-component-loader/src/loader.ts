@@ -10,7 +10,7 @@ import {
     IFluidPackage,
     IFluidCodeDetails,
     IFluidPackageResolver,
-    IResolvedPackage,
+    IResolvedFluidCodeDetails,
     isFluidPackage,
 } from "@microsoft/fluid-container-definitions";
 import { Container } from "@microsoft/fluid-container-loader";
@@ -162,7 +162,7 @@ function makeSideBySideDiv(divId?: string) {
 
 class WebPackPackageResolver implements IFluidPackageResolver{
     constructor(private readonly options: IBaseRouteOptions){}
-    async resolve(details: IFluidCodeDetails): Promise<IResolvedPackage> {
+    async resolve(details: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails> {
         let pkg = details.package;
         if(typeof pkg === "string"){
             const resp = await fetch(`http://localhost:${this.options.port}/package.json`);
@@ -172,9 +172,10 @@ class WebPackPackageResolver implements IFluidPackageResolver{
             throw new Error("Not a fluid package");
         }
         return{
-            details,
-            packageUrl:`http://localhost:${this.options.port}`,
-            package: pkg,
+            config:details.config,
+            package: details.package,
+            resolvedPackageUrl:`http://localhost:${this.options.port}`,
+            resolvedPackage: pkg,
         };
     }
 

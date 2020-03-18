@@ -22,14 +22,18 @@ import { initializeContainerCode } from "./initializeContainerCode";
  */
 async function createWebLoader(
     hostConfig: IBaseHostConfig,
-    seedPackages?: Iterable<[IFluidCodeDetails, IFluidModule]>): Promise<Loader> {
+    seedPackages?: Iterable<IFluidCodeDetails | [IFluidCodeDetails, IFluidModule]>): Promise<Loader> {
 
     // Create the web loader and prefetch the chaincode we will need
     const codeLoader = new WebCodeLoader(hostConfig.packageResolver, hostConfig.whiteList);
 
     if (seedPackages !== undefined) {
         for(const pkg of seedPackages){
-            await codeLoader.seed(pkg[0], pkg[1]);
+            if(Array.isArray(pkg)){
+                await codeLoader.seed(pkg[0], pkg[1]);
+            }else{
+                await codeLoader.seed(pkg);
+            }
         }
     }
 
@@ -67,7 +71,7 @@ export class BaseHost {
         url: string,
         pkg: IFluidCodeDetails,
         div: HTMLDivElement,
-        seedPackages?: Iterable<[IFluidCodeDetails, IFluidModule]>,
+        seedPackages?: Iterable< IFluidCodeDetails | [IFluidCodeDetails, IFluidModule]>,
     ): Promise<Container> {
         const baseHost = new BaseHost(hostConfig, seedPackages);
         return baseHost.loadAndRender(url, div, pkg);
@@ -76,7 +80,7 @@ export class BaseHost {
     private readonly loaderP: Promise<Loader>;
     public constructor(
         hostConfig: IBaseHostConfig,
-        seedPackages?: Iterable<[IFluidCodeDetails, IFluidModule]>,
+        seedPackages?: Iterable<IFluidCodeDetails | [IFluidCodeDetails, IFluidModule]>,
     ) {
 
         this.loaderP = createWebLoader(

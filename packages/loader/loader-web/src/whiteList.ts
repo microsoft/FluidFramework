@@ -4,7 +4,7 @@
  */
 
 import {
-    ICodeWhiteList, IFluidPackage, IPackageConfig, IResolvedPackage,
+    ICodeWhiteList, IFluidPackage, IPackageConfig, IResolvedFluidCodeDetails,
 } from "@microsoft/fluid-container-definitions";
 
 /**
@@ -16,10 +16,10 @@ export class WhiteList implements ICodeWhiteList {
     public scriptIds?: string[];
 
     constructor(
-        private readonly testHandler?: (source: IResolvedPackage) => Promise<boolean>,
+        private readonly testHandler?: (source: IResolvedFluidCodeDetails) => Promise<boolean>,
     ) { }
 
-    public async testSource(source: IResolvedPackage): Promise<boolean> {
+    public async testSource(source: IResolvedFluidCodeDetails): Promise<boolean> {
         if (!this.testHandler) {
             return true;
         }

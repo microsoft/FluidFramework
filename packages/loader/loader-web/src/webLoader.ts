@@ -9,6 +9,7 @@ import {
     IFluidCodeDetails,
     IFluidModule,
     IFluidPackageResolver,
+    IResolvedFluidCodeDetails,
 } from "@microsoft/fluid-container-definitions";
 /**
  * Helper class to manage loading of script elements. Only loads a given script once.
@@ -87,13 +88,38 @@ export class WebCodeLoader implements ICodeLoader {
         private readonly packageResolver: IFluidPackageResolver,
         private readonly whiteList?: ICodeWhiteList) { }
 
-    public async seed(source: IFluidCodeDetails, fluidModule: IFluidModule){
+
+    public async cache(source: IFluidCodeDetails, tryPreload: boolean = false): Promise<IResolvedFluidCodeDetails>{
+        const resolved = await this.packageResolver.resolve(source);
+        resolved.resolvedPackage.fluid.browser.umd.files.forEach((file)=>{
+            const preloadLink = document.createElement("link");
+            preloadLink.href = `${resolved.resolvedPackageUrl}/${file}`;
+            if(tryPreload && preloadLink.relList && preloadLink.relList.contains("preload")){
+                preloadLink.rel = "preload";
+            }else{
+                preloadLink.rel = "prefetch";
+            }
+
+            switch(file.substr(file.lastIndexOf("."))){
+                case ".js":
+                    preloadLink.as = "script";
+                    break;
+                case ".css":
+                    preloadLink.as = "style";
+                    break;
+                default:
+                    break;
+            }
+            document.head.appendChild(preloadLink);
+        });
+        return resolved;
+    }
+
+    public async seed(source: IFluidCodeDetails, maybeFluidModule?: IFluidModule): Promise<IResolvedFluidCodeDetails>{
         const resolvedPackage = await this.packageResolver.resolve(source);
-        if(resolvedPackage === undefined){
-            throw new Error("Failed to resolve package");
-        }
-        this.loadedModules.set(resolvedPackage.packageUrl, fluidModule);
-        return fluidModule;
+        const fluidModule = maybeFluidModule ?? await this.load(source);
+        this.loadedModules.set(resolvedPackage.resolvedPackageUrl, fluidModule);
+        return resolvedPackage;
     }
 
     /**
@@ -102,26 +128,24 @@ export class WebCodeLoader implements ICodeLoader {
     public async load(
         source: IFluidCodeDetails,
     ): Promise<IFluidModule> {
-        const resolvedPackage = await this.packageResolver.resolve(source);
-        if (resolvedPackage === undefined){
-            throw new Error("Failed to resolve code package");
-        }
-        const maybePkg = this.loadedModules.get(resolvedPackage.packageUrl);
+        const resolved = await this.packageResolver.resolve(source);
+        const maybePkg = this.loadedModules.get(resolved.resolvedPackageUrl);
         if(maybePkg !== undefined){
             return maybePkg;
         }
-        if (this.whiteList && !(await this.whiteList.testSource(resolvedPackage))) {
+        if (this.whiteList && !(await this.whiteList.testSource(resolved))) {
             throw new Error("Attempted to load invalid code package url");
         }
 
         const fluidModule = await this.scriptManager.loadScripts(
-            resolvedPackage.package.fluid.browser.umd,
-            resolvedPackage.packageUrl,
+            resolved.resolvedPackage.fluid.browser.umd,
+            resolved.resolvedPackageUrl,
         ) as IFluidModule;
 
         if(fluidModule?.fluidExport === undefined){
             throw new Error("Entry point of loaded code package not a fluid module");
         }
-        return this.seed(source, fluidModule);
+        this.loadedModules.set(resolved.resolvedPackageUrl, fluidModule);
+        return fluidModule;
     }
 }

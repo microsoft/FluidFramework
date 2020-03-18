@@ -25,21 +25,20 @@ export interface ICodeLoader {
     load(source: IFluidCodeDetails): Promise<IFluidModule>;
 }
 
-export interface IResolvedPackage {
-    details: IFluidCodeDetails;
-    package: IFluidPackage;
-    packageUrl: string;
+export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
+    resolvedPackage: IFluidPackage;
+    resolvedPackageUrl: string;
 }
 
 export interface IFluidPackageResolver{
-    resolve(details: IFluidCodeDetails): Promise<IResolvedPackage | undefined>;
+    resolve(details: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails>;
 }
 
 /**
  * Code WhiteListing Interface
  */
 export interface ICodeWhiteList {
-    testSource(source: IResolvedPackage): Promise<boolean>;
+    testSource(source: IResolvedFluidCodeDetails): Promise<boolean>;
 }
 
 export interface IContainer extends EventEmitter {

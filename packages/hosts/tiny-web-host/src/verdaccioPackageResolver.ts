@@ -4,18 +4,18 @@
  */
 
 import {
-    IFluidCodeDetails,IFluidPackageResolver, IPackage, IResolvedPackage, isFluidPackage,
+    IFluidCodeDetails,IFluidPackageResolver, IPackage, IResolvedFluidCodeDetails, isFluidPackage,
 } from "@microsoft/fluid-container-definitions";
 import {extractPackageIdentifierDetails} from "@microsoft/fluid-web-code-loader";
 import * as fetch from "isomorphic-fetch";
 
 
 class FluidPackage {
-    private resolveP: Promise<IResolvedPackage> | undefined;
+    private resolveP: Promise<IResolvedFluidCodeDetails> | undefined;
 
     constructor(private readonly codeDetails: IFluidCodeDetails, private readonly packageUrl: string){}
 
-    public async resolve(): Promise<IResolvedPackage> {
+    public async resolve(): Promise<IResolvedFluidCodeDetails> {
         if (this.resolveP === undefined) {
             this.resolveP = this.resolveCore();
         }
@@ -23,7 +23,7 @@ class FluidPackage {
         return this.resolveP;
     }
 
-    private async resolveCore(): Promise<IResolvedPackage> {
+    private async resolveCore(): Promise<IResolvedFluidCodeDetails> {
         let packageJson: IPackage;
         if (typeof this.codeDetails.package === "string") {
             const response = await fetch(`${this.packageUrl}/package.json`);
@@ -33,13 +33,14 @@ class FluidPackage {
         }
 
         if (!isFluidPackage(packageJson)) {
-            return Promise.reject(new Error(`Package ${packageJson.name} not a fluid module.`));
+            throw new Error(`Package ${packageJson.name} not a fluid module.`);
         }
 
         return {
-            details: this.codeDetails,
-            packageUrl: this.packageUrl,
-            package: packageJson,
+            config: this.codeDetails.config,
+            package: this.codeDetails.package,
+            resolvedPackageUrl: this.packageUrl,
+            resolvedPackage: packageJson,
         };
     }
 }
@@ -48,7 +49,7 @@ export class VerdaccioPackageResolver implements IFluidPackageResolver{
     // Cache goes CDN -> package -> entrypoint
     private readonly fluidPackageCache = new Map<string, FluidPackage>();
 
-    public async resolve(details: IFluidCodeDetails): Promise<IResolvedPackage | undefined> {
+    public async resolve(details: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails> {
         const parsed = extractPackageIdentifierDetails(details.package);
 
         const cdn = details.config[`@${parsed.scope}:cdn`] ?? details.config.cdn;
@@ -61,7 +62,7 @@ export class VerdaccioPackageResolver implements IFluidPackageResolver{
             const resolved = new FluidPackage(details, packageUrl);
             this.fluidPackageCache.set(packageUrl, resolved);
         }
-
-        return this.fluidPackageCache.get(packageUrl)?.resolve();
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return this.fluidPackageCache.get(packageUrl)!.resolve();
     }
 }
