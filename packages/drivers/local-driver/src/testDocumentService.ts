@@ -67,7 +67,7 @@ export class TestDocumentService implements api.IDocumentService {
      * Returns null
      */
     public async branch(): Promise<string> {
-        return Promise.reject(new Error("Not implemented"));
+        throw new Error("Not implemented");
     }
 
     /**
