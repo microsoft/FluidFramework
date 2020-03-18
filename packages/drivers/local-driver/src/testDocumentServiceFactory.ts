@@ -29,18 +29,15 @@ export class TestDocumentServiceFactory implements IDocumentServiceFactory {
      * URL for the tenant ID, document ID, and token.
      * @param resolvedUrl - resolved URL of document
      */
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
+    public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
         if (resolvedUrl.type !== "fluid") {
-            // eslint-disable-next-line max-len
-            return Promise.reject("Only Fluid components currently supported in the RouterliciousDocumentServiceFactory");
+            return Promise.reject("Only Fluid components currently supported");
         }
 
         const parsedUrl = parse(resolvedUrl.url);
-        const [, tenantId, documentId] = parsedUrl.path.split("/");
+        const [, tenantId, documentId] = parsedUrl.path? parsedUrl.path.split("/") : [];
         if (!documentId || !tenantId) {
-            // eslint-disable-next-line max-len
-            return Promise.reject(`Couldn't parse documentId and/or tenantId. [documentId:${documentId}][tenantId:${tenantId}]`);
+            return Promise.reject(`Couldn't parse resolved url. [documentId:${documentId}][tenantId:${tenantId}]`);
         }
 
         const fluidResolvedUrl = resolvedUrl;
