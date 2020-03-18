@@ -52,15 +52,17 @@ export class TestDocumentService implements api.IDocumentService {
      */
     public async connectToDeltaStream(
         client: IClient,
-        mode: ConnectionMode): Promise<api.IDocumentDeltaConnection> {
-        // socketStorage.DocumentDeltaStorageService?
+        mode?: ConnectionMode): Promise<api.IDocumentDeltaConnection> {
+        // Backward compat
+        if (mode !== undefined) {
+            client.mode = mode;
+        }
         return TestDocumentDeltaConnection.create(
             this.tenantId,
             this.documentId,
             this.tokenProvider.token,
             client,
-            this.localDeltaConnectionServer.webSocketServer,
-            mode);
+            this.localDeltaConnectionServer.webSocketServer);
     }
 
     /**

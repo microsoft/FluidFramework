@@ -47,13 +47,16 @@ export class DocumentService2 extends DocumentService {
      */
     public async connectToDeltaStream(
         client: api.IClient,
-        mode: api.ConnectionMode): Promise<IDocumentDeltaConnection> {
+        mode?: api.ConnectionMode): Promise<IDocumentDeltaConnection> {
+        // Backward compat
+        if (mode !== undefined) {
+            client.mode = mode;
+        }
         return WSDeltaConnection.create(
             this.tenantId,
             this.documentId,
             this.tokenProvider.token,
             client,
-            this.ordererUrl,
-            mode);
+            this.ordererUrl);
     }
 }

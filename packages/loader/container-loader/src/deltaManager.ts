@@ -341,7 +341,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
                 try {
                     this.client.mode = requestedMode;
-                    connection = await DeltaConnection.connect(docService, this.client, requestedMode);
+                    connection = await DeltaConnection.connect(docService, this.client);
                 } catch (error) {
                     // Socket.io error when we connect to wrong socket, or hit some multiplexing bug
                     if (!canRetryOnError(error)) {

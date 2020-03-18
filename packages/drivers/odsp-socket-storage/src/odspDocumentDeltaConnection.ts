@@ -9,7 +9,6 @@ import { TelemetryNullLogger } from "@microsoft/fluid-common-utils";
 import { DocumentDeltaConnection } from "@microsoft/fluid-driver-base";
 import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
 import {
-    ConnectionMode,
     IClient,
     IConnect,
 } from "@microsoft/fluid-protocol-definitions";
@@ -71,7 +70,6 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         token: string | null,
         io: SocketIOClientStatic,
         client: IClient,
-        mode: ConnectionMode,
         url: string,
         timeoutMs: number = 20000,
         telemetryLogger: ITelemetryLogger = new TelemetryNullLogger()): Promise<IDocumentDeltaConnection> {
@@ -89,7 +87,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         const connectMessage: IConnect = {
             client,
             id: webSocketId,
-            mode,
+            mode: client.mode,
             tenantId,
             token,  // Token is going to indicate tenant level information, etc...
             versions: protocolVersions,

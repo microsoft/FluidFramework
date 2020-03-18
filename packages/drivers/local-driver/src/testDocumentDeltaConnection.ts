@@ -30,14 +30,13 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
         id: string,
         token: string,
         client: IClient,
-        webSocketServer: core.IWebSocketServer,
-        mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
+        webSocketServer: core.IWebSocketServer): Promise<IDocumentDeltaConnection> {
         const socket = (webSocketServer as TestWebSocketServer).createConnection();
 
         const connectMessage: IConnect = {
             client,
             id,
-            mode,
+            mode: client.mode,
             tenantId,
             token,  // Token is going to indicate tenant level information, etc...
             versions: testProtocolVersions,

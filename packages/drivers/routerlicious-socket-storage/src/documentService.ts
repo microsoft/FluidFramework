@@ -103,14 +103,17 @@ export class DocumentService implements api.IDocumentService {
      */
     public async connectToDeltaStream(
         client: IClient,
-        mode: ConnectionMode): Promise<api.IDocumentDeltaConnection> {
+        mode?: ConnectionMode): Promise<api.IDocumentDeltaConnection> {
+        // Backward compat
+        if (mode !== undefined) {
+            client.mode = mode;
+        }
         return DocumentDeltaConnection.create(
             this.tenantId,
             this.documentId,
             this.tokenProvider.token,
             io,
             client,
-            mode,
             this.ordererUrl);
     }
 

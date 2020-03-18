@@ -37,8 +37,12 @@ export class CreationDocumentService implements api.IDocumentService {
      */
     public async connectToDeltaStream(
         client: IClient,
-        mode: ConnectionMode): Promise<api.IDocumentDeltaConnection> {
-        return new CreationDocumentDeltaConnection(client, mode, this.documentId, this.tenantId, this.creationServer);
+        mode?: ConnectionMode): Promise<api.IDocumentDeltaConnection> {
+        // Backward compat
+        if (mode !== undefined) {
+            client.mode = mode;
+        }
+        return new CreationDocumentDeltaConnection(client, this.documentId, this.tenantId, this.creationServer);
     }
 
     public async branch(): Promise<string> {

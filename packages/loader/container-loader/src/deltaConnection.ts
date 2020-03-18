@@ -13,7 +13,6 @@ import {
     IDocumentService,
 } from "@microsoft/fluid-driver-definitions";
 import {
-    ConnectionMode,
     IClient,
     IDocumentMessage,
     INack,
@@ -22,9 +21,8 @@ import {
 export class DeltaConnection extends EventEmitter {
     public static async connect(
         service: IDocumentService,
-        client: IClient,
-        mode: ConnectionMode) {
-        const connection = await service.connectToDeltaStream(client, mode);
+        client: IClient) {
+        const connection = await service.connectToDeltaStream(client, client.mode);
         return new DeltaConnection(connection);
     }
 
