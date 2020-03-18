@@ -51,9 +51,9 @@ export class TestHistorian implements IHistorian {
     }
 
     public async getBlob(sha: string): Promise<git.IBlob> {
-        const blob = await this.blobs.findOne(sha);
+        const blob = await this.blobs.findOne({_id: sha});
         return {
-            content: blob.value.content,
+            content: Buffer.from(blob.value.content, blob.value.encoding).toString("base64"),
             encoding: blob.value.encoding,
             sha: blob._id,
             size: blob.value.content.length,
@@ -110,7 +110,7 @@ export class TestHistorian implements IHistorian {
                 parents: commit.value.parents.map<git.ICommitHash>((p) => ({ sha: p, url: "" })),
                 sha: commit._id,
                 tree: {
-                    sha: gitHashFile(Buffer.from(commit.value.tree)),
+                    sha: commit.value.tree,
                     url: "",
                 },
                 url: "",
@@ -119,7 +119,7 @@ export class TestHistorian implements IHistorian {
     }
 
     public async createCommit(commit: git.ICreateCommitParams): Promise<git.ICommit> {
-        const _id = gitHashFile(Buffer.from(commit.tree));
+        const _id = commit.tree;
         await this.commits.insertOne({ _id, value: commit });
         return this.getCommit(_id);
     }
@@ -176,20 +176,34 @@ export class TestHistorian implements IHistorian {
     }
 
     public async getTree(sha: string, recursive: boolean): Promise<git.ITree> {
+        return this.getTreeHelper(sha, recursive);
+    }
+
+    public async getTreeHelper(sha: string, recursive: boolean, path: string = ""): Promise<git.ITree> {
         const tree = await this.trees.findOne({ _id: sha });
         if (tree) {
-            return {
+            const finalTree: git.ITree = {
                 sha: tree._id,
                 url: "",
-                tree: tree.value.tree.map<git.ITreeEntry>((t) => ({
-                    mode: t.mode,
-                    path: t.path,
-                    sha: t.sha,
-                    size: 0,
-                    type: t.type,
-                    url: "",
-                })),
+                tree: [],
             };
+            for (const entry of tree.value.tree) {
+                const entryPath: string = path  === "" ? entry.path : `${path}/${entry.path}`;
+                const treeEntry: git.ITreeEntry = {
+                    mode: entry.mode,
+                    path: entryPath,
+                    sha: entry.sha,
+                    size: 0,
+                    type: entry.type,
+                    url: "",
+                };
+                finalTree.tree.push(treeEntry);
+                if (entry.type === "tree" && recursive) {
+                    const childTree = await this.getTreeHelper(entry.sha, recursive, entryPath);
+                    finalTree.tree = finalTree.tree.concat(childTree.tree);
+                }
+            }
+            return finalTree;
         }
     }
 }
