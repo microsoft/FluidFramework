@@ -55,14 +55,14 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 
         // Lookup the last sequence number stored
         // TODO - is this storage specific to the orderer in place? Or can I generalize the output context?
-        const dbObject = await this.collection.findOne({ documentId, tenantId });
+        let dbObject = await this.collection.findOne({ documentId, tenantId });
         if (!dbObject) {
             // Temporary guard against failure until we figure out what causing this to trigger.
             return new NoOpLambda(context);
         }
 
         // Migrate the db object to new schema if applicable.
-        await migrateSchema(dbObject, this.collection);
+        dbObject = await migrateSchema(dbObject, this.collection);
 
         // Restore deli state if not present in the cache. Mongodb casts undefined as null so we are checking
         // both to be safe. Empty sring denotes a cache that was cleared due to a service summary
