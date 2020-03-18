@@ -89,7 +89,7 @@ export class WebCodeLoader implements ICodeLoader {
         private readonly whiteList?: ICodeWhiteList) { }
 
 
-    public async cache(source: IFluidCodeDetails, tryPreload: boolean = false): Promise<IResolvedFluidCodeDetails>{
+    public async cacheFiles(source: IFluidCodeDetails, tryPreload: boolean = false): Promise<IResolvedFluidCodeDetails>{
         const resolved = await this.packageResolver.resolve(source);
         resolved.resolvedPackage.fluid.browser.umd.files.forEach((file)=>{
             const cacheLink = document.createElement("link");
@@ -105,7 +105,10 @@ export class WebCodeLoader implements ICodeLoader {
         return resolved;
     }
 
-    public async seed(source: IFluidCodeDetails, maybeFluidModule?: IFluidModule): Promise<IResolvedFluidCodeDetails>{
+    public async seedModule(
+        source: IFluidCodeDetails,
+        maybeFluidModule?: IFluidModule,
+    ): Promise<IResolvedFluidCodeDetails>{
         const resolvedPackage = await this.packageResolver.resolve(source);
         const fluidModule = maybeFluidModule ?? await this.load(source);
         this.loadedModules.set(resolvedPackage.resolvedPackageUrl, fluidModule);

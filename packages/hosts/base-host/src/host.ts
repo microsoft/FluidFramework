@@ -30,9 +30,9 @@ async function createWebLoader(
     if (seedPackages !== undefined) {
         for(const pkg of seedPackages){
             if(Array.isArray(pkg)){
-                await codeLoader.seed(pkg[0], pkg[1]);
+                await codeLoader.seedModule(pkg[0], pkg[1]);
             }else{
-                await codeLoader.seed(pkg);
+                await codeLoader.seedModule(pkg);
             }
         }
     }
