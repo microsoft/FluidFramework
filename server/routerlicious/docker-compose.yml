@@ -1,7 +1,7 @@
 version: '3.4'
 services:
     gateway:
-        image: prague.azurecr.io/gateway:latest
+        image: prague.azurecr.io/gateway:22300
         ports:
             - "3000:3000"
         command: node dist/www.js

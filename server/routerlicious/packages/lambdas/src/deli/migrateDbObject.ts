@@ -35,6 +35,7 @@ export async function migrateSchema(object: IDocument, collection: ICollection<I
             null);
 
         // Return the modified object so that we don't have to read it again from db.
+        object.version = "0.1";
         object.deli = JSON.stringify(deliState);
         return object;
     }
