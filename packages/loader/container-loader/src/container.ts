@@ -439,7 +439,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         if (!parsedUrl) {
             throw new Error("Unable to parse Url");
         }
-        this._id = decodeURI(parsedUrl.id);
+        const [, docId] = parsedUrl.id.split("/");
+        this._id = decodeURI(docId);
 
         this.storageService = await this.getDocumentStorageService();
 
