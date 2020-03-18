@@ -4,5 +4,4 @@
  */
 import * as uuid from "uuid";
 
-export const generateClientId = (): string =>
-    `trevor${uuid()}`;
+export const generateClientId = (): string => uuid();
