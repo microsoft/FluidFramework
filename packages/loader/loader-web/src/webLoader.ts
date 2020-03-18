@@ -92,25 +92,25 @@ export class WebCodeLoader implements ICodeLoader {
     public async cache(source: IFluidCodeDetails, tryPreload: boolean = false): Promise<IResolvedFluidCodeDetails>{
         const resolved = await this.packageResolver.resolve(source);
         resolved.resolvedPackage.fluid.browser.umd.files.forEach((file)=>{
-            const preloadLink = document.createElement("link");
-            preloadLink.href = `${resolved.resolvedPackageUrl}/${file}`;
-            if(tryPreload && preloadLink.relList && preloadLink.relList.contains("preload")){
-                preloadLink.rel = "preload";
+            const cacheLink = document.createElement("link");
+            cacheLink.href = `${resolved.resolvedPackageUrl}/${file}`;
+            if(tryPreload && cacheLink.relList && cacheLink.relList.contains("preload")){
+                cacheLink.rel = "preload";
             }else{
-                preloadLink.rel = "prefetch";
+                cacheLink.rel = "prefetch";
             }
 
             switch(file.substr(file.lastIndexOf("."))){
                 case ".js":
-                    preloadLink.as = "script";
+                    cacheLink.as = "script";
                     break;
                 case ".css":
-                    preloadLink.as = "style";
+                    cacheLink.as = "style";
                     break;
                 default:
                     break;
             }
-            document.head.appendChild(preloadLink);
+            document.head.appendChild(cacheLink);
         });
         return resolved;
     }
