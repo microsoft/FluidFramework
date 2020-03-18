@@ -4,7 +4,7 @@
  */
 
 import * as testUtils from "@microsoft/fluid-server-test-utils";
-import { CheckpointContext, ICheckpoint } from "../../deli/checkpointContext";
+import { CheckpointContext, ICheckpointParams } from "../../deli/checkpointContext";
 
 describe("Routerlicious", () => {
     describe("Deli", () => {
@@ -15,7 +15,7 @@ describe("Routerlicious", () => {
             let testCollection: testUtils.TestCollection;
             let testContext: testUtils.TestContext;
 
-            function createCheckpoint(logOffset: number, sequenceNumber: number): ICheckpoint {
+            function createCheckpoint(logOffset: number, sequenceNumber: number): ICheckpointParams {
                 return {
                     branchMap: null,
                     clients: null,
