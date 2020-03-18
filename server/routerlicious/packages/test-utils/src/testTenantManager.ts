@@ -4,16 +4,17 @@
  */
 
 import { GitManager } from "@microsoft/fluid-server-services-client";
-import { ITenant, ITenantManager, ITenantOrderer, ITenantStorage } from "@microsoft/fluid-server-services-core";
+import { ITenant, ITenantManager, ITenantOrderer, ITenantStorage, IDb } from "@microsoft/fluid-server-services-core";
 import { TestHistorian } from "./testHistorian";
+import { TestDb } from "./testCollection";
 
 export class TestTenant implements ITenant {
     private readonly owner = "test";
     private readonly repository = "test";
     private readonly manager: GitManager;
 
-    constructor(private readonly url: string, private readonly historianUrl: string) {
-        const testHistorian = new TestHistorian();
+    constructor(private readonly url: string, private readonly historianUrl: string, db: IDb) {
+        const testHistorian = new TestHistorian(db);
         this.manager = new GitManager(testHistorian);
     }
 
@@ -43,8 +44,8 @@ export class TestTenant implements ITenant {
 export class TestTenantManager implements ITenantManager {
     private readonly tenant: TestTenant;
 
-    constructor(url = "http://test", historian = "http://historian") {
-        this.tenant = new TestTenant(url, historian);
+    constructor(url = "http://test", historian = "http://historian", testDb: IDb = new TestDb({})) {
+        this.tenant = new TestTenant(url, historian, testDb);
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async

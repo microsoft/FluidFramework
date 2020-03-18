@@ -21,9 +21,11 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import { canSummarize } from "@microsoft/fluid-server-services-client";
 import {
+    ControlMessageType,
     extractBoxcar,
     ICollection,
     IContext,
+    IControlMessage,
     IDocument,
     IMessage,
     INackMessage,
@@ -37,7 +39,7 @@ import {
     SequencedOperationType,
     IQueuedMessage,
 } from "@microsoft/fluid-server-services-core";
-import { CheckpointContext, ICheckpoint, IClientSequenceNumber, IDeliCheckpoint } from "./checkpointContext";
+import { CheckpointContext, ICheckpointParams, IClientSequenceNumber, IDeliCheckpoint } from "./checkpointContext";
 import { ClientSequenceNumberManager } from "./clientSeqManager";
 
 enum IncomingMessageOrder {
@@ -52,7 +54,12 @@ enum SendType {
     Never,
 }
 
-export interface ITicketedMessageOutput {
+enum InstructionType {
+    ClearCache,
+    NoOp,
+}
+
+interface ITicketedMessageOutput {
 
     message: ITicketedMessage;
 
@@ -65,6 +72,8 @@ export interface ITicketedMessageOutput {
     send: SendType;
 
     nacked: boolean;
+
+    instruction: InstructionType;
 }
 
 /**
@@ -83,6 +92,7 @@ export class DeliLambda implements IPartitionLambda {
     private readonly checkpointContext: CheckpointContext;
     private lastSendP = Promise.resolve();
     private lastSentMSN = 0;
+    private lastInstruction = InstructionType.NoOp;
     private idleTimer: any;
     private noopTimer: any;
     private noActiveClients = false;
@@ -102,9 +112,11 @@ export class DeliLambda implements IPartitionLambda {
         private readonly activityTimeout: number,
         private readonly noOpConsolidationTimeout: number) {
 
+        const lastCheckpoint = JSON.parse(dbObject.deli);
+
         // Instantiate existing clients
-        if (dbObject.clients) {
-            for (const client of dbObject.clients) {
+        if (lastCheckpoint.clients) {
+            for (const client of lastCheckpoint.clients) {
                 this.clientSeqManager.upsertClient(
                     client.clientId,
                     client.clientSequenceNumber,
@@ -118,8 +130,8 @@ export class DeliLambda implements IPartitionLambda {
 
         // Setup branch information
         if (dbObject.parent) {
-            if (dbObject.branchMap) {
-                this.branchMap = new RangeTracker(dbObject.branchMap);
+            if (lastCheckpoint.branchMap) {
+                this.branchMap = new RangeTracker(lastCheckpoint.branchMap);
             } else {
                 // Initialize the range tracking window
                 this.branchMap = new RangeTracker(
@@ -140,17 +152,17 @@ export class DeliLambda implements IPartitionLambda {
         }
 
         // Initialize counting context
-        this.sequenceNumber = dbObject.sequenceNumber;
+        this.sequenceNumber = lastCheckpoint.sequenceNumber;
         const msn = this.clientSeqManager.getMinimumSequenceNumber();
         this.minimumSequenceNumber = msn === -1 ? this.sequenceNumber : msn;
 
-        this.logOffset = dbObject.logOffset;
+        this.logOffset = lastCheckpoint.logOffset;
         this.checkpointContext = new CheckpointContext(this.tenantId, this.documentId, collection, context);
     }
 
     public handler(rawMessage: IQueuedMessage): void {
         // In cases where we are reprocessing messages we have already checkpointed exit early
-        if (rawMessage.offset < this.logOffset) {
+        if (rawMessage.offset <= this.logOffset) {
             return;
         }
 
@@ -168,12 +180,15 @@ export class DeliLambda implements IPartitionLambda {
                 continue;
             }
 
+            this.lastInstruction = ticketedMessage.instruction;
+
             if (!ticketedMessage.nacked) {
                 // Check for idle clients.
                 this.checkIdleClients(ticketedMessage);
 
                 // Check for document inactivity.
-                if (ticketedMessage.type !== MessageType.NoClient && this.noActiveClients) {
+                if (!(ticketedMessage.type === MessageType.NoClient || ticketedMessage.type === MessageType.Control)
+                    && this.noActiveClients) {
                     this.sendToAlfred(this.createOpMessage(MessageType.NoClient));
                 }
 
@@ -200,6 +215,9 @@ export class DeliLambda implements IPartitionLambda {
         // Checkpoint the current state
         this.lastSendP.then(
             () => {
+                if (this.lastInstruction === InstructionType.ClearCache) {
+                    checkpoint.clear = true;
+                }
                 this.checkpointContext.checkpoint(checkpoint);
             },
             (error) => {
@@ -378,8 +396,10 @@ export class DeliLambda implements IPartitionLambda {
                     message.timestamp,
                     true);
             } else {
-                // Don't rev for server sent no-ops or noClient ops.
-                if (!(message.operation.type === MessageType.NoOp || message.operation.type === MessageType.NoClient)) {
+                // Don't rev for server sent no-ops, noClient, or Control messages.
+                if (!(message.operation.type === MessageType.NoOp ||
+                    message.operation.type === MessageType.NoClient ||
+                    message.operation.type === MessageType.Control)) {
                     sequenceNumber = this.revSequenceNumber();
                 }
             }
@@ -396,8 +416,10 @@ export class DeliLambda implements IPartitionLambda {
             this.noActiveClients = false;
         }
 
-        // Sequence number was never rev'd for NoOps/noClients. We will decide now based on heuristics.
         let sendType = SendType.Immediate;
+        let instruction = InstructionType.NoOp;
+
+        // Sequence number was never rev'd for NoOps/noClients. We will decide now based on heuristics.
         if (message.operation.type === MessageType.NoOp) {
             // Set up delay sending of client sent no-ops
             if (message.clientId) {
@@ -422,10 +444,30 @@ export class DeliLambda implements IPartitionLambda {
             // Only rev if no clients have shown up since last noClient was sent to alfred.
             if (this.noActiveClients) {
                 sequenceNumber = this.revSequenceNumber();
+                message.operation.referenceSequenceNumber = sequenceNumber;
                 this.minimumSequenceNumber = sequenceNumber;
-                this.canClose = true;
             } else {
                 sendType = SendType.Never;
+            }
+        } else if (message.operation.type === MessageType.Control) {
+            sendType = SendType.Never;
+            const controlMessage = systemContent as IControlMessage;
+            if (controlMessage.type === ControlMessageType.UpdateDSN) {
+                this.context.log.info(
+                    `Update DSN for ${this.tenantId}/${this.documentId}: ${JSON.stringify(controlMessage)}`);
+                // TODO: Make specific interface type for controlContents. The schema should be more clear
+                // as we introduce more of these.
+                const controlContent = controlMessage.contents as
+                    {
+                        durableSequenceNumber: number
+                        clearCache: boolean
+                    };
+                // Deli cache is only cleared when no clients have joined since last noClient was sent to alfred.
+                if (controlContent.clearCache && this.noActiveClients) {
+                    instruction = InstructionType.ClearCache;
+                    this.canClose = true;
+                    this.context.log.info(`Deli cache will be cleared for ${this.tenantId}/${this.documentId}`);
+                }
             }
         }
 
@@ -446,6 +488,7 @@ export class DeliLambda implements IPartitionLambda {
         };
 
         return {
+            instruction,
             message: sequencedMessage,
             msn: this.minimumSequenceNumber,
             nacked: false,
@@ -595,6 +638,7 @@ export class DeliLambda implements IPartitionLambda {
             type: NackOperationType,
         };
         return {
+            instruction: InstructionType.NoOp,
             message: nackMessage,
             msn: this.minimumSequenceNumber,
             nacked: true,
@@ -637,9 +681,9 @@ export class DeliLambda implements IPartitionLambda {
     /**
      * Generates a checkpoint of the current ticketing state
      */
-    private generateCheckpoint(queuedMessage: IQueuedMessage): ICheckpoint {
+    private generateCheckpoint(queuedMessage: IQueuedMessage): ICheckpointParams {
         const deliCheckpoint = this.generateDeliCheckpoint();
-        const checkpoint = deliCheckpoint as ICheckpoint;
+        const checkpoint = deliCheckpoint as ICheckpointParams;
         checkpoint.queuedMessage = queuedMessage;
         return checkpoint;
     }
