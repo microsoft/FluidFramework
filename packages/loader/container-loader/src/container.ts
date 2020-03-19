@@ -438,7 +438,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         if (!parsedUrl) {
             throw new Error("Unable to parse Url");
         }
-        this._id = decodeURI(parsedUrl.id);
+        const [, docId] = parsedUrl.id.split("/");
+        this._id = decodeURI(docId);
 
         this.storageService = await this.getDocumentStorageService();
 
@@ -452,6 +453,16 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         startConnectionP.catch((error) => {
             debug(`Error in connecting to delta stream from unpaused case ${error}`);
         });
+
+        await startConnectionP.then((details) => {
+            this._existing = details.existing;
+            this._parentBranch = details.parentBranch;
+        });
+
+        // Propagate current connection state through the system.
+        const connected = this.connectionState === ConnectionState.Connected;
+        assert(!connected || this._deltaManager.connectionMode === "read");
+        this.propagateConnectionState();
     }
 
     public async request(path: IRequest): Promise<IResponse> {
