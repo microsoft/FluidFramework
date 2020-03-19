@@ -75,22 +75,6 @@ export class WebCodeLoader implements ICodeLoader {
         private readonly codeResolver: IFluidCodeResolver,
         private readonly whiteList?: ICodeWhiteList) { }
 
-
-    public async cacheFiles(source: IFluidCodeDetails, tryPreload: boolean = false): Promise<void>{
-        const resolved = await this.codeResolver.resolveCodeDetails(source);
-        resolved.resolvedPackage.fluid.browser.umd.files.forEach((url)=>{
-            const cacheLink = document.createElement("link");
-            cacheLink.href = url;
-            cacheLink.as = "script";
-            if(tryPreload && cacheLink.relList && cacheLink.relList.contains("preload")){
-                cacheLink.rel = "preload";
-            }else{
-                cacheLink.rel = "prefetch";
-            }
-            document.head.appendChild(cacheLink);
-        });
-    }
-
     public async seedModule(
         source: IFluidCodeDetails,
         maybeFluidModule?: IFluidModule,
