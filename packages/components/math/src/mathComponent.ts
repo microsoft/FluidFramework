@@ -505,10 +505,17 @@ const endIdPrefix = "end-";
 export interface IMathOptions extends IComponentHTMLOptions { }
 
 export class MathCollection extends SharedComponent<ISharedDirectory> implements IComponentCollection {
-    public static getFactory() { return fluidExport; }
+    private static readonly factory = new SharedComponentFactory(
+        "@fluid-example/math",
+        MathCollection,
+        /* root: */ SharedDirectory.getFactory(),
+        [Sequence.SharedString.getFactory()],
+    );
+
+    public static getFactory(): IComponentFactory { return MathCollection.factory; }
 
     public static create(parentContext: IComponentContext, props?: any) {
-        return factory.create(parentContext, props);
+        return MathCollection.factory.create(parentContext, props);
     }
 
     public create() {
@@ -669,11 +676,4 @@ export class MathCollection extends SharedComponent<ISharedDirectory> implements
     }
 }
 
-const factory = new SharedComponentFactory(
-    "@fluid-example/math",
-    MathCollection,
-    /* root: */ SharedDirectory.getFactory(),
-    [Sequence.SharedString.getFactory()],
-);
-
-export const fluidExport: IComponentFactory = factory;
+export const fluidExport: IComponentFactory = MathCollection.getFactory();

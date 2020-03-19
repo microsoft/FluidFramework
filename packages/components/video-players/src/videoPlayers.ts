@@ -149,14 +149,18 @@ export class VideoPlayer implements
 }
 
 export class VideoPlayerCollection extends SharedComponent<ISharedDirectory> implements
-    IComponentCollection {
+    IComponentCollection
+{
+    private static readonly factory = new SharedComponentFactory(
+        "@fluid-example/video-players",
+        VideoPlayerCollection,
+        SharedDirectory.getFactory(),
+    );
 
-    // eslint-disable-next-line @typescript-eslint/no-use-before-define
-    public static getFactory() { return fluidExport; }
+    public static getFactory(): IComponentFactory { return VideoPlayerCollection.factory; }
 
     public static create(parentContext: IComponentContext, props?: any) {
-        // eslint-disable-next-line @typescript-eslint/no-use-before-define
-        return factory.create(parentContext, props);
+        return VideoPlayerCollection.factory.create(parentContext, props);
     }
 
     public create() { this.initialize().catch((error) => { this.context.error(error); }); }
@@ -243,10 +247,4 @@ export class VideoPlayerCollection extends SharedComponent<ISharedDirectory> imp
     }
 }
 
-const factory = new SharedComponentFactory(
-    "@fluid-example/video-players",
-    VideoPlayerCollection,
-    SharedDirectory.getFactory(),
-);
-
-export const fluidExport: IComponentFactory = factory;
+export const fluidExport: IComponentFactory = VideoPlayerCollection.getFactory();

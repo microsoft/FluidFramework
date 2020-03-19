@@ -14,7 +14,7 @@ import {
     IComponentHTMLVisual,
 } from "@microsoft/fluid-component-core-interfaces";
 import {
-    FlushMode,
+    FlushMode, IComponentFactory, IComponentContext,
 } from "@microsoft/fluid-runtime-definitions";
 import { IProvideComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { SharedMap, ISharedDirectory, SharedDirectory } from "@microsoft/fluid-map";
@@ -36,10 +36,26 @@ const enum RootKey {
 }
 
 export class WebFlowHost extends SharedComponent<ISharedDirectory> implements IComponentHTMLVisual {
-    private intelViewer: FlowIntelViewer;
+    private static readonly factory = new SharedComponentFactory(
+        hostType,
+        WebFlowHost,
+        /* root: */ SharedDirectory.getFactory(),
+        [SharedMap.getFactory()],
+        [
+            FlowDocument.getFactory(),
+            VideoPlayerCollection.getFactory(),
+            ImageCollection.getFactory(),
+            MathCollection.getFactory(),
+            TableView.getFactory(),
+        ]);
 
-    // eslint-disable-next-line @typescript-eslint/no-use-before-define
-    public static getFactory() { return webFlowHostFactory; }
+    public static getFactory(): IComponentFactory { return WebFlowHost.factory; }
+
+    public static create(parentContext: IComponentContext, props?: any) {
+        return WebFlowHost.factory.create(parentContext, props);
+    }
+
+    private intelViewer: FlowIntelViewer;
 
     public get IComponentHTMLVisual() { return this; }
 
@@ -149,16 +165,3 @@ export class WebFlowHost extends SharedComponent<ISharedDirectory> implements IC
         return component.IComponentCollection;
     }
 }
-
-export const webFlowHostFactory = new SharedComponentFactory(
-    hostType,
-    WebFlowHost,
-    /* root: */ SharedDirectory.getFactory(),
-    [SharedMap.getFactory()],
-    [
-        FlowDocument.getFactory(),
-        VideoPlayerCollection.getFactory(),
-        ImageCollection.getFactory(),
-        MathCollection.getFactory(),
-        TableView.getFactory(),
-    ]);

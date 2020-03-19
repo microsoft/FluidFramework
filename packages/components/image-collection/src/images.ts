@@ -55,14 +55,18 @@ export class ImageComponent implements
 }
 
 export class ImageCollection extends SharedComponent<ISharedDirectory> implements
-    IComponentLoadable, IComponentRouter, IComponentCollection {
+    IComponentLoadable, IComponentRouter, IComponentCollection
+{
+    private static readonly factory = new SharedComponentFactory(
+        "@fluid-example/image-collection",
+        ImageCollection,
+        SharedDirectory.getFactory(),
+    );
 
-    // eslint-disable-next-line @typescript-eslint/no-use-before-define
-    public static getFactory() { return fluidExport; }
+    public static getFactory(): IComponentFactory { return ImageCollection.factory; }
 
     public static create(parentContext: IComponentContext, props?: any) {
-        // eslint-disable-next-line @typescript-eslint/no-use-before-define
-        return factory.create(parentContext, props);
+        return ImageCollection.factory.create(parentContext, props);
     }
 
     public create() { this.initialize(); }
@@ -71,9 +75,6 @@ export class ImageCollection extends SharedComponent<ISharedDirectory> implement
     public get IComponentLoadable() { return this; }
     public get IComponentCollection() { return this; }
     public get IComponentRouter() { return this; }
-
-    public url: string;
-    public handle: ComponentHandle;
 
     private readonly images = new Map<string, ImageComponent>();
 
@@ -141,10 +142,4 @@ export class ImageCollection extends SharedComponent<ISharedDirectory> implement
     }
 }
 
-const factory = new SharedComponentFactory(
-    "@fluid-example/image-collection",
-    ImageCollection,
-    SharedDirectory.getFactory(),
-);
-
-export const fluidExport: IComponentFactory = factory;
+export const fluidExport: IComponentFactory = ImageCollection.getFactory();

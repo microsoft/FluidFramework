@@ -124,6 +124,18 @@ const accumAsLeafAction = (
 const endOfTextSegment = undefined as unknown as SharedStringSegment;
 
 export class FlowDocument extends SharedComponent<ISharedDirectory> {
+    private static readonly factory = new SharedComponentFactory(
+        documentType,
+        FlowDocument,
+        /* root: */ SharedDirectory.getFactory(),
+        [SharedString.getFactory()]);
+
+    public static getFactory(): IComponentFactory { return FlowDocument.factory; }
+
+    public static create(parentContext: IComponentContext, props?: any) {
+        return FlowDocument.factory.create(parentContext, props);
+    }
+
     private get sharedString() { return this.maybeSharedString; }
 
     public get length() {
@@ -139,12 +151,6 @@ export class FlowDocument extends SharedComponent<ISharedDirectory> {
     });
 
     private maybeSharedString?: SharedString;
-
-    public static create(parentContext: IComponentContext, props?: any) {
-        return flowDocumentFactory.create(parentContext, props);
-    }
-
-    public static getFactory(): IComponentFactory { return flowDocumentFactory; }
 
     public create() {
         // For 'findTile(..)', we must enable tracking of left/rightmost tiles:
@@ -499,9 +505,3 @@ export class FlowDocument extends SharedComponent<ISharedDirectory> {
         }
     }
 }
-
-const flowDocumentFactory = new SharedComponentFactory(
-    documentType,
-    FlowDocument,
-    /* root: */ SharedDirectory.getFactory(),
-    [SharedString.getFactory()]);

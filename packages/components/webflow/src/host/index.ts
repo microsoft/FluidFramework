@@ -18,11 +18,18 @@ import { WebflowView } from "./host";
 import { importDoc } from "./import";
 
 export class WebFlow extends SharedComponent<ISharedDirectory> implements IComponentHTMLVisual {
-    public static create(parentContext: IComponentContext, props?: any) {
-        return webFlowFactory.create(parentContext, props);
-    }
+    private static readonly factory = new SharedComponentFactory(
+        hostType,
+        WebFlow,
+        /* root: */ SharedDirectory.getFactory(),
+        [],
+        [FlowDocument.getFactory()]);
 
-    public static getFactory(): IComponentFactory { return webFlowFactory; }
+    public static getFactory(): IComponentFactory { return WebFlow.factory; }
+
+    public static create(parentContext: IComponentContext, props?: any) {
+        return WebFlow.factory.create(parentContext, props);
+    }
 
     public create() {
         const doc = FlowDocument.create(this.context);
@@ -50,10 +57,3 @@ export class WebFlow extends SharedComponent<ISharedDirectory> implements ICompo
 
     protected async componentInitializingFirstTime() { this.create(); }
 }
-
-const webFlowFactory = new SharedComponentFactory(
-    hostType,
-    WebFlow,
-    /* root: */ SharedDirectory.getFactory(),
-    [],
-    [FlowDocument.getFactory()]);
