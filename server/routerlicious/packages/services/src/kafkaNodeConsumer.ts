@@ -15,7 +15,6 @@ const defaultReconnectDelay = 5000;
 
 export class KafkaNodeConsumer implements IConsumer {
     private client: kafka.KafkaClient;
-    private offset: kafka.Offset;
     private consumerGroup: kafka.ConsumerGroup;
     private readonly events = new EventEmitter();
 
@@ -33,14 +32,18 @@ export class KafkaNodeConsumer implements IConsumer {
     }
 
     public async commitCheckpoint(partitionId: number, queuedMessage: IQueuedMessage): Promise<void> {
-        const commitRequest = [{
+        // Although tagged as optional, kafka-node requies a value in the metadata field.
+        // Also logs are replayed from the last checkponited offset. To avoid reprocessing the last message
+        // twice, we checkpoint at offset + 1.
+        const commitRequest: kafka.OffsetCommitRequest[] = [{
+            metadata: "m",
             offset: queuedMessage.offset + 1,
             partition: partitionId,
             topic: this.topic,
         }];
 
         return new Promise<void>((resolve, reject) => {
-            this.offset.commit(this.groupId, commitRequest, (err, data) => {
+            this.consumerGroup.sendOffsetCommitRequest(commitRequest, (err, data) => {
                 if (err) {
                     reject(err);
                 } else {
@@ -70,8 +73,6 @@ export class KafkaNodeConsumer implements IConsumer {
 
     private async connect() {
         this.client = new kafka.KafkaClient(this.clientOptions);
-        this.offset = new kafka.Offset(this.client);
-
         const groupId = this.groupId;
 
         try {

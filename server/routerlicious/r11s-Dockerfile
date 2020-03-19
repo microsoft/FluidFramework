@@ -72,7 +72,9 @@ COPY server/routerlicious/packages/ server/routerlicious/packages/
 WORKDIR /usr/src/server/server/routerlicious
 # Set the version number
 ARG VERSION_BUILDNUMBER=0
-RUN echo $VERSION_BUILDNUMBER
+ARG VERSION_BUILDBRANCH=refs/heads/unknown
+RUN echo VERSION_BUILDNUMBER=$VERSION_BUILDNUMBER
+RUN echo VERSOIN_BUILDBRANCH=$VRESION_BUILDBRANCH
 RUN version=`node tools/build-server-resources/build-version.js`; echo $version; npx lerna version $version --no-git-tag-version --no-push --yes
 RUN npm run build:ci
 

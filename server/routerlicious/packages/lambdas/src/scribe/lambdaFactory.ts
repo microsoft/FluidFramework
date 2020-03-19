@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable no-null/no-null */
+
 import { EventEmitter } from "events";
+import { IRef } from "@microsoft/fluid-gitresources";
 import { ProtocolOpHandler } from "@microsoft/fluid-protocol-base";
 import { IDocumentAttributes } from "@microsoft/fluid-protocol-definitions";
 import { IGitManager } from "@microsoft/fluid-server-services-client";
@@ -28,9 +31,25 @@ const DefaultScribe: IScribe = {
     lastClientSummaryHead: undefined,
     logOffset: -1,
     minimumSequenceNumber: 0,
-    protocolState: undefined,
+    protocolState: {
+        members: [],
+        minimumSequenceNumber: 0,
+        proposals: [],
+        sequenceNumber: 0,
+        values: [],
+    },
     sequenceNumber: 0,
 };
+
+interface ILatestSummaryState {
+    ref: IRef;
+    protocolHead: number;
+}
+
+interface ISummaryCheckpoint {
+    scribe: string;
+    messages: ISequencedOperationMessage[];
+}
 
 export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     constructor(
@@ -44,18 +63,15 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
     }
 
     public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
-        const tenantId = config.get("tenantId");
-        const documentId = config.get("documentId");
+        const tenantId: string = config.get("tenantId");
+        const documentId: string = config.get("documentId");
 
-        context.log.info(`New tenant storage ${tenantId}/${documentId}`);
         const tenant = await this.tenantManager.getTenant(tenantId);
         const gitManager = tenant.gitManager;
 
-        context.log.info(`Querying mongo for proposals ${tenantId}/${documentId}`);
-        const [protocolHead, document, messages] = await Promise.all([
+        const [latestSummary, document] = await Promise.all([
             this.fetchLatestSummaryState(gitManager, documentId, context.log),
             this.documentCollection.findOne({ documentId, tenantId }),
-            this.messageCollection.find({ documentId, tenantId }, { "operation.sequenceNumber": 1 }),
         ]);
 
         // If the document doesn't exist then we trivially accept every message
@@ -64,18 +80,28 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             return new NoOpLambda(context);
         }
 
-        const scribe: IScribe = document.scribe ? JSON.parse(document.scribe) : DefaultScribe;
+        let messages = await this.messageCollection.find({ documentId, tenantId }, { "operation.sequenceNumber": 1 });
 
-        if (!scribe.protocolState) {
-            scribe.protocolState = {
-                members: [],
-                minimumSequenceNumber: 0,
-                proposals: [],
-                sequenceNumber: 0,
-                values: [],
-            };
+        // Restore scribe state if not present in the cache. Mongodb casts undefined as null so we are checking
+        // both to be safe. Empty sring denotes a cache that was cleared due to a service summary
+        if (document.scribe === undefined || document.scribe === null) {
+            context.log.info(`New document. Setting empty scribe checkpoint for ${tenantId}/${documentId}`);
+            document.scribe = JSON.stringify(DefaultScribe);
+        } else if (document.scribe === "") {
+            context.log.info(`Loading scribe state from service summary for ${tenantId}/${documentId}`);
+            const summaryState: ISummaryCheckpoint = await this.loadStateFromSummary(
+                tenantId,
+                documentId,
+                gitManager,
+                latestSummary.ref,
+                context.log);
+            document.scribe = summaryState.scribe;
+            messages = summaryState.messages;
+        } else {
+            context.log.info(`Loading scribe state from cache for ${tenantId}/${documentId}`);
         }
 
+        const scribe: IScribe = JSON.parse(document.scribe);
         const protocolHandler = new ProtocolOpHandler(
             document.documentId,
             scribe.protocolState.minimumSequenceNumber,
@@ -97,7 +123,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             gitManager,
             this.producer,
             protocolHandler,
-            protocolHead,
+            latestSummary.protocolHead,
             messages,
             true);
     }
@@ -109,10 +135,13 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
     private async fetchLatestSummaryState(
         gitManager: IGitManager,
         documentId: string,
-        logger: ILogger): Promise<number> {
+        logger: ILogger): Promise<ILatestSummaryState> {
         const existingRef = await gitManager.getRef(encodeURIComponent(documentId));
         if (!existingRef) {
-            return 0;
+            return {
+                ref: existingRef,
+                protocolHead: 0,
+            };
         }
 
         try {
@@ -120,10 +149,54 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             const attributes =
                 JSON.parse(Buffer.from(content.content, content.encoding).toString()) as IDocumentAttributes;
 
-            logger.info(`Attributes ${JSON.stringify(attributes)}`);
-            return attributes.sequenceNumber;
+            return {
+                ref: existingRef,
+                protocolHead: attributes.sequenceNumber,
+            };
         } catch (exception) {
-            return 0;
+            logger.error(`Error fetching protocol state`);
+            logger.error(JSON.stringify(exception));
+            return {
+                ref: existingRef,
+                protocolHead: 0,
+            };
+        }
+    }
+
+    // When scribe cache is cleared, we need to hydrate from last summary.
+    private async loadStateFromSummary(
+        tenantId: string,
+        documentId: string,
+        gitManager: IGitManager,
+        existingRef: IRef,
+        logger: ILogger): Promise<ISummaryCheckpoint> {
+        if (!existingRef) {
+            logger.error(`No service summary present for ${tenantId}/${documentId}`);
+            return {
+                messages: [],
+                scribe: JSON.stringify(DefaultScribe),
+            };
+        } else {
+            try {
+                const scribeContent = await gitManager.getContent(existingRef.object.sha, ".serviceProtocol/scribe");
+                const scribe = Buffer.from(scribeContent.content, scribeContent.encoding).toString();
+                const opsContent = await gitManager.getContent(existingRef.object.sha, ".logTail/logTail");
+                const messages = JSON.parse(
+                    Buffer.from(opsContent.content, opsContent.encoding).toString()) as ISequencedOperationMessage[];
+                return {
+                    scribe,
+                    messages,
+                };
+            } catch (exception) {
+                // We should fail when no service summary is present.
+                // For now we are just logging it for better telemetry.
+                logger.error(`Error fetching scribe state from summary: ${tenantId}/${documentId}`);
+                logger.error(JSON.stringify(exception));
+                return {
+                    messages: [],
+                    scribe: JSON.stringify(DefaultScribe),
+                };
+            }
         }
     }
 }
