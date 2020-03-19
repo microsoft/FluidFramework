@@ -1,20 +1,35 @@
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
-import { SequenceDeltaEvent, SparseMatrix, SparseMatrixItem } from "@microsoft/fluid-sequence";
+import { SequenceDeltaEvent, SharedObjectSequence } from "@microsoft/fluid-sequence";
+import { IHostRuntime } from "@microsoft/fluid-runtime-definitions";
 // import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 
-const rowNum = 0;
+export interface IMinimalArray<T> {
+    get(index: number): T,
+    set(index: number, item: T): void,
+    push(...items: [T]): number,
+    pop(): T,
+    shift(): T,
+    unshift(...items: [T]): number,
+    hostRuntime: IHostRuntime,
+}
 
-type BadArrayItem = SparseMatrixItem;
+// const rowNum = 0;
 
-export class BadArray<T extends BadArrayItem> {
-    constructor(private store: SparseMatrix) {
-        store.on("sequenceDelta", deltaHandler);
+export class BadArray<T> implements IMinimalArray<T> {
+
+    constructor(private store: SharedObjectSequence<T>, private runtime: IComponentRuntime, public hostRuntime: IHostRuntime) {
+        store.on("sequenceDelta", this.deltaHandler);
     }
 
-    public static create<T>(runtime: IComponentRuntime) {
-        const newSequence = SparseMatrix.create(runtime);
-        newSequence.insertRows(rowNum, 1);
-        return new BadArray(newSequence);
+    public static create<T>(runtime: IComponentRuntime, hostRuntime: IHostRuntime) {
+        const newSequence = SharedObjectSequence.create<T>(runtime);
+        return new BadArray(newSequence, runtime, hostRuntime);
+    }
+
+    public static createWithData<T>(runtime: IComponentRuntime, hostRuntime: IHostRuntime, items: T[]) {
+        const newSequence = SharedObjectSequence.create<T>(runtime);
+        newSequence.insert(0, items);
+        return new BadArray(newSequence, runtime, hostRuntime);
     }
 
     public get(index: number): T {
@@ -22,35 +37,49 @@ export class BadArray<T extends BadArrayItem> {
         if (index >= len) {
             throw new Error(`index out of range (${index} >= ${len})`);
         }
-        return this.store.getItem(rowNum, index) as T;
+        return this.store.getItems(index, index)[0];
     }
 
-    public set(index: number, value: T) {
+    public set(index: number, value: T): void {
         const len = this.store.getLength();
         if (index >= len) {
             throw new Error(`index out of range (${index} >= ${len})`);
         }
-        this.store.setItems(rowNum, index, [value]);
+        this.hostRuntime.orderSequentially(() => {
+            this.store.insert(index, [value]);
+            this.store.remove(index + 1, index + 1);
+        });
     }
 
-    public add(value: T) {
-        this.set(this.store.getLength(), value);
+    public push(...items: [T]): number {
+        this.store.insert(this.store.getLength(), items);
+        return this.store.getLength();
+    }
+
+    public pop(): T {
+        let item = this.store.getItems(this.store.getLength() - 1, this.store.getLength() - 1)[0];
+        this.store.remove(this.store.getLength() - 1, this.store.getLength() - 1);
+        return item;
+    }
+
+    public shift(): T {
+        let item = this.store.getItems(0, 0)[0];
+        this.store.remove(0, 0);
+        return item;
+    }
+
+    public unshift(...items: [T]): number {
+        this.store.insert(0, items);
+        return this.store.getLength();
     }
 
     public all(): T[] {
-        let allItems = Array<T>();
-
-        // this probably isn't good...
-        for (let i = 0; i < this.store.getLength(); i++) {
-            allItems.push(this.store.getItem(rowNum, i) as T);
-        }
-        return allItems;
+        return this.store.getItems(0);
     }
 
     public getHandle = () => this.store.handle;
-}
 
-// TODO
-const deltaHandler = (event: SequenceDeltaEvent, target: SparseMatrix) => {
-    // do something
+    private deltaHandler = (event: SequenceDeltaEvent, target: SharedObjectSequence<T>) => {
+        // do something
+    }
 }
