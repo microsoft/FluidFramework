@@ -14,7 +14,6 @@ import {
     TelemetryEventPropertyType,
 } from "@microsoft/fluid-common-definitions";
 import * as registerDebug from "debug";
-import { pkgName, pkgVersion } from "./packageVersion";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const performanceNow = require("performance-now") as (() => number);
 
@@ -224,10 +223,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
 
     protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent {
         const newEvent: ITelemetryBaseEvent = { ...this.properties, ...event };
-        if (newEvent.packageVersion === undefined) {
-            newEvent.packageName = TelemetryLogger.sanitizePkgName(pkgName);
-            newEvent.packageVersion = pkgVersion;
-        }
         if (this.namespace !== undefined) {
             newEvent.eventName = `${this.namespace}${TelemetryLogger.eventNamespaceSeparator}${newEvent.eventName}`;
         }

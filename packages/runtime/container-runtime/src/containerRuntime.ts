@@ -91,6 +91,7 @@ import { analyzeTasks } from "./taskAnalyzer";
 import { DeltaScheduler } from "./deltaScheduler";
 import { ReportConnectionTelemetry } from "./connectionTelemetry";
 import { SummaryCollection } from "./summaryCollection";
+import { pkgVersion } from "./packageVersion";
 
 interface ISummaryTreeWithStats {
     summaryStats: ISummaryStats;
@@ -610,7 +611,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.contextsDeferred.set(key, deferred);
         }
 
-        this.logger = context.logger;
+        this.logger = ChildLogger.create(context.logger, undefined, {
+            runtimeVersion: pkgVersion,
+        });
 
         this.scheduleManager = new ScheduleManager(
             context.deltaManager,
