@@ -89,7 +89,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private readonlyPermissions: boolean | undefined;
 
     // tracks host requiring read-only mode.
-    private readonlyView = false;
+    private readonlyRuntime = false;
 
     // Connection mode used when reconnecting on error or disconnect.
     private readonly defaultReconnectionMode: ConnectionMode;
@@ -206,22 +206,22 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
      * This is independent from file permissions and type of type of conneciton
      */
     public get readonly(): boolean | undefined {
-        return this.readonlyPermissions || this.readonlyView;
+        return this.readonlyPermissions || this.readonlyRuntime;
     }
 
     /**
-     * Sets or resets read-only view.
+     * Sends signal to runtime (and components) to be read-only.
      * Hosts may have read only views, indicating to components that no edits are allowed.
-     * This is independent from  this.readonlyPermissions (permissions) and this.connectionMode
+     * This is independent from this.readonlyPermissions (permissions) and this.connectionMode
      * (server can return "write" mode even when asked for "read")
-     * Leveraging same "readonly" event as components should behave the same in such case
+     * Leveraging same "readonly" event as runtime & components should behave the same in such case
      * as in read-only permissions.
-     * But this.active can be used by some DDSs to figure out if ops can be sent (
-     * for example, read-only view still participates in code proposals / upgrades decisions)
+     * But this.active can be used by some DDSs to figure out if ops can be sent
+     * (for example, read-only view still participates in code proposals / upgrades decisions)
      */
-    public setReadonlyView(readonly: boolean) {
+    public setReadonlyRuntime(readonly: boolean) {
         const oldValue = this.readonly;
-        this.readonlyView = readonly;
+        this.readonlyRuntime = readonly;
         if (oldValue !== this.readonly) {
             this.emit("readonly", this.readonly);
         }
