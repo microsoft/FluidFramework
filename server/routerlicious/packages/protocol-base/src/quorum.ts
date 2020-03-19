@@ -319,7 +319,7 @@ export class Quorum extends EventEmitter implements IQuorum {
 
             // If it was a local proposal - resolve the promise
             if (proposal.deferred) {
-                // eslint-disable-next-line no-unused-expressions
+                // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                 approved
                     ? proposal.deferred.resolve()
                     : proposal.deferred.reject(`Rejected by ${Array.from(proposal.rejections)}`);
