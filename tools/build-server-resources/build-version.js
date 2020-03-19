@@ -35,7 +35,7 @@ function parseFileVersion(file_version, build_num) {
     let prerelease_version = split.join("-");
 
     /**
-     * Back compat. Version >= 0.15 we use the build number as the patch number.
+     * Back compat. Version <= 0.15 we use the build number as the patch number.
      */
 
     // split the prerelease out
@@ -71,16 +71,30 @@ function getBuildSuffix(env_build_branch, build_num) {
     }
 
     // Suffix based on branch.
-    let build_suffix = "";
-    if (build_branch[1] === 'heads' && (build_branch[2] === 'master' || build_branch[2] === "release")) {
-        build_suffix = `ci.${build_num}.official`;
-    } else if (build_branch[1] === 'pull') {
-        build_suffix = `ci.${build_num}.dev`
-    } else if (build_branch[1] !== 'tags') {
-        build_suffix = `ci.${build_num}.manual`;
+
+    // Tag releases
+    if (build_branch[1] === 'tags') {
+        return "";
     }
 
-    return build_suffix;
+    // PRs
+    if (build_branch[1] === 'pull') {
+        return `ci.${build_num}.dev`
+    }
+
+    // master or release branches
+    if (build_branch[1] === 'heads' && (build_branch[2] === 'master' || build_branch[2] === "release")) {
+        /**
+         * Back compat. Version 0.15 not using tag to release yet.
+         */
+        if (build_branch[2] === "release" && build_branch[3] === "0.15") {
+            return "";
+        }
+        return `ci.${build_num}.official`;
+    }
+
+    // Otherwise, it is manual builds
+    return `ci.${build_num}.manual`;
 }
 
 function generateFullVersion(release_version, prerelease_version, build_suffix) {
@@ -146,14 +160,14 @@ function test() {
     // Test version <= 0.15, no prerelease
     assert.equal(getFullVersion("0.15.0", "12345.0", "refs/pull/blah"), "0.15.12345--ci.12345.dev");
     assert.equal(getFullVersion("0.15.0", "12345.0", "refs/heads/master"), "0.15.12345--ci.12345.official");
-    assert.equal(getFullVersion("0.15.0", "12345.0", "refs/heads/release/0.12"), "0.15.12345--ci.12345.official");
+    assert.equal(getFullVersion("0.15.0", "12345.0", "refs/heads/release/0.15"), "0.15.12345");
     assert.equal(getFullVersion("0.15.0", "12345.0", "refs/heads/blah"), "0.15.12345--ci.12345.manual");
     assert.equal(getFullVersion("0.15.0", "12345.0", "refs/tags/v0.15.x"), "0.15.12345");
 
     // Test version <= 0.15, with prerelease
     assert.equal(getFullVersion("0.15.0-rc", "12345.0", "refs/pull/blah"), "0.15.12345-rc.0.0.ci.12345.dev");
     assert.equal(getFullVersion("0.15.0-alpha.1", "12345.0", "refs/heads/master"), "0.15.12345-alpha.1.0.ci.12345.official");
-    assert.equal(getFullVersion("0.15.0-beta.2.1", "12345.0", "refs/heads/release/0.12"), "0.15.12345-beta.2.1.ci.12345.official");
+    assert.equal(getFullVersion("0.15.0-beta.2.1", "12345.0", "refs/heads/release/0.15"), "0.15.12345-beta.2.1");
     assert.equal(getFullVersion("0.15.0-beta.2.1", "12345.0", "refs/heads/blah"), "0.15.12345-beta.2.1.ci.12345.manual");
     assert.equal(getFullVersion("0.15.0-beta", "12345.0", "refs/tags/v0.15.x"), "0.15.12345-beta");
 
@@ -167,7 +181,7 @@ function test() {
     // Test version >= 0.16, with prerelease
     assert.equal(getFullVersion("0.16.0-rc", "12345.0", "refs/pull/blah"), "0.16.0-rc.0.0.ci.12345.dev");
     assert.equal(getFullVersion("0.16.0-alpha.1", "12345.0", "refs/heads/master"), "0.16.0-alpha.1.0.ci.12345.official");
-    assert.equal(getFullVersion("0.16.0-beta.2.1", "12345.0", "refs/heads/release/0.12"), "0.16.0-beta.2.1.ci.12345.official");
+    assert.equal(getFullVersion("0.16.0-beta.2.1", "12345.0", "refs/heads/release/0.16.1"), "0.16.0-beta.2.1.ci.12345.official");
     assert.equal(getFullVersion("0.16.0-beta.2.1", "12345.0", "refs/heads/blah"), "0.16.0-beta.2.1.ci.12345.manual");
     assert.equal(getFullVersion("0.16.0-beta", "12345.0", "refs/tags/v0.16.0"), "0.16.0-beta");
 
