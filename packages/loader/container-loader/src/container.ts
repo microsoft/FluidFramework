@@ -80,7 +80,7 @@ import { DeltaManager } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { Loader, RelativeLoader } from "./loader";
 import { NullChaincode } from "./nullRuntime";
-import { pkgName, pkgVersion } from "./packageVersion";
+import { pkgVersion } from "./packageVersion";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 import { parseUrl } from "./utils";
 import { BlobCacheStorageService } from "./blobCacheStorageService";
@@ -324,8 +324,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             {
                 docId: this.id,
                 clientType, // Differentiating summarizer container from main container
-                packageName: TelemetryLogger.sanitizePkgName(pkgName),
-                packageVersion: pkgVersion,
+                loaderVersion: pkgVersion,
             });
 
         // Prefix all events in this file with container-loader
