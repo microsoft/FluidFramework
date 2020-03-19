@@ -35,7 +35,7 @@ function parseFileVersion(file_version, build_num) {
     let prerelease_version = split.join("-");
 
     /**
-     * Back compat. Version <= 0.15 we use the build number as the patch number.
+     * Back compat. Version <= 0.15 (or server 0.1003) we use the build number as the patch number.
      */
 
     // split the prerelease out
@@ -45,7 +45,8 @@ function parseFileVersion(file_version, build_num) {
         process.exist(5);
     }
 
-    if (r[0] === "0" && parseInt(r[1]) <= 15) {
+    const minor = parseInt(r[1]);
+    if (r[0] === "0" && (minor <= 15 || minor === 1003)) {
         r[2] = parseInt(r[2]) + parseInt(build_num);
         release_version = r.join('.');
     }
@@ -79,7 +80,7 @@ function getBuildSuffix(env_build_branch, build_num) {
 
     // PRs
     if (build_branch[1] === 'pull') {
-        return `ci.${build_num}.dev`
+        return `ci.${build_num}.dev`;
     }
 
     // master or release branches
