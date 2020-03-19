@@ -230,7 +230,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
                 }
             } else if (this.shouldSummarize) {
                 this.setNextSummarizer(summarizer.setSummarizer());
-                this.run(summarizer);
+                this.run(summarizer, attempt);
             } else {
                 summarizer.stop(this.getStopReason());
                 this.state = SummaryManagerState.Off;
@@ -245,20 +245,22 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         });
     }
 
-    private run(summarizer: IComponentRunnable) {
+    private run(summarizer: IComponentRunnable, attempt: number) {
         this.state = SummaryManagerState.Running;
+        let currentAttempt = attempt;
 
         const runningSummarizerEvent = PerformanceEvent.start(this.logger, { eventName: "RunningSummarizer" });
         this.runningSummarizer = summarizer;
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.runningSummarizer.run(this.clientId).then(() => {
             runningSummarizerEvent.end();
+            currentAttempt = 0;
         }, (error) => {
             runningSummarizerEvent.cancel({}, error);
         }).finally(() => {
             this.runningSummarizer = undefined;
             if (this.shouldSummarize) {
-                this.start();
+                this.start(currentAttempt + 1);
             } else {
                 this.state = SummaryManagerState.Off;
             }

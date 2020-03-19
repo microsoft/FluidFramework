@@ -143,7 +143,7 @@ export class Summarizer implements ISummarizer {
                 expectedSummarizer: this.runtime.summarizerClientId,
                 onBehalfOf,
             });
-            return;
+            throw Error("ParentIsNotSummarizer");
         }
 
         // Initialize values and first ack (time is not exact)
