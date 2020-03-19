@@ -25,12 +25,37 @@ export interface ICodeLoader {
     load(source: IFluidCodeDetails): Promise<IFluidModule>;
 }
 
+/**
+ * The interface returned from a IFluidCodeResolver which represents IFluidCodeDetails
+ * that have been resolved and are ready to load
+ */
 export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
+    /**
+     * A resolved version of the fluid package. All fluid browser file entries should be absolute urls.
+     */
     resolvedPackage: IFluidPackage;
+    /**
+     * If not undefined, this id will be used to cache the entry point for the code package
+     */
     resolvedPackageCacheId: string | undefined;
 }
 
+/**
+ * Fluid code resolvers take a fluid code details, and resolve the
+ * full fuild package including absolute urls for the browser file entries.
+ * The fluid code resolver is coupled to a specific cdn and knows how to resolve
+ * the code detail for loading from that cdn. This include resolving to the most recent
+ * version of package the that supports the provided code details.
+ */
 export interface IFluidCodeResolver{
+    /**
+     * Resolves a fluid code details into a form that can be loaded
+     * @param details - The fluid code details to resolve
+     * @returns - A IResolvedFluidCodeDetails where the
+     *            resolvedPackage's fluid file entries are absolute urls, and
+     *            an optional resolvedPackageCacheId if the loaded package should be
+     *            cached.
+     */
     resolveCodeDetails(details: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails>;
 }
 
