@@ -175,7 +175,7 @@ async function loadContainer(
         urlResolver: resolver,
     };
 
-    const baseHost = new BaseHost(hostConf, undefined);
+    const baseHost = new BaseHost(hostConf);
     const container = await baseHost.initializeContainer(
         href,
         pkg,

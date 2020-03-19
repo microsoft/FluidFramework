@@ -35,12 +35,18 @@ class FluidPackage {
         if (!isFluidPackage(packageJson)) {
             throw new Error(`Package ${packageJson.name} not a fluid module.`);
         }
+        const files = packageJson.fluid.browser.umd.files;
+        for(let i=0;i<packageJson.fluid.browser.umd.files.length;i++){
+            if(!files[i].startsWith("http")){
+                files[i] = `${this.packageUrl}/${files[i]}`;
+            }
+        }
 
         return {
             config: this.codeDetails.config,
             package: this.codeDetails.package,
-            resolvedPackageUrl: this.packageUrl,
             resolvedPackage: packageJson,
+            resolvedPackageCacheId: this.packageUrl,
         };
     }
 }

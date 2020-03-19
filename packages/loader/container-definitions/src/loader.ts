@@ -27,7 +27,7 @@ export interface ICodeLoader {
 
 export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
     resolvedPackage: IFluidPackage;
-    resolvedPackageUrl: string;
+    resolvedPackageCacheId: string | undefined;
 }
 
 export interface IFluidCodeResolver{

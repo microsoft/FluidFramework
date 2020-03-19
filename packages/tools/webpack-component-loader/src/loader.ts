@@ -171,10 +171,16 @@ class WebpackCodeResolver implements IFluidCodeResolver{
         if(!isFluidPackage(pkg)){
             throw new Error("Not a fluid package");
         }
+        const files = pkg.fluid.browser.umd.files;
+        for(let i=0;i<pkg.fluid.browser.umd.files.length;i++){
+            if(!files[i].startsWith("http")){
+                files[i] = `http://localhost:${this.options.port}}/${files[i]}`;
+            }
+        }
+
         return{
             config:details.config,
             package: details.package,
-            resolvedPackageUrl:`http://localhost:${this.options.port}`,
             resolvedPackage: pkg,
         };
     }
