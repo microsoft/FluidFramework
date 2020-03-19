@@ -81,14 +81,14 @@ export class BaseHost {
         return this.loaderP;
     }
 
-    public async initializeContainer(url: string, pkg?: IFluidCodeDetails) {
+    public async initializeContainer(url: string, codeDetails?: IFluidCodeDetails) {
         const loader = await this.getLoader();
         const container = await loader.resolve({ url });
 
         // if a package is provided, try to initialize the code proposal with it
         // if not we assume the container already has a code proposal
-        if (pkg) {
-            await initializeContainerCode(container, pkg)
+        if (codeDetails) {
+            await initializeContainerCode(container, codeDetails)
                 .catch((error) => console.error("code proposal error", error));
         }
 

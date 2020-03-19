@@ -134,11 +134,11 @@ async function getResolvedPackage(
 ): Promise<IResolvedPackage> {
     // Start the creation of pkg.
     if (!packageJson) {
-        return Promise.reject(new Error("No package specified"));
+        throw new Error("No package specified");
     }
 
     if (!isFluidPackage(packageJson)) {
-        return Promise.reject(new Error(`Package ${packageJson.name} not a fluid module.`));
+        throw new Error(`Package ${packageJson.name} not a fluid module.`);
     }
 
     const details = extractDetails(`${packageJson.name}@${packageJson.version}`);
@@ -272,7 +272,7 @@ export async function start(
     // Create Package
     const scriptIds: string[] = [];
     const pkg = await getResolvedPackage(packageJson, scriptIds);
-    const codeDetails = pkg ? pkg.details : undefined;
+    const codeDetails = pkg.details;
 
     const host1Conf: IBaseHostConfig = { documentServiceFactory, urlResolver };
     const baseHost1 = new BaseHost(

@@ -147,7 +147,7 @@ async function loadContainer(
     div: HTMLDivElement,
     clientId: string,
     secret: string,
-    pkg?: IResolvedPackage,
+    pkg: IResolvedPackage,
     scriptIds?: string[],
 ): Promise<Container> {
 
@@ -188,7 +188,7 @@ async function loadContainer(
     );
     const container = await baseHost.initializeContainer(
         href,
-        pkg ? pkg.details : undefined,
+        pkg.details,
     );
     container.on("contextChanged", (value) => {
         getComponentAndRender(baseHost, href, div).catch(() => { });
