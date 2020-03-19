@@ -13,6 +13,7 @@ import {
     DefaultServiceConfiguration,
     DeliLambda,
     ForemanLambda,
+    IDeliCheckpoint,
     NoopConsolidationTimeout,
     ScribeLambda,
     ScriptoriumLambda,
@@ -21,6 +22,7 @@ import { IGitManager } from "@microsoft/fluid-server-services-client";
 import {
     IContext,
     IDatabaseManager,
+    IDocument,
     IDocumentDetails,
     IDocumentStorage,
     IOrderer,
@@ -52,6 +54,13 @@ const DefaultScribe: IScribe = {
     minimumSequenceNumber: -1,
     protocolState: undefined,
     sequenceNumber: -1,
+};
+
+const DefaultDeli: IDeliCheckpoint = {
+    branchMap: undefined,
+    clients: undefined,
+    logOffset: -1,
+    sequenceNumber: 0,
 };
 
 class WebSocketSubscriber implements ISubscriber {
@@ -331,11 +340,15 @@ export class LocalOrderer implements IOrderer {
             this.deliContext,
             async (lambdaSetup, context) => {
                 const documentCollection = await lambdaSetup.documentCollectionP();
+                const dbObject: IDocument = this.details.value;
+                if (dbObject.deli === undefined || dbObject.deli === null) {
+                    dbObject.deli = JSON.stringify(DefaultDeli);
+                }
                 return new DeliLambda(
                     context,
                     this.tenantId,
                     this.documentId,
-                    this.details.value,
+                    dbObject,
                     documentCollection,
                     this.deltasKafka,
                     this.rawDeltasKafka,
@@ -359,11 +372,12 @@ export class LocalOrderer implements IOrderer {
             setup.scribeMessagesP(),
         ]);
 
-        const scribe: IScribe = this.details.value.scribe
-            ? typeof this.details.value.scribe === "string" ?
+        const dbObject = this.details.value;
+        const scribe: IScribe = (dbObject.scribe === undefined || dbObject.scribe === null)
+            ? DefaultScribe
+            : typeof this.details.value.scribe === "string" ?
                 JSON.parse(this.details.value.scribe) :
-                this.details.value.scribe
-            : DefaultScribe;
+                this.details.value.scribe;
         const lastState = scribe.protocolState
             ? scribe.protocolState
             : { members: [], proposals: [], values: [] };
