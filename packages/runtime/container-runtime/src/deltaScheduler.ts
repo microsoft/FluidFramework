@@ -45,7 +45,7 @@ export class DeltaScheduler {
     // to process the ops.
     private schedulingCount: number = 0;
 
-    private opProcessingLog: {
+    private schedulingLog: {
         numberOfOps: number;
         totalProcessingTime: number;
         numberOfTurns: number;
@@ -72,7 +72,7 @@ export class DeltaScheduler {
                 // Every 2000th time we are scheduling the inbound queue, we log telemetry for the
                 // number of ops processed, the time and number of turns it took to process the ops.
                 if (this.schedulingCount % 2000 === 0) {
-                    this.opProcessingLog = {
+                    this.schedulingLog = {
                         numberOfOps: this.deltaManager.inbound.length,
                         numberOfTurns: 1,
                         totalProcessingTime: 0,
@@ -98,28 +98,28 @@ export class DeltaScheduler {
                 this.totalProcessingTime += this.processingTimeIncrement;
 
                 // If we are logging the telemetry this time, update the telemetry log object.
-                if (this.opProcessingLog) {
-                    this.opProcessingLog.numberOfTurns++;
-                    this.opProcessingLog.totalProcessingTime += elaspedTime;
+                if (this.schedulingLog) {
+                    this.schedulingLog.numberOfTurns++;
+                    this.schedulingLog.totalProcessingTime += elaspedTime;
                 }
             }
         }
     }
 
     private inboundQueueIdle() {
-        if (this.opProcessingLog) {
+        if (this.schedulingLog) {
             // Add the time taken for processing the final ops to the total processing time in the
             // telemetry log object.
-            this.opProcessingLog.totalProcessingTime += performanceNow() - this.processingStartTime;
+            this.schedulingLog.totalProcessingTime += performanceNow() - this.processingStartTime;
 
             this.logger.sendTelemetryEvent({
                 eventName: "InboundOpsProcessingTime",
-                numberOfOps: this.opProcessingLog.numberOfOps,
-                numberOfTurns: this.opProcessingLog.numberOfTurns,
-                processingTime: this.opProcessingLog.totalProcessingTime,
+                numberOfOps: this.schedulingLog.numberOfOps,
+                numberOfTurns: this.schedulingLog.numberOfTurns,
+                processingTime: this.schedulingLog.totalProcessingTime,
             });
 
-            this.opProcessingLog = undefined;
+            this.schedulingLog = undefined;
         }
 
         // If we scheduled this batch of the inbound queue, increment the counter that tracks the
