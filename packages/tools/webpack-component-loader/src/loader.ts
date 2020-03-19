@@ -27,6 +27,7 @@ import * as uuid from "uuid/v4";
 import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
 import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 import { InsecureUrlResolver } from "@microsoft/fluid-test-runtime-utils";
+import { extractPackageIdentifierDetails} from "@microsoft/fluid-web-code-loader";
 import { OdspUrlResolver } from "./odspUrlResolver";
 
 export interface IDevServerUser extends IUser {
@@ -177,11 +178,12 @@ class WebpackCodeResolver implements IFluidCodeResolver{
                 files[i] = `http://localhost:${this.options.port}}/${files[i]}`;
             }
         }
-
+        const parse = extractPackageIdentifierDetails(details.package);
         return{
             config:details.config,
             package: details.package,
             resolvedPackage: pkg,
+            resolvedPackageCacheId: parse.fullId,
         };
     }
 
@@ -240,7 +242,7 @@ export async function start(
         [codeDetails, wrapIfComponentPackage(packageJson, fluidModule)];
 
     const host1Conf: IBaseHostConfig =
-        { packageResolver: new WebpackCodeResolver(options), documentServiceFactory, urlResolver };
+        { codeResolver: new WebpackCodeResolver(options), documentServiceFactory, urlResolver };
     const baseHost1 = new BaseHost(
         host1Conf,
         [packageSeed],
@@ -255,7 +257,7 @@ export async function start(
         // New documentServiceFactory for right div, same everything else
         const docServFac2: IDocumentServiceFactory = new TestDocumentServiceFactory(deltaConn);
         const hostConf2 =
-            { packageResolver: new WebpackCodeResolver(options), documentServiceFactory: docServFac2, urlResolver };
+            { codeResolver: new WebpackCodeResolver(options), documentServiceFactory: docServFac2, urlResolver };
 
         // This will create a new Loader/Container/Component from the BaseHost above. This is
         // intentional because we want to emulate two clients collaborating with each other.

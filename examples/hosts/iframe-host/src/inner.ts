@@ -20,7 +20,7 @@ export async function runInner(divId: string){
     const documentServiceFactory = await InnerDocumentServiceFactory.create();
     const baseHost = new BaseHost(
         {
-            packageResolver: new VerdaccioCodeResolver(),
+            codeResolver: new VerdaccioCodeResolver(),
             documentServiceFactory,
             urlResolver: documentServiceFactory.urlResolver,
             config: {},

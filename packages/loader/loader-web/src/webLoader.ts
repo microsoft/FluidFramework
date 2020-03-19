@@ -63,7 +63,7 @@ class ScriptManager {
     ): Promise<{file: string, entryPoint: any}[]> {
         return Promise.all(
             umdDetails.files.map(
-                async (file)=>({file, entryPoint: this.loadScript(file, umdDetails.library)})));
+                async (file)=>({file, entryPoint: await this.loadScript(file, umdDetails.library)})));
     }
 }
 

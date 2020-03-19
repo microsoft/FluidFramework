@@ -170,7 +170,7 @@ async function loadContainer(
         new Map<string, IResolvedUrl>([[href, resolved]]));
 
     const hostConf: IBaseHostConfig = {
-        packageResolver: new VerdaccioCodeResolver(),
+        codeResolver: new VerdaccioCodeResolver(),
         documentServiceFactory,
         urlResolver: resolver,
     };

@@ -28,5 +28,6 @@ export interface IBaseHostConfig {
     // White List for the code loader
     whiteList?: ICodeWhiteList;
 
-    packageResolver: IFluidCodeResolver;
+    // The code resolver
+    codeResolver: IFluidCodeResolver;
 }
