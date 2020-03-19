@@ -158,7 +158,8 @@ export class Summarizer implements ISummarizer {
         };
 
         // this.runCoordinator.waitStart in the beginning guaranteed that we are connected and has a clientId
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        // eslint-disable-next-line max-len
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
         const clientId = this.runtime.clientId!;
         assert(clientId);
 
