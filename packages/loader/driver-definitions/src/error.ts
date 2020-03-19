@@ -14,6 +14,11 @@ export enum ErrorType {
     fatalError,
 }
 
+export enum ConnectionErrorType {
+    accessDenied,
+    notFound,
+}
+
 export type IError = IGeneralError | IThrottlingError | IConnectionError |
 IServiceError | ISummarizingError | IWriteError | IFatalError;
 
@@ -32,6 +37,7 @@ export interface IThrottlingError {
 
 export interface IConnectionError {
     readonly errorType: ErrorType.connectionError;
+    readonly connectionError?: ConnectionErrorType
     readonly message: string;
     readonly canRetry?: boolean;
     readonly statusCode?: number;

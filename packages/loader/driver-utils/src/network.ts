@@ -9,13 +9,15 @@ import {
     IThrottlingError,
     IWriteError,
     ErrorType,
+    ConnectionErrorType,
 } from "@microsoft/fluid-driver-definitions";
 
 /**
- * Network error error class - used to communicate all  network errors
+ * Network error error class - used to communicate all network errors
  */
 export class NetworkError extends Error implements IConnectionError {
     readonly errorType: ErrorType.connectionError = ErrorType.connectionError;
+    readonly connectionError?: ConnectionErrorType;
 
     constructor(
         errorMessage: string,
@@ -24,6 +26,12 @@ export class NetworkError extends Error implements IConnectionError {
         readonly online = OnlineStatus[isOnline()],
     ) {
         super(errorMessage);
+        if (statusCode === 401 || statusCode === 403) {
+            this.connectionError = ConnectionErrorType.accessDenied;
+        }
+        else if (statusCode === 404) {
+            this.connectionError = ConnectionErrorType.notFound;
+        }
     }
 
     // Return all properties
