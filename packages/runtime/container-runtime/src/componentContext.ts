@@ -148,7 +148,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     protected componentRuntime: IComponentRuntime;
     private loaded = false;
     private pending: ISequencedDocumentMessage[] = [];
-    private componentRuntimeDeferred: Deferred<IComponentRuntime>;
+    private readonly componentRuntimeDeferred = new Deferred<IComponentRuntime>();
     private _baseSnapshot: ISnapshotTree;
 
     constructor(
@@ -245,8 +245,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     }
 
     public async realize(): Promise<IComponentRuntime> {
-        if (!this.componentRuntimeDeferred) {
-            this.componentRuntimeDeferred = new Deferred<IComponentRuntime>();
+        if (!this.componentRuntimeDeferred.isCompleted) {
             const details = await this.getInitialSnapshotDetails();
             // Base snapshot is the baseline where pending ops are applied to.
             // It is important that this be in sync with the pending ops, and also
@@ -417,12 +416,6 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     public bindRuntime(componentRuntime: IComponentRuntime) {
         if (this.componentRuntime) {
             throw new Error("runtime already bound");
-        }
-
-        // If this ComponentContext was created via `IHostRuntime.createComponentContext`, the
-        // `componentRuntimeDeferred` promise hasn't yet been initialized.  Do so now.
-        if (!this.componentRuntimeDeferred) {
-            this.componentRuntimeDeferred = new Deferred();
         }
 
         if (this.pending.length > 0) {
