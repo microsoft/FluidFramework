@@ -403,7 +403,7 @@ export class LocalOrderer implements IOrderer {
             this.rawDeltasKafka,
             protocolHandler,
             protocolHead,
-            scribeMessages,
+            scribeMessages.map((message) => message.operation),
             false,
             this.scribeNackOnSummarizeException);
     }
