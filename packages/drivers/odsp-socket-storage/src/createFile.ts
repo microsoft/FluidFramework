@@ -7,8 +7,9 @@ import { Deferred } from "@microsoft/fluid-common-utils";
 import { IOdspResolvedUrl } from "./contracts";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { IOdspCache } from "./odspCache";
-import { createOdspUrl, OdspDriverUrlResolver } from "./odspDriverUrlResolver";
+import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
 import { getWithRetryForTokenRefresh, throwOdspNetworkError } from "./odspUtils";
+import { createOdspUrl } from "./odspUtils2";
 
 export interface INewFileInfo {
     siteUrl: string;

@@ -3,22 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { isOdcOrigin } from "./isOdc";
-
 /*
- * Per https://github.com/microsoft/FluidFramework/issues/1556, isolating couple functions in its own file.
+ * Per https://github.com/microsoft/FluidFramework/issues/1556, isolating createOdspUrl() in its own file.
  */
-
-export function getSnapshotUrl(siteUrl: string, driveId: string, itemId: string) {
-    const siteOrigin = new URL(siteUrl).origin;
-
-    let prefix = "_api/";
-    if (isOdcOrigin(siteOrigin)) {
-        prefix = "";
-    }
-
-    return `${siteOrigin}/${prefix}v2.1/drives/${driveId}/items/${itemId}/opStream/snapshots`;
-}
 
 /**
  * Encodes ODC/SPO information into a URL format that can be handled by the Loader
