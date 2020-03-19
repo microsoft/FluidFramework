@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import { IDisposable, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
     IComponentLoadable,
@@ -53,17 +54,14 @@ export class Summarizer implements ISummarizer {
     public get IComponentLoadable() { return this; }
     public get ISummarizer() { return this; }
 
-    public get summaryCollection() {
-        return this._summaryCollection;
-    }
-
     private readonly logger: ITelemetryLogger;
     private readonly runCoordinator: RunWhileConnectedCoordinator;
-    private onBehalfOfClientId: string;
+    private onBehalfOfClientId: string | undefined;
     private runningSummarizer?: RunningSummarizer;
     private systemOpListener?: (op: ISequencedDocumentMessage) => void;
     private opListener?: (error: any, op: ISequencedDocumentMessage) => void;
     private immediateSummary: boolean = false;
+    public readonly summaryCollection: SummaryCollection;
 
     constructor(
         public readonly url: string,
@@ -71,15 +69,16 @@ export class Summarizer implements ISummarizer {
         private readonly configurationGetter: () => ISummaryConfiguration,
         private readonly generateSummaryCore: (full: boolean, safe: boolean) => Promise<GenerateSummaryData>,
         private readonly refreshLatestAck: (context: ISummaryContext, referenceSequenceNumber: number) => Promise<void>,
-        private readonly _summaryCollection?: SummaryCollection,
+        summaryCollection?: SummaryCollection,
     ) {
         this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");
         this.runCoordinator = new RunWhileConnectedCoordinator(runtime);
-        if (_summaryCollection) {
+        if (summaryCollection) {
             // summarize immediately because we just went through context reload
             this.immediateSummary = true;
+            this.summaryCollection = summaryCollection;
         } else {
-            this._summaryCollection = new SummaryCollection(this.runtime.deltaManager.initialSequenceNumber);
+            this.summaryCollection = new SummaryCollection(this.runtime.deltaManager.initialSequenceNumber);
         }
         this.runtime.deltaManager.inbound.on("op",
             (op) => this.summaryCollection.handleOp(op as ISequencedDocumentMessage));
@@ -158,17 +157,24 @@ export class Summarizer implements ISummarizer {
             summaryTime: Date.now(),
         };
 
-        this.runningSummarizer = await RunningSummarizer.start(
-            this.runtime.clientId,
+        // this.runCoordinator.waitStart in the beginning guaranteed that we are connected and has a clientId
+        // eslint-disable-next-line max-len
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
+        const clientId = this.runtime.clientId!;
+        assert(clientId);
+
+        const runningSummarizer = await RunningSummarizer.start(
+            clientId,
             onBehalfOf,
             this.logger,
-            this.summaryCollection.createWatcher(this.runtime.clientId),
+            this.summaryCollection.createWatcher(clientId),
             this.configurationGetter(),
             async (full: boolean, safe: boolean) => this.generateSummary(full, safe),
             this.runtime.deltaManager.referenceSequenceNumber,
             initialAttempt,
             this.immediateSummary,
         );
+        this.runningSummarizer = runningSummarizer;
 
         this.immediateSummary = false;
 
@@ -179,10 +185,10 @@ export class Summarizer implements ISummarizer {
         });
 
         // Listen for ops
-        this.systemOpListener = (op: ISequencedDocumentMessage) => this.runningSummarizer.handleSystemOp(op);
+        this.systemOpListener = (op: ISequencedDocumentMessage) => runningSummarizer.handleSystemOp(op);
         this.runtime.deltaManager.inbound.on("op", this.systemOpListener);
 
-        this.opListener = (error: any, op: ISequencedDocumentMessage) => this.runningSummarizer.handleOp(error, op);
+        this.opListener = (error: any, op: ISequencedDocumentMessage) => runningSummarizer.handleOp(error, op);
         this.runtime.on("batchEnd", this.opListener);
 
         await this.runCoordinator.waitStopped();
@@ -543,7 +549,7 @@ export class RunningSummarizer implements IDisposable {
             return;
         }
 
-        const telemetryProps = {
+        const telemetryProps: any = {
             ...summaryData,
             ...summaryData.summaryStats,
             refSequenceNumber: summaryData.referenceSequenceNumber,
