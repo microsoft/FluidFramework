@@ -187,13 +187,8 @@ async function loadContainer(
         scriptIds,
     );
     const container = await baseHost.initializeContainer(href, pkg.details);
-    await getComponentAndRender(baseHost, href, div);
 
-    return container;
-}
-
-async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
-    const component = await baseHost.getComponent(url);
+    const component = await baseHost.getComponent(href);
     if (component === undefined) {
         return;
     }
@@ -201,6 +196,8 @@ async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLD
     // Render the component with an HTMLViewAdapter to abstract the UI framework used by the component
     const view = new HTMLViewAdapter(component);
     view.render(div, { display: "block" });
+
+    return container;
 }
 
 const routerliciousRegex = /^(http(s)?:\/\/)?www\..{3,9}\.prague\.office-int\.com\/loader\/.*/;
