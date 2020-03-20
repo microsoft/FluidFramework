@@ -6,10 +6,10 @@ import { IHostRuntime } from "@microsoft/fluid-runtime-definitions";
 export interface IMinimalArray<T> {
     get(index: number): T,
     set(index: number, item: T): void,
-    push(...items: [T]): number,
+    push(...items: T[]): number,
     pop(): T,
     shift(): T,
-    unshift(...items: [T]): number,
+    unshift(...items: T[]): number,
     hostRuntime: IHostRuntime,
 }
 
