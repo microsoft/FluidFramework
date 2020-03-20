@@ -307,16 +307,25 @@ export async function start(
         div.append(leftDiv, rightDiv);
 
         await Promise.all([
-            container1Promise.then(async () => {
+            container1Promise.then(async (container) => {
                 await getComponentAndRender(baseHost1, url, leftDiv);
+                container.on("contextChanged", () => {
+                    window.location.reload();
+                });
             }),
-            container2Promise.then(async () => {
+            container2Promise.then(async (container) => {
                 await getComponentAndRender(baseHost2, url, rightDiv);
+                container.on("contextChanged", () => {
+                    window.location.reload();
+                });
             }),
         ]);
     } else {
-        await container1Promise;
+        const container = await container1Promise;
         await getComponentAndRender(baseHost1, url, div);
+        container.on("contextChanged", () => {
+            window.location.reload();
+        });
     }
 }
 
