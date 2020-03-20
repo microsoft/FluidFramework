@@ -94,7 +94,6 @@ export class OdspDocumentService implements IDocumentService {
     }
 
     private storageManager?: OdspDocumentStorageManager;
-    private joinSessionP: Promise<ISocketStorageDiscovery> | undefined;
 
     private readonly logger: TelemetryLogger;
 
@@ -280,13 +279,7 @@ export class OdspDocumentService implements IDocumentService {
     }
 
     private async joinSession(): Promise<ISocketStorageDiscovery> {
-        // Implement "locking" - only one outstanding join session call at a time.
-        // Note - we need it for perf. But also OdspCache.put() validates cache is not  overwritten by second call.
-        if (this.joinSessionP !== undefined) {
-            return this.joinSessionP;
-        }
-
-        this.joinSessionP = getSocketStorageDiscovery(
+        return getSocketStorageDiscovery(
             this.appId,
             this.driveId,
             this.itemId,
@@ -295,14 +288,6 @@ export class OdspDocumentService implements IDocumentService {
             this.getStorageToken,
             this.cache,
             this.joinSessionKey);
-
-        try {
-            const joinSession = await this.joinSessionP;
-            return joinSession;
-        } finally {
-            // Clear "lock" - form now on cache is responsible for handling caching policy (duration / reset on error)
-            this.joinSessionP = undefined;
-        }
     }
 
     /**
