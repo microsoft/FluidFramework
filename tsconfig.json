@@ -10,7 +10,7 @@
     "sourceMap": true,
     "inlineSources": true,
     "jsx": "react",
-    "strict": true
+    // "strict": true
   },
   "include": ["src/**/*"]
 }

@@ -22,8 +22,8 @@ export class DataModel extends PrimedComponent
     private _datesKey = "dates";
     private _peopleKey = "people";
 
-    private _dates: SharedObjectSequence<number>;
-    private _people: SharedObjectSequence<IPersonType>;
+    private _dates: SharedObjectSequence<number> | undefined;
+    private _people: SharedObjectSequence<IPersonType> | undefined;
 
     public get IComponentHTMLVisual() {
         return this;
@@ -33,12 +33,12 @@ export class DataModel extends PrimedComponent
         // Initialize the data model
         let dates = SharedObjectSequence.create<number>(this.runtime);
         this.root.set(this._datesKey, dates.handle);
-        
+
         let people = SharedObjectSequence.create<IPersonType>(this.runtime);
         this.root.set(this._peopleKey, people.handle);
         // if (this.context.leader) {
-            BadArray.push<number>(dates, defaultDatesNumbers);
-            BadArray.push<IPersonType>(people, defaultPeople);
+        BadArray.push<number>(dates, defaultDatesNumbers);
+        BadArray.push<IPersonType>(people, defaultPeople);
         // }
     }
 
@@ -49,23 +49,33 @@ export class DataModel extends PrimedComponent
     }
 
     public setDate = (index: number, value: Date): void => {
-        BadArray.set(this._dates, this.context.hostRuntime, index, value.valueOf());
+        if (this._dates) {
+            BadArray.set(this._dates, this.context.hostRuntime, index, value.valueOf());
+        } else {
+
+        }
     };
 
     public setPerson = (index: number, person: IPersonType): void => {
-        BadArray.set(this._people, this.context.hostRuntime, index, person);
+        if (this._people) {
+            BadArray.set(this._people, this.context.hostRuntime, index, person);
+        }
     };
 
     public setAvailability = (personIndex: number, dayIndex: number, available: AvailabilityType) => {
-        let person = BadArray.get(this._people, personIndex);
-        person[dayIndex] = available;
-        this.setPerson(personIndex, person);
+        if (this._people) {
+            let person = BadArray.get(this._people, personIndex);
+            person.availability[dayIndex] = available;
+            this.setPerson(personIndex, person);
+        }
     };
 
     public setName = (personIndex: number, name: string) => {
-        let person = BadArray.get(this._people, personIndex);
-        person.name = name;
-        this.setPerson(personIndex, person);
+        if (this._people) {
+            let person = BadArray.get(this._people, personIndex);
+            person.name = name;
+            this.setPerson(personIndex, person);
+        }
     };
 
     public get dates(): Date[] {
@@ -105,14 +115,18 @@ export class DataModel extends PrimedComponent
             console.log("valueChanged");
             rerender();
         });
-        this._people.on("sequenceDelta", (event) => {
-            console.log(`${this.runtime.clientId} people sequenceDelta: op[${event.deltaOperation}] args[${JSON.stringify(event.deltaArgs.operation)}]`);
-            rerender();
-        });
-        this._dates.on("sequenceDelta", (event) => {
-            console.log(`${this.runtime.clientId} dates sequenceDelta: op[${event.deltaOperation}] args[${JSON.stringify(event.deltaArgs.operation)}]`);
-            rerender();
-        });
+        if (this._people) {
+            this._people.on("sequenceDelta", (event) => {
+                console.log(`${this.runtime.clientId} people sequenceDelta: op[${event.deltaOperation}] args[${JSON.stringify(event.deltaArgs.operation)}]`);
+                rerender();
+            });
+        }
+        if (this._dates) {
+            this._dates.on("sequenceDelta", (event) => {
+                console.log(`${this.runtime.clientId} dates sequenceDelta: op[${event.deltaOperation}] args[${JSON.stringify(event.deltaArgs.operation)}]`);
+                rerender();
+            });
+        }
     }
 
     //#region IViewProps
@@ -136,13 +150,13 @@ export class DataModel extends PrimedComponent
     };
     //#endregion
 
-    private _reactContext: React.Context<IViewProps>;
-    public get reactContext(): React.Context<IViewProps> {
-        if (!this._reactContext) {
-            this._reactContext = React.createContext<IViewProps>(this);
-        }
-        return this._reactContext;
-    }
+    // private _reactContext: React.Context<IViewProps>;
+    // public get reactContext(): React.Context<IViewProps> {
+    //     if (!this._reactContext) {
+    //         this._reactContext = React.createContext<IViewProps>(this);
+    //     }
+    //     return this._reactContext;
+    // }
 }
 
 // let _reactContext: React.Context<IViewProps>;
