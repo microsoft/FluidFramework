@@ -6,7 +6,9 @@
 // tslint:disable: no-unsafe-any
 export enum ErrorType {
     generalError,
-    connectionError,
+    generalConnectionError,
+    accessDeniedError,
+    fileNotFoundError,
     throttlingError,
     serviceError,
     summarizingError,
@@ -14,13 +16,8 @@ export enum ErrorType {
     fatalError,
 }
 
-export enum ConnectionErrorType {
-    default,
-    accessDenied,
-    notFound,
-}
-
-export type IError = IGeneralError | IThrottlingError | IConnectionError |
+export type IError = IGeneralError | IThrottlingError |
+IGeneralConnectionError | IAccessDeniedError | IFileNotFoundError |
 IServiceError | ISummarizingError | IWriteError | IFatalError;
 
 export interface IGeneralError {
@@ -36,14 +33,24 @@ export interface IThrottlingError {
     critical?: boolean;
 }
 
-export interface IConnectionError {
-    readonly errorType: ErrorType.connectionError;
-    readonly connectionErrorType: ConnectionErrorType
+interface IBaseConnectionError {
     readonly message: string;
     readonly canRetry?: boolean;
     readonly statusCode?: number;
     readonly online: string;
     critical?: boolean;
+}
+
+export interface IGeneralConnectionError extends IBaseConnectionError {
+    readonly errorType: ErrorType.generalConnectionError;
+}
+
+export interface IAccessDeniedError extends IBaseConnectionError {
+    readonly errorType: ErrorType.accessDeniedError;
+}
+
+export interface IFileNotFoundError extends IBaseConnectionError {
+    readonly errorType: ErrorType.fileNotFoundError;
 }
 
 export interface IServiceError {

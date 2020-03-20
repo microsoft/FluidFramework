@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { isOnline, FatalError, NetworkError, ThrottlingError, OnlineStatus } from "@microsoft/fluid-driver-utils";
+import { isOnline, FatalError, createNetworkError, ThrottlingError, OnlineStatus } from "@microsoft/fluid-driver-utils";
 import { IError } from "@microsoft/fluid-driver-definitions";
 import {
     default as fetch,
@@ -28,7 +28,7 @@ export function throwOdspNetworkError(
     if (response) {
         message = `${message}, msg = ${response.statusText}, type = ${response.type}`;
     }
-    throw newOdspNetworkError(
+    throw createOdspNetworkError(
         message,
         statusCode,
         canRetry,
@@ -37,14 +37,15 @@ export function throwOdspNetworkError(
     );
 }
 
-export function newOdspNetworkError(
+export function createOdspNetworkError(
     errorMessage: string,
     statusCode: number,
     canRetry: boolean,
     sprequestguid?: string,
-    online: string = OnlineStatus[isOnline()]) {
-    const networkError: any = new NetworkError(errorMessage, statusCode, canRetry, online);
-    networkError.sprequestguid = sprequestguid;
+    online: string = OnlineStatus[isOnline()],
+) {
+    const networkError = createNetworkError(errorMessage, statusCode, canRetry, online);
+    (networkError as any).sprequestguid = sprequestguid;
     return networkError;
 }
 
@@ -58,7 +59,7 @@ export function errorObjectFromOdspError(socketError: IOdspSocketError, retryFil
     } else if (socketError.retryAfter) {
         return new ThrottlingError(socketError.message, socketError.retryAfter);
     } else {
-        return newOdspNetworkError(
+        return createOdspNetworkError(
             socketError.message,
             socketError.code,
             retryFilter?.(socketError.code) ?? true,

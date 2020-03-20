@@ -4,34 +4,87 @@
  */
 
 import {
-    IConnectionError,
+    IGeneralConnectionError,
+    IAccessDeniedError,
+    IFileNotFoundError,
     IFatalError,
     IThrottlingError,
     IWriteError,
     ErrorType,
-    ConnectionErrorType,
 } from "@microsoft/fluid-driver-definitions";
 
+export function createNetworkError(
+    errorMessage: string,
+    statusCode?: number,
+    canRetry?: boolean,
+    online: string = OnlineStatus[isOnline()],
+) {
+    if (statusCode === 401 || statusCode === 403) {
+        return new AccessDeniedError(errorMessage, statusCode, canRetry, online);
+    }
+    if (statusCode === 404) {
+        return new FileNotFoundError(errorMessage, statusCode, canRetry, online);
+    }
+    return new NetworkError(errorMessage, statusCode, canRetry, online);
+}
+
 /**
- * Network error error class - used to communicate all network errors
+ * Network error error class - used to communicate general network errors
  */
-export class NetworkError extends Error implements IConnectionError {
-    readonly errorType: ErrorType.connectionError = ErrorType.connectionError;
+export class NetworkError extends Error implements IGeneralConnectionError {
+    readonly errorType: ErrorType.generalConnectionError = ErrorType.generalConnectionError;
 
     constructor(
         errorMessage: string,
         readonly statusCode?: number,
         readonly canRetry?: boolean,
         readonly online: string = OnlineStatus[isOnline()],
-        readonly connectionErrorType: ConnectionErrorType = ConnectionErrorType.default,
     ) {
         super(errorMessage);
-        if (statusCode === 401 || statusCode === 403) {
-            this.connectionErrorType = ConnectionErrorType.accessDenied;
-        }
-        else if (statusCode === 404) {
-            this.connectionErrorType = ConnectionErrorType.notFound;
-        }
+    }
+
+    // Return all properties
+    public getCustomProperties(): object {
+        return copyObjectProps(this);
+    }
+}
+
+/**
+ * AccessDenied error error class -
+ * used to communicate Unauthorized/Forbidden error responses from the server
+ */
+export class AccessDeniedError extends Error implements IAccessDeniedError {
+    readonly errorType: ErrorType.accessDeniedError = ErrorType.accessDeniedError;
+
+    constructor(
+        errorMessage: string,
+        readonly statusCode?: number,
+        readonly canRetry?: boolean,
+        readonly online: string = OnlineStatus[isOnline()],
+    ) {
+        super(errorMessage);
+    }
+
+    // Return all properties
+    public getCustomProperties(): object {
+        return copyObjectProps(this);
+    }
+}
+
+/**
+ * FileNotFound error error class -
+ * used to communicate File Not Found errors from the server
+ */
+export class FileNotFoundError extends Error implements IFileNotFoundError {
+    readonly errorType: ErrorType.fileNotFoundError = ErrorType.fileNotFoundError;
+
+    constructor(
+        errorMessage: string,
+        readonly statusCode?: number,
+        readonly canRetry?: boolean,
+        readonly online: string = OnlineStatus[isOnline()],
+    ) {
+        super(errorMessage);
     }
 
     // Return all properties
