@@ -92,10 +92,10 @@ export class BaseHost {
                 .catch((error) => console.error("code proposal error", error));
         }
 
-        // If we're loading from ops, the context might be in the middle of reloading.  Wait for the connected event
-        // to avoid returning before that reload completes.
-        if (!container.connected) {
-            await new Promise<void>((resolve) => container.once("connected", () => resolve()));
+        // If we're loading from ops, the context might be in the middle of reloading.  Check for that case and wait
+        // for the contextChanged event to avoid returning before that reload completes.
+        if (container.hasNullRuntime()) {
+            await new Promise<void>((resolve) => container.once("contextChanged", () => resolve()));
         }
 
         return container;

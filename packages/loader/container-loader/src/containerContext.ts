@@ -42,6 +42,7 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import { BlobManager } from "./blobManager";
 import { Container } from "./container";
+import { NullRuntime } from "./nullRuntime";
 
 export class ContainerContext extends EventEmitter implements IContainerContext, IExperimentalContainerContext {
 
@@ -266,6 +267,10 @@ export class ContainerContext extends EventEmitter implements IContainerContext,
 
     public async reloadContext(): Promise<void> {
         return this.container.reloadContext();
+    }
+
+    public hasNullRuntime() {
+        return this.runtime! instanceof NullRuntime;
     }
 
     private async load() {
