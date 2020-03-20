@@ -53,7 +53,7 @@ export class BadArray<T> {
         if (items) {
             toStore.push(...rest);
         }
-        store.insert(store.getLength(), items);
+        store.insert(store.getLength(), toStore);
         console.log(`pushed: ${toStore.length} items to ${store.id}; new sequence length: ${store.getLength()}`);
         return store.getLength();
     }
