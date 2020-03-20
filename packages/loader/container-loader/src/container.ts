@@ -227,6 +227,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this._deltaManager.readonly;
     }
 
+    public forceReadonly(readonly: boolean) {
+        this._deltaManager.forceReadonly(readonly);
+    }
+
     public get closed(): boolean {
         return this._closed;
     }
