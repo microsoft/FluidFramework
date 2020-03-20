@@ -3,10 +3,11 @@ import { IComponentHandle, IComponentHTMLVisual } from "@microsoft/fluid-compone
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { BadArray } from "./BadArray";
-import { defaultDatesNumbers, defaultPeople } from "./data";
+import { defaultDatesNumbers, defaultPeople, defaultDates } from "./data";
 import { FluidApp } from "./FluidApp";
 import { AvailabilityType, IPersonType, IViewProps } from "./provider.types";
 import { PrimedContext } from "./provider";
+import { SharedNumberSequence, SharedObjectSequence } from "@microsoft/fluid-sequence";
 
 
 // export interface IDataModel {
@@ -21,8 +22,8 @@ export class DataModel extends PrimedComponent
     private _datesKey = "dates";
     private _peopleKey = "people";
 
-    private _dates: BadArray<number>;
-    private _people: BadArray<IPersonType>;
+    private _dates: SharedObjectSequence<number>;
+    private _people: SharedObjectSequence<IPersonType>;
 
     public get IComponentHTMLVisual() {
         return this;
@@ -30,44 +31,46 @@ export class DataModel extends PrimedComponent
 
     protected async componentInitializingFirstTime() {
         // Initialize the data model
-        let dates = BadArray.createWithData<number>(this.runtime, this.context.hostRuntime, defaultDatesNumbers);
-        let people = BadArray.createWithData<IPersonType>(this.runtime, this.context.hostRuntime, defaultPeople);
+        let dates = SharedObjectSequence.create<number>(this.runtime);
+        BadArray.push<number>(dates, defaultDatesNumbers);
+        this.root.set(this._datesKey, dates.handle);
 
-        this.root.set(this._datesKey, dates.getHandle());
-        this.root.set(this._peopleKey, people.getHandle());
+        let people = SharedObjectSequence.create<IPersonType>(this.runtime);
+        BadArray.push<IPersonType>(people, defaultPeople);
+        this.root.set(this._peopleKey, people.handle);
     }
 
     protected async componentHasInitialized() {
         // set up local refs to the DDSes so they're easily accessible from synchronous code
-        this._dates = await this.root.get<IComponentHandle>(this._datesKey).get<BadArray<number>>();
-        this._people = await this.root.get<IComponentHandle>(this._peopleKey).get<BadArray<IPersonType>>();
+        this._dates = await this.root.get<IComponentHandle>(this._datesKey).get<SharedObjectSequence<number>>();
+        this._people = await this.root.get<IComponentHandle>(this._peopleKey).get<SharedObjectSequence<IPersonType>>();
     }
 
-    public setDate = (id: number, value: Date): void => {
-        this._dates.set(id, value.valueOf());
+    public setDate = (index: number, value: Date): void => {
+        BadArray.set(this._dates, this.context.hostRuntime, index, value.valueOf());
     };
 
-    public setPerson = (key: number, person: IPersonType): void => {
-        this._people.set(key, person);
+    public setPerson = (index: number, person: IPersonType): void => {
+        BadArray.set(this._people, this.context.hostRuntime, index, person);
     };
 
-    public setAvailability = (personKey: number, dayKey: number, available: AvailabilityType) => {
-        let person = this._people.get(personKey);
-        person.availability[dayKey] = available;
-        this.setPerson(personKey, person);
+    public setAvailability = (personIndex: number, dayIndex: number, available: AvailabilityType) => {
+        let person = BadArray.get(this._people, personIndex);
+        person[dayIndex] = available;
+        this.setPerson(personIndex, person);
     };
 
-    public setName = (personKey: number, name: string) => {
-        let person = this._people.get(personKey);
+    public setName = (personIndex: number, name: string) => {
+        let person = BadArray.get(this._people, personIndex);
         person.name = name;
-        this.setPerson(personKey, person);
+        this.setPerson(personIndex, person);
     };
 
     public get dates(): Date[] {
         if (!this._dates) {
             return [];
         }
-        return this._dates.all().map((value: number) => {
+        return this._dates.getItems(0).map((value: number) => {
             return new Date(value);
         });
     };
@@ -76,7 +79,7 @@ export class DataModel extends PrimedComponent
         if (!this._people) {
             return [];
         }
-        return this._people.all();
+        return this._people.getItems(0);
     }
 
     // todo this should just be a data component with no rendering; rendering should be done elsewhere

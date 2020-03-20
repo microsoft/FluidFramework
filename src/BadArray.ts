@@ -15,69 +15,75 @@ export interface IMinimalArray<T> {
 
 // const rowNum = 0;
 
-export class BadArray<T> implements IMinimalArray<T> {
+export class BadArray<T> {
+    // public static create<T>(runtime: IComponentRuntime, hostRuntime: IHostRuntime) {
+    //     const newSequence = SharedObjectSequence.create<T>(runtime);
+    //     return new BadArray(newSequence, runtime, hostRuntime);
+    // }
 
-    constructor(private store: SharedObjectSequence<T>, private runtime: IComponentRuntime, public hostRuntime: IHostRuntime) {
-        store.on("sequenceDelta", this.deltaHandler);
-    }
+    // public static createWithData<T>(runtime: IComponentRuntime, hostRuntime: IHostRuntime, items: T[]) {
+    //     const newSequence = SharedObjectSequence.create<T>(runtime);
+    //     newSequence.insert(0, items);
+    //     return new BadArray(newSequence, runtime, hostRuntime);
+    // }
 
-    public static create<T>(runtime: IComponentRuntime, hostRuntime: IHostRuntime) {
-        const newSequence = SharedObjectSequence.create<T>(runtime);
-        return new BadArray(newSequence, runtime, hostRuntime);
-    }
-
-    public static createWithData<T>(runtime: IComponentRuntime, hostRuntime: IHostRuntime, items: T[]) {
-        const newSequence = SharedObjectSequence.create<T>(runtime);
-        newSequence.insert(0, items);
-        return new BadArray(newSequence, runtime, hostRuntime);
-    }
-
-    public get(index: number): T {
-        const len = this.store.getLength();
+    public static get<T>(store: SharedObjectSequence<T>, index: number): T {
+        const len = store.getLength();
         if (index >= len) {
             throw new Error(`index out of range (${index} >= ${len})`);
         }
-        return this.store.getItems(index, index)[0];
+        let items = store.getItems(index, index + 1);
+        return items[0];
     }
 
-    public set(index: number, value: T): void {
-        const len = this.store.getLength();
+    public static set<T>(store: SharedObjectSequence<T>, hostRuntime: IHostRuntime, index: number, value: T): void {
+        const len = store.getLength();
         if (index >= len) {
             throw new Error(`index out of range (${index} >= ${len})`);
         }
-        this.hostRuntime.orderSequentially(() => {
-            this.store.insert(index, [value]);
-            this.store.remove(index + 1, index + 1);
+
+        hostRuntime.orderSequentially(() => {
+            store.insert(index, [value]);
+            store.remove(index + 1, index + 1);
         });
     }
 
-    public push(...items: [T]): number {
-        this.store.insert(this.store.getLength(), items);
-        return this.store.getLength();
+    public static push<T>(store: SharedObjectSequence<T>, items?: T[], ...rest: T[]): number {
+        let toStore = items ?? rest;
+        if (items) {
+            toStore.push(...rest);
+        }
+        store.insert(store.getLength(), items);
+        return store.getLength();
     }
 
-    public pop(): T {
-        let item = this.store.getItems(this.store.getLength() - 1, this.store.getLength() - 1)[0];
-        this.store.remove(this.store.getLength() - 1, this.store.getLength() - 1);
+    public static pop<T>(store: SharedObjectSequence<T>): T {
+        let item = store.getItems(store.getLength() - 1, store.getLength() - 1)[0];
+        store.remove(store.getLength() - 1, store.getLength() - 1);
         return item;
     }
 
-    public shift(): T {
-        let item = this.store.getItems(0, 0)[0];
-        this.store.remove(0, 0);
+    public static shift<T>(store: SharedObjectSequence<T>): T {
+        let item = store.getItems(0, 0)[0];
+        store.remove(0, 0);
         return item;
     }
 
-    public unshift(...items: [T]): number {
-        this.store.insert(0, items);
-        return this.store.getLength();
+    public static unshift<T>(store: SharedObjectSequence<T>, items?: T[], ...rest: T[]): number {
+        let toStore = items ?? rest;
+        if (items) {
+            toStore.push(...rest);
+        }
+
+        store.insert(0, toStore);
+        return store.getLength();
     }
 
-    public all(): T[] {
-        return this.store.getItems(0);
+    public static all<T>(store: SharedObjectSequence<T>): T[] {
+        return store.getItems(0);
     }
 
-    public getHandle = () => this.store.handle;
+    // public getHandle = () => store.handle;
 
     private deltaHandler = (event: SequenceDeltaEvent, target: SharedObjectSequence<T>) => {
         // do something
