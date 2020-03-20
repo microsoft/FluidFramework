@@ -13,6 +13,8 @@ import {
     IDocumentService,
     IFluidResolvedUrl,
     ErrorType,
+    IConnectionError,
+    ConnectionErrorType,
 } from "@microsoft/fluid-driver-definitions";
 import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
@@ -65,7 +67,7 @@ describe("Errors Types", () => {
                 testRequest,
                 testResolved);
         } catch (error) {
-            assert.equal(error.errorType, ErrorType.generalError, "Error is not a general error");
+            assert.equal(error.errorType, ErrorType.generalError, "Error should be a general error");
         }
     });
 
@@ -73,8 +75,9 @@ describe("Errors Types", () => {
         const err = {
             message: "Test Error",
         };
-        const networkError = createIError(createErrorObject("handler", err, false));
-        assert.equal(networkError.errorType, ErrorType.connectionError, "Error is not a network error");
+        const networkError = createIError(createErrorObject("handler", err, false)) as IConnectionError;
+        assert.equal(networkError.errorType, ErrorType.connectionError, "Error should be a network error");
+        assert.equal(networkError.connectionErrorType, ConnectionErrorType.default, "Error should be default");
     });
 
     it("Network Error Test_2", async () => {
@@ -82,8 +85,9 @@ describe("Errors Types", () => {
             message: "Test Error",
             retryAfter: 100,
         };
-        const networkError = createIError(createErrorObject("handler", err, false));
-        assert.equal(networkError.errorType, ErrorType.connectionError, "Error is not a network error");
+        const networkError = createIError(createErrorObject("handler", err, false)) as IConnectionError;
+        assert.equal(networkError.errorType, ErrorType.connectionError, "Error should be a network error");
+        assert.equal(networkError.connectionErrorType, ConnectionErrorType.default, "Error should be default");
     });
 
     it("Network Error Test_3", async () => {
@@ -91,8 +95,41 @@ describe("Errors Types", () => {
             message: "Test Error",
             code: 400,
         };
-        const networkError = createIError(errorObjectFromOdspError(err, () => false));
-        assert.equal(networkError.errorType, ErrorType.connectionError, "Error is not a network error");
+        const networkError = createIError(errorObjectFromOdspError(err, () => false)) as IConnectionError;
+        assert.equal(networkError.errorType, ErrorType.connectionError, "Error should be a network error");
+        assert.equal(networkError.connectionErrorType, ConnectionErrorType.default, "Error should be default");
+    });
+
+    it("Network Error Test_4", async () => {
+        const err = {
+            message: "Test Error",
+            code: 401,
+        };
+        const networkError = createIError(errorObjectFromOdspError(err, () => false)) as IConnectionError;
+        assert.equal(networkError.errorType, ErrorType.connectionError, "Error should be a network error");
+        // eslint-disable-next-line max-len
+        assert.equal(networkError.connectionErrorType, ConnectionErrorType.accessDenied, "Error should be accessDenied");
+    });
+
+    it("Network Error Test_5", async () => {
+        const err = {
+            message: "Test Error",
+            code: 403,
+        };
+        const networkError = createIError(errorObjectFromOdspError(err, () => false)) as IConnectionError;
+        assert.equal(networkError.errorType, ErrorType.connectionError, "Error should be a network error");
+        // eslint-disable-next-line max-len
+        assert.equal(networkError.connectionErrorType, ConnectionErrorType.accessDenied, "Error should be accessDenied");
+    });
+
+    it("Network Error Test_6", async () => {
+        const err = {
+            message: "Test Error",
+            code: 404,
+        };
+        const networkError = createIError(errorObjectFromOdspError(err, () => false)) as IConnectionError;
+        assert.equal(networkError.errorType, ErrorType.connectionError, "Error should be a network error");
+        assert.equal(networkError.connectionErrorType, ConnectionErrorType.notFound, "Error should be notFound");
     });
 
     it("Throttling Error Test", async () => {
@@ -102,7 +139,7 @@ describe("Errors Types", () => {
             retryAfter: 100,
         };
         const throttlingError = createIError(errorObjectFromOdspError(err, () => true));
-        assert.equal(throttlingError.errorType, ErrorType.throttlingError, "Error is not a throttling error");
+        assert.equal(throttlingError.errorType, ErrorType.throttlingError, "Error should be a throttling error");
     });
 
     it("Check double conversion of network error", async () => {
