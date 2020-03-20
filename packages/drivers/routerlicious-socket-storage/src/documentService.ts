@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { fromUtf8ToBase64 } from "@microsoft/fluid-common-utils";
 import { DocumentDeltaConnection } from "@microsoft/fluid-driver-base";
 import * as api from "@microsoft/fluid-driver-definitions";
@@ -34,6 +35,8 @@ export class DocumentService implements api.IDocumentService {
         protected documentId: string,
     ) {
     }
+
+    private documentStorageService: DocumentStorageService | undefined;
 
     /**
      * Connects to a storage endpoint for snapshot service.
@@ -83,7 +86,8 @@ export class DocumentService implements api.IDocumentService {
             }
         }
 
-        return new DocumentStorageService(this.documentId, gitManager);
+        this.documentStorageService = new DocumentStorageService(this.documentId, gitManager);
+        return this.documentStorageService;
     }
 
     /**
@@ -92,8 +96,14 @@ export class DocumentService implements api.IDocumentService {
      * @returns returns the document delta storage service for routerlicious driver.
      */
     public async connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService> {
+        assert(this.documentStorageService, "Storage service not initialized");
         const deltaStorage = new DeltaStorageService(this.deltaStorageUrl);
-        return new DocumentDeltaStorageService(this.tenantId, this.documentId, this.tokenProvider, deltaStorage);
+        return new DocumentDeltaStorageService(
+            this.tenantId,
+            this.documentId,
+            this.tokenProvider,
+            deltaStorage,
+            this.documentStorageService!.logTail);
     }
 
     /**

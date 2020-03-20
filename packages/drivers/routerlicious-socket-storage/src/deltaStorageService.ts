@@ -19,11 +19,16 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
         private readonly tenantId: string,
         private readonly id: string,
         private readonly tokenProvider: api.ITokenProvider,
-        private readonly storageService: IDeltaStorageService) {
+        private readonly storageService: IDeltaStorageService,
+        private logTail: api.ISequencedDocumentMessage[]) {
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public get(from?: number, to?: number): Promise<api.ISequencedDocumentMessage[]> {
+    public async get(from?: number, to?: number): Promise<api.ISequencedDocumentMessage[]> {
+        const opsFromLogTail = this.logTail;
+        this.logTail = [];
+        if (opsFromLogTail.length > 0 && from !== undefined) {
+            return opsFromLogTail.filter((op) => op.sequenceNumber > from);
+        }
         return this.storageService.get(this.tenantId, this.id, this.tokenProvider, from, to);
     }
 }
