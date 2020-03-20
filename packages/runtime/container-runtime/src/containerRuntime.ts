@@ -170,7 +170,7 @@ export class ScheduleManager {
 
     private paused = false;
     private localPaused = false;
-    private batchClientId: string;
+    private batchClientId: string | undefined;
 
     constructor(
         private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
@@ -237,7 +237,7 @@ export class ScheduleManager {
                 });
             }
 
-            // This could be the beginning of a new batch or an invidual message.
+            // This could be the beginning of a new batch or an individual message.
             this.emitter.emit("batchBegin", message);
             this.deltaScheduler.batchBegin();
 
@@ -573,8 +573,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.latestSummaryAck = {
             proposalHandle: undefined,
             ackHandle: expContainerContext.isExperimentalContainerContext && expContainerContext.getLoadedFromVersion
-                && expContainerContext.getLoadedFromVersion()
-                ? expContainerContext.getLoadedFromVersion().id : undefined };
+                ? expContainerContext?.getLoadedFromVersion()?.id : undefined,
+        };
         this.summaryTracker = new SummaryTracker(
             useContext,
             "", // fullPath - the root is unnamed
@@ -587,9 +587,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         // Extract components stored inside the snapshot
         const components = new Map<string, ISnapshotTree | string>();
         if (context.baseSnapshot) {
-            Object.keys(context.baseSnapshot.trees).forEach((value) => {
+            const baseSnapshot = context.baseSnapshot;
+            Object.keys(baseSnapshot.trees).forEach((value) => {
                 if (value !== ".protocol") {
-                    const tree = context.baseSnapshot.trees[value];
+                    const tree = baseSnapshot.trees[value];
                     components.set(value, tree);
                 }
             });
@@ -660,14 +661,15 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.summaryManager = new SummaryManager(
             context,
             this.runtimeOptions.generateSummaries !== false,
-            this.runtimeOptions.enableWorker,
+            !!this.runtimeOptions.enableWorker,
             this.logger,
             (summarizer) => { this.nextSummarizerP = summarizer; },
             this.previousState.nextSummarizerP,
             !!this.previousState.reload);
 
         if (this.context.connectionState === ConnectionState.Connected) {
-            this.summaryManager.setConnected(this.context.clientId);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            this.summaryManager.setConnected(this.context.clientId!);
         }
 
         ReportConnectionTelemetry(this.context.clientId, this.deltaManager, this.logger);
@@ -687,7 +689,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             contextD.promise.then((context) => {
                 context.dispose();
             }).catch((error) => {
-                this.logger.sendErrorEvent({eventName: "ComponentContextDisposeError", componentId}, error);
+                this.logger.sendErrorEvent({ eventName: "ComponentContextDisposeError", componentId }, error);
             });
         }
     }
@@ -1014,7 +1016,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
      */
     public submitSignal(type: string, content: any) {
         this.verifyNotClosed();
-        const envelope: IEnvelope = { address: undefined, contents: {type, content} };
+        const envelope: IEnvelope = { address: undefined, contents: { type, content } };
         return this.context.submitSignalFn(envelope);
     }
 
@@ -1407,7 +1409,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     }
                 });
             }).catch((err) => {
-                this.logger.sendErrorEvent({eventName: "ContainerRuntime_getScheduler"}, err);
+                this.logger.sendErrorEvent({ eventName: "ContainerRuntime_getScheduler" }, err);
             });
 
             this.context.quorum.on("removeMember", (clientId: string) => {
