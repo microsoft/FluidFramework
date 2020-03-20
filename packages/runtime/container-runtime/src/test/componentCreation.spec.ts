@@ -35,7 +35,7 @@ describe("Component Creation Tests", () => {
 
         let storage: IDocumentStorageService;
         let scope: IComponent;
-        const attachCb = (mR: IComponentRuntime) => {};
+        const attachCb = (mR: IComponentRuntime) => { };
         let containerRuntime: ContainerRuntime;
         const defaultName = "default";
         const componentAName = "componentA";
@@ -53,10 +53,8 @@ describe("Component Creation Tests", () => {
                     context.bindRuntime(new MockRuntime());
                 },
             };
-            let registry: IComponentRegistry;
-            // eslint-disable-next-line prefer-const
-            registry = {
-                IComponentRegistry: registry,
+            const registry: IComponentRegistry = {
+                get IComponentRegistry() { return registry; },
                 // Returns the registry entry as per the entries provided in the param.
                 get: async (pkg) => registryEntries.get(pkg),
             };
@@ -69,9 +67,9 @@ describe("Component Creation Tests", () => {
         }
 
         beforeEach(async () => {
-            // Component B is a leaf component and itss registry does not have any entries.
+            // Component B is a leaf component and its registry does not have any entries.
             const entryB = createComponentRegistryEntry([]);
-            // Component C is a leaf component and itss registry does not have any entries.
+            // Component C is a leaf component and its registry does not have any entries.
             const entryC = createComponentRegistryEntry([]);
             // Component A's registry has entries for component B and component C.
             const entryA = createComponentRegistryEntry([
@@ -83,10 +81,8 @@ describe("Component Creation Tests", () => {
 
             // Create the global registry for the container that can only create the default component.
             const globalRegistryEntries = new Map([[defaultName, Promise.resolve(entryDefault)]]);
-            let globalRegistry: IComponentRegistry;
-            // eslint-disable-next-line prefer-const
-            globalRegistry = {
-                IComponentRegistry: globalRegistry,
+            const globalRegistry: IComponentRegistry = {
+                get IComponentRegistry() { return globalRegistry; },
                 get: async (pkg) => globalRegistryEntries.get(pkg),
             };
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions

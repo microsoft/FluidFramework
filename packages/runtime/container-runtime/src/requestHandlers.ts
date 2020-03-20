@@ -7,7 +7,7 @@ import { IHostRuntime } from "@microsoft/fluid-runtime-definitions";
 import { RequestParser } from "./requestParser";
 
 /**
- * A request handler for the contianer runtime. Each handler should handle a specific request, and return undefined
+ * A request handler for the container runtime. Each handler should handle a specific request, and return undefined
  * if it does not apply. These handlers are called in series, so there may be other handlers before or after.
  * A handler should only return error if the request is for a route the handler owns, and there is a problem with
  * the route, or fulling the specific request.
@@ -24,8 +24,10 @@ export const componentRuntimeRequestHandler: RuntimeRequestHandler =
             }
 
             const component = await runtime.getComponentRuntime(request.pathParts[0], wait);
-
-            return component.request(request.createSubRequest(1));
+            const subRequest = request.createSubRequest(1);
+            if (subRequest) {
+                return component.request(subRequest);
+            }
         }
         return undefined;
     };

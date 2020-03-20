@@ -33,6 +33,7 @@ function parseFileVersion(file_version, build_num) {
     let release_version = split[0];
     split.shift();
     let prerelease_version = split.join("-");
+    let isBackCompat = false;
 
     /**
      * Back compat. Version <= 0.15 (or server 0.1003) we use the build number as the patch number.
@@ -47,11 +48,12 @@ function parseFileVersion(file_version, build_num) {
 
     const minor = parseInt(r[1]);
     if (r[0] === "0" && (minor <= 15 || minor === 1003)) {
+        isBackCompat = true;
         r[2] = parseInt(r[2]) + parseInt(build_num);
         release_version = r.join('.');
     }
 
-    return { release_version, prerelease_version };
+    return { release_version, prerelease_version, isBackCompat };
 }
 
 /**
@@ -85,12 +87,6 @@ function getBuildSuffix(env_build_branch, build_num) {
 
     // master or release branches
     if (build_branch[1] === 'heads' && (build_branch[2] === 'master' || build_branch[2] === "release")) {
-        /**
-         * Back compat. Version 0.15 not using tag to release yet.
-         */
-        if (build_branch[2] === "release" && build_branch[3] === "0.15") {
-            return "";
-        }
         return `ci.${build_num}.official`;
     }
 
@@ -126,8 +122,8 @@ function getFullVersion(file_version, env_build_num, env_build_branch) {
     // Azure DevOp pass in the build number as $(buildNum).$(buildAttempt).
     // Get the Build number and ignore the attempt number.
     const build_num = parseInt(env_build_num.split('.')[0]);
-    const { release_version, prerelease_version } = parseFileVersion(file_version, build_num);
-    const build_suffix = getBuildSuffix(env_build_branch, build_num)
+    const { release_version, prerelease_version, isBackCompat } = parseFileVersion(file_version, build_num);
+    const build_suffix = isBackCompat? "" : getBuildSuffix(env_build_branch, build_num);
     const fullVersion = generateFullVersion(release_version, prerelease_version, build_suffix);
     return fullVersion;
 }
@@ -159,17 +155,17 @@ main();
 const assert = require("assert").strict;
 function test() {
     // Test version <= 0.15, no prerelease
-    assert.equal(getFullVersion("0.15.0", "12345.0", "refs/pull/blah"), "0.15.12345--ci.12345.dev");
-    assert.equal(getFullVersion("0.15.0", "12345.0", "refs/heads/master"), "0.15.12345--ci.12345.official");
+    assert.equal(getFullVersion("0.15.0", "12345.0", "refs/pull/blah"), "0.15.12345");
+    assert.equal(getFullVersion("0.15.0", "12345.0", "refs/heads/master"), "0.15.12345");
     assert.equal(getFullVersion("0.15.0", "12345.0", "refs/heads/release/0.15"), "0.15.12345");
-    assert.equal(getFullVersion("0.15.0", "12345.0", "refs/heads/blah"), "0.15.12345--ci.12345.manual");
+    assert.equal(getFullVersion("0.15.0", "12345.0", "refs/heads/blah"), "0.15.12345");
     assert.equal(getFullVersion("0.15.0", "12345.0", "refs/tags/v0.15.x"), "0.15.12345");
 
     // Test version <= 0.15, with prerelease
-    assert.equal(getFullVersion("0.15.0-rc", "12345.0", "refs/pull/blah"), "0.15.12345-rc.0.0.ci.12345.dev");
-    assert.equal(getFullVersion("0.15.0-alpha.1", "12345.0", "refs/heads/master"), "0.15.12345-alpha.1.0.ci.12345.official");
+    assert.equal(getFullVersion("0.15.0-rc", "12345.0", "refs/pull/blah"), "0.15.12345-rc");
+    assert.equal(getFullVersion("0.15.0-alpha.1", "12345.0", "refs/heads/master"), "0.15.12345-alpha.1");
     assert.equal(getFullVersion("0.15.0-beta.2.1", "12345.0", "refs/heads/release/0.15"), "0.15.12345-beta.2.1");
-    assert.equal(getFullVersion("0.15.0-beta.2.1", "12345.0", "refs/heads/blah"), "0.15.12345-beta.2.1.ci.12345.manual");
+    assert.equal(getFullVersion("0.15.0-beta.2.1", "12345.0", "refs/heads/blah"), "0.15.12345-beta.2.1");
     assert.equal(getFullVersion("0.15.0-beta", "12345.0", "refs/tags/v0.15.x"), "0.15.12345-beta");
 
     // Test version >= 0.16, no prerelease

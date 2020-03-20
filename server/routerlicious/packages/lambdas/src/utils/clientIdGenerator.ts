@@ -2,8 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+// eslint-disable-next-line import/no-internal-modules
+import * as uuid from "uuid/v4";
 
-import * as moniker from "moniker";
-
-export const generateClientId = (): string =>
-    moniker.choose();
+export const generateClientId = (): string => uuid();

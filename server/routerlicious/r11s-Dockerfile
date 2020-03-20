@@ -23,6 +23,7 @@ WORKDIR /usr/src/server
 COPY LICENSE.txt .
 COPY server/routerlicious/package*.json server/routerlicious/
 COPY server/routerlicious/lerna.json server/routerlicious/lerna.json
+COPY server/routerlicious/lerna-package-lock.json server/routerlicious/lerna-package-lock.json
 COPY server/routerlicious/.npmrc server/routerlicious/
 COPY tools/build-server-resources/build-version.js server/routerlicious/tools/build-server-resources/
 
@@ -74,7 +75,7 @@ WORKDIR /usr/src/server/server/routerlicious
 ARG VERSION_BUILDNUMBER=0
 ARG VERSION_BUILDBRANCH=refs/heads/unknown
 RUN echo VERSION_BUILDNUMBER=$VERSION_BUILDNUMBER
-RUN echo VERSOIN_BUILDBRANCH=$VRESION_BUILDBRANCH
+RUN echo VERSION_BUILDBRANCH=$VERSION_BUILDBRANCH
 RUN version=`node tools/build-server-resources/build-version.js`; echo $version; npx lerna version $version --no-git-tag-version --no-push --yes
 RUN npm run build:ci
 
