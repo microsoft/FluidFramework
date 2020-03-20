@@ -164,9 +164,10 @@ function makeSideBySideDiv(divId?: string) {
 class WebpackCodeResolver implements IFluidCodeResolver{
     constructor(private readonly options: IBaseRouteOptions){}
     async resolveCodeDetails(details: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails> {
+        const baseUrl = details.config.cdn ?? `http://localhost:${this.options.port}`;
         let pkg = details.package;
         if(typeof pkg === "string"){
-            const resp = await fetch(`http://localhost:${this.options.port}/package.json`);
+            const resp = await fetch(`${baseUrl}/package.json`);
             pkg = await resp.json() as IFluidPackage;
         }
         if(!isFluidPackage(pkg)){
@@ -175,7 +176,7 @@ class WebpackCodeResolver implements IFluidCodeResolver{
         const files = pkg.fluid.browser.umd.files;
         for(let i=0;i<pkg.fluid.browser.umd.files.length;i++){
             if(!files[i].startsWith("http")){
-                files[i] = `http://localhost:${this.options.port}/${files[i]}`;
+                files[i] = `${baseUrl}/${files[i]}`;
             }
         }
         const parse = extractPackageIdentifierDetails(details.package);
@@ -234,9 +235,7 @@ export async function start(
 
     const codeDetails: IFluidCodeDetails ={
         package:packageJson,
-        config:{
-            cdn: "http://localhost:8080",
-        },
+        config:{},
     };
     const packageSeed: [IFluidCodeDetails, IFluidModule] =
         [codeDetails, wrapIfComponentPackage(packageJson, fluidModule)];
