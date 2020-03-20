@@ -4,6 +4,7 @@
  */
 
 import { isOnline, FatalError, NetworkError, ThrottlingError, OnlineStatus } from "@microsoft/fluid-driver-utils";
+import { IError } from "@microsoft/fluid-driver-definitions";
 import {
     default as fetch,
     RequestInfo as FetchRequestInfo,
@@ -27,7 +28,7 @@ export function throwOdspNetworkError(
     if (response) {
         message = `${message}, msg = ${response.statusText}, type = ${response.type}`;
     }
-    throw new OdspNetworkError(
+    throw newOdspNetworkError(
         message,
         statusCode,
         canRetry,
@@ -36,27 +37,28 @@ export function throwOdspNetworkError(
     );
 }
 
-export class OdspNetworkError extends NetworkError {
-    constructor(
-        errorMessage: string,
-        readonly statusCode: number,
-        readonly canRetry: boolean,
-        readonly sprequestguid?: string,
-        readonly online: string = OnlineStatus[isOnline()]) {
-        super(errorMessage, statusCode, canRetry, online);
-    }
+export function newOdspNetworkError(
+    errorMessage: string,
+    statusCode: number,
+    canRetry: boolean,
+    sprequestguid?: string,
+    online: string = OnlineStatus[isOnline()]) {
+    const networkError: any = new NetworkError(errorMessage, statusCode, canRetry, online);
+    networkError.sprequestguid = sprequestguid;
+    return networkError;
 }
+
 
 /**
  * Returns network error based on error object from ODSP socket (IOdspSocketError)
  */
-export function errorObjectFromOdspError(socketError: IOdspSocketError, retryFilter?: RetryFilter) {
+export function errorObjectFromOdspError(socketError: IOdspSocketError, retryFilter?: RetryFilter): IError {
     if (socketError.code === 500) {
         return new FatalError(socketError.message);
     } else if (socketError.retryAfter) {
         return new ThrottlingError(socketError.message, socketError.retryAfter);
     } else {
-        return new OdspNetworkError(
+        return newOdspNetworkError(
             socketError.message,
             socketError.code,
             retryFilter?.(socketError.code) ?? true,

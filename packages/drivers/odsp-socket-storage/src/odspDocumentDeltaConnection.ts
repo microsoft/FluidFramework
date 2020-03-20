@@ -7,16 +7,15 @@ import * as assert from "assert";
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { TelemetryNullLogger } from "@microsoft/fluid-common-utils";
 import { DocumentDeltaConnection } from "@microsoft/fluid-driver-base";
-import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
+import { IDocumentDeltaConnection, IError } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionMode,
     IClient,
     IConnect,
 } from "@microsoft/fluid-protocol-definitions";
-import { FatalError, ThrottlingError } from "@microsoft/fluid-driver-utils";
 import { IOdspSocketError } from "./contracts";
 import { debug } from "./debug";
-import { errorObjectFromOdspError, OdspNetworkError, socketErrorRetryFilter } from "./odspUtils";
+import { errorObjectFromOdspError, socketErrorRetryFilter } from "./odspUtils";
 
 const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 
@@ -200,7 +199,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
     private static removeSocketIoReference(
         key: string,
         isFatalError: boolean,
-        reason: string | OdspNetworkError | ThrottlingError | FatalError) {
+        reason: string | IError) {
         const socketReference = OdspDocumentDeltaConnection.socketIoSockets.get(key);
         if (!socketReference) {
             // This is expected to happen if we removed the reference due the socket not being connected
