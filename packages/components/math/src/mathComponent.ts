@@ -17,8 +17,9 @@ import {
     IComponentRouter,
     IRequest,
     IResponse,
+    IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
-import { ComponentHandle, ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { ComponentHandle } from "@microsoft/fluid-component-runtime";
 import {
     IComponentLayout,
     ComponentCursorDirection,
@@ -27,11 +28,11 @@ import {
 import {
     IComponentCollection,
 } from "@microsoft/fluid-framework-interfaces";
-import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
+import { SharedDirectory, ISharedDirectory } from "@microsoft/fluid-map";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
-import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import * as Sequence from "@microsoft/fluid-sequence";
-import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+import { SharedComponentFactory, SharedComponent } from "@microsoft/fluid-component-base";
 import * as Katex from "katex";
 import * as MathExpr from "./mathExpr";
 
@@ -55,7 +56,6 @@ type IMathMarkerInst = MathExpr.IMathMarker;
 
 export class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout {
     public get IComponentHTMLView() { return this; }
-
     public get IComponentCursor() { return this; }
     public get IComponentLayout() { return this; }
 
@@ -504,29 +504,36 @@ const endIdPrefix = "end-";
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IMathOptions extends IComponentHTMLOptions { }
 
-export class MathCollection implements IComponentLoadable, IComponentCollection, IComponentRouter {
+export class MathCollection extends SharedComponent<ISharedDirectory> implements IComponentCollection {
+    private static readonly factory = new SharedComponentFactory(
+        "@fluid-example/math",
+        MathCollection,
+        /* root: */ SharedDirectory.getFactory(),
+        [Sequence.SharedString.getFactory()],
+    );
 
-    public static async load(runtime: IComponentRuntime, context: IComponentContext) {
-        const collection = new MathCollection(runtime, context);
-        await collection.initialize();
+    public static getFactory(): IComponentFactory { return MathCollection.factory; }
 
-        return collection;
+    public static create(parentContext: IComponentContext, props?: any) {
+        return MathCollection.factory.create(parentContext, props);
+    }
+
+    public create() {
+        this.combinedMathText = Sequence.SharedString.create(this.runtime, "mathText");
+        this.root.set("mathText", this.combinedMathText.handle);
+        this.initialize();
+    }
+
+    public async load() {
+        this.combinedMathText = await (await this.root.wait<IComponentHandle<Sequence.SharedString>>("mathText")).get();
+        this.initialize();
     }
 
     public get IComponentLoadable() { return this; }
     public get IComponentCollection() { return this; }
     public get IComponentRouter() { return this; }
 
-    public url: string;
-    public handle: ComponentHandle;
-
-    private root: ISharedMap;
     private combinedMathText: Sequence.SharedString;
-
-    constructor(private readonly runtime: IComponentRuntime, context: IComponentContext) {
-        this.url = context.id;
-        this.handle = new ComponentHandle(this, "", runtime.IComponentHandleContext);
-    }
 
     public appendMathMarkers(instance: MathInstance, inCombinedText: boolean) {
         const endId = endIdPrefix + instance.leafId;
@@ -640,16 +647,12 @@ export class MathCollection implements IComponentLoadable, IComponentCollection,
         return this.combinedMathText.findTile(startPos, tileType, preceding);
     }
 
-    private async initialize() {
-        if (!this.runtime.existing) {
-            this.root = SharedMap.create(this.runtime, "root");
-            this.combinedMathText = Sequence.SharedString.create(this.runtime, "mathText");
-            this.root.register();
-            this.combinedMathText.register();
-        } else {
-            this.root = await this.runtime.getChannel("root") as ISharedMap;
-            this.combinedMathText = await this.runtime.getChannel("mathText") as Sequence.SharedString;
-        }
+    private initialize() {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-internal-modules, import/no-unassigned-import
+        require("katex/dist/katex.min.css");
+        // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-unassigned-import
+        require("./index.css");
+
         this.combinedMathText.on("sequenceDelta", (event) => {
             if ((!event.isLocal) && (event.ranges.length > 0) && (event.clientId !== "original")) {
                 let pos: number;
@@ -670,39 +673,7 @@ export class MathCollection implements IComponentLoadable, IComponentCollection,
 
             }
         });
-
     }
 }
 
-export class MathFactoryComponent implements IComponentFactory {
-    public static readonly type = "@fluid-example/math";
-    public readonly type = MathFactoryComponent.type;
-
-    public get IComponentFactory() { return this; }
-
-    public instantiateComponent(context: IComponentContext): void {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-internal-modules, import/no-unassigned-import
-        require("katex/dist/katex.min.css");
-        // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-unassigned-import
-        require("./index.css");
-        const mapFactory = SharedMap.getFactory();
-        const sharedStringFactory = Sequence.SharedString.getFactory();
-
-        const dataTypes = new Map<string, ISharedObjectFactory>();
-        dataTypes.set(mapFactory.type, mapFactory);
-        dataTypes.set(sharedStringFactory.type, sharedStringFactory);
-
-        const runtime = ComponentRuntime.load(
-            context,
-            dataTypes,
-        );
-
-        const mathCollectionP = MathCollection.load(runtime, context);
-        runtime.registerRequestHandler(async (request: IRequest) => {
-            const mathCollection = await mathCollectionP;
-            return mathCollection.request(request);
-        });
-    }
-}
-
-export const fluidExport: IComponentFactory = new MathFactoryComponent();
+export const fluidExport: IComponentFactory = MathCollection.getFactory();

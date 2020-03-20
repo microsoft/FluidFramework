@@ -8,8 +8,9 @@ import { Marker, ReferenceType } from "@microsoft/fluid-merge-tree";
 import { TestHost } from "@microsoft/fluid-local-test-utils";
 import * as assert from "assert";
 import "mocha";
-import { FlowDocument, flowDocumentFactory } from "../src/document";
-import { FlowDocumentType } from "../src/runtime";
+import { FlowDocument } from "../src/document";
+
+const flowDocumentFactory = FlowDocument.getFactory();
 
 describe("FlowDocument", () => {
     let host: TestHost;
@@ -17,7 +18,7 @@ describe("FlowDocument", () => {
 
     before(async () => {
         host = new TestHost([
-            [FlowDocumentType, Promise.resolve(flowDocumentFactory)],
+            [flowDocumentFactory.type, Promise.resolve(flowDocumentFactory)],
         ]);
     });
 
@@ -26,7 +27,7 @@ describe("FlowDocument", () => {
     });
 
     beforeEach(async () => {
-        doc = await host.createAndAttachComponent(randomId(), FlowDocumentType);
+        doc = await host.createAndAttachComponent(randomId(), flowDocumentFactory.type);
     });
 
     function expect(expected: string) {
