@@ -1075,8 +1075,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
                 const attachMessage = message.contents as IAttachMessage;
                 const flatBlobs = new Map<string, string>();
-                assert(attachMessage.snapshot);
-                const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
+                let snapshotTree: ISnapshotTree | null;
+                if (attachMessage.snapshot) {
+                    snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
+                }
 
                 // Include the type of attach message which is the pkg of the component to be
                 // used by RemotedComponentContext in case it is not in the snapshot.
