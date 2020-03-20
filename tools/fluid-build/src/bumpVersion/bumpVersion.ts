@@ -117,6 +117,20 @@ async function main() {
 
     const resolvedRoot = await getResolvedFluidRoot();
 
+    // Determine the line of bump
+    const result = await execWithErrorAsync("git rev-parse --abbrev-ref HEAD", { cwd: resolvedRoot }, resolvedRoot, false);
+    if (result.error) {
+        process.exit(1);
+    }
+
+    const branchName = result.stdout;
+    if (branchName !== "master\n" && !branchName.startsWith("release/")) {
+        console.error(`ERROR: Unrecognized branch '${branchName}'`);
+        process.exit(2)
+    }
+
+    const versionBump = result.stdout == "master\n" ? "minor" : "patch";
+
     // Load the package
     const repo = new FluidRepoBase(resolvedRoot);
     timer.time("Package scan completed");
@@ -176,7 +190,6 @@ async function main() {
     }
     console.log();
 
-    const versionBump = "preminor --preid=alpha";
     const bumpMonoRepo = async (monoRepo: MonoRepo) => {
         const repoPath = repo.getMonoRepoPath(monoRepo)!;
         return await execWithErrorAsync(`npx lerna version ${versionBump} --no-push --no-git-tag-version -y && npm run build:genver`, {
