@@ -175,7 +175,7 @@ class WebpackCodeResolver implements IFluidCodeResolver{
         const files = pkg.fluid.browser.umd.files;
         for(let i=0;i<pkg.fluid.browser.umd.files.length;i++){
             if(!files[i].startsWith("http")){
-                files[i] = `http://localhost:${this.options.port}}/${files[i]}`;
+                files[i] = `http://localhost:${this.options.port}/${files[i]}`;
             }
         }
         const parse = extractPackageIdentifierDetails(details.package);
