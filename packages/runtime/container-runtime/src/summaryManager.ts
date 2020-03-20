@@ -55,7 +55,6 @@ enum SummaryManagerState {
     Running = 2,
 }
 
-const defaultMaxRestarts = 5;
 const defaultInitialDelayMs = 5000;
 
 export class SummaryManager extends EventEmitter implements IDisposable {
@@ -69,6 +68,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     private state = SummaryManagerState.Off;
     private runningSummarizer?: IComponentRunnable;
     private _disposed = false;
+    private readonly startTimes: number[] = [];
 
     public get summarizer() {
         return this.summarizerClientId;
@@ -90,7 +90,6 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         private readonly setNextSummarizer: (summarizer: Promise<Summarizer>) => void,
         private readonly nextSummarizerP?: Promise<Summarizer>,
         immediateSummary: boolean = false,
-        private readonly maxRestarts: number = defaultMaxRestarts,
         initialDelayMs: number = defaultInitialDelayMs,
     ) {
         super();
@@ -202,13 +201,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         }
     }
 
-    private start(attempt: number = 1) {
-        if (attempt > this.maxRestarts) {
-            this.logger.sendErrorEvent({ eventName: "MaxRestarts", maxRestarts: this.maxRestarts });
-            this.state = SummaryManagerState.Off;
-            return;
-        }
-
+    private start() {
         this.state = SummaryManagerState.Starting;
 
         // If we should never summarize, lock in starting state
@@ -221,19 +214,26 @@ export class SummaryManager extends EventEmitter implements IDisposable {
             return;
         }
 
-        // Back-off delay for subsequent retry starting.  The delay increase is linear,
-        // increasing by 20ms each time: 0ms, 20ms, 40ms, 60ms, etc.
-        const delayMs = (attempt - 1) * 20;
+        // comment about throttling goes here
+        const throttleDelayWindowMs = 60 * 1000;
+        const throttleMaxDelayMs = 2 * 60 * 1000;
+        const now = Date.now();
+        while (this.startTimes.length && now - this.startTimes[0] > throttleDelayWindowMs) {
+            this.startTimes.shift();
+        }
+        const delayMs = Math.min(20 * (Math.pow(2, this.startTimes.length) - 1), throttleMaxDelayMs);
+        this.startTimes.push(now);
+
         this.createSummarizer(delayMs).then((summarizer) => {
             if (summarizer === undefined) {
                 if (this.shouldSummarize) {
-                    this.start(attempt + 1);
+                    this.start();
                 } else {
                     this.state = SummaryManagerState.Off;
                 }
             } else if (this.shouldSummarize) {
                 this.setNextSummarizer(summarizer.setSummarizer());
-                this.run(summarizer, attempt);
+                this.run(summarizer);
             } else {
                 // eslint-disable-next-line max-len
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
@@ -241,31 +241,29 @@ export class SummaryManager extends EventEmitter implements IDisposable {
                 this.state = SummaryManagerState.Off;
             }
         }, (error) => {
-            this.logger.sendErrorEvent({ eventName: "CreateSummarizerError", attempt }, error);
+            this.logger.sendErrorEvent({ eventName: "CreateSummarizerError", attempt: this.startTimes.length }, error);
             if (this.shouldSummarize) {
-                this.start(attempt + 1);
+                this.start();
             } else {
                 this.state = SummaryManagerState.Off;
             }
         });
     }
 
-    private run(summarizer: IComponentRunnable, attempt: number) {
+    private run(summarizer: IComponentRunnable) {
         this.state = SummaryManagerState.Running;
-        let currentAttempt = attempt;
 
         const runningSummarizerEvent = PerformanceEvent.start(this.logger, { eventName: "RunningSummarizer" });
         this.runningSummarizer = summarizer;
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.runningSummarizer.run(this.clientId).then(() => {
             runningSummarizerEvent.end();
-            currentAttempt = 0;
         }, (error) => {
             runningSummarizerEvent.cancel({}, error);
         }).finally(() => {
             this.runningSummarizer = undefined;
             if (this.shouldSummarize) {
-                this.start(currentAttempt + 1);
+                this.start();
             } else {
                 this.state = SummaryManagerState.Off;
             }
