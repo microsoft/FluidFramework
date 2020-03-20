@@ -426,7 +426,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     public get existing(): boolean {
-        return this.context.existing;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return this.context.existing!;
     }
 
     public get options(): any {
@@ -442,7 +443,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     public get blobManager(): IBlobManager {
-        return this.context.blobManager;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return this.context.blobManager!;
     }
 
     public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
@@ -1075,7 +1077,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
                 const attachMessage = message.contents as IAttachMessage;
                 const flatBlobs = new Map<string, string>();
-                let snapshotTree: ISnapshotTree | null;
+                let snapshotTree: ISnapshotTree | null = null;
                 if (attachMessage.snapshot) {
                     snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
                 }
@@ -1184,7 +1186,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return treeWithStats.summaryTree;
     }
 
-    private async generateSummary(fullTree: boolean = false, safe: boolean = false): Promise<GenerateSummaryData | undefined> {
+    private async generateSummary(
+        fullTree: boolean = false,
+        safe: boolean = false,
+    ): Promise<GenerateSummaryData | undefined> {
         const message =
             `Summary @${this.deltaManager.referenceSequenceNumber}:${this.deltaManager.minimumSequenceNumber}`;
 
@@ -1243,7 +1248,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     this.deltaManager.referenceSequenceNumber);
             }
 
-            const parent = this.latestSummaryAck.ackHandle;
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const parent = this.latestSummaryAck.ackHandle!;
             const summaryMessage: ISummaryContent = {
                 handle,
                 head: parent,
@@ -1508,17 +1514,19 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             // We have to call get version to get the treeId for r11s; this isnt needed
             // for odsp currently, since their treeId is undefined
             const versionsResult = await this.setOrLogError("FailedToGetVersion",
-                async () => this.storage.getVersions(context.ackHandle, 1),
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                async () => this.storage.getVersions(context.ackHandle!, 1),
                 (versions) => !!(versions && versions.length));
 
             if (versionsResult.success) {
                 const snapshotResult = await this.setOrLogError("FailedToGetSnapshot",
-                    async () => this.storage.getSnapshotTree(versionsResult.result[0]),
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    async () => this.storage.getSnapshotTree(versionsResult.result![0]),
                     (snapshot) => !!snapshot);
 
                 if (snapshotResult.success) {
                     // Translate null to undefined
-                    return snapshotResult.result?? undefined;
+                    return snapshotResult.result ?? undefined;
                 }
             }
         });
