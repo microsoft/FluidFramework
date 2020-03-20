@@ -43,8 +43,6 @@ in order to trigger reconnect. Now, calling Container.setAutoReconnect(true) is 
 
 To facilitate rendering `getComponent()` has also been added, which requests the component at the given url.  Once you've requested a component, you can take whatever steps you would like to render it (e.g. querying its interfaces or passing it into an adapter like `ReactAdapter` or `HTMLViewAdapter` from `@microsoft/fluid-view-adapters`).
 
-Do be cautious about when you `getComponent()` - in the case that an existing container is loaded from ops (no summary yet) the component will not exist before the code proposal.  To support this flow, listen to the `"contextChanged"` event on the `Container` and re-render at that time.
-
 ## 0.14 Breaking Changes
 
 - [Packages move and renamed](#packages-moved-and-renamed)
