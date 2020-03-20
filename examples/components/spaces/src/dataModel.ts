@@ -78,7 +78,8 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
         return response;
     }
 
-    public async addComponent(type: SupportedComponent, w: number = 1, h: number = 1, id?: string): Promise<IComponentLoadable> {
+    public async addComponent(type: SupportedComponent, w: number = 1, h: number = 1, id?: string):
+    Promise<IComponentLoadable> {
         const defaultLayout = { x: 0, y: 0, w, h };
         return this.addComponentInternal(type, defaultLayout, id);
     }
@@ -134,14 +135,14 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
             type,
             layout,
         };
-        this.componentSubDirectory.set(id, defaultModel);
         let component: IComponentLoadable;
         if (id === this.defaultComponentToolbarId) {
             component = await this.createAndAttachComponent<IComponentLoadable>(id, type);
         } else {
             component = await this.createAndAttachComponent_NEW<IComponentLoadable>(type);
         }
-        this.root.set(id, component.handle); 
+        this.root.set(id, component.handle);
+        this.componentSubDirectory.set(id, defaultModel);
         return component;
     }
 }
