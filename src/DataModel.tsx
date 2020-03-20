@@ -7,7 +7,7 @@ import { defaultDatesNumbers, defaultPeople, defaultDates } from "./data";
 import { FluidApp } from "./FluidApp";
 import { AvailabilityType, IPersonType, IViewProps } from "./provider.types";
 import { PrimedContext } from "./provider";
-import { SharedNumberSequence, SharedObjectSequence } from "@microsoft/fluid-sequence";
+import { SharedObjectSequence } from "@microsoft/fluid-sequence";
 
 
 // export interface IDataModel {
@@ -32,12 +32,14 @@ export class DataModel extends PrimedComponent
     protected async componentInitializingFirstTime() {
         // Initialize the data model
         let dates = SharedObjectSequence.create<number>(this.runtime);
-        BadArray.push<number>(dates, defaultDatesNumbers);
         this.root.set(this._datesKey, dates.handle);
-
+        
         let people = SharedObjectSequence.create<IPersonType>(this.runtime);
-        BadArray.push<IPersonType>(people, defaultPeople);
         this.root.set(this._peopleKey, people.handle);
+        // if (this.context.leader) {
+            BadArray.push<number>(dates, defaultDatesNumbers);
+            BadArray.push<IPersonType>(people, defaultPeople);
+        // }
     }
 
     protected async componentHasInitialized() {
@@ -89,6 +91,7 @@ export class DataModel extends PrimedComponent
         const actions = this.actions;
         const selectors = this.selectors;
         const rerender = () => {
+            console.log(`rerender ${this.runtime.clientId}!`);
             ReactDOM.render(
                 <PrimedContext.Provider value={{ actions, selectors }}>
                     <FluidApp />
@@ -100,6 +103,14 @@ export class DataModel extends PrimedComponent
         rerender();
         this.root.on("valueChanged", () => {
             console.log("valueChanged");
+            rerender();
+        });
+        this._people.on("sequenceDelta", (event) => {
+            console.log(`${this.runtime.clientId} people sequenceDelta: op[${event.deltaOperation}] args[${JSON.stringify(event.deltaArgs.operation)}]`);
+            rerender();
+        });
+        this._dates.on("sequenceDelta", (event) => {
+            console.log(`${this.runtime.clientId} dates sequenceDelta: op[${event.deltaOperation}] args[${JSON.stringify(event.deltaArgs.operation)}]`);
             rerender();
         });
     }
