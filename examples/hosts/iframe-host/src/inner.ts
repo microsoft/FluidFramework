@@ -42,10 +42,6 @@ export async function runInner(divId: string){
         []);
 
     const url = documentServiceFactory.resolvedUrl.url;
-    const container = await baseHost.initializeContainer(url, pkg);
-
-    container.on("contextChanged", (value) => {
-        getComponentAndRender(baseHost, url, div).catch(() => { });
-    });
+    await baseHost.initializeContainer(url, pkg);
     await getComponentAndRender(baseHost, url, div);
 }

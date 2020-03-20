@@ -103,11 +103,7 @@ export async function loadDiv(divId: string){
         []);
 
     const url = createRequest().url;
-    const container = await baseHost.initializeContainer(url, pkg);
-
-    container.on("contextChanged", (value) => {
-        getComponentAndRender(baseHost, url, div).catch(() => { });
-    });
+    await baseHost.initializeContainer(url, pkg);
     await getComponentAndRender(baseHost, url, div);
 }
 

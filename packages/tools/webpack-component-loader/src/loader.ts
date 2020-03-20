@@ -11,7 +11,6 @@ import {
     IPackage,
     isFluidPackage,
 } from "@microsoft/fluid-container-definitions";
-import { Container } from "@microsoft/fluid-container-loader";
 import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
@@ -308,24 +307,17 @@ export async function start(
         div.append(leftDiv, rightDiv);
 
         await Promise.all([
-            container1Promise.then(async (container) => {
-                await startRendering(container, baseHost1, url, leftDiv);
+            container1Promise.then(async () => {
+                await getComponentAndRender(baseHost1, url, leftDiv);
             }),
-            container2Promise.then(async (container) => {
-                await startRendering(container, baseHost2, url, rightDiv);
+            container2Promise.then(async () => {
+                await getComponentAndRender(baseHost2, url, rightDiv);
             }),
         ]);
     } else {
-        const container = await container1Promise;
-        await startRendering(container, baseHost1, url, div);
+        await container1Promise;
+        await getComponentAndRender(baseHost1, url, div);
     }
-}
-
-async function startRendering(container: Container, baseHost: BaseHost, url: string, div: HTMLDivElement) {
-    container.on("contextChanged", (value) => {
-        getComponentAndRender(baseHost, url, div).catch(() => { });
-    });
-    await getComponentAndRender(baseHost, url, div);
 }
 
 async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {

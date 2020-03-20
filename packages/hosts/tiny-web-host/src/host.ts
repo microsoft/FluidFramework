@@ -186,13 +186,7 @@ async function loadContainer(
         pkg,
         scriptIds,
     );
-    const container = await baseHost.initializeContainer(
-        href,
-        pkg.details,
-    );
-    container.on("contextChanged", (value) => {
-        getComponentAndRender(baseHost, href, div).catch(() => { });
-    });
+    const container = await baseHost.initializeContainer(href, pkg.details);
     await getComponentAndRender(baseHost, href, div);
 
     return container;
