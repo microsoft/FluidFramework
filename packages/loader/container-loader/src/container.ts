@@ -529,8 +529,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             }
 
             // Ensure connection to web socket
-            // All errors are reported through events ("error" / "disconnected") and telemetry in DeltaManager
-            this.connectToDeltaStream().catch(() => {});
+            this.connectToDeltaStream().catch((error) => {
+                // All errors are reported through events ("error" / "disconnected") and telemetry in DeltaManager
+                // So there shouldn't be a need to record error here.
+                // But we have number of cases where reconnects do not happen, and no errors are recorded, so
+                // adding this log point for easier diagnostics
+                this.logger.sendTelemetryEvent({eventName: "setAutoReconnectError"}, error);
+            });
         }
     }
 
@@ -1211,7 +1216,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     private propagateConnectionState() {
         assert(this.loaded);
-        const logOpsOnReconnect: boolean = this._connectionState === ConnectionState.Connected && !this.firstConnection;
+        const logOpsOnReconnect: boolean =
+            this._connectionState === ConnectionState.Connected &&
+            !this.firstConnection &&
+            this._deltaManager.connectionMode === "write";
         if (logOpsOnReconnect) {
             this.messageCountAfterDisconnection = 0;
         }
