@@ -67,7 +67,7 @@ export class Summarizer implements ISummarizer {
         public readonly url: string,
         private readonly runtime: ContainerRuntime,
         private readonly configurationGetter: () => ISummaryConfiguration,
-        private readonly generateSummaryCore: (full: boolean, safe: boolean) => Promise<GenerateSummaryData>,
+        private readonly generateSummaryCore: (full: boolean, safe: boolean) => Promise<GenerateSummaryData | undefined>,
         private readonly refreshLatestAck: (context: ISummaryContext, referenceSequenceNumber: number) => Promise<void>,
         summaryCollection?: SummaryCollection,
     ) {

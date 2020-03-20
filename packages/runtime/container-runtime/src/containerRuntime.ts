@@ -67,6 +67,7 @@ import {
     IEnvelope,
     IHostRuntime,
     IInboundSignalMessage,
+    ISignalEnvelop,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import { ComponentSerializer, SummaryTracker } from "@microsoft/fluid-runtime-utils";
@@ -389,11 +390,11 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         const chunkId = context.baseSnapshot?.blobs[".chunks"];
         const chunks = chunkId
-            ? await readAndParse<[string, string[]][]>(context.storage, chunkId)
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            ? await readAndParse<[string, string[]][]>(context.storage!, chunkId)
             : [];
 
         const runtime = new ContainerRuntime(context, componentRegistry, chunks, runtimeOptions, containerScope);
-        runtime.requestHandler = new RuntimeRequestHandlerBuilder();
         runtime.requestHandler.pushHandler(
             createLoadableComponentRuntimeRequestHandler(runtime.summarizer),
             schedulerRuntimeRequestHandler,
@@ -420,7 +421,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.context.id;
     }
 
-    public get parentBranch(): string {
+    public get parentBranch(): string | null {
         return this.context.parentBranch;
     }
 
@@ -449,7 +450,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     public get storage(): IDocumentStorageService {
-        return this.context.storage;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return this.context.storage!;
     }
 
     public get branch(): string {
@@ -506,7 +508,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     private tasks: string[] = [];
 
     // Back-compat: version decides between loading document and chaincode.
-    private version: string;
+    private version: string | undefined;
 
     private _flushMode = FlushMode.Automatic;
     private needsFlush = false;
@@ -523,7 +525,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this._leader;
     }
 
-    public get summarizerClientId(): string {
+    public get summarizerClientId(): string | undefined {
         return this.summaryManager.summarizer;
     }
 
@@ -542,7 +544,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     private readonly summarizer: Summarizer;
     private readonly deltaSender: IDeltaSender | undefined;
     private readonly scheduleManager: ScheduleManager;
-    private requestHandler: RuntimeRequestHandlerBuilder;
+    private readonly requestHandler = new RuntimeRequestHandlerBuilder();
 
     // Local copy of incomplete received chunks.
     private readonly chunkMap: Map<string, string[]>;
@@ -806,7 +808,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         }
 
         if (value === ConnectionState.Connected) {
-            this.summaryManager.setConnected(clientId);
+            assert(clientId);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            this.summaryManager.setConnected(clientId!);
         } else {
             assert(!this._leader);
             this.summaryManager.setDisconnected();
@@ -833,7 +837,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     public processSignal(message: ISignalMessage, local: boolean) {
-        const envelope = message.content as IEnvelope;
+        const envelope = message.content as ISignalEnvelop;
         const innerContent = envelope.contents as { content: any; type: string };
         const transformed: IInboundSignalMessage = {
             clientId: message.clientId,
@@ -861,11 +865,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     public async getComponentRuntime(id: string, wait = true): Promise<IComponentRuntime> {
         this.verifyNotClosed();
 
-        if (!this.contextsDeferred.has(id)) {
-            // Add in a deferred that will resolve once the process ID arrives
-            this.contextsDeferred.set(id, new Deferred<ComponentContext>());
-        }
-        const deferredContext = this.contextsDeferred.get(id);
+        // Ensure deferred if it doesn't exist which will resolve once the process ID arrives
+        const deferredContext = this.ensureContextDeferred(id);
 
         if (!wait && !deferredContext.isCompleted) {
             return Promise.reject(`Process ${id} does not exist`);
@@ -967,7 +968,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     public getAudience(): IAudience {
-        return this.context.audience;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return this.context.audience!;
     }
 
     public error(error: any) {
@@ -1016,7 +1018,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
      */
     public submitSignal(type: string, content: any) {
         this.verifyNotClosed();
-        const envelope: IEnvelope = { address: undefined, contents: { type, content } };
+        const envelope: ISignalEnvelop = { address: undefined, contents: { type, content } };
         return this.context.submitSignalFn(envelope);
     }
 
@@ -1073,7 +1075,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
                 const attachMessage = message.contents as IAttachMessage;
                 const flatBlobs = new Map<string, string>();
-                let snapshotTree: ISnapshotTree = null;
+                let snapshotTree: ISnapshotTree | null = null;
                 if (attachMessage.snapshot) {
                     snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
                 }
@@ -1116,14 +1118,11 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     this.pendingAttach.delete(attachMessage.id);
                 } else {
                     // Resolve pending gets and store off any new ones
-                    if (this.contextsDeferred.has(attachMessage.id)) {
-                        this.contextsDeferred.get(attachMessage.id).resolve(remotedComponentContext);
-                    } else {
-                        const deferred = new Deferred<ComponentContext>();
-                        deferred.resolve(remotedComponentContext);
-                        this.contextsDeferred.set(attachMessage.id, deferred);
-                    }
-                    this.contexts.set(attachMessage.id, remotedComponentContext);
+                    const deferred = this.ensureContextDeferred(attachMessage.id);
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    deferred.resolve(remotedComponentContext!);
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    this.contexts.set(attachMessage.id, remotedComponentContext!);
 
                     // Equivalent of nextTick() - Prefetch once all current ops have completed
                     // eslint-disable-next-line max-len
@@ -1138,7 +1137,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     private attachComponent(componentRuntime: IComponentRuntime): void {
         this.verifyNotClosed();
 
-        const context = this.contexts.get(componentRuntime.id);
+        const context = this.getContext(componentRuntime.id);
         // If storage is not available then we are not yet fully attached and so will defer to the initial snapshot
         const expContainerContext = this.context as IExperimentalContainerContext;
         if (expContainerContext?.isExperimentalContainerContext ? expContainerContext.isAttached() : true) {
@@ -1151,8 +1150,30 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         }
 
         // Resolve the deferred so other local components can access it.
-        const deferred = this.contextsDeferred.get(componentRuntime.id);
+        const deferred = this.getContextDeferred(componentRuntime.id);
         deferred.resolve(context);
+    }
+
+    private ensureContextDeferred(id: string): Deferred<ComponentContext> {
+        const deferred = this.contextsDeferred.get(id);
+        if (deferred) { return deferred; }
+        const newDeferred = new Deferred<ComponentContext>();
+        this.contextsDeferred.set(id, newDeferred);
+        return newDeferred;
+    }
+
+    private getContextDeferred(id: string): Deferred<ComponentContext> {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const deferred = this.contextsDeferred.get(id)!;
+        assert(deferred);
+        return deferred;
+    }
+
+    private getContext(id: string): ComponentContext {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const context = this.contexts.get(id)!;
+        assert(context);
+        return context;
     }
 
     public async createSummary(): Promise<ISummaryTree> {
@@ -1163,7 +1184,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return treeWithStats.summaryTree;
     }
 
-    private async generateSummary(fullTree: boolean = false, safe: boolean = false): Promise<GenerateSummaryData> {
+    private async generateSummary(fullTree: boolean = false, safe: boolean = false): Promise<GenerateSummaryData | undefined> {
         const message =
             `Summary @${this.deltaManager.referenceSequenceNumber}:${this.deltaManager.minimumSequenceNumber}`;
 
@@ -1203,12 +1224,12 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
             let handle: string;
             if (this.summaryTracker.useContext === true) {
-                handle = await this.context.storage.uploadSummaryWithContext(
+                handle = await this.storage.uploadSummaryWithContext(
                     treeWithStats.summaryTree,
                     this.latestSummaryAck);
             } else {
                 // back-compat: 0.14 uploadSummary
-                const summaryHandle = await this.context.storage.uploadSummary(
+                const summaryHandle = await this.storage.uploadSummary(
                     treeWithStats.summaryTree);
                 handle = summaryHandle.handle;
             }
@@ -1260,7 +1281,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.addChunk(clientId, chunkedContent);
         if (chunkedContent.chunkId === chunkedContent.totalChunks) {
             const newMessage = { ...message };
-            const serializedContent = this.chunkMap.get(clientId).join("");
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const serializedContent = this.chunkMap.get(clientId)!.join("");
             newMessage.contents = JSON.parse(serializedContent);
             newMessage.type = chunkedContent.originalType;
             this.clearPartialChunks(clientId);
@@ -1368,8 +1390,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
     private processOperation(message: ISequencedDocumentMessage, local: boolean) {
         const envelope = message.contents as IEnvelope;
-        const componentContext = this.contexts.get(envelope.address);
-        assert(componentContext);
+        const componentContext = this.getContext(envelope.address);
         const innerContents = envelope.contents as { content: any; type: string };
 
         const transformed: ISequencedDocumentMessage = {
@@ -1424,7 +1445,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         const schedulerRuntime = await this.getComponentRuntime(schedulerId, true);
         const schedulerResponse = await schedulerRuntime.request({ url: "" });
         const schedulerComponent = schedulerResponse.value as IComponent;
-        return schedulerComponent.IAgentScheduler;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return schedulerComponent.IAgentScheduler!;
     }
 
     private updateLeader(leadership: boolean) {
@@ -1495,7 +1517,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     (snapshot) => !!snapshot);
 
                 if (snapshotResult.success) {
-                    return snapshotResult.result;
+                    // Translate null to undefined
+                    return snapshotResult.result?? undefined;
                 }
             }
         });
@@ -1508,20 +1531,21 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         eventName: string,
         setter: () => Promise<T>,
         validator: (result: T) => boolean,
-    ): Promise<{ result: T; success: boolean }> {
+    ): Promise<{ result: T | undefined; success: boolean }> {
         let result: T;
-        let success = true;
         try {
             result = await setter();
         } catch (error) {
             // Send error event for exceptions
             this.logger.sendErrorEvent({ eventName }, error);
-            success = false;
+            return { result: undefined, success: false };
         }
-        if (success && !validator(result)) {
+
+        const success = validator(result);
+
+        if (!success) {
             // Send error event when result is invalid
             this.logger.sendErrorEvent({ eventName });
-            success = false;
         }
         return { result, success };
     }

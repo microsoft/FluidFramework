@@ -73,7 +73,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this.pkg;
     }
 
-    public get parentBranch(): string {
+    public get parentBranch(): string | null {
         return this._hostRuntime.parentBranch;
     }
 
@@ -462,11 +462,11 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 }
 
 export class RemotedComponentContext extends ComponentContext {
-    private details: ISnapshotDetails;
+    private details: ISnapshotDetails | undefined;
 
     constructor(
         id: string,
-        private readonly initSnapshotValue: ISnapshotTree | string,
+        private readonly initSnapshotValue: ISnapshotTree | string | null,
         runtime: IHostRuntime,
         storage: IDocumentStorageService,
         scope: IComponent,
@@ -496,7 +496,7 @@ export class RemotedComponentContext extends ComponentContext {
     // pkg can never change for a component.
     protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
         if (!this.details) {
-            let tree: ISnapshotTree;
+            let tree: ISnapshotTree | null;
 
             if (typeof this.initSnapshotValue === "string") {
                 const commit = (await this.storage.getVersions(this.initSnapshotValue, 1))[0];
