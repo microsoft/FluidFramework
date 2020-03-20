@@ -17,20 +17,20 @@ import {
  */
 export class NetworkError extends Error implements IConnectionError {
     readonly errorType: ErrorType.connectionError = ErrorType.connectionError;
-    readonly connectionError?: ConnectionErrorType;
 
     constructor(
         errorMessage: string,
         readonly statusCode?: number,
         readonly canRetry?: boolean,
-        readonly online = OnlineStatus[isOnline()],
+        readonly online: string = OnlineStatus[isOnline()],
+        readonly connectionErrorType: ConnectionErrorType = ConnectionErrorType.default,
     ) {
         super(errorMessage);
         if (statusCode === 401 || statusCode === 403) {
-            this.connectionError = ConnectionErrorType.accessDenied;
+            this.connectionErrorType = ConnectionErrorType.accessDenied;
         }
         else if (statusCode === 404) {
-            this.connectionError = ConnectionErrorType.notFound;
+            this.connectionErrorType = ConnectionErrorType.notFound;
         }
     }
 

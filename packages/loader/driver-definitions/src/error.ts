@@ -15,6 +15,7 @@ export enum ErrorType {
 }
 
 export enum ConnectionErrorType {
+    default,
     accessDenied,
     notFound,
 }
@@ -37,7 +38,7 @@ export interface IThrottlingError {
 
 export interface IConnectionError {
     readonly errorType: ErrorType.connectionError;
-    readonly connectionError?: ConnectionErrorType
+    readonly connectionErrorType: ConnectionErrorType
     readonly message: string;
     readonly canRetry?: boolean;
     readonly statusCode?: number;

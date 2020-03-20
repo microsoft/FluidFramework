@@ -42,7 +42,7 @@ export class OdspNetworkError extends NetworkError {
         readonly statusCode: number,
         readonly canRetry: boolean,
         readonly sprequestguid?: string,
-        readonly online = OnlineStatus[isOnline()]) {
+        readonly online: string = OnlineStatus[isOnline()]) {
         super(errorMessage, statusCode, canRetry, online);
     }
 }
