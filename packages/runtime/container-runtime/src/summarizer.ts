@@ -44,8 +44,6 @@ export interface ISummarizer extends IComponentRouter, IComponentRunnable, IComp
     setSummarizer(): Promise<Summarizer>;
 }
 
-type GenerateSummaryFn = (full: boolean, safe: boolean) => Promise<GenerateSummaryData | undefined>;
-
 /**
  * Summarizer is responsible for coordinating when to send generate and send summaries.
  * It is the main entry point for summary work.
@@ -69,7 +67,8 @@ export class Summarizer implements ISummarizer {
         public readonly url: string,
         private readonly runtime: ContainerRuntime,
         private readonly configurationGetter: () => ISummaryConfiguration,
-        private readonly generateSummaryCore: GenerateSummaryFn,
+        // eslint-disable-next-line max-len
+        private readonly generateSummaryCore: (full: boolean, safe: boolean) => Promise<GenerateSummaryData | undefined>,
         private readonly refreshLatestAck: (context: ISummaryContext, referenceSequenceNumber: number) => Promise<void>,
         summaryCollection?: SummaryCollection,
     ) {
