@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@microsoft/fluid-common-utils": "^0.14.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1002.0",
+    "@microsoft/fluid-protocol-definitions": "^0.1003.0",
     "@microsoft/fluid-runtime-definitions": "^0.15.0",
     "@microsoft/fluid-shared-object-base": "^0.15.0",
     "@types/debug": "^0.0.31",
@@ -35,7 +35,7 @@
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",
-    "@microsoft/eslint-config-fluid": "^0.14.0",
+    "@microsoft/eslint-config-fluid": "^0.15.0",
     "@microsoft/fluid-build-common": "^0.14.0",
     "@types/uuid": "^3.4.4",
     "@typescript-eslint/eslint-plugin": "~2.17.0",

@@ -111,7 +111,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         return this.componentContext.leader;
     }
 
-    public get clientId(): string {
+    public get clientId(): string | undefined {
         return this.componentContext.clientId;
     }
 
@@ -370,7 +370,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         this.boundhandles.add(handle);
     }
 
-    public changeConnectionState(value: ConnectionState, clientId: string) {
+    public changeConnectionState(value: ConnectionState, clientId?: string) {
         this.verifyNotClosed();
 
         // Resend all pending attach messages prior to notifying clients

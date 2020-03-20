@@ -11,6 +11,7 @@ import {
 import {
     DefaultMetricClient,
     IDatabaseManager,
+    IDocumentStorage,
     IOrderer,
     IOrdererManager,
     IWebSocketServer,
@@ -97,7 +98,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 
         const webSocketServer = new TestWebSocketServer();
         const mongoManager = new MongoManager(testDbFactory);
-        const testTenantManager = new TestTenantManager();
+        const testTenantManager = new TestTenantManager(undefined, undefined, testDbFactory.testDatabase);
 
         const databaseManager = new MongoDatabaseManager(
             mongoManager,
@@ -143,14 +144,20 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
             new DefaultMetricClient(),
             logger);
 
-        return new LocalDeltaConnectionServer(webSocketServer, databaseManager, testOrderer, testDbFactory);
+        return new LocalDeltaConnectionServer(
+            webSocketServer,
+            databaseManager,
+            testOrderer,
+            testDbFactory,
+            testStorage);
     }
 
     private constructor(
         public webSocketServer: IWebSocketServer,
         public databaseManager: IDatabaseManager,
         private readonly testOrdererManager: TestOrderManager,
-        public testDbFactory: ITestDbFactory) { }
+        public testDbFactory: ITestDbFactory,
+        public documentStorage: IDocumentStorage) { }
 
     /**
      * Returns true if there are any received ops that are not yet ordered.

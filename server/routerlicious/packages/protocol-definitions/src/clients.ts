@@ -18,7 +18,7 @@ export interface IClientDetails {
 }
 
 export interface IClient {
-    mode?: ConnectionMode;
+    mode: ConnectionMode;
     details: IClientDetails;
     permission: string[];
     user: IUser;

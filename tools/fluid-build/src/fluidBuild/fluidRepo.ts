@@ -96,12 +96,13 @@ export class FluidRepo extends FluidRepoBase {
         );
     }
 
-    public async checkScripts(fix: boolean) {
+    public async checkPackages(fix: boolean) {
         for (const pkg of this.packages.packages) {
             if (FluidPackageCheck.checkScripts(this, pkg, fix)) {
                 await pkg.savePackageJson();
             }
             await FluidPackageCheck.checkNpmIgnore(pkg, fix);
+            await FluidPackageCheck.checkTsConfig(pkg, fix);
         }
     }
     public async depcheck() {

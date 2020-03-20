@@ -26,7 +26,7 @@ interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
     uninstall: boolean;
     concurrency: number;
     samples: boolean;
-    fixScripts: boolean;
+    fix: boolean;
 }
 
 // defaults
@@ -48,7 +48,7 @@ export const options: FastBuildOptions = {
     uninstall: false,
     concurrency: os.cpus().length, // TODO: argument?
     samples: true,
-    fixScripts: false,
+    fix: false,
     all: false,
     server: false,
 };
@@ -62,6 +62,7 @@ Options:
      --all            Operate on all packages/monorepo (default: client monorepo)
   -c --clean          Same as running build script 'clean' on matched packages (all if package regexp is not specified)
   -d --dep            Apply actions (clean/force/rebuild) to matched packages and their dependent packages
+     --fix            Auto fix warning from package check if possible
   -f --force          Force build and ignore dependency check on matched packages (all if package regexp is not specified)
   -? --help           Print this message
      --install        Run NPM install for all packages/monorepo
@@ -157,8 +158,8 @@ export function parseOptions(argv: string[]) {
             continue;
         }
 
-        if (arg === "--fixscripts") {
-            options.fixScripts = true;
+        if (arg === "--fix") {
+            options.fix = true;
             setBuild(false);
             continue;
         }

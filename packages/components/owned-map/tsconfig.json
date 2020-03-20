@@ -5,9 +5,7 @@
         "node_modules"
     ],
     "compilerOptions": {
-        "strict": true,
         "strictNullChecks": false,
-        "noUnusedLocals": true,
         "module": "esnext",
         "outDir": "./dist",
         "jsx": "react"

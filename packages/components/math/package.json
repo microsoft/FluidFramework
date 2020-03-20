@@ -31,6 +31,7 @@
     "@fluid-example/client-ui-lib": "^0.15.0",
     "@fluid-example/flow-util-lib": "^0.15.0",
     "@fluid-example/search-menu": "^0.15.0",
+    "@microsoft/fluid-component-base": "^0.15.0",
     "@microsoft/fluid-component-core-interfaces": "^0.15.0",
     "@microsoft/fluid-component-runtime": "^0.15.0",
     "@microsoft/fluid-framework-experimental": "^0.15.0",
@@ -44,7 +45,7 @@
     "katex": "^0.10.2"
   },
   "devDependencies": {
-    "@microsoft/eslint-config-fluid": "^0.14.0",
+    "@microsoft/eslint-config-fluid": "^0.15.0",
     "@microsoft/fluid-build-common": "^0.14.0",
     "@types/node": "^10.14.6",
     "@typescript-eslint/eslint-plugin": "~2.17.0",

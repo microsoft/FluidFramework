@@ -18,6 +18,7 @@ import {
     TestContext,
     TestDbFactory,
     TestKafka,
+    TestTenantManager,
 } from "@microsoft/fluid-server-test-utils";
 import * as assert from "assert";
 import * as _ from "lodash";
@@ -35,6 +36,7 @@ describe("Routerlicious", () => {
             const testData = [{ documentId: testId, tenantId: testTenantId, sequenceNumber: 0, logOffset: undefined }];
 
             let testCollection: ICollection<any>;
+            let testTenantManager: TestTenantManager;
             let testKafka: TestKafka;
             let testForwardProducer: IProducer;
             let testReverseProducer: IProducer;
@@ -73,11 +75,17 @@ describe("Routerlicious", () => {
                 testCollection = database.collection("documents");
 
                 testKafka =  new TestKafka();
+                testTenantManager = new TestTenantManager();
                 testForwardProducer = testKafka.createProducer();
                 testReverseProducer = testKafka.createProducer();
                 messageFactory = new MessageFactory(testId, testClientId);
                 kafkaMessageFactory = new KafkaMessageFactory("test", 1, false);
-                factory = new DeliLambdaFactory(mongoManager, testCollection, testForwardProducer, testReverseProducer);
+                factory = new DeliLambdaFactory(
+                    mongoManager,
+                    testCollection,
+                    testTenantManager,
+                    testForwardProducer,
+                    testReverseProducer);
 
                 testContext = new TestContext();
                 const config = (new nconf.Provider({})).defaults({ documentId: testId, tenantId: testTenantId })

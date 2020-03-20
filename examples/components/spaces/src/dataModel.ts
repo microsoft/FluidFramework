@@ -22,7 +22,12 @@ export type SupportedComponent =
 
 export interface ISpacesDataModel extends EventEmitter {
     componentList: Map<string, Layout>;
-    addComponent(type: SupportedComponent, w?: number, h?: number, id?: string): Promise<IComponentLoadable>;
+    addComponent<T extends IComponent & IComponentLoadable>(
+        type: SupportedComponent,
+        w?: number,
+        h?: number,
+        id?: string
+    ): Promise<T>;
     getComponent<T>(id: string): Promise<T>;
     removeComponent(id: string): void;
     updateGridItem(id: string, newLayout: Layout): void;
@@ -78,8 +83,12 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
         return response;
     }
 
-    public async addComponent(type: SupportedComponent, w: number = 1, h: number = 1, id?: string):
-    Promise<IComponentLoadable> {
+    public async addComponent<T extends IComponent & IComponentLoadable>(
+        type: SupportedComponent,
+        w: number = 1,
+        h: number = 1,
+        id?: string,
+    ): Promise<T> {
         const defaultLayout = { x: 0, y: 0, w, h };
         return this.addComponentInternal(type, defaultLayout, id);
     }
@@ -126,7 +135,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
         }
     }
 
-    private async addComponentInternal(
+    private async addComponentInternal<T extends IComponent & IComponentLoadable>(
         type: SupportedComponent,
         layout: Layout,
         id = `${type}-${Date.now()}`): Promise<IComponentLoadable> {

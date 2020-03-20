@@ -295,7 +295,7 @@ function initialize(
         }
 
         const buttonText = startButton.innerText;
-        // eslint-disable-next-line no-unused-expressions
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         buttonText === "Start" ? startButton.innerText = "Pause" : startButton.innerText = "Start";
 
         event.preventDefault();
