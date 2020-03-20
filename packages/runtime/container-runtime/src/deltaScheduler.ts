@@ -20,7 +20,7 @@ const performanceNow = require("performance-now") as (() => number);
  * 1. If the ops have been processed for more than a specific amount of time, it pauses the queue
  *    and calls setTimeout to schedule a resume of the queue. This ensures that we don't block
  *    the JS thread for a long time processing ops synchronously (for example, when catching up
- *    ops right after boot or catching up ops / delayed reaziling components by summarizer).
+ *    ops right after boot or catching up ops / delayed realizing components by summarizer).
  * 2. If we scheduled a particular run of the queue, it logs telemetry for the number of ops
  *    processed, the time and number of turns it took to process the ops.
  */
