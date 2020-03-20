@@ -44,7 +44,7 @@ export class BadArray<T> {
 
         hostRuntime.orderSequentially(() => {
             store.insert(index, [value]);
-            store.remove(index + 1, index + 1);
+            store.remove(index + 1, index + 2);
         });
     }
 
@@ -54,30 +54,31 @@ export class BadArray<T> {
             toStore.push(...rest);
         }
         store.insert(store.getLength(), items);
+        console.log(`pushed: ${toStore.length} items to ${store.id}; new sequence length: ${store.getLength()}`);
         return store.getLength();
     }
 
-    public static pop<T>(store: SharedObjectSequence<T>): T {
-        let item = store.getItems(store.getLength() - 1, store.getLength() - 1)[0];
-        store.remove(store.getLength() - 1, store.getLength() - 1);
-        return item;
-    }
+    // public static pop<T>(store: SharedObjectSequence<T>): T {
+    //     let item = store.getItems(store.getLength() - 1, store.getLength() - 1)[0];
+    //     store.remove(store.getLength() - 1, store.getLength() - 1);
+    //     return item;
+    // }
 
-    public static shift<T>(store: SharedObjectSequence<T>): T {
-        let item = store.getItems(0, 0)[0];
-        store.remove(0, 0);
-        return item;
-    }
+    // public static shift<T>(store: SharedObjectSequence<T>): T {
+    //     let item = store.getItems(0, 0)[0];
+    //     store.remove(0, 0);
+    //     return item;
+    // }
 
-    public static unshift<T>(store: SharedObjectSequence<T>, items?: T[], ...rest: T[]): number {
-        let toStore = items ?? rest;
-        if (items) {
-            toStore.push(...rest);
-        }
+    // public static unshift<T>(store: SharedObjectSequence<T>, items?: T[], ...rest: T[]): number {
+    //     let toStore = items ?? rest;
+    //     if (items) {
+    //         toStore.push(...rest);
+    //     }
 
-        store.insert(0, toStore);
-        return store.getLength();
-    }
+    //     store.insert(0, toStore);
+    //     return store.getLength();
+    // }
 
     public static all<T>(store: SharedObjectSequence<T>): T[] {
         return store.getItems(0);
