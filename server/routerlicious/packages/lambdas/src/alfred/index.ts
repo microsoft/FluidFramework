@@ -224,6 +224,9 @@ export function configureWebSocketServices(
                     parentBranch: connection.parentBranch,
                     serviceConfiguration: connection.serviceConfiguration,
                     initialClients: clients,
+                    initialContents: [],
+                    initialMessages: [],
+                    initialSignals: [],
                     supportedVersions: protocolVersions,
                     version,
                 };
@@ -237,6 +240,9 @@ export function configureWebSocketServices(
                     parentBranch: null, // Does not matter for now.
                     serviceConfiguration: DefaultServiceConfiguration,
                     initialClients: clients,
+                    initialContents: [],
+                    initialMessages: [],
+                    initialSignals: [],
                     supportedVersions: protocolVersions,
                     version,
                 };

@@ -165,6 +165,19 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
         };
 
         this.once("connect_document_success", (connectedMessage: IConnected) => {
+            /* Issue #1566: Backward compat */
+            if (connectedMessage.initialMessages === undefined) {
+                connectedMessage.initialMessages = [];
+            }
+            if (connectedMessage.initialClients === undefined) {
+                connectedMessage.initialClients = [];
+            }
+            if (connectedMessage.initialContents === undefined) {
+                connectedMessage.initialContents = [];
+            }
+            if (connectedMessage.initialSignals === undefined) {
+                connectedMessage.initialSignals = [];
+            }
             this.details = connectedMessage;
         });
 

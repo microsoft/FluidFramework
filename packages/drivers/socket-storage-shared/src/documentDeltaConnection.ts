@@ -394,6 +394,20 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             });
 
             this.addConnectionListener("connect_document_success", (response: IConnected) => {
+                /* Issue #1566: Backward compat */
+                if (response.initialMessages === undefined) {
+                    response.initialMessages = [];
+                }
+                if (response.initialClients === undefined) {
+                    response.initialClients = [];
+                }
+                if (response.initialContents === undefined) {
+                    response.initialContents = [];
+                }
+                if (response.initialSignals === undefined) {
+                    response.initialSignals = [];
+                }
+
                 this.removeTrackedListeners(true);
                 resolve(response);
             });

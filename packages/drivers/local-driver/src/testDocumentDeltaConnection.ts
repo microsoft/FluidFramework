@@ -77,25 +77,30 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
                 socket.removeListener("op-content", earlyContentHandler);
                 socket.removeListener("signal", earlySignalHandler);
 
+                /* Issue #1566: Backward compat */
+                if (response.initialMessages === undefined) {
+                    response.initialMessages = [];
+                }
+                if (response.initialClients === undefined) {
+                    response.initialClients = [];
+                }
+                if (response.initialContents === undefined) {
+                    response.initialContents = [];
+                }
+                if (response.initialSignals === undefined) {
+                    response.initialSignals = [];
+                }
+
                 if (queuedMessages.length > 0) {
                     // Some messages were queued.
                     // add them to the list of initialMessages to be processed
-                    if (!response.initialMessages) {
-                        response.initialMessages = [];
-                    }
-
                     response.initialMessages.push(...queuedMessages);
-
                     response.initialMessages.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
                 }
 
                 if (queuedContents.length > 0) {
                     // Some contents were queued.
                     // add them to the list of initialContents to be processed
-                    if (!response.initialContents) {
-                        response.initialContents = [];
-                    }
-
                     response.initialContents.push(...queuedContents);
 
                     // eslint-disable-next-line max-len
@@ -105,10 +110,6 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
                 if (queuedSignals.length > 0) {
                     // Some signals were queued.
                     // add them to the list of initialSignals to be processed
-                    if (!response.initialSignals) {
-                        response.initialSignals = [];
-                    }
-
                     response.initialSignals.push(...queuedSignals);
                 }
 
