@@ -194,7 +194,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
                 runtime.dispose();
             }).catch((error) => {
                 this.hostRuntime.logger.sendErrorEvent(
-                    {eventName: "ComponentRuntimeDisposeError", componentId: this.id},
+                    { eventName: "ComponentRuntimeDisposeError", componentId: this.id },
                     error);
             });
         }
@@ -235,8 +235,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this.hostRuntime._createComponentWithProps(packagePath, props, id);
     }
 
-    private async rejectDeferredRealize(reason: string)
-    {
+    private async rejectDeferredRealize(reason: string) {
         const error = new Error(reason);
         // Error messages contain package names that is considered Personal Identifiable Information
         // Mark it as such, so that if it ever reaches telemetry pipeline, it has a chance to remove it.
@@ -549,7 +548,7 @@ export class RemotedComponentContext extends ComponentContext {
             this.details = {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 pkg: this.pkg!,
-                snapshot: tree?? undefined,
+                snapshot: tree ?? undefined,
             };
         }
 
