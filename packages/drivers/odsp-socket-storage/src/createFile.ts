@@ -9,7 +9,7 @@ import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { IOdspCache } from "./odspCache";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
 import { getWithRetryForTokenRefresh, throwOdspNetworkError } from "./odspUtils";
-import { createOdspUrl } from "./odspUtils2";
+import { createOdspUrl } from "./createOdspUrl";
 
 export interface INewFileInfo {
     siteUrl: string;

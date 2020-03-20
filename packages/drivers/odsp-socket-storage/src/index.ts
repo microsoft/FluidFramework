@@ -12,7 +12,7 @@ export * from "./contracts";
 export * from "./odspDriverUrlResolver";
 export * from "./fetchSnapshot";
 export * from "./odspUtils";
-export * from "./odspUtils2";
+export * from "./createOdspUrl";
 export * from "./vroom";
 export * from "./odspDocumentServiceFactoryWithCodeSplit";
 export * from "./odspDocumentDeltaConnection";
