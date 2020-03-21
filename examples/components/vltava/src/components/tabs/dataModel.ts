@@ -31,7 +31,6 @@ export interface ITabsDataModel extends EventEmitter {
     getTabIds(): string[];
     createTab(type: string): Promise<string>;
     getNewTabTypes(): ITabsTypes[];
-    root: ISharedDirectory;
 }
 
 export class TabsDataModel extends EventEmitter implements ITabsDataModel {

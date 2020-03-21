@@ -64,7 +64,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
 
     protected async componentInitializingFromExisting() {
         this.initializeDataModel();
-        this.componentToolbar = await this.getComponent<ComponentToolbar>(Spaces.componentToolbarId);
+        this.componentToolbar = await this.dataModel.getComponentById<ComponentToolbar>(Spaces.componentToolbarId);
     }
 
     protected async componentHasInitialized() {
@@ -84,8 +84,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
         this.dataModelInternal =
             new SpacesDataModel(
                 this.root,
-                this.createAndAttachComponent.bind(this),
-                this.getComponent.bind(this),
+                this.createAndAttachComponent_NEW.bind(this),
                 Spaces.componentToolbarId,
             );
     }

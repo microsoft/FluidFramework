@@ -6,7 +6,7 @@
 import { EventEmitter } from "events";
 import { ISharedDirectory, IDirectory, IDirectoryValueChanged } from "@microsoft/fluid-map";
 import {
-    IComponent, IComponentLoadable,
+    IComponent, IComponentLoadable, IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
 import { Layout } from "react-grid-layout";
 
@@ -28,7 +28,7 @@ export interface ISpacesDataModel extends EventEmitter {
         h?: number,
         id?: string
     ): Promise<T>;
-    getComponent<T>(id: string): Promise<T>;
+    getComponentById<T extends IComponent>(id: string): Promise<T>;
     removeComponent(id: string): void;
     updateGridItem(id: string, newLayout: Layout): void;
     getLayout(id: string): Layout;
@@ -46,10 +46,8 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
     constructor(
         private readonly root: ISharedDirectory,
         private readonly createAndAttachComponent: <T extends IComponent & IComponentLoadable>(
-            id: string | undefined,
             pkg: string,
             props?: any) => Promise<T>,
-        public getComponent: <T>(id: string) => Promise<T>,
         public componentToolbarId: string,
     ) {
         super();
@@ -104,8 +102,14 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
         const model = {
             type: currentEntry.type,
             layout: { x: newLayout.x, y: newLayout.y, w: newLayout.w, h: newLayout.h },
+            handle: currentEntry.handle,
         };
         this.componentSubDirectory.set(id, model);
+    }
+
+    public getComponentById<T>(id: string): Promise<T> {
+        const handle = this.componentSubDirectory.get(id).handle as IComponentHandle<T>;
+        return handle.get();
     }
 
     public getLayout(id: string): Layout {
@@ -141,17 +145,19 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
         type: SupportedComponent,
         layout: Layout,
         id = `${type}-${Date.now()}`): Promise<T> {
-
+        const component = await this.createAndAttachComponent<T>(type);
         const defaultModel: ISpacesModel = {
             type,
             layout,
+            handle: component.handle
         };
         this.componentSubDirectory.set(id, defaultModel);
-        return this.createAndAttachComponent<T>(id, type);
+        return component;
     }
 }
 
 interface ISpacesModel {
     type: string;
     layout: Layout;
+    handle?: IComponentHandle;
 }
