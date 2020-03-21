@@ -130,6 +130,7 @@ async function main() {
     }
 
     const versionBump = result.stdout == "master\n" ? "minor" : "patch";
+    console.log(`Bumping ${versionBump} version`);
 
     // Load the package
     const repo = new FluidRepoBase(resolvedRoot);
