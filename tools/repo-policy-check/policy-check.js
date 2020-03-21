@@ -8,6 +8,7 @@ const readline = require('readline');
 const newline = require('os').EOL;
 const program = require('commander');
 const exclusions = require('./exclusions.json').map(e => new RegExp(e, "i"));
+const sortPackageJson = require('sort-package-json');
 
 /**
  * argument parsing
@@ -133,7 +134,7 @@ const handlers = [
         }
     },
     {
-        name: "npm-package-author-license",
+        name: "npm-package-author-license-sort",
         match: /(^|\/)package\.json/i,
         handler: file => {
             let json;
@@ -143,18 +144,27 @@ const handlers = [
                 return 'Error parsing JSON file: ' + file;
             }
 
-            let ret = [];
+            const missing = [];
 
             if (json.author !== author) {
-                ret.push(`${author} author entry`);
+                missing.push(`${author} author entry`);
             }
 
             if (json.license !== licenseId) {
-                ret.push(`${licenseId} license entry`);
+                missing.push(`${licenseId} license entry`);
+            }
+
+            const ret = [];
+            if (missing.length > 0) {
+                ret.push(`missing ${missing.join(' and ')}`);
+            }
+
+            if (JSON.stringify(sortPackageJson(json)) != JSON.stringify(json)) {
+                ret.push(`not sorted`);
             }
 
             if (ret.length > 0) {
-                return 'Package missing ' + ret.join(' and ');
+                return `Package.json ${ret.join(', ')}`;
             }
         },
         resolver: file => {
@@ -179,7 +189,7 @@ const handlers = [
                 resolved = false;
             }
 
-            writeFile(file, JSON.stringify(json, undefined, 2) + newline);
+            writeFile(file, JSON.stringify(sortPackageJson(json), undefined, 2) + newline);
 
             return { resolved: resolved };
         }
