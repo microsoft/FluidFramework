@@ -11,7 +11,7 @@ import {
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { IResolvedPackage, WebCodeLoader } from "@microsoft/fluid-web-code-loader";
 import { IBaseHostConfig } from "./hostConfig";
-import { containerContextReady, initializeContainerCode } from "./initializeContainerCode";
+import { initializeContainerCode } from "./initializeContainerCode";
 
 /**
  * Create a loader and return it.
@@ -112,9 +112,6 @@ export class BaseHost {
                 .catch((error) => console.error("code proposal error", error));
         }
 
-        // Don't return until the container is ready
-        await containerContextReady(container);
-
         return container;
     }
 
@@ -156,6 +153,9 @@ export class BaseHost {
     public async loadAndRender(url: string, div: HTMLDivElement, pkg?: IFluidCodeDetails) {
         const container = await this.initializeContainer(url, pkg);
 
+        container.on("contextChanged", (value) => {
+            this.getComponentAndRender(url, div).catch(() => { });
+        });
         await this.getComponentAndRender(url, div);
 
         return container;

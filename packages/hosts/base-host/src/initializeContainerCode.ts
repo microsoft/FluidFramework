@@ -31,21 +31,6 @@ function isOldestClient(container: Container) {
     return false;
 }
 
-export async function containerContextReady(
-    container: Container,
-) {
-    const quorum = container.getQuorum();
-
-    // Resolve if the proposal is already available - either the code came in the snapshot or the contextChanged will
-    // have already fired in response to the proposal being approved
-    if (quorum.has(currentCodeProposalKey)) {
-        return;
-    }
-
-    // Otherwise wait for the contextChanged.
-    await new Promise<void>((resolve) => container.once("contextChanged", () => resolve()));
-}
-
 export async function initializeContainerCode(
     container: Container,
     pkgForCodeProposal: IFluidCodeDetails,
