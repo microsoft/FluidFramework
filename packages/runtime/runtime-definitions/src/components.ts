@@ -35,6 +35,7 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 
 import { IProvideComponentRegistry } from "./componentRegistry";
+import { RuntimeMetadata } from "./metadata";
 import { IChannel } from ".";
 
 /**
@@ -366,6 +367,7 @@ export interface IHostRuntime extends
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly closeFn: () => void;
     readonly scope: IComponent;
+    readonly metadata: RuntimeMetadata;
 
     /**
      * Returns the runtime of the component.

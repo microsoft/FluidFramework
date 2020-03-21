@@ -64,10 +64,12 @@ import {
     IAttachMessage,
     IComponentRegistry,
     IComponentRuntime,
+    IContainerRuntimeMetadata,
     IEnvelope,
     IHostRuntime,
     IInboundSignalMessage,
     NamedComponentRegistryEntries,
+    RuntimeMetadata,
 } from "@microsoft/fluid-runtime-definitions";
 import { ComponentSerializer, SummaryTracker } from "@microsoft/fluid-runtime-utils";
 // eslint-disable-next-line import/no-internal-modules
@@ -376,6 +378,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
      * @param registry - Mapping to the components.
      * @param requestHandlers - Request handlers for the container runtime
      * @param runtimeOptions - Additional options to be passed to the runtime
+     * @param containerScope - Ambient services provided with the context.
+     * @param metadata - Metadata object owned by the app to manage container metadata.
      */
     public static async load(
         context: IContainerContext,
@@ -383,6 +387,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         requestHandlers: RuntimeRequestHandler[] = [],
         runtimeOptions?: IContainerRuntimeOptions,
         containerScope: IComponent = context.scope,
+        metadata?: IContainerRuntimeMetadata,
     ): Promise<ContainerRuntime> {
         const componentRegistry = new ContainerRuntimeComponentRegistry(registryEntries);
 
@@ -391,7 +396,15 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             ? await readAndParse<[string, string[]][]>(context.storage, chunkId)
             : [];
 
-        const runtime = new ContainerRuntime(context, componentRegistry, chunks, runtimeOptions, containerScope);
+        if (metadata) {
+            const metadataId = context.baseSnapshot?.blobs[".metadata"];
+            metadata.content = metadataId
+                ? await readAndParse<RuntimeMetadata>(context.storage, metadataId)
+                : undefined;
+        }
+
+        const runtime =
+            new ContainerRuntime(context, componentRegistry, chunks, runtimeOptions, containerScope, metadata);
         runtime.requestHandler = new RuntimeRequestHandlerBuilder();
         runtime.requestHandler.pushHandler(
             createLoadableComponentRuntimeRequestHandler(runtime.summarizer),
@@ -552,12 +565,17 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     // on its creation). This is a superset of contexts.
     private readonly contextsDeferred = new Map<string, Deferred<ComponentContext>>();
 
+    public get metadata(): RuntimeMetadata {
+        return this._metadata?.content;
+    }
+
     private constructor(
         private readonly context: IContainerContext,
         private readonly registry: IComponentRegistry,
         readonly chunks: [string, string[]][],
         private readonly runtimeOptions: IContainerRuntimeOptions = { generateSummaries: true, enableWorker: false },
         private readonly containerScope: IComponent,
+        private readonly _metadata?: IContainerRuntimeMetadata,
     ) {
         super();
 
@@ -745,6 +763,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         if (this.chunkMap.size > 0) {
             root.entries.push(new BlobTreeEntry(".chunks", JSON.stringify([...this.chunkMap])));
+        }
+
+        if (this.metadata?.content) {
+            root.entries.push(new BlobTreeEntry(".metadata", JSON.stringify(this.metadata.content)));
         }
 
         return root;
@@ -1036,6 +1058,13 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         if (this.chunkMap.size > 0) {
             summaryTree.tree[".chunks"] = {
                 content: JSON.stringify([...this.chunkMap]),
+                type: SummaryType.Blob,
+            };
+        }
+
+        if (this.metadata?.content) {
+            summaryTree.tree[".metadata"] = {
+                content: JSON.stringify(this.metadata.content),
                 type: SummaryType.Blob,
             };
         }

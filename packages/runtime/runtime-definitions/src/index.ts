@@ -9,6 +9,7 @@ export * from "./componentFactory";
 export * from "./componentRegistry";
 export * from "./components";
 export * from "./jsonable";
+export * from "./metadata";
 export * from "./protocol";
 export * from "./serializable";
 export * from "./storage";
