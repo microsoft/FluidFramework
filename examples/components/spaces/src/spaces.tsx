@@ -58,7 +58,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView {
         // Set the saved template if there is a template query param
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has("template")) {
-            await this.dataModelInternal.setTemplate();
+            await this.dataModel.setTemplate();
         }
     }
 

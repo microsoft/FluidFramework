@@ -35,7 +35,7 @@ export class ComponentToolbar extends PrimedComponent implements IComponentHTMLV
 
     private static readonly factory = new PrimedComponentFactory(ComponentToolbar, []);
 
-    private supportedComponentList: IContainerComponentDetails[];
+    private supportedComponentList: IContainerComponentDetails[] | undefined;
 
     public static getFactory() {
         return ComponentToolbar.factory;
@@ -60,7 +60,6 @@ export class ComponentToolbar extends PrimedComponent implements IComponentHTMLV
         this.root.set("isEditable", false);
     }
 
-
     /**
      * Will return a new ComponentToolbarView
      */
@@ -69,7 +68,8 @@ export class ComponentToolbar extends PrimedComponent implements IComponentHTMLV
             <ComponentToolbarView
                 emit={this.emit.bind(this)}
                 root={this.root}
-                supportedComponentList={this.supportedComponentList}
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                supportedComponentList={this.supportedComponentList!}
             />,
             div,
         );

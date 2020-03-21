@@ -41,6 +41,6 @@ export function tabHandler(e) {
         return;
     }
     const n = e.target.closest('[role="tab"]');
-    // eslint-disable-next-line no-unused-expressions
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     n && n.closest('[role="tablist"]') && xn(document, t.indexOf(n));
 }

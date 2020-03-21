@@ -68,7 +68,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         return clientId as string;
     }
 
-    public url = "/_tasks";
+    public url = "_tasks";
 
     // Set of tasks registered by this client.
     // Has no relationship with lists below.
@@ -429,9 +429,10 @@ export class TaskManager implements ITaskManager {
             return Promise.reject("Picking not allowed on secondary copy");
         } else {
             const urlWithSlash = componentUrl.startsWith("/") ? componentUrl : `/${componentUrl}`;
+            const fullUrl = `${urlWithSlash}/${this.url}/${taskId}`;
             return this.scheduler.pick(
-                `${urlWithSlash}${this.url}/${taskId}`,
-                async () => this.runTask(taskId, worker !== undefined ? worker : false));
+                fullUrl,
+                async () => this.runTask(fullUrl, worker !== undefined ? worker : false));
         }
     }
 

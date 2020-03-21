@@ -153,14 +153,6 @@ export class DeltaManagerProxy
         return this.deltaManager.connect(requestedMode);
     }
 
-    public async getDeltas(
-        reason: string,
-        from: number,
-        to?: number,
-    ): Promise<ISequencedDocumentMessage[]> {
-        return this.deltaManager.getDeltas(reason, from, to);
-    }
-
     public attachOpHandler(
         minSequenceNumber: number,
         sequenceNumber: number,
