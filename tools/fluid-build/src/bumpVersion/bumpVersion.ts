@@ -92,7 +92,7 @@ function collectVersions(repo: FluidRepoBase, generatorPackage: Package, templat
     return versions;
 }
 
-async function bumpGeneratorFluid(buildPackages: Map<string, Package>, generatorPackage: Package, templatePackage: Package) {
+async function bumpGeneratorFluid(buildPackages: Map<string, Package>, generatorPackage: Package, templatePackage: Package, versionBump: string) {
     console.log("Bumping generator version");
 
     for (const { name, dev } of templatePackage.combinedDependencies) {
@@ -106,8 +106,8 @@ async function bumpGeneratorFluid(buildPackages: Map<string, Package>, generator
         }
     }
     await templatePackage.savePackageJson();
-    await execWithErrorAsync("npm version minor", { cwd: templatePackage.directory }, templatePackage.directory, false);
-    await execWithErrorAsync("npm version minor", { cwd: generatorPackage.directory }, generatorPackage.directory, false);
+    await execWithErrorAsync(`npm version ${versionBump}`, { cwd: templatePackage.directory }, templatePackage.directory, false);
+    await execWithErrorAsync(`npm version ${versionBump}`, { cwd: generatorPackage.directory }, generatorPackage.directory, false);
 }
 
 async function main() {
@@ -116,6 +116,21 @@ async function main() {
     versionCheck();
 
     const resolvedRoot = await getResolvedFluidRoot();
+
+    // Determine the line of bump
+    const result = await execWithErrorAsync("git rev-parse --abbrev-ref HEAD", { cwd: resolvedRoot }, resolvedRoot, false);
+    if (result.error) {
+        process.exit(1);
+    }
+
+    const branchName = result.stdout;
+    if (branchName !== "master\n" && !branchName.startsWith("release/")) {
+        console.error(`ERROR: Unrecognized branch '${branchName}'`);
+        process.exit(2)
+    }
+
+    const versionBump = result.stdout == "master\n" ? "minor" : "patch";
+    console.log(`Bumping ${versionBump} version`);
 
     // Load the package
     const repo = new FluidRepoBase(resolvedRoot);
@@ -178,7 +193,7 @@ async function main() {
 
     const bumpMonoRepo = async (monoRepo: MonoRepo) => {
         const repoPath = repo.getMonoRepoPath(monoRepo)!;
-        return await execWithErrorAsync("npx lerna version minor --no-push --no-git-tag-version -y && npm run build:genver", {
+        return await execWithErrorAsync(`npx lerna version ${versionBump} --no-push --no-git-tag-version -y && npm run build:genver`, {
             cwd: repoPath,
         }, repoPath, false);
     }
@@ -193,7 +208,7 @@ async function main() {
 
     for (const pkg of packageNeedBump) {
         console.log(`Bumping ${pkg.name}`);
-        let cmd = "npm version minor";
+        let cmd = `npm version ${versionBump}`;
         if (pkg.getScript("build:genver")) {
             cmd += " && npm run build:genver";
         }
@@ -203,7 +218,7 @@ async function main() {
     // Package json has changed. Reload.
     repo.reload();
 
-    await bumpGeneratorFluid(buildPackages, generatorPackage, templatePackage);
+    await bumpGeneratorFluid(buildPackages, generatorPackage, templatePackage, versionBump);
 
     // Generate has changed. Reload.
     generatorPackage.reload();
