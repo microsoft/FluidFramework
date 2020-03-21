@@ -31,6 +31,13 @@ function isOldestClient(container: Container) {
     return false;
 }
 
+/**
+ * Ensures that the given container has an approved code proposal, and proposes the code package passed if needed.
+ * Note that although this guarantees an approved code proposal before returning, the context may not have been
+ * reloaded yet.
+ * @param container - The container to be initialized with the code
+ * @param pkgForCodeProposal - The code to propose if a proposal has not already been made
+ */
 export async function initializeContainerCode(
     container: Container,
     pkgForCodeProposal: IFluidCodeDetails,
