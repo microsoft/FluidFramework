@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import {
     ISharedDirectory,
     IDirectory,
@@ -26,11 +26,12 @@ export interface ITabsTypes {
     fabricIconName: string;
 }
 
-export interface ITabsDataModel extends EventEmitter{
-    getComponent(id: string): Promise<IComponent>;
+export interface ITabsDataModel extends EventEmitter {
+    getComponentTab(id: string): Promise<IComponent>;
     getTabIds(): string[];
     createTab(type: string): Promise<string>;
     getNewTabTypes(): ITabsTypes[];
+    root: ISharedDirectory;
 }
 
 export class TabsDataModel extends EventEmitter implements ITabsDataModel {
@@ -38,10 +39,9 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
     private readonly tabs: IDirectory;
 
     constructor(
-        root: ISharedDirectory,
+        public root: ISharedDirectory,
         private readonly internalRegistry: IComponentRegistryDetails,
-        private readonly createAndAttachComponent: (id: string, pkg: string, props?: any) => Promise<IComponent>,
-        public getComponent: (id: string) => Promise<IComponent>,
+        private readonly createAndAttachComponent: (pkg: string, props?: any) => Promise<IComponent>,
     ) {
         super();
 
@@ -67,15 +67,19 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
 
     public async createTab(type: string): Promise<string> {
         const newId = uuid();
-        const component = await this.createAndAttachComponent(newId, type);
+        const component = await this.createAndAttachComponent(type);
         this.tabs.set(newId, component.IComponentHandle);
         this.emit("newTab", true);
         return newId;
     }
 
+    public getComponentTab(id: string): Promise<IComponent> {
+        return this.tabs.get<IComponentHandle<IComponent>>(id).get();
+    }
+
     public getNewTabTypes(): ITabsTypes[] {
         const response: ITabsTypes[] = [];
-        this.internalRegistry.getFromCapabilities("IComponentHTMLVisual").forEach((e) => {
+        this.internalRegistry.getFromCapabilities("IComponentHTMLView").forEach((e) => {
             response.push({
                 type: e.type,
                 friendlyName: e.friendlyName,
