@@ -15,7 +15,8 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { ComponentHandle } from "@microsoft/fluid-component-runtime";
-import uuid from "uuid/v4";
+// eslint-disable-next-line import/no-internal-modules
+import * as uuid from "uuid/v4";
 import { serviceRoutePathRoot } from "../containerServices";
 
 /**
