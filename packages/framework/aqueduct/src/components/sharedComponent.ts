@@ -149,7 +149,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     }
 
     /**
-     * Calls create, initialize, and attach on a new component with specified ID
+     * Calls create, initialize, and attach on a new component with random generated ID
      *
      * @param pkg - package name for the new component
      * @param props - optional props to be passed in
