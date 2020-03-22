@@ -94,7 +94,9 @@ export async function fetchJoinSession(
  * @param getVroomToken - A function that gets the Vroom token
  * @param getPushToken - A function that gets the push token
  */
-export async function getSocketStorageDiscovery(
+// Function has to be syncronous (i.e. no awaits) in order to be correct!
+// eslint-disable-next-line @typescript-eslint/promise-function-async
+export function getSocketStorageDiscovery(
     appId: string,
     driveId: string,
     itemId: string,
@@ -107,7 +109,7 @@ export async function getSocketStorageDiscovery(
     // If the result is valid and used within an hour we put the same result again with updated time
     // to keep using it for consecutive join session calls.
     // On error, the delta connection will invalidate it.
-    let cachedResultP: Promise<ISocketStorageDiscovery> = await cache.sessionStorage.get(joinSessionKey);
+    let cachedResultP: Promise<ISocketStorageDiscovery> = cache.sessionStorage.get(joinSessionKey);
 
     if (cachedResultP === undefined) {
         cachedResultP = fetchJoinSession(

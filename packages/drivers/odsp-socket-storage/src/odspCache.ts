@@ -20,6 +20,24 @@ export interface ICache {
     put(key: string, value: any, expiryTime?: number);
 }
 
+export interface ISessionCache {
+    /**
+     * Get the cache value of the key
+     * This is syncronous API
+     */
+    get(key: string): any;
+
+    /**
+     * Deletes value in storage
+     */
+    remove(key: string);
+
+    /**
+     * puts value into cache
+     */
+    put(key: string, value: any, expiryTime?: number);
+}
+
 /**
  * Internal cache interface used within driver only
  */
@@ -32,7 +50,7 @@ export interface IOdspCache {
     /**
      * session cache - non-serializable content is allowed
      */
-    readonly sessionStorage: ICache;
+    readonly sessionStorage: ISessionCache;
 }
 
 export class LocalCache implements ICache {
