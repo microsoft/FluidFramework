@@ -42,8 +42,8 @@ Consumers of the Fluid Framework NPM packages **must use a TypeScript version >=
 
 ::: danger Supported versions
 
-- Current release version: `0.14.x`
-- Supported releases: `>=0.13.x, <=0.14.x`
+- Current release version: `0.15.x`
+- Supported releases: `>=0.14.x, <=0.15.x`
 
 [Learn more about Fluid's release process](./contributing/release-process.md)
 
