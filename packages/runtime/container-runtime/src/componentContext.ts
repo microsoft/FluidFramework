@@ -117,10 +117,6 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this._hostRuntime.snapshotFn;
     }
 
-    public get closeFn(): () => void {
-        return this._hostRuntime.closeFn;
-    }
-
     public get branch(): string {
         return this._hostRuntime.branch;
     }
@@ -336,10 +332,6 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
     public async getBlobMetadata(): Promise<IGenericBlob[]> {
         return this.blobManager.getBlobMetadata();
-    }
-
-    public close(): void {
-        this._hostRuntime.closeFn();
     }
 
     /**

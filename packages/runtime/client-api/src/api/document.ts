@@ -103,6 +103,7 @@ export class Document extends EventEmitter {
         public readonly runtime: ComponentRuntime,
         public readonly context: IComponentContext,
         private readonly root: ISharedMap,
+        private readonly closeFn?: () => void,
     ) {
         super();
     }
@@ -195,7 +196,10 @@ export class Document extends EventEmitter {
      */
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public close() {
-        return this.runtime.close();
+        if (this.closeFn === undefined) {
+            throw new Error("closeFn handler was not provided to Document");
+        }
+        return this.closeFn();
     }
 
     public async uploadBlob(file: IGenericBlob): Promise<IGenericBlob> {

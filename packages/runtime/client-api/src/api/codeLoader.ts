@@ -37,6 +37,8 @@ export class Chaincode implements IComponentFactory {
 
     public get IComponentFactory() { return this; }
 
+    public constructor(private readonly closeFn?: () => void) {}
+
     public instantiateComponent(context: IComponentContext): void {
         // Create channel factories
         const mapFactory = map.SharedMap.getFactory();
@@ -78,10 +80,10 @@ export class Chaincode implements IComponentFactory {
         }
 
         // Create the underlying Document
-        async function createDocument() {
+        const createDocument = async () => {
             root = await runtime.getChannel(rootMapId) as map.ISharedMap;
-            return new Document(runtime, context, root);
-        }
+            return new Document(runtime, context, root, this.closeFn);
+        };
         const documentP = createDocument();
 
         // And then return it from requests
@@ -122,7 +124,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
     }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const chaincode = new Chaincode();
+        const chaincode = new Chaincode(context.closeFn);
 
         const runtime = await ContainerRuntime.load(
             context,

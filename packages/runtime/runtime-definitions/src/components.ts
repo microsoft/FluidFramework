@@ -97,15 +97,6 @@ export interface IComponentRuntime extends
     changeConnectionState(value: ConnectionState, clientId?: string);
 
     /**
-     * @deprecated in 0.14 async close()
-     * Call snapshot separately if needed, then call dispose
-     *
-     * Closes the component. Once closed the component will not receive any new ops and should
-     * not attempt to generate them.
-     */
-    close(): Promise<void>;
-
-    /**
      * Generates a snapshot of the given component
      */
     snapshotInternal(fullTree?: boolean): Promise<ITreeEntry[]>;
@@ -257,7 +248,6 @@ export interface IComponentContext extends EventEmitter {
     readonly loader: ILoader;
     readonly hostRuntime: IHostRuntime;
     readonly snapshotFn: (message: string) => Promise<void>;
-    readonly closeFn: () => void;
     readonly createProps?: any;
 
     /**
@@ -364,7 +354,6 @@ export interface IHostRuntime extends
     readonly submitFn: (type: MessageType, contents: any) => number;
     readonly submitSignalFn: (contents: any) => void;
     readonly snapshotFn: (message: string) => Promise<void>;
-    readonly closeFn: () => void;
     readonly scope: IComponent;
 
     /**
