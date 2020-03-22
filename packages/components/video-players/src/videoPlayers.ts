@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import {
     IComponent,
     IComponentHandleContext,
@@ -13,12 +12,12 @@ import {
     IRequest,
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
-import { ComponentHandle, ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { ComponentHandle } from "@microsoft/fluid-component-runtime";
 import { IComponentLayout } from "@microsoft/fluid-framework-experimental";
 import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
-import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
-import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
-import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+import { SharedDirectory, ISharedDirectory } from "@microsoft/fluid-map";
+import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
+import { SharedComponent, SharedComponentFactory } from "@microsoft/fluid-component-base";
 
 declare global {
     interface Window {
@@ -149,32 +148,29 @@ export class VideoPlayer implements
     }
 }
 
-export class VideoPlayerCollection extends EventEmitter implements
-    IComponentLoadable, IComponentRouter, IComponentCollection {
+export class VideoPlayerCollection extends SharedComponent<ISharedDirectory> implements
+    IComponentCollection
+{
+    private static readonly factory = new SharedComponentFactory(
+        "@fluid-example/video-players",
+        VideoPlayerCollection,
+        SharedDirectory.getFactory(),
+    );
 
-    public static async load(runtime: IComponentRuntime, context: IComponentContext) {
-        const collection = new VideoPlayerCollection(runtime, context);
-        await collection.initialize();
+    public static getFactory(): IComponentFactory { return VideoPlayerCollection.factory; }
 
-        return collection;
+    public static create(parentContext: IComponentContext, props?: any) {
+        return VideoPlayerCollection.factory.create(parentContext, props);
     }
+
+    public create() { this.initialize().catch((error) => { this.context.error(error); }); }
+    public async load() { await this.initialize(); }
 
     public get IComponentRouter() { return this; }
     public get IComponentLoadable() { return this; }
     public get IComponentCollection() { return this; }
 
-    public url: string;
-    public handle: ComponentHandle;
-
     private readonly videoPlayers = new Map<string, VideoPlayer>();
-    private root: ISharedMap;
-
-    constructor(private readonly runtime: IComponentRuntime, context: IComponentContext) {
-        super();
-
-        this.url = context.id;
-        this.handle = new ComponentHandle(this, "", runtime.IComponentHandleContext);
-    }
 
     public changeValue(key: string, newValue: number) {
         this.root.set(key, newValue);
@@ -217,13 +213,6 @@ export class VideoPlayerCollection extends EventEmitter implements
     }
 
     private async initialize() {
-        if (!this.runtime.existing) {
-            this.root = SharedMap.create(this.runtime, "root");
-            this.root.register();
-        } else {
-            this.root = await this.runtime.getChannel("root") as ISharedMap;
-        }
-
         // TODO for simplicity initializing youtube api now but it's probably not always the case we will want to do
         // this - especially since we may just be loading the model data here
         const youTubeApi = await YouTubeAPI.GetOrCreate();
@@ -240,7 +229,7 @@ export class VideoPlayerCollection extends EventEmitter implements
                     this));
         }
 
-        this.root.on("valueChanged", (changed, local) => {
+        this.root.on("valueChanged", (changed) => {
             if (this.videoPlayers.has(changed.key)) {
                 // TODO add support for video playback values
                 // this.videoPlayers.get(changed.key).update(this.root.get(changed.key));
@@ -258,28 +247,4 @@ export class VideoPlayerCollection extends EventEmitter implements
     }
 }
 
-export class VideoPlayerFactoryComponent implements IComponentFactory {
-    public static readonly type = "@fluid-example/video-players";
-    public readonly type = VideoPlayerFactoryComponent.type;
-
-    public get IComponentFactory() { return this; }
-
-    public instantiateComponent(context: IComponentContext): void {
-        const dataTypes = new Map<string, ISharedObjectFactory>();
-        const mapFactory = SharedMap.getFactory();
-        dataTypes.set(mapFactory.type, mapFactory);
-
-        const runtime = ComponentRuntime.load(
-            context,
-            dataTypes,
-        );
-
-        const progressCollectionP = VideoPlayerCollection.load(runtime, context);
-        runtime.registerRequestHandler(async (request: IRequest) => {
-            const progressCollection = await progressCollectionP;
-            return progressCollection.request(request);
-        });
-    }
-}
-
-export const fluidExport: IComponentFactory = new VideoPlayerFactoryComponent();
+export const fluidExport: IComponentFactory = VideoPlayerCollection.getFactory();
