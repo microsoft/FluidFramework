@@ -1,4 +1,12 @@
-# Fluid Loader
+# Loader and Container
+
+- [`Fluid loader`](#Fluid-loader)
+- [`Audience`](#Audience)
+- [`Error Handling`](#Error-handling)
+- [`Connectivity events`](#Connectivity-events)
+- [`Proposal Lifetime`](#Proposal-lifetime)
+
+## Fluid Loader
 
 The loader makes up the minimal kernal of the Fluid runtime. This kernel is responsible for providing access to
 Fluid storage as well as consensus over a quorum of clients.
@@ -8,16 +16,48 @@ Storage includes snapshots as well as the live and persisted operation stream.
 The consensus system allows clients within the collaboration window to agree on document properties. One
 example of this is the npm package that should be loaded to process operations applied to the document.
 
-## Document and channels
+## Audience
+**Container.audience** exposes an object that tracks all connected clients to same document.
+- **getMembers()** can be used to retrive current set of users
+- **getMember()** can be used to get IClient information about particular client (returns undefined if such client is not connected)
+- **"addMember"** event is raised when new member joins
+- **"removeMember"** event is raised when an earlier connected member leaves (disconnects from document)
 
-The base document channel is 'owned' and run by the chaincode of the loader. It should be versioned and require
-a specific loader version.
+**getMembers()** and **"addMember"** event provide _IClient_ interface that describes type of connection, permissions and user inforamtion. IClient.mode in particular describes connectivity mode of a client:
+- "write" means client has read/write connection, can change document, and participates in Quorum
+- "read" indicates client as read connection. Such clients can't modify document and do not participate in quorum. That said, "read" does not indicate client permissions, i.e. client might have read-only permissions to a file, or maybe connected temporarely as read-only, to reduce COGS on server and not "modify" document (any read-write connection generates join & leave messages that modify document and change "last edited by" property)
 
-The channels of the document run separate code as defined by the consensus field. It's possible we could further
-split this and have each channel have an independent code source and use the consensus to propagate it.
+Please note that if this client losses connection to ordering server, then audience infomration is not reset at that moment. It will become stale while client is disconnected, and will refresh the moment client connects back to document. For more details, please see [`Connectivity events`](#Connectivity-events) section
 
-We could also possibly define a runtime code that gets executed independent of a chain - this would be for UI,
-etc...
+## Error handling
+
+There are two ways errors are exposed:
+1. At open time, by returning rejected promise from Loader.resolve() or Loader.request()
+2. As an **"error"** event on resolved container.
+
+Most errors can shows up on both workflows. For example, URI may point to deleted file, which will result in errors on container open. But file can also be deleted while container is oponed, resulting in same error type being raised through "erorr" handler.
+
+Errors raised by those two paths are typed: errors are of [IError](../driver-definitions/src/error.ts) type, which is a union of interfaces that have one thing in common - they have the following  field, describing type of an error (and appropriate interface of error object):
+>     readonly errorType: ErrorType.generalError;
+ErrorType enum represents all  error types that can be raised by container.
+For a fill list of error interfaces please see interfaces that are part of [IError](../driver-definitions/src/error.ts) type.
+
+Please note that not all errors raised through this mechanism are catastrophic in nature. For example, **IThrottlingError** indicates likely temporary service issue. Errors contain **critical** field indicatinig if it's critical error or not:
+>     critical?: boolean;
+ That said, it's recomended to listed on **"closed"** event instead of relying on thsi field. **"closed"** event is raised when container is closed, i.e. it no longer connected to ordering service due to some error. An event contans optional error object of IError type describing the reason for closure, or no error if container was closed due to host applicaion calling Container.close() (without specifying error).
+
+## Connectivity events
+Container raises 2  events to notify hosting applicaion about connectivity issues and connectivity status.
+- **"connected"** is raised when container is connected and is up-to-date, i.e. changes are flowing between client and server.
+- **"disconnected"** is raised when container lost connectivity (for any reason).
+
+Container also exposes **Container.connected** property to indicate current state.
+
+In normal circumstances, container will attempt to reconnect back to ordering service as quickly as possible. But it will scale down retries if computer is offline.  That said, if IThrottlingError error is rainsed through **"error"** handler, then container is following storage throttling policy and will attempt to reconnect after some amount of time (**IThrottlingError.retryAfterSeconds**).
+
+Container will also not attempt to reconnect on lost connection if **Container.setAutoReconnect(false)** was called prior to loss of connection. This might be useful if hosting applicaiton implements "user away" type of experience to reduce cost on both client and server of maintaining connection while user is away. Calling setAutoReconnect(true) will reenable automatic reconnections, but host might need to allow extra time for reconneciton as it likely involves token fetch and processing of a lot of ops generated by other clients while this client was not connected.
+
+Hosting applicaion can use these events in order to indicate to user when user changes are not propagating through the system, and thus can be lost (on browser tab being closed). It's advicesd to use some delay (like 5 seconds) before showing such UI, as network connectivity might be intermitent.  Also if container was offline for very long period of time due to **Container.setAutoReconnect(false)** being called, it might take a while to get connected and current.
 
 ## Proposal lifetime
 
