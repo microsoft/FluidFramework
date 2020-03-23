@@ -38,8 +38,7 @@ export function resolveUrl(
             clientSecret: microsoftConfiguration.secret,
         };
         const resolvedP = spoGetResolvedUrl(tenantId, documentId,
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            request.session!.tokens, clientConfig);
+            request.session?.tokens, clientConfig);
         const fullTreeP = Promise.resolve(undefined);
         return [resolvedP, fullTreeP];
     } else {
