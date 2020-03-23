@@ -1,7 +1,9 @@
 # Loader and Container
 
 - [`Fluid loader`](#Fluid-loader)
+- [`Container Lifetime`](#Container-lifetime)
 - [`Audience`](#Audience)
+- [`ClientID and client identification`](#ClientId-and-client-identification)
 - [`Error Handling`](#Error-handling)
 - [`Connectivity events`](#Connectivity-events)
 - [`Proposal Lifetime`](#Proposal-lifetime)
@@ -16,6 +18,22 @@ Storage includes snapshots as well as the live and persisted operation stream.
 The consensus system allows clients within the collaboration window to agree on document properties. One
 example of this is the npm package that should be loaded to process operations applied to the document.
 
+## Container Lifetime
+
+### Loading
+
+Container is returned as result of Loader.resolve() call. Loader can cache containers, so if same URI is requested from same loader instance, earlier created container might be returned. This is important, as some of the headers (like **pause**) might be ignored because of Container reuse.
+
+**ILoaderHeader** in [loader.ts](../container-definitions/src/loader.ts) describes properties controlling container loading.
+
+### Connectivity
+Usually container is returned when state of container (and components) is rehydrated from snapshot. Unless **IRequest.headers.pause** is specified, connection to ordering service will be established at some point (asynchronously) and latest ops would be processed, allowing local changes to flow form client to server. **Container.connected** indicates whether connection to ordering service is established, and  [`Connectivity events`](#Connectivity-events) are notifying about connectivity changes.
+
+### Close
+Container can be closed directly by host by calling **Container.close()**. Once closed, container terminates connection to ordering service, and any local changes (former or future) do not propagate to storage.
+
+Container can also be closed by runtime itself as result of some critical error. Critical errors can be internal (like violation in op ordering invariants), or external (file was deleted). Please see [`Error Handling`](#Error-handling) for more details
+
 ## Audience
 **Container.audience** exposes an object that tracks all connected clients to same document.
 - **getMembers()** can be used to retrieve current set of users
@@ -23,13 +41,21 @@ example of this is the npm package that should be loaded to process operations a
 - **"addMember"** event is raised when new member joins
 - **"removeMember"** event is raised when an earlier connected member leaves (disconnects from document)
 
-**getMembers()** and **"addMember"** event provide _IClient_ interface that describes type of connection, permissions and user information.
-- IClient.details.capabilities.interactive is true for human clients, and false for agents (aka robots). This property should be used to filter out bots when exposing present users (like in coauth gallery)
+**getMembers()** and **"addMember"** event provide _IClient_ interface that describes type of connection, permissions and user information:
+- clientId is the key - it is unique ID for a session. Please see [`ClientID and client identification`](#ClientId-and-client-identification) for more details on it, as well as how to properly differentiate human vs. agent clients and difference between client ID & user ID.
 - IClient.mode in particular describes connectivity mode of a client:
     - "write" means client has read/write connection, can change document, and participates in Quorum
     - "read" indicates client as read connection. Such clients can't modify document and do not participate in quorum. That said, "read" does not indicate client permissions, i.e. client might have read-only permissions to a file, or maybe connected temporarily as read-only, to reduce COGS on server and not "modify" document (any read-write connection generates join & leave messages that modify document and change "last edited by" property)
 
 Please note that if this client losses connection to ordering server, then audience information is not reset at that moment. It will become stale while client is disconnected, and will refresh the moment client connects back to document. For more details, please see [`Connectivity events`](#Connectivity-events) section
+
+## ClientID and client identification
+
+**Container.clientId** exposes ID of a client. Ordering service assigns unique random IDs to all connected clients. Please note that if same user opened same document on 3 different machines, then there would be 3 clientIDs tracking 3 sessions for the same user.
+
+A single user connecting to a document may result in multiple sessions for the document (and thus multiple clientID). This is due to various agents (including summarizing agents) working along humans. You can leverage **IClient.details.capabilities.interactive** to differentiate humans vs. agents. This property should be used to filter out bots when exposing user presence (like in coauth gallery)
+
+IClient.user represents user ID (in storage) and can be used to identify sessions from same user (from same or different machines).
 
 ## Error handling
 
