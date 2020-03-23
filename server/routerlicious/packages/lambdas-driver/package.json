@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-server-lambdas-driver",
-  "version": "0.1003.0",
+  "version": "0.1004.0",
   "description": "Driver components for the Fluid service lambdas.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -44,9 +44,9 @@
   },
   "dependencies": {
     "@microsoft/fluid-common-utils": "^0.14.0",
-    "@microsoft/fluid-server-services": "^0.1003.0",
-    "@microsoft/fluid-server-services-core": "^0.1003.0",
-    "@microsoft/fluid-server-services-utils": "^0.1003.0",
+    "@microsoft/fluid-server-services": "^0.1004.0",
+    "@microsoft/fluid-server-services-core": "^0.1004.0",
+    "@microsoft/fluid-server-services-utils": "^0.1004.0",
     "async": "^2.6.1",
     "lodash": "^4.17.11",
     "moniker": "^0.1.2",
@@ -56,7 +56,7 @@
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.15.0",
     "@microsoft/fluid-build-common": "^0.14.0",
-    "@microsoft/fluid-server-test-utils": "^0.1003.0",
+    "@microsoft/fluid-server-test-utils": "^0.1004.0",
     "@types/async": "^2.0.50",
     "@types/lodash": "^4.14.118",
     "@types/mocha": "^5.2.5",

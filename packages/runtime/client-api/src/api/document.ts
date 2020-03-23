@@ -103,6 +103,7 @@ export class Document extends EventEmitter {
         public readonly runtime: ComponentRuntime,
         public readonly context: IComponentContext,
         private readonly root: ISharedMap,
+        private readonly closeFn: () => void,
     ) {
         super();
     }
@@ -193,9 +194,8 @@ export class Document extends EventEmitter {
     /**
      * Closes the document and detaches all listeners
      */
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public close() {
-        return this.runtime.close();
+        return this.closeFn();
     }
 
     public async uploadBlob(file: IGenericBlob): Promise<IGenericBlob> {

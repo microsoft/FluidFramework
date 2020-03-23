@@ -5,8 +5,8 @@
 
 import { strict as assert } from "assert";
 import { randomId, TokenList, TagName } from "@fluid-example/flow-util-lib";
-import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { IComponent, IComponentHandle, IComponentHTMLOptions } from "@microsoft/fluid-component-core-interfaces";
+import { SharedComponent, SharedComponentFactory } from "@microsoft/fluid-component-base";
+import { IComponentHandle, IComponentHTMLOptions } from "@microsoft/fluid-component-core-interfaces";
 import {
     createInsertSegmentOp,
     createRemoveRangeOp,
@@ -23,21 +23,19 @@ import {
     reservedTileLabelsKey,
     TextSegment,
 } from "@microsoft/fluid-merge-tree";
-import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import {
     SequenceDeltaEvent,
     SequenceMaintenanceEvent,
     SharedString,
-    SharedStringFactory,
     SharedStringSegment,
 } from "@microsoft/fluid-sequence";
+import { ISharedDirectory, SharedDirectory } from "@microsoft/fluid-map";
 import { clamp, emptyArray } from "../util";
 import { IHTMLAttributes } from "../util/attr";
-
+import { documentType } from "../package";
 import { debug } from "./debug";
 import { SegmentSpan } from "./segmentspan";
-
-export { SegmentSpan };
 
 export const enum DocSegmentKind {
     text = "text",
@@ -125,7 +123,19 @@ const accumAsLeafAction = (
 //       See: https://github.com/microsoft/Prague/issues/2408
 const endOfTextSegment = undefined as unknown as SharedStringSegment;
 
-export class FlowDocument extends PrimedComponent {
+export class FlowDocument extends SharedComponent<ISharedDirectory> {
+    private static readonly factory = new SharedComponentFactory(
+        documentType,
+        FlowDocument,
+        /* root: */ SharedDirectory.getFactory(),
+        [SharedString.getFactory()]);
+
+    public static getFactory(): IComponentFactory { return FlowDocument.factory; }
+
+    public static create(parentContext: IComponentContext, props?: any) {
+        return FlowDocument.factory.create(parentContext, props);
+    }
+
     private get sharedString() { return this.maybeSharedString; }
 
     public get length() {
@@ -142,19 +152,26 @@ export class FlowDocument extends PrimedComponent {
 
     private maybeSharedString?: SharedString;
 
-    constructor(runtime: IComponentRuntime, context: IComponentContext) {
-        super(runtime, context);
+    public create() {
+        // For 'findTile(..)', we must enable tracking of left/rightmost tiles:
+        // (See: https://github.com/Microsoft/Prague/pull/1118)
+        Object.assign(this.runtime, { options: { ...(this.runtime.options || {}), blockUpdateMarkers: true } });
+
+        this.maybeSharedString = SharedString.create(this.runtime, "text");
+        this.root.set("text", this.maybeSharedString.handle);
+    }
+
+    public async load() {
+        // For 'findTile(..)', we must enable tracking of left/rightmost tiles:
+        // (See: https://github.com/Microsoft/Prague/pull/1118)
+        Object.assign(this.runtime, { options: { ...(this.runtime.options || {}), blockUpdateMarkers: true } });
+
+        const handle = await this.root.wait<IComponentHandle<SharedString>>("text");
+        this.maybeSharedString = await handle.get();
     }
 
     public async getComponentFromMarker(marker: Marker) {
-        const url = marker.properties.url as string;
-
-        const response = await this.context.hostRuntime.request({ url });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
-            return Promise.reject("Not found");
-        }
-
-        return response.value as IComponent;
+        return marker.properties.handle.get();
     }
 
     public getSegmentAndOffset(position: number) {
@@ -287,10 +304,10 @@ export class FlowDocument extends PrimedComponent {
         this.sharedString.insertMarker(position, ReferenceType.Tile, FlowDocument.lineBreakProperties);
     }
 
-    public insertComponent(position: number, url: string, view: string, componentOptions: object, style?: string, classList?: string[]) {
+    public insertComponent(position: number, handle: IComponentHandle, view: string, componentOptions: object, style?: string, classList?: string[]) {
         this.sharedString.insertMarker(position, ReferenceType.Tile, Object.freeze({
             ...FlowDocument.inclusionProperties,
-            componentOptions, url, style, classList: classList && classList.join(" "), view,
+            componentOptions, handle, style, classList: classList && classList.join(" "), view,
         }));
     }
 
@@ -461,19 +478,6 @@ export class FlowDocument extends PrimedComponent {
         return s.join("");
     }
 
-    protected async componentInitializingFirstTime() {
-        // For 'findTile(..)', we must enable tracking of left/rightmost tiles:
-        // (See: https://github.com/Microsoft/Prague/pull/1118)
-        Object.assign(this.runtime, { options: { ...(this.runtime.options || {}), blockUpdateMarkers: true } });
-
-        const text = SharedString.create(this.runtime, "text");
-        this.root.set("text", text.handle);
-    }
-
-    protected async componentHasInitialized() {
-        const handle = await this.root.wait<IComponentHandle<SharedString>>("text");
-        this.maybeSharedString = await handle.get();
-    }
 
     private getOppositeMarker(marker: Marker, oldPrefixLength: number, newPrefix: string) {
         return this.sharedString.getMarkerFromId(`${newPrefix}${marker.getId().slice(oldPrefixLength)}`);
@@ -501,5 +505,3 @@ export class FlowDocument extends PrimedComponent {
         }
     }
 }
-
-export const flowDocumentFactory = new PrimedComponentFactory(FlowDocument, [new SharedStringFactory()]);

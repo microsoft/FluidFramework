@@ -13,6 +13,7 @@ import {
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { GridView } from "./grid";
 import * as styles from "./index.css";
+import { tableViewType } from "./runtime";
 
 const template = new Template({
     tag: "div",
@@ -34,15 +35,8 @@ const template = new Template({
 });
 
 export class TableView extends PrimedComponent implements IComponentHTMLView {
-    public static getFactory() { return TableView.factory; }
-
-    private static readonly factory = new PrimedComponentFactory(
-        TableView,
-        [],
-        new Map([
-            [TableDocumentType, import("@fluid-example/table-document").then((m) => m.TableDocument.getFactory())],
-        ]),
-    );
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+    public static getFactory() { return factory; }
 
     public get IComponentHTMLView() { return this; }
 
@@ -108,3 +102,19 @@ export class TableView extends PrimedComponent implements IComponentHTMLView {
 
     private get docId() { return `${this.id}-doc`; }
 }
+
+export class TableViewFactory extends PrimedComponentFactory {
+    public static readonly type = tableViewType;
+    public readonly type = TableViewFactory.type;
+
+    constructor() {
+        super(
+            TableView,
+            [],
+            [
+                [TableDocumentType, import("@fluid-example/table-document").then((m) => m.TableDocument.getFactory())],
+            ]);
+    }
+}
+
+const factory = new TableViewFactory();
