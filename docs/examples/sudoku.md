@@ -14,7 +14,7 @@ environment](../guide/README.md#set-up-your-development-environment).
 
 ### Clone the tutorial repository
 
-First, clone [the tutorial repository](https://github.com/microsoft/fluid-tutorial-sudoku).
+First, clone the <var-link text="Sudoku tutorial repository" href="$sudokuRepo" />.
 
 Once you've cloned the repo, you'll need to set up access to the [private Fluid NPM feed](../guide/package-feed.md). On
 Windows, you can run the `npm run auth` command to automate this process.

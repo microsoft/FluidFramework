@@ -18,7 +18,7 @@ footer: Made with ❤ in Redmond.
 
 ::: tip
 
-The URL to this documentation is <https://aka.ms/fluid>.
+The URL to this documentation is <var-link href="$docsUrl" />
 
 :::
 
