@@ -55,10 +55,10 @@ class TestRootComponent extends PrimedComponent implements IComponentRunnable {
     public run = () => Promise.resolve();
 
     // Make this function public so TestHost can use them
-    public async createAndAttachComponent<T extends IComponentLoadable>(
-        id: string, type: string, props?: any,
+    public async createAndAttachComponent_NEW<T extends IComponentLoadable>(
+        type: string, props?: any,
     ): Promise<T> {
-        return super.createAndAttachComponent<T>(id, type, props);
+        return super.createAndAttachComponent_NEW<T>(type, props);
     }
 
     // Make this function public so TestHost can use them
@@ -219,13 +219,12 @@ export class TestHost {
      * @param services component services for query interface
      * @returns Component object
      */
-    public async createAndAttachComponent<T extends IComponentLoadable>(
-        id: string,
+    public async createAndAttachComponent_NEW<T extends IComponentLoadable>(
         type: string,
         props?: any,
     ): Promise<T> {
         const root = await this.root;
-        return root.createAndAttachComponent<T>(id, type, props);
+        return root.createAndAttachComponent_NEW<T>(type, props);
     }
 
     /**

@@ -9,6 +9,7 @@ import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aquedu
 import {
     IComponentHTMLOptions,
     IComponentHTMLView,
+    IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { GridView } from "./grid";
@@ -58,7 +59,7 @@ export class TableView extends PrimedComponent implements IComponentHTMLView {
         elm.append(this.templateRoot);
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.getComponent<TableDocument>(this.docId, /* wait: */ true).then((doc) => {
+        this.root.get<IComponentHandle<TableDocument>>(this.docId).get().then((doc) => {
             const grid = template.get(this.templateRoot, "grid");
             const gridView = new GridView(doc, this);
             grid.appendChild(gridView.root);
@@ -95,7 +96,8 @@ export class TableView extends PrimedComponent implements IComponentHTMLView {
     // #endregion IComponentHTMLView
 
     protected async componentInitializingFirstTime() {
-        const doc = await this.createAndAttachComponent<TableDocument>(this.docId, TableDocumentType);
+        const doc = await this.createAndAttachComponent_NEW<TableDocument>(TableDocumentType);
+        this.root.set(this.docId, doc.handle);
         doc.insertRows(0, 5);
         doc.insertCols(0, 8);
     }

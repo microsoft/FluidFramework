@@ -133,22 +133,6 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     }
 
     /**
-     * Calls create, initialize, and attach on a new component.
-     *
-     * @param id - unique component id for the new component
-     * @param pkg - package name for the new component
-     * @param props - optional props to be passed in
-     */
-    protected async createAndAttachComponent<T extends IComponent & IComponentLoadable>(
-        id: string | undefined, pkg: string, props?: any,
-    ): Promise<T> {
-        const componentRuntime = await this.context.createComponent(id, pkg, props);
-        const component = await this.asComponent<T>(componentRuntime.request({ url: "/" }));
-        componentRuntime.attach();
-        return component;
-    }
-
-    /**
      * Calls create, initialize, and attach on a new component with random generated ID
      *
      * @param pkg - package name for the new component

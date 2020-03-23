@@ -86,8 +86,10 @@ export class TableDocument extends PrimedComponent implements ITable {
         minCol: number,
         maxRow: number,
         maxCol: number): Promise<ITable> {
-        return super.createAndAttachComponent<TableSlice>(sliceId, TableSliceType,
+        const component = await super.createAndAttachComponent_NEW<TableSlice>(sliceId, TableSliceType,
             { docId: this.runtime.id, name, minRow, minCol, maxRow, maxCol });
+        this.root.set(sliceId, (await component).handle);
+        return component;
     }
 
     public annotateRows(startRow: number, endRow: number, properties: PropertySet, op?: ICombiningOp) {
