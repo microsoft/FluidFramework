@@ -27,7 +27,7 @@ export interface IComponentCreator<T extends IComponent> {
 
     /**
      * Create a component
-     * @param context The component context being used to create the component
+     * @param context - The component context being used to create the component
      * (the created component will have its own new context created as well)
      * @returns A promise for a component that will have been initialized and attached
      * to the provided runtime's container

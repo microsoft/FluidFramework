@@ -323,7 +323,7 @@ export interface IComponentContext extends EventEmitter {
     /**
      * Take a package name and transform it into a path that can be used to find it
      * from this context, such as by looking into subregistries
-     * @param subpackage The subpackage to find in this context
+     * @param subpackage - The subpackage to find in this context
      * @returns A list of packages to the subpackage destination if found,
      * otherwise the original subpackage
      */
