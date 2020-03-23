@@ -17,7 +17,7 @@ export enum ErrorType {
 }
 
 export type IError = IGeneralError | IThrottlingError |
-IGeneralConnectionError | IAccessDeniedError | IFileNotFoundError |
+IGenericNetworkError | IAccessDeniedError | IFileNotFoundError |
 IServiceError | ISummarizingError | IWriteError | IFatalError;
 
 export interface IGeneralError {
@@ -41,7 +41,7 @@ interface IBaseConnectionError {
     critical?: boolean;
 }
 
-export interface IGeneralConnectionError extends IBaseConnectionError {
+export interface IGenericNetworkError extends IBaseConnectionError {
     readonly errorType: ErrorType.generalConnectionError;
 }
 

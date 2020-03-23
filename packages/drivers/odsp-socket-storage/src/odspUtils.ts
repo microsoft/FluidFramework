@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { isOnline, FatalError, createNetworkError, ThrottlingError, OnlineStatus } from "@microsoft/fluid-driver-utils";
+import { createNetworkError, OnlineStatus } from "@microsoft/fluid-driver-utils";
 import { IError } from "@microsoft/fluid-driver-definitions";
 import {
     default as fetch,
@@ -23,7 +23,8 @@ export function throwOdspNetworkError(
     statusCode: number,
     canRetry: boolean,
     response?: Response,
-    online?: string) {
+    online?: string,
+) {
     let message = errorMessage;
     if (response) {
         message = `${message}, msg = ${response.statusText}, type = ${response.type}`;
@@ -37,34 +38,35 @@ export function throwOdspNetworkError(
     );
 }
 
+/**
+ * This is exported for unit tests
+ */
 export function createOdspNetworkError(
     errorMessage: string,
     statusCode: number,
     canRetry: boolean,
     sprequestguid?: string,
-    online: string = OnlineStatus[isOnline()],
+    online?: string,
 ) {
-    const networkError = createNetworkError(errorMessage, statusCode, canRetry, online);
+    const networkError: IError = createNetworkError(
+        errorMessage,
+        canRetry,
+        statusCode,
+        undefined /*retryAfterSeconds*/,
+        online);
     (networkError as any).sprequestguid = sprequestguid;
     return networkError;
 }
 
-
 /**
  * Returns network error based on error object from ODSP socket (IOdspSocketError)
  */
-export function errorObjectFromOdspError(socketError: IOdspSocketError, retryFilter?: RetryFilter): IError {
-    if (socketError.code === 500) {
-        return new FatalError(socketError.message);
-    } else if (socketError.retryAfter) {
-        return new ThrottlingError(socketError.message, socketError.retryAfter);
-    } else {
-        return createOdspNetworkError(
-            socketError.message,
-            socketError.code,
-            retryFilter?.(socketError.code) ?? true,
-        );
-    }
+export function errorObjectFromSocketError(socketError: IOdspSocketError, retryFilter?: RetryFilter): IError {
+    return createNetworkError(
+        socketError.message,
+        retryFilter?.(socketError.code) ?? true,
+        socketError.code,
+        socketError.retryAfter);
 }
 
 /**

@@ -15,7 +15,7 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import { IOdspSocketError } from "./contracts";
 import { debug } from "./debug";
-import { errorObjectFromOdspError, socketErrorRetryFilter } from "./odspUtils";
+import { errorObjectFromSocketError, socketErrorRetryFilter } from "./odspUtils";
 
 const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 
@@ -105,7 +105,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             if (errorObject !== null && typeof errorObject === "object" && errorObject.canRetry) {
                 const socketError: IOdspSocketError = errorObject.socketError;
                 if (typeof socketError === "object" && socketError !== null) {
-                    throw errorObjectFromOdspError(socketError, socketErrorRetryFilter);
+                    throw errorObjectFromSocketError(socketError, socketErrorRetryFilter);
                 }
             }
             throw errorObject;
@@ -173,7 +173,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
                 // filter out retryable vs. non-retryable cases.
                 // Specifically, it will have one retry for 403 - see
                 // connectToDeltaStream() / getWithRetryForTokenRefresh() call.
-                const error = errorObjectFromOdspError(socketError);
+                const error = errorObjectFromSocketError(socketError);
 
                 // The server always closes the socket after sending this message
                 // fully remove the socket reference now
