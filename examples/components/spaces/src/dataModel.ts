@@ -14,7 +14,7 @@ import { Layout } from "react-grid-layout";
 export interface ISpacesDataModel extends EventEmitter {
     componentList: Map<string, Layout>;
     setComponentToolbar(id: string, type: string, url: string): Promise<IComponent>;
-    setComponent(id: string, type: string, url: string): void;
+    setComponent(id: string, type: string, url: string): Promise<IComponent>;
     getComponentToolbar(): Promise<IComponent>;
     addComponent<T extends IComponent & IComponentLoadable>(
         type: string,
@@ -105,16 +105,17 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
         return component as IComponent;
     }
 
-    public setComponent(id: string, type: string, url: string): void {
+    public async setComponent(id: string, type: string, url: string): Promise<IComponent> {
         const defaultModel: ISpacesModel = {
             type,
             layout: { x: 0, y: 0, w: 6, h: 2 },
         };
-        this.getComponent<IComponent>(id)
+        return this.getComponent<IComponent>(id)
             .then((returnedComponent) => {
                 if (returnedComponent) {
                     if (returnedComponent.IComponentLoadable) {
                         this.componentSubDirectory.set(id, defaultModel);
+                        return returnedComponent;
                     } else {
                         throw new Error("Component is not an instance of IComponentLoadable!!");
                     }

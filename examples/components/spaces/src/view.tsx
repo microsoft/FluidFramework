@@ -12,7 +12,7 @@ import { ISpacesDataModel } from "./dataModel";
 
 interface IEmbeddedComponentWrapperProps {
     id: string;
-    getComponent(id: string): Promise<IComponent>;
+    getComponent: (componentId: string) => Promise<IComponent>;
 }
 
 interface IEmbeddedComponentWrapperState {

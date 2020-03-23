@@ -63,6 +63,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView, IComp
         const type: string = options["type"];
         // eslint-disable-next-line dot-notation
         const url: string = options["url"];
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.dataModel.setComponent(id, type, url);
         // This is okay as we are not using the value returned from this function call anywhere
         // Instead, setComponent adds it to the sequence to be synchronously loaded
