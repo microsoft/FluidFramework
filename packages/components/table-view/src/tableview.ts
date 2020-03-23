@@ -13,7 +13,6 @@ import {
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { GridView } from "./grid";
 import * as styles from "./index.css";
-import { tableViewType } from "./runtime";
 
 export const tableViewType = "@fluid-example/table-view";
 
