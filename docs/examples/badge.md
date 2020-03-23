@@ -49,7 +49,7 @@ environment](../guide/README.md#set-up-your-development-environment).
 
 ### Clone the tutorial repository
 
-First, clone the [Badge tutorial repository](https://github.com/microsoft/fluid-tutorial-badge).
+First, clone the <var-link text="Badge example repository" href="$badgeRepo" />.
 
 Once you've cloned the repo, you'll need to set up access to the [private Fluid NPM feed](../guide/package-feed.md). On
 Windows, you can run the `npm run auth` command to automate this process.
