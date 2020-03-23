@@ -23,9 +23,11 @@ example of this is the npm package that should be loaded to process operations a
 - **"addMember"** event is raised when new member joins
 - **"removeMember"** event is raised when an earlier connected member leaves (disconnects from document)
 
-**getMembers()** and **"addMember"** event provide _IClient_ interface that describes type of connection, permissions and user information. IClient.mode in particular describes connectivity mode of a client:
-- "write" means client has read/write connection, can change document, and participates in Quorum
-- "read" indicates client as read connection. Such clients can't modify document and do not participate in quorum. That said, "read" does not indicate client permissions, i.e. client might have read-only permissions to a file, or maybe connected temporarily as read-only, to reduce COGS on server and not "modify" document (any read-write connection generates join & leave messages that modify document and change "last edited by" property)
+**getMembers()** and **"addMember"** event provide _IClient_ interface that describes type of connection, permissions and user information.
+- IClient.details.capabilities.interactive is true for human clients, and false for agents (aka robots). This property should be used to filter out bots when exposing present users (like in coauth gallery)
+- IClient.mode in particular describes connectivity mode of a client:
+    - "write" means client has read/write connection, can change document, and participates in Quorum
+    - "read" indicates client as read connection. Such clients can't modify document and do not participate in quorum. That said, "read" does not indicate client permissions, i.e. client might have read-only permissions to a file, or maybe connected temporarily as read-only, to reduce COGS on server and not "modify" document (any read-write connection generates join & leave messages that modify document and change "last edited by" property)
 
 Please note that if this client losses connection to ordering server, then audience information is not reset at that moment. It will become stale while client is disconnected, and will refresh the moment client connects back to document. For more details, please see [`Connectivity events`](#Connectivity-events) section
 
@@ -35,7 +37,7 @@ There are two ways errors are exposed:
 1. At open time, by returning rejected promise from Loader.resolve() or Loader.request()
 2. As an **"error"** event on resolved container.
 
-Most errors can shows up on both workflows. For example, URI may point to deleted file, which will result in errors on container open. But file can also be deleted while container is opened, resulting in same error type being raised through "ereor" handler.
+Most errors can shows up on both workflows. For example, URI may point to deleted file, which will result in errors on container open. But file can also be deleted while container is opened, resulting in same error type being raised through "error" handler.
 
 Errors raised by those two paths are typed: errors are of [IError](../driver-definitions/src/error.ts) type, which is a union of interfaces that have one thing in common - they have the following  field, describing type of an error (and appropriate interface of error object):
 >     readonly errorType: ErrorType.generalError;
