@@ -408,8 +408,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             throw new Error("Protocol Handler is undefined");
         }
         const protocolHandler = this.protocolHandler;
-        const quorumSnapshot = protocolHandler.quorum.snapshot();
-
+        const protocolSnapshot = protocolHandler.captureSummary();
         this.originalRequest = request;
         // Actually go and create the resolved document
         const expUrlResolver = resolver as IExperimentalUrlResolver;
@@ -418,8 +417,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
         const resolvedUrl = await expUrlResolver.createContainer(
             summary,
-            protocolHandler.sequenceNumber,
-            quorumSnapshot.values,
+            protocolSnapshot,
             request);
 
         if (resolvedUrl.type !== "fluid") {

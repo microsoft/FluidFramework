@@ -10,7 +10,13 @@ import {
     IUrlResolver,
     IExperimentalUrlResolver,
 } from "@microsoft/fluid-driver-definitions";
-import { ScopeType, ISummaryTree, ICommittedProposal } from "@microsoft/fluid-protocol-definitions";
+import {
+    ScopeType,
+    ISummaryTree,
+    ISummaryBlob,
+    IDocumentAttributes,
+    ICommittedProposal,
+} from "@microsoft/fluid-protocol-definitions";
 import { generateToken } from "@microsoft/fluid-server-services-client";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { IExperimentalDocumentStorage } from "@microsoft/fluid-server-services-core";
@@ -40,9 +46,8 @@ export class TestResolver implements IUrlResolver, IExperimentalUrlResolver {
     }
 
     public async createContainer(
-        summary: ISummaryTree,
-        sequenceNumber: number,
-        values: [string, ICommittedProposal][],
+        appSummary: ISummaryTree,
+        protocolSummary: ISummaryTree,
         request: IRequest,
     ): Promise<IResolvedUrl> {
         if (!this.testDeltaConnectionServer) {
@@ -53,12 +58,18 @@ export class TestResolver implements IUrlResolver, IExperimentalUrlResolver {
         if (!(expDocumentStorage && expDocumentStorage.isExperimentalDocumentStorage)) {
             throw new Error("Storage has no experimental features!!");
         }
+
+        const quorumValuesBlob = protocolSummary.tree.quorumValues as ISummaryBlob;
+        const attributesBlob = protocolSummary.tree[".attributes"] as ISummaryBlob;
+        const quorumValues = JSON.parse(quorumValuesBlob.content as string) as [string, ICommittedProposal][];
+        const attributes = JSON.parse(attributesBlob.content as string) as IDocumentAttributes;
+        const sequenceNumber = attributes.sequenceNumber;
         await expDocumentStorage.createDocument(
             this.tenantId,
             this.id,
-            summary,
+            appSummary,
             sequenceNumber,
-            values,
+            quorumValues,
         );
         return this.resolveHelper();
     }

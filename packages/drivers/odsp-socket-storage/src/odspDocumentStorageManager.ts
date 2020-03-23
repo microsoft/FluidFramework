@@ -562,6 +562,49 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         return summarySnapshotTree;
     }
 
+    public async uploadSummaryWithContextForCreateNew(
+        summary: api.ISummaryTree,
+        appHandle: string,
+    ): Promise<string> {
+        this.checkSnapshotUrl();
+        const lastSummaryHandle = this.lastSummaryHandle;
+        this.lastSummaryHandle = undefined;
+        const commit: api.ISummaryHandle = {
+            handle: "",
+            type: api.SummaryType.Handle,
+            handleType: api.SummaryType.Commit,
+        };
+        const attributesBlob = summary.tree[".attributes"] as api.ISummaryBlob;
+        const attributes = JSON.parse(attributesBlob.content as string) as api.IDocumentAttributes;
+        attributes.sequenceNumber = 1;
+        const attributesSummaryBlob: api.ISummaryBlob = {
+            type: api.SummaryType.Blob,
+            content: JSON.stringify(attributes),
+        };
+        summary.tree.attributes = attributesSummaryBlob;
+        const fullSummary: api.ISummaryTree = {
+            type: api.SummaryType.Tree,
+            tree: {
+                ".protocol": summary,
+                ".app": commit,
+            },
+        };
+        const { result, blobsShaToPathCacheLatest } = await this.writeSummaryTreeForCreateNew({
+            useContext: true,
+            parentHandle: appHandle,
+            tree: fullSummary,
+        });
+        if (!result || !result.sha) {
+            throw new Error(`Failed to write summary tree`);
+        }
+        if (blobsShaToPathCacheLatest) {
+            this.blobsShaToPathCache = blobsShaToPathCacheLatest;
+        }
+
+        this.lastSummaryHandle = lastSummaryHandle;
+        return result.sha;
+    }
+
     private async writeSummaryTree(summary: ConditionallyContextedSummary, depth: number = 0): Promise<{ result: ISnapshotResponse, blobsShaToPathCacheLatest?: Map<string, string> }> {
         // Wait for all pending hashes to complete before using them in convertSummaryToSnapshotTree
         await Promise.all(this.blobsCachePendingHashes.values());
@@ -583,6 +626,49 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/snapshot${this.queryString}`, storageToken);
             headers["Content-Type"] = "application/json";
 
+            const postBody = JSON.stringify(snapshot);
+
+            const response = await this.fetchWrapper.post<ISnapshotResponse>(url, postBody, headers);
+            return { result: response.content, blobsShaToPathCacheLatest };
+        });
+    }
+
+    private async writeSummaryTreeForCreateNew(summary: ConditionallyContextedSummary, depth: number = 0): Promise<{ result: ISnapshotResponse, blobsShaToPathCacheLatest?: Map<string, string> }> {
+        // Wait for all pending hashes to complete before using them in convertSummaryToSnapshotTree
+        await Promise.all(this.blobsCachePendingHashes.values());
+        // This cache is associated with mapping sha to path for currently generated summary.
+        const blobsShaToPathCacheLatest: Map<string, string> = new Map();
+        const snapshotTree = await this.convertSummaryToSnapshotTree(summary, blobsShaToPathCacheLatest);
+
+        const snapshot = {
+            entries: snapshotTree.entries!,
+            message: "app",
+            sequenceNumber: 1,
+            sha: snapshotTree.id!,
+            type: SnapshotType.Container,
+            ops: [{
+                op: {
+                    clientId: null,
+                    clientSequenceNumber: -1,
+                    contents: null,
+                    minimumSequenceNumber: 0,
+                    referenceSequenceNumber: -1,
+                    sequenceNumber: 1,
+                    timestamp: Date.now(),
+                    traces: [],
+                    type: "join",
+                    data: "{\"clientId\":\"1300c20a-7744-443b-91b7-8cadb8d51b45\",\"detail\":{\"user\":{\"id\":\"garywilb@microsoft.com\",\"name\":\"garywilb@microsoft.com\",\"email\":\"garywilb@microsoft.com\"},\"scopes\":[\"doc:read\",\"doc:write\",\"summary:write\"],\"permission\":[],\"details\":{\"capabilities\":{\"interactive\":true}}}}",
+                },
+                sequenceNumber: 1,
+            }],
+        };
+
+        return getWithRetryForTokenRefresh(async (refresh: boolean) => {
+            const storageToken = await this.getStorageToken(refresh, "WriteSummaryTree");
+
+            const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/snapshot${this.queryString}`, storageToken);
+            headers["Content-Type"] = "application/json";
+            headers["X-Tempuse-Allow-Singlepost"] = "1";
             const postBody = JSON.stringify(snapshot);
 
             const response = await this.fetchWrapper.post<ISnapshotResponse>(url, postBody, headers);

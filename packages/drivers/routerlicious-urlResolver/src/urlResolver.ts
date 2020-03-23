@@ -13,7 +13,7 @@ import {
     IUrlResolver,
     IExperimentalUrlResolver,
 } from "@microsoft/fluid-driver-definitions";
-import { IUser, ScopeType, ISummaryTree, ICommittedProposal } from "@microsoft/fluid-protocol-definitions";
+import { IUser, ScopeType, ISummaryTree } from "@microsoft/fluid-protocol-definitions";
 import { generateToken, IAlfredTenant } from "@microsoft/fluid-server-services-client";
 import { Provider } from "nconf";
 
@@ -141,9 +141,8 @@ export class RouterliciousUrlResolver implements IUrlResolver, IExperimentalUrlR
     }
 
     public async createContainer(
-        summary: ISummaryTree,
-        sequenceNumber: number,
-        values: [string, ICommittedProposal][],
+        appSummary: ISummaryTree,
+        protocolSummary: ISummaryTree,
         request: IRequest,
     ): Promise<IResolvedUrl> {
         throw new Error("Method not implemented.");

@@ -12,11 +12,13 @@ import {
     IDocumentStorageService,
     IResolvedUrl,
     OpenMode,
+    ISummaryContext,
 } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionMode,
     IClient,
     IErrorTrackingService,
+    ISummaryTree,
 } from "@microsoft/fluid-protocol-definitions";
 import { IOdspResolvedUrl, ISocketStorageDiscovery } from "./contracts";
 import { createNewFluidFile } from "./createFile";
@@ -69,13 +71,18 @@ export class OdspDocumentService implements IDocumentService {
         isFirstTimeDocumentOpened = true,
     ): Promise<IDocumentService> {
         let odspResolvedUrl: IOdspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
-        if (odspResolvedUrl.openMode === OpenMode.CreateNew && odspResolvedUrl.newFileInfoPromise) {
+        const openMode: OpenMode | undefined = odspResolvedUrl.openMode;
+        let appSummary: ISummaryTree | undefined;
+        let protocolSummary: ISummaryTree | undefined;
+        if (openMode === OpenMode.CreateNew && odspResolvedUrl.createNewOptions) {
+            appSummary = odspResolvedUrl.createNewOptions.appSummary;
+            protocolSummary = odspResolvedUrl.createNewOptions.protocolSummary;
             odspResolvedUrl = await createNewFluidFile(
                 getStorageToken,
-                odspResolvedUrl.newFileInfoPromise,
+                odspResolvedUrl.createNewOptions.newFileInfoPromise,
                 cache);
         }
-        return new OdspDocumentService(
+        const documentService = new OdspDocumentService(
             appId,
             odspResolvedUrl.hashedDocumentId,
             odspResolvedUrl.siteUrl,
@@ -91,6 +98,13 @@ export class OdspDocumentService implements IDocumentService {
             cache,
             isFirstTimeDocumentOpened,
         );
+        if (openMode === OpenMode.CreateNew && appSummary && protocolSummary) {
+            const summaryContext: ISummaryContext = { proposalHandle: undefined, ackHandle: undefined};
+            const storageService = (await documentService.connectToStorage()) as OdspDocumentStorageService;
+            const appHandle = await storageService.uploadSummaryWithContext(appSummary, summaryContext);
+            await storageService.uploadSummaryWithContextForCreateNew(protocolSummary, appHandle);
+        }
+        return documentService;
     }
 
     private storageManager?: OdspDocumentStorageManager;
