@@ -29,7 +29,7 @@ Container is returned as result of Loader.resolve() call. Loader can cache conta
 ### Connectivity
 Usually container is returned when state of container (and components) is rehydrated from snapshot. Unless **IRequest.headers.pause** is specified, connection to ordering service will be established at some point (asynchronously) and latest ops would be processed, allowing local changes to flow form client to server. **Container.connected** indicates whether connection to ordering service is established, and  [`Connectivity events`](#Connectivity-events) are notifying about connectivity changes.
 
-### Close
+### Closure
 Container can be closed directly by host by calling **Container.close()**. Once closed, container terminates connection to ordering service, and any local changes (former or future) do not propagate to storage.
 
 Container can also be closed by runtime itself as result of some critical error. Critical errors can be internal (like violation in op ordering invariants), or external (file was deleted). Please see [`Error Handling`](#Error-handling) for more details
