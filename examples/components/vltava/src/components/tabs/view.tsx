@@ -63,7 +63,10 @@ export class TabsView extends React.Component<ITabsViewProps, ITabsViewState> {
                 </Tab>);
             tabPanel.push(
                 <TabPanel key={id}  >
-                    <EmbeddedComponentWrapper id={id} getComponent={(id: string) => this.props.dataModel.getComponentTab(id)} />
+                    <EmbeddedComponentWrapper
+                        id={id}
+                        getComponent={this.props.dataModel.getComponentTab}
+                    />
                 </TabPanel>);
         });
 

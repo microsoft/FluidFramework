@@ -72,7 +72,7 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
         return newId;
     }
 
-    public getComponentTab(id: string): Promise<IComponent> {
+    public async getComponentTab(id: string): Promise<IComponent> {
         return this.tabs.get<IComponentHandle<IComponent>>(id).get();
     }
 

@@ -107,7 +107,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
         this.componentSubDirectory.set(id, model);
     }
 
-    public getComponentById<T>(id: string): Promise<T> {
+    public async getComponentById<T>(id: string): Promise<T> {
         const handle = this.componentSubDirectory.get(id).handle as IComponentHandle<T>;
         return handle.get();
     }
@@ -149,7 +149,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
         const defaultModel: ISpacesModel = {
             type,
             layout,
-            handle: component.handle
+            handle: component.handle,
         };
         this.componentSubDirectory.set(id, defaultModel);
         return component;
