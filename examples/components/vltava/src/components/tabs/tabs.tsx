@@ -38,7 +38,8 @@ export class TabsComponent extends PrimedComponent implements IComponentHTMLView
 
     protected async componentHasInitialized() {
         const registry = await this.context.hostRuntime.IComponentRegistry.get("");
-        const registryDetails = (registry as IComponent).IComponentRegistryDetails;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const registryDetails = (registry as IComponent).IComponentRegistryDetails!;
         this.dataModelInternal =
             new TabsDataModel(
                 this.root,

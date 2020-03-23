@@ -319,7 +319,7 @@ export class Quorum extends EventEmitter implements IQuorum {
 
             // If it was a local proposal - resolve the promise
             if (proposal.deferred) {
-                // eslint-disable-next-line no-unused-expressions
+                // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                 approved
                     ? proposal.deferred.resolve()
                     : proposal.deferred.reject(`Rejected by ${Array.from(proposal.rejections)}`);
@@ -387,7 +387,7 @@ export class Quorum extends EventEmitter implements IQuorum {
         return immediateNoOp;
     }
 
-    public changeConnectionState(value: ConnectionState, clientId: string) {
+    public changeConnectionState(value: ConnectionState, clientId?: string) {
         if (value === ConnectionState.Disconnected) {
             this.localProposals.forEach((deferral) => {
                 deferral.reject("Client got disconnected");

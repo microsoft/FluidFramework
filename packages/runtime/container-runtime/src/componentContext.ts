@@ -5,6 +5,7 @@
 
 import * as assert from "assert";
 import { EventEmitter } from "events";
+import { IDisposable } from "@microsoft/fluid-common-definitions";
 import { IComponent, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
     IAudience,
@@ -61,7 +62,7 @@ interface ISnapshotDetails {
 /**
  * Represents the context for the component. This context is passed to the component runtime.
  */
-export abstract class ComponentContext extends EventEmitter implements IComponentContext {
+export abstract class ComponentContext extends EventEmitter implements IComponentContext, IDisposable {
     public get documentId(): string {
         return this._hostRuntime.id;
     }
@@ -80,7 +81,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this._hostRuntime.options;
     }
 
-    public get clientId(): string {
+    public get clientId(): string | undefined {
         return this._hostRuntime.clientId;
     }
 
@@ -136,13 +137,15 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this._baseSnapshot;
     }
 
+    private _disposed = false;
+    public get disposed() { return this._disposed; }
+
     public get isAttached(): boolean {
         return this._isAttached;
     }
 
     public readonly attach: (componentRuntime: IComponentRuntime) => void;
     protected componentRuntime: IComponentRuntime;
-    private closed = false;
     private loaded = false;
     private pending: ISequencedDocumentMessage[] = [];
     private componentRuntimeDeferred: Deferred<IComponentRuntime>;
@@ -179,6 +182,24 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
                 }
             }
         });
+    }
+
+    public dispose(): void {
+        if (this._disposed) {
+            return;
+        }
+        this._disposed = true;
+
+        // Dispose any pending runtime after it gets fulfilled
+        if (this.componentRuntimeDeferred) {
+            this.componentRuntimeDeferred.promise.then((runtime) => {
+                runtime.dispose();
+            }).catch((error) => {
+                this.hostRuntime.logger.sendErrorEvent(
+                    {eventName: "ComponentRuntimeDisposeError", componentId: this.id},
+                    error);
+            });
+        }
     }
 
     public async createComponent(pkgOrId: string | undefined, pkg?: string, props?: any): Promise<IComponentRuntime> {
@@ -260,18 +281,13 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this.componentRuntimeDeferred.promise;
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public getComponentRuntime(id: string, wait: boolean): Promise<IComponentRuntime> {
-        return this._hostRuntime.getComponentRuntime(id, wait);
-    }
-
     /**
      * Notifies this object about changes in the connection state.
      * @param value - New connection state.
      * @param clientId - ID of the client. It's old ID when in disconnected state and
      * it's new client ID when we are connecting or connected.
      */
-    public changeConnectionState(value: ConnectionState, clientId: string) {
+    public changeConnectionState(value: ConnectionState, clientId?: string) {
         this.verifyNotClosed();
 
         // Connection events are ignored if the component is not yet loaded
@@ -320,15 +336,6 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
     public async getBlobMetadata(): Promise<IGenericBlob[]> {
         return this.blobManager.getBlobMetadata();
-    }
-
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public stop(): Promise<ITree> {
-        this.verifyNotClosed();
-
-        this.closed = true;
-
-        return this.snapshot(true);
     }
 
     public close(): void {
@@ -407,9 +414,15 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
     }
 
-    public bindRuntime(componentRuntime: IComponentRuntime): void {
+    public bindRuntime(componentRuntime: IComponentRuntime) {
         if (this.componentRuntime) {
             throw new Error("runtime already bound");
+        }
+
+        // If this ComponentContext was created via `IHostRuntime.createComponentContext`, the
+        // `componentRuntimeDeferred` promise hasn't yet been initialized.  Do so now.
+        if (!this.componentRuntimeDeferred) {
+            this.componentRuntimeDeferred = new Deferred();
         }
 
         if (this.pending.length > 0) {
@@ -450,7 +463,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     }
 
     private verifyNotClosed() {
-        if (this.closed) {
+        if (this._disposed) {
             throw new Error("Runtime is closed");
         }
     }

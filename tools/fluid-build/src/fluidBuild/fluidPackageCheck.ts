@@ -7,8 +7,9 @@ import { FluidRepo } from "./fluidRepo";
 import { MonoRepo } from "../common/fluidRepoBase";
 import { Package } from "../common/npmPackage";
 import * as path from "path";
-import { existsSync, readFileAsync, writeFileAsync } from "../common/utils";
-import { fstat } from "fs";
+import { existsSync, readFileAsync, writeFileAsync, resolveNodeModule } from "../common/utils";
+import * as TscUtils from "./tscUtils";
+import sortPackageJson from "sort-package-json";
 
 export class FluidPackageCheck {
     constructor(private readonly repoType: MonoRepo) {
@@ -22,8 +23,13 @@ export class FluidPackageCheck {
             FluidPackageCheck.checkTestSafePromiseRequire(pkg, fix, monoRepo),
             FluidPackageCheck.checkMochaTestScripts(pkg, fix, monoRepo),
             FluidPackageCheck.checkJestJunitTestEntry(pkg, fix),
+            FluidPackageCheck.checkSort(pkg, fix),
         ];
         return fixed.some((bool) => bool);
+    }
+
+    private static logWarn(pkg: Package, message: string, fix: boolean) {
+        console.warn(`${pkg.nameColored}: warning:${fix ? " [FIXED]" : ""} ${message}`);
     }
 
     /**
@@ -37,7 +43,7 @@ export class FluidPackageCheck {
         const testScript = monoRepo === MonoRepo.Server ? "test" : "test:mocha";
         if (pkg.packageJson.scripts && pkg.packageJson.scripts[testScript] && /(ts-)?mocha/.test(pkg.packageJson.scripts[testScript]!)) {
             if (pkg.packageJson.devDependencies && !pkg.packageJson.devDependencies[pkgstring]) {
-                console.warn(`${pkg.nameColored}: warning: missing ${pkgstring} dependency`);
+                this.logWarn(pkg, `missing ${pkgstring} dependency`, fix);
                 if (fix) {
                     pkg.packageJson.devDependencies[pkgstring] = pkgversion;
                     fixed = true;
@@ -45,7 +51,7 @@ export class FluidPackageCheck {
             }
             if (!pkg.packageJson.scripts[testScript]!.includes(pkgstring)) {
                 if (/(ts-)?mocha/.test(pkg.packageJson.scripts[testScript]!)) {
-                    console.warn(`${pkg.nameColored}: warning: no ${pkgstring} require in test script`);
+                    this.logWarn(pkg, `no ${pkgstring} require in test script`, fix);
                     if (fix) {
                         pkg.packageJson.scripts[testScript] += " -r " + pkgstring;
                         fixed = true;
@@ -63,7 +69,7 @@ export class FluidPackageCheck {
     public static checkMochaTestScripts(pkg: Package, fix: boolean, monoRepo: MonoRepo) {
         let fixed = false;
         if (monoRepo !== MonoRepo.Server && pkg.packageJson.scripts && pkg.packageJson.scripts.test && /^(ts-)?mocha/.test(pkg.packageJson.scripts.test)) {
-            console.warn(`${pkg.nameColored}: warning: "mocha" in "test" script instead of "test:mocha" script`)
+            this.logWarn(pkg, `"mocha" in "test" script instead of "test:mocha" script`, fix)
             if (fix) {
                 if (!pkg.packageJson.scripts["test:mocha"]) {
                     pkg.packageJson.scripts["test:mocha"] = pkg.packageJson.scripts["test"];
@@ -84,14 +90,14 @@ export class FluidPackageCheck {
         const pkgversion = "^10.0.0";
         if (pkg.packageJson.scripts && pkg.packageJson.scripts["test:jest"]) {
             if (!pkg.packageJson.devDependencies[pkgstring]) {
-                console.warn(`${pkg.nameColored}: warning: missing ${pkgstring} dependency`);
+                this.logWarn(pkg, `missing ${pkgstring} dependency`, fix);
                 if (fix) {
                     pkg.packageJson.devDependencies[pkgstring] = pkgversion;
                     fixed = true;
                 }
             }
             if (!pkg.packageJson["jest-junit"]) {
-                console.warn(`${pkg.nameColored} warning: no jest-junit entry for jest test`);
+                this.logWarn(pkg, `no jest-junit entry for jest test`, false);
             }
         }
 
@@ -104,18 +110,18 @@ export class FluidPackageCheck {
         const testCoverageScript = pkg.getScript("test:coverage");
         if (testCoverageScript && testCoverageScript.startsWith("nyc")) {
             if (!pkg.packageJson.devDependencies.nyc) {
-                console.warn(`${pkg.nameColored}: warning: missing nyc dependency`);
+                this.logWarn(pkg, `missing nyc dependency`, false);
             }
             if (pkg.packageJson.nyc) {
                 if (pkg.packageJson.nyc["exclude-after-remap"] !== false) {
-                    console.warn(`${pkg.nameColored}: warning: nyc.exclude-after-remap need to be false`);
+                    this.logWarn(pkg, `nyc.exclude-after-remap need to be false`, fix);
                     if (fix) {
                         pkg.packageJson.nyc["exclude-after-remap"] = false;
                         fixed = true;
                     }
                 }
             } else {
-                console.warn(`${pkg.nameColored}: warning: missing nyc configuration`);
+                this.logWarn(pkg, `missing nyc configuration`, false);
             }
         }
 
@@ -190,17 +196,17 @@ export class FluidPackageCheck {
             }
 
             if (buildCompile.length === 0) {
-                console.warn(`${pkg.nameColored}: warning: can't detect anything to build`);
+                this.logWarn(pkg, `can't detect anything to build`, false);
                 return;
             }
 
             const check = (scriptName: string, parts: string[], prefix = "") => {
-                const expected = parts.length === 0? undefined :
+                const expected = parts.length === 0 ? undefined :
                     prefix + (parts.length > 1 ? `concurrently npm:${parts.join(" npm:")}` : `npm run ${parts[0]}`);
                 if (pkg.packageJson.scripts[scriptName] !== expected) {
-                    console.warn(`${pkg.nameColored}: warning: non-conformant script ${scriptName}`);
-                    console.warn(`${pkg.nameColored}: warning:   expect: ${expected}`);
-                    console.warn(`${pkg.nameColored}: warning:      got: ${pkg.packageJson.scripts[scriptName]}`);
+                    this.logWarn(pkg, `non-conformant script ${scriptName}`, fix);
+                    this.logWarn(pkg, `  expect: ${expected}`, fix);
+                    this.logWarn(pkg, `     got: ${pkg.packageJson.scripts[scriptName]}`, fix);
                     if (fix) {
                         pkg.packageJson.scripts[scriptName] = expected;
                         fixed = true;
@@ -214,21 +220,31 @@ export class FluidPackageCheck {
             check("prepack", prepack);
 
             if (!pkg.getScript("clean")) {
-                console.warn(`${pkg.nameColored}: warning: package has "build" script without "clean" script`);
+                this.logWarn(pkg, `package has "build" script without "clean" script`, false);
             }
         }
         return fixed;
     }
-    
+
+    private static checkSort(pkg: Package, fix: boolean) {
+        // Note that package.json is sorted when we save, so this is just for the warning
+        const result = sortPackageJson(pkg.packageJson);
+        if (JSON.stringify(result) !== JSON.stringify(pkg.packageJson)) {
+            this.logWarn(pkg, `package.json not sorted`, fix);
+            return fix;
+        }
+        return false;
+    }
+
     public static async checkNpmIgnore(pkg: Package, fix: boolean) {
         const filename = path.join(pkg.directory, ".npmignore");
-        const expected = [ 
+        const expected = [
             "nyc",
             "*.log",
             "**/*.tsbuildinfo"
         ];
         if (!existsSync(filename)) {
-            console.warn(`${pkg.nameColored}: warning: .npmignore not exist`);
+            this.logWarn(pkg, `.npmignore not exist`, fix);
             if (fix) {
                 await writeFileAsync(filename, expected.join("\n"), "utf8");
             }
@@ -240,20 +256,71 @@ export class FluidPackageCheck {
             }
             for (const v of expected) {
                 if (!split.includes(v)) {
-                    console.warn(`${pkg.nameColored}: warning: .npmignore missing "${v}"`);
+                    this.logWarn(pkg, `.npmignore missing "${v}"`, fix);
                     if (fix) {
                         split.push(v);
                     }
                 }
             }
             if (fix) {
-                if (split.length !== 0 && split[split.length -1] !== "") {
+                if (split.length !== 0 && split[split.length - 1] !== "") {
                     split.push("");
                 }
                 const ret = split.join("\n");
                 if (ret !== content) {
                     await writeFileAsync(filename, ret, "utf8");
                 }
+            }
+        }
+    }
+
+    public static async checkTsConfig(pkg: Package, fix: boolean) {
+        const command = pkg.getScript("tsc");
+        if (command) {
+            const parsedCommand = TscUtils.parseCommandLine(command);
+            if (!parsedCommand) { return undefined; }
+
+            // Assume tsc with no argument.
+            const configFile = TscUtils.findConfigFile(pkg.directory, parsedCommand);
+            const configJson = TscUtils.readConfigFile(configFile);
+
+            const commonConfig = "@microsoft/fluid-build-common/ts-common-config.json";
+            let changed = false;
+            if (configJson.extends !== commonConfig) {
+                this.logWarn(pkg, `tsc config not extending ts-common-config.json`, fix);
+                if (fix) {
+                    configJson.extends = commonConfig;
+                    changed = true;
+                }
+            }
+
+            if (configJson.extends === commonConfig) {
+                let loaded = false;
+                const commonConfigFullPath = resolveNodeModule(pkg.directory, commonConfig);
+                if (commonConfigFullPath) {
+                    const commonConfigJson = TscUtils.readConfigFile(commonConfigFullPath);
+                    if (commonConfigJson) {
+                        loaded = true;
+                        for (const option in configJson.compilerOptions) {
+                            if (configJson.compilerOptions[option] === commonConfigJson.compilerOptions[option]) {
+                                this.logWarn(pkg, `duplicate compilerOptions ${option}: ${configJson.compilerOptions[option]}`, fix);
+                                if (fix) {
+                                    delete configJson.compilerOptions[option];
+                                    changed = true;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (!loaded) {
+                    this.logWarn(pkg, `can't found ${commonConfig}`, false);
+                }
+            }
+
+
+            if (changed) {
+                await writeFileAsync(configFile, JSON.stringify(configJson, undefined, 4));
             }
         }
     }

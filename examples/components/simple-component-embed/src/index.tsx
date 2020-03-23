@@ -10,7 +10,7 @@ import { ClickerInstantiationFactory, Clicker } from "@fluid-example/clicker";
 export class SimpleComponentEmbed extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
-    private clicker: Clicker;
+    private clicker: Clicker | undefined;
 
     /**
    * This is only run the first time a document is created
@@ -36,7 +36,8 @@ export class SimpleComponentEmbed extends PrimedComponent implements IComponentH
         div.appendChild(componentDiv);
 
         // Then render the clicker in our div
-        this.clicker.render(componentDiv);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.clicker!.render(componentDiv);
     }
 }
 

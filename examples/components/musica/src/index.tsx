@@ -27,7 +27,7 @@ export class Musica extends PrimedComponent implements IComponentHTMLView {
 
     }
 
-    private player: Player;
+    private player: Player | undefined;
 
     public render(div: HTMLDivElement) {
         const reactRender = () => {
@@ -75,8 +75,9 @@ export class Musica extends PrimedComponent implements IComponentHTMLView {
    * Applies the given setting to the key corresponding to the given midi number.
    */
     private execPressKey(note: NoteProperties, clientId: string) {
-    // Make the sound.
-        this.player.playNote(note);
+        // Make the sound.
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.player!.playNote(note);
 
         // Update visuals.
         const key = PianoUtility.findKeyFromMidiNumber(note.midiNumber);
@@ -90,7 +91,7 @@ export class Musica extends PrimedComponent implements IComponentHTMLView {
    * Stops the note for the given midi number.
    */
     private execStopNote(_midiNumber: number) {
-    // TODO: Stop the sound.
+        // TODO: Stop the sound.
     }
 }
 

@@ -5,7 +5,7 @@
 
 import { BaseHost, IBaseHostConfig } from "@microsoft/fluid-base-host";
 import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
-import { BaseTelemetryNullLogger } from "@microsoft/fluid-core-utils";
+import { BaseTelemetryNullLogger } from "@microsoft/fluid-common-utils";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
@@ -158,7 +158,7 @@ export async function initialize(
     // eslint-disable-next-line dot-notation
     window["allServices"] = services;
 
-    const baseHost = new BaseHost(hostConfig, resolved, pkg, scriptIds);
+    const baseHost = new BaseHost(hostConfig, pkg, scriptIds);
     const loader = await baseHost.getLoader();
     documentFactory.resolveLoader(loader);
 
@@ -167,12 +167,6 @@ export async function initialize(
     const div = document.getElementById("content") as HTMLDivElement;
     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     const container = await baseHost.loadAndRender(url, div, pkg ? pkg.details : undefined);
-
-    // Move the div hosting components into a shadow so it doesn't catch external formatting
-    const shadowHostDiv = document.createElement("div");
-    document.body.insertBefore(shadowHostDiv, div);
-    const shadowRoot = shadowHostDiv.attachShadow({mode: "open"});
-    shadowRoot.appendChild(div);
 
     container.on("error", (error) => {
         console.error(error);

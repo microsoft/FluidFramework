@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryLogger, IDisposable } from "@microsoft/fluid-common-definitions";
 import {
     IComponent,
     IComponentHandleContext,
@@ -40,7 +40,11 @@ import { IChannel } from ".";
 /**
  * Represents the runtime for the component. Contains helper functions/state of the component.
  */
-export interface IComponentRuntime extends EventEmitter, IComponentRouter, Partial<IProvideComponentRegistry>  {
+export interface IComponentRuntime extends
+    EventEmitter,
+    IComponentRouter,
+    Partial<IProvideComponentRegistry>,
+    IDisposable {
     readonly IComponentRouter: IComponentRouter;
 
     readonly IComponentSerializer: IComponentSerializer;
@@ -51,7 +55,7 @@ export interface IComponentRuntime extends EventEmitter, IComponentRouter, Parti
 
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 
-    readonly clientId: string;
+    readonly clientId: string | undefined;
 
     readonly id: string;
 
@@ -90,9 +94,12 @@ export interface IComponentRuntime extends EventEmitter, IComponentRouter, Parti
      * @param clientId - ID of the client. It's old ID when in disconnected state and
      * it's new client ID when we are connecting or connected.
      */
-    changeConnectionState(value: ConnectionState, clientId: string);
+    changeConnectionState(value: ConnectionState, clientId?: string);
 
     /**
+     * @deprecated in 0.14 async close()
+     * Call snapshot separately if needed, then call dispose
+     *
      * Closes the component. Once closed the component will not receive any new ops and should
      * not attempt to generate them.
      */
@@ -237,7 +244,7 @@ export interface IComponentContext extends EventEmitter {
     readonly packagePath: readonly string[];
     readonly existing: boolean;
     readonly options: any;
-    readonly clientId: string;
+    readonly clientId: string | undefined;
     readonly parentBranch: string;
     readonly connected: boolean;
     readonly leader: boolean;
@@ -297,13 +304,6 @@ export interface IComponentContext extends EventEmitter {
     createComponent(pkgOrId: string | undefined, pkg?: string, props?: any): Promise<IComponentRuntime>;
 
     /**
-     * Returns the runtime of the component.
-     * @param id - Id supplied during creating the component.
-     * @param wait - True if you want to wait for it.
-     */
-    getComponentRuntime(id: string, wait: boolean): Promise<IComponentRuntime>;
-
-    /**
      * Make request to the component.
      * @param request - Request.
      */
@@ -348,7 +348,7 @@ export interface IHostRuntime extends
     readonly id: string;
     readonly existing: boolean;
     readonly options: any;
-    readonly clientId: string;
+    readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
     readonly parentBranch: string;
     readonly connected: boolean;
@@ -393,6 +393,15 @@ export interface IHostRuntime extends
      * @internal
      */
     _createComponentWithProps(pkg: string | string[], props: any, id: string): Promise<IComponentRuntime>;
+
+    /**
+     * Creates a new IComponentContext instance.  The caller completes construction of the the component by
+     * calling IComponentContext.bindRuntime() when the component is prepared to begin processing ops.
+     *
+     * @param pkg - Package path for the component to be created
+     * @param props - Properties to be passed to the instantiateComponent thru the context
+     */
+    createComponentContext(pkg: string[], props?: any): IComponentContext;
 
     /**
      * Returns the current quorum.

@@ -44,11 +44,11 @@ export class ComponentToolbar extends PrimedComponent
     public get IComponentHTMLView() { return this; }
     public get IComponentCallable() { return this; }
 
-    private callbacks: IComponentToolbarCallbacks;
+    private callbacks: IComponentToolbarCallbacks = {};
 
     private static readonly factory = new PrimedComponentFactory(ComponentToolbar, []);
 
-    private supportedComponentList: IContainerComponentDetails[] = [];
+    private supportedComponentList: IContainerComponentDetails[] | undefined;
 
     public static getFactory() {
         return ComponentToolbar.factory;
@@ -85,7 +85,8 @@ export class ComponentToolbar extends PrimedComponent
             <ComponentToolbarView
                 callbacks={this.callbacks}
                 root={this.root}
-                supportedComponentList={this.supportedComponentList}
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                supportedComponentList={this.supportedComponentList!}
             />,
             div,
         );
@@ -94,7 +95,7 @@ export class ComponentToolbar extends PrimedComponent
 }
 
 interface IComponentToolbarViewProps {
-    callbacks: IComponentToolbarCallbacks
+    callbacks: IComponentToolbarCallbacks;
     supportedComponentList: IContainerComponentDetails[];
     root: ISharedDirectory;
 }
@@ -129,7 +130,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
     public emitToggleEditable() {
         const newIsEditable = !this.state.isEditable;
         this.setState({ isEditable: newIsEditable });
-        if (this.props.callbacks.addComponent) {
+        if (this.props.callbacks.toggleEditable) {
             this.props.callbacks.toggleEditable(newIsEditable);
         }
     }

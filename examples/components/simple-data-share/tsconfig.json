@@ -1,23 +1,18 @@
-{    
+{
+    "extends": "@microsoft/fluid-build-common/ts-common-config.json",
     "exclude": [
         "dist",
         "node_modules"
     ],
     "compilerOptions": {
         "target": "es6",
-        "noImplicitAny": false,
-        "noUnusedLocals": true,
         "module": "esnext",
-        "moduleResolution": "node",
         "outDir": "dist",
-        "sourceMap": true,
-        "inlineSources": true,
         "jsx": "react",
         "lib": [
             "es2015",
             "dom"
         ],
-        "incremental": true,
         "types": []
     },
     "include": [

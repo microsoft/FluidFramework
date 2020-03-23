@@ -35,8 +35,15 @@ class NullRuntime extends EventEmitter implements IRuntime {
 
     public ready: Promise<void> | undefined;
 
+    private _disposed = false;
+    public get disposed() { return this._disposed; }
+
     constructor() {
         super();
+    }
+
+    public dispose(): void {
+        this._disposed = true;
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -52,7 +59,7 @@ class NullRuntime extends EventEmitter implements IRuntime {
         });
     }
 
-    public changeConnectionState(value: ConnectionState, clientId: string) {
+    public changeConnectionState(value: ConnectionState, clientId?: string) {
         return;
     }
 

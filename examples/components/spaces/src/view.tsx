@@ -123,7 +123,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
     }
 
     generateViewState(): [JSX.Element, any[], Layout[]] {
-        const components = [];
+        const components: JSX.Element[] = [];
         const layouts: Layout[] = [];
         let componentToolbar: JSX.Element | undefined;
 
@@ -202,7 +202,8 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
             }
         });
 
-        return [componentToolbar, components, layouts];
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return [componentToolbar!, components, layouts];
     }
 
     render() {

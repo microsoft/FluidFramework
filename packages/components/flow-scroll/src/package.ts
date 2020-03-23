@@ -1,0 +1,13 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+/* eslint-disable @typescript-eslint/no-var-requires */
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { name, version } = require("../package.json");
+/* eslint-enable @typescript-eslint/no-var-requires */
+
+const makeTypeName = (type: string) => `${name}/${type}@${version}`;
+
+export const hostType = makeTypeName("host");

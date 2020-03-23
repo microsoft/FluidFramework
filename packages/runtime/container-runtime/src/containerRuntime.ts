@@ -91,6 +91,7 @@ import { analyzeTasks } from "./taskAnalyzer";
 import { DeltaScheduler } from "./deltaScheduler";
 import { ReportConnectionTelemetry } from "./connectionTelemetry";
 import { SummaryCollection } from "./summaryCollection";
+import { pkgVersion } from "./packageVersion";
 
 interface ISummaryTreeWithStats {
     summaryStats: ISummaryStats;
@@ -431,7 +432,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.context.options;
     }
 
-    public get clientId(): string {
+    public get clientId(): string | undefined {
         return this.context.clientId;
     }
 
@@ -532,8 +533,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             : DefaultSummaryConfiguration;
     }
 
+    private _disposed = false;
+    public get disposed() { return this._disposed; }
+
     // Components tracked by the Domain
-    private closed = false;
     private readonly pendingAttach = new Map<string, IAttachMessage>();
     private dirtyDocument = false;
     private readonly summarizer: Summarizer;
@@ -567,7 +570,11 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         // useContext - back-compat: 0.14 uploadSummary
         const useContext: boolean = expContainerContext.isExperimentalContainerContext ?
             true : this.storage.uploadSummaryWithContext !== undefined;
-        this.latestSummaryAck = { proposalHandle: undefined, ackHandle: undefined };
+        this.latestSummaryAck = {
+            proposalHandle: undefined,
+            ackHandle: expContainerContext.isExperimentalContainerContext && expContainerContext.getLoadedFromVersion
+                && expContainerContext.getLoadedFromVersion()
+                ? expContainerContext.getLoadedFromVersion().id : undefined };
         this.summaryTracker = new SummaryTracker(
             useContext,
             "", // fullPath - the root is unnamed
@@ -604,7 +611,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.contextsDeferred.set(key, deferred);
         }
 
-        this.logger = context.logger;
+        this.logger = ChildLogger.create(context.logger, undefined, {
+            runtimeVersion: pkgVersion,
+        });
 
         this.scheduleManager = new ScheduleManager(
             context.deltaManager,
@@ -662,6 +671,25 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         }
 
         ReportConnectionTelemetry(this.context.clientId, this.deltaManager, this.logger);
+    }
+
+    public dispose(): void {
+        if (this._disposed) {
+            return;
+        }
+        this._disposed = true;
+
+        this.summaryManager.dispose();
+        this.summarizer.dispose();
+
+        // close/stop all component contexts
+        for (const [componentId, contextD] of this.contextsDeferred) {
+            contextD.promise.then((context) => {
+                context.dispose();
+            }).catch((error) => {
+                this.logger.sendErrorEvent({eventName: "ComponentContextDisposeError", componentId}, error);
+            });
+        }
     }
 
     public get IComponentTokenProvider() {
@@ -731,20 +759,21 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
     public async stop(): Promise<IRuntimeState> {
         this.verifyNotClosed();
+
         const snapshot = await this.snapshot("", true);
-        this.summaryManager.dispose();
-        this.summarizer.dispose();
-        this.closed = true;
         const state: IPreviousState = {
             reload: true,
             summaryCollection: this.summarizer.summaryCollection,
             nextSummarizerP: this.nextSummarizerP,
             nextSummarizerD: this.nextSummarizerD,
         };
+
+        this.dispose();
+
         return { snapshot, state };
     }
 
-    public changeConnectionState(value: ConnectionState, clientId: string, version: string) {
+    public changeConnectionState(value: ConnectionState, clientId?: string) {
         this.verifyNotClosed();
 
         assert(this.connectionState === value);
@@ -908,11 +937,15 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     public async _createComponentWithProps(pkg: string | string[], props: any, id: string): Promise<IComponentRuntime> {
+        return this.createComponentContext(Array.isArray(pkg) ? pkg : [pkg], props, id).realize();
+    }
+
+    public createComponentContext(pkg: string[], props?: any, id = uuid()) {
         this.verifyNotClosed();
 
         const context = new LocalComponentContext(
             id,
-            Array.isArray(pkg) ? pkg : [pkg],
+            pkg,
             this,
             this.storage,
             this.containerScope,
@@ -924,7 +957,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.contextsDeferred.set(id, deferred);
         this.contexts.set(id, context);
 
-        return context.realize();
+        return context;
     }
 
     public getQuorum(): IQuorum {
@@ -1326,7 +1359,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     private verifyNotClosed() {
-        if (this.closed) {
+        if (this._disposed) {
             throw new Error("Runtime is closed");
         }
     }

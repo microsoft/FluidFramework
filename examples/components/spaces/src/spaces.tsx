@@ -30,7 +30,6 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView, IComp
     private componentToolbar: IComponent | undefined;
     private static readonly defaultComponentToolbarId = "spaces-component-toolbar";
     private componentToolbarId = Spaces.defaultComponentToolbarId;
-    private readonly sequence: SharedObjectSequence<string>;
 
     // TODO #1188 - Component registry should automatically add ComponentToolbar
     // to the registry since it's required for the spaces component
@@ -64,7 +63,11 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView, IComp
         const type: string = options["type"];
         // eslint-disable-next-line dot-notation
         const url: string = options["url"];
-        return this.dataModel.setComponent(id, type, url);
+        this.dataModel.setComponent(id, type, url);
+        // This is okay as we are not using the value returned from this function call anywhere
+        // Instead, setComponent adds it to the sequence to be synchronously loaded
+        const emptyComponent: IComponent = {};
+        return emptyComponent;
     }
 
     public removeCollectionItem(instance: IComponent): void {
@@ -90,7 +93,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView, IComp
         // Set the saved template if there is a template query param
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has("template")) {
-            await this.dataModelInternal.setTemplate();
+            await this.dataModel.setTemplate();
         }
     }
 
@@ -138,7 +141,6 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView, IComp
                 this.createAndAttachComponent.bind(this),
                 this.getComponent.bind(this),
                 this.componentToolbarId,
-                this.sequence,
             );
     }
 

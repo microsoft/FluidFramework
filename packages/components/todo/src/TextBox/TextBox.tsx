@@ -22,7 +22,7 @@ export class TextBox extends PrimedComponent implements IComponentHTMLView, ICom
     public get IComponentHTMLView() { return this; }
     public get IComponentReactViewable() { return this; }
 
-    private text: SharedString;
+    private text: SharedString | undefined;
 
     /**
      * Do creation work

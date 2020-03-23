@@ -21,13 +21,20 @@ import { IBaseHostConfig } from "@microsoft/fluid-base-host";
 import { ISequencedDocumentMessage, ITree, ConnectionState } from "@microsoft/fluid-protocol-definitions";
 
 class ProxyRuntime implements IRuntime{
+    private _disposed = false;
+    public get disposed() { return this._disposed; }
+
+    public dispose(): void {
+        this._disposed = true;
+    }
+
     async request(request: IRequest): Promise<IResponse> {
         throw new Error("Method not implemented.");
     }
     async snapshot(tagMessage: string, fullTree?: boolean | undefined): Promise<ITree | null> {
         throw new Error("Method not implemented.");
     }
-    async changeConnectionState(value: ConnectionState, clientId: string, version?: string | undefined) {
+    async changeConnectionState(value: ConnectionState, clientId?: string) {
     }
     async stop(): Promise<IRuntimeState> {
         throw new Error("Method not implemented.");

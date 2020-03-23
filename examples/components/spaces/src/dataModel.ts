@@ -6,18 +6,22 @@
 import { EventEmitter } from "events";
 import { ISharedDirectory, IDirectory, IDirectoryValueChanged } from "@microsoft/fluid-map";
 import {
-    IComponent,
+    IComponent, IComponentLoadable,
 } from "@microsoft/fluid-component-core-interfaces";
 import { Layout } from "react-grid-layout";
-import { SharedObjectSequence } from "@microsoft/fluid-sequence";
 
 
 export interface ISpacesDataModel extends EventEmitter {
     componentList: Map<string, Layout>;
-    addComponent<T>(type: string, w?: number, h?: number, id?: string): Promise<T>;
     setComponentToolbar(id: string, type: string, url: string): Promise<IComponent>;
-    setComponent(id: string, type: string, url: string): IComponent;
+    setComponent(id: string, type: string, url: string): void;
     getComponentToolbar(): Promise<IComponent>;
+    addComponent<T extends IComponent & IComponentLoadable>(
+        type: string,
+        w?: number,
+        h?: number,
+        id?: string
+    ): Promise<T>;
     getComponent<T>(id: string): Promise<T>;
     removeComponent(id: string): void;
     updateGridItem(id: string, newLayout: Layout): void;
@@ -36,10 +40,12 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
 
     constructor(
         private readonly root: ISharedDirectory,
-        private readonly createAndAttachComponent: <T>(id: string, pkg: string, props?: any) => Promise<T>,
+        private readonly createAndAttachComponent: <T extends IComponent & IComponentLoadable>(
+            id: string | undefined,
+            pkg: string,
+            props?: any) => Promise<T>,
         public getComponent: <T>(id: string) => Promise<T>,
         public componentToolbarId: string,
-        private readonly sequence: SharedObjectSequence<string>,
     ) {
         super();
 
@@ -99,21 +105,16 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
         return component as IComponent;
     }
 
-    public setComponent(id: string, type: string, url: string): IComponent {
+    public setComponent(id: string, type: string, url: string): void {
         const defaultModel: ISpacesModel = {
             type,
             layout: { x: 0, y: 0, w: 6, h: 2 },
         };
-        // TODO: Figure out how to use loadable component and sequence, and type this correctly
-        // line 115-133 use this, current code path is 134-140
-        //let loadableComponent: IComponentLoadable;
         this.getComponent<IComponent>(url)
             .then((returnedComponent) => {
                 if (returnedComponent) {
                     if (returnedComponent.IComponentLoadable) {
                         this.componentSubDirectory.set(id, defaultModel);
-                        this.sequence.insert(this.sequence.getLength(), [url]);
-                        // loadableComponent = { url, IComponentLoadable: component.IComponentLoadable };
                     } else {
                         throw new Error("Component is not an instance of IComponentLoadable!!");
                     }
@@ -124,17 +125,14 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
             .catch((error) => {
                 throw error;
             });
-        // return loadableComponent;
-        const component = this.getComponent(id);
-        if (component) {
-            this.componentSubDirectory.set(id, defaultModel);
-            return component as IComponent;
-        } else {
-            throw new Error(`Runtime does not contain component with id: ${id}`);
-        }
     }
 
-    public async addComponent<T>(type: string, w: number = 1, h: number = 1, id?: string): Promise<T> {
+    public async addComponent<T extends IComponent & IComponentLoadable>(
+        type: string,
+        w: number = 1,
+        h: number = 1,
+        id?: string,
+    ): Promise<T> {
         const defaultLayout = { x: 0, y: 0, w, h };
         return this.addComponentInternal<T>(type, defaultLayout, id);
     }
@@ -181,7 +179,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
         }
     }
 
-    private async addComponentInternal<T>(
+    private async addComponentInternal<T extends IComponent & IComponentLoadable>(
         type: string,
         layout: Layout,
         id = `${type}-${Date.now()}`): Promise<T> {
@@ -190,8 +188,10 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
             type,
             layout,
         };
-        this.componentSubDirectory.set(id, defaultModel);
-        return this.createAndAttachComponent<T>(id, type);
+        return this.createAndAttachComponent<T>(id, type).then((component: T) => {
+            this.componentSubDirectory.set(id, defaultModel);
+            return component;
+        });
     }
 }
 

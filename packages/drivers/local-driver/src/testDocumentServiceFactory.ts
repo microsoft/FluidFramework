@@ -29,29 +29,25 @@ export class TestDocumentServiceFactory implements IDocumentServiceFactory {
      * URL for the tenant ID, document ID, and token.
      * @param resolvedUrl - resolved URL of document
      */
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
+    public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
         if (resolvedUrl.type !== "fluid") {
-            // eslint-disable-next-line max-len
-            return Promise.reject("Only Fluid components currently supported in the RouterliciousDocumentServiceFactory");
+            throw new Error("Only Fluid components currently supported");
         }
 
         const parsedUrl = parse(resolvedUrl.url);
-        const [, tenantId, documentId] = parsedUrl.path.split("/");
+        const [, tenantId, documentId] = parsedUrl.path? parsedUrl.path.split("/") : [];
         if (!documentId || !tenantId) {
-            // eslint-disable-next-line max-len
-            return Promise.reject(`Couldn't parse documentId and/or tenantId. [documentId:${documentId}][tenantId:${tenantId}]`);
+            throw new Error(`Couldn't parse resolved url. [documentId:${documentId}][tenantId:${tenantId}]`);
         }
 
         const fluidResolvedUrl = resolvedUrl;
         const jwtToken = fluidResolvedUrl.tokens.jwt;
         if (!jwtToken) {
-            return Promise.reject(`Token was not provided.`);
+            throw new Error(`Token was not provided.`);
         }
 
         const tokenProvider = new TokenProvider(jwtToken);
 
-        return Promise.resolve(
-            createTestDocumentService(this.localDeltaConnectionServer, tokenProvider, tenantId, documentId));
+        return createTestDocumentService(this.localDeltaConnectionServer, tokenProvider, tenantId, documentId);
     }
 }

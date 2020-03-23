@@ -47,6 +47,7 @@ import {
     raiseConnectedEvent,
 } from "@microsoft/fluid-protocol-base";
 import {
+    ConnectionMode,
     ConnectionState,
     FileMode,
     IClient,
@@ -79,7 +80,7 @@ import { DeltaManager } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { Loader, RelativeLoader } from "./loader";
 import { NullChaincode } from "./nullRuntime";
-import { pkgName, pkgVersion } from "./packageVersion";
+import { pkgVersion } from "./packageVersion";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 import { parseUrl } from "./utils";
 import { BlobCacheStorageService } from "./blobCacheStorageService";
@@ -190,7 +191,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private storageService: IDocumentStorageService | undefined | null;
     private blobsCacheStorageService: IDocumentStorageService | undefined;
 
-    private _version: string | undefined;
     private _clientId: string | undefined;
     private _scopes: string[] | undefined;
     private readonly _deltaManager: DeltaManager;
@@ -213,13 +213,22 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private manualReconnectInProgress = false;
     private readonly connectionTransitionTimes: number[] = [];
     private messageCountAfterDisconnection: number = 0;
+    private _loadedFromVersion: IVersion | undefined;
 
     private lastVisible: number | undefined;
 
     private _closed = false;
 
+    public get loadedFromVersion(): IVersion | undefined {
+        return this._loadedFromVersion;
+    }
+
     public get readonly(): boolean | undefined {
         return this._deltaManager.readonly;
+    }
+
+    public forceReadonly(readonly: boolean) {
+        this._deltaManager.forceReadonly(readonly);
     }
 
     public get closed(): boolean {
@@ -319,8 +328,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             {
                 docId: this.id,
                 clientType, // Differentiating summarizer container from main container
-                packageName: TelemetryLogger.sanitizePkgName(pkgName),
-                packageVersion: pkgVersion,
+                loaderVersion: pkgVersion,
             });
 
         // Prefix all events in this file with container-loader
@@ -377,6 +385,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.protocolHandler.close();
         }
 
+        this.context?.dispose();
+
         assert(this.connectionState === ConnectionState.Disconnected, "disconnect event was not raised!");
 
         this.emit("closed");
@@ -432,7 +442,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         if (!parsedUrl) {
             throw new Error("Unable to parse Url");
         }
-        this._id = decodeURI(parsedUrl.id);
+        const [, docId] = parsedUrl.id.split("/");
+        this._id = decodeURI(docId);
 
         this.storageService = await this.getDocumentStorageService();
 
@@ -446,6 +457,16 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         startConnectionP.catch((error) => {
             debug(`Error in connecting to delta stream from unpaused case ${error}`);
         });
+
+        await startConnectionP.then((details) => {
+            this._existing = details.existing;
+            this._parentBranch = details.parentBranch;
+        });
+
+        // Propagate current connection state through the system.
+        const connected = this.connectionState === ConnectionState.Connected;
+        assert(!connected || this._deltaManager.connectionMode === "read");
+        this.propagateConnectionState();
     }
 
     public async request(path: IRequest): Promise<IResponse> {
@@ -512,8 +533,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             }
 
             // Ensure connection to web socket
-            // All errors are reported through events ("error" / "disconnected") and telemetry in DeltaManager
-            this.connectToDeltaStream().catch(() => {});
+            this.connectToDeltaStream().catch((error) => {
+                // All errors are reported through events ("error" / "disconnected") and telemetry in DeltaManager
+                // So there shouldn't be a need to record error here.
+                // But we have number of cases where reconnects do not happen, and no errors are recorded, so
+                // adding this log point for easier diagnostics
+                this.logger.sendTelemetryEvent({eventName: "setAutoReconnectError"}, error);
+            });
         }
     }
 
@@ -556,7 +582,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.deltaManager.inbound.systemPause(),
             this.deltaManager.inboundSignal.systemPause()]);
 
-        const previousContextState = await this.context!.stop();
+        const previousContextState = await this.context!.snapshotRuntimeState();
+        this.context!.dispose();
 
         let snapshot: ISnapshotTree | undefined;
         const blobs = new Map();
@@ -684,9 +711,16 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
     }
 
-    private async connectToDeltaStream() {
+    private async connectToDeltaStream(modeArg: ConnectionMode = "read") {
         this.recordConnectStartTime();
-        return this._deltaManager.connect();
+
+        let mode = modeArg;
+        // All agents need "write" access, including summarizer.
+        if (!this.canReconnect || !this.client.details.capabilities.interactive) {
+            mode = "write";
+        }
+
+        return this._deltaManager.connect(mode);
     }
 
     /**
@@ -703,10 +737,21 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         let startConnectionP: Promise<IConnectionDetails> | undefined;
 
-        // Start websocket connection as soon as possible.  Note that there is no op handler attached yet, but the
+        // Ideally we always connect as "read" by default.
+        // Currently that works with SPO & r11s, because we get "write" connection when connecting to non-existing file.
+        // We should not rely on it by (one of them will address the issue, but we need to address both)
+        // 1) switching create new flow to one where we create file by posting snapshot
+        // 2) Fixing quorum workflows (have retry logic)
+        // That all said, "read" does not work with memorylicious workflows (that opens two simultaneous
+        // connections to same file) in two ways:
+        // A) creation flow breaks (as one of the clients "sees" file as existing, and hits #2 above)
+        // B) Once file is created, transition from view-only connection to write does not work - some bugs to be fixed.
+        const defaultConnectionMode = "write";
+
+        // Start websocket connection as soon as possible. Note that there is no op handler attached yet, but the
         // DeltaManager is resilient to this and will wait to start processing ops until after it is attached.
         if (!pause) {
-            startConnectionP = this.connectToDeltaStream();
+            startConnectionP = this.connectToDeltaStream(defaultConnectionMode);
             startConnectionP.catch((error) => {});
         }
 
@@ -716,12 +761,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // Fetch specified snapshot, but intentionally do not load from snapshot if specifiedVersion is null
         const maybeSnapshotTree = specifiedVersion === null ? undefined
             : await this.fetchSnapshotTree(specifiedVersion);
-
-        // If pause, and there's no tree, then we'll start the websocket connection here (we'll need the details later)
-        if (!maybeSnapshotTree && !startConnectionP) {
-            startConnectionP = this.connectToDeltaStream();
-            startConnectionP.catch((error) => {});
-        }
 
         const blobManagerP = this.loadBlobManager(this.storageService, maybeSnapshotTree);
 
@@ -745,7 +784,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             loadDetailsP = Promise.resolve();
         } else {
             if (!startConnectionP) {
-                startConnectionP = this.connectToDeltaStream();
+                startConnectionP = this.connectToDeltaStream(defaultConnectionMode);
             }
             // Intentionally don't .catch on this promise - we'll let any error throw below in the await.
             loadDetailsP = startConnectionP.then((details) => {
@@ -759,8 +798,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         [this.blobManager, this.protocolHandler] = await Promise.all([blobManagerP, protocolHandlerP, loadDetailsP]);
 
         await this.loadContext(attributes, maybeSnapshotTree);
-
-        this.context!.changeConnectionState(this.connectionState, this.clientId!, this._version);
 
         // Internal context is fully loaded at this point
         this.loaded = true;
@@ -812,7 +849,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         // The load context - given we seeded the quorum - will be great
         await this.createDetachedContext(attributes);
+
         this.loaded = true;
+
+        this.propagateConnectionState();
     }
 
     private async getDocumentStorageService(): Promise<IDocumentStorageService> {
@@ -899,7 +939,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     ConnectionState.Connected,
                     `joined @ ${details.sequenceNumber}`,
                     this.pendingClientId,
-                    this._deltaManager.version,
                     details.client.scopes,
                     this._deltaManager.serviceConfiguration);
             }
@@ -980,13 +1019,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     }
 
-    private get client() {
+    private get client(): IClient {
         const client: IClient = this.options && this.options.client
             ? (this.options.client as IClient)
             : {
                 details: {
                     capabilities: { interactive: true },
                 },
+                mode: "read", // default reconnection mode on lost connection / connection error
                 permission: [],
                 scopes: [],
                 user: { id: "" },
@@ -1015,7 +1055,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 ConnectionState.Connecting,
                 "websocket established",
                 details.clientId,
-                details.version,
                 details.claims.scopes,
                 details.serviceConfiguration);
 
@@ -1024,7 +1063,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     ConnectionState.Connected,
                     `joined as readonly`,
                     details.clientId,
-                    deltaManager.version,
                     details.claims.scopes,
                     deltaManager.serviceConfiguration);
             }
@@ -1137,14 +1175,12 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         value: ConnectionState,
         reason: string,
         clientId: string,
-        version: string,
         scopes: string[],
         configuration: IServiceConfiguration);
     private setConnectionState(
         value: ConnectionState,
         reason: string,
-        context?: string,
-        version?: string,
+        clientId?: string,
         scopes?: string[],
         configuration?: IServiceConfiguration) {
         if (this.connectionState === value) {
@@ -1155,7 +1191,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         const oldState = this._connectionState;
         this._connectionState = value;
-        this._version = version;
         this._scopes = scopes;
         this._serviceConfiguration = configuration;
 
@@ -1166,7 +1201,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // join message. after we see the join message for out new connection with our new client id,
         // we know there can no longer be outstanding ops that we sent with the previous client id.
         if (value === ConnectionState.Connecting) {
-            this.pendingClientId = context;
+            this.pendingClientId = clientId;
         } else if (value === ConnectionState.Connected) {
             this._clientId = this.pendingClientId;
             this._deltaManager.updateQuorumJoin();
@@ -1175,23 +1210,26 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.pendingClientId = undefined;
         }
 
-        // Report telemetry after we set client id!
-        this.logConnectionStateChangeTelemetry(value, oldState, reason);
-
         if (this.loaded) {
             this.propagateConnectionState();
         }
+
+        // Report telemetry after we set client id!
+        this.logConnectionStateChangeTelemetry(value, oldState, reason);
     }
 
     private propagateConnectionState() {
         assert(this.loaded);
-        const logOpsOnReconnect: boolean = this._connectionState === ConnectionState.Connected && !this.firstConnection;
+        const logOpsOnReconnect: boolean =
+            this._connectionState === ConnectionState.Connected &&
+            !this.firstConnection &&
+            this._deltaManager.connectionMode === "write";
         if (logOpsOnReconnect) {
             this.messageCountAfterDisconnection = 0;
         }
-        this.context!.changeConnectionState(this._connectionState, this.clientId!, this._version);
-        this.protocolHandler!.quorum.changeConnectionState(this._connectionState, this.clientId!);
-        raiseConnectedEvent(this, this._connectionState, this.clientId!);
+        this.context!.changeConnectionState(this._connectionState, this.clientId);
+        this.protocolHandler!.quorum.changeConnectionState(this._connectionState, this.clientId);
+        raiseConnectedEvent(this, this._connectionState, this.clientId);
         if (logOpsOnReconnect) {
             this.logger.sendTelemetryEvent(
                 { eventName: "OpsSentOnReconnect", count: this.messageCountAfterDisconnection });
@@ -1259,6 +1297,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const version = await this.getVersion(specifiedVersion || this.id);
 
         if (version) {
+            this._loadedFromVersion = version;
             return await this.storageService!.getSnapshotTree(version) || undefined;
         } else if (specifiedVersion) {
             // We should have a defined version to load from if specified version requested
@@ -1278,15 +1317,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go to this loader
-        const loader = new RelativeLoader(this.loader, this.originalRequest);
+        const loader = new RelativeLoader(this.loader, () => this.originalRequest);
 
         this.context = await ContainerContext.createOrLoad(
             this,
             this.scope,
             this.codeLoader,
             chaincode,
-            // back-compat: 0.14 undefinedSnapshot
-            snapshot || { id: null, blobs: {}, commits: {}, trees: {} },
+            snapshot ?? null,
             attributes,
             this.blobManager,
             new DeltaManagerProxy(this._deltaManager),
@@ -1317,7 +1355,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
         // are set. Global requests will still go to this loader
-        const loader = new RelativeLoader(this.loader, this.originalRequest);
+        const loader = new RelativeLoader(this.loader, () => this.originalRequest);
 
         this.context = await ContainerContext.createOrLoad(
             this,

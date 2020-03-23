@@ -12,7 +12,7 @@ sidebar: auto
 - Breaking changes are [tracked in our docs](./breaking-changes.md) and in
   [BREAKING.md](https://github.com/microsoft/FluidFramework/blob/master/BREAKING.md) at the root of our repo.
 - Release branches are forked every ~2-4 weeks
-- **Supported versions:*- _current release_ and _current release - 1_
+- **Supported versions:** _current release_ and _current release - 1_
 
 
 ## Release status
