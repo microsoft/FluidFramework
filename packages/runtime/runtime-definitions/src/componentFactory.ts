@@ -40,6 +40,11 @@ export interface IComponentCreator<T extends IComponent> {
  */
 export interface IComponentFactory extends IProvideComponentFactory {
     /**
+     * String that uniquely identifies the type of component created by this factory.
+     */
+    type?: string;
+
+    /**
      * Generates runtime for the component from the component context. Once created should be bound to the context.
      * @param context - Context for the component.
      */

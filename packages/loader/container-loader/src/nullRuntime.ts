@@ -59,7 +59,7 @@ class NullRuntime extends EventEmitter implements IRuntime {
         });
     }
 
-    public changeConnectionState(value: ConnectionState, clientId: string) {
+    public changeConnectionState(value: ConnectionState, clientId?: string) {
         return;
     }
 

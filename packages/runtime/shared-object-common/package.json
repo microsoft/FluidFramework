@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-shared-object-base",
-  "version": "0.15.0",
+  "version": "0.16.0",
   "description": "Fluid document loader",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -27,10 +27,10 @@
   "dependencies": {
     "@microsoft/fluid-common-definitions": "^0.13.0",
     "@microsoft/fluid-common-utils": "^0.14.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.15.0",
-    "@microsoft/fluid-container-definitions": "^0.15.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.16.0",
+    "@microsoft/fluid-container-definitions": "^0.16.0",
     "@microsoft/fluid-protocol-definitions": "^0.1003.0",
-    "@microsoft/fluid-runtime-definitions": "^0.15.0",
+    "@microsoft/fluid-runtime-definitions": "^0.16.0",
     "@types/debug": "^0.0.31",
     "@types/double-ended-queue": "^2.1.0",
     "@types/node": "^10.14.6",
@@ -39,7 +39,7 @@
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",
-    "@microsoft/eslint-config-fluid": "^0.14.0",
+    "@microsoft/eslint-config-fluid": "^0.15.0",
     "@microsoft/fluid-build-common": "^0.14.0",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",

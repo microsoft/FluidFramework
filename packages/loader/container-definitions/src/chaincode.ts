@@ -144,7 +144,7 @@ export interface IRuntime extends IDisposable {
     /**
      * Notifies the runtime of a change in the connection state
      */
-    changeConnectionState(value: ConnectionState, clientId: string, version?: string);
+    changeConnectionState(value: ConnectionState, clientId?: string);
 
     /**
      * @deprecated in 0.14 async stop()

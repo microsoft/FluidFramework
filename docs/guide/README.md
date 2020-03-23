@@ -33,7 +33,7 @@ later Node versions.
 
 ::: tip
 
-If you do not have NodeJS already installed, we stringly recommend using nvm to simplify installing and managing
+If you do not have NodeJS already installed, we strongly recommend using nvm to simplify installing and managing
 multiple NodeJS versions.
 
 * [nvm for Windows](https://github.com/coreybutler/nvm-windows)

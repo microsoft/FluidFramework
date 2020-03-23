@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import { strict as assert } from "assert";
 import { RequestParser } from "../requestParser";
 
 describe("RequestParser", () => {
@@ -47,16 +47,16 @@ describe("RequestParser", () => {
             requestParser = new RequestParser({ url: "/componentId//some/route/" });
         });
         it("Create request from part 0", () => {
-            assert.equal(requestParser.createSubRequest(0).url, "componentId/some/route");
+            assert.equal(requestParser.createSubRequest(0)?.url, "componentId/some/route");
         });
         it("Create request from part 1", () => {
-            assert.equal(requestParser.createSubRequest(1).url, "some/route");
+            assert.equal(requestParser.createSubRequest(1)?.url, "some/route");
         });
         it("Create request from part 2", () => {
-            assert.equal(requestParser.createSubRequest(2).url, "route");
+            assert.equal(requestParser.createSubRequest(2)?.url, "route");
         });
         it("Create request from parts length ", () => {
-            assert.equal(requestParser.createSubRequest(3).url, "");
+            assert.equal(requestParser.createSubRequest(3)?.url, "");
         });
         it("Create request from invalid part ", () => {
             assert.equal(requestParser.createSubRequest(4), undefined);

@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-blob-manager",
-  "version": "0.15.0",
+  "version": "0.16.0",
   "description": "Blob management component",
   "license": "MIT",
   "author": "Microsoft",
@@ -26,16 +26,16 @@
     "webpack:dev": "webpack --env=\"development\""
   },
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.15.0",
-    "@microsoft/fluid-component-runtime": "^0.15.0",
-    "@microsoft/fluid-container-definitions": "^0.15.0",
-    "@microsoft/fluid-driver-definitions": "^0.15.0",
-    "@microsoft/fluid-map": "^0.15.0",
-    "@microsoft/fluid-runtime-definitions": "^0.15.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.16.0",
+    "@microsoft/fluid-component-runtime": "^0.16.0",
+    "@microsoft/fluid-container-definitions": "^0.16.0",
+    "@microsoft/fluid-driver-definitions": "^0.16.0",
+    "@microsoft/fluid-map": "^0.16.0",
+    "@microsoft/fluid-runtime-definitions": "^0.16.0",
     "@types/node": "^10.14.6"
   },
   "devDependencies": {
-    "@microsoft/eslint-config-fluid": "^0.14.0",
+    "@microsoft/eslint-config-fluid": "^0.15.0",
     "@microsoft/fluid-build-common": "^0.14.0",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",

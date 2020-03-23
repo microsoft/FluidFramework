@@ -94,7 +94,7 @@ export interface IComponentRuntime extends
      * @param clientId - ID of the client. It's old ID when in disconnected state and
      * it's new client ID when we are connecting or connected.
      */
-    changeConnectionState(value: ConnectionState, clientId: string);
+    changeConnectionState(value: ConnectionState, clientId?: string);
 
     /**
      * @deprecated in 0.14 async close()
@@ -414,6 +414,15 @@ export interface IHostRuntime extends
         pkg: string[],
         realizationFn?: (context: IComponentContext) => void,
     ): Promise<IComponentRuntime>;
+
+    /**
+     * Creates a new IComponentContext instance.  The caller completes construction of the the component by
+     * calling IComponentContext.bindRuntime() when the component is prepared to begin processing ops.
+     *
+     * @param pkg - Package path for the component to be created
+     * @param props - Properties to be passed to the instantiateComponent thru the context
+     */
+    createComponentContext(pkg: string[], props?: any): IComponentContext;
 
     /**
      * Returns the current quorum.
