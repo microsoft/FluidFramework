@@ -32,7 +32,7 @@ so you can focus on your app's business logic. Fluid's data synchronization is f
 bandwidth. Fluid is extensible, too. You can write components which can be re-used or you can even create new
 distributed data structures.
 
-::: info Supported versions
+::: important Supported versions
 
 - Current release version: `0.15.x`
 - Supported releases: `>=0.14.x, <=0.15.x`
