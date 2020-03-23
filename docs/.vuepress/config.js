@@ -34,34 +34,11 @@ const getNav = () => {
         { text: "What is Fluid?", link: "/what-is-fluid" },
         { text: "Guide", link: "/guide/" },
         { text: "Tutorials", link: "/examples/" },
-        { text: "Patterns", link: "/patterns/" },
         { text: "API", link: "/api/overview" },
         {
             text: "🤿 Dive Deeper",
             items: [
                 { text: "How Fluid works", link: "/how/" },
-                { text: "Big page of docs and decks", link: "/misc/doc-index" },
-                { text: "FAQ", link: "/faq/" },
-                { text: "Terminology", link: "/misc/terminology" },
-                { text: "Concepts", link: "/misc/concepts" },
-                {
-                    text: "Contributing",
-                    items: [
-                        { text: "Release process", link: "/contributing/release-process" },
-                        { text: "Breaking changes", link: "/contributing/breaking-changes" },
-                        { text: "Compatibility", link: "/contributing/compatibility" },
-                        { text: "Coding guidelines", link: "/contributing/coding-guidelines" },
-                        { text: "Building documentation locally", link: "/contributing/building-documentation" },
-                        { text: "Miscellaneous", link: "/contributing/misc" },
-                    ]
-                },
-                {
-                    text: "Team",
-                    items: [
-                        { text: "Updates", link: "/team/" },
-                        { text: "Routerlicious build machine", link: "/contributing/r11s-build-machine" },
-                    ]
-                }
             ]
         },
     ];
@@ -206,8 +183,8 @@ const getGuideSidebar = () => {
                 "",
                 "spfx.md",
                 "upload.md",
-                "yo-fluid",
-                "water-park",
+                // "yo-fluid",
+                // "water-park",
             ]
         },
         {
@@ -256,27 +233,27 @@ const getExamplesSidebar = () => {
         "dice-roller",
         "sudoku",
         "badge",
-        {
-            title: "Components",
-            collapsable: true,
-            children: [
-                "visual-component",
-                "data-component",
-                "embed-components",
-                "cross-component",
-                "component-patterns",
-                "component-collections",
-                "bots",
-                "component-best-practices",
-            ]
-        },
-        {
-            title: "Containers",
-            collapsable: true,
-            children: [
-                "singletons",
-            ]
-        },
+        // {
+        //     title: "Components",
+        //     collapsable: true,
+        //     children: [
+        //         "visual-component",
+        //         "data-component",
+        //         "embed-components",
+        //         "cross-component",
+        //         "component-patterns",
+        //         "component-collections",
+        //         "bots",
+        //         "component-best-practices",
+        //     ]
+        // },
+        // {
+        //     title: "Containers",
+        //     collapsable: true,
+        //     children: [
+        //         "singletons",
+        //     ]
+        // },
     ];
 }
 
@@ -301,7 +278,6 @@ const getHowSidebar = () => {
     return [
         "",
         "tob",
-        "developer-guide",
     ];
 }
 
@@ -361,14 +337,13 @@ module.exports = {
     evergreen: true,
     head: [
         ["link", { rel: "icon", href: "/images/homescreen48.png" }],
-        ["link", { rel: "manifest", crossorigin: "use-credentials", href: "/manifest.webmanifest" }],
-        ["meta", { name: "theme-color", content: "#00BCF2" }],
-        ["meta", { name: "apple-mobile-web-app-capable", content: "yes" }],
-        ["meta", { name: "apple-mobile-web-app-status-bar-style", content: "black" }],
-        ["link", { rel: "apple-touch-icon", href: "/images/homescreen192.png" }],
-        // ["link", { rel: "mask-icon", href: "/icons/safari-pinned-tab.svg", color: "#3eaf7c" }],
-        ["meta", { name: "msapplication-TileImage", content: "/images/homescreen144.png" }],
-        ["meta", { name: "msapplication-TileColor", content: "#000000" }]
+        // ["link", { rel: "manifest", crossorigin: "use-credentials", href: "/manifest.webmanifest" }],
+        // ["meta", { name: "theme-color", content: "#00BCF2" }],
+        // ["meta", { name: "apple-mobile-web-app-capable", content: "yes" }],
+        // ["meta", { name: "apple-mobile-web-app-status-bar-style", content: "black" }],
+        // ["link", { rel: "apple-touch-icon", href: "/images/homescreen192.png" }],
+        // ["meta", { name: "msapplication-TileImage", content: "/images/homescreen144.png" }],
+        // ["meta", { name: "msapplication-TileColor", content: "#000000" }]
     ],
     plugins: [
         ["code-switcher"],
@@ -380,13 +355,13 @@ module.exports = {
         //         color: "#999",
         //     }
         // ],
-        [
-            "@vuepress/pwa",
-            {
-                serviceWorker: true,
-                updatePopup: true
-            }
-        ],
+        // [
+        //     "@vuepress/pwa",
+        //     {
+        //         serviceWorker: true,
+        //         updatePopup: true
+        //     }
+        // ],
         [
             "vuepress-plugin-container",
             {
@@ -426,7 +401,7 @@ module.exports = {
         fluidVarGroup: fluidVarGroup,
         editLinks: true,
         lastUpdated: false, // "Last Updated",
-        repo: "microsoft/FluidFramework",
+        // repo: "microsoft/FluidFramework",
         docsDir: "docs",
         heroSymbol: permalinkSymbol(),
         smoothScroll: true,
