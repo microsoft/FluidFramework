@@ -26,7 +26,6 @@ class Component extends PrimedComponent {
 describe("PrimedComponent", () => {
 
     describe("Blob support", () => {
-        const componentId = "id";
         let host: TestHost;
         let component: Component;
 
@@ -35,7 +34,7 @@ describe("PrimedComponent", () => {
             host = new TestHost([
                 [PrimedType, Promise.resolve(factory)],
             ]);
-            component = await host.createAndAttachComponent(componentId, PrimedType);
+            component = await host.createAndAttachComponent_NEW(PrimedType);
         });
 
         afterEach(async () => { await host.close(); });
@@ -51,7 +50,7 @@ describe("PrimedComponent", () => {
 
             const host2 = host.clone();
             await TestHost.sync(host, host2);
-            const component2 = await host2.getComponent<Component>(componentId);
+            const component2 = await component.handle.get();
             const value = await component2.root.get<IComponentHandle<string>>("key").get();
             assert(value === "aaaa");
             await host2.close();

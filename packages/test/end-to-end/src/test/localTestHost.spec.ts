@@ -63,7 +63,7 @@ describe("TestHost", () => {
 
         beforeEach(async () => {
             host = new TestHost(testComponents, [SharedString.getFactory()]);
-            comp = await host.createAndAttachComponent("documentId", TestComponent.type);
+            comp = await host.createAndAttachComponent_NEW(TestComponent.type);
         });
 
         afterEach(async () => {
@@ -84,8 +84,9 @@ describe("TestHost", () => {
                 "Cloned hosts must share the deltaConnectionServer.");
 
             // Create/open both instance of TestComponent before applying ops.
-            const comp1 = await host1.createAndAttachComponent<TestComponent>("documentId", TestComponent.type);
-            const comp2 = await host2.getComponent<TestComponent>("documentId");
+            const comp1 = await host1.createAndAttachComponent_NEW<TestComponent>("documentId", TestComponent.type);
+            const handle = comp1.handle;
+            const comp2 = await handle.get();
             assert(comp1 !== comp2, "Each host must return a separate TestComponent instance.");
 
             comp1.increment();
@@ -107,14 +108,14 @@ describe("TestHost", () => {
 
         it("late open / early close", async () => {
             const host1 = new TestHost(testComponents, [SharedString.getFactory()]);
-            const comp1 = await host1.createAndAttachComponent<TestComponent>("documentId", TestComponent.type);
-
+            const comp1 = await host1.createAndAttachComponent_NEW<TestComponent>(TestComponent.type);
+            const handle = comp1.handle;
             comp1.increment();
             assert.equal(comp1.value, 1, "Local update by 'comp1' must be promptly observable");
 
             // Wait until ops are pending before opening second TestComponent instance.
             const host2 = host1.clone();
-            const comp2 = await host2.getComponent<TestComponent>("documentId");
+            const comp2 = await handle.get();
             assert(comp1 !== comp2, "Each host must return a separate TestComponent instance.");
 
             await TestHost.sync(host1, host2);
@@ -206,9 +207,9 @@ describe("TestHost", () => {
                 deltaEventManager.registerDocuments(user1DocumentDeltaEvent, user2DocumentDeltaEvent);
 
                 const user1Component =
-                    await host1.createAndAttachComponent<TestComponent>("test_component", TestComponent.type);
-                const user2Component =
-                    await host2.getComponent<TestComponent>("test_component");
+                    await host1.createAndAttachComponent_NEW<TestComponent>(TestComponent.type);
+                const handle = user1Component.handle;
+                const user2Component = await handle.get();
 
                 await deltaEventManager.pauseProcessing();
 
