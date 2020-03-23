@@ -16,7 +16,7 @@ import * as winston from "winston";
 import { spoEnsureLoggedIn } from "../gatewayOdspUtils";
 import { resolveUrl } from "../gatewayUrlResolver";
 import { IAlfred } from "../interfaces";
-import { getConfig, getParam, getUserDetails } from "../utils";
+import { getConfig, getUserDetails } from "../utils";
 import { defaultPartials } from "./partials";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -54,8 +54,7 @@ export function create(
             },
             jwtKey);
 
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const documentId = getParam(request.params, "id")!;
+        const documentId = request.params.id;
         const path = request.params[0];
         const tenantId = appTenants[0].id;
         const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];

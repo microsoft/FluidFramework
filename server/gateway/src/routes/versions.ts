@@ -6,7 +6,7 @@
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
 import { IAlfred } from "../interfaces";
-import { getParam, getUserDetails } from "../utils";
+import { getUserDetails } from "../utils";
 import { defaultPartials } from "./partials";
 
 export function create(alfred: IAlfred, ensureLoggedIn: any): Router {
@@ -16,10 +16,8 @@ export function create(alfred: IAlfred, ensureLoggedIn: any): Router {
      * Loads count number of latest commits.
      */
     router.get("/:tenantId/:id", ensureLoggedIn(), (request, response) => {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const tenantId = getParam(request.params, "tenantId")!;
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const documentId = getParam(request.params, "id")!;
+        const tenantId = request.params.tenantId;
+        const documentId = request.params.id;
 
         const versionsP = alfred.getVersions(tenantId, documentId, 10);
         versionsP.then(

@@ -10,6 +10,7 @@ import {
     IWebServer,
     IWebServerFactory,
     MongoManager,
+    IHttpServer,
 } from "@microsoft/fluid-server-services-core";
 import * as utils from "@microsoft/fluid-server-services-utils";
 import { Provider } from "nconf";
@@ -52,7 +53,7 @@ export class GatewayRunner implements utils.IRunner {
         // Listen on provided port, on all network interfaces.
         httpServer.listen(this.port);
         httpServer.on("error", (error) => this.onError(error));
-        httpServer.on("listening", () => this.onListening());
+        httpServer.on("listening", () => this.onListening(httpServer));
 
         return this.runningDeferred.promise;
     }
@@ -105,9 +106,8 @@ export class GatewayRunner implements utils.IRunner {
     /**
      * Event listener for HTTP server "listening" event.
      */
-    private onListening() {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const addr = this.server!.httpServer.address();
+    private onListening(httpServer: IHttpServer) {
+        const addr = httpServer.address();
         const bind = typeof addr === "string"
             ? `pipe ${addr}`
             : `port ${addr.port}`;

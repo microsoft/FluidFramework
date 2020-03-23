@@ -17,7 +17,7 @@ import * as winston from "winston";
 import { spoEnsureLoggedIn } from "../gatewayOdspUtils";
 import { resolveUrl } from "../gatewayUrlResolver";
 import { IAlfred, IKeyValueWrapper } from "../interfaces";
-import { getConfig, getJWTClaims, getParam, getUserDetails } from "../utils";
+import { getConfig, getJWTClaims, getUserDetails } from "../utils";
 import { defaultPartials } from "./partials";
 
 export function create(
@@ -72,8 +72,7 @@ export function create(
                 const documentId = rawPath.substring(0, slash !== -1 ? slash : rawPath.length);
                 const path = rawPath.substring(slash !== -1 ? slash : rawPath.length);
 
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                const tenantId = getParam(request.params, "tenantId")!;
+                const tenantId = request.params.tenantId;
 
                 const search = parse(request.url).search;
                 const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];

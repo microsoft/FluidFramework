@@ -57,7 +57,7 @@ class WorkerLoader implements ILoader, IComponentRunnable {
                 new BaseTelemetryNullLogger());
         }
         const documentService: IDocumentService = await factory.createDocumentService(this.resolved);
-        this.container = await Container.load(
+        const container = await Container.load(
             this.id,
             documentService,
             new WebCodeLoader(),
@@ -67,18 +67,17 @@ class WorkerLoader implements ILoader, IComponentRunnable {
             request,
             this.resolved,
             new BaseTelemetryNullLogger());
+        this.container = container;
 
         if (this.container.deltaManager.referenceSequenceNumber <= this.fromSequenceNumber) {
             await new Promise((resolve, reject) => {
                 const opHandler = (message: ISequencedDocumentMessage) => {
                     if (message.sequenceNumber > this.fromSequenceNumber) {
                         resolve();
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        this.container!.removeListener("op", opHandler);
+                        container.removeListener("op", opHandler);
                     }
                 };
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                this.container!.on("op", opHandler);
+                container.on("op", opHandler);
             });
         }
 
