@@ -23,7 +23,7 @@ function craftCachePage(headHTML: string, bodyHTML: string) {
             ${headHTML}
         </head>
         <body>
-            <div id="content">
+            <div id="content" style="height:100%; width:100%">
                 ${bodyHTML}
             </div>
         </body>

@@ -161,7 +161,7 @@ services:
         volumes:
             - ./verdaccio/conf:/verdaccio/conf
     headless-agent:
-        image: prague.azurecr.io/headless-agent:6258
+        image: prague.azurecr.io/headless-agent:latest
         cap_add:
             - SYS_ADMIN
         restart: always

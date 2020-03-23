@@ -5,7 +5,7 @@
 
 import { BaseHost, IBaseHostConfig } from "@microsoft/fluid-base-host";
 import { Container } from "@microsoft/fluid-container-loader";
-import { IFluidResolvedUrl, IResolvedUrl } from "@microsoft/fluid-driver-definitions";
+import { IDocumentServiceFactory, IFluidResolvedUrl, IResolvedUrl } from "@microsoft/fluid-driver-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 
 interface IWindow extends Window {
@@ -19,19 +19,21 @@ export async function startLoading(resolvedUrl: IResolvedUrl): Promise<Container
         new DefaultErrorTracking(),
         false,
         true);
+    const documentServiceFactories: IDocumentServiceFactory[] = [];
+        documentServiceFactories.push(serviceFactory);
     const baseHostConfig: IBaseHostConfig = {
-        documentServiceFactory: serviceFactory,
+        documentServiceFactory: documentServiceFactories,
         urlResolver: {
             resolve: () => Promise.resolve(resolvedUrl),
         },
     };
 
-    const baseHost = new BaseHost(baseHostConfig, resolvedUrl, undefined, [] );
+    const baseHost = new BaseHost(baseHostConfig, undefined, [] );
     const container =  await baseHost.loadAndRender(
         (resolvedUrl as IFluidResolvedUrl).url,
         document.getElementById("content") as HTMLDivElement);
 
-    return container;
+    return container as any;
 }
 
 // Checks container quorum for connected clients. Once all client leaves,
