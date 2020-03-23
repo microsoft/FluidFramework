@@ -165,19 +165,19 @@ export function create(
 
                 Promise.all([resolvedP, fullTreeP, pkgP, scriptsP, timingsP])
                     .then(([resolved, fullTree, pkg, scripts, timings]) => {
-                        // eslint-disable-next-line max-len
-                        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-non-null-assertion
-                        resolved!.url += path + (search ? search : "");
+                        // Bug in TS3.7: https://github.com/microsoft/TypeScript/issues/33752
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        resolved!.url += path + (search ?? "");
                         winston.info(`render ${tenantId}/${documentId} +${Date.now() - start}`);
 
+                        // Bug in TS3.7: https://github.com/microsoft/TypeScript/issues/33752
                         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                         timings!.push(Date.now() - start);
 
                         response.render(
                             "loaderHost",
                             {
-                                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-                                cache: fullTree ? JSON.stringify(fullTree.cache) : undefined,
+                                cache: fullTree !== undefined ? JSON.stringify(fullTree.cache) : undefined,
                                 chaincode: JSON.stringify(pkg),
                                 clientId: config.get("login:microsoft").clientId,
                                 config: workerConfig,

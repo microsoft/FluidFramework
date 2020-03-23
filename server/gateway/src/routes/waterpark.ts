@@ -123,16 +123,18 @@ export function create(
 
         Promise.all([resolvedP, fullTreeP, pkgP, scriptsP, timingsP])
             .then(([resolved, fullTree, pkg, scripts, timings]) => {
-                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-                if (!pkg) {
+                if (pkg === undefined) {
+                    // Bug in TS3.7: https://github.com/microsoft/TypeScript/issues/33752
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     resolved!.url += `${path}`;
                 } else {
+                    // Bug in TS3.7: https://github.com/microsoft/TypeScript/issues/33752
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     resolved!.url += `?chaincode=${chaincode}`;
                 }
                 winston.info(`render ${tenantId}/${documentId} +${Date.now() - start}`);
 
+                // Bug in TS3.7: https://github.com/microsoft/TypeScript/issues/33752
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 timings!.push(Date.now() - start);
 

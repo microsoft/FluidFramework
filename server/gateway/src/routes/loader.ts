@@ -132,15 +132,12 @@ export function create(
                 });
 
                 const scriptsP = pkgP.then((pkg) => {
-                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-                    if (!pkg) {
+                    if (pkg === undefined) {
                         return [];
                     }
 
-                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-                    const umd = pkg.pkg.fluid && pkg.pkg.fluid.browser && pkg.pkg.fluid.browser.umd;
-                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-                    if (!umd) {
+                    const umd = pkg.pkg.fluid?.browser?.umd;
+                    if (umd === undefined) {
                         return [];
                     }
 
@@ -163,11 +160,12 @@ export function create(
 
                 Promise.all([resolvedP, fullTreeP, pkgP, scriptsP, timingsP])
                     .then(([resolved, fullTree, pkg, scripts, timings]) => {
-                        // eslint-disable-next-line max-len
-                        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-non-null-assertion
-                        resolved!.url += path + (search ? search : "");
+                        // Bug in TS3.7: https://github.com/microsoft/TypeScript/issues/33752
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        resolved!.url += path + (search ?? "");
                         winston.info(`render ${tenantId}/${documentId} +${Date.now() - start}`);
 
+                        // Bug in TS3.7: https://github.com/microsoft/TypeScript/issues/33752
                         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                         timings!.push(Date.now() - start);
 
