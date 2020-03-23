@@ -56,7 +56,7 @@ export async function initializeContainerCode(
         } else {
             const approveProposalHandler = (sequenceNumber: number, key: string) => {
                 if (key === currentCodeProposalKey) {
-                    quorum.off("approveProposal", approveProposalHandler);
+                    quorum.removeListener("approveProposal", approveProposalHandler);
                     resolve();
                 }
             };
@@ -86,7 +86,7 @@ export async function initializeContainerCode(
             const quorumChangeHandler = () => {
                 if (isOldestClient(container)) {
                     resolve();
-                    quorum.off("removeMember", quorumChangeHandler);
+                    quorum.removeListener("removeMember", quorumChangeHandler);
                 }
             };
             quorum.on("removeMember", quorumChangeHandler);
