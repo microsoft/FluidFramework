@@ -1,4 +1,7 @@
-import vue_markdown from "vue-markdown";
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
 
 export default ({
     Vue, // the version of Vue being used in the VuePress app
@@ -7,5 +10,10 @@ export default ({
     siteData, // site metadata
     isServer // is this enhancement applied in server-rendering or client
 }) => {
-    Vue.use(vue_markdown);
+    if (isServer) {
+        const vue_markdown = require("vue-markdown");
+        // console.log("Enhancing app...");
+        // Vue.use(vue_markdown);
+        Vue.component(vue_markdown);
+    }
 };
