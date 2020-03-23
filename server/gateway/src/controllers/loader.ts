@@ -181,7 +181,8 @@ export async function initialize(
     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     const container = await baseHost.initializeContainer(url, pkg ? pkg.details : undefined);
 
-    // Back-compat -- this contextChanged handler will not be necessary in the next version of base-host
+    // Currently this contextChanged handler covers both the initial load (from NullRuntime) as well as the upgrade
+    // scenario.  In the next version of base-host it will only be for the upgrade scenario.
     container.on("contextChanged", (value) => {
         getComponentAndRender(baseHost, url, div).catch(() => { });
     });

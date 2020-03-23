@@ -309,22 +309,25 @@ export async function start(
         await Promise.all([
             container1Promise.then(async (container) => {
                 await getComponentAndRender(baseHost1, url, leftDiv);
+                // Handle the code upgrade scenario (which fires contextChanged)
                 container.on("contextChanged", () => {
-                    window.location.reload();
+                    getComponentAndRender(baseHost1, url, leftDiv).catch(() => { });
                 });
             }),
             container2Promise.then(async (container) => {
                 await getComponentAndRender(baseHost2, url, rightDiv);
+                // Handle the code upgrade scenario (which fires contextChanged)
                 container.on("contextChanged", () => {
-                    window.location.reload();
+                    getComponentAndRender(baseHost2, url, rightDiv).catch(() => { });
                 });
             }),
         ]);
     } else {
         const container = await container1Promise;
         await getComponentAndRender(baseHost1, url, div);
+        // Handle the code upgrade scenario (which fires contextChanged)
         container.on("contextChanged", () => {
-            window.location.reload();
+            getComponentAndRender(baseHost1, url, div).catch(() => { });
         });
     }
 }
