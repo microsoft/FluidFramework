@@ -23,7 +23,7 @@ describe("external-component-loader", () => {
 
         // wait for clicker to be loaded
         // tslint:disable-next-line: no-string-based-set-timeout ???
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 200));
 
         // clicker tests
         const getValue = async (index: number) => {
