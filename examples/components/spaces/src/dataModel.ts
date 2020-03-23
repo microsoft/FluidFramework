@@ -110,7 +110,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
             type,
             layout: { x: 0, y: 0, w: 6, h: 2 },
         };
-        this.getComponent<IComponent>(url)
+        this.getComponent<IComponent>(id)
             .then((returnedComponent) => {
                 if (returnedComponent) {
                     if (returnedComponent.IComponentLoadable) {
