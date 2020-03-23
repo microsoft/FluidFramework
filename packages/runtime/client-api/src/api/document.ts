@@ -194,11 +194,7 @@ export class Document extends EventEmitter {
     /**
      * Closes the document and detaches all listeners
      */
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
     public close() {
-        if (this.closeFn === undefined) {
-            throw new Error("closeFn handler was not provided to Document");
-        }
         return this.closeFn();
     }
 
