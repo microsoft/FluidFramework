@@ -7,10 +7,16 @@ const fs = require("fs");
 const path = require("path");
 const process = require("process");
 
+const fluidVarGroup = process.env[`FLUID_VAR_GROUP`] || "internal";
+
 const listPages = (dirPath, includeIndex = false) => {
     dirPath = path.join(__dirname, dirPath);
-    const files = fs.readdirSync(dirPath);
     let pages = [];
+    if (!fs.existsSync(dirPath)) {
+        return pages;
+    }
+
+    const files = fs.readdirSync(dirPath);
     for (let file of files) {
         if (file === "README.md" || file == "index.md") {
             if (!includeIndex) {
@@ -316,6 +322,27 @@ const getPatternsSidebar = () => {
     ];
 }
 
+const getAllSidebars = () => {
+    const sidebars = {
+        internal: {
+            "/patterns/": getPatternsSidebar(),
+            "/advanced/": getAdvancedSidebar(),
+            "/team/": getTeamSidebar(),
+        },
+        all: {
+            "/guide/": getGuideSidebar(),
+            "/examples/": getExamplesSidebar(),
+            "/api/": getApiSidebar(),
+            "/how/": getHowSidebar(),
+        }
+    };
+
+    return Object.assign({},
+        sidebars.all,
+        fluidVarGroup === "internal" ? sidebars.internal : {}
+    );
+}
+
 function permalinkSymbol() {
     const now = new Date(new Date().getTime());
     const start = new Date(Date.UTC(2020, 2 /* 0-based because javascript */, 17));
@@ -394,7 +421,7 @@ module.exports = {
         }
     },
     themeConfig: {
-        fluidVarGroup: process.env[`FLUID_VAR_GROUP`] || "internal",
+        fluidVarGroup: fluidVarGroup,
         editLinks: true,
         lastUpdated: false, // "Last Updated",
         repo: "microsoft/FluidFramework",
@@ -403,14 +430,6 @@ module.exports = {
         smoothScroll: true,
         sidebarDepth: 1,
         nav: getNav(),
-        sidebar: {
-            "/guide/": getGuideSidebar(),
-            "/examples/": getExamplesSidebar(),
-            "/patterns/": getPatternsSidebar(),
-            "/api/": getApiSidebar(),
-            "/how/": getHowSidebar(),
-            "/advanced/": getAdvancedSidebar(),
-            "/team/": getTeamSidebar(),
-        },
+        sidebar: getAllSidebars(),
     }
 }
