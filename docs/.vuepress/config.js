@@ -5,6 +5,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const process = require("process");
 
 const listPages = (dirPath, includeIndex = false) => {
     dirPath = path.join(__dirname, dirPath);
@@ -393,6 +394,7 @@ module.exports = {
         }
     },
     themeConfig: {
+        fluidVarGroup: process.env[`FLUID_VAR_GROUP`] || "internal",
         editLinks: true,
         lastUpdated: false, // "Last Updated",
         repo: "microsoft/FluidFramework",
