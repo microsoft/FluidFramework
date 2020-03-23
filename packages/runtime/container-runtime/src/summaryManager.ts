@@ -214,9 +214,14 @@ export class SummaryManager extends EventEmitter implements IDisposable {
             return;
         }
 
-        // comment about throttling goes here
-        const throttleDelayWindowMs = 60 * 1000;
-        const throttleMaxDelayMs = 2 * 60 * 1000;
+        // Throttle creation of new summarizer containers to prevent spamming the server with websocket connections.
+        // Ideally we want throttleDelayWindow >= throttleMaxDelay * ceil(finv(throttleMaxDelay)) (where
+        // f:start count in window -> delay time is our function to calculate delay). This makes the delay increase
+        // monotonically up to the max, rather than older start times falling out of the window causing shorter delays.
+        // e.g. in this case, with throttleMaxDelay = 30 seconds and f(x) = 20(2^x - 1), finv(30000) = log2(1501)
+        // ~= 10.552 so we want throttleDelayWindow >= 30000 * 11 = 5.5 minutes.
+        const throttleMaxDelayMs = 30 * 1000;
+        const throttleDelayWindowMs = 6 * 60 * 1000;
         const now = Date.now();
         while (this.startTimes.length && now - this.startTimes[0] > throttleDelayWindowMs) {
             this.startTimes.shift();
