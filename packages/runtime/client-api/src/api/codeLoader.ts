@@ -37,7 +37,7 @@ export class Chaincode implements IComponentFactory {
 
     public get IComponentFactory() { return this; }
 
-    public constructor(private readonly closeFn?: () => void) {}
+    public constructor(private readonly closeFn: () => void) {}
 
     public instantiateComponent(context: IComponentContext): void {
         // Create channel factories

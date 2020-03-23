@@ -103,7 +103,7 @@ export class Document extends EventEmitter {
         public readonly runtime: ComponentRuntime,
         public readonly context: IComponentContext,
         private readonly root: ISharedMap,
-        private readonly closeFn?: () => void,
+        private readonly closeFn: () => void,
     ) {
         super();
     }
