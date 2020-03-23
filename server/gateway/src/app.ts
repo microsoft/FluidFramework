@@ -313,12 +313,9 @@ export function create(
     const routes = gatewayRoutes.create(config, cache, alfred, tenants, getFingerprintUrl);
 
     app.use((request, response, next) => {
-        // eslint-disable-next-line max-len
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-non-null-assertion
-        if (!request.session!.guest) {
+        if (request.session?.guest !== undefined) {
             const name = getRandomName(" ", true);
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            request.session!.guest = {
+            request.session.guest = {
                 displayName: name,
                 sub: `guest-${v4()}`,
                 name,

@@ -147,6 +147,12 @@ let cache: IKeyValue;
 // TODO (mdaumi): Move this to comlink.
 // eslint-disable-next-line @typescript-eslint/no-misused-promises
 process.on("message", async (message: IIncomingMessage) => {
+    // Throughout this handler, note that we can only get the message event if process.send is defined,
+    // per Node documentation: https://nodejs.org/api/child_process.html
+    // Once @types/node supports assertion type narrowing natively,
+    // these checks could be replaced with the native assert:
+    // https://github.com/DefinitelyTyped/DefinitelyTyped/pull/42786
+
     if (message.type === "init") {
         const keyValueLoaderP = promiseTimeout(cacheLoadTimeoutMS, KeyValueLoader.load(message.param));
         const cacheP = keyValueLoaderP.then(async (keyValueLoader: KeyValueLoader) => {
@@ -160,16 +166,20 @@ process.on("message", async (message: IIncomingMessage) => {
                 status: true,
                 type: message.type,
             };
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            process.send!(initSuccessMessage);
+            if (process.send === undefined) {
+                throw new Error("process.send should be defined if we got a message event");
+            }
+            process.send(initSuccessMessage);
         }, (err) => {
             const initFailMessage: IOutgoingMessage = {
                 status: false,
                 type: message.type,
                 value: err,
             };
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            process.send!(initFailMessage);
+            if (process.send === undefined) {
+                throw new Error("process.send should be defined if we got a message event");
+            }
+            process.send(initFailMessage);
         });
     } else {
         if (cache === undefined) {
@@ -178,16 +188,20 @@ process.on("message", async (message: IIncomingMessage) => {
                 type: message.type,
                 value: `Called before initialization`,
             };
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            process.send!(getFailMessage);
+            if (process.send === undefined) {
+                throw new Error("process.send should be defined if we got a message event");
+            }
+            process.send(getFailMessage);
         } else {
             const getSuccessMessage: IOutgoingMessage = {
                 status: true,
                 type: message.type,
                 value: cache.get(message.param as string),
             };
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            process.send!(getSuccessMessage);
+            if (process.send === undefined) {
+                throw new Error("process.send should be defined if we got a message event");
+            }
+            process.send(getSuccessMessage);
         }
     }
 });
