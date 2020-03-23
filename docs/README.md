@@ -32,23 +32,23 @@ so you can focus on your app's business logic. Fluid's data synchronization is f
 bandwidth. Fluid is extensible, too. You can write components which can be re-used or you can even create new
 distributed data structures.
 
+::: important Supported versions
+
+- Current release version: `0.15.x`
+- Supported releases: `>=0.14.x, <=0.15.x`
+
+[Learn more about Fluid's release process](./contributing/release-process.md)
+
+:::
+
+
 ::: danger TypeScript 3.6+ required
 
 Consumers of the Fluid Framework NPM packages **must use a TypeScript version >= 3.6.**
 
-[Read more.](./contributing/breaking-changes.md#fluid-packages-require-consumers-on-typescript-3-6)
+[Read more](./contributing/breaking-changes.md#fluid-packages-require-consumers-on-typescript-3-6)
 
 :::
-
-::: danger Supported versions
-
-- Current release version: `0.14.x`
-- Supported releases: `>=0.13.x, <=0.14.x`
-
-[Learn more about Fluid's release process.](./contributing/release-process.md)
-
-:::
-
 
 ## New to Fluid?
 

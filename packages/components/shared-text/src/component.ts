@@ -227,7 +227,11 @@ export class SharedTextRunner
         containerDiv.style.overflow = "hidden";
         const container = new controls.FlowContainer(
             containerDiv,
-            new API.Document(this.runtime, this.context, this.rootView),
+            new API.Document(
+                this.runtime,
+                this.context,
+                this.rootView,
+                () => { throw new Error("Can't close document"); }),
             this.sharedString,
             overlayInkMap,
             image,
