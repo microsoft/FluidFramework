@@ -28,3 +28,7 @@ export interface IProvideComponentRouter {
 export interface IComponentRouter extends IProvideComponentRouter {
     request(request: IRequest): Promise<IResponse>;
 }
+
+export enum RequestUrlEnum {
+    DefaultComponent = "/",
+}

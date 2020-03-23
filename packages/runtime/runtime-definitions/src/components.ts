@@ -319,6 +319,15 @@ export interface IComponentContext extends EventEmitter {
      * @param componentRuntime - runtime to attach
      */
     attach(componentRuntime: IComponentRuntime): void;
+
+    /**
+     * Take a package name and transform it into a path that can be used to find it
+     * from this context, such as by looking into subregistries
+     * @param subpackage The subpackage to find in this context
+     * @returns A list of packages to the subpackage destination if found,
+     * otherwise the original subpackage
+     */
+    composeSubpackagePath(subpackage: string): Promise<string[]>;
 }
 
 /**
@@ -393,6 +402,18 @@ export interface IHostRuntime extends
      * @internal
      */
     _createComponentWithProps(pkg: string | string[], props: any, id: string): Promise<IComponentRuntime>;
+
+    /**
+     * Creates a new component using an optional realization function.  This API does not allow specifying
+     * the component's id and insteads generates a uuid.  Consumers must save the id of the created component
+     * in order to reference it later.
+     * @param pkg - Package name of the component
+     * @param realizationFn - Optional function to call to realize the component over the context default
+     */
+    createComponentWithRealizationFn(
+        pkg: string[],
+        realizationFn?: (context: IComponentContext) => void,
+    ): Promise<IComponentRuntime>;
 
     /**
      * Returns the current quorum.

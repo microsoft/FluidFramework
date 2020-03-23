@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { PrimedComponent, TypedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { ICombiningOp, IntervalType, LocalReference, PropertySet } from "@microsoft/fluid-merge-tree";
 import {
@@ -18,7 +18,7 @@ import {
 } from "@microsoft/fluid-sequence";
 import { createSheetlet, ISheetlet } from "@tiny-calc/micro";
 import { CellRange } from "./cellrange";
-import { TableSliceType } from "./componentTypes";
+import { TableDocumentType, TableSliceType } from "./componentTypes";
 import { debug } from "./debug";
 import { TableSlice } from "./slice";
 import { ITable, TableDocumentItem } from "./table";
@@ -26,8 +26,10 @@ import { ITable, TableDocumentItem } from "./table";
 export class TableDocument extends PrimedComponent implements ITable {
     public static getFactory() { return TableDocument.factory; }
 
-    private static readonly factory = new PrimedComponentFactory(
-        TableDocument, [
+    private static readonly factory = new TypedComponentFactory<TableDocument>(
+        TableDocumentType,
+        TableDocument,
+        [
             SparseMatrix.getFactory(),
             SharedNumberSequence.getFactory(),
         ],

@@ -206,29 +206,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         const pkgName = pkg ?? pkgOrId;
         const id = pkg ? (pkgOrId ?? uuid()) : uuid();
 
-        const details = await this.getInitialSnapshotDetails();
-        let packagePath: string[] = [...details.pkg];
-
-        // A factory could not contain the registry for itself. So if it is the same the last snapshot
-        // pkg, create component with our package path.
-        if (packagePath.length > 0 && pkgName === packagePath[packagePath.length - 1]) {
-            return this.hostRuntime._createComponentWithProps(packagePath, props, id);
-        }
-
-        // Look for the package entry in our sub-registry. If we find the entry, we need to add our path
-        // to the packagePath. If not, look into the global registry and the packagePath becomes just the
-        // passed package.
-        let entry: ComponentRegistryEntry = await this.componentRuntime.IComponentRegistry?.get(pkgName);
-        if (entry) {
-            packagePath.push(pkgName);
-        } else {
-            entry = await this._hostRuntime.IComponentRegistry.get(pkgName);
-            packagePath = [pkgName];
-        }
-
-        if (!entry) {
-            throw new Error(`Registry does not contain entry for package '${pkgName}'`);
-        }
+        const packagePath: string[] = await this.composeSubpackagePath(pkgName);
 
         return this.hostRuntime._createComponentWithProps(packagePath, props, id);
     }
@@ -276,6 +254,15 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             // During this call we will invoke the instantiate method - which will call back into us
             // via the bindRuntime call to resolve componentRuntimeDeferred
             factory.instantiateComponent(this);
+        }
+
+        return this.componentRuntimeDeferred.promise;
+    }
+
+    public async realizeWithFn(realizationFn?: (context: IComponentContext) => void): Promise<IComponentRuntime> {
+        if (!this.componentRuntimeDeferred) {
+            this.componentRuntimeDeferred = new Deferred<IComponentRuntime>();
+            realizationFn(this);
         }
 
         return this.componentRuntimeDeferred.promise;
@@ -438,6 +425,32 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
         // And notify the pending promise it is now available
         this.componentRuntimeDeferred.resolve(this.componentRuntime);
+    }
+
+    public async composeSubpackagePath(subpackage: string): Promise<string[]> {
+        const details = await this.getInitialSnapshotDetails();
+        let packagePath: string[] = [...details.pkg];
+
+        // A factory could not contain the registry for itself. So if it is the same the last snapshot
+        // pkg, return our package path.
+        if (packagePath.length > 0 && subpackage === packagePath[packagePath.length - 1]) {
+            return packagePath;
+        }
+
+        // Look for the package entry in our sub-registry. If we find the entry, we need to add our path
+        // to the packagePath. If not, look into the global registry and the packagePath becomes just the
+        // passed package.
+        if (await this.componentRuntime.IComponentRegistry?.get(subpackage)) {
+            packagePath.push(subpackage);
+        } else {
+            if (!(await this._hostRuntime.IComponentRegistry.get(subpackage))) {
+                throw new Error(`Registry does not contain entry for package '${subpackage}'`);
+            }
+
+            packagePath = [subpackage];
+        }
+
+        return packagePath;
     }
 
     public abstract generateAttachMessage(): IAttachMessage;

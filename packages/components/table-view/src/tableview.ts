@@ -14,6 +14,8 @@ import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-d
 import { GridView } from "./grid";
 import * as styles from "./index.css";
 
+export const tableViewType = "@fluid-example/table-view";
+
 const template = new Template({
     tag: "div",
     children: [
@@ -33,6 +35,8 @@ const template = new Template({
     ],
 });
 
+const innerDocKey = "innerDoc";
+
 export class TableView extends PrimedComponent implements IComponentHTMLView {
     public static getFactory() { return TableView.factory; }
 
@@ -42,6 +46,7 @@ export class TableView extends PrimedComponent implements IComponentHTMLView {
         new Map([
             [TableDocumentType, import("@fluid-example/table-document").then((m) => m.TableDocument.getFactory())],
         ]),
+        true,
     );
 
     public get IComponentHTMLView() { return this; }
@@ -64,7 +69,7 @@ export class TableView extends PrimedComponent implements IComponentHTMLView {
         elm.append(this.templateRoot);
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.getComponent<TableDocument>(this.docId, /* wait: */ true).then((doc) => {
+        this.getComponent<TableDocument>(this.root.get<string>(innerDocKey), /* wait: */ true).then((doc) => {
             const grid = template.get(this.templateRoot, "grid");
             const gridView = new GridView(doc, this);
             grid.appendChild(gridView.root);
@@ -101,10 +106,10 @@ export class TableView extends PrimedComponent implements IComponentHTMLView {
     // #endregion IComponentHTMLView
 
     protected async componentInitializingFirstTime() {
-        const doc = await this.createAndAttachComponent<TableDocument>(this.docId, TableDocumentType);
+        // Set up internal table doc
+        const doc = await TableDocument.getFactory().createComponent(this.context);
+        this.root.set(innerDocKey, doc.id);
         doc.insertRows(0, 5);
         doc.insertCols(0, 8);
     }
-
-    private get docId() { return `${this.id}-doc`; }
 }
