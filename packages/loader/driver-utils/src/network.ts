@@ -4,6 +4,7 @@
  */
 
 import {
+    IError,
     IGenericNetworkError,
     IAccessDeniedError,
     IFileNotFoundError,
@@ -31,7 +32,7 @@ export function createNetworkError(
     statusCode?: number,
     retryAfterSeconds?: number,
     online: string = OnlineStatus[isOnline()],
-) {
+): IError {
     if (statusCode === 401 || statusCode === 403) {
         return new AccessDeniedError(errorMessage, statusCode, canRetry, online);
     }
