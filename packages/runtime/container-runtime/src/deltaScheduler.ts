@@ -80,8 +80,9 @@ export class DeltaScheduler {
                 }
             }
 
-            const elaspedTime = performanceNow() - this.processingStartTime;
-            if (elaspedTime > this.totalProcessingTime) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const elapsedTime = performanceNow() - this.processingStartTime!;
+            if (elapsedTime > this.totalProcessingTime) {
                 // We have processed ops for more than the total processing time. So, pause the
                 // queue, yield the thread and schedule a resume.
 
@@ -100,7 +101,7 @@ export class DeltaScheduler {
                 // If we are logging the telemetry this time, update the telemetry log object.
                 if (this.schedulingLog) {
                     this.schedulingLog.numberOfTurns++;
-                    this.schedulingLog.totalProcessingTime += elaspedTime;
+                    this.schedulingLog.totalProcessingTime += elapsedTime;
                 }
             }
         }
@@ -110,7 +111,8 @@ export class DeltaScheduler {
         if (this.schedulingLog) {
             // Add the time taken for processing the final ops to the total processing time in the
             // telemetry log object.
-            this.schedulingLog.totalProcessingTime += performanceNow() - this.processingStartTime;
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            this.schedulingLog.totalProcessingTime += performanceNow() - this.processingStartTime!;
 
             this.logger.sendTelemetryEvent({
                 eventName: "InboundOpsProcessingTime",
