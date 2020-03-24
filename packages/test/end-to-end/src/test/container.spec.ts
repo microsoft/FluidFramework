@@ -9,13 +9,10 @@ import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import {
-    IDocumentDeltaStorageService,
-    IDocumentService,
-    IDocumentStorageService,
     IFluidResolvedUrl,
     IGeneralError,
-    IDocumentDeltaConnection,
     ErrorType,
+    IDocumentServiceFactory,
 } from "@microsoft/fluid-driver-definitions";
 import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
@@ -28,7 +25,7 @@ describe("Container", () => {
     let testResolved: IFluidResolvedUrl;
     let deltaConnection: MockDocumentDeltaConnection;
     const testRequest: IRequest = { url: "" };
-    let service: IDocumentService;
+    let serviceFactory: Readonly<IDocumentServiceFactory>;
     let codeLoader: API.CodeLoader;
     let loader: Loader;
 
@@ -36,9 +33,7 @@ describe("Container", () => {
         testDeltaConnectionServer = LocalDeltaConnectionServer.create();
         testResolver = new TestResolver();
         testResolved = await testResolver.resolve(testRequest) as IFluidResolvedUrl;
-        const serviceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
-        service = await serviceFactory.createDocumentService(testResolved);
-
+        serviceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
         codeLoader = new API.CodeLoader({ generateSummaries: false });
         const options = {};
 
@@ -57,7 +52,7 @@ describe("Container", () => {
         try {
             await Container.load(
                 "tenantId/documentId",
-                service,
+                serviceFactory,
                 codeLoader,
                 {},
                 {},
@@ -74,14 +69,20 @@ describe("Container", () => {
     it("Load container unsuccessfully", async () => {
         let success: boolean = true;
         try {
+            const mockFactory = Object.create(serviceFactory) as IDocumentServiceFactory;
             // Issue typescript-eslint/typescript-eslint #1256
             // eslint-disable-next-line @typescript-eslint/unbound-method
-            service.connectToStorage = async (): Promise<IDocumentStorageService> => {
-                return Promise.reject(false);
+            mockFactory.createDocumentService = async (resolvedUrl) => {
+                const service = await serviceFactory.createDocumentService(resolvedUrl);
+                // Issue typescript-eslint/typescript-eslint #1256
+                // eslint-disable-next-line @typescript-eslint/unbound-method
+                service.connectToStorage = async ()=> Promise.reject(false);
+                return service;
             };
+
             await Container.load(
                 "tenantId/documentId",
-                service,
+                serviceFactory,
                 codeLoader,
                 {},
                 {},
@@ -98,14 +99,19 @@ describe("Container", () => {
     it("Load container with error", async () => {
         let success: boolean = true;
         try {
+            const mockFactory = Object.create(serviceFactory) as IDocumentServiceFactory;
             // Issue typescript-eslint/typescript-eslint #1256
             // eslint-disable-next-line @typescript-eslint/unbound-method
-            service.connectToDeltaStorage = async (): Promise<IDocumentDeltaStorageService> => {
-                return Promise.reject(false);
+            mockFactory.createDocumentService = async (resolvedUrl) => {
+                const service = await serviceFactory.createDocumentService(resolvedUrl);
+                // Issue typescript-eslint/typescript-eslint #1256
+                // eslint-disable-next-line @typescript-eslint/unbound-method
+                service.connectToDeltaStorage = async () => Promise.reject(false);
+                return service;
             };
             await Container.load(
                 "tenantId/documentId",
-                service,
+                serviceFactory,
                 codeLoader,
                 {},
                 {},
@@ -124,15 +130,20 @@ describe("Container", () => {
         deltaConnection = new MockDocumentDeltaConnection(
             "test",
         );
+        const mockFactory = Object.create(serviceFactory) as IDocumentServiceFactory;
         // Issue typescript-eslint/typescript-eslint #1256
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        service.connectToDeltaStream = async (): Promise<IDocumentDeltaConnection> => {
-            return deltaConnection;
+        mockFactory.createDocumentService = async (resolvedUrl) => {
+            const service = await serviceFactory.createDocumentService(resolvedUrl);
+            // Issue typescript-eslint/typescript-eslint #1256
+            // eslint-disable-next-line @typescript-eslint/unbound-method
+            service.connectToDeltaStream = async () => deltaConnection;
+            return service;
         };
 
         const container = await Container.load(
             "tenantId/documentId",
-            service,
+            serviceFactory,
             codeLoader,
             {},
             {},
@@ -151,15 +162,20 @@ describe("Container", () => {
         deltaConnection = new MockDocumentDeltaConnection(
             "test",
         );
+        const mockFactory = Object.create(serviceFactory) as IDocumentServiceFactory;
         // Issue typescript-eslint/typescript-eslint #1256
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        service.connectToDeltaStream = async (): Promise<IDocumentDeltaConnection> => {
-            return deltaConnection;
+        mockFactory.createDocumentService = async (resolvedUrl) => {
+            const service = await serviceFactory.createDocumentService(resolvedUrl);
+            // Issue typescript-eslint/typescript-eslint #1256
+            // eslint-disable-next-line @typescript-eslint/unbound-method
+            service.connectToDeltaStream = async () => deltaConnection;
+            return service;
         };
 
         const container = await Container.load(
             "tenantId/documentId",
-            service,
+            serviceFactory,
             codeLoader,
             {},
             {},
@@ -179,22 +195,27 @@ describe("Container", () => {
         deltaConnection = new MockDocumentDeltaConnection(
             "test",
         );
+        const mockFactory = Object.create(serviceFactory) as IDocumentServiceFactory;
         // Issue typescript-eslint/typescript-eslint #1256
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        service.connectToDeltaStream = async (): Promise<IDocumentDeltaConnection> => {
-            return deltaConnection;
+        mockFactory.createDocumentService = async (resolvedUrl) => {
+            const service = await serviceFactory.createDocumentService(resolvedUrl);
+            // Issue typescript-eslint/typescript-eslint #1256
+            // eslint-disable-next-line @typescript-eslint/unbound-method
+            service.connectToDeltaStream = async () => deltaConnection;
+            return service;
         };
         let errorRaised = false;
         const container = await Container.load(
             "tenantId/documentId",
-            service,
+            serviceFactory,
             codeLoader,
             {},
             {},
             loader,
             testRequest,
             testResolved);
-        container.on("error", (error) => {
+        container.on("error", () => {
             errorRaised = true;
         });
         assert.equal(container.connectionState, ConnectionState.Connecting,
@@ -215,21 +236,26 @@ describe("Container", () => {
         deltaConnection = new MockDocumentDeltaConnection(
             "test",
         );
+        const mockFactory = Object.create(serviceFactory) as IDocumentServiceFactory;
         // Issue typescript-eslint/typescript-eslint #1256
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        service.connectToDeltaStream = async (): Promise<IDocumentDeltaConnection> => {
-            return deltaConnection;
+        mockFactory.createDocumentService = async (resolvedUrl) => {
+            const service = await serviceFactory.createDocumentService(resolvedUrl);
+            // Issue typescript-eslint/typescript-eslint #1256
+            // eslint-disable-next-line @typescript-eslint/unbound-method
+            service.connectToDeltaStream = async () => deltaConnection;
+            return service;
         };
         const container = await Container.load(
             "tenantId/documentId",
-            service,
+            serviceFactory,
             codeLoader,
             {},
             {},
             loader,
             testRequest,
             testResolved);
-        container.on("error", (error) => {
+        container.on("error", () => {
             assert.ok(false, "Error event should not be raised.");
         });
         assert.equal(container.connectionState, ConnectionState.Connecting,
