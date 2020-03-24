@@ -16,7 +16,7 @@ import {
     IRuntimeState,
 } from "@microsoft/fluid-container-definitions";
 import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
-
+import { MultiUrlResolver, MultiDocumentServiceFactory } from "@microsoft/fluid-driver-utils";
 import { IBaseHostConfig } from "@microsoft/fluid-base-host";
 import { ISequencedDocumentMessage, ITree, ConnectionState } from "@microsoft/fluid-protocol-definitions";
 
@@ -82,10 +82,10 @@ export class IFrameOuterHost {
     public async load(request: IRequest, iframe: HTMLIFrameElement): Promise<Container>{
 
         const proxy = await IFrameDocumentServiceProxyFactory.create(
-            this.hostConfig.documentServiceFactory,
+            MultiDocumentServiceFactory.create(this.hostConfig.documentServiceFactory),
             iframe,
             this.hostConfig.config,
-            this.hostConfig.urlResolver);
+            MultiUrlResolver.create(this.hostConfig.urlResolver));
 
         await proxy.createDocumentServiceFromRequest(request);
 
