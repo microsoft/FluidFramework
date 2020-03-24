@@ -2,22 +2,15 @@
   "name": "scribe",
   "version": "1.0.0",
   "description": "",
+  "license": "MIT",
+  "author": "Microsoft",
   "main": "index.js",
   "scripts": {
     "build": "docker build . -t praguelambdas.azurecr.io/scribe:latest",
-    "push": "docker push praguelambdas.azurecr.io/scribe:latest",
     "deploy": "nuctl deploy scribe -n nuclio --run-image praguelambdas.azurecr.io/scribe:latest --runtime nodejs --handler handler:handler --platform kube",
-    "upload": "npm run build && npm run push && npm run deploy",
-    "endpoint": "kubectl get endpoints -n nuclio scribe"
-  },
-  "author": "Microsoft",
-  "license": "MIT",
-  "devDependencies": {
-    "@types/uuid": "^3.4.4",
-    "ts-loader": "^5.3.1",
-    "typescript": "~3.4.5",
-    "webpack": "^4.26.1",
-    "webpack-cli": "^3.1.2"
+    "endpoint": "kubectl get endpoints -n nuclio scribe",
+    "push": "docker push praguelambdas.azurecr.io/scribe:latest",
+    "upload": "npm run build && npm run push && npm run deploy"
   },
   "dependencies": {
     "@fluid-internal/client-api": "^0.1.4408",
@@ -27,5 +20,12 @@
     "@prague/socket-storage": "^0.1.4184",
     "jsonwebtoken": "^8.4.0",
     "uuid": "^3.3.2"
+  },
+  "devDependencies": {
+    "@types/uuid": "^3.4.4",
+    "ts-loader": "^5.3.1",
+    "typescript": "~3.4.5",
+    "webpack": "^4.26.1",
+    "webpack-cli": "^3.1.2"
   }
 }

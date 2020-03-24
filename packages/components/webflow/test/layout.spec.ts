@@ -11,9 +11,10 @@ import { TestHost } from "@microsoft/fluid-local-test-utils";
 import * as assert from "assert";
 import "mocha";
 import { htmlFormatter } from "../src";
-import { FlowDocument, flowDocumentFactory } from "../src/document";
-import { FlowDocumentType } from "../src/runtime";
+import { FlowDocument } from "../src/document";
 import { Layout } from "../src/view/layout";
+
+const flowDocumentFactory = FlowDocument.getFactory();
 
 interface ISnapshotNode {
     node: Node;
@@ -46,10 +47,10 @@ describe("Layout", () => {
 
     before(async () => {
         host = new TestHost([
-            [FlowDocumentType, Promise.resolve(flowDocumentFactory)],
+            [flowDocumentFactory.type, Promise.resolve(flowDocumentFactory)],
         ]);
 
-        doc = await host.createAndAttachComponent("fd", FlowDocumentType);
+        doc = await host.createAndAttachComponent("fd", flowDocumentFactory.type);
     });
 
     after(async () => {

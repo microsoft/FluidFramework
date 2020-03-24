@@ -26,8 +26,8 @@ import * as Comlink from "comlink";
 // Loader class to load a container and proxy component interfaces from within a web worker.
 // Only supports IComponentRunnable for now.
 class WorkerLoader implements ILoader, IComponentRunnable {
-    private container: Container;
-    private runnable: IComponentRunnable;
+    private container: Container | undefined;
+    private runnable: IComponentRunnable | undefined;
 
     constructor(
         private readonly id: string,
@@ -57,7 +57,7 @@ class WorkerLoader implements ILoader, IComponentRunnable {
                 new BaseTelemetryNullLogger());
         }
         const documentService: IDocumentService = await factory.createDocumentService(this.resolved);
-        this.container = await Container.load(
+        const container = await Container.load(
             this.id,
             documentService,
             new WebCodeLoader(),
@@ -67,16 +67,17 @@ class WorkerLoader implements ILoader, IComponentRunnable {
             request,
             this.resolved,
             new BaseTelemetryNullLogger());
+        this.container = container;
 
         if (this.container.deltaManager.referenceSequenceNumber <= this.fromSequenceNumber) {
             await new Promise((resolve, reject) => {
                 const opHandler = (message: ISequencedDocumentMessage) => {
                     if (message.sequenceNumber > this.fromSequenceNumber) {
                         resolve();
-                        this.container.removeListener("op", opHandler);
+                        container.removeListener("op", opHandler);
                     }
                 };
-                this.container.on("op", opHandler);
+                container.on("op", opHandler);
             });
         }
 
@@ -92,7 +93,8 @@ class WorkerLoader implements ILoader, IComponentRunnable {
     }
 
     public async resolve(request: IRequest): Promise<IContainer> {
-        return this.container;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return this.container!;
     }
 
     public async run(...args: any[]): Promise<void> {
