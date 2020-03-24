@@ -109,10 +109,12 @@ class ThrottlingError extends ErrorWithProps implements IThrottlingError {
     }
 }
 
+export const createWriteError = (errorMessage: string) => (new WriteError(errorMessage) as IError);
+
 /**
  * Write error class - When attempting to write, without proper permissions
  */
-export class WriteError extends ErrorWithProps implements IWriteError {
+class WriteError extends ErrorWithProps implements IWriteError {
     readonly errorType: ErrorType.writeError = ErrorType.writeError;
     public readonly critical = true;
 

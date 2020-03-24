@@ -16,7 +16,7 @@ import {
 } from "@microsoft/fluid-driver-definitions";
 import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
-import { createIError, createNetworkError, WriteError } from "@microsoft/fluid-driver-utils";
+import { createIError, createNetworkError, createWriteError } from "@microsoft/fluid-driver-utils";
 
 describe("Errors Types", () => {
     let testDeltaConnectionServer: ILocalDeltaConnectionServer;
@@ -178,7 +178,7 @@ describe("Errors Types", () => {
     });
 
     it("WriteError Test", async () => {
-        const writeError = new WriteError("Test Error");
+        const writeError = createWriteError("Test Error");
         assertCustomPropertySupport(writeError);
         assert.equal(writeError.errorType, ErrorType.writeError, "Error should be a writeError");
         assert.equal(writeError.critical, true, "Error should be critical");
