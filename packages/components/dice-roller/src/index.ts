@@ -4,7 +4,7 @@
  */
 
 import {
-    SimpleModuleInstantiationFactory,
+    DefaultComponentContainerRuntimeFactory,
 } from "@microsoft/fluid-aqueduct";
 
 import { DiceRollerInstantiationFactory } from "./main";
@@ -14,7 +14,7 @@ const pkg = require("../package.json");
 const componentName = pkg.name as string;
 
 /**
- * This does setup for the Container. The SimpleModuleInstantiationFactory also enables dynamic loading in the
+ * This does setup for the Container. The DefaultComponentContainerRuntimeFactory also enables dynamic loading in the
  * EmbeddedComponentLoader.
  *
  * There are two important things here:
@@ -24,7 +24,7 @@ const componentName = pkg.name as string;
  * In this example, we are only registering a single component, but more complex examples will register multiple
  * components.
  */
-export const fluidExport = new SimpleModuleInstantiationFactory(
+export const fluidExport = new DefaultComponentContainerRuntimeFactory(
     componentName,
     new Map([
         [componentName, Promise.resolve(DiceRollerInstantiationFactory)],
