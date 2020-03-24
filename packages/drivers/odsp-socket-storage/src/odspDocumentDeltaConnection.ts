@@ -18,7 +18,7 @@ import { IOdspSocketError } from "./contracts";
 import { debug } from "./debug";
 import { errorObjectFromOdspError, OdspNetworkError, socketErrorRetryFilter } from "./odspUtils";
 
-const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
+const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 
 // How long to wait before disconnecting the socket after the last reference is removed
 // This allows reconnection after receiving a nack to be smooth

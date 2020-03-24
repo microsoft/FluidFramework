@@ -23,7 +23,7 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import { debug } from "./debug";
 
-const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
+const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 
 /**
  * Error raising for socket.io issues
