@@ -93,7 +93,7 @@ function sanitizeMessage(message: any): IDocumentMessage {
     }
 }
 
-const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
+const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 
 function selectProtocolVersion(connectVersions: string[]): string {
     let version: string = null;
@@ -224,6 +224,9 @@ export function configureWebSocketServices(
                     parentBranch: connection.parentBranch,
                     serviceConfiguration: connection.serviceConfiguration,
                     initialClients: clients,
+                    initialContents: [],
+                    initialMessages: [],
+                    initialSignals: [],
                     supportedVersions: protocolVersions,
                     version,
                 };
@@ -237,6 +240,9 @@ export function configureWebSocketServices(
                     parentBranch: null, // Does not matter for now.
                     serviceConfiguration: DefaultServiceConfiguration,
                     initialClients: clients,
+                    initialContents: [],
+                    initialMessages: [],
+                    initialSignals: [],
                     supportedVersions: protocolVersions,
                     version,
                 };

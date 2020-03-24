@@ -10,7 +10,6 @@ import {
     IDocumentService,
 } from "@microsoft/fluid-driver-definitions";
 import {
-    ConnectionMode,
     IClient,
     ISequencedDocumentMessage,
     ScopeType,
@@ -98,9 +97,8 @@ async function* loadAllSequencedMessages(
 
     if (connectToWebSocket) {
         let logMsg = "";
-        const mode: ConnectionMode = "write";
         const client: IClient = {
-            mode,
+            mode: "write",
             permission: [],
             scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
             details: {
@@ -110,7 +108,7 @@ async function* loadAllSequencedMessages(
         };
         console.log("Retrieving messages from web socket");
         timeStart = Date.now();
-        const deltaStream = await documentService.connectToDeltaStream(client, mode);
+        const deltaStream = await documentService.connectToDeltaStream(client);
         const initialMessages = deltaStream.initialMessages;
         deltaStream.disconnect();
         console.log(`${Math.floor((Date.now() - timeStart) / 1000)} seconds to connect to web socket`);
