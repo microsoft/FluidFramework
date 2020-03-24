@@ -20,7 +20,7 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import { CreationServerMessagesHandler } from "./creationDriverServer";
 
-const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
+const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 
 /**
  * Represents a connection to a stream of delta updates. This also provides functionality to stamp
@@ -116,13 +116,15 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
         return this.details.serviceConfiguration;
     }
 
+    /* Issue #1566: Backward compat - cleanup initialMessages, etc. being undefined*/
+
     /**
      * Get messages sent during the connection
      *
      * @returns messages sent during the connection
      */
-    public get initialMessages(): ISequencedDocumentMessage[] | undefined {
-        return this.details.initialMessages !== undefined ? this.details.initialMessages : [];
+    public get initialMessages(): ISequencedDocumentMessage[] {
+        return this.details.initialMessages ?? [];
     }
 
     /**
@@ -130,8 +132,8 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
      *
      * @returns contents sent during the connection
      */
-    public get initialContents(): IContentMessage[] | undefined {
-        return this.details.initialContents !== undefined ? this.details.initialContents : [];
+    public get initialContents(): IContentMessage[] {
+        return this.details.initialContents ?? [];
     }
 
     /**
@@ -139,8 +141,8 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
      *
      * @returns signals sent during the connection
      */
-    public get initialSignals(): ISignalMessage[] | undefined {
-        return this.details.initialSignals !== undefined ? this.details.initialSignals : [];
+    public get initialSignals(): ISignalMessage[] {
+        return this.details.initialSignals ?? [];
     }
 
     /**
@@ -149,7 +151,7 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
      * @returns initial client list sent during the connection
      */
     public get initialClients(): ISignalClient[] {
-        return this.details.initialClients !== undefined ? this.details.initialClients : [];
+        return this.details.initialClients ?? [];
     }
 
     /**
