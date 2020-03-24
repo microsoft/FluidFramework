@@ -68,7 +68,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     private state = SummaryManagerState.Off;
     private runningSummarizer?: IComponentRunnable;
     private _disposed = false;
-    private readonly startTimes: number[] = [];
+    private startTimes: number[] = [];
 
     public get summarizer() {
         return this.summarizerClientId;
@@ -215,19 +215,21 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         }
 
         // Throttle creation of new summarizer containers to prevent spamming the server with websocket connections.
-        // Ideally we want throttleDelayWindow >= throttleMaxDelay * ceil(finv(throttleMaxDelay)) (where
-        // f:start count in window -> delay time is our function to calculate delay). This makes the delay increase
-        // monotonically up to the max, rather than older start times falling out of the window causing shorter delays.
-        // e.g. in this case, with throttleMaxDelay = 30 seconds and f(x) = 20(2^x - 1), finv(30000) = log2(1501)
-        // ~= 10.552 so we want throttleDelayWindow >= 30000 * 11 = 5.5 minutes.
+        // Delay is based on previous attempts within specified time window, ignoring actual delay time.
         const throttleMaxDelayMs = 30 * 1000;
-        const throttleDelayWindowMs = 6 * 60 * 1000;
+        const throttleDelayWindowMs = 60 * 1000;
+        const throttleDelayFunction = (n: number) => Math.min(20 * (Math.pow(2, n) - 1), throttleMaxDelayMs);
+
         const now = Date.now();
-        while (this.startTimes.length && now - this.startTimes[0] > throttleDelayWindowMs) {
+        this.startTimes = this.startTimes.filter((t) => now - t < throttleDelayWindowMs);
+        const delayMs = throttleDelayFunction(this.startTimes.length);
+        this.startTimes.push(now);
+        this.startTimes = this.startTimes.map((t) => t + delayMs); // account for delay time
+        if (delayMs === throttleMaxDelayMs) {
+            // we hit max delay so adding more won't affect anything
+            // shift off oldest time to stop this array from growing forever
             this.startTimes.shift();
         }
-        const delayMs = Math.min(20 * (Math.pow(2, this.startTimes.length) - 1), throttleMaxDelayMs);
-        this.startTimes.push(now);
 
         this.createSummarizer(delayMs).then((summarizer) => {
             if (summarizer === undefined) {
@@ -258,7 +260,8 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     private run(summarizer: IComponentRunnable) {
         this.state = SummaryManagerState.Running;
 
-        const runningSummarizerEvent = PerformanceEvent.start(this.logger, { eventName: "RunningSummarizer" });
+        const runningSummarizerEvent = PerformanceEvent.start(this.logger,
+            { eventName: "RunningSummarizer", attempt: this.startTimes.length });
         this.runningSummarizer = summarizer;
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.runningSummarizer.run(this.clientId).then(() => {
