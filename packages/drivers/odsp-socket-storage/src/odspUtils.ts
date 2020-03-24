@@ -26,36 +26,20 @@ export function throwOdspNetworkError(
     online?: string,
 ) {
     let message = errorMessage;
+    let sprequestguid;
     if (response) {
         message = `${message}, msg = ${response.statusText}, type = ${response.type}`;
+        sprequestguid = response.headers ? `${response.headers.get("sprequestguid")}` : undefined;
     }
-    throw createOdspNetworkError(
-        message,
-        statusCode,
-        canRetry,
-        response && response.headers ? `${response.headers.get("sprequestguid")}` : undefined,
-        online,
-    );
-}
 
-/**
- * This is exported for unit tests
- */
-export function createOdspNetworkError(
-    errorMessage: string,
-    statusCode: number,
-    canRetry: boolean,
-    sprequestguid?: string,
-    online?: string,
-) {
-    const networkError: IError = createNetworkError(
-        errorMessage,
+    const networkError = createNetworkError(
+        message,
         canRetry,
         statusCode,
         undefined /*retryAfterSeconds*/,
         online);
     (networkError as any).sprequestguid = sprequestguid;
-    return networkError;
+    throw networkError;
 }
 
 /**
