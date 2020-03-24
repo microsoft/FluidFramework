@@ -148,6 +148,8 @@ export class CreationServerMessagesHandler {
             serviceConfiguration: DefaultServiceConfiguration,
             initialClients: [{ clientId, client: connectMessage.client }],
             initialMessages: [joinMessage],
+            initialContents: [],
+            initialSignals: [],
             supportedVersions: connectMessage.versions,
             version: connectMessage.versions[connectMessage.versions.length - 1],
         };
