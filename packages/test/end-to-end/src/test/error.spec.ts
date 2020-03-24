@@ -13,14 +13,10 @@ import {
     IDocumentService,
     IFluidResolvedUrl,
     ErrorType,
-    IConnectionError,
-    ConnectionErrorType,
 } from "@microsoft/fluid-driver-definitions";
 import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
-import { createErrorObject } from "@microsoft/fluid-driver-base";
-import { errorObjectFromOdspError } from "@microsoft/fluid-odsp-driver";
-import { createIError } from "@microsoft/fluid-driver-utils";
+import { createIError, createNetworkError, WriteError } from "@microsoft/fluid-driver-utils";
 
 describe("Errors Types", () => {
     let testDeltaConnectionServer: ILocalDeltaConnectionServer;
@@ -31,7 +27,8 @@ describe("Errors Types", () => {
     let codeLoader: API.CodeLoader;
     let loader: Loader;
 
-    beforeEach(async () => {
+    it("GeneralError Test", async () => {
+        // Setup
         testDeltaConnectionServer = LocalDeltaConnectionServer.create();
         testResolver = new TestResolver();
         testResolved = await testResolver.resolve(testRequest) as IFluidResolvedUrl;
@@ -48,9 +45,7 @@ describe("Errors Types", () => {
             options,
             {},
             new Map<string, IProxyLoaderFactory>());
-    });
 
-    it("General Error Test", async () => {
         try {
             // Issue typescript-eslint/typescript-eslint #1256
             // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -67,88 +62,131 @@ describe("Errors Types", () => {
                 testRequest,
                 testResolved);
         } catch (error) {
-            assert.equal(error.errorType, ErrorType.generalError, "Error should be a general error");
+            assert.equal(error.errorType, ErrorType.generalError, "Error should be a generalError");
         }
     });
 
-    it("Network Error Test_1", async () => {
+    it("GeneralError Logging Test", async () => {
         const err = {
-            message: "Test Error",
+            userData: "My name is Mark",
         };
-        const networkError = createIError(createErrorObject("handler", err, false)) as IConnectionError;
-        assert.equal(networkError.errorType, ErrorType.connectionError, "Error should be a network error");
-        assert.equal(networkError.connectionErrorType, ConnectionErrorType.default, "Error should be default");
+        const iError = createIError(err);
+        assert.equal((iError as any).getCustomProperties, undefined,
+            "We shouldn't expose the properties of the inner/original error");
     });
 
-    it("Network Error Test_2", async () => {
-        const err = {
-            message: "Test Error",
-            retryAfter: 100,
-        };
-        const networkError = createIError(createErrorObject("handler", err, false)) as IConnectionError;
-        assert.equal(networkError.errorType, ErrorType.connectionError, "Error should be a network error");
-        assert.equal(networkError.connectionErrorType, ConnectionErrorType.default, "Error should be default");
+    function assertCustomPropertySupport(err: any) {
+        err.asdf = "asdf";
+        if (err.getCustomProperties !== undefined) {
+            assert.equal(err.getCustomProperties().asdf, "asdf", "Error should have property asdf");
+        }
+        else {
+            assert.fail("Error should support getCustomProperties()");
+        }
+    }
+
+    it("GenericNetworkError Test_1", async () => {
+        const networkError = createNetworkError("Test Message", false /*canRetry*/);
+        assert.equal(networkError.errorType, ErrorType.generalConnectionError,
+            "Error should be a generalConnectionError");
+        assertCustomPropertySupport(networkError);
     });
 
-    it("Network Error Test_3", async () => {
-        const err = {
-            message: "Test Error",
-            code: 400,
-        };
-        const networkError = createIError(errorObjectFromOdspError(err, () => false)) as IConnectionError;
-        assert.equal(networkError.errorType, ErrorType.connectionError, "Error should be a network error");
-        assert.equal(networkError.connectionErrorType, ConnectionErrorType.default, "Error should be default");
+    it("GenericNetworkError Test_2", async () => {
+        const networkError = createNetworkError(
+            "Test Message",
+            true /*canRetry*/,
+            400 /*statusCode*/,
+            undefined /*retryAfterSeconds*/,
+            "foo" /*online*/);
+        if (networkError.errorType !== ErrorType.generalConnectionError) {
+            assert.fail("Error should be a generalConnectionError");
+        }
+        else {
+            assert.equal(networkError.canRetry, true, "canRetry should be preserved");
+            assert.equal(networkError.statusCode, 400, "status code should be preserved");
+            assert.equal(networkError.online, "foo", "online status should be preserved");
+        }
     });
 
-    it("Network Error Test_4", async () => {
-        const err = {
-            message: "Test Error",
-            code: 401,
-        };
-        const networkError = createIError(errorObjectFromOdspError(err, () => false)) as IConnectionError;
-        assert.equal(networkError.errorType, ErrorType.connectionError, "Error should be a network error");
-        // eslint-disable-next-line max-len
-        assert.equal(networkError.connectionErrorType, ConnectionErrorType.accessDenied, "Error should be accessDenied");
+    it("AccessDeniedError Test 401", async () => {
+        const networkError = createNetworkError(
+            "Test Message",
+            false /*canRetry*/,
+            401 /*statusCode*/);
+        assert.equal(networkError.errorType, ErrorType.accessDeniedError,
+            "Error should be an accessDeniedError");
+        assertCustomPropertySupport(networkError);
     });
 
-    it("Network Error Test_5", async () => {
-        const err = {
-            message: "Test Error",
-            code: 403,
-        };
-        const networkError = createIError(errorObjectFromOdspError(err, () => false)) as IConnectionError;
-        assert.equal(networkError.errorType, ErrorType.connectionError, "Error should be a network error");
-        // eslint-disable-next-line max-len
-        assert.equal(networkError.connectionErrorType, ConnectionErrorType.accessDenied, "Error should be accessDenied");
+    it("AccessDeniedError Test 403", async () => {
+        const networkError = createNetworkError(
+            "Test Message",
+            false /*canRetry*/,
+            403 /*statusCode*/);
+        if (networkError.errorType !== ErrorType.accessDeniedError) {
+            assert.fail("Error should be an accessDeniedError");
+        }
+        else {
+            assert.equal(networkError.canRetry, false, "canRetry should be preserved");
+            assert.equal(networkError.statusCode, 403, "status code should be preserved");
+        }
     });
 
-    it("Network Error Test_6", async () => {
-        const err = {
-            message: "Test Error",
-            code: 404,
-        };
-        const networkError = createIError(errorObjectFromOdspError(err, () => false)) as IConnectionError;
-        assert.equal(networkError.errorType, ErrorType.connectionError, "Error should be a network error");
-        assert.equal(networkError.connectionErrorType, ConnectionErrorType.notFound, "Error should be notFound");
+    it("FileNotFoundError Test", async () => {
+        const networkError = createNetworkError(
+            "Test Message",
+            false /*canRetry*/,
+            404 /*statusCode*/);
+        assertCustomPropertySupport(networkError);
+        if (networkError.errorType !== ErrorType.fileNotFoundError) {
+            assert.fail("Error should be a fileNotFoundError");
+        }
+        else {
+            assert.equal(networkError.canRetry, false, "canRetry should be preserved");
+            assert.equal(networkError.statusCode, 404, "status code should be preserved");
+        }
     });
 
-    it("Throttling Error Test", async () => {
-        const err = {
-            message: "Test Error",
-            code: 529,
-            retryAfter: 100,
-        };
-        const throttlingError = createIError(errorObjectFromOdspError(err, () => true));
-        assert.equal(throttlingError.errorType, ErrorType.throttlingError, "Error should be a throttling error");
+    it("FatalError Test", async () => {
+        const networkError = createNetworkError(
+            "Test Message",
+            false /*canRetry*/,
+            500 /*statusCode*/);
+        assertCustomPropertySupport(networkError);
+        if (networkError.errorType !== ErrorType.fatalError) {
+            assert.fail("Error should be a fatalError");
+        }
+        else {
+            assert.equal(networkError.critical, true, "Error should be critical");
+        }
+    });
+
+    it("ThrottlingError Test", async () => {
+        const networkError = createNetworkError(
+            "Test Message",
+            false /*canRetry*/,
+            400 /*statusCode*/,
+            100 /*retryAfterSeconds*/);
+        assertCustomPropertySupport(networkError);
+        if (networkError.errorType !== ErrorType.throttlingError) {
+            assert.fail("Error should be a throttlingError");
+        }
+        else {
+            assert.equal(networkError.retryAfterSeconds, 100, "retryAfterSeconds should be preserved");
+        }
+    });
+
+    it("WriteError Test", async () => {
+        const writeError = new WriteError("Test Error");
+        assertCustomPropertySupport(writeError);
+        assert.equal(writeError.errorType, ErrorType.writeError, "Error should be a writeError");
+        assert.equal(writeError.critical, true, "Error should be critical");
     });
 
     it("Check double conversion of network error", async () => {
-        const err = {
-            message: "Test Error",
-            code: 529,
-            retryAfter: 100,
-        };
-        const error1 = createIError(errorObjectFromOdspError(err, () => true), true);
+        const networkError = createNetworkError("Test Error", true /*canRetry*/);
+        const error1 = createIError(networkError, true);
         const error2 = createIError(error1, false);
         assert.equal(error1, error2, "Both errors should be same!!");
     });

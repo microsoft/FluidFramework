@@ -28,7 +28,7 @@ const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 /**
  * Error raising for socket.io issues
  */
-export function createErrorObject(handler: string, error: any, canRetry = true) {
+function createErrorObject(handler: string, error: any, canRetry = true) {
     // Note: we suspect the incoming error object is either:
     // - a string: log it in the message (if not a string, it may contain PII but will print as [object Object])
     // - a socketError: add it to the IError object for driver to be able to parse it and reason over it.
