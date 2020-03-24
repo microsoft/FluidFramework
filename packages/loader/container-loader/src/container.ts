@@ -461,6 +461,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const connected = this.connectionState === ConnectionState.Connected;
         assert(!connected || this._deltaManager.connectionMode === "read");
         this.propagateConnectionState();
+        this.resume();
     }
 
     public async request(path: IRequest): Promise<IResponse> {
