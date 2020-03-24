@@ -6,7 +6,6 @@
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
 import { IAlfred } from "../interfaces";
-import { getParam } from "../utils";
 
 export function create(alfred: IAlfred, ensureLoggedIn: any): Router {
     const router: Router = Router();
@@ -15,8 +14,8 @@ export function create(alfred: IAlfred, ensureLoggedIn: any): Router {
      * Loads count number of latest commits.
      */
     router.get("/:tenantId/:id", ensureLoggedIn(), (request, response) => {
-        const tenantId = getParam(request.params, "tenantId");
-        const documentId = getParam(request.params, "id");
+        const tenantId = request.params.tenantId;
+        const documentId = request.params.id;
 
         const forkP = alfred.createFork(tenantId, documentId);
         forkP.then(

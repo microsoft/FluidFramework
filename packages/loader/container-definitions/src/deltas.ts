@@ -130,6 +130,7 @@ export interface IDeltaManager<T, U> extends EventEmitter, IDeltaSender, IDispos
     on(event: "pong" | "processTime", listener: (latency: number) => void);
     on(event: "connect", listener: (details: IConnectionDetails) => void);
     on(event: "disconnect", listener: (reason: string) => void);
+    on(event: "readonly", listener: (readonly: boolean) => void);
 }
 
 export interface IDeltaQueue<T> extends EventEmitter, IDisposable {

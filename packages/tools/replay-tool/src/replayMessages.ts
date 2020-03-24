@@ -271,7 +271,9 @@ class Document {
 
         const resolver = new ContainerUrlResolver(
             new Map<string, IResolvedUrl>([[resolved.url, resolved]]));
-        const chaincode = new API.Chaincode();
+        const chaincode = new API.Chaincode(() => {
+            throw new Error("Can't close Document");
+        });
         const codeLoader = new API.CodeLoader({ generateSummaries: false },
             [
                 ["@ms/atmentions", Promise.resolve(chaincode)],
