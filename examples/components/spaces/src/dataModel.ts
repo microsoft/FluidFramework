@@ -38,7 +38,6 @@ export interface ISpacesDataModel extends EventEmitter {
 interface ISpacesCollectionOptions {
     id?: string;
     type?: string;
-    url?: string;
 }
 
 /**
@@ -72,12 +71,11 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
 
     public createCollectionItem<T>(rawOptions: T): IComponent {
         const options = rawOptions as ISpacesCollectionOptions;
-        // eslint-disable-next-line dot-notation
-        if (!options.id || !options.type || !options.url){
-            throw new Error("Tried to create a collection item in Spaces with invalid options")
+        if (!options.id || !options.type){
+            throw new Error("Tried to create a collection item in Spaces with invalid options");
         }
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.setComponent(options.id, options.type, options.url);
+        this.setComponent(options.id, options.type);
         // This is okay as we are not using the value returned from this function call anywhere
         // Instead, setComponent adds it to the sequence to be synchronously loaded
         const emptyComponent: IComponent = {};
@@ -88,6 +86,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         let componentUrl: string;
         if (instance.IComponentLoadable) {
             componentUrl = instance.IComponentLoadable.url;
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.removeComponent(componentUrl);
         }
     }
@@ -138,7 +137,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         return component as IComponent;
     }
 
-    public async setComponent(id: string, type: string, url: string): Promise<IComponent> {
+    public async setComponent(id: string, type: string): Promise<IComponent> {
         const defaultModel: ISpacesModel = {
             type,
             layout: { x: 0, y: 0, w: 6, h: 2 },

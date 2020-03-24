@@ -3,7 +3,7 @@
 * Licensed under the MIT License.
 */
 
-import { SpacesComponentName, Spaces, } from "@fluid-example/spaces";
+import { SpacesComponentName, Spaces } from "@fluid-example/spaces";
 import { WaterParkLoaderInstantiationFactory, WaterParkLoaderName } from "./waterParkLoader";
 import { WaterParkModuleInstantiationFactory } from "./waterParkModuleInstantiationFactory";
 

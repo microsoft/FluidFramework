@@ -43,7 +43,7 @@ export class WaterParkModuleInstantiationFactory extends SimpleModuleInstantiati
                 );
                 const viewResponse = await runtime.request({ url: SimpleContainerRuntimeFactory.defaultComponentId });
                 const viewComponent = viewResponse.value as Spaces;
-                await viewComponent
+                await viewComponent.IComponentToolbarConsumer
                     .setComponentToolbar(loaderComponent.id, this.loaderComponentName, loaderComponent.url);
                 loaderComponent.setViewComponent(viewComponent);
             }

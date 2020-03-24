@@ -21,13 +21,13 @@ import { ISpacesDataModel, SpacesDataModel } from "./dataModel";
 
 import { SpacesGridView } from "./view";
 import { ComponentToolbar, ComponentToolbarName } from "./components";
-import { IComponentToolbarConsumer } from "./interfaces";
+import { IProvideComponentToolbarConsumer } from "./interfaces";
 
 /**
  * Spaces is the Fluid
  */
-export class Spaces extends PrimedComponent 
-implements IComponentHTMLView, IProvideComponentCollection, IComponentToolbarConsumer {
+export class Spaces extends PrimedComponent
+    implements IComponentHTMLView, IProvideComponentCollection, IProvideComponentToolbarConsumer {
     private dataModelInternal: ISpacesDataModel | undefined;
     private componentToolbar: IComponent | undefined;
     private static readonly defaultComponentToolbarId = "spaces-component-toolbar";
@@ -56,6 +56,7 @@ implements IComponentHTMLView, IProvideComponentCollection, IComponentToolbarCon
 
     public get IComponentHTMLView() { return this; }
     public get IComponentCollection() { return this.dataModel; }
+    public get IComponentToolbarConsumer() { return this; }
 
     protected async componentInitializingFirstTime(props?: any) {
         this.root.createSubDirectory("component-list");
