@@ -8,10 +8,9 @@ import {
     RouterliciousDocumentServiceFactory,
 } from "@microsoft/fluid-routerlicious-driver";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
-import { BaseHost } from "@microsoft/fluid-base-host";
+import { BaseHost, SemVerCdnCodeResolver } from "@microsoft/fluid-base-host";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { InsecureUrlResolver } from "@microsoft/fluid-test-runtime-utils";
-import { VerdaccioCodeResolver } from "@fluid-example/tiny-web-host";
 import { IFrameOuterHost } from "./inframehost";
 
 const createRequest = (): IRequest => ({
@@ -82,7 +81,7 @@ export async function loadDiv(divId: string){
 
     const baseHost = new BaseHost(
         {
-            codeResolver: new VerdaccioCodeResolver(),
+            codeResolver: new SemVerCdnCodeResolver(),
             documentServiceFactory,
             urlResolver,
             config: {},

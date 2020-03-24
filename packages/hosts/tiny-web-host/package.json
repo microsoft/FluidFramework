@@ -44,7 +44,6 @@
     "@microsoft/fluid-routerlicious-urlresolver": "^0.16.0",
     "@microsoft/fluid-view-adapters": "^0.16.0",
     "@microsoft/fluid-web-code-loader": "^0.16.0",
-    "isomorphic-fetch": "^2.2.1",
     "jsonwebtoken": "^8.4.0",
     "uuid": "^3.3.2"
   },

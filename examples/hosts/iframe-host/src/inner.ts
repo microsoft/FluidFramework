@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 import { InnerDocumentServiceFactory } from "@microsoft/fluid-iframe-driver";
-import { BaseHost } from "@microsoft/fluid-base-host";
+import { BaseHost, SemVerCdnCodeResolver } from "@microsoft/fluid-base-host";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
-import { VerdaccioCodeResolver} from "@fluid-example/tiny-web-host";
 
 export async function runInner(divId: string){
     const div = document.getElementById(divId) as HTMLDivElement;
@@ -20,7 +19,7 @@ export async function runInner(divId: string){
     const documentServiceFactory = await InnerDocumentServiceFactory.create();
     const baseHost = new BaseHost(
         {
-            codeResolver: new VerdaccioCodeResolver(),
+            codeResolver: new SemVerCdnCodeResolver(),
             documentServiceFactory,
             urlResolver: documentServiceFactory.urlResolver,
             config: {},

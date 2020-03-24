@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { BaseHost, IBaseHostConfig } from "@microsoft/fluid-base-host";
+import { BaseHost, IBaseHostConfig, SemVerCdnCodeResolver } from "@microsoft/fluid-base-host";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import { Container } from "@microsoft/fluid-container-loader";
 import { BaseTelemetryNullLogger } from "@microsoft/fluid-common-utils";
@@ -22,7 +22,6 @@ import { RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlreso
 import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 import { v4 } from "uuid";
 import { IOdspTokenApi, IRouterliciousTokenApi, ITokenApis } from "./utils";
-import { VerdaccioCodeResolver } from "./verdaccioCodeResolver";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const packageJson = require("../package.json");
@@ -170,7 +169,7 @@ async function loadContainer(
         new Map<string, IResolvedUrl>([[href, resolved]]));
 
     const hostConf: IBaseHostConfig = {
-        codeResolver: new VerdaccioCodeResolver(),
+        codeResolver: new SemVerCdnCodeResolver(),
         documentServiceFactory,
         urlResolver: resolver,
     };

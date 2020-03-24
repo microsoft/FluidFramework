@@ -28,7 +28,6 @@
     "webpack": "webpack --env build"
   },
   "dependencies": {
-    "@fluid-example/tiny-web-host": "^0.16.0",
     "@microsoft/fluid-base-host": "^0.16.0",
     "@microsoft/fluid-component-core-interfaces": "^0.16.0",
     "@microsoft/fluid-container-definitions": "^0.16.0",

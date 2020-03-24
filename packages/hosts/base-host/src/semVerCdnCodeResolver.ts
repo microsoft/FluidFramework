@@ -51,7 +51,17 @@ class FluidPackage {
     }
 }
 
-export class VerdaccioCodeResolver implements IFluidCodeResolver{
+/**
+ * This code resolver works against cdn's that support semantic verioning in the url path of the format
+ * <cdn base>/<package scope?>/<package name>@<package version>
+ *
+ * The package version can be an npm style semantic version.
+ *
+ * The cdn base is provide in the config of the fluid code details, as either a global config.cdn property, or
+ * a per scope cdn, config["@<package scope>:cdn"]. A scope specific cdn base will take preciedence over
+ * the global cdn
+ */
+export class SemVerCdnCodeResolver implements IFluidCodeResolver{
     // Cache goes CDN -> package -> entrypoint
     private readonly fluidPackageCache = new Map<string, FluidPackage>();
 
