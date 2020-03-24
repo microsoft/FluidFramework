@@ -6,7 +6,7 @@
 // tslint:disable: no-unsafe-any
 export enum ErrorType {
     generalError,
-    generalConnectionError,
+    genericNetworkError,
     accessDeniedError,
     fileNotFoundError,
     throttlingError,
@@ -42,7 +42,7 @@ interface IBaseConnectionError {
 }
 
 export interface IGenericNetworkError extends IBaseConnectionError {
-    readonly errorType: ErrorType.generalConnectionError;
+    readonly errorType: ErrorType.genericNetworkError;
 }
 
 export interface IAccessDeniedError extends IBaseConnectionError {

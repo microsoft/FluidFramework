@@ -47,8 +47,8 @@ describe("Odsp Error", () => {
             true /*includeResponse*/,
             OnlineStatus[OnlineStatus.Offline],
         );
-        if (networkError.errorType !== ErrorType.generalConnectionError) {
-            assert.fail("networkError should be a generalConnectionError");
+        if (networkError.errorType !== ErrorType.genericNetworkError) {
+            assert.fail("networkError should be a genericNetworkError");
         }
         else {
             assert.notEqual(-1, networkError.message.indexOf("TestMessage"),
@@ -80,8 +80,8 @@ describe("Odsp Error", () => {
             code: 400,
         };
         const networkError = errorObjectFromSocketError(socketError);
-        if (networkError.errorType !== ErrorType.generalConnectionError) {
-            assert.fail("networkError should be a generalConnectionError");
+        if (networkError.errorType !== ErrorType.genericNetworkError) {
+            assert.fail("networkError should be a genericNetworkError");
         }
         else {
             assert.equal(networkError.message, "testMessage");
@@ -97,8 +97,8 @@ describe("Odsp Error", () => {
         };
         const retryFilter = (code: number) => false;
         const networkError = errorObjectFromSocketError(socketError, retryFilter);
-        if (networkError.errorType !== ErrorType.generalConnectionError) {
-            assert.fail("networkError should be a generalConnectionError");
+        if (networkError.errorType !== ErrorType.genericNetworkError) {
+            assert.fail("networkError should be a genericNetworkError");
         }
         else {
             assert.equal(networkError.message, "testMessage");

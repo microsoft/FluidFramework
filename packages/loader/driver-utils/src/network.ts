@@ -51,7 +51,7 @@ export function createNetworkError(
  * Network error error class - used to communicate general network errors
  */
 class GenericNetworkError extends ErrorWithProps implements IGenericNetworkError {
-    readonly errorType: ErrorType.generalConnectionError = ErrorType.generalConnectionError;
+    readonly errorType: ErrorType.genericNetworkError = ErrorType.genericNetworkError;
 
     constructor(
         errorMessage: string,

@@ -87,8 +87,8 @@ describe("Errors Types", () => {
 
     it("GenericNetworkError Test_1", async () => {
         const networkError = createNetworkError("Test Message", false /*canRetry*/);
-        assert.equal(networkError.errorType, ErrorType.generalConnectionError,
-            "Error should be a generalConnectionError");
+        assert.equal(networkError.errorType, ErrorType.genericNetworkError,
+            "Error should be a genericNetworkError");
         assertCustomPropertySupport(networkError);
     });
 
@@ -99,8 +99,8 @@ describe("Errors Types", () => {
             400 /*statusCode*/,
             undefined /*retryAfterSeconds*/,
             "foo" /*online*/);
-        if (networkError.errorType !== ErrorType.generalConnectionError) {
-            assert.fail("Error should be a generalConnectionError");
+        if (networkError.errorType !== ErrorType.genericNetworkError) {
+            assert.fail("Error should be a genericNetworkError");
         }
         else {
             assert.equal(networkError.canRetry, true, "canRetry should be preserved");
