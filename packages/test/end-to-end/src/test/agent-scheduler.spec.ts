@@ -7,7 +7,7 @@
 
 import * as assert from "assert";
 import { AgentSchedulerFactory, TaskManager } from "@microsoft/fluid-agent-scheduler";
-import { TestHost } from "@microsoft/fluid-local-test-utils";
+import { TestHost, getComponent } from "@microsoft/fluid-local-test-utils";
 import { IAgentScheduler } from "@microsoft/fluid-runtime-definitions";
 import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";
 
@@ -25,7 +25,7 @@ describe("AgentScheduler", () => {
                 [AgentSchedulerType, Promise.resolve(new AgentSchedulerFactory())],
             ]);
 
-            scheduler = await host.getComponent<TaskManager>(AgentSchedulerFactory.type)
+            scheduler = await getComponent<TaskManager>(host, AgentSchedulerFactory.type)
                 .then((taskmanager) => taskmanager.IAgentScheduler);
 
             // Make sure all initial ops (around leadership) are processed.
@@ -104,9 +104,9 @@ describe("AgentScheduler", () => {
                 [AgentSchedulerType, Promise.resolve(new AgentSchedulerFactory())],
             ]);
             host2 = host1.clone();
-            scheduler1 = await host1.getComponent<TaskManager>("_scheduler")
+            scheduler1 = await getComponent<TaskManager>(host1, "_scheduler")
                 .then((taskmanager) => taskmanager.IAgentScheduler);
-            scheduler2 = await host2.getComponent<TaskManager>("_scheduler")
+            scheduler2 = await getComponent<TaskManager>(host2, "_scheduler")
                 .then((taskmanager) => taskmanager.IAgentScheduler);
 
             // Make sure all initial ops (around leadership) are processed.

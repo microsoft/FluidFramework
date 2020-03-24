@@ -14,6 +14,7 @@ import {
     IComponentHandle,
     IComponentLoadable,
     IComponentRunnable,
+    IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import {
@@ -51,6 +52,12 @@ class TestRootComponent extends PrimedComponent implements IComponentRunnable {
         super(runtime, context);
     }
 
+    public get context(): IComponentContext { return this.context; }
+
+    public async asComponent<T extends IComponent>(response: Promise<IResponse>): Promise<T> {
+        return super.asComponent<T>(response);
+    }
+
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public run = () => Promise.resolve();
 
@@ -59,11 +66,6 @@ class TestRootComponent extends PrimedComponent implements IComponentRunnable {
         type: string, props?: any,
     ): Promise<T> {
         return super.createAndAttachComponent_NEW<T>(type, props);
-    }
-
-    // Make this function public so TestHost can use them
-    public async getComponent<T>(id: string): Promise<T> {
-        return super.getComponent<T>(id);
     }
 
     /**
@@ -152,7 +154,7 @@ export class TestHost {
     public readonly deltaConnectionServer: ILocalDeltaConnectionServer;
     private rootResolver: (accept: TestRootComponent) => void;
 
-    private readonly root = new Promise<TestRootComponent>((accept) => { this.rootResolver = accept; });
+    public readonly root = new Promise<TestRootComponent>((accept) => { this.rootResolver = accept; });
 
     /**
      * @param componentRegistry - array of key-value pairs of components available to the host
@@ -225,18 +227,6 @@ export class TestHost {
     ): Promise<T> {
         const root = await this.root;
         return root.createAndAttachComponent_NEW<T>(type, props);
-    }
-
-    /**
-     * Wait and get the component with the id.
-     * @param id component Id
-     * @returns Component object
-     */
-    public async getComponent<T extends IComponentLoadable>(
-        id: string,
-    ): Promise<T> {
-        const root = await this.root;
-        return root.getComponent<T>(id);
     }
 
     /**

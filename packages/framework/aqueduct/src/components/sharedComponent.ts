@@ -148,19 +148,6 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     }
 
     /**
-     * Gets the component of a given id. Will follow the pattern of the container for waiting.
-     * @param id - component id
-     */
-    protected async getComponent<T extends IComponent>(id: string, wait: boolean = true): Promise<T> {
-        const request = {
-            headers: [[wait]],
-            url: `/${id}`,
-        };
-
-        return this.asComponent<T>(this.context.hostRuntime.request(request));
-    }
-
-    /**
      * Gets the service at a given id.
      * @param id - service id
      */
