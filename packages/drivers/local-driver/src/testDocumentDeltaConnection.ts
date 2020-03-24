@@ -153,20 +153,22 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
         return this.details.maxMessageSize;
     }
 
-    public get initialMessages(): ISequencedDocumentMessage[] | undefined {
-        return this.details.initialMessages;
+    /* Issue #1566: Backward compat - cleanup initialMessages, etc. being undefined*/
+
+    public get initialMessages(): ISequencedDocumentMessage[] {
+        return this.details.initialMessages ?? [];
     }
 
-    public get initialContents(): IContentMessage[] | undefined {
-        return this.details.initialContents;
+    public get initialContents(): IContentMessage[] {
+        return this.details.initialContents ?? [];
     }
 
-    public get initialSignals(): ISignalMessage[] | undefined {
-        return this.details.initialSignals;
+    public get initialSignals(): ISignalMessage[] {
+        return this.details.initialSignals ?? [];
     }
 
     public get initialClients(): ISignalClient[] {
-        return this.details.initialClients ? this.details.initialClients : [];
+        return this.details.initialClients ?? [];
     }
 
     public get version(): string {

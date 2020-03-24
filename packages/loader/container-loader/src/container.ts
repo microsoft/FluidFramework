@@ -1070,8 +1070,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             // Back-compat for new client and old server.
             this._audience.clear();
 
-            const priorClients = details.initialClients ? details.initialClients : [];
-            for (const priorClient of priorClients) {
+            for (const priorClient of details.initialClients ?? []) {
                 this._audience.addMember(priorClient.clientId, priorClient.client);
             }
         });
