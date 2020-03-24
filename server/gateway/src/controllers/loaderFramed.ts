@@ -60,8 +60,7 @@ export async function initialize(
 
     documentFactory.resolveLoader(loader);
 
-    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-    const container = await baseHost.initializeContainer(url, pkg ? pkg.details : undefined);
+    const container = await baseHost.initializeContainer(url, pkg?.details);
 
     // Currently this contextChanged handler covers both the initial load (from NullRuntime) as well as the upgrade
     // scenario.  In the next version of base-host it will only be for the upgrade scenario.

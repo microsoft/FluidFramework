@@ -7,6 +7,16 @@ import { BaseHost } from "@microsoft/fluid-base-host";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 
+async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
+    const component = await baseHost.getComponent(url);
+    if (component === undefined) {
+        return;
+    }
+    // Render the component with an HTMLViewAdapter to abstract the UI framework used by the component
+    const view = new HTMLViewAdapter(component);
+    view.render(div, { display: "block" });
+}
+
 export async function runInner(divId: string){
     const div = document.getElementById(divId) as HTMLDivElement;
 
@@ -31,14 +41,10 @@ export async function runInner(divId: string){
         []);
 
     const url = documentServiceFactory.resolvedUrl.url;
-    await baseHost.initializeContainer(url, pkg);
+    const container = await baseHost.initializeContainer(url, pkg);
 
-    const component = await baseHost.getComponent(url);
-    if (component === undefined) {
-        return;
-    }
-
-    // Render the component with an HTMLViewAdapter to abstract the UI framework used by the component
-    const view = new HTMLViewAdapter(component);
-    view.render(div, { display: "block" });
+    // Handle the code upgrade scenario (which fires contextChanged)
+    container.on("contextChanged", (value) => {
+        getComponentAndRender(baseHost, url, div).catch(() => { });
+    });
 }

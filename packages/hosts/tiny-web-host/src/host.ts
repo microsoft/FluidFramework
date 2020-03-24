@@ -187,6 +187,7 @@ async function loadContainer(
         scriptIds,
     );
     const container = await baseHost.initializeContainer(href, pkg.details);
+    // Handle the code upgrade scenario (which fires contextChanged)
     container.on("contextChanged", (value) => {
         getComponentAndRender(baseHost, href, div).catch(() => { });
     });
