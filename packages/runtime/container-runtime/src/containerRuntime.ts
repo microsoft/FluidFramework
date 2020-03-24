@@ -33,7 +33,7 @@ import {
     LazyPromise,
     ChildLogger,
 } from "@microsoft/fluid-common-utils";
-import { IDocumentStorageService, ISummaryContext } from "@microsoft/fluid-driver-definitions";
+import { IDocumentStorageService, IError, ISummaryContext } from "@microsoft/fluid-driver-definitions";
 import { readAndParse, createIError } from "@microsoft/fluid-driver-utils";
 import {
     BlobTreeEntry,
@@ -473,7 +473,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.context.snapshotFn;
     }
 
-    public get closeFn(): (reason?: string) => void {
+    public get closeFn(): (error?: IError) => void {
         return this.context.closeFn;
     }
 
