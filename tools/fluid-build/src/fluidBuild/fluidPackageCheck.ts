@@ -12,18 +12,46 @@ import * as TscUtils from "./tscUtils";
 import sortPackageJson from "sort-package-json";
 
 export class FluidPackageCheck {
+    private static fixPackageVersions: { [key: string]: string } = {
+        "jest-junit": "^10.0.0",
+        "make-promises-safe": "^5.1.0",
+        "nyc": "^15.0.0",
+        "rimraf": "^2.6.2",
+    };
+
+    private static ensureDevDependency(pkg: Package, fix: boolean, pkgName: string) {
+        if (pkg.packageJson.devDependencies && pkg.packageJson.devDependencies[pkgName]) {
+            return;
+        }
+
+        const pkgVersion = this.fixPackageVersions[pkgName]
+        if (!pkgVersion) {
+            fix = false;
+        }
+
+        this.logWarn(pkg, `missing ${pkgName} dependency`, fix);
+        if (fix) {
+            if (!pkg.packageJson.devDependencies) {
+                pkg.packageJson.devDependencies = {};
+            }
+            pkg.packageJson.devDependencies[pkgName] = pkgVersion;
+        }
+        return fix;
+    }
+
     constructor(private readonly repoType: MonoRepo) {
     }
 
     public static checkScripts(repo: FluidRepo, pkg: Package, fix: boolean) {
         const monoRepo = repo.getMonoRepo(pkg);
         const fixed = [
+            FluidPackageCheck.checkSort(pkg, fix),
             FluidPackageCheck.checkBuildScripts(pkg, fix, monoRepo),
+            FluidPackageCheck.checkCleanScript(pkg, fix),
             FluidPackageCheck.checkTestCoverageScripts(pkg, fix),
             FluidPackageCheck.checkTestSafePromiseRequire(pkg, fix, monoRepo),
             FluidPackageCheck.checkMochaTestScripts(pkg, fix, monoRepo),
             FluidPackageCheck.checkJestJunitTestEntry(pkg, fix),
-            FluidPackageCheck.checkSort(pkg, fix),
         ];
         return fixed.some((bool) => bool);
     }
@@ -39,15 +67,10 @@ export class FluidPackageCheck {
     private static checkTestSafePromiseRequire(pkg: Package, fix: boolean, monoRepo: MonoRepo) {
         let fixed = false;
         const pkgstring = "make-promises-safe";
-        const pkgversion = "^5.1.0";
         const testScript = monoRepo === MonoRepo.Server ? "test" : "test:mocha";
         if (pkg.packageJson.scripts && pkg.packageJson.scripts[testScript] && /(ts-)?mocha/.test(pkg.packageJson.scripts[testScript]!)) {
-            if (pkg.packageJson.devDependencies && !pkg.packageJson.devDependencies[pkgstring]) {
-                this.logWarn(pkg, `missing ${pkgstring} dependency`, fix);
-                if (fix) {
-                    pkg.packageJson.devDependencies[pkgstring] = pkgversion;
-                    fixed = true;
-                }
+            if (this.ensureDevDependency(pkg, fix, pkgstring)) {
+                fixed = true;
             }
             if (!pkg.packageJson.scripts[testScript]!.includes(pkgstring)) {
                 if (/(ts-)?mocha/.test(pkg.packageJson.scripts[testScript]!)) {
@@ -87,14 +110,9 @@ export class FluidPackageCheck {
     private static checkJestJunitTestEntry(pkg: Package, fix: boolean) {
         let fixed = false;
         const pkgstring = "jest-junit";
-        const pkgversion = "^10.0.0";
         if (pkg.packageJson.scripts && pkg.packageJson.scripts["test:jest"]) {
-            if (!pkg.packageJson.devDependencies[pkgstring]) {
-                this.logWarn(pkg, `missing ${pkgstring} dependency`, fix);
-                if (fix) {
-                    pkg.packageJson.devDependencies[pkgstring] = pkgversion;
-                    fixed = true;
-                }
+            if (this.ensureDevDependency(pkg, fix, pkgstring)) {
+                fixed = true;
             }
             if (!pkg.packageJson["jest-junit"]) {
                 this.logWarn(pkg, `no jest-junit entry for jest test`, false);
@@ -111,8 +129,8 @@ export class FluidPackageCheck {
         // we have the package in the devDependencies and configuration
         const testCoverageScript = pkg.getScript("test:coverage");
         if (testCoverageScript && testCoverageScript.startsWith("nyc")) {
-            if (!pkg.packageJson.devDependencies.nyc) {
-                this.logWarn(pkg, `missing nyc dependency`, false);
+            if (this.ensureDevDependency(pkg, fix, "nyc")) {
+                fixed = true;
             }
             if (pkg.packageJson.nyc) {
                 if (pkg.packageJson.nyc["exclude-after-remap"] !== false) {
@@ -220,14 +238,24 @@ export class FluidPackageCheck {
             check("build:full", buildFull);
             check("build:full:compile", buildFullCompile);
             check("prepack", prepack);
-
-            if (!pkg.getScript("clean")) {
-                this.logWarn(pkg, `package has "build" script without "clean" script`, false);
-            }
         }
         return fixed;
     }
 
+    private static checkCleanScript(pkg: Package, fix: boolean) {
+        const cleanScript = pkg.getScript("clean");
+        if (!cleanScript) {
+            if (pkg.getScript("build")) {
+                this.logWarn(pkg, `package has "build" script without "clean" script`, false);
+            }
+            return false;
+        }
+
+        if (cleanScript.startsWith("rimraf")) {
+            return this.ensureDevDependency(pkg, fix, "rimraf");
+        }
+        return false;
+    }
     private static checkSort(pkg: Package, fix: boolean) {
         // Note that package.json is sorted when we save, so this is just for the warning
         const result = sortPackageJson(pkg.packageJson);
