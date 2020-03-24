@@ -204,6 +204,8 @@ const getGuideSidebar = () => {
             collapsable: false,
             children: [
                 "",
+                "spfx.md",
+                "upload.md",
                 "yo-fluid",
                 "water-park",
             ]
