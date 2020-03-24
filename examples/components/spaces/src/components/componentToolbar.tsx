@@ -22,6 +22,7 @@ import {
     InternalRegistry,
     IContainerComponentDetails,
     IComponentCallable,
+    IComponentCallbacks,
 } from "..";
 
 const componentToolbarStyle: React.CSSProperties = { position: "absolute", top: 10, left: 10, zIndex: 1000 };
@@ -30,21 +31,15 @@ export const ComponentToolbarName = "componentToolbar";
 
 initializeIcons();
 
-export interface IComponentToolbarCallbacks {
-    addComponent?(type: string, w?: number, h?: number): void;
-    saveLayout?(): void;
-    toggleEditable?(isEditable?: boolean): void;
-}
-
 /**
  * A component to allow you to add and manipulate components
  */
 export class ComponentToolbar extends PrimedComponent
-    implements IComponentHTMLView, IComponentCallable<IComponentToolbarCallbacks> {
+    implements IComponentHTMLView, IComponentCallable<IComponentCallbacks> {
     public get IComponentHTMLView() { return this; }
     public get IComponentCallable() { return this; }
 
-    private callbacks: IComponentToolbarCallbacks = {};
+    private callbacks: IComponentCallbacks = {};
 
     private static readonly factory = new PrimedComponentFactory(ComponentToolbar, []);
 
@@ -73,7 +68,7 @@ export class ComponentToolbar extends PrimedComponent
         this.root.set("isEditable", true);
     }
 
-    public setComponentCallbacks(callbacks: IComponentToolbarCallbacks) {
+    public setComponentCallbacks(callbacks: IComponentCallbacks) {
         this.callbacks = callbacks;
     }
 
@@ -95,7 +90,7 @@ export class ComponentToolbar extends PrimedComponent
 }
 
 interface IComponentToolbarViewProps {
-    callbacks: IComponentToolbarCallbacks;
+    callbacks: IComponentCallbacks;
     supportedComponentList: IContainerComponentDetails[];
     root: ISharedDirectory;
 }

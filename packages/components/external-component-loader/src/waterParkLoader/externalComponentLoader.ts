@@ -13,7 +13,7 @@ import {
 import { IPackage } from "@microsoft/fluid-container-definitions";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import * as uuid from "uuid";
-import { IComponentCallable, IComponentToolbarCallbacks } from "@fluid-example/spaces";
+import { IComponentCallable, IComponentCallbacks } from "@fluid-example/spaces";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pkg = require("../../package.json") as IPackage;
@@ -23,7 +23,7 @@ export const WaterParkLoaderName = `${pkg.name}-loader`;
  * Component that loads extneral components via their url
  */
 export class ExternalComponentLoader extends PrimedComponent
-    implements IComponentHTMLView, IComponentCallable<IComponentToolbarCallbacks> {
+    implements IComponentHTMLView, IComponentCallable<IComponentCallbacks> {
 
     private static readonly defaultComponents = [
         "@fluid-example/todo",
@@ -40,7 +40,7 @@ export class ExternalComponentLoader extends PrimedComponent
 
     private savedElement: HTMLElement;
     private error: string;
-    private callbacks: IComponentToolbarCallbacks;
+    private callbacks: IComponentCallbacks;
 
     public get IComponentHTMLView() { return this; }
 
@@ -51,7 +51,7 @@ export class ExternalComponentLoader extends PrimedComponent
         this.viewComponentP = Promise.resolve(component);
     }
 
-    public setComponentCallbacks(callbacks: IComponentToolbarCallbacks) {
+    public setComponentCallbacks(callbacks: IComponentCallbacks) {
         this.callbacks = callbacks;
     }
 

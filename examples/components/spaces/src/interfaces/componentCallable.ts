@@ -8,9 +8,16 @@ declare module "@microsoft/fluid-component-core-interfaces" {
     export interface IComponent extends Readonly<Partial<IProvideComponentCallable>> { }
 }
 
+export interface IComponentCallbacks {
+    addComponent?(type: string, w?: number, h?: number): void;
+    saveLayout?(): void;
+    toggleEditable?(isEditable?: boolean): void;
+}
 
+// Experimental code, we are looking into seeing how we can use generics to allow components
+// to set interfaces to communicate between one another
 export interface IProvideComponentCallable {
-    IComponentCallable: IComponentCallable<any>;
+    IComponentCallable: IComponentCallable<IComponentCallbacks>;
 }
 
 /**

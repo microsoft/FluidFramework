@@ -25,7 +25,7 @@ describe("external-component-loader", () => {
         // tslint:disable-next-line: no-string-based-set-timeout ???
         await new Promise((resolve) => setTimeout(resolve, 200));
 
-        // enable the components by toggling edit so that the clicker can be ysed
+        // enable the components by toggling edit so that the clicker can be used
         await expect(page).toClick("button", { text: "Toggle Edit" });
 
         // clicker tests

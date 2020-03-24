@@ -6,7 +6,7 @@
 import { SimpleContainerRuntimeFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { IContainerContext, IRuntime } from "@microsoft/fluid-container-definitions";
 import { NamedComponentRegistryEntries } from "@microsoft/fluid-runtime-definitions";
-import { Spaces, SpacesComponentName } from "@fluid-example/spaces";
+import { SpacesComponentName } from "@fluid-example/spaces";
 import * as uuid from "uuid";
 import { ExternalComponentLoader, WaterParkLoaderName } from "./waterParkLoader";
 /**
@@ -42,9 +42,12 @@ export class WaterParkModuleInstantiationFactory extends SimpleModuleInstantiati
                     this.loaderComponentName,
                 );
                 const viewResponse = await runtime.request({ url: SimpleContainerRuntimeFactory.defaultComponentId });
-                const viewComponent = viewResponse.value as Spaces;
-                await viewComponent.IComponentToolbarConsumer
-                    .setComponentToolbar(loaderComponent.id, this.loaderComponentName, loaderComponent.url);
+                const viewComponent = viewResponse.value;
+                // Only add the component toolbar if the view component supports it
+                if (viewComponent.IComponentToolbarConsumer) {
+                    await viewComponent.IComponentToolbarConsumer
+                        .setComponentToolbar(loaderComponent.id, this.loaderComponentName, loaderComponent.url);
+                }
                 loaderComponent.setViewComponent(viewComponent);
             }
         });
