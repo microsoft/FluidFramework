@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import { ISequencedClient } from "@microsoft/fluid-protocol-definitions";
 
 export interface IHelpTasks {
@@ -25,12 +26,14 @@ export interface IHelpTasks {
 export function analyzeTasks(
     runnerClientId: string,
     clients: Map<string, ISequencedClient>,
-    tasks: string[]): IHelpTasks {
+    tasks: string[]): IHelpTasks | undefined {
     const robotClients = [...clients].filter((client) => isRobot(client[1]));
     const handledTasks = robotClients.map((robot) => robot[1].client.details.type);
     const unhandledTasks = tasks.filter((task) => !handledTasks.includes(task));
     if (unhandledTasks.length > 0) {
-        const runnerClient = clients.get(runnerClientId);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const runnerClient = clients.get(runnerClientId)!;
+        assert(runnerClient);   // assume runnerClientId must be in the clients list.
         const permission = runnerClient.client && runnerClient.client.permission ? runnerClient.client.permission : [];
         const allowedTasks = unhandledTasks.filter((task) => permission && permission.includes(task));
         const robotNeeded = unhandledTasks.filter((task) => permission && !permission.includes(task));

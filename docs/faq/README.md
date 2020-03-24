@@ -6,7 +6,7 @@ Check out our [getting started guide](../guide/README.md).
 
 ## Can I run Routerlicious locally?
 
-Yes, see the [Routerlicious documentation](../architecture/server/README.md).
+Yes; see the [Routerlicious documentation](https://github.com/microsoft/FluidFramework/blob/master/server/routerlicious/README.md).
 
 ## Why can't I build or start docker?
 
@@ -18,11 +18,11 @@ Yes, see the [Routerlicious documentation](../architecture/server/README.md).
 
 ## Is there a set of design principles I can look at?
 
-Architectural design principals can be found in the [Fluid architecture documentation](../architecture/README.md).
+Architectural design principals can be found in the [Fluid architecture documentation](../how/README.md).
 
 ## Do you have a homepage?
 
-<https://aka.ms/fluid/> is our alpha version of our documentation and tutorial website.
+Yes! <https://aka.ms/fluid/>
 
 ## Why aren't commandline tools working?
 
@@ -30,7 +30,7 @@ You may need to upgrade NodeJS. Make sure you're using NodeJS versions 10 or 12.
 
 ## Do you have any suggested reading before I get started?
 
-If you need to read, check out our [architecture documents](../architecture/README.md).
+If you need to read, check out our [architecture documents](../how/README.md).
 
 But it's more fun to [start hacking](../guide/yo-fluid.md)!
 

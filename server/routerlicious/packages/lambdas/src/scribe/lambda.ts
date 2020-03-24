@@ -80,7 +80,7 @@ export class ScribeLambda extends SequencedLambda {
         private readonly producer: IProducer,
         private readonly protocolHandler: ProtocolOpHandler,
         private protocolHead: number,
-        messages: ISequencedOperationMessage[],
+        messages: ISequencedDocumentMessage[],
         private readonly generateServiceSummary: boolean,
         private readonly nackOnSummarizeException?: boolean,
     ) {
@@ -93,9 +93,7 @@ export class ScribeLambda extends SequencedLambda {
 
         // Filter and keep messages up to protocol state.
         this.pendingMessages = new Deque<ISequencedDocumentMessage>(
-            messages
-                .filter((message) => message.operation.sequenceNumber > scribe.protocolState.sequenceNumber)
-                .map((message) => message.operation));
+            messages.filter((message) => message.sequenceNumber > scribe.protocolState.sequenceNumber));
     }
 
     public async handlerCore(message: IQueuedMessage): Promise<void> {
@@ -590,7 +588,7 @@ export class ScribeLambda extends SequencedLambda {
         await this.sendSummaryConfirmationMessage(sequenceNumber, true);
     }
 
-    private async generateLogTailTree(gt: number, lt: number): Promise<ISequencedOperationMessage[]> {
+    private async generateLogTailTree(gt: number, lt: number): Promise<ISequencedDocumentMessage[]> {
         if (lt - gt <= 1) {
             return [];
         } else {
@@ -614,7 +612,7 @@ export class ScribeLambda extends SequencedLambda {
                     }
                 }
             }
-            return logTail;
+            return logTail.map((log) => log.operation);
         }
 
     }

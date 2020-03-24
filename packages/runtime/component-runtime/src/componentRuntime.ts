@@ -88,7 +88,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
             context.getQuorum(),
             context.getAudience(),
             context.snapshotFn,
-            context.closeFn,
             sharedObjectRegistry,
             componentRegistry,
             logger);
@@ -165,7 +164,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         private readonly quorum: IQuorum,
         private readonly audience: IAudience,
         private readonly snapshotFn: (message: string) => Promise<void>,
-        private readonly closeFn: () => void,
         private readonly sharedObjectRegistry: ISharedObjectRegistry,
         private readonly componentRegistry: IComponentRegistry | undefined,
         public readonly logger: ITelemetryLogger,
@@ -434,10 +432,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         this.verifyNotClosed();
 
         this.closed = true;
-    }
-
-    public async close(): Promise<void> {
-        this.closeFn();
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean) {

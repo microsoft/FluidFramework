@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-local-test-utils",
-  "version": "0.15.0",
+  "version": "0.16.0",
   "description": "Local test utils implementation",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -46,17 +46,17 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@microsoft/fluid-aqueduct": "^0.15.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.15.0",
-    "@microsoft/fluid-container-definitions": "^0.15.0",
-    "@microsoft/fluid-container-loader": "^0.15.0",
-    "@microsoft/fluid-driver-definitions": "^0.15.0",
-    "@microsoft/fluid-local-driver": "^0.15.0",
-    "@microsoft/fluid-runtime-definitions": "^0.15.0",
+    "@microsoft/fluid-aqueduct": "^0.16.0",
+    "@microsoft/fluid-component-core-interfaces": "^0.16.0",
+    "@microsoft/fluid-container-definitions": "^0.16.0",
+    "@microsoft/fluid-container-loader": "^0.16.0",
+    "@microsoft/fluid-driver-definitions": "^0.16.0",
+    "@microsoft/fluid-local-driver": "^0.16.0",
+    "@microsoft/fluid-runtime-definitions": "^0.16.0",
     "@microsoft/fluid-server-local-server": "^0.1003.0",
     "@microsoft/fluid-server-services-core": "^0.1003.0",
     "@microsoft/fluid-server-test-utils": "^0.1003.0",
-    "@microsoft/fluid-shared-object-base": "^0.15.0",
+    "@microsoft/fluid-shared-object-base": "^0.16.0",
     "debug": "^4.1.1",
     "uuid": "^3.3.2"
   },
