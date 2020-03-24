@@ -40,19 +40,19 @@ export class Alfred implements IAlfred {
     public async getFullTree(
         tenantId: string,
         documentId: string,
-    ): Promise<{ cache: IGitCache; code: string | IFluidCodeDetails }> {
+    ): Promise<{ cache: IGitCache; code: IFluidCodeDetails | null }> {
         const gitManager = this.getGitManager(tenantId);
         const versions = await gitManager.getCommits(documentId, 1);
         if (versions.length === 0) {
-            // eslint-disable-next-line no-null/no-null
-            return { cache: { blobs: [], commits: [], refs: { [documentId]: null }, trees: [] }, code: null };
+            // eslint-disable-next-line no-null/no-null, max-len
+            return { cache: { blobs: [], commits: [], refs: { [documentId]: null as unknown as string }, trees: [] }, code: null };
         }
 
         const fullTree = await gitManager.getFullTree(versions[0].sha);
 
         // TODO this needs to be summary aware
         // eslint-disable-next-line no-null/no-null
-        let code: string | IFluidCodeDetails = null;
+        let code: IFluidCodeDetails | null = null;
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (fullTree.quorumValues) {
             let quorumValues;
@@ -94,7 +94,7 @@ export class Alfred implements IAlfred {
         return gitManager.getCommit(sha);
     }
 
-    public async getLatestVersion(tenantId: string, documentId: string): Promise<ICommit> {
+    public async getLatestVersion(tenantId: string, documentId: string): Promise<ICommit | null> {
         const versions = await this.getVersions(tenantId, documentId, 1);
         if (versions.length === 0) {
             // eslint-disable-next-line no-null/no-null
