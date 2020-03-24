@@ -33,7 +33,7 @@ The `src/main.tsx` file is where the component logic lives.
 First we will declare all our imports. Here is a quick description and use cases for each is discussed further below.
 
 `PrimedComponent` and `PrimedComponentFactory` from [@microsoft/fluid-aqueduct](../api/fluid-aqueduct.md) provide helper
-functionality. `IComponentHTMLVisual` from
+functionality. `IComponentHTMLView` from
 [@microsoft/fluid-component-core-interfaces](../api/fluid-component-core-interfaces.md) provides the interface for
 enabling rendering. `React` and `ReactDOM` enable React use.
 
@@ -42,7 +42,7 @@ import {
   PrimedComponent,
   PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
-import { IComponentHTMLVisual } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -68,9 +68,9 @@ behavior as well as additional helpers to make component development easier.
    - `existing()` - called every time except the first time a component is initialized
    - `opened()` - called every time a component is initialized. After `create` and `existing`.
 
-#### IComponentHTMLVisual
+#### IComponentHTMLView
 
-Implementing the [IComponentHTMLVisual](../api/fluid-component-core-interfaces.icomponenthtmlvisual.md) interface
+Implementing the [IComponentHTMLView](../api/fluid-component-core-interfaces.icomponenthtmlview.md) interface
 denotes that our component can render an HTML view. Throughout the Fluid Framework we define interfaces as a way to
 state our behavior. Whoever is attempting to use this component can know we support this interface and therefore it will
 have a `render(...)` function. View rendering is explained more below.
@@ -79,17 +79,17 @@ have a `render(...)` function. View rendering is explained more below.
 
 ```typescript
 export class ExampleFluidComponent extends PrimedComponent
-  implements IComponentHTMLVisual {
+  implements IComponentHTMLView {
   // ...
 }
 ```
 
 We also must implement our interface provider. As described above our component is viewable so it implements
-`IComponentHTMLVisual`. By returning the component when this interface is queried, anyone who has a reference to
-our component can discover that we implement `IComponentHTMLVisual`.
+`IComponentHTMLView`. By returning the component when this interface is queried, anyone who has a reference to
+our component can discover that we implement `IComponentHTMLView`.
 
 ```typescript
-public get IComponentHTMLVisual() { return this; }
+public get IComponentHTMLView() { return this; }
 ```
 
 ### `componentInitializingFirstTime()`
@@ -106,7 +106,7 @@ protected async componentInitializingFirstTime() {
 
 ### `render(div: HTMLElement)`
 
-`render(div: HTMLElement)` is the implementation of `IComponentHTMLVisual`. The caller provides an `HTMLElement` that the
+`render(div: HTMLElement)` is the implementation of `IComponentHTMLView`. The caller provides an `HTMLElement` that the
 Component can use to render into. Every time `render(...)` is called we should produce a new view.
 
 ::: note
