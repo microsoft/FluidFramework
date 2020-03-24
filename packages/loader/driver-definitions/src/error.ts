@@ -33,7 +33,7 @@ export interface IThrottlingError {
     critical?: boolean;
 }
 
-interface IBaseConnectionError {
+export interface IBaseConnectionError {
     readonly message: string;
     readonly canRetry?: boolean;
     readonly statusCode?: number;
