@@ -219,13 +219,11 @@ describe("Cell", () => {
     });
 
     afterEach(async () => {
-        const closeP: Promise<void>[] = [];
         /* eslint-disable @typescript-eslint/strict-boolean-expressions */
-        if (user1Document) { closeP.push(user1Document.close()); }
-        if (user2Document) { closeP.push(user2Document.close()); }
-        if (user3Document) { closeP.push(user3Document.close()); }
+        if (user1Document) { user1Document.close(); }
+        if (user2Document) { user2Document.close(); }
+        if (user3Document) { user3Document.close(); }
         /* eslint-enable @typescript-eslint/strict-boolean-expressions */
-        await Promise.all(closeP);
         await testDeltaConnectionServer.webSocketServer.close();
     });
 });

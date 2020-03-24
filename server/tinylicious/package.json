@@ -16,14 +16,14 @@
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+    "docker:build": "docker build -t tinylicious .",
+    "docker:start": "docker run --rm -t -p 3000:3000 tinylicious",
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "lint": "npm run eslint",
     "start": "node dist/index.js",
     "start:debug": "node --inspect=0.0.0.0:9229 dist/index.js",
-    "tsc": "tsc",
-    "docker:build": "docker build -t tinylicious .",
-    "docker:start": "docker run --rm -t -p 3000:3000 tinylicious"
+    "tsc": "tsc"
   },
   "dependencies": {
     "@microsoft/fluid-core-utils": "^0.13.17538",

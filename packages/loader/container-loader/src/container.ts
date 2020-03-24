@@ -80,7 +80,7 @@ import { DeltaManager } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { Loader, RelativeLoader } from "./loader";
 import { NullChaincode } from "./nullRuntime";
-import { pkgName, pkgVersion } from "./packageVersion";
+import { pkgVersion } from "./packageVersion";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 import { parseUrl } from "./utils";
 import { BlobCacheStorageService } from "./blobCacheStorageService";
@@ -227,6 +227,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this._deltaManager.readonly;
     }
 
+    public forceReadonly(readonly: boolean) {
+        this._deltaManager.forceReadonly(readonly);
+    }
+
     public get closed(): boolean {
         return this._closed;
     }
@@ -324,8 +328,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             {
                 docId: this.id,
                 clientType, // Differentiating summarizer container from main container
-                packageName: TelemetryLogger.sanitizePkgName(pkgName),
-                packageVersion: pkgVersion,
+                loaderVersion: pkgVersion,
             });
 
         // Prefix all events in this file with container-loader
@@ -439,7 +442,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         if (!parsedUrl) {
             throw new Error("Unable to parse Url");
         }
-        this._id = decodeURI(parsedUrl.id);
+        const [, docId] = parsedUrl.id.split("/");
+        this._id = decodeURI(docId);
 
         this.storageService = await this.getDocumentStorageService();
 
@@ -453,6 +457,16 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         startConnectionP.catch((error) => {
             debug(`Error in connecting to delta stream from unpaused case ${error}`);
         });
+
+        await startConnectionP.then((details) => {
+            this._existing = details.existing;
+            this._parentBranch = details.parentBranch;
+        });
+
+        // Propagate current connection state through the system.
+        const connected = this.connectionState === ConnectionState.Connected;
+        assert(!connected || this._deltaManager.connectionMode === "read");
+        this.propagateConnectionState();
     }
 
     public async request(path: IRequest): Promise<IResponse> {
@@ -519,8 +533,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             }
 
             // Ensure connection to web socket
-            // All errors are reported through events ("error" / "disconnected") and telemetry in DeltaManager
-            this.connectToDeltaStream().catch(() => {});
+            this.connectToDeltaStream().catch((error) => {
+                // All errors are reported through events ("error" / "disconnected") and telemetry in DeltaManager
+                // So there shouldn't be a need to record error here.
+                // But we have number of cases where reconnects do not happen, and no errors are recorded, so
+                // adding this log point for easier diagnostics
+                this.logger.sendTelemetryEvent({eventName: "setAutoReconnectError"}, error);
+            });
         }
     }
 
@@ -1205,7 +1224,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     private propagateConnectionState() {
         assert(this.loaded);
-        const logOpsOnReconnect: boolean = this._connectionState === ConnectionState.Connected && !this.firstConnection;
+        const logOpsOnReconnect: boolean =
+            this._connectionState === ConnectionState.Connected &&
+            !this.firstConnection &&
+            this._deltaManager.connectionMode === "write";
         if (logOpsOnReconnect) {
             this.messageCountAfterDisconnection = 0;
         }

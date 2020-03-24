@@ -117,10 +117,6 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this._hostRuntime.snapshotFn;
     }
 
-    public get closeFn(): () => void {
-        return this._hostRuntime.closeFn;
-    }
-
     public get branch(): string {
         return this._hostRuntime.branch;
     }
@@ -338,10 +334,6 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this.blobManager.getBlobMetadata();
     }
 
-    public close(): void {
-        this._hostRuntime.closeFn();
-    }
-
     /**
      * Notifies the object to take snapshot of a component.
      */
@@ -414,9 +406,15 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
     }
 
-    public bindRuntime(componentRuntime: IComponentRuntime): void {
+    public bindRuntime(componentRuntime: IComponentRuntime) {
         if (this.componentRuntime) {
             throw new Error("runtime already bound");
+        }
+
+        // If this ComponentContext was created via `IHostRuntime.createComponentContext`, the
+        // `componentRuntimeDeferred` promise hasn't yet been initialized.  Do so now.
+        if (!this.componentRuntimeDeferred) {
+            this.componentRuntimeDeferred = new Deferred();
         }
 
         if (this.pending.length > 0) {

@@ -188,12 +188,6 @@ export async function initialize(
     });
     await getComponentAndRender(baseHost, url, div);
 
-    // Move the div hosting components into a shadow so it doesn't catch external formatting
-    const shadowHostDiv = document.createElement("div");
-    document.body.insertBefore(shadowHostDiv, div);
-    const shadowRoot = shadowHostDiv.attachShadow({mode: "open"});
-    shadowRoot.appendChild(div);
-
     container.on("error", (error) => {
         console.error(error);
     });

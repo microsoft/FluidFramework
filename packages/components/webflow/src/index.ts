@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-export { FlowDocument, flowDocumentFactory } from "./document";
+export { FlowDocument } from "./document";
 export { Editor, IComponentHTMLViewFactory } from "./editor";
 export { htmlFormatter } from "./html/formatters";
-export { FlowDocumentType, fluidExport, WebFlowType } from "./runtime";
+
+import { RuntimeFactory } from "@microsoft/fluid-component-base";
+import { WebFlow } from "./host";
+
+export const fluidExport = new RuntimeFactory(WebFlow.getFactory());

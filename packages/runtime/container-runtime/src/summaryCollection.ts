@@ -111,12 +111,16 @@ class Summary implements ISummary {
 
     public async waitBroadcast(): Promise<ISummaryOpMessage> {
         await this.defSummaryOp.promise;
-        return this._summaryOp;
+        // eslint-disable-next-line max-len
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
+        return this._summaryOp!;
     }
 
     public async waitAckNack(): Promise<ISummaryAckMessage | ISummaryNackMessage> {
         await this.defSummaryAck.promise;
-        return this._summaryAckNack;
+        // eslint-disable-next-line max-len
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
+        return this._summaryAckNack!;
     }
 }
 
@@ -295,7 +299,8 @@ export class SummaryCollection {
 
     private handleSummaryAck(op: ISummaryAckMessage) {
         const seq = op.contents.summaryProposal.summarySequenceNumber;
-        const summary = this.pendingSummaries.get(seq);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const summary = this.pendingSummaries.get(seq)!;
         assert(summary); // We should never see an ack without an op
         summary.ackNack(op);
         this.pendingSummaries.delete(seq);

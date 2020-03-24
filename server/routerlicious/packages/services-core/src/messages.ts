@@ -139,3 +139,20 @@ export interface IForkOperation {
 export interface IBoxcarMessage extends ITicketedMessage {
     contents: IMessage[];
 }
+
+/**
+ * Control messages for service to service communication only
+ */
+export interface IControlMessage {
+    type: string;
+
+    contents: any;
+}
+
+/**
+ * Control messages types
+ */
+export enum ControlMessageType {
+    // Instruction sent to update Durable sequence number
+    UpdateDSN = "updateDSN"
+}

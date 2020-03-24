@@ -5,3 +5,4 @@
 
 export * from "./lambda";
 export * from "./lambdaFactory";
+export { IDeliCheckpoint } from "./checkpointContext";

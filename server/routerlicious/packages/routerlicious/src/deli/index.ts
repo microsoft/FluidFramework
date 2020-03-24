@@ -26,6 +26,10 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
 
     const documentsCollectionName = config.get("mongo:collectionNames:documents");
 
+    // Generate tenant manager which abstracts access to the underlying storage provider
+    const authEndpoint = config.get("auth:endpoint");
+    const tenantManager = new services.TenantManager(authEndpoint);
+
     // Connection to stored document details
     const mongoFactory = new services.MongoDbFactory(mongoUrl);
     const mongoManager = new core.MongoManager(mongoFactory, false);
@@ -68,7 +72,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
 
     await broadcasterLambda.start();
 
-    return new DeliLambdaFactory(mongoManager, collection, combinedProducer, reverseProducer);
+    return new DeliLambdaFactory(mongoManager, collection, tenantManager, combinedProducer, reverseProducer);
 }
 
 export async function create(config: Provider): Promise<core.IPartitionLambdaFactory> {
