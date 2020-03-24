@@ -80,7 +80,8 @@ export async function initializeContainerCode(
 
     // Otherwise start watching to see when we become the oldest client
     const becameOldestP = new Promise<void>((resolve) => {
-        if (isOldestClient(container)) {
+        // Short circuit the oldest check if the container is non-existing (in which case we are de-facto oldest)
+        if (!container.existing || isOldestClient(container)) {
             resolve();
         } else {
             const quorumChangeHandler = () => {
