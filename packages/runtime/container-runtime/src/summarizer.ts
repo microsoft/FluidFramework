@@ -67,7 +67,8 @@ export class Summarizer implements ISummarizer {
         public readonly url: string,
         private readonly runtime: ContainerRuntime,
         private readonly configurationGetter: () => ISummaryConfiguration,
-        private readonly generateSummaryCore: (full: boolean, safe: boolean) => Promise<GenerateSummaryData>,
+        // eslint-disable-next-line max-len
+        private readonly generateSummaryCore: (full: boolean, safe: boolean) => Promise<GenerateSummaryData | undefined>,
         private readonly refreshLatestAck: (context: ISummaryContext, referenceSequenceNumber: number) => Promise<void>,
         summaryCollection?: SummaryCollection,
     ) {
@@ -158,8 +159,7 @@ export class Summarizer implements ISummarizer {
         };
 
         // this.runCoordinator.waitStart in the beginning guaranteed that we are connected and has a clientId
-        // eslint-disable-next-line max-len
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const clientId = this.runtime.clientId!;
         assert(clientId);
 
