@@ -199,7 +199,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private originalRequest: IRequest | undefined;
     private service: IDocumentService | undefined;
     private factoryProvider: ((resolvedUrl: IFluidResolvedUrl) => IDocumentServiceFactory) | undefined;
-    private _parentBranch: string | undefined | null;
+    private _parentBranch: string | null = null;
     private _connectionState = ConnectionState.Disconnected;
     private _serviceConfiguration: IServiceConfiguration | undefined;
     private readonly _audience: Audience;
@@ -225,6 +225,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     public get readonly(): boolean | undefined {
         return this._deltaManager.readonly;
+    }
+
+    public forceReadonly(readonly: boolean) {
+        this._deltaManager.forceReadonly(readonly);
     }
 
     public get closed(): boolean {
@@ -300,7 +304,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     /**
      * Returns the parent branch for this document
      */
-    public get parentBranch(): string | undefined | null {
+    public get parentBranch(): string | null {
         return this._parentBranch;
     }
 
@@ -528,8 +532,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             }
 
             // Ensure connection to web socket
-            // All errors are reported through events ("error" / "disconnected") and telemetry in DeltaManager
-            this.connectToDeltaStream().catch(() => {});
+            this.connectToDeltaStream().catch((error) => {
+                // All errors are reported through events ("error" / "disconnected") and telemetry in DeltaManager
+                // So there shouldn't be a need to record error here.
+                // But we have number of cases where reconnects do not happen, and no errors are recorded, so
+                // adding this log point for easier diagnostics
+                this.logger.sendTelemetryEvent({eventName: "setAutoReconnectError"}, error);
+            });
         }
     }
 
@@ -1060,8 +1069,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             // Back-compat for new client and old server.
             this._audience.clear();
 
-            const priorClients = details.initialClients ? details.initialClients : [];
-            for (const priorClient of priorClients) {
+            for (const priorClient of details.initialClients ?? []) {
                 this._audience.addMember(priorClient.clientId, priorClient.client);
             }
         });
@@ -1210,7 +1218,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     private propagateConnectionState() {
         assert(this.loaded);
-        const logOpsOnReconnect: boolean = this._connectionState === ConnectionState.Connected && !this.firstConnection;
+        const logOpsOnReconnect: boolean =
+            this._connectionState === ConnectionState.Connected &&
+            !this.firstConnection &&
+            this._deltaManager.connectionMode === "write";
         if (logOpsOnReconnect) {
             this.messageCountAfterDisconnection = 0;
         }

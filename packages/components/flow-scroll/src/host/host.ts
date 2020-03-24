@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { KeyCode, randomId, Template, TagName } from "@fluid-example/flow-util-lib";
+import { KeyCode, Template, TagName } from "@fluid-example/flow-util-lib";
 import { MathInstance, MathView } from "@fluid-example/math";
 import * as SearchMenu from "@fluid-example/search-menu";
 import { tableViewType } from "@fluid-example/table-view";
@@ -13,9 +13,9 @@ import {
     IComponentHTMLOptions,
     IComponentHTMLView,
     IComponentLoadable,
+    IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
-import { ISharedDirectory } from "@microsoft/fluid-map";
 import { TST } from "@microsoft/fluid-merge-tree";
 import * as styles from "./index.css";
 
@@ -56,13 +56,12 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
     private viewport: HTMLElement;
 
     constructor(
-        private readonly createSubComponent: (id: string, pkg: string, props?: any) => Promise<IComponent>,
+        private readonly createSubComponent: (pkg: string, props?: any) => Promise<IComponentHandle>,
         private readonly docP: Promise<FlowDocument>,
         private readonly mathP: Promise<IComponentCollection>,
         private readonly videosP: Promise<IComponentCollection>,
         private readonly imagesP: Promise<IComponentCollection>,
         private readonly intelViewer: IComponentHTMLView,
-        private readonly root: ISharedDirectory,
     ) { }
 
     // #region IComponentHTMLView
@@ -115,10 +114,11 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
                 classList?: string[],
             ) => {
                 const position = editor.selection.end;
-                const url = randomId();
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                this.createSubComponent(url, type);
-                doc.insertComponent(position, `/${this.root.get(url)}`, view, componentOptions, style, classList);
+                const ref = doc.addLocalRef(position);
+                this.createSubComponent(type).then((handle) => {
+                    doc.insertComponent(doc.localRefToPosition(ref), handle, view, componentOptions, style, classList);
+                    doc.removeLocalRef(ref);
+                }).catch((error) => console.error(error));
             };
 
             const insertComponentFromCollection = (
@@ -130,7 +130,7 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
             ) => {
                 const position = editor.selection.end;
                 const instance = factory.createCollectionItem(componentOptions) as IComponentLoadable;
-                doc.insertComponent(position, `/${instance.url}`, view, componentOptions, style, classList);
+                doc.insertComponent(position, instance.handle, view, componentOptions, style, classList);
             };
 
             const insertTags = (tags: TagName[]) => {

@@ -15,7 +15,6 @@ import {
     ISummaryContext,
 } from "@microsoft/fluid-driver-definitions";
 import {
-    ConnectionMode,
     IClient,
     IErrorTrackingService,
     ISummaryTree,
@@ -248,7 +247,7 @@ export class OdspDocumentService implements IDocumentService {
      *
      * @returns returns the document delta stream service for sharepoint driver.
      */
-    public async connectToDeltaStream(client: IClient, mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
+    public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
         // Attempt to connect twice, in case we used expired token.
         return getWithRetryForTokenRefresh<IDocumentDeltaConnection>(async (refresh: boolean) => {
             const [websocketEndpoint, webSocketToken, io] =
@@ -275,7 +274,6 @@ export class OdspDocumentService implements IDocumentService {
                 webSocketToken ? webSocketToken : websocketEndpoint.socketToken,
                 io,
                 client,
-                mode,
                 websocketEndpoint.deltaStreamSocketUrl,
                 websocketEndpoint.deltaStreamSocketUrl2,
             ).catch((error) => {
@@ -365,7 +363,6 @@ export class OdspDocumentService implements IDocumentService {
         token: string | null,
         io: SocketIOClientStatic,
         client: IClient,
-        mode: ConnectionMode,
         url: string,
         url2?: string): Promise<IDocumentDeltaConnection> {
         // tslint:disable-next-line: strict-boolean-expressions
@@ -402,7 +399,6 @@ export class OdspDocumentService implements IDocumentService {
                 token,
                 io,
                 client,
-                mode,
                 url2!,
                 20000,
                 this.logger,
@@ -428,7 +424,6 @@ export class OdspDocumentService implements IDocumentService {
                         token,
                         io,
                         client,
-                        mode,
                         url,
                         20000,
                         this.logger,
@@ -462,7 +457,6 @@ export class OdspDocumentService implements IDocumentService {
             token,
             io,
             client,
-            mode,
             url,
             hasUrl2 ? 15000 : 20000,
             this.logger,
@@ -482,7 +476,6 @@ export class OdspDocumentService implements IDocumentService {
                     token,
                     io,
                     client,
-                    mode,
                     url2!,
                     20000,
                     this.logger,

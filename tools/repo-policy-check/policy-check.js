@@ -8,6 +8,7 @@ const readline = require('readline');
 const newline = require('os').EOL;
 const program = require('commander');
 const exclusions = require('./exclusions.json').map(e => new RegExp(e, "i"));
+const sortPackageJson = require('sort-package-json');
 
 /**
  * argument parsing
@@ -46,7 +47,7 @@ if (program.path) {
 const copyrightText = "Copyright (c) Microsoft Corporation. All rights reserved." + newline + "Licensed under the MIT License.";
 const licenseId = 'MIT';
 const author = 'Microsoft';
-const clientDockerfilePath = "server/routerlicious/Dockerfile";
+const serverDockerfilePath = "server/routerlicious/r11s-Dockerfile";
 function getDockerfileCopyText(packageFilePath) {
     const packageDir = packageFilePath.split("/").slice(0, -1).join("/");
     return `COPY ${packageDir}/package*.json ${packageDir}/`;
@@ -133,7 +134,7 @@ const handlers = [
         }
     },
     {
-        name: "npm-package-author-license",
+        name: "npm-package-author-license-sort",
         match: /(^|\/)package\.json/i,
         handler: file => {
             let json;
@@ -143,18 +144,27 @@ const handlers = [
                 return 'Error parsing JSON file: ' + file;
             }
 
-            let ret = [];
+            const missing = [];
 
             if (json.author !== author) {
-                ret.push(`${author} author entry`);
+                missing.push(`${author} author entry`);
             }
 
             if (json.license !== licenseId) {
-                ret.push(`${licenseId} license entry`);
+                missing.push(`${licenseId} license entry`);
+            }
+
+            const ret = [];
+            if (missing.length > 0) {
+                ret.push(`missing ${missing.join(' and ')}`);
+            }
+
+            if (JSON.stringify(sortPackageJson(json)) != JSON.stringify(json)) {
+                ret.push(`not sorted`);
             }
 
             if (ret.length > 0) {
-                return 'Package missing ' + ret.join(' and ');
+                return `Package.json ${ret.join(', ')}`;
             }
         },
         resolver: file => {
@@ -179,20 +189,20 @@ const handlers = [
                 resolved = false;
             }
 
-            writeFile(file, JSON.stringify(json, undefined, 2) + newline);
+            writeFile(file, JSON.stringify(sortPackageJson(json), undefined, 2) + newline);
 
             return { resolved: resolved };
         }
     },
     {
         name: "dockerfile-packages",
-        match: /^(packages)\/.*\/package\.json/i,
+        match: /^(server\/routerlicious\/packages)\/.*\/package\.json/i,
         handler: file => {
             const dockerfileCopyText = getDockerfileCopyText(file);
 
             const dockerfileContents = getOrAddLocalMap(
                 "dockerfileContents",
-                () => fs.readFileSync(clientDockerfilePath),
+                () => fs.readFileSync(serverDockerfilePath),
             );
 
             if (dockerfileContents.indexOf(dockerfileCopyText) === -1) {
@@ -203,11 +213,11 @@ const handlers = [
             const dockerfileCopyText = getDockerfileCopyText(file);
 
             // add to Dockerfile
-            let dockerfileContents = readFile(clientDockerfilePath);
+            let dockerfileContents = readFile(serverDockerfilePath);
 
             if (dockerfileContents.indexOf(dockerfileCopyText) === -1) {
                 // regex basically find the last of 3 or more consecutive COPY package lines
-                const endOfCopyLinesRegex = /(COPY\s+(?<firstFolder>packages|samples)\/.*\/package\*\.json\s+\k<firstFolder>\/.*\/\s*\n){3,}[^\S\r]*(?<newline>\r?\n)+/gi;
+                const endOfCopyLinesRegex = /(COPY\s+server\/routerlicious\/packages\/.*\/package\*\.json\s+server\/routerlicious\/packages\/.*\/\s*\n){3,}[^\S\r]*(?<newline>\r?\n)+/gi;
                 const regexMatch = endOfCopyLinesRegex.exec(dockerfileContents);
                 const localNewline = regexMatch.groups.newline;
                 let insertIndex = regexMatch.index + regexMatch[0].length - localNewline.length;
@@ -216,7 +226,7 @@ const handlers = [
                     + dockerfileCopyText + localNewline
                     + dockerfileContents.substring(insertIndex, dockerfileContents.length);
 
-                writeFile(clientDockerfilePath, dockerfileContents);
+                writeFile(serverDockerfilePath, dockerfileContents);
             }
 
             return { resolved: true };

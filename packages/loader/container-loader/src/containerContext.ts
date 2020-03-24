@@ -109,7 +109,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext,
         return this.attributes.branch;
     }
 
-    public get parentBranch(): string | undefined | null {
+    public get parentBranch(): string | null {
         return this.container.parentBranch;
     }
 

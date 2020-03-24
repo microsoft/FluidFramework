@@ -59,10 +59,10 @@
   "dependencies": {
     "@fluid-example/tiny-web-host": "0.15.21948",
     "@microsoft/fluid-base-host": "0.15.21948",
+    "@microsoft/fluid-common-utils": "0.15.21678",
     "@microsoft/fluid-component-core-interfaces": "0.15.21948",
     "@microsoft/fluid-container-definitions": "0.15.21948",
     "@microsoft/fluid-container-loader": "0.15.21948",
-    "@microsoft/fluid-common-utils": "0.15.21678",
     "@microsoft/fluid-driver-definitions": "0.15.21948",
     "@microsoft/fluid-driver-utils": "0.15.21948",
     "@microsoft/fluid-execution-context-loader": "0.15.21948",
