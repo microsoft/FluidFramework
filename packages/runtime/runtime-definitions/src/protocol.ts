@@ -16,6 +16,14 @@ export interface IEnvelope {
     contents: any;
 }
 
+export interface ISignalEnvelop {
+    // The target for the envelope, undefined for the container
+    address?: string;
+
+    // The contents of the envelope
+    contents: any;
+}
+
 /**
  * Represents ISignalMessage with its type.
  */

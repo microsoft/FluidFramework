@@ -199,7 +199,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private originalRequest: IRequest | undefined;
     private service: IDocumentService | undefined;
     private factoryProvider: ((resolvedUrl: IFluidResolvedUrl) => IDocumentServiceFactory) | undefined;
-    private _parentBranch: string | undefined | null;
+    private _parentBranch: string | null = null;
     private _connectionState = ConnectionState.Disconnected;
     private _serviceConfiguration: IServiceConfiguration | undefined;
     private readonly _audience: Audience;
@@ -304,7 +304,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     /**
      * Returns the parent branch for this document
      */
-    public get parentBranch(): string | undefined | null {
+    public get parentBranch(): string | null {
         return this._parentBranch;
     }
 

@@ -23,7 +23,7 @@ uid: doc-index
 - [Shared
   String.docx](https://microsoft-my.sharepoint-df.com/:w:/p/anthonm/Eeshhh4GSslDkjLKK28lunIBwrh-7glib7Lfnw_9ixNL8A?e=wD35Yi)
 - [Fluid Framework Developer Guide](../how/developer-guide.md)
-- [Total Order Broadcast & Eventual Consistency]((../how/tob.md))
+- [Total Order Broadcast & Eventual Consistency](../how/tob.md)
 - [Fluid Loading Deep Dive](https://microsoft.sharepoint.com/:w:/t/Prague/EY_xwXmXzXRBlnx6sMgbVp8Bbs4K3GQXhV6ERUyKhLgNbA?e=wFWoFH)
   (slightly out of date)
 
