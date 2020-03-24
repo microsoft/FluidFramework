@@ -849,23 +849,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.emit("connect", connection.details);
 
         /* Issue #1566: Backward compat */
-        if (connection.details.initialMessages === undefined) {
-            connection.details.initialMessages = [];
-        }
-        if (connection.details.initialClients === undefined) {
-            connection.details.initialClients = [];
-        }
-        if (connection.details.initialContents === undefined) {
-            connection.details.initialContents = [];
-        }
-        if (connection.details.initialSignals === undefined) {
-            connection.details.initialSignals = [];
-        }
-
         this.processInitialMessages(
-            connection.details.initialMessages,
-            connection.details.initialContents,
-            connection.details.initialSignals,
+            connection.details.initialMessages ?? [],
+            connection.details.initialContents ?? [],
+            connection.details.initialSignals ?? [],
             this.connectFirstConnection);
         this.connectFirstConnection = false;
     }
