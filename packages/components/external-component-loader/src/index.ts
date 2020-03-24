@@ -3,7 +3,7 @@
 * Licensed under the MIT License.
 */
 
-import { SpacesComponentName, Spaces, ComponentToolbarName, ComponentToolbar } from "@fluid-example/spaces";
+import { SpacesComponentName, Spaces, } from "@fluid-example/spaces";
 import { WaterParkLoaderInstantiationFactory, WaterParkLoaderName } from "./waterParkLoader";
 import { WaterParkModuleInstantiationFactory } from "./waterParkModuleInstantiationFactory";
 
@@ -12,6 +12,5 @@ export const fluidExport = new WaterParkModuleInstantiationFactory(
     new Map([
         [WaterParkLoaderName, Promise.resolve(WaterParkLoaderInstantiationFactory)],
         [SpacesComponentName, Promise.resolve(Spaces.getFactory())],
-        [ComponentToolbarName, Promise.resolve(ComponentToolbar.getFactory())],
     ]),
 );

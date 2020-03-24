@@ -11,7 +11,7 @@ import {
     IComponentHTMLView,
     IComponent,
 } from "@microsoft/fluid-component-core-interfaces";
-import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
+import { IProvideComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { SharedObjectSequence } from "@microsoft/fluid-sequence";
 
 import * as React from "react";
@@ -21,11 +21,13 @@ import { ISpacesDataModel, SpacesDataModel } from "./dataModel";
 
 import { SpacesGridView } from "./view";
 import { ComponentToolbar, ComponentToolbarName } from "./components";
+import { IComponentToolbarConsumer } from "./interfaces";
 
 /**
  * Spaces is the Fluid
  */
-export class Spaces extends PrimedComponent implements IComponentHTMLView, IComponentCollection {
+export class Spaces extends PrimedComponent 
+implements IComponentHTMLView, IProvideComponentCollection, IComponentToolbarConsumer {
     private dataModelInternal: ISpacesDataModel | undefined;
     private componentToolbar: IComponent | undefined;
     private static readonly defaultComponentToolbarId = "spaces-component-toolbar";
@@ -53,31 +55,7 @@ export class Spaces extends PrimedComponent implements IComponentHTMLView, IComp
     }
 
     public get IComponentHTMLView() { return this; }
-    public get IComponentCollection() { return this; }
-
-
-    public createCollectionItem<T>(options: T): IComponent{
-        // eslint-disable-next-line dot-notation
-        const id: string = options["id"];
-        // eslint-disable-next-line dot-notation
-        const type: string = options["type"];
-        // eslint-disable-next-line dot-notation
-        const url: string = options["url"];
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.dataModel.setComponent(id, type, url);
-        // This is okay as we are not using the value returned from this function call anywhere
-        // Instead, setComponent adds it to the sequence to be synchronously loaded
-        const emptyComponent: IComponent = {};
-        return emptyComponent;
-    }
-
-    public removeCollectionItem(instance: IComponent): void {
-        let componentUrl: string;
-        if (instance.IComponentLoadable) {
-            componentUrl = instance.IComponentLoadable.url;
-            this.dataModel.removeComponent(componentUrl);
-        }
-    }
+    public get IComponentCollection() { return this.dataModel; }
 
     protected async componentInitializingFirstTime(props?: any) {
         this.root.createSubDirectory("component-list");

@@ -8,6 +8,7 @@ import { ISharedDirectory, IDirectory, IDirectoryValueChanged } from "@microsoft
 import {
     IComponent, IComponentLoadable,
 } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { Layout } from "react-grid-layout";
 
 
@@ -29,14 +30,22 @@ export interface ISpacesDataModel extends EventEmitter {
     saveLayout(): void;
     setTemplate(): Promise<void>;
     componentToolbarId: string;
+    IComponentCollection: IComponentCollection;
+    createCollectionItem<ISpacesCollectionOptions>(options: ISpacesCollectionOptions): IComponent;
+    removeCollectionItem(item: IComponent): void;
+}
+
+interface ISpacesCollectionOptions {
+    id?: string;
+    type?: string;
+    url?: string;
 }
 
 /**
  * The Data Model is an abstraction layer so the React View doesn't need to interact directly with fluid.
  */
-export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
+export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, IComponentCollection {
     private readonly componentSubDirectory: IDirectory;
-
 
     constructor(
         private readonly root: ISharedDirectory,
@@ -57,6 +66,30 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
                 this.emit("componentListChanged", this.componentList);
             }
         });
+    }
+
+    public get IComponentCollection() { return this; }
+
+    public createCollectionItem<T>(rawOptions: T): IComponent {
+        const options = rawOptions as ISpacesCollectionOptions;
+        // eslint-disable-next-line dot-notation
+        if (!options.id || !options.type || !options.url){
+            throw new Error("Tried to create a collection item in Spaces with invalid options")
+        }
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        this.setComponent(options.id, options.type, options.url);
+        // This is okay as we are not using the value returned from this function call anywhere
+        // Instead, setComponent adds it to the sequence to be synchronously loaded
+        const emptyComponent: IComponent = {};
+        return emptyComponent;
+    }
+
+    public removeCollectionItem(instance: IComponent): void {
+        let componentUrl: string;
+        if (instance.IComponentLoadable) {
+            componentUrl = instance.IComponentLoadable.url;
+            this.removeComponent(componentUrl);
+        }
     }
 
     /**
