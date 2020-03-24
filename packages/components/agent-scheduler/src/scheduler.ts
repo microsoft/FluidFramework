@@ -285,8 +285,9 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
             }
 
             this.runtime.on("connected", () => {
-                assert(this.isActive());
-                this.initializeCore();
+                if (this.isActive()) {
+                    this.initializeCore();
+                }
             });
         }
     }
