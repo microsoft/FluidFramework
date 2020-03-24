@@ -82,13 +82,14 @@ describe("Container", () => {
 
             await Container.load(
                 "tenantId/documentId",
-                serviceFactory,
+                mockFactory,
                 codeLoader,
                 {},
                 {},
                 loader,
                 testRequest,
                 testResolved);
+            assert.fail("Error expected");
         } catch (error) {
             const err = error as IGeneralError;
             success = err.error as boolean;
@@ -111,13 +112,14 @@ describe("Container", () => {
             };
             await Container.load(
                 "tenantId/documentId",
-                serviceFactory,
+                mockFactory,
                 codeLoader,
                 {},
                 {},
                 loader,
                 testRequest,
                 testResolved);
+            assert.fail("Error expected");
         } catch (error) {
             assert.equal(error.errorType, ErrorType.generalError, "Error is not a general error");
             const generalError = error as IGeneralError;
@@ -143,7 +145,7 @@ describe("Container", () => {
 
         const container = await Container.load(
             "tenantId/documentId",
-            serviceFactory,
+            mockFactory,
             codeLoader,
             {},
             {},
@@ -175,7 +177,7 @@ describe("Container", () => {
 
         const container = await Container.load(
             "tenantId/documentId",
-            serviceFactory,
+            mockFactory,
             codeLoader,
             {},
             {},
@@ -208,7 +210,7 @@ describe("Container", () => {
         let errorRaised = false;
         const container = await Container.load(
             "tenantId/documentId",
-            serviceFactory,
+            mockFactory,
             codeLoader,
             {},
             {},
@@ -248,7 +250,7 @@ describe("Container", () => {
         };
         const container = await Container.load(
             "tenantId/documentId",
-            serviceFactory,
+            mockFactory,
             codeLoader,
             {},
             {},

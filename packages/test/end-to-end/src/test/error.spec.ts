@@ -61,13 +61,15 @@ describe("Errors Types", () => {
 
             await Container.load(
                 "tenantId/documentId",
-                serviceFactory,
+                mockFactory,
                 codeLoader,
                 {},
                 {},
                 loader,
                 testRequest,
                 testResolved);
+
+            assert.fail("Error expected");
         } catch (error) {
             assert.equal(error.errorType, ErrorType.generalError, "Error is not a general error");
         }
