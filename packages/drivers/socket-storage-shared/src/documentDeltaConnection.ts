@@ -72,7 +72,6 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         token: string | null,
         io: SocketIOClientStatic,
         client: IClient,
-        mode: ConnectionMode,
         url: string,
         timeoutMs: number = 20000): Promise<IDocumentDeltaConnection> {
 
@@ -91,7 +90,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         const connectMessage: IConnect = {
             client,
             id,
-            mode,
+            mode: client.mode,
             tenantId,
             token,  // Token is going to indicate tenant level information, etc...
             versions: protocolVersions,

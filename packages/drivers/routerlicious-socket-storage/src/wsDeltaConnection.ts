@@ -45,11 +45,10 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
         id: string,
         token: string,
         client: IClient,
-        urlStr: string,
-        mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
+        urlStr: string): Promise<IDocumentDeltaConnection> {
 
         return new Promise<IDocumentDeltaConnection>((resolve, reject) => {
-            const connection = new WSDeltaConnection(tenantId, id, token, client, urlStr, mode);
+            const connection = new WSDeltaConnection(tenantId, id, token, client, urlStr);
 
             const resolveHandler = () => {
                 resolve(connection);
@@ -126,8 +125,7 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
         public documentId: string,
         token: string,
         client: IClient,
-        urlStr: string,
-        mode: ConnectionMode) {
+        urlStr: string) {
         super();
 
         const p = url.parse(urlStr);
@@ -141,7 +139,7 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
             const connectMessage: IConnect = {
                 client,
                 id: documentId,
-                mode,
+                mode: client.mode,
                 tenantId,
                 token,
                 versions: [protocolVersion],

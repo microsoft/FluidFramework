@@ -39,13 +39,12 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
 
     constructor(
         client: IClient,
-        mode: ConnectionMode,
         private readonly documentId: string,
         private readonly tenantId: string,
         private readonly serverMessagesHandler: CreationServerMessagesHandler) {
         super();
 
-        this.initialize(client, mode);
+        this.initialize(client);
     }
 
     /**
@@ -198,11 +197,11 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
      * @param client - Client who initiated the connection.
      * @param mode - Mode of the connection.
      */
-    private initialize(client: IClient, mode: ConnectionMode) {
+    private initialize(client: IClient) {
         const connectMessage: IConnect = {
             client,
             id: this.documentId,
-            mode,
+            mode: client.mode,
             tenantId: this.tenantId,
             token: "token",
             versions: protocolVersions,
