@@ -23,7 +23,7 @@ export interface IProvideComponentCallable {
 /**
  * An IComponentCallable is a component that has a roster of functions defined by T that other components can use
  */
-export interface IComponentCallable<T>  {
+export interface IComponentCallable<T> extends IProvideComponentCallable {
     setComponentCallbacks(callbacks: T): void;
 }
 

@@ -21,13 +21,13 @@ import { ISpacesDataModel, SpacesDataModel } from "./dataModel";
 
 import { SpacesGridView } from "./view";
 import { ComponentToolbar, ComponentToolbarName } from "./components";
-import { IProvideComponentToolbarConsumer } from "./interfaces";
+import { IComponentToolbarConsumer } from "./interfaces";
 
 /**
  * Spaces is the Fluid
  */
 export class Spaces extends PrimedComponent
-    implements IComponentHTMLView, IProvideComponentCollection, IProvideComponentToolbarConsumer {
+    implements IComponentHTMLView, IProvideComponentCollection, IComponentToolbarConsumer {
     private dataModelInternal: ISpacesDataModel | undefined;
     private componentToolbar: IComponent | undefined;
     private static readonly defaultComponentToolbarId = "spaces-component-toolbar";
