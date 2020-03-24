@@ -106,7 +106,9 @@ export class FluidPackageCheck {
 
     private static checkTestCoverageScripts(pkg: Package, fix: boolean) {
         let fixed = false;
-        // Fluid specific
+
+        // Make sure that if we enable test coverage for the package using nyc
+        // we have the package in the devDependencies and configuration
         const testCoverageScript = pkg.getScript("test:coverage");
         if (testCoverageScript && testCoverageScript.startsWith("nyc")) {
             if (!pkg.packageJson.devDependencies.nyc) {
