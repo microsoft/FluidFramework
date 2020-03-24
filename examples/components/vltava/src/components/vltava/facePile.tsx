@@ -27,7 +27,10 @@ export const VltavaFacepile = (props: IVltavaFacepileProps) => {
     const facepilePersonas: IFacepilePersona[] = [];
     let count = 0;
     props.users.forEach((personaName) => {
-        const imageInitials = `${personaName.substring(0,1)}${personaName.split(" ")[1].substring(0,1)}`;
+        // Split the names on spaces and underscores
+        const nameParts = personaName.split(" ")
+            .reduce((acc: string[], val) => { acc.push(...val.split("_")); return acc; }, []);
+        const imageInitials = nameParts.reduce((acc, val) => acc.concat(val.substr(0, 1)), "");
         // This is just a way to iterate through all colors in PersonaInitialColor in order
         const initialsColor =
             PersonaInitialsColor[

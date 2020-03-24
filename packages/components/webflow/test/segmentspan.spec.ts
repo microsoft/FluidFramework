@@ -7,8 +7,10 @@ import { TextSegment } from "@microsoft/fluid-merge-tree";
 import { TestHost } from "@microsoft/fluid-local-test-utils";
 import * as assert from "assert";
 import "mocha";
-import { FlowDocument, flowDocumentFactory, SegmentSpan } from "../src/document";
-import { FlowDocumentType } from "../src/runtime";
+import { FlowDocument } from "../src/document";
+import { SegmentSpan } from "../src/document/segmentspan";
+
+const flowDocumentFactory = FlowDocument.getFactory();
 
 describe("SegmentSpan", () => {
     let host: TestHost;
@@ -16,10 +18,10 @@ describe("SegmentSpan", () => {
 
     before(async () => {
         host = new TestHost([
-            [FlowDocumentType, Promise.resolve(flowDocumentFactory)],
+            [flowDocumentFactory.type, Promise.resolve(flowDocumentFactory)],
         ]);
 
-        doc = await host.createAndAttachComponent("fd", FlowDocumentType);
+        doc = await host.createAndAttachComponent("fd", flowDocumentFactory.type);
     });
 
     after(async () => {

@@ -143,7 +143,7 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
         return this.details.existing;
     }
 
-    public get parentBranch(): string {
+    public get parentBranch(): string | null {
         return this.details.parentBranch;
     }
 
@@ -151,11 +151,11 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
         return this.details.maxMessageSize;
     }
 
-    public get initialMessages(): ISequencedDocumentMessage[] {
+    public get initialMessages(): ISequencedDocumentMessage[] | undefined {
         return this.details.initialMessages;
     }
 
-    public get initialContents(): IContentMessage[] {
+    public get initialContents(): IContentMessage[] | undefined {
         return this.details.initialContents;
     }
 

@@ -4,16 +4,23 @@
  */
 
 import { isSpoTenant, resolveFluidUrl, spoGetResolvedUrl } from "@fluid-example/tiny-web-host";
+import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
+import { IFluidResolvedUrl } from "@microsoft/fluid-driver-definitions";
 import { IClientConfig } from "@microsoft/fluid-odsp-utils";
 import { ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { IAlfredUser, RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlresolver";
-import { IAlfredTenant } from "@microsoft/fluid-server-services-client";
+import { IAlfredTenant, IGitCache } from "@microsoft/fluid-server-services-client";
 import { chooseCelaName } from "@microsoft/fluid-server-services-core";
 import { Request } from "express";
 import { Provider } from "nconf";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
 import { IAlfred } from "./interfaces";
+
+interface FullTree {
+    cache: IGitCache,
+    code: IFluidCodeDetails | null,
+}
 
 export function resolveUrl(
     config: Provider,
@@ -23,7 +30,7 @@ export function resolveUrl(
     documentId: string,
     scopes: ScopeType[],
     request: Request,
-) {
+): [Promise<IFluidResolvedUrl>, Promise<undefined | FullTree>] {
     if (isSpoTenant(tenantId)) {
         const microsoftConfiguration = config.get("login:microsoft");
         const clientConfig: IClientConfig = {
@@ -31,7 +38,7 @@ export function resolveUrl(
             clientSecret: microsoftConfiguration.secret,
         };
         const resolvedP = spoGetResolvedUrl(tenantId, documentId,
-            request.session.tokens, clientConfig);
+            request.session?.tokens, clientConfig);
         const fullTreeP = Promise.resolve(undefined);
         return [resolvedP, fullTreeP];
     } else {
@@ -57,6 +64,7 @@ export function resolveUrl(
         const resolverList = [new RouterliciousUrlResolver(endPointConfig, undefined, appTenants, scopes, user)];
         const resolvedP = resolveFluidUrl(request, resolverList);
         const fullTreeP = alfred.getFullTree(tenantId, documentId);
-        return [resolvedP, fullTreeP];
+        // RouterliciousUrlResolver only resolves as IFluidResolvedUrl
+        return [resolvedP as Promise<IFluidResolvedUrl>, fullTreeP];
     }
 }

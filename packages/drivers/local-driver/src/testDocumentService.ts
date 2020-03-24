@@ -64,8 +64,7 @@ export class TestDocumentService implements api.IDocumentService {
      * Returns null
      */
     public async branch(): Promise<string> {
-        // eslint-disable-next-line no-null/no-null
-        return null;
+        throw new Error("Not implemented");
     }
 
     /**

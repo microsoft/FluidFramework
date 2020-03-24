@@ -12,9 +12,10 @@ import {
 /**
  * Host services provides a collection of interfaces exposed by a gateway host
  */
-// tslint:disable-next-line:no-empty-interface
-export interface IHostServices extends
-    IProvideDocumentFactory,
-    IProvideMicrosoftGraph,
-    IProvidePackageManager {
+/* eslint-disable @typescript-eslint/no-empty-interface, @typescript-eslint/indent */
+export interface IHostServices extends Partial<
+    IProvideDocumentFactory
+    & IProvideMicrosoftGraph
+    & IProvidePackageManager> {
 }
+/* eslint-enable @typescript-eslint/no-empty-interface, @typescript-eslint/indent */
