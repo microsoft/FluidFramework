@@ -4,7 +4,7 @@
  */
 
 import * as api from "@microsoft/fluid-driver-definitions";
-import { ConnectionMode, IClient } from "@microsoft/fluid-protocol-definitions";
+import { IClient } from "@microsoft/fluid-protocol-definitions";
 import * as socketStorage from "@microsoft/fluid-routerlicious-driver";
 import { GitManager } from "@microsoft/fluid-server-services-client";
 import { TestHistorian } from "@microsoft/fluid-server-test-utils";
@@ -51,12 +51,7 @@ export class TestDocumentService implements api.IDocumentService {
      * @param client - client data
      */
     public async connectToDeltaStream(
-        client: IClient,
-        mode?: ConnectionMode): Promise<api.IDocumentDeltaConnection> {
-        // Backward compat
-        if (mode !== undefined) {
-            client.mode = mode;
-        }
+        client: IClient): Promise<api.IDocumentDeltaConnection> {
         return TestDocumentDeltaConnection.create(
             this.tenantId,
             this.documentId,

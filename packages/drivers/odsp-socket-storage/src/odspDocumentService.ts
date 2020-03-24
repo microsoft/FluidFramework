@@ -14,7 +14,6 @@ import {
     OpenMode,
 } from "@microsoft/fluid-driver-definitions";
 import {
-    ConnectionMode,
     IClient,
     IErrorTrackingService,
 } from "@microsoft/fluid-protocol-definitions";
@@ -234,11 +233,7 @@ export class OdspDocumentService implements IDocumentService {
      *
      * @returns returns the document delta stream service for sharepoint driver.
      */
-    public async connectToDeltaStream(client: IClient, mode?: ConnectionMode): Promise<IDocumentDeltaConnection> {
-        // Backward compat
-        if (mode !== undefined) {
-            client.mode = mode;
-        }
+    public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
         // Attempt to connect twice, in case we used expired token.
         return getWithRetryForTokenRefresh<IDocumentDeltaConnection>(async (refresh: boolean) => {
             const [websocketEndpoint, webSocketToken, io] =

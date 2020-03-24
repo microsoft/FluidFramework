@@ -46,12 +46,7 @@ export class DocumentService2 extends DocumentService {
      * @returns returns the delta stream service.
      */
     public async connectToDeltaStream(
-        client: api.IClient,
-        mode?: api.ConnectionMode): Promise<IDocumentDeltaConnection> {
-        // Backward compat
-        if (mode !== undefined) {
-            client.mode = mode;
-        }
+        client: api.IClient): Promise<IDocumentDeltaConnection> {
         return WSDeltaConnection.create(
             this.tenantId,
             this.documentId,

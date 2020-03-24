@@ -22,7 +22,7 @@ export class DeltaConnection extends EventEmitter {
     public static async connect(
         service: IDocumentService,
         client: IClient) {
-        const connection = await service.connectToDeltaStream(client, client.mode);
+        const connection = await service.connectToDeltaStream(client);
         return new DeltaConnection(connection);
     }
 

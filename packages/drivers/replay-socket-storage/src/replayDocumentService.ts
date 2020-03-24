@@ -4,7 +4,7 @@
  */
 
 import * as api from "@microsoft/fluid-driver-definitions";
-import { ConnectionMode, IClient } from "@microsoft/fluid-protocol-definitions";
+import { IClient } from "@microsoft/fluid-protocol-definitions";
 import { EmptyDeltaStorageService } from "./emptyDeltaStorageService";
 import { ReplayController } from "./replayController";
 import { ReplayDocumentDeltaConnection } from "./replayDocumentDeltaConnection";
@@ -58,9 +58,7 @@ export class ReplayDocumentService implements api.IDocumentService {
      * @param client - Client that connects to socket.
      * @returns returns the delta stream service which replay ops from --from to --to arguments.
      */
-    public async connectToDeltaStream(
-        client: IClient,
-        mode?: ConnectionMode): Promise<api.IDocumentDeltaConnection> {
+    public async connectToDeltaStream(client: IClient): Promise<api.IDocumentDeltaConnection> {
         return this.deltaStorage;
     }
 

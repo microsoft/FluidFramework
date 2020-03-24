@@ -100,7 +100,7 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
 
         const [deltaStream, deltaStorage, storage] = await Promise.all([
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            connectedDocumentService.connectToDeltaStream(clientDetails, clientDetails.mode),
+            connectedDocumentService.connectToDeltaStream(clientDetails),
             connectedDocumentService.connectToDeltaStorage(),
             connectedDocumentService.connectToStorage(),
         ]);

@@ -4,7 +4,7 @@
  */
 
 import * as api from "@microsoft/fluid-driver-definitions";
-import { ConnectionMode, IClient } from "@microsoft/fluid-protocol-definitions";
+import { IClient } from "@microsoft/fluid-protocol-definitions";
 import { CreationDeltaStorageService } from "./creationDeltaStorageService";
 import { CreationDocumentDeltaConnection } from "./creationDocumentDeltaConnection";
 import { CreationDocumentStorageService } from "./creationDocumentStorageService";
@@ -36,12 +36,7 @@ export class CreationDocumentService implements api.IDocumentService {
      * @returns returns the delta stream service.
      */
     public async connectToDeltaStream(
-        client: IClient,
-        mode?: ConnectionMode): Promise<api.IDocumentDeltaConnection> {
-        // Backward compat
-        if (mode !== undefined) {
-            client.mode = mode;
-        }
+        client: IClient): Promise<api.IDocumentDeltaConnection> {
         return new CreationDocumentDeltaConnection(client, this.documentId, this.tenantId, this.creationServer);
     }
 

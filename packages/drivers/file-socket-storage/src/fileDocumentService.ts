@@ -4,7 +4,7 @@
  */
 
 import * as api from "@microsoft/fluid-driver-definitions";
-import { ConnectionMode, IClient } from "@microsoft/fluid-protocol-definitions";
+import { IClient } from "@microsoft/fluid-protocol-definitions";
 import { FileDeltaStorageService } from "./fileDeltaStorageService";
 
 /**
@@ -34,8 +34,7 @@ export class FileDocumentService implements api.IDocumentService {
      * @returns returns the delta stream service.
      */
     public async connectToDeltaStream(
-        client: IClient,
-        mode?: ConnectionMode): Promise<api.IDocumentDeltaConnection> {
+        client: IClient): Promise<api.IDocumentDeltaConnection> {
         return this.deltaConnection;
     }
 
