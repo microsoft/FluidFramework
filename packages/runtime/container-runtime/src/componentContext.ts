@@ -32,6 +32,7 @@ import {
     IAttachMessage,
     IComponentContext,
     IComponentFactory,
+    IComponentRegistry,
     IComponentRuntime,
     IEnvelope,
     IHostRuntime,
@@ -56,7 +57,7 @@ export interface IComponentAttributes {
 
 interface ISnapshotDetails {
     pkg: readonly string[];
-    snapshot: ISnapshotTree;
+    snapshot?: ISnapshotTree;
 }
 
 /**
@@ -70,10 +71,11 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     public get packagePath(): readonly string[] {
         // The component must be loaded before the path is accessed.
         assert(this.loaded);
-        return this.pkg;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return this.pkg!;
     }
 
-    public get parentBranch(): string {
+    public get parentBranch(): string | null {
         return this._hostRuntime.parentBranch;
     }
 
@@ -117,10 +119,6 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this._hostRuntime.snapshotFn;
     }
 
-    public get closeFn(): () => void {
-        return this._hostRuntime.closeFn;
-    }
-
     public get branch(): string {
         return this._hostRuntime.branch;
     }
@@ -133,7 +131,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this._hostRuntime;
     }
 
-    public get baseSnapshot(): ISnapshotTree {
+    public get baseSnapshot(): ISnapshotTree | undefined {
         return this._baseSnapshot;
     }
 
@@ -145,11 +143,11 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     }
 
     public readonly attach: (componentRuntime: IComponentRuntime) => void;
-    protected componentRuntime: IComponentRuntime;
+    protected componentRuntime: IComponentRuntime | undefined;
     private loaded = false;
-    private pending: ISequencedDocumentMessage[] = [];
-    private componentRuntimeDeferred: Deferred<IComponentRuntime>;
-    private _baseSnapshot: ISnapshotTree;
+    private pending: ISequencedDocumentMessage[] | undefined = [];
+    private componentRuntimeDeferred: Deferred<IComponentRuntime> | undefined;
+    private _baseSnapshot: ISnapshotTree | undefined;
 
     constructor(
         private readonly _hostRuntime: IHostRuntime,
@@ -196,14 +194,17 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
                 runtime.dispose();
             }).catch((error) => {
                 this.hostRuntime.logger.sendErrorEvent(
-                    {eventName: "ComponentRuntimeDisposeError", componentId: this.id},
+                    { eventName: "ComponentRuntimeDisposeError", componentId: this.id },
                     error);
             });
         }
     }
 
     public async createComponent(pkgOrId: string | undefined, pkg?: string, props?: any): Promise<IComponentRuntime> {
-        const pkgName = pkg ?? pkgOrId;
+        // pkgOrId can't be undefined if pkg is undefined
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const pkgName = pkg ?? pkgOrId!;
+        assert(pkgName);
         const id = pkg ? (pkgOrId ?? uuid()) : uuid();
 
         const details = await this.getInitialSnapshotDetails();
@@ -218,7 +219,8 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         // Look for the package entry in our sub-registry. If we find the entry, we need to add our path
         // to the packagePath. If not, look into the global registry and the packagePath becomes just the
         // passed package.
-        let entry: ComponentRegistryEntry = await this.componentRuntime.IComponentRegistry?.get(pkgName);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        let entry: ComponentRegistryEntry | undefined = await this.componentRuntime!.IComponentRegistry?.get(pkgName);
         if (entry) {
             packagePath.push(pkgName);
         } else {
@@ -233,15 +235,17 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this.hostRuntime._createComponentWithProps(packagePath, props, id);
     }
 
-    public async rejectDeferredRealize(reason: string)
-    {
+    private async rejectDeferredRealize(reason: string) {
         const error = new Error(reason);
         // Error messages contain package names that is considered Personal Identifiable Information
         // Mark it as such, so that if it ever reaches telemetry pipeline, it has a chance to remove it.
         (error as any).containsPII = true;
 
-        this.componentRuntimeDeferred.reject(error);
-        return this.componentRuntimeDeferred.promise;
+        // This is always called with a componentRuntimeDeferred in realize();
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const deferred = this.componentRuntimeDeferred!;
+        deferred.reject(error);
+        return deferred.promise;
     }
 
     public async realize(): Promise<IComponentRuntime> {
@@ -253,9 +257,9 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             // that it is set here, before bindRuntime is called.
             this._baseSnapshot = details.snapshot;
             const packages = details.pkg;
-            let entry: ComponentRegistryEntry;
-            let registry = this._hostRuntime.IComponentRegistry;
-            let factory: IComponentFactory;
+            let entry: ComponentRegistryEntry | undefined;
+            let registry: IComponentRegistry | undefined = this._hostRuntime.IComponentRegistry;
+            let factory: IComponentFactory | undefined;
             let lastPkg: string | undefined;
             for (const pkg of packages) {
                 if (!registry) {
@@ -295,7 +299,8 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             return;
         }
 
-        this.componentRuntime.changeConnectionState(value, clientId);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.componentRuntime!.changeConnectionState(value, clientId);
 
         raiseConnectedEvent(this, value, clientId);
     }
@@ -306,10 +311,12 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         this.summaryTracker.updateLatestSequenceNumber(message.sequenceNumber);
 
         if (this.loaded) {
-            return this.componentRuntime.process(message, local);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            return this.componentRuntime!.process(message, local);
         } else {
             assert(!local);
-            this.pending.push(message);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            this.pending!.push(message);
         }
     }
 
@@ -321,7 +328,8 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             return;
         }
 
-        this.componentRuntime.processSignal(message, local);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.componentRuntime!.processSignal(message, local);
     }
 
     public getQuorum(): IQuorum {
@@ -336,10 +344,6 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
     public async getBlobMetadata(): Promise<IGenericBlob[]> {
         return this.blobManager.getBlobMetadata();
-    }
-
-    public close(): void {
-        this._hostRuntime.closeFn();
     }
 
     /**
@@ -362,7 +366,8 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
         await this.realize();
 
-        const entries = await this.componentRuntime.snapshotInternal(fullTree);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const entries = await this.componentRuntime!.snapshotInternal(fullTree);
 
         entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));
 
@@ -414,14 +419,23 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
     }
 
-    public bindRuntime(componentRuntime: IComponentRuntime): void {
+    public bindRuntime(componentRuntime: IComponentRuntime) {
         if (this.componentRuntime) {
             throw new Error("runtime already bound");
         }
 
-        if (this.pending.length > 0) {
+        // If this ComponentContext was created via `IHostRuntime.createComponentContext`, the
+        // `componentRuntimeDeferred` promise hasn't yet been initialized.  Do so now.
+        if (!this.componentRuntimeDeferred) {
+            this.componentRuntimeDeferred = new Deferred();
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const pending = this.pending!;
+
+        if (pending.length > 0) {
             // Apply all pending ops
-            for (const op of this.pending) {
+            for (const op of pending) {
                 componentRuntime.process(op, false);
             }
         }
@@ -464,11 +478,11 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 }
 
 export class RemotedComponentContext extends ComponentContext {
-    private details: ISnapshotDetails;
+    private details: ISnapshotDetails | undefined;
 
     constructor(
         id: string,
-        private readonly initSnapshotValue: ISnapshotTree | string,
+        private readonly initSnapshotValue: ISnapshotTree | string | null,
         runtime: IHostRuntime,
         storage: IDocumentStorageService,
         scope: IComponent,
@@ -498,7 +512,7 @@ export class RemotedComponentContext extends ComponentContext {
     // pkg can never change for a component.
     protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
         if (!this.details) {
-            let tree: ISnapshotTree;
+            let tree: ISnapshotTree | null;
 
             if (typeof this.initSnapshotValue === "string") {
                 const commit = (await this.storage.getVersions(this.initSnapshotValue, 1))[0];
@@ -525,13 +539,16 @@ export class RemotedComponentContext extends ComponentContext {
                     }
                 } else if (snapshotFormatVersion === currentSnapshotFormatVersion) {
                     pkgFromSnapshot = JSON.parse(pkg) as string[];
+                } else {
+                    throw new Error(`Invalid snapshot format version ${snapshotFormatVersion}`);
                 }
                 this.pkg = pkgFromSnapshot;
             }
 
             this.details = {
-                pkg: this.pkg,
-                snapshot: tree,
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                pkg: this.pkg!,
+                snapshot: tree ?? undefined,
             };
         }
 
@@ -559,15 +576,17 @@ export class LocalComponentContext extends ComponentContext {
             snapshotFormatVersion: currentSnapshotFormatVersion,
         };
 
-        const entries = this.componentRuntime.getAttachSnapshot();
-        const snapshot = { entries, id: undefined };
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const entries = this.componentRuntime!.getAttachSnapshot();
+        const snapshot: ITree = { entries, id: null };
 
         snapshot.entries.push(new BlobTreeEntry(".component", JSON.stringify(componentAttributes)));
 
         const message: IAttachMessage = {
             id: this.id,
             snapshot,
-            type: this.pkg[this.pkg.length - 1],
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            type: this.pkg![this.pkg!.length - 1],
         };
 
         return message;
@@ -575,7 +594,8 @@ export class LocalComponentContext extends ComponentContext {
 
     protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
         return {
-            pkg: this.pkg,
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            pkg: this.pkg!,
             snapshot: undefined,
         };
     }

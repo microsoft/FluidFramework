@@ -24,7 +24,7 @@ See <https://github.com/microsoft/FluidFramework/blob/master/examples/hosts/lite
 
 ## Routerlicious
 
-See [Routerlicious](../architecture/server/README.md).
+See [Routerlicious](../server/README.md).
 
 ## Sequence Number
 

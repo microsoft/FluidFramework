@@ -14,6 +14,7 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import { PerformanceEvent } from "@microsoft/fluid-common-utils";
 import {
+    IConnectionError,
     IDocumentDeltaStorageService,
     IDocumentService,
     IError,
@@ -85,7 +86,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
      */
     public autoReconnect: boolean = true;
 
-    private _readonly: boolean | undefined;
+    // file ACL - whether user has only read-only access to a file
+    private readonlyPermissions: boolean | undefined;
+
+    // tracks host requiring read-only mode.
+    private _forceReadonly = false;
 
     // Connection mode used when reconnecting on error or disconnect.
     private readonly defaultReconnectionMode: ConnectionMode;
@@ -170,7 +175,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     public get active(): boolean {
-        return this.inQuorum && this.connectionMode === "write";
+        const res = this.inQuorum && this.connectionMode === "write";
+        // user can't have r/w connection when user has only read permisisons.
+        // That said, connection can be r/w when host called forceReadonly(), as
+        // this is view-only change
+        assert(!(this.readonlyPermissions && res));
+        return res;
     }
 
     public get socketDocumentId(): string | undefined {
@@ -190,8 +200,40 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         return this.connection.details.mode;
     }
 
+    /**
+     * Tells if container is in read-only mode.
+     * Components should listen for "readonly" notifications and disallow user
+     * making changes to components.
+     * This is independent from file permissions and type of type of conneciton
+     */
     public get readonly(): boolean | undefined {
-        return this._readonly;
+        return this.readonlyPermissions || this._forceReadonly;
+    }
+
+    /**
+     * Sends signal to runtime (and components) to be read-only.
+     * Hosts may have read only views, indicating to components that no edits are allowed.
+     * This is independent from this.readonlyPermissions (permissions) and this.connectionMode
+     * (server can return "write" mode even when asked for "read")
+     * Leveraging same "readonly" event as runtime & components should behave the same in such case
+     * as in read-only permissions.
+     * But this.active can be used by some DDSs to figure out if ops can be sent
+     * (for example, read-only view still participates in code proposals / upgrades decisions)
+     */
+    public forceReadonly(readonly: boolean) {
+        const oldValue = this.readonly;
+        this._forceReadonly = readonly;
+        if (oldValue !== this.readonly) {
+            this.emit("readonly", this.readonly);
+        }
+    }
+
+    private setReadonlyPermissions(readonly: boolean) {
+        const oldValue = this.readonly;
+        this.readonlyPermissions = readonly;
+        if (oldValue !== this.readonly) {
+            this.emit("readonly", this.readonly);
+        }
     }
 
     constructor(
@@ -341,12 +383,13 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
                 try {
                     this.client.mode = requestedMode;
-                    connection = await DeltaConnection.connect(docService, this.client, requestedMode);
+                    connection = await DeltaConnection.connect(docService, this.client);
                 } catch (error) {
                     // Socket.io error when we connect to wrong socket, or hit some multiplexing bug
                     if (!canRetryOnError(error)) {
-                        this.close(error);
-                        throw new Error("Encountered unrecoverable error while connecting");
+                        const error2 = createIError(error, true);
+                        this.close(error2);
+                        throw error2;
                     }
 
                     // Log error once - we get too many errors in logs when we are offline,
@@ -569,7 +612,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 if (!canRetry || !canRetryOnError(error)) {
                     // It's game over scenario.
                     telemetryEvent.cancel({ category: "error" }, error);
-                    this.close(error);
+                    this.close(createIError(error, true));
                     return;
                 }
                 success = false;
@@ -600,7 +643,14 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                         replayFrom: from,
                         to,
                     });
-                    this.close(new Error("Failed to retrieve ops from storage: giving up after too many retries"));
+                    const closeError: IConnectionError = {
+                        errorType: ErrorType.connectionError,
+                        message: "Failed to retrieve ops from storage: giving up after too many retries",
+                        canRetry: false,
+                        online: "Online",
+                        critical: true,
+                    };
+                    this.close(closeError);
                     return;
                 }
             }
@@ -630,16 +680,15 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     /**
      * Closes the connection and clears inbound & outbound queues.
      */
-    public close(error?: any, raiseContainerError = true): void {
+    public close(error?: IError, raiseContainerError = true): void {
         if (this.closed) {
             return;
         }
         this.closed = true;
 
-        const iError = error === undefined ? error : createIError(error, true);
         // Note: "disconnect" & "nack" do not have error object
         if (raiseContainerError && error !== undefined) {
-            this.emit("error", iError);
+            this.emit("error", error);
         }
 
         this.logger.sendTelemetryEvent({ eventName: "ContainerClose" }, error);
@@ -663,12 +712,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // Drop pending messages - this will ensure catchUp() does not go into infinite loop
         this.pending = [];
 
-        this.emit("closed", iError);
+        this.emit("closed", error);
 
         // Notify everyone we are in read-only state.
         // Useful for components in case we hit some critical error,
         // to switch to a mode where user edits are not accepted
-        this.setReadonlyState(true);
+        this.setReadonlyPermissions(true);
 
         this.removeAllListeners();
     }
@@ -712,14 +761,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
     }
 
-    private setReadonlyState(readonly: boolean) {
-        const oldValue = this._readonly;
-        this._readonly = readonly;
-        if (oldValue !== this._readonly) {
-            this.emit("readonly", this._readonly);
-        }
-    }
-
     /**
      * Once we've successfully gotten a DeltaConnection, we need to set up state, attach event listeners, and process
      * initial messages.
@@ -734,7 +775,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         const readonly = !connection.details.claims.scopes.includes(ScopeType.DocWrite);
         assert(requestedMode === "read" || readonly === (this.connectionMode === "read"));
         assert(!readonly || this.connectionMode === "read");
-        this.setReadonlyState(readonly);
+        this.setReadonlyPermissions(readonly);
 
         this.emitDelayInfo(retryFor.DELTASTREAM, -1);
 
@@ -769,7 +810,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // Always connect in write mode after getting nacked.
         connection.on("nack", (target: number) => {
             const nackReason = target === -1 ? "Nack: Start writing" : "Nack";
-            if (this._readonly) {
+            if (this.readonlyPermissions) {
                 this.close(createWriteError("WriteOnReadOnlyDocument"));
             }
             if (!this.autoReconnect) {
@@ -815,10 +856,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // If not, we may not update Container.pendingClientId in time before seeing our own join session op.
         this.emit("connect", connection.details);
 
+        /* Issue #1566: Backward compat */
         this.processInitialMessages(
-            connection.details.initialMessages,
-            connection.details.initialContents,
-            connection.details.initialSignals,
+            connection.details.initialMessages ?? [],
+            connection.details.initialContents ?? [],
+            connection.details.initialSignals ?? [],
             this.connectFirstConnection);
         this.connectFirstConnection = false;
     }
@@ -874,7 +916,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             // Do not raise container error if we are closing just because we lost connection.
             // Those errors (like IdleDisconnect) would show up in telemetry dashboards and
             // are very misleading, as first initial reaction - some logic is broken.
-            this.close(error, criticalError /*raiseContainerError*/);
+            this.close(createIError(error), criticalError /*raiseContainerError*/);
         }
 
         // If closed then we can't reconnect
@@ -905,35 +947,19 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     private processInitialMessages(
-        messages: ISequencedDocumentMessage[] | undefined,
-        contents: IContentMessage[] | undefined,
-        signals: ISignalMessage[] | undefined,
+        messages: ISequencedDocumentMessage[],
+        contents: IContentMessage[],
+        signals: ISignalMessage[],
         firstConnection: boolean,
     ): void {
-        this.enqueueInitialOps(messages, contents, firstConnection);
-        this.enqueueInitialSignals(signals);
-    }
-
-    private enqueueInitialOps(
-        messages: ISequencedDocumentMessage[] | undefined,
-        contents: IContentMessage[] | undefined,
-        firstConnection: boolean,
-    ): void {
-        if (contents && contents.length > 0) {
-            for (const content of contents) {
-                this.contentCache.set(content);
-            }
+        for (const content of contents) {
+            this.contentCache.set(content);
         }
-        if (messages && messages.length > 0) {
+        if (messages.length > 0) {
             this.catchUp(messages, firstConnection ? "InitialOps" : "ReconnectOps");
         }
-    }
-
-    private enqueueInitialSignals(signals: ISignalMessage[] | undefined): void {
-        if (signals && signals.length > 0) {
-            for (const signal of signals) {
-                this._inboundSignal.push(signal);
-            }
+        for (const signal of signals) {
+            this._inboundSignal.push(signal);
         }
     }
 

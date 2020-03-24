@@ -8,7 +8,7 @@
 import { EventEmitter } from "events";
 import { IRef } from "@microsoft/fluid-gitresources";
 import { ProtocolOpHandler } from "@microsoft/fluid-protocol-base";
-import { IDocumentAttributes } from "@microsoft/fluid-protocol-definitions";
+import { IDocumentAttributes, ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { IGitManager } from "@microsoft/fluid-server-services-client";
 import {
     ICollection,
@@ -48,7 +48,7 @@ interface ILatestSummaryState {
 
 interface ISummaryCheckpoint {
     scribe: string;
-    messages: ISequencedOperationMessage[];
+    messages: ISequencedDocumentMessage[];
 }
 
 export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
@@ -80,7 +80,9 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             return new NoOpLambda(context);
         }
 
-        let messages = await this.messageCollection.find({ documentId, tenantId }, { "operation.sequenceNumber": 1 });
+        const dbMessages =
+            await this.messageCollection.find({ documentId, tenantId }, { "operation.sequenceNumber": 1 });
+        let opMessages = dbMessages.map((message) => message.operation);
 
         // Restore scribe state if not present in the cache. Mongodb casts undefined as null so we are checking
         // both to be safe. Empty sring denotes a cache that was cleared due to a service summary
@@ -96,7 +98,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
                 latestSummary.ref,
                 context.log);
             document.scribe = summaryState.scribe;
-            messages = summaryState.messages;
+            opMessages = summaryState.messages;
         } else {
             context.log.info(`Loading scribe state from cache for ${tenantId}/${documentId}`);
         }
@@ -124,7 +126,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             this.producer,
             protocolHandler,
             latestSummary.protocolHead,
-            messages,
+            opMessages,
             true);
     }
 
@@ -182,7 +184,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
                 const scribe = Buffer.from(scribeContent.content, scribeContent.encoding).toString();
                 const opsContent = await gitManager.getContent(existingRef.object.sha, ".logTail/logTail");
                 const messages = JSON.parse(
-                    Buffer.from(opsContent.content, opsContent.encoding).toString()) as ISequencedOperationMessage[];
+                    Buffer.from(opsContent.content, opsContent.encoding).toString()) as ISequencedDocumentMessage[];
                 return {
                     scribe,
                     messages,

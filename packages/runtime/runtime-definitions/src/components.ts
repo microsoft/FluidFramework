@@ -63,7 +63,7 @@ export interface IComponentRuntime extends
 
     readonly existing: boolean;
 
-    readonly parentBranch: string;
+    readonly parentBranch: string | null;
 
     readonly connectionState: ConnectionState;
 
@@ -95,15 +95,6 @@ export interface IComponentRuntime extends
      * it's new client ID when we are connecting or connected.
      */
     changeConnectionState(value: ConnectionState, clientId?: string);
-
-    /**
-     * @deprecated in 0.14 async close()
-     * Call snapshot separately if needed, then call dispose
-     *
-     * Closes the component. Once closed the component will not receive any new ops and should
-     * not attempt to generate them.
-     */
-    close(): Promise<void>;
 
     /**
      * Generates a snapshot of the given component
@@ -245,7 +236,7 @@ export interface IComponentContext extends EventEmitter {
     readonly existing: boolean;
     readonly options: any;
     readonly clientId: string | undefined;
-    readonly parentBranch: string;
+    readonly parentBranch: string | null;
     readonly connected: boolean;
     readonly leader: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
@@ -257,7 +248,6 @@ export interface IComponentContext extends EventEmitter {
     readonly loader: ILoader;
     readonly hostRuntime: IHostRuntime;
     readonly snapshotFn: (message: string) => Promise<void>;
-    readonly closeFn: () => void;
     readonly createProps?: any;
 
     /**
@@ -350,7 +340,7 @@ export interface IHostRuntime extends
     readonly options: any;
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
-    readonly parentBranch: string;
+    readonly parentBranch: string | null;
     readonly connected: boolean;
     readonly leader: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
@@ -364,7 +354,6 @@ export interface IHostRuntime extends
     readonly submitFn: (type: MessageType, contents: any) => number;
     readonly submitSignalFn: (contents: any) => void;
     readonly snapshotFn: (message: string) => Promise<void>;
-    readonly closeFn: () => void;
     readonly scope: IComponent;
 
     /**
@@ -393,6 +382,15 @@ export interface IHostRuntime extends
      * @internal
      */
     _createComponentWithProps(pkg: string | string[], props: any, id: string): Promise<IComponentRuntime>;
+
+    /**
+     * Creates a new IComponentContext instance.  The caller completes construction of the the component by
+     * calling IComponentContext.bindRuntime() when the component is prepared to begin processing ops.
+     *
+     * @param pkg - Package path for the component to be created
+     * @param props - Properties to be passed to the instantiateComponent thru the context
+     */
+    createComponentContext(pkg: string[], props?: any): IComponentContext;
 
     /**
      * Returns the current quorum.

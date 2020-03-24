@@ -5,11 +5,10 @@
 
 import { FlowDocument } from "../../document";
 
-export async function importDoc(docP: Promise<FlowDocument>, file: string) {
+export async function importDoc(doc: FlowDocument, file: string) {
     const response = await fetch(`https://www.wu2.prague.office-int.com/public/literature/${file}`);
     const reader = response.body.getReader();
     const decoder = new TextDecoder("utf-8");
-    const doc = await docP;
 
     try {
         // eslint-disable-next-line no-constant-condition

@@ -23,7 +23,7 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import { debug } from "./debug";
 
-const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
+const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 
 /**
  * Error raising for socket.io issues
@@ -69,7 +69,6 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         token: string | null,
         io: SocketIOClientStatic,
         client: IClient,
-        mode: ConnectionMode,
         url: string,
         timeoutMs: number = 20000): Promise<IDocumentDeltaConnection> {
 
@@ -88,7 +87,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         const connectMessage: IConnect = {
             client,
             id,
-            mode,
+            mode: client.mode,
             tenantId,
             token,  // Token is going to indicate tenant level information, etc...
             versions: protocolVersions,
@@ -214,18 +213,18 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      *
      * @returns messages sent during the connection
      */
-    public get initialMessages(): ISequencedDocumentMessage[] | undefined {
+    public get initialMessages(): ISequencedDocumentMessage[] {
         this.removeEarlyOpHandler();
 
         assert(this.listeners("op").length !== 0, "No op handler is setup!");
 
+        /* Issue #1566: Backward compat */
+        if (!this.details.initialMessages) {
+            this.details.initialMessages = [];
+        }
         if (this.queuedMessages.length > 0) {
             // Some messages were queued.
             // add them to the list of initialMessages to be processed
-            if (!this.details.initialMessages) {
-                this.details.initialMessages = [];
-            }
-
             this.details.initialMessages.push(...this.queuedMessages);
             this.details.initialMessages.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
             this.queuedMessages.length = 0;
@@ -391,6 +390,20 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             });
 
             this.addConnectionListener("connect_document_success", (response: IConnected) => {
+                /* Issue #1566: Backward compat */
+                if (response.initialMessages === undefined) {
+                    response.initialMessages = [];
+                }
+                if (response.initialClients === undefined) {
+                    response.initialClients = [];
+                }
+                if (response.initialContents === undefined) {
+                    response.initialContents = [];
+                }
+                if (response.initialSignals === undefined) {
+                    response.initialSignals = [];
+                }
+
                 this.removeTrackedListeners(true);
                 resolve(response);
             });

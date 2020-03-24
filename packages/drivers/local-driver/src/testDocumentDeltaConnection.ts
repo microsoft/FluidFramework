@@ -30,14 +30,13 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
         id: string,
         token: string,
         client: IClient,
-        webSocketServer: core.IWebSocketServer,
-        mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
+        webSocketServer: core.IWebSocketServer): Promise<IDocumentDeltaConnection> {
         const socket = (webSocketServer as TestWebSocketServer).createConnection();
 
         const connectMessage: IConnect = {
             client,
             id,
-            mode,
+            mode: client.mode,
             tenantId,
             token,  // Token is going to indicate tenant level information, etc...
             versions: testProtocolVersions,
@@ -77,25 +76,30 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
                 socket.removeListener("op-content", earlyContentHandler);
                 socket.removeListener("signal", earlySignalHandler);
 
+                /* Issue #1566: Backward compat */
+                if (response.initialMessages === undefined) {
+                    response.initialMessages = [];
+                }
+                if (response.initialClients === undefined) {
+                    response.initialClients = [];
+                }
+                if (response.initialContents === undefined) {
+                    response.initialContents = [];
+                }
+                if (response.initialSignals === undefined) {
+                    response.initialSignals = [];
+                }
+
                 if (queuedMessages.length > 0) {
                     // Some messages were queued.
                     // add them to the list of initialMessages to be processed
-                    if (!response.initialMessages) {
-                        response.initialMessages = [];
-                    }
-
                     response.initialMessages.push(...queuedMessages);
-
                     response.initialMessages.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
                 }
 
                 if (queuedContents.length > 0) {
                     // Some contents were queued.
                     // add them to the list of initialContents to be processed
-                    if (!response.initialContents) {
-                        response.initialContents = [];
-                    }
-
                     response.initialContents.push(...queuedContents);
 
                     // eslint-disable-next-line max-len
@@ -105,10 +109,6 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
                 if (queuedSignals.length > 0) {
                     // Some signals were queued.
                     // add them to the list of initialSignals to be processed
-                    if (!response.initialSignals) {
-                        response.initialSignals = [];
-                    }
-
                     response.initialSignals.push(...queuedSignals);
                 }
 
@@ -144,7 +144,7 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
         return this.details.existing;
     }
 
-    public get parentBranch(): string {
+    public get parentBranch(): string | null {
         return this.details.parentBranch;
     }
 
@@ -152,20 +152,22 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
         return this.details.maxMessageSize;
     }
 
+    /* Issue #1566: Backward compat - cleanup initialMessages, etc. being undefined*/
+
     public get initialMessages(): ISequencedDocumentMessage[] {
-        return this.details.initialMessages;
+        return this.details.initialMessages ?? [];
     }
 
     public get initialContents(): IContentMessage[] {
-        return this.details.initialContents;
+        return this.details.initialContents ?? [];
     }
 
-    public get initialSignals(): ISignalMessage[] | undefined {
-        return this.details.initialSignals;
+    public get initialSignals(): ISignalMessage[] {
+        return this.details.initialSignals ?? [];
     }
 
     public get initialClients(): ISignalClient[] {
-        return this.details.initialClients ? this.details.initialClients : [];
+        return this.details.initialClients ?? [];
     }
 
     public get version(): string {

@@ -11,6 +11,7 @@ import {
 } from "@microsoft/fluid-common-definitions";
 import { IComponent, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
+    IAudience,
     ICodeLoader,
     IConnectionDetails,
     IContainer,
@@ -80,7 +81,7 @@ import { DeltaManager } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { Loader, RelativeLoader } from "./loader";
 import { NullChaincode } from "./nullRuntime";
-import { pkgName, pkgVersion } from "./packageVersion";
+import { pkgVersion } from "./packageVersion";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 import { parseUrl } from "./utils";
 import { BlobCacheStorageService } from "./blobCacheStorageService";
@@ -199,7 +200,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private originalRequest: IRequest | undefined;
     private service: IDocumentService | undefined;
     private factoryProvider: ((resolvedUrl: IFluidResolvedUrl) => IDocumentServiceFactory) | undefined;
-    private _parentBranch: string | undefined | null;
+    private _parentBranch: string | null = null;
     private _connectionState = ConnectionState.Disconnected;
     private _serviceConfiguration: IServiceConfiguration | undefined;
     private readonly _audience: Audience;
@@ -225,6 +226,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     public get readonly(): boolean | undefined {
         return this._deltaManager.readonly;
+    }
+
+    public forceReadonly(readonly: boolean) {
+        this._deltaManager.forceReadonly(readonly);
     }
 
     public get closed(): boolean {
@@ -293,14 +298,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     /**
      * Retrieves the audience associated with the document
      */
-    public get audience(): Audience {
+    public get audience(): IAudience {
         return this._audience;
     }
 
     /**
      * Returns the parent branch for this document
      */
-    public get parentBranch(): string | undefined | null {
+    public get parentBranch(): string | null {
         return this._parentBranch;
     }
 
@@ -324,8 +329,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             {
                 docId: this.id,
                 clientType, // Differentiating summarizer container from main container
-                packageName: TelemetryLogger.sanitizePkgName(pkgName),
-                packageVersion: pkgVersion,
+                loaderVersion: pkgVersion,
             });
 
         // Prefix all events in this file with container-loader
@@ -360,8 +364,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     public on(event: "readonly", listener: (readonly: boolean) => void): void;
     public on(event: "connected" | "contextChanged", listener: (clientId: string) => void): this;
-    public on(event: "disconnected" | "joining" | "closed", listener: () => void): this;
-    public on(event: "error", listener: (error: any) => void): this;
+    public on(event: "disconnected" | "joining", listener: () => void): this;
+    public on(event: "closed", listener: (error?: IError) => void): this;
+    public on(event: "error", listener: (error: IError) => void): this;
     public on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
     public on(event: "pong" | "processTime", listener: (latency: number) => void): this;
     public on(event: MessageType.BlobUploaded, listener: (contents: any) => void): this;
@@ -370,13 +375,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return super.on(event, listener);
     }
 
-    public close(reason?: string) {
+    public close(error?: IError) {
         if (this._closed) {
             return;
         }
         this._closed = true;
 
-        this._deltaManager.close(reason ? new Error(reason) : undefined, false /*raiseContainerError*/);
+        this._deltaManager.close(error, false /*raiseContainerError*/);
 
         if (this.protocolHandler) {
             this.protocolHandler.close();
@@ -386,7 +391,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         assert(this.connectionState === ConnectionState.Disconnected, "disconnect event was not raised!");
 
-        this.emit("closed");
+        this.emit("closed", error);
 
         this.removeAllListeners();
     }
@@ -439,7 +444,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         if (!parsedUrl) {
             throw new Error("Unable to parse Url");
         }
-        this._id = decodeURI(parsedUrl.id);
+        const [, docId] = parsedUrl.id.split("/");
+        this._id = decodeURI(docId);
 
         this.storageService = await this.getDocumentStorageService();
 
@@ -453,6 +459,16 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         startConnectionP.catch((error) => {
             debug(`Error in connecting to delta stream from unpaused case ${error}`);
         });
+
+        await startConnectionP.then((details) => {
+            this._existing = details.existing;
+            this._parentBranch = details.parentBranch;
+        });
+
+        // Propagate current connection state through the system.
+        const connected = this.connectionState === ConnectionState.Connected;
+        assert(!connected || this._deltaManager.connectionMode === "read");
+        this.propagateConnectionState();
     }
 
     public async request(path: IRequest): Promise<IResponse> {
@@ -519,8 +535,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             }
 
             // Ensure connection to web socket
-            // All errors are reported through events ("error" / "disconnected") and telemetry in DeltaManager
-            this.connectToDeltaStream().catch(() => {});
+            this.connectToDeltaStream().catch((error) => {
+                // All errors are reported through events ("error" / "disconnected") and telemetry in DeltaManager
+                // So there shouldn't be a need to record error here.
+                // But we have number of cases where reconnects do not happen, and no errors are recorded, so
+                // adding this log point for easier diagnostics
+                this.logger.sendTelemetryEvent({eventName: "setAutoReconnectError"}, error);
+            });
         }
     }
 
@@ -1051,8 +1072,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             // Back-compat for new client and old server.
             this._audience.clear();
 
-            const priorClients = details.initialClients ? details.initialClients : [];
-            for (const priorClient of priorClients) {
+            for (const priorClient of details.initialClients ?? []) {
                 this._audience.addMember(priorClient.clientId, priorClient.client);
             }
         });
@@ -1201,7 +1221,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     private propagateConnectionState() {
         assert(this.loaded);
-        const logOpsOnReconnect: boolean = this._connectionState === ConnectionState.Connected && !this.firstConnection;
+        const logOpsOnReconnect: boolean =
+            this._connectionState === ConnectionState.Connected &&
+            !this.firstConnection &&
+            this._deltaManager.connectionMode === "write";
         if (logOpsOnReconnect) {
             this.messageCountAfterDisconnection = 0;
         }
@@ -1312,7 +1335,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             (type, contents, batch, metadata) => this.submitMessage(type, contents, batch, metadata),
             (message) => this.submitSignal(message),
             async (message) => this.snapshot(message),
-            (reason?: string) => this.close(reason),
+            (error?: IError) => this.close(error),
             Container.version,
             previousRuntimeState,
         );
@@ -1350,7 +1373,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             (type, contents, batch, metadata) => this.submitMessage(type, contents, batch, metadata),
             (message) => this.submitSignal(message),
             async (message) => this.snapshot(message),
-            (reason?: string) => this.close(reason),
+            (error?: IError) => this.close(error),
             Container.version,
             {},
         );

@@ -18,7 +18,7 @@ interface ITrackedClient {
 
 class ClientComparer implements IComparer<ITrackedClient> {
     public readonly min: ITrackedClient = {
-        clientId: null,
+        clientId: "",
         sequenceNumber: -1,
     };
 
@@ -117,9 +117,8 @@ export class SummaryManager extends EventEmitter implements IDisposable {
             this.refreshSummarizer();
         });
 
-        this.initialDelayTimer = immediateSummary ? undefined : new PromiseTimer(initialDelayMs, () => {});
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        this.initialDelayP = this.initialDelayTimer?.start().catch(() => {}) ?? Promise.resolve();
+        this.initialDelayTimer = immediateSummary ? undefined : new PromiseTimer(initialDelayMs, () => { });
+        this.initialDelayP = this.initialDelayTimer?.start().catch(() => { }) ?? Promise.resolve();
 
         this.refreshSummarizer();
     }
@@ -187,8 +186,10 @@ export class SummaryManager extends EventEmitter implements IDisposable {
                     // Only need to check defined in case we are between
                     // finally and then states; stopping should trigger
                     // a change in states when the running summarizer closes
+
                     if (this.runningSummarizer) {
-                        this.runningSummarizer.stop(this.getStopReason());
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        this.runningSummarizer.stop!(this.getStopReason());
                     }
                 }
                 return;
@@ -232,7 +233,9 @@ export class SummaryManager extends EventEmitter implements IDisposable {
                 this.setNextSummarizer(summarizer.setSummarizer());
                 this.run(summarizer);
             } else {
-                summarizer.stop(this.getStopReason());
+                // eslint-disable-next-line max-len
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
+                summarizer.stop!(this.getStopReason());
                 this.state = SummaryManagerState.Off;
             }
         }, (error) => {
@@ -275,7 +278,6 @@ export class SummaryManager extends EventEmitter implements IDisposable {
             return undefined;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         if (this.nextSummarizerP) {
             return this.nextSummarizerP;
         }
