@@ -1,12 +1,12 @@
 # Loader and Container
 
-- [`Fluid loader`](#Fluid-loader)
-- [`Container Lifetime`](#Container-lifetime)
-- [`Audience`](#Audience)
-- [`ClientID and client identification`](#ClientId-and-client-identification)
-- [`Error Handling`](#Error-handling)
-- [`Connectivity events`](#Connectivity-events)
-- [`Proposal Lifetime`](#Proposal-lifetime)
+- [Fluid loader](#Fluid-loader)
+- [Container Lifetime](#Container-lifetime)
+- [Audience](#Audience)
+- [ClientID and client identification](#ClientId-and-client-identification)
+- [Error Handling](#Error-handling)
+- [Connectivity events](#Connectivity-events)
+- [Proposal Lifetime](#Proposal-lifetime)
 
 ## Fluid Loader
 
@@ -22,38 +22,38 @@ example of this is the npm package that should be loaded to process operations a
 
 ### Loading
 
-Container is returned as result of Loader.resolve() call. Loader can cache containers, so if same URI is requested from same loader instance, earlier created container might be returned. This is important, as some of the headers (like **pause**) might be ignored because of Container reuse.
+Container is returned as result of Loader.resolve() call. Loader can cache containers, so if same URI is requested from same loader instance, earlier created container might be returned. This is important, as some of the headers (like `pause`) might be ignored because of Container reuse.
 
-**ILoaderHeader** in [loader.ts](../container-definitions/src/loader.ts) describes properties controlling container loading.
+`ILoaderHeader` in [loader.ts](../container-definitions/src/loader.ts) describes properties controlling container loading.
 
 ### Connectivity
-Usually container is returned when state of container (and components) is rehydrated from snapshot. Unless **IRequest.headers.pause** is specified, connection to ordering service will be established at some point (asynchronously) and latest ops would be processed, allowing local changes to flow form client to server. **Container.connected** indicates whether connection to ordering service is established, and  [`Connectivity events`](#Connectivity-events) are notifying about connectivity changes.
+Usually container is returned when state of container (and components) is rehydrated from snapshot. Unless `IRequest.headers.pause` is specified, connection to ordering service will be established at some point (asynchronously) and latest ops would be processed, allowing local changes to flow form client to server. `Container.connected` indicates whether connection to ordering service is established, and  [Connectivity events](#Connectivity-events) are notifying about connectivity changes.
 
 ### Closure
-Container can be closed directly by host by calling **Container.close()**. Once closed, container terminates connection to ordering service, and any local changes (former or future) do not propagate to storage.
+Container can be closed directly by host by calling `Container.close()`. Once closed, container terminates connection to ordering service, and any local changes (former or future) do not propagate to storage.
 
-Container can also be closed by runtime itself as result of some critical error. Critical errors can be internal (like violation in op ordering invariants), or external (file was deleted). Please see [`Error Handling`](#Error-handling) for more details
+Container can also be closed by runtime itself as result of some critical error. Critical errors can be internal (like violation in op ordering invariants), or external (file was deleted). Please see [Error Handling](#Error-handling) for more details
 
 ## Audience
-**Container.audience** exposes an object that tracks all connected clients to same document.
-- **getMembers()** can be used to retrieve current set of users
-- **getMember()** can be used to get IClient information about particular client (returns undefined if such client is not connected)
-- **"addMember"** event is raised when new member joins
-- **"removeMember"** event is raised when an earlier connected member leaves (disconnects from document)
+`Container.audience` exposes an object that tracks all connected clients to same document.
+- `getMembers()` can be used to retrieve current set of users
+- `getMember()` can be used to get IClient information about particular client (returns undefined if such client is not connected)
+- `"addMember"` event is raised when new member joins
+- `"removeMember"` event is raised when an earlier connected member leaves (disconnects from document)
 
-**getMembers()** and **"addMember"** event provide _IClient_ interface that describes type of connection, permissions and user information:
-- clientId is the key - it is unique ID for a session. Please see [`ClientID and client identification`](#ClientId-and-client-identification) for more details on it, as well as how to properly differentiate human vs. agent clients and difference between client ID & user ID.
+`getMembers()` and `"addMember"` event provide _IClient_ interface that describes type of connection, permissions and user information:
+- clientId is the key - it is unique ID for a session. Please see [ClientID and client identification](#ClientId-and-client-identification) for more details on it, as well as how to properly differentiate human vs. agent clients and difference between client ID & user ID.
 - IClient.mode in particular describes connectivity mode of a client:
     - "write" means client has read/write connection, can change document, and participates in Quorum
     - "read" indicates client as read connection. Such clients can't modify document and do not participate in quorum. That said, "read" does not indicate client permissions, i.e. client might have read-only permissions to a file, or maybe connected temporarily as read-only, to reduce COGS on server and not "modify" document (any read-write connection generates join & leave messages that modify document and change "last edited by" property)
 
-Please note that if this client losses connection to ordering server, then audience information is not reset at that moment. It will become stale while client is disconnected, and will refresh the moment client connects back to document. For more details, please see [`Connectivity events`](#Connectivity-events) section
+Please note that if this client losses connection to ordering server, then audience information is not reset at that moment. It will become stale while client is disconnected, and will refresh the moment client connects back to document. For more details, please see [Connectivity events](#Connectivity-events) section
 
 ## ClientID and client identification
 
-**Container.clientId** exposes ID of a client. Ordering service assigns unique random IDs to all connected clients. Please note that if same user opened same document on 3 different machines, then there would be 3 clientIDs tracking 3 sessions for the same user.
+`Container.clientId` exposes ID of a client. Ordering service assigns unique random IDs to all connected clients. Please note that if same user opened same document on 3 different machines, then there would be 3 clientIDs tracking 3 sessions for the same user.
 
-A single user connecting to a document may result in multiple sessions for the document (and thus multiple clientID). This is due to various agents (including summarizing agents) working along humans. You can leverage **IClient.details.capabilities.interactive** to differentiate humans vs. agents. This property should be used to filter out bots when exposing user presence (like in coauth gallery)
+A single user connecting to a document may result in multiple sessions for the document (and thus multiple clientID). This is due to various agents (including summarizing agents) working along humans. You can leverage `IClient.details.capabilities.interactive` to differentiate humans vs. agents. This property should be used to filter out bots when exposing user presence (like in coauth gallery)
 
 IClient.user represents user ID (in storage) and can be used to identify sessions from same user (from same or different machines).
 
@@ -61,31 +61,35 @@ IClient.user represents user ID (in storage) and can be used to identify session
 
 There are two ways errors are exposed:
 1. At open time, by returning rejected promise from Loader.resolve() or Loader.request()
-2. As an **"error"** event on resolved container.
+2. As an `"error"` event on resolved container.
 
 Most errors can shows up on both workflows. For example, URI may point to deleted file, which will result in errors on container open. But file can also be deleted while container is opened, resulting in same error type being raised through "error" handler.
 
 Errors raised by those two paths are typed: errors are of [IError](../driver-definitions/src/error.ts) type, which is a union of interfaces that have one thing in common - they have the following  field, describing type of an error (and appropriate interface of error object):
->     readonly errorType: ErrorType.generalError;
+```ts
+     readonly errorType: ErrorType.generalError;
+```
 ErrorType enum represents all  error types that can be raised by container.
 For a fill list of error interfaces please see interfaces that are part of [IError](../driver-definitions/src/error.ts) type.
 
-Please note that not all errors raised through this mechanism are catastrophic in nature. For example, **IThrottlingError** indicates likely temporary service issue. Errors contain **critical** field indicating if it's critical error or not:
->     critical?: boolean;
- That said, it's recommended to listed on **"closed"** event instead of relying on this field. **"closed"** event is raised when container is closed, i.e. it no longer connected to ordering service due to some error. An event contains optional error object of IError type describing the reason for closure, or no error if container was closed due to host application calling Container.close() (without specifying error).
+Please note that not all errors raised through this mechanism are catastrophic in nature. For example, `IThrottlingError` indicates likely temporary service issue. Errors contain `critical` field indicating if it's critical error or not:
+```ts
+     critical?: boolean;
+```
+ That said, it's recommended to listed on `"closed"` event instead of relying on this field. `"closed"` event is raised when container is closed, i.e. it no longer connected to ordering service due to some error. An event contains optional error object of IError type describing the reason for closure, or no error if container was closed due to host application calling Container.close() (without specifying error).
 
 ## Connectivity events
 Container raises 2  events to notify hosting application about connectivity issues and connectivity status.
-- **"connected"** is raised when container is connected and is up-to-date, i.e. changes are flowing between client and server.
-- **"disconnected"** is raised when container lost connectivity (for any reason).
+- `"connected"` event is raised when container is connected and is up-to-date, i.e. changes are flowing between client and server.
+- `"disconnected"` event is raised when container lost connectivity (for any reason).
 
-Container also exposes **Container.connected** property to indicate current state.
+Container also exposes `Container.connected` property to indicate current state.
 
-In normal circumstances, container will attempt to reconnect back to ordering service as quickly as possible. But it will scale down retries if computer is offline.  That said, if IThrottlingError error is raised through **"error"** handler, then container is following storage throttling policy and will attempt to reconnect after some amount of time (**IThrottlingError.retryAfterSeconds**).
+In normal circumstances, container will attempt to reconnect back to ordering service as quickly as possible. But it will scale down retries if computer is offline.  That said, if IThrottlingError error is raised through `"error"` handler, then container is following storage throttling policy and will attempt to reconnect after some amount of time (`IThrottlingError.retryAfterSeconds`).
 
-Container will also not attempt to reconnect on lost connection if **Container.setAutoReconnect(false)** was called prior to loss of connection. This might be useful if hosting application implements "user away" type of experience to reduce cost on both client and server of maintaining connection while user is away. Calling setAutoReconnect(true) will reenable automatic reconnections, but host might need to allow extra time for reconnection as it likely involves token fetch and processing of a lot of ops generated by other clients while this client was not connected.
+Container will also not attempt to reconnect on lost connection if `Container.setAutoReconnect(false)` was called prior to loss of connection. This might be useful if hosting application implements "user away" type of experience to reduce cost on both client and server of maintaining connection while user is away. Calling setAutoReconnect(true) will reenable automatic reconnections, but host might need to allow extra time for reconnection as it likely involves token fetch and processing of a lot of ops generated by other clients while this client was not connected.
 
-Hosting applicaion can use these events in order to indicate to user when user changes are not propagating through the system, and thus can be lost (on browser tab being closed). It's advised to use some delay (like 5 seconds) before showing such UI, as network connectivity might be intermittent.  Also if container was offline for very long period of time due to **Container.setAutoReconnect(false)** being called, it might take a while to get connected and current.
+Hosting applicaion can use these events in order to indicate to user when user changes are not propagating through the system, and thus can be lost (on browser tab being closed). It's advised to use some delay (like 5 seconds) before showing such UI, as network connectivity might be intermittent.  Also if container was offline for very long period of time due to `Container.setAutoReconnect(false)` being called, it might take a while to get connected and current.
 
 ## Proposal lifetime
 
