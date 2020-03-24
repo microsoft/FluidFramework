@@ -2,13 +2,13 @@
   "name": "example",
   "version": "1.0.0",
   "description": "Example Nuclio Implementation",
+  "license": "MIT",
+  "author": "Microsoft",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Microsoft",
-  "license": "MIT",
   "dependencies": {
     "json-stringify-safe": "^5.0.1",
     "nodemailer": "^4.7.0"

@@ -383,7 +383,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
                 try {
                     this.client.mode = requestedMode;
-                    connection = await DeltaConnection.connect(docService, this.client, requestedMode);
+                    connection = await DeltaConnection.connect(docService, this.client);
                 } catch (error) {
                     // Socket.io error when we connect to wrong socket, or hit some multiplexing bug
                     if (!canRetryOnError(error)) {
@@ -856,10 +856,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // If not, we may not update Container.pendingClientId in time before seeing our own join session op.
         this.emit("connect", connection.details);
 
+        /* Issue #1566: Backward compat */
         this.processInitialMessages(
-            connection.details.initialMessages,
-            connection.details.initialContents,
-            connection.details.initialSignals,
+            connection.details.initialMessages ?? [],
+            connection.details.initialContents ?? [],
+            connection.details.initialSignals ?? [],
             this.connectFirstConnection);
         this.connectFirstConnection = false;
     }
@@ -946,35 +947,19 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     private processInitialMessages(
-        messages: ISequencedDocumentMessage[] | undefined,
-        contents: IContentMessage[] | undefined,
-        signals: ISignalMessage[] | undefined,
+        messages: ISequencedDocumentMessage[],
+        contents: IContentMessage[],
+        signals: ISignalMessage[],
         firstConnection: boolean,
     ): void {
-        this.enqueueInitialOps(messages, contents, firstConnection);
-        this.enqueueInitialSignals(signals);
-    }
-
-    private enqueueInitialOps(
-        messages: ISequencedDocumentMessage[] | undefined,
-        contents: IContentMessage[] | undefined,
-        firstConnection: boolean,
-    ): void {
-        if (contents && contents.length > 0) {
-            for (const content of contents) {
-                this.contentCache.set(content);
-            }
+        for (const content of contents) {
+            this.contentCache.set(content);
         }
-        if (messages && messages.length > 0) {
+        if (messages.length > 0) {
             this.catchUp(messages, firstConnection ? "InitialOps" : "ReconnectOps");
         }
-    }
-
-    private enqueueInitialSignals(signals: ISignalMessage[] | undefined): void {
-        if (signals && signals.length > 0) {
-            for (const signal of signals) {
-                this._inboundSignal.push(signal);
-            }
+        for (const signal of signals) {
+            this._inboundSignal.push(signal);
         }
     }
 

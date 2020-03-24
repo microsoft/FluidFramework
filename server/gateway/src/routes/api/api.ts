@@ -19,7 +19,8 @@ import { IJWTClaims } from "../../utils";
 
 // Although probably the case we want a default behavior here. Maybe just the URL?
 async function getWebComponent(url: UrlWithStringQuery): Promise<IWebResolvedUrl> {
-    const result = await Axios.get(url.href);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const result = await Axios.get(url.href!);
 
     return {
         data: result.data,
@@ -59,8 +60,8 @@ async function getInternalComponent(
     const regex = url.protocol === "fluid:"
         ? /^\/([^/]*)\/([^/]*)(\/?.*)$/
         : /^\/loader\/([^/]*)\/([^/]*)(\/?.*)$/;
-    // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
-    const match = url.path.match(regex);
+    // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec, @typescript-eslint/no-non-null-assertion
+    const match = url.path!.match(regex);
 
     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     if (!match) {

@@ -200,7 +200,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private originalRequest: IRequest | undefined;
     private service: IDocumentService | undefined;
     private factoryProvider: ((resolvedUrl: IFluidResolvedUrl) => IDocumentServiceFactory) | undefined;
-    private _parentBranch: string | undefined | null;
+    private _parentBranch: string | null = null;
     private _connectionState = ConnectionState.Disconnected;
     private _serviceConfiguration: IServiceConfiguration | undefined;
     private readonly _audience: Audience;
@@ -305,7 +305,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     /**
      * Returns the parent branch for this document
      */
-    public get parentBranch(): string | undefined | null {
+    public get parentBranch(): string | null {
         return this._parentBranch;
     }
 
@@ -1072,8 +1072,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             // Back-compat for new client and old server.
             this._audience.clear();
 
-            const priorClients = details.initialClients ? details.initialClients : [];
-            for (const priorClient of priorClients) {
+            for (const priorClient of details.initialClients ?? []) {
                 this._audience.addMember(priorClient.clientId, priorClient.client);
             }
         });
