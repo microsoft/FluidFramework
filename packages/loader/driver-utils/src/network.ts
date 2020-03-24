@@ -16,12 +16,12 @@ import {
 class ErrorWithProps extends Error {
     // Return all properties
     public getCustomProperties(): object {
-        const prop = {};
+        const props = {};
         // Could not use {...this} because it does not return properties of base class.
         for (const key of Object.getOwnPropertyNames(this)) {
-            prop[key] = this[key];
+            props[key] = this[key];
         }
-        return prop;
+        return props;
     }
 }
 
