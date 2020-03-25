@@ -4,9 +4,20 @@ uid: package-feed
 
 # Fluid private NPM feed
 
-Fluid packages are published on the <var-link text="private Fluid NPM feed" href="$fluidFeed" />.
+<vue-markdown v-if="$themeConfig.fluidVarGroup === 'internal'">
 
-You must authenticate with this feed in order to install Fluid package and their dependencies.
+Fluid packages are published on our [private npm
+feed](https://offnet.visualstudio.com/officenet/_packaging?_a=feed&feed=fluid).
+
+</vue-markdown>
+<vue-markdown v-else>
+
+Fluid packages are published on our [private npm
+feed](https://dev.azure.com/FluidDeveloperProgram/Developer%20Preview/_packaging?_a=feed&feed=packages).
+
+</vue-markdown>
+
+You will need to authenticate with this feed in order to install Fluid package and their dependencies.
 
 ## Windows
 
@@ -22,5 +33,18 @@ If the `npm run auth` command fails, you can follow the instructions for macOS a
 
 On macOS and Linux, you must create a personal access token and add it to your `.npmrc` manually.
 
-First, visit the <var-link text="private Fluid NPM feed" href="$fluidFeed" /> in a browser and follow the instructions
-at <https://docs.microsoft.com/en-us/azure/devops/artifacts/npm/npmrc?view=azure-devops&tabs=windows#linux-or-mac>.
+<vue-markdown v-if="$themeConfig.fluidVarGroup === 'internal'">
+
+First, visit the [private npm feed](https://offnet.visualstudio.com/officenet/_packaging?_a=feed&feed=fluid) in a
+browser and follow the instructions at
+<https://docs.microsoft.com/en-us/azure/devops/artifacts/npm/npmrc?view=azure-devops&tabs=windows#linux-or-mac>.
+
+</vue-markdown>
+<vue-markdown v-else>
+
+First, visit the [private npm
+feed](https://dev.azure.com/FluidDeveloperProgram/Developer%20Preview/_packaging?_a=feed&feed=packages) in a browser and
+follow the instructions at
+<https://docs.microsoft.com/en-us/azure/devops/artifacts/npm/npmrc?view=azure-devops&tabs=windows#linux-or-mac>.
+
+</vue-markdown>

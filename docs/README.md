@@ -16,11 +16,16 @@ showHeroSymbol: true
 footer: Made with ❤ in Redmond.
 ---
 
+<vue-markdown v-if="$themeConfig.fluidVarGroup === 'internal'">
+
 ::: tip
 
-The URL to this documentation is <var-link href="$docsUrl" />
+The URL to this documentation is <https://aka.ms/fluid>
 
 :::
+
+</vue-markdown>
+
 
 Welcome to Fluid!
 

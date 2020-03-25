@@ -49,7 +49,20 @@ environment](../guide/README.md#set-up-your-development-environment).
 
 ### Clone the tutorial repository
 
-First, clone the <var-link text="Badge example repository" href="$badgeRepo" />.
+<vue-markdown v-if="$themeConfig.fluidVarGroup === 'internal'">
+
+First, clone the Badge repository here: <https://github.com/microsoft/fluid-tutorial-badge>.
+
+</vue-markdown>
+<vue-markdown v-else>
+
+First, clone the Badge repository here:
+   <https://dev.azure.com/FluidDeveloperProgram/Developer%20Preview/_git/fluid-badge>.
+
+</vue-markdown>
+
+Since the Git repository is authenticated, it is easiest to visit the link above and click the "Clone" button in the
+top-right corner of the UI. Follow the resulting instructions to clone the repo.
 
 Once you've cloned the repo, you'll need to set up access to the [private Fluid NPM feed](../guide/package-feed.md). On
 Windows, you can run the `npm run auth` command to automate this process.
