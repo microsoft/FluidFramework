@@ -8,14 +8,11 @@ import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 
 import * as React from "react";
 import GridLayout, { Layout } from "react-grid-layout";
-
-import "../../../../node_modules/react-grid-layout/css/styles.css";
-import "../../../../node_modules/react-resizable/css/styles.css";
 import { ISpacesDataModel } from "./dataModel";
 
 interface IEmbeddedComponentWrapperProps {
     id: string;
-    getComponent(id: string): Promise<IComponent>;
+    getComponent: (componentId: string) => Promise<IComponent>;
 }
 
 interface IEmbeddedComponentWrapperState {
@@ -87,10 +84,17 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
 
     componentDidMount() {
         this.props.dataModel.on("componentListChanged", (newMap: Map<string, Layout>) => {
-            this.setState({ componentMap: newMap });
+            if (!this.state.componentMap.get(this.props.dataModel.componentToolbarId)) {
+                this.setState({
+                    componentMap: newMap,
+                    isEditable: this.props.dataModel.componentList.size - 1 === 0,
+                });
+            } else {
+                this.setState({ componentMap: newMap });
+            }
         });
-        this.props.dataModel.on("editableUpdated", (isEditable: boolean) => {
-            this.setState({isEditable});
+        this.props.dataModel.on("editableUpdated", (isEditable?: boolean) => {
+            this.setState({isEditable: isEditable || !this.state.isEditable});
         });
     }
 
@@ -129,6 +133,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
             const editableStyle: React.CSSProperties = { overflow: "hidden", padding: 2 };
             const embeddedComponentStyle: React.CSSProperties = {
                 height: "100%",
+                overflow: "scroll",
             };
             if (editable) {
                 editableStyle.border = "1px solid black";
