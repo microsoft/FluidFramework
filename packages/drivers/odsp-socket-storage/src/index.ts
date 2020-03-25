@@ -8,6 +8,7 @@ export * from "./odspDocumentServiceFactory";
 export * from "./odspDeltaStorageService";
 export * from "./odspDocumentService";
 export * from "./odspDocumentStorageManager";
+export * from "./odspDocumentStorageService";
 export * from "./contracts";
 export * from "./odspDriverUrlResolver";
 export * from "./fetchSnapshot";

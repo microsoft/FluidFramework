@@ -11,6 +11,11 @@ import {
     IDocumentAttributes,
 } from "@microsoft/fluid-protocol-definitions";
 
+/**
+ * Combine the app summary and protocol summary in 1 tree.
+ * @param appSummary - Summary of the app.
+ * @param protocolSummary - Summary of the protocol.
+ */
 export function combineAppAndProtocolSummary(
     appSummary: ISummaryTree,
     protocolSummary: ISummaryTree,
@@ -25,6 +30,10 @@ export function combineAppAndProtocolSummary(
     return fullSummary;
 }
 
+/**
+ * Extract the attributes and quorum values from the protocol summary.
+ * @param protocolSummary - protocol summary from which the values are to be extracted.
+ */
 export function getDocAttributesAndQuorumValuesFromProtocolSummary(
     protocolSummary: ISummaryTree,
 ): {documentAttributes: IDocumentAttributes, quorumValues: [string, ICommittedProposal][]} {
