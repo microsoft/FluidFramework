@@ -195,13 +195,18 @@ export function configureWebSocketServices(
 
             const detailsP = storage.getOrCreateDocument(claims.tenantId, claims.documentId);
             const clientsP = clientManager.getClients(claims.tenantId, claims.documentId);
-            const addP = clientManager.addClient(
+
+            const [details, clients] = await Promise.all([detailsP, clientsP]);
+
+            if (clients.length > 500) {
+                return Promise.reject(`Reached connected client limit for document ${claims.documentId} in tenant ${claims.tenantId}`);
+            }
+
+            await clientManager.addClient(
                 claims.tenantId,
                 claims.documentId,
                 clientId,
                 messageClient as IClient);
-
-            const [details, , clients] = await Promise.all([detailsP, addP, clientsP]);
 
             let connectedMessage: IConnected;
             if (isWriter(messageClient.scopes, details.existing, message.mode)) {
