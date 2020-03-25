@@ -13,6 +13,7 @@ import {
 import { IPackage } from "@microsoft/fluid-container-definitions";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import * as uuid from "uuid";
+import { IComponentCallable, IComponentCallbacks } from "@fluid-example/spaces";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pkg = require("../../package.json") as IPackage;
@@ -22,7 +23,7 @@ export const WaterParkLoaderName = `${pkg.name}-loader`;
  * Component that loads extneral components via their url
  */
 export class ExternalComponentLoader extends PrimedComponent
-    implements IComponentHTMLView {
+    implements IComponentHTMLView, IComponentCallable<IComponentCallbacks> {
 
     private static readonly defaultComponents = [
         "@fluid-example/todo",
@@ -39,12 +40,19 @@ export class ExternalComponentLoader extends PrimedComponent
 
     private savedElement: HTMLElement;
     private error: string;
+    private callbacks: IComponentCallbacks;
 
     public get IComponentHTMLView() { return this; }
+
+    public get IComponentCallable() { return this; }
 
     public setViewComponent(component: IComponentLoadable) {
         this.root.set(this.viewComponentMapID, component.IComponentLoadable.url);
         this.viewComponentP = Promise.resolve(component);
+    }
+
+    public setComponentCallbacks(callbacks: IComponentCallbacks) {
+        this.callbacks = callbacks;
     }
 
     public render(element: HTMLElement) {
@@ -85,12 +93,23 @@ export class ExternalComponentLoader extends PrimedComponent
             input.type = "text";
             input.placeholder = "@fluid-example/component-name@version";
             input.style.width = "100%";
+            inputDiv.onkeyup = (event: KeyboardEvent) => {
+                if (event.keyCode === 13) {
+                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                    this.inputClick(input);
+                }
+            };
 
             const counterButton = document.createElement("button");
             inputDiv.appendChild(counterButton);
             counterButton.textContent = "Add Component";
             // eslint-disable-next-line @typescript-eslint/promise-function-async
             counterButton.onclick = () => this.inputClick(input);
+
+            const editableButton = document.createElement("button");
+            inputDiv.append(editableButton);
+            editableButton.textContent = "Toggle Edit";
+            editableButton.onclick = () => this.callbacks.toggleEditable();
 
             if (this.error) {
                 const errorDiv = document.createElement("div");
@@ -125,9 +144,10 @@ export class ExternalComponentLoader extends PrimedComponent
                         const urlReg = await this.runtime.IComponentRegistry.get("url");
                         const pkgReg = await urlReg.IComponentRegistry.get(url) as IComponent;
                         let componentRuntime: IComponentRuntime;
+                        const id = uuid();
                         if (pkgReg.IComponentDefaultFactoryName) {
                             componentRuntime = await this.context.hostRuntime.createComponent(
-                                uuid(),
+                                id,
                                 [
                                     ...this.context.packagePath,
                                     "url",
@@ -136,7 +156,7 @@ export class ExternalComponentLoader extends PrimedComponent
                                 ]);
                         } else if (pkgReg.IComponentFactory) {
                             componentRuntime = await this.context.hostRuntime.createComponent(
-                                uuid(),
+                                id,
                                 [
                                     ...this.context.packagePath,
                                     "url",
@@ -153,7 +173,7 @@ export class ExternalComponentLoader extends PrimedComponent
                             // eslint-disable-next-line @typescript-eslint/await-thenable
                             component = await component.IComponentCollection.createCollectionItem();
                         }
-                        viewComponent.IComponentCollection.createCollectionItem(component.IComponentLoadable);
+                        viewComponent.IComponentCollection.createCollectionItem({id, type: value});
                     } else {
                         throw new Error("View component is empty or is not an IComponentCollection!!");
                     }

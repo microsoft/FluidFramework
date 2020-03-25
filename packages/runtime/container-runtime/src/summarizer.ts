@@ -19,7 +19,7 @@ import {
     ISummaryConfiguration,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
-import { ISummaryContext } from "@microsoft/fluid-driver-definitions";
+import { ErrorType, ISummarizingError, ISummaryContext } from "@microsoft/fluid-driver-definitions";
 import { ContainerRuntime, GenerateSummaryData } from "./containerRuntime";
 import { RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
 import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
@@ -111,7 +111,11 @@ export class Summarizer implements ISummarizer {
             reason,
         });
         this.runCoordinator.stop();
-        this.runtime.closeFn(`Summarizer: ${reason}`);
+        const error: ISummarizingError = {
+            errorType: ErrorType.summarizingError,
+            description: `Summarizer: ${reason}`,
+        };
+        this.runtime.closeFn(error);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
