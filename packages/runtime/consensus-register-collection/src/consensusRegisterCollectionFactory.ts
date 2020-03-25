@@ -29,12 +29,13 @@ export class ConsensusRegisterCollectionFactory implements IConsensusRegisterCol
     }
 
     public async load(
-        document: IComponentRuntime,
+        runtime: IComponentRuntime,
         id: string,
         services: ISharedObjectServices,
-        branchId: string): Promise<IConsensusRegisterCollection> {
+        branchId: string,
+        attributes: IChannelAttributes): Promise<IConsensusRegisterCollection> {
 
-        const collection = new ConsensusRegisterCollection(id, document, ConsensusRegisterCollectionFactory.Attributes);
+        const collection = new ConsensusRegisterCollection(id, runtime, attributes);
         await collection.load(branchId, services);
         return collection;
     }

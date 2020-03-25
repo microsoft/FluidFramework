@@ -9,6 +9,7 @@ import * as path from "path";
 import * as mocks from "@microsoft/fluid-test-runtime-utils";
 import { GitManager } from "@microsoft/fluid-server-services-client";
 import { SharedString } from "../sharedString";
+import { SharedStringFactory } from "../sequenceFactory";
 import { generateStrings } from "./generateSharedStrings";
 
 /* tslint:disable:non-literal-fs-path */
@@ -46,7 +47,7 @@ describe("SharedString Snapshot Version", () => {
 
                 objectStorage: historian,
             };
-            const sharedString = new SharedString(runtime, documentId);
+            const sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
             // eslint-disable-next-line no-null/no-null
             await sharedString.load(null/*branchId*/, services);
             await sharedString.loaded;
