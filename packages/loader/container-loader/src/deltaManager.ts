@@ -14,10 +14,10 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import { PerformanceEvent } from "@microsoft/fluid-common-utils";
 import {
-    IConnectionError,
     IDocumentDeltaStorageService,
     IDocumentService,
     IError,
+    IGenericNetworkError,
     IThrottlingError,
     ErrorType,
 } from "@microsoft/fluid-driver-definitions";
@@ -36,7 +36,7 @@ import {
     MessageType,
     ScopeType,
 } from "@microsoft/fluid-protocol-definitions";
-import { createIError, createWriteError } from "@microsoft/fluid-driver-utils";
+import { createIError, createWriteError, createNetworkError } from "@microsoft/fluid-driver-utils";
 import { ContentCache } from "./contentCache";
 import { debug } from "./debug";
 import { DeltaConnection } from "./deltaConnection";
@@ -643,13 +643,14 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                         replayFrom: from,
                         to,
                     });
-                    const closeError: IConnectionError = {
-                        errorType: ErrorType.connectionError,
-                        message: "Failed to retrieve ops from storage: giving up after too many retries",
-                        canRetry: false,
-                        online: "Online",
-                        critical: true,
-                    };
+                    const closeError = createNetworkError(
+                        "Failed to retrieve ops from storage: giving up after too many retries",
+                        false /*canRetry*/,
+                        undefined /*statusCode*/,
+                        undefined /*retryAfterSeconds*/,
+                        "Online",
+                    ) as IGenericNetworkError;
+                    closeError.critical = true;
                     this.close(closeError);
                     return;
                 }
