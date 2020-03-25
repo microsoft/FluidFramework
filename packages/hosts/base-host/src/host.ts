@@ -71,7 +71,7 @@ export class BaseHost {
         url: string,
         pkg: IFluidCodeDetails,
         div: HTMLDivElement,
-        seedPackages?: Iterable< IFluidCodeDetails | [IFluidCodeDetails, IFluidModule]>,
+        seedPackages?: Iterable<IFluidCodeDetails | [IFluidCodeDetails, IFluidModule]>,
     ): Promise<Container> {
         const baseHost = new BaseHost(hostConfig, seedPackages);
         return baseHost.loadAndRender(url, div, pkg);

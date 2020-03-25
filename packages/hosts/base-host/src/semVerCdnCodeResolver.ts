@@ -59,7 +59,7 @@ class FluidPackage {
  * The `package_version` can be an npm style semantic version.
  *
  * The `cdn_base` is provided in the config of the fluid code details, as either a global `config.cdn` property, or
- * a per scope cdn, `config["@package_scope:cdn"]`. A scope specific cdn base will take preciedence over
+ * a per scope cdn, `config["@package_scope:cdn"]`. A scope specific cdn base will take precedence over
  * the global cdn.
  */
 export class SemVerCdnCodeResolver implements IFluidCodeResolver{

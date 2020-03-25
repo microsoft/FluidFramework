@@ -45,7 +45,7 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
  * full fuild package including absolute urls for the browser file entries.
  * The fluid code resolver is coupled to a specific cdn and knows how to resolve
  * the code detail for loading from that cdn. This include resolving to the most recent
- * version of package the that supports the provided code details.
+ * version of package that supports the provided code details.
  */
 export interface IFluidCodeResolver{
     /**
