@@ -8,22 +8,17 @@ import { ISharedDirectory, IDirectory, IDirectoryValueChanged } from "@microsoft
 import {
     IComponent, IComponentLoadable, IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { Layout } from "react-grid-layout";
 
-export type SupportedComponent =
-    "button"
-    | "clicker"
-    | "number"
-    | "textbox"
-    | "facepile"
-    | "codemirror"
-    | "prosemirror"
-    | "componentToolbar";
 
 export interface ISpacesDataModel extends EventEmitter {
     componentList: Map<string, Layout>;
+    setComponentToolbar(id: string, type: string, url: string): Promise<IComponent>;
+    setComponent(id: string, type: string, url: string): Promise<IComponent>;
+    getComponentToolbar(): Promise<IComponent>;
     addComponent<T extends IComponent & IComponentLoadable>(
-        type: SupportedComponent,
+        type: string,
         w?: number,
         h?: number,
         id?: string
@@ -35,12 +30,20 @@ export interface ISpacesDataModel extends EventEmitter {
     saveLayout(): void;
     setTemplate(): Promise<void>;
     componentToolbarId: string;
+    IComponentCollection: IComponentCollection;
+    createCollectionItem<ISpacesCollectionOptions>(options: ISpacesCollectionOptions): IComponent;
+    removeCollectionItem(item: IComponent): void;
+}
+
+interface ISpacesCollectionOptions {
+    id?: string;
+    type?: string;
 }
 
 /**
  * The Data Model is an abstraction layer so the React View doesn't need to interact directly with fluid.
  */
-export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
+export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, IComponentCollection {
     private readonly componentSubDirectory: IDirectory;
 
     constructor(
@@ -60,6 +63,30 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
                 this.emit("componentListChanged", this.componentList);
             }
         });
+    }
+
+    public get IComponentCollection() { return this; }
+
+    public createCollectionItem<T>(rawOptions: T): IComponent {
+        const options = rawOptions as ISpacesCollectionOptions;
+        if (!options.id || !options.type){
+            throw new Error("Tried to create a collection item in Spaces with invalid options");
+        }
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        this.setComponent(options.id, options.type);
+        // This is okay as we are not using the value returned from this function call anywhere
+        // Instead, setComponent adds it to the sequence to be synchronously loaded
+        const emptyComponent: IComponent = {};
+        return emptyComponent;
+    }
+
+    public removeCollectionItem(instance: IComponent): void {
+        let componentUrl: string;
+        if (instance.IComponentLoadable) {
+            componentUrl = instance.IComponentLoadable.url;
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            this.removeComponent(componentUrl);
+        }
     }
 
     /**
@@ -83,8 +110,56 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
         return response;
     }
 
+    public async setComponentToolbar(
+        id: string,
+        type: string,
+        url: string): Promise<IComponent> {
+        return this.removeComponent(this.componentToolbarId).then(async () => {
+            this.componentToolbarId = id;
+            const component = await this.getComponent(id);
+            const defaultModel: ISpacesModel = {
+                type,
+                layout: { x: 0, y: 0, w: 6, h: 2 },
+            };
+            if (component) {
+                this.componentSubDirectory.set(id, defaultModel);
+                return component as IComponent;
+            } else {
+                throw new Error(`Runtime does not contain component with id: ${id}`);
+            }
+        });
+    }
+
+    public async getComponentToolbar(): Promise<IComponent> {
+        const component = await this.getComponent(this.componentToolbarId);
+        return component as IComponent;
+    }
+
+    public async setComponent(id: string, type: string): Promise<IComponent> {
+        const defaultModel: ISpacesModel = {
+            type,
+            layout: { x: 0, y: 0, w: 6, h: 2 },
+        };
+        return this.getComponent<IComponent>(id)
+            .then((returnedComponent) => {
+                if (returnedComponent) {
+                    if (returnedComponent.IComponentLoadable) {
+                        this.componentSubDirectory.set(id, defaultModel);
+                        return returnedComponent;
+                    } else {
+                        throw new Error("Component is not an instance of IComponentLoadable!!");
+                    }
+                } else {
+                    throw new Error(`Runtime does not contain component with id: ${id}`);
+                }
+            })
+            .catch((error) => {
+                throw error;
+            });
+    }
+
     public async addComponent<T extends IComponent & IComponentLoadable>(
-        type: SupportedComponent,
+        type: string,
         w: number = 1,
         h: number = 1,
         id?: string,
@@ -134,7 +209,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
             const template = JSON.parse(templateString) as ISpacesModel[];
             const promises: Promise<IComponent>[] = [];
             template.forEach((value) => {
-                promises.push(this.addComponentInternal(value.type as SupportedComponent, value.layout));
+                promises.push(this.addComponentInternal(value.type, value.layout));
             });
 
             await Promise.all(promises);
@@ -142,7 +217,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel {
     }
 
     private async addComponentInternal<T extends IComponent & IComponentLoadable>(
-        type: SupportedComponent,
+        type: string,
         layout: Layout,
         id = `${type}-${Date.now()}`): Promise<T> {
         const component = await this.createAndAttachComponent<T>(type);

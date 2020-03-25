@@ -134,7 +134,7 @@ export interface IComponentHTMLOptions {
 
 ### Fluid Data Interfaces
 
-For an introduction to the Fluid Data model, please read [What is Fluid?](../../what-is-fluid.md)
+For an introduction to the Fluid Data model, please read [What is Fluid?](../what-is-fluid.md)
 
 The Fluid distributed data structures can be instantiated and accessed via methods in the core Runtime and implementing the
 `IComponentLoadable` interface.
@@ -201,10 +201,10 @@ export interface IComponentCursor extends IProvideComponentCursor {
 }
 ```
 
-[icomponenthtmlvisual]: ../../api/fluid-component-core-interfaces.IComponentHTMLVisual.md
-[icomponentreactviewable]: ../../api/fluid-aqueduct-react.IComponentReactViewable.md
-[iprovidecomponenthtmlvisual]: ../../api/fluid-component-core-interfaces.IProvideComponentHTMLVisual.md
-[primedcomponent]: ../../api/fluid-aqueduct.PrimedComponent.md
-[shareddirectory]: ../../api/fluid-map.SharedDirectory.md
-[sharedmap]: ../../api/fluid-map.SharedMap.md
-[undo-redo]: ../../api/fluid-undo-redo.md
+[icomponenthtmlvisual]: ../api/fluid-component-core-interfaces.icomponenthtmlvisual.md
+[icomponentreactviewable]: ../api/fluid-aqueduct-react.icomponentreactviewable.md
+[iprovidecomponenthtmlvisual]: ../api/fluid-component-core-interfaces.iprovidecomponenthtmlvisual.md
+[primedcomponent]: ../api/fluid-aqueduct.primedcomponent.md
+[shareddirectory]: ../api/fluid-map.shareddirectory.md
+[sharedmap]: ../api/fluid-map.sharedmap.md
+[undo-redo]: ../api/fluid-undo-redo.md

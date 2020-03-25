@@ -6,8 +6,8 @@ uid: SharedDirectory
 
 - Package: [@microsoft/fluid-map](../api/fluid-map.md)
 - API documentation:
-  - [SharedDirectory](../api/fluid-map.SharedDirectory.md)
-  - [IDirectory](../api/fluid-map.IDirectory.md)
+  - [SharedDirectory](../api/fluid-map.shareddirectory.md)
+  - [IDirectory](../api/fluid-map.idirectory.md)
 
 The SharedDirectory distributed data structure is similar to a [SharedMap][] and can be used to store key-value pairs.
 In addition to the typical Map functionality for getting, setting, and iterating over values, SharedDirectory provides a
@@ -47,7 +47,7 @@ corresponding subdirectory methods.
 ### getWorkingDirectory
 
 To "navigate" the subdirectory structure, `IDirectory` provides a
-[getWorkingDirectory](../api/fluid-map.SharedDirectory.getWorkingDirectory.md) method which takes a relative path and
+[getWorkingDirectory](../api/fluid-map.shareddirectory.getworkingdirectory.md) method which takes a relative path and
 returns the `IDirectory` located at that path if it exists.
 
 !!!include(object-serialization.md)!!!
@@ -58,7 +58,7 @@ they don't overwrite each other.
 
 ## Eventing
 
-[valueChanged](../api/fluid-map.SharedDirectory.on_1.md) events additionally provide the absolute path to the
+[valueChanged](../api/fluid-map.shareddirectory.on_1.md) events additionally provide the absolute path to the
 subdirectory storing the value that changed.
 
 ## Related distributed data structures

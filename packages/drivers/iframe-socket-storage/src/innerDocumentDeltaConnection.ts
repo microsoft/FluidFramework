@@ -125,13 +125,15 @@ export class InnerDocumentDeltaConnection extends EventEmitter implements IDocum
         return this.details.serviceConfiguration;
     }
 
+    /* Issue #1566: Backward compat - cleanup initialMessages, etc. being undefined*/
+
     /**
      * Get messages sent during the connection
      *
      * @returns messages sent during the connection
      */
-    public get initialMessages(): ISequencedDocumentMessage[] | undefined {
-        return this.details.initialMessages;
+    public get initialMessages(): ISequencedDocumentMessage[] {
+        return this.details.initialMessages ?? [];
     }
 
     /**
@@ -139,8 +141,8 @@ export class InnerDocumentDeltaConnection extends EventEmitter implements IDocum
      *
      * @returns contents sent during the connection
      */
-    public get initialContents(): IContentMessage[] | undefined {
-        return this.details.initialContents;
+    public get initialContents(): IContentMessage[] {
+        return this.details.initialContents ?? [];
     }
 
     /**
@@ -148,8 +150,8 @@ export class InnerDocumentDeltaConnection extends EventEmitter implements IDocum
      *
      * @returns signals sent during the connection
      */
-    public get initialSignals(): ISignalMessage[] | undefined {
-        return this.details.initialSignals;
+    public get initialSignals(): ISignalMessage[] {
+        return this.details.initialSignals ?? [];
     }
 
     /**
@@ -158,7 +160,7 @@ export class InnerDocumentDeltaConnection extends EventEmitter implements IDocum
      * @returns initial client list sent during the connection
      */
     public get initialClients(): ISignalClient[] {
-        return this.details.initialClients ? this.details.initialClients : [];
+        return this.details.initialClients ?? [];
     }
 
     /**

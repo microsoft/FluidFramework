@@ -13,7 +13,7 @@ import * as winston from "winston";
 import { spoEnsureLoggedIn } from "../gatewayOdspUtils";
 import { resolveUrl } from "../gatewayUrlResolver";
 import { IAlfred, IKeyValueWrapper } from "../interfaces";
-import { getConfig, getParam, getUserDetails } from "../utils";
+import { getConfig, getUserDetails } from "../utils";
 import { defaultPartials } from "./partials";
 
 export function create(
@@ -45,8 +45,7 @@ export function create(
      * Loading of a specific fluid document.
      */
     router.get("/:docId?", spoEnsureLoggedIn(), ensureLoggedIn(), async (request, response) => {
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        const docId = getParam(request.params, "docId") || await getDocId();
+        const docId = request.params.docId ?? await getDocId();
         winston.info(`Loading FrontPage from ${docId}`);
         if (docId === undefined) {
             response.status(500).end("No document found");

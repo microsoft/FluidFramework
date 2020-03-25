@@ -2,7 +2,7 @@
   "name": "chaincode-loader",
   "version": "0.0.1",
   "description": "Headless chaincode loader",
-  "main": "index.js",
+  "license": "MIT",
   "author": "Microsoft",
-  "license": "MIT"
+  "main": "index.js"
 }

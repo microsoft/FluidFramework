@@ -54,12 +54,12 @@ Below we define our component class `ExampleFluidComponent`.
 
 #### PrimedComponent
 
-Extending [PrimedComponent](../api/fluid-aqueduct.PrimedComponent.md) sets up our component with required default
+Extending [PrimedComponent](../api/fluid-aqueduct.primedcomponent.md) sets up our component with required default
 behavior as well as additional helpers to make component development easier.
 
 ##### Key benefits
 
-1. Setup a `root` [SharedDirectory](../api/fluid-map.SharedDirectory.md) (a Distributed Data Structure) that we can use to
+1. Setup a `root` [SharedDirectory](../api/fluid-map.shareddirectory.md) (a Distributed Data Structure) that we can use to
    store collaborative content and other distributed data structures.
 2. Provide `this.createAndAttachComponent(...)` and `this.getComponent(...)` functions for easier creation and access
    to other components.
@@ -70,7 +70,7 @@ behavior as well as additional helpers to make component development easier.
 
 #### IComponentHTMLVisual
 
-Implementing the [IComponentHTMLVisual](../api/fluid-component-core-interfaces.IComponentHTMLVisual.md) interface
+Implementing the [IComponentHTMLVisual](../api/fluid-component-core-interfaces.icomponenthtmlvisual.md) interface
 denotes that our component can render an HTML view. Throughout the Fluid Framework we define interfaces as a way to
 state our behavior. Whoever is attempting to use this component can know we support this interface and therefore it will
 have a `render(...)` function. View rendering is explained more below.
@@ -212,7 +212,7 @@ new instance. We require having an instantiation factory because it's required t
 distributed data structures up front. Defining all the DDSs up front allows for the Fluid Framework to load
 from a snapshot without worrying that something might exist in the snapshot that the framework can't understand.
 
-In the example below we use the [PrimedComponentFactory](../api/fluid-aqueduct.PrimedComponentFactory.md) as a helper to
+In the example below we use the [PrimedComponentFactory](../api/fluid-aqueduct.primedcomponentfactory.md) as a helper to
 create our instantiation factory. As properties we pass in our supported distributed data structures. In this scenario
 we don't use any additional distributed data structures, so we pass an empty array.
 
