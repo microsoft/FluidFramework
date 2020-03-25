@@ -84,10 +84,10 @@ export class OdspDocumentService implements IDocumentService {
                 getStorageToken,
                 odspResolvedUrl.createNewOptions.newFileInfoPromise,
                 cache);
-                props = {
-                    hashedDocumentId: odspResolvedUrl.hashedDocumentId,
-                    itemId: odspResolvedUrl.itemId,
-                };
+            props = {
+                hashedDocumentId: odspResolvedUrl.hashedDocumentId,
+                itemId: odspResolvedUrl.itemId,
+            };
             if (!fullSummary) {
                 event.end(props, "WithoutSummary");
             }
