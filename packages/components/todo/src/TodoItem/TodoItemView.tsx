@@ -4,6 +4,8 @@
  */
 
 import { CollaborativeInput } from "@microsoft/fluid-aqueduct-react";
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IHostRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
 import { TodoItem } from "./TodoItem";
@@ -27,6 +29,11 @@ export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemVie
         marginRight: "2px",
         width: "35px",
     };
+
+    public static async createFromRequest(request: IRequest, runtime: IHostRuntime) {
+        const todoItemModel = (await runtime.request(request)).value as TodoItem;
+        return { status: 200, mimeType: "fluid/component", value: <TodoItemView todoItemModel={ todoItemModel } /> };
+    }
 
     constructor(props: TodoItemViewProps) {
         super(props);

@@ -33,6 +33,12 @@ const defaultComponentRuntimeRequestHandler: RuntimeRequestHandler =
         return undefined;
     };
 
+/**
+ * A ContainerRuntimeFactory that initializes Containers with a single default component, which can be requested from
+ * the container with an empty URL.
+ *
+ * This factory should be exposed as fluidExport off the entry point to your module.
+ */
 export class DefaultComponentContainerRuntimeFactory extends BaseContainerRuntimeFactory implements
     IComponentDefaultFactoryName {
     constructor(

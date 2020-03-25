@@ -37,6 +37,7 @@
     "@microsoft/fluid-aqueduct-react": "^0.15.0",
     "@microsoft/fluid-cell": "^0.15.0",
     "@microsoft/fluid-component-core-interfaces": "^0.15.0",
+    "@microsoft/fluid-container-runtime": "^0.15.0",
     "@microsoft/fluid-map": "^0.15.0",
     "@microsoft/fluid-runtime-definitions": "^0.15.0",
     "@microsoft/fluid-sequence": "^0.15.0",
