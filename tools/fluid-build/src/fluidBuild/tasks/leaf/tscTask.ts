@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { LeafTask } from "./leafTask";
+import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 import { logVerbose } from "../../../common/logging";
 import { readFileAsync, existsSync } from "../../../common/utils";
 import path from "path";
@@ -247,4 +247,44 @@ export class TscTask extends LeafTask {
     protected async markExecDone() {
         this._tsBuildInfo = undefined;
     }
+};
+
+// Base class for tasks that are dependent on a tsc compile
+export abstract class TscDependentTask extends LeafWithDoneFileTask {
+    private tscTask: TscTask | undefined;
+    protected get recheckLeafIsUpToDate() {
+        return true;
+    }
+
+    protected async getDoneFileContent() {
+        try {
+            const doneFileContent = { tsBuildInfoFile: {}, config: "" };
+            if (this.tscTask) {
+                const tsBuildInfo = await this.tscTask.readTsBuildInfo();
+                if (tsBuildInfo === undefined) {
+                    return undefined;
+                }
+                doneFileContent.tsBuildInfoFile = tsBuildInfo;
+                const configFile = this.configFileFullPath;
+                if (existsSync(configFile)) {
+                    // Include the config file if it exists so that we can detect changes
+                    doneFileContent.config = await readFileAsync(this.configFileFullPath, "utf8");
+                }
+            }
+            return JSON.stringify(doneFileContent);
+        } catch(e) {
+            this.logVerboseTask(`error generating done file content ${e}`);
+            return undefined;
+        }
+    }
+
+    protected addDependentTasks(dependentTasks: LeafTask[]) {
+        const tscTask = this.addChildTask(dependentTasks, this.node, "tsc");
+        if (tscTask) {
+            this.tscTask = tscTask as TscTask;
+            this.logVerboseDependency(this.node, "tsc");
+        }
+    }
+
+    protected abstract get configFileFullPath() : string;
 };
