@@ -7,9 +7,10 @@ import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import {
     IFluidCodeDetails,
     IProxyLoaderFactory,
+    IFluidModule,
 } from "@microsoft/fluid-container-definitions";
 import { Loader } from "@microsoft/fluid-container-loader";
-import { IResolvedPackage, WebCodeLoader } from "@microsoft/fluid-web-code-loader";
+import { WebCodeLoader } from "@microsoft/fluid-web-code-loader";
 import { IBaseHostConfig } from "./hostConfig";
 import { initializeContainerCode } from "./initializeContainerCode";
 
@@ -21,26 +22,19 @@ import { initializeContainerCode } from "./initializeContainerCode";
  */
 async function createWebLoader(
     hostConfig: IBaseHostConfig,
-    pkg: IResolvedPackage | undefined,
-    scriptIds: string[],
-): Promise<Loader> {
+    seedPackages?: Iterable<IFluidCodeDetails | [IFluidCodeDetails, IFluidModule]>): Promise<Loader> {
 
     // Create the web loader and prefetch the chaincode we will need
-    const codeLoader = new WebCodeLoader(hostConfig.whiteList);
-    if (pkg) {
-        if (pkg.pkg) { // This is an IFluidPackage
-            await codeLoader.seed({
-                package: pkg.pkg,
-                config: pkg.details.config,
-                scriptIds,
-            });
-            if (pkg.details.package === pkg.pkg.name) {
-                pkg.details.package = `${pkg.pkg.name}@${pkg.pkg.version}`;
+    const codeLoader = new WebCodeLoader(hostConfig.codeResolver, hostConfig.whiteList);
+
+    if (seedPackages !== undefined) {
+        for(const pkg of seedPackages){
+            if(Array.isArray(pkg)){
+                await codeLoader.seedModule(pkg[0], pkg[1]);
+            }else{
+                await codeLoader.seedModule(pkg);
             }
         }
-
-        // The load takes in an IFluidCodeDetails
-        codeLoader.load(pkg.details).catch((error) => console.error("script load error", error));
     }
 
     const config = hostConfig.config ? hostConfig.config : {};
@@ -66,14 +60,12 @@ export class BaseHost {
     private readonly loaderP: Promise<Loader>;
     public constructor(
         hostConfig: IBaseHostConfig,
-        seedPackage: IResolvedPackage | undefined,
-        scriptIds: string[],
+        seedPackages?: Iterable<IFluidCodeDetails | [IFluidCodeDetails, IFluidModule]>,
     ) {
 
         this.loaderP = createWebLoader(
             hostConfig,
-            seedPackage,
-            scriptIds,
+            seedPackages,
         );
     }
 

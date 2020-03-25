@@ -49,7 +49,7 @@ export async function createNewFluidFile(
     const newFileInfo = await newFileInfoPromise;
 
     const key = getKeyFromFileInfo(newFileInfo);
-    const responseP: Promise<IOdspResolvedUrl> = await cache.sessionStorage.get(key);
+    const responseP: Promise<IOdspResolvedUrl> = cache.sessionStorage.get(key);
     let resolvedUrl: IOdspResolvedUrl;
     if (responseP !== undefined) {
         return responseP;
