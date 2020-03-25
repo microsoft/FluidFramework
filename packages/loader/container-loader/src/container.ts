@@ -38,7 +38,13 @@ import {
     IUrlResolver,
     IDocumentServiceFactory,
 } from "@microsoft/fluid-driver-definitions";
-import { createIError, readAndParse, OnlineStatus, isOnline } from "@microsoft/fluid-driver-utils";
+import {
+    createIError,
+    readAndParse,
+    OnlineStatus,
+    isOnline,
+    combineAppAndProtocolSummary,
+} from "@microsoft/fluid-driver-utils";
 import {
     buildSnapshotTree,
     isSystemMessage,
@@ -70,6 +76,7 @@ import {
     IVersion,
     MessageType,
     TreeEntry,
+    ISummaryTree,
 } from "@microsoft/fluid-protocol-definitions";
 import * as jwtDecode from "jwt-decode";
 import { Audience } from "./audience";
@@ -407,12 +414,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         assert(!this.deltaManager.inbound.length);
         // Get the document state post attach - possibly can just call attach but we need to change the semantics
         // around what the attach means as far as async code goes.
-        const summary = await this.context.createSummary();
+        const appSummary: ISummaryTree = await this.context.createSummary();
         if (!this.protocolHandler) {
             throw new Error("Protocol Handler is undefined");
         }
-        const protocolHandler = this.protocolHandler;
-        const protocolSnapshot = protocolHandler.captureSummary();
+        const protocolSummary = this.protocolHandler.captureSummary();
         this.originalRequest = request;
         // Actually go and create the resolved document
         const expUrlResolver = resolver as IExperimentalUrlResolver;
@@ -420,8 +426,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             throw new Error("Not an Experimental UrlResolver");
         }
         const resolvedUrl = await expUrlResolver.createContainer(
-            summary,
-            protocolSnapshot,
+            combineAppAndProtocolSummary(appSummary, protocolSummary),
             request);
 
         if (resolvedUrl.type !== "fluid") {

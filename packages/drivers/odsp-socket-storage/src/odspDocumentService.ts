@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryBaseLogger, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { DebugLogger, PerformanceEvent, TelemetryLogger, TelemetryNullLogger } from "@microsoft/fluid-common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
     IDocumentService,
-    IDocumentStorageService,
     IResolvedUrl,
     OpenMode,
     ISummaryContext,
@@ -43,7 +42,7 @@ const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
  * clients
  */
 export class OdspDocumentService implements IDocumentService {
-
+    private _storageService: OdspDocumentStorageService | undefined;
     /**
      * @param appId - app id used for telemetry for network requests.
      * @param getStorageToken - function that can provide the storage token for a given site. This is
@@ -70,16 +69,28 @@ export class OdspDocumentService implements IDocumentService {
         isFirstTimeDocumentOpened = true,
     ): Promise<IDocumentService> {
         let odspResolvedUrl: IOdspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
+        const templogger: ITelemetryLogger = DebugLogger.mixinDebugLogger(
+            "fluid:telemetry:OdspDriver",
+            logger,
+            { docId: odspResolvedUrl.hashedDocumentId, odc: isOdcUrl(odspResolvedUrl.endpoints.snapshotStorageUrl) });
         const openMode: OpenMode | undefined = odspResolvedUrl.openMode;
-        let appSummary: ISummaryTree | undefined;
-        let protocolSummary: ISummaryTree | undefined;
+        let fullSummary: ISummaryTree | undefined;
+        let event: PerformanceEvent | undefined;
+        let props;
         if (openMode === OpenMode.CreateNew && odspResolvedUrl.createNewOptions) {
-            appSummary = odspResolvedUrl.createNewOptions.appSummary;
-            protocolSummary = odspResolvedUrl.createNewOptions.protocolSummary;
+            event = PerformanceEvent.start(templogger, { eventName: "CreateNew" });
+            fullSummary = odspResolvedUrl.createNewOptions.fullSummary;
             odspResolvedUrl = await createNewFluidFile(
                 getStorageToken,
                 odspResolvedUrl.createNewOptions.newFileInfoPromise,
                 cache);
+                props = {
+                    hashedDocumentId: odspResolvedUrl.hashedDocumentId,
+                    itemId: odspResolvedUrl.itemId,
+                };
+            if (!fullSummary) {
+                event.end(props, "WithoutSummary");
+            }
         }
         const documentService = new OdspDocumentService(
             appId,
@@ -97,11 +108,24 @@ export class OdspDocumentService implements IDocumentService {
             cache,
             isFirstTimeDocumentOpened,
         );
-        if (openMode === OpenMode.CreateNew && appSummary && protocolSummary) {
+        if (openMode === OpenMode.CreateNew && fullSummary) {
             const summaryContext: ISummaryContext = { proposalHandle: undefined, ackHandle: undefined};
-            const storageService = (await documentService.connectToStorage()) as OdspDocumentStorageService;
+            documentService.storageService = await documentService.connectToStorage();
+            const appSummary: ISummaryTree | undefined = fullSummary.tree[".app"] as ISummaryTree;
+            const protocolSummary: ISummaryTree | undefined = fullSummary.tree[".protocol"] as ISummaryTree;
+            if (!(appSummary && protocolSummary)) {
+                throw new Error("App and protocol summary required for create new path!!");
+            }
+            const storageService = documentService.storageService;
             const appHandle = await storageService.uploadSummaryWithContext(appSummary, summaryContext);
-            await storageService.uploadSummaryWithContextForCreateNew(protocolSummary, appHandle);
+            const fullTreeHandle = await storageService.uploadSummaryWithContextForCreateNew(protocolSummary, appHandle);
+            if (props) {
+                props.appHandle = appHandle;
+                props.fullTreeHandle = fullTreeHandle;
+            }
+            if (event) {
+                event.end(props, "WithSummary");
+            }
         }
         return documentService;
     }
@@ -158,7 +182,7 @@ export class OdspDocumentService implements IDocumentService {
         this.logger = DebugLogger.mixinDebugLogger(
             "fluid:telemetry:OdspDriver",
             logger,
-            { docId: hashedDocumentId, odc: isOdcUrl(snapshotStorageUrl) });
+            { docId: hashedDocumentId, odc: isOdcUrl(snapshotStorageUrl) });        
 
         this.getStorageToken = async (refresh: boolean, name?: string) => {
             if (refresh) {
@@ -198,12 +222,23 @@ export class OdspDocumentService implements IDocumentService {
         this.localStorageAvailable = isLocalStorageAvailable();
     }
 
+    private get storageService(): OdspDocumentStorageService | undefined {
+        return this._storageService;
+    }
+
+    private set storageService(storageService: OdspDocumentStorageService| undefined) {
+        this._storageService = storageService;
+    }
+
     /**
      * Connects to a storage endpoint for snapshot service.
      *
      * @returns returns the document storage service for sharepoint driver.
      */
-    public async connectToStorage(): Promise<IDocumentStorageService> {
+    public async connectToStorage(): Promise<OdspDocumentStorageService> {
+        if (this.storageService) {
+            return this.storageService;
+        }
         const latestSha: string | null | undefined = undefined;
         this.storageManager = new OdspDocumentStorageManager(
             { app_id: this.appId },

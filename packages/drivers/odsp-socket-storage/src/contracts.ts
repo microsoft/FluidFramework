@@ -9,8 +9,7 @@ import * as api from "@microsoft/fluid-protocol-definitions";
 import { INewFileInfo } from "./createFile";
 
 export interface ICreateNewOptions {
-    appSummary?: api.ISummaryTree,
-    protocolSummary?: api.ISummaryTree,
+    fullSummary?: api.ISummaryTree,
     newFileInfoPromise: Promise<INewFileInfo>,
 }
 

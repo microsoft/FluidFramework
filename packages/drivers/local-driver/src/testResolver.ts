@@ -13,13 +13,11 @@ import {
 import {
     ScopeType,
     ISummaryTree,
-    ISummaryBlob,
-    IDocumentAttributes,
-    ICommittedProposal,
 } from "@microsoft/fluid-protocol-definitions";
 import { generateToken } from "@microsoft/fluid-server-services-client";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { IExperimentalDocumentStorage } from "@microsoft/fluid-server-services-core";
+import { getDocAttributesAndQuorumValuesFromProtocolSummary } from "@microsoft/fluid-driver-utils";
 
 /**
  * Resolves URLs by providing fake URLs which succeed with the other
@@ -46,8 +44,7 @@ export class TestResolver implements IUrlResolver, IExperimentalUrlResolver {
     }
 
     public async createContainer(
-        appSummary: ISummaryTree,
-        protocolSummary: ISummaryTree,
+        fullSummary: ISummaryTree,
         request: IRequest,
     ): Promise<IResolvedUrl> {
         if (!this.testDeltaConnectionServer) {
@@ -59,11 +56,14 @@ export class TestResolver implements IUrlResolver, IExperimentalUrlResolver {
             throw new Error("Storage has no experimental features!!");
         }
 
-        const quorumValuesBlob = protocolSummary.tree.quorumValues as ISummaryBlob;
-        const attributesBlob = protocolSummary.tree[".attributes"] as ISummaryBlob;
-        const quorumValues = JSON.parse(quorumValuesBlob.content as string) as [string, ICommittedProposal][];
-        const attributes = JSON.parse(attributesBlob.content as string) as IDocumentAttributes;
-        const sequenceNumber = attributes.sequenceNumber;
+        const protocolSummary = fullSummary.tree[".protocol"] as ISummaryTree;
+        const appSummary = fullSummary.tree[".app"] as ISummaryTree;
+        if (!(protocolSummary && appSummary)) {
+            throw new Error("Protocol and App Summary required in the full summary");
+        }
+        const {documentAttributes, quorumValues} =
+            getDocAttributesAndQuorumValuesFromProtocolSummary(protocolSummary);
+        const sequenceNumber = documentAttributes.sequenceNumber;
         await expDocumentStorage.createDocument(
             this.tenantId,
             this.id,

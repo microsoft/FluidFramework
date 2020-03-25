@@ -7,7 +7,7 @@ import * as assert from "assert";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IUrlResolver, OpenMode, IExperimentalUrlResolver } from "@microsoft/fluid-driver-definitions";
 import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
-import { IOdspResolvedUrl } from "./contracts";
+import { IOdspResolvedUrl, ICreateNewOptions } from "./contracts";
 import { getHashedDocumentId } from "./odspUtils";
 import { isOdcOrigin } from "./isOdc";
 
@@ -39,31 +39,15 @@ export class OdspDriverUrlResolver implements IUrlResolver, IExperimentalUrlReso
     constructor() { }
 
     public async resolve(request: IRequest): Promise<IOdspResolvedUrl> {
-        if (request.headers && request.headers.openMode === OpenMode.CreateNew && request.headers.newFileInfoPromise) {
-            const [, queryString] = request.url.split("?");
-
-            const searchParams = new URLSearchParams(queryString);
-
-            const uniqueId = searchParams.get("uniqueId");
-            if (uniqueId === null) {
-                throw new Error("ODSP URL for new file should contain the uniqueId");
-            }
-            return {
-                type: "fluid",
-                endpoints: {
-                    snapshotStorageUrl: "",
-                },
-                openMode: OpenMode.CreateNew,
-                createNewOptions: {
+        if (request.headers) {
+            assert((request.headers.openMode === OpenMode.CreateNew)
+                === (request.headers.newFileInfoPromise !== undefined));
+            if (request.headers.newFileInfoPromise) {
+                const createNewOptions: ICreateNewOptions = {
                     newFileInfoPromise: request.headers.newFileInfoPromise,
-                },
-                tokens: {},
-                url: `fluid-odsp://placeholder/placeholder/${uniqueId}?version=null`,
-                hashedDocumentId: "",
-                siteUrl: "",
-                driveId: "",
-                itemId: "",
-            };
+                };
+                return this.resolveHelperForCreateNew(request.url, createNewOptions);
+            }
         }
         const { siteUrl, driveId, itemId, path } = this.decodeOdspUrl(request.url);
         const hashedDocumentId = getHashedDocumentId(driveId, itemId);
@@ -94,39 +78,44 @@ export class OdspDriverUrlResolver implements IUrlResolver, IExperimentalUrlReso
     }
 
     public async createContainer(
-        appSummary: ISummaryTree,
-        protocolSummary: ISummaryTree,
+        fullSummary: ISummaryTree,
         request: IRequest,
     ): Promise<IOdspResolvedUrl> {
-        if (request.headers && request.headers.openMode === OpenMode.CreateNew && request.headers.newFileInfoPromise) {
-            const [, queryString] = request.url.split("?");
-
-            const searchParams = new URLSearchParams(queryString);
-
-            const uniqueId = searchParams.get("uniqueId");
-            if (uniqueId === null) {
-                throw new Error("ODSP URL for new file should contain the uniqueId");
-            }
-            return {
-                type: "fluid",
-                endpoints: {
-                    snapshotStorageUrl: "",
-                },
-                openMode: OpenMode.CreateNew,
-                createNewOptions: {
-                    appSummary,
-                    protocolSummary,
-                    newFileInfoPromise: request.headers.newFileInfoPromise,
-                },
-                tokens: {},
-                url: `fluid-odsp://placeholder/placeholder/${uniqueId}?version=null`,
-                hashedDocumentId: "",
-                siteUrl: "",
-                driveId: "",
-                itemId: "",
-            };
+        if(!request.headers) {
+            throw new Error("Request should contian headers!!");
         }
-        throw new Error("Headers does not contain the right info");
+        assert(request.headers.openMode === OpenMode.CreateNew);
+        assert(request.headers.newFileInfoPromise);
+        const createNewOptions: ICreateNewOptions = {
+            fullSummary,
+            newFileInfoPromise: request.headers.newFileInfoPromise,
+        };
+        return this.resolveHelperForCreateNew(request.url, createNewOptions);
+    }
+
+    private resolveHelperForCreateNew(url: string, createNewOptions: ICreateNewOptions): IOdspResolvedUrl {
+        const [, queryString] = url.split("?");
+
+        const searchParams = new URLSearchParams(queryString);
+
+        const uniqueId = searchParams.get("uniqueId");
+        if (uniqueId === null) {
+            throw new Error("ODSP URL for new file should contain the uniqueId");
+        }
+        return {
+            type: "fluid",
+            endpoints: {
+                snapshotStorageUrl: "",
+            },
+            openMode: OpenMode.CreateNew,
+            createNewOptions,
+            tokens: {},
+            url: `fluid-odsp://placeholder/placeholder/${uniqueId}?version=null`,
+            hashedDocumentId: "",
+            siteUrl: "",
+            driveId: "",
+            itemId: "",
+        };
     }
 
     private decodeOdspUrl(url: string): { siteUrl: string; driveId: string; itemId: string; path: string } {

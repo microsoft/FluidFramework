@@ -9,3 +9,4 @@ export * from "./documentStorageServiceProxy";
 export * from "./network";
 export * from "./readAndParse";
 export * from "./error";
+export * from "./summaryForCreateNew";

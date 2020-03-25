@@ -14,13 +14,11 @@ import {
     ITokenClaims,
     IUser,
     ISummaryTree,
-    ISummaryBlob,
-    IDocumentAttributes,
-    ICommittedProposal,
 } from "@microsoft/fluid-protocol-definitions";
 import Axios from "axios";
 import * as jwt from "jsonwebtoken";
 import { getRandomName } from "@microsoft/fluid-server-services-client";
+import { getDocAttributesAndQuorumValuesFromProtocolSummary } from "@microsoft/fluid-driver-utils";
 
 /**
  * As the name implies this is not secure and should not be used in production. It simply makes the example easier
@@ -106,22 +104,24 @@ export class InsecureUrlResolver implements IUrlResolver, IExperimentalUrlResolv
     }
 
     public async createContainer(
-        appSummary: ISummaryTree,
-        protocolSummary: ISummaryTree,
+        fullSummary: ISummaryTree,
         request: IRequest,
     ): Promise<IResolvedUrl> {
         const id = getRandomName("-", false);
-        const quorumValuesBlob = protocolSummary.tree.quorumValues as ISummaryBlob;
-        const attributesBlob = protocolSummary.tree[".attributes"] as ISummaryBlob;
-        const values = JSON.parse(quorumValuesBlob.content as string) as [string, ICommittedProposal][];
-        const attributes = JSON.parse(attributesBlob.content as string) as IDocumentAttributes;
+        const protocolSummary = fullSummary.tree[".protocol"] as ISummaryTree;
+        const appSummary = fullSummary.tree[".app"] as ISummaryTree;
+        if (!(protocolSummary && appSummary)) {
+            throw new Error("Protocol and App Summary required in the full summary");
+        }
+        const {documentAttributes, quorumValues} =
+            getDocAttributesAndQuorumValuesFromProtocolSummary(protocolSummary);
         await Axios.post(
             `${this.ordererUrl}/documents/${this.tenantId}`,
             {
                 id,
                 summary: appSummary,
-                sequenceNumber: attributes.sequenceNumber,
-                values,
+                sequenceNumber: documentAttributes.sequenceNumber,
+                values: quorumValues,
             });
 
         return this.resolveHelper(id);

@@ -595,6 +595,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             tree: fullSummary,
         });
         if (!result || !result.sha) {
+            this.logger.sendErrorEvent({eventName: "FailedSummaryTreeWriteInCreateNew"});
             throw new Error(`Failed to write summary tree`);
         }
         if (blobsShaToPathCacheLatest) {
@@ -641,10 +642,10 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         const snapshotTree = await this.convertSummaryToSnapshotTree(summary, blobsShaToPathCacheLatest);
 
         const snapshot = {
-            entries: snapshotTree.entries!,
+            entries: snapshotTree.entries ?? [],
             message: "app",
             sequenceNumber: 1,
-            sha: snapshotTree.id!,
+            sha: snapshotTree.id,
             type: SnapshotType.Container,
             ops: [{
                 op: {
@@ -656,8 +657,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     sequenceNumber: 1,
                     timestamp: Date.now(),
                     traces: [],
-                    type: "join",
-                    data: "{\"clientId\":\"1300c20a-7744-443b-91b7-8cadb8d51b45\",\"detail\":{\"user\":{\"id\":\"garywilb@microsoft.com\",\"name\":\"garywilb@microsoft.com\",\"email\":\"garywilb@microsoft.com\"},\"scopes\":[\"doc:read\",\"doc:write\",\"summary:write\"],\"permission\":[],\"details\":{\"capabilities\":{\"interactive\":true}}}}",
+                    type: api.MessageType.NoOp,
                 },
                 sequenceNumber: 1,
             }],
