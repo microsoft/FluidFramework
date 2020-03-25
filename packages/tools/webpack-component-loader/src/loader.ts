@@ -27,7 +27,7 @@ import * as uuid from "uuid/v4";
 import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
 import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 import { InsecureUrlResolver } from "@microsoft/fluid-test-runtime-utils";
-import { extractPackageIdentifierDetails} from "@microsoft/fluid-web-code-loader";
+import { extractPackageIdentifierDetails } from "@microsoft/fluid-web-code-loader";
 import { OdspUrlResolver } from "./odspUrlResolver";
 
 export interface IDevServerUser extends IUser {
@@ -95,7 +95,7 @@ function wrapIfComponentPackage(packageJson: IFluidPackage, fluidModule: IFluidM
             ]),
         );
         return {
-            fluidExport:{
+            fluidExport: {
                 IRuntimeFactory: runtimeFactory,
                 IComponentFactory: componentFactory,
             },
@@ -161,27 +161,27 @@ function makeSideBySideDiv(divId?: string) {
     return div;
 }
 
-class WebpackCodeResolver implements IFluidCodeResolver{
-    constructor(private readonly options: IBaseRouteOptions){}
+class WebpackCodeResolver implements IFluidCodeResolver {
+    constructor(private readonly options: IBaseRouteOptions) { }
     async resolveCodeDetails(details: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails> {
         const baseUrl = details.config.cdn ?? `http://localhost:${this.options.port}`;
         let pkg = details.package;
-        if(typeof pkg === "string"){
+        if (typeof pkg === "string") {
             const resp = await fetch(`${baseUrl}/package.json`);
             pkg = await resp.json() as IFluidPackage;
         }
-        if(!isFluidPackage(pkg)){
+        if (!isFluidPackage(pkg)) {
             throw new Error("Not a fluid package");
         }
         const files = pkg.fluid.browser.umd.files;
-        for(let i=0;i<pkg.fluid.browser.umd.files.length;i++){
-            if(!files[i].startsWith("http")){
+        for (let i = 0; i < pkg.fluid.browser.umd.files.length; i++) {
+            if (!files[i].startsWith("http")) {
                 files[i] = `${baseUrl}/${files[i]}`;
             }
         }
         const parse = extractPackageIdentifierDetails(details.package);
-        return{
-            config:details.config,
+        return {
+            config: details.config,
             package: details.package,
             resolvedPackage: pkg,
             resolvedPackageCacheId: parse.fullId,
@@ -233,9 +233,9 @@ export async function start(
     // Construct a request
     const url = window.location.href;
 
-    const codeDetails: IFluidCodeDetails ={
-        package:packageJson,
-        config:{},
+    const codeDetails: IFluidCodeDetails = {
+        package: packageJson,
+        config: {},
     };
     const packageSeed: [IFluidCodeDetails, IFluidModule] =
         [codeDetails, wrapIfComponentPackage(packageJson, fluidModule)];
@@ -288,21 +288,33 @@ export async function start(
 }
 
 async function startRendering(container: Container, baseHost: BaseHost, url: string, div: HTMLDivElement) {
-    container.on("contextChanged", (value) => {
-        getComponentAndRender(baseHost, url, div).catch(() => { });
+    const p = new Promise((resolve, reject) => {
+        const tryGetComponentAndRender = () => {
+            getComponentAndRender(baseHost, url, div).then((success) => {
+                if (success) {
+                    resolve();
+                }
+            }).catch((error) => reject(error));
+        };
+
+        container.on("contextChanged", (value) => {
+            tryGetComponentAndRender();
+        });
+        tryGetComponentAndRender();
     });
-    await getComponentAndRender(baseHost, url, div);
+    return p;
 }
 
 async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
     const component = await baseHost.getComponent(url);
     if (component === undefined) {
-        return;
+        return false;
     }
 
     // Render the component with an HTMLViewAdapter to abstract the UI framework used by the component
     const view = new HTMLViewAdapter(component);
     view.render(div, { display: "block" });
+    return true;
 }
 
 export function getUserToken(bearerSecret: string) {
