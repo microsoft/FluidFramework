@@ -137,7 +137,14 @@ export class KafkaNodeConsumer implements IConsumer {
         this.consumerGroup.on("rebalanced", async () => {
             const payloads = (this.consumerGroup as any).topicPayloads;
             const partitions = this.getPartitions(payloads);
-            const partitionsWithEpoch = await this.fetchPartitionEpochs(partitions);
+
+            let partitionsWithEpoch: IPartitionWithEpoch[];
+            try {
+                partitionsWithEpoch = await this.fetchPartitionEpochs(partitions);
+            } catch(err) {
+                this.events.emit("error", err);
+            }
+
             this.events.emit("rebalanced", partitionsWithEpoch);
         });
 
@@ -164,7 +171,7 @@ export class KafkaNodeConsumer implements IConsumer {
 
     private async fetchPartitionEpochs(partitions: IPartition[]): Promise<IPartitionWithEpoch[]> {
         if (this.zookeeperEndpoint) {
-            const epochsP: Promise<number>[] = [];
+            const epochsP = new Array<Promise<number>>();
             for (const partition of partitions) {
                 epochsP.push(this.zookeeper.getPartitionLeaderEpoch(this.topic, partition.partition));
             }
@@ -177,7 +184,7 @@ export class KafkaNodeConsumer implements IConsumer {
             }
             return partitionsWithEpoch;
         } else {
-            return new Array(partitions.length).fill(-1);
+            return new Array(partitions.length).fill(0);
         }
     }
 }
