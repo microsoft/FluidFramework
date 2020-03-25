@@ -4,18 +4,11 @@
  */
 
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
-import {
-    IComponentHandle,
-    IComponentHTMLView,
-} from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
-import { IComponentReactViewable } from "@microsoft/fluid-view-adapters";
-import * as React from "react";
-import * as ReactDOM from "react-dom";
 import { TodoItem, TodoItemName } from "../TodoItem/index";
-import { TodoView } from "./TodoView";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../../package.json");
@@ -28,18 +21,12 @@ export const TodoName = `${pkg.name as string}-todo`;
  * - New todo item entry
  * - List of todo items
  */
-export class Todo extends PrimedComponent implements
-    IComponentHTMLView,
-    IComponentReactViewable {
-
+export class Todo extends PrimedComponent {
     // DDS ids stored as variables to minimize simple string mistakes
     private readonly todoItemsKey = "todo-items";
     private readonly todoTitleKey = "todo-title";
 
     private todoItemsMap: ISharedMap;
-
-    public get IComponentHTMLView() { return this; }
-    public get IComponentReactViewable() { return this; }
 
     // Would prefer not to hand this out, and instead give back a title component?
     public async getTodoTitleString() {
@@ -70,42 +57,9 @@ export class Todo extends PrimedComponent implements
         });
     }
 
-    // start IComponentHTMLView
-
-    /**
-     * Creates a new view for a caller that doesn't directly support React
-     */
-    public render(div: HTMLElement) {
-        // Because we are using React and our caller is not we will use the
-        // ReactDOM to render our JSX.Element directly into the provided div.
-        // Because we support IComponentReactViewable and createViewElement returns a JSX.Element
-        // we can just call that and minimize duplicate code.
-        ReactDOM.render(
-            this.createJSXElement(),
-            div,
-        );
-    }
-
-    // end IComponentHTMLView
-
-    // start IComponentReactViewable
-
-    /**
-     * If our caller supports React they can query against the IComponentReactViewable
-     * Since this returns a JSX.Element it allows for an easier model.
-     */
-    public createJSXElement(): JSX.Element {
-        return (
-            <TodoView todoModel={this} />
-        );
-    }
-
-    // end IComponentReactViewable
-
     // start public API surface for the Todo model, used by the view
 
     public async addTodoItemComponent(props?: any) {
-
         // Create a new todo item
         const componentRuntime: IComponentRuntime = await this.context.createComponent(undefined, TodoItemName, props);
         await componentRuntime.request({ url: "/" });

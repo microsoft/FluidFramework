@@ -42,7 +42,7 @@ export class TodoItemView extends React.Component<TodoItemViewProps, TodoItemVie
 
         const baseUrl = this.props.todoItemModel.getBaseUrl();
         const url = new URL(baseUrl);
-        this.itemUrl = `${url.origin}${url.pathname}/${this.props.todoItemModel.url}${url.search}`;
+        this.itemUrl = `${url.origin}${url.pathname}/TodoItemView/${this.props.todoItemModel.url}${url.search}`;
 
         this.state = {
             checked: this.props.todoItemModel.getCheckedState(),
