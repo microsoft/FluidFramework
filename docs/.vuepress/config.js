@@ -9,6 +9,17 @@ const process = require("process");
 
 const fluidVarGroup = process.env[`FLUID_VAR_GROUP`] || "internal";
 
+const internalOnly = (obj) => {
+    if (fluidVarGroup !== "internal") {
+        return null;
+    }
+    return obj;
+};
+
+const compact = (input) => {
+    return input.filter(x=>x);
+};
+
 const listPages = (dirPath, includeIndex = false) => {
     dirPath = path.join(__dirname, dirPath);
     let pages = [];
@@ -30,13 +41,6 @@ const listPages = (dirPath, includeIndex = false) => {
 };
 
 const getNav = () => {
-    const internalOnly = (navItem) => {
-        if (fluidVarGroup !== "internal") {
-            return null;
-        }
-        return navItem;
-    };
-
     let nav = [
         { text: "What is Fluid?", link: "/what-is-fluid" },
         { text: "Guide", link: "/guide/" },
@@ -75,8 +79,8 @@ const getNav = () => {
 
     function filterFalsy(item) {
         console.log(`item: ${item}`);
-        if(item){
-            if(item.items) {
+        if (item) {
+            if (item.items) {
                 console.log("about to recurse!");
                 item.items = item.items.filter(filterFalsy);
             }
@@ -226,13 +230,13 @@ const getGuideSidebar = () => {
         {
             title: "Guide",
             collapsable: false,
-            children: [
+            children: compact([
                 "",
                 "spfx.md",
                 "upload.md",
-                // "yo-fluid",
-                // "water-park",
-            ]
+                internalOnly("yo-fluid"),
+                internalOnly("water-park"),
+            ])
         },
         {
             title: "Distributed Data Structures",
@@ -275,33 +279,33 @@ const getGuideSidebar = () => {
 }
 
 const getExamplesSidebar = () => {
-    return [
+    return compact([
         "",
         "dice-roller",
         "sudoku",
         "badge",
-        // {
-        //     title: "Components",
-        //     collapsable: true,
-        //     children: [
-        //         "visual-component",
-        //         "data-component",
-        //         "embed-components",
-        //         "cross-component",
-        //         "component-patterns",
-        //         "component-collections",
-        //         "bots",
-        //         "component-best-practices",
-        //     ]
-        // },
-        // {
-        //     title: "Containers",
-        //     collapsable: true,
-        //     children: [
-        //         "singletons",
-        //     ]
-        // },
-    ];
+        internalOnly({
+            title: "Components",
+            collapsable: true,
+            children: [
+                "visual-component",
+                "data-component",
+                "embed-components",
+                "cross-component",
+                "component-patterns",
+                "component-collections",
+                "bots",
+                "component-best-practices",
+            ]
+        }),
+        internalOnly({
+            title: "Containers",
+            collapsable: true,
+            children: [
+                "singletons",
+            ]
+        }),
+    ]);
 }
 
 const getTeamSidebar = () => {
@@ -322,10 +326,11 @@ const getTeamSidebar = () => {
 }
 
 const getHowSidebar = () => {
-    return [
+    return compact([
         "",
         "tob",
-    ];
+        internalOnly("developer-guide"),
+    ]);
 }
 
 const getAdvancedSidebar = () => {
@@ -366,6 +371,24 @@ const getAllSidebars = () => {
         sidebars.all,
         fluidVarGroup === "internal" ? sidebars.internal : {}
     );
+}
+
+const getThemeConfig = () => {
+    let config = {
+        fluidVarGroup: fluidVarGroup,
+        editLinks: true,
+        lastUpdated: false, // "Last Updated",
+        docsDir: "docs",
+        heroSymbol: permalinkSymbol(),
+        smoothScroll: true,
+        sidebarDepth: 1,
+        nav: getNav(),
+        sidebar: getAllSidebars(),
+    };
+    if (fluidVarGroup === "internal") {
+        config.repo = "microsoft/FluidFramework";
+    }
+    return config;
 }
 
 function permalinkSymbol() {
@@ -444,16 +467,5 @@ module.exports = {
                 .use(require("markdown-it-replacements"));
         }
     },
-    themeConfig: {
-        fluidVarGroup: fluidVarGroup,
-        editLinks: true,
-        lastUpdated: false, // "Last Updated",
-        // repo: "microsoft/FluidFramework",
-        docsDir: "docs",
-        heroSymbol: permalinkSymbol(),
-        smoothScroll: true,
-        sidebarDepth: 1,
-        nav: getNav(),
-        sidebar: getAllSidebars(),
-    }
+    themeConfig: getThemeConfig(),
 }
