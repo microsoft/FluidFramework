@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime, ISharedObjectRegistry } from "@microsoft/fluid-component-runtime";
 import { ComponentRegistry } from "@microsoft/fluid-container-runtime";
 import {
@@ -18,7 +18,7 @@ import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 // eslint-disable-next-line import/no-internal-modules
 import { SharedComponent } from "../components/sharedComponent";
 
-export class SharedComponentFactory implements IComponentFactory, Partial<IProvideComponentRegistry>  {
+export class SharedComponentFactory implements IComponentFactory, Partial<IProvideComponentRegistry> {
     private readonly sharedObjectRegistry: ISharedObjectRegistry;
     private readonly registry: IComponentRegistry | undefined;
 
@@ -27,6 +27,7 @@ export class SharedComponentFactory implements IComponentFactory, Partial<IProvi
         sharedObjects: readonly ISharedObjectFactory[],
         registryEntries?: NamedComponentRegistryEntries,
         private readonly onDemandInstantiation = true,
+        readonly type: string = "",
     ) {
         if (registryEntries !== undefined) {
             this.registry = new ComponentRegistry(registryEntries);
@@ -83,5 +84,20 @@ export class SharedComponentFactory implements IComponentFactory, Partial<IProvi
         const instance = new this.ctor(runtime, context);
         await instance.initialize();
         return instance;
+    }
+
+    public async createComponent(context: IComponentContext): Promise<IComponent> {
+        const packagePath = await context.composeSubpackagePath(this.type);
+
+        const componentRuntime = await context.hostRuntime.createComponentWithRealizationFn(
+            packagePath,
+            (newContext) => { this.instantiateComponent(newContext); },
+        );
+        const response = await componentRuntime.request({url: "/"});
+        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+            throw new Error("Failed to create component");
+        }
+
+        return response.value as IComponent;
     }
 }

@@ -7,6 +7,7 @@ import { Template } from "@fluid-example/flow-util-lib";
 import { TableDocument, TableDocumentType } from "@fluid-example/table-document";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import {
+    IComponentHandle,
     IComponentHTMLOptions,
     IComponentHTMLView,
 } from "@microsoft/fluid-component-core-interfaces";
@@ -61,7 +62,7 @@ export class TableView extends PrimedComponent implements IComponentHTMLView {
         elm.append(this.templateRoot);
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.getComponent<TableDocument>(this.root.get<string>(innerDocKey), /* wait: */ true).then((doc) => {
+        this.root.get<IComponentHandle<TableDocument>>(innerDocKey).get().then((doc) => {
             const grid = template.get(this.templateRoot, "grid");
             const gridView = new GridView(doc, this);
             grid.appendChild(gridView.root);
@@ -99,8 +100,8 @@ export class TableView extends PrimedComponent implements IComponentHTMLView {
 
     protected async componentInitializingFirstTime() {
         // Set up internal table doc
-        const doc = await TableDocument.getFactory().createComponent(this.context);
-        this.root.set(innerDocKey, doc.id);
+        const doc = await TableDocument.getFactory().createComponent(this.context) as TableDocument;
+        this.root.set(innerDocKey, doc.handle);
         doc.insertRows(0, 5);
         doc.insertCols(0, 8);
     }
