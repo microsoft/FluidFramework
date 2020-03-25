@@ -10,10 +10,9 @@ import {
     IComponentHTMLView,
     IComponentLoadable,
 } from "@microsoft/fluid-component-core-interfaces";
+import { IDirectory } from "@microsoft/fluid-map";
 import { IPackage } from "@microsoft/fluid-container-definitions";
 import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
-import { MergeTreeDeltaType } from "@microsoft/fluid-merge-tree";
-import { SharedObjectSequence, SubSequence } from "@microsoft/fluid-sequence";
 import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -30,22 +29,24 @@ export class ExternalComponentView extends PrimedComponent implements
     public get IComponentHTMLView() { return this; }
     public get IComponentCollection() { return this; }
 
-    private sequence: SharedObjectSequence<string>;
-    private readonly urlToComponent = new Map<string, IComponent>();
+    private readonly handleToComponent = new Map<IComponentHandle, IComponent>();
     private savedElement: HTMLElement;
+    private componentSubDirectory: IDirectory;
 
     public createCollectionItem<T>(options: T): IComponent {
         // eslint-disable-next-line dot-notation
+        const handle: IComponentHandle = options["handle"];
         const url: string = options["url"];
-        if (!url) {
-            throw new Error("Options do not contain any url!!");
+        if (!handle) {
+            throw new Error("Options do not contain any handle!!");
         }
 
         let loadableComponent: IComponentLoadable;
-        this.getComponent<IComponent>(url)
+        handle.get()
             .then((component) => {
                 if (component.IComponentLoadable) {
-                    this.sequence.insert(this.sequence.getLength(), [url]);
+                    this.handleToComponent.set(handle, component);
+                    this.componentSubDirectory.set(component.url, handle);
                     loadableComponent = { url, IComponentLoadable: component.IComponentLoadable };
                 } else {
                     throw new Error("Component is not an instance of IComponentLoadable!!");
@@ -58,29 +59,20 @@ export class ExternalComponentView extends PrimedComponent implements
     }
 
     public removeCollectionItem(instance: IComponent): void {
-        let componentUrl: string;
         if (instance.IComponentLoadable) {
-            componentUrl = instance.IComponentLoadable.url;
-        }
-        let position: number = 0;
-        const componentsUrl: string[] = this.sequence.getItems(0);
-        while (componentUrl !== componentsUrl[position]) {
-            position += 1;
-        }
-        if (position < componentsUrl.length) {
-            this.sequence.remove(position, position + 1);
-            this.urlToComponent.delete(componentUrl);
+            const url = instance.IComponentLoadable.url;
+            const handle = this.componentSubDirectory.get("url");
+            this.handleToComponent.delete(handle);
+            this.componentSubDirectory.delete(url);
         } else {
-            throw new Error("Component url is not found in sequence. Component not removed!!");
+            throw new Error("Component url is not found in component");
         }
     }
 
     public render(element: HTMLElement) {
-
         if (element === undefined) {
             return;
         }
-
         if (this.savedElement) {
             while (this.savedElement.firstChild) {
                 this.savedElement.removeChild(this.savedElement.firstChild);
@@ -93,9 +85,10 @@ export class ExternalComponentView extends PrimedComponent implements
             const mainDiv = document.createElement("div");
             this.savedElement.appendChild(mainDiv);
 
-            if (this.sequence !== undefined) {
-                this.sequence.getItems(0).forEach((url) => {
-                    const component = this.urlToComponent.get(url);
+            if (this.componentSubDirectory !== undefined) {
+                this.componentSubDirectory.forEach((handle) => {
+                    const component = this.handleToComponent.get(handle);
+                    const componentUrl = component.IComponentLoadable.url;
                     if (component && HTMLViewAdapter.canAdapt(component)) {
                         const renderable = new HTMLViewAdapter(component);
 
@@ -120,17 +113,17 @@ export class ExternalComponentView extends PrimedComponent implements
                             {
                                 display: "block",
                             });
-                        if (!this.root.has(`${url}-height`)) {
+                        if (!this.root.has(`${handle}-height`)) {
                             requestAnimationFrame(() => {
                                 if (componentDiv.getBoundingClientRect().height < 100) {
-                                    this.root.set(`${url}-height`, 100);
+                                    this.root.set(`${handle}-height`, 100);
                                 }
                             });
                         } else {
-                            componentDiv.style.height = `${this.root.get(`${url}-height`)}px`;
+                            componentDiv.style.height = `${this.root.get(`${handle}-height`)}px`;
                         }
-                        this.renderSubComponentButton(url, containerDiv);
-                        this.renderResize(url, containerDiv);
+                        this.renderSubComponentButton(componentUrl, containerDiv);
+                        this.renderResize(componentUrl, containerDiv);
                     }
                 });
             }
@@ -138,55 +131,11 @@ export class ExternalComponentView extends PrimedComponent implements
     }
 
     protected async componentInitializingFirstTime() {
-        const sequence = SharedObjectSequence.create<string>(this.runtime);
-        sequence.register();
-        this.root.set("componentIds", sequence.handle);
+        this.root.createSubDirectory("component-list");
     }
 
     protected async componentHasInitialized() {
-        const seqHandle = await this.root.wait<IComponentHandle<SharedObjectSequence<string>>>("componentIds");
-        this.sequence = await seqHandle.get();
-        const cacheComponentsByUrl = async (urls: string[]) => {
-            const promises =
-                // eslint-disable-next-line @typescript-eslint/promise-function-async
-                urls.map((url) => {
-                    const urlSplit = url.split("/");
-                    if (urlSplit.length > 0) {
-                        return this.context.hostRuntime.getComponentRuntime(urlSplit.shift(), true)
-                            .then(
-                                async (componentRuntime) => componentRuntime.request({ url: `/${urlSplit.join("/")}` }),
-                            ).then((request) => {
-                                this.urlToComponent.set(url, request.value as IComponent);
-                            });
-                    }
-                    return Promise.resolve();
-                });
-            while (promises.length > 0) {
-                await promises.shift();
-            }
-        };
-
-        await cacheComponentsByUrl(this.sequence.getItems(0));
-
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        this.sequence.on("sequenceDelta", async (event) => {
-            if (event.deltaOperation === MergeTreeDeltaType.INSERT) {
-                const items = event.deltaArgs.deltaSegments.reduce<string[]>(
-                    (pv, cv) => {
-                        if (SubSequence.is(cv.segment)) {
-                            pv.push(...cv.segment.items);
-                        }
-                        return pv;
-                    },
-                    []);
-                await cacheComponentsByUrl(items)
-                    .then(() => this.render(this.savedElement))
-                    .catch((e) => {
-                        this.render(this.savedElement);
-                    });
-
-            }
-        });
+        this.componentSubDirectory = this.root.getSubDirectory("component-list");
         this.root.on("valueChanged", () => {
             this.render(this.savedElement);
         });

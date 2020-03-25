@@ -9,6 +9,7 @@ import {
     IComponentHTMLView,
     IComponentLoadable,
     IResponse,
+    IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IPackage } from "@microsoft/fluid-container-definitions";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
@@ -42,8 +43,8 @@ export class ExternalComponentLoader extends PrimedComponent
 
     public get IComponentHTMLView() { return this; }
 
-    public setViewComponent(component: IComponentLoadable) {
-        this.root.set(this.viewComponentMapID, component.IComponentLoadable.url);
+    public setViewComponent(component: IComponentLoadable & PrimedComponent) {
+        this.root.set(this.viewComponentMapID, component.IComponentHandle);
         this.viewComponentP = Promise.resolve(component);
     }
 
@@ -101,9 +102,9 @@ export class ExternalComponentLoader extends PrimedComponent
     }
 
     protected async componentHasInitialized() {
-        const viewComponentUrl: string = this.root.get(this.viewComponentMapID);
-        if (viewComponentUrl) {
-            this.viewComponentP = this.getComponent(viewComponentUrl);
+        const viewComponentHandle = this.root.get<IComponentHandle>(this.viewComponentMapID);
+        if (viewComponentHandle) {
+            this.viewComponentP = viewComponentHandle.get();
         }
     }
 
@@ -153,7 +154,10 @@ export class ExternalComponentLoader extends PrimedComponent
                             // eslint-disable-next-line @typescript-eslint/await-thenable
                             component = await component.IComponentCollection.createCollectionItem();
                         }
-                        viewComponent.IComponentCollection.createCollectionItem(component.IComponentLoadable);
+                        viewComponent.IComponentCollection.createCollectionItem({
+                            handle: component.IComponentHandle,
+                            url: component.IComponentLoadable.url
+                        });
                     } else {
                         throw new Error("View component is empty or is not an IComponentCollection!!");
                     }
