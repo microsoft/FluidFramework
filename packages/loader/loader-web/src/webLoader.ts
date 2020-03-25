@@ -13,8 +13,8 @@ import {
 import { ScriptManager } from "./scriptManager";
 
 export class WebCodeLoader implements ICodeLoader {
-    private static readonly loadedModules = new Map<string, IFluidModule>();
-    private static readonly scriptManager = new ScriptManager();
+    private readonly loadedModules = new Map<string, IFluidModule>();
+    private readonly scriptManager = new ScriptManager();
 
     constructor(
         private readonly codeResolver: IFluidCodeResolver,
@@ -26,12 +26,12 @@ export class WebCodeLoader implements ICodeLoader {
     ): Promise<void>{
         const resolved = await this.codeResolver.resolveCodeDetails(source);
         if(resolved.resolvedPackageCacheId !== undefined
-            && WebCodeLoader.loadedModules.has(resolved.resolvedPackageCacheId)){
+            && this.loadedModules.has(resolved.resolvedPackageCacheId)){
             return;
         }
         const fluidModule = maybeFluidModule ?? await this.load(source);
         if(resolved.resolvedPackageCacheId !== undefined){
-            WebCodeLoader.loadedModules.set(resolved.resolvedPackageCacheId, fluidModule);
+            this.loadedModules.set(resolved.resolvedPackageCacheId, fluidModule);
         }
     }
 
@@ -43,7 +43,7 @@ export class WebCodeLoader implements ICodeLoader {
     ): Promise<IFluidModule> {
         const resolved = await this.codeResolver.resolveCodeDetails(source);
         if(resolved.resolvedPackageCacheId !== undefined){
-            const maybePkg = WebCodeLoader.loadedModules.get(resolved.resolvedPackageCacheId);
+            const maybePkg = this.loadedModules.get(resolved.resolvedPackageCacheId);
             if(maybePkg !== undefined){
                 return maybePkg;
             }
@@ -52,7 +52,7 @@ export class WebCodeLoader implements ICodeLoader {
             throw new Error("Attempted to load invalid code package url");
         }
 
-        const loadedScripts = await WebCodeLoader.scriptManager.loadLibrary(
+        const loadedScripts = await this.scriptManager.loadLibrary(
             resolved.resolvedPackage.fluid.browser.umd,
         );
         let fluidModule: IFluidModule | undefined;
@@ -70,7 +70,7 @@ export class WebCodeLoader implements ICodeLoader {
             throw new Error("Entry point of loaded code package not a fluid module");
         }
         if(resolved.resolvedPackageCacheId !== undefined){
-            WebCodeLoader.loadedModules.set(resolved.resolvedPackageCacheId, fluidModule);
+            this.loadedModules.set(resolved.resolvedPackageCacheId, fluidModule);
         }
         return fluidModule;
     }

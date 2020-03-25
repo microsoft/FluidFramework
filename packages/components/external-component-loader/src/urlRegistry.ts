@@ -40,13 +40,13 @@ export class UrlRegistry implements IComponentRegistry {
     public async get(name: string): Promise<ComponentRegistryEntry> {
 
         if (!this.urlRegistryMap.has(name)) {
-            this.urlRegistryMap.set(name, this.loadEntyrpoint(name));
+            this.urlRegistryMap.set(name, this.loadEntrypoint(name));
         }
 
         return this.urlRegistryMap.get(name);
     }
 
-    private async loadEntyrpoint(name: string): Promise<IComponent>{
+    private async loadEntrypoint(name: string): Promise<IComponent>{
         if(this.isUrl(name)){
             if(!this.loadingPackages.has(name)){
                 this.loadingPackages.set(name, this.loadPackage(name));
