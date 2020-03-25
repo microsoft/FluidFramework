@@ -4,7 +4,11 @@
  */
 
 import { EventEmitter } from "events";
-import { IComponentRuntime, ISharedObjectServices } from "@microsoft/fluid-runtime-definitions";
+import {
+    IComponentRuntime,
+    ISharedObjectServices,
+    IChannelAttributes,
+} from "@microsoft/fluid-runtime-definitions";
 import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 
 export enum ConsensusResult {
@@ -29,7 +33,8 @@ export interface IConsensusOrderedCollectionFactory extends ISharedObjectFactory
         document: IComponentRuntime,
         id: string,
         services: ISharedObjectServices,
-        branchId: string): Promise<IConsensusOrderedCollection>;
+        branchId: string,
+        attributes: IChannelAttributes): Promise<IConsensusOrderedCollection>;
 
     create(document: IComponentRuntime, id: string): IConsensusOrderedCollection;
 }

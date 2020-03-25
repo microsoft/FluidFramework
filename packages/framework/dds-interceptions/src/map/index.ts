@@ -3,5 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export * from "./sequence";
-export * from "./map";
+export * from "./sharedDirectoryWithInterception";
+export * from "./sharedMapWithInterception";
+

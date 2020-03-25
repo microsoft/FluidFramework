@@ -8,7 +8,7 @@ import { PerformanceEvent } from "@microsoft/fluid-common-utils";
 import { ISocketStorageDiscovery } from "./contracts";
 import { IOdspCache } from "./odspCache";
 import { fetchHelper, getWithRetryForTokenRefresh, throwOdspNetworkError } from "./odspUtils";
-import { isOdcOrigin } from "./isOdc";
+import { getApiRoot } from "./odspUrlHelper";
 
 const getOrigin = (url: string) => new URL(url).origin;
 
@@ -55,13 +55,8 @@ export async function fetchJoinSession(
                 headers = { Authorization: `Bearer ${token}` };
             }
 
-            let prefix = "_api/";
-            if (isOdcOrigin(siteOrigin)) {
-                prefix = "";
-            }
-
             const response = await fetchHelper(
-                `${siteOrigin}/${prefix}v2.1/drives/${driveId}/items/${itemId}/${path}?${queryParams}`,
+                `${getApiRoot(siteOrigin)}/drives/${driveId}/items/${itemId}/${path}?${queryParams}`,
                 { method, headers },
             );
 

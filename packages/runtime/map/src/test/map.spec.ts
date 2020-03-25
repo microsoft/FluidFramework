@@ -218,7 +218,7 @@ describe("Routerlicious", () => {
                     });
 
                     const services = new MockSharedObjectServices({header: content});
-                    const map2 = await factory.load(runtime, "mapId", services, "branchId");
+                    const map2 = await factory.load(runtime, "mapId", services, "branchId", factory.attributes);
                     assert(map2.get("key") === "value");
                 });
 
@@ -240,7 +240,7 @@ describe("Routerlicious", () => {
                     assert((tree.entries[0].value as IBlob).contents === content);
 
                     const services = new MockSharedObjectServices({header: content});
-                    const map2 = await factory.load(runtime, "mapId", services, "branchId");
+                    const map2 = await factory.load(runtime, "mapId", services, "branchId", factory.attributes);
                     assert(map2.get("key") === "value");
                 });
 
@@ -288,7 +288,7 @@ describe("Routerlicious", () => {
                         header: content1,
                         blob0: content2,
                     });
-                    const map2 = await factory.load(runtime, "mapId", services, "branchId");
+                    const map2 = await factory.load(runtime, "mapId", services, "branchId", factory.attributes);
                     assert(map2.get("key") === "value");
                     assert(map2.get("longValue") === longString);
                     assert(map2.get("zzz") === "the end");
