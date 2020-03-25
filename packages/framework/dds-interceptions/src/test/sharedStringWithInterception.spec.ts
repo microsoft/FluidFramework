@@ -21,7 +21,6 @@ describe("Shared String with Interception", () => {
         const documentId = "fakeId";
         let deltaConnectionFactory: MockDeltaConnectionFactory;
         let sharedString: SharedString;
-        let sharedStringWithInterception: SharedString;
         let componentContext: IComponentContext;
 
         function orderSequentially(callback: () => void): void {
@@ -56,11 +55,12 @@ describe("Shared String with Interception", () => {
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             componentContext = { hostRuntime: { orderSequentially } } as IComponentContext;
-            sharedStringWithInterception =
-                createSharedStringWithInterception(sharedString, componentContext, propertyInterceptionCb);
         });
 
         it("should be able to intercept SharedString methods by the wrapper", async () => {
+            const sharedStringWithInterception =
+                createSharedStringWithInterception(sharedString, componentContext, propertyInterceptionCb);
+
             // Insert text into shared string.
             let text: string = "123";
             let syleProps: PropertySet = { style: "bold" };
@@ -80,6 +80,9 @@ describe("Shared String with Interception", () => {
         });
 
         it("should be able to see changes made by the wrapper from the underlying shared string", async () => {
+            const sharedStringWithInterception =
+                createSharedStringWithInterception(sharedString, componentContext, propertyInterceptionCb);
+
             // Insert text via the shared string with interception wrapper.
             let text: string = "123";
             let syleProps: PropertySet = { style: "bold" };
@@ -102,6 +105,9 @@ describe("Shared String with Interception", () => {
         });
 
         it("should be able to see changes made by the underlying shared string from the wrapper", async () => {
+            const sharedStringWithInterception =
+                createSharedStringWithInterception(sharedString, componentContext, propertyInterceptionCb);
+
             // Insert text via the underlying shared string.
             let text: string = "123";
             let syleProps: PropertySet = { style: "bold" };
@@ -121,6 +127,60 @@ describe("Shared String with Interception", () => {
             sharedString.annotateRange(0, 5, colorProps);
             // Verify the text and properties via the interception wrapper. It should not have the user attributes.
             verifyString(sharedStringWithInterception, "12aaa", { ...syleProps, ...colorProps}, 2);
+        });
+
+        /**
+         * This test calls a method on the wrapper from the interception callback which will cause an infinite
+         * recursion. Verify that the wrapper detects this and asserts.
+         * Also, verify that the object is not unusable after the assert.
+         */
+        it("should assert if a wrapper method is called from the callback causing infinite recursion", async () => {
+            // eslint-disable-next-line prefer-const
+            let sharedStringWithInterception: SharedString;
+
+            const propsInRecursiveCb = { fromRecursiveCb: "true" };
+            let useWrapper: boolean = true;
+            // If useWrapper above is true, this interception callback calls a method on the wrapped object
+            // causing an infinite recursion.
+            // If useWrapper is false, it uses the passed shared string which does not cause recursion.
+            function recursiveInterceptionCb(properties?: PropertySet) {
+                const ss = useWrapper ? sharedStringWithInterception : sharedString;
+                ss.annotateRange(0, 1, propsInRecursiveCb);
+                return { ...properties, ...userAttributes };
+            }
+
+            // Create the interception wrapper with the above callback. The set method should throw an assertion as this
+            // will cause infinite recursion.
+            sharedStringWithInterception =
+                createSharedStringWithInterception(sharedString, componentContext, recursiveInterceptionCb);
+
+            let text: string = "123";
+            const props: PropertySet = { style: "bold" };
+            // First, insert text via the unwrapped shared string so that we have something to annotate in the
+            // recursiveInterceptionCb.
+            sharedString.insertText(0, text, props);
+
+            let asserted: boolean = false;
+            try {
+                text = "abc";
+                // Try to replace text.
+                sharedStringWithInterception.replaceText(1, 2, text);
+            } catch (error) {
+                assert(error instanceof assert.AssertionError,
+                    "We should have caught an assert in replaceText because it detects an infinite recursion");
+                asserted = true;
+            }
+            assert.equal(asserted, true, "replaceText should have asserted because it detects inifinite recursion");
+
+            // Verify that the object is still usable:
+            // Set useWrapper to false and call replacetext on the wrapper again. Verify that we do not get an assert.
+            useWrapper = false;
+            text = "test";
+            sharedStringWithInterception.replaceText(2, 3, text, props);
+            verifyString(sharedStringWithInterception, "12test", { ...props, ...userAttributes }, 2);
+
+            // Verify that the annotate on position 0 in the recursiveInterceptionCb annotated the attributes.
+            verifyString(sharedStringWithInterception, "12test", { ...props, ...propsInRecursiveCb }, 0);
         });
     });
 });
