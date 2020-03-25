@@ -15,7 +15,8 @@
         }
     },
     "alfred": {
-        "maxMessageSize": "16KB"
+        "maxMessageSize": "16KB",
+        "maxNumberOfClientsPerDocument": 500
     },
     "mongo": {
         "endpoint": "mongodb://mongodb:27017",

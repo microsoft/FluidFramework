@@ -29,6 +29,7 @@
     "alfred": {
         "kafkaClientId": "alfred",
         "maxMessageSize": "16KB",
+        "maxNumberOfClientsPerDocument": 500,
         "topic": "rawdeltas2",
         "bucket": "snapshots",
         "restJsonSize": "50mb",
