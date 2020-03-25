@@ -14,7 +14,7 @@ import * as safeStringify from "json-stringify-safe";
 import * as jwt from "jsonwebtoken";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import { getConfig, getParam, getUserDetails } from "../utils";
+import { getConfig, getUserDetails } from "../utils";
 import { defaultPartials } from "./partials";
 
 function createLoaderScript(
@@ -70,11 +70,11 @@ export function create(
         const documentId = rawPath.substring(0, slash !== -1 ? slash : rawPath.length);
         const path = rawPath.substring(slash !== -1 ? slash : rawPath.length);
 
-        const tenantId = getParam(request.params, "tenantId");
+        const tenantId = request.params.tenantId;
         const chaincode = request.query.chaincode;
 
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        const user: IAlfredUser = (request.user) ? {
+        const user: IAlfredUser | undefined = (request.user) ? {
             displayName: request.user.name,
             id: request.user.oid,
             name: request.user.name,

@@ -17,7 +17,7 @@ import * as winston from "winston";
 import { spoEnsureLoggedIn } from "../gatewayOdspUtils";
 import { resolveUrl } from "../gatewayUrlResolver";
 import { IAlfred, IKeyValueWrapper } from "../interfaces";
-import { getConfig, getJWTClaims, getParam, getUserDetails } from "../utils";
+import { getConfig, getJWTClaims, getUserDetails } from "../utils";
 import { defaultPartials } from "./partials";
 
 export function create(
@@ -72,7 +72,7 @@ export function create(
                 const documentId = rawPath.substring(0, slash !== -1 ? slash : rawPath.length);
                 const path = rawPath.substring(slash !== -1 ? slash : rawPath.length);
 
-                const tenantId = getParam(request.params, "tenantId");
+                const tenantId = request.params.tenantId;
 
                 const search = parse(request.url).search;
                 const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
@@ -84,7 +84,6 @@ export function create(
                     tenantId,
                     config.get("error:track"));
 
-                // eslint-disable-next-line @typescript-eslint/promise-function-async
                 const pkgP = fullTreeP.then((fullTree) => {
                     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     if (fullTree && fullTree.code) {
@@ -133,15 +132,12 @@ export function create(
                 });
 
                 const scriptsP = pkgP.then((pkg) => {
-                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-                    if (!pkg) {
+                    if (pkg === undefined) {
                         return [];
                     }
 
-                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-                    const umd = pkg.pkg.fluid && pkg.pkg.fluid.browser && pkg.pkg.fluid.browser.umd;
-                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-                    if (!umd) {
+                    const umd = pkg.pkg.fluid?.browser?.umd;
+                    if (umd === undefined) {
                         return [];
                     }
 
@@ -164,11 +160,14 @@ export function create(
 
                 Promise.all([resolvedP, fullTreeP, pkgP, scriptsP, timingsP])
                     .then(([resolved, fullTree, pkg, scripts, timings]) => {
-                        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-                        resolved.url += path + (search ? search : "");
+                        // Bug in TS3.7: https://github.com/microsoft/TypeScript/issues/33752
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        resolved!.url += path + (search ?? "");
                         winston.info(`render ${tenantId}/${documentId} +${Date.now() - start}`);
 
-                        timings.push(Date.now() - start);
+                        // Bug in TS3.7: https://github.com/microsoft/TypeScript/issues/33752
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        timings!.push(Date.now() - start);
 
                         response.render(
                             "loader",

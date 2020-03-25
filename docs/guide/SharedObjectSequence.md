@@ -5,7 +5,7 @@ uid: SharedObjectSequence
 # SharedObjectSequence
 
 - Package: [@microsoft/fluid-sequence](../api/fluid-sequence.md)
-- API documentation: [SharedObjectSequence](../api/fluid-sequence.SharedObjectSequence.md)
+- API documentation: [SharedObjectSequence](../api/fluid-sequence.sharedobjectsequence.md)
 
 The SharedObjectSequence distributed data structure can be used to store sequences of objects.
 

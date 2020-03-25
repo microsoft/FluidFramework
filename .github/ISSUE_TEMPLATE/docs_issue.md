@@ -11,15 +11,16 @@ assignees: ''
 <!-- See the "Edit this page" link at the bottom of the page in the docs -->
 
 ### Issue Category
+<!-- Choose one, delete the rest -->
 
-- [ ] Typo _(consider submitting a PR instead of opening this issue!)_
+- Typo or editorial suggestion <!-- consider submitting a PR instead of opening this issue! -->
   - **Link to page:**
-- [ ] Incorrect/Outdated information
+- Incorrect/Outdated information
   - **Link to page:**
-- [ ] Can't find an answer to a specific question
-- [ ] Missing page/section/topic
-- [ ] Organization/Navigation suggestion
-- [ ] Other
+- Can't find an answer to a specific question
+- Missing page/section/topic
+- Organization/Navigation suggestion
+- Other
 
 ### Details
 <!-- Please put specific details about the typo, error, missing info, suggestion, etc here-->
