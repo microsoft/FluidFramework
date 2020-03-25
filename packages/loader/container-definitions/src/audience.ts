@@ -11,6 +11,9 @@ import { IClient } from "@microsoft/fluid-protocol-definitions";
  */
 export interface IAudience extends EventEmitter {
 
+    on(event: "addMember", listener: (clientId: string, details: IClient) => void): this;
+    on(event: "removeMember", listener: (clientId: string) => void): this;
+
     getMembers(): Map<string, IClient>;
 
     getMember(clientId: string): IClient | undefined;

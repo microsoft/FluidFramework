@@ -19,7 +19,6 @@ import {
     DocumentServiceFactoryProtocolMatcher,
 } from "@microsoft/fluid-driver-utils";
 import {
-    ConnectionMode,
     IClient,
     IDocumentMessage,
     IVersion,
@@ -87,12 +86,20 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
         const connectedDocumentService: IDocumentService =
             await documentServiceFactory.createDocumentService(this.resolvedUrl);
 
-        const clientDetails = this.options ? (this.options.client as IClient) : null;
-        const mode: ConnectionMode = "write";
+        const clientDetails: IClient = this.options?.client ?
+            (this.options.client as IClient) :
+            {
+                details: {
+                    capabilities: { interactive: true },
+                },
+                mode: "write", // default reconnection mode on lost connection / connection error
+                permission: [],
+                scopes: [],
+                user: { id: "" },
+            };
 
         const [deltaStream, deltaStorage, storage] = await Promise.all([
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            connectedDocumentService.connectToDeltaStream(clientDetails!, mode),
+            connectedDocumentService.connectToDeltaStream(clientDetails),
             connectedDocumentService.connectToDeltaStorage(),
             connectedDocumentService.connectToStorage(),
         ]);

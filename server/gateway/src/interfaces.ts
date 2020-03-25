@@ -11,13 +11,13 @@ import { ITenantManager } from "@microsoft/fluid-server-services-core";
 export interface IAlfred {
     createFork(tenantId: string, id: string): Promise<string>;
 
-    getFullTree(tenantId: string, documentId: string): Promise<{ cache: IGitCache; code: string | IFluidCodeDetails }>;
+    getFullTree(tenantId: string, documentId: string): Promise<{ cache: IGitCache; code: IFluidCodeDetails | null }>;
 
     getVersions(tenantId: string, documentId: string, count: number): Promise<ICommitDetails[]>;
 
     getVersion(tenantId: string, documentId: string, sha: string): Promise<ICommit>;
 
-    getLatestVersion(tenantId: string, documentId: string): Promise<ICommit>;
+    getLatestVersion(tenantId: string, documentId: string): Promise<ICommit | null>;
 
     getTenantManager(): ITenantManager;
 }
