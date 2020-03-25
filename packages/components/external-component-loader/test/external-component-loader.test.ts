@@ -11,6 +11,7 @@ describe("external-component-loader", () => {
 
     beforeEach(async () => {
         await page.goto(globals.PATH, { waitUntil: "load" });
+        await page.waitFor(() => window["fluidStarted"]);
     });
 
     it("There's a button to be clicked", async () => {
