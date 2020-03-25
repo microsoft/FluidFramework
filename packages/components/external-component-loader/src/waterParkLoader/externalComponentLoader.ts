@@ -170,12 +170,11 @@ export class ExternalComponentLoader extends PrimedComponent
                         let component: IComponent = response.value as IComponent;
                         componentRuntime.attach();
                         if (component.IComponentCollection !== undefined) {
-                            // eslint-disable-next-line @typescript-eslint/await-thenable
-                            component = await component.IComponentCollection.createCollectionItem();
+                            component = component.IComponentCollection.createCollectionItem();
                         }
                         viewComponent.IComponentCollection.createCollectionItem({
                             handle: component.IComponentHandle,
-                            url: component.IComponentLoadable.url
+                            url: component.IComponentLoadable.url,
                         });
                     } else {
                         throw new Error("View component is empty or is not an IComponentCollection!!");

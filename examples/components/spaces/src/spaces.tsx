@@ -10,7 +10,7 @@ import {
 import {
     IComponentHTMLView,
     IComponent,
-    IResponse
+    IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IProvideComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { SharedObjectSequence } from "@microsoft/fluid-sequence";

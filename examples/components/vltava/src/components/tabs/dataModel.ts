@@ -41,8 +41,8 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
     constructor(
         public root: ISharedDirectory,
         private readonly internalRegistry: IComponentRegistryDetails,
-        private readonly createAndAttachComponent: 
-        <T extends IComponent & IComponentLoadable>(pkg: string, props?: any) => Promise<T>,
+        private readonly createAndAttachComponent: <T extends IComponent & IComponentLoadable>(pkg: string, props?: any)
+        => Promise<T>,
     ) {
         super();
 
@@ -86,7 +86,6 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
         } else {
             throw Error("Tried to render a tab with no created component");
         }
-        
     }
 
     public getNewTabTypes(): ITabsTypes[] {
