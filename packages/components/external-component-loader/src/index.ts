@@ -10,7 +10,7 @@ import { WaterParkModuleInstantiationFactory } from "./waterParkModuleInstantiat
 // TODO: Why does ComponentToolbar need to be added here
 export const fluidExport = new WaterParkModuleInstantiationFactory(
     new Map([
-        [WaterParkLoaderName, Promise.resolve(WaterParkLoaderInstantiationFactory)],
+        [WaterParkLoaderName, Promise.resolve(WaterParkLoaderInstantiationFactory.getFactory())],
         [SpacesComponentName, Promise.resolve(Spaces.getFactory())],
     ]),
 );

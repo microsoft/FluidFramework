@@ -26,6 +26,7 @@ import {
     IRuntimeState,
     IExperimentalRuntime,
     IExperimentalContainerContext,
+    ICodeLoader,
 } from "@microsoft/fluid-container-definitions";
 import {
     Deferred,
@@ -458,6 +459,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
     public get branch(): string {
         return this.context.branch;
+    }
+
+    public get codeLoader(): ICodeLoader{
+        return this.context.codeLoader;
     }
 
     public get submitFn(): (type: MessageType, contents: any) => number {

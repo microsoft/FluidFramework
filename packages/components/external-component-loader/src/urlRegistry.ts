@@ -6,12 +6,12 @@
 import {
     IFluidPackage,
     isFluidPackage,
-    IContainerContext,
     IFluidCodeDetails,
 } from "@microsoft/fluid-container-definitions";
 import {
     ComponentRegistryEntry,
     IComponentRegistry,
+    IHostRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 
@@ -24,7 +24,7 @@ export class UrlRegistry implements IComponentRegistry {
     private readonly urlRegistryMap = new Map<string, Promise<ComponentRegistryEntry>>();
     private readonly loadingPackages: Map<string, Promise<IFluidPackage>>;
 
-    constructor(private readonly containerContext: IContainerContext) {
+    constructor(private readonly containerRuntime: IHostRuntime) {
 
         // Stash on the window so multiple instance can coordinate
         const loadingPackagesKey = `${UrlRegistry.WindowKeyPrefix}LoadingPackages`;
@@ -56,7 +56,7 @@ export class UrlRegistry implements IComponentRegistry {
                 cdn:"https://pragueauspkn-3873244262.azureedge.net/",
             },
         };
-        const fluidModuel = await this.containerContext.codeLoader.load(codeDetails);
+        const fluidModuel = await this.containerRuntime.codeLoader.load(codeDetails);
         return fluidModuel.fluidExport;
     }
 
