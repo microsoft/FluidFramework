@@ -46,6 +46,7 @@ export interface IServiceError {
 
 export interface ISummarizingError {
     readonly errorType: ErrorType.summarizingError;
+    readonly description: string;
     critical?: boolean;
 }
 
