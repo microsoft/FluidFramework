@@ -21,7 +21,6 @@ import {
     IDeltaManager,
     IGenericBlob,
     ILoader,
-    ICodeLoader,
 } from "@microsoft/fluid-container-definitions";
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import {
@@ -356,7 +355,6 @@ export interface IHostRuntime extends
     readonly submitSignalFn: (contents: any) => void;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly scope: IComponent;
-    readonly codeLoader: ICodeLoader
 
     /**
      * Returns the runtime of the component.
