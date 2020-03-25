@@ -10,6 +10,7 @@ import {
 import {
     IComponentHTMLView,
     IComponent,
+    IResponse
 } from "@microsoft/fluid-component-core-interfaces";
 import { IProvideComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { SharedObjectSequence } from "@microsoft/fluid-sequence";
@@ -54,6 +55,23 @@ export class Spaces extends PrimedComponent
         return this.dataModelInternal;
     }
 
+    public async asComponent<T extends IComponent>(response: Promise<IResponse>): Promise<T> {
+        return super.asComponent<T>(response);
+    }
+
+    /**
+     * Gets the component of a given id. Will follow the pattern of the container for waiting.
+     * @param id - component id
+     */
+    protected async getComponent_UNSAFE<T extends IComponent>(id: string, wait: boolean = true): Promise<T> {
+        const request = {
+            headers: [[wait]],
+            url: `/${id}`,
+        };
+
+        return this.asComponent<T>(this.context.hostRuntime.request(request));
+    }
+
     public get IComponentHTMLView() { return this; }
     public get IComponentCollection() { return this.dataModel; }
     public get IComponentToolbarConsumer() { return this; }
@@ -78,9 +96,8 @@ export class Spaces extends PrimedComponent
     }
 
     protected async componentInitializingFromExisting() {
-        this.componentToolbarId = this.root.get("componentToolbarId");
         this.initializeDataModel();
-        this.componentToolbar = await this.dataModel.getComponentById<ComponentToolbar>(Spaces.componentToolbarId);
+        this.componentToolbar = await this.dataModel.getComponentById<ComponentToolbar>(this.componentToolbarId);
     }
 
     protected async componentHasInitialized() {
@@ -111,8 +128,17 @@ export class Spaces extends PrimedComponent
             new SpacesDataModel(
                 this.root,
                 this.createAndAttachComponent_NEW.bind(this),
-                Spaces.componentToolbarId,
+                this.getComponent_UNSAFE.bind(this),
+                this.componentToolbarId,
             );
+    }
+
+    public async setComponentToolbar(id: string, type: string, url: string) {
+        this.componentToolbarId = id;
+        const componentToolbar = await this.dataModel.setComponentToolbar(id, type, url);
+        this.componentToolbar = componentToolbar;
+        this.root.set("componentToolbarId", id);
+        this.addToolbarListeners();
     }
 
     /**

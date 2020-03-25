@@ -23,6 +23,7 @@ export interface ISpacesDataModel extends EventEmitter {
         h?: number,
         id?: string
     ): Promise<T>;
+    getComponent_UNSAFE<T>(id: string): Promise<T>;
     getComponentById<T extends IComponent>(id: string): Promise<T>;
     removeComponent(id: string): void;
     updateGridItem(id: string, newLayout: Layout): void;
@@ -51,6 +52,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         private readonly createAndAttachComponent: <T extends IComponent & IComponentLoadable>(
             pkg: string,
             props?: any) => Promise<T>,
+        public getComponent_UNSAFE: <T>(id: string) => Promise<T>,
         public componentToolbarId: string,
     ) {
         super();
@@ -180,6 +182,14 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
             handle: currentEntry.handle,
         };
         this.componentSubDirectory.set(id, model);
+    }
+
+    public async getComponent<T>(id: string): Promise<T> {
+        try {
+            return this.getComponentById<T>(id);
+        } catch {
+            return this.getComponent_UNSAFE<T>(id);
+        }
     }
 
     public async getComponentById<T>(id: string): Promise<T> {

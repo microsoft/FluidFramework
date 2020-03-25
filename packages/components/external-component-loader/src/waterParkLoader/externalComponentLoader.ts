@@ -173,14 +173,10 @@ export class ExternalComponentLoader extends PrimedComponent
                             // eslint-disable-next-line @typescript-eslint/await-thenable
                             component = await component.IComponentCollection.createCollectionItem();
                         }
-<<<<<<< HEAD
                         viewComponent.IComponentCollection.createCollectionItem({
                             handle: component.IComponentHandle,
                             url: component.IComponentLoadable.url
                         });
-=======
-                        viewComponent.IComponentCollection.createCollectionItem({id, type: value});
->>>>>>> microsoft/master
                     } else {
                         throw new Error("View component is empty or is not an IComponentCollection!!");
                     }
