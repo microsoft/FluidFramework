@@ -131,18 +131,13 @@ export class ExternalComponentLoader extends PrimedComponent
         input.value = "";
         this.error = undefined;
         if (value !== undefined && value.length > 0) {
-            let url = value;
-            if (url.startsWith("@")) {
-                url = `https://pragueauspkn-3873244262.azureedge.net/${url}`;
-            }
-
             try {
                 // eslint-disable-next-line @typescript-eslint/no-misused-promises
                 if (this.viewComponentP) {
                     const viewComponent = await this.viewComponentP;
                     if (viewComponent && viewComponent.IComponentCollection && this.runtime.IComponentRegistry) {
                         const urlReg = await this.runtime.IComponentRegistry.get("url");
-                        const pkgReg = await urlReg.IComponentRegistry.get(url) as IComponent;
+                        const pkgReg = await urlReg.IComponentRegistry.get(value) as IComponent;
                         let componentRuntime: IComponentRuntime;
                         const id = uuid();
                         if (pkgReg.IComponentDefaultFactoryName) {
@@ -151,7 +146,7 @@ export class ExternalComponentLoader extends PrimedComponent
                                 [
                                     ...this.context.packagePath,
                                     "url",
-                                    url,
+                                    value,
                                     pkgReg.IComponentDefaultFactoryName.getDefaultFactoryName(),
                                 ]);
                         } else if (pkgReg.IComponentFactory) {
@@ -160,10 +155,10 @@ export class ExternalComponentLoader extends PrimedComponent
                                 [
                                     ...this.context.packagePath,
                                     "url",
-                                    url,
+                                    value,
                                 ]);
                         } else {
-                            throw new Error(`${url} is not a factory, and does not provide default component name`);
+                            throw new Error(`${value} is not a factory, and does not provide default component name`);
                         }
 
                         const response: IResponse = await componentRuntime.request({ url: "/" });
