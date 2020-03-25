@@ -33,7 +33,13 @@ export async function startLoading(resolvedUrl: IResolvedUrl): Promise<Container
         (resolvedUrl as IFluidResolvedUrl).url,
         document.getElementById("content") as HTMLDivElement);
 
-    return container as any;
+    return await new Promise((resolve, reject) => {
+        container.on("op", () => {
+            console.log("Op Resolve");
+
+            resolve(container);
+        });
+    });
 }
 
 // Checks container quorum for connected clients. Once all client leaves,

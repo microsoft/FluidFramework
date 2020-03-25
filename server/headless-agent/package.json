@@ -14,7 +14,7 @@
     "lint": "tslint 'src/**/*.ts'",
     "start": "docker-compose up",
     "start:debug": "docker-compose -f docker-compose.yml -f docker-compose.debug.yml up",
-    "test": "node dist/puppeteer/cli.js -u https://www.wu2-ppe.prague.office-int.com -d samasoa5agaz -t search",
+    "test": "node dist/puppeteer/cli.js -u http://localhost:3000 -d daffy-toothsa -t search",
     "tsc": "tsc"
   },
   "dependencies": {

@@ -160,11 +160,6 @@ services:
             - "4873:4873"
         volumes:
             - ./verdaccio/conf:/verdaccio/conf
-    headless-agent:
-        image: prague.azurecr.io/headless-agent:latest
-        cap_add:
-            - SYS_ADMIN
-        restart: always
 volumes:
   git:
     driver: local

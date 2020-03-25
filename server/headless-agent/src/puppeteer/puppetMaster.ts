@@ -30,7 +30,7 @@ export class PuppetMaster extends EventEmitter {
         cache?: ICache): Promise<PuppetMaster> {
 
         const browser = await puppeteer.launch({
-            headless: true, // headless: false launches a browser window
+            headless: false, // headless: false launches a browser window
         });
 
         const page = await browser.newPage();
@@ -77,7 +77,7 @@ export class PuppetMaster extends EventEmitter {
 
     public async launch() {
         // Debug parameters if running locally { headless: false, args: ["--start-fullscreen"] }
-        await this.page.setViewport({ width: 1920, height: 1080 }); // This was for the quick load demo
+        await this.page.setViewport({ width: 1920, height: 1000000 }); // This was for the quick load demo
         return this.launchPage();
     }
 
@@ -102,28 +102,29 @@ export class PuppetMaster extends EventEmitter {
                 window.setTimeout(callback, 0);
             };
         });
-        await this.attachEndOfLife();
+        // await this.attachEndOfLife();
 
         // Joining the gateway hostname to allow for localstorage
         await this.page.goto(`${this.gatewayUrl}/public/images/`);
         await this.page.addScriptTag({path: "client/fluid-loader.bundle.js"});
+        winston.info(`
+        Evaluate`);
         await this.page.evaluate((resolvedUrlString) => {
 
             const resolvedUrlInternal = JSON.parse(resolvedUrlString) as IResolvedUrl;
             document.body.innerHTML = `
-            <div id="content" style="flex: 1 1 auto; position: relative"></div>
+            <div id="content" style="flex: 1 1 auto; position: relative; height:1000000px !important"></div>
             `;
 
             return (window as any).loader.startLoading(resolvedUrlInternal);
         }, JSON.stringify(resolvedUrl));
 
         if (this.agentType === "cache") {
+            await this.attachEndOfLife();
             await this.upsertPageCache();
         } else if (this.agentType === "search") {
             const html = await this.getPageHTML();
             await this.searchStorage.upload(this.getSearchKey(), html);
-            await this.page.close();
-            await this.browser.close();
         }
     }
 
