@@ -17,6 +17,7 @@ import {
     IDocumentDeltaStorageService,
     IDocumentService,
     IError,
+    IGenericNetworkError,
     IThrottlingError,
     ErrorType,
 } from "@microsoft/fluid-driver-definitions";
@@ -35,7 +36,7 @@ import {
     MessageType,
     ScopeType,
 } from "@microsoft/fluid-protocol-definitions";
-import { createIError, WriteError } from "@microsoft/fluid-driver-utils";
+import { createIError, createWriteError, createNetworkError } from "@microsoft/fluid-driver-utils";
 import { ContentCache } from "./contentCache";
 import { debug } from "./debug";
 import { DeltaConnection } from "./deltaConnection";
@@ -386,8 +387,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 } catch (error) {
                     // Socket.io error when we connect to wrong socket, or hit some multiplexing bug
                     if (!canRetryOnError(error)) {
-                        this.close(error);
-                        throw new Error("Encountered unrecoverable error while connecting");
+                        const error2 = createIError(error, true);
+                        this.close(error2);
+                        throw error2;
                     }
 
                     // Log error once - we get too many errors in logs when we are offline,
@@ -610,7 +612,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 if (!canRetry || !canRetryOnError(error)) {
                     // It's game over scenario.
                     telemetryEvent.cancel({ category: "error" }, error);
-                    this.close(error);
+                    this.close(createIError(error, true));
                     return;
                 }
                 success = false;
@@ -641,7 +643,15 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                         replayFrom: from,
                         to,
                     });
-                    this.close(new Error("Failed to retrieve ops from storage: giving up after too many retries"));
+                    const closeError = createNetworkError(
+                        "Failed to retrieve ops from storage: giving up after too many retries",
+                        false /*canRetry*/,
+                        undefined /*statusCode*/,
+                        undefined /*retryAfterSeconds*/,
+                        "Online",
+                    ) as IGenericNetworkError;
+                    closeError.critical = true;
+                    this.close(closeError);
                     return;
                 }
             }
@@ -671,16 +681,15 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     /**
      * Closes the connection and clears inbound & outbound queues.
      */
-    public close(error?: any, raiseContainerError = true): void {
+    public close(error?: IError, raiseContainerError = true): void {
         if (this.closed) {
             return;
         }
         this.closed = true;
 
-        const iError = error === undefined ? error : createIError(error, true);
         // Note: "disconnect" & "nack" do not have error object
         if (raiseContainerError && error !== undefined) {
-            this.emit("error", iError);
+            this.emit("error", error);
         }
 
         this.logger.sendTelemetryEvent({ eventName: "ContainerClose" }, error);
@@ -704,7 +713,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // Drop pending messages - this will ensure catchUp() does not go into infinite loop
         this.pending = [];
 
-        this.emit("closed", iError);
+        this.emit("closed", error);
 
         // Notify everyone we are in read-only state.
         // Useful for components in case we hit some critical error,
@@ -803,7 +812,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         connection.on("nack", (target: number) => {
             const nackReason = target === -1 ? "Nack: Start writing" : "Nack";
             if (this.readonlyPermissions) {
-                this.close(new WriteError("WriteOnReadOnlyDocument"));
+                this.close(createWriteError("WriteOnReadOnlyDocument"));
             }
             if (!this.autoReconnect) {
                 this.logger.sendErrorEvent({ eventName: "NackWithNoReconnect", target, mode: this.connectionMode });
@@ -908,7 +917,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             // Do not raise container error if we are closing just because we lost connection.
             // Those errors (like IdleDisconnect) would show up in telemetry dashboards and
             // are very misleading, as first initial reaction - some logic is broken.
-            this.close(error, criticalError /*raiseContainerError*/);
+            this.close(createIError(error), criticalError /*raiseContainerError*/);
         }
 
         // If closed then we can't reconnect

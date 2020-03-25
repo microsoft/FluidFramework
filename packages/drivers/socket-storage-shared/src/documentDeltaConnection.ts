@@ -6,8 +6,8 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { BatchManager } from "@microsoft/fluid-common-utils";
-import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
-import { NetworkError } from "@microsoft/fluid-driver-utils";
+import { IDocumentDeltaConnection, IError } from "@microsoft/fluid-driver-definitions";
+import { createNetworkError } from "@microsoft/fluid-driver-utils";
 import {
     ConnectionMode,
     IClient,
@@ -28,15 +28,12 @@ const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 /**
  * Error raising for socket.io issues
  */
-export function createErrorObject(handler: string, error: any, canRetry = true) {
-    // Note: we assume error object is a string here.
-    // If it's not (and it's an object), we would not get its content.
-    // That is likely Ok, as it may contain PII that will get logged to telemetry,
-    // so we do not want it there.
-    // Also add actual error object(socketError), for driver to be able to parse it and reason over it.
-    const errorObj = new NetworkError(
+function createErrorObject(handler: string, error: any, canRetry = true) {
+    // Note: we suspect the incoming error object is either:
+    // - a string: log it in the message (if not a string, it may contain PII but will print as [object Object])
+    // - a socketError: add it to the IError object for driver to be able to parse it and reason over it.
+    const errorObj: IError = createNetworkError(
         `socket.io error: ${handler}: ${error}`,
-        undefined,
         canRetry,
     );
 

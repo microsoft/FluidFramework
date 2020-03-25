@@ -3,16 +3,14 @@
  * Licensed under the MIT License.
  */
 import { InnerDocumentServiceFactory } from "@microsoft/fluid-iframe-driver";
-import { BaseHost } from "@microsoft/fluid-base-host";
+import { BaseHost, SemVerCdnCodeResolver } from "@microsoft/fluid-base-host";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
+
 export async function runInner(divId: string){
     const div = document.getElementById(divId) as HTMLDivElement;
 
-    const pkgResp =
-        await fetch(
-            "https://pragueauspkn-3873244262.azureedge.net/@fluid-example/todo@^0.15.0/package.json");
     const pkg: IFluidCodeDetails = {
-        package: await pkgResp.json(),
+        package: "@fluid-example/todo@^0.15.0",
         config:{
             "@fluid-example:cdn":"https://pragueauspkn-3873244262.azureedge.net",
         },
@@ -21,12 +19,11 @@ export async function runInner(divId: string){
     const documentServiceFactory = await InnerDocumentServiceFactory.create();
     const baseHost = new BaseHost(
         {
+            codeResolver: new SemVerCdnCodeResolver(),
             documentServiceFactory,
             urlResolver: documentServiceFactory.urlResolver,
             config: {},
-        },
-        undefined,
-        []);
+        });
 
     await baseHost.loadAndRender(documentServiceFactory.resolvedUrl.url, div, pkg);
 }

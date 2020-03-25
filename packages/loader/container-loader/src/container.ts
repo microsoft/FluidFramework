@@ -11,6 +11,7 @@ import {
 } from "@microsoft/fluid-common-definitions";
 import { IComponent, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
+    IAudience,
     ICodeLoader,
     IConnectionDetails,
     IContainer,
@@ -297,7 +298,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     /**
      * Retrieves the audience associated with the document
      */
-    public get audience(): Audience {
+    public get audience(): IAudience {
         return this._audience;
     }
 
@@ -364,8 +365,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     public on(event: "readonly", listener: (readonly: boolean) => void): void;
     public on(event: "connected" | "contextChanged", listener: (clientId: string) => void): this;
-    public on(event: "disconnected" | "joining" | "closed", listener: () => void): this;
-    public on(event: "error", listener: (error: any) => void): this;
+    public on(event: "disconnected" | "joining", listener: () => void): this;
+    public on(event: "closed", listener: (error?: IError) => void): this;
+    public on(event: "error", listener: (error: IError) => void): this;
     public on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
     public on(event: "pong" | "processTime", listener: (latency: number) => void): this;
     public on(event: MessageType.BlobUploaded, listener: (contents: any) => void): this;
@@ -374,13 +376,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return super.on(event, listener);
     }
 
-    public close(reason?: string) {
+    public close(error?: IError) {
         if (this._closed) {
             return;
         }
         this._closed = true;
 
-        this._deltaManager.close(reason ? new Error(reason) : undefined, false /*raiseContainerError*/);
+        this._deltaManager.close(error, false /*raiseContainerError*/);
 
         if (this.protocolHandler) {
             this.protocolHandler.close();
@@ -390,7 +392,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         assert(this.connectionState === ConnectionState.Disconnected, "disconnect event was not raised!");
 
-        this.emit("closed");
+        this.emit("closed", error);
 
         this.removeAllListeners();
     }
@@ -1332,7 +1334,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             (type, contents, batch, metadata) => this.submitMessage(type, contents, batch, metadata),
             (message) => this.submitSignal(message),
             async (message) => this.snapshot(message),
-            (reason?: string) => this.close(reason),
+            (error?: IError) => this.close(error),
             Container.version,
             previousRuntimeState,
         );
@@ -1370,7 +1372,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             (type, contents, batch, metadata) => this.submitMessage(type, contents, batch, metadata),
             (message) => this.submitSignal(message),
             async (message) => this.snapshot(message),
-            (reason?: string) => this.close(reason),
+            (error?: IError) => this.close(error),
             Container.version,
             {},
         );
