@@ -133,7 +133,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
             const editableStyle: React.CSSProperties = { overflow: "hidden", padding: 2 };
             const embeddedComponentStyle: React.CSSProperties = {
                 height: "100%",
-                overflow: "scroll"
+                overflow: "scroll",
             };
             if (editable) {
                 editableStyle.border = "1px solid black";
