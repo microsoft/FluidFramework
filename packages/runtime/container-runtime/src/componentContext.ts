@@ -262,7 +262,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this.componentRuntimeDeferred.promise;
     }
 
-    public async realizeWithFn(realizationFn?: (context: IComponentContext) => void): Promise<IComponentRuntime> {
+    public async realizeWithFn(realizationFn: (context: IComponentContext) => void): Promise<IComponentRuntime> {
         if (!this.componentRuntimeDeferred) {
             this.componentRuntimeDeferred = new Deferred<IComponentRuntime>();
             realizationFn(this);
