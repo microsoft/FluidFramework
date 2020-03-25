@@ -14,6 +14,18 @@ RUN apt-get update && apt-get install -y \
 RUN npm install -g @microsoft/api-documenter@^7.4.6 copyfiles@^2.1.0
 
 #############################
+# Use pre-release version of vuepress with a perf fix
+WORKDIR /
+RUN git clone https://github.com/tylerbutler/vuepress.git vuepress
+
+WORKDIR /vuepress
+RUN git checkout feat/implement-node-worker-threads
+#bd669ed8feeb4715ecc5fd5bcbae0d388e53c9ee
+RUN yarn
+RUN yarn tsc
+RUN yarn boot
+RUN yarn register-vuepress
+
 WORKDIR /
 RUN mkdir docs
 
@@ -23,6 +35,9 @@ COPY docs/package*.json docs/
 
 WORKDIR /docs
 RUN npm ci
+
+# Link the forked version of vuepress
+RUN yarn link "vuepress"
 
 #############################
 # Copy the source and the api artifact
