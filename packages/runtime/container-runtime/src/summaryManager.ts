@@ -57,6 +57,50 @@ enum SummaryManagerState {
 
 const defaultInitialDelayMs = 5000;
 
+interface IThrottleConfig {
+    maxDelayMs: number,
+    delayWindowMs: number,
+    delayFunction: (n: number) => number,
+}
+
+const defaultThrottleConfig: IThrottleConfig = {
+    maxDelayMs: 30 * 1000,
+    delayWindowMs: 60 * 1000,
+    delayFunction: (n: number) => 20 * (Math.pow(2, n) - 1),
+};
+
+/**
+ * Used to give increasing delay times for throttling a single functionality.
+ * Delay is based on previous attempts within specified time window, ignoring actual delay time.
+ * Default throttling function increases exponentially (0ms, 20ms, 60ms, 140ms, etc) up to max delay (default 30s)
+ */
+class Throttler {
+    private readonly config: IThrottleConfig;
+    private startTimes: number[] = [];
+    constructor(config: Partial<IThrottleConfig> = {}) {
+        this.config = { ...defaultThrottleConfig, ...config };
+    }
+
+    public get attempts() {
+        return this.startTimes.length;
+    }
+
+    public getDelay() {
+        const now = Date.now();
+        this.startTimes = this.startTimes.filter((t) => now - t < this.config.delayWindowMs);
+        const delayMs = Math.min(this.config.delayFunction(this.startTimes.length), this.config.maxDelayMs);
+        this.startTimes.push(now);
+        this.startTimes = this.startTimes.map((t) => t + delayMs); // account for delay time
+        if (delayMs === this.config.maxDelayMs) {
+            // we hit max delay so adding more won't affect anything
+            // shift off oldest time to stop this array from growing forever
+            this.startTimes.shift();
+        }
+
+        return delayMs;
+    }
+}
+
 export class SummaryManager extends EventEmitter implements IDisposable {
     private readonly logger: ITelemetryLogger;
     private readonly quorumHeap = new QuorumHeap();
@@ -68,7 +112,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     private state = SummaryManagerState.Off;
     private runningSummarizer?: IComponentRunnable;
     private _disposed = false;
-    private startTimes: number[] = [];
+    private readonly startThrottler = new Throttler();
 
     public get summarizer() {
         return this.summarizerClientId;
@@ -214,22 +258,8 @@ export class SummaryManager extends EventEmitter implements IDisposable {
             return;
         }
 
-        // Throttle creation of new summarizer containers to prevent spamming the server with websocket connections.
-        // Delay is based on previous attempts within specified time window, ignoring actual delay time.
-        const throttleMaxDelayMs = 30 * 1000;
-        const throttleDelayWindowMs = 60 * 1000;
-        const throttleDelayFunction = (n: number) => Math.min(20 * (Math.pow(2, n) - 1), throttleMaxDelayMs);
-
-        const now = Date.now();
-        this.startTimes = this.startTimes.filter((t) => now - t < throttleDelayWindowMs);
-        const delayMs = throttleDelayFunction(this.startTimes.length);
-        this.startTimes.push(now);
-        this.startTimes = this.startTimes.map((t) => t + delayMs); // account for delay time
-        if (delayMs === throttleMaxDelayMs) {
-            // we hit max delay so adding more won't affect anything
-            // shift off oldest time to stop this array from growing forever
-            this.startTimes.shift();
-        }
+        // throttle creation of new summarizer containers to prevent spamming the server with websocket connections
+        const delayMs = this.startThrottler.getDelay();
 
         this.createSummarizer(delayMs).then((summarizer) => {
             if (summarizer === undefined) {
@@ -248,7 +278,10 @@ export class SummaryManager extends EventEmitter implements IDisposable {
                 this.state = SummaryManagerState.Off;
             }
         }, (error) => {
-            this.logger.sendErrorEvent({ eventName: "CreateSummarizerError", attempt: this.startTimes.length }, error);
+            this.logger.sendErrorEvent({
+                eventName: "CreateSummarizerError",
+                attempt: this.startThrottler.attempts,
+            }, error);
             if (this.shouldSummarize) {
                 this.start();
             } else {
@@ -261,7 +294,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         this.state = SummaryManagerState.Running;
 
         const runningSummarizerEvent = PerformanceEvent.start(this.logger,
-            { eventName: "RunningSummarizer", attempt: this.startTimes.length });
+            { eventName: "RunningSummarizer", attempt: this.startThrottler.attempts });
         this.runningSummarizer = summarizer;
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.runningSummarizer.run(this.clientId).then(() => {
