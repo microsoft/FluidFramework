@@ -78,19 +78,19 @@ const getNav = () => {
     ];
 
     function filterFalsy(item) {
-        console.log(`item: ${item}`);
+        // console.log(`item: ${item}`);
         if (item) {
             if (item.items) {
-                console.log("about to recurse!");
+                // console.log("about to recurse!");
                 item.items = item.items.filter(filterFalsy);
             }
         }
         return item;
     }
 
-    console.log(JSON.stringify(nav));
+    // console.log(JSON.stringify(nav));
     const filtered = nav.filter(filterFalsy);
-    console.log(JSON.stringify(filtered));
+    // console.log(JSON.stringify(filtered));
 
     return filtered;
 }
