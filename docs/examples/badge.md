@@ -77,4 +77,4 @@ After you've cloned the sample repo and installed dependencies using `npm instal
 a local dev environment for testing and debugging. Visit <http://localhost:8080/> in a browser to load the Fluid
 development server, which will load two instances of the component side by side.
 
-!!!include(../includes/browsers.md)!!!
+!!!include(browsers.md)!!!
