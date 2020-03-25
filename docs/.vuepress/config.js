@@ -30,18 +30,65 @@ const listPages = (dirPath, includeIndex = false) => {
 };
 
 const getNav = () => {
-    return [
+    const internalOnly = (navItem) => {
+        if (fluidVarGroup !== "internal") {
+            return null;
+        }
+        return navItem;
+    };
+
+    let nav = [
         { text: "What is Fluid?", link: "/what-is-fluid" },
         { text: "Guide", link: "/guide/" },
         { text: "Tutorials", link: "/examples/" },
+        internalOnly({ text: "Patterns", link: "/patterns/" }),
         { text: "API", link: "/api/overview" },
         {
             text: "🤿 Dive Deeper",
             items: [
                 { text: "How Fluid works", link: "/how/" },
+                internalOnly({ text: "Big page of docs and decks", link: "/misc/doc-index" }),
+                internalOnly({ text: "FAQ", link: "/faq/" }),
+                internalOnly({ text: "Terminology", link: "/misc/terminology" }),
+                internalOnly({ text: "Concepts", link: "/misc/concepts" }),
+                internalOnly({
+                    text: "Contributing",
+                    items: [
+                        { text: "Release process", link: "/contributing/release-process" },
+                        { text: "Breaking changes", link: "/contributing/breaking-changes" },
+                        { text: "Compatibility", link: "/contributing/compatibility" },
+                        { text: "Coding guidelines", link: "/contributing/coding-guidelines" },
+                        { text: "Building documentation locally", link: "/contributing/building-documentation" },
+                        { text: "Miscellaneous", link: "/contributing/misc" },
+                    ]
+                }),
+                internalOnly({
+                    text: "Team",
+                    items: [
+                        { text: "Updates", link: "/team/" },
+                        { text: "Routerlicious build machine", link: "/contributing/r11s-build-machine" },
+                    ]
+                }),
             ]
         },
     ];
+
+    function filterFalsy(item) {
+        console.log(`item: ${item}`);
+        if(item){
+            if(item.items) {
+                console.log("about to recurse!");
+                item.items = item.items.filter(filterFalsy);
+            }
+        }
+        return item;
+    }
+
+    console.log(JSON.stringify(nav));
+    const filtered = nav.filter(filterFalsy);
+    console.log(JSON.stringify(filtered));
+
+    return filtered;
 }
 
 /**
