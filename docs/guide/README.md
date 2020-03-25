@@ -39,6 +39,7 @@ multiple NodeJS versions.
 * [nvm for Windows](https://github.com/coreybutler/nvm-windows)
 * [nvm for macOS/Linux](https://github.com/nvm-sh/nvm)
 
+:::
 
 #### Install vsts-npm-auth (Windows only)
 

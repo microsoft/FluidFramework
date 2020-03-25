@@ -113,3 +113,10 @@ network calls yourself in order to use Fluid. The runtime takes care of that for
 On top of the runtime is a layered component model. A Fluid component can have a broad range of capabilities such as
 distributed data, rendering, experience integration, and much more. For many developers their primary interaction with
 Fluid will be writing components.
+
+<vue-markdown v-if="$themeConfig.fluidVarGroup === 'internal'">
+
+***
+
+_[source document](https://microsoft.sharepoint.com/:w:/t/Prague/ESoVbMxYtoJKp1CqUUsycjYBuURKe1x3Bwgp4_2yCzrH3A?e=KeWZQd)_
+</vue-markdown>

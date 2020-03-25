@@ -63,3 +63,21 @@ If you are new to the Fluid Framework, we recommend reading [What is Fluid?](./w
 
 Get up and running quickly using our [Getting Started guide](./guide/README.md).
 
+<vue-markdown v-if="$themeConfig.fluidVarGroup === 'internal'">
+
+## Help
+
+### Stack Overflow
+
+The Fluid team answers **questions** on the [Microsoft Stack Overflow](https://stackoverflow.microsoft.com/) using
+the [Fluid](https://stackoverflow.microsoft.com/questions/tagged/fluid) tag.
+
+Bugs, suggestions, and issues should be directed to our [issues page](https://github.com/Microsoft/FluidFramework/issues).
+
+Logistical questions can be directed to our [Teams group](https://teams.microsoft.com/l/team/19%3a10ccb94cae324ec2aabcd6b6322b1a25%40thread.skype/conversations?groupId=9ce27575-2f82-4689-abdb-bcff07e8063b&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47).
+
+### Additional resources
+
+- [Demo videos](./team/videos.md)
+
+</vue-markdown>
