@@ -104,12 +104,12 @@ export class InsecureUrlResolver implements IUrlResolver, IExperimentalUrlResolv
     }
 
     public async createContainer(
-        fullSummary: ISummaryTree,
+        createNewSummary: ISummaryTree,
         request: IRequest,
     ): Promise<IResolvedUrl> {
         const id = getRandomName("-", false);
-        const protocolSummary = fullSummary.tree[".protocol"] as ISummaryTree;
-        const appSummary = fullSummary.tree[".app"] as ISummaryTree;
+        const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
+        const appSummary = createNewSummary.tree[".app"] as ISummaryTree;
         if (!(protocolSummary && appSummary)) {
             throw new Error("Protocol and App Summary required in the full summary");
         }

@@ -23,10 +23,10 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     }
 
     public async uploadSummaryWithContextForCreateNew(
-        summary: api.ISummaryTree,
-        appHandle: string,
+        protocolSummary: api.ISummaryTree,
+        appSummary: api.ISummaryTree,
     ): Promise<string> {
-        return this.storageManager.uploadSummaryWithContextForCreateNew(summary, appHandle);
+        return this.storageManager.uploadSummaryWithContextForCreateNew(protocolSummary, appSummary);
     }
 
     public async downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree> {

@@ -141,7 +141,7 @@ export class RouterliciousUrlResolver implements IUrlResolver, IExperimentalUrlR
     }
 
     public async createContainer(
-        fullSummary: ISummaryTree,
+        createNewSummary: ISummaryTree,
         request: IRequest,
     ): Promise<IResolvedUrl> {
         throw new Error("Method not implemented.");

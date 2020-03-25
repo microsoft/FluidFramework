@@ -44,7 +44,7 @@ export class TestResolver implements IUrlResolver, IExperimentalUrlResolver {
     }
 
     public async createContainer(
-        fullSummary: ISummaryTree,
+        createNewSummary: ISummaryTree,
         request: IRequest,
     ): Promise<IResolvedUrl> {
         if (!this.testDeltaConnectionServer) {
@@ -56,8 +56,8 @@ export class TestResolver implements IUrlResolver, IExperimentalUrlResolver {
             throw new Error("Storage has no experimental features!!");
         }
 
-        const protocolSummary = fullSummary.tree[".protocol"] as ISummaryTree;
-        const appSummary = fullSummary.tree[".app"] as ISummaryTree;
+        const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
+        const appSummary = createNewSummary.tree[".app"] as ISummaryTree;
         if (!(protocolSummary && appSummary)) {
             throw new Error("Protocol and App Summary required in the full summary");
         }

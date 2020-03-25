@@ -18,6 +18,7 @@ import * as api from "@microsoft/fluid-protocol-definitions";
 import {
     ISummaryContext,
 } from "@microsoft/fluid-driver-definitions";
+import { getDocAttributesAndQuorumValuesFromProtocolSummary } from "@microsoft/fluid-driver-utils";
 import {
     IDocumentStorageGetVersionsResponse,
     IDocumentStorageManager,
@@ -563,10 +564,12 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     }
 
     public async uploadSummaryWithContextForCreateNew(
-        summary: api.ISummaryTree,
-        appHandle: string,
+        protocolSummary: api.ISummaryTree,
+        appSummary: api.ISummaryTree,
     ): Promise<string> {
         this.checkSnapshotUrl();
+        const summaryContext: ISummaryContext = { proposalHandle: undefined, ackHandle: undefined};
+        const appHandle = await this.uploadSummaryWithContext(appSummary, summaryContext);
         const lastSummaryHandle = this.lastSummaryHandle;
         this.lastSummaryHandle = undefined;
         const commit: api.ISummaryHandle = {
@@ -574,25 +577,24 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             type: api.SummaryType.Handle,
             handleType: api.SummaryType.Commit,
         };
-        const attributesBlob = summary.tree[".attributes"] as api.ISummaryBlob;
-        const attributes = JSON.parse(attributesBlob.content as string) as api.IDocumentAttributes;
-        attributes.sequenceNumber = 1;
+        const {documentAttributes} = getDocAttributesAndQuorumValuesFromProtocolSummary(protocolSummary);
+        documentAttributes.sequenceNumber = 1;
         const attributesSummaryBlob: api.ISummaryBlob = {
             type: api.SummaryType.Blob,
-            content: JSON.stringify(attributes),
+            content: JSON.stringify(documentAttributes),
         };
-        summary.tree.attributes = attributesSummaryBlob;
-        const fullSummary: api.ISummaryTree = {
+        protocolSummary.tree.attributes = attributesSummaryBlob;
+        const createNewSummary: api.ISummaryTree = {
             type: api.SummaryType.Tree,
             tree: {
-                ".protocol": summary,
+                ".protocol": protocolSummary,
                 ".app": commit,
             },
         };
         const { result, blobsShaToPathCacheLatest } = await this.writeSummaryTreeForCreateNew({
             useContext: true,
             parentHandle: appHandle,
-            tree: fullSummary,
+            tree: createNewSummary,
         });
         if (!result || !result.sha) {
             this.logger.sendErrorEvent({eventName: "FailedSummaryTreeWriteInCreateNew"});

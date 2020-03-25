@@ -78,7 +78,7 @@ export class OdspDriverUrlResolver implements IUrlResolver, IExperimentalUrlReso
     }
 
     public async createContainer(
-        fullSummary: ISummaryTree,
+        createNewSummary: ISummaryTree,
         request: IRequest,
     ): Promise<IOdspResolvedUrl> {
         if(!request.headers) {
@@ -87,7 +87,7 @@ export class OdspDriverUrlResolver implements IUrlResolver, IExperimentalUrlReso
         assert(request.headers.openMode === OpenMode.CreateNew);
         assert(request.headers.newFileInfoPromise);
         const createNewOptions: ICreateNewOptions = {
-            fullSummary,
+            createNewSummary,
             newFileInfoPromise: request.headers.newFileInfoPromise,
         };
         return this.resolveHelperForCreateNew(request.url, createNewOptions);

@@ -20,14 +20,14 @@ export function combineAppAndProtocolSummary(
     appSummary: ISummaryTree,
     protocolSummary: ISummaryTree,
 ): ISummaryTree {
-    const fullSummary: ISummaryTree = {
+    const createNewSummary: ISummaryTree = {
         type: SummaryType.Tree,
         tree: {
             ".protocol": protocolSummary,
             ".app": appSummary,
         },
     };
-    return fullSummary;
+    return createNewSummary;
 }
 
 /**
