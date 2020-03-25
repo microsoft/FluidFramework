@@ -16,7 +16,7 @@ export class WaterParkLoaderInstantiationFactory implements IComponentFactory {
         const factory = new PrimedComponentFactory(
             ExternalComponentLoader,
             [],
-            [["url", Promise.resolve(new UrlRegistry(context.hostRuntime))]],
+            [["url", Promise.resolve(new UrlRegistry())]],
         );
 
         return factory.instantiateComponent(context);

@@ -17,7 +17,6 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import { IRequest, IResponse, IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
-
 import { ISequencedDocumentMessage, ITree, ConnectionState } from "@microsoft/fluid-protocol-definitions";
 
 class ProxyRuntime implements IRuntime{

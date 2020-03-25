@@ -6,4 +6,3 @@
 export * from "./host";
 export * from "./hostConfig";
 export * from "./initializeContainerCode";
-export * from "./semVerCdnCodeResolver";

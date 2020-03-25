@@ -11,9 +11,9 @@ import {
 import {
     ComponentRegistryEntry,
     IComponentRegistry,
-    IHostRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import {WebCodeLoader, SemVerCdnCodeResolver} from "@microsoft/fluid-web-code-loader";
 
 /**
  * A component registry that can load component via their url
@@ -23,8 +23,9 @@ export class UrlRegistry implements IComponentRegistry {
 
     private readonly urlRegistryMap = new Map<string, Promise<ComponentRegistryEntry>>();
     private readonly loadingPackages: Map<string, Promise<IFluidPackage>>;
+    private readonly webloader = new WebCodeLoader(new SemVerCdnCodeResolver());
 
-    constructor(private readonly containerRuntime: IHostRuntime) {
+    constructor() {
 
         // Stash on the window so multiple instance can coordinate
         const loadingPackagesKey = `${UrlRegistry.WindowKeyPrefix}LoadingPackages`;
@@ -46,35 +47,37 @@ export class UrlRegistry implements IComponentRegistry {
     }
 
     private async loadEntyrpoint(name: string): Promise<IComponent>{
-        if(!this.loadingPackages.has(name) && this.isUrl(name)){
-            this.loadingPackages.set(name, this.loadPackage(name));
+        if(this.isUrl(name)){
+            if(!this.loadingPackages.has(name)){
+                this.loadingPackages.set(name, this.loadPackage(name));
+            }
         }
         const fluidPackage = this.loadingPackages.has(name) ? await this.loadingPackages.get(name) : name;
-        const codeDetails: IFluidCodeDetails ={
+        const codeDetails: IFluidCodeDetails = {
             package: fluidPackage,
             config:{
                 cdn:"https://pragueauspkn-3873244262.azureedge.net/",
             },
         };
-        const fluidModuel = await this.containerRuntime.codeLoader.load(codeDetails);
+        const fluidModuel = await this.webloader.load(codeDetails);
         return fluidModuel.fluidExport;
     }
 
-    private async loadPackage(name: string): Promise<IFluidPackage> {
-        const response = await fetch(`${name}/package.json`);
+    private async loadPackage(url: string): Promise<IFluidPackage> {
+        const response = await fetch(`${url}/package.json`);
         if (!response.ok) {
-            throw new Error(`UrlRegistry: ${name}: fetch was no ok. status code: ${response.status}`);
+            throw new Error(`UrlRegistry: ${url}: fetch was no ok. status code: ${response.status}`);
         } else {
             const responseText = await response.text();
             const packageJson = JSON.parse(responseText);
             if (!isFluidPackage(packageJson)) {
-                throw new Error(`UrlRegistry: ${name}: Package json not deserializable as IFluidPackage`);
+                throw new Error(`UrlRegistry: ${url}: Package json not deserializable as IFluidPackage`);
             }
             // we need to resolve the package here, as
             // we don't know forsure where this http endpoint is
             packageJson.fluid.browser.umd.files =
                 packageJson.fluid.browser.umd.files.map(
-                    (file)=> this.isUrl(file) ? file : `${name}/${file}`);
+                    (file) => this.isUrl(file) ? file : `${url}/${file}`);
             return packageJson;
 
         }

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { BaseHost, IBaseHostConfig, SemVerCdnCodeResolver } from "@microsoft/fluid-base-host";
+import { BaseHost, IBaseHostConfig } from "@microsoft/fluid-base-host";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import { Container } from "@microsoft/fluid-container-loader";
 import { BaseTelemetryNullLogger } from "@microsoft/fluid-common-utils";
@@ -21,6 +21,7 @@ import { ContainerUrlResolver } from "@microsoft/fluid-routerlicious-host";
 import { RouterliciousUrlResolver } from "@microsoft/fluid-routerlicious-urlresolver";
 import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 import { v4 } from "uuid";
+import { SemVerCdnCodeResolver} from "@microsoft/fluid-web-code-loader";
 import { IOdspTokenApi, IRouterliciousTokenApi, ITokenApis } from "./utils";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires

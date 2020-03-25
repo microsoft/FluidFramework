@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 import { InnerDocumentServiceFactory } from "@microsoft/fluid-iframe-driver";
-import { BaseHost, SemVerCdnCodeResolver } from "@microsoft/fluid-base-host";
+import { BaseHost } from "@microsoft/fluid-base-host";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
+import {SemVerCdnCodeResolver} from "@microsoft/fluid-web-code-loader";
+
 
 export async function runInner(divId: string){
     const div = document.getElementById(divId) as HTMLDivElement;
