@@ -72,7 +72,7 @@ export class OdspDocumentService implements IDocumentService {
         const templogger: ITelemetryLogger = DebugLogger.mixinDebugLogger(
             "fluid:telemetry:OdspDriver",
             logger,
-            { docId: odspResolvedUrl.hashedDocumentId, odc: isOdcUrl(odspResolvedUrl.endpoints.snapshotStorageUrl) });
+            { docId: odspResolvedUrl.hashedDocumentId });
         const openMode: OpenMode | undefined = odspResolvedUrl.openMode;
         let fullSummary: ISummaryTree | undefined;
         let event: PerformanceEvent | undefined;
@@ -118,7 +118,8 @@ export class OdspDocumentService implements IDocumentService {
             }
             const storageService = documentService.storageService;
             const appHandle = await storageService.uploadSummaryWithContext(appSummary, summaryContext);
-            const fullTreeHandle = await storageService.uploadSummaryWithContextForCreateNew(protocolSummary, appHandle);
+            const fullTreeHandle =
+                await storageService.uploadSummaryWithContextForCreateNew(protocolSummary, appHandle);
             if (props) {
                 props.appHandle = appHandle;
                 props.fullTreeHandle = fullTreeHandle;
@@ -182,7 +183,7 @@ export class OdspDocumentService implements IDocumentService {
         this.logger = DebugLogger.mixinDebugLogger(
             "fluid:telemetry:OdspDriver",
             logger,
-            { docId: hashedDocumentId, odc: isOdcUrl(snapshotStorageUrl) });        
+            { docId: hashedDocumentId, odc: isOdcUrl(snapshotStorageUrl) });
 
         this.getStorageToken = async (refresh: boolean, name?: string) => {
             if (refresh) {
