@@ -8,12 +8,12 @@ import { KafkaNodeConsumer } from "./kafkaNodeConsumer";
 import { KafkaNodeProducer } from "./kafkaNodeProducer";
 
 export const createConsumer = (
-    type: string,
-    endPoint: string,
+    kafkaEndPoint: string,
+    zookeeperEndPoint: string,
     clientId: string,
     groupId: string,
     topic: string): IConsumer =>
-    new KafkaNodeConsumer({ kafkaHost: endPoint }, clientId, groupId, topic);
+    new KafkaNodeConsumer({ kafkaHost: kafkaEndPoint }, clientId, groupId, topic, zookeeperEndPoint);
 
 export const createProducer = (
     type: string,
