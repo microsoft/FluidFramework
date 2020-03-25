@@ -93,6 +93,12 @@ export class ExternalComponentLoader extends PrimedComponent
             input.type = "text";
             input.placeholder = "@fluid-example/component-name@version";
             input.style.width = "100%";
+            inputDiv.onkeyup = (event: KeyboardEvent) => {
+                if (event.keyCode === 13) {
+                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                    this.inputClick(input);
+                }
+            };
 
             const counterButton = document.createElement("button");
             inputDiv.appendChild(counterButton);

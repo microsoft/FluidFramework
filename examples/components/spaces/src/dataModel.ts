@@ -69,7 +69,8 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
 
     public get IComponentCollection() { return this; }
 
-    public createCollectionItem(options: ISpacesCollectionOptions): IComponent {
+    public createCollectionItem<T>(rawOptions: T): IComponent {
+        const options = rawOptions as ISpacesCollectionOptions;
         if (!options.id || !options.type){
             throw new Error("Tried to create a collection item in Spaces with invalid options");
         }
