@@ -53,12 +53,8 @@ export interface IOdspCache {
     readonly sessionStorage: ISessionCache;
 }
 
-export class LocalCache implements ICache {
-    private readonly cache = new Map<string, any>();
-
-    public async get(key: string) {
-        return this.cache.get(key);
-    }
+export class CacheBase {
+    protected readonly cache = new Map<string, any>();
 
     public remove(key: string) {
         this.cache.delete(key);
@@ -83,9 +79,22 @@ export class LocalCache implements ICache {
 
 }
 
+export class LocalCache extends CacheBase implements ICache {
+    public async get(key: string) {
+        return this.cache.get(key);
+    }
+}
+
+export class SessionCache extends CacheBase implements ISessionCache {
+    public get(key: string) {
+        return this.cache.get(key);
+    }
+}
+
+
 export class OdspCache implements IOdspCache {
     public readonly localStorage: ICache;
-    public readonly sessionStorage: ICache = new LocalCache();
+    public readonly sessionStorage: ICache = new SessionCache();
 
     constructor(permanentCache?: ICache) {
         this.localStorage = permanentCache !== undefined ? permanentCache : new LocalCache();
