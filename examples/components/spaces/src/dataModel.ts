@@ -186,12 +186,13 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
 
     public async getComponent<T extends IComponent>(id: string): Promise<T | undefined> {
         const data = this.componentSubDirectory.get<ISpacesModel>(id);
-        if (typeof data.handleOrId === "string") {
+        if (data && typeof data.handleOrId === "string") {
             return this.getComponent_UNSAFE<T>(data.handleOrId);
-        } else if (data.handleOrId) {
-            return this.getComponentById(data.handleOrId);
+        } else if (data && data.handleOrId) {
+            return this.getComponentById<T>(data.handleOrId as IComponentHandle);
+        } else {
+            return this.getComponent_UNSAFE<T>(id);
         }
-        return Promise.resolve(undefined);
     }
 
     private async getComponentById<T>(handle: IComponentHandle): Promise<T> {
