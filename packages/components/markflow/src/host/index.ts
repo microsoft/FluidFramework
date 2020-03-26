@@ -8,7 +8,6 @@ import {
     IComponent,
     IComponentHTMLView,
     IComponentHTMLVisual,
-    IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { FlowDocument } from "../document";
@@ -29,7 +28,6 @@ export class WebFlow extends PrimedComponent implements IComponentHTMLVisual {
         if (componentHandle) {
             return new WebflowView(componentHandle.get(), this.context.documentId);
         }
-        
     }
     // #endregion IComponentHTMLVisual
 

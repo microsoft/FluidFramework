@@ -9,6 +9,7 @@ import { ISharedCell, SharedCell } from "@microsoft/fluid-cell";
 import {
     IComponentHandle,
     IComponentHTMLView,
+    IComponent,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
@@ -165,7 +166,7 @@ export class TodoItem extends PrimedComponent
     public async getInnerComponent() {
         const innerComponentId = this.innerIdCell.get();
         if (innerComponentId) {
-            return this.getComponent(innerComponentId);
+            return this.root.get<IComponentHandle<IComponent>>(innerComponentKey).get();
         } else {
             return undefined;
         }

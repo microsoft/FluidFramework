@@ -196,7 +196,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                         <EmbeddedComponentWrapper
                             id={id}
                             getComponent={async (componentId: string) =>
-                                this.props.dataModel.getComponentById(componentId)}
+                                this.props.dataModel.getComponent(componentId)}
                         />
                     </div>
                 </div>;

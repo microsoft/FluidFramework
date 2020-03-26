@@ -9,7 +9,6 @@ import {
     IComponentHTMLView,
 } from "@microsoft/fluid-component-core-interfaces";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
-import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { IComponentReactViewable } from "@microsoft/fluid-view-adapters";
 import * as React from "react";
@@ -107,20 +106,18 @@ export class Todo extends PrimedComponent implements
     public async addTodoItemComponent(props?: any) {
 
         // Create a new todo item
-        const componentRuntime: IComponentRuntime = await this.context.createComponent(undefined, TodoItemName, props);
-        await componentRuntime.request({ url: "/" });
-        componentRuntime.attach();
+        const component = await this.createAndAttachComponent_NEW(TodoItemName, props);
 
         // Store the id of the component in our ids map so we can reference it later
-        this.todoItemsMap.set(componentRuntime.id, "");
+        this.todoItemsMap.set(component.url, component.handle);
 
         this.emit("todoItemsChanged");
     }
 
     public async getTodoItemComponents() {
         const todoItemComponentPromises: Promise<TodoItem>[] = [];
-        for (const id of this.todoItemsMap.keys()) {
-            todoItemComponentPromises.push(this.getComponent<TodoItem>(id));
+        for (const handle of this.todoItemsMap.values()) {
+            todoItemComponentPromises.push(handle.get());
         }
 
         return Promise.all(todoItemComponentPromises);

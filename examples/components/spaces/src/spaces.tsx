@@ -97,7 +97,7 @@ export class Spaces extends PrimedComponent
 
     protected async componentInitializingFromExisting() {
         this.initializeDataModel();
-        this.componentToolbar = await this.dataModel.getComponentById<ComponentToolbar>(this.componentToolbarId);
+        this.componentToolbar = await this.dataModel.getComponent<ComponentToolbar>(this.componentToolbarId);
     }
 
     protected async componentHasInitialized() {

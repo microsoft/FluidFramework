@@ -23,8 +23,7 @@ export interface ISpacesDataModel extends EventEmitter {
         h?: number,
         id?: string
     ): Promise<T>;
-    getComponent_UNSAFE<T>(id: string): Promise<T>;
-    getComponentById<T extends IComponent>(id: string): Promise<T>;
+    getComponent<T extends IComponent>(id: string): Promise<T>;
     removeComponent(id: string): void;
     updateGridItem(id: string, newLayout: Layout): void;
     getLayout(id: string): Layout;
@@ -52,7 +51,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         private readonly createAndAttachComponent: <T extends IComponent & IComponentLoadable>(
             pkg: string,
             props?: any) => Promise<T>,
-        public getComponent_UNSAFE: <T>(id: string) => Promise<T>,
+        private readonly getComponent_UNSAFE: <T>(id: string) => Promise<T>,
         public componentToolbarId: string,
     ) {
         super();
@@ -185,16 +184,16 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
     }
 
     public async getComponent<T>(id: string): Promise<T> {
-        try {
-            return this.getComponentById<T>(id);
-        } catch {
+        const component = await this.getComponentById<T>(id);
+        if (!component) {
             return this.getComponent_UNSAFE<T>(id);
         }
+        return component;
     }
 
-    public async getComponentById<T>(id: string): Promise<T> {
-        const handle = this.componentSubDirectory.get(id).handle as IComponentHandle<T>;
-        return handle.get();
+    private async getComponentById<T>(id: string): Promise<T|undefined> {
+        const handle = this.componentSubDirectory.get(id);
+        return handle && handle.IComponentHandle ? handle.IComponentHandle.get() : undefined;
     }
 
     public getLayout(id: string): Layout {

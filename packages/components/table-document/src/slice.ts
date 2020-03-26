@@ -4,6 +4,7 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { ICombiningOp, PropertySet } from "@microsoft/fluid-merge-tree";
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { CellRange } from "./cellrange";
@@ -135,7 +136,8 @@ export class TableSlice extends PrimedComponent implements ITable {
     private async ensureDoc() {
         if (!this.maybeDoc) {
             const docId = this.root.get(ConfigKey.docId);
-            this.maybeDoc = await this.getComponent(docId);
+            const handle = this.root.get<IComponentHandle<TableDocument>>(docId);
+            this.maybeDoc = await handle.get();
         }
     }
 
