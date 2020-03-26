@@ -15,7 +15,6 @@ import {
     IRuntimeFactory,
     IRuntimeState,
 } from "@microsoft/fluid-container-definitions";
-import { IBaseHostConfig } from "@microsoft/fluid-base-host";
 import { MultiUrlResolver, MultiDocumentServiceFactory } from "@microsoft/fluid-driver-utils";
 import { IRequest, IResponse, IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";

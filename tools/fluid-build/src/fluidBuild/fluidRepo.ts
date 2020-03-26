@@ -12,7 +12,7 @@ import {
     execWithErrorAsync,
 } from "../common/utils";
 import { FluidPackageCheck } from "./fluidPackageCheck";
-import { FluidRepoBase } from "../common/fluidRepoBase";
+import { FluidRepoBase, MonoRepo } from "../common/fluidRepoBase";
 import { NpmDepChecker } from "./npmDepChecker";
 import { ISymlinkOptions, symlinkPackage } from "./symlinkUtils";
 import { BuildGraph } from "./buildGraph";
@@ -87,14 +87,8 @@ export class FluidRepo extends FluidRepoBase {
             return this.matchWithFilter(pkg => true);
         }
 
-        if (options.server) {
-            return this.matchWithFilter(pkg => pkg.directory.startsWith(this.serverDirectory));
-        }
-
-        // Default to client and example packages
-        return this.matchWithFilter(
-            pkg => pkg.directory.startsWith(this.clientDirectory) || pkg.directory.startsWith(this.exampleDirectory)
-        );
+        const matchMonoRepo = options.server? MonoRepo.Server : MonoRepo.Client;
+        return this.matchWithFilter(pkg => this.getMonoRepo(pkg) == matchMonoRepo);
     }
 
     public async checkPackages(fix: boolean) {
