@@ -18,5 +18,5 @@ export interface IProvideComponentIocContainerProvider {
  * A component that knows how to Provide an Inversify Ioc Container
  */
 export interface IComponentIocContainerProvider extends IProvideComponentIocContainerProvider {
-    getContainer(): Container
+    getIocContainer(): Container
 }

@@ -27,7 +27,7 @@ class InversifyContainerProvider implements IComponentIocContainerProvider {
 
     public constructor(private readonly container: ioc.Container) { }
 
-    public getContainer() { return this.container; }
+    public getIocContainer() { return this.container; }
 }
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
@@ -63,7 +63,7 @@ export class SimpleContainerRuntimeFactory {
         // If the loader provides an Ioc Container then we can make it the parent of our Container's scope
         const iocCapable = context.scope.IComponentIocContainerProvider;
         if (iocCapable) {
-            iocContainer.parent = iocCapable.getContainer();
+            iocContainer.parent = iocCapable.getIocContainer();
         }
 
         // Debug(`instantiateRuntime(chaincode=${chaincode},registry=${JSON.stringify(registry)})`);

@@ -68,7 +68,7 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>  {
         const iocContainer = new IocContainer();
         const iocCapable = context.scope.IComponentIocContainerProvider;
         if(iocCapable) {
-            iocContainer.parent = iocCapable.getContainer();
+            iocContainer.parent = iocCapable.getIocContainer();
         }
 
         // Setup required ioc bindings
