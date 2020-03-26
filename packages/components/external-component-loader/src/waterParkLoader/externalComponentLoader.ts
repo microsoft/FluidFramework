@@ -172,9 +172,11 @@ export class ExternalComponentLoader extends PrimedComponent
                         if (component.IComponentCollection !== undefined) {
                             component = component.IComponentCollection.createCollectionItem();
                         }
+                        // The type value here looks sketchy
                         viewComponent.IComponentCollection.createCollectionItem({
                             handle: component.IComponentHandle,
-                            url: component.IComponentLoadable.url,
+                            type: value,
+                            id,
                         });
                     } else {
                         throw new Error("View component is empty or is not an IComponentCollection!!");

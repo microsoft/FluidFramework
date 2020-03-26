@@ -11,6 +11,7 @@ import {
     IComponentHTMLView,
     IComponent,
     IResponse,
+    IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IProvideComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { SharedObjectSequence } from "@microsoft/fluid-sequence";
@@ -32,7 +33,7 @@ export class Spaces extends PrimedComponent
     private dataModelInternal: ISpacesDataModel | undefined;
     private componentToolbar: IComponent | undefined;
     private static readonly defaultComponentToolbarId = "spaces-component-toolbar";
-    private componentToolbarId = Spaces.defaultComponentToolbarId;
+    private componentToolbarId: string = Spaces.defaultComponentToolbarId;
 
     // TODO #1188 - Component registry should automatically add ComponentToolbar
     // to the registry since it's required for the spaces component
@@ -86,8 +87,11 @@ export class Spaces extends PrimedComponent
                 4,
                 Spaces.defaultComponentToolbarId,
             );
-        this.root.set("component-toolbar", componentToolbar.handle);
         this.componentToolbar = componentToolbar;
+        await this.dataModel.setComponentToolbar(
+            Spaces.defaultComponentToolbarId,
+            ComponentToolbarName,
+            componentToolbar.handle);
         (this.componentToolbar as ComponentToolbar).changeEditState(true);
         // Set the saved template if there is a template query param
         const urlParams = new URLSearchParams(window.location.search);
@@ -97,6 +101,7 @@ export class Spaces extends PrimedComponent
     }
 
     protected async componentInitializingFromExisting() {
+        this.componentToolbarId = this.root.get("component-toolbar-id");
         this.initializeDataModel();
         this.componentToolbar = await this.dataModel.getComponent<ComponentToolbar>(this.componentToolbarId);
     }
@@ -105,7 +110,7 @@ export class Spaces extends PrimedComponent
         this.addToolbarListeners();
         const isEditable = this.dataModel.componentList.size - 1 === 0;
         this.dataModel.emit("editableUpdated", isEditable);
-        if (this.root.get("componentToolbarId") === Spaces.defaultComponentToolbarId) {
+        if (this.root.get("component-toolbar-id") === Spaces.defaultComponentToolbarId) {
             (this.componentToolbar as ComponentToolbar).changeEditState(isEditable);
         }
     }
@@ -134,11 +139,10 @@ export class Spaces extends PrimedComponent
             );
     }
 
-    public async setComponentToolbar(id: string, type: string, url: string) {
+    public async setComponentToolbar(id: string, type: string, handle: IComponentHandle) {
         this.componentToolbarId = id;
-        const componentToolbar = await this.dataModel.setComponentToolbar(id, type, url);
+        const componentToolbar = await this.dataModel.setComponentToolbar(id, type, handle);
         this.componentToolbar = componentToolbar;
-        this.root.set("component-toolbar", id);
         this.addToolbarListeners();
     }
 

@@ -48,11 +48,11 @@ class TestRootComponent extends PrimedComponent implements IComponentRunnable {
         config: {},
     };
 
+    public context: IComponentContext;
+
     constructor(runtime: IComponentRuntime, context: IComponentContext) {
         super(runtime, context);
     }
-
-    public get context(): IComponentContext { return this.context; }
 
     public async asComponent<T extends IComponent>(response: Promise<IResponse>): Promise<T> {
         return super.asComponent<T>(response);
