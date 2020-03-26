@@ -6,11 +6,7 @@
 // eslint-disable-next-line import/no-unassigned-import
 import "reflect-metadata";
 
-import {
-    AsyncContainerModule,
-    Container,
-    ContainerModule,
-} from "inversify";
+import ioc from "inversify";
 
 import { IContainerContext } from "@microsoft/fluid-container-definitions";
 import {
@@ -29,7 +25,7 @@ import {
 class InversifyContainerProvider implements IComponentIocContainerProvider {
     public get IComponentIocContainerProvider() { return this; }
 
-    public constructor(private readonly container: Container) { }
+    public constructor(private readonly container: ioc.Container) { }
 
     public getContainer() { return this.container; }
 }
@@ -47,12 +43,12 @@ export class SimpleContainerRuntimeFactory {
         registryEntries: NamedComponentRegistryEntries,
         serviceRegistry: ContainerServiceRegistryEntries = [],
         requestHandlers: RuntimeRequestHandler[] = [],
-        scopeModules: ContainerModule[] = [],
-        scopeModulesAsync: AsyncContainerModule[] = [],
+        scopeModules: ioc.ContainerModule[] = [],
+        scopeModulesAsync: ioc.AsyncContainerModule[] = [],
     ): Promise<ContainerRuntime> {
 
         // Setup our IocContainer that will do scope injection through our framework
-        const iocContainer = new Container();
+        const iocContainer = new ioc.Container();
 
         // Load all the sync modules provided by the caller
         scopeModules.forEach((module) => {
