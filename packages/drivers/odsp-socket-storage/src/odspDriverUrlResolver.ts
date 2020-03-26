@@ -9,17 +9,11 @@ import { IUrlResolver, OpenMode, IExperimentalUrlResolver } from "@microsoft/flu
 import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
 import { IOdspResolvedUrl, ICreateNewOptions } from "./contracts";
 import { getHashedDocumentId } from "./odspUtils";
-import { isOdcOrigin } from "./isOdc";
+import { getApiRoot } from "./odspUrlHelper";
 
 function getSnapshotUrl(siteUrl: string, driveId: string, itemId: string) {
     const siteOrigin = new URL(siteUrl).origin;
-
-    let prefix = "_api/";
-    if (isOdcOrigin(siteOrigin)) {
-        prefix = "";
-    }
-
-    return `${siteOrigin}/${prefix}v2.1/drives/${driveId}/items/${itemId}/opStream/snapshots`;
+    return `${getApiRoot(siteOrigin)}/drives/${driveId}/items/${itemId}/opStream/snapshots`;
 }
 
 /**

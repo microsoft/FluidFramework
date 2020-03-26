@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
@@ -27,6 +28,10 @@ export function createSharedStringWithInterception(
     propertyInterceptionCallback: (props?: MergeTree.PropertySet) => MergeTree.PropertySet): SharedString {
     const sharedStringWithInterception = Object.create(sharedString);
 
+    // executingCallback keeps track of whether a method on this wrapper object is called recursively
+    // from the propertyInterceptionCallback.
+    let executingCallback: boolean = false;
+
     /**
      * Inserts a marker at a relative postition.
      *
@@ -38,8 +43,18 @@ export function createSharedStringWithInterception(
         relativePos1: MergeTree.IRelativePosition,
         refType: MergeTree.ReferenceType,
         props?: MergeTree.PropertySet) => {
+        // Wrapper methods should not be called from the interception callback as this will lead to
+        // infinite recursion.
+        assert(executingCallback === false,
+            "Interception wrapper methods called recursively from the interception callback");
+
         context.hostRuntime.orderSequentially(() => {
-            sharedString.insertMarkerRelative(relativePos1, refType, propertyInterceptionCallback(props));
+            executingCallback = true;
+            try {
+                sharedString.insertMarkerRelative(relativePos1, refType, propertyInterceptionCallback(props));
+            } finally {
+                executingCallback = false;
+            }
         });
     };
 
@@ -55,8 +70,18 @@ export function createSharedStringWithInterception(
         refType: MergeTree.ReferenceType,
         props?: MergeTree.PropertySet) => {
         let insertOp;
+        // Wrapper methods should not be called from the interception callback as this will lead to
+        // infinite recursion.
+        assert(executingCallback === false,
+            "Interception wrapper methods called recursively from the interception callback");
+
         context.hostRuntime.orderSequentially(() => {
-            insertOp = sharedString.insertMarker(pos, refType, propertyInterceptionCallback(props));
+            executingCallback = true;
+            try {
+                insertOp = sharedString.insertMarker(pos, refType, propertyInterceptionCallback(props));
+            } finally {
+                executingCallback = false;
+            }
         });
         return insertOp;
     };
@@ -72,8 +97,18 @@ export function createSharedStringWithInterception(
         relativePos1: MergeTree.IRelativePosition,
         text: string,
         props?: MergeTree.PropertySet) => {
+        // Wrapper methods should not be called from the interception callback as this will lead to
+        // infinite recursion.
+        assert(executingCallback === false,
+            "Interception wrapper methods called recursively from the interception callback");
+
         context.hostRuntime.orderSequentially(() => {
-            sharedString.insertTextRelative(relativePos1, text, propertyInterceptionCallback(props));
+            executingCallback = true;
+            try {
+                sharedString.insertTextRelative(relativePos1, text, propertyInterceptionCallback(props));
+            } finally {
+                executingCallback = false;
+            }
         });
     };
 
@@ -85,8 +120,18 @@ export function createSharedStringWithInterception(
      * @param props - The properties of text
      */
     sharedStringWithInterception.insertText = (pos: number, text: string, props?: MergeTree.PropertySet) => {
+        // Wrapper methods should not be called from the interception callback as this will lead to
+        // infinite recursion.
+        assert(executingCallback === false,
+            "Interception wrapper methods called recursively from the interception callback");
+
         context.hostRuntime.orderSequentially(() => {
-            sharedString.insertText(pos, text, propertyInterceptionCallback(props));
+            executingCallback = true;
+            try {
+                sharedString.insertText(pos, text, propertyInterceptionCallback(props));
+            } finally {
+                executingCallback = false;
+            }
         });
     };
 
@@ -103,8 +148,18 @@ export function createSharedStringWithInterception(
         end: number,
         text: string,
         props?: MergeTree.PropertySet) => {
+        // Wrapper methods should not be called from the interception callback as this will lead to
+        // infinite recursion.
+        assert(executingCallback === false,
+            "Interception wrapper methods called recursively from the interception callback");
+
         context.hostRuntime.orderSequentially(() => {
-            sharedString.replaceText(start, end, text, propertyInterceptionCallback(props));
+            executingCallback = true;
+            try {
+                sharedString.replaceText(start, end, text, propertyInterceptionCallback(props));
+            } finally {
+                executingCallback = false;
+            }
         });
     };
 
@@ -119,8 +174,18 @@ export function createSharedStringWithInterception(
         marker: MergeTree.Marker,
         props: MergeTree.PropertySet,
         callback: (m: MergeTree.Marker) => void) => {
+        // Wrapper methods should not be called from the interception callback as this will lead to
+        // infinite recursion.
+        assert(executingCallback === false,
+            "Interception wrapper methods called recursively from the interception callback");
+
         context.hostRuntime.orderSequentially(() => {
-            sharedString.annotateMarkerNotifyConsensus(marker, propertyInterceptionCallback(props), callback);
+            executingCallback = true;
+            try {
+                sharedString.annotateMarkerNotifyConsensus(marker, propertyInterceptionCallback(props), callback);
+            } finally {
+                executingCallback = false;
+            }
         });
     };
 
@@ -135,8 +200,18 @@ export function createSharedStringWithInterception(
         marker: MergeTree.Marker,
         props: MergeTree.PropertySet,
         combiningOp?: MergeTree.ICombiningOp) => {
+        // Wrapper methods should not be called from the interception callback as this will lead to
+        // infinite recursion.
+        assert(executingCallback === false,
+            "Interception wrapper methods called recursively from the interception callback");
+
         context.hostRuntime.orderSequentially(() => {
-            sharedString.annotateMarker(marker, propertyInterceptionCallback(props), combiningOp);
+            executingCallback = true;
+            try {
+                sharedString.annotateMarker(marker, propertyInterceptionCallback(props), combiningOp);
+            } finally {
+                executingCallback = false;
+            }
         });
     };
 
@@ -154,8 +229,18 @@ export function createSharedStringWithInterception(
         end: number,
         props: MergeTree.PropertySet,
         combiningOp?: MergeTree.ICombiningOp) => {
+        // Wrapper methods should not be called from the interception callback as this will lead to
+        // infinite recursion.
+        assert(executingCallback === false,
+            "Interception wrapper methods called recursively from the interception callback");
+
         context.hostRuntime.orderSequentially(() => {
-            sharedString.annotateRange(start, end, propertyInterceptionCallback(props), combiningOp);
+            executingCallback = true;
+            try {
+                sharedString.annotateRange(start, end, propertyInterceptionCallback(props), combiningOp);
+            } finally {
+                executingCallback = false;
+            }
         });
     };
 
@@ -168,9 +253,19 @@ export function createSharedStringWithInterception(
     sharedStringWithInterception.insertAtReferencePosition = (
         pos: MergeTree.ReferencePosition,
         segment: MergeTree.TextSegment) => {
+        // Wrapper methods should not be called from the interception callback as this will lead to
+        // infinite recursion.
+        assert(executingCallback === false,
+            "Interception wrapper methods called recursively from the interception callback");
+
         context.hostRuntime.orderSequentially(() => {
-            segment.properties = propertyInterceptionCallback(segment.properties);
-            sharedString.insertAtReferencePosition(pos, segment);
+            executingCallback = true;
+            try {
+                segment.properties = propertyInterceptionCallback(segment.properties);
+                sharedString.insertAtReferencePosition(pos, segment);
+            } finally {
+                executingCallback = false;
+            }
         });
     };
 

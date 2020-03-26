@@ -30,6 +30,9 @@
         },
         "maxMessageSize": "1MB"
     },
+    "zookeeper": {
+        "endpoint": "zookeeper:2181"
+    },
     "alfred": {
         "kafkaClientId": "alfred",
         "maxMessageSize": "16KB",

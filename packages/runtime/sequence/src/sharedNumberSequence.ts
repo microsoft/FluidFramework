@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IComponentRuntime, IChannelAttributes } from "@microsoft/fluid-runtime-definitions";
 import { SharedNumberSequenceFactory } from "./sequenceFactory";
 import { SharedSequence } from "./sharedSequence";
 
@@ -29,8 +29,8 @@ export class SharedNumberSequence extends SharedSequence<number> {
         return new SharedNumberSequenceFactory();
     }
 
-    constructor(document: IComponentRuntime, public id: string) {
-        super(document, id, SharedNumberSequenceFactory.Attributes, SharedNumberSequenceFactory.segmentFromSpec);
+    constructor(document: IComponentRuntime, public id: string, attributes: IChannelAttributes) {
+        super(document, id, attributes, SharedNumberSequenceFactory.segmentFromSpec);
     }
 
     public getRange(start: number, end?: number) {

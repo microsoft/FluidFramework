@@ -5,6 +5,7 @@
 - [`getComponentRuntime` no longer on `IComponentContext`](#getComponentRuntime-no-longer-on-IComponentContext)
 - [Container.autoReconnect & Container.reconnect changes](#Container.reconnect-Container.reconnect-changes)
 - [0.13 backwards compatibility removed](#013-backwards-compatibility-removed)
+- [Base host no longer renders](#Base-host-no-longer-renders)
 
 ### `getComponentRuntime` no longer on `IComponentContext`
 
@@ -36,6 +37,12 @@ in order to trigger reconnect. Now, calling Container.setAutoReconnect(true) is 
     - While `IContainerContext.baseSnapshot` was defined to be possibly `null`, `ContainerContext` and `ContainerRuntime` would not correctly handle being passed `baseSnapshot` as `null` in 0.13 and below, and `Container` would not pass it as `null`, passing an empty snapshot instead. `Container` will now potentially pass `baseSnapshot` as `null`.
     - `ContainerRuntime.stop()` is now expected to return an `IRuntimeState`, rather than `void` as previously returned in 0.13 and below. This `IRuntimeState` can be an empty object, but cannot be null.
 
+### Base host no longer renders
+
+`BaseHost.start()` and `BaseHost.loadAndRender()` have been removed.  They have been replaced by `initializeContainer()`, which similarly resolves a container at the url provided and initializes it with the package provided if needed, but does not perform any rendering.
+
+To facilitate rendering `getComponent()` has also been added, which requests the component at the given url.  Once you've requested a component, you can take whatever steps you would like to render it (e.g. querying its interfaces or passing it into an adapter like `ReactAdapter` or `HTMLViewAdapter` from `@microsoft/fluid-view-adapters`).
+
 ## 0.14 Breaking Changes
 
 - [Packages move and renamed](#packages-moved-and-renamed)
@@ -46,6 +53,7 @@ in order to trigger reconnect. Now, calling Container.setAutoReconnect(true) is 
 - [`IComponentHandle` - Moved type parameter from get to interface](#icomponenthandle---type-parameter-moved)
 - [Changes to the render interfaces](#changes-to-the-render-interfaces)
 - [Old runtime container cannot load new components](#old-runtime-container-cannot-load-new-components)
+- [PrimedComponent and SharedComponent interfaces are now more restrictive](#restricted-component-interfaces)
 
 ### Packages moved and renamed
 
@@ -149,6 +157,18 @@ The rendering interfaces have undergone several changes:
 ### Old runtime container cannot load new components
 
 The way that summaries are generated has changed in such a way that the runtime container is backwards compatible with 0.13 components, but 0.13 runtime container cannot load 0.14 or later components.
+
+### PrimedComponent and SharedComponent interfaces are now more restrictive
+The following class variables have been changed from public -> protected
+In PrimedComponent:
+- root
+- taskManager
+- writeBlob
+In SharedComponent:
+- asComponent
+If you still need to access these methods, you can still do so by overloading the needed method in your class
+and making it public.
+An example of this can be seen in primedComponent.spec.ts 
 
 ## 0.13 Breaking Changes
 

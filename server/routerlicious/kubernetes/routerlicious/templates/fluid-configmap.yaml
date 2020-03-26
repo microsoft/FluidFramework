@@ -41,6 +41,9 @@ data:
             },
             "maxMessageSize": "1MB"
         },
+        "zookeeper": {
+            "endpoint": "{{ .Values.zookeeper.url }}"
+        },
         {{- if .Values.eventHub }}
         "eventHub": {
             "endpoint": "{{ .Values.eventHub.endpoint }}",

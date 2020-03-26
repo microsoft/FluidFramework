@@ -64,7 +64,7 @@ export class VersionTest extends PrimedComponent implements IComponentHTMLView {
     console.log(`code: ${this.upgradeToPkg} on ${this.cdn}`);
     this.runtime.getQuorum().propose(
       "code",
-      { "config": { "@fluid-example:cdn": this.cdn }, "package": `${ this.upgradeToPkg }` },
+      { "config": { "cdn": `${this.cdn}/@fluid-example/version-test-2` }, "package": `${ this.upgradeToPkg }` },
     );
   }
 }

@@ -237,3 +237,9 @@ export interface IOdspSnapshot {
     blobs: resources.IBlob[];
     ops: ISequencedDeltaOpMessage[];
 }
+
+export interface IOdspUrlParts {
+    site: string;
+    drive: string;
+    item: string;
+}

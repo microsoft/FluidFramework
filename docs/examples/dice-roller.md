@@ -26,7 +26,7 @@ Finally, you can open the folder in Visual Studio Code.
 
 ## main.tsx
 
-The `src/main.tsx` file is where the component logic lives.
+The `src/fluid-components/index.tsx` file is where the component logic lives.
 
 ### Declare imports
 

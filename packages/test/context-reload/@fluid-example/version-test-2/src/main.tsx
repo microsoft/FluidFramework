@@ -79,7 +79,7 @@ export class VersionTest extends PrimedComponent implements IComponentHTMLView {
   private quorumProposeCode() {
     setTimeout(() => this.runtime.getQuorum().propose(
       "code",
-      { "config": { "@yo-fluid:cdn": "https://pragueauspkn-3873244262.azureedge.net" }, "package": `${ this.upgradeToPkg }@${ this.upgradeToVersion }` },
+      { "config": { "cdn": `https://pragueauspkn-3873244262.azureedge.net/@yo-fluid/${ this.upgradeToPkg }` }, "package": `${ this.upgradeToPkg }@${ this.upgradeToVersion }` },
     ), 3000);
   }
 }

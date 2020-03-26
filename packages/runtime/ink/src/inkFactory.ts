@@ -21,7 +21,7 @@ export class InkFactory implements ISharedObjectFactory {
     /**
      * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory.attributes}
      */
-    public static Attributes: IChannelAttributes = {
+    public static readonly Attributes: IChannelAttributes = {
         type: InkFactory.Type,
         snapshotFormatVersion: "0.2",
         packageVersion: pkgVersion,
@@ -48,9 +48,10 @@ export class InkFactory implements ISharedObjectFactory {
         runtime: IComponentRuntime,
         id: string,
         services: ISharedObjectServices,
-        branchId: string): Promise<ISharedObject> {
+        branchId: string,
+        attributes: IChannelAttributes): Promise<ISharedObject> {
 
-        const ink = new Ink(runtime, id);
+        const ink = new Ink(runtime, id, attributes);
         await ink.load(branchId, services);
 
         return ink;
@@ -60,7 +61,7 @@ export class InkFactory implements ISharedObjectFactory {
      * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory.create}
      */
     public create(runtime: IComponentRuntime, id: string): ISharedObject {
-        const ink = new Ink(runtime, id);
+        const ink = new Ink(runtime, id, InkFactory.Attributes);
         ink.initializeLocal();
 
         return ink;
