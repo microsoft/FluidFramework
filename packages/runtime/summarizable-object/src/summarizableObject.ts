@@ -26,6 +26,7 @@ const snapshotFileName = "header";
 
 /**
  * Implementation of a summarizable object. It does not generate any ops. It is only part of the summary.
+ * Data should be set in this object in response to a remote op.
  */
 export class SummarizableObject extends SharedObject implements ISummarizableObject {
     /**
@@ -69,7 +70,13 @@ export class SummarizableObject extends SharedObject implements ISummarizableObj
         return this._data;
     }
 
-    public set(data: SummarizableData, sequenceNumber: number) {
+    /**
+     * Set data on the object.
+     *
+     * @param data The data to be set.
+     * @param sequenceNumber The sequence number of the remote op in response to which this is called.
+     */
+    public set(data: SummarizableData, sequenceNumber: number): void {
         if (SharedObject.is(data)) {
             throw new Error("SharedObject sets are no longer supported. Instead set the SharedObject handle.");
         }
