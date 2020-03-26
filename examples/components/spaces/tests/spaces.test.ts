@@ -6,7 +6,7 @@
 import { globals } from "../jest.config";
 
 describe("spaces", () => {
-    jest.setTimeout(15000);
+    jest.setTimeout(20000);
     beforeEach(async () => {
         await page.goto(globals.PATH, { waitUntil: "load" });
     });

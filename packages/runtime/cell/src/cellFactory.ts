@@ -30,18 +30,19 @@ export class CellFactory implements ISharedObjectFactory {
     }
 
     public async load(
-        document: IComponentRuntime,
+        runtime: IComponentRuntime,
         id: string,
         services: ISharedObjectServices,
-        branchId: string): Promise<ISharedCell> {
+        branchId: string,
+        attributes: IChannelAttributes): Promise<ISharedCell> {
 
-        const cell = new SharedCell(id, document);
+        const cell = new SharedCell(id, runtime, attributes);
         await cell.load(branchId, services);
         return cell;
     }
 
     public create(document: IComponentRuntime, id: string): ISharedCell {
-        const cell = new SharedCell(id, document);
+        const cell = new SharedCell(id, document, this.attributes);
         cell.initializeLocal();
         return cell;
     }

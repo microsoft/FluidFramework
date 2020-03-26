@@ -51,6 +51,8 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         const documentId = config.get("documentId");
         const tenantId = config.get("tenantId");
 
+        context.log.info(`Leader epoch in ${tenantId}/${documentId}: ${config.get("leaderEpoch")}`);
+
         // Lookup the last sequence number stored
         // TODO - is this storage specific to the orderer in place? Or can I generalize the output context?
         let dbObject = await this.collection.findOne({ documentId, tenantId });
