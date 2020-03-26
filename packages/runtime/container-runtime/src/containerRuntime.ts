@@ -982,7 +982,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.context.scope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.referenceSequenceNumber),
             (cr: IComponentRuntime) => this.attachComponent(cr),
-            undefined /* TODO: REMOVE PROPS FLOW */);
+            undefined /* #1635: Remove LocalComponentContext createProps */);
 
         const deferred = new Deferred<ComponentContext>();
         this.contextsDeferred.set(id, deferred);

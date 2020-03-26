@@ -4,7 +4,7 @@
  */
 
 
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentContext } from "./components";
 
 declare module "@microsoft/fluid-component-core-interfaces" {
@@ -33,7 +33,7 @@ export interface IComponentFactory extends IProvideComponentFactory {
      * @returns A promise for a component that will have been initialized. Caller is responsible
      * for attaching the component to the provided runtime's container such as by storing its handle
      */
-    createComponent?(context: IComponentContext): Promise<IComponent>;
+    createComponent?(context: IComponentContext): Promise<IComponent & IComponentLoadable>;
 
     /**
      * Generates runtime for the component from the component context. Once created should be bound to the context.

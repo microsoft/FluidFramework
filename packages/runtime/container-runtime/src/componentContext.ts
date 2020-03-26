@@ -6,7 +6,7 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { IDisposable } from "@microsoft/fluid-common-definitions";
-import { IComponent, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IComponentLoadable, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
     IAudience,
     IBlobManager,
@@ -210,6 +210,24 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         const packagePath: string[] = await this.composeSubpackagePath(pkgName);
 
         return this.hostRuntime._createComponentWithProps(packagePath, props, id);
+    }
+
+    public async createComponentWithRealizationFn(
+        pkg: string,
+        realizationFn?: (context: IComponentContext) => void,
+    ): Promise<IComponent & IComponentLoadable> {
+        const packagePath = await this.composeSubpackagePath(pkg);
+
+        const componentRuntime = await this.hostRuntime.createComponentWithRealizationFn(
+            packagePath,
+            realizationFn,
+        );
+        const response = await componentRuntime.request({url: "/"});
+        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+            throw new Error("Failed to create component");
+        }
+
+        return response.value;
     }
 
     private async rejectDeferredRealize(reason: string) {

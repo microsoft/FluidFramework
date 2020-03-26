@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IComponentLoadable, IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime, ISharedObjectRegistry } from "@microsoft/fluid-component-runtime";
 import { ComponentRegistry } from "@microsoft/fluid-container-runtime";
 import {
@@ -27,7 +27,7 @@ export class SharedComponentFactory implements IComponentFactory, Partial<IProvi
         sharedObjects: readonly ISharedObjectFactory[],
         registryEntries?: NamedComponentRegistryEntries,
         private readonly onDemandInstantiation = true,
-        readonly type: string = "",
+        public readonly type: string = "",
     ) {
         if (registryEntries !== undefined) {
             this.registry = new ComponentRegistry(registryEntries);
@@ -86,18 +86,10 @@ export class SharedComponentFactory implements IComponentFactory, Partial<IProvi
         return instance;
     }
 
-    public async createComponent(context: IComponentContext): Promise<IComponent> {
-        const packagePath = await context.composeSubpackagePath(this.type);
-
-        const componentRuntime = await context.hostRuntime.createComponentWithRealizationFn(
-            packagePath,
+    public async createComponent(context: IComponentContext): Promise<IComponent & IComponentLoadable> {
+        return context.createComponentWithRealizationFn(
+            this.type,
             (newContext) => { this.instantiateComponent(newContext); },
         );
-        const response = await componentRuntime.request({url: "/"});
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
-            throw new Error("Failed to create component");
-        }
-
-        return response.value as IComponent;
     }
 }

@@ -8,6 +8,7 @@ import { ITelemetryLogger, IDisposable } from "@microsoft/fluid-common-definitio
 import {
     IComponent,
     IComponentHandleContext,
+    IComponentLoadable,
     IComponentRouter,
     IComponentSerializer,
     IProvideComponentHandleContext,
@@ -294,6 +295,18 @@ export interface IComponentContext extends EventEmitter {
     createComponent(pkgOrId: string | undefined, pkg?: string, props?: any): Promise<IComponentRuntime>;
 
     /**
+     * Create a new component using subregistries with fallback.
+     * @param pkg - Package name of the component
+     * @param realizationFn - Optional function to call to realize the component over the context default
+     * @returns A promise for a component that will have been initialized. Caller is responsible
+     * for attaching the component to the provided runtime's container such as by storing its handle
+     */
+    createComponentWithRealizationFn(
+        pkg: string,
+        realizationFn?: (context: IComponentContext) => void,
+    ): Promise<IComponent & IComponentLoadable>;
+
+    /**
      * Make request to the component.
      * @param request - Request.
      */
@@ -394,8 +407,8 @@ export interface IHostRuntime extends
 
     /**
      * Creates a new component using an optional realization function.  This API does not allow specifying
-     * the component's id and insteads generates a uuid.  Consumers must save the id of the created component
-     * in order to reference it later.
+     * the component's id and insteads generates a uuid.  Consumers must save another reference to the
+     * component, such as the handle.
      * @param pkg - Package name of the component
      * @param realizationFn - Optional function to call to realize the component over the context default
      */
