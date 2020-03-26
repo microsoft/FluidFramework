@@ -72,15 +72,17 @@ RUN git config --global user.name "Fluid build server"
 
 ARG DOCSGITPASSWORD
 RUN git clone https://%24fluid-docs:$DOCSGITPASSWORD@fluid-docs.scm.azurewebsites.net:443/fluid-docs.git repo
-WORKDIR /repo
-RUN git pull
 
 WORKDIR /
 ARG VUEPRESS_BASE
 RUN mkdir repo${VUEPRESS_BASE} -p -v
-RUN rsync docs/dist/ repo${VUEPRESS_BASE} -rv --delete --exclude '.git' --exclude 'versions'
 
 WORKDIR /repo
+RUN git pull
+
+WORKDIR /
+RUN rsync docs/dist/ repo${VUEPRESS_BASE} -rv --delete --exclude '.git' --exclude 'versions'
+
 RUN git add .
 RUN git diff --quiet && git diff --staged --quiet || git commit -am 'Automated build'
 RUN git push
