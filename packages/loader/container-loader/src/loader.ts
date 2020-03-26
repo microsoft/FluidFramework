@@ -20,17 +20,13 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import { Deferred } from "@microsoft/fluid-common-utils";
 import {
-    IDocumentService,
     IDocumentServiceFactory,
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
 } from "@microsoft/fluid-driver-definitions";
-import {
-    configurableUrlResolver,
-    DocumentServiceFactoryProtocolMatcher,
-} from "@microsoft/fluid-driver-utils";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import { MultiUrlResolver, MultiDocumentServiceFactory } from "@microsoft/fluid-driver-utils";
 import { Container } from "./container";
 import { debug } from "./debug";
 import { IParsedUrl, parseUrl } from "./utils";
@@ -117,13 +113,14 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
 
     private readonly containers = new Map<string, Promise<Container>>();
     private readonly resolveCache = new Map<string, IResolvedUrl>();
-    private readonly protocolToDocumentFactoryMap: DocumentServiceFactoryProtocolMatcher;
+    private readonly resolver: IUrlResolver;
+    private readonly documentServiceFactory: IDocumentServiceFactory;
 
     public readonly isExperimentalLoader = true;
 
     constructor(
-        private readonly resolver: IUrlResolver | IUrlResolver[],
-        documentServiceFactories: IDocumentServiceFactory | IDocumentServiceFactory[],
+        resolver: IUrlResolver | IUrlResolver[],
+        documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[],
         private readonly codeLoader: ICodeLoader,
         private readonly options: any,
         private readonly scope: IComponent,
@@ -135,16 +132,16 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
         if (!resolver) {
             throw new Error("An IUrlResolver must be provided");
         }
+        this.resolver = MultiUrlResolver.create(resolver);
 
-        if (!documentServiceFactories) {
-            throw new Error("An IDocumentService must be provided");
+        if (!documentServiceFactory) {
+            throw new Error("An IDocumentServiceFactory must be provided");
         }
+        this.documentServiceFactory = MultiDocumentServiceFactory.create(documentServiceFactory);
 
         if (!codeLoader) {
             throw new Error("An ICodeLoader must be provided");
         }
-
-        this.protocolToDocumentFactoryMap = new DocumentServiceFactoryProtocolMatcher(documentServiceFactories);
     }
 
     public async createDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
@@ -156,9 +153,7 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
             this.scope,
             this,
             source,
-            (resolvedUrl: IFluidResolvedUrl) => {
-                return this.protocolToDocumentFactoryMap.getFactory(resolvedUrl);
-            },
+            this.documentServiceFactory,
             this.logger);
     }
 
@@ -214,12 +209,7 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
             return maybeResolvedUrl;
         }
 
-        let toCache: IResolvedUrl | undefined;
-        if (Array.isArray(this.resolver)) {
-            toCache = await configurableUrlResolver(this.resolver, request);
-        } else {
-            toCache = await this.resolver.resolve(request);
-        }
+        const toCache = await this.resolver.resolve(request);
         if (!toCache) {
             return Promise.reject(`Invalid URL ${request.url}`);
         }
@@ -250,8 +240,6 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
         const { canCache, fromSequenceNumber } = this.parseHeader(parsed, request);
 
         debug(`${canCache} ${request.headers[LoaderHeader.pause]} ${request.headers[LoaderHeader.version]}`);
-        const factory: IDocumentServiceFactory =
-            this.protocolToDocumentFactoryMap.getFactory(resolvedAsFluid);
 
         let container: Container;
         if (canCache) {
@@ -265,7 +253,6 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
                 const containerP =
                     this.loadContainer(
                         parsed.id,
-                        await factory.createDocumentService(resolvedAsFluid),
                         request,
                         resolvedAsFluid,
                         this.logger);
@@ -276,7 +263,6 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
             container =
                 await this.loadContainer(
                     parsed.id,
-                    await factory.createDocumentService(resolvedAsFluid),
                     request,
                     resolvedAsFluid,
                     this.logger);
@@ -337,14 +323,13 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
 
     private async loadContainer(
         id: string,
-        documentService: IDocumentService,
         request: IRequest,
         resolved: IFluidResolvedUrl,
         logger?: ITelemetryBaseLogger,
     ): Promise<Container> {
         const container = Container.load(
             id,
-            documentService,
+            this.documentServiceFactory,
             this.codeLoader,
             this.options,
             this.scope,
