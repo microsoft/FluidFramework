@@ -322,21 +322,34 @@ export async function start(
 }
 
 async function startRendering(container: Container, baseHost: BaseHost, url: string, div: HTMLDivElement) {
-    container.on("contextChanged", (value) => {
-        getComponentAndRender(baseHost, url, div).catch(() => { });
+    const p = new Promise((resolve, reject) => {
+        const tryGetComponentAndRender = () => {
+            getComponentAndRender(baseHost, url, div).then((success) => {
+                if (success) {
+                    resolve();
+                }
+            }).catch((error) => reject(error));
+        };
+
+        container.on("contextChanged", (value) => {
+            tryGetComponentAndRender();
+        });
+        tryGetComponentAndRender();
     });
-    await getComponentAndRender(baseHost, url, div);
+    return p;
 }
+
 
 async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
     const component = await baseHost.getComponent(url);
     if (component === undefined) {
-        return;
+        return false;
     }
 
     // Render the component with an HTMLViewAdapter to abstract the UI framework used by the component
     const view = new HTMLViewAdapter(component);
     view.render(div, { display: "block" });
+    return true;
 }
 
 export function getUserToken(bearerSecret: string) {
