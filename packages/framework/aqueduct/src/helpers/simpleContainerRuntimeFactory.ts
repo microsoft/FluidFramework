@@ -6,7 +6,11 @@
 // eslint-disable-next-line import/no-unassigned-import
 import "reflect-metadata";
 
-import { Container, injectable } from "inversify";
+import {
+    AsyncContainerModule,
+    Container,
+    ContainerModule,
+} from "inversify";
 
 import { IContainerContext } from "@microsoft/fluid-container-definitions";
 import {
@@ -21,18 +25,6 @@ import {
     generateContainerServicesRequestHandler,
     ContainerServiceRegistryEntries,
 } from "../containerServices";
-
-// eslint-disable-next-line import/no-internal-modules
-import { IComponentFoo } from "../components/sharedIocComponent";
-
-import { TYPES } from "./types";
-
-@injectable()
-export class Foo implements IComponentFoo {
-    foo() {
-        alert("foo");
-    }
-}
 
 class InversifyContainerProvider implements IComponentIocContainerProvider {
     public get IComponentIocContainerProvider() { return this; }
@@ -55,17 +47,28 @@ export class SimpleContainerRuntimeFactory {
         registryEntries: NamedComponentRegistryEntries,
         serviceRegistry: ContainerServiceRegistryEntries = [],
         requestHandlers: RuntimeRequestHandler[] = [],
+        scopeModules: ContainerModule[] = [],
+        scopeModulesAsync: AsyncContainerModule[] = [],
     ): Promise<ContainerRuntime> {
 
         // Setup our IocContainer that will do scope injection through our framework
         const iocContainer = new Container();
+
+        // Load all the sync modules provided by the caller
+        scopeModules.forEach((module) => {
+            iocContainer.load(module);
+        });
+
+        // Load all the async modules provided by the caller
+        scopeModulesAsync.forEach((module) => {
+            iocContainer.load(module);
+        });
+
+        // If the loader provides an Ioc Container then we can make it the parent of our Container's scope
         const iocCapable = context.scope.IComponentIocContainerProvider;
         if (iocCapable) {
-            // If the loader provides an Ioc Container then we can make it the parent of our Container's scope
             iocContainer.parent = iocCapable.getContainer();
         }
-
-        iocContainer.bind<IComponentFoo>(TYPES.IComponentFoo).to(Foo);
 
         // Debug(`instantiateRuntime(chaincode=${chaincode},registry=${JSON.stringify(registry)})`);
         const runtime = await ContainerRuntime.load(

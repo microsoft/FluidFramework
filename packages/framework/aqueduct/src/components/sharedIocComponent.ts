@@ -19,7 +19,7 @@ import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-d
 import { ComponentHandle } from "@microsoft/fluid-component-runtime";
 import { serviceRoutePathRoot } from "../containerServices";
 
-import { TYPES } from "../helpers";
+import { IocTYPES } from "../helpers";
 
 export interface IComponentFoo {
     foo(): void;
@@ -49,8 +49,8 @@ export abstract class SharedIocComponent extends EventEmitter implements ICompon
     public get handle(): IComponentHandle<this> { return this.innerHandle; }
 
     public constructor(
-        @inject(TYPES.IComponentRuntime) protected readonly runtime: IComponentRuntime,
-        @inject(TYPES.IComponentContext) protected readonly context: IComponentContext,
+        @inject(IocTYPES.IComponentRuntime) protected readonly runtime: IComponentRuntime,
+        @inject(IocTYPES.IComponentContext) protected readonly context: IComponentContext,
     ) {
         super();
         this.innerHandle = new ComponentHandle(this, this.url, runtime.IComponentHandleContext);

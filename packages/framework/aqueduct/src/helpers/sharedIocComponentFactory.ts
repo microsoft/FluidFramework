@@ -23,7 +23,7 @@ import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 
 import { SharedIocComponent } from "../components";
 
-import { TYPES } from "./types";
+import { IocTYPES } from "./types";
 
 export class SharedIocComponentFactory<T extends SharedIocComponent>
 implements IComponentFactory, Partial<IProvideComponentRegistry>  {
@@ -72,9 +72,9 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>  {
         }
 
         // Setup required ioc bindings
-        iocContainer.bind<IComponentContext>(TYPES.IComponentContext).toConstantValue(context);
-        iocContainer.bind<IComponentRuntime>(TYPES.IComponentRuntime).toConstantValue(runtime);
-        iocContainer.bind<T>(TYPES.SharedComponent).to(this.ctor);
+        iocContainer.bind<IComponentContext>(IocTYPES.IComponentContext).toConstantValue(context);
+        iocContainer.bind<IComponentRuntime>(IocTYPES.IComponentRuntime).toConstantValue(runtime);
+        iocContainer.bind<T>(IocTYPES.SharedComponent).to(this.ctor);
 
         let instanceP: Promise<SharedIocComponent>;
         // For new runtime, we need to force the component instance to be create
@@ -102,7 +102,7 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>  {
      */
     private async instantiateInstance<T extends SharedIocComponent>(iocContainer: IocContainer) {
         // Create a new instance of our component
-        const instance = iocContainer.get<T>(TYPES.SharedComponent);
+        const instance = iocContainer.get<T>(IocTYPES.SharedComponent);
         await instance.initialize();
         return instance;
     }
