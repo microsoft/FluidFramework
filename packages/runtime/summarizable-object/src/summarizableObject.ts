@@ -64,6 +64,7 @@ export class SummarizableObject extends SharedObject implements ISummarizableObj
      */
     constructor(id: string, runtime: IComponentRuntime, attributes: IChannelAttributes) {
         super(id, runtime, attributes);
+        this._data = {};
     }
 
     public get data(): SummarizableData {
@@ -74,7 +75,13 @@ export class SummarizableObject extends SharedObject implements ISummarizableObj
             throw new Error("SharedObject sets are no longer supported. Instead set the SharedObject handle.");
         }
 
-        this._data = data;
+        Object.keys(data).forEach(
+            (key) => {
+                this._data[key] = data[key];
+            },
+        );
+
+        // Set this object as dirty so that it is part of the next summary.
         this.dirty();
     }
 
@@ -82,7 +89,7 @@ export class SummarizableObject extends SharedObject implements ISummarizableObj
      * Initialize a local instance of data.
      */
     protected initializeLocalCore() {
-        this._data = undefined;
+        this._data = {};
     }
 
     /**
@@ -102,7 +109,7 @@ export class SummarizableObject extends SharedObject implements ISummarizableObj
                     path: snapshotFileName,
                     type: TreeEntry[TreeEntry.Blob],
                     value: {
-                        contents: JSON.stringify({ data: this.data}),
+                        contents: JSON.stringify(this.data),
                         encoding: "utf-8",
                     },
                 },
@@ -130,7 +137,7 @@ export class SummarizableObject extends SharedObject implements ISummarizableObj
 
         const rawContent = await storage.read(snapshotFileName);
 
-        this._data = rawContent !== undefined ? JSON.parse(fromBase64ToUtf8(rawContent)).data : undefined;
+        this._data = rawContent !== undefined ? JSON.parse(fromBase64ToUtf8(rawContent)) : {};
     }
 
     /**

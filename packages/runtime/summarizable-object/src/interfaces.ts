@@ -9,7 +9,7 @@ import {
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObject } from "@microsoft/fluid-shared-object-base";
 
-export type SummarizableData = JsonableObject<Jsonable> | undefined;
+export type SummarizableData = JsonableObject<Jsonable>;
 
 /**
  * Summarizable object interface
