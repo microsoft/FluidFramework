@@ -9,10 +9,9 @@ import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import {
-    IDocumentDeltaStorageService,
-    IDocumentService,
     IFluidResolvedUrl,
     ErrorType,
+    IDocumentServiceFactory,
 } from "@microsoft/fluid-driver-definitions";
 import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
@@ -25,7 +24,7 @@ describe("Errors Types", () => {
     let testResolver: TestResolver;
     let testResolved: IFluidResolvedUrl;
     const testRequest: IRequest = { url: "" };
-    let service: IDocumentService;
+    let serviceFactory: IDocumentServiceFactory;
     let codeLoader: API.CodeLoader;
     let loader: Loader;
 
@@ -33,8 +32,7 @@ describe("Errors Types", () => {
         testDeltaConnectionServer = LocalDeltaConnectionServer.create();
         testResolver = new TestResolver();
         testResolved = await testResolver.resolve(testRequest) as IFluidResolvedUrl;
-        const serviceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
-        service = await serviceFactory.createDocumentService(testResolved);
+        serviceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
 
         codeLoader = new API.CodeLoader({ generateSummaries: false });
         const options = {};
@@ -50,20 +48,29 @@ describe("Errors Types", () => {
 
     it("General Error Test", async () => {
         try {
+            const mockFactory = Object.create(serviceFactory) as IDocumentServiceFactory;
             // Issue typescript-eslint/typescript-eslint #1256
             // eslint-disable-next-line @typescript-eslint/unbound-method
-            service.connectToDeltaStorage = async (): Promise<IDocumentDeltaStorageService> => {
-                return Promise.reject(false);
+            mockFactory.createDocumentService = async (resolvedUrl) => {
+                const service = await serviceFactory.createDocumentService(resolvedUrl);
+                // Issue typescript-eslint/typescript-eslint #1256
+                // eslint-disable-next-line @typescript-eslint/unbound-method
+                service.connectToDeltaStorage = async () => Promise.reject(false);
+                return service;
             };
+
             await Container.load(
                 "tenantId/documentId",
-                service,
+                mockFactory,
                 codeLoader,
                 {},
                 {},
                 loader,
                 testRequest,
-                testResolved);
+                testResolved,
+                testResolver);
+
+            assert.fail("Error expected");
         } catch (error) {
             assert.equal(error.errorType, ErrorType.generalError, "Error is not a general error");
         }

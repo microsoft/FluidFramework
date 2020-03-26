@@ -9,8 +9,8 @@ import {
     IDocumentServiceFactory,
     IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
+import { assertFluidResolvedUrl } from "@microsoft/fluid-driver-utils";
 import { CreationDocumentService } from "./creationDocumentService";
-
 /**
  * Factory for creating the faux document service. Use this if you want to
  * lie to runtime that there is an actual connection to server.
@@ -22,10 +22,8 @@ export class CreationDocumentServiceFactory implements IDocumentServiceFactory {
     }
 
     public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
-        if (resolvedUrl.type !== "fluid") {
-            // eslint-disable-next-line max-len
-            return Promise.reject("Only Fluid components currently supported in the RouterliciousDocumentServiceFactory");
-        }
+
+        assertFluidResolvedUrl(resolvedUrl);
 
         const fluidResolvedUrl = resolvedUrl;
         const parsedUrl = parse(fluidResolvedUrl.url);

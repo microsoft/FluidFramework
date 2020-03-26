@@ -15,18 +15,16 @@ import {
     IUrlResolver,
 } from "@microsoft/fluid-driver-definitions";
 import {
-    configurableUrlResolver,
-    DocumentServiceFactoryProtocolMatcher,
-} from "@microsoft/fluid-driver-utils";
-import {
     ConnectionMode,
     IClient,
     IDocumentMessage,
     IVersion,
 } from "@microsoft/fluid-protocol-definitions";
 import * as Comlink from "comlink";
+import { assertFluidResolvedUrl } from "@microsoft/fluid-driver-utils";
 import { debug } from "./debug";
 import { IOuterDocumentDeltaConnectionProxy } from "./innerDocumentDeltaConnection";
+
 
 const socketIOEvents = [
     "op",
@@ -67,25 +65,20 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
             storage: IDocumentStorageService;
         },
     };
-    private readonly driverProtocolMappings: DocumentServiceFactoryProtocolMatcher;
 
     constructor(
-        documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[],
+        private readonly documentServiceFactory: IDocumentServiceFactory,
         private readonly options: any,
         private readonly resolvedUrl: IFluidResolvedUrl,
         frame: HTMLIFrameElement,
     ) {
-        this.driverProtocolMappings = new DocumentServiceFactoryProtocolMatcher(documentServiceFactory);
         this.clients = {};
         this.createProxy(frame);
     }
 
     public async createDocumentService(): Promise<string> {
-
-        const documentServiceFactory = this.driverProtocolMappings.getFactory(this.resolvedUrl);
-
         const connectedDocumentService: IDocumentService =
-            await documentServiceFactory.createDocumentService(this.resolvedUrl);
+            await this.documentServiceFactory.createDocumentService(this.resolvedUrl);
 
         const clientDetails = this.options ? (this.options.client as IClient) : null;
         const mode: ConnectionMode = "write";
@@ -261,10 +254,10 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
 export class IFrameDocumentServiceProxyFactory {
 
     public static async create(
-        documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[],
+        documentServiceFactory: IDocumentServiceFactory,
         frame: HTMLIFrameElement,
         options: any,
-        urlResolver: IUrlResolver | IUrlResolver[],
+        urlResolver: IUrlResolver,
     ) {
         return new IFrameDocumentServiceProxyFactory(documentServiceFactory, frame, options, urlResolver);
     }
@@ -272,10 +265,10 @@ export class IFrameDocumentServiceProxyFactory {
     public readonly protocolName = "fluid-outer:";
 
     constructor(
-        private readonly documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[],
+        private readonly documentServiceFactory: IDocumentServiceFactory,
         private readonly frame: HTMLIFrameElement,
         private readonly options: any,
-        private readonly urlResolver: IUrlResolver | IUrlResolver[],
+        private readonly urlResolver: IUrlResolver,
     ) {
 
     }
@@ -290,19 +283,9 @@ export class IFrameDocumentServiceProxyFactory {
     }
 
     public async createDocumentServiceFromRequest(request: IRequest): Promise<IDocumentServiceFactoryProxy> {
-        // Simplify this with either https://github.com/microsoft/FluidFramework/pull/448
-        // or https://github.com/microsoft/FluidFramework/issues/447
-        const resolvers: IUrlResolver[] = [];
-        if (!(Array.isArray(this.urlResolver))) {
-            resolvers.push(this.urlResolver);
-        } else {
-            resolvers.push(... this.urlResolver);
-        }
 
-        const resolvedUrl = await configurableUrlResolver(resolvers, request);
-        if (!resolvedUrl  || resolvedUrl.type !== "fluid") {
-            return Promise.reject("No Resolver for request");
-        }
+        const resolvedUrl = await this.urlResolver.resolve(request);
+        assertFluidResolvedUrl(resolvedUrl);
 
         return this.createDocumentService(resolvedUrl);
     }
