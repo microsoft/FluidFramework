@@ -27,7 +27,7 @@ class Foo implements IComponentFoo {
     }
 }
 
-const generateScopeModules: () => ContainerModule[] = () => {
+export const generateScopeModules: () => ContainerModule[] = () => {
     const foo = new ContainerModule((bind) => {
         bind<IComponentFoo>(IComponentFoo_SYMBOL).toConstantValue(new Foo());
     });
