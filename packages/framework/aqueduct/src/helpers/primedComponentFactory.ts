@@ -10,12 +10,12 @@ import {
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-import { SharedComponent } from "../components";
+import { PrimedComponent } from "../components";
 import { SharedComponentFactory } from "./sharedComponentFactory";
 
-export class PrimedComponentFactory extends SharedComponentFactory {
+export class PrimedComponentFactory<T extends PrimedComponent> extends SharedComponentFactory<T> {
     constructor(
-        ctor: new (runtime: IComponentRuntime, context: IComponentContext) => SharedComponent,
+        ctor: new (runtime: IComponentRuntime, context: IComponentContext) => T,
         sharedObjects: readonly ISharedObjectFactory[] = [],
         registryEntries?: NamedComponentRegistryEntries,
         onDemandInstantiation = true,

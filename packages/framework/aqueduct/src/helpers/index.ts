@@ -8,6 +8,4 @@ export * from "./simpleContainerRuntimeFactory";
 export * from "./simpleModuleInstantiationFactory";
 export * from "./sharedComponentFactory";
 
-export * from "./primedIocComponentFactory";
-export * from "./sharedIocComponentFactory";
-export * from "./types";
+export * from "./iocTypes";

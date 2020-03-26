@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { injectable, inject, optional } from "inversify";
+import { injectable } from "inversify";
 
 import {
-    PrimedIocComponent,
-    PrimedIocComponentFactory,
-    TYPES,
-    IComponentFoo,
+    PrimedComponent,
+    PrimedComponentFactory,
+    // IocTYPES,
 } from "@microsoft/fluid-aqueduct";
 import {
     IComponentHTMLView,
@@ -22,11 +21,8 @@ import * as ReactDOM from "react-dom";
  * Dice roller example using view interfaces and stock component classes.
  */
 @injectable()
-export class DiceRoller extends PrimedIocComponent implements IComponentHTMLView {
+export class DiceRoller extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
-
-    @inject(TYPES.IComponentFoo) @optional()
-    private readonly foo: IComponentFoo | undefined;
 
     /**
      * ComponentInitializingFirstTime is called only once, it is executed only by the first client to open the
@@ -39,13 +35,13 @@ export class DiceRoller extends PrimedIocComponent implements IComponentHTMLView
     }
 
     protected async componentHasInitialized() {
-        // TODO: REMOVE
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        if (this.foo) {
-            this.foo?.foo();
-        } else {
-            alert("no foo");
-        }
+        // // TODO: REMOVE
+        // // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        // if (this.foo) {
+        //     this.foo?.foo();
+        // } else {
+        //     alert("no foo");
+        // }
     }
 
     /**
@@ -86,7 +82,7 @@ export class DiceRoller extends PrimedIocComponent implements IComponentHTMLView
  * The PrimedComponentFactory declares the component and defines any additional distributed data structures.
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
  */
-export const DiceRollerInstantiationFactory = new PrimedIocComponentFactory(
+export const DiceRollerInstantiationFactory = new PrimedComponentFactory(
     DiceRoller,
     [],
 );
