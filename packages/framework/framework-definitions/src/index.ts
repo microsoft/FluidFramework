@@ -7,3 +7,4 @@ export * from "./discover";
 export * from "./collection";
 
 export * from "./componentDefaultFactoryName";
+export * from "./iocContainer";

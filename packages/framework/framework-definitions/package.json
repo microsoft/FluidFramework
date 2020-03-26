@@ -25,7 +25,8 @@
   },
   "dependencies": {
     "@microsoft/fluid-component-core-interfaces": "^0.16.0",
-    "@microsoft/fluid-runtime-definitions": "^0.16.0"
+    "@microsoft/fluid-runtime-definitions": "^0.16.0",
+    "inversify": "^5.0.1"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",

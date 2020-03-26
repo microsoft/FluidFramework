@@ -3,6 +3,11 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-unassigned-import
+import "reflect-metadata";
+
+import { Container, injectable } from "inversify";
+
 import { IContainerContext } from "@microsoft/fluid-container-definitions";
 import {
     componentRuntimeRequestHandler,
@@ -11,10 +16,31 @@ import {
     RuntimeRequestHandler,
 } from "@microsoft/fluid-container-runtime";
 import { IHostRuntime, NamedComponentRegistryEntries } from "@microsoft/fluid-runtime-definitions";
+import { IComponentIocContainerProvider } from "@microsoft/fluid-framework-interfaces";
 import {
     generateContainerServicesRequestHandler,
     ContainerServiceRegistryEntries,
 } from "../containerServices";
+
+// eslint-disable-next-line import/no-internal-modules
+import { IComponentFoo } from "../components/sharedIocComponent";
+
+import { TYPES } from "./types";
+
+@injectable()
+export class Foo implements IComponentFoo {
+    foo() {
+        alert("foo");
+    }
+}
+
+class InversifyContainerProvider implements IComponentIocContainerProvider {
+    public get IComponentIocContainerProvider() { return this; }
+
+    public constructor(private readonly container: Container) { }
+
+    public getContainer() { return this.container; }
+}
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class SimpleContainerRuntimeFactory {
@@ -30,6 +56,17 @@ export class SimpleContainerRuntimeFactory {
         serviceRegistry: ContainerServiceRegistryEntries = [],
         requestHandlers: RuntimeRequestHandler[] = [],
     ): Promise<ContainerRuntime> {
+
+        // Setup our IocContainer that will do scope injection through our framework
+        const iocContainer = new Container();
+        const iocCapable = context.scope.IComponentIocContainerProvider;
+        if (iocCapable) {
+            // If the loader provides an Ioc Container then we can make it the parent of our Container's scope
+            iocContainer.parent = iocCapable.getContainer();
+        }
+
+        iocContainer.bind<IComponentFoo>(TYPES.IComponentFoo).to(Foo);
+
         // Debug(`instantiateRuntime(chaincode=${chaincode},registry=${JSON.stringify(registry)})`);
         const runtime = await ContainerRuntime.load(
             context,
@@ -40,7 +77,9 @@ export class SimpleContainerRuntimeFactory {
                 generateContainerServicesRequestHandler(serviceRegistry),
                 ...requestHandlers,
                 componentRuntimeRequestHandler,
-            ]);
+            ],
+            undefined,
+            new InversifyContainerProvider(iocContainer));
         // Debug("runtime loaded.");
 
         // On first boot create the base component
