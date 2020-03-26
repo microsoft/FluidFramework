@@ -61,6 +61,8 @@
     "@microsoft/fluid-map": "^0.16.0",
     "@microsoft/fluid-runtime-definitions": "^0.16.0",
     "@microsoft/fluid-shared-object-base": "^0.16.0",
+    "inversify": "^5.0.1",
+    "reflect-metadata": "^0.1.13",
     "uuid": "^3.3.2"
   },
   "devDependencies": {

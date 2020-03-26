@@ -3,6 +3,11 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-unassigned-import
+import "reflect-metadata";
+
+import { Container as IocContainer } from "inversify";
+
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime, ISharedObjectRegistry } from "@microsoft/fluid-component-runtime";
 import { ComponentRegistry } from "@microsoft/fluid-container-runtime";
@@ -15,8 +20,10 @@ import {
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-// eslint-disable-next-line import/no-internal-modules
+
 import { SharedIocComponent } from "../components";
+
+import { TYPES } from "./types";
 
 export class SharedIocComponentFactory<T extends SharedIocComponent>
 implements IComponentFactory, Partial<IProvideComponentRegistry>  {
@@ -56,19 +63,24 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>  {
             this.registry,
         );
 
+        const iocContainer = new IocContainer();
+        iocContainer.bind<IComponentContext>(TYPES.IComponentContext).toConstantValue(context);
+        iocContainer.bind<IComponentRuntime>(TYPES.IComponentRuntime).toConstantValue(runtime);
+        iocContainer.bind<T>(TYPES.SharedComponent).to(this.ctor);
+
         let instanceP: Promise<SharedIocComponent>;
         // For new runtime, we need to force the component instance to be create
         // run the initialization.
         if (!this.onDemandInstantiation || !runtime.existing) {
             // Create a new instance of our component up front
-            instanceP = this.instantiateInstance(runtime, context);
+            instanceP = this.instantiateInstance(iocContainer);
         }
 
         runtime.registerRequestHandler(async (request: IRequest) => {
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             if (!instanceP) {
                 // Create a new instance of our component on demand
-                instanceP = this.instantiateInstance(runtime, context);
+                instanceP = this.instantiateInstance(iocContainer);
             }
             const instance = await instanceP;
             return instance.request(request);
@@ -80,9 +92,9 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>  {
      * @param runtime - component runtime created for the component context
      * @param context - component context used to load a component runtime
      */
-    private async instantiateInstance(runtime: ComponentRuntime, context: IComponentContext) {
+    private async instantiateInstance<T extends SharedIocComponent>(iocContainer: IocContainer) {
         // Create a new instance of our component
-        const instance = new this.ctor(runtime, context);
+        const instance = iocContainer.get<T>(TYPES.SharedComponent);
         await instance.initialize();
         return instance;
     }

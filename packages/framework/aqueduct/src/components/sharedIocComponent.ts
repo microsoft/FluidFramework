@@ -4,6 +4,8 @@
  */
 
 import { EventEmitter } from "events";
+import { injectable, inject } from "inversify";
+
 import {
     IComponent,
     IComponentHandle,
@@ -17,10 +19,14 @@ import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-d
 import { ComponentHandle } from "@microsoft/fluid-component-runtime";
 import { serviceRoutePathRoot } from "../containerServices";
 
+import { TYPES } from "../helpers";
+
 /**
  * This is a bare-bones base class that does basic setup and enables for factory on an initialize call.
  * You probably don't want to inherit from this component directly unless you are creating another base component class
  */
+
+@injectable()
 // eslint-disable-next-line max-len
 export abstract class SharedIocComponent extends EventEmitter implements IComponentLoadable, IComponentRouter, IProvideComponentHandle {
     private initializeP: Promise<void> | undefined;
@@ -39,8 +45,8 @@ export abstract class SharedIocComponent extends EventEmitter implements ICompon
     public get handle(): IComponentHandle<this> { return this.innerHandle; }
 
     public constructor(
-        protected readonly runtime: IComponentRuntime,
-        protected readonly context: IComponentContext,
+        @inject(TYPES.IComponentRuntime) protected readonly runtime: IComponentRuntime,
+        @inject(TYPES.IComponentContext) protected readonly context: IComponentContext,
     ) {
         super();
         this.innerHandle = new ComponentHandle(this, this.url, runtime.IComponentHandleContext);

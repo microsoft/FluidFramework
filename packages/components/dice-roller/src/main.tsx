@@ -4,8 +4,8 @@
  */
 
 import {
-    PrimedComponent,
-    PrimedComponentFactory,
+    PrimedIocComponent,
+    PrimedIocComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import {
     IComponentHTMLView,
@@ -17,7 +17,7 @@ import * as ReactDOM from "react-dom";
 /**
  * Dice roller example using view interfaces and stock component classes.
  */
-export class DiceRoller extends PrimedComponent implements IComponentHTMLView {
+export class DiceRoller extends PrimedIocComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
     /**
@@ -68,7 +68,7 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLView {
  * The PrimedComponentFactory declares the component and defines any additional distributed data structures.
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
  */
-export const DiceRollerInstantiationFactory = new PrimedComponentFactory(
+export const DiceRollerInstantiationFactory = new PrimedIocComponentFactory(
     DiceRoller,
     [],
 );

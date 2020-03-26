@@ -9,8 +9,11 @@
         "rootDir": "./src",
         "outDir": "./dist",
         "types": [
-            "mocha"
-        ]
+            "mocha",
+            "reflect-metadata"
+        ],
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true
     },
     "include": [
         "src/**/*"
