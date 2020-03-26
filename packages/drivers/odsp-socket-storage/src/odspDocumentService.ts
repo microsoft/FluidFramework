@@ -85,8 +85,8 @@ export class OdspDocumentService implements IDocumentService {
                 const props = {
                     hashedDocumentId: odspResolvedUrl.hashedDocumentId,
                     itemId: odspResolvedUrl.itemId,
+                    isWithSummaryUpload: createNewSummary ? true : false,
                 };
-                createNewSummary ? props["isWithSummaryUpload"] = true : props["isWithSummaryUpload"] = false;
                 event?.end(props);
             }
         } catch(error) {
