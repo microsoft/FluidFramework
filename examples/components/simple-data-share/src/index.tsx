@@ -50,11 +50,11 @@ export class SimpleDataSharing extends PrimedComponent implements IComponentHTML
         this.root.createValueType("clicks", CounterValueType.Name, 0);
 
         // Create a button, textDisplay, and incrementor component
-        const buttonComponent = await this.createAndAttachComponent_NEW(Button.chaincodeName);
+        const buttonComponent = await this.createAndAttachComponent(Button.chaincodeName);
         this.root.set(this.buttonId, buttonComponent.handle);
-        const textComponent = await this.createAndAttachComponent_NEW(TextDisplay.chaincodeName);
+        const textComponent = await this.createAndAttachComponent(TextDisplay.chaincodeName);
         this.root.set(this.textDisplayId, textComponent.handle);
-        const incrementorComponent = await this.createAndAttachComponent_NEW(Incrementor.chaincodeName);
+        const incrementorComponent = await this.createAndAttachComponent(Incrementor.chaincodeName);
         this.root.set(this.incrementorId, incrementorComponent.handle);
     }
 

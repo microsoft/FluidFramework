@@ -138,7 +138,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
      * @param pkg - package name for the new component
      * @param props - optional props to be passed in
      */
-    protected async createAndAttachComponent_NEW<T extends IComponent & IComponentLoadable>(
+    protected async createAndAttachComponent<T extends IComponent & IComponentLoadable>(
         pkg: string, props?: any,
     ): Promise<T> {
         const componentRuntime = await this.context.createComponent(uuid(), pkg, props);

@@ -78,15 +78,16 @@ export class Spaces extends PrimedComponent
 
     protected async componentInitializingFirstTime(props?: any) {
         this.root.createSubDirectory("component-list");
-        this.root.set("componentToolbarId", this.componentToolbarId);
         this.initializeDataModel();
-        this.componentToolbar =
+        const componentToolbar =
             await this.dataModel.addComponent<ComponentToolbar>(
                 ComponentToolbarName,
                 4,
                 4,
                 Spaces.defaultComponentToolbarId,
             );
+        this.root.set("component-toolbar", componentToolbar.handle);
+        this.componentToolbar = componentToolbar;
         (this.componentToolbar as ComponentToolbar).changeEditState(true);
         // Set the saved template if there is a template query param
         const urlParams = new URLSearchParams(window.location.search);
@@ -127,7 +128,7 @@ export class Spaces extends PrimedComponent
         this.dataModelInternal =
             new SpacesDataModel(
                 this.root,
-                this.createAndAttachComponent_NEW.bind(this),
+                this.createAndAttachComponent.bind(this),
                 this.getComponent_UNSAFE.bind(this),
                 this.componentToolbarId,
             );
@@ -137,7 +138,7 @@ export class Spaces extends PrimedComponent
         this.componentToolbarId = id;
         const componentToolbar = await this.dataModel.setComponentToolbar(id, type, url);
         this.componentToolbar = componentToolbar;
-        this.root.set("componentToolbarId", id);
+        this.root.set("component-toolbar", id);
         this.addToolbarListeners();
     }
 

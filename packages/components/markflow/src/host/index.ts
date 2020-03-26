@@ -32,7 +32,7 @@ export class WebFlow extends PrimedComponent implements IComponentHTMLVisual {
     // #endregion IComponentHTMLVisual
 
     protected async componentInitializingFirstTime() {
-        const component = await this.createAndAttachComponent_NEW<FlowDocument>(FlowDocumentType);
+        const component = await this.createAndAttachComponent<FlowDocument>(FlowDocumentType);
         this.docId = `${component.IComponentLoadable.url}`;
         this.root.set(this.docId, component.handle);
         const url = new URL(window.location.href);

@@ -34,7 +34,7 @@ describe("PrimedComponent", () => {
             host = new TestHost([
                 [PrimedType, Promise.resolve(factory)],
             ]);
-            component = await host.createAndAttachComponent_NEW(PrimedType);
+            component = await host.createAndAttachComponent(PrimedType);
         });
 
         afterEach(async () => { await host.close(); });

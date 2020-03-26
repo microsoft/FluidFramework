@@ -12,7 +12,7 @@ import { ISpacesDataModel } from "./dataModel";
 
 interface IEmbeddedComponentWrapperProps {
     id: string;
-    getComponent: (componentId: string) => Promise<IComponent>;
+    getComponent: (componentId: string) => Promise<IComponent | undefined>;
 }
 
 interface IEmbeddedComponentWrapperState {
@@ -48,8 +48,10 @@ class EmbeddedComponentWrapper extends React.Component<IEmbeddedComponentWrapper
 
     async componentDidMount() {
         const component = await this.props.getComponent(this.props.id);
-        const element = <ReactViewAdapter component={component} />;
-        this.setState({ element });
+        if (component) {
+            const element = <ReactViewAdapter component={component} />;
+            this.setState({ element });
+        }
     }
 
     public render() {

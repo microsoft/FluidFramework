@@ -106,7 +106,7 @@ export class Todo extends PrimedComponent implements
     public async addTodoItemComponent(props?: any) {
 
         // Create a new todo item
-        const component = await this.createAndAttachComponent_NEW(TodoItemName, props);
+        const component = await this.createAndAttachComponent(TodoItemName, props);
 
         // Store the id of the component in our ids map so we can reference it later
         this.todoItemsMap.set(component.url, component.handle);

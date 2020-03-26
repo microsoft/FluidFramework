@@ -23,7 +23,7 @@ export interface ISpacesDataModel extends EventEmitter {
         h?: number,
         id?: string
     ): Promise<T>;
-    getComponent<T extends IComponent>(id: string): Promise<T>;
+    getComponent<T extends IComponent>(id: string): Promise<T | undefined>;
     removeComponent(id: string): void;
     updateGridItem(id: string, newLayout: Layout): void;
     getLayout(id: string): Layout;
@@ -117,14 +117,15 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         url: string): Promise<IComponent> {
         return this.removeComponent(this.componentToolbarId).then(async () => {
             this.componentToolbarId = id;
-            const component = await this.getComponent(id);
+            const component = await this.getComponent<IComponent>(id);
             const defaultModel: ISpacesModel = {
                 type,
                 layout: { x: 0, y: 0, w: 6, h: 2 },
+                handleOrId: id,
             };
             if (component) {
                 this.componentSubDirectory.set(id, defaultModel);
-                return component as IComponent;
+                return component;
             } else {
                 throw new Error(`Runtime does not contain component with id: ${id}`);
             }
@@ -178,22 +179,27 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         const model = {
             type: currentEntry.type,
             layout: { x: newLayout.x, y: newLayout.y, w: newLayout.w, h: newLayout.h },
-            handle: currentEntry.handle,
+            handleOrId: currentEntry.handleOrId,
         };
         this.componentSubDirectory.set(id, model);
     }
 
-    public async getComponent<T>(id: string): Promise<T> {
-        const component = await this.getComponentById<T>(id);
-        if (!component) {
-            return this.getComponent_UNSAFE<T>(id);
+    public async getComponent<T extends IComponent>(id: string): Promise<T | undefined> {
+        const data = this.componentSubDirectory.get<ISpacesModel>(id);
+        if (typeof data.handleOrId === "string") {
+            return this.getComponent_UNSAFE<T>(data.handleOrId);
+        } else if (data.handleOrId) {
+            return this.getComponentById(data.handleOrId);
         }
-        return component;
+        return Promise.resolve(undefined);
     }
 
-    private async getComponentById<T>(id: string): Promise<T|undefined> {
-        const handle = this.componentSubDirectory.get(id);
-        return handle && handle.IComponentHandle ? handle.IComponentHandle.get() : undefined;
+    private async getComponentById<T>(handle: IComponentHandle): Promise<T> {
+        // We have to do this bit of hackery because in handles.ts, there is a note
+        // about constraining the handle's T to IComponent & IComponentLoadable
+        // Since getComponent above doesn't restrict T to IComponentLoadable, we cannot set
+        // the type there
+        return await handle.get() as unknown as T;
     }
 
     public getLayout(id: string): Layout {
@@ -233,7 +239,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         const defaultModel: ISpacesModel = {
             type,
             layout,
-            handle: component.handle,
+            handleOrId: component.handle,
         };
         this.componentSubDirectory.set(id, defaultModel);
         return component;
@@ -243,5 +249,5 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
 interface ISpacesModel {
     type: string;
     layout: Layout;
-    handle?: IComponentHandle;
+    handleOrId?: IComponentHandle | string;
 }

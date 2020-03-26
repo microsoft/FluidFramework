@@ -86,7 +86,7 @@ export class TableDocument extends PrimedComponent implements ITable {
         minCol: number,
         maxRow: number,
         maxCol: number): Promise<ITable> {
-        const component = await super.createAndAttachComponent_NEW<TableSlice>(TableSliceType,
+        const component = await super.createAndAttachComponent<TableSlice>(TableSliceType,
             { docId: this.runtime.id, name, minRow, minCol, maxRow, maxCol });
         this.root.set(sliceId, component.handle);
         return component;
