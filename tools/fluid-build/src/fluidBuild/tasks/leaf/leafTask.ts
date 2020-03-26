@@ -186,8 +186,8 @@ export abstract class LeafTask extends Task {
         return path.join(this.node.pkg.directory, filePath);
     }
 
-    protected get allDependentTasks()  {
-        return (function * (dependentTasks) {
+    protected get allDependentTasks() {
+        return (function* (dependentTasks) {
             const pending: LeafTask[] = [...dependentTasks];
             const seen = new Set<LeafTask>();
             while (true) {
@@ -237,6 +237,17 @@ export abstract class LeafTask extends Task {
 
     protected logVerboseTask(msg: string) {
         logVerbose(`Task: ${this.node.pkg.nameColored} ${this.executable}: ${msg}`);
+    }
+
+    protected addAllDependentPackageTasks(dependentTasks: LeafTask[]) {
+        for (const child of this.node.dependentPackages) {
+            if (child.task) {
+                child.task.collectLeafTasks(dependentTasks);
+                this.logVerboseDependency(child, "*");
+            }
+        }
+
+        // TODO: we should add all the prefix tasks in the task tree of the current package as well.
     }
 };
 
@@ -310,12 +321,7 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 export class UnknownLeafTask extends LeafTask {
     protected addDependentTasks(dependentTasks: LeafTask[]) {
         // Because we don't know, we need to depends on all the task in the dependent packages
-        for (const child of this.node.dependentPackages) {
-            if (child.task) {
-                child.task.collectLeafTasks(dependentTasks);
-                this.logVerboseDependency(child, "*");
-            }
-        }
+        this.addAllDependentPackageTasks(dependentTasks);
     }
 
     protected async checkLeafIsUpToDate() {
