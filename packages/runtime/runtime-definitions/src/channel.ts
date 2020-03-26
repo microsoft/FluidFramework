@@ -94,6 +94,13 @@ export interface IDeltaConnection {
      * Attaches a message handler to the delta connection
      */
     attach(handler: IDeltaHandler): void;
+
+    /**
+     * Indicates that the channel is dirty and needs to be part of the summary. It is called by a summarizable
+     * object that needs to be part of the summary but does not generate ops.
+     * It updates the latest sequence number of the summary tracker.
+     */
+    dirty(sequenceNumber: number): void;
 }
 
 /**

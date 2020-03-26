@@ -32,6 +32,7 @@ export function createServiceEndpoints(
     id: string,
     connectionState: ConnectionState,
     submitFn: (type: MessageType, content: any) => number,
+    dirtyFn: (address: string, sequenceNumber: number) => void,
     storageService: IDocumentStorageService,
     tree?: ISnapshotTree,
     extraBlobs?: Map<string, string>,
@@ -42,7 +43,8 @@ export function createServiceEndpoints(
         (message) => {
             const envelope: IEnvelope = { address: id, contents: message };
             return submitFn(MessageType.Operation, envelope);
-        });
+        },
+        (sequenceNumber: number) => dirtyFn(id, sequenceNumber));
     const objectStorage = new ChannelStorageService(tree, storageService, extraBlobs);
 
     return {
