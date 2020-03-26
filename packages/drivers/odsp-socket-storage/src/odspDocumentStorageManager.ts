@@ -13,12 +13,11 @@ import {
     TelemetryLogger,
 } from "@microsoft/fluid-common-utils";
 import * as resources from "@microsoft/fluid-gitresources";
-import { buildHierarchy } from "@microsoft/fluid-protocol-base";
+import { buildHierarchy, getGitType } from "@microsoft/fluid-protocol-base";
 import * as api from "@microsoft/fluid-protocol-definitions";
 import {
     ISummaryContext,
 } from "@microsoft/fluid-driver-definitions";
-import { getDocAttributesAndQuorumValuesFromProtocolSummary } from "@microsoft/fluid-driver-utils";
 import {
     IDocumentStorageGetVersionsResponse,
     IDocumentStorageManager,
@@ -217,6 +216,12 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
         hierarchicalTree.commits = commits;
 
+        const appTree = hierarchicalTree.trees[".app"];
+        const protocolTree = hierarchicalTree.trees[".protocol"];
+        if (appTree && protocolTree) {
+            return this.combineProtocolAndAppSnapshotTree(tree.sha, appTree, protocolTree);
+        }
+
         return hierarchicalTree;
     }
 
@@ -309,12 +314,12 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     // want to use the same getLatest result.
                     this.cache.localStorage.put(odspCacheKey, odspSnapshot, 10000);
                 }
-                const { trees, blobs, ops, sha } = odspSnapshot;
+                const { trees, tree, blobs, ops, sha } = odspSnapshot;
                 const blobsIdToPathMap: Map<string, string> = new Map();
                 if (trees) {
                     this.initTreesCache(trees);
-                    for (const tree of this.treesCache.values()) {
-                        for (const entry of tree.tree) {
+                    for (const treeVal of this.treesCache.values()) {
+                        for (const entry of treeVal.tree) {
                             if (entry.type === "blob") {
                                 blobsIdToPathMap.set(entry.sha, `/${entry.path}`);
                             } else if (entry.type === "commit" && entry.path === ".app") {
@@ -323,6 +328,10 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                             }
                         }
                     }
+                }
+
+                if (tree) {
+                    this.treesCache.set(odspSnapshot.sha, (odspSnapshot as any) as resources.ITree);
                 }
 
                 if (blobs) {
@@ -421,9 +430,10 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     public async uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string> {
         this.checkSnapshotUrl();
 
+        this.lastSummaryHandle = `${context.ackHandle}/.app`;
         const { result, blobsShaToPathCacheLatest } = await this.writeSummaryTree({
             useContext: true,
-            parentHandle: context.proposalHandle,
+            parentHandle: this.lastSummaryHandle,
             tree: summary,
         });
         if (!result || !result.sha) {
@@ -433,7 +443,6 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             this.blobsShaToPathCache = blobsShaToPathCacheLatest;
         }
 
-        this.lastSummaryHandle = result.sha;
         return result.sha;
     }
 
@@ -546,6 +555,14 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             }
         }
 
+        return this.combineProtocolAndAppSnapshotTree(snapshotTreeId, hierarchicalAppTree, hierarchicalProtocolTree);
+    }
+
+    private combineProtocolAndAppSnapshotTree(
+        snapshotTreeId: string,
+        hierarchicalAppTree: api.ISnapshotTree,
+        hierarchicalProtocolTree: api.ISnapshotTree,
+    ) {
         const summarySnapshotTree: api.ISnapshotTree = {
             blobs: {
                 ...hierarchicalAppTree.blobs,
@@ -561,51 +578,6 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         };
 
         return summarySnapshotTree;
-    }
-
-    public async uploadSummaryWithContextForCreateNew(
-        protocolSummary: api.ISummaryTree,
-        appSummary: api.ISummaryTree,
-    ): Promise<string> {
-        this.checkSnapshotUrl();
-        const summaryContext: ISummaryContext = { proposalHandle: undefined, ackHandle: undefined};
-        const appHandle = await this.uploadSummaryWithContext(appSummary, summaryContext);
-        const lastSummaryHandle = this.lastSummaryHandle;
-        this.lastSummaryHandle = undefined;
-        const commit: api.ISummaryHandle = {
-            handle: "",
-            type: api.SummaryType.Handle,
-            handleType: api.SummaryType.Commit,
-        };
-        const {documentAttributes} = getDocAttributesAndQuorumValuesFromProtocolSummary(protocolSummary);
-        documentAttributes.sequenceNumber = 1;
-        const attributesSummaryBlob: api.ISummaryBlob = {
-            type: api.SummaryType.Blob,
-            content: JSON.stringify(documentAttributes),
-        };
-        protocolSummary.tree.attributes = attributesSummaryBlob;
-        const createNewSummary: api.ISummaryTree = {
-            type: api.SummaryType.Tree,
-            tree: {
-                ".protocol": protocolSummary,
-                ".app": commit,
-            },
-        };
-        const { result, blobsShaToPathCacheLatest } = await this.writeSummaryTreeForCreateNew({
-            useContext: true,
-            parentHandle: appHandle,
-            tree: createNewSummary,
-        });
-        if (!result || !result.sha) {
-            this.logger.sendErrorEvent({eventName: "FailedSummaryTreeWriteInCreateNew"});
-            throw new Error(`Failed to write summary tree`);
-        }
-        if (blobsShaToPathCacheLatest) {
-            this.blobsShaToPathCache = blobsShaToPathCacheLatest;
-        }
-
-        this.lastSummaryHandle = lastSummaryHandle;
-        return result.sha;
     }
 
     private async writeSummaryTree(summary: ConditionallyContextedSummary, depth: number = 0): Promise<{ result: ISnapshotResponse, blobsShaToPathCacheLatest?: Map<string, string> }> {
@@ -629,48 +601,6 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/snapshot${this.queryString}`, storageToken);
             headers["Content-Type"] = "application/json";
 
-            const postBody = JSON.stringify(snapshot);
-
-            const response = await this.fetchWrapper.post<ISnapshotResponse>(url, postBody, headers);
-            return { result: response.content, blobsShaToPathCacheLatest };
-        });
-    }
-
-    private async writeSummaryTreeForCreateNew(summary: ConditionallyContextedSummary, depth: number = 0): Promise<{ result: ISnapshotResponse, blobsShaToPathCacheLatest?: Map<string, string> }> {
-        // Wait for all pending hashes to complete before using them in convertSummaryToSnapshotTree
-        await Promise.all(this.blobsCachePendingHashes.values());
-        // This cache is associated with mapping sha to path for currently generated summary.
-        const blobsShaToPathCacheLatest: Map<string, string> = new Map();
-        const snapshotTree = await this.convertSummaryToSnapshotTree(summary, blobsShaToPathCacheLatest);
-
-        const snapshot = {
-            entries: snapshotTree.entries ?? [],
-            message: "app",
-            sequenceNumber: 1,
-            sha: snapshotTree.id,
-            type: SnapshotType.Container,
-            ops: [{
-                op: {
-                    clientId: null,
-                    clientSequenceNumber: -1,
-                    contents: null,
-                    minimumSequenceNumber: 0,
-                    referenceSequenceNumber: -1,
-                    sequenceNumber: 1,
-                    timestamp: Date.now(),
-                    traces: [],
-                    type: api.MessageType.NoOp,
-                },
-                sequenceNumber: 1,
-            }],
-        };
-
-        return getWithRetryForTokenRefresh(async (refresh: boolean) => {
-            const storageToken = await this.getStorageToken(refresh, "WriteSummaryTree");
-
-            const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/snapshot${this.queryString}`, storageToken);
-            headers["Content-Type"] = "application/json";
-            headers["X-Tempuse-Allow-Singlepost"] = "1";
             const postBody = JSON.stringify(snapshot);
 
             const response = await this.fetchWrapper.post<ISnapshotResponse>(url, postBody, headers);
@@ -770,7 +700,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             const baseEntry: ISnapshotTreeBaseEntry = {
                 mode: "100644",
                 path: encodeURIComponent(key),
-                type: this.getServerType(summaryObject),
+                type: getGitType(summaryObject),
             };
 
             let entry: SnapshotTreeEntry;
@@ -796,23 +726,6 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         }
 
         return snapshotTree;
-    }
-
-    private getServerType(value: api.SummaryObject): string {
-        const type = value.type === api.SummaryType.Handle ? value.handleType : value.type;
-        switch (type) {
-            case api.SummaryType.Blob:
-                return "blob";
-
-            case api.SummaryType.Commit:
-                return "commit";
-
-            case api.SummaryType.Tree:
-                return "tree";
-
-            default:
-                throw new Error();
-        }
     }
 }
 

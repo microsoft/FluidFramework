@@ -15,7 +15,6 @@ import {
 import {
     IClient,
     IErrorTrackingService,
-    ISummaryTree,
 } from "@microsoft/fluid-protocol-definitions";
 import { IOdspResolvedUrl, ISocketStorageDiscovery } from "./contracts";
 import { createNewFluidFile } from "./createFile";
@@ -71,56 +70,45 @@ export class OdspDocumentService implements IDocumentService {
             "fluid:telemetry:OdspDriver",
             logger,
             { docId: odspResolvedUrl.hashedDocumentId });
-        let documentService: OdspDocumentService;
         let event: PerformanceEvent | undefined;
-        let props;
         try {
             const openMode = odspResolvedUrl.openMode;
-            let createNewSummary;
             if (openMode === OpenMode.CreateNew && odspResolvedUrl.createNewOptions) {
                 event = PerformanceEvent.start(templogger, { eventName: "CreateNew" });
-                createNewSummary = odspResolvedUrl.createNewOptions.createNewSummary;
+                const createNewSummary = odspResolvedUrl.createNewOptions.createNewSummary;
                 odspResolvedUrl = await createNewFluidFile(
                     getStorageToken,
                     odspResolvedUrl.createNewOptions.newFileInfoPromise,
-                    cache);
-                props = {
+                    cache,
+                    createNewSummary);
+                const props = {
                     hashedDocumentId: odspResolvedUrl.hashedDocumentId,
                     itemId: odspResolvedUrl.itemId,
                     isWithSummaryUpload: false,
                 };
+                event?.end(props);
             }
-            documentService = new OdspDocumentService(
-                appId,
-                odspResolvedUrl.hashedDocumentId,
-                odspResolvedUrl.siteUrl,
-                odspResolvedUrl.driveId,
-                odspResolvedUrl.itemId,
-                odspResolvedUrl.endpoints.snapshotStorageUrl,
-                getStorageToken,
-                getWebsocketToken,
-                logger,
-                storageFetchWrapper,
-                deltasFetchWrapper,
-                socketIOClientP,
-                cache,
-                isFirstTimeDocumentOpened,
-            );
-            if (openMode === OpenMode.CreateNew && createNewSummary) {
-                props.isWithSummaryUpload = true;
-                const storageService = await documentService.connectToStorage();
-                const appSummary = createNewSummary.tree[".app"] as ISummaryTree;
-                const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
-                if (!(appSummary && protocolSummary)) {
-                    throw new Error("App and protocol summary required for create new path!!");
-                }
-                await storageService.uploadSummaryWithContextForCreateNew(protocolSummary, appSummary);
-            }
-            event?.end(props);
         } catch(error) {
             event?.cancel(undefined, error);
             throw error;
         }
+        const documentService = new OdspDocumentService(
+            appId,
+            odspResolvedUrl.hashedDocumentId,
+            odspResolvedUrl.siteUrl,
+            odspResolvedUrl.driveId,
+            odspResolvedUrl.itemId,
+            odspResolvedUrl.endpoints.snapshotStorageUrl,
+            getStorageToken,
+            getWebsocketToken,
+            logger,
+            storageFetchWrapper,
+            deltasFetchWrapper,
+            socketIOClientP,
+            cache,
+            isFirstTimeDocumentOpened,
+        );
+
         return documentService;
     }
 
