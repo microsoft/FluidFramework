@@ -5,4 +5,6 @@
 
 export { PrimedComponent } from "./primedComponent";
 export { SharedComponent } from "./sharedComponent";
+export { PrimedIocComponent } from "./primedIocComponent";
+export { SharedIocComponent } from "./sharedIocComponent";
 export { BlobHandle } from "./blobHandle";
