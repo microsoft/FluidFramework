@@ -37,6 +37,7 @@
     "@microsoft/fluid-protocol-definitions": "^0.1003.0",
     "@microsoft/fluid-routerlicious-driver": "^0.16.0",
     "@microsoft/fluid-test-runtime-utils": "^0.16.0",
+    "@microsoft/fluid-view-adapters": "^0.16.0",
     "@microsoft/fluid-web-code-loader": "^0.16.0",
     "jsonwebtoken": "^8.4.0"
   },

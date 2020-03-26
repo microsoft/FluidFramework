@@ -579,6 +579,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         });
     }
 
+    public hasNullRuntime() {
+        return this.context!.hasNullRuntime();
+    }
+
     private async reloadContextCore(): Promise<void> {
         await Promise.all([
             this.deltaManager.inbound.systemPause(),
