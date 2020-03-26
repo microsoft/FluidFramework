@@ -59,8 +59,11 @@ const DefaultScribe: IScribe = {
 const DefaultDeli: IDeliCheckpoint = {
     branchMap: undefined,
     clients: undefined,
+    durableSequenceNumber: 0,
+    epoch: 0,
     logOffset: -1,
     sequenceNumber: 0,
+    term: 1,
 };
 
 class WebSocketSubscriber implements ISubscriber {
@@ -343,10 +346,12 @@ export class LocalOrderer implements IOrderer {
             this.deliContext,
             async (lambdaSetup, context) => {
                 const documentCollection = await lambdaSetup.documentCollectionP();
+                const lastCheckpoint = JSON.parse(this.dbObject.deli);
                 return new DeliLambda(
                     context,
                     this.tenantId,
                     this.documentId,
+                    lastCheckpoint,
                     this.dbObject,
                     documentCollection,
                     this.deltasKafka,
