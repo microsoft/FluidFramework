@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-server-services-utils",
-  "version": "0.1004.0",
+  "version": "0.1004.0-0",
   "description": "Fluid service lambdas",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -22,7 +22,7 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@microsoft/fluid-protocol-definitions": "^0.1004.0",
+    "@microsoft/fluid-protocol-definitions": "^0.1004.0-0",
     "@sentry/node": "^5.6.2",
     "debug": "^4.1.1",
     "nconf": "^0.10.0",
