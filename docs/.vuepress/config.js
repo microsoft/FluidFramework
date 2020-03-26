@@ -470,7 +470,7 @@ module.exports = {
         extendMarkdown: (md) => {
             md.set({ typographer: true });
             // use additional markdown-it plugins
-            md.use(require("markdown-it-include"), "./includes/")
+            md.use(require("markdown-it-include"), "./.vuepress/includes/")
                 .use(require("markdown-it-deflist"))
                 .use(require("markdown-it-replacements"));
         }
