@@ -202,12 +202,14 @@ const fluid = (req: express.Request, res: express.Response, baseDir: string, opt
     <script>
         var pkgJson = ${JSON.stringify(packageJson)};
         var options = ${JSON.stringify(options)};
+        var fluidStarted = false;
         FluidLoader.start(
             "${documentId}",
             pkgJson,
             window["${packageJson.fluid.browser.umd.library}"],
             options,
             document.getElementById("content"))
+        .then(() => fluidStarted = true)
         .catch((error) => console.error(error));
     </script>
 </body>

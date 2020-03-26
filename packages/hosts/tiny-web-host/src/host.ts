@@ -175,10 +175,7 @@ async function loadContainer(
     };
 
     const baseHost = new BaseHost(hostConf);
-    const container = await baseHost.initializeContainer(
-        href,
-        pkg,
-    );
+    const container = await baseHost.initializeContainer(href, pkg);
     container.on("contextChanged", (value) => {
         getComponentAndRender(baseHost, href, div).catch(() => { });
     });

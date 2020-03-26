@@ -208,8 +208,8 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
         return new SparseMatrixFactory();
     }
 
-    constructor(document: IComponentRuntime, public id: string) {
-        super(document, id, SparseMatrixFactory.Attributes, SparseMatrixFactory.segmentFromSpec);
+    constructor(document: IComponentRuntime, public id: string, attributes: IChannelAttributes) {
+        super(document, id, attributes, SparseMatrixFactory.segmentFromSpec);
     }
 
     public get numRows() {
@@ -352,18 +352,19 @@ export class SparseMatrixFactory implements ISharedObjectFactory {
     }
 
     public async load(
-        document: IComponentRuntime,
+        runtime: IComponentRuntime,
         id: string,
         services: ISharedObjectServices,
         branchId: string,
+        attributes: IChannelAttributes,
     ): Promise<ISharedObject> {
-        const sharedObject = new SparseMatrix(document, id);
+        const sharedObject = new SparseMatrix(runtime, id, attributes);
         await sharedObject.load(branchId, services);
         return sharedObject;
     }
 
     public create(document: IComponentRuntime, id: string): ISharedObject {
-        const sharedObject = new SparseMatrix(document, id);
+        const sharedObject = new SparseMatrix(document, id, this.attributes);
         sharedObject.initializeLocal();
         return sharedObject;
     }

@@ -16,7 +16,7 @@ RUN npm install -g @microsoft/api-documenter@^7.4.6 copyfiles@^2.1.0
 #############################
 # Use pre-release version of vuepress with a perf fix
 WORKDIR /
-RUN git clone https://github.com/itsxallwater/vuepress.git vuepress
+RUN git clone https://github.com/tylerbutler/vuepress.git vuepress
 
 WORKDIR /vuepress
 RUN git checkout feat/implement-node-worker-threads
