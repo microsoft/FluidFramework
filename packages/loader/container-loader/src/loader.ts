@@ -222,7 +222,6 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
         }
     }
 
-
     private async resolveCore(
         request: IRequest,
     ): Promise<{ container: Container; parsed: IParsedUrl }> {
