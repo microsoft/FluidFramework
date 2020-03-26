@@ -93,7 +93,7 @@ export class OdspDocumentService implements IDocumentService {
             event?.cancel(undefined, error);
             throw error;
         }
-        const documentService = new OdspDocumentService(
+        return new OdspDocumentService(
             appId,
             odspResolvedUrl.hashedDocumentId,
             odspResolvedUrl.siteUrl,
@@ -109,8 +109,6 @@ export class OdspDocumentService implements IDocumentService {
             cache,
             isFirstTimeDocumentOpened,
         );
-
-        return documentService;
     }
 
     private storageManager?: OdspDocumentStorageManager;
