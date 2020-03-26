@@ -11,6 +11,7 @@ import {
     IDocumentService,
     IResolvedUrl,
     OpenMode,
+    IDocumentStorageService,
 } from "@microsoft/fluid-driver-definitions";
 import {
     IClient,
@@ -84,8 +85,8 @@ export class OdspDocumentService implements IDocumentService {
                 const props = {
                     hashedDocumentId: odspResolvedUrl.hashedDocumentId,
                     itemId: odspResolvedUrl.itemId,
-                    isWithSummaryUpload: false,
                 };
+                createNewSummary ? props["isWithSummaryUpload"] = true : props["isWithSummaryUpload"] = false;
                 event?.end(props);
             }
         } catch(error) {
@@ -208,7 +209,7 @@ export class OdspDocumentService implements IDocumentService {
      *
      * @returns returns the document storage service for sharepoint driver.
      */
-    public async connectToStorage(): Promise<OdspDocumentStorageService> {
+    public async connectToStorage(): Promise<IDocumentStorageService> {
         const latestSha: string | null | undefined = undefined;
         this.storageManager = new OdspDocumentStorageManager(
             { app_id: this.appId },
