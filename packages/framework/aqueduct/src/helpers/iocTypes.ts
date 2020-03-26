@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-const IocTYPES = {
-    SharedComponent: Symbol.for("SharedComponent"),
-    IComponentRuntime: Symbol.for("IComponentRuntime"),
-    IComponentContext: Symbol.for("IComponentContext"),
-    IComponentFoo: Symbol.for("IComponentFoo"),
-};
+namespace IocTYPES {
+    export const SharedComponent = Symbol.for("SharedComponent");
+    export const IComponentRuntime = Symbol.for("IComponentRuntime");
+    export const IComponentContext = Symbol.for("IComponentContext");
+}
 
 export { IocTYPES };

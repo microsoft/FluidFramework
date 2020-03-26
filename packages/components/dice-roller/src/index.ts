@@ -3,15 +3,37 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-unassigned-import
+import "reflect-metadata";
+
+import { ContainerModule } from "inversify";
+
 import {
     SimpleModuleInstantiationFactory,
 } from "@microsoft/fluid-aqueduct";
 
 import { DiceRollerInstantiationFactory } from "./main";
 
+import { IComponentFoo, IComponentFoo_SYMBOL } from "./iComponentFoo";
+
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
 const componentName = pkg.name as string;
+
+class Foo implements IComponentFoo {
+    public get IComponentFoo() { return this; }
+    public foo() {
+        alert("foo ya!");
+    }
+}
+
+const generateScopeModules: () => ContainerModule[] = () => {
+    const foo = new ContainerModule((bind) => {
+        bind<IComponentFoo>(IComponentFoo_SYMBOL).toConstantValue(new Foo());
+    });
+
+    return [foo];
+};
 
 /**
  * This does setup for the Container. The SimpleModuleInstantiationFactory also enables dynamic loading in the
@@ -29,4 +51,7 @@ export const fluidExport = new SimpleModuleInstantiationFactory(
     new Map([
         [componentName, Promise.resolve(DiceRollerInstantiationFactory)],
     ]),
+    undefined,
+    undefined,
+    generateScopeModules(),
 );

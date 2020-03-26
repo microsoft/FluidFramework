@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { injectable } from "inversify";
+import { injectable, inject, optional } from "inversify";
 
 import {
     PrimedComponent,
@@ -16,6 +16,7 @@ import {
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+import { IComponentFoo, IComponentFoo_SYMBOL } from "./iComponentFoo";
 
 /**
  * Dice roller example using view interfaces and stock component classes.
@@ -23,6 +24,9 @@ import * as ReactDOM from "react-dom";
 @injectable()
 export class DiceRoller extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
+
+    @inject(IComponentFoo_SYMBOL) @optional()
+    private readonly foo: IComponentFoo | undefined; // = { name: "DefaultShuriken" } // Default value!
 
     /**
      * ComponentInitializingFirstTime is called only once, it is executed only by the first client to open the
@@ -35,13 +39,13 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLView {
     }
 
     protected async componentHasInitialized() {
-        // // TODO: REMOVE
-        // // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        // if (this.foo) {
-        //     this.foo?.foo();
-        // } else {
-        //     alert("no foo");
-        // }
+        // TODO: REMOVE
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        if (this.foo) {
+            this.foo?.foo();
+        } else {
+            alert("no foo");
+        }
     }
 
     /**

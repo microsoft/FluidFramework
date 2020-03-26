@@ -8,9 +8,18 @@
         "module": "esnext",
         "outDir": "dist",
         "jsx": "react",
-        "types": ["node", "react", "react-dom", "jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer"],
+        "types": [
+            "node",
+            "react",
+            "react-dom",
+            "jest",
+            "puppeteer",
+            "jest-environment-puppeteer",
+            "expect-puppeteer",
+            "reflect-metadata"
+        ],
         "experimentalDecorators": true,
-        "emitDecoratorMetadata": true
+        "emitDecoratorMetadata": true,
     },
     "include": [
         "src/**/*"

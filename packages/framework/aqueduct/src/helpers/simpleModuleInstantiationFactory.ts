@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { ContainerModule, AsyncContainerModule } from "inversify";
+
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
 import { ComponentRegistry, RuntimeRequestHandler } from "@microsoft/fluid-container-runtime";
 import { IComponentDefaultFactoryName } from "@microsoft/fluid-framework-interfaces";
@@ -35,6 +37,8 @@ export class SimpleModuleInstantiationFactory implements
         private readonly registryEntries: NamedComponentRegistryEntries,
         private readonly serviceRegistry: ContainerServiceRegistryEntries = [],
         private readonly requestHandlers: RuntimeRequestHandler[] = [],
+        private readonly scopeModules: ContainerModule[] = [],
+        private readonly scopeModulesAsync: AsyncContainerModule[] = [],
     ) {
         this.registry = new ComponentRegistry(registryEntries);
     }
@@ -51,6 +55,8 @@ export class SimpleModuleInstantiationFactory implements
             this.registryEntries,
             this.serviceRegistry,
             this.requestHandlers,
+            this.scopeModules,
+            this.scopeModulesAsync,
         );
     }
 }

@@ -19,7 +19,8 @@ import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-d
 import { ComponentHandle } from "@microsoft/fluid-component-runtime";
 import { serviceRoutePathRoot } from "../containerServices";
 
-import { IocTYPES } from "../helpers";
+// eslint-disable-next-line import/no-internal-modules
+import { IocTYPES } from "../helpers/iocTypes";
 
 /**
  * This is a bare-bones base class that does basic setup and enables for factory on an initialize call.

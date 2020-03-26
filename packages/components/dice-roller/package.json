@@ -36,7 +36,8 @@
     "@microsoft/fluid-component-core-interfaces": "^0.16.0",
     "inversify": "^5.0.1",
     "react": "^16.10.2",
-    "react-dom": "^16.10.2"
+    "react-dom": "^16.10.2",
+    "reflect-metadata": "^0.1.13"
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.15.0",
