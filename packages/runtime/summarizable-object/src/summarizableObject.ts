@@ -47,6 +47,7 @@ export class SummarizableObject extends SharedObject implements ISummarizableObj
     public static getFactory(): ISharedObjectFactory {
         return new SummarizableObjectFactory();
     }
+
     /**
      * The data held by this object.
      */
@@ -68,13 +69,13 @@ export class SummarizableObject extends SharedObject implements ISummarizableObj
         return this._data;
     }
 
-    public set data(data: SummarizableData) {
+    public set(data: SummarizableData, sequenceNumber: number) {
         if (SharedObject.is(data)) {
             throw new Error("SharedObject sets are no longer supported. Instead set the SharedObject handle.");
         }
 
         this._data = data;
-        this.dirty();
+        this.dirty(sequenceNumber);
     }
 
     /**
@@ -101,7 +102,7 @@ export class SummarizableObject extends SharedObject implements ISummarizableObj
                     path: snapshotFileName,
                     type: TreeEntry[TreeEntry.Blob],
                     value: {
-                        contents: JSON.stringify({ data: this._data}),
+                        contents: JSON.stringify({ data: this.data}),
                         encoding: "utf-8",
                     },
                 },

@@ -179,7 +179,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                     componentContext,
                     componentContext.storage,
                     (type, content) => this.submit(type, content),
-                    (key: string) => this.channelIsDirty(key),
+                    (address: string, sequenceNumber: number) => this.channelIsDirty(address, sequenceNumber),
                     path,
                     tree.trees[path],
                     this.sharedObjectRegistry,
@@ -270,7 +270,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
             this.componentContext,
             this.componentContext.storage,
             (t, content) => this.submit(t, content),
-            (key: string) => this.channelIsDirty(key));
+            (address: string, sequenceNumber: number) => this.channelIsDirty(address, sequenceNumber));
         this.contexts.set(id, context);
 
         if (this.contextsDeferred.has(id)) {
@@ -446,7 +446,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                         this.componentContext,
                         this.componentContext.storage,
                         (type, content) => this.submit(type, content),
-                        (key: string) => this.channelIsDirty(key),
+                        (address: string, sequenceNumber: number) => this.channelIsDirty(address, sequenceNumber),
                         attachMessage.id,
                         snapshotTree,
                         this.sharedObjectRegistry,
@@ -579,9 +579,9 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         return this.componentContext.submitMessage(type, content);
     }
 
-    private channelIsDirty(key: string): void {
+    private channelIsDirty(address: string, sequenceNumber: number): void {
         this.verifyNotClosed();
-        this.componentContext.channelIsDirty(key);
+        this.componentContext.channelIsDirty(address, sequenceNumber);
     }
 
     private processOp(message: ISequencedDocumentMessage, local: boolean) {

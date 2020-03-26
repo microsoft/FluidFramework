@@ -59,9 +59,9 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     private readonly pendingOps = new Deque<{ clientSequenceNumber: number; content: any }>();
 
     /**
-     * Local dirty state not yet sent to the component.
+     * Local dirty state sequence number not yet sent to the component.
      */
-    private pendingDirty = false;
+    private pendingDirtySequenceNumber: number = -1;
 
     /**
      * Services used by the shared object
@@ -286,10 +286,11 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     }
 
     /**
-     * Marks this object as dirty so that is part of the next summary. It is used by a summarizable
-     * object that does not generate ops but wants to be part of the summary.
+     * Marks this object as dirty and updated the channel's latest sequence number so that it is part of
+     * the next summary. It is called by a summarizable object that does not generate ops but wants to be
+     * part of the summary.
      */
-    protected dirty(): void {
+    protected dirty(sequenceNumber: number): void {
         if (this.isLocal()) {
             return;
         }
@@ -297,9 +298,9 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
         // Send if we are connected - otherwise just add it as pending.
         if (this.state === ConnectionState.Connected) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.services!.deltaConnection.dirty();
+            this.services!.deltaConnection.dirty(sequenceNumber);
         } else {
-            this.pendingDirty = true;
+            this.pendingDirtySequenceNumber = sequenceNumber;
         }
     }
 
@@ -395,9 +396,9 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
                 /**
                  * Send pending dirty, if any.
                  */
-                if (this.pendingDirty) {
-                    this.dirty();
-                    this.pendingDirty = false;
+                if (this.pendingDirtySequenceNumber !== -1) {
+                    this.dirty(this.pendingDirtySequenceNumber);
+                    this.pendingDirtySequenceNumber = -1;
                 }
 
                 this.emit("connected");

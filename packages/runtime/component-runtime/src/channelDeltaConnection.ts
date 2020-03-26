@@ -23,7 +23,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
         public objectId: string,
         private _state: ConnectionState,
         private readonly submitFn: (message: IDocumentMessage) => number,
-        private readonly dirtyFn: () => void) {
+        private readonly dirtyFn: (sequenceNumber: number) => void) {
     }
 
     public attach(handler: IDeltaHandler) {
@@ -50,8 +50,9 @@ export class ChannelDeltaConnection implements IDeltaConnection {
     /**
      * Indicates that the channel is dirty and needs to be part of the summary. It is called by a summarizable
      * object that needs to be part of the summary but does not generate ops.
+     * It updates the latest sequence number of the summary tracker.
      */
-    public dirty(): void {
-        this.dirtyFn();
+    public dirty(sequenceNumber: number): void {
+        this.dirtyFn(sequenceNumber);
     }
 }
