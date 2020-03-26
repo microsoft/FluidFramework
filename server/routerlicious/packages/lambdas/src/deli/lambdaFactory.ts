@@ -85,6 +85,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                 // Increment term if epoch changed since the last checkpoint. Epoch should always move forward
                 // but there is no need to enforce it.
                 if (leaderEpoch !== lastCheckpoint.epoch) {
+                    // TODO: Set sequence number to DSN when clients are updated to resubmit.
                     ++lastCheckpoint.term;
                     lastCheckpoint.epoch = leaderEpoch;
                 }
