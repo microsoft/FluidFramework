@@ -22,7 +22,6 @@ export class CreationDocumentServiceFactory implements IDocumentServiceFactory {
     }
 
     public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
-
         assertFluidResolvedUrl(resolvedUrl);
 
         const fluidResolvedUrl = resolvedUrl;

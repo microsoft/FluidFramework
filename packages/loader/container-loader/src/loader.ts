@@ -118,11 +118,9 @@ class CachingUrlResolver implements IUrlResolver{
 
     async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
         const resolved = await this.resolver.resolve(request);
-
         if (isFluidResolvedUrl(resolved)) {
             this.resolveCache.set(request.url, resolved);
         }
-
         return resolved;
     }
 }

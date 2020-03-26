@@ -25,7 +25,6 @@ import { assertFluidResolvedUrl } from "@microsoft/fluid-driver-utils";
 import { debug } from "./debug";
 import { IOuterDocumentDeltaConnectionProxy } from "./innerDocumentDeltaConnection";
 
-
 const socketIOEvents = [
     "op",
     "nack",
