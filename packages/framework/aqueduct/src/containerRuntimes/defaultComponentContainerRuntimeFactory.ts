@@ -82,6 +82,9 @@ export class DefaultComponentContainerRuntimeFactory extends BaseContainerRuntim
         }
     }
 
+    /**
+     * {@inheritDoc BaseContainerRuntimeFactory.containerInitializingFirstTime}
+     */
     protected async containerInitializingFirstTime(runtime: IHostRuntime) {
         // Debug(`createAndAttachComponent(chaincode=${chaincode})`);
         await DefaultComponentContainerRuntimeFactory.createAndAttachComponent(

@@ -45,6 +45,10 @@ const requestHandlers = [
     todoItemViewRequestHandler,
 ];
 
+/**
+ * The TodoContainerRuntimeFactory is an example of what a container author might write to combine the separated views
+ * and models and offer direct links to TodoViews and TodoItemViews via the request handlers.
+ */
 class TodoContainerRuntimeFactory extends BaseContainerRuntimeFactory {
     constructor() {
         super(registryEntries, [], requestHandlers);
@@ -55,7 +59,7 @@ class TodoContainerRuntimeFactory extends BaseContainerRuntimeFactory {
         const result = await componentRuntime.request({ url: "/" });
 
         if (result.status !== 200 || result.mimeType !== "fluid/component") {
-            return Promise.reject("Default component is not a component.");
+            throw new Error("Error in creating the default Todo model.");
         }
 
         componentRuntime.attach();
