@@ -139,6 +139,7 @@
     "node-sass": "^4.9.3",
     "nyc": "^15.0.0",
     "random-js": "^1.0.8",
+    "rimraf": "^2.6.2",
     "sass-loader": "^7.1.0",
     "source-map-loader": "^0.2.4",
     "string-hash": "^1.1.3",
