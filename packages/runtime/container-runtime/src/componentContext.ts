@@ -363,6 +363,21 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this.submitOp(type, content);
     }
 
+    /**
+     * @param key - The key of the dirty channel's summary tracker node.
+     *
+     * Updates the latestSequenceNumber of the channel's summary tracker to our summary tracker's latestSequenceNumber.
+     * This is called from a summarizable object that does not generate ops but only wants to be part of the summary.
+     * Updating its latestSequenceNumber will ensure that it is part of the next summary.
+     */
+    public channelIsDirty(key: string): void {
+        this.verifyNotClosed();
+        const channelSummaryTracker = this.summaryTracker.getChild(key);
+        if (channelSummaryTracker !== undefined) {
+            channelSummaryTracker.updateLatestSequenceNumber(this.summaryTracker.latestSequenceNumber);
+        }
+    }
+
     public submitSignal(type: string, content: any) {
         this.verifyNotClosed();
         assert(this.componentRuntime);

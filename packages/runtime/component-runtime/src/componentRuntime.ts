@@ -179,6 +179,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                     componentContext,
                     componentContext.storage,
                     (type, content) => this.submit(type, content),
+                    (key: string) => this.channelIsDirty(key),
                     path,
                     tree.trees[path],
                     this.sharedObjectRegistry,
@@ -268,7 +269,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
             this,
             this.componentContext,
             this.componentContext.storage,
-            (t, content) => this.submit(t, content));
+            (t, content) => this.submit(t, content),
+            (key: string) => this.channelIsDirty(key));
         this.contexts.set(id, context);
 
         if (this.contextsDeferred.has(id)) {
@@ -444,6 +446,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                         this.componentContext,
                         this.componentContext.storage,
                         (type, content) => this.submit(type, content),
+                        (key: string) => this.channelIsDirty(key),
                         attachMessage.id,
                         snapshotTree,
                         this.sharedObjectRegistry,
@@ -574,6 +577,11 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     private submit(type: MessageType, content: any): number {
         this.verifyNotClosed();
         return this.componentContext.submitMessage(type, content);
+    }
+
+    private channelIsDirty(key: string): void {
+        this.verifyNotClosed();
+        this.componentContext.channelIsDirty(key);
     }
 
     private processOp(message: ISequencedDocumentMessage, local: boolean) {

@@ -59,6 +59,11 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     private readonly pendingOps = new Deque<{ clientSequenceNumber: number; content: any }>();
 
     /**
+     * Local dirty state not yet sent to the component.
+     */
+    private pendingDirty = false;
+
+    /**
      * Services used by the shared object
      */
     private services: ISharedObjectServices | undefined;
@@ -281,6 +286,24 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     }
 
     /**
+     * Marks this object as dirty so that is part of the next summary. It is used by a summarizable
+     * object that does not generate ops but wants to be part of the summary.
+     */
+    protected dirty(): void {
+        if (this.isLocal()) {
+            return;
+        }
+
+        // Send if we are connected - otherwise just add it as pending.
+        if (this.state === ConnectionState.Connected) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            this.services!.deltaConnection.dirty();
+        } else {
+            this.pendingDirty = true;
+        }
+    }
+
+    /**
      * Called when the object has fully connected to the delta stream
      * Default implementation for DDS, override if different behavior is required.
      * @param pending - Messages received while disconnected
@@ -368,6 +391,15 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
                 // - we have a client ID
                 // - we are caught up enough to attempt to send messages
                 this.onConnect(pendingOps);
+
+                /**
+                 * Send pending dirty, if any.
+                 */
+                if (this.pendingDirty) {
+                    this.dirty();
+                    this.pendingDirty = false;
+                }
+
                 this.emit("connected");
 
                 break;
