@@ -93,12 +93,7 @@ export class SummarizableObject extends SharedObject implements ISummarizableObj
     }
 
     /**
-     *
      * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.snapshot}
-     *
-     * Create a snapshot for the object's data.
-     *
-     * @returns the snapshot of the current state of the data.
      */
     public snapshot(): ITree {
         // Construct the tree for the data.
@@ -122,14 +117,7 @@ export class SummarizableObject extends SharedObject implements ISummarizableObj
     }
 
     /**
-     *
      * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.loadCore}
-     *
-     * Load data from snapshot.
-     *
-     * @param branchId - Not used.
-     * @param storage - the storage to get the snapshot from.
-     * @returns - promise that resolved when the load is completed.
      */
     protected async loadCore(
         branchId: string,
@@ -157,12 +145,6 @@ export class SummarizableObject extends SharedObject implements ISummarizableObj
 
     /**
      * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.processCore}
-     *
-     * Process a data operation. Summarizable object should not generate ops.
-     * Throw an error if this is called.
-     *
-     * @param message - the message to prepare
-     * @param local - whether the message was sent by the local client
      */
     protected processCore(message: ISequencedDocumentMessage, local: boolean) {
         throw new Error("Summarizable object should not generate any ops.");
