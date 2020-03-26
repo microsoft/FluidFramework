@@ -12,8 +12,9 @@ const { wrapCommand } = require("../node_modules/vuepress/lib/util");
 
 INCLUDE_PATH = ".vuepress/includes/";
 
-
 const fluidVarGroup = process.env[`FLUID_VAR_GROUP`] || "internal";
+const vuepressBase = process.env.VUEPRESS_BASE || "/";
+logger.debug(`VUEPRESS_BASE = ${process.env.VUEPRESS_BASE}`);
 
 const internalOnly = (obj) => {
     if (fluidVarGroup !== "internal") {
@@ -358,8 +359,6 @@ const getPatternsSidebar = () => {
     ];
 }
 
-logger.debug(`VUEPRESS_BASE = ${process.env.VUEPRESS_BASE}`);
-
 const getAllSidebars = () => {
     const sidebars = {
         internal: {
@@ -413,7 +412,7 @@ module.exports = {
     title: "Fluid Framework",
     description: "State that flows",
     evergreen: true,
-    base: process.env.VUEPRESS_BASE || "/",
+    base: vuepressBase,
     head: [
         ["link", { rel: "icon", href: "/images/homescreen48.png" }],
         // ["link", { rel: "manifest", crossorigin: "use-credentials", href: "/manifest.webmanifest" }],
