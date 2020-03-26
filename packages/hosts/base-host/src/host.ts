@@ -9,7 +9,7 @@ import {
     IProxyLoaderFactory,
     IFluidModule,
 } from "@microsoft/fluid-container-definitions";
-import { Container, Loader } from "@microsoft/fluid-container-loader";
+import { Loader } from "@microsoft/fluid-container-loader";
 import { WebCodeLoader } from "@microsoft/fluid-web-code-loader";
 import { IBaseHostConfig } from "./hostConfig";
 import { initializeContainerCode } from "./initializeContainerCode";
@@ -57,26 +57,6 @@ async function createWebLoader(
 }
 
 export class BaseHost {
-    /**
-     * Function to load the container from the given url and initialize the chaincode.
-     * @param hostConfig - Config specifying the resolver/factory and other loader settings to be used.
-     * @param url - Url of the Fluid component to be loaded.
-     * @param resolved - A resolved url from a url resolver.
-     * @param pkg - A resolved package with cdn links.
-     * @param scriptIds - The script tags the chaincode are attached to the view with.
-     * @param div - The div to load the component into.
-     */
-    public static async start(
-        hostConfig: IBaseHostConfig,
-        url: string,
-        pkg: IFluidCodeDetails,
-        div: HTMLDivElement,
-        seedPackages?: Iterable<IFluidCodeDetails | [IFluidCodeDetails, IFluidModule]>,
-    ): Promise<Container> {
-        const baseHost = new BaseHost(hostConfig, seedPackages);
-        return baseHost.loadAndRender(url, div, pkg);
-    }
-
     private readonly loaderP: Promise<Loader>;
     public constructor(
         hostConfig: IBaseHostConfig,
@@ -93,15 +73,21 @@ export class BaseHost {
         return this.loaderP;
     }
 
-    public async initializeContainer(url: string, pkg?: IFluidCodeDetails) {
+    public async initializeContainer(url: string, codeDetails?: IFluidCodeDetails) {
         const loader = await this.getLoader();
         const container = await loader.resolve({ url });
 
         // if a package is provided, try to initialize the code proposal with it
         // if not we assume the container already has a code proposal
-        if (pkg) {
-            await initializeContainerCode(container, pkg)
+        if (codeDetails) {
+            await initializeContainerCode(container, codeDetails)
                 .catch((error) => console.error("code proposal error", error));
+        }
+
+        // If we're loading from ops, the context might be in the middle of reloading.  Check for that case and wait
+        // for the contextChanged event to avoid returning before that reload completes.
+        if (container.hasNullRuntime()) {
+            await new Promise<void>((resolve) => container.once("contextChanged", () => resolve()));
         }
 
         return container;
@@ -120,36 +106,5 @@ export class BaseHost {
         }
 
         return response.value as IComponent;
-    }
-
-    private async getComponentAndRender(url: string, div: HTMLDivElement) {
-        const component = await this.getComponent(url);
-        if (component === undefined) {
-            return;
-        }
-
-        // First try to get it as a view
-        let renderable = component.IComponentHTMLView;
-        if (!renderable) {
-            // Otherwise get the visual, which is a view factory
-            const visual = component.IComponentHTMLVisual;
-            if (visual) {
-                renderable = visual.addView();
-            }
-        }
-        if (renderable) {
-            renderable.render(div, { display: "block" });
-        }
-    }
-
-    public async loadAndRender(url: string, div: HTMLDivElement, pkg?: IFluidCodeDetails) {
-        const container = await this.initializeContainer(url, pkg);
-
-        container.on("contextChanged", (value) => {
-            this.getComponentAndRender(url, div).catch(() => { });
-        });
-        await this.getComponentAndRender(url, div);
-
-        return container;
     }
 }

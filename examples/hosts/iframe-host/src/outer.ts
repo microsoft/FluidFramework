@@ -12,6 +12,7 @@ import { BaseHost } from "@microsoft/fluid-base-host";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { InsecureUrlResolver } from "@microsoft/fluid-test-runtime-utils";
 import { SemVerCdnCodeResolver } from "@microsoft/fluid-web-code-loader";
+import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 import { IFrameOuterHost } from "./inframehost";
 
 const createRequest = (): IRequest => ({
@@ -66,6 +67,16 @@ export async function loadFrame(iframeId: string, logId: string){
     log(proxyContainer, "Container", "error", "connected","disconnected");
 }
 
+async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
+    const component = await baseHost.getComponent(url);
+    if (component === undefined) {
+        return;
+    }
+    // Render the component with an HTMLViewAdapter to abstract the UI framework used by the component
+    const view = new HTMLViewAdapter(component);
+    view.render(div, { display: "block" });
+}
+
 export async function loadDiv(divId: string){
     const div = document.getElementById(divId) as HTMLDivElement;
 
@@ -88,7 +99,13 @@ export async function loadDiv(divId: string){
             config: {},
         });
 
-    await baseHost.loadAndRender(createRequest().url, div, pkg);
+    const url = createRequest().url;
+    const container = await baseHost.initializeContainer(url, pkg);
+
+    // Handle the code upgrade scenario (which fires contextChanged)
+    container.on("contextChanged", (value) => {
+        getComponentAndRender(baseHost, url, div).catch(() => { });
+    });
 }
 
 export async function runOuter(iframeId: string, divId: string, logId: string){

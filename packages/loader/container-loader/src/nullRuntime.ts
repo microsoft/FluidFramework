@@ -24,7 +24,7 @@ import {
     SummaryType,
 } from "@microsoft/fluid-protocol-definitions";
 
-class NullRuntime extends EventEmitter implements IRuntime {
+export class NullRuntime extends EventEmitter implements IRuntime {
     public get IComponentSerializer(): IComponentSerializer {
         throw new Error("Not implemented");
     }
