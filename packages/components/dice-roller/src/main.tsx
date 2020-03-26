@@ -3,9 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { injectable, inject, optional } from "inversify";
+
 import {
     PrimedIocComponent,
     PrimedIocComponentFactory,
+    TYPES,
+    IComponentFoo,
 } from "@microsoft/fluid-aqueduct";
 import {
     IComponentHTMLView,
@@ -17,8 +21,12 @@ import * as ReactDOM from "react-dom";
 /**
  * Dice roller example using view interfaces and stock component classes.
  */
+@injectable()
 export class DiceRoller extends PrimedIocComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
+
+    @inject(TYPES.IComponentFoo) @optional()
+    private readonly foo: IComponentFoo | undefined;
 
     /**
      * ComponentInitializingFirstTime is called only once, it is executed only by the first client to open the
@@ -28,6 +36,16 @@ export class DiceRoller extends PrimedIocComponent implements IComponentHTMLView
      */
     protected async componentInitializingFirstTime() {
         this.root.set("diceValue", 1);
+    }
+
+    protected async componentHasInitialized() {
+        // TODO: REMOVE
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        if (this.foo) {
+            this.foo?.foo();
+        } else {
+            alert("no foo");
+        }
     }
 
     /**

@@ -6,7 +6,7 @@
 // eslint-disable-next-line import/no-unassigned-import
 import "reflect-metadata";
 
-import { Container as IocContainer } from "inversify";
+import { Container as IocContainer,  injectable } from "inversify";
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime, ISharedObjectRegistry } from "@microsoft/fluid-component-runtime";
@@ -23,7 +23,17 @@ import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 
 import { SharedIocComponent } from "../components";
 
+// eslint-disable-next-line import/no-internal-modules
+import { IComponentFoo } from "../components/sharedIocComponent";
+
 import { TYPES } from "./types";
+
+@injectable()
+export class Foo implements IComponentFoo {
+    foo() {
+        alert("foo");
+    }
+}
 
 export class SharedIocComponentFactory<T extends SharedIocComponent>
 implements IComponentFactory, Partial<IProvideComponentRegistry>  {
@@ -66,6 +76,7 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>  {
         const iocContainer = new IocContainer();
         iocContainer.bind<IComponentContext>(TYPES.IComponentContext).toConstantValue(context);
         iocContainer.bind<IComponentRuntime>(TYPES.IComponentRuntime).toConstantValue(runtime);
+        iocContainer.bind<IComponentFoo>(TYPES.IComponentFoo).to(Foo);
         iocContainer.bind<T>(TYPES.SharedComponent).to(this.ctor);
 
         let instanceP: Promise<SharedIocComponent>;

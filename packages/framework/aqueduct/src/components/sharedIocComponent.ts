@@ -21,6 +21,10 @@ import { serviceRoutePathRoot } from "../containerServices";
 
 import { TYPES } from "../helpers";
 
+export interface IComponentFoo {
+    foo(): void;
+}
+
 /**
  * This is a bare-bones base class that does basic setup and enables for factory on an initialize call.
  * You probably don't want to inherit from this component directly unless you are creating another base component class
