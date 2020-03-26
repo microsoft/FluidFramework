@@ -23,6 +23,7 @@ export class LocalChannelContext implements IChannelContext {
     public readonly channel: IChannel;
     private attached = false;
     private connection: ChannelDeltaConnection | undefined;
+    private readonly dirtyFn: () => void;
 
     constructor(
         id: string,
@@ -32,7 +33,7 @@ export class LocalChannelContext implements IChannelContext {
         private readonly componentContext: IComponentContext,
         private readonly storageService: IDocumentStorageService,
         private readonly submitFn: (type: MessageType, content: any) => number,
-        private readonly dirtyFn: (address: string, sequenceNumber: number) => void,
+        dirtyFn: (address: string) => void,
     ) {
         const factory = registry.get(type);
         if (!factory) {
@@ -40,6 +41,8 @@ export class LocalChannelContext implements IChannelContext {
         }
 
         this.channel = factory.create(runtime, id);
+
+        this.dirtyFn = () => { dirtyFn(id); };
     }
 
     public async getChannel(): Promise<IChannel> {

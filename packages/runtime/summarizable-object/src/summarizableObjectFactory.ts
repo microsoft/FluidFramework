@@ -59,19 +59,19 @@ export class SummarizableObjectFactory implements ISharedObjectFactory {
         branchId: string,
         attributes: IChannelAttributes): Promise<ISharedObject> {
 
-        const object = new SummarizableObject(id, runtime, attributes);
-        await object.load(branchId, services);
+        const summarizableObject = new SummarizableObject(id, runtime, attributes);
+        await summarizableObject.load(branchId, services);
 
-        return object;
+        return summarizableObject;
     }
 
     /**
      * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory.create}
      */
     public create(runtime: IComponentRuntime, id: string): ISharedObject {
-        const object = new SummarizableObject(id, runtime, SummarizableObjectFactory.Attributes);
-        object.initializeLocal();
+        const summarizableObject = new SummarizableObject(id, runtime, SummarizableObjectFactory.Attributes);
+        summarizableObject.initializeLocal();
 
-        return object;
+        return summarizableObject;
     }
 }

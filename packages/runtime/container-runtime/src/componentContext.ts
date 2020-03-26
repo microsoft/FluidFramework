@@ -381,22 +381,26 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     }
 
     /**
-     * @param address - The key of the dirty channel's summary tracker node.
-     *
-     * Updates the latestSequenceNumber of our and the dirty channel's summary tracker to the passed sequence number.
      * This is called from a summarizable object that does not generate ops but only wants to be part of the summary.
-     * Updating the latestSequenceNumber will ensure that it is part of the next summary.
+     * It indicates that there is data in the object that needs to be summarized.
+     * We will update the latestSequenceNumber of the summary tracker of this component and of the object's channel.
+     *
+     * @param address - The address of the channel that is dirty.
+     *
      */
-    public channelIsDirty(address: string, sequenceNumber: number): void {
+    public setChannelDirty(address: string): void {
         this.verifyNotClosed();
 
+        // Get the latest sequence number.
+        const latestSequenceNumber = this.deltaManager.referenceSequenceNumber;
+
         // Update our summary tracker's latestSequenceNumber.
-        this.summaryTracker.updateLatestSequenceNumber(sequenceNumber);
+        this.summaryTracker.updateLatestSequenceNumber(latestSequenceNumber);
 
         const channelSummaryTracker = this.summaryTracker.getChild(address);
         // If there is a summary tracker for the channel that called us, update it's latestSequenceNumber.
         if (channelSummaryTracker) {
-            channelSummaryTracker.updateLatestSequenceNumber(sequenceNumber);
+            channelSummaryTracker.updateLatestSequenceNumber(latestSequenceNumber);
         }
     }
 

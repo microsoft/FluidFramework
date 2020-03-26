@@ -15,13 +15,5 @@ export type SummarizableData = JsonableObject<Jsonable> | undefined;
  * Summarizable object interface
  */
 export interface ISummarizableObject extends ISharedObject {
-    readonly data: SummarizableData;
-
-    /**
-     * Set data on the object in response to a remote op.
-     *
-     * @param data The data to be set.
-     * @param sequenceNumber The sequence number of the remote op in response to which this is called.
-     */
-    set(data: SummarizableData, sequenceNumber: number): void;
+    data: SummarizableData;
 }

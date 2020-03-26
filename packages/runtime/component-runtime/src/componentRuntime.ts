@@ -182,7 +182,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                     componentContext,
                     componentContext.storage,
                     (type, content) => this.submit(type, content),
-                    (address: string, sequenceNumber: number) => this.channelIsDirty(address, sequenceNumber),
+                    (address: string) => this.setChannelDirty(address),
                     path,
                     tree.trees[path],
                     this.sharedObjectRegistry,
@@ -288,7 +288,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
             this.componentContext,
             this.componentContext.storage,
             (t, content) => this.submit(t, content),
-            (address: string, sequenceNumber: number) => this.channelIsDirty(address, sequenceNumber));
+            (address: string) => this.setChannelDirty(address));
         this.contexts.set(id, context);
 
         if (this.contextsDeferred.has(id)) {
@@ -464,7 +464,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                         this.componentContext,
                         this.componentContext.storage,
                         (type, content) => this.submit(type, content),
-                        (address: string, sequenceNumber: number) => this.channelIsDirty(address, sequenceNumber),
+                        (address: string) => this.setChannelDirty(address),
                         attachMessage.id,
                         snapshotTree,
                         this.sharedObjectRegistry,
@@ -597,9 +597,9 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         return this.componentContext.submitMessage(type, content);
     }
 
-    private channelIsDirty(address: string, sequenceNumber: number): void {
+    private setChannelDirty(address: string): void {
         this.verifyNotClosed();
-        this.componentContext.channelIsDirty(address, sequenceNumber);
+        this.componentContext.setChannelDirty(address);
     }
 
     private processOp(message: ISequencedDocumentMessage, local: boolean) {

@@ -327,12 +327,10 @@ export interface IComponentContext extends EventEmitter {
     attach(componentRuntime: IComponentRuntime): void;
 
     /**
-     * Indicates that a channel is dirty and needs to be part of the summary. The latestSequenceNumber
-     * of the component's and the channel's summary tracker is updated to the passed sequence number.
-     * @param key - The key of the channel's summary tracker node.
-     * @param sequenceNumber - The sequence number that the summary trackers need to be updated to.
+     * Indicates that a channel is dirty and needs to be part of the summary.
+     * @param address - The address of the channe that is dirty.
      */
-    channelIsDirty(key: string, sequenceNumber: number): void;
+    setChannelDirty(address: string): void;
 }
 
 /**

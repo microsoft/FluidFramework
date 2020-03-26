@@ -69,20 +69,13 @@ export class SummarizableObject extends SharedObject implements ISummarizableObj
     public get data(): SummarizableData {
         return this._data;
     }
-
-    /**
-     * Set data on the object.
-     *
-     * @param data The data to be set.
-     * @param sequenceNumber The sequence number of the remote op in response to which this is called.
-     */
-    public set(data: SummarizableData, sequenceNumber: number): void {
+    public set data(data: SummarizableData) {
         if (SharedObject.is(data)) {
             throw new Error("SharedObject sets are no longer supported. Instead set the SharedObject handle.");
         }
 
         this._data = data;
-        this.dirty(sequenceNumber);
+        this.dirty();
     }
 
     /**
@@ -137,8 +130,7 @@ export class SummarizableObject extends SharedObject implements ISummarizableObj
 
         const rawContent = await storage.read(snapshotFileName);
 
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        this._data = rawContent ? JSON.parse(fromBase64ToUtf8(rawContent)).data : undefined;
+        this._data = rawContent !== undefined ? JSON.parse(fromBase64ToUtf8(rawContent)).data : undefined;
     }
 
     /**
