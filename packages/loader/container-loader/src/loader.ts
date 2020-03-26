@@ -111,18 +111,18 @@ export class RelativeLoader extends EventEmitter implements ILoader {
     }
 }
 
-class CachingUrlResolver implements IUrlResolver{
-    private readonly resolveCache = new Map<string, IFluidResolvedUrl>();
-
-    constructor(private readonly resolver: IUrlResolver){ }
-
-    async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
-        const resolved = await this.resolver.resolve(request);
-        if (isFluidResolvedUrl(resolved)) {
-            this.resolveCache.set(request.url, resolved);
+function createCachedResolver(resolver: IUrlResolver){
+    const cacheResolver = Object.create(resolver) as IUrlResolver;
+    const resolveCache = new Map<string, IFluidResolvedUrl>();
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    cacheResolver.resolve = async (request: IRequest): Promise<IResolvedUrl | undefined> => {
+        const resolved = resolveCache.get(request.url) ?? await resolver.resolve(request);
+        if (isFluidResolvedUrl(resolved) && !resolveCache.has(request.url)) {
+            resolveCache.set(request.url, resolved);
         }
         return resolved;
-    }
+    };
+    return cacheResolver;
 }
 
 /**
@@ -150,7 +150,7 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
         if (!resolver) {
             throw new Error("An IUrlResolver must be provided");
         }
-        this.resolver = new CachingUrlResolver(MultiUrlResolver.create(resolver));
+        this.resolver = createCachedResolver(MultiUrlResolver.create(resolver));
 
         if (!documentServiceFactory) {
             throw new Error("An IDocumentServiceFactory must be provided");
