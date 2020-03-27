@@ -54,14 +54,14 @@ const getNav = () => {
         { text: "Tutorials", link: "/examples/" },
         internalOnly({ text: "Patterns", link: "/patterns/" }),
         { text: "API", link: "/api/overview" },
-        {
+        internalOnly({
             text: "Versions",
             items: [
                 { text: "v0.15 - Current release", link: "/" },
                 { text: "v0.14", link: "/versions/0.14/" },
                 { text: "Latest", link: "/versions/latest/" },
             ]
-        },
+        }),
         {
             text: "🤿 Dive Deeper",
             items: [
