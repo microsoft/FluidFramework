@@ -48,6 +48,7 @@
     "@microsoft/fluid-sequence": "^0.16.0",
     "@microsoft/fluid-shared-object-base": "^0.16.0",
     "@microsoft/fluid-view-adapters": "^0.16.0",
+    "@microsoft/fluid-view-interfaces": "^0.16.0",
     "office-ui-fabric-react": "^7.28.1",
     "react": "^16.10.2",
     "react-countdown360": "^1.3.0",

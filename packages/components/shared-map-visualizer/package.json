@@ -38,6 +38,7 @@
     "@microsoft/fluid-map": "^0.16.0",
     "@microsoft/fluid-runtime-definitions": "^0.16.0",
     "@microsoft/fluid-shared-object-base": "^0.16.0",
+    "@microsoft/fluid-view-interfaces": "^0.16.0",
     "@types/node": "^10.14.6",
     "bootstrap": "^3.3.7",
     "jquery": "^3.3.1"

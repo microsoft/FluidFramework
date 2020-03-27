@@ -8,7 +8,6 @@ import * as api from "@fluid-internal/client-api";
 import {
     IComponent,
     IComponentHandle,
-    IComponentHTMLView,
     IComponentLoadable,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IGenericBlob } from "@microsoft/fluid-container-definitions";
@@ -28,6 +27,7 @@ import { IInboundSignalMessage } from "@microsoft/fluid-runtime-definitions";
 import * as Sequence from "@microsoft/fluid-sequence";
 import { SharedSegmentSequenceUndoRedoHandler, UndoRedoStackManager } from "@microsoft/fluid-undo-redo";
 import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
+import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import { blobUploadHandler } from "../blob";
 import { CharacterCodes, Paragraph, Table } from "../text";
 import * as ui from "../ui";

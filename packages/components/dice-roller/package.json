@@ -34,7 +34,7 @@
   },
   "dependencies": {
     "@microsoft/fluid-aqueduct": "^0.16.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.16.0",
+    "@microsoft/fluid-view-interfaces": "^0.16.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },

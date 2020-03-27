@@ -40,6 +40,7 @@
     "@microsoft/fluid-runtime-definitions": "^0.16.0",
     "@microsoft/fluid-server-tools-core": "^0.16.0",
     "@microsoft/fluid-shared-object-base": "^0.16.0",
+    "@microsoft/fluid-view-interfaces": "^0.16.0",
     "@types/node": "^10.14.6",
     "axios": "^0.18.0",
     "bootstrap": "^3.3.7"

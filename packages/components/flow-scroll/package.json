@@ -50,6 +50,7 @@
     "@microsoft/fluid-map": "^0.16.0",
     "@microsoft/fluid-merge-tree": "^0.16.0",
     "@microsoft/fluid-runtime-definitions": "^0.16.0",
+    "@microsoft/fluid-view-interfaces": "^0.16.0",
     "debug": "^4.1.1"
   },
   "devDependencies": {

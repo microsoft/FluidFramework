@@ -6,12 +6,12 @@
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
 import {
     IComponent,
-    IComponentHTMLView,
     IComponentLoadable,
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IPackage } from "@microsoft/fluid-container-definitions";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as uuid from "uuid";
 import { IComponentCallable, IComponentCallbacks } from "@fluid-example/spaces";
 
