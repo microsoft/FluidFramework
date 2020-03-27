@@ -39,6 +39,7 @@
     "@microsoft/fluid-runtime-definitions": "^0.16.0",
     "@microsoft/fluid-sequence": "^0.16.0",
     "@microsoft/fluid-shared-object-base": "^0.16.0",
+    "@microsoft/fluid-view-interfaces": "^0.16.0",
     "@types/react": "^16.9.15",
     "@types/react-dom": "^16.9.4",
     "@types/semver": "^6.0.1",

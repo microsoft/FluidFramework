@@ -6,8 +6,6 @@
 import {
     IComponent,
     IComponentHandleContext,
-    IComponentHTMLOptions,
-    IComponentHTMLView,
     IComponentLoadable,
     IComponentRouter,
     IRequest,
@@ -19,6 +17,7 @@ import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { ISharedDirectory, SharedDirectory } from "@microsoft/fluid-map";
 import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import { SharedComponent, SharedComponentFactory } from "@microsoft/fluid-component-base";
+import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 export class ImageComponent implements
     IComponentLoadable, IComponentHTMLView, IComponentRouter, IComponentLayout {
