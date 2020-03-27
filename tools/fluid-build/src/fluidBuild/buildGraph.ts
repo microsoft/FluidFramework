@@ -47,23 +47,21 @@ class BuildContext {
 };
 
 export class BuildPackage {
-    private buildTask?: Task;
-    private buildScript: string | undefined | null;
+    private buildTask?: Task | null = null;
+    private buildScriptNames: string[];
+    private loaded = false;
     public readonly parents = new Array<BuildPackage>();
     public readonly dependentPackages = new Array<BuildPackage>();
     public level: number = -1;
     private buildP?: Promise<BuildResult>;
 
-    constructor(public readonly buildContext: BuildContext, public readonly pkg: Package, private buildScriptName: string) {
-        this.buildScript = null;
+    constructor(public readonly buildContext: BuildContext, public readonly pkg: Package, buildScriptNames: string[]) {
+        this.buildScriptNames = buildScriptNames.filter(name => this.pkg.getScript(name));
     }
 
     public get task(): Task | undefined {
-        if (this.buildScript === null) {
-            this.buildScript = this.pkg.getScript(this.buildScriptName);
-            if (this.buildScript) {
-                this.buildTask = TaskFactory.Create(this, `npm run ${this.buildScriptName}`);
-            }
+        if (this.buildTask === null) {
+            this.buildTask = TaskFactory.CreateScriptTasks(this, this.buildScriptNames);
         }
         return this.buildTask;
     }
@@ -98,11 +96,11 @@ export class BuildGraph {
 
     public constructor(
         private readonly packages: Package[],
-        private readonly buildScriptName: string,
+        private readonly buildScriptNames: string[],
         getDepFilter: (pkg: Package) => (dep: Package) => boolean) {
 
         packages.forEach((value) =>
-            this.buildPackages.set(value.name, new BuildPackage(this.buildContext, value, buildScriptName))
+            this.buildPackages.set(value.name, new BuildPackage(this.buildContext, value, buildScriptNames))
         );
 
         const needPropagate = this.buildDependencies(getDepFilter);
@@ -125,7 +123,7 @@ export class BuildGraph {
         const isUpToDate = await this.isUpToDate();
         if (timer) timer.time(`Check up to date completed`);
 
-        logStatus(`Starting npm script "${chalk.cyanBright(this.buildScriptName)}" for ${this.buildPackages.size} packages, ${this.buildContext.taskStats.leafTotalCount} tasks`);
+        logStatus(`Starting npm script "${chalk.cyanBright(this.buildScriptNames.join(" && "))}" for ${this.buildPackages.size} packages, ${this.buildContext.taskStats.leafTotalCount} tasks`);
         if (isUpToDate) {
             return BuildResult.UpToDate;
         }
@@ -235,7 +233,7 @@ export class BuildGraph {
         });
 
         if (!hasTask) {
-            throw new Error(`No task for script ${this.buildScriptName} found`);
+            throw new Error(`No task for script ${this.buildScriptNames} found`);
         }
     }
 }

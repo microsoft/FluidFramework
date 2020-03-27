@@ -14,7 +14,7 @@ interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
     showExec: boolean;
     clean: boolean;
     matchedOnly: boolean
-    buildScript: string;
+    buildScriptNames: string[];
     build?: boolean;
     vscode: boolean;
     symlink: boolean;
@@ -37,7 +37,7 @@ export const options: FastBuildOptions = {
     clean: false,
     match: [],
     matchedOnly: true,
-    buildScript: "build",
+    buildScriptNames: [],
     vscode: false,
     symlink: false,
     fullSymlink: undefined,
@@ -201,8 +201,8 @@ export function parseOptions(argv: string[]) {
 
         if (arg === "-s" || arg === "--script") {
             if (i !== process.argv.length - 1) {
-                options.buildScript = process.argv[++i];
-                options.build = true;
+                options.buildScriptNames.push(process.argv[++i]);
+                setBuild(true);
                 continue;
             }
             console.error("ERROR: Missing argument for --script");
@@ -261,5 +261,9 @@ export function parseOptions(argv: string[]) {
     if (error) {
         printUsage();
         process.exit(-1);
+    }
+
+    if (options.buildScriptNames.length === 0) {
+        options.buildScriptNames = [ "build" ];
     }
 }
