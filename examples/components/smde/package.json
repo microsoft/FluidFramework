@@ -41,6 +41,7 @@
     "@microsoft/fluid-runtime-definitions": "^0.16.0",
     "@microsoft/fluid-sequence": "^0.16.0",
     "@microsoft/fluid-shared-object-base": "^0.16.0",
+    "@microsoft/fluid-view-interfaces": "^0.16.0",
     "@types/simplemde": "^1.11.7",
     "marked": "^0.8.0",
     "simplemde": "^1.11.2"
