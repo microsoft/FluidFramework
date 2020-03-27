@@ -9,7 +9,7 @@
 !examples/hosts/iframe-host/**
 !server/routerlicious
 !docs/**
-!tools/build-server-resources/**
+!tools/**
 **/node_modules
 **/dist
 **/lib
