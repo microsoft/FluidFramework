@@ -19,6 +19,7 @@ import {
 import { FluidRepo } from "./fluidRepo";
 import * as semver from "semver";
 import * as fs from "fs";
+import { MonoRepo } from "../common/monoRepo";
 
 async function writeAndReplace(outFile: string, bakFile: string, content: string) {
     logVerbose(`Writing ${outFile}`);
@@ -125,8 +126,7 @@ export interface ISymlinkOptions {
 
 export async function symlinkPackage(repo: FluidRepo, pkg: Package, buildPackages: Map<string, Package>, options: ISymlinkOptions) {
     let changed = 0;
-    const monoRepo = repo.getMonoRepo(pkg);
-    const monoRepoNodeModulePath = repo.getMonoRepoNodeModulePath(monoRepo);
+    const monoRepoNodeModulePath = pkg.monoRepo?.getNodeModulePath();
 
     if (monoRepoNodeModulePath && !existsSync(monoRepoNodeModulePath)) {
         // If the node_modules isn't install at all, just don't check
@@ -141,7 +141,7 @@ export async function symlinkPackage(repo: FluidRepo, pkg: Package, buildPackage
         // Check and fix link if it is a known package and version satisfy the version.
         // TODO: check of extranous symlinks
         if (depBuildPackage) {
-            const sameMonoRepo = repo.isSameMonoRepo(monoRepo, depBuildPackage);
+            const sameMonoRepo = MonoRepo.isSame(pkg.monoRepo, depBuildPackage.monoRepo);
             if (!semver.satisfies(depBuildPackage.version, version)) {
                 if (sameMonoRepo) {
                     console.warn(`${pkg.nameColored}: Mismatch version ${depBuildPackage.version} for dependency ${depBuildPackage.nameColored} in the same mono repo`)
