@@ -23,7 +23,7 @@ export interface ISpacesDataModel extends EventEmitter {
         h?: number,
         id?: string
     ): Promise<T>;
-    getComponent<T extends IComponent>(id: string): Promise<T | undefined>;
+    getComponent<T extends IComponent & IComponentLoadable>(id: string): Promise<T | undefined>;
     removeComponent(id: string): void;
     updateGridItem(id: string, newLayout: Layout): void;
     getLayout(id: string): Layout;
@@ -187,23 +187,15 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         this.componentSubDirectory.set(id, model);
     }
 
-    public async getComponent<T extends IComponent>(id: string): Promise<T | undefined> {
+    public async getComponent<T extends IComponent & IComponentLoadable>(id: string): Promise<T | undefined> {
         const data = this.componentSubDirectory.get<ISpacesModel>(id);
-        if (data && typeof data.handleOrId === "string") {
-            return this.getComponent_UNSAFE<T>(data.handleOrId);
-        } else if (data && data.handleOrId) {
-            return this.getComponentById<T>(data.handleOrId as IComponentHandle);
+        const handleOrId = data?.handleOrId;
+        if (typeof handleOrId === "string") {
+            return this.getComponent_UNSAFE<T>(handleOrId);
         } else {
-            return this.getComponent_UNSAFE<T>(id);
+            const handle = handleOrId?.IComponentHandle;
+            return await (handle ? handle.get() : this.getComponent_UNSAFE(id)) as T;
         }
-    }
-
-    private async getComponentById<T>(handle: IComponentHandle): Promise<T> {
-        // We have to do this bit of hackery because in handles.ts, there is a note
-        // about constraining the handle's T to IComponent & IComponentLoadable
-        // Since getComponent above doesn't restrict T to IComponentLoadable, we cannot set
-        // the type there
-        return await handle.get() as unknown as T;
     }
 
     public getLayout(id: string): Layout {
