@@ -43,6 +43,7 @@
     "@microsoft/fluid-runtime-definitions": "^0.16.0",
     "@microsoft/fluid-sequence": "^0.16.0",
     "@microsoft/fluid-view-adapters": "^0.16.0",
+    "@microsoft/fluid-view-interfaces": "^0.16.0",
     "uuid": "^3.3.2"
   },
   "devDependencies": {

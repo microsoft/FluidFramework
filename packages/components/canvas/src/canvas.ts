@@ -4,12 +4,9 @@
  */
 
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
-import {
-    IComponentHandle,
-    IComponentHTMLOptions,
-    IComponentHTMLView,
-} from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { IColor, IInk, Ink, InkCanvas } from "@microsoft/fluid-ink";
+import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 // eslint-disable-next-line import/no-unassigned-import
 import "./style.less";
 
