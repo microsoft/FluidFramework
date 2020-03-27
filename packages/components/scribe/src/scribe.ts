@@ -6,8 +6,6 @@
 import { EventEmitter } from "events";
 import { resolve } from "url";
 import {
-    IComponentHTMLOptions,
-    IComponentHTMLView,
     IComponentLoadable,
     IComponentRouter,
     IRequest,
@@ -31,6 +29,7 @@ import {
 } from "@microsoft/fluid-runtime-definitions";
 import * as scribe from "@microsoft/fluid-server-tools-core";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import Axios from "axios";
 
 // eslint-disable-next-line max-len
