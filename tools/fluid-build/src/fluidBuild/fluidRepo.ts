@@ -12,10 +12,11 @@ import {
     execWithErrorAsync,
 } from "../common/utils";
 import { FluidPackageCheck } from "./fluidPackageCheck";
-import { FluidRepoBase } from "../common/fluidRepoBase";
+import { FluidRepoBase, MonoRepo } from "../common/fluidRepoBase";
 import { NpmDepChecker } from "./npmDepChecker";
 import { ISymlinkOptions, symlinkPackage } from "./symlinkUtils";
 import { BuildGraph } from "./buildGraph";
+import { logVerbose } from "../common/logging";
 
 export interface IPackageMatchedOptions {
     match: string[];
@@ -86,14 +87,8 @@ export class FluidRepo extends FluidRepoBase {
             return this.matchWithFilter(pkg => true);
         }
 
-        if (options.server) {
-            return this.matchWithFilter(pkg => pkg.directory.startsWith(this.serverDirectory));
-        }
-
-        // Default to client and example packages
-        return this.matchWithFilter(
-            pkg => pkg.directory.startsWith(this.clientDirectory) || pkg.directory.startsWith(this.exampleDirectory)
-        );
+        const matchMonoRepo = options.server? MonoRepo.Server : MonoRepo.Client;
+        return this.matchWithFilter(pkg => this.getMonoRepo(pkg) == matchMonoRepo);
     }
 
     public async checkPackages(fix: boolean) {
@@ -130,8 +125,8 @@ export class FluidRepo extends FluidRepoBase {
         return result.reduce((sum, value) => sum + value);
     }
 
-    public createBuildGraph(options: ISymlinkOptions, buildScript: string) {
-        return new BuildGraph(this.packages.packages, buildScript,
+    public createBuildGraph(options: ISymlinkOptions, buildScriptNames: string[]) {
+        return new BuildGraph(this.packages.packages, buildScriptNames,
             (pkg: Package) => {
                 const monoRepo = this.getMonoRepo(pkg);
                 return (dep: Package) => {
@@ -143,7 +138,8 @@ export class FluidRepo extends FluidRepoBase {
     private matchWithFilter(callback: (pkg: Package) => boolean) {
         let matched = false;
         this.packages.packages.forEach((pkg) => {
-            if (callback(pkg)) {
+            if (!pkg.matched && callback(pkg)) {
+                logVerbose(`${pkg.nameColored}: matched`);
                 pkg.setMatched();
                 matched = true;
             }

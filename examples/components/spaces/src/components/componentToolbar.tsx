@@ -9,15 +9,13 @@ import {
     PrimedComponent,
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
-import {
-    IComponentHTMLView,
-    IComponent,
-} from "@microsoft/fluid-component-core-interfaces";
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import {
     DefaultButton as Button,
     initializeIcons,
 } from "office-ui-fabric-react";
 import { ISharedDirectory } from "@microsoft/fluid-map";
+import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import {
     InternalRegistry,
     IContainerComponentDetails,

@@ -6,7 +6,7 @@
 import * as assert from "assert";
 import { randomId, TokenList } from "@fluid-example/flow-util-lib";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { IComponent, IComponentHandle, IComponentHTMLOptions } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import {
     createInsertSegmentOp,
     createRemoveRangeOp,
@@ -31,6 +31,7 @@ import {
     SharedStringFactory,
     SharedStringSegment,
 } from "@microsoft/fluid-sequence";
+import { IComponentHTMLOptions } from "@microsoft/fluid-view-interfaces";
 import { clamp, emptyArray } from "../util";
 import { IHTMLAttributes } from "../util/attr";
 import { Tag } from "../util/tag";

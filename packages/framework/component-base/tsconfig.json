@@ -5,11 +5,12 @@
         "node_modules"
     ],
     "compilerOptions": {
-        "strict": true,
         "declarationDir": "./dist",
         "rootDir": "./src",
         "outDir": "./dist",
-        "types": [ "mocha" ]
+        "types": [
+            "mocha"
+        ]
     },
     "include": [
         "src/**/*"

@@ -115,15 +115,13 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
         return this.details.serviceConfiguration;
     }
 
-    /* Issue #1566: Backward compat - cleanup initialMessages, etc. being undefined*/
-
     /**
      * Get messages sent during the connection
      *
      * @returns messages sent during the connection
      */
     public get initialMessages(): ISequencedDocumentMessage[] {
-        return this.details.initialMessages ?? [];
+        return this.details.initialMessages;
     }
 
     /**
@@ -132,7 +130,7 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
      * @returns contents sent during the connection
      */
     public get initialContents(): IContentMessage[] {
-        return this.details.initialContents ?? [];
+        return this.details.initialContents;
     }
 
     /**
@@ -141,7 +139,7 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
      * @returns signals sent during the connection
      */
     public get initialSignals(): ISignalMessage[] {
-        return this.details.initialSignals ?? [];
+        return this.details.initialSignals;
     }
 
     /**
@@ -150,7 +148,7 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
      * @returns initial client list sent during the connection
      */
     public get initialClients(): ISignalClient[] {
-        return this.details.initialClients ?? [];
+        return this.details.initialClients;
     }
 
     /**

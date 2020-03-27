@@ -38,8 +38,8 @@
     "@fluid-example/flow-util-lib": "^0.16.0",
     "@fluid-example/table-document": "^0.16.0",
     "@microsoft/fluid-aqueduct": "^0.16.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.16.0",
-    "@microsoft/fluid-runtime-definitions": "^0.16.0"
+    "@microsoft/fluid-runtime-definitions": "^0.16.0",
+    "@microsoft/fluid-view-interfaces": "^0.16.0"
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.15.0",

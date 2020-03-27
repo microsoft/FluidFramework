@@ -26,6 +26,7 @@
     "start:r11s": "webpack-dev-server --config webpack.config.js --package package.json --env.mode r11s",
     "start:spo": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo",
     "start:spo-df": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo-df",
+    "test": "npm run test:jest",
     "test:jest": "jest",
     "tsc": "tsc",
     "webpack": "webpack --env.production",
@@ -34,6 +35,7 @@
   "dependencies": {
     "@microsoft/fluid-aqueduct": "^0.16.0",
     "@microsoft/fluid-component-core-interfaces": "^0.16.0",
+    "@microsoft/fluid-view-interfaces": "^0.16.0",
     "inversify": "^5.0.1",
     "react": "^16.10.2",
     "react-dom": "^16.10.2",

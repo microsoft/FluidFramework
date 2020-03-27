@@ -7,7 +7,6 @@
 // IComponent as opposed to an export *
 export { IComponent } from "./components";
 export * from "./componentLoadable";
-export * from "./componentRender";
 export * from "./componentRouter";
 export * from "./handles";
 export * from "./serializer";

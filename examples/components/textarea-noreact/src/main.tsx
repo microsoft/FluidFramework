@@ -15,19 +15,16 @@ import {
     PrimedComponent,
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
-import {
-    IComponentHTMLView,
-    IComponentHandle,
-} from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import {
     IComponentContext,
     IComponentRuntime,
 } from "@microsoft/fluid-runtime-definitions";
-
 import {
     SequenceDeltaEvent,
     SharedString,
 } from "@microsoft/fluid-sequence";
+import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 /******************************************************************************/
 
 /**
