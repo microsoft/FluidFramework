@@ -48,6 +48,7 @@ describe("clicker", () => {
 
     it("Clicking the button after refresh updates both users", async () => {
         await page.reload({ waitUntil: ["load"] });
+        await page.waitFor(() => window["fluidStarted"]);
 
         // Validate both users have 0 as their value
         const preValue = await getValue(0);
