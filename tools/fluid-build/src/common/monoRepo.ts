@@ -5,6 +5,7 @@
 
 import { Package, Packages } from "./npmPackage";
 import * as path from "path";
+import { rimrafWithErrorAsync, existsSync, readJsonSync } from "./utils";
 
 export enum MonoRepoKind {
     None,
@@ -13,20 +14,29 @@ export enum MonoRepoKind {
 };
 
 export class MonoRepo {
-    public readonly packages: Package[];
-    constructor(public readonly kind: MonoRepoKind, private dirs: string[]) {
-        this.packages = Packages.loadDirs(dirs, this);
+    public readonly packages: Package[] = [];
+    constructor(public readonly kind: MonoRepoKind, public readonly repoPath: string) {
+        const lernaPath = path.join(repoPath, "lerna.json");
+        if (!existsSync(lernaPath)) {
+            throw new Error(`ERROR: lerna.json not found in ${repoPath}`);
+        }
+        const lerna = readJsonSync(lernaPath);
+        for (const dir of lerna.packages as string[]) {
+            // TODO: other glob pattern?
+            const loadDir = dir.endsWith("/**")? dir.substr(0, dir.length - 3) : dir;
+            this.packages.push(...Packages.loadDir(path.join(this.repoPath, loadDir), this));
+        }
     }
 
     public static isSame(a: MonoRepo | undefined, b: MonoRepo | undefined) {
         return a !== undefined && a === b;
     }
 
-    public getPath() {
-        // TODO: Cheating here
-        return path.join(this.dirs[0], "..");
-    }
     public getNodeModulePath() {
-        return path.join(this.getPath(), "node_modules");
+        return path.join(this.repoPath, "node_modules");
+    }
+
+    public async uninstall() {
+        return rimrafWithErrorAsync(this.getNodeModulePath(), this.repoPath);
     }
 };

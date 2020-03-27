@@ -123,13 +123,13 @@ async function main() {
         process.exit(1);
     }
 
-    const branchName = result.stdout;
-    if (branchName !== "master\n" && !branchName.startsWith("release/")) {
+    const branchName = result.stdout.split("\n")[0];
+    if (branchName !== "master" && !branchName.startsWith("release/")) {
         console.error(`ERROR: Unrecognized branch '${branchName}'`);
         process.exit(2)
     }
 
-    const versionBump = result.stdout == "master\n" ? "minor" : "patch";
+    const versionBump = branchName === "master" ? "minor" : "patch";
     console.log(`Bumping ${versionBump} version`);
 
     // Load the package
@@ -145,8 +145,8 @@ async function main() {
         for (const { name: dep, version } of pkg.combinedDependencies) {
             const depBuildPackage = buildPackages.get(dep);
             if (depBuildPackage) {
-                saveVersion(depVersions, dep, semver.minVersion(version)!.version, depBuildPackage.monoRepo);
-                if (semver.satisfies(depBuildPackage.version, version)) {
+                let depVersion = depBuildPackage.version;
+                if (semver.satisfies(depVersion, version)) {
                     if (depBuildPackage.monoRepo === undefined) {
                         if (!packageNeedBump.has(depBuildPackage)) {
                             packageNeedBump.add(depBuildPackage);
@@ -156,7 +156,10 @@ async function main() {
                     } else if (depBuildPackage.monoRepo.kind === MonoRepoKind.Server) {
                         serverNeedBump = true;
                     }
+                } else {
+                    depVersion = semver.minVersion(version)!.version;
                 }
+                saveVersion(depVersions, dep, depVersion, depBuildPackage.monoRepo);
             }
         }
     };
@@ -190,7 +193,7 @@ async function main() {
     console.log();
 
     const bumpMonoRepo = async (monoRepo: MonoRepo) => {
-        const repoPath = monoRepo.getPath();
+        const repoPath = monoRepo.repoPath;
         return await execWithErrorAsync(`npx lerna version ${versionBump} --no-push --no-git-tag-version -y && npm run build:genver`, {
             cwd: repoPath,
         }, repoPath, false);

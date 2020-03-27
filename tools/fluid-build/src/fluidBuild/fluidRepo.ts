@@ -34,10 +34,6 @@ export class FluidRepo extends FluidRepoBase {
         path.join(this.resolvedRoot, "common/lib/common-definitions"),
         path.join(this.resolvedRoot, "common/lib/common-utils"),
     ];
-    private readonly monoReposInstallDirectories = [
-        path.join(this.resolvedRoot),
-        this.serverDirectory,
-    ];
 
     constructor(resolvedRoot: string) {
         super(resolvedRoot);
@@ -53,7 +49,7 @@ export class FluidRepo extends FluidRepoBase {
         }
         const installScript = "npm i";
         const installPromises: Promise<ExecAsyncResult>[] = [];
-        for (const dir of [...this.packageInstallDirectories, ...this.monoReposInstallDirectories]) {
+        for (const dir of [...this.packageInstallDirectories, ...this.clientMonoRepo.repoPath, ...this.serverMonoRepo.repoPath]) {
             installPromises.push(execWithErrorAsync(installScript, { cwd: dir }, dir));
         }
         const rets = await Promise.all(installPromises);
@@ -64,7 +60,7 @@ export class FluidRepo extends FluidRepoBase {
     public async uninstall() {
         const cleanPackageNodeModules = this.packages.cleanNodeModules();
         const removePromise = Promise.all(
-            this.monoReposInstallDirectories.map(dir => rimrafWithErrorAsync(path.join(dir, "node_modules"), dir))
+            [ this.clientMonoRepo.uninstall(), this.serverMonoRepo.uninstall() ]
         );
 
         const r = await Promise.all([cleanPackageNodeModules, removePromise]);

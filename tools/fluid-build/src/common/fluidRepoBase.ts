@@ -6,24 +6,17 @@
 import * as path from "path";
 import { Package, Packages } from "./npmPackage";
 import { MonoRepo, MonoRepoKind } from "./monoRepo";
+import { rimrafWithErrorAsync } from "./utils";
 
 
 export class FluidRepoBase {
-    // TODO: Should read lerna.json to determine
-    protected readonly clientDirectory = path.join(this.resolvedRoot, "packages");
-    protected readonly serverDirectory = path.join(this.resolvedRoot, "server/routerlicious/packages");
-    protected readonly exampleComponentsDirectory = path.join(this.resolvedRoot, "examples/components");
-    protected readonly exampleIframeHostDirectory = path.join(this.resolvedRoot, "examples/hosts/iframe-host");
-
     public readonly clientMonoRepo: MonoRepo;
     public readonly serverMonoRepo: MonoRepo;
 
     public readonly packages: Packages;
     constructor(protected readonly resolvedRoot: string) {
-        this.clientMonoRepo = new MonoRepo(MonoRepoKind.Client,
-            [this.clientDirectory, this.exampleComponentsDirectory, this.exampleIframeHostDirectory]);
-        this.serverMonoRepo = new MonoRepo(MonoRepoKind.Server,
-            [this.serverDirectory]);
+        this.clientMonoRepo = new MonoRepo(MonoRepoKind.Client, this.resolvedRoot);
+        this.serverMonoRepo = new MonoRepo(MonoRepoKind.Server, path.join(this.resolvedRoot, "server/routerlicious"));
         this.packages = new Packages(
             [
                 ...Packages.loadDir(path.join(this.resolvedRoot, "common")), 

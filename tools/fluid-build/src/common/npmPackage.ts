@@ -16,6 +16,7 @@ import {
     unlinkAsync,
     writeFileAsync,
     ExecAsyncResult,
+    readJsonSync,
 } from "./utils"
 import { MonoRepo } from "./monoRepo";
 import { options } from "../fluidBuild/options";
@@ -86,7 +87,7 @@ export class Package {
     private _packageJson: IPackage;
 
     constructor(private readonly packageJsonFileName: string, public readonly monoRepo?: MonoRepo) {
-        this._packageJson = require(packageJsonFileName);
+        this._packageJson = readJsonSync(packageJsonFileName);
         logVerbose(`Package Loaded: ${this.nameColored}`);
     }
 
@@ -156,8 +157,7 @@ export class Package {
     }
 
     public reload() {
-        delete require.cache[this.packageJsonFileName];
-        this._packageJson = require(this.packageJsonFileName);
+        this._packageJson = readJsonSync(this.packageJsonFileName);
     }
 
     public async noHoistInstall(repoRoot: string) {
