@@ -4,7 +4,7 @@
  */
 
 import { FluidRepo } from "./fluidRepo";
-import { MonoRepo } from "../common/fluidRepoBase";
+import { MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import * as path from "path";
 import { existsSync, readFileAsync, writeFileAsync, resolveNodeModule } from "../common/utils";
@@ -39,7 +39,7 @@ export class FluidPackageCheck {
         return fix;
     }
 
-    constructor(private readonly repoType: MonoRepo) {
+    constructor(private readonly repoType: MonoRepoKind) {
     }
 
     public static checkScripts(repo: FluidRepo, pkg: Package, fix: boolean) {
@@ -64,10 +64,10 @@ export class FluidPackageCheck {
      * Verify that all packages with 'test' scripts require the 'make-promises-safe' package, which will cause unhandled
      * promise rejections to throw errors
      */
-    private static checkTestSafePromiseRequire(pkg: Package, fix: boolean, monoRepo: MonoRepo) {
+    private static checkTestSafePromiseRequire(pkg: Package, fix: boolean, monoRepo: MonoRepoKind) {
         let fixed = false;
         const pkgstring = "make-promises-safe";
-        const testScriptName = monoRepo === MonoRepo.Server ? "test" : "test:mocha";
+        const testScriptName = monoRepo === MonoRepoKind.Server ? "test" : "test:mocha";
         const testScript = pkg.getScript(testScriptName);
         if (testScript && /(ts-)?mocha/.test(testScript)) {
             if (this.ensureDevDependency(pkg, fix, pkgstring)) {
@@ -90,7 +90,7 @@ export class FluidPackageCheck {
     /**
      * mocha tests in packages/ should be in a "test:mocha" script so they can be run separately from jest tests
      */
-    public static checkClientTestScripts(pkg: Package, fix: boolean, monoRepo: MonoRepo) {
+    public static checkClientTestScripts(pkg: Package, fix: boolean, monoRepo: MonoRepoKind) {
         let fixed = false;
         const testScript = pkg.getScript("test");
         const testMochaScript = pkg.getScript("test:mocha");
@@ -104,7 +104,7 @@ export class FluidPackageCheck {
         }
         const expectedTestScript = expectedTestScripts.length > 0 ? expectedTestScripts.join(" && ") : undefined;
 
-        if (monoRepo === MonoRepo.Client && testScript && /^(ts-)?mocha/.test(testScript)) {
+        if (monoRepo === MonoRepoKind.Client && testScript && /^(ts-)?mocha/.test(testScript)) {
             this.logWarn(pkg, `"mocha" in "test" script instead of "test:mocha" script`, fix);
             if (fix) {
                 if (!testMochaScript) {
@@ -170,7 +170,7 @@ export class FluidPackageCheck {
         return fixed;
     }
 
-    private static checkBuildScripts(pkg: Package, fix: boolean, monoRepo: MonoRepo) {
+    private static checkBuildScripts(pkg: Package, fix: boolean, monoRepo: MonoRepoKind) {
         // Fluid specific
         let fixed = false;
         const buildScript = pkg.getScript("build");
@@ -232,7 +232,7 @@ export class FluidPackageCheck {
                     buildFull.push("webpack");
                     buildFullCompile.push("webpack");
                 }
-                if (monoRepo !== MonoRepo.Server) {
+                if (monoRepo !== MonoRepoKind.Server) {
                     prepack.push("webpack");
                 }
             }

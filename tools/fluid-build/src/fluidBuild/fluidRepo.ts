@@ -12,7 +12,8 @@ import {
     execWithErrorAsync,
 } from "../common/utils";
 import { FluidPackageCheck } from "./fluidPackageCheck";
-import { FluidRepoBase, MonoRepo } from "../common/fluidRepoBase";
+import { FluidRepoBase } from "../common/fluidRepoBase";
+import { MonoRepoKind } from "../common/monoRepo";
 import { NpmDepChecker } from "./npmDepChecker";
 import { ISymlinkOptions, symlinkPackage } from "./symlinkUtils";
 import { BuildGraph } from "./buildGraph";
@@ -87,7 +88,7 @@ export class FluidRepo extends FluidRepoBase {
             return this.matchWithFilter(pkg => true);
         }
 
-        const matchMonoRepo = options.server? MonoRepo.Server : MonoRepo.Client;
+        const matchMonoRepo = options.server? MonoRepoKind.Server : MonoRepoKind.Client;
         return this.matchWithFilter(pkg => this.getMonoRepo(pkg) == matchMonoRepo);
     }
 

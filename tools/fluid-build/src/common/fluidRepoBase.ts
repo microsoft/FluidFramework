@@ -5,12 +5,8 @@
 
 import * as path from "path";
 import { Package, Packages } from "./npmPackage";
+import { MonoRepo, MonoRepoKind } from "./monoRepo";
 
-export enum MonoRepo {
-    None,
-    Client,
-    Server,
-};
 
 export class FluidRepoBase {
     // TODO: Should read lerna.json to determine
@@ -28,35 +24,41 @@ export class FluidRepoBase {
 
     public readonly packages: Packages;
     constructor(protected readonly resolvedRoot: string) {
-        this.packages = Packages.load(this.baseDirectories);
+        const clientMonoRepo = new MonoRepo(MonoRepoKind.Client,
+            [this.clientDirectory, this.exampleComponentsDirectory, this.exampleIframeHostDirectory]);
+        const serverMonoRepo = new MonoRepo(MonoRepoKind.Server,
+            [this.serverDirectory]);
+        this.packages = new Packages(
+            [...Packages.loadDir(path.join(this.resolvedRoot, "common")), ...clientMonoRepo.packages, ...serverMonoRepo.packages]
+        );
     }
 
     public getMonoRepo(pkg: Package) {
-        return pkg.directory.startsWith(this.serverDirectory) ? MonoRepo.Server :
-            pkg.directory.startsWith(this.clientDirectory) 
-            || pkg.directory.startsWith(this.exampleComponentsDirectory)
-            || pkg.directory.startsWith(this.exampleIframeHostDirectory) ? MonoRepo.Client : MonoRepo.None
+        return pkg.directory.startsWith(this.serverDirectory) ? MonoRepoKind.Server :
+            pkg.directory.startsWith(this.clientDirectory)
+                || pkg.directory.startsWith(this.exampleComponentsDirectory)
+                || pkg.directory.startsWith(this.exampleIframeHostDirectory) ? MonoRepoKind.Client : MonoRepoKind.None
     }
 
-    public isSameMonoRepo(monoRepo: MonoRepo, pkg: Package) {
-        return monoRepo !== MonoRepo.None && monoRepo === this.getMonoRepo(pkg);
+    public isSameMonoRepo(monoRepo: MonoRepoKind, pkg: Package) {
+        return monoRepo !== MonoRepoKind.None && monoRepo === this.getMonoRepo(pkg);
     }
 
-    public getMonoRepoPath(monoRepo: MonoRepo) {
+    public getMonoRepoPath(monoRepo: MonoRepoKind) {
         switch (monoRepo) {
-            case MonoRepo.Client:
+            case MonoRepoKind.Client:
                 return path.join(this.clientDirectory, "..");
-            case MonoRepo.Server:
+            case MonoRepoKind.Server:
                 return path.join(this.serverDirectory, "..");
             default:
                 return undefined;
         }
     }
-    public getMonoRepoNodeModulePath(monoRepo: MonoRepo) {
+    public getMonoRepoNodeModulePath(monoRepo: MonoRepoKind) {
         switch (monoRepo) {
-            case MonoRepo.Client:
+            case MonoRepoKind.Client:
                 return path.join(this.clientDirectory, "..", "node_modules");
-            case MonoRepo.Server:
+            case MonoRepoKind.Server:
                 return path.join(this.serverDirectory, "..", "node_modules");
             default:
                 return undefined;

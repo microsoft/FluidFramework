@@ -17,7 +17,7 @@ import {
     writeFileAsync,
     ExecAsyncResult,
 } from "./utils"
-
+import { MonoRepo } from "./monoRepo";
 import { options } from "../fluidBuild/options";
 
 interface IPerson {
@@ -85,7 +85,7 @@ export class Package {
 
     private _packageJson: IPackage;
 
-    constructor(private readonly packageJsonFileName: string) {
+    constructor(private readonly packageJsonFileName: string, public readonly monoRepo?: MonoRepo) {
         this._packageJson = require(packageJsonFileName);
         logVerbose(`Package Loaded: ${this.nameColored}`);
     }
@@ -144,7 +144,7 @@ export class Package {
     }
 
     public getScript(name: string): string | undefined {
-        return this.packageJson.scripts? this.packageJson.scripts[name] : undefined;
+        return this.packageJson.scripts ? this.packageJson.scripts[name] : undefined;
     }
 
     public async cleanNodeModules() {
@@ -159,7 +159,7 @@ export class Package {
         delete require.cache[this.packageJsonFileName];
         this._packageJson = require(this.packageJsonFileName);
     }
-    
+
     public async noHoistInstall(repoRoot: string) {
         // Fluid specific
         const rootNpmRC = path.join(repoRoot, ".npmrc")
@@ -206,33 +206,33 @@ async function queueExec<TItem, TResult>(items: Iterable<TItem>, exec: (item: TI
 
 export class Packages {
 
-    public static load(dirs: string[]) {
+    public static loadDirs(dirs: string[], monoRepo?: MonoRepo) {
         const packages: Package[] = [];
         for (const dir of dirs) {
-            packages.push(...Packages.loadCore(dir));
+            packages.push(...Packages.loadDir(dir, monoRepo));
         }
-        return new Packages(packages);
+        return packages;
     }
 
-    private static loadCore(dir: string) {
+    public static loadDir(dir: string, monoRepo?: MonoRepo) {
         const packages: Package[] = [];
         const files = fs.readdirSync(dir, { withFileTypes: true });
         files.map((dirent) => {
             if (dirent.isDirectory()) {
                 if (dirent.name !== "node_modules") {
-                    packages.push(...Packages.loadCore(path.join(dir, dirent.name)));
+                    packages.push(...Packages.loadDir(path.join(dir, dirent.name)));
                 }
                 return;
             }
             if (dirent.isFile() && dirent.name === "package.json") {
                 const packageJsonFileName = path.join(dir, "package.json");
-                packages.push(new Package(packageJsonFileName))
+                packages.push(new Package(packageJsonFileName, monoRepo))
             }
         });
         return packages;
     }
 
-    private constructor(public readonly packages: Package[]) {
+    public constructor(public readonly packages: Package[]) {
     }
 
     public async cleanNodeModules() {

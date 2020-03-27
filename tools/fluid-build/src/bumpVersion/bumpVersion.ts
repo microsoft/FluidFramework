@@ -8,7 +8,8 @@ import * as path from "path";
 import { commonOptions, commonOptionString, parseOption } from "../common/commonOptions";
 import { Timer } from "../common/timer";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
-import { FluidRepoBase, MonoRepo } from "../common/fluidRepoBase";
+import { FluidRepoBase } from "../common/fluidRepoBase";
+import { MonoRepoKind } from "../common/monoRepo";
 import * as semver from "semver";
 import { Package } from "../common/npmPackage";
 import { execWithErrorAsync, ExecAsyncResult } from "../common/utils";
@@ -64,18 +65,18 @@ function parseOptions(argv: string[]) {
 
 parseOptions(process.argv);
 
-function saveVersion(versions: { [key: string]: string }, name: string, version: string, monoRepo: MonoRepo = MonoRepo.None) {
-    if (monoRepo == MonoRepo.None) {
+function saveVersion(versions: { [key: string]: string }, name: string, version: string, monoRepo: MonoRepoKind = MonoRepoKind.None) {
+    if (monoRepo == MonoRepoKind.None) {
         versions[name] = version;
     } else if (name.startsWith("@fluid-example/version-test")) {
         // Ignore example packages
         return;
-    } else if (versions[MonoRepo[monoRepo]]) {
-        if (versions[MonoRepo[monoRepo]] !== version) {
+    } else if (versions[MonoRepoKind[monoRepo]]) {
+        if (versions[MonoRepoKind[monoRepo]] !== version) {
             throw new Error(`Inconsistent version within Monorepo ${name} ${version}`);
         }
     } else {
-        versions[MonoRepo[monoRepo]] = version;
+        versions[MonoRepoKind[monoRepo]] = version;
     }
 }
 
@@ -148,13 +149,13 @@ async function main() {
                 const depMonoRepo = repo.getMonoRepo(depBuildPackage);
                 saveVersion(depVersions, dep, semver.minVersion(version)!.version, depMonoRepo);
                 if (semver.satisfies(depBuildPackage.version, version)) {
-                    if (depMonoRepo === MonoRepo.None) {
+                    if (depMonoRepo === MonoRepoKind.None) {
                         if (!packageNeedBump.has(depBuildPackage)) {
                             packageNeedBump.add(depBuildPackage);
                             logVerbose(`${depBuildPackage.nameColored}: Add from ${pkg.nameColored} ${version}`)
                             checkPackageNeedBump(depBuildPackage);
                         }
-                    } else if (depMonoRepo === MonoRepo.Server) {
+                    } else if (depMonoRepo === MonoRepoKind.Server) {
                         serverNeedBump = true;
                     }
                 }
@@ -162,7 +163,7 @@ async function main() {
         }
     };
 
-    const checkMonoRepoNeedBump = (checkRepo: MonoRepo) => {
+    const checkMonoRepoNeedBump = (checkRepo: MonoRepoKind) => {
         repo.packages.packages.forEach(pkg => {
             const monoRepo = repo.getMonoRepo(pkg);
             if (monoRepo !== checkRepo) {
@@ -172,10 +173,10 @@ async function main() {
         });
     };
 
-    checkMonoRepoNeedBump(MonoRepo.Client);
+    checkMonoRepoNeedBump(MonoRepoKind.Client);
 
     if (serverNeedBump) {
-        checkMonoRepoNeedBump(MonoRepo.Server);
+        checkMonoRepoNeedBump(MonoRepoKind.Server);
     }
 
     const generatorDir = path.join(resolvedRoot, "tools", "generator-fluid");
@@ -191,7 +192,7 @@ async function main() {
     }
     console.log();
 
-    const bumpMonoRepo = async (monoRepo: MonoRepo) => {
+    const bumpMonoRepo = async (monoRepo: MonoRepoKind) => {
         const repoPath = repo.getMonoRepoPath(monoRepo)!;
         return await execWithErrorAsync(`npx lerna version ${versionBump} --no-push --no-git-tag-version -y && npm run build:genver`, {
             cwd: repoPath,
@@ -199,11 +200,11 @@ async function main() {
     }
 
     console.log("Bumping client version");
-    await bumpMonoRepo(MonoRepo.Client)
+    await bumpMonoRepo(MonoRepoKind.Client)
 
     if (serverNeedBump) {
         console.log("Bumping server version");
-        await bumpMonoRepo(MonoRepo.Server);
+        await bumpMonoRepo(MonoRepoKind.Server);
     }
 
     for (const pkg of packageNeedBump) {
