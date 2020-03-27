@@ -76,7 +76,7 @@ export class Package {
         chalk.default.whiteBright,
     ];
 
-    public get packageJson(): Readonly<IPackage> {
+    public get packageJson(): IPackage {
         return this._packageJson;
     }
     private readonly packageId = Package.packageCount++;
