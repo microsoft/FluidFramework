@@ -208,7 +208,8 @@
                     "@microsoft/fluid-webpack-component-loader"
                 ],
                 "dirs": [
-                    "packages/test/"
+                    "packages/test/",
+                    "examples/hosts/"
                 ]
             }
         }
