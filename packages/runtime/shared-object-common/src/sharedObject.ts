@@ -59,11 +59,6 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     private readonly pendingOps = new Deque<{ clientSequenceNumber: number; content: any }>();
 
     /**
-     * Local dirty state not yet sent to the component.
-     */
-    private pendingDirtyState: boolean = false;
-
-    /**
      * Services used by the shared object
      */
     private services: ISharedObjectServices | undefined;
@@ -294,13 +289,8 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
             return;
         }
 
-        // Send if we are connected - otherwise just add it as pending.
-        if (this.state === ConnectionState.Connected) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.services!.deltaConnection.dirty();
-        } else {
-            this.pendingDirtyState = true;
-        }
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.services!.deltaConnection.dirty();
     }
 
     /**
@@ -391,15 +381,6 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
                 // - we have a client ID
                 // - we are caught up enough to attempt to send messages
                 this.onConnect(pendingOps);
-
-                /**
-                 * Send pending dirty, if any.
-                 */
-                if (this.pendingDirtyState) {
-                    this.dirty();
-                    this.pendingDirtyState = false;
-                }
-
                 this.emit("connected");
 
                 break;
