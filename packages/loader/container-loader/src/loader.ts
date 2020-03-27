@@ -28,7 +28,6 @@ import {
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import {
     assertFluidResolvedUrl,
-    isFluidResolvedUrl,
     MultiUrlResolver,
     MultiDocumentServiceFactory,
 } from "@microsoft/fluid-driver-utils";
@@ -76,7 +75,7 @@ export class RelativeLoader extends EventEmitter implements ILoader {
                 return this.loader.requestWorker(baseRequest.url, request);
             } else {
                 let container: Container;
-                if (this.canUseCache(request)) {
+                if (canUseCache(request)) {
                     container = await this.containerDeferred.promise;
                 } else if (!baseRequest) {
                     throw new Error("Base Request is not provided");
@@ -94,33 +93,36 @@ export class RelativeLoader extends EventEmitter implements ILoader {
         this.containerDeferred.resolve(container);
     }
 
-    private canUseCache(request: IRequest): boolean {
-        if (!request.headers) {
-            return true;
-        }
-
-        const noCache =
-            request.headers[LoaderHeader.cache] === false ||
-            request.headers[LoaderHeader.reconnect] === false;
-
-        return !noCache;
-    }
-
     private needExecutionContext(request: IRequest): boolean {
         return (request.headers !== undefined && request.headers[LoaderHeader.executionContext] !== undefined);
     }
 }
 
+function canUseCache(request: IRequest): boolean {
+    if (!request.headers) {
+        return true;
+    }
+
+    const noCache =
+        request.headers[LoaderHeader.cache] === false ||
+        request.headers[LoaderHeader.reconnect] === false;
+
+    return !noCache;
+}
+
 function createCachedResolver(resolver: IUrlResolver){
     const cacheResolver = Object.create(resolver) as IUrlResolver;
-    const resolveCache = new Map<string, IFluidResolvedUrl>();
+    const resolveCache = new Map<string, Promise<IResolvedUrl | undefined>>();
     // eslint-disable-next-line @typescript-eslint/unbound-method
     cacheResolver.resolve = async (request: IRequest): Promise<IResolvedUrl | undefined> => {
-        const resolved = resolveCache.get(request.url) ?? await resolver.resolve(request);
-        if (isFluidResolvedUrl(resolved) && !resolveCache.has(request.url)) {
-            resolveCache.set(request.url, resolved);
+        if(!canUseCache(request)){
+            return resolver.resolve(request);
         }
-        return resolved;
+        if(!resolveCache.has(request.url)){
+            resolveCache.set(request.url, resolver.resolve(request));
+        }
+
+        return resolveCache.get(request.url);
     };
     return cacheResolver;
 }
