@@ -28,7 +28,6 @@
     "@microsoft/fluid-local-web-host": "^0.14.0",
     "@vuepress/plugin-pwa": "^1.4.0",
     "copyfiles": "^2.2.0",
-    "deepmerge": "^4.1.1",
     "firstline": "^2.0.2",
     "fs-extra": "^8.1.0",
     "markdown-it-deflist": "^2.0.3",
