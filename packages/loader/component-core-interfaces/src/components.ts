@@ -8,7 +8,6 @@ import {
     IProvideComponentLoadable,
     IProvideComponentRunnable,
 } from "./componentLoadable";
-import { IProvideComponentHTMLView, IProvideComponentHTMLVisual } from "./componentRender";
 import { IProvideComponentRouter } from "./componentRouter";
 import { IProvideComponentHandle, IProvideComponentHandleContext } from "./handles";
 import { IProvideComponentSerializer } from "./serializer";
@@ -16,9 +15,7 @@ import { IProvideComponentSerializer } from "./serializer";
 /* eslint-disable @typescript-eslint/no-empty-interface, @typescript-eslint/indent */
 export interface IComponent extends
     Readonly<Partial<
-        IProvideComponentHTMLView
-        & IProvideComponentHTMLVisual
-        & IProvideComponentLoadable
+        IProvideComponentLoadable
         & IProvideComponentRunnable
         & IProvideComponentRouter
         & IProvideComponentHandleContext

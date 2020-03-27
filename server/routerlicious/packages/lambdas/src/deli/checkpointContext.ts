@@ -27,8 +27,11 @@ export interface ICheckpointParams extends IDeliCheckpoint {
 export interface IDeliCheckpoint {
     branchMap: IRangeTrackerSnapshot;
     clients: IClientSequenceNumber[];
+    durableSequenceNumber: number;
     logOffset: number;
     sequenceNumber: number;
+    epoch: number;
+    term: number;
 }
 
 export class CheckpointContext {

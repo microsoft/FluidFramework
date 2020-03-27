@@ -82,7 +82,13 @@ interface ITicketedMessageOutput {
 const getBranchClientId = (branch: string) => `branch$${branch}`;
 
 export class DeliLambda implements IPartitionLambda {
-    private sequenceNumber: number = undefined;
+    private sequenceNumber: number;
+    private durableSequenceNumber: number;
+
+    // 'epoch' and 'term' are readonly and should never change when lambda is running.
+    private readonly term: number;
+    private readonly epoch: number;
+
     private logOffset: number;
 
     // Client sequence number mapping
@@ -104,6 +110,7 @@ export class DeliLambda implements IPartitionLambda {
         private readonly context: IContext,
         private readonly tenantId: string,
         private readonly documentId: string,
+        readonly lastCheckpoint: IDeliCheckpoint,
         dbObject: IDocument,
         collection: ICollection<IDocument>,
         private readonly forwardProducer: IProducer,
@@ -111,8 +118,6 @@ export class DeliLambda implements IPartitionLambda {
         private readonly clientTimeout: number,
         private readonly activityTimeout: number,
         private readonly noOpConsolidationTimeout: number) {
-
-        const lastCheckpoint = JSON.parse(dbObject.deli);
 
         // Instantiate existing clients
         if (lastCheckpoint.clients) {
@@ -153,6 +158,9 @@ export class DeliLambda implements IPartitionLambda {
 
         // Initialize counting context
         this.sequenceNumber = lastCheckpoint.sequenceNumber;
+        this.term = lastCheckpoint.term;
+        this.epoch = lastCheckpoint.epoch;
+        this.durableSequenceNumber = lastCheckpoint.durableSequenceNumber;
         const msn = this.clientSeqManager.getMinimumSequenceNumber();
         this.minimumSequenceNumber = msn === -1 ? this.sequenceNumber : msn;
 
@@ -468,6 +476,10 @@ export class DeliLambda implements IPartitionLambda {
                     this.canClose = true;
                     this.context.log.info(`Deli cache will be cleared for ${this.tenantId}/${this.documentId}`);
                 }
+                const dsn = controlContent.durableSequenceNumber;
+                assert(dsn >= this.durableSequenceNumber,
+                    `Incoming dsn@${dsn} < Current dsn@${this.durableSequenceNumber}`);
+                this.durableSequenceNumber = controlContent.durableSequenceNumber;
             }
         }
 
@@ -692,8 +704,11 @@ export class DeliLambda implements IPartitionLambda {
         return {
             branchMap: this.branchMap ? this.branchMap.serialize() : undefined,
             clients: this.clientSeqManager.cloneValues(),
+            durableSequenceNumber: this.durableSequenceNumber,
+            epoch: this.epoch,
             logOffset: this.logOffset,
             sequenceNumber: this.sequenceNumber,
+            term: this.term,
         };
     }
 

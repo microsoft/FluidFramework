@@ -4,8 +4,8 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
-import { IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
 import { ClickerInstantiationFactory, Clicker } from "@fluid-example/clicker";
+import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 export class SimpleComponentEmbed extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }

@@ -98,22 +98,20 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
         return this.details!.version;
     }
 
-    /* Issue #1566: Backward compat - cleanup initialMessages, etc. being undefined*/
-
     public get initialMessages(): ISequencedDocumentMessage[] {
-        return this.details!.initialMessages ?? [];
+        return this.details!.initialMessages;
     }
 
     public get initialContents(): IContentMessage[] {
-        return this.details!.initialContents ?? [];
+        return this.details!.initialContents;
     }
 
     public get initialSignals(): ISignalMessage[] {
-        return this.details!.initialSignals ?? [];
+        return this.details!.initialSignals;
     }
 
     public get initialClients(): ISignalClient[] {
-        return this.details!.initialClients ?? [];
+        return this.details!.initialClients;
     }
 
     public get serviceConfiguration(): IServiceConfiguration {

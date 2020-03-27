@@ -37,12 +37,12 @@ The [`SharedComponent`](./src/components/sharedComponent.ts) provides the follow
 
 #### Component Object Example
 
-In the below example we have a simple Component Object that will render a value alongside a button the the page. Every time the button is pressed the value will increment. Because this Component Object renders to the DOM it also extends `IComponentHTMLVisual`.
+In the below example we have a simple Component Object that will render a value alongside a button the the page. Every time the button is pressed the value will increment. Because this Component Object renders to the DOM it also extends `IComponentHTMLView`.
 
 ```jsx
-export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
+export class Clicker extends PrimedComponent implements IComponentHTMLView {
 
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
 
     protected async componentInitializingFirstTime() {
         this.root.createValueType("clicks", CounterValueType.Name, 0);
