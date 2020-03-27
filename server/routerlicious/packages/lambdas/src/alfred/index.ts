@@ -200,9 +200,10 @@ export function configureWebSocketServices(
             const [details, clients] = await Promise.all([detailsP, clientsP]);
 
             if (clients.length > maxNumberOfClientsPerDocument) {
-                return Promise.reject(
-                    `Reached connected client limit for document ${claims.documentId}` +
-                    ` in tenant ${claims.tenantId}`);
+                return Promise.reject({
+                        code: 400,
+                        message: "Too many clients are already connected to this document.",
+                    });
             }
 
             await clientManager.addClient(
