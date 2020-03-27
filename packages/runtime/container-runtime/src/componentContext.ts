@@ -380,6 +380,30 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this.submitOp(type, content);
     }
 
+    /**
+     * This is called from a summarizable object that does not generate ops but only wants to be part of the summary.
+     * It indicates that there is data in the object that needs to be summarized.
+     * We will update the latestSequenceNumber of the summary tracker of this component and of the object's channel.
+     *
+     * @param address - The address of the channel that is dirty.
+     *
+     */
+    public setChannelDirty(address: string): void {
+        this.verifyNotClosed();
+
+        // Get the latest sequence number.
+        const latestSequenceNumber = this.deltaManager.referenceSequenceNumber;
+
+        // Update our summary tracker's latestSequenceNumber.
+        this.summaryTracker.updateLatestSequenceNumber(latestSequenceNumber);
+
+        const channelSummaryTracker = this.summaryTracker.getChild(address);
+        // If there is a summary tracker for the channel that called us, update it's latestSequenceNumber.
+        if (channelSummaryTracker) {
+            channelSummaryTracker.updateLatestSequenceNumber(latestSequenceNumber);
+        }
+    }
+
     public submitSignal(type: string, content: any) {
         this.verifyNotClosed();
         assert(this.componentRuntime);

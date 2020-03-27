@@ -230,6 +230,12 @@ export interface ISummaryTracker {
      * @param latestSequenceNumber - inital value for latest sequence number of change
      */
     createOrGetChild(key: string, latestSequenceNumber: number): ISummaryTracker;
+    /**
+     * Retrives a child ISummaryTracker node based off the key.
+     * @param key - key of the child ISummaryTracker node.
+     * @returns - The child ISummaryTracker node.
+     */
+    getChild(key: string): ISummaryTracker | undefined;
 }
 
 /**
@@ -319,6 +325,12 @@ export interface IComponentContext extends EventEmitter {
      * @param componentRuntime - runtime to attach
      */
     attach(componentRuntime: IComponentRuntime): void;
+
+    /**
+     * Indicates that a channel is dirty and needs to be part of the summary.
+     * @param address - The address of the channe that is dirty.
+     */
+    setChannelDirty(address: string): void;
 }
 
 /**
