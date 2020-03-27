@@ -68,7 +68,8 @@
             },
             "Framework-Utils": {
                 "packages": [
-                    "@microsoft/fluid-view-adapters"
+                    "@microsoft/fluid-view-adapters",
+                    "@microsoft/fluid-view-interfaces"
                 ],
                 "deps": [
                     "Base-Definitions"

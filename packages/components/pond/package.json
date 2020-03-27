@@ -38,6 +38,7 @@
     "@microsoft/fluid-map": "^0.16.0",
     "@microsoft/fluid-runtime-definitions": "^0.16.0",
     "@microsoft/fluid-view-adapters": "^0.16.0",
+    "@microsoft/fluid-view-interfaces": "^0.16.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },

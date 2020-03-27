@@ -4,5 +4,4 @@
  */
 
 export * from "./htmlview";
-export * from "./interfaces";
 export * from "./react";

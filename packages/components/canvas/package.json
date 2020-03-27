@@ -38,7 +38,8 @@
     "@microsoft/fluid-component-core-interfaces": "^0.16.0",
     "@microsoft/fluid-ink": "^0.16.0",
     "@microsoft/fluid-map": "^0.16.0",
-    "@microsoft/fluid-runtime-definitions": "^0.16.0"
+    "@microsoft/fluid-runtime-definitions": "^0.16.0",
+    "@microsoft/fluid-view-interfaces": "^0.16.0"
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.15.0",

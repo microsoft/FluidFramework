@@ -38,6 +38,7 @@
     "@microsoft/fluid-runtime-definitions": "^0.16.0",
     "@microsoft/fluid-sequence": "^0.16.0",
     "@microsoft/fluid-shared-object-base": "^0.16.0",
+    "@microsoft/fluid-view-interfaces": "^0.16.0",
     "draft-js": "^0.11.0",
     "immutable": "~3.7.4",
     "react": "^16.10.2",

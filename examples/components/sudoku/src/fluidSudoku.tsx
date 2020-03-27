@@ -4,9 +4,9 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { IComponentHandle, IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
-import { IComponentReactViewable } from "@microsoft/fluid-view-adapters";
+import { IComponentHTMLView, IComponentReactViewable } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { loadPuzzle } from "./helpers/puzzles";
