@@ -21,6 +21,7 @@ import {
     LoaderHeader,
     IRuntimeState,
     IExperimentalContainer,
+    IFluidModule,
 } from "@microsoft/fluid-container-definitions";
 import {
     ChildLogger,
@@ -818,7 +819,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
      * Loads the runtime factory for the provided package
      */
     private async loadRuntimeFactory(pkg: IFluidCodeDetails): Promise<IRuntimeFactory> {
-        let component;
+        let component: IFluidModule;
         const perfEvent = PerformanceEvent.start(this.logger, { eventName: "CodeLoad" });
         try {
             component = await this.codeLoader.load(pkg);
@@ -828,12 +829,17 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
         perfEvent.end();
 
-        const factory = component.fluidExport.IRuntimeFactory;
-        if (!factory) {
+        if (component?.fluidExport?.IRuntimeFactory === undefined) {
+            //Back compat for 0.3 containers
+            if(component !== undefined && "instantiateRuntime" in component){
+                this.logger.logGenericError("DeprecatedRuntimeFactory", PackageNotFactoryError);
+                const factory = component as any;
+                factory.IRuntimeFactory = factory.IRuntimeFactory ?? component;
+                return factory;
+            }
             throw new Error(PackageNotFactoryError);
         }
-        return factory;
-
+        return component.fluidExport.IRuntimeFactory;
     }
 
     private get client() {
