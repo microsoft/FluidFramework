@@ -16,12 +16,14 @@ export class FluidRepoBase {
     // TODO: Should read lerna.json to determine
     protected readonly clientDirectory = path.join(this.resolvedRoot, "packages");
     protected readonly serverDirectory = path.join(this.resolvedRoot, "server/routerlicious/packages");
-    protected readonly exampleDirectory = path.join(this.resolvedRoot, "examples/components");
+    protected readonly exampleComponentsDirectory = path.join(this.resolvedRoot, "examples/components");
+    protected readonly exampleIframeHostDirectory = path.join(this.resolvedRoot, "examples/hosts/iframe-host");
     protected readonly baseDirectories = [
         path.join(this.resolvedRoot, "common"),
         this.serverDirectory,
         this.clientDirectory,
-        this.exampleDirectory,
+        this.exampleComponentsDirectory,
+        this.exampleIframeHostDirectory,
     ];
 
     public readonly packages: Packages;
@@ -31,7 +33,9 @@ export class FluidRepoBase {
 
     public getMonoRepo(pkg: Package) {
         return pkg.directory.startsWith(this.serverDirectory) ? MonoRepo.Server :
-            pkg.directory.startsWith(this.clientDirectory) || pkg.directory.startsWith(this.exampleDirectory) ? MonoRepo.Client : MonoRepo.None
+            pkg.directory.startsWith(this.clientDirectory) 
+            || pkg.directory.startsWith(this.exampleComponentsDirectory)
+            || pkg.directory.startsWith(this.exampleIframeHostDirectory) ? MonoRepo.Client : MonoRepo.None
     }
 
     public isSameMonoRepo(monoRepo: MonoRepo, pkg: Package) {
