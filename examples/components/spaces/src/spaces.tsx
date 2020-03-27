@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import * as React from "react";
+import * as ReactDOM from "react-dom";
 import {
     PrimedComponent,
     PrimedComponentFactory,
@@ -14,11 +16,7 @@ import {
 import { IProvideComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { SharedObjectSequence } from "@microsoft/fluid-sequence";
 
-import * as React from "react";
-import * as ReactDOM from "react-dom";
-
 import { ISpacesDataModel, SpacesDataModel } from "./dataModel";
-
 import { SpacesGridView } from "./view";
 import { ComponentToolbar, ComponentToolbarName } from "./components";
 import { IComponentToolbarConsumer } from "./interfaces";
