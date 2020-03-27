@@ -834,7 +834,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             if(component !== undefined && "instantiateRuntime" in component){
                 this.logger.logGenericError("DeprecatedRuntimeFactory", PackageNotFactoryError);
                 const factory = component as any;
-                factory.IRuntimeFactory = factory.IRuntimeFactory ?? component;
+                if(factory.IRuntimeFactory === undefined){
+                    //make it a valid runtime factory if it isn't already one
+                    factory.IRuntimeFactory = factory;
+                }
                 return factory;
             }
             throw new Error(PackageNotFactoryError);
