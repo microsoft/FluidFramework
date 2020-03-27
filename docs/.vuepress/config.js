@@ -24,7 +24,7 @@ const internalOnly = (obj) => {
 };
 
 const compact = (input) => {
-    return input.filter(x=>x);
+    return input.filter(x => x);
 };
 
 const listPages = (dirPath, includeIndex = false) => {
@@ -54,6 +54,14 @@ const getNav = () => {
         { text: "Tutorials", link: "/examples/" },
         internalOnly({ text: "Patterns", link: "/patterns/" }),
         { text: "API", link: "/api/overview" },
+        {
+            text: "Versions",
+            items: [
+                { text: "v0.15 - Current release", link: "/" },
+                { text: "v0.14", link: "/versions/0.14/" },
+                { text: "Latest", link: "/versions/latest/" },
+            ]
+        },
         {
             text: "🤿 Dive Deeper",
             items: [
