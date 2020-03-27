@@ -163,8 +163,7 @@ async function main() {
 
     const checkMonoRepoNeedBump = (checkRepo: MonoRepoKind) => {
         repo.packages.packages.forEach(pkg => {
-            const monoRepo = repo.getMonoRepo(pkg);
-            if (monoRepo !== checkRepo) {
+            if (pkg.monoRepo?.kind !== checkRepo) {
                 return;
             }
             checkPackageNeedBump(pkg);
@@ -190,19 +189,19 @@ async function main() {
     }
     console.log();
 
-    const bumpMonoRepo = async (monoRepo: MonoRepoKind) => {
-        const repoPath = repo.getMonoRepoPath(monoRepo)!;
+    const bumpMonoRepo = async (monoRepo: MonoRepo) => {
+        const repoPath = monoRepo.getPath();
         return await execWithErrorAsync(`npx lerna version ${versionBump} --no-push --no-git-tag-version -y && npm run build:genver`, {
             cwd: repoPath,
         }, repoPath, false);
     }
 
     console.log("Bumping client version");
-    await bumpMonoRepo(MonoRepoKind.Client)
+    await bumpMonoRepo(repo.clientMonoRepo)
 
     if (serverNeedBump) {
         console.log("Bumping server version");
-        await bumpMonoRepo(MonoRepoKind.Server);
+        await bumpMonoRepo(repo.serverMonoRepo);
     }
 
     for (const pkg of packageNeedBump) {

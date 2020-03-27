@@ -22,8 +22,11 @@ export class MonoRepo {
         return a !== undefined && a === b;
     }
 
-    public getNodeModulePath() {
+    public getPath() {
         // TODO: Cheating here
-        return path.join(this.dirs[0], "..", "node_modules");
+        return path.join(this.dirs[0], "..");
+    }
+    public getNodeModulePath() {
+        return path.join(this.getPath(), "node_modules");
     }
 };

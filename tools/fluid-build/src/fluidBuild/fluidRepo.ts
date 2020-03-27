@@ -90,7 +90,7 @@ export class FluidRepo extends FluidRepoBase {
         }
 
         const matchMonoRepo = options.server? MonoRepoKind.Server : MonoRepoKind.Client;
-        return this.matchWithFilter(pkg => this.getMonoRepo(pkg) == matchMonoRepo);
+        return this.matchWithFilter(pkg => pkg.monoRepo?.kind === matchMonoRepo);
     }
 
     public async checkPackages(fix: boolean) {
