@@ -18,6 +18,7 @@ import { NpmDepChecker } from "./npmDepChecker";
 import { ISymlinkOptions, symlinkPackage } from "./symlinkUtils";
 import { BuildGraph } from "./buildGraph";
 import { logVerbose } from "../common/logging";
+import { MonoRepo } from "../common/monoRepo";
 
 export interface IPackageMatchedOptions {
     match: string[];
@@ -129,9 +130,8 @@ export class FluidRepo extends FluidRepoBase {
     public createBuildGraph(options: ISymlinkOptions, buildScriptNames: string[]) {
         return new BuildGraph(this.packages.packages, buildScriptNames,
             (pkg: Package) => {
-                const monoRepo = this.getMonoRepo(pkg);
                 return (dep: Package) => {
-                    return options.fullSymlink || this.isSameMonoRepo(monoRepo, dep);
+                    return options.fullSymlink || MonoRepo.isSame(pkg.monoRepo, dep.monoRepo);
                 }
             });
     }

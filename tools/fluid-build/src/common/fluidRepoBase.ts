@@ -40,10 +40,6 @@ export class FluidRepoBase {
                 || pkg.directory.startsWith(this.exampleIframeHostDirectory) ? MonoRepoKind.Client : MonoRepoKind.None
     }
 
-    public isSameMonoRepo(monoRepo: MonoRepoKind, pkg: Package) {
-        return monoRepo !== MonoRepoKind.None && monoRepo === this.getMonoRepo(pkg);
-    }
-
     public getMonoRepoPath(monoRepo: MonoRepoKind) {
         switch (monoRepo) {
             case MonoRepoKind.Client:

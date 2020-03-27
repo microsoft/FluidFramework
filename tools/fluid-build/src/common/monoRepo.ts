@@ -16,4 +16,8 @@ export class MonoRepo {
     constructor(public readonly kind: MonoRepoKind, private dirs: string[]) {
         this.packages = Packages.loadDirs(dirs, this);
     }
+
+    public static isSame(a: MonoRepo | undefined, b: MonoRepo | undefined) {
+        return a !== undefined && a === b;
+    }
 };

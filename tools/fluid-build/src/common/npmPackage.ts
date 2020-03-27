@@ -220,7 +220,7 @@ export class Packages {
         files.map((dirent) => {
             if (dirent.isDirectory()) {
                 if (dirent.name !== "node_modules") {
-                    packages.push(...Packages.loadDir(path.join(dir, dirent.name)));
+                    packages.push(...Packages.loadDir(path.join(dir, dirent.name), monoRepo));
                 }
                 return;
             }
