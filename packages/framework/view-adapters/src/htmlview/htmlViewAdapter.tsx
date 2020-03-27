@@ -4,9 +4,9 @@
  */
 
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHTMLOptions, IComponentHTMLView, IComponentReactViewable } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { IComponentHTMLOptions, IComponentHTMLView, IComponentReactViewable } from "../interfaces";
 
 /**
  * Abstracts rendering of components via the IComponentHTMLView interface.  Supports React elements, as well as

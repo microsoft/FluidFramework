@@ -4,8 +4,8 @@
  */
 
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHTMLView, IComponentHTMLVisual, IComponentReactViewable } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
-import { IComponentHTMLView, IComponentHTMLVisual, IComponentReactViewable } from "../interfaces";
 
 export interface IEmbeddedComponentProps {
     component: IComponent;

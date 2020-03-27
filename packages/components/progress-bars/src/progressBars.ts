@@ -7,8 +7,6 @@ import { EventEmitter } from "events";
 import {
     IComponent,
     IComponentHandleContext,
-    IComponentHTMLView,
-    IComponentHTMLVisual,
     IComponentLoadable,
     IComponentRouter,
     IRequest,
@@ -19,6 +17,7 @@ import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+import { IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-view-interfaces";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports,import/no-internal-modules,import/no-unassigned-import
 require("bootstrap/dist/css/bootstrap.min.css");

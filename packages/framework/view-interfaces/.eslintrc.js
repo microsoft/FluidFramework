@@ -3,5 +3,8 @@
  * Licensed under the MIT License.
  */
 
-export * from "./htmlview";
-export * from "./react";
+module.exports = {
+    "extends": [
+        "@microsoft/eslint-config-fluid"
+    ]
+}
