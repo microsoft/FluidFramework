@@ -4,6 +4,7 @@
  */
 
 import { Package, Packages } from "./npmPackage";
+import * as path from "path";
 
 export enum MonoRepoKind {
     None,
@@ -19,5 +20,10 @@ export class MonoRepo {
 
     public static isSame(a: MonoRepo | undefined, b: MonoRepo | undefined) {
         return a !== undefined && a === b;
+    }
+
+    public getNodeModulePath() {
+        // TODO: Cheating here
+        return path.join(this.dirs[0], "..", "node_modules");
     }
 };

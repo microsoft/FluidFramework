@@ -126,8 +126,7 @@ export interface ISymlinkOptions {
 
 export async function symlinkPackage(repo: FluidRepo, pkg: Package, buildPackages: Map<string, Package>, options: ISymlinkOptions) {
     let changed = 0;
-    const monoRepo = repo.getMonoRepo(pkg);
-    const monoRepoNodeModulePath = repo.getMonoRepoNodeModulePath(monoRepo);
+    const monoRepoNodeModulePath = pkg.monoRepo?.getNodeModulePath();
 
     if (monoRepoNodeModulePath && !existsSync(monoRepoNodeModulePath)) {
         // If the node_modules isn't install at all, just don't check

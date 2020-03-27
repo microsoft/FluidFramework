@@ -50,16 +50,6 @@ export class FluidRepoBase {
                 return undefined;
         }
     }
-    public getMonoRepoNodeModulePath(monoRepo: MonoRepoKind) {
-        switch (monoRepo) {
-            case MonoRepoKind.Client:
-                return path.join(this.clientDirectory, "..", "node_modules");
-            case MonoRepoKind.Server:
-                return path.join(this.serverDirectory, "..", "node_modules");
-            default:
-                return undefined;
-        }
-    }
 
     public createPackageMap() {
         return new Map<string, Package>(this.packages.packages.map(pkg => [pkg.name, pkg]));
