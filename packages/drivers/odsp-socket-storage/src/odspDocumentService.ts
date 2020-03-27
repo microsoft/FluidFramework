@@ -71,12 +71,16 @@ export class OdspDocumentService implements IDocumentService {
             "fluid:telemetry:OdspDriver",
             logger,
             { docId: odspResolvedUrl.hashedDocumentId });
-        let event: PerformanceEvent | undefined;
-        try {
-            const openMode = odspResolvedUrl.openMode;
-            if (openMode === OpenMode.CreateNew && odspResolvedUrl.createNewOptions) {
-                event = PerformanceEvent.start(templogger, { eventName: "CreateNew" });
-                const createNewSummary = odspResolvedUrl.createNewOptions.createNewSummary;
+        const openMode = odspResolvedUrl.openMode;
+        if (openMode === OpenMode.CreateNew && odspResolvedUrl.createNewOptions) {
+            const createNewOptions = odspResolvedUrl.createNewOptions;
+            const createNewSummary = createNewOptions.createNewSummary;
+            const event = PerformanceEvent.start(templogger,
+                {
+                    eventName: "CreateNew",
+                    isWithSummaryUpload: createNewSummary ? true : false,
+                });
+            try {
                 odspResolvedUrl = await createNewFluidFile(
                     getStorageToken,
                     odspResolvedUrl.createNewOptions.newFileInfoPromise,
@@ -85,13 +89,12 @@ export class OdspDocumentService implements IDocumentService {
                 const props = {
                     hashedDocumentId: odspResolvedUrl.hashedDocumentId,
                     itemId: odspResolvedUrl.itemId,
-                    isWithSummaryUpload: createNewSummary ? true : false,
                 };
-                event?.end(props);
+                event.end(props);
+            } catch(error) {
+                event.cancel(undefined, error);
+                throw error;
             }
-        } catch(error) {
-            event?.cancel(undefined, error);
-            throw error;
         }
         return new OdspDocumentService(
             appId,

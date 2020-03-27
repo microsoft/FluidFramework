@@ -431,47 +431,47 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const resolvedUrl = await expUrlResolver.createContainer(
             combineAppAndProtocolSummary(appSummary, protocolSummary),
             request);
+        try {
+            if (resolvedUrl.type !== "fluid") {
+                throw new Error("Only Fluid components currently supported");
+            }
 
-        if (resolvedUrl.type !== "fluid") {
-            throw new Error("Only Fluid components currently supported");
+            this.service = await this.serviceFactory.createDocumentService(resolvedUrl);
+            this._canReconnect = !(request.headers?.[LoaderHeader.reconnect] === false);
+            const parsedUrl = parseUrl(resolvedUrl.url);
+            if (!parsedUrl) {
+                throw new Error("Unable to parse Url");
+            }
+            const [, docId] = parsedUrl.id.split("/");
+            this._id = decodeURI(docId);
+
+            this.storageService = await this.getDocumentStorageService();
+
+            // This we can probably just pass the storage service to the blob manager - although ideally
+            // there just isn't a blob manager
+            this.blobManager = await this.loadBlobManager(this.storageService, undefined);
+            this.attached = true;
+
+            const startConnectionP = this.connectToDeltaStream();
+            startConnectionP.catch((error) => {
+                debug(`Error in connecting to delta stream from unpaused case ${error}`);
+            });
+
+            // We know this is create new flow.
+            this._existing = false;
+            this._parentBranch = this._id;
+
+            // Propagate current connection state through the system.
+            const connected = this.connectionState === ConnectionState.Connected;
+            assert(!connected || this._deltaManager.connectionMode === "read");
+            this.propagateConnectionState();
+            this.resume();
+        } catch (error) {
+            const err = createIError(error, true);
+            this.raiseCriticalError(err);
+            this.close();
+            throw error;
         }
-        if (!this.serviceFactory) {
-            throw new Error("Provide callback to get factory from resolved url");
-        }
-        const service = await this.serviceFactory.createDocumentService(resolvedUrl);
-
-        this.service = service;
-        this._canReconnect = !(request.headers?.[LoaderHeader.reconnect] === false);
-        const parsedUrl = parseUrl(resolvedUrl.url);
-        if (!parsedUrl) {
-            throw new Error("Unable to parse Url");
-        }
-        const [, docId] = parsedUrl.id.split("/");
-        this._id = decodeURI(docId);
-
-        this.storageService = await this.getDocumentStorageService();
-
-        // This we can probably just pass the storage service to the blob manager - although ideally
-        // there just isn't a blob manager
-        this.blobManager = await this.loadBlobManager(this.storageService, undefined);
-
-        this.attached = true;
-
-        const startConnectionP = this.connectToDeltaStream();
-        startConnectionP.catch((error) => {
-            debug(`Error in connecting to delta stream from unpaused case ${error}`);
-        });
-
-        await startConnectionP.then((details) => {
-            this._existing = details.existing;
-            this._parentBranch = details.parentBranch;
-        });
-
-        // Propagate current connection state through the system.
-        const connected = this.connectionState === ConnectionState.Connected;
-        assert(!connected || this._deltaManager.connectionMode === "read");
-        this.propagateConnectionState();
-        this.resume();
     }
 
     public async request(path: IRequest): Promise<IResponse> {

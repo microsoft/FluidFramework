@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { Deferred } from "@microsoft/fluid-common-utils";
 import { getGitType } from "@microsoft/fluid-protocol-base";
-import { getDocAttributesAndQuorumValuesFromProtocolSummary } from "@microsoft/fluid-driver-utils";
+import { getDocAttributesFromProtocolSummary } from "@microsoft/fluid-driver-utils";
 import { SummaryType, ISummaryTree, ISummaryBlob, MessageType } from "@microsoft/fluid-protocol-definitions";
 import {
     IOdspResolvedUrl,
     ISnapshotTree,
     SnapshotTreeValue,
-    ISnapshotTreeBaseEntry,
     SnapshotTreeEntry,
     SnapshotType,
 } from "./contracts";
@@ -52,7 +52,7 @@ export async function createNewFluidFile(
     getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
     newFileInfoPromise: Promise<INewFileInfo> | undefined,
     cache: IOdspCache,
-    createNewSummary: ISummaryTree | undefined,
+    createNewSummary?: ISummaryTree,
 ): Promise<IOdspResolvedUrl> {
     if (!newFileInfoPromise) {
         throw new Error("Odsp driver needs to create a new file but no newFileInfo supplied");
@@ -71,12 +71,7 @@ export async function createNewFluidFile(
     }
     let containerSnapshot: ISnapshotTree | undefined;
     if (createNewSummary) {
-        const appSummary = createNewSummary.tree[".app"] as ISummaryTree;
-        const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
-        if (!(appSummary && protocolSummary)) {
-            throw new Error("App and protocol summary required for create new path!!");
-        }
-        containerSnapshot = await convertSummaryIntoContainerSnapshot(appSummary, protocolSummary);
+        containerSnapshot = convertSummaryIntoContainerSnapshot(createNewSummary);
     }
     // We don't want to create a new file for different instances of a driver. So we cache the
     // response of previous create request as a deferred promise because this is async and we don't
@@ -107,7 +102,7 @@ export async function createNewFluidFile(
 async function createNewFluidFileHelper(
     newFileInfo: INewFileInfo,
     getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
-    containerSnapshot: ISnapshotTree | undefined,
+    containerSnapshot?: ISnapshotTree,
 ): Promise<IFileCreateResponse> {
     const fileResponse = await getWithRetryForTokenRefresh(async (refresh: boolean) => {
         const storageToken = await getStorageToken(newFileInfo.siteUrl, refresh);
@@ -122,6 +117,8 @@ async function createNewFluidFileHelper(
                 `:/opStream/snapshots/snapshot?@name.conflictBehavior=rename`;
             const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
             headers["Content-Type"] = "application/json";
+            // Currently the api to create new file with snapshot is under a feature gate. So we have to
+            // add this header to enter into that gate.
             headers["X-Tempuse-Allow-Singlepost"] = "1";
             const postBody = JSON.stringify(containerSnapshot);
             fetchResponse = await fetch(url, {
@@ -184,22 +181,30 @@ async function createNewFluidFileHelper(
     return fileResponse;
 }
 
-async function convertSummaryIntoContainerSnapshot(appSummary: ISummaryTree, protocolSummary: ISummaryTree) {
-    const {documentAttributes} = getDocAttributesAndQuorumValuesFromProtocolSummary(protocolSummary);
+function convertSummaryIntoContainerSnapshot(createNewSummary: ISummaryTree) {
+    const appSummary = createNewSummary.tree[".app"] as ISummaryTree;
+    const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
+    if (!(appSummary && protocolSummary)) {
+        throw new Error("App and protocol summary required for create new path!!");
+    }
+    const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
+    // Currently for the scenarios we have we don't have ops in the detached container. So the
+    // sequence number would always be 0 here. However odsp requires to have atleast 1 snapshot.
+    assert(documentAttributes.sequenceNumber === 0, "Sequence No for detached container snapshot should be 0");
     documentAttributes.sequenceNumber = 1;
     const attributesSummaryBlob: ISummaryBlob = {
         type: SummaryType.Blob,
         content: JSON.stringify(documentAttributes),
     };
     protocolSummary.tree.attributes = attributesSummaryBlob;
-    const createNewSummary: ISummaryTree = {
+    const convertedCreateNewSummary: ISummaryTree = {
         type: SummaryType.Tree,
         tree: {
             ".protocol": protocolSummary,
             ".app": appSummary,
         },
     };
-    const snapshotTree = await convertSummaryToSnapshotTreeForCreateNew(createNewSummary);
+    const snapshotTree = convertSummaryToSnapshotTreeForCreateNew(convertedCreateNewSummary);
     const snapshot = {
         entries: snapshotTree.entries ?? [],
         message: "app",
@@ -227,7 +232,7 @@ async function convertSummaryIntoContainerSnapshot(appSummary: ISummaryTree, pro
 /**
  * Converts a summary tree to ODSP tree
  */
-export async function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree): Promise<ISnapshotTree> {
+export function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree): ISnapshotTree {
     const snapshotTree: ISnapshotTree = {
         entries: [],
     }!;
@@ -236,12 +241,11 @@ export async function convertSummaryToSnapshotTreeForCreateNew(summary: ISummary
     for (const key of keys) {
         const summaryObject = summary.tree[key];
 
-        let id: string | undefined;
-        let value: SnapshotTreeValue | undefined;
+        let value: SnapshotTreeValue;
 
         switch (summaryObject.type) {
             case SummaryType.Tree: {
-                value = await convertSummaryToSnapshotTreeForCreateNew(summaryObject);
+                value = convertSummaryToSnapshotTreeForCreateNew(summaryObject);
                 break;
             }
             case SummaryType.Blob: {
@@ -263,31 +267,12 @@ export async function convertSummaryToSnapshotTreeForCreateNew(summary: ISummary
             }
         }
 
-        const baseEntry: ISnapshotTreeBaseEntry = {
+        const entry: SnapshotTreeEntry = {
             mode: "100644",
             path: encodeURIComponent(key),
             type: getGitType(summaryObject),
+            value,
         };
-
-        let entry: SnapshotTreeEntry;
-
-        if (value) {
-            entry = {
-                ...baseEntry,
-                id,
-                value,
-            };
-
-        } else if (id) {
-            entry = {
-                ...baseEntry,
-                id,
-            };
-
-        } else {
-            throw new Error(`Invalid tree entry for ${summaryObject.type}`);
-        }
-
         snapshotTree.entries?.push(entry);
     }
 

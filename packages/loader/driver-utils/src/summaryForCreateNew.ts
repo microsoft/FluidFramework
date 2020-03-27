@@ -31,15 +31,25 @@ export function combineAppAndProtocolSummary(
 }
 
 /**
- * Extract the attributes and quorum values from the protocol summary.
+ * Extract the attributes from the protocol summary.
  * @param protocolSummary - protocol summary from which the values are to be extracted.
  */
-export function getDocAttributesAndQuorumValuesFromProtocolSummary(
+export function getDocAttributesFromProtocolSummary(
     protocolSummary: ISummaryTree,
-): {documentAttributes: IDocumentAttributes, quorumValues: [string, ICommittedProposal][]} {
-    const quorumValuesBlob = protocolSummary.tree.quorumValues as ISummaryBlob;
+): IDocumentAttributes {
     const attributesBlob = protocolSummary.tree[".attributes"] as ISummaryBlob;
-    const quorumValues = JSON.parse(quorumValuesBlob.content as string) as [string, ICommittedProposal][];
     const documentAttributes = JSON.parse(attributesBlob.content as string) as IDocumentAttributes;
-    return {documentAttributes, quorumValues};
+    return documentAttributes;
+}
+
+/**
+ * Extract quorum values from the protocol summary.
+ * @param protocolSummary - protocol summary from which the values are to be extracted.
+ */
+export function getQuorumValuesFromProtocolSummary(
+    protocolSummary: ISummaryTree,
+): [string, ICommittedProposal][] {
+    const quorumValuesBlob = protocolSummary.tree.quorumValues as ISummaryBlob;
+    const quorumValues = JSON.parse(quorumValuesBlob.content as string) as [string, ICommittedProposal][];
+    return quorumValues;
 }

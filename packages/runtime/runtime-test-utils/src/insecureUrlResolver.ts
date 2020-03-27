@@ -18,7 +18,10 @@ import {
 import Axios from "axios";
 import * as jwt from "jsonwebtoken";
 import { getRandomName } from "@microsoft/fluid-server-services-client";
-import { getDocAttributesAndQuorumValuesFromProtocolSummary } from "@microsoft/fluid-driver-utils";
+import {
+    getDocAttributesFromProtocolSummary,
+    getQuorumValuesFromProtocolSummary,
+} from "@microsoft/fluid-driver-utils";
 
 /**
  * As the name implies this is not secure and should not be used in production. It simply makes the example easier
@@ -113,8 +116,8 @@ export class InsecureUrlResolver implements IUrlResolver, IExperimentalUrlResolv
         if (!(protocolSummary && appSummary)) {
             throw new Error("Protocol and App Summary required in the full summary");
         }
-        const {documentAttributes, quorumValues} =
-            getDocAttributesAndQuorumValuesFromProtocolSummary(protocolSummary);
+        const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
+        const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
         await Axios.post(
             `${this.ordererUrl}/documents/${this.tenantId}`,
             {

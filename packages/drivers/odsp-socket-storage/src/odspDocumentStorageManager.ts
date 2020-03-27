@@ -216,6 +216,8 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
         hierarchicalTree.commits = commits;
 
+        // When we upload the container snapshot, we upload appTree in ".app" and protocol tree in ".protocol"
+        // So when we request the snapshot we get ".app" as tree and not as commit node as in the case just above.
         const appTree = hierarchicalTree.trees[".app"];
         const protocolTree = hierarchicalTree.trees[".protocol"];
         if (appTree && protocolTree) {
@@ -330,6 +332,9 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     }
                 }
 
+                // Sometimes we get the tree instead of trees. Odsp has maintained this for back-compat reasons. They are in process of removing this
+                // and once that is achieved we can remove this condition. Also we can specify "TreesInsteadOfTree" in headers to always get "Trees"
+                // instead of "Tree"
                 if (tree) {
                     this.treesCache.set(odspSnapshot.sha, (odspSnapshot as any) as resources.ITree);
                 }

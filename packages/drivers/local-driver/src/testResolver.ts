@@ -17,7 +17,10 @@ import {
 import { generateToken } from "@microsoft/fluid-server-services-client";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { IExperimentalDocumentStorage } from "@microsoft/fluid-server-services-core";
-import { getDocAttributesAndQuorumValuesFromProtocolSummary } from "@microsoft/fluid-driver-utils";
+import {
+    getDocAttributesFromProtocolSummary,
+    getQuorumValuesFromProtocolSummary,
+} from "@microsoft/fluid-driver-utils";
 
 /**
  * Resolves URLs by providing fake URLs which succeed with the other
@@ -61,8 +64,8 @@ export class TestResolver implements IUrlResolver, IExperimentalUrlResolver {
         if (!(protocolSummary && appSummary)) {
             throw new Error("Protocol and App Summary required in the full summary");
         }
-        const {documentAttributes, quorumValues} =
-            getDocAttributesAndQuorumValuesFromProtocolSummary(protocolSummary);
+        const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
+        const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
         const sequenceNumber = documentAttributes.sequenceNumber;
         await expDocumentStorage.createDocument(
             this.tenantId,
