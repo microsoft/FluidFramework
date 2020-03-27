@@ -11,6 +11,7 @@ import {
     IComponentHTMLView,
 } from "@microsoft/fluid-component-core-interfaces";
 import { CounterValueType, Counter } from "@microsoft/fluid-map";
+import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";

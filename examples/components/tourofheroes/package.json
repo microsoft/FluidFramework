@@ -44,6 +44,7 @@
     "@microsoft/fluid-container-runtime": "^0.16.0",
     "@microsoft/fluid-map": "^0.16.0",
     "@microsoft/fluid-runtime-definitions": "^0.16.0",
+    "@microsoft/fluid-view-interfaces": "^0.16.0",
     "@types/react": "^16.9.15",
     "angular-in-memory-web-api": "^0.8.0",
     "core-js": "^2.6.5",
