@@ -18,16 +18,19 @@ import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 // eslint-disable-next-line import/no-internal-modules
 import { SharedComponent } from "../components/sharedComponent";
 
-export class SharedComponentFactory implements IComponentFactory, Partial<IProvideComponentRegistry> {
+export class SharedComponentFactory<T extends IComponent & IComponentLoadable> implements
+    IComponentFactory,
+    Partial<IProvideComponentRegistry>
+{
     private readonly sharedObjectRegistry: ISharedObjectRegistry;
     private readonly registry: IComponentRegistry | undefined;
 
     constructor(
+        public readonly type: string,
         private readonly ctor: new (runtime: IComponentRuntime, context: IComponentContext) => SharedComponent,
         sharedObjects: readonly ISharedObjectFactory[],
         registryEntries?: NamedComponentRegistryEntries,
         private readonly onDemandInstantiation = true,
-        public readonly type: string = "",
     ) {
         if (registryEntries !== undefined) {
             this.registry = new ComponentRegistry(registryEntries);
@@ -86,10 +89,10 @@ export class SharedComponentFactory implements IComponentFactory, Partial<IProvi
         return instance;
     }
 
-    public async createComponent(context: IComponentContext): Promise<IComponent & IComponentLoadable> {
+    public async createComponent(context: IComponentContext): Promise<T> {
         return context.createComponentWithRealizationFn(
             this.type,
             (newContext) => { this.instantiateComponent(newContext); },
-        );
+        ) as Promise<T>;
     }
 }

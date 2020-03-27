@@ -1,5 +1,13 @@
 # Breaking changes
 
+## 0.16 Breaking Changes
+
+- [SharedComponentFactory and PrimedComponentFactory changes](#SharedComponentFactory-and-PrimedComponentFactory-changes)
+
+### SharedComponentFactory and PrimedComponentFactory changes
+
+Class definitions for SharedComponentFactory and PrimedComponentFactory have been updated.  Both now specify a required `type: string` parameter in their constructors, along with a generics type specification indicating the component class the factory produces.
+
 ## 0.15 Breaking Changes
 
 - [`getComponentRuntime` no longer on `IComponentContext`](#getComponentRuntime-no-longer-on-IComponentContext)
@@ -18,7 +26,7 @@ scenario.
 
 ### Container.reconnect, Container.reconnect changes
 
-autoReconnect property is gone, as well as reconnect() method.  
+autoReconnect property is gone, as well as reconnect() method.
 Use Container.setAutoReconnect() instead.
 
 Note that there is difference in behavior. It used to be that one needed to do
@@ -170,7 +178,7 @@ TypeScript now emits `get/set` accessors in `.d.ts` files. TypeScript versions `
 
 More about the changes:
 
-- [Class Field Mitigations](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#class-field-mitigations)  
+- [Class Field Mitigations](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#class-field-mitigations)
 - [Full list of TypeScript changes](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html)
 
 ### IHost interface removed, Loader constructor signature updated

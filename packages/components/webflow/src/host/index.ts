@@ -18,7 +18,7 @@ import { WebflowView } from "./host";
 import { importDoc } from "./import";
 
 export class WebFlow extends SharedComponent<ISharedDirectory> implements IComponentHTMLVisual {
-    private static readonly factory = new SharedComponentFactory(
+    private static readonly factory = new SharedComponentFactory<WebFlow>(
         hostType,
         WebFlow,
         /* root: */ SharedDirectory.getFactory(),

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IComponent, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
 import { DirectoryFactory, MapFactory, SharedDirectory, SharedMap } from "@microsoft/fluid-map";
 import {
     IComponentContext,
@@ -13,13 +14,13 @@ import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { SharedComponent } from "../components";
 import { SharedComponentFactory } from "./sharedComponentFactory";
 
-export class PrimedComponentFactory extends SharedComponentFactory {
+export class PrimedComponentFactory<T extends IComponent & IComponentLoadable> extends SharedComponentFactory<T> {
     constructor(
+        type: string,
         ctor: new (runtime: IComponentRuntime, context: IComponentContext) => SharedComponent,
         sharedObjects: readonly ISharedObjectFactory[] = [],
         registryEntries?: NamedComponentRegistryEntries,
         onDemandInstantiation = true,
-        type: string = "",
     ) {
         const mergedObjects = [...sharedObjects];
 
@@ -34,6 +35,6 @@ export class PrimedComponentFactory extends SharedComponentFactory {
             mergedObjects.push(SharedMap.getFactory());
         }
 
-        super(ctor, mergedObjects, registryEntries, onDemandInstantiation, type);
+        super(type, ctor, mergedObjects, registryEntries, onDemandInstantiation);
     }
 }

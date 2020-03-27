@@ -36,7 +36,7 @@ const enum RootKey {
 }
 
 export class WebFlowHost extends SharedComponent<ISharedDirectory> implements IComponentHTMLVisual {
-    private static readonly factory = new SharedComponentFactory(
+    private static readonly factory = new SharedComponentFactory<WebFlowHost>(
         hostType,
         WebFlowHost,
         /* root: */ SharedDirectory.getFactory(),

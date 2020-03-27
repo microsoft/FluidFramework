@@ -505,7 +505,7 @@ const endIdPrefix = "end-";
 export interface IMathOptions extends IComponentHTMLOptions { }
 
 export class MathCollection extends SharedComponent<ISharedDirectory> implements IComponentCollection {
-    private static readonly factory = new SharedComponentFactory(
+    private static readonly factory = new SharedComponentFactory<MathCollection>(
         "@fluid-example/math",
         MathCollection,
         /* root: */ SharedDirectory.getFactory(),
