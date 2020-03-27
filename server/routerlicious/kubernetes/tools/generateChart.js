@@ -45,7 +45,7 @@ alfred:
   cert: wu2-tls-certificate
   tenants: []
   key: VBQyoGpEYrTn3XQPtXW3K8fFDd
-  maxNumberOfClientsPerDocument: 500
+  maxNumberOfClientsPerDocument: 1000000
 
 login:
   microsoft:

@@ -116,7 +116,7 @@ export function configureWebSocketServices(
     clientManager: core.IClientManager,
     metricLogger: core.IMetricClient,
     logger: core.ILogger,
-    maxNumberOfClientsPerDocument: number = 9999999) {
+    maxNumberOfClientsPerDocument: number = 1000000) {
 
 
     webSocketServer.on("connection", (socket: core.IWebSocket) => {
@@ -200,7 +200,9 @@ export function configureWebSocketServices(
             const [details, clients] = await Promise.all([detailsP, clientsP]);
 
             if (clients.length > maxNumberOfClientsPerDocument) {
-                return Promise.reject(`Reached connected client limit for document ${claims.documentId} in tenant ${claims.tenantId}`);
+                return Promise.reject(
+                    `Reached connected client limit for document ${claims.documentId}` +
+                    ` in tenant ${claims.tenantId}`);
             }
 
             await clientManager.addClient(
