@@ -76,7 +76,7 @@ export class Package {
         chalk.default.whiteBright,
     ];
 
-    public get packageJson(): Readonly<IPackage> {
+    public get packageJson(): IPackage {
         return this._packageJson;
     }
     private readonly packageId = Package.packageCount++;
@@ -144,7 +144,7 @@ export class Package {
     }
 
     public getScript(name: string): string | undefined {
-        return this.packageJson.scripts[name];
+        return this.packageJson.scripts? this.packageJson.scripts[name] : undefined;
     }
 
     public async cleanNodeModules() {

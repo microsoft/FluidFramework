@@ -54,9 +54,10 @@ export class SharedIntervalCollectionFactory implements ISharedObjectFactory {
         runtime: IComponentRuntime,
         id: string,
         services: ISharedObjectServices,
-        branchId: string): Promise<SharedIntervalCollection> {
+        branchId: string,
+        attributes: IChannelAttributes): Promise<SharedIntervalCollection> {
 
-        const map = new SharedIntervalCollection(id, runtime, this.attributes);
+        const map = new SharedIntervalCollection(id, runtime, attributes);
         await map.load(branchId, services);
 
         return map;
@@ -111,7 +112,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
     constructor(
         id: string,
         runtime: IComponentRuntime,
-        attributes = SharedIntervalCollectionFactory.Attributes,
+        attributes: IChannelAttributes,
     ) {
         super(id, runtime, attributes);
         this.intervalMapKernel = new MapKernel(

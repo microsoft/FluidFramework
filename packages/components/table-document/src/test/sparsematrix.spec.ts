@@ -8,8 +8,6 @@
 import * as assert from "assert";
 import { SparseMatrix, SparseMatrixFactory, SparseMatrixItem } from "@microsoft/fluid-sequence";
 import { TestHost } from "@microsoft/fluid-local-test-utils";
-// eslint-disable-next-line import/no-unassigned-import
-import "mocha";
 
 describe("SparseMatrix", () => {
     const extract = (matrix: SparseMatrix, numCols: number) => {
@@ -215,7 +213,7 @@ describe("SparseMatrix", () => {
                         s: "s2",
                         a: [],
                         o: {},
-                    }], o: {}
+                    }], o: {},
                 }],
                 o: {
                     b: false,

@@ -397,44 +397,13 @@ export class ScribeLambda extends SequencedLambda {
         const protocolEntries: ITreeEntry[] =
             getQuorumTreeEntries(this.documentId, minimumSequenceNumber, sequenceNumber, quorumSnapshot);
 
-        // Fetch the logtail starting from protocol sequence number to summarySequenceNumber
-        const logTail = await this.generateLogTailTree(sequenceNumber, summarySequenceNumber + 1);
-        const logTailEntries: ITreeEntry[] = [
-            {
-                mode: FileMode.File,
-                path: "logTail",
-                type: TreeEntry[TreeEntry.Blob],
-                value: {
-                    contents: JSON.stringify(logTail),
-                    encoding: "utf-8",
-                },
-            },
-        ];
+        // Generate a tree of logTail starting from protocol sequence number to summarySequenceNumber
+        const logTailEntries = await this.generateLogtailEntries(sequenceNumber, summarySequenceNumber + 1);
 
-        // Create service protocol entries forwarded from deli
-        const serviceProtocolEntries: ITreeEntry[] = [
-            {
-                mode: FileMode.File,
-                path: "deli",
-                type: TreeEntry[TreeEntry.Blob],
-                value: {
-                    contents: op.additionalContent,
-                    encoding: "utf-8",
-                },
-            },
-        ];
-        // Combine with scribe state
-        serviceProtocolEntries.push(
-            {
-                mode: FileMode.File,
-                path: "scribe",
-                type: TreeEntry[TreeEntry.Blob],
-                value: {
-                    contents: JSON.stringify(checkpoint),
-                    encoding: "utf-8",
-                },
-            },
-        );
+        // Create service protocol entries combining scribe and deli states.
+        const serviceProtocolEntries = this.generateServiceProtocolEntries(
+            op.additionalContent,
+            JSON.stringify(checkpoint));
 
         const [logTailTree, protocolTree, serviceProtocolTree, appSummaryTree] = await Promise.all([
             this.storage.createTree({ entries: logTailEntries, id: null }),
@@ -498,45 +467,13 @@ export class ScribeLambda extends SequencedLambda {
             return;
         }
 
-        // Fetch the logtail starting from the last protocol state.
-        const logTail = await this.generateLogTailTree(this.protocolHead, sequenceNumber + 1);
-        const logTailEntries: ITreeEntry[] = [
-            {
-                mode: FileMode.File,
-                path: "logTail",
-                type: TreeEntry[TreeEntry.Blob],
-                value: {
-                    contents: JSON.stringify(logTail),
-                    encoding: "utf-8",
-                },
-            },
-        ];
+        // Generate a tree of logTail starting from the last protocol state.
+        const logTailEntries = await this.generateLogtailEntries(this.protocolHead, sequenceNumber + 1);
 
-        // Create service protocol entries forwarded from deli
-        const serviceProtocolEntries: ITreeEntry[] = [
-            {
-                mode: FileMode.File,
-                path: "deli",
-                type: TreeEntry[TreeEntry.Blob],
-                value: {
-                    contents: serviceContent,
-                    encoding: "utf-8",
-                },
-            },
-        ];
-
-        // Combine with scribe state
-        serviceProtocolEntries.push(
-            {
-                mode: FileMode.File,
-                path: "scribe",
-                type: TreeEntry[TreeEntry.Blob],
-                value: {
-                    contents: JSON.stringify(checkpoint),
-                    encoding: "utf-8",
-                },
-            },
-        );
+        // Create service protocol entries combining scribe and deli states.
+        const serviceProtocolEntries = this.generateServiceProtocolEntries(
+            serviceContent,
+            JSON.stringify(checkpoint));
 
         // Fetch the last commit and summary tree. Create new trees with logTail and serviceProtocol.
         const lastCommit = await this.storage.getCommit(existingRef.object.sha);
@@ -588,7 +525,7 @@ export class ScribeLambda extends SequencedLambda {
         await this.sendSummaryConfirmationMessage(sequenceNumber, true);
     }
 
-    private async generateLogTailTree(gt: number, lt: number): Promise<ISequencedDocumentMessage[]> {
+    private async getLogTail(gt: number, lt: number): Promise<ISequencedDocumentMessage[]> {
         if (lt - gt <= 1) {
             return [];
         } else {
@@ -614,7 +551,49 @@ export class ScribeLambda extends SequencedLambda {
             }
             return logTail.map((log) => log.operation);
         }
+    }
 
+    private async generateLogtailEntries(from: number, to: number): Promise<ITreeEntry[]> {
+        const logTail = await this.getLogTail(from, to);
+        const logTailEntries: ITreeEntry[] = [
+            {
+                mode: FileMode.File,
+                path: "logTail",
+                type: TreeEntry[TreeEntry.Blob],
+                value: {
+                    contents: JSON.stringify(logTail),
+                    encoding: "utf-8",
+                },
+            },
+        ];
+        return logTailEntries;
+    }
+
+    private generateServiceProtocolEntries(deli: string, scribe: string): ITreeEntry[] {
+        const serviceProtocolEntries: ITreeEntry[] = [
+            {
+                mode: FileMode.File,
+                path: "deli",
+                type: TreeEntry[TreeEntry.Blob],
+                value: {
+                    contents: deli,
+                    encoding: "utf-8",
+                },
+            },
+        ];
+
+        serviceProtocolEntries.push(
+            {
+                mode: FileMode.File,
+                path: "scribe",
+                type: TreeEntry[TreeEntry.Blob],
+                value: {
+                    contents: scribe,
+                    encoding: "utf-8",
+                },
+            },
+        );
+        return serviceProtocolEntries;
     }
 
     private async sendSummaryAck(handle: string, summarySequenceNumber: number) {

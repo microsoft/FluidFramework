@@ -153,22 +153,22 @@ export interface IDocumentDeltaConnection extends EventEmitter {
     /**
      * Messages sent during the connection
      */
-    initialMessages?: ISequencedDocumentMessage[];
+    initialMessages: ISequencedDocumentMessage[];
 
     /**
      * Messages sent during the connection
      */
-    initialContents?: IContentMessage[];
+    initialContents: IContentMessage[];
 
     /**
      * Signals sent during the connection
      */
-    initialSignals?: ISignalMessage[];
+    initialSignals: ISignalMessage[];
 
     /**
      * Prior clients already connected.
      */
-    initialClients?: ISignalClient[];
+    initialClients: ISignalClient[];
 
     /**
      * Configuration details provided by the service

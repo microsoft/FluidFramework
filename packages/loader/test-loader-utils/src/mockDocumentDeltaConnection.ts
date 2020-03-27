@@ -12,6 +12,7 @@ import {
     INack,
     ISequencedDocumentMessage,
     IServiceConfiguration,
+    ISignalClient,
     ISignalMessage,
     ITokenClaims,
 } from "@microsoft/fluid-protocol-definitions";
@@ -47,9 +48,10 @@ export class MockDocumentDeltaConnection extends EventEmitter implements IDocume
     public readonly parentBranch: string | null = null;
     public readonly maxMessageSize: number = 16 * 1024;
     public readonly version: string = "";
-    public initialMessages?: ISequencedDocumentMessage[];
-    public initialContents?: IContentMessage[];
-    public initialSignals?: ISignalMessage[];
+    public initialMessages: ISequencedDocumentMessage[] = [];
+    public initialContents: IContentMessage[] = [];
+    public initialSignals: ISignalMessage[] = [];
+    public initialClients: ISignalClient[] = [];
     public readonly serviceConfiguration = DefaultServiceConfiguration;
 
     constructor(

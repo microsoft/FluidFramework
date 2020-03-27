@@ -106,7 +106,7 @@ async function main() {
             logStatus(`Symlink in ${options.fullSymlink ? "full" : options.fullSymlink === false ? "isolated" : "non-dependent"} mode`);
 
             // build the graph
-            const buildGraph = repo.createBuildGraph(options, options.buildScript);
+            const buildGraph = repo.createBuildGraph(options, options.buildScriptNames);
             timer.time("Build graph creation completed");
 
             if (options.clean) {

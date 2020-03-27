@@ -7,7 +7,6 @@ import { PrimedComponent } from "@microsoft/fluid-aqueduct";
 import {
     IComponent,
     IComponentHandle,
-    IComponentHTMLView,
     IComponentLoadable,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IPackage } from "@microsoft/fluid-container-definitions";
@@ -15,6 +14,7 @@ import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { MergeTreeDeltaType } from "@microsoft/fluid-merge-tree";
 import { SharedObjectSequence, SubSequence } from "@microsoft/fluid-sequence";
 import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
+import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pkg = require("../../package.json") as IPackage;

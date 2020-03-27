@@ -218,10 +218,6 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
 
         assert(this.listeners("op").length !== 0, "No op handler is setup!");
 
-        /* Issue #1566: Backward compat */
-        if (!this.details.initialMessages) {
-            this.details.initialMessages = [];
-        }
         if (this.queuedMessages.length > 0) {
             // Some messages were queued.
             // add them to the list of initialMessages to be processed
@@ -237,18 +233,12 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      *
      * @returns contents sent during the connection
      */
-    public get initialContents(): IContentMessage[] | undefined {
+    public get initialContents(): IContentMessage[] {
         this.removeEarlyContentsHandler();
 
         assert(this.listeners("op-content").length !== 0, "No op-content handler is setup!");
 
         if (this.queuedContents.length > 0) {
-            // Some contents were queued.
-            // add them to the list of initialContents to be processed
-            if (!this.details.initialContents) {
-                this.details.initialContents = [];
-            }
-
             this.details.initialContents.push(...this.queuedContents);
 
             this.details.initialContents.sort((a, b) =>
@@ -266,7 +256,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      *
      * @returns signals sent during the connection
      */
-    public get initialSignals(): ISignalMessage[] | undefined {
+    public get initialSignals(): ISignalMessage[] {
         this.removeEarlySignalHandler();
 
         assert(this.listeners("signal").length !== 0, "No signal handler is setup!");
@@ -274,10 +264,6 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         if (this.queuedSignals.length > 0) {
             // Some signals were queued.
             // add them to the list of initialSignals to be processed
-            if (!this.details.initialSignals) {
-                this.details.initialSignals = [];
-            }
-
             this.details.initialSignals.push(...this.queuedSignals);
             this.queuedSignals.length = 0;
         }
@@ -290,7 +276,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      * @returns initial client list sent during the connection
      */
     public get initialClients(): ISignalClient[] {
-        return this.details.initialClients ? this.details.initialClients : [];
+        return this.details.initialClients;
     }
 
     /**

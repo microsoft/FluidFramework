@@ -3,5 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export * from "./waterParkViewInstantiationFactory";
-export * from "./externalComponentView";
+export * from "./sharedDirectoryWithInterception";
+export * from "./sharedMapWithInterception";
+

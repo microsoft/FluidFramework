@@ -30,11 +30,16 @@ export const ActivityCheckingTimeout = 30 * 1000;
 // Timeout for sending consolidated no-ops.
 export const NoopConsolidationTimeout = 250;
 
-const DefaultDeliCheckpoint: IDeliCheckpoint = {
-    branchMap: undefined,
-    clients: undefined,
-    logOffset: -1,
-    sequenceNumber: 0,
+const getDefaultCheckpooint = (epoch: number): IDeliCheckpoint => {
+    return {
+        branchMap: undefined,
+        clients: undefined,
+        durableSequenceNumber: 0,
+        epoch,
+        logOffset: -1,
+        sequenceNumber: 0,
+        term: 1,
+    };
 };
 
 export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
@@ -50,6 +55,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
     public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
         const documentId = config.get("documentId");
         const tenantId = config.get("tenantId");
+        const leaderEpoch = config.get("leaderEpoch") as number;
 
         // Lookup the last sequence number stored
         // TODO - is this storage specific to the orderer in place? Or can I generalize the output context?
@@ -60,25 +66,43 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         }
 
         // Migrate the db object to new schema if applicable.
-        dbObject = await migrateSchema(dbObject, this.collection);
+        dbObject = await migrateSchema(dbObject, this.collection, leaderEpoch, 1);
+
+        let lastCheckpoint: IDeliCheckpoint;
 
         // Restore deli state if not present in the cache. Mongodb casts undefined as null so we are checking
         // both to be safe. Empty sring denotes a cache that was cleared due to a service summary
         // eslint-disable-next-line no-null/no-null
         if (dbObject.deli === undefined || dbObject.deli === null) {
             context.log.info(`New document. Setting empty deli checkpoint for ${tenantId}/${documentId}`);
-            dbObject.deli = JSON.stringify(DefaultDeliCheckpoint);
-        } else if (dbObject.deli === "") {
-            context.log.info(`Loading deli state from service summary for ${tenantId}/${documentId}`);
-            dbObject.deli = await this.loadStateFromSummary(tenantId, documentId, context.log);
+            lastCheckpoint = getDefaultCheckpooint(leaderEpoch);
         } else {
-            context.log.info(`Loading deli state from cache for ${tenantId}/${documentId}`);
+            lastCheckpoint = dbObject.deli === "" ?
+                await this.loadStateFromSummary(tenantId, documentId, leaderEpoch, context.log) :
+                JSON.parse(dbObject.deli);
+
+            if (lastCheckpoint.epoch !== undefined && lastCheckpoint.term !== undefined) {
+                // Increment term if epoch changed since the last checkpoint. Epoch should always move forward
+                // but there is no need to enforce it.
+                if (leaderEpoch !== lastCheckpoint.epoch) {
+                    // TODO: Set sequence number to DSN when clients are updated to resubmit.
+                    ++lastCheckpoint.term;
+                    lastCheckpoint.epoch = leaderEpoch;
+                }
+            } else {
+                // Back-compat for old documents.
+                lastCheckpoint.epoch = leaderEpoch;
+                lastCheckpoint.term = 1;
+                lastCheckpoint.durableSequenceNumber = lastCheckpoint.sequenceNumber;
+            }
         }
 
+        // Should the lambda reaize that term has flipped to send a no-op message at the beginning?
         return new DeliLambda(
             context,
             tenantId,
             documentId,
+            lastCheckpoint,
             dbObject,
             // It probably shouldn't take the collection - I can manage that
             this.collection,
@@ -98,7 +122,11 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
     }
 
     // When deli cache is cleared, we need to hydrate from summary.
-    private async loadStateFromSummary(tenantId: string, documentId: string, logger: ILogger): Promise<string> {
+    private async loadStateFromSummary(
+        tenantId: string,
+        documentId: string,
+        leaderEpoch: number,
+        logger: ILogger): Promise<IDeliCheckpoint> {
         const tenant = await this.tenantManager.getTenant(tenantId);
         const gitManager = tenant.gitManager;
 
@@ -106,18 +134,17 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 
         if (!existingRef) {
             logger.error(`No service summary present for ${tenantId}/${documentId}`);
-            return JSON.stringify(DefaultDeliCheckpoint);
+            return getDefaultCheckpooint(leaderEpoch);
         } else {
             try {
                 const content = await gitManager.getContent(existingRef.object.sha, ".serviceProtocol/deli");
-                const deliState = Buffer.from(content.content, content.encoding).toString();
-                return deliState;
+                return JSON.parse(Buffer.from(content.content, content.encoding).toString()) as IDeliCheckpoint;
             } catch (exception) {
                 // We should really fail when no service summary is present.
                 // For now we are just logging it for better telemetry.
                 logger.error(`Error fetching deli state from summary: ${tenantId}/${documentId}`);
                 logger.error(JSON.stringify(exception));
-                return JSON.stringify(DefaultDeliCheckpoint);
+                return getDefaultCheckpooint(leaderEpoch);
             }
         }
     }

@@ -28,7 +28,7 @@ import { OdspDocumentStorageManager } from "./odspDocumentStorageManager";
 import { OdspDocumentStorageService } from "./odspDocumentStorageService";
 import { getWithRetryForTokenRefresh, isLocalStorageAvailable } from "./odspUtils";
 import { getSocketStorageDiscovery } from "./vroom";
-import { isOdcUrl } from "./isOdc";
+import { isOdcOrigin } from "./odspUrlHelper";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const performanceNow = require("performance-now") as (() => number);
@@ -93,7 +93,6 @@ export class OdspDocumentService implements IDocumentService {
     }
 
     private storageManager?: OdspDocumentStorageManager;
-    private joinSessionP: Promise<ISocketStorageDiscovery> | undefined;
 
     private readonly logger: TelemetryLogger;
 
@@ -144,7 +143,7 @@ export class OdspDocumentService implements IDocumentService {
         this.logger = DebugLogger.mixinDebugLogger(
             "fluid:telemetry:OdspDriver",
             logger,
-            { docId: hashedDocumentId, odc: isOdcUrl(snapshotStorageUrl) });
+            { docId: hashedDocumentId, odc: isOdcOrigin(new URL(snapshotStorageUrl).origin) });
 
         this.getStorageToken = async (refresh: boolean, name?: string) => {
             if (refresh) {
@@ -278,13 +277,7 @@ export class OdspDocumentService implements IDocumentService {
     }
 
     private async joinSession(): Promise<ISocketStorageDiscovery> {
-        // Implement "locking" - only one outstanding join session call at a time.
-        // Note - we need it for perf. But also OdspCache.put() validates cache is not  overwritten by second call.
-        if (this.joinSessionP !== undefined) {
-            return this.joinSessionP;
-        }
-
-        this.joinSessionP = getSocketStorageDiscovery(
+        return getSocketStorageDiscovery(
             this.appId,
             this.driveId,
             this.itemId,
@@ -293,14 +286,6 @@ export class OdspDocumentService implements IDocumentService {
             this.getStorageToken,
             this.cache,
             this.joinSessionKey);
-
-        try {
-            const joinSession = await this.joinSessionP;
-            return joinSession;
-        } finally {
-            // Clear "lock" - form now on cache is responsible for handling caching policy (duration / reset on error)
-            this.joinSessionP = undefined;
-        }
     }
 
     /**

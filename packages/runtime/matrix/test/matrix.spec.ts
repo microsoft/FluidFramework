@@ -35,7 +35,7 @@ function expectSize<T extends Serializable>(actual: SharedMatrix<T>, numRows: nu
 async function snapshot<T extends Serializable>(matrix: SharedMatrix<T>) {
     const objectStorage = new MockStorage(matrix.snapshot());
     const runtime = new MockRuntime();
-    const matrix2 = new SharedMatrix(runtime, `load(${matrix.id})`);
+    const matrix2 = new SharedMatrix(runtime, `load(${matrix.id})`, SharedMatrixFactory.Attributes);
     await matrix2.load(/*branchId: */ null as any, {
         deltaConnection: new MockEmptyDeltaConnection(),
         objectStorage

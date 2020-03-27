@@ -11,19 +11,23 @@ describe("external-component-loader", () => {
 
     beforeEach(async () => {
         await page.goto(globals.PATH, { waitUntil: "load" });
+        await page.waitFor(() => window["fluidStarted"]);
     });
 
     it("There's a button to be clicked", async () => {
         await expect(page).toClick("button", { text: "Add Component" });
     });
 
-    it("can load clicker", async () => {
+    it("can load, enable, and use clicker", async () => {
         await expect(page).toFill("input", `${globals.PATH}/file/${path.join(__dirname, "../..")}/clicker/`);
         await expect(page).toClick("button", { text: "Add Component" });
 
         // wait for clicker to be loaded
         // tslint:disable-next-line: no-string-based-set-timeout ???
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 200));
+
+        // enable the components by toggling edit so that the clicker can be used
+        await expect(page).toClick("button", { text: "Toggle Edit" });
 
         // clicker tests
         const getValue = async (index: number) => {

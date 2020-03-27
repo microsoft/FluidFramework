@@ -7,9 +7,7 @@ import {
   PrimedComponent,
   PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
-import {
-  IComponentHTMLView,
-} from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -64,7 +62,7 @@ export class VersionTest extends PrimedComponent implements IComponentHTMLView {
     console.log(`code: ${this.upgradeToPkg} on ${this.cdn}`);
     this.runtime.getQuorum().propose(
       "code",
-      { "config": { "@fluid-example:cdn": this.cdn }, "package": `${ this.upgradeToPkg }` },
+      { "config": { "cdn": `${this.cdn}/@fluid-example/version-test-2` }, "package": `${ this.upgradeToPkg }` },
     );
   }
 }
