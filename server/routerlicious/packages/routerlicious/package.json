@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-server-routerlicious",
-  "version": "0.1004.0-0",
+  "version": "0.1004.0",
   "description": "Server to assign sequence numbers and route deltas between connected clients",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
