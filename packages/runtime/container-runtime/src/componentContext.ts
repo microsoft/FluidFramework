@@ -458,7 +458,14 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         this.componentRuntimeDeferred.resolve(this.componentRuntime);
     }
 
-    public async composeSubpackagePath(subpackage: string): Promise<string[]> {
+    /**
+     * Take a package name and transform it into a path that can be used to find it
+     * from this context, such as by looking into subregistries
+     * @param subpackage - The subpackage to find in this context
+     * @returns A list of packages to the subpackage destination if found,
+     * otherwise the original subpackage
+     */
+    protected async composeSubpackagePath(subpackage: string): Promise<string[]> {
         const details = await this.getInitialSnapshotDetails();
         let packagePath: string[] = [...details.pkg];
 

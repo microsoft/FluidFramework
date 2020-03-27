@@ -87,6 +87,10 @@ export class SharedComponentFactory implements IComponentFactory, Partial<IProvi
     }
 
     public async createComponent(context: IComponentContext): Promise<IComponent & IComponentLoadable> {
+        if (this.type === "") {
+            throw new Error("undefined type member");
+        }
+
         return context.createComponentWithRealizationFn(
             this.type,
             (newContext) => { this.instantiateComponent(newContext); },

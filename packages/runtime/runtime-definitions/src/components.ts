@@ -322,15 +322,6 @@ export interface IComponentContext extends EventEmitter {
      * @param componentRuntime - runtime to attach
      */
     attach(componentRuntime: IComponentRuntime): void;
-
-    /**
-     * Take a package name and transform it into a path that can be used to find it
-     * from this context, such as by looking into subregistries
-     * @param subpackage - The subpackage to find in this context
-     * @returns A list of packages to the subpackage destination if found,
-     * otherwise the original subpackage
-     */
-    composeSubpackagePath(subpackage: string): Promise<string[]>;
 }
 
 /**
