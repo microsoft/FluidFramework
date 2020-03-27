@@ -11,7 +11,6 @@ import {
     IQuorum,
     ISequencedDocumentMessage,
 } from "@microsoft/fluid-protocol-definitions";
-import { IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import { IFluidCodeDetails, IFluidModule } from "./chaincode";
 import { IDeltaManager } from "./deltas";
 
@@ -54,7 +53,7 @@ export interface IExperimentalContainer extends IContainer {
      * TODO - in the case of failure options should give a retry policy. Or some continuation function
      * that allows attachment to a secondary document.
      */
-    attach(resolver: IUrlResolver, request: IRequest): Promise<void>;
+    attach(request: IRequest): Promise<void>;
 }
 
 export interface ILoader {

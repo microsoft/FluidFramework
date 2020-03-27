@@ -67,7 +67,8 @@ describe("Errors Types", () => {
                 {},
                 loader,
                 testRequest,
-                testResolved);
+                testResolved,
+                testResolver);
 
             assert.fail("Error expected");
         } catch (error) {

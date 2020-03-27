@@ -21,6 +21,7 @@ import {
     IVersion,
 } from "@microsoft/fluid-protocol-definitions";
 import * as Comlink from "comlink";
+import { ensureFluidResolvedUrl } from "@microsoft/fluid-driver-utils";
 import { debug } from "./debug";
 import { IOuterDocumentDeltaConnectionProxy } from "./innerDocumentDeltaConnection";
 
@@ -283,9 +284,7 @@ export class IFrameDocumentServiceProxyFactory {
     public async createDocumentServiceFromRequest(request: IRequest): Promise<IDocumentServiceFactoryProxy> {
 
         const resolvedUrl = await this.urlResolver.resolve(request);
-        if (!resolvedUrl  || resolvedUrl.type !== "fluid") {
-            return Promise.reject("No Resolver for request");
-        }
+        ensureFluidResolvedUrl(resolvedUrl);
 
         return this.createDocumentService(resolvedUrl);
     }

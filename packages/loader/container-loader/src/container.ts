@@ -38,7 +38,13 @@ import {
     IUrlResolver,
     IDocumentServiceFactory,
 } from "@microsoft/fluid-driver-definitions";
-import { createIError, readAndParse, OnlineStatus, isOnline } from "@microsoft/fluid-driver-utils";
+import {
+    createIError,
+    readAndParse,
+    OnlineStatus,
+    isOnline,
+    ensureFluidResolvedUrl,
+} from "@microsoft/fluid-driver-utils";
 import {
     buildSnapshotTree,
     isSystemMessage,
@@ -110,6 +116,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         loader: Loader,
         request: IRequest,
         resolvedUrl: IFluidResolvedUrl,
+        urlResolver: IUrlResolver,
         logger?: ITelemetryBaseLogger,
     ): Promise<Container> {
         const container = new Container(
@@ -118,6 +125,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             codeLoader,
             loader,
             serviceFactory,
+            urlResolver,
             logger);
 
         const [, docId] = id.split("/");
@@ -165,6 +173,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         loader: Loader,
         source: IFluidCodeDetails,
         serviceFactory: IDocumentServiceFactory,
+        urlResolver: IUrlResolver,
         logger?: ITelemetryBaseLogger,
     ): Promise<Container> {
         const container = new Container(
@@ -173,6 +182,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             codeLoader,
             loader,
             serviceFactory,
+            urlResolver,
             logger);
         await container.createDetached(source);
 
@@ -314,6 +324,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         private readonly codeLoader: ICodeLoader,
         private readonly loader: Loader,
         private readonly serviceFactory: IDocumentServiceFactory,
+        private readonly urlResolver: IUrlResolver,
         logger?: ITelemetryBaseLogger,
     ) {
         super();
@@ -399,7 +410,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this.attached;
     }
 
-    public async attach(resolver: IUrlResolver, request: IRequest): Promise<void> {
+    public async attach(request: IRequest): Promise<void> {
         if (!this.context) {
             throw new Error("Context is undefined");
         }
@@ -417,7 +428,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         this.originalRequest = request;
         // Actually go and create the resolved document
-        const expUrlResolver = resolver as IExperimentalUrlResolver;
+        const expUrlResolver = this.urlResolver as IExperimentalUrlResolver;
         if (!expUrlResolver?.isExperimentalUrlResolver) {
             throw new Error("Not an Experimental UrlResolver");
         }
@@ -427,9 +438,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             quorumSnapshot.values,
             request);
 
-        if (resolvedUrl.type !== "fluid") {
-            throw new Error("Only Fluid components currently supported");
-        }
+        ensureFluidResolvedUrl(resolvedUrl);
+
         if (!this.serviceFactory) {
             throw new Error("Provide callback to get factory from resolved url");
         }
