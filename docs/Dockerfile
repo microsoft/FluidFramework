@@ -83,6 +83,7 @@ RUN git pull
 WORKDIR /
 RUN rsync docs/dist/ repo${VUEPRESS_BASE} -rv --delete --exclude '.git' --exclude 'versions'
 
+WORKDIR /repo
 RUN git add .
 RUN git diff --quiet && git diff --staged --quiet || git commit -am 'Automated build'
 RUN git push
