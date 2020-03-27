@@ -20,19 +20,28 @@ import { IComponentFoo, IComponentFoo_SYMBOL } from "./iComponentFoo";
 const pkg = require("../package.json");
 const componentName = pkg.name as string;
 
-class Foo implements IComponentFoo {
+export class Foo implements IComponentFoo {
     public get IComponentFoo() { return this; }
     public foo() {
         alert("foo ya!");
     }
 }
 
-export const generateScopeModules: () => ContainerModule[] = () => {
-    const foo = new ContainerModule((bind) => {
+const generateFluidExport: () => SimpleModuleInstantiationFactory = () => {
+
+    const fooModule = new ContainerModule((bind) => {
         bind<IComponentFoo>(IComponentFoo_SYMBOL).toConstantValue(new Foo());
     });
 
-    return [foo];
+    return new SimpleModuleInstantiationFactory(
+        componentName,
+        new Map([
+            [componentName, Promise.resolve(DiceRollerInstantiationFactory)],
+        ]),
+        undefined,
+        undefined,
+        [fooModule],
+    );
 };
 
 /**
@@ -46,12 +55,4 @@ export const generateScopeModules: () => ContainerModule[] = () => {
  * In this example, we are only registering a single component, but more complex examples will register multiple
  * components.
  */
-export const fluidExport = new SimpleModuleInstantiationFactory(
-    componentName,
-    new Map([
-        [componentName, Promise.resolve(DiceRollerInstantiationFactory)],
-    ]),
-    undefined,
-    undefined,
-    generateScopeModules(),
-);
+export const fluidExport = generateFluidExport();
