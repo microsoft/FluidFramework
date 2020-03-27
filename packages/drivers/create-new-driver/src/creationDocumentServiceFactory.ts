@@ -9,7 +9,7 @@ import {
     IDocumentServiceFactory,
     IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
-import { assertFluidResolvedUrl } from "@microsoft/fluid-driver-utils";
+import { ensureFluidResolvedUrl } from "@microsoft/fluid-driver-utils";
 import { CreationDocumentService } from "./creationDocumentService";
 /**
  * Factory for creating the faux document service. Use this if you want to
@@ -22,7 +22,7 @@ export class CreationDocumentServiceFactory implements IDocumentServiceFactory {
     }
 
     public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
-        assertFluidResolvedUrl(resolvedUrl);
+        ensureFluidResolvedUrl(resolvedUrl);
 
         const fluidResolvedUrl = resolvedUrl;
         const parsedUrl = parse(fluidResolvedUrl.url);

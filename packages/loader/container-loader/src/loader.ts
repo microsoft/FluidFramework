@@ -27,7 +27,7 @@ import {
 } from "@microsoft/fluid-driver-definitions";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import {
-    assertFluidResolvedUrl,
+    ensureFluidResolvedUrl,
     MultiUrlResolver,
     MultiDocumentServiceFactory,
 } from "@microsoft/fluid-driver-utils";
@@ -227,7 +227,7 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
     ): Promise<{ container: Container; parsed: IParsedUrl }> {
 
         const resolvedAsFluid = await this.resolver.resolve(request);
-        assertFluidResolvedUrl(resolvedAsFluid);
+        ensureFluidResolvedUrl(resolvedAsFluid);
 
         // Parse URL into components
         const parsed = parseUrl(resolvedAsFluid.url);

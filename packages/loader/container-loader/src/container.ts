@@ -43,7 +43,7 @@ import {
     readAndParse,
     OnlineStatus,
     isOnline,
-    assertFluidResolvedUrl,
+    ensureFluidResolvedUrl,
 } from "@microsoft/fluid-driver-utils";
 import {
     buildSnapshotTree,
@@ -438,7 +438,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             quorumSnapshot.values,
             request);
 
-        assertFluidResolvedUrl(resolvedUrl);
+        ensureFluidResolvedUrl(resolvedUrl);
 
         if (!this.serviceFactory) {
             throw new Error("Provide callback to get factory from resolved url");

@@ -11,7 +11,7 @@ import {
 } from "@microsoft/fluid-driver-definitions";
 import { TokenProvider } from "@microsoft/fluid-routerlicious-driver";
 import { ILocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
-import { assertFluidResolvedUrl } from "@microsoft/fluid-driver-utils";
+import { ensureFluidResolvedUrl } from "@microsoft/fluid-driver-utils";
 import { createTestDocumentService } from "./testDocumentService";
 
 /**
@@ -31,7 +31,7 @@ export class TestDocumentServiceFactory implements IDocumentServiceFactory {
      * @param resolvedUrl - resolved URL of document
      */
     public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
-        assertFluidResolvedUrl(resolvedUrl);
+        ensureFluidResolvedUrl(resolvedUrl);
 
         const parsedUrl = parse(resolvedUrl.url);
         const [, tenantId, documentId] = parsedUrl.path? parsedUrl.path.split("/") : [];

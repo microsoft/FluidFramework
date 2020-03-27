@@ -11,7 +11,7 @@ import {
 } from "@microsoft/fluid-driver-definitions";
 import { IErrorTrackingService } from "@microsoft/fluid-protocol-definitions";
 import { ICredentials, IGitCache } from "@microsoft/fluid-server-services-client";
-import { assertFluidResolvedUrl } from "@microsoft/fluid-driver-utils";
+import { ensureFluidResolvedUrl } from "@microsoft/fluid-driver-utils";
 import { DocumentService } from "./documentService";
 import { DocumentService2 } from "./documentService2";
 import { DefaultErrorTracking } from "./errorTracking";
@@ -41,7 +41,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
      */
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
-        assertFluidResolvedUrl(resolvedUrl);
+        ensureFluidResolvedUrl(resolvedUrl);
 
         const fluidResolvedUrl = resolvedUrl;
         const storageUrl = fluidResolvedUrl.endpoints.storageUrl;
