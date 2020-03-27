@@ -62,8 +62,6 @@ describe("Detached Container", () => {
         assert.equal(container.isAttached(), true, "Container should be attached");
         assert.equal(container.closed, false, "Container should be open");
         assert.equal(container.deltaManager.inbound.length, 0, "Inbound queue should be empty");
-        assert.equal(container.connectionState, ConnectionState.Connected,
-            "Container should be in connected state!!");
         assert.equal(container.id, "documentId", "Doc id is not matching!!");
     });
 
