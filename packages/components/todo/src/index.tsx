@@ -56,7 +56,7 @@ class TodoContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 
     protected async containerInitializingFirstTime(runtime: IHostRuntime) {
         const componentRuntime = await runtime.createComponent(todoComponentId, TodoName);
-        const result = await componentRuntime.request({ url: "/" });
+        const result = await componentRuntime.request({ url: todoComponentId });
 
         if (result.status !== 200 || result.mimeType !== "fluid/component") {
             throw new Error("Error in creating the default Todo model.");
