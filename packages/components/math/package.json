@@ -41,6 +41,7 @@
     "@microsoft/fluid-runtime-definitions": "^0.16.0",
     "@microsoft/fluid-sequence": "^0.16.0",
     "@microsoft/fluid-shared-object-base": "^0.16.0",
+    "@microsoft/fluid-view-interfaces": "^0.16.0",
     "debug": "^4.1.1",
     "katex": "^0.10.2"
   },

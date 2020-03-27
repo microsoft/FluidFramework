@@ -5,13 +5,12 @@
 
 import {
     IComponent,
-    IComponentHTMLView,
-    IComponentHTMLVisual,
     IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import { SharedComponentFactory, SharedComponent } from "@microsoft/fluid-component-base";
 import { ISharedDirectory, SharedDirectory } from "@microsoft/fluid-map";
+import { IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-view-interfaces";
 import { FlowDocument } from "../document";
 import { hostType } from "../package";
 import { WebflowView } from "./host";

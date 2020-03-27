@@ -4,14 +4,11 @@
  */
 
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
-import { IComponentReactViewable } from "@microsoft/fluid-view-adapters";
 import { SharedCell } from "@microsoft/fluid-cell";
-import {
-    IComponentHandle,
-    IComponentHTMLView,
-} from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { SharedMap } from "@microsoft/fluid-map";
 import { SharedObjectSequence } from "@microsoft/fluid-sequence";
+import { IComponentHTMLView, IComponentReactViewable } from "@microsoft/fluid-view-interfaces";
 // eslint-disable-next-line import/no-internal-modules
 import { SharedColors } from "@uifabric/fluent-theme/lib/fluent/FluentColors";
 import * as React from "react";

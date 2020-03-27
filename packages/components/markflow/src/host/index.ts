@@ -6,11 +6,10 @@
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import {
     IComponent,
-    IComponentHTMLView,
-    IComponentHTMLVisual,
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-view-interfaces";
 import { FlowDocument } from "../document";
 import { FlowDocumentType } from "../runtime";
 import { WebflowView } from "./host";
