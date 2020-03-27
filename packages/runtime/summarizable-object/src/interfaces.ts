@@ -15,5 +15,6 @@ export type SummarizableData = JsonableObject<Jsonable>;
  * Summarizable object interface
  */
 export interface ISummarizableObject extends ISharedObject {
-    data: SummarizableData;
+    get(): SummarizableData;
+    set(data: SummarizableData): void;
 }

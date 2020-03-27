@@ -52,7 +52,7 @@ export class SummarizableObject extends SharedObject implements ISummarizableObj
     /**
      * The data held by this object.
      */
-    private _data: SummarizableData;
+    private data: SummarizableData = {};
 
     /**
      * Constructs a new SummarizableObject. If the object is non-local, an id and service interfaces will
@@ -64,20 +64,19 @@ export class SummarizableObject extends SharedObject implements ISummarizableObj
      */
     constructor(id: string, runtime: IComponentRuntime, attributes: IChannelAttributes) {
         super(id, runtime, attributes);
-        this._data = {};
     }
 
-    public get data(): SummarizableData {
-        return this._data;
+    public get(): SummarizableData {
+        return this.data;
     }
-    public set data(data: SummarizableData) {
+    public set(data: SummarizableData) {
         if (SharedObject.is(data)) {
             throw new Error("SharedObject sets are no longer supported. Instead set the SharedObject handle.");
         }
 
         Object.keys(data).forEach(
             (key) => {
-                this._data[key] = data[key];
+                this.data[key] = data[key];
             },
         );
 
@@ -89,7 +88,7 @@ export class SummarizableObject extends SharedObject implements ISummarizableObj
      * Initialize a local instance of data.
      */
     protected initializeLocalCore() {
-        this._data = {};
+        this.data = {};
     }
 
     /**
@@ -125,7 +124,7 @@ export class SummarizableObject extends SharedObject implements ISummarizableObj
 
         const rawContent = await storage.read(snapshotFileName);
 
-        this._data = rawContent !== undefined ? JSON.parse(fromBase64ToUtf8(rawContent)) : {};
+        this.data = rawContent !== undefined ? JSON.parse(fromBase64ToUtf8(rawContent)) : {};
     }
 
     /**
