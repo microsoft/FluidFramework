@@ -68,7 +68,8 @@
             },
             "Framework-Utils": {
                 "packages": [
-                    "@microsoft/fluid-view-adapters"
+                    "@microsoft/fluid-view-adapters",
+                    "@microsoft/fluid-view-interfaces"
                 ],
                 "deps": [
                     "Base-Definitions"
@@ -208,7 +209,8 @@
                     "@microsoft/fluid-webpack-component-loader"
                 ],
                 "dirs": [
-                    "packages/test/"
+                    "packages/test/",
+                    "examples/hosts/"
                 ]
             }
         }

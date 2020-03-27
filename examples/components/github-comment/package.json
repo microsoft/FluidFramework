@@ -37,6 +37,7 @@
     "@microsoft/fluid-component-core-interfaces": "^0.16.0",
     "@microsoft/fluid-runtime-definitions": "^0.16.0",
     "@microsoft/fluid-sequence": "^0.16.0",
+    "@microsoft/fluid-view-interfaces": "^0.16.0",
     "markdown-it": "^9.1.0"
   },
   "devDependencies": {

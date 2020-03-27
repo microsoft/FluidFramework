@@ -6,8 +6,6 @@
 import { EventEmitter } from "events";
 import {
     IComponent,
-    IComponentHTMLOptions,
-    IComponentHTMLView,
     IComponentLoadable,
     IComponentRouter,
     IRequest,
@@ -26,6 +24,7 @@ import {
     IHostRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as $ from "jquery";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports,import/no-internal-modules,import/no-unassigned-import

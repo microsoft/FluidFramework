@@ -8,13 +8,14 @@ import {
     RouterliciousDocumentServiceFactory,
 } from "@microsoft/fluid-routerlicious-driver";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
-import { BaseHost } from "@microsoft/fluid-base-host";
+import { BaseHost, SemVerCdnCodeResolver } from "@microsoft/fluid-base-host";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { InsecureUrlResolver } from "@microsoft/fluid-test-runtime-utils";
+import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 import { IFrameOuterHost } from "./inframehost";
 
 const createRequest = (): IRequest => ({
-    url: `${window.location.origin}/testdoc41`,
+    url: `${window.location.origin}/testdoc50`,
 });
 
 const getTinyliciousResolver =
@@ -65,6 +66,16 @@ export async function loadFrame(iframeId: string, logId: string){
     log(proxyContainer, "Container", "error", "connected","disconnected");
 }
 
+async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
+    const component = await baseHost.getComponent(url);
+    if (component === undefined) {
+        return;
+    }
+    // Render the component with an HTMLViewAdapter to abstract the UI framework used by the component
+    const view = new HTMLViewAdapter(component);
+    view.render(div, { display: "block" });
+}
+
 export async function loadDiv(divId: string){
     const div = document.getElementById(divId) as HTMLDivElement;
 
@@ -72,25 +83,28 @@ export async function loadDiv(divId: string){
 
     const documentServiceFactory = getTinyliciousDocumentServiceFactory();
 
-    const pkgResp =
-        await fetch(
-            "https://pragueauspkn-3873244262.azureedge.net/@fluid-example/todo@^0.15.0/package.json");
     const pkg: IFluidCodeDetails = {
-        package: await pkgResp.json(),
+        package: "@fluid-example/todo@^0.15.0",
         config:{
             "@fluid-example:cdn":"https://pragueauspkn-3873244262.azureedge.net",
         },
     };
+
     const baseHost = new BaseHost(
         {
+            codeResolver: new SemVerCdnCodeResolver(),
             documentServiceFactory,
             urlResolver,
             config: {},
-        },
-        undefined,
-        []);
+        });
 
-    await baseHost.loadAndRender(createRequest().url, div, pkg);
+    const url = createRequest().url;
+    const container = await baseHost.initializeContainer(url, pkg);
+
+    // Handle the code upgrade scenario (which fires contextChanged)
+    container.on("contextChanged", (value) => {
+        getComponentAndRender(baseHost, url, div).catch(() => { });
+    });
 }
 
 export async function runOuter(iframeId: string, divId: string, logId: string){

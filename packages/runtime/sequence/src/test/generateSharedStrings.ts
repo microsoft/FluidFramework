@@ -7,13 +7,14 @@ import { SnapshotLegacy as Snapshot } from "@microsoft/fluid-merge-tree";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import * as mocks from "@microsoft/fluid-test-runtime-utils";
 import { SharedString } from "../sharedString";
+import { SharedStringFactory } from "../sequenceFactory";
 
 export function* generateStrings() {
     const documentId = "fakeId";
     const runtime: mocks.MockRuntime = new mocks.MockRuntime();
     const insertText = "text";
 
-    let sharedString = new SharedString(runtime, documentId);
+    let sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
     sharedString.initializeLocal();
     // Small enough so snapshot won't have body
     for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) / 2; ++i) {
@@ -22,7 +23,7 @@ export function* generateStrings() {
 
     yield sharedString;
 
-    sharedString = new SharedString(runtime, documentId);
+    sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
     sharedString.initializeLocal();
     // Big enough that snapshot will have body
     for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) * 2; ++i) {
@@ -31,7 +32,7 @@ export function* generateStrings() {
 
     yield sharedString;
 
-    sharedString = new SharedString(runtime, documentId);
+    sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
     sharedString.initializeLocal();
     // Very big sharedString
     for (let i = 0; i < Snapshot.sizeOfFirstChunk; ++i) {
@@ -40,7 +41,7 @@ export function* generateStrings() {
 
     yield sharedString;
 
-    sharedString = new SharedString(runtime, documentId);
+    sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
     sharedString.initializeLocal();
     // SharedString with markers
     for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) * 2; ++i) {
@@ -57,7 +58,7 @@ export function* generateStrings() {
 
     yield sharedString;
 
-    sharedString = new SharedString(runtime, documentId);
+    sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
     sharedString.initializeLocal();
     // SharedString with annotations
     for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) * 2; ++i) {

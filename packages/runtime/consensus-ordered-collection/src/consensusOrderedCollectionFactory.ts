@@ -14,7 +14,7 @@ import { pkgVersion } from "./packageVersion";
 export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory {
     public static Type = "https://graph.microsoft.com/types/consensus-queue";
 
-    public static Attributes: IChannelAttributes = {
+    public static readonly Attributes: IChannelAttributes = {
         type: ConsensusQueueFactory.Type,
         snapshotFormatVersion: "0.1",
         packageVersion : pkgVersion,
@@ -29,18 +29,19 @@ export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory
     }
 
     public async load(
-        document: IComponentRuntime,
+        runtime: IComponentRuntime,
         id: string,
         services: ISharedObjectServices,
-        branchId: string): Promise<IConsensusOrderedCollection> {
+        branchId: string,
+        attributes: IChannelAttributes): Promise<IConsensusOrderedCollection> {
 
-        const collection = new ConsensusQueue(id, document);
+        const collection = new ConsensusQueue(id, runtime, attributes);
         await collection.load(branchId, services);
         return collection;
     }
 
     public create(document: IComponentRuntime, id: string): IConsensusOrderedCollection {
-        const collection = new ConsensusQueue(id, document);
+        const collection = new ConsensusQueue(id, document, this.attributes);
         collection.initializeLocal();
         return collection;
     }

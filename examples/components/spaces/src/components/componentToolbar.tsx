@@ -3,23 +3,25 @@
  * Licensed under the MIT License.
  */
 
+import * as React from "react";
+import * as ReactDOM from "react-dom";
 import {
     PrimedComponent,
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
-import {
-    IComponentHTMLView, IComponent,
-} from "@microsoft/fluid-component-core-interfaces";
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import {
     DefaultButton as Button,
     initializeIcons,
 } from "office-ui-fabric-react";
 import { ISharedDirectory } from "@microsoft/fluid-map";
-
-import * as React from "react";
-import * as ReactDOM from "react-dom";
-import { SupportedComponent } from "../dataModel";
-import { InternalRegistry, IContainerComponentDetails } from "..";
+import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+import {
+    InternalRegistry,
+    IContainerComponentDetails,
+    IComponentCallable,
+    IComponentCallbacks,
+} from "..";
 
 const componentToolbarStyle: React.CSSProperties = { position: "absolute", top: 10, left: 10, zIndex: 1000 };
 
@@ -30,8 +32,12 @@ initializeIcons();
 /**
  * A component to allow you to add and manipulate components
  */
-export class ComponentToolbar extends PrimedComponent implements IComponentHTMLView {
+export class ComponentToolbar extends PrimedComponent
+    implements IComponentHTMLView, IComponentCallable<IComponentCallbacks> {
     public get IComponentHTMLView() { return this; }
+    public get IComponentCallable() { return this; }
+
+    private callbacks: IComponentCallbacks = {};
 
     private static readonly factory = new PrimedComponentFactory(ComponentToolbar, []);
 
@@ -57,7 +63,11 @@ export class ComponentToolbar extends PrimedComponent implements IComponentHTMLV
     }
 
     protected async componentInitializingFirstTime() {
-        this.root.set("isEditable", false);
+        this.root.set("isEditable", true);
+    }
+
+    public setComponentCallbacks(callbacks: IComponentCallbacks) {
+        this.callbacks = callbacks;
     }
 
     /**
@@ -66,7 +76,7 @@ export class ComponentToolbar extends PrimedComponent implements IComponentHTMLV
     public render(div: HTMLElement) {
         ReactDOM.render(
             <ComponentToolbarView
-                emit={this.emit.bind(this)}
+                callbacks={this.callbacks}
                 root={this.root}
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 supportedComponentList={this.supportedComponentList!}
@@ -78,7 +88,7 @@ export class ComponentToolbar extends PrimedComponent implements IComponentHTMLV
 }
 
 interface IComponentToolbarViewProps {
-    emit: (event: string | symbol, ...args: any[]) => boolean;
+    callbacks: IComponentCallbacks;
     supportedComponentList: IContainerComponentDetails[];
     root: ISharedDirectory;
 }
@@ -87,7 +97,7 @@ interface IComponentToolbarViewState {
     isEditable: boolean;
 }
 
-class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, IComponentToolbarViewState>{
+class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, IComponentToolbarViewState> {
 
     private readonly supportedComponentList: IContainerComponentDetails[];
 
@@ -104,14 +114,18 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
         });
     }
 
-    public emitAddComponentEvent(type: SupportedComponent, w?: number, h?: number) {
-        this.props.emit("addComponent", type, w, h);
+    public emitAddComponentEvent(type: string, w?: number, h?: number) {
+        if (this.props.callbacks.addComponent) {
+            this.props.callbacks.addComponent(type, w, h);
+        }
     }
 
     public emitToggleEditable() {
         const newIsEditable = !this.state.isEditable;
-        this.props.emit("toggleEditable", newIsEditable);
         this.setState({ isEditable: newIsEditable });
+        if (this.props.callbacks.toggleEditable) {
+            this.props.callbacks.toggleEditable(newIsEditable);
+        }
     }
 
     render(){
@@ -122,7 +136,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
                     key={`componentToolbarButton-${supportedComponent.type}`}
                     iconProps={{ iconName: supportedComponent.fabricIconName }}
                     onClick={async () =>
-                        this.emitAddComponentEvent(supportedComponent.type as SupportedComponent, 4, 4)}
+                        this.emitAddComponentEvent(supportedComponent.type, 4, 4)}
                 >
                     {supportedComponent.friendlyName}
                 </Button>,

@@ -11,6 +11,7 @@ import * as nconf from "nconf";
 import WebpackDevServer from "webpack-dev-server";
 import { IOdspTokens, getServer } from "@microsoft/fluid-odsp-utils";
 import { getMicrosoftConfiguration, OdspTokenManager, odspTokensCache } from "@microsoft/fluid-tool-utils";
+import { IFluidPackage } from "@microsoft/fluid-container-definitions";
 import { RouteOptions } from "./loader";
 
 const tokenManager = new OdspTokenManager(odspTokensCache);
@@ -181,8 +182,8 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
 const fluid = (req: express.Request, res: express.Response, baseDir: string, options: RouteOptions) => {
 
     const documentId = req.params.id;
-    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-    const packageJson = require(path.join(baseDir, "./package.json"));
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const packageJson = require(path.join(baseDir, "./package.json")) as IFluidPackage;
 
     const html =
         `<!DOCTYPE html>
@@ -197,14 +198,18 @@ const fluid = (req: express.Request, res: express.Response, baseDir: string, opt
     </div>
 
     <script src="/node_modules/@microsoft/fluid-webpack-component-loader/dist/fluid-loader.bundle.js"></script>
+    ${packageJson.fluid.browser.umd.files.map((file)=>`<script src="${file}"></script>\n`)}
     <script>
         var pkgJson = ${JSON.stringify(packageJson)};
         var options = ${JSON.stringify(options)};
+        var fluidStarted = false;
         FluidLoader.start(
             "${documentId}",
             pkgJson,
+            window["${packageJson.fluid.browser.umd.library}"],
             options,
             document.getElementById("content"))
+        .then(() => fluidStarted = true)
         .catch((error) => console.error(error));
     </script>
 </body>

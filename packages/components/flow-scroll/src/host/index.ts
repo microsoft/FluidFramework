@@ -10,8 +10,6 @@ import { TableView } from "@fluid-example/table-view";
 import {
     IComponent,
     IComponentHandle,
-    IComponentHTMLView,
-    IComponentHTMLVisual,
 } from "@microsoft/fluid-component-core-interfaces";
 import {
     FlushMode, IComponentFactory, IComponentContext,
@@ -22,6 +20,7 @@ import { MathCollection } from "@fluid-example/math";
 import { VideoPlayerCollection } from "@fluid-example/video-players";
 import { ImageCollection } from "@fluid-example/image-collection";
 import { SharedComponentFactory, SharedComponent } from "@microsoft/fluid-component-base";
+import { IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-view-interfaces";
 import { hostType } from "../package";
 import { importDoc } from "./template";
 import { HostView } from "./host";

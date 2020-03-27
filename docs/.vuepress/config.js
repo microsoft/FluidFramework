@@ -5,11 +5,29 @@
 
 const fs = require("fs");
 const path = require("path");
+const process = require("process");
+
+const fluidVarGroup = process.env[`FLUID_VAR_GROUP`] || "internal";
+
+const internalOnly = (obj) => {
+    if (fluidVarGroup !== "internal") {
+        return null;
+    }
+    return obj;
+};
+
+const compact = (input) => {
+    return input.filter(x=>x);
+};
 
 const listPages = (dirPath, includeIndex = false) => {
     dirPath = path.join(__dirname, dirPath);
-    const files = fs.readdirSync(dirPath);
     let pages = [];
+    if (!fs.existsSync(dirPath)) {
+        return pages;
+    }
+
+    const files = fs.readdirSync(dirPath);
     for (let file of files) {
         if (file === "README.md" || file == "index.md") {
             if (!includeIndex) {
@@ -23,21 +41,21 @@ const listPages = (dirPath, includeIndex = false) => {
 };
 
 const getNav = () => {
-    return [
+    let nav = [
         { text: "What is Fluid?", link: "/what-is-fluid" },
         { text: "Guide", link: "/guide/" },
         { text: "Tutorials", link: "/examples/" },
-        { text: "Patterns", link: "/patterns/" },
+        internalOnly({ text: "Patterns", link: "/patterns/" }),
         { text: "API", link: "/api/overview" },
         {
             text: "🤿 Dive Deeper",
             items: [
                 { text: "How Fluid works", link: "/how/" },
-                { text: "Big page of docs and decks", link: "/misc/doc-index" },
-                { text: "FAQ", link: "/faq/" },
-                { text: "Terminology", link: "/misc/terminology" },
-                { text: "Concepts", link: "/misc/concepts" },
-                {
+                internalOnly({ text: "Big page of docs and decks", link: "/misc/doc-index" }),
+                internalOnly({ text: "FAQ", link: "/faq/" }),
+                internalOnly({ text: "Terminology", link: "/misc/terminology" }),
+                internalOnly({ text: "Concepts", link: "/misc/concepts" }),
+                internalOnly({
                     text: "Contributing",
                     items: [
                         { text: "Release process", link: "/contributing/release-process" },
@@ -47,17 +65,34 @@ const getNav = () => {
                         { text: "Building documentation locally", link: "/contributing/building-documentation" },
                         { text: "Miscellaneous", link: "/contributing/misc" },
                     ]
-                },
-                {
+                }),
+                internalOnly({
                     text: "Team",
                     items: [
                         { text: "Updates", link: "/team/" },
                         { text: "Routerlicious build machine", link: "/contributing/r11s-build-machine" },
                     ]
-                }
+                }),
             ]
         },
     ];
+
+    function filterFalsy(item) {
+        // console.log(`item: ${item}`);
+        if (item) {
+            if (item.items) {
+                // console.log("about to recurse!");
+                item.items = item.items.filter(filterFalsy);
+            }
+        }
+        return item;
+    }
+
+    // console.log(JSON.stringify(nav));
+    const filtered = nav.filter(filterFalsy);
+    // console.log(JSON.stringify(filtered));
+
+    return filtered;
 }
 
 /**
@@ -195,11 +230,13 @@ const getGuideSidebar = () => {
         {
             title: "Guide",
             collapsable: false,
-            children: [
+            children: compact([
                 "",
-                "yo-fluid",
-                "water-park",
-            ]
+                "spfx.md",
+                "upload.md",
+                internalOnly("yo-fluid"),
+                internalOnly("water-park"),
+            ])
         },
         {
             title: "Distributed Data Structures",
@@ -242,12 +279,12 @@ const getGuideSidebar = () => {
 }
 
 const getExamplesSidebar = () => {
-    return [
+    return compact([
         "",
         "dice-roller",
         "sudoku",
         "badge",
-        {
+        internalOnly({
             title: "Components",
             collapsable: true,
             children: [
@@ -260,15 +297,15 @@ const getExamplesSidebar = () => {
                 "bots",
                 "component-best-practices",
             ]
-        },
-        {
+        }),
+        internalOnly({
             title: "Containers",
             collapsable: true,
             children: [
                 "singletons",
             ]
-        },
-    ];
+        }),
+    ]);
 }
 
 const getTeamSidebar = () => {
@@ -289,11 +326,11 @@ const getTeamSidebar = () => {
 }
 
 const getHowSidebar = () => {
-    return [
+    return compact([
         "",
         "tob",
-        "developer-guide",
-    ];
+        internalOnly("developer-guide"),
+    ]);
 }
 
 const getAdvancedSidebar = () => {
@@ -315,6 +352,45 @@ const getPatternsSidebar = () => {
     ];
 }
 
+const getAllSidebars = () => {
+    const sidebars = {
+        internal: {
+            "/patterns/": getPatternsSidebar(),
+            "/advanced/": getAdvancedSidebar(),
+            "/team/": getTeamSidebar(),
+        },
+        all: {
+            "/guide/": getGuideSidebar(),
+            "/examples/": getExamplesSidebar(),
+            "/api/": getApiSidebar(),
+            "/how/": getHowSidebar(),
+        }
+    };
+
+    return Object.assign({},
+        sidebars.all,
+        fluidVarGroup === "internal" ? sidebars.internal : {}
+    );
+}
+
+const getThemeConfig = () => {
+    let config = {
+        fluidVarGroup: fluidVarGroup,
+        editLinks: true,
+        lastUpdated: false, // "Last Updated",
+        docsDir: "docs",
+        heroSymbol: permalinkSymbol(),
+        smoothScroll: true,
+        sidebarDepth: 1,
+        nav: getNav(),
+        sidebar: getAllSidebars(),
+    };
+    if (fluidVarGroup === "internal") {
+        config.repo = "microsoft/FluidFramework";
+    }
+    return config;
+}
+
 function permalinkSymbol() {
     const now = new Date(new Date().getTime());
     const start = new Date(Date.UTC(2020, 2 /* 0-based because javascript */, 17));
@@ -331,14 +407,13 @@ module.exports = {
     evergreen: true,
     head: [
         ["link", { rel: "icon", href: "/images/homescreen48.png" }],
-        ["link", { rel: "manifest", crossorigin: "use-credentials", href: "/manifest.webmanifest" }],
-        ["meta", { name: "theme-color", content: "#00BCF2" }],
-        ["meta", { name: "apple-mobile-web-app-capable", content: "yes" }],
-        ["meta", { name: "apple-mobile-web-app-status-bar-style", content: "black" }],
-        ["link", { rel: "apple-touch-icon", href: "/images/homescreen192.png" }],
-        // ["link", { rel: "mask-icon", href: "/icons/safari-pinned-tab.svg", color: "#3eaf7c" }],
-        ["meta", { name: "msapplication-TileImage", content: "/images/homescreen144.png" }],
-        ["meta", { name: "msapplication-TileColor", content: "#000000" }]
+        // ["link", { rel: "manifest", crossorigin: "use-credentials", href: "/manifest.webmanifest" }],
+        // ["meta", { name: "theme-color", content: "#00BCF2" }],
+        // ["meta", { name: "apple-mobile-web-app-capable", content: "yes" }],
+        // ["meta", { name: "apple-mobile-web-app-status-bar-style", content: "black" }],
+        // ["link", { rel: "apple-touch-icon", href: "/images/homescreen192.png" }],
+        // ["meta", { name: "msapplication-TileImage", content: "/images/homescreen144.png" }],
+        // ["meta", { name: "msapplication-TileColor", content: "#000000" }]
     ],
     plugins: [
         ["code-switcher"],
@@ -350,13 +425,13 @@ module.exports = {
         //         color: "#999",
         //     }
         // ],
-        [
-            "@vuepress/pwa",
-            {
-                serviceWorker: true,
-                updatePopup: true
-            }
-        ],
+        // [
+        //     "@vuepress/pwa",
+        //     {
+        //         serviceWorker: true,
+        //         updatePopup: true
+        //     }
+        // ],
         [
             "vuepress-plugin-container",
             {
@@ -387,28 +462,10 @@ module.exports = {
         extendMarkdown: (md) => {
             md.set({ typographer: true });
             // use additional markdown-it plugins
-            md.use(require("markdown-it-include"), "./includes/")
+            md.use(require("markdown-it-include"), "./.vuepress/includes/")
                 .use(require("markdown-it-deflist"))
                 .use(require("markdown-it-replacements"));
         }
     },
-    themeConfig: {
-        editLinks: true,
-        lastUpdated: false, // "Last Updated",
-        repo: "microsoft/FluidFramework",
-        docsDir: "docs",
-        heroSymbol: permalinkSymbol(),
-        smoothScroll: true,
-        sidebarDepth: 1,
-        nav: getNav(),
-        sidebar: {
-            "/guide/": getGuideSidebar(),
-            "/examples/": getExamplesSidebar(),
-            "/patterns/": getPatternsSidebar(),
-            "/api/": getApiSidebar(),
-            "/how/": getHowSidebar(),
-            "/advanced/": getAdvancedSidebar(),
-            "/team/": getTeamSidebar(),
-        },
-    }
+    themeConfig: getThemeConfig(),
 }

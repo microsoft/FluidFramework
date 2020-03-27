@@ -40,6 +40,7 @@
     "@microsoft/fluid-runtime-definitions": "^0.16.0",
     "@microsoft/fluid-sequence": "^0.16.0",
     "@microsoft/fluid-shared-object-base": "^0.16.0",
+    "@microsoft/fluid-view-interfaces": "^0.16.0",
     "@types/codemirror": "0.0.76",
     "codemirror": "^5.48.4"
   },

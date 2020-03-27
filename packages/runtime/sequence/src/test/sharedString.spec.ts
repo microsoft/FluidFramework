@@ -8,6 +8,7 @@ import { ITree } from "@microsoft/fluid-protocol-definitions";
 import { ISharedObjectServices } from "@microsoft/fluid-runtime-definitions";
 import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
 import { SharedString } from "../sharedString";
+import { SharedStringFactory } from "../sequenceFactory";
 
 describe("SharedString", () => {
 
@@ -17,7 +18,7 @@ describe("SharedString", () => {
     beforeEach(() => {
         const runtime = new MockRuntime();
         deltaConnectionFactory = new MockDeltaConnectionFactory();
-        sharedString = new SharedString(runtime, documentId);
+        sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
         runtime.services = {
             deltaConnection: deltaConnectionFactory.createDeltaConnection(runtime),
             objectStorage: new MockStorage(undefined),
@@ -74,7 +75,7 @@ describe("SharedString", () => {
                 objectStorage: new MockStorage(tree),
             };
 
-            const sharedString2 = new SharedString(runtime, documentId);
+            const sharedString2 = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
             // eslint-disable-next-line no-null/no-null
             await sharedString2.load(null/*branchId*/, services);
             await sharedString2.loaded;

@@ -26,6 +26,7 @@
     "start:r11s": "webpack-dev-server --config webpack.config.js --package package.json --env.mode r11s",
     "start:spo": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo",
     "start:spo-df": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo-df",
+    "test": "npm run test:jest",
     "test:buildclicker": "cd ../clicker && test -e dist/main.bundle.js || npm run webpack",
     "test:jest": "npm run test:buildclicker && jest",
     "tsc": "tsc",
@@ -33,6 +34,7 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
+    "@fluid-example/spaces": "^0.16.0",
     "@microsoft/fluid-aqueduct": "^0.16.0",
     "@microsoft/fluid-common-utils": "^0.14.0",
     "@microsoft/fluid-component-core-interfaces": "^0.16.0",
@@ -42,6 +44,7 @@
     "@microsoft/fluid-runtime-definitions": "^0.16.0",
     "@microsoft/fluid-sequence": "^0.16.0",
     "@microsoft/fluid-view-adapters": "^0.16.0",
+    "@microsoft/fluid-view-interfaces": "^0.16.0",
     "uuid": "^3.3.2"
   },
   "devDependencies": {

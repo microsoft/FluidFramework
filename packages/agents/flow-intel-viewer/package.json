@@ -26,8 +26,8 @@
     "webpack:dev": "webpack --env=\"development\""
   },
   "dependencies": {
-    "@microsoft/fluid-component-core-interfaces": "^0.16.0",
-    "@microsoft/fluid-map": "^0.16.0"
+    "@microsoft/fluid-map": "^0.16.0",
+    "@microsoft/fluid-view-interfaces": "^0.16.0"
   },
   "devDependencies": {
     "@microsoft/eslint-config-fluid": "^0.15.0",

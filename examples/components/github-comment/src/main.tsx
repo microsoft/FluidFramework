@@ -7,10 +7,7 @@
 import {
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
-import {
-    IComponentHTMLView,
-    IComponentHandle,
-} from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import {
     IComponentContext,
     IComponentRuntime,
@@ -18,6 +15,7 @@ import {
 import {
     SharedString,
 } from "@microsoft/fluid-sequence";
+import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 // Import parent textarea component:
 import {

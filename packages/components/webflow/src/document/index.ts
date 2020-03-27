@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { randomId, TokenList, TagName } from "@fluid-example/flow-util-lib";
 import { SharedComponent, SharedComponentFactory } from "@microsoft/fluid-component-base";
-import { IComponentHandle, IComponentHTMLOptions } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import {
     createInsertSegmentOp,
     createRemoveRangeOp,
@@ -31,6 +31,7 @@ import {
     SharedStringSegment,
 } from "@microsoft/fluid-sequence";
 import { ISharedDirectory, SharedDirectory } from "@microsoft/fluid-map";
+import { IComponentHTMLOptions } from "@microsoft/fluid-view-interfaces";
 import { clamp, emptyArray } from "../util";
 import { IHTMLAttributes } from "../util/attr";
 import { documentType } from "../package";

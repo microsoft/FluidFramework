@@ -13,7 +13,6 @@ import { SharedCell } from "@microsoft/fluid-cell";
 import {
     IComponent,
     IComponentHandle,
-    IComponentHTMLView,
     IComponentLoadable,
     IRequest,
     IResponse,
@@ -32,6 +31,7 @@ import {
     SharedObjectSequence,
     SharedString,
 } from "@microsoft/fluid-sequence";
+import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import { Document } from "./document";
 import { downloadRawText, getInsights, setTranslation } from "./utils";
 

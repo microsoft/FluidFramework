@@ -6,7 +6,6 @@
 import {
     IComponent,
     IComponentHandleContext,
-    IComponentHTMLView,
     IComponentLoadable,
     IComponentRouter,
     IRequest,
@@ -18,6 +17,7 @@ import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { SharedDirectory, ISharedDirectory } from "@microsoft/fluid-map";
 import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import { SharedComponent, SharedComponentFactory } from "@microsoft/fluid-component-base";
+import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 declare global {
     interface Window {

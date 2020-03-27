@@ -5,11 +5,7 @@
 
 // inspiration for this example taken from https://github.com/agentcooper/typescript-play
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
-import {
-    IComponentHandle,
-    IComponentHTMLOptions,
-    IComponentHTMLView,
-} from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentLayout } from "@microsoft/fluid-framework-experimental";
 import {
     IMergeTreeGroupMsg,
@@ -20,6 +16,7 @@ import {
 } from "@microsoft/fluid-merge-tree";
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
+import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 // eslint-disable-next-line import/no-unresolved
 import * as monaco from "monaco-editor";
 
