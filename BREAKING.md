@@ -1,5 +1,13 @@
 # Breaking changes
 
+## 0.16 Breaking Changes
+
+- [View interfaces moved to separate package](View-interfaces-moved-to-separate-package)
+
+### View interfaces moved to separate package
+
+View-related interfaces have been moved to package `@microsoft/fluid-view-interfaces`.  This includes `IComponentHTMLView`, `IComponentHTMLVisual`, `IComponentHTMLOptions`, `IComponentReactViewable`, and their related "provide" interfaces.
+
 ## 0.15 Breaking Changes
 
 - [`getComponentRuntime` no longer on `IComponentContext`](#getComponentRuntime-no-longer-on-IComponentContext)

@@ -10,13 +10,12 @@ import { tableViewType } from "@fluid-example/table-view";
 import { Editor, FlowDocument, htmlFormatter, IComponentHTMLViewFactory } from "@fluid-example/webflow";
 import {
     IComponent,
-    IComponentHTMLOptions,
-    IComponentHTMLView,
     IComponentLoadable,
     IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { TST } from "@microsoft/fluid-merge-tree";
+import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as styles from "./index.css";
 
 const template = new Template(

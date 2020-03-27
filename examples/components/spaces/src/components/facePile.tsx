@@ -7,7 +7,7 @@ import {
     PrimedComponent,
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
-import { IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import { Persona, PersonaSize } from "office-ui-fabric-react/lib/Persona";
 import { Icon } from "office-ui-fabric-react/lib/Icon";
 

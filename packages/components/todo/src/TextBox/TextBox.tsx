@@ -4,9 +4,9 @@
  */
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
 import { CollaborativeTextArea } from "@microsoft/fluid-aqueduct-react";
-import { IComponentHandle, IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { SharedString } from "@microsoft/fluid-sequence";
-import { IComponentReactViewable } from "@microsoft/fluid-view-adapters";
+import { IComponentHTMLView, IComponentReactViewable } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 

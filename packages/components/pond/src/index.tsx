@@ -8,13 +8,11 @@ import {
     PrimedComponentFactory,
     SimpleModuleInstantiationFactory,
 } from "@microsoft/fluid-aqueduct";
-import {
-    IComponentHandle,
-    IComponentHTMLView,
-} from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { SharedDirectory } from "@microsoft/fluid-map";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
+import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 import { Clicker, ClickerName, ClickerWithInitialValue, ClickerWithInitialValueName } from "./internal-components";
 

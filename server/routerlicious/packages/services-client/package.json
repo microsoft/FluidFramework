@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-server-services-client",
-  "version": "0.1004.0-0",
+  "version": "0.1004.0",
   "description": "Isomorphic services for communicating with Fluid",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",

@@ -755,7 +755,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 const throttlingError: IThrottlingError = {
                     errorType: ErrorType.throttlingError,
                     message: "Service busy/throttled.",
-                    retryAfterSeconds: delayTime,
+                    retryAfterSeconds: delayTime / 1000,
                 };
                 this.emit("error", throttlingError);
             }
@@ -943,7 +943,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     private getRetryDelayFromError(error): number | undefined {
-        return error !== null && typeof error === "object" && error.retryAfterSeconds ? error.retryAfterSeconds
+        return error !== null && typeof error === "object" && error.retryAfterSeconds ? error.retryAfterSeconds * 1000
             : undefined;
     }
 

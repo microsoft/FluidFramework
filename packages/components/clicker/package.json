@@ -27,6 +27,7 @@
     "start:spo": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo",
     "start:spo-df": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo-df",
     "start:tinylicious": "webpack-dev-server --config webpack.config.js --package package.json --env.mode tinylicious",
+    "test": "npm run test:jest",
     "test:jest": "jest",
     "tsc": "tsc",
     "webpack": "webpack --env.production",
@@ -37,6 +38,7 @@
     "@microsoft/fluid-component-core-interfaces": "^0.16.0",
     "@microsoft/fluid-map": "^0.16.0",
     "@microsoft/fluid-runtime-definitions": "^0.16.0",
+    "@microsoft/fluid-view-interfaces": "^0.16.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },

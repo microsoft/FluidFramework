@@ -25,7 +25,7 @@ function getFileVersion() {
         return JSON.parse(fs.readFileSync("./package.json")).version;
     }
     console.error(`ERROR: lerna.json or package.json not found`);
-    process.exit(1);
+    process.exit(5);
 }
 
 function parseFileVersion(file_version, build_num) {
@@ -43,7 +43,7 @@ function parseFileVersion(file_version, build_num) {
     const r = release_version.split('.');
     if (r.length !== 3) {
         console.error(`ERROR: Invalid format for release version ${release_version}`);
-        process.exist(5);
+        process.exit(6);
     }
 
     const minor = parseInt(r[1]);
@@ -124,13 +124,13 @@ function generateFullVersion(release_version, prerelease_version, build_suffix) 
     return release_version;
 }
 
-function getFullVersion(file_version, env_build_num, env_build_branch) {
+function getFullVersion(file_version, arg_build_num, arg_build_branch) {
     // Azure DevOp pass in the build number as $(buildNum).$(buildAttempt).
     // Get the Build number and ignore the attempt number.
-    const build_num = parseInt(env_build_num.split('.')[0]);
+    const build_num = parseInt(arg_build_num.split('.')[0]);
 
     const { release_version, prerelease_version, isBackCompat } = parseFileVersion(file_version, build_num);
-    const build_suffix = isBackCompat ? "" : getBuildSuffix(env_build_branch, build_num, true);
+    const build_suffix = isBackCompat ? "" : getBuildSuffix(arg_build_branch, build_num, true);
     const fullVersion = generateFullVersion(release_version, prerelease_version, build_suffix);
     return fullVersion;
 }
@@ -152,41 +152,75 @@ function generateSimpleVersion(release_version, prerelease_version, build_suffix
     return release_version;
 }
 
-function getSimpleVersion(file_version, env_build_num, env_build_branch) {
+function getSimpleVersion(file_version, arg_build_num, arg_build_branch) {
     // Azure DevOp pass in the build number as $(buildNum).$(buildAttempt).
     // Get the Build number and ignore the attempt number.
-    const build_num = parseInt(env_build_num.split('.')[0]);
+    const build_num = parseInt(arg_build_num.split('.')[0]);
 
     const { release_version, prerelease_version, isBackCompat } = parseFileVersion(file_version, build_num);
-    const build_suffix = isBackCompat ? "" : getBuildSuffix(env_build_branch, build_num, false);
+    const build_suffix = isBackCompat ? "" : getBuildSuffix(arg_build_branch, build_num, false);
     const fullVersion = generateSimpleVersion(release_version, prerelease_version, build_suffix);
     return fullVersion;
 }
 
 function main() {
-    const isFull = process.argv[1] === "--full";
-    const env_build_num = process.env["VERSION_BUILDNUMBER"];
-    const env_build_branch = process.env["VERSION_BUILDBRANCH"];
-    const file_version = getFileVersion();
+    let isFull = false;
+    let arg_build_num;
+    let arg_build_branch;
+    let file_version;
+    for (let i = 2; i < process.argv.length; i++) {
+        if (process.argv[i] === "--full") {
+            isFull = true;
+            continue;
+        }
+
+        if (process.argv[i] === "--build") {
+            arg_build_num = process.argv[++i];
+            continue;
+        }
+
+        if (process.argv[i] === "--branch") {
+            arg_build_branch = process.argv[++i];
+            continue;
+        }
+
+        if (process.argv[i] === "--base") {
+            file_version = process.argv[++i];
+            continue;
+        }
+
+        console.log(`ERROR: Invalid argument ${process.argv[i]}`);
+        process.exit(1)
+    }
+
+    if (!arg_build_num) {
+        arg_build_num = process.env["VERSION_BUILDNUMBER"];
+        if (!arg_build_num) {
+            console.error("ERROR: Missing VERSION_BUILDNUMBER environment variable");
+            process.exit(3);
+        }
+    }
+
+    if (!arg_build_branch) {
+        arg_build_branch = process.env["VERSION_BUILDBRANCH"];
+        if (!arg_build_branch) {
+            console.error("ERROR: Missing VERSION_BUILD_BRANCH environment variable");
+            process.exit(4);
+        }
+    }
+
     if (!file_version) {
-        console.error("ERROR: Missing version in lerna.json/package.json");
-        process.exit(2);
-    }
-
-    if (!env_build_num) {
-        console.error("ERROR: Missing VERSION_BUILDNUMBER environment variable");
-        process.exit(3);
-    }
-
-    if (!env_build_branch) {
-        console.error("ERROR: Missing VERSION_BUILD_BRANCH environment variable");
-        process.exit(4);
+        file_version = getFileVersion();
+        if (!file_version) {
+            console.error("ERROR: Missing version in lerna.json/package.json");
+            process.exit(2);
+        }
     }
 
     if (isFull) {
-        console.log(getFullVersion(file_version, env_build_num, env_build_branch));
+        console.log(getFullVersion(file_version, arg_build_num, arg_build_branch));
     } else {
-        console.log(getSimpleVersion(file_version, env_build_num, env_build_branch));
+        console.log(getSimpleVersion(file_version, arg_build_num, arg_build_branch));
     }
 }
 
