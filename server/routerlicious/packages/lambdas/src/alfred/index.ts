@@ -201,10 +201,10 @@ export function configureWebSocketServices(
 
             if (clients.length > maxNumberOfClientsPerDocument) {
                 return Promise.reject({
-                        code: 400,
-                        message: "Too many clients are already connected to this document.",
-                        retryAfter: 5*60
-                    });
+                    code: 400,
+                    message: "Too many clients are already connected to this document.",
+                    retryAfter: 5*60,
+                });
             }
 
             await clientManager.addClient(
