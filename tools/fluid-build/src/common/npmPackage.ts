@@ -144,7 +144,7 @@ export class Package {
     }
 
     public getScript(name: string): string | undefined {
-        return this.packageJson.scripts[name];
+        return this.packageJson.scripts? this.packageJson.scripts[name] : undefined;
     }
 
     public async cleanNodeModules() {
