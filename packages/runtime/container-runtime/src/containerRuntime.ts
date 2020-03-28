@@ -498,7 +498,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
     public readonly IComponentSerializer: IComponentSerializer = new ComponentSerializer();
 
-    public readonly IComponentHandleContext: IComponentHandleContext;
+    public readonly [IComponentHandleContext]: IComponentHandleContext;
 
     public readonly logger: ITelemetryLogger;
     public readonly previousState: IPreviousState;
@@ -569,7 +569,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.chunkMap = new Map<string, string[]>(chunks);
 
         const expContainerContext = this.context as IExperimentalContainerContext;
-        this.IComponentHandleContext = new ComponentHandleContext("", this);
+        this[IComponentHandleContext] = new ComponentHandleContext("", this);
 
         // useContext - back-compat: 0.14 uploadSummary
         const useContext: boolean = expContainerContext.isExperimentalContainerContext ?

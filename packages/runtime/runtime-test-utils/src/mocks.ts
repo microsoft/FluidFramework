@@ -9,6 +9,7 @@ import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
     IComponentHandle,
     IComponentHandleContext,
+    IComponentRouter,
     IRequest,
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
@@ -323,8 +324,8 @@ export class MockQuorum implements IQuorum, EventEmitter{
 export class MockRuntime extends EventEmitter
     implements IComponentRuntime, IComponentHandleContext {
 
-    public get IComponentHandleContext(): IComponentHandleContext { return this; }
-    public get IComponentRouter() { return this; }
+    public get [IComponentHandleContext](): IComponentHandleContext { return this; }
+    public get [IComponentRouter]() { return this; }
 
     public readonly IComponentSerializer = new ComponentSerializer();
 

@@ -55,7 +55,7 @@ class KeyValue implements IKeyValue, IComponent, IComponentRouter {
         return kevValue;
     }
 
-    public get IComponentRouter() { return this; }
+    public get [IComponentRouter]() { return this; }
     public get IKeyValue() { return this; }
 
     private _root: ISharedMap | undefined;

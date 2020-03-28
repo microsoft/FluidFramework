@@ -6,14 +6,15 @@
 import {
     IComponentHandle,
     IComponentHandleContext,
+    IComponentRouter,
     IRequest,
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IRuntime } from "@microsoft/fluid-container-definitions";
 
 export class ComponentHandleContext implements IComponentHandleContext {
-    public get IComponentRouter() { return this; }
-    public get IComponentHandleContext() { return this; }
+    public get [IComponentRouter]() { return this; }
+    public get [IComponentHandleContext]() { return this; }
     public readonly isAttached = true;
 
     constructor(

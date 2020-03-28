@@ -17,7 +17,7 @@ export type ContainerServiceRegistryEntries = Iterable<[string, (runtime: IHostR
  */
 export abstract class BaseContainerService implements IComponentRouter {
 
-    public get IComponentRouter() { return this; }
+    public get [IComponentRouter]() { return this; }
 
     constructor(protected readonly runtime: IHostRuntime){
     }
@@ -87,7 +87,7 @@ export const generateContainerServicesRequestHandler =
             }
 
             const service = await factory.getService(runtime);
-            const router = service.IComponentRouter;
+            const router = service[IComponentRouter];
             let subRequest = request.createSubRequest(2);
             if (router) {
                 // If the service is also a router then we will route to it

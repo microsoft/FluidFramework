@@ -95,7 +95,8 @@ export class MatchMaker extends BaseContainerService implements IComponentInterf
             discoverable.discoverableInterfaces.forEach((interfaceName) => {
                 assert(
                     component[interfaceName],
-                    `Component registering discoverable interface: [${interfaceName}] but does not implement it.`,
+                    `Component registering discoverable interface: [${interfaceName.toString()}]
+                    but does not implement it.`,
                 );
             });
             this.registerDiscoverableInterfaces(discoverable);

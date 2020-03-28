@@ -4595,7 +4595,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public insertNewCollectionComponent(collection: IComponentCollection, inline = false) {
         // TODO - we may want to have a shared component collection?
         const instance = collection.createCollectionItem();
-        const loadable = instance.IComponentLoadable;
+        const loadable = instance[IComponentLoadable];
 
         const props = {
             crefTest: {

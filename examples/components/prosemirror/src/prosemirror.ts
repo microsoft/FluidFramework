@@ -109,8 +109,8 @@ export class ProseMirror extends EventEmitter
         return collection;
     }
 
-    public get IComponentLoadable() { return this; }
-    public get IComponentRouter() { return this; }
+    public get [IComponentLoadable]() { return this; }
+    public get [IComponentRouter]() { return this; }
     public get IComponentHTMLVisual() { return this; }
     public get IRichTextEditor() { return this.collabManager; }
 

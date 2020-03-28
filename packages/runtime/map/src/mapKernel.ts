@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHandle, IComponentHandleContext } from "@microsoft/fluid-component-core-interfaces";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { makeHandlesSerializable, parseHandles, ValueType } from "@microsoft/fluid-shared-object-base";
@@ -317,7 +317,7 @@ export class MapKernel {
         const serializableValue = makeSerializable(
             localValue,
             this.runtime.IComponentSerializer,
-            this.runtime.IComponentHandleContext,
+            this.runtime[IComponentHandleContext],
             this.handle);
 
         this.setCore(
@@ -347,7 +347,7 @@ export class MapKernel {
         const transformedValue = makeHandlesSerializable(
             params,
             this.runtime.IComponentSerializer,
-            this.runtime.IComponentHandleContext,
+            this.runtime[IComponentHandleContext],
             this.handle);
 
         // This is a special form of serialized valuetype only used for set, containing info for initialization.
@@ -406,7 +406,7 @@ export class MapKernel {
         this.data.forEach((localValue, key) => {
             serializableMapData[key] = localValue.makeSerialized(
                 this.runtime.IComponentSerializer,
-                this.runtime.IComponentHandleContext,
+                this.runtime[IComponentHandleContext],
                 this.handle);
         });
         return serializableMapData;
@@ -418,7 +418,7 @@ export class MapKernel {
             serializableMapData[key] = makeSerializable(
                 localValue,
                 this.runtime.IComponentSerializer,
-                this.runtime.IComponentHandleContext,
+                this.runtime[IComponentHandleContext],
                 this.handle);
         });
         return serializableMapData;
@@ -665,7 +665,7 @@ export class MapKernel {
                     const translatedValue = parseHandles(
                         op.value.value,
                         this.runtime.IComponentSerializer,
-                        this.runtime.IComponentHandleContext);
+                        this.runtime[IComponentHandleContext]);
                     handler.process(previousValue, translatedValue, local, message);
                     const event: IValueChanged = { key: op.key, previousValue };
                     this.eventEmitter.emit("valueChanged", event, local, message, this);
@@ -709,7 +709,7 @@ export class MapKernel {
             const translatedParams = makeHandlesSerializable(
                 params,
                 this.runtime.IComponentSerializer,
-                this.runtime.IComponentHandleContext,
+                this.runtime[IComponentHandleContext],
                 this.handle);
 
             const op: IMapValueTypeOperation = {

@@ -47,7 +47,7 @@ export class ExternalComponentLoader extends PrimedComponent
     public get IComponentCallable() { return this; }
 
     public setViewComponent(component: IComponentLoadable) {
-        this.root.set(this.viewComponentMapID, component.IComponentLoadable.url);
+        this.root.set(this.viewComponentMapID, component.url);
         this.viewComponentP = Promise.resolve(component);
     }
 

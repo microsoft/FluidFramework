@@ -6,6 +6,7 @@
 import {
     IComponentHandle,
     IComponentHandleContext,
+    IComponentRouter,
     IRequest,
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
@@ -25,9 +26,9 @@ export class SharedObjectComponentHandle implements IComponentHandle {
      */
     private bound: Set<IComponentHandle> | undefined;
 
-    public get IComponentHandle() { return this; }
-    public get IComponentRouter() { return this; }
-    public get IComponentHandleContext() { return this; }
+    public get [IComponentHandle]() { return this; }
+    public get [IComponentRouter]() { return this; }
+    public get [IComponentHandleContext]() { return this; }
 
     /**
      * Whether services have been attached for the associated shared object.

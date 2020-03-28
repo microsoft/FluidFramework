@@ -52,7 +52,7 @@ async function getHandle(runtimeP: Promise<IComponentRuntime>): Promise<ICompone
     }
 
     const component = request.value as IComponent;
-    return component.IComponentLoadable.handle;
+    return component[IComponentLoadable]?.handle;
 }
 
 export class SharedTextRunner
@@ -66,7 +66,7 @@ export class SharedTextRunner
         return runner;
     }
 
-    public get IComponentLoadable() { return this; }
+    public get [IComponentLoadable]() { return this; }
     public get IComponentHTMLView() { return this; }
     public get ISharedString() { return this.sharedString; }
 

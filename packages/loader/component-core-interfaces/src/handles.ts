@@ -7,8 +7,10 @@ import { IComponentRouter } from "./componentRouter";
 import { IComponent } from "./components";
 import { IComponentLoadable } from "./componentLoadable";
 
+export const IComponentHandleContext = Symbol.for("IComponentHandleContext");
+
 export interface IProvideComponentHandleContext {
-    readonly IComponentHandleContext: IComponentHandleContext;
+    readonly [IComponentHandleContext]: IComponentHandleContext;
 }
 
 /**
@@ -43,8 +45,10 @@ export interface IComponentHandleContext extends IComponentRouter, IProvideCompo
     bind(handle: IComponentHandle): void;
 }
 
+export const IComponentHandle = Symbol.for("IComponentHandle");
+
 export interface IProvideComponentHandle {
-    readonly IComponentHandle: IComponentHandle;
+    readonly [IComponentHandle]: IComponentHandle;
 }
 
 /**

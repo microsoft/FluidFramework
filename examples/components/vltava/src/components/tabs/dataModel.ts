@@ -5,7 +5,10 @@
 
 import { EventEmitter } from "events";
 
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import {
+    IComponent,
+    IComponentLoadable,
+} from "@microsoft/fluid-component-core-interfaces";
 import {
     ISharedDirectory,
     IDirectory,
@@ -68,7 +71,7 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
     public async createTab(type: string): Promise<string> {
         const newId = uuid();
         const component = await this.createAndAttachComponent(newId, type);
-        this.tabs.set(newId, component.IComponentHandle);
+        this.tabs.set(newId, component[IComponentLoadable]?.handle);
         this.emit("newTab", true);
         return newId;
     }

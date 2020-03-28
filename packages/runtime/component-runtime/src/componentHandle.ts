@@ -15,9 +15,9 @@ import {
 export class ComponentHandle implements IComponentHandle {
     private bound: Set<IComponentHandle> | undefined;
 
-    public get IComponentRouter(): IComponentRouter { return this; }
-    public get IComponentHandleContext(): IComponentHandleContext { return this; }
-    public get IComponentHandle(): IComponentHandle { return this; }
+    public get [IComponentRouter](): IComponentRouter { return this; }
+    public get [IComponentHandleContext](): IComponentHandleContext { return this; }
+    public get [IComponentHandle](): IComponentHandle { return this; }
 
     public get isAttached(): boolean {
         return this.routeContext.isAttached;
@@ -55,8 +55,9 @@ export class ComponentHandle implements IComponentHandle {
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        if (this.value.IComponentRouter) {
-            return this.value.IComponentRouter.request(request);
+        const router = this.value[IComponentRouter];
+        if (router) {
+            return router.request(request);
         } else {
             return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
         }

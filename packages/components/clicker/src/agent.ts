@@ -11,7 +11,7 @@ export class ClickerAgent implements IComponentRouter, IComponentRunnable {
 
     constructor(private readonly counter: Counter) { }
 
-    public get IComponentRouter() { return this; }
+    public get [IComponentRouter]() { return this; }
     public get IComponentRunnable() { return this; }
 
     public async run() {

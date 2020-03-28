@@ -6,6 +6,7 @@
 import * as assert from "assert";
 import * as path from "path";
 import { fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
+import { IComponentHandleContext } from "@microsoft/fluid-component-core-interfaces";
 import { addBlobToTree } from "@microsoft/fluid-protocol-base";
 import {
     ISequencedDocumentMessage,
@@ -915,7 +916,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
                     const handler = localValue.getOpHandler(op.value.opName);
                     const previousValue = localValue.value;
                     const translatedValue = this.runtime.IComponentSerializer.parse(
-                        JSON.stringify(op.value.value), this.runtime.IComponentHandleContext);
+                        JSON.stringify(op.value.value), this.runtime[IComponentHandleContext]);
                     handler.process(previousValue, translatedValue, local, message);
                     const event: IDirectoryValueChanged = { key: op.key, path: op.path, previousValue };
                     this.emit("valueChanged", event, local, message);
@@ -1031,7 +1032,7 @@ class SubDirectory implements IDirectory {
         const serializableValue = makeSerializable(
             localValue,
             this.runtime.IComponentSerializer,
-            this.runtime.IComponentHandleContext,
+            this.runtime[IComponentHandleContext],
             this.directory.handle);
 
         this.setCore(
@@ -1067,7 +1068,7 @@ class SubDirectory implements IDirectory {
         const transformedValue = params
             ? JSON.parse(this.runtime.IComponentSerializer.stringify(
                 params,
-                this.runtime.IComponentHandleContext,
+                this.runtime[IComponentHandleContext],
                 this.directory.handle))
             : params;
 
@@ -1409,7 +1410,7 @@ class SubDirectory implements IDirectory {
         for (const [key, localValue] of this._storage) {
             const value = localValue.makeSerialized(
                 this.runtime.IComponentSerializer,
-                this.runtime.IComponentHandleContext,
+                this.runtime[IComponentHandleContext],
                 this.directory.handle);
             const res: [string, ISerializedValue] = [key, value];
             yield res;

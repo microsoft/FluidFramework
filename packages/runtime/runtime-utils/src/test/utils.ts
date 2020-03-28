@@ -3,14 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle, IComponentHandleContext } from "@microsoft/fluid-component-core-interfaces";
+import {
+    IComponentHandle,
+    IComponentHandleContext,
+    IComponentRouter,
+} from "@microsoft/fluid-component-core-interfaces";
 import { ComponentHandle } from "../componentHandle";
 
 export const mockHandleContext: IComponentHandleContext = {
     path: "",
     isAttached: false,
-    IComponentRouter: undefined as any,
-    IComponentHandleContext: undefined as any,
+    [IComponentRouter]: undefined as any,
+    [IComponentHandleContext]: undefined as any,
 
     attach: () => {
         throw new Error("Method not implemented.");

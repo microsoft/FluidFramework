@@ -20,9 +20,9 @@ import { ISharedDirectory } from "@microsoft/fluid-map";
  * and loads blob.
  */
 export class BlobHandle implements IComponentHandle {
-    public get IComponentRouter(): IComponentRouter { return this; }
-    public get IComponentHandleContext(): IComponentHandleContext { return this; }
-    public get IComponentHandle(): IComponentHandle { return this; }
+    public get [IComponentRouter](): IComponentRouter { return this; }
+    public get [IComponentHandleContext](): IComponentHandleContext { return this; }
+    public get [IComponentHandle](): IComponentHandle { return this; }
 
     public get isAttached(): boolean {
         return true;

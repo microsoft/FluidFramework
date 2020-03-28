@@ -9,6 +9,7 @@ import {
     IComponentHandleContext,
     IRequest,
     IResponse,
+    IComponentRouter,
 } from "@microsoft/fluid-component-core-interfaces";
 
 /**
@@ -17,9 +18,9 @@ import {
  * as well as shared objects (see ComponentRuntime.request for details)
  */
 export class ComponentHandle implements IComponentHandle {
-    public get IComponentRouter() { return this; }
-    public get IComponentHandleContext() { return this; }
-    public get IComponentHandle() { return this; }
+    public get [IComponentRouter]() { return this; }
+    public get [IComponentHandleContext]() { return this; }
+    public get [IComponentHandle]() { return this; }
 
     public readonly isAttached = true;
     private componentP: Promise<IComponent> | undefined;
@@ -54,7 +55,7 @@ export class ComponentHandle implements IComponentHandle {
 
     public async request(request: IRequest): Promise<IResponse> {
         const component = await this.get() as IComponent;
-        const router = component.IComponentRouter;
+        const router = component[IComponentRouter];
 
         return router
             ? router.request(request)

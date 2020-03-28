@@ -15,7 +15,7 @@ export class TextAnalyzer implements IComponentRouter, IComponentRunnable {
         private readonly insightsMap: ISharedMap,
         private readonly config: ITokenConfig) { }
 
-    public get IComponentRouter() { return this; }
+    public get [IComponentRouter]() { return this; }
     public get IComponentRunnable() { return this; }
 
     public async run() {

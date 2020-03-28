@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { createLoader, IHostConfig } from "@microsoft/fluid-base-host";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IComponentRouter } from "@microsoft/fluid-component-core-interfaces";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
 import { BaseTelemetryNullLogger, Deferred } from "@microsoft/fluid-core-utils";
 import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
@@ -128,7 +128,7 @@ class KeyValueLoader {
             return;
         }
         const component = response.value as IComponent;
-        const keyValue = (component.IComponentRouter as unknown) as IKeyValue;
+        const keyValue = (component[IComponentRouter]) as IKeyValue;
         winston.info(`Resolved key-value component`);
         this.kvDeferred.resolve(keyValue);
     }

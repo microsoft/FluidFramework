@@ -29,7 +29,7 @@ export class NullRuntime extends EventEmitter implements IRuntime {
         throw new Error("Not implemented");
     }
 
-    public get IComponentHandleContext(): IComponentHandleContext {
+    public get [IComponentHandleContext](): IComponentHandleContext {
         throw new Error("Not implemented");
     }
 

@@ -84,8 +84,9 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
 
     public removeCollectionItem(instance: IComponent): void {
         let componentUrl: string;
-        if (instance.IComponentLoadable) {
-            componentUrl = instance.IComponentLoadable.url;
+        const loadable = instance[IComponentLoadable];
+        if (loadable) {
+            componentUrl = loadable.url;
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.removeComponent(componentUrl);
         }
@@ -145,7 +146,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         return this.getComponent<IComponent>(id)
             .then((returnedComponent) => {
                 if (returnedComponent) {
-                    if (returnedComponent.IComponentLoadable) {
+                    if (returnedComponent[IComponentLoadable]) {
                         this.componentSubDirectory.set(id, defaultModel);
                         return returnedComponent;
                     } else {

@@ -80,9 +80,9 @@ export class VideoPlayer implements
     private playerDiv: HTMLDivElement;
 
     public get IComponentHTMLView() { return this; }
-    public get IComponentRouter() { return this; }
+    public get [IComponentRouter]() { return this; }
     public get IComponentLayout() { return this; }
-    public get IComponentLoadable() { return this; }
+    public get [IComponentLoadable]() { return this; }
 
     // Video def has a preferred aspect ratio
     public aspectRatio?: number;
@@ -166,8 +166,8 @@ export class VideoPlayerCollection extends SharedComponent<ISharedDirectory> imp
     public create() { this.initialize().catch((error) => { this.context.error(error); }); }
     public async load() { await this.initialize(); }
 
-    public get IComponentRouter() { return this; }
-    public get IComponentLoadable() { return this; }
+    public get [IComponentRouter]() { return this; }
+    public get [IComponentLoadable]() { return this; }
     public get IComponentCollection() { return this; }
 
     private readonly videoPlayers = new Map<string, VideoPlayer>();
@@ -223,7 +223,7 @@ export class VideoPlayerCollection extends SharedComponent<ISharedDirectory> imp
                 new VideoPlayer(
                     this.root.get(key),
                     `${this.url}/${key}`,
-                    this.runtime.IComponentHandleContext,
+                    this.runtime[IComponentHandleContext],
                     key,
                     youTubeApi,
                     this));
@@ -237,7 +237,7 @@ export class VideoPlayerCollection extends SharedComponent<ISharedDirectory> imp
                 const player = new VideoPlayer(
                     this.root.get(changed.key),
                     `${this.url}/${changed.key}`,
-                    this.runtime.IComponentHandleContext,
+                    this.runtime[IComponentHandleContext],
                     changed.key,
                     youTubeApi,
                     this);

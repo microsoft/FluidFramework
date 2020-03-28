@@ -5,6 +5,7 @@
 
 import * as assert from "assert";
 import { fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
+import { IComponentHandleContext } from "@microsoft/fluid-component-core-interfaces";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -445,13 +446,13 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
     private serializeValue(value) {
         return this.runtime.IComponentSerializer.stringify(
             value,
-            this.runtime.IComponentHandleContext,
+            this.runtime[IComponentHandleContext],
             this.handle);
     }
 
     private deserializeValue(content: string) {
         return this.runtime.IComponentSerializer.parse(
             content,
-            this.runtime.IComponentHandleContext);
+            this.runtime[IComponentHandleContext]);
     }
 }

@@ -5,7 +5,10 @@
 
 // inspiration for this example taken from https://github.com/agentcooper/typescript-play
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import {
+    IComponentHandle,
+    IComponentLoadable,
+} from "@microsoft/fluid-component-core-interfaces";
 import { IComponentLayout } from "@microsoft/fluid-framework-experimental";
 import {
     IMergeTreeGroupMsg,
@@ -75,7 +78,7 @@ export class MonacoRunner extends PrimedComponent implements
     }
 
     public get IComponentHTMLView() { return this; }
-    public get IComponentLoadable() { return this; }
+    public get [IComponentLoadable]() { return this; }
     public get IComponentLayout() { return this; }
 
     /**

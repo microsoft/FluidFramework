@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import {
+    IComponentHandle,
+    IComponentHandleContext,
+    IRequest,
+    IResponse,
+} from "@microsoft/fluid-component-core-interfaces";
+
 import { ISharedDirectory, MapFactory, SharedDirectory } from "@microsoft/fluid-map";
 import { ITaskManager } from "@microsoft/fluid-runtime-definitions";
 // eslint-disable-next-line import/no-internal-modules
@@ -76,7 +82,7 @@ export abstract class PrimedComponent extends SharedComponent {
         });
         const path = `${this.bigBlobs}${uuid()}`;
         this.root.set(path, blob);
-        return new BlobHandle(path, this.root, this.runtime.IComponentHandleContext);
+        return new BlobHandle(path, this.root, this.runtime[IComponentHandleContext]);
     }
 
     /**

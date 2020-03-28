@@ -48,10 +48,10 @@ export interface ISummarizer extends IComponentRouter, IComponentRunnable, IComp
  * Summarizer is responsible for coordinating when to send generate and send summaries.
  * It is the main entry point for summary work.
  */
-export class Summarizer implements ISummarizer {
-    public get IComponentRouter() { return this; }
+export class Summarizer implements ISummarizer, IComponentRouter, IComponentRunnable, IComponentLoadable {
+    public get [IComponentRouter]() { return this; }
     public get IComponentRunnable() { return this; }
-    public get IComponentLoadable() { return this; }
+    public get [IComponentLoadable]() { return this; }
     public get ISummarizer() { return this; }
 
     private readonly logger: ITelemetryLogger;

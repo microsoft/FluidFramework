@@ -45,8 +45,8 @@ export class Drawer extends EventEmitter implements
         { pkg: "@fluid-example/table-view", name: "Table", version: "^0.10.0", icon: "Table" },
     ];
 
-    public get IComponentLoadable() { return this; }
-    public get IComponentRouter() { return this; }
+    public get [IComponentLoadable]() { return this; }
+    public get [IComponentRouter]() { return this; }
     public get IComponentHTMLVisual() { return this; }
 
     public url: string;

@@ -384,8 +384,8 @@ export class Scribe
         return collection;
     }
 
-    public get IComponentLoadable() { return this; }
-    public get IComponentRouter() { return this; }
+    public get [IComponentLoadable]() { return this; }
+    public get [IComponentRouter]() { return this; }
     public get IComponentHTMLView() { return this; }
 
     public url: string;

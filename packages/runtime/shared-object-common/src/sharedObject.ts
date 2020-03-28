@@ -5,7 +5,11 @@
 
 import * as assert from "assert";
 import { ITelemetryErrorEvent, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import {
+    IComponentHandle,
+    IComponentHandleContext,
+    IComponentLoadable,
+} from "@microsoft/fluid-component-core-interfaces";
 import {
     IComponent,
 } from "@microsoft/fluid-container-definitions";
@@ -36,7 +40,7 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
 
     public get ISharedObject() { return this; }
     public get IChannel() { return this; }
-    public get IComponentLoadable() { return this; }
+    public get [IComponentLoadable]() { return this; }
 
     /**
      * The handle referring to this SharedObject
@@ -98,7 +102,7 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
         this.handle = new SharedObjectComponentHandle(
             this,
             id,
-            runtime.IComponentHandleContext);
+            runtime[IComponentHandleContext]);
 
         // Runtime could be null since some package hasn't turn on strictNullChecks yet
         // We should remove the null check once that is done

@@ -93,9 +93,9 @@ export class ProgressBar extends EventEmitter implements
         this.handle = new ComponentHandle(this, keyId, context);
     }
 
-    public get IComponentLoadable() { return this; }
+    public get [IComponentLoadable]() { return this; }
     public get IComponentHTMLVisual() { return this; }
-    public get IComponentRouter() { return this; }
+    public get [IComponentRouter]() { return this; }
 
     public addView(scope?: IComponent) {
         return new ProgressBarView(this);
@@ -130,8 +130,8 @@ export class ProgressCollection
         return collection;
     }
 
-    public get IComponentLoadable() { return this; }
-    public get IComponentRouter() { return this; }
+    public get [IComponentLoadable]() { return this; }
+    public get [IComponentRouter]() { return this; }
     public get IComponentCollection() { return this; }
 
     public url: string;
@@ -144,7 +144,7 @@ export class ProgressCollection
         super();
 
         this.url = context.id;
-        this.handle = new ComponentHandle(this, "", this.runtime.IComponentHandleContext);
+        this.handle = new ComponentHandle(this, "", this.runtime[IComponentHandleContext]);
     }
 
     public changeValue(key: string, newValue: number) {
@@ -202,7 +202,7 @@ export class ProgressCollection
                     this.root.get(key),
                     `${this.url}/${key}`,
                     key,
-                    this.runtime.IComponentHandleContext,
+                    this.runtime[IComponentHandleContext],
                     this));
         }
 
@@ -216,7 +216,7 @@ export class ProgressCollection
                         this.root.get(changed.key),
                         `${this.url}/${changed.key}`,
                         changed.key,
-                        this.runtime.IComponentHandleContext,
+                        this.runtime[IComponentHandleContext],
                         this));
                 this.emit("progressAdded", `/${changed.key}`);
             }

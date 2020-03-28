@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { IComponentHandleContext } from "@microsoft/fluid-component-core-interfaces";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -149,7 +150,7 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
             makeHandlesSerializable(
                 message,
                 this.runtime.IComponentSerializer,
-                this.runtime.IComponentHandleContext,
+                this.runtime[IComponentHandleContext],
                 this.handle,
             ),
         );
@@ -184,7 +185,7 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
     }
 
     protected processCore(rawMessage: ISequencedDocumentMessage, local: boolean) {
-        const msg = parseHandles(rawMessage, this.runtime.IComponentSerializer, this.runtime.IComponentHandleContext);
+        const msg = parseHandles(rawMessage, this.runtime.IComponentSerializer, this.runtime[IComponentHandleContext]);
 
         const contents = msg.contents;
 
@@ -296,7 +297,7 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
             type: TreeEntry[TreeEntry.Blob],
             value: {
                 contents: serializer !== undefined
-                    ? serializer.stringify(chunk, this.runtime.IComponentHandleContext, this.handle)
+                    ? serializer.stringify(chunk, this.runtime[IComponentHandleContext], this.handle)
                     : JSON.stringify(chunk),
                 encoding: "utf-8",
             },
@@ -309,7 +310,7 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
 
         const serializer = this.runtime.IComponentSerializer;
         const cellData = serializer !== undefined
-            ? serializer.parse(utf8, this.runtime.IComponentHandleContext)
+            ? serializer.parse(utf8, this.runtime[IComponentHandleContext])
             : JSON.parse(utf8);
 
         this.cells = SparseArray2D.load(cellData[0]);

@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 import { EventEmitter } from "events";
 import {
     IComponent,
+    IComponentConfiguration,
     IComponentLoadable,
     IComponentRouter,
     IRequest,
@@ -43,8 +44,8 @@ export class Smde extends EventEmitter implements
         return collection;
     }
 
-    public get IComponentLoadable() { return this; }
-    public get IComponentRouter() { return this; }
+    public get [IComponentLoadable]() { return this; }
+    public get [IComponentRouter]() { return this; }
     public get IComponentHTMLView() { return this; }
 
     public url: string;
@@ -202,7 +203,7 @@ export class Smde extends EventEmitter implements
     // TODO: this should be an utility.
     private isReadonly() {
         const runtimeAsComponent = this.context.hostRuntime as IComponent;
-        const scopes = runtimeAsComponent.IComponentConfiguration?.scopes;
+        const scopes = runtimeAsComponent[IComponentConfiguration]?.scopes;
         return scopes !== undefined && !scopes.includes("doc:write");
     }
 }

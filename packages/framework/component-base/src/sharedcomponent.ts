@@ -6,6 +6,7 @@
 import { EventEmitter } from "events";
 import {
     IComponentHandle,
+    IComponentHandleContext,
     IComponentLoadable,
     IComponentRouter,
     IRequest,
@@ -21,10 +22,9 @@ export abstract class SharedComponent<
 > extends EventEmitter implements IComponentLoadable, IProvideComponentHandle, IComponentRouter {
     private _handle?: IComponentHandle<this>;
 
-    public get IComponentRouter() { return this; }
-    public get IComponentLoadable() { return this; }
-    public get IComponentHandle() { return this.handle; }
-    public get IProvideComponentHandle() { return this; }
+    public get [IComponentRouter]() { return this; }
+    public get [IComponentLoadable]() { return this; }
+    public get [IComponentHandle]() { return this.handle; }
 
     /**
      * Handle to a shared component
@@ -60,7 +60,7 @@ export abstract class SharedComponent<
             this._handle = new ComponentHandle(
                 this,
                 "",
-                this.runtime.IComponentHandleContext);
+                this.runtime[IComponentHandleContext]);
         }
 
         return this._handle;
@@ -69,7 +69,7 @@ export abstract class SharedComponent<
     /**
      * Absolute URL to the component within the document
      */
-    public get url() { return this.runtime.IComponentHandleContext.path; }
+    public get url() { return this.runtime[IComponentHandleContext].path; }
 
     // #endregion IComponentLoadable
 

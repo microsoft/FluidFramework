@@ -9,6 +9,7 @@ import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
     IComponentHandle,
     IComponentHandleContext,
+    IComponentRouter,
     IRequest,
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
@@ -96,7 +97,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         return runtime;
     }
 
-    public get IComponentRouter() { return this; }
+    public get [IComponentRouter]() { return this; }
 
     public get connectionState(): ConnectionState {
         return this.componentContext.connectionState;
@@ -131,12 +132,12 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     }
 
     public get routeContext(): IComponentHandleContext {
-        return this.componentContext.hostRuntime.IComponentHandleContext;
+        return this.componentContext.hostRuntime[IComponentHandleContext];
     }
 
     public get IComponentSerializer() { return this.componentContext.hostRuntime.IComponentSerializer; }
 
-    public get IComponentHandleContext() { return this; }
+    public get [IComponentHandleContext]() { return this; }
     public get IComponentRegistry() { return this.componentRegistry; }
 
     private _disposed = false;

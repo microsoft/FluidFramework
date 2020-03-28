@@ -21,9 +21,9 @@ import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-view
 
 export class ImageComponent implements
     IComponentLoadable, IComponentHTMLView, IComponentRouter, IComponentLayout {
-    public get IComponentLoadable() { return this; }
+    public get [IComponentLoadable]() { return this; }
     public get IComponentHTMLView() { return this; }
-    public get IComponentRouter() { return this; }
+    public get [IComponentRouter]() { return this; }
     public get IComponentLayout() { return this; }
 
     // Video def has a preferred aspect ratio
@@ -71,9 +71,9 @@ export class ImageCollection extends SharedComponent<ISharedDirectory> implement
     public create() { this.initialize(); }
     public async load() { this.initialize(); }
 
-    public get IComponentLoadable() { return this; }
+    public get [IComponentLoadable]() { return this; }
     public get IComponentCollection() { return this; }
-    public get IComponentRouter() { return this; }
+    public get [IComponentRouter]() { return this; }
 
     private readonly images = new Map<string, ImageComponent>();
 
@@ -122,7 +122,7 @@ export class ImageCollection extends SharedComponent<ISharedDirectory> implement
                     this.root.get(key),
                     `${this.url}/${key}`,
                     key,
-                    this.runtime.IComponentHandleContext));
+                    this.runtime[IComponentHandleContext]));
         }
 
         this.root.on("valueChanged", (changed) => {
@@ -134,7 +134,7 @@ export class ImageCollection extends SharedComponent<ISharedDirectory> implement
                     this.root.get(changed.key),
                     `${this.url}/${changed.key}`,
                     changed.key,
-                    this.runtime.IComponentHandleContext);
+                    this.runtime[IComponentHandleContext]);
                 this.images.set(changed.key, player);
             }
         });

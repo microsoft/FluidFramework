@@ -4,6 +4,7 @@
  */
 
 import * as assert from "assert";
+import { IComponentHandleContext } from "@microsoft/fluid-component-core-interfaces";
 import { fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
@@ -92,7 +93,7 @@ export class SnapshotLoader {
         const chunk = Snapshot.processChunk(
             header,
             this.runtime.IComponentSerializer,
-            this.runtime.IComponentHandleContext);
+            this.runtime[IComponentHandleContext]);
         const segs = chunk.segmentTexts.map(this.specToSegment);
         this.mergeTree.reloadFromSegments(segs);
 
@@ -131,7 +132,7 @@ export class SnapshotLoader {
             services,
             Snapshot.body,
             this.runtime.IComponentSerializer,
-            this.runtime.IComponentHandleContext);
+            this.runtime[IComponentHandleContext]);
 
         this.runtime.logger.shipAssert(
             chunk1.chunkLengthChars + chunk2.chunkLengthChars === chunk1.totalLengthChars,

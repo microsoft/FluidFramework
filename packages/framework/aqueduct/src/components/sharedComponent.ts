@@ -7,6 +7,7 @@ import { EventEmitter } from "events";
 import {
     IComponent,
     IComponentHandle,
+    IComponentHandleContext,
     IComponentLoadable,
     IComponentRouter,
     IProvideComponentHandle,
@@ -29,9 +30,9 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     public get disposed() { return this._disposed; }
 
     public get id() { return this.runtime.id; }
-    public get IComponentRouter() { return this; }
-    public get IComponentLoadable() { return this; }
-    public get IComponentHandle() { return this.innerHandle; }
+    public get [IComponentRouter]() { return this; }
+    public get [IComponentLoadable]() { return this; }
+    public get [IComponentHandle]() { return this.innerHandle; }
 
     /**
      * Handle to a shared component
@@ -43,7 +44,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
         protected readonly context: IComponentContext,
     ) {
         super();
-        this.innerHandle = new ComponentHandle(this, this.url, runtime.IComponentHandleContext);
+        this.innerHandle = new ComponentHandle(this, this.url, runtime[IComponentHandleContext]);
 
         // Container event handlers
         this.runtime.once("dispose", () => {

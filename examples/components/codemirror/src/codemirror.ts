@@ -205,8 +205,8 @@ export class CodeMirrorComponent
         return collection;
     }
 
-    public get IComponentLoadable() { return this; }
-    public get IComponentRouter() { return this; }
+    public get [IComponentLoadable]() { return this; }
+    public get [IComponentRouter]() { return this; }
     public get IComponentHTMLVisual() { return this; }
 
     public url: string;

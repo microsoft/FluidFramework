@@ -45,11 +45,11 @@ export interface IComponentRuntime extends
     IComponentRouter,
     Partial<IProvideComponentRegistry>,
     IDisposable {
-    readonly IComponentRouter: IComponentRouter;
+    readonly [IComponentRouter]: IComponentRouter;
 
     readonly IComponentSerializer: IComponentSerializer;
 
-    readonly IComponentHandleContext: IComponentHandleContext;
+    readonly [IComponentHandleContext]: IComponentHandleContext;
 
     readonly options: any;
 

@@ -47,7 +47,7 @@ export class WebWorkerLoader implements ILoader, IComponentRunnable, IComponentR
     constructor(private readonly proxy: Comlink.Remote<IProxyLoader>) {
     }
 
-    public get IComponentRouter() { return this; }
+    public get [IComponentRouter]() { return this; }
     public get IComponentRunnable() { return this; }
 
     public async request(request: IRequest): Promise<IResponse> {

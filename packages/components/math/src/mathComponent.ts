@@ -422,8 +422,8 @@ export class MathInstance extends EventEmitter implements IComponentLoadable, IC
     IComponentHTMLVisual {
     public static defaultOptions: IMathOptions = { display: "inline" };
 
-    public get IComponentLoadable() { return this; }
-    public get IComponentRouter() { return this; }
+    public get [IComponentLoadable]() { return this; }
+    public get [IComponentRouter]() { return this; }
     public get IComponentHTMLVisual() { return this; }
 
     public handle: ComponentHandle;
@@ -527,9 +527,9 @@ export class MathCollection extends SharedComponent<ISharedDirectory> implements
         this.initialize();
     }
 
-    public get IComponentLoadable() { return this; }
+    public get [IComponentLoadable]() { return this; }
     public get IComponentCollection() { return this; }
-    public get IComponentRouter() { return this; }
+    public get [IComponentRouter]() { return this; }
 
     private combinedMathText: Sequence.SharedString;
 
@@ -561,7 +561,7 @@ export class MathCollection extends SharedComponent<ISharedDirectory> implements
 
     public createCollectionItem(options?: IMathOptions): MathInstance {
         const leafId = `math-${Date.now()}`;
-        return new MathInstance(`${this.url}/${leafId}`, leafId, this.runtime.IComponentHandleContext, this, options);
+        return new MathInstance(`${this.url}/${leafId}`, leafId, this.runtime[IComponentHandleContext], this, options);
     }
 
     public getText(instance: MathInstance) {
@@ -628,7 +628,7 @@ export class MathCollection extends SharedComponent<ISharedDirectory> implements
                     options = mathMarker.properties.componentOptions;
                 }
                 mathMarker.mathInstance = new MathInstance(
-                    `${this.url}/${id}`, id, this.runtime.IComponentHandleContext, this, options, true);
+                    `${this.url}/${id}`, id, this.runtime[IComponentHandleContext], this, options, true);
             }
             return mathMarker.mathInstance as MathInstance;
         }

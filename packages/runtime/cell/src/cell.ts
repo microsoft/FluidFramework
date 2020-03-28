@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ISerializedHandle } from "@microsoft/fluid-component-core-interfaces";
+import {
+    ISerializedHandle,
+    IComponentHandleContext,
+} from "@microsoft/fluid-component-core-interfaces";
 import { fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
 import {
     FileMode,
@@ -270,7 +273,7 @@ export class SharedCell extends SharedObject implements ISharedCell {
         // a POJO for the op
         const stringified = this.runtime.IComponentSerializer.stringify(
             value,
-            this.runtime.IComponentHandleContext,
+            this.runtime[IComponentHandleContext],
             this.handle);
         return JSON.parse(stringified);
     }
@@ -288,7 +291,7 @@ export class SharedCell extends SharedObject implements ISharedCell {
         }
 
         return value !== undefined
-            ? this.runtime.IComponentSerializer.parse(JSON.stringify(value), this.runtime.IComponentHandleContext)
+            ? this.runtime.IComponentSerializer.parse(JSON.stringify(value), this.runtime[IComponentHandleContext])
             : value;
     }
 }

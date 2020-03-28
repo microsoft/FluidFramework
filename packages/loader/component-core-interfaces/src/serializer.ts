@@ -16,6 +16,8 @@ export interface ISerializedHandle {
     url: string;
 }
 
+export const IComponentSerializer = Symbol.for("IComponentSerializer");
+
 export interface IProvideComponentSerializer {
     readonly IComponentSerializer: IComponentSerializer;
 }

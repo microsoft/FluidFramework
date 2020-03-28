@@ -245,7 +245,7 @@ export class LocalValueMaker {
             const translatedValue = parseHandles(
                 serializable.value,
                 this.runtime.IComponentSerializer,
-                this.runtime.IComponentHandleContext);
+                this.runtime[IComponentHandleContext]);
 
             return new PlainLocalValue(translatedValue);
         } else if (this.valueTypes.has(serializable.type)) {
@@ -254,7 +254,7 @@ export class LocalValueMaker {
             serializable.value = parseHandles(
                 serializable.value,
                 this.runtime.IComponentSerializer,
-                this.runtime.IComponentHandleContext);
+                this.runtime[IComponentHandleContext]);
 
             const localValue = valueType.factory.load(emitter, serializable.value);
             return new ValueTypeLocalValue(localValue, valueType);

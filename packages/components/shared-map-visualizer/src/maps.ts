@@ -36,7 +36,7 @@ async function updateOrCreateKey(key: string, map: ISharedMap, container: JQuery
     let keyElement = container.find(`>.${key}`);
     const newElement = keyElement.length === 0;
 
-    const isCollab = value ? (value as IComponent).IComponentHandle !== undefined : false;
+    const isCollab = value ? (value as IComponent)[IComponentHandle] !== undefined : false;
 
     if (newElement) {
         keyElement = $(`<div class="${key} ${isCollab ? "collab-object" : ""}"></div>`);
@@ -165,8 +165,8 @@ export class ProgressCollection
         return collection;
     }
 
-    public get IComponentLoadable() { return this; }
-    public get IComponentRouter() { return this; }
+    public get [IComponentLoadable]() { return this; }
+    public get [IComponentRouter]() { return this; }
     public get IComponentHTMLView() { return this; }
 
     public url: string;

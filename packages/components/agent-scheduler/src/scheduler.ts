@@ -8,6 +8,7 @@ import { EventEmitter } from "events";
 import {
     IComponent,
     IComponentHandle,
+    IComponentLoadable,
     IComponentRouter,
     IComponentRunnable,
     IRequest,
@@ -55,9 +56,9 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         return agentScheduler;
     }
 
-    public get IComponentLoadable() { return this; }
+    public get [IComponentLoadable]() { return this; }
     public get IAgentScheduler() { return this; }
-    public get IComponentRouter() { return this; }
+    public get [IComponentRouter]() { return this; }
 
     private get clientId(): string {
         if (!this.runtime.isAttached) {
@@ -387,8 +388,8 @@ export class TaskManager implements ITaskManager {
     }
 
     public get IAgentScheduler() { return this.scheduler; }
-    public get IComponentLoadable() { return this; }
-    public get IComponentRouter() { return this; }
+    public get [IComponentLoadable]() { return this; }
+    public get [IComponentRouter]() { return this; }
     public get ITaskManager() { return this; }
 
     public get url() { return this.scheduler.url; }
@@ -456,7 +457,7 @@ export class TaskManager implements ITaskManager {
         }
 
         const rawComponent = response.value as IComponent;
-        const agent = rawComponent.IComponentRunnable;
+        const agent = rawComponent[IComponentRunnable];
         if (agent === undefined) {
             return Promise.reject("Component does not implement IComponentRunnable");
         }

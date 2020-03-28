@@ -5,6 +5,7 @@
 
 import * as assert from "assert";
 import { ChildLogger, Deferred, fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
+import { IComponentHandleContext } from "@microsoft/fluid-component-core-interfaces";
 import { IValueChanged, MapKernel } from "@microsoft/fluid-map";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
 import {
@@ -309,7 +310,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         const translated = makeHandlesSerializable(
             message,
             this.runtime.IComponentSerializer,
-            this.runtime.IComponentHandleContext,
+            this.runtime[IComponentHandleContext],
             this.handle);
         this.submitLocalMessage(translated);
     }
@@ -533,7 +534,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         const message = parseHandles(
             rawMessage,
             this.runtime.IComponentSerializer,
-            this.runtime.IComponentHandleContext);
+            this.runtime[IComponentHandleContext]);
 
         const ops: MergeTree.IMergeTreeOp[] = [];
         function transfromOps(event: SequenceDeltaEvent) {

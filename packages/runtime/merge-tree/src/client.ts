@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHandle, IComponentHandleContext } from "@microsoft/fluid-component-core-interfaces";
 import { ISequencedDocumentMessage, MessageType } from "@microsoft/fluid-protocol-definitions";
 import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
@@ -921,7 +921,7 @@ export class Client {
         return snap.emit(
             tardisMsgs,
             runtime.IComponentSerializer,
-            runtime.IComponentHandleContext,
+            runtime[IComponentHandleContext],
             handle);
     }
 
