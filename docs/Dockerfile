@@ -11,13 +11,13 @@ RUN apt-get update && apt-get install -y \
 RUN npm install -g @microsoft/api-documenter@^7.4.6 copyfiles@^2.1.0
 
 #############################
+FROM base AS vuepress
 # Use pre-release version of vuepress with a perf fix
 WORKDIR /
-RUN git clone https://github.com/itsxallwater/vuepress.git vuepress
+RUN git clone https://github.com/tylerbutler/vuepress.git vuepress
 
 WORKDIR /vuepress
 RUN git checkout feat/implement-node-worker-threads
-#bd669ed8feeb4715ecc5fd5bcbae0d388e53c9ee
 RUN yarn
 RUN yarn tsc
 RUN yarn boot
@@ -34,7 +34,7 @@ RUN npm install
 
 #############################
 # Copy the source and the api artifact
-FROM base AS r11s
+FROM vuepress AS copysrc
 
 WORKDIR /
 COPY . .
@@ -43,7 +43,7 @@ COPY . .
 RUN npm run build:gendocs
 
 #############################
-FROM r11s AS docs
+FROM copysrc AS docs
 
 WORKDIR /docs
 
@@ -51,7 +51,12 @@ WORKDIR /docs
 RUN yarn link "vuepress"
 
 # Build docs
-RUN npm run build:ci
+ARG VUEPRESS_BASE
+
+# write the arg into a temp file
+RUN echo ${VUEPRESS_BASE} > /root/vuepress_base
+# set the environment variable right before running the build
+RUN VARIABLE=$(cat /root/vuepress_base); npm run build:ci
 
 #############################
 FROM docs AS docpublish
@@ -62,13 +67,27 @@ RUN git config --global user.email "fluidrtdev@microsoft.com"
 RUN git config --global user.name "Fluid build server"
 
 ARG DOCSGITPASSWORD
-RUN git clone https://%24praguedocs:$DOCSGITPASSWORD@praguedocs.scm.azurewebsites.net:443/praguedocs.git praguedocs
-WORKDIR /praguedocs
-RUN git pull
-WORKDIR /
-RUN rsync docs/dist/ praguedocs/ -rv --delete --exclude '.git'
+RUN git clone https://%24fluid-docs:$DOCSGITPASSWORD@fluid-docs.scm.azurewebsites.net:443/fluid-docs.git repo
 
-WORKDIR /praguedocs
+WORKDIR /
+ARG VUEPRESS_BASE
+RUN mkdir repo${VUEPRESS_BASE} -p -v
+
+WORKDIR /repo
+RUN git pull
+
+WORKDIR /
+RUN rsync docs/dist/ repo${VUEPRESS_BASE} -rv --delete --exclude '.git' --exclude 'versions'
+
+WORKDIR /repo
 RUN git add .
 RUN git diff --quiet && git diff --staged --quiet || git commit -am 'Automated build'
 RUN git push
+
+#############################
+FROM docpublish AS publishroot
+
+WORKDIR /repo
+RUN git pull
+WORKDIR /
+RUN rsync docs/dist/ repo/ -rv --delete --exclude '.git' --exclude 'versions'

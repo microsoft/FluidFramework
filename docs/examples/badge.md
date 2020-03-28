@@ -49,8 +49,17 @@ environment](../guide/README.md#set-up-your-development-environment).
 
 ### Clone the tutorial repository
 
+<vue-markdown v-if="$themeConfig.fluidVarGroup === 'internal'">
+
+First, clone the Badge repository here: <https://github.com/microsoft/fluid-tutorial-badge>.
+
+</vue-markdown>
+<vue-markdown v-else>
+
 First, clone the Badge repository here:
    <https://dev.azure.com/FluidDeveloperProgram/Developer%20Preview/_git/fluid-badge>.
+
+</vue-markdown>
 
 Since the Git repository is authenticated, it is easiest to visit the link above and click the "Clone" button in the
 top-right corner of the UI. Follow the resulting instructions to clone the repo.
@@ -68,4 +77,4 @@ After you've cloned the sample repo and installed dependencies using `npm instal
 a local dev environment for testing and debugging. Visit <http://localhost:8080/> in a browser to load the Fluid
 development server, which will load two instances of the component side by side.
 
-!!!include(../includes/browsers.md)!!!
+!!!include(browsers.md)!!!

@@ -18,7 +18,7 @@ sustainable way, which means we need to enable a "self-service" model as much as
 
 In January we began work to address these issues in several ways. As part of this effort, we updated the docs
 organization and UI, we now have an [end-to-end tutorial for the Sudoku component](../examples/sudoku.md), and we have a
-[detailed description of the code](../examples/yo-fluid-breakdown.html) that is produced by the `yo fluid` scaffold.
+[detailed description of the code](../examples/dice-roller.md) that is produced by the `yo fluid` scaffold.
 
 We kicked off several initiatives around the Fluid component model, including a deep survey of the interfaces and
 patterns that have been pioneered in Bohemia, setting the stage for our February focus areas.
