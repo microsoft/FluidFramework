@@ -8,6 +8,11 @@ import * as resources from "@microsoft/fluid-gitresources";
 import * as api from "@microsoft/fluid-protocol-definitions";
 import { INewFileInfo } from "./createFile";
 
+export interface ICreateNewOptions {
+    createNewSummary?: api.ISummaryTree,
+    newFileInfoPromise: Promise<INewFileInfo>,
+}
+
 export interface IOdspResolvedUrl extends IResolvedUrlBase {
     type: "fluid";
 
@@ -16,7 +21,7 @@ export interface IOdspResolvedUrl extends IResolvedUrlBase {
 
     openMode?: OpenMode;
 
-    newFileInfoPromise?: Promise<INewFileInfo>;
+    createNewOptions?: ICreateNewOptions;
 
     // A hashed identifier that is unique to this document
     hashedDocumentId: string;

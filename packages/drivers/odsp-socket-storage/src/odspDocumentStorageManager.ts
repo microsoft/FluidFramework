@@ -13,7 +13,7 @@ import {
     TelemetryLogger,
 } from "@microsoft/fluid-common-utils";
 import * as resources from "@microsoft/fluid-gitresources";
-import { buildHierarchy } from "@microsoft/fluid-protocol-base";
+import { buildHierarchy, getGitType } from "@microsoft/fluid-protocol-base";
 import * as api from "@microsoft/fluid-protocol-definitions";
 import {
     ISummaryContext,
@@ -216,6 +216,14 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
         hierarchicalTree.commits = commits;
 
+        // When we upload the container snapshot, we upload appTree in ".app" and protocol tree in ".protocol"
+        // So when we request the snapshot we get ".app" as tree and not as commit node as in the case just above.
+        const appTree = hierarchicalTree.trees[".app"];
+        const protocolTree = hierarchicalTree.trees[".protocol"];
+        if (appTree && protocolTree) {
+            return this.combineProtocolAndAppSnapshotTree(tree.sha, appTree, protocolTree);
+        }
+
         return hierarchicalTree;
     }
 
@@ -308,12 +316,12 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     // want to use the same getLatest result.
                     this.cache.localStorage.put(odspCacheKey, odspSnapshot, 10000);
                 }
-                const { trees, blobs, ops, sha } = odspSnapshot;
+                const { trees, tree, blobs, ops, sha } = odspSnapshot;
                 const blobsIdToPathMap: Map<string, string> = new Map();
                 if (trees) {
                     this.initTreesCache(trees);
-                    for (const tree of this.treesCache.values()) {
-                        for (const entry of tree.tree) {
+                    for (const treeVal of this.treesCache.values()) {
+                        for (const entry of treeVal.tree) {
                             if (entry.type === "blob") {
                                 blobsIdToPathMap.set(entry.sha, `/${entry.path}`);
                             } else if (entry.type === "commit" && entry.path === ".app") {
@@ -322,6 +330,13 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                             }
                         }
                     }
+                }
+
+                // Sometimes we get the tree instead of trees. Odsp has maintained this for back-compat reasons. They are in process of removing this
+                // and once that is achieved we can remove this condition. Also we can specify "TreesInsteadOfTree" in headers to always get "Trees"
+                // instead of "Tree"
+                if (tree) {
+                    this.treesCache.set(odspSnapshot.sha, (odspSnapshot as any) as resources.ITree);
                 }
 
                 if (blobs) {
@@ -420,9 +435,10 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     public async uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string> {
         this.checkSnapshotUrl();
 
+        this.lastSummaryHandle = `${context.ackHandle}/.app`;
         const { result, blobsShaToPathCacheLatest } = await this.writeSummaryTree({
             useContext: true,
-            parentHandle: context.proposalHandle,
+            parentHandle: this.lastSummaryHandle,
             tree: summary,
         });
         if (!result || !result.sha) {
@@ -432,7 +448,6 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             this.blobsShaToPathCache = blobsShaToPathCacheLatest;
         }
 
-        this.lastSummaryHandle = result.sha;
         return result.sha;
     }
 
@@ -545,6 +560,14 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             }
         }
 
+        return this.combineProtocolAndAppSnapshotTree(snapshotTreeId, hierarchicalAppTree, hierarchicalProtocolTree);
+    }
+
+    private combineProtocolAndAppSnapshotTree(
+        snapshotTreeId: string,
+        hierarchicalAppTree: api.ISnapshotTree,
+        hierarchicalProtocolTree: api.ISnapshotTree,
+    ) {
         const summarySnapshotTree: api.ISnapshotTree = {
             blobs: {
                 ...hierarchicalAppTree.blobs,
@@ -682,7 +705,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             const baseEntry: ISnapshotTreeBaseEntry = {
                 mode: "100644",
                 path: encodeURIComponent(key),
-                type: this.getServerType(summaryObject),
+                type: getGitType(summaryObject),
             };
 
             let entry: SnapshotTreeEntry;
@@ -708,23 +731,6 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         }
 
         return snapshotTree;
-    }
-
-    private getServerType(value: api.SummaryObject): string {
-        const type = value.type === api.SummaryType.Handle ? value.handleType : value.type;
-        switch (type) {
-            case api.SummaryType.Blob:
-                return "blob";
-
-            case api.SummaryType.Commit:
-                return "commit";
-
-            case api.SummaryType.Tree:
-                return "tree";
-
-            default:
-                throw new Error();
-        }
     }
 }
 
