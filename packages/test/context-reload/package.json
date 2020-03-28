@@ -19,6 +19,7 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "prepack": "npm run webpack",
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
+    "start:dummy": "webpack-dev-server --config webpack.config.js --package package.json --env.dummyClients 10",
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
     "start:r11s": "webpack-dev-server --config webpack.config.js --package package.json --env.mode r11s",
     "test": "npm run test:jest",

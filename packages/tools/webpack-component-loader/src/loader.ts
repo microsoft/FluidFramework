@@ -41,6 +41,7 @@ export interface IBaseRouteOptions {
 export interface ILocalRouteOptions extends IBaseRouteOptions {
     mode: "local";
     single?: boolean;
+    dummyClients?: number;
 }
 
 export interface IDockerRouteOptions extends IBaseRouteOptions {
@@ -295,6 +296,20 @@ export async function start(
         container.on("contextChanged", () => {
             getComponentAndRender(baseHost1, url, div).catch(() => { });
         });
+    }
+
+    if (options.mode === "local" && options.dummyClients > 0) {
+        const hosts: BaseHost[] = [];
+        for (let i = 0; i < options.dummyClients; ++i) {
+            hosts.push(new BaseHost({
+                codeResolver: new WebpackCodeResolver(options),
+                documentServiceFactory: new TestDocumentServiceFactory(deltaConn),
+                urlResolver,
+            }, [packageSeed]));
+        }
+
+        await Promise.all(hosts.map(async (host) => host.initializeContainer(url, codeDetails)
+            .then(async () => host.getComponent(url))));
     }
 }
 

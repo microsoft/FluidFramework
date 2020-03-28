@@ -30,7 +30,7 @@ export class VersionTest extends PrimedComponent implements IComponentHTMLView {
   }
 
   protected async componentHasInitialized() {
-    this.upgradeManager = new UpgradeManager(this.runtime);
+    this.upgradeManager = new UpgradeManager(this.runtime.getQuorum());
 
     this.runtime.on("signal", (message) => {
       if (message.type === upgradeKey) {
@@ -77,19 +77,17 @@ export class VersionTest extends PrimedComponent implements IComponentHTMLView {
     this.runtime.submitSignal(upgradeKey, undefined);
   }
 
-  private upgradeManagerProposeCode() {
-    console.log(`code: ${this.upgradeToPkg} on ${this.cdn}`);
+  private async upgradeManagerProposeCode() {
     if (!this.upgradeManager) {
-      throw Error("component not initialized; no upgrade manager!!!")
+      throw Error("component not initialized; no upgrade manager")
     }
-    this.upgradeManager.upgrade({
+    await this.upgradeManager.upgrade({
       "config": { "cdn": `${this.cdn}/@fluid-example/version-test-2` },
       "package": `${ this.upgradeToPkg }`
     });
   }
 
   private quorumProposeCode() {
-    console.log(`code: ${this.upgradeToPkg} on ${this.cdn}`);
     this.runtime.getQuorum().propose(
       "code",
       { "config": { "cdn": `${this.cdn}/@fluid-example/version-test-2` }, "package": `${ this.upgradeToPkg }` },

@@ -3,24 +3,22 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
+import { ITelemetryBaseLogger, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { DebugLogger } from "@microsoft/fluid-common-utils";
+import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import { IPendingProposal, IQuorum } from "@microsoft/fluid-protocol-definitions";
-import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 
-export class UpgradeManager {
-    private readonly quorum: IQuorum;
+export class UpgradeManager extends EventEmitter {
     private proposedSeqNum: number | undefined;
+    private readonly logger: ITelemetryLogger;
 
-    constructor(private readonly runtime: IComponentRuntime) {
-        this.log("initialized");
-        this.quorum = this.runtime.getQuorum();
-        this.quorum.on("addProposal", (proposal) => this.onAdd(proposal));
-        this.quorum.on("approveProposal", (seqNum) => this.clear(seqNum));
-        this.quorum.on("rejectProposal", (seqNum) => this.clear(seqNum));
-    }
-
-    private log(msg: string) {
-        const trstr = this.proposedSeqNum ? `${this.proposedSeqNum}` : "empty";
-        console.log(`UpMan (${this.runtime.clientId}, tracking: ${trstr}): ${msg}`);
+    constructor(private readonly quorum: IQuorum, logger?: ITelemetryBaseLogger) {
+        super();
+        this.logger = DebugLogger.mixinDebugLogger("fluid:telemetry:UpgradeManager", logger);
+        quorum.on("addProposal", (proposal) => this.onAdd(proposal));
+        quorum.on("approveProposal", (seqNum) => this.onApprove(seqNum));
+        quorum.on("rejectProposal", (seqNum) => this.onReject(seqNum));
     }
 
     private onAdd(proposal: IPendingProposal) {
@@ -28,30 +26,47 @@ export class UpgradeManager {
             return;
         }
         if (!this.proposedSeqNum) {
-            this.log(`tracking ${proposal.sequenceNumber}`);
             this.proposedSeqNum = proposal.sequenceNumber;
+            this.emit("upgradeInProgress");
         } else if (this.proposedSeqNum < proposal.sequenceNumber) {
-            this.log(`rejecting ${proposal.sequenceNumber}`);
             proposal.reject();
         } else {
-            this.log(`got older proposal (${proposal.sequenceNumber}!!!!!`);
+            // The proposal we're tracking is not the first. It should've been rejected but we missed our chance.
+            this.proposedSeqNum = undefined;
+            this.logger.sendErrorEvent({ eventName: "proposalOutOfOrder" });
         }
     }
 
-    private clear(seqNum: number) {
+    private onApprove(seqNum: number) {
         if (seqNum === this.proposedSeqNum) {
             this.proposedSeqNum = undefined;
+            this.logger.sendTelemetryEvent({
+                eventName: "upgradeSucceeded",
+                proposalSequenceNumber: this.proposedSeqNum,
+            });
+            this.emit("upgradeSucceeded");
         }
     }
 
-    public upgrade(code) {
+    private onReject(seqNum: number) {
+        if (seqNum === this.proposedSeqNum) {
+            // the proposal we're tracking was rejected, which probably means the upgrade failed
+            this.proposedSeqNum = undefined;
+            this.logger.sendTelemetryEvent({ eventName: "upgradeFailed", proposalSequenceNumber: this.proposedSeqNum });
+            this.emit("upgradeFailed");
+        }
+    }
+
+    public async upgrade(code: IFluidCodeDetails) {
         if (this.proposedSeqNum) {
-            this.log(`not proposing: already tracking ${this.proposedSeqNum}`);
+            // don't propose if we know there's already one pending
+            this.logger.sendTelemetryEvent({ eventName: "skippedProposal"});
             return;
         }
-        this.log(`proposing @${this.runtime.deltaManager.referenceSequenceNumber}`);
-        this.quorum.propose("code", code).then(
-            () => this.log("local proposal approved"),
-            () => this.log("local proposal rejected"));
+
+        return this.quorum.propose("code", code).then(
+            () => true,
+            () => false,
+        );
     }
 }
