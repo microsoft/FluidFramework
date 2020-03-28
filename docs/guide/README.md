@@ -63,7 +63,7 @@ You'll need [Git](https://git-scm.com/) to use the [Fluid tutorials](../examples
 
 #### Install a modern browser
 
-!!!include(../includes/browsers.md)!!!
+!!!include(browsers.md)!!!
 
 ## Next steps
 
