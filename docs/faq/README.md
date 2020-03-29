@@ -18,11 +18,11 @@ Yes, see the [Routerlicious documentation](../architecture/server/README.md).
 
 ## Is there a set of design principles I can look at?
 
-Architectural design principals can be found in the [Fluid architecture documentation](../architecture/README.md).
+Architectural design principals can be found in the [Fluid architecture documentation](../how/README.md).
 
 ## Do you have a homepage?
 
-<https://aka.ms/fluid/> is our alpha version of our documentation and tutorial website.
+Yes! <https://aka.ms/fluid/>
 
 ## Why aren't commandline tools working?
 

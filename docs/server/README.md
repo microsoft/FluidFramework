@@ -2,6 +2,6 @@
 uid: server
 ---
 
-# Server
+# Reference server implementation
 
-See <https://github.com/microsoft/FluidFramework/blob/master/server/README.md>
+See <https://github.com/microsoft/FluidFramework/blob/master/server/README.md>.

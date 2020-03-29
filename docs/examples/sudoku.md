@@ -14,7 +14,20 @@ environment](../guide/README.md#set-up-your-development-environment).
 
 ### Clone the tutorial repository
 
-First, clone [the tutorial repository](https://github.com/microsoft/fluid-tutorial-sudoku).
+<vue-markdown v-if="$themeConfig.fluidVarGroup === 'internal'">
+
+First, clone the tutorial repository here: <https://github.com/microsoft/fluid-tutorial-sudoku>.
+
+</vue-markdown>
+<vue-markdown v-else>
+
+First, clone the tutorial repository here:
+   <https://dev.azure.com/FluidDeveloperProgram/Developer%20Preview/_git/fluid-sudoku-tutorial>.
+
+Since the Git repository is authenticated, it is easiest to visit the link above and click the "Clone" button in the
+top-right corner of the UI. Follow the resulting instructions to clone the repo.
+
+</vue-markdown>
 
 Once you've cloned the repo, you'll need to set up access to the [private Fluid NPM feed](../guide/package-feed.md). On
 Windows, you can run the `npm run auth` command to automate this process.
@@ -38,11 +51,11 @@ The project has the following folder layout:
     |   fluidSudoku.tsx
     │   index.ts
     ├───helpers
-    │       coordinate.ts
-    │       puzzles.ts
-    |       styles.css
-    │       sudokuCell.ts
-    └───react
+        │       coordinate.ts
+        │       puzzles.ts
+        |       styles.css
+        │       sudokuCell.ts
+        └───react
             sudokuView.tsx
 ```
 
@@ -54,7 +67,7 @@ After you've cloned the sample repo and installed dependencies using `npm instal
 a local dev environment for testing and debugging. Visit <http://localhost:8080/> in a browser to load the Fluid
 development server, which will load two instances of the component side by side.
 
-!!!include(../includes/browsers.md)!!!
+!!!include(browsers.md)!!!
 
 <style>
   iframe#sudoku {
