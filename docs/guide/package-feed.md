@@ -17,6 +17,14 @@ feed](https://dev.azure.com/FluidDeveloperProgram/Developer%20Preview/_packaging
 
 </vue-markdown>
 
+</vue-markdown>
+<vue-markdown v-else>
+
+Fluid packages are published on our [private npm
+feed](https://dev.azure.com/FluidDeveloperProgram/Developer%20Preview/_packaging?_a=feed&feed=packages).
+
+</vue-markdown>
+
 You will need to authenticate with this feed in order to install Fluid package and their dependencies.
 
 ## Windows
