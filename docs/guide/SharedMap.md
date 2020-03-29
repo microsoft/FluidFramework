@@ -6,8 +6,8 @@ uid: SharedMap
 
 - Package: [@microsoft/fluid-map](../api/fluid-map.md)
 - API documentation:
-  - [SharedMap](../api/fluid-map.SharedMap.md)
-  - [ISharedMap](../api/fluid-map.ISharedMap.md)
+  - [SharedMap](../api/fluid-map.sharedmap.md)
+  - [ISharedMap](../api/fluid-map.isharedmap.md)
 
 The SharedMap distributed data structure can be used to store key-value pairs. It provides the same API for setting and
 retrieving values that JavaScript developers are accustomed to with the
@@ -33,8 +33,8 @@ SharedMap keys are _last write wins_; this behavior works well with few infreque
 with many frequent writers it's best to design your use of the map such that each writer writes to its own keys/maps, so
 they don't overwrite each other.
 
-`SharedMap` has a [wait](../api/fluid-map.SharedMap.wait.md) method in addition to the normal
-[get](../api/fluid-map.SharedMap.get.md), which returns a `Promise` that resolves to the value when the key becomes
+`SharedMap` has a [wait](../api/fluid-map.sharedmap.wait.md) method in addition to the normal
+[get](../api/fluid-map.sharedmap.get.md), which returns a `Promise` that resolves to the value when the key becomes
 available.
 
 ### Eventing
@@ -42,11 +42,11 @@ available.
 `SharedMap` is an `EventEmitter`, and will emit events when other clients make modifications. You should register for
 these events and respond appropriately as the data is modified.
 
-[valueChanged](../api/fluid-map.SharedMap.on_1.md) will be emitted in response to a
-[set](../api/fluid-map.SharedMap.set.md) or [delete](../api/fluid-map.SharedMap.delete.md) and
+[valueChanged](../api/fluid-map.sharedmap.on_1.md) will be emitted in response to a
+[set](../api/fluid-map.sharedmap.set.md) or [delete](../api/fluid-map.sharedmap.delete.md) and
 provide the key and previous value that was stored at that key.
 
-`clear` will be emitted in response to [clear](../api/fluid-map.SharedMap.clear.md).
+`clear` will be emitted in response to [clear](../api/fluid-map.sharedmap.clear.md).
 
 ## Examples using SharedMap
 
