@@ -4,7 +4,7 @@
  */
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { ISummaryTree, ICommittedProposal } from "@microsoft/fluid-protocol-definitions";
+import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
 
 export type IResolvedUrl = IWebResolvedUrl | IFluidResolvedUrl;
 
@@ -22,12 +22,6 @@ export interface IFluidResolvedUrl extends IResolvedUrlBase {
     url: string;
     tokens: { [name: string]: string };
     endpoints: { [name: string]: string };
-    openMode?: OpenMode;
-}
-
-export enum OpenMode {
-    "CreateNew",
-    "OpenExisting",
 }
 
 export interface IUrlResolver {
@@ -43,9 +37,7 @@ export interface IExperimentalUrlResolver extends IUrlResolver {
     readonly isExperimentalUrlResolver: true;
     // Creates a new document on the host with the provided options. Returns the resolved URL.
     createContainer(
-        summary: ISummaryTree,
-        sequenceNumber: number,
-        values: [string, ICommittedProposal][],
+        createNewSummary: ISummaryTree,
         request: IRequest,
     ): Promise<IResolvedUrl>;
 }

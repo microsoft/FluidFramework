@@ -10,10 +10,17 @@ import {
     IUrlResolver,
     IExperimentalUrlResolver,
 } from "@microsoft/fluid-driver-definitions";
-import { ScopeType, ISummaryTree, ICommittedProposal } from "@microsoft/fluid-protocol-definitions";
+import {
+    ScopeType,
+    ISummaryTree,
+} from "@microsoft/fluid-protocol-definitions";
 import { generateToken } from "@microsoft/fluid-server-services-client";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { IExperimentalDocumentStorage } from "@microsoft/fluid-server-services-core";
+import {
+    getDocAttributesFromProtocolSummary,
+    getQuorumValuesFromProtocolSummary,
+} from "@microsoft/fluid-driver-utils";
 
 /**
  * Resolves URLs by providing fake URLs which succeed with the other
@@ -40,9 +47,7 @@ export class TestResolver implements IUrlResolver, IExperimentalUrlResolver {
     }
 
     public async createContainer(
-        summary: ISummaryTree,
-        sequenceNumber: number,
-        values: [string, ICommittedProposal][],
+        createNewSummary: ISummaryTree,
         request: IRequest,
     ): Promise<IResolvedUrl> {
         if (!this.testDeltaConnectionServer) {
@@ -53,12 +58,21 @@ export class TestResolver implements IUrlResolver, IExperimentalUrlResolver {
         if (!(expDocumentStorage && expDocumentStorage.isExperimentalDocumentStorage)) {
             throw new Error("Storage has no experimental features!!");
         }
+
+        const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
+        const appSummary = createNewSummary.tree[".app"] as ISummaryTree;
+        if (!(protocolSummary && appSummary)) {
+            throw new Error("Protocol and App Summary required in the full summary");
+        }
+        const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
+        const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
+        const sequenceNumber = documentAttributes.sequenceNumber;
         await expDocumentStorage.createDocument(
             this.tenantId,
             this.id,
-            summary,
+            appSummary,
             sequenceNumber,
-            values,
+            quorumValues,
         );
         return this.resolveHelper();
     }

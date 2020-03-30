@@ -10,7 +10,7 @@ import { IOdspCache } from "./odspCache";
 import { fetchHelper, getWithRetryForTokenRefresh, throwOdspNetworkError } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";
 
-const getOrigin = (url: string) => new URL(url).origin;
+export const getOrigin = (url: string) => new URL(url).origin;
 
 /**
  * Makes join session call on SPO
