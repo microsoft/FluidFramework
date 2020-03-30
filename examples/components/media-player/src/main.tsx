@@ -12,6 +12,9 @@ import {
 } from "@microsoft/fluid-aqueduct";
 import { ISharedDirectory } from "@microsoft/fluid-map";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+import {
+    Text
+} from "office-ui-fabric-react";
 import YoutubeClient from "./clients/YoutubeClient";
 import { IPlaylistItem, PlaylistKey, PlayerStateKey, PlayerStates, PlayerProgressKey, PlaylistIndexKey, PlayerProgressProportionKey, AcceptableDelta } from "./interfaces/PlayerInterfaces";
 import Slider from "./components/Slider";
@@ -90,14 +93,17 @@ interface IMediaPlayerViewProps {
 
 interface IMediaPlayerViewState {
     playedProportion: number;
+    newUrl: string;
 }
 
 class MediaPlayerView extends React.Component<IMediaPlayerViewProps, IMediaPlayerViewState> {
 
     private reactPlayerRef: any = null; // ReactPlayer component
     private styles = {
-        playlistItem: {border:"1px solid green"} as React.CSSProperties,
-        playerContainer: {border:"1px solid black"} as React.CSSProperties
+        playlistItem: { border:".1vh solid green" } as React.CSSProperties,
+        playerTableContainer: { backgroundColor:"transparent", height: "50vh", width: "100%" } as React.CSSProperties,
+        playlistButton: { height: "4vh", marginTop: ".5vh"} as React.CSSProperties,
+        urlInput: { height:"4vh", marginTop: ".5vh" } as React.CSSProperties,
     };
     private isSeeking = false;
 
@@ -105,7 +111,8 @@ class MediaPlayerView extends React.Component<IMediaPlayerViewProps, IMediaPlaye
         super(props);
         const {root} = this.props;
         this.state = {
-            playedProportion: root.get(PlayerProgressProportionKey)
+            playedProportion: root.get(PlayerProgressProportionKey),
+            newUrl: ""
         }
         root.on("valueChanged", (change, local) => {
             if (root.get(PlayerProgressProportionKey) != this.state.playedProportion) {
@@ -118,7 +125,7 @@ class MediaPlayerView extends React.Component<IMediaPlayerViewProps, IMediaPlaye
 
     render(){
         const { root } = this.props;
-        const { playedProportion } = this.state;
+        const { playedProportion, newUrl } = this.state;
         const playlist = root.get<IPlaylistItem[]>(PlaylistKey);
         const playlistIndex = root.get<number>(PlaylistIndexKey);
         if (playlistIndex < playlist.length && playlist[playlistIndex]) {
@@ -128,12 +135,17 @@ class MediaPlayerView extends React.Component<IMediaPlayerViewProps, IMediaPlaye
             const videoName = currentVideo.name;
             const playerState = root.get(PlayerStateKey);
             return (
-                <table style={{backgroundColor:"transparent", height: "500px", border:"3px solid black", marginLeft: "20px", marginRight: "20px", minWidth: "490px", maxWidth: "490px"}}>
-                    <td style={{width: "50%", paddingRight: "5px"}}>
-                        <h4 style={{marginBlockStart: "0px", marginBlockEnd: "10px"}}>{videoName}</h4>
-                        <h5 style={{marginBlockStart: "0px", marginBlockEnd: "20px", color: "grey"}}>{videoChannelName}</h5>
-                        <div style={this.styles.playerContainer}>
+                <table style={this.styles.playerTableContainer}>
+                    <td>
+                        <tr>
+                            <Text style={{marginBlockStart: "0vh", marginBlockEnd: "1vh"}}>{videoName}</Text>
+                        </tr>
+                        <tr>
+                            <Text style={{marginBlockStart: "0vh", marginBlockEnd: "2vh", color: "grey"}}>{videoChannelName}</Text>
+                        </tr>
+                        <tr>
                             <ReactPlayer
+                                style={{width: "100%"}}
                                 url={videoUrl}
                                 playing={playerState === PlayerStates.Playing || playerState === PlayerStates.Buffering || playerState === PlayerStates.Seeking}
                                 onStart={() => root.set(PlayerStateKey, PlayerStates.Playing)}
@@ -147,37 +159,82 @@ class MediaPlayerView extends React.Component<IMediaPlayerViewProps, IMediaPlaye
                                 onProgress={({played, playedSeconds}) => this.onProgress(played, playedSeconds)}
                                 ref={(playerNode: any) => { this.reactPlayerRef = playerNode; }}
                             />
+                        </tr>
+                        <tr>
                             <Slider value={playedProportion} root={root} reactPlayerRef={this.reactPlayerRef}></Slider>
-                        </div>
+                        </tr>
+                        <tr>
+                            <input
+                                value={newUrl}
+                                style={this.styles.urlInput}
+                                onChange={(event: React.ChangeEvent<HTMLInputElement>) => 
+                                    this.setState({
+                                        newUrl: event.target.value
+                                    })
+                                }
+                            />
+                        </tr>
+                        <tr>
+                            <button style={this.styles.playlistButton} onClick={() => this.onAddClicked(newUrl)}>+</button>
+                            <button style={this.styles.playlistButton} onClick={() => this.onNextClicked()}>-></button>
+                        </tr>
+                        <tr>
+                            <Playlist playlist={playlist} currentIndex={playlistIndex} />
+                        </tr>
                     </td>
-                    <td style={{width: "50%", paddingLeft: "5px"}}>
-                        <Playlist playlist={playlist} currentIndex={playlistIndex} />
-                    </td>
-                    </table>
+                </table>
             );
         }
     }
 
-  private onProgress = (played: number, playedSeconds: number) => {
-    const {root} = this.props;
-    const currentLeaderSeconds = root.get(PlayerProgressKey);
-    const playerState = root.get(PlayerStateKey);
-    if (Math.abs(currentLeaderSeconds - playedSeconds) > AcceptableDelta || playerState === PlayerStates.Seeking) {
-      this.seekPlayer(currentLeaderSeconds);
-    } else if (root.get(PlayerStateKey) !== PlayerStates.Seeking && !this.isSeeking) {
-      console.log(`PROGRESS ${played} ${playedSeconds}`)
-      root.set(PlayerProgressKey, playedSeconds);
-      root.set(PlayerProgressProportionKey, played);
+    private onProgress = (played: number, playedSeconds: number) => {
+        const {root} = this.props;
+        const currentLeaderSeconds = root.get(PlayerProgressKey);
+        const playerState = root.get(PlayerStateKey);
+        if (Math.abs(currentLeaderSeconds - playedSeconds) > AcceptableDelta && playedSeconds > 2
+            || playerState === PlayerStates.Seeking) {
+            this.seekPlayer(currentLeaderSeconds);
+        } else if (root.get(PlayerStateKey) !== PlayerStates.Seeking && !this.isSeeking) {
+            console.log(`PROGRESS ${played} ${playedSeconds}`)
+            root.set(PlayerProgressKey, playedSeconds);
+            root.set(PlayerProgressProportionKey, played);
+        }
     }
-  }
 
-  private seekPlayer = (seekSeconds: number) => {
-    console.log(`SEEKING ${seekSeconds}`);
-    if (this.reactPlayerRef) {
-      this.reactPlayerRef.seekTo(seekSeconds);
+    private seekPlayer = (seekSeconds: number) => {
+        console.log(`SEEKING ${seekSeconds}`);
+        if (this.reactPlayerRef) {
+            this.reactPlayerRef.seekTo(seekSeconds);
+        }
     }
-  }
-  
+
+    private onAddClicked = (newUrl: string) => {
+        const { root } = this.props;
+        const playlist = root.get<IPlaylistItem[]>(PlaylistKey);
+        const newVideoId = YoutubeClient.getYoutubeVideoId(newUrl);
+        YoutubeClient.getVideoById(newVideoId).then(response => {
+          var newPlaylistItem: IPlaylistItem = {
+            name: response.snippet.title,
+            url: newUrl,
+            id: newVideoId,
+            thumbnailUrl: response.snippet.thumbnails.standard.url,
+            channelName: response.snippet.channelTitle,
+            description: response.snippet.description
+          };
+          playlist.push(newPlaylistItem);
+          root.set<IPlaylistItem[]>(PlaylistKey, playlist);
+          this.setState({newUrl: ""});
+        })
+    }
+    
+    private onNextClicked = () => {
+        const { root } = this.props;
+        const nextIndex = root.get(PlaylistIndexKey) + 1;
+        root.set(PlayerProgressKey, 0);
+        root.set(PlaylistIndexKey, nextIndex);
+    }
+
+
 }
 
 export const fluidExport = MediaPlayer.getFactory();

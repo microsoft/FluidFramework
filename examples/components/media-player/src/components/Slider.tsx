@@ -18,6 +18,13 @@ interface SliderState {
 }
 
 class Slider extends React.Component<SliderProps, SliderState> {
+
+    private styles = {
+      input: {
+        width: "100%"
+      }
+    }
+
     constructor(props: any) {
         super(props);
         this.state = {
@@ -26,16 +33,16 @@ class Slider extends React.Component<SliderProps, SliderState> {
         };
     }
 
-
     public render() {
         return (
             <input
-            type='range' min={0} max={1} step='any'
-            value={this.state.isChanging ? this.state.value : this.props.value}
-            onMouseDown={this._onSeekMouseDown}
-            onChange={this._onSeekChange}
-            onMouseUp={this._onSeekMouseUp}
-          />
+              style={this.styles.input}
+              type='range' min={0} max={1} step='any'
+              value={this.state.isChanging ? this.state.value : this.props.value}
+              onMouseDown={this._onSeekMouseDown}
+              onChange={this._onSeekChange}
+              onMouseUp={this._onSeekMouseUp}
+            />
         );
     }
 
@@ -50,13 +57,21 @@ class Slider extends React.Component<SliderProps, SliderState> {
         const seekValue = parseFloat(e.target.value);
         console.log(seekValue);
         const seekSeconds = seekValue * this.props.reactPlayerRef.getDuration();
+        this.props.root.set(PlayerStateKey, PlayerStates.Seeking);
         this.props.root.set(PlayerProgressKey, seekSeconds);
         this.setState({value: seekValue});
       }
 
       private _onSeekMouseUp = e => {
-        console.log("seek finished")
-        setTimeout(() => this.props.root.set(PlayerStateKey, PlayerStates.Playing), 2000);
+        console.log("seek finished");
+        const seekValue = parseFloat(e.target.value);
+        const seekSeconds = seekValue * this.props.reactPlayerRef.getDuration();
+        this.props.root.set(PlayerProgressKey, seekSeconds);
+        this.props.root.set(PlayerStateKey, PlayerStates.Seeking);
+        setTimeout(() =>  {
+          this.props.root.set(PlayerStateKey, PlayerStates.Playing);
+          this.props.root.set(PlayerProgressKey, seekSeconds);
+        }, 500);
         this.setState({isChanging: false})
       }
 }

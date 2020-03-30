@@ -40,6 +40,16 @@ class YoutubeClient extends GenericRestClient {
                 return SyncTasks.Rejected();
             });
     }
+
+    public getYoutubeVideoId = (url: string) => {
+        var regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        var match = url.match(regExp);
+        if (match && match[2].length == 11) {
+          return match[2];
+        } else {
+          return undefined;
+        }
+    }
 }
 
 export default new YoutubeClient();
