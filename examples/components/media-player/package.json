@@ -26,6 +26,7 @@
     "@microsoft/fluid-map": "^0.16.0",
     "@microsoft/fluid-view-interfaces": "^0.16.0",
     "react": "^16.10.2",
+    "react-collapsible": "^2.7.0",
     "react-dom": "^16.10.2",
     "react-player": "^1.15.3",
     "simplerestclients": "^0.2.7"

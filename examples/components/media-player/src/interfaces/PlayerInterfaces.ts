@@ -6,6 +6,10 @@
  
 export const PlayerStateKey = "playerState";
 export const PlayerProgressKey = "playerProgress";
+export const PlaylistKey = "playlist";
+export const PlaylistIndexKey = "playlistIndex";
+export const PlayerProgressProportionKey = "playerProgressProportion";
+export const AcceptableDelta = 3;
 
 export enum PlayerStates {
     Playing = "Playing",
