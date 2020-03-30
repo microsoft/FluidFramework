@@ -10,6 +10,7 @@ import {
     IFluidPackage,
     IPackage,
     isFluidPackage,
+    IContainer,
 } from "@microsoft/fluid-container-definitions";
 import { Container } from "@microsoft/fluid-container-loader";
 import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
@@ -68,6 +69,7 @@ export interface IOdspRouteOptions extends IBaseRouteOptions {
     odspAccessToken?: string;
     pushAccessToken?: string;
     forceReauth?: boolean;
+    driveId?: string;
 }
 
 export type RouteOptions =
@@ -206,7 +208,8 @@ function getUrlResolver(documentId: string, options: RouteOptions): IUrlResolver
         case "spo-df":
             return new OdspUrlResolver(
                 options.server,
-                { accessToken: options.odspAccessToken });
+                { accessToken: options.odspAccessToken },
+                options.driveId);
 
         default: // Local
             return new TestResolver(documentId);
@@ -227,15 +230,9 @@ function makeSideBySideDiv(divId?: string) {
     return div;
 }
 
-export async function start(
-    documentId: string,
-    packageJson: IPackage,
-    options: RouteOptions,
-    div: HTMLDivElement,
-): Promise<void> {
+function getDocumentServiceFactory(documentId: string, options: RouteOptions) {
     let documentServiceFactory: IDocumentServiceFactory;
     let deltaConn: ILocalDeltaConnectionServer;
-
     switch (options.mode) {
         case "local": {
             deltaConn = LocalDeltaConnectionServer.create(new SessionStorageDbFactory(documentId));
@@ -263,6 +260,16 @@ export async function start(
             );
         }
     }
+    return {documentServiceFactory, connection: deltaConn};
+}
+
+export async function start(
+    documentId: string,
+    packageJson: IPackage,
+    options: RouteOptions,
+    div: HTMLDivElement,
+): Promise<void> {
+    const {documentServiceFactory, connection} = getDocumentServiceFactory(documentId, options);
 
     const urlResolver = getUrlResolver(documentId, options);
 
@@ -288,7 +295,7 @@ export async function start(
     // Side-by-side mode
     if (options.mode === "local" && !options.single) {
         // New documentServiceFactory for right div, same everything else
-        const docServFac2: IDocumentServiceFactory = new TestDocumentServiceFactory(deltaConn);
+        const docServFac2: IDocumentServiceFactory = new TestDocumentServiceFactory(connection);
         const hostConf2 = { documentServiceFactory: docServFac2, urlResolver };
 
         // This will create a new Loader/Container/Component from the BaseHost above. This is
@@ -321,6 +328,32 @@ export async function start(
     }
 }
 
+export async function create(
+    documentId: string,
+    packageJson: IPackage,
+    options: RouteOptions,
+    div: HTMLDivElement,
+): Promise<IContainer> {
+    const {documentServiceFactory} = getDocumentServiceFactory(documentId, options);
+
+    const urlResolver = getUrlResolver(documentId, options);
+
+    // Create Package
+    const scriptIds: string[] = [];
+    const pkg = await getResolvedPackage(packageJson, scriptIds);
+    const codeDetails = pkg ? pkg.details : undefined;
+
+    const host1Conf: IBaseHostConfig = { documentServiceFactory, urlResolver };
+    const baseHost = new BaseHost(
+        host1Conf,
+        pkg,
+        scriptIds,
+    );
+    const container = await baseHost.initializeContainerForCreateNew(codeDetails);
+    await startRenderingForCreateNew(container, baseHost, div);
+    return container;
+}
+
 async function startRendering(container: Container, baseHost: BaseHost, url: string, div: HTMLDivElement) {
     const p = new Promise((resolve, reject) => {
         const tryGetComponentAndRender = () => {
@@ -339,9 +372,34 @@ async function startRendering(container: Container, baseHost: BaseHost, url: str
     return p;
 }
 
+async function startRenderingForCreateNew(container: Container, baseHost: BaseHost, div: HTMLDivElement) {
+    const p = new Promise((resolve, reject) => {
+        const tryGetComponentAndRender = () => {
+            getComponentAndRenderForCreateNew(container, baseHost, div).then((success) => {
+                if (success) {
+                    resolve();
+                }
+            }).catch((error) => reject(error));
+        };
+        tryGetComponentAndRender();
+    });
+    return p;
+}
 
 async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
     const component = await baseHost.getComponent(url);
+    if (component === undefined) {
+        return false;
+    }
+
+    // Render the component with an HTMLViewAdapter to abstract the UI framework used by the component
+    const view = new HTMLViewAdapter(component);
+    view.render(div, { display: "block" });
+    return true;
+}
+
+async function getComponentAndRenderForCreateNew(container: Container, baseHost: BaseHost, div: HTMLDivElement) {
+    const component = await baseHost.getComponentForCreateNew(container);
     if (component === undefined) {
         return false;
     }
