@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IResolvedUrlBase, ISummaryContext, OpenMode } from "@microsoft/fluid-driver-definitions";
+import { IResolvedUrlBase, ISummaryContext } from "@microsoft/fluid-driver-definitions";
 import * as resources from "@microsoft/fluid-gitresources";
 import * as api from "@microsoft/fluid-protocol-definitions";
 import { INewFileInfo } from "./createFile";
@@ -18,8 +18,6 @@ export interface IOdspResolvedUrl extends IResolvedUrlBase {
 
     // URL to send to fluid, contains the documentId and the path
     url: string;
-
-    openMode?: OpenMode;
 
     createNewOptions?: ICreateNewOptions;
 

@@ -10,7 +10,6 @@ import {
     IDocumentDeltaStorageService,
     IDocumentService,
     IResolvedUrl,
-    OpenMode,
     IDocumentStorageService,
 } from "@microsoft/fluid-driver-definitions";
 import {
@@ -72,8 +71,7 @@ export class OdspDocumentService implements IDocumentService {
             "fluid:telemetry:OdspDriver",
             logger,
             { docId: odspResolvedUrl.hashedDocumentId });
-        const openMode = odspResolvedUrl.openMode;
-        if (openMode === OpenMode.CreateNew && odspResolvedUrl.createNewOptions) {
+        if (odspResolvedUrl.createNewOptions) {
             const createNewOptions = odspResolvedUrl.createNewOptions;
             const createNewSummary = createNewOptions.createNewSummary;
             const event = PerformanceEvent.start(templogger,

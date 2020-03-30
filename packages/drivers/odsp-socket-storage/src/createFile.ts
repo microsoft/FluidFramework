@@ -18,8 +18,10 @@ import {
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { IOdspCache } from "./odspCache";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
-import { getWithRetryForTokenRefresh, throwOdspNetworkError } from "./odspUtils";
+import { getWithRetryForTokenRefresh, throwOdspNetworkError, fetchHelper } from "./odspUtils";
 import { createOdspUrl } from "./createOdspUrl";
+import { getApiRoot } from "./odspUrlHelper";
+import { getOrigin } from "./vroom";
 
 export interface INewFileInfo {
     siteUrl: string;
@@ -109,72 +111,55 @@ async function createNewFluidFileHelper(
 
         const encodedFilename = encodeURIComponent(`${newFileInfo.filename}.fluid`);
 
-        let fetchResponse: Response;
+        let fetchResponse;
         if (containerSnapshot) {
             const initialUrl =
-                `${newFileInfo.siteUrl}/_api/v2.1/drives/${newFileInfo.driveId}/items/root:/` +
+                `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:/` +
                 `${encodeURIComponent(newFileInfo.filePath)}/${encodedFilename}` +
-                `:/opStream/snapshots/snapshot?@name.conflictBehavior=rename`;
+                `:/opStream/snapshots/snapshot`;
             const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
             headers["Content-Type"] = "application/json";
             // Currently the api to create new file with snapshot is under a feature gate. So we have to
             // add this header to enter into that gate.
             headers["X-Tempuse-Allow-Singlepost"] = "1";
             const postBody = JSON.stringify(containerSnapshot);
-            fetchResponse = await fetch(url, {
+            fetchResponse = await fetchHelper(url, {
                 body: postBody,
                 method: "POST",
                 headers,
             });
-            if (fetchResponse.status !== 200) {
-                // We encounter status=-1 if url path including filename length exceeds 400 characters.
-                if (fetchResponse.status === -1) {
-                    throwOdspNetworkError(`Unknown Error. File path length exceeding 400 characters
-                        could cause this error`, fetchResponse.status, false);
-                }
 
-                throwOdspNetworkError("Failed to create file with snapshot", fetchResponse.status, true);
-            }
-
-            const response = await fetchResponse.json();
-            if (!response || !response.itemId) {
+            const content = await fetchResponse.content;
+            if (!content || !content.itemId) {
                 throwOdspNetworkError("Could not parse drive item from Vroom response", fetchResponse.status, false);
             }
             return {
-                itemId: response.itemId,
+                itemId: content.itemId,
                 siteUrl: newFileInfo.siteUrl,
                 driveId: newFileInfo.driveId,
                 filename: newFileInfo.filename,
             };
         } else {
             const initialUrl =
-                `${newFileInfo.siteUrl}/_api/v2.1/drives/${newFileInfo.driveId}/items/root:/${encodeURIComponent(
+                `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:/` +
+                `${encodeURIComponent(
                     newFileInfo.filePath,
                 )}/${encodedFilename}:/content?@name.conflictBehavior=rename&select=id,name,parentReference`;
             const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
-            fetchResponse = await fetch(url, {
+            fetchResponse = await fetchHelper(url, {
                 method: "PUT",
                 headers,
             });
-            if (fetchResponse.status !== 201) {
-                // We encounter status=-1 if url path including filename length exceeds 400 characters.
-                if (fetchResponse.status === -1) {
-                    throwOdspNetworkError(`Unknown Error. File path length exceeding 400 characters
-                        could cause this error`, fetchResponse.status, false);
-                }
 
-                throwOdspNetworkError("Failed to create file", fetchResponse.status, true);
-            }
-
-            const item = await fetchResponse.json();
-            if (!item || !item.id) {
+            const content = await fetchResponse.content;
+            if (!content || !content.id) {
                 throwOdspNetworkError("Could not parse drive item from Vroom response", fetchResponse.status, false);
             }
             return {
-                itemId: item.id,
+                itemId: content.id,
                 siteUrl: newFileInfo.siteUrl,
                 driveId: newFileInfo.driveId,
-                filename: item.name,
+                filename: content.name,
             };
         }
     });
