@@ -26,26 +26,21 @@ class ErrorWithProps extends Error {
     }
 }
 
-export function createNetworkError(
-    errorMessage: string,
-    canRetry: boolean,
-    statusCode?: number,
-    retryAfterSeconds?: number,
-    online: string = OnlineStatus[isOnline()],
-): IError {
-    if (statusCode === 401 || statusCode === 403) {
-        return new AccessDeniedError(errorMessage, statusCode, canRetry, online);
+export enum OnlineStatus {
+    Offline,
+    Online,
+    Unknown,
+}
+
+// It tells if we have local connection only - we might not have connection to web.
+// No solution for node.js (other than resolve dns names / ping specific sites)
+// Can also use window.addEventListener("online" / "offline")
+export function isOnline(): OnlineStatus {
+    // eslint-disable-next-line no-null/no-null
+    if (typeof navigator === "object" && navigator !== null && typeof navigator.onLine === "boolean") {
+        return navigator.onLine ? OnlineStatus.Online : OnlineStatus.Offline;
     }
-    if (statusCode === 404) {
-        return new FileNotFoundError(errorMessage, statusCode, canRetry, online);
-    }
-    if (statusCode === 500) {
-        return new FatalError(errorMessage);
-    }
-    if (retryAfterSeconds !== undefined) {
-        return new ThrottlingError(errorMessage, retryAfterSeconds);
-    }
-    return new GenericNetworkError(errorMessage, statusCode, canRetry, online);
+    return OnlineStatus.Unknown;
 }
 
 /**
@@ -109,8 +104,6 @@ class ThrottlingError extends ErrorWithProps implements IThrottlingError {
     }
 }
 
-export const createWriteError = (errorMessage: string) => (new WriteError(errorMessage) as IError);
-
 /**
  * Write error class - When attempting to write, without proper permissions
  */
@@ -122,6 +115,8 @@ class WriteError extends ErrorWithProps implements IWriteError {
         super(errorMessage);
     }
 }
+
+export const createWriteError = (errorMessage: string) => (new WriteError(errorMessage) as IError);
 
 /**
  * Fatal error class - when the server encountered a fatal error
@@ -135,19 +130,24 @@ class FatalError extends ErrorWithProps implements IFatalError {
     }
 }
 
-export enum OnlineStatus {
-    Offline,
-    Online,
-    Unknown,
-}
-
-// It tells if we have local connection only - we might not have connection to web.
-// No solution for node.js (other than resolve dns names / ping specific sites)
-// Can also use window.addEventListener("online" / "offline")
-export function isOnline(): OnlineStatus {
-    // eslint-disable-next-line no-null/no-null
-    if (typeof navigator === "object" && navigator !== null && typeof navigator.onLine === "boolean") {
-        return navigator.onLine ? OnlineStatus.Online : OnlineStatus.Offline;
+export function createNetworkError(
+    errorMessage: string,
+    canRetry: boolean,
+    statusCode?: number,
+    retryAfterSeconds?: number,
+    online: string = OnlineStatus[isOnline()],
+): IError {
+    if (statusCode === 401 || statusCode === 403) {
+        return new AccessDeniedError(errorMessage, statusCode, canRetry, online);
     }
-    return OnlineStatus.Unknown;
+    if (statusCode === 404) {
+        return new FileNotFoundError(errorMessage, statusCode, canRetry, online);
+    }
+    if (statusCode === 500) {
+        return new FatalError(errorMessage);
+    }
+    if (retryAfterSeconds !== undefined) {
+        return new ThrottlingError(errorMessage, retryAfterSeconds);
+    }
+    return new GenericNetworkError(errorMessage, statusCode, canRetry, online);
 }
