@@ -114,7 +114,7 @@ On top of the runtime is a layered component model. A Fluid component can have a
 distributed data, rendering, experience integration, and much more. For many developers their primary interaction with
 Fluid will be writing components.
 
-<vue-markdown v-if="$themeConfig.fluidVarGroup === 'internal'">
+<vue-markdown v-if="$themeConfig.DOCS_AUDIENCE === 'internal'">
 
 ***
 
