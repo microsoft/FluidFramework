@@ -116,15 +116,13 @@ export class DocumentDeltaEventManager {
      * Resume normal delta event processing after a pauseProcessing call.
      * Useful when called from a manual test utility, but not for automated testing.
      */
-    public async resumeProcessing(...docs: IDocumentDeltaEvent[]) {
-        // eslint-disable-next-line @typescript-eslint/promise-function-async
-        await Promise.all(docs.map((doc) => this.resumeDocument(doc)));
+    public resumeProcessing(...docs: IDocumentDeltaEvent[]) {
+        docs.map(DocumentDeltaEventManager.resumeDocument);
         this.isNormalProcessingPaused = false;
     }
 
     private async pauseAndValidateDocs(...docs: IDocumentDeltaEvent[]): Promise<Iterable<IDocumentDeltaEvent>> {
-        // eslint-disable-next-line @typescript-eslint/promise-function-async
-        await Promise.all(Array.from(this.documents).map((doc) => this.pauseDocument(doc)));
+        await Promise.all(Array.from(this.documents).map(async (doc) => this.pauseDocument(doc)));
         this.isNormalProcessingPaused = true;
 
         if (docs && docs.length > 0) {
@@ -169,7 +167,7 @@ export class DocumentDeltaEventManager {
         await Promise.all([doc.deltaManager.inbound.pause(), doc.deltaManager.outbound.pause()]);
     }
 
-    private async resumeDocument(doc: IDocumentDeltaEvent) {
+    private static resumeDocument(doc: IDocumentDeltaEvent) {
         doc.deltaManager.inbound.resume();
         doc.deltaManager.outbound.resume();
     }

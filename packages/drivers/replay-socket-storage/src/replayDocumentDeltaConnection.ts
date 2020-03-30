@@ -54,9 +54,8 @@ export class ReplayControllerStatic extends ReplayController {
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public initStorage(storage: IDocumentStorageService) {
-        return Promise.resolve(true);
+    public async initStorage(storage: IDocumentStorageService) {
+        return true;
     }
 
     public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
@@ -116,8 +115,7 @@ export class ReplayControllerStatic extends ReplayController {
         return 0;
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public replay(
+    public async replay(
         emitter: (op: ISequencedDocumentMessage[]) => void,
         fetchedOps: ISequencedDocumentMessage[]): Promise<void> {
         let current = this.skipToIndex(fetchedOps);
@@ -333,8 +331,8 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
                 continue;
             }
 
-            // eslint-disable-next-line @typescript-eslint/promise-function-async, max-len
-            replayP = replayP.then(() => controller.replay((ops) => this.emit("op", ReplayDocumentId, ops), fetchedOps));
+            replayP = replayP.then(
+                async () => controller.replay((ops) => this.emit("op", ReplayDocumentId, ops), fetchedOps));
 
             currentOp += fetchedOps.length;
             done = controller.isDoneFetch(currentOp, fetchedOps[fetchedOps.length - 1].timestamp);

@@ -380,8 +380,7 @@ export class OdspDocumentService implements IDocumentService {
                 });
 
                 return connection;
-                // eslint-disable-next-line @typescript-eslint/promise-function-async
-            }).catch((connectionError) => {
+            }).catch(async (connectionError) => {
                 const endAfd = performanceNow();
                 localStorage.removeItem(lastAfdConnectionTimeMsKey);
                 // Retry on non-AFD URL
@@ -434,8 +433,7 @@ export class OdspDocumentService implements IDocumentService {
         ).then((connection) => {
             logger.sendTelemetryEvent({ eventName: "UsedNonAfdUrl" });
             return connection;
-            // eslint-disable-next-line @typescript-eslint/promise-function-async
-        }).catch((connectionError) => {
+        }).catch(async (connectionError) => {
             const endNonAfd = performanceNow();
             if (hasUrl2 && this.canRetryOnError(connectionError)) {
                 // eslint-disable-next-line max-len

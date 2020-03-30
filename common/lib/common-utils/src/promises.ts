@@ -148,3 +148,5 @@ export class SinglePromise<T> {
         return this.pResponse;
     }
 }
+
+export const delay = async (ms?: number) => new Promise((res) => setTimeout(res, ms));
