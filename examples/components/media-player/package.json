@@ -1,0 +1,52 @@
+{
+  "name": "@fluid-example/media-player",
+  "version": "0.16.0",
+  "description": "Synced media player with support for multiple sources, like YouTube, Soundcloud, etc.",
+  "repository": "microsoft/FluidFramework",
+  "author": "Microsoft",
+  "main": "dist/index.js",
+  "module": "lib/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "webpack --env.production && npm run tsc",
+    "deploy": "npm run build && npm version patch && npm run verdaccio",
+    "dev": "webpack --env.development",
+    "start": "webpack-dev-server --config webpack.config.js --package package.json --env.mode local",
+    "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
+    "start:r11s": "webpack-dev-server --config webpack.config.js --package package.json --env.mode r11s",
+    "start:spo": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo",
+    "start:spo-df": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo-df",
+    "tsc": "tsc",
+    "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
+    "webpack": "npm run build",
+    "webpack:dev": "npm run dev"
+  },
+  "dependencies": {
+    "@microsoft/fluid-aqueduct": "^0.16.0",
+    "@microsoft/fluid-map": "^0.16.0",
+    "@microsoft/fluid-view-interfaces": "^0.16.0",
+    "react": "^16.10.2",
+    "react-dom": "^16.10.2"
+  },
+  "devDependencies": {
+    "@microsoft/fluid-webpack-component-loader": "^0.16.0",
+    "@types/node": "^10.14.6",
+    "@types/react-dom": "^16.9.4",
+    "ts-loader": "^6.1.2",
+    "typescript": "~3.7.4",
+    "webpack": "^4.16.5",
+    "webpack-cli": "^3.1.2",
+    "webpack-dev-server": "^3.8.0",
+    "webpack-merge": "^4.1.4"
+  },
+  "fluid": {
+    "browser": {
+      "umd": {
+        "files": [
+          "dist/main.bundle.js"
+        ],
+        "library": "main"
+      }
+    }
+  }
+}
