@@ -6,7 +6,6 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import ReactPlayer from 'react-player';
-import Collapsible from 'react-collapsible';
 import {
     PrimedComponent,
     PrimedComponentFactory,
@@ -16,6 +15,7 @@ import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import YoutubeClient from "./clients/YoutubeClient";
 import { IPlaylistItem, PlaylistKey, PlayerStateKey, PlayerStates, PlayerProgressKey, PlaylistIndexKey, PlayerProgressProportionKey, AcceptableDelta } from "./interfaces/PlayerInterfaces";
 import Slider from "./components/Slider";
+import Playlist from "./components/Playlist";
 
 export const MediaPlayerName = "media-player";
 
@@ -122,76 +122,47 @@ class MediaPlayerView extends React.Component<IMediaPlayerViewProps, IMediaPlaye
         const playlist = root.get<IPlaylistItem[]>(PlaylistKey);
         const playlistIndex = root.get<number>(PlaylistIndexKey);
         if (playlistIndex < playlist.length && playlist[playlistIndex]) {
-            const videoUrl = playlist[playlistIndex].url;
+            const currentVideo = playlist[playlistIndex];
+            const videoUrl = currentVideo.url;
+            const videoChannelName = currentVideo.channelName;
+            const videoName = currentVideo.name;
             const playerState = root.get(PlayerStateKey);
-            const playlistComponent = this.renderPlaylistComponent(playlist, playlistIndex);
             return (
-                <div style={this.styles.playerContainer}>
-                    <ReactPlayer
-                        url={videoUrl}
-                        playing={playerState === PlayerStates.Playing || playerState === PlayerStates.Buffering || playerState === PlayerStates.Seeking}
-                        onStart={() => root.set(PlayerStateKey, PlayerStates.Playing)}
-                        onPlay={() => {
-                            console.log("Clicked play");
-                            root.set(PlayerStateKey, PlayerStates.Playing);
-                        }}
-                        onPause={() => root.set(PlayerStateKey, PlayerStates.Paused)}
-                        onBuffer={() => root.set(PlayerStateKey, PlayerStates.Buffering)}
-                        progressInterval={100}
-                        onProgress={({played, playedSeconds}) => this.onProgress(played, playedSeconds)}
-                        ref={(playerNode: any) => { this.reactPlayerRef = playerNode; }}
-                    />
-                    <Slider value={playedProportion} root={root} reactPlayerRef={this.reactPlayerRef}></Slider>
-                    {playlistComponent}
-                </div>
+                <table style={{backgroundColor:"transparent", height: "500px", border:"3px solid black", marginLeft: "20px", marginRight: "20px", minWidth: "490px", maxWidth: "490px"}}>
+                    <td style={{width: "50%", paddingRight: "5px"}}>
+                        <h4 style={{marginBlockStart: "0px", marginBlockEnd: "10px"}}>{videoName}</h4>
+                        <h5 style={{marginBlockStart: "0px", marginBlockEnd: "20px", color: "grey"}}>{videoChannelName}</h5>
+                        <div style={this.styles.playerContainer}>
+                            <ReactPlayer
+                                url={videoUrl}
+                                playing={playerState === PlayerStates.Playing || playerState === PlayerStates.Buffering || playerState === PlayerStates.Seeking}
+                                onStart={() => root.set(PlayerStateKey, PlayerStates.Playing)}
+                                onPlay={() => {
+                                    console.log("Clicked play");
+                                    root.set(PlayerStateKey, PlayerStates.Playing);
+                                }}
+                                onPause={() => root.set(PlayerStateKey, PlayerStates.Paused)}
+                                onBuffer={() => root.set(PlayerStateKey, PlayerStates.Buffering)}
+                                progressInterval={500}
+                                onProgress={({played, playedSeconds}) => this.onProgress(played, playedSeconds)}
+                                ref={(playerNode: any) => { this.reactPlayerRef = playerNode; }}
+                            />
+                            <Slider value={playedProportion} root={root} reactPlayerRef={this.reactPlayerRef}></Slider>
+                        </div>
+                    </td>
+                    <td style={{width: "50%", paddingLeft: "5px"}}>
+                        <Playlist playlist={playlist} currentIndex={playlistIndex} />
+                    </td>
+                    </table>
             );
         }
-        
     }
-
-    private renderPlaylistComponent = (playlist: IPlaylistItem[], currentIndex: number) => {
-        const historyPlaylist = playlist.slice(0, currentIndex);
-        const futurePlaylist = playlist.slice(currentIndex + 1);
-        const historyPlaylistComponent = this.renderList(historyPlaylist);
-        const futurePlaylistComponent = this.renderList(futurePlaylist);
-        return (
-          <div>
-            <Collapsible style={this.styles.playlistItem} trigger={"Queue"}>{futurePlaylistComponent}</Collapsible>
-            <Collapsible style={this.styles.playlistItem} trigger={"History"}>{historyPlaylistComponent}</Collapsible>
-          </div>
-        );
-    }
-
-    private renderList = (playlist: IPlaylistItem[]) => {
-        return (
-          <ul>
-            {playlist.map(item => (
-              this.renderItem(item)
-            ))}
-          </ul>
-        );
-    }
-
-    
-  private renderItem = (item: IPlaylistItem) => {
-    return(
-      <div>
-        <img src={item.thumbnailUrl}/>
-        <br/>
-        <label>{item.name}</label>
-        <br/>
-        <label>{item.channelName}</label>
-        <br/>
-        <label>{item.description}</label>
-      </div>
-    )
-  }
 
   private onProgress = (played: number, playedSeconds: number) => {
     const {root} = this.props;
     const currentLeaderSeconds = root.get(PlayerProgressKey);
     const playerState = root.get(PlayerStateKey);
-    if (currentLeaderSeconds - playedSeconds > AcceptableDelta || playerState === PlayerStates.Seeking) {
+    if (Math.abs(currentLeaderSeconds - playedSeconds) > AcceptableDelta || playerState === PlayerStates.Seeking) {
       this.seekPlayer(currentLeaderSeconds);
     } else if (root.get(PlayerStateKey) !== PlayerStates.Seeking && !this.isSeeking) {
       console.log(`PROGRESS ${played} ${playedSeconds}`)
