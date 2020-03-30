@@ -31,7 +31,6 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluid-example/badge": "^0.16.0",
     "@fluid-example/clicker": "^0.16.0",
     "@fluid-example/codemirror": "^0.16.0",
     "@fluid-example/prosemirror": "^0.16.0",

@@ -13,13 +13,15 @@ import uuid from "uuid/v4";
 import { IVltavaDataModel, VltavaDataModel } from "./dataModel";
 import { VltavaView } from "./view";
 
+export const VltavaName = "vltava";
+
 /**
  * Vltava is an application experience
  */
 export class Vltava extends PrimedComponent implements IComponentHTMLView {
     private dataModelInternal: IVltavaDataModel | undefined;
 
-    private static readonly factory = new PrimedComponentFactory(Vltava, []);
+    private static readonly factory = new PrimedComponentFactory(VltavaName, Vltava, []);
 
     public static getFactory() {
         return Vltava.factory;

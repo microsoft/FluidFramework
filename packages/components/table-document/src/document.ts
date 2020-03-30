@@ -26,7 +26,7 @@ import { ITable, TableDocumentItem } from "./table";
 export class TableDocument extends PrimedComponent implements ITable {
     public static getFactory() { return TableDocument.factory; }
 
-    private static readonly factory = new PrimedComponentFactory<TableDocument>(
+    private static readonly factory = new PrimedComponentFactory(
         TableDocumentType,
         TableDocument,
         [

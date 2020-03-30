@@ -55,7 +55,7 @@ export class DraftJsExample extends PrimedComponent implements IComponentHTMLVie
 }
 
 // ----- COMPONENT SETUP STUFF -----
-export const DraftInstantiationFactory = new PrimedComponentFactory<DraftJsExample>(
+export const DraftInstantiationFactory = new PrimedComponentFactory(
     DraftJsName,
     DraftJsExample,
     [SharedMap.getFactory(), SharedString.getFactory()],

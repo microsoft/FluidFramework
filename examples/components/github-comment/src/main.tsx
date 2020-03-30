@@ -27,6 +27,7 @@ import {
 import/no-unassigned-import */
 import * as tabSelector from "./utils/githubMissingJs";
 import "./styles/github-css-full-rip.css";
+import { githubCommentName } from "./index";
 const mdit = require("markdown-it")("commonmark");
 const divHTML = require("./styles/github-comment-only.html");
 /* eslint-enable @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, import/no-internal-modules,
@@ -117,6 +118,7 @@ export class GithubComment extends TextareaNoReact implements IComponentHTMLView
  */
 export const GithubCommentInstantiationFactory =
     new PrimedComponentFactory(
+        githubCommentName,
         GithubComment,
         [
             SharedString.getFactory(),

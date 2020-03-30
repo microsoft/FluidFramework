@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
 import { DirectoryFactory, MapFactory, SharedDirectory, SharedMap } from "@microsoft/fluid-map";
 import {
     IComponentContext,
@@ -14,7 +13,7 @@ import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { SharedComponent } from "../components";
 import { SharedComponentFactory } from "./sharedComponentFactory";
 
-export class PrimedComponentFactory<T extends IComponent & IComponentLoadable> extends SharedComponentFactory<T> {
+export class PrimedComponentFactory extends SharedComponentFactory {
     constructor(
         type: string,
         ctor: new (runtime: IComponentRuntime, context: IComponentContext) => SharedComponent,

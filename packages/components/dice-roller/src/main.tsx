@@ -12,6 +12,8 @@ import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
+import { diceRollerName } from "./index";
+
 /**
  * Dice roller example using view interfaces and stock component classes.
  */
@@ -67,6 +69,7 @@ export class DiceRoller extends PrimedComponent implements IComponentHTMLView {
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
  */
 export const DiceRollerInstantiationFactory = new PrimedComponentFactory(
+    diceRollerName,
     DiceRoller,
     [],
 );

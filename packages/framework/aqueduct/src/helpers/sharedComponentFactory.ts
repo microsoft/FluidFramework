@@ -18,7 +18,7 @@ import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 // eslint-disable-next-line import/no-internal-modules
 import { SharedComponent } from "../components/sharedComponent";
 
-export class SharedComponentFactory<T extends IComponent & IComponentLoadable> implements
+export class SharedComponentFactory implements
     IComponentFactory,
     Partial<IProvideComponentRegistry>
 {
@@ -89,10 +89,10 @@ export class SharedComponentFactory<T extends IComponent & IComponentLoadable> i
         return instance;
     }
 
-    public async createComponent(context: IComponentContext): Promise<T> {
+    public async createComponent(context: IComponentContext): Promise<IComponent & IComponentLoadable> {
         return context.createComponentWithRealizationFn(
             this.type,
             (newContext) => { this.instantiateComponent(newContext); },
-        ) as Promise<T>;
+        );
     }
 }

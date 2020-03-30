@@ -25,6 +25,7 @@ import {
     SharedString,
 } from "@microsoft/fluid-sequence";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+import { textAreaNoReactName } from "./index";
 /******************************************************************************/
 
 /**
@@ -401,6 +402,7 @@ export class TextareaNoReact extends PrimedComponent implements IComponentHTMLVi
  */
 export const TextareaNoReactInstantiationFactory =
     new PrimedComponentFactory(
+        textAreaNoReactName,
         TextareaNoReact,
         [
             SharedString.getFactory(),

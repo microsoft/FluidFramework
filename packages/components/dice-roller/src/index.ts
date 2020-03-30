@@ -11,7 +11,7 @@ import { DiceRollerInstantiationFactory } from "./main";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
-const componentName = pkg.name as string;
+export const diceRollerName = pkg.name as string;
 
 /**
  * This does setup for the Container. The SimpleModuleInstantiationFactory also enables dynamic loading in the
@@ -25,8 +25,8 @@ const componentName = pkg.name as string;
  * components.
  */
 export const fluidExport = new SimpleModuleInstantiationFactory(
-    componentName,
+    diceRollerName,
     new Map([
-        [componentName, Promise.resolve(DiceRollerInstantiationFactory)],
+        [diceRollerName, Promise.resolve(DiceRollerInstantiationFactory)],
     ]),
 );
