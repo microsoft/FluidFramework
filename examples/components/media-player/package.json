@@ -26,7 +26,9 @@
     "@microsoft/fluid-map": "^0.16.0",
     "@microsoft/fluid-view-interfaces": "^0.16.0",
     "react": "^16.10.2",
-    "react-dom": "^16.10.2"
+    "react-dom": "^16.10.2",
+    "react-player": "^1.15.3",
+    "simplerestclients": "^0.2.7"
   },
   "devDependencies": {
     "@microsoft/fluid-webpack-component-loader": "^0.16.0",

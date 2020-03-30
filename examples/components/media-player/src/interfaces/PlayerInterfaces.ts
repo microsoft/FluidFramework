@@ -1,0 +1,24 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+ 
+export const PlayerStateKey = "playerState";
+export const PlayerProgressKey = "playerProgress";
+
+export enum PlayerStates {
+    Playing = "Playing",
+    Paused = "Paused",
+    Buffering = "Buffering",
+    Seeking = "Seeking"
+}
+  
+export interface IPlaylistItem {
+    name: string;
+    url: string;
+    id: string;
+    thumbnailUrl: string;
+    channelName: string;
+    description: string;
+}

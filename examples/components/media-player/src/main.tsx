@@ -5,6 +5,7 @@
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+import ReactPlayer from 'react-player';
 import {
     PrimedComponent,
     PrimedComponentFactory,
@@ -12,7 +13,7 @@ import {
 import { ISharedDirectory } from "@microsoft/fluid-map";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
-export const MediaPlayerName = "mediaPlayer";
+export const MediaPlayerName = "media-player";
 
 
 /**
@@ -71,10 +72,8 @@ class MediaPlayerView extends React.Component<IMediaPlayerViewProps, IMediaPlaye
     }
 
     render(){
-        
-
         return (
-            <label>{"Hi"}</label>
+            <ReactPlayer url={"https://www.youtube.com/watch?v=sP7OuFYJLTE"}/>
         );
     }
 }
