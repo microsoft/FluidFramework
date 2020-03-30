@@ -60,7 +60,7 @@ export class RemoteChannelContext implements IChannelContext {
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public getChannel(): Promise<IChannel> {
-        if (!this.channelP) {
+        if (this.channelP === undefined) {
             this.channelP = this.loadChannel();
         }
 

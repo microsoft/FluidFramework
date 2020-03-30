@@ -173,7 +173,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         const tree = componentContext.baseSnapshot;
 
         // Must always receive the component type inside of the attributes
-        if (tree && tree.trees) {
+        if (tree?.trees !== undefined) {
             Object.keys(tree.trees).forEach((path) => {
                 const channelContext = new RemoteChannelContext(
                     this,
@@ -246,7 +246,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         }
 
         // Otherwise defer to an attached request handler
-        if (!this.requestHandler) {
+        if (this.requestHandler === undefined) {
             return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
         } else {
             return this.requestHandler(request);
@@ -331,7 +331,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
             return;
         }
 
-        if (this.boundhandles) {
+        if (this.boundhandles !== undefined) {
             this.boundhandles.forEach((handle) => {
                 handle.attach();
             });
@@ -354,7 +354,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     }
 
     public bind(handle: IComponentHandle): void {
-        if (!this.boundhandles) {
+        if (this.boundhandles === undefined) {
             this.boundhandles = new Set<IComponentHandle>();
         }
 
@@ -446,7 +446,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                     this.pendingAttach.delete(attachMessage.id);
                 } else {
                     // Create storage service that wraps the attach data
-                    const origin = message.origin ? message.origin.id : this.documentId;
+                    const origin = message.origin?.id ?? this.documentId;
 
                     const flatBlobs = new Map<string, string>();
                     const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);

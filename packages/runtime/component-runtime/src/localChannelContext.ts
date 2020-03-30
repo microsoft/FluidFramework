@@ -34,7 +34,7 @@ export class LocalChannelContext implements IChannelContext {
         private readonly submitFn: (type: MessageType, content: any) => number,
     ) {
         const factory = registry.get(type);
-        if (!factory) {
+        if (factory === undefined) {
             throw new Error(`Channel Factory ${type} not registered`);
         }
 
