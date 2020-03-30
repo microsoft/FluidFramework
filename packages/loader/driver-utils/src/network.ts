@@ -42,7 +42,7 @@ export function createNetworkError(
     if (statusCode === 500) {
         return new FatalError(errorMessage);
     }
-    if (retryAfterSeconds) {
+    if (retryAfterSeconds !== undefined) {
         return new ThrottlingError(errorMessage, retryAfterSeconds);
     }
     return new GenericNetworkError(errorMessage, statusCode, canRetry, online);
