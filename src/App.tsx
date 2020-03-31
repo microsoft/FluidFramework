@@ -95,7 +95,14 @@ export const App = () => {
         newState[action.personKey] = person;
         break;
       case "add":
-        newState.push({ name: "", availability: [0, 0, 0] });
+        newState.push({
+          name: "",
+          availability: [
+            AvailabilityType.No,
+            AvailabilityType.No,
+            AvailabilityType.No
+          ]
+        });
         break;
       case "remove":
         newState.pop();
