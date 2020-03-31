@@ -2,17 +2,21 @@
 
 ## 0.16 Breaking Changes
 
-- [View interfaces moved to separate package](View-interfaces-moved-to-separate-package)
-- [Interfaces should now have string identifiers](Interfaces-should-now-have-string-identifiers)
+- [View interfaces moved to separate package](#View-interfaces-moved-to-separate-package)
+- [IComponent* Interfaces should now have string literal identifiers](#IComponent*-Interfaces-should-now-have-string-literal-identifiers)
 
 ### View interfaces moved to separate package
 
 View-related interfaces have been moved to package `@microsoft/fluid-view-interfaces`.  This includes `IComponentHTMLView`, `IComponentHTMLVisual`, `IComponentHTMLOptions`, `IComponentReactViewable`, and their related "provide" interfaces.
 
-### Interfaces should now have string identifiers
+### `IComponent*` Interfaces should now have string literal identifiers
 
-This change is non-breaking, but an update to our IComponent interface paradigm. Interfaces that use module augmentation on IComponent should export a string const with the same name as the interface. This string can be used as a global runtime
-identifier for the interface. Since interfaces are a typescript concept and compiled away, we can now use this const as a way to identify interfaces at runtime.
+This change is non-breaking, but an update to our IComponent interface paradigm. Interfaces that use module augmentation on IComponent should export a string literal const with the same name as the interface.
+
+This const provides two benefits:
+
+1. This additional syntax will provide circular type safety so it's hared to mix up typings.
+2. This string can be used as a global runtime identifier for the interface. Since interfaces are a typescript concept and compiled away, we can now use this const as a way to identify interfaces at runtime.
 
 #### Old Pattern
 
@@ -39,10 +43,10 @@ declare module "@microsoft/fluid-component-core-interfaces" {
     export interface IComponent extends Readonly<Partial<IProvideComponentFactory>> { }
 }
 
-export const IComponentFoo = "IComponentFoo";
+export const IComponentFoo: keyof IProvideComponentFoo  = "IComponentFoo";
 
 export interface IProvideComponentFoo {
-    readonly [IComponentFoo]: IComponentFoo;
+    readonly IComponentFoo: IComponentFoo;
 }
 
 export interface IComponentFoo extends IProvideComponentFoo {
