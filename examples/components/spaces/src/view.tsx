@@ -8,7 +8,9 @@ import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 
 import * as React from "react";
 import RGL, { WidthProvider, Layout } from "react-grid-layout";
-import "react-grid-layout/css/styles.css";
+// eslint-disable @typescript-eslint/no-require-imports
+require("react-grid-layout/css/styles.css");
+// eslint-enable @typescript-eslint/no-require-imports
 const ReactGridLayout = WidthProvider(RGL);
 import { ISpacesDataModel } from "./dataModel";
 
