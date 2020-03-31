@@ -8,8 +8,7 @@ import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 
 import * as React from "react";
 import RGL, { WidthProvider, Layout } from "react-grid-layout";
-import "../../../../node_modules/react-grid-layout/css/styles.css";
-import "../../../../node_modules/react-resizable/css/styles.css";
+import "react-grid-layout/css/styles.css";
 const ReactGridLayout = WidthProvider(RGL);
 import { ISpacesDataModel } from "./dataModel";
 
