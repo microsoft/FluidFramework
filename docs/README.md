@@ -46,8 +46,8 @@ Instead, you probably want <a :href="$themeConfig.RELEASE_URL">documentation for
 {{ $themeConfig.RELEASE_VERSION }}, or the <a :href="$themeConfig.N1_URL">previous supported release</a>,
 {{ $themeConfig.N1_VERSION }}.
 
-- Current release version: v<a :href="$themeConfig.RELEASE_URL">{{ $themeConfig.RELEASE_VERSION }}</a>
-- Supported former releases: v<a :href="$themeConfig.N1_URL">{{ $themeConfig.N1_VERSION }}</a>
+- Current release version: <a :href="$themeConfig.RELEASE_URL">v{{ $themeConfig.RELEASE_VERSION }}</a>
+- Supported former releases: <a :href="$themeConfig.N1_URL">v{{ $themeConfig.N1_VERSION }}</a>
 
 [Learn more about Fluid's release process](./contributing/release-process.md)
 
@@ -58,8 +58,8 @@ Instead, you probably want <a :href="$themeConfig.RELEASE_URL">documentation for
 
 ::: tip Fluid Framework v{{$themeConfig.RELEASE_VERSION}}
 
-- Current release version: v<a :href="$themeConfig.RELEASE_URL">{{ $themeConfig.RELEASE_VERSION }}</a>
-- Supported former releases: v<a :href="$themeConfig.N1_URL">{{ $themeConfig.N1_VERSION }}</a>
+- Current release version: <a :href="$themeConfig.RELEASE_URL">v{{ $themeConfig.RELEASE_VERSION }}</a>
+- Supported former releases: <a :href="$themeConfig.N1_URL">v{{ $themeConfig.N1_VERSION }}</a>
 
 [Learn more about Fluid's release process](./contributing/release-process.md)
 
@@ -73,8 +73,8 @@ Instead, you probably want <a :href="$themeConfig.RELEASE_URL">documentation for
 This documentation is for an outdated version of the Fluid Framework. A new version of the Fluid Framework is available,
 version {{ $themeConfig.RELEASE_VERSION }}. You should consider upgrading as soon as possible.
 
-- Current release version: v<a :href="$themeConfig.RELEASE_URL">{{ $themeConfig.RELEASE_VERSION }}</a>
-- Supported former releases: v<a :href="$themeConfig.N1_URL">{{ $themeConfig.N1_VERSION }}</a>
+- Current release version: <a :href="$themeConfig.RELEASE_URL">v{{ $themeConfig.RELEASE_VERSION }}</a>
+- Supported former releases: <a :href="$themeConfig.N1_URL">v{{ $themeConfig.N1_VERSION }}</a>
 
 [Learn more about Fluid's release process](./contributing/release-process.md)
 
