@@ -8,7 +8,8 @@ import {
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
-
+import { IComponentRuntime, IComponentContext } from "@microsoft/fluid-runtime-definitions";
+import { FluidRtcPeerConnectionManager } from "./peerConnectionManager";
 
 /**
  * Dice roller example using view interfaces and stock component classes.
@@ -16,19 +17,15 @@ import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 class WebRTCComponent extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
+    constructor(runtime: IComponentRuntime, context: IComponentContext){
+        super(runtime, context);
+    }
 
-    /**
-     * Render the dice.
-     */
+    protected async componentHasInitialized(){
+        await FluidRtcPeerConnectionManager.Initialize(this.context);
+    }
+
     public render(div: HTMLElement) {
-        const rerender = () => {
-
-        };
-
-        rerender();
-        this.root.on("valueChanged", () => {
-            rerender();
-        });
     }
 
 }
