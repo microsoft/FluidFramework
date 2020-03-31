@@ -12,6 +12,7 @@ import {
 } from "@microsoft/fluid-runtime-definitions";
 import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
 import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
+import { MediaPlayer } from "../../media-player/src/main";
 import {
     ComponentToolbar,
     ComponentToolbarName,
@@ -23,7 +24,6 @@ import { Spaces } from "./spaces";
 import {
     IContainerComponentDetails,
 } from "./interfaces";
-import { MediaPlayer } from "../../media-player/src/main";
 
 export * from "./spaces";
 export * from "./components";
