@@ -360,16 +360,17 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
                 break;
 
             case ConnectionState.Connected:
-                // Extract all un-ack'd payload operation
-                // eslint-disable-next-line no-case-declarations
-                const pendingOps = this.pendingOps.toArray().map((value) => value.content);
-                this.pendingOps.clear();
+                {
+                    // Extract all un-ack'd payload operation
+                    const pendingOps = this.pendingOps.toArray().map((value) => value.content);
+                    this.pendingOps.clear();
 
-                // And now we are fully connected
-                // - we have a client ID
-                // - we are caught up enough to attempt to send messages
-                this.onConnect(pendingOps);
-                this.emit("connected");
+                    // And now we are fully connected
+                    // - we have a client ID
+                    // - we are caught up enough to attempt to send messages
+                    this.onConnect(pendingOps);
+                    this.emit("connected");
+                }
 
                 break;
 

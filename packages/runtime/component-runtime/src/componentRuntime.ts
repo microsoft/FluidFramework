@@ -435,46 +435,48 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
 
     public process(message: ISequencedDocumentMessage, local: boolean) {
         this.verifyNotClosed();
-        /* eslint-disable no-case-declarations */
         switch (message.type) {
             case MessageType.Attach:
-                const attachMessage = message.contents as IAttachMessage;
+                {
+                    const attachMessage = message.contents as IAttachMessage;
 
-                // If a non-local operation then go and create the object - otherwise mark it as officially attached.
-                if (local) {
-                    assert(this.pendingAttach.has(attachMessage.id));
-                    this.pendingAttach.delete(attachMessage.id);
-                } else {
-                    // Create storage service that wraps the attach data
-                    const origin = message.origin?.id ?? this.documentId;
-
-                    const flatBlobs = new Map<string, string>();
-                    const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
-
-                    const remoteChannelContext = new RemoteChannelContext(
-                        this,
-                        this.componentContext,
-                        this.componentContext.storage,
-                        (type, content) => this.submit(type, content),
-                        attachMessage.id,
-                        snapshotTree,
-                        this.sharedObjectRegistry,
-                        flatBlobs,
-                        origin,
-                        this.componentContext.summaryTracker.createOrGetChild(
-                            attachMessage.id,
-                            message.sequenceNumber,
-                        ),
-                        attachMessage.type);
-
-                    this.contexts.set(attachMessage.id, remoteChannelContext);
-                    if (this.contextsDeferred.has(attachMessage.id)) {
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        this.contextsDeferred.get(attachMessage.id)!.resolve(remoteChannelContext);
+                    // If a non-local operation then go and create the object
+                    // Otherwise mark it as officially attached.
+                    if (local) {
+                        assert(this.pendingAttach.has(attachMessage.id));
+                        this.pendingAttach.delete(attachMessage.id);
                     } else {
-                        const deferred = new Deferred<IChannelContext>();
-                        deferred.resolve(remoteChannelContext);
-                        this.contextsDeferred.set(attachMessage.id, deferred);
+                        // Create storage service that wraps the attach data
+                        const origin = message.origin?.id ?? this.documentId;
+
+                        const flatBlobs = new Map<string, string>();
+                        const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
+
+                        const remoteChannelContext = new RemoteChannelContext(
+                            this,
+                            this.componentContext,
+                            this.componentContext.storage,
+                            (type, content) => this.submit(type, content),
+                            attachMessage.id,
+                            snapshotTree,
+                            this.sharedObjectRegistry,
+                            flatBlobs,
+                            origin,
+                            this.componentContext.summaryTracker.createOrGetChild(
+                                attachMessage.id,
+                                message.sequenceNumber,
+                            ),
+                            attachMessage.type);
+
+                        this.contexts.set(attachMessage.id, remoteChannelContext);
+                        if (this.contextsDeferred.has(attachMessage.id)) {
+                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                            this.contextsDeferred.get(attachMessage.id)!.resolve(remoteChannelContext);
+                        } else {
+                            const deferred = new Deferred<IChannelContext>();
+                            deferred.resolve(remoteChannelContext);
+                            this.contextsDeferred.set(attachMessage.id, deferred);
+                        }
                     }
                 }
 
@@ -485,7 +487,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                 break;
             default:
         }
-        /* eslint-enable no-case-declarations */
 
         this.emit("op", message);
     }
