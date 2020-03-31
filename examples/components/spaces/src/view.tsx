@@ -7,8 +7,11 @@ import { ReactViewAdapter } from "@microsoft/fluid-view-adapters";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 
 import * as React from "react";
-import GridLayout, { Layout } from "react-grid-layout";
+import RGL, { WidthProvider, Layout } from "react-grid-layout";
+import "react-grid-layout/css/styles.css";
+const ReactGridLayout = WidthProvider(RGL);
 import { ISpacesDataModel } from "./dataModel";
+
 
 interface IEmbeddedComponentWrapperProps {
     id: string;
@@ -192,36 +195,6 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                             >
                                 {"↗️"}
                             </button>
-                            <input
-                                style={buttonStyle}
-                                value={layout.w}
-                                onMouseDown={(event: React.MouseEvent<HTMLInputElement>) => {
-                                    event.stopPropagation();
-                                }}
-                                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                                    this.props.dataModel.updateGridItem(id, {
-                                        x: layout.x,
-                                        y: layout.y,
-                                        w: event.target.value,
-                                        h: layout.h,
-                                    })
-                                }
-                            />
-                            <input
-                                style={buttonStyle}
-                                value={layout.h}
-                                onMouseDown={(event: React.MouseEvent<HTMLInputElement>) => {
-                                    event.stopPropagation();
-                                }}
-                                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                                    this.props.dataModel.updateGridItem(id, {
-                                        x: layout.x,
-                                        y: layout.y,
-                                        w: layout.w,
-                                        h: event.target.value,
-                                    })
-                                }
-                            />
                         </div>
                     }
                     <div style={embeddedComponentStyle}>
@@ -246,7 +219,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                 {componentToolbar}
                 {
                     this.state.componentMap.size > 0 &&
-                        <GridLayout
+                        <ReactGridLayout
                             className="layout"
                             cols={36}
                             rowHeight={50}
@@ -255,7 +228,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                             compactType={null} // null is required for the GridLayout
                             isDroppable={this.state.isEditable}
                             isDraggable={this.state.isEditable}
-                            isResizable={this.state.isEditable}
+                            isResizable={true}
                             preventCollision={true}
                             isRearrangeable={false}
                             onResizeStop={this.onGridChangeEvent}
@@ -264,7 +237,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                             style={gridContainerStyle}
                         >
                             {components}
-                        </GridLayout>
+                        </ReactGridLayout>
                 }
             </div>
         );
