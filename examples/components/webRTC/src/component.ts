@@ -27,6 +27,7 @@ export class WebRTCComponent extends PrimedComponent implements IComponentHTMLVi
         };
         const audio: MediaTrackConstraints={
             echoCancellation:true,
+            noiseSuppression: true,
         };
         const mediaStream = await navigator.mediaDevices.getUserMedia({video, audio});
         this.streamMap.set("local", await navigator.mediaDevices.getUserMedia({video, audio: false}));
