@@ -67,7 +67,7 @@ class Playlist extends React.Component<PlaylistProps, PlaylistState> {
   
   private _renderList = (playlist: PlaylistItem[]) => {
     return playlist.length > 0? (
-      <ul style={{maxHeight: "356px", border: "1px solid grey", overflow: "auto", paddingInlineStart: "0px"}}>
+      <ul style={{maxHeight: "356px", border: "1px solid grey", overflow: "auto", paddingInlineStart: "0px", overflowY: "scroll"}}>
         {playlist.map(item => (
           this._renderItem(item)
         ))}
@@ -77,7 +77,7 @@ class Playlist extends React.Component<PlaylistProps, PlaylistState> {
 
   private _renderItem = (item: PlaylistItem) => {
     return(
-        <div style={{margin: "1vh"}}>
+        <div style={{margin: "1vh", height: "12vh"}}>
             <div style={{float: "left"}}>
                 <img style={{maxWidth: "15vh", marginLeft: "2vh", marginRight: "2vh"}} src={item.thumbnailUrl}/>
             </div>

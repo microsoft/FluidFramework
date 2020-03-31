@@ -20,7 +20,8 @@ export enum PlayerState {
 
 export enum MediaSource {
     Youtube,
-    Soundcloud
+    Soundcloud,
+    Vimeo
 }
   
 export interface IPlaylistItem {

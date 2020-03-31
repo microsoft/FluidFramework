@@ -23,6 +23,7 @@ import { IPlaylistItem, PlaylistKey, PlayerStateKey, PlayerState, PlayerProgress
 import Slider from "./components/Slider";
 import Playlist from "./components/Playlist";
 import SoundcloudClient from "./clients/SoundcloudClient";
+import VimeoClient from "./clients/VimeoClient";
 
 export const MediaPlayerName = "media-player";
 
@@ -286,6 +287,23 @@ class MediaPlayerView extends React.Component<IMediaPlayerViewProps, IMediaPlaye
                 playlist.push(newPlaylistItem);
                 root.set<IPlaylistItem[]>(PlaylistKey, playlist);
                 this.setState({newUrl: ""});
+            } else if (newUrl.indexOf("vimeo.com") > 0) {
+                const newVideoId = VimeoClient.getVimeoTrackId(newUrl);
+                VimeoClient.getVideoById(newVideoId).then(response => {
+                    const pictureUrl = response.pictures.sizes[response.pictures.sizes.length - 1].link
+                    var newPlaylistItem: IPlaylistItem = {
+                        name: response.name,
+                        url: response.link,
+                        id: newVideoId,
+                        thumbnailUrl: pictureUrl,
+                        channelName: response.user.name,
+                        description: response.description,
+                        mediaSource: MediaSource.Vimeo
+                    };
+                    playlist.push(newPlaylistItem);
+                    root.set<IPlaylistItem[]>(PlaylistKey, playlist);
+                    this.setState({newUrl: ""});
+                })
             }
             
         } else {
