@@ -25,6 +25,7 @@
     "@microsoft/fluid-aqueduct": "^0.16.0",
     "@microsoft/fluid-map": "^0.16.0",
     "@microsoft/fluid-view-interfaces": "^0.16.0",
+    "@fluentui/react-northstar": "^0.47.0",
     "react": "^16.10.2",
     "react-collapsible": "^2.7.0",
     "react-dom": "^16.10.2",

@@ -12,16 +12,13 @@ import {
 } from "@microsoft/fluid-aqueduct";
 import { ISharedDirectory } from "@microsoft/fluid-map";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
-import {
-    Text
-} from "office-ui-fabric-react";
+import { Provider, themes, Header, Table } from '@fluentui/react-northstar';
 import YoutubeClient from "./clients/YoutubeClient";
 import { IPlaylistItem, PlaylistKey, PlayerStateKey, PlayerStates, PlayerProgressKey, PlaylistIndexKey, PlayerProgressProportionKey, AcceptableDelta } from "./interfaces/PlayerInterfaces";
 import Slider from "./components/Slider";
 import Playlist from "./components/Playlist";
 
 export const MediaPlayerName = "media-player";
-
 
 /**
  * A component to allow you to add and manipulate components
@@ -69,9 +66,12 @@ export class MediaPlayer extends PrimedComponent
      */
     public render(div: HTMLElement) {
         ReactDOM.render(
-            <MediaPlayerView
-                root={this.root}
-            />,
+            <Provider theme={themes.teams}>
+                <MediaPlayerView
+                    root={this.root}
+                />
+            </Provider>
+            ,
             div,
         );
     }
@@ -94,6 +94,7 @@ interface IMediaPlayerViewProps {
 interface IMediaPlayerViewState {
     playedProportion: number;
     newUrl: string;
+    playlist: IPlaylistItem[]
 }
 
 class MediaPlayerView extends React.Component<IMediaPlayerViewProps, IMediaPlayerViewState> {
@@ -112,7 +113,8 @@ class MediaPlayerView extends React.Component<IMediaPlayerViewProps, IMediaPlaye
         const {root} = this.props;
         this.state = {
             playedProportion: root.get(PlayerProgressProportionKey),
-            newUrl: ""
+            newUrl: "",
+            playlist: root.get<IPlaylistItem[]>(PlaylistKey)
         }
         root.on("valueChanged", (change, local) => {
             if (root.get(PlayerProgressProportionKey) != this.state.playedProportion) {
@@ -120,13 +122,17 @@ class MediaPlayerView extends React.Component<IMediaPlayerViewProps, IMediaPlaye
                     playedProportion: root.get(PlayerProgressProportionKey)
                 });
             }
+            if (root.get(PlaylistKey) != this.state.playlist) {
+                this.setState({
+                    playlist: root.get<IPlaylistItem[]>(PlaylistKey)
+                });
+            }
         });
     }
 
     render(){
         const { root } = this.props;
-        const { playedProportion, newUrl } = this.state;
-        const playlist = root.get<IPlaylistItem[]>(PlaylistKey);
+        const { playedProportion, newUrl, playlist } = this.state;
         const playlistIndex = root.get<number>(PlaylistIndexKey);
         if (playlistIndex < playlist.length && playlist[playlistIndex]) {
             const currentVideo = playlist[playlistIndex];
@@ -135,13 +141,10 @@ class MediaPlayerView extends React.Component<IMediaPlayerViewProps, IMediaPlaye
             const videoName = currentVideo.name;
             const playerState = root.get(PlayerStateKey);
             return (
-                <table style={this.styles.playerTableContainer}>
+                <Table style={this.styles.playerTableContainer}>
                     <td>
                         <tr>
-                            <Text style={{marginBlockStart: "0vh", marginBlockEnd: "1vh"}}>{videoName}</Text>
-                        </tr>
-                        <tr>
-                            <Text style={{marginBlockStart: "0vh", marginBlockEnd: "2vh", color: "grey"}}>{videoChannelName}</Text>
+                            <Header content={videoName} description={videoChannelName}/>
                         </tr>
                         <tr>
                             <ReactPlayer
@@ -182,7 +185,7 @@ class MediaPlayerView extends React.Component<IMediaPlayerViewProps, IMediaPlaye
                             <Playlist playlist={playlist} currentIndex={playlistIndex} />
                         </tr>
                     </td>
-                </table>
+                </Table>
             );
         }
     }
