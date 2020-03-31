@@ -1,1 +1,1 @@
-export * from "./fluidSignalingChannel";
+export * from "./component";
