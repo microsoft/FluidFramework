@@ -1080,29 +1080,30 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         // Old prepare part
         switch (message.type) {
             case MessageType.Attach:
-                // The local object has already been attached
-                if (local) {
-                    break;
+                {
+                    // The local object has already been attached
+                    if (local) {
+                        break;
+                    }
+
+                    const attachMessage = message.contents as IAttachMessage;
+                    const flatBlobs = new Map<string, string>();
+                    let snapshotTree: ISnapshotTree | null = null;
+                    if (attachMessage.snapshot) {
+                        snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
+                    }
+
+                    // Include the type of attach message which is the pkg of the component to be
+                    // used by RemotedComponentContext in case it is not in the snapshot.
+                    remotedComponentContext = new RemotedComponentContext(
+                        attachMessage.id,
+                        snapshotTree,
+                        this,
+                        new BlobCacheStorageService(this.storage, flatBlobs),
+                        this.containerScope,
+                        this.summaryTracker.createOrGetChild(attachMessage.id, message.sequenceNumber),
+                        [attachMessage.type]);
                 }
-
-                const attachMessage = message.contents as IAttachMessage;
-                const flatBlobs = new Map<string, string>();
-                let snapshotTree: ISnapshotTree | null = null;
-                if (attachMessage.snapshot) {
-                    snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
-                }
-
-                // Include the type of attach message which is the pkg of the component to be
-                // used by RemotedComponentContext in case it is not in the snapshot.
-                remotedComponentContext = new RemotedComponentContext(
-                    attachMessage.id,
-                    snapshotTree,
-                    this,
-                    new BlobCacheStorageService(this.storage, flatBlobs),
-                    this.containerScope,
-                    this.summaryTracker.createOrGetChild(attachMessage.id, message.sequenceNumber),
-                    [attachMessage.type]);
-
                 break;
 
             default:
@@ -1122,24 +1123,26 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         // Post-process part
         switch (message.type) {
             case MessageType.Attach:
-                const attachMessage = message.contents as IAttachMessage;
+                {
+                    const attachMessage = message.contents as IAttachMessage;
 
-                // If a non-local operation then go and create the object - otherwise mark it as officially attached.
-                if (local) {
-                    assert(this.pendingAttach.has(attachMessage.id));
-                    this.pendingAttach.delete(attachMessage.id);
-                } else {
-                    // Resolve pending gets and store off any new ones
-                    const deferred = this.ensureContextDeferred(attachMessage.id);
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    deferred.resolve(remotedComponentContext!);
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    this.contexts.set(attachMessage.id, remotedComponentContext!);
+                    // If a non-local operation then go and create the object, otherwise mark it as officially attached.
+                    if (local) {
+                        assert(this.pendingAttach.has(attachMessage.id));
+                        this.pendingAttach.delete(attachMessage.id);
+                    } else {
+                        // Resolve pending gets and store off any new ones
+                        const deferred = this.ensureContextDeferred(attachMessage.id);
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        deferred.resolve(remotedComponentContext!);
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        this.contexts.set(attachMessage.id, remotedComponentContext!);
 
-                    // Equivalent of nextTick() - Prefetch once all current ops have completed
-                    // eslint-disable-next-line max-len
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises, @typescript-eslint/promise-function-async
-                    Promise.resolve().then(() => remotedComponentContext.realize());
+                        // Equivalent of nextTick() - Prefetch once all current ops have completed
+                        // eslint-disable-next-line max-len
+                        // eslint-disable-next-line @typescript-eslint/no-floating-promises, @typescript-eslint/promise-function-async
+                        Promise.resolve().then(() => remotedComponentContext.realize());
+                    }
                 }
                 break;
             default: // Do nothing
