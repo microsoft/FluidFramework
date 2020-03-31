@@ -16,7 +16,7 @@ This change is non-breaking, but an update to our IComponent interface paradigm.
 This const provides two benefits:
 
 1. This additional syntax will provide circular type safety so it's hared to mix up typings.
-2. This string can be used as a global runtime identifier for the interface. Since interfaces are a typescript concept and compiled away, we can now use this const as a way to identify interfaces at runtime.
+2. This string can be used as a global runtime identifier for the interface. Since interfaces are a TypeScript concept and compiled away, we can now use this const as a way to identify interfaces at runtime.
 
 #### Old Pattern
 
