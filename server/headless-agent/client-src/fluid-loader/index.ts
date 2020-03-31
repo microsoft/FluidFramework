@@ -20,7 +20,7 @@ export async function startLoading(resolvedUrl: IResolvedUrl): Promise<Container
         false,
         true);
     const documentServiceFactories: IDocumentServiceFactory[] = [];
-        documentServiceFactories.push(serviceFactory);
+    documentServiceFactories.push(serviceFactory);
     const baseHostConfig: IBaseHostConfig = {
         documentServiceFactory: documentServiceFactories,
         urlResolver: {
@@ -33,8 +33,19 @@ export async function startLoading(resolvedUrl: IResolvedUrl): Promise<Container
         (resolvedUrl as IFluidResolvedUrl).url,
         document.getElementById("content") as HTMLDivElement);
 
-    return container as any;
+    return await new Promise((resolve, reject) => {
+        if (reject) {
+            console.log("Container promise reject!");
+            reject(container);
+        }
+
+        container.on("op", () => {
+            console.log("Op Resolve");
+            resolve(container);
+        });
+    });
 }
+
 
 // Checks container quorum for connected clients. Once all client leaves,
 // invokes the close function injected by puppeteer launcher.

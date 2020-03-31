@@ -42,6 +42,7 @@ export class HeadlessRunner implements utils.IRunner {
             const type = message.type;
 
             if (type === "tasks:start") {
+                winston.info("tasks:start!!!");
                 const requestMessage = message.content as IQueueMessage;
                 const originalTasksToRun = requestMessage.message.tasks.filter((task) => this.permission.has(task));
                 // back-compat with tmz

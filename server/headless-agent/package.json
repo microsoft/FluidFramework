@@ -9,7 +9,7 @@
     "build": "npm run tsc && npm run lint",
     "build:client": "webpack --color --config client-src/fluid-loader/webpack.config.js",
     "build:full": "npm run build && npm run build:client",
-    "docker:build": "docker build --build-arg NPM_TOKEN=$(echo $NPM_TOKEN) -t headless-agent .",
+    "docker:build": "docker build --build-arg NPM_TOKEN=$(echo $NPM_TOKEN) -t prague.azurecr.io/headless-agent:local .",
     "docker:local": "docker run --rm -t --cap-add=SYS_ADMIN --network routerlicious_default headless-agent",
     "docker:start": "docker run --rm -t --cap-add=SYS_ADMIN --network routerlicious_default prague.azurecr.io/headless-agent:local",
     "lint": "tslint 'src/**/*.ts'",
