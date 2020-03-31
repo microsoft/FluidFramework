@@ -4,16 +4,14 @@ import { pkgName } from "./packageVersion";
 import { IEmitter, IEvent, IErrorEvent } from "./events";
 
 export interface IOfferEvent extends IEvent{
-    (event: "offer", listener: (offer: any) => void);
+    (event: "offer", listener: (clientId: string, offer: RTCSessionDescription) => void);
 }
 
 export interface IAnswerEvent extends IEvent{
-    (event: "answer", listener: (offer: any) => void);
+    (event: "answer", listener: (clientId: string, answer: any) => void);
 }
 
-type ISignalingChannelEvents = IOfferEvent & IAnswerEvent & IErrorEvent;
-
-export interface ISignalingChannel extends IEmitter<ISignalingChannelEvents>{
+export interface ISignalingChannel extends IEmitter<IOfferEvent & IAnswerEvent & IErrorEvent>{
     send(offer: any);
 }
 
@@ -30,11 +28,11 @@ export class FluidSignalingChannel extends EventEmitter implements ISignalingCha
             if(!local){
                 if(msg.type === pkgName){
                     if(msg.content.offer !== undefined){
-                        this.emit("offer", msg.content);
+                        this.emit("offer", msg.clientId, msg.content as RTCSessionDescription);
                     } else if(msg.content.answer !== undefined){
-                        this.emit("answer", msg.content);
+                        this.emit("answer", msg.clientId, msg.content);
                     } else{
-                        this.emit("error", `unknown signal type`);
+                        this.emit("error", `unknown signal type from ${msg.clientId}`);
                     }
 
                 }
@@ -42,7 +40,7 @@ export class FluidSignalingChannel extends EventEmitter implements ISignalingCha
         });
     }
 
-    public send(offer: any){
+    public send(offer: RTCSessionDescription){
         this.containerRuntime.submitSignal(pkgName, {offer});
     }
 }
