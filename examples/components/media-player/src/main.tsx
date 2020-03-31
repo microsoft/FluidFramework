@@ -52,23 +52,25 @@ export class MediaPlayer extends PrimedComponent
     }
 
     protected async componentInitializingFirstTime() {
-        const newVideoId = this.getYoutubeVideoId(MediaPlayer.initialUrl);
-        await YoutubeClient.getVideoById(newVideoId).then(response => {
-            console.log(response);
-            var firstPlaylistItem: IPlaylistItem = {
-                name: response.snippet.title,
-                url: MediaPlayer.initialUrl,
-                id: newVideoId,
-                thumbnailUrl: response.snippet.thumbnails.standard.url,
-                channelName: response.snippet.channelTitle,
-                description: response.snippet.description,
-                mediaSource: MediaSource.Youtube
-            };
-            this.root.set(PlaylistKey, [firstPlaylistItem]);
-            this.root.set(PlaylistIndexKey, 0);
-            this.root.set(PlayerStateKey, PlayerState.Playing);
-            this.root.set(PlayerProgressKey, -1);
-        });
+        const newVideoId = YoutubeClient.getYoutubeVideoId(MediaPlayer.initialUrl);
+        if (newVideoId) {
+            await YoutubeClient.getVideoById(newVideoId).then(response => {
+                console.log(response);
+                var firstPlaylistItem: IPlaylistItem = {
+                    name: response.snippet.title,
+                    url: MediaPlayer.initialUrl,
+                    id: newVideoId,
+                    thumbnailUrl: response.snippet.thumbnails.standard.url,
+                    channelName: response.snippet.channelTitle,
+                    description: response.snippet.description,
+                    mediaSource: MediaSource.Youtube
+                };
+                this.root.set(PlaylistKey, [firstPlaylistItem]);
+                this.root.set(PlaylistIndexKey, 0);
+                this.root.set(PlayerStateKey, PlayerState.Paused);
+                this.root.set(PlayerProgressKey, -1);
+            });
+        }
     }
 
     /**
@@ -85,16 +87,6 @@ export class MediaPlayer extends PrimedComponent
             div,
         );
     }
-
-    private getYoutubeVideoId = (url: string) => {
-        var regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-        var match = url.match(regExp);
-        if (match && match[2].length == 11) {
-          return match[2];
-        } else {
-          return undefined;
-        }
-      }
 }
 
 interface IMediaPlayerViewProps {
@@ -201,11 +193,13 @@ class MediaPlayerView extends React.Component<IMediaPlayerViewProps, IMediaPlaye
                                     <TextField
                                         placeholder={"Please enter new playlist item URL here..."}
                                         value={newUrl}
-                                        onChange={(event: React.ChangeEvent<HTMLInputElement>) => 
-                                            this.setState({
-                                                newUrl: event.target.value
-                                            })
-                                        }
+                                        onChange={(event: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>, newValue: string | undefined) => {
+                                            if (newValue) {
+                                                this.setState({
+                                                    newUrl: newValue
+                                                })
+                                            }  
+                                        }}
                                     />
                                 </div>
                                 <div style={this.styles.playlistButtonContainer}>
@@ -236,10 +230,9 @@ class MediaPlayerView extends React.Component<IMediaPlayerViewProps, IMediaPlaye
         const {root} = this.props;
         const currentLeaderSeconds = root.get(PlayerProgressKey);
         const playerState = root.get(PlayerStateKey);
-        if (Math.abs(currentLeaderSeconds - playedSeconds) > AcceptableDelta && playedSeconds > 2
-            || playerState === PlayerState.Seeking) {
+        if (Math.abs(currentLeaderSeconds - playedSeconds) > AcceptableDelta || playerState === PlayerState.Seeking) {
             this.seekPlayer(currentLeaderSeconds);
-        } else if (root.get(PlayerStateKey) !== PlayerState.Seeking && !this.isSeeking) {
+        } else if (root.get(PlayerStateKey) !== PlayerState.Seeking && !this.isSeeking && playedSeconds > 5) {
             console.log(`PROGRESS ${played} ${playedSeconds}`)
             root.set(PlayerProgressKey, playedSeconds);
             root.set(PlayerProgressProportionKey, played);
@@ -259,51 +252,64 @@ class MediaPlayerView extends React.Component<IMediaPlayerViewProps, IMediaPlaye
             const playlist = root.get<IPlaylistItem[]>(PlaylistKey);
             if (newUrl.indexOf("youtube.com") > 0) {
                 const newVideoId = YoutubeClient.getYoutubeVideoId(newUrl);
-                YoutubeClient.getVideoById(newVideoId).then(response => {
-                  var newPlaylistItem: IPlaylistItem = {
-                    name: response.snippet.title,
-                    url: newUrl,
-                    id: newVideoId,
-                    thumbnailUrl: response.snippet.thumbnails.standard.url,
-                    channelName: response.snippet.channelTitle,
-                    description: response.snippet.description,
-                    mediaSource: MediaSource.Youtube
-                  };
-                  playlist.push(newPlaylistItem);
-                  root.set<IPlaylistItem[]>(PlaylistKey, playlist);
-                  this.setState({newUrl: ""});
-                })
+                if (newVideoId) {
+                    YoutubeClient.getVideoById(newVideoId).then(response => {
+                        var newPlaylistItem: IPlaylistItem = {
+                          name: response.snippet.title,
+                          url: newUrl,
+                          id: newVideoId,
+                          thumbnailUrl: response.snippet.thumbnails.standard.url,
+                          channelName: response.snippet.channelTitle,
+                          description: response.snippet.description,
+                          mediaSource: MediaSource.Youtube
+                        };
+                        playlist.push(newPlaylistItem);
+                        root.set<IPlaylistItem[]>(PlaylistKey, playlist);
+                        this.setState({newUrl: ""});
+                      });
+                } else {
+                    alert("No track id found in the URL!");
+                }
             } else if (newUrl.indexOf("soundcloud.com") > 0) {
                 const newTrackId = SoundcloudClient.getSouncloudTrackId(newUrl);
-                var newPlaylistItem: IPlaylistItem = {
-                    name: newUrl,
-                    url: newUrl,
-                    id: newTrackId,
-                    thumbnailUrl: "https://icons.iconarchive.com/icons/uiconstock/socialmedia/512/Soundcloud-icon.png",
-                    channelName: "",
-                    description: "",
-                    mediaSource: MediaSource.Soundcloud
-                };
-                playlist.push(newPlaylistItem);
-                root.set<IPlaylistItem[]>(PlaylistKey, playlist);
-                this.setState({newUrl: ""});
-            } else if (newUrl.indexOf("vimeo.com") > 0) {
-                const newVideoId = VimeoClient.getVimeoTrackId(newUrl);
-                VimeoClient.getVideoById(newVideoId).then(response => {
-                    const pictureUrl = response.pictures.sizes[response.pictures.sizes.length - 1].link
+                if (newTrackId) {
                     var newPlaylistItem: IPlaylistItem = {
-                        name: response.name,
-                        url: response.link,
-                        id: newVideoId,
-                        thumbnailUrl: pictureUrl,
-                        channelName: response.user.name,
-                        description: response.description,
-                        mediaSource: MediaSource.Vimeo
+                        name: newUrl,
+                        url: newUrl,
+                        id: newTrackId,
+                        thumbnailUrl: "https://icons.iconarchive.com/icons/uiconstock/socialmedia/512/Soundcloud-icon.png",
+                        channelName: "",
+                        description: "",
+                        mediaSource: MediaSource.Soundcloud
                     };
                     playlist.push(newPlaylistItem);
                     root.set<IPlaylistItem[]>(PlaylistKey, playlist);
                     this.setState({newUrl: ""});
-                })
+                } else {
+                    alert("No track id found in the URL!");
+                }
+            } else if (newUrl.indexOf("vimeo.com") > 0) {
+                const newVideoId = VimeoClient.getVimeoTrackId(newUrl);
+                if (newVideoId) {
+                    VimeoClient.getVideoById(newVideoId).then(response => {
+                        const pictureUrl = response.pictures.sizes[response.pictures.sizes.length - 1].link
+                        var newPlaylistItem: IPlaylistItem = {
+                            name: response.name,
+                            url: response.link,
+                            id: response.id,
+                            thumbnailUrl: pictureUrl,
+                            channelName: response.user.name,
+                            description: response.description,
+                            mediaSource: MediaSource.Vimeo
+                        };
+                        playlist.push(newPlaylistItem);
+                        root.set<IPlaylistItem[]>(PlaylistKey, playlist);
+                        this.setState({newUrl: ""});
+                    });
+                } else {
+                    alert("No video id found in the URL!");
+                }
+                
             }
             
         } else {

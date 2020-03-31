@@ -5,32 +5,25 @@
 
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { ClickerInstantiationFactory } from "@fluid-example/clicker";
 import {
     IProvideComponentFactory,
     NamedComponentRegistryEntries,
     IComponentRegistry,
 } from "@microsoft/fluid-runtime-definitions";
+import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
+import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
 import {
     ComponentToolbar,
     ComponentToolbarName,
-    Button,
-    ButtonName,
-    Number,
-    NumberName,
     TextBox,
     TextBoxName,
-    FacePile,
-    FacePileName,
-    FriendlyButtonName,
-    FriendlyNumberName,
-    FriendlyFacePileName,
     FriendlyTextBoxName,
 } from "./components";
 import { Spaces } from "./spaces";
 import {
     IContainerComponentDetails,
 } from "./interfaces";
+import { MediaPlayer } from "../../media-player/src/main";
 
 export * from "./spaces";
 export * from "./components";
@@ -67,39 +60,32 @@ export class InternalRegistry implements IComponentRegistry {
 const generateFactory = () => {
     const containerComponentsDefinition: IContainerComponentDetails[] = [
         {
-            type: "clicker",
-            factory: Promise.resolve(ClickerInstantiationFactory),
-            friendlyName: "Clicker",
-            fabricIconName: "Touch",
+            type: "media-player",
+            factory: Promise.resolve(MediaPlayer.getFactory()),
+            friendlyName: "Media Player",
+            fabricIconName: "Media",
             capabilities: ["IComponentHTMLView"],
         },
         {
-            type: ButtonName as string,
-            factory: Promise.resolve(Button.getFactory()),
-            friendlyName: FriendlyButtonName,
-            fabricIconName: "ButtonControl",
+            type: "codemirror",
+            factory: Promise.resolve(cmfe),
             capabilities: ["IComponentHTMLView"],
-        },
-        {
-            type: NumberName as string,
-            factory: Promise.resolve(Number.getFactory()),
-            friendlyName: FriendlyNumberName,
-            fabricIconName: "NumberField",
-            capabilities: ["IComponentHTMLView"],
-        },
-        {
-            type: FacePileName as string,
-            factory: Promise.resolve(FacePile.getFactory()),
-            friendlyName: FriendlyFacePileName,
-            fabricIconName: "People",
-            capabilities: ["IComponentHTMLView"],
+            friendlyName: "Code",
+            fabricIconName: "Code",
         },
         {
             type: TextBoxName as string,
             factory: Promise.resolve(TextBox.getFactory()),
             friendlyName: FriendlyTextBoxName,
-            fabricIconName: "TextField",
+            fabricIconName: "Text",
             capabilities: ["IComponentHTMLView"],
+        },
+        {
+            type: "prosemirror",
+            factory: Promise.resolve(pmfe),
+            capabilities: ["IComponentHTMLView"],
+            friendlyName: "Rich Text",
+            fabricIconName: "Edit",
         },
     ];
 
