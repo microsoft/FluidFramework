@@ -238,11 +238,11 @@ const fluid = (req: express.Request, res: express.Response, baseDir: string, opt
                         console.log("Fully attached!");
                     },
                     (error) => {
-                        console.error(error);
+                        alert(error);
                     });
             }
         })
-        .catch((error) => console.error(error));
+        .catch((error) => alert(error));
     </script>
 </body>
 </html>`;

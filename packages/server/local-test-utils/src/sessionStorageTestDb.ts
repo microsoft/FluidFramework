@@ -129,7 +129,7 @@ class SessionStorageCollection<T> implements ICollection<T> {
 
     public async insertOne(value: any): Promise<any> {
         if (this.findOneInternal(value)) {
-            throw new Error("existing object");
+            return;
         }
 
         return this.insertInternal(value);
