@@ -5,6 +5,7 @@
 import * as assert from "assert";
 import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
 import { SharedNumberSequence } from "../sharedNumberSequence";
+import { SharedNumberSequenceFactory } from "../sequenceFactory";
 
 describe("SharedNumberSequence", () => {
     const documentId = "fakeId";
@@ -13,7 +14,7 @@ describe("SharedNumberSequence", () => {
     beforeEach(() => {
         const runtime = new MockRuntime();
         deltaConnectionFactory = new MockDeltaConnectionFactory();
-        sharedNumberSequence = new SharedNumberSequence(runtime, documentId);
+        sharedNumberSequence = new SharedNumberSequence(runtime, documentId, SharedNumberSequenceFactory.Attributes);
         runtime.services = {
             deltaConnection: deltaConnectionFactory.createDeltaConnection(runtime),
             objectStorage: new MockStorage(undefined),

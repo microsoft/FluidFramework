@@ -5,10 +5,7 @@
 
 import { CounterValueType } from "@microsoft/fluid-map";
 import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
-import {
-    IComponentHTMLOptions,
-    IComponentHTMLView,
-} from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { TeamScore } from "./teamScore";

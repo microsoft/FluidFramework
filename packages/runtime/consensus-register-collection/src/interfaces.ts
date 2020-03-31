@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentRuntime, ISharedObjectServices } from "@microsoft/fluid-runtime-definitions";
+import { IComponentRuntime, ISharedObjectServices, IChannelAttributes } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 
 /**
@@ -17,7 +17,8 @@ export interface IConsensusRegisterCollectionFactory extends ISharedObjectFactor
         document: IComponentRuntime,
         id: string,
         services: ISharedObjectServices,
-        branchId: string): Promise<IConsensusRegisterCollection>;
+        branchId: string,
+        attributes: IChannelAttributes): Promise<IConsensusRegisterCollection>;
 
     create(document: IComponentRuntime, id: string): IConsensusRegisterCollection;
 }

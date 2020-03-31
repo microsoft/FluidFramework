@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerContext } from "@microsoft/fluid-container-definitions";
+import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+
 import { renderChat } from "./chat";
 // eslint-disable-next-line import/no-internal-modules
 import { Runtime } from "./runtime/runtime";

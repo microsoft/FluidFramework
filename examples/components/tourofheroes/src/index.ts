@@ -8,7 +8,7 @@ import { APP_BASE_HREF } from "@angular/common";
 import { platformBrowserDynamic } from "@angular/platform-browser-dynamic";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
-import { IComponentHTMLView, IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
 import { ISharedDirectory } from "@microsoft/fluid-map";
 import {
@@ -18,6 +18,7 @@ import {
     IComponentRegistry,
     IHostRuntime,
 } from "@microsoft/fluid-runtime-definitions";
+import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as GraphiQL from "graphiql";
 import * as React from "react";
 import * as ReactDOM from "react-dom";

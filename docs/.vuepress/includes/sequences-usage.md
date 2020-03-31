@@ -1,8 +1,8 @@
 ## Usage
 
 Like all SharedSequences, you can use the [insert](../api/fluid-sequence.sharedsequence.insert.md) and
-[getItems](../api/fluid-sequence.sharedsequence.getitems.md) methods to insert and retrieve items from the
-sequence, and [remove](../api/fluid-sequence.sharedsequence.remove.md) to remove items.
+[getItems](../api/fluid-sequence.sharedsequence.getitems.md) methods to insert and retrieve items from the sequence,
+and [remove](../api/fluid-sequence.sharedsequence.remove.md) to remove items.
 
 ## Eventing
 

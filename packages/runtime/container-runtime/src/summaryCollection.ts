@@ -111,15 +111,13 @@ class Summary implements ISummary {
 
     public async waitBroadcast(): Promise<ISummaryOpMessage> {
         await this.defSummaryOp.promise;
-        // eslint-disable-next-line max-len
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return this._summaryOp!;
     }
 
     public async waitAckNack(): Promise<ISummaryAckMessage | ISummaryNackMessage> {
         await this.defSummaryAck.promise;
-        // eslint-disable-next-line max-len
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return this._summaryAckNack!;
     }
 }

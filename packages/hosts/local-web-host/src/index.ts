@@ -59,6 +59,12 @@ export async function createLocalContainerFactory(
 
         await initializeContainerCode(container, {} as any as IFluidCodeDetails);
 
+        // If we're loading from ops, the context might be in the middle of reloading.  Check for that case and wait
+        // for the contextChanged event to avoid returning before that reload completes.
+        if (container.hasNullRuntime()) {
+            await new Promise<void>((resolve) => container.once("contextChanged", () => resolve()));
+        }
+
         return container;
     };
 }

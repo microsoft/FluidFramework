@@ -263,20 +263,20 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
         return this.details.version;
     }
 
-    public get initialContents(): IContentMessage[] | undefined {
+    public get initialContents(): IContentMessage[] {
         return this.details.initialContents;
     }
 
-    public get initialMessages(): ISequencedDocumentMessage[] | undefined {
+    public get initialMessages(): ISequencedDocumentMessage[] {
         return this.details.initialMessages;
     }
 
-    public get initialSignals(): ISignalMessage[] | undefined {
+    public get initialSignals(): ISignalMessage[] {
         return this.details.initialSignals;
     }
 
     public get initialClients(): ISignalClient[] {
-        return this.details.initialClients ? this.details.initialClients : [];
+        return this.details.initialClients;
     }
 
     public get serviceConfiguration(): IServiceConfiguration {

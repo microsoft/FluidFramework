@@ -4,7 +4,7 @@
  */
 
 import { commonOptions } from "./commonOptions";
-import { existsSync, readFileAsync, realpathAsync } from "./utils";
+import { existsSync, readFileAsync, realpathAsync, readJsonAsync } from "./utils";
 import * as path from "path";
 import { logVerbose } from "./logging";
 
@@ -15,17 +15,12 @@ async function isFluidRootLerna(dir: string) {
         return false;
     }
 
-    const content = await readFileAsync(filename, "utf-8");
-    const parsed = JSON.parse(content);
-    if (Array.isArray(parsed.packages)
-        && parsed.packages.length == 3
-        && parsed.packages[0] === "examples/components/**"
-        && parsed.packages[1] === "examples/hosts/iframe-host"
-        && parsed.packages[2] === "packages/**") {
-        return true;
+    if (!existsSync(path.join(dir, "server", "routerlicious", "lerna.json"))) {
+        logVerbose(`InferRoot: server/routerlicious/lerna.json not found`);
+        return false;
     }
-    logVerbose(`InferRoot: lerna.json not matched`);
-    return false;
+
+    return true;
 }
 
 async function isFluidRootPackage(dir: string) {
@@ -35,8 +30,7 @@ async function isFluidRootPackage(dir: string) {
         return false;
     }
 
-    const content = await readFileAsync(filename, "utf-8");
-    const parsed = JSON.parse(content);
+    const parsed = await readJsonAsync(filename);
     if (parsed.name === "root" && parsed.private === true) {
         return true;
     }

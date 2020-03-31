@@ -8,14 +8,11 @@ import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 
 import * as React from "react";
 import GridLayout, { Layout } from "react-grid-layout";
-
-import "../../../../node_modules/react-grid-layout/css/styles.css";
-import "../../../../node_modules/react-resizable/css/styles.css";
 import { ISpacesDataModel } from "./dataModel";
 
 interface IEmbeddedComponentWrapperProps {
     id: string;
-    getComponent(id: string): Promise<IComponent>;
+    getComponent: (componentId: string) => Promise<IComponent>;
 }
 
 interface IEmbeddedComponentWrapperState {
@@ -87,10 +84,17 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
 
     componentDidMount() {
         this.props.dataModel.on("componentListChanged", (newMap: Map<string, Layout>) => {
-            this.setState({ componentMap: newMap });
+            if (!this.state.componentMap.get(this.props.dataModel.componentToolbarId)) {
+                this.setState({
+                    componentMap: newMap,
+                    isEditable: this.props.dataModel.componentList.size - 1 === 0,
+                });
+            } else {
+                this.setState({ componentMap: newMap });
+            }
         });
-        this.props.dataModel.on("editableUpdated", (isEditable: boolean) => {
-            this.setState({isEditable});
+        this.props.dataModel.on("editableUpdated", (isEditable?: boolean) => {
+            this.setState({isEditable: isEditable || !this.state.isEditable});
         });
     }
 
@@ -137,6 +141,9 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                 editableStyle.overflow = "visible";
                 embeddedComponentStyle.pointerEvents = "none";
                 embeddedComponentStyle.opacity = 0.5;
+            }
+            if (id !== this.props.dataModel.componentToolbarId) {
+                embeddedComponentStyle.overflow = "scroll";
             }
 
             // We use separate layout from array because using GridLayout
@@ -185,6 +192,36 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                             >
                                 {"↗️"}
                             </button>
+                            <input
+                                style={buttonStyle}
+                                value={layout.w}
+                                onMouseDown={(event: React.MouseEvent<HTMLInputElement>) => {
+                                    event.stopPropagation();
+                                }}
+                                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                                    this.props.dataModel.updateGridItem(id, {
+                                        x: layout.x,
+                                        y: layout.y,
+                                        w: event.target.value,
+                                        h: layout.h,
+                                    })
+                                }
+                            />
+                            <input
+                                style={buttonStyle}
+                                value={layout.h}
+                                onMouseDown={(event: React.MouseEvent<HTMLInputElement>) => {
+                                    event.stopPropagation();
+                                }}
+                                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                                    this.props.dataModel.updateGridItem(id, {
+                                        x: layout.x,
+                                        y: layout.y,
+                                        w: layout.w,
+                                        h: event.target.value,
+                                    })
+                                }
+                            />
                         </div>
                     }
                     <div style={embeddedComponentStyle}>

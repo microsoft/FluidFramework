@@ -9,11 +9,8 @@ import {
     IComponentRouter,
     IRequest,
     IResponse,
-    IComponentHTMLOptions,
-    IComponentHTMLVisual,
     IComponentHandle,
     IComponent,
-    IComponentHTMLView,
 } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
@@ -27,6 +24,7 @@ import {
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString, SequenceDeltaEvent } from "@microsoft/fluid-sequence";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+import { IComponentHTMLOptions, IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-view-interfaces";
 import * as CodeMirror from "codemirror";
 
 /* eslint-disable @typescript-eslint/no-require-imports,

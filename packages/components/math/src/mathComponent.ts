@@ -10,9 +10,6 @@ import * as SearchMenu from "@fluid-example/search-menu";
 import {
     IComponent,
     IComponentHandleContext,
-    IComponentHTMLOptions,
-    IComponentHTMLView,
-    IComponentHTMLVisual,
     IComponentLoadable,
     IComponentRouter,
     IRequest,
@@ -33,6 +30,7 @@ import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import * as Sequence from "@microsoft/fluid-sequence";
 import { SharedComponentFactory, SharedComponent } from "@microsoft/fluid-component-base";
+import { IComponentHTMLOptions, IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-view-interfaces";
 import * as Katex from "katex";
 import * as MathExpr from "./mathExpr";
 

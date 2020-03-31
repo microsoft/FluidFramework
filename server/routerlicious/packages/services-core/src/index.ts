@@ -20,3 +20,4 @@ export * from "./queue";
 export * from "./taskMessages";
 export * from "./tenant";
 export * from "./combinedProducer";
+export * from "./zookeeper";

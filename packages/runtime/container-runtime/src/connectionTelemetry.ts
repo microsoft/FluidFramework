@@ -86,7 +86,8 @@ class ConnectionTelemetry {
                 eventName: "OpRoundtripTime",
                 seqNumber: message.sequenceNumber,
                 clientSequenceNumber: message.clientSequenceNumber,
-                value: Date.now() - this.opSendTimeForLatencyStatistics,
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                value: Date.now() - this.opSendTimeForLatencyStatistics!,
             });
             this.clientSequenceNumberForLatencyStatistics = undefined;
         }

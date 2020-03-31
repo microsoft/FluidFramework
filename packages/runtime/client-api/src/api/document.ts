@@ -85,7 +85,7 @@ export class Document extends EventEmitter {
     /**
      * Returns the parent branch for this document
      */
-    public get parentBranch(): string {
+    public get parentBranch(): string | null {
         return this.runtime.parentBranch;
     }
 

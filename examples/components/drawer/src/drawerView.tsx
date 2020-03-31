@@ -3,16 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IComponentHTMLOptions,
-    IComponentHTMLView,
-} from "@microsoft/fluid-component-core-interfaces";
 import { mergeStyles } from "office-ui-fabric-react";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { IDocumentFactory } from "@microsoft/fluid-host-service-interfaces";
 import { ISharedMap } from "@microsoft/fluid-map";
 import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
+import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import { DocumentList } from "./documentList";
 import { DrawerCommandBar } from "./drawerCommandBar";
 

@@ -5,7 +5,7 @@
 
 module.exports = {
   server: {
-    command: "npm run start -- --port 8086",
+    command: "npm run start -- --no-live-reload --port 8086",
     port: 8086,
     launchTimeout:10000,
     usedPortAction: 'error'

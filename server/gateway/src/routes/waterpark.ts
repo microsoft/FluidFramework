@@ -16,7 +16,7 @@ import * as winston from "winston";
 import { spoEnsureLoggedIn } from "../gatewayOdspUtils";
 import { resolveUrl } from "../gatewayUrlResolver";
 import { IAlfred } from "../interfaces";
-import { getConfig, getParam, getUserDetails } from "../utils";
+import { getConfig, getUserDetails } from "../utils";
 import { defaultPartials } from "./partials";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -54,7 +54,7 @@ export function create(
             },
             jwtKey);
 
-        const documentId = getParam(request.params, "id");
+        const documentId = request.params.id;
         const path = request.params[0];
         const tenantId = appTenants[0].id;
         const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
@@ -66,7 +66,6 @@ export function create(
             tenantId,
             config.get("error:track"));
 
-        // eslint-disable-next-line @typescript-eslint/promise-function-async
         const pkgP = fullTreeP.then((fullTree) => {
             // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (path) {
@@ -124,15 +123,20 @@ export function create(
 
         Promise.all([resolvedP, fullTreeP, pkgP, scriptsP, timingsP])
             .then(([resolved, fullTree, pkg, scripts, timings]) => {
-                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-                if (!pkg) {
-                    resolved.url += `${path}`;
+                if (pkg === undefined) {
+                    // Bug in TS3.7: https://github.com/microsoft/TypeScript/issues/33752
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    resolved!.url += `${path}`;
                 } else {
-                    resolved.url += `?chaincode=${chaincode}`;
+                    // Bug in TS3.7: https://github.com/microsoft/TypeScript/issues/33752
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    resolved!.url += `?chaincode=${chaincode}`;
                 }
                 winston.info(`render ${tenantId}/${documentId} +${Date.now() - start}`);
 
-                timings.push(Date.now() - start);
+                // Bug in TS3.7: https://github.com/microsoft/TypeScript/issues/33752
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                timings!.push(Date.now() - start);
 
                 response.render(
                     "loader",

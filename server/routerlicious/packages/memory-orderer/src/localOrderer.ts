@@ -59,8 +59,11 @@ const DefaultScribe: IScribe = {
 const DefaultDeli: IDeliCheckpoint = {
     branchMap: undefined,
     clients: undefined,
+    durableSequenceNumber: 0,
+    epoch: 0,
     logOffset: -1,
     sequenceNumber: 0,
+    term: 1,
 };
 
 class WebSocketSubscriber implements ISubscriber {
@@ -213,6 +216,7 @@ export class LocalOrderer implements IOrderer {
     public broadcasterLambda: LocalLambdaController | undefined;
 
     private readonly socketPublisher: LocalSocketPublisher;
+    private readonly dbObject: IDocument;
     private existing: boolean;
 
     constructor(
@@ -236,6 +240,7 @@ export class LocalOrderer implements IOrderer {
         private readonly scribeNackOnSummarizeException: boolean,
     ) {
         this.existing = details.existing;
+        this.dbObject = this.getDeliState();
         this.socketPublisher = new LocalSocketPublisher(this.pubSub);
 
         this.setupKafkas();
@@ -293,7 +298,8 @@ export class LocalOrderer implements IOrderer {
     }
 
     private setupKafkas() {
-        this.rawDeltasKafka = new LocalKafka(this.existing ? this.details.value.logOffset : 0);
+        const deliState: IDeliCheckpoint = JSON.parse(this.dbObject.deli);
+        this.rawDeltasKafka = new LocalKafka(deliState.logOffset + 1);
         this.deltasKafka = new LocalKafka();
     }
 
@@ -340,15 +346,13 @@ export class LocalOrderer implements IOrderer {
             this.deliContext,
             async (lambdaSetup, context) => {
                 const documentCollection = await lambdaSetup.documentCollectionP();
-                const dbObject: IDocument = this.details.value;
-                if (dbObject.deli === undefined || dbObject.deli === null) {
-                    dbObject.deli = JSON.stringify(DefaultDeli);
-                }
+                const lastCheckpoint = JSON.parse(this.dbObject.deli);
                 return new DeliLambda(
                     context,
                     this.tenantId,
                     this.documentId,
-                    dbObject,
+                    lastCheckpoint,
+                    this.dbObject,
                     documentCollection,
                     this.deltasKafka,
                     this.rawDeltasKafka,
@@ -372,12 +376,7 @@ export class LocalOrderer implements IOrderer {
             setup.scribeMessagesP(),
         ]);
 
-        const dbObject = this.details.value;
-        const scribe: IScribe = (dbObject.scribe === undefined || dbObject.scribe === null)
-            ? DefaultScribe
-            : typeof this.details.value.scribe === "string" ?
-                JSON.parse(this.details.value.scribe) :
-                this.details.value.scribe;
+        const scribe = this.getScribeState();
         const lastState = scribe.protocolState
             ? scribe.protocolState
             : { members: [], proposals: [], values: [] };
@@ -467,5 +466,23 @@ export class LocalOrderer implements IOrderer {
             this.broadcasterLambda.close();
             this.broadcasterLambda = undefined;
         }
+    }
+
+    private getDeliState(): IDocument {
+        const dbObject: IDocument = this.details.value;
+        if (dbObject.deli === undefined || dbObject.deli === null) {
+            dbObject.deli = JSON.stringify(DefaultDeli);
+        }
+        return dbObject;
+    }
+
+    private getScribeState(): IScribe {
+        const dbObject: IDocument = this.details.value;
+        const scribe: IScribe = (dbObject.scribe === undefined || dbObject.scribe === null)
+            ? DefaultScribe
+            : typeof this.details.value.scribe === "string" ?
+                JSON.parse(this.details.value.scribe) :
+                this.details.value.scribe;
+        return scribe;
     }
 }

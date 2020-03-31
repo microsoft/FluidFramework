@@ -19,8 +19,11 @@ describe("Routerlicious", () => {
                 return {
                     branchMap: null,
                     clients: null,
+                    durableSequenceNumber: 0,
+                    epoch: 0,
                     logOffset,
                     sequenceNumber,
+                    term: 1,
                     queuedMessage: {
                         offset: logOffset,
                         partition: 1,

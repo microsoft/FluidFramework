@@ -130,7 +130,7 @@ export class InnerDocumentDeltaConnection extends EventEmitter implements IDocum
      *
      * @returns messages sent during the connection
      */
-    public get initialMessages(): ISequencedDocumentMessage[] | undefined {
+    public get initialMessages(): ISequencedDocumentMessage[] {
         return this.details.initialMessages;
     }
 
@@ -139,7 +139,7 @@ export class InnerDocumentDeltaConnection extends EventEmitter implements IDocum
      *
      * @returns contents sent during the connection
      */
-    public get initialContents(): IContentMessage[] | undefined {
+    public get initialContents(): IContentMessage[] {
         return this.details.initialContents;
     }
 
@@ -148,7 +148,7 @@ export class InnerDocumentDeltaConnection extends EventEmitter implements IDocum
      *
      * @returns signals sent during the connection
      */
-    public get initialSignals(): ISignalMessage[] | undefined {
+    public get initialSignals(): ISignalMessage[] {
         return this.details.initialSignals;
     }
 
@@ -158,7 +158,7 @@ export class InnerDocumentDeltaConnection extends EventEmitter implements IDocum
      * @returns initial client list sent during the connection
      */
     public get initialClients(): ISignalClient[] {
-        return this.details.initialClients ? this.details.initialClients : [];
+        return this.details.initialClients;
     }
 
     /**
