@@ -49,7 +49,7 @@ export class FluidRepo extends FluidRepoBase {
         }
         const installScript = "npm i";
         const installPromises: Promise<ExecAsyncResult>[] = [];
-        for (const dir of [...this.packageInstallDirectories, ...this.clientMonoRepo.repoPath, ...this.serverMonoRepo.repoPath]) {
+        for (const dir of [...this.packageInstallDirectories, this.clientMonoRepo.repoPath, this.serverMonoRepo.repoPath]) {
             installPromises.push(execWithErrorAsync(installScript, { cwd: dir }, dir));
         }
         const rets = await Promise.all(installPromises);
