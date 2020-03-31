@@ -19,7 +19,7 @@ import {
     TextField
 } from "office-ui-fabric-react";
 import YoutubeClient from "./clients/YoutubeClient";
-import { IPlaylistItem, PlaylistKey, PlayerStateKey, PlayerState, PlayerProgressKey, PlaylistIndexKey, PlayerProgressProportionKey, AcceptableDelta, MediaSource } from "./interfaces/PlayerInterfaces";
+import { IPlaylistItem, PlaylistKey, PlayerStateKey, PlayerState, PlayerProgressKey, PlaylistIndexKey, PlayerProgressProportionKey, AcceptableDelta, MediaSource, InitialBuffer } from "./interfaces/PlayerInterfaces";
 import Slider from "./components/Slider";
 import Playlist from "./components/Playlist";
 import SoundcloudClient from "./clients/SoundcloudClient";
@@ -232,7 +232,7 @@ class MediaPlayerView extends React.Component<IMediaPlayerViewProps, IMediaPlaye
         const playerState = root.get(PlayerStateKey);
         if (Math.abs(currentLeaderSeconds - playedSeconds) > AcceptableDelta || playerState === PlayerState.Seeking) {
             this.seekPlayer(currentLeaderSeconds);
-        } else if (root.get(PlayerStateKey) !== PlayerState.Seeking && !this.isSeeking && playedSeconds > 5) {
+        } else if (root.get(PlayerStateKey) !== PlayerState.Seeking && !this.isSeeking && playedSeconds > InitialBuffer) {
             console.log(`PROGRESS ${played} ${playedSeconds}`)
             root.set(PlayerProgressKey, playedSeconds);
             root.set(PlayerProgressProportionKey, played);
