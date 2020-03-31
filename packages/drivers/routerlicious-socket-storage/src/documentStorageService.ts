@@ -72,8 +72,8 @@ export class DocumentStorageService implements IDocumentStorageService {
 
     public async write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
         const branch = ref ? `components/${this.id}/${ref}` : this.id;
-        const commit = this.manager.write(branch, tree, parents, message);
-        return commit.then((c) => ({ date: c.committer.date, id: c.sha, treeId: c.tree.sha }));
+        const commit = await this.manager.write(branch, tree, parents, message);
+        return { date: commit.committer.date, id: commit.sha, treeId: commit.tree.sha };
     }
 
     // back-compat: 0.14 uploadSummary

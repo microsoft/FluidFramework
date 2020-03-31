@@ -336,8 +336,6 @@ export class OdspDocumentService implements IDocumentService {
         client: IClient,
         url: string,
         url2?: string): Promise<IDocumentDeltaConnection> {
-        // tslint:disable-next-line: strict-boolean-expressions
-        const hasUrl2 = !!url2;
 
         // Create null logger if telemetry logger is not available from caller
         const logger = this.logger ? this.logger : new TelemetryNullLogger();
@@ -360,123 +358,137 @@ export class OdspDocumentService implements IDocumentService {
         }
 
         // Use AFD URL if in cache
-        if (afdCacheValid && hasUrl2) {
+        if (afdCacheValid && url2 !== undefined) {
             debug("Connecting to AFD URL directly due to valid cache.");
             const startAfd = performanceNow();
+            let endAfd;
+            let afdConnError;
 
-            return OdspDocumentDeltaConnection.create(
-                tenantId,
-                websocketId,
-                token,
-                io,
-                client,
-                url2!,
-                20000,
-                this.logger,
-            ).then((connection) => {
-                logger.sendTelemetryEvent({
-                    eventName: "UsedAfdUrl",
-                    fromCache: true,
-                });
-
-                return connection;
-            }).catch(async (connectionError) => {
-                const endAfd = performanceNow();
-                localStorage.removeItem(lastAfdConnectionTimeMsKey);
-                // Retry on non-AFD URL
-                if (this.canRetryOnError(connectionError)) {
-                    // eslint-disable-next-line max-len
-                    debug(`Socket connection error on AFD URL (cached). Error was [${connectionError}]. Retry on non-AFD URL: ${url}`);
-
-                    return OdspDocumentDeltaConnection.create(
-                        tenantId,
-                        websocketId,
-                        token,
-                        io,
-                        client,
-                        url,
-                        20000,
-                        this.logger,
-                    ).then((connection) => {
-                        logger.sendPerformanceEvent({
-                            eventName: "UsedNonAfdUrlFallback",
-                            duration: endAfd - startAfd,
-                        }, connectionError);
-
-                        return connection;
-                    }).catch((retryError) => {
-                        logger.sendPerformanceEvent({
-                            eventName: "FailedNonAfdUrlFallback",
-                            duration: endAfd - startAfd,
-                        }, retryError);
-                        throw retryError;
-                    });
-                } else {
-                    logger.sendPerformanceEvent({
-                        eventName: "FailedAfdUrl-NoNonAfdFallback",
-                    }, connectionError);
-                }
-                throw connectionError;
-            });
-        }
-
-        const startNonAfd = performanceNow();
-        return OdspDocumentDeltaConnection.create(
-            tenantId,
-            websocketId,
-            token,
-            io,
-            client,
-            url,
-            hasUrl2 ? 15000 : 20000,
-            this.logger,
-        ).then((connection) => {
-            logger.sendTelemetryEvent({ eventName: "UsedNonAfdUrl" });
-            return connection;
-        }).catch(async (connectionError) => {
-            const endNonAfd = performanceNow();
-            if (hasUrl2 && this.canRetryOnError(connectionError)) {
-                // eslint-disable-next-line max-len
-                debug(`Socket connection error on non-AFD URL. Error was [${connectionError}]. Retry on AFD URL: ${url2}`);
-
-                return OdspDocumentDeltaConnection.create(
+            try {
+                const connection = await OdspDocumentDeltaConnection.create(
                     tenantId,
                     websocketId,
                     token,
                     io,
                     client,
-                    url2!,
+                    url2,
                     20000,
                     this.logger,
-                ).then((connection) => {
-                    // Refresh AFD cache
-                    const cacheResult = this.writeLocalStorage(lastAfdConnectionTimeMsKey, Date.now().toString());
-                    if (cacheResult) {
-                        // eslint-disable-next-line max-len
-                        debug(`Cached AFD connection time. Expiring in ${new Date(Number(localStorage.getItem(lastAfdConnectionTimeMsKey)) + afdUrlConnectExpirationMs)}`);
-                    }
-                    logger.sendPerformanceEvent({
-                        eventName: "UsedAfdUrl",
-                        duration: endNonAfd - startNonAfd,
-                        refreshedCache: cacheResult,
-                        fromCache: false,
-                    }, connectionError);
-
-                    return connection;
-                }).catch((retryError) => {
-                    logger.sendPerformanceEvent({
-                        eventName: "FailedAfdUrlFallback",
-                        duration: endNonAfd - startNonAfd,
-                    }, retryError);
-                    throw retryError;
+                );
+                logger.sendTelemetryEvent({
+                    eventName: "UsedAfdUrl",
+                    fromCache: true,
                 });
-            } else {
+                return connection;
+            }
+            catch(error) {
+                endAfd = performanceNow();
+                afdConnError = error;
+
+                localStorage.removeItem(lastAfdConnectionTimeMsKey);
+
+                if (!this.canRetryOnError(afdConnError)) {
+                    logger.sendPerformanceEvent({
+                        eventName: "FailedAfdUrl-NoNonAfdFallback",
+                    }, afdConnError);
+                    throw afdConnError;
+                }
+            }
+
+            // eslint-disable-next-line max-len
+            debug(`Socket connection error on AFD URL (cached). Error was [${afdConnError}]. Retry on non-AFD URL: ${url}`);
+
+            try {
+                const connection = await OdspDocumentDeltaConnection.create(
+                    tenantId,
+                    websocketId,
+                    token,
+                    io,
+                    client,
+                    url,
+                    20000,
+                    this.logger,
+                );
+                logger.sendPerformanceEvent({
+                    eventName: "UsedNonAfdUrlFallback",
+                    duration: endAfd - startAfd,
+                }, afdConnError);
+                return connection;
+            }
+            catch(retryError) {
+                logger.sendPerformanceEvent({
+                    eventName: "FailedNonAfdUrlFallback",
+                    duration: endAfd - startAfd,
+                }, retryError);
+                throw retryError;
+            }
+        }
+
+        const startNonAfd = performanceNow();
+        let endNonAfd;
+        let nonAfdConnError;
+
+        try {
+            const connection = await OdspDocumentDeltaConnection.create(
+                tenantId,
+                websocketId,
+                token,
+                io,
+                client,
+                url,
+                url2 === undefined ? 20000 : 15000,
+                this.logger,
+            );
+            logger.sendTelemetryEvent({ eventName: "UsedNonAfdUrl" });
+            return connection;
+        }
+        catch(error) {
+            endNonAfd = performanceNow();
+            nonAfdConnError = error;
+
+            if (!this.canRetryOnError(nonAfdConnError) || url2 === undefined) {
                 logger.sendPerformanceEvent({
                     eventName: "FailedNonAfdUrl-NoAfdFallback",
-                }, connectionError);
+                }, nonAfdConnError);
+                throw nonAfdConnError;
             }
-            throw connectionError;
-        });
-    }
+        }
 
+        debug(`Socket connection error on non-AFD URL. Error was [${nonAfdConnError}]. Retry on AFD URL: ${url2}`);
+
+        try
+        {
+            const connection = await OdspDocumentDeltaConnection.create(
+                tenantId,
+                websocketId,
+                token,
+                io,
+                client,
+                url2,
+                20000,
+                this.logger,
+            );
+            // Refresh AFD cache
+            const cacheResult = this.writeLocalStorage(lastAfdConnectionTimeMsKey, Date.now().toString());
+            if (cacheResult) {
+                // eslint-disable-next-line max-len
+                debug(`Cached AFD connection time. Expiring in ${new Date(Number(localStorage.getItem(lastAfdConnectionTimeMsKey)) + afdUrlConnectExpirationMs)}`);
+            }
+            logger.sendPerformanceEvent({
+                eventName: "UsedAfdUrl",
+                duration: endNonAfd - startNonAfd,
+                refreshedCache: cacheResult,
+                fromCache: false,
+            }, nonAfdConnError);
+
+            return connection;
+        }
+        catch(retryError) {
+            logger.sendPerformanceEvent({
+                eventName: "FailedAfdUrlFallback",
+                duration: endNonAfd - startNonAfd,
+            }, retryError);
+            throw retryError;
+        }
+    }
 }

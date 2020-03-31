@@ -122,7 +122,7 @@ export class DocumentDeltaEventManager {
     }
 
     private async pauseAndValidateDocs(...docs: IDocumentDeltaEvent[]): Promise<Iterable<IDocumentDeltaEvent>> {
-        await Promise.all(Array.from(this.documents).map(async (doc) => this.pauseDocument(doc)));
+        await Promise.all(Array.from(this.documents).map(DocumentDeltaEventManager.pauseDocument));
         this.isNormalProcessingPaused = true;
 
         if (docs && docs.length > 0) {
@@ -158,12 +158,12 @@ export class DocumentDeltaEventManager {
         // If deterministically controlling events, need to pause before continuing
         if (this.isNormalProcessingPaused) {
             for (const doc of docs) {
-                await this.pauseDocument(doc);
+                await DocumentDeltaEventManager.pauseDocument(doc);
             }
         }
     }
 
-    private async pauseDocument(doc: IDocumentDeltaEvent) {
+    private static async pauseDocument(doc: IDocumentDeltaEvent) {
         await Promise.all([doc.deltaManager.inbound.pause(), doc.deltaManager.outbound.pause()]);
     }
 

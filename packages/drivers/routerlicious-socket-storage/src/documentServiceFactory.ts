@@ -48,21 +48,20 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         const ordererUrl = fluidResolvedUrl.endpoints.ordererUrl;
         const deltaStorageUrl = fluidResolvedUrl.endpoints.deltaStorageUrl;
         if (!ordererUrl || !deltaStorageUrl) {
-            // eslint-disable-next-line no-throw-literal
-            throw `All endpoints urls must be provided. [ordererUrl:${ordererUrl}][deltaStorageUrl:${deltaStorageUrl}]`;
+            throw new Error(
+                `All endpoints urls must be provided. [ordererUrl:${ordererUrl}][deltaStorageUrl:${deltaStorageUrl}]`);
         }
 
         const parsedUrl = parse(fluidResolvedUrl.url);
         const [, tenantId, documentId] = parsedUrl.pathname!.split("/");
         if (!documentId || !tenantId) {
-            // eslint-disable-next-line no-throw-literal
-            throw `Couldn't parse documentId and/or tenantId. [documentId:${documentId}][tenantId:${tenantId}]`;
+            throw new Error(
+                `Couldn't parse documentId and/or tenantId. [documentId:${documentId}][tenantId:${tenantId}]`);
         }
 
         const jwtToken = fluidResolvedUrl.tokens.jwt;
         if (!jwtToken) {
-            // eslint-disable-next-line no-throw-literal
-            throw `Token was not provided.`;
+            throw new Error(`Token was not provided.`);
         }
 
         const tokenProvider = new TokenProvider(jwtToken);
