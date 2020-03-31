@@ -18,10 +18,15 @@ interface SliderState {
 }
 
 class Slider extends React.Component<SliderProps, SliderState> {
-
     private styles = {
       input: {
-        width: "100%"
+        width: "90%",
+      },
+      inputContainer: {
+        alignItems: "center",
+        width: "100%",
+        margin: "2vh",
+        marginBottom: ".5vh"
       }
     }
 
@@ -35,6 +40,7 @@ class Slider extends React.Component<SliderProps, SliderState> {
 
     public render() {
         return (
+          <div style={this.styles.inputContainer}>
             <input
               style={this.styles.input}
               type='range' min={0} max={1} step='any'
@@ -43,6 +49,7 @@ class Slider extends React.Component<SliderProps, SliderState> {
               onChange={this._onSeekChange}
               onMouseUp={this._onSeekMouseUp}
             />
+          </div>  
         );
     }
 

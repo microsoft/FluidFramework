@@ -5,6 +5,10 @@
 
 import * as React from "react";
 import Collapsible from 'react-collapsible';
+import {
+    DefaultButton as Button,
+    initializeIcons,
+} from "office-ui-fabric-react";
 import { PlaylistItem } from "../interfaces/PlaylistInterfaces";
 
 interface PlaylistProps {
@@ -16,6 +20,8 @@ interface PlaylistState {
   isHistoryOpen: boolean;
   isQueueOpen: boolean;
 }
+
+initializeIcons();
 
 class Playlist extends React.Component<PlaylistProps, PlaylistState> {
   constructor(props: any) {
@@ -32,8 +38,24 @@ class Playlist extends React.Component<PlaylistProps, PlaylistState> {
     const futurePlaylist = playlist.slice(currentIndex + 1);
     const historyPlaylistComponent = this._renderList(historyPlaylist);
     const futurePlaylistComponent = this._renderList(futurePlaylist);
-    const queueButton = <button style={{width: "100%", height: "40px"}} onClick={this._onClickQueue}>{this._getQueueTriggerLabel()}</button>;
-    const historyButton = <button style={{width: "100%", height: "40px", marginTop: "10px"}} onClick={this._onClickHistory}>{this._getHistoryTriggerLabel()}</button>;
+    const queueButton = (
+        <Button
+            iconProps={{ iconName: this.state.isQueueOpen ? "ChevronUpEnd6" : "ChevronDownEnd6" }}
+            style={{width: "100%", height: "40px"}}
+            onClick={this._onClickQueue}
+        >
+            {"Queue"}
+        </Button>
+    );
+    const historyButton = (
+        <Button
+            iconProps={{ iconName: this.state.isHistoryOpen ? "ChevronUpEnd6" : "ChevronDownEnd6" }}
+            style={{width: "100%", height: "40px", marginTop: "10px"}}
+            onClick={this._onClickHistory}
+        >
+            {"History"}
+        </Button>
+    );
 
     return (
       <div>
@@ -41,14 +63,6 @@ class Playlist extends React.Component<PlaylistProps, PlaylistState> {
         <Collapsible open={this.state.isHistoryOpen} trigger={historyButton}>{historyPlaylistComponent}</Collapsible>
       </div>
     );
-  }
-
-  private _getQueueTriggerLabel = (): string => {
-    return this.state.isQueueOpen ?  "Queue ⬆" : "Queue ⬇";
-  }
-
-  private _getHistoryTriggerLabel = (): string => {
-    return this.state.isHistoryOpen ? "History ⬆" : "History ⬇" ;
   }
   
   private _renderList = (playlist: PlaylistItem[]) => {
@@ -63,15 +77,20 @@ class Playlist extends React.Component<PlaylistProps, PlaylistState> {
 
   private _renderItem = (item: PlaylistItem) => {
     return(
-      <div style={{borderBottom: "1px solid grey"}}>
-        <img style={{maxWidth: "120px", marginTop: "5px", marginLeft: "60px"}} src={item.thumbnailUrl}/>
-        <h5 style={{marginBlockStart: "0px", marginBlockEnd: "0px"}}>{item.name}</h5>
-        <h6 style={{marginBlockStart: "0px", marginBlockEnd: "0px", color: "grey"}}>{item.channelName}</h6>
-      </div>
+        <div>
+            <div style={{float: "left"}}>
+                <img style={{maxWidth: "15vh", marginTop: "1vh", marginLeft: "2vh", marginRight: "2vh"}} src={item.thumbnailUrl}/>
+            </div>
+            <div>
+                <h3 style={{marginBlockStart: "0px", marginBlockEnd: "0px"}}>{item.name}</h3>
+                <h4 style={{marginBlockStart: "0px", marginBlockEnd: "0px", color: "grey"}}>{item.channelName}</h4>
+            </div>
+        </div>
+                
     )
   }
 
-  private _onClickQueue = (e: React.MouseEvent) => {
+  private _onClickQueue = () => {
     const isQueueOpen = this.state.isQueueOpen;
     this.setState({
       isQueueOpen: !isQueueOpen,
@@ -79,7 +98,7 @@ class Playlist extends React.Component<PlaylistProps, PlaylistState> {
     });
   }
 
-  private _onClickHistory = (e: React.MouseEvent) => {
+  private _onClickHistory = () => {
     const isHistoryOpen = this.state.isHistoryOpen;
     this.setState({
       isHistoryOpen: !isHistoryOpen,

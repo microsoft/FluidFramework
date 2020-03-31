@@ -13,12 +13,19 @@ import {
 import { ISharedDirectory } from "@microsoft/fluid-map";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import { Provider, themes, Header, Table } from '@fluentui/react-northstar';
+import {
+    DefaultButton as Button,
+    initializeIcons,
+    TextField
+} from "office-ui-fabric-react";
 import YoutubeClient from "./clients/YoutubeClient";
 import { IPlaylistItem, PlaylistKey, PlayerStateKey, PlayerStates, PlayerProgressKey, PlaylistIndexKey, PlayerProgressProportionKey, AcceptableDelta } from "./interfaces/PlayerInterfaces";
 import Slider from "./components/Slider";
 import Playlist from "./components/Playlist";
 
 export const MediaPlayerName = "media-player";
+
+initializeIcons();
 
 /**
  * A component to allow you to add and manipulate components
@@ -102,9 +109,11 @@ class MediaPlayerView extends React.Component<IMediaPlayerViewProps, IMediaPlaye
     private reactPlayerRef: any = null; // ReactPlayer component
     private styles = {
         playlistItem: { border:".1vh solid green" } as React.CSSProperties,
-        playerTableContainer: { backgroundColor:"transparent", height: "50vh", width: "100%" } as React.CSSProperties,
-        playlistButton: { height: "4vh", marginTop: ".5vh"} as React.CSSProperties,
-        urlInput: { height:"4vh", marginTop: ".5vh" } as React.CSSProperties,
+        playerTableContainer: { backgroundColor:"transparent", height: "50vh", width: "100%", padding: "2vh" } as React.CSSProperties,
+        playlistButton: { height: "4vh", width: "7%", margin: ".5vh", marginBottom: "1vh" } as React.CSSProperties,
+        urlInput: { height:"4.2vh", width: "75%", margin: ".5vh", marginBottom: "1vh", float: "left" } as React.CSSProperties,
+        playlistControlContainer: { width: "100%", alignItems: "center", marginTop: "2vh"} as React.CSSProperties,
+        playlistButtonContainer: {float: "right"} as React.CSSProperties
     };
     private isSeeking = false;
 
@@ -144,11 +153,7 @@ class MediaPlayerView extends React.Component<IMediaPlayerViewProps, IMediaPlaye
                 <Table style={this.styles.playerTableContainer}>
                     <td>
                         <tr>
-                            <Header content={videoName} description={videoChannelName}/>
-                        </tr>
-                        <tr>
                             <ReactPlayer
-                                style={{width: "100%"}}
                                 url={videoUrl}
                                 playing={playerState === PlayerStates.Playing || playerState === PlayerStates.Buffering || playerState === PlayerStates.Seeking}
                                 onStart={() => root.set(PlayerStateKey, PlayerStates.Playing)}
@@ -161,25 +166,50 @@ class MediaPlayerView extends React.Component<IMediaPlayerViewProps, IMediaPlaye
                                 progressInterval={500}
                                 onProgress={({played, playedSeconds}) => this.onProgress(played, playedSeconds)}
                                 ref={(playerNode: any) => { this.reactPlayerRef = playerNode; }}
+                                width={"82vh"}
+                                controls={true}
                             />
                         </tr>
                         <tr>
                             <Slider value={playedProportion} root={root} reactPlayerRef={this.reactPlayerRef}></Slider>
                         </tr>
                         <tr>
-                            <input
-                                value={newUrl}
-                                style={this.styles.urlInput}
-                                onChange={(event: React.ChangeEvent<HTMLInputElement>) => 
-                                    this.setState({
-                                        newUrl: event.target.value
-                                    })
-                                }
+                            <Header 
+                                as={"h2"} 
+                                content={videoName} 
+                                description={{
+                                    content: `By ${videoChannelName}`,
+                                    as: 'span',
+                                }}
                             />
                         </tr>
                         <tr>
-                            <button style={this.styles.playlistButton} onClick={() => this.onAddClicked(newUrl)}>+</button>
-                            <button style={this.styles.playlistButton} onClick={() => this.onNextClicked()}>-></button>
+                            <div style={this.styles.playlistControlContainer}>
+                                <div style={this.styles.urlInput}>
+                                    <TextField
+                                        placeholder={"Please enter new playlist item URL here..."}
+                                        value={newUrl}
+                                        onChange={(event: React.ChangeEvent<HTMLInputElement>) => 
+                                            this.setState({
+                                                newUrl: event.target.value
+                                            })
+                                        }
+                                    />
+                                </div>
+                                <div style={this.styles.playlistButtonContainer}>
+                                    <Button 
+                                        iconProps={{ iconName: "Add" }}
+                                        style={this.styles.playlistButton}
+                                        onClick={() => this.onAddClicked(newUrl)}
+                                    />
+                                    <Button
+                                        iconProps={{ iconName: "Next" }}
+                                        style={this.styles.playlistButton}
+                                        onClick={() => this.onNextClicked()}
+                                    />
+                                </div>
+                                
+                            </div>
                         </tr>
                         <tr>
                             <Playlist playlist={playlist} currentIndex={playlistIndex} />
@@ -212,28 +242,34 @@ class MediaPlayerView extends React.Component<IMediaPlayerViewProps, IMediaPlaye
     }
 
     private onAddClicked = (newUrl: string) => {
-        const { root } = this.props;
-        const playlist = root.get<IPlaylistItem[]>(PlaylistKey);
-        const newVideoId = YoutubeClient.getYoutubeVideoId(newUrl);
-        YoutubeClient.getVideoById(newVideoId).then(response => {
-          var newPlaylistItem: IPlaylistItem = {
-            name: response.snippet.title,
-            url: newUrl,
-            id: newVideoId,
-            thumbnailUrl: response.snippet.thumbnails.standard.url,
-            channelName: response.snippet.channelTitle,
-            description: response.snippet.description
-          };
-          playlist.push(newPlaylistItem);
-          root.set<IPlaylistItem[]>(PlaylistKey, playlist);
-          this.setState({newUrl: ""});
-        })
+        if (ReactPlayer.canPlay(newUrl)) {
+            const { root } = this.props;
+            const playlist = root.get<IPlaylistItem[]>(PlaylistKey);
+            const newVideoId = YoutubeClient.getYoutubeVideoId(newUrl);
+            YoutubeClient.getVideoById(newVideoId).then(response => {
+              var newPlaylistItem: IPlaylistItem = {
+                name: response.snippet.title,
+                url: newUrl,
+                id: newVideoId,
+                thumbnailUrl: response.snippet.thumbnails.standard.url,
+                channelName: response.snippet.channelTitle,
+                description: response.snippet.description
+              };
+              playlist.push(newPlaylistItem);
+              root.set<IPlaylistItem[]>(PlaylistKey, playlist);
+              this.setState({newUrl: ""});
+            })
+        } else {
+            alert("This URL is not currently supported! Please try again!");
+        }
+        
     }
     
     private onNextClicked = () => {
         const { root } = this.props;
         const nextIndex = root.get(PlaylistIndexKey) + 1;
         root.set(PlayerProgressKey, 0);
+        root.set(PlayerProgressProportionKey, 0);
         root.set(PlaylistIndexKey, nextIndex);
     }
 
