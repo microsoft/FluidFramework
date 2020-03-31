@@ -127,6 +127,7 @@ export class ComponentSerializer implements IComponentSerializer {
                         : { ...input });
 
                     // Overwrite the current property `key` in the clone with the `replaced` value.
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     clone![key] = replaced;
                 }
             }
