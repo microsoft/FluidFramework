@@ -34,11 +34,6 @@ export async function startLoading(resolvedUrl: IResolvedUrl): Promise<Container
         document.getElementById("content") as HTMLDivElement);
 
     return await new Promise((resolve, reject) => {
-        if (reject) {
-            console.log("Container promise reject!");
-            reject(container);
-        }
-
         container.on("op", () => {
             console.log("Op Resolve");
             resolve(container);

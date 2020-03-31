@@ -122,8 +122,8 @@ export class PuppetMaster extends EventEmitter {
         } else if (this.agentType === "search") {
             const html = await this.getPageHTML();
             await this.searchStorage.upload(this.getSearchKey(), html);
-            await this.page.close();
-            await this.browser.close();
+            // await this.page.close();
+            // await this.browser.close();
         }
     }
 
