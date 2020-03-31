@@ -32,9 +32,9 @@ export const componentRuntimeRequestHandler: RuntimeRequestHandler =
         return undefined;
     };
 
-export function createComponentResponse(component: IComponent) {
-    return { status: 200, mimeType: "fluid/component", value: component };
-}
+export const createComponentResponse = (component: IComponent) => {
+    return {status: 200, mimeType: "fluid/component", value: component };
+};
 
 export function createLoadableComponentRuntimeRequestHandler(component: IComponentLoadable): RuntimeRequestHandler {
     const pathParts = RequestParser.getPathParts(component.url);

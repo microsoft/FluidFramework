@@ -164,6 +164,17 @@ interface IRuntimeMessageMetadata {
     batch?: boolean;
 }
 
+function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
+    switch (message.type) {
+        case MessageType.ChunkedOp:
+        case MessageType.Attach:
+        case MessageType.Operation:
+            return true;
+        default:
+            return false;
+    }
+}
+
 export class ScheduleManager {
     private readonly deltaScheduler: DeltaScheduler;
     private pauseSequenceNumber: number | undefined;
@@ -345,17 +356,6 @@ export class ScheduleManager {
     }
 }
 
-function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
-    switch (message.type) {
-        case MessageType.ChunkedOp:
-        case MessageType.Attach:
-        case MessageType.Operation:
-            return true;
-        default:
-            return false;
-    }
-}
-
 export const schedulerId = "_scheduler";
 const schedulerRuntimeRequestHandler: RuntimeRequestHandler =
     async (request: RequestParser, runtime: IHostRuntime) => {
@@ -364,6 +364,16 @@ const schedulerRuntimeRequestHandler: RuntimeRequestHandler =
         }
         return undefined;
     };
+
+// Wraps the provided list of packages and augments with some system level services.
+class ContainerRuntimeComponentRegistry extends ComponentRegistry {
+    constructor(namedEntries: NamedComponentRegistryEntries) {
+        super([
+            ...namedEntries,
+            [schedulerId, Promise.resolve(new AgentSchedulerFactory())],
+        ]);
+    }
+}
 
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
@@ -1557,17 +1567,4 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         }
         return { result, success };
     }
-}
-
-// Wraps the provided list of packages and augments with some system level services.
-class ContainerRuntimeComponentRegistry extends ComponentRegistry {
-
-    constructor(namedEntries: NamedComponentRegistryEntries) {
-
-        super([
-            ...namedEntries,
-            [schedulerId, Promise.resolve(new AgentSchedulerFactory())],
-        ]);
-    }
-
 }

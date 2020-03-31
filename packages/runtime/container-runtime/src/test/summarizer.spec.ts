@@ -38,6 +38,55 @@ describe("Runtime", () => {
                 let shouldDeferGenerateSummary: boolean = false;
                 let deferGenerateSummary: Deferred<void>;
 
+                async function flushPromises() {
+                    const p = new Promise((resolve) => setTimeout(() => { resolve(); }, 0));
+                    clock.tick(0);
+                    return p;
+                }
+
+                async function emitNextOp(increment: number = 1) {
+                    lastRefSeq += increment;
+                    const op: Partial<ISequencedDocumentMessage> = {
+                        sequenceNumber: lastRefSeq,
+                        timestamp: Date.now(),
+                    };
+                    summarizer.handleOp(undefined, op as ISequencedDocumentMessage);
+                    await flushPromises();
+                }
+
+                function emitBroadcast() {
+                    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                    summaryCollection.handleOp({
+                        type: MessageType.Summarize,
+                        clientId: summarizerClientId,
+                        referenceSequenceNumber: lastRefSeq,
+                        clientSequenceNumber: --lastClientSeq,
+                        sequenceNumber: --lastSummarySeq,
+                        contents: {
+                            handle: "test-broadcast-handle",
+                        },
+                    } as ISequencedDocumentMessage);
+                }
+
+                async function emitAck(type: MessageType = MessageType.SummaryAck) {
+                    const summaryProposal: ISummaryProposal = {
+                        summarySequenceNumber: lastSummarySeq,
+                    };
+                    const contents: ISummaryAck = {
+                        handle: "test-ack-handle",
+                        summaryProposal,
+                    };
+                    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                    summaryCollection.handleOp({ contents, type } as ISequencedDocumentMessage);
+
+                    await flushPromises(); // let summarize run
+                }
+
+                async function tickAndFlushPromises(ms: number) {
+                    clock.tick(ms);
+                    await flushPromises();
+                }
+
                 before(() => {
                     clock = sinon.useFakeTimers();
                 });
@@ -86,55 +135,6 @@ describe("Runtime", () => {
                 after(() => {
                     clock.restore();
                 });
-
-                async function emitNextOp(increment: number = 1) {
-                    lastRefSeq += increment;
-                    const op: Partial<ISequencedDocumentMessage> = {
-                        sequenceNumber: lastRefSeq,
-                        timestamp: Date.now(),
-                    };
-                    summarizer.handleOp(undefined, op as ISequencedDocumentMessage);
-                    await flushPromises();
-                }
-
-                function emitBroadcast() {
-                    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                    summaryCollection.handleOp({
-                        type: MessageType.Summarize,
-                        clientId: summarizerClientId,
-                        referenceSequenceNumber: lastRefSeq,
-                        clientSequenceNumber: --lastClientSeq,
-                        sequenceNumber: --lastSummarySeq,
-                        contents: {
-                            handle: "test-broadcast-handle",
-                        },
-                    } as ISequencedDocumentMessage);
-                }
-
-                async function emitAck(type: MessageType = MessageType.SummaryAck) {
-                    const summaryProposal: ISummaryProposal = {
-                        summarySequenceNumber: lastSummarySeq,
-                    };
-                    const contents: ISummaryAck = {
-                        handle: "test-ack-handle",
-                        summaryProposal,
-                    };
-                    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                    summaryCollection.handleOp({ contents, type } as ISequencedDocumentMessage);
-
-                    await flushPromises(); // let summarize run
-                }
-
-                async function flushPromises() {
-                    const p = new Promise((resolve) => setTimeout(() => { resolve(); }, 0));
-                    clock.tick(0);
-                    return p;
-                }
-
-                async function tickAndFlushPromises(ms: number) {
-                    clock.tick(ms);
-                    await flushPromises();
-                }
 
                 it("Should summarize after configured number of ops when not pending", async () => {
                     await emitNextOp();
