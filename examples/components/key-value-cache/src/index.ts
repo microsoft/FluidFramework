@@ -30,8 +30,10 @@ import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 const pkg = require("../package.json");
 export const ComponentName = pkg.name;
 
+export const IKeyValue = "IKeyValue";
+
 export interface IProvideKeyValue {
-    readonly IKeyValue: IKeyValue;
+    readonly [IKeyValue]: IKeyValue;
 }
 
 export interface IKeyValue extends IProvideKeyValue {

@@ -11,8 +11,10 @@ declare module "@microsoft/fluid-component-core-interfaces" {
     }
 }
 
+export const IComponentFactory = "IComponentFactory";
+
 export interface IProvideComponentFactory {
-    readonly IComponentFactory: IComponentFactory;
+    readonly [IComponentFactory]: IComponentFactory;
 }
 
 /**

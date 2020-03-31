@@ -32,9 +32,15 @@ import { create as createSelection } from "./selection";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import OrderedMap = require("orderedmap");
 
+declare module "@microsoft/fluid-component-core-interfaces" {
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IComponent extends Readonly<Partial<IProvideRichTextEditor>> { }
+}
+
+export const IRichTextEditor = "IRichTextEditor";
 
 export interface IProvideRichTextEditor {
-    readonly IRichTextEditor: IRichTextEditor;
+    readonly [IRichTextEditor]: IRichTextEditor;
 }
 
 export interface IRichTextEditor extends IProvideRichTextEditor {
@@ -43,7 +49,7 @@ export interface IRichTextEditor extends IProvideRichTextEditor {
     initializeValue(value: string): void;
 }
 
-export class FluidCollabManager extends EventEmitter {
+export class FluidCollabManager extends EventEmitter implements IRichTextEditor {
     public get IRichTextEditor() { return this; }
 
     public readonly plugin: Plugin;

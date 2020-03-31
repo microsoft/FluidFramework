@@ -11,8 +11,10 @@ declare module "@microsoft/fluid-component-core-interfaces" {
     export interface IComponent extends Readonly<Partial<IProvideComponentRegistryDetails>> { }
 }
 
+export const IComponentRegistryDetails = "IComponentRegistryDetails";
+
 export interface IProvideComponentRegistryDetails {
-    readonly IComponentRegistryDetails: IComponentRegistryDetails;
+    readonly [IComponentRegistryDetails]: IComponentRegistryDetails;
 }
 
 export interface IComponentRegistryDetails extends IProvideComponentRegistryDetails {

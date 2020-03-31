@@ -9,8 +9,10 @@ export interface IComponentHTMLOptions {
     display?: "block" | "inline";
 }
 
+export const IComponentHTMLView = "IComponentHTMLView";
+
 export interface IProvideComponentHTMLView {
-    readonly IComponentHTMLView: IComponentHTMLView;
+    readonly [IComponentHTMLView]: IComponentHTMLView;
 }
 
 /**
@@ -36,8 +38,10 @@ export interface IComponentHTMLView extends IProvideComponentHTMLView {
     remove?(): void;
 }
 
+export const IComponentHTMLVisual = "IComponentHTMLVisual";
+
 export interface IProvideComponentHTMLVisual {
-    readonly IComponentHTMLVisual: IComponentHTMLVisual;
+    readonly [IComponentHTMLVisual]: IComponentHTMLVisual;
 }
 
 /**

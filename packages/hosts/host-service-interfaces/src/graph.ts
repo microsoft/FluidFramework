@@ -19,8 +19,10 @@ export interface IGraphUser {
     id: string;
 }
 
+export const IMicrosoftGraph = "IMicrosoftGraph";
+
 export interface IProvideMicrosoftGraph {
-    readonly IMicrosoftGraph: IMicrosoftGraph;
+    readonly [IMicrosoftGraph]: IMicrosoftGraph;
 }
 
 export interface IMicrosoftGraph extends IProvideMicrosoftGraph {

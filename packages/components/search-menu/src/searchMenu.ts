@@ -16,8 +16,10 @@ declare module "@microsoft/fluid-component-core-interfaces" {
         extends Readonly<Partial<IProvideSearchMenuHost & ISearchMenuClient>> { }
 }
 
+export const ISearchMenuHost = "ISearchMenuHost";
+
 export interface IProvideSearchMenuHost {
-    readonly ISearchMenuHost: ISearchMenuHost;
+    readonly [ISearchMenuHost]: ISearchMenuHost;
 }
 
 export interface ISearchMenuHost {
@@ -30,8 +32,10 @@ export interface ISearchMenuHost {
     cancelSearchMenu(): void;
 }
 
+export const ISearchMenuClient = "ISearchMenuClient";
+
 export interface IProvideSearchMenuClient {
-    readonly ISearchMenuClient: ISearchMenuClient;
+    readonly [ISearchMenuClient]: ISearchMenuClient;
 }
 export interface ISearchMenuClient extends IProvideSearchMenuClient {
     registerSearchMenuHost(host: ISearchMenuHost): void;

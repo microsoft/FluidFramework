@@ -8,8 +8,10 @@ declare module "@microsoft/fluid-component-core-interfaces" {
     export interface IComponent extends Readonly<Partial<IProvideComponentDefaultFactoryName>> { }
 }
 
+export const IComponentDefaultFactoryName = "IComponentDefaultFactoryName";
+
 export interface IProvideComponentDefaultFactoryName {
-    readonly IComponentDefaultFactoryName: IComponentDefaultFactoryName;
+    readonly [IComponentDefaultFactoryName]: IComponentDefaultFactoryName;
 }
 
 export interface IComponentDefaultFactoryName extends IProvideComponentDefaultFactoryName {
