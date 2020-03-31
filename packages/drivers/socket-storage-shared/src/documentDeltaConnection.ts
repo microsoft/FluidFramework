@@ -349,8 +349,8 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      *  (not on Fluid protocol level)
      */
     public disconnect(socketProtocolError: boolean = false) {
-        this.socket.disconnect();
         this.removeTrackedListeners(false);
+        this.socket.disconnect();
     }
 
     protected async initialize(connectMessage: IConnect, timeout: number) {
