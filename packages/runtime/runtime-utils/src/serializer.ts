@@ -54,7 +54,9 @@ export class ComponentSerializer implements IComponentSerializer {
             // return the result of 'serializeHandle'.
             // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             const handle = !!value && value.IComponentHandle;
-            return handle !== undefined
+            // TODO - understand why handle === false in some of our tests
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+            return handle
                 ? this.serializeHandle(handle, context, bind)
                 : value;
         });

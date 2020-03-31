@@ -171,7 +171,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
      */
     public read(key: string, policy?: ReadPolicy): T | undefined {
         // Default policy is atomic.
-        const readPolicy = (policy === undefined) ? ReadPolicy.Atomic : policy;
+        const readPolicy = policy ?? ReadPolicy.Atomic;
 
         if (readPolicy === ReadPolicy.Atomic) {
             return this.readAtomic(key);
@@ -189,9 +189,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
 
     public readVersions(key: string): T[] | undefined {
         const data = this.data.get(key);
-        if (data !== undefined) {
-            return data.versions.map((element: ILocalRegister) => element.value.value);
-        }
+        return data?.versions.map((element: ILocalRegister) => element.value.value);
     }
 
     public keys(): string[] {
@@ -272,25 +270,26 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
             const op: IRegisterOperation = message.contents;
             switch (op.type) {
                 case "write":
-                    // add back-compat for pre-0.14 versions
-                    // when the refSeq property didn't exist
-                    if(op.refSeq === undefined){
-                        op.refSeq = message.referenceSequenceNumber;
-                    }
-                    // Message can be delivered with delay - resubmitted on reconnect.
-                    // As such, refSeq needs to reference seq # at the time op was created (here),
-                    // not when op was actually sent over wire (as client can ingest ops in between)
-                    // in other words, we can't use ISequencedDocumentMessage.referenceSequenceNumber
-                    assert(op.refSeq <= message.referenceSequenceNumber);
-
-                    // If it is local operation, resolve the promise.
-                    if (local) {
+                    {
+                        // add back-compat for pre-0.14 versions
+                        // when the refSeq property didn't exist
+                        if(op.refSeq === undefined){
+                            op.refSeq = message.referenceSequenceNumber;
+                        }
+                        // Message can be delivered with delay - resubmitted on reconnect.
+                        // As such, refSeq needs to reference seq # at the time op was created (here),
+                        // not when op was actually sent over wire (as client can ingest ops in between)
+                        // in other words, we can't use ISequencedDocumentMessage.referenceSequenceNumber
+                        assert(op.refSeq <= message.referenceSequenceNumber);
                         const winner = this.processInboundWrite(
                             op.refSeq,
                             message.sequenceNumber,
                             op,
                             local);
-                        this.processLocalMessage(message, winner);
+                        // If it is local operation, resolve the promise.
+                        if (local) {
+                            this.processLocalMessage(message, winner);
+                        }
                     }
                     break;
 
@@ -302,9 +301,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
 
     private readAtomic(key: string): T | undefined {
         const data = this.data.get(key);
-        if (data !== undefined) {
-            return data.atomic.value.value;
-        }
+        return data?.atomic.value.value;
     }
 
     private processInboundWrite(
