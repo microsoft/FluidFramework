@@ -10,7 +10,6 @@ import {
     IFluidPackage,
     IPackage,
     isFluidPackage,
-    IContainer,
 } from "@microsoft/fluid-container-definitions";
 import { Container } from "@microsoft/fluid-container-loader";
 import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
@@ -21,12 +20,14 @@ import { IUser } from "@microsoft/fluid-protocol-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { getRandomName } from "@microsoft/fluid-server-services-client";
 import { extractDetails, IResolvedPackage } from "@microsoft/fluid-web-code-loader";
+import { Deferred } from "@microsoft/fluid-common-utils";
 import * as jwt from "jsonwebtoken";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
 import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
 import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 import { InsecureUrlResolver } from "@microsoft/fluid-test-runtime-utils";
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { OdspUrlResolver } from "./odspUrlResolver";
 
 export interface IDevServerUser extends IUser {
@@ -36,6 +37,7 @@ export interface IDevServerUser extends IUser {
 export interface IBaseRouteOptions {
     port: number;
     npm?: string;
+    openMode?: "detached" | "attached";
 }
 
 export interface ILocalRouteOptions extends IBaseRouteOptions {
@@ -172,7 +174,11 @@ async function getResolvedPackage(
     };
 }
 
-function getUrlResolver(documentId: string, options: RouteOptions): IUrlResolver {
+function getUrlResolver(
+    documentId: string,
+    options: RouteOptions,
+    connection: ILocalDeltaConnectionServer,
+): IUrlResolver {
     switch (options.mode) {
         case "docker":
             return new InsecureUrlResolver(
@@ -212,7 +218,7 @@ function getUrlResolver(documentId: string, options: RouteOptions): IUrlResolver
                 options.driveId);
 
         default: // Local
-            return new TestResolver(documentId);
+            return new TestResolver(documentId, connection);
     }
 }
 
@@ -268,10 +274,11 @@ export async function start(
     packageJson: IPackage,
     options: RouteOptions,
     div: HTMLDivElement,
-): Promise<void> {
+    attached: boolean,
+): Promise<{ container: Container, urlD: Deferred<string> }> {
     const {documentServiceFactory, connection} = getDocumentServiceFactory(documentId, options);
 
-    const urlResolver = getUrlResolver(documentId, options);
+    const urlResolver = getUrlResolver(documentId, options, connection);
 
     // Construct a request
     const url = window.location.href;
@@ -287,77 +294,57 @@ export async function start(
         pkg,
         scriptIds,
     );
-    const container1Promise = baseHost1.initializeContainer(
-        url,
-        codeDetails,
-    );
-
-    // Side-by-side mode
-    if (options.mode === "local" && !options.single) {
-        // New documentServiceFactory for right div, same everything else
-        const docServFac2: IDocumentServiceFactory = new TestDocumentServiceFactory(connection);
-        const hostConf2 = { documentServiceFactory: docServFac2, urlResolver };
-
-        // This will create a new Loader/Container/Component from the BaseHost above. This is
-        // intentional because we want to emulate two clients collaborating with each other.
-        const baseHost2 = new BaseHost(
-            hostConf2,
-            pkg,
-            scriptIds,
-        );
-        const container2Promise = baseHost2.initializeContainer(
+    let container1: Container;
+    if (options.openMode === "detached" && !attached) {
+        if (!codeDetails) {
+            throw new Error("Code details must be defined for detached mode!!");
+        }
+        const loader = await baseHost1.getLoader();
+        container1 = await loader.createDetachedContainer(codeDetails);
+    } else {
+        container1 = await baseHost1.initializeContainer(
             url,
             codeDetails,
         );
+    }
 
+    const urlDeferred = new Deferred<string>();
+    // Side-by-side mode
+    if (options.mode === "local" && !options.single) {
         const leftDiv = makeSideBySideDiv("sbs-left");
         const rightDiv = makeSideBySideDiv("sbs-right");
         div.append(leftDiv, rightDiv);
+        await startRendering(container1, "/", leftDiv);
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        urlDeferred.promise.then(async (containerUrl) => {
+            // New documentServiceFactory for right div, same everything else
+            const docServFac2: IDocumentServiceFactory = new TestDocumentServiceFactory(connection);
+            const hostConf2 = { documentServiceFactory: docServFac2, urlResolver };
 
-        await Promise.all([
-            container1Promise.then(async (container) => {
-                await startRendering(container, baseHost1, url, leftDiv);
-            }),
-            container2Promise.then(async (container) => {
-                await startRendering(container, baseHost2, url, rightDiv);
-            }),
-        ]);
+            // This will create a new Loader/Container/Component from the BaseHost above. This is
+            // intentional because we want to emulate two clients collaborating with each other.
+            const baseHost2 = new BaseHost(
+                hostConf2,
+                pkg,
+                scriptIds,
+            );
+            const container2 = await baseHost2.initializeContainer(
+                containerUrl,
+                codeDetails,
+            );
+
+            await startRendering(container2, "/", rightDiv);
+        });
     } else {
-        const container = await container1Promise;
-        await startRendering(container, baseHost1, url, div);
+        await startRendering(container1, "/", div);
     }
+    return {container: container1, urlD: urlDeferred};
 }
 
-export async function create(
-    documentId: string,
-    packageJson: IPackage,
-    options: RouteOptions,
-    div: HTMLDivElement,
-): Promise<IContainer> {
-    const {documentServiceFactory} = getDocumentServiceFactory(documentId, options);
-
-    const urlResolver = getUrlResolver(documentId, options);
-
-    // Create Package
-    const scriptIds: string[] = [];
-    const pkg = await getResolvedPackage(packageJson, scriptIds);
-    const codeDetails = pkg ? pkg.details : undefined;
-
-    const host1Conf: IBaseHostConfig = { documentServiceFactory, urlResolver };
-    const baseHost = new BaseHost(
-        host1Conf,
-        pkg,
-        scriptIds,
-    );
-    const container = await baseHost.initializeContainerForCreateNew(codeDetails);
-    await startRenderingForCreateNew(container, baseHost, div);
-    return container;
-}
-
-async function startRendering(container: Container, baseHost: BaseHost, url: string, div: HTMLDivElement) {
+async function startRendering(container: Container, url: string, div: HTMLDivElement) {
     const p = new Promise((resolve, reject) => {
         const tryGetComponentAndRender = () => {
-            getComponentAndRender(baseHost, url, div).then((success) => {
+            getComponentAndRender(container, url, div).then((success) => {
                 if (success) {
                     resolve();
                 }
@@ -372,34 +359,18 @@ async function startRendering(container: Container, baseHost: BaseHost, url: str
     return p;
 }
 
-async function startRenderingForCreateNew(container: Container, baseHost: BaseHost, div: HTMLDivElement) {
-    const p = new Promise((resolve, reject) => {
-        const tryGetComponentAndRender = () => {
-            getComponentAndRenderForCreateNew(container, baseHost, div).then((success) => {
-                if (success) {
-                    resolve();
-                }
-            }).catch((error) => reject(error));
-        };
-        tryGetComponentAndRender();
-    });
-    return p;
-}
+async function getComponentAndRender(container: Container, url: string, div: HTMLDivElement) {
+    const response = await container.request({ url });
 
-async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
-    const component = await baseHost.getComponent(url);
-    if (component === undefined) {
+    if (response.status !== 200 ||
+        !(
+            response.mimeType === "fluid/component" ||
+            response.mimeType === "prague/component"
+        )) {
         return false;
     }
 
-    // Render the component with an HTMLViewAdapter to abstract the UI framework used by the component
-    const view = new HTMLViewAdapter(component);
-    view.render(div, { display: "block" });
-    return true;
-}
-
-async function getComponentAndRenderForCreateNew(container: Container, baseHost: BaseHost, div: HTMLDivElement) {
-    const component = await baseHost.getComponentForCreateNew(container);
+    const component = response.value as IComponent;
     if (component === undefined) {
         return false;
     }

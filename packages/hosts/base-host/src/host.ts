@@ -115,28 +115,9 @@ export class BaseHost {
         return container;
     }
 
-    public async initializeContainerForCreateNew(pkg: IFluidCodeDetails) {
-        const loader = await this.getLoader();
-        return loader.createDetachedContainer(pkg);
-    }
-
     public async getComponent(url: string) {
         const loader = await this.getLoader();
         const response = await loader.request({ url });
-
-        if (response.status !== 200 ||
-            !(
-                response.mimeType === "fluid/component" ||
-                response.mimeType === "prague/component"
-            )) {
-            return undefined;
-        }
-
-        return response.value as IComponent;
-    }
-
-    public async getComponentForCreateNew(container: Container) {
-        const response = await container.request({ url: "/" });
 
         if (response.status !== 200 ||
             !(

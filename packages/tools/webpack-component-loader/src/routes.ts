@@ -19,8 +19,9 @@ let odspAuthLock: Promise<void> | undefined;
 
 const getThisOrigin = (options: RouteOptions): string => `http://localhost:${options.port}`;
 
-export const before = (app: express.Application, server: WebpackDevServer) => {
-    app.get("/", (req, res) => res.redirect(`/${moniker.choose()}`));
+export const before = (app: express.Application, server: WebpackDevServer, env?: RouteOptions) => {
+    app.get("/", (req, res) => env?.openMode === "detached" ?
+        res.redirect(`/create`) : res.redirect(`/${moniker.choose()}`));
 };
 
 export const after = (app: express.Application, server: WebpackDevServer, baseDir: string, env: RouteOptions) => {
@@ -155,27 +156,6 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
         const buffer = fs.readFileSync(req.params[0].substr(1));
         res.end(buffer);
     });
-    app.get("/create", async (req, res) => {
-        if (readyP !== undefined) {
-            let canContinue = false;
-            try {
-                canContinue = await readyP(req, res);
-            } catch (error) {
-                let toLog = error;
-                try {
-                    toLog = JSON.stringify(error);
-                } catch {}
-                console.log(toLog ?? error);
-            }
-            if (!canContinue) {
-                if (!res.finished) {
-                    res.end();
-                }
-                return;
-            }
-        }
-        create(req, res, baseDir, options);
-    });
     app.get("/:id*", async (req, res) => {
         if (readyP !== undefined) {
             let canContinue = false;
@@ -194,6 +174,9 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
                 }
                 return;
             }
+        }
+        if (req.params.id === "create") {
+            req.params.openMode = "detached";
         }
         fluid(req, res, baseDir, options);
     });
@@ -214,6 +197,12 @@ const fluid = (req: express.Request, res: express.Response, baseDir: string, opt
     <title>${documentId}</title>
 </head>
 <body style="margin: 0; padding: 0">
+    <div>
+        <button id="attach-button" disabled>Attach!</button>
+    </div>
+    <div>
+        <textarea id="text" rows="1" cols="60" wrap="hard">Url will appear here!!</textarea>
+    </div>
     <div id="content" style="width: 100%; min-height: 100vh; display: flex; position: relative">
     </div>
 
@@ -222,72 +211,38 @@ const fluid = (req: express.Request, res: express.Response, baseDir: string, opt
         var pkgJson = ${JSON.stringify(packageJson)};
         var options = ${JSON.stringify(options)};
         var fluidStarted = false;
-        FluidLoader.start(
+        const attached = "${req.params.openMode}" !== "detached";
+        const containerP = FluidLoader.start(
             "${documentId}",
             pkgJson,
             options,
-            document.getElementById("content"))
-        .then(() => fluidStarted = true)
+            document.getElementById("content"),
+            attached)
+        .then(({container, urlD}) => {
+            fluidStarted = true;
+            const textarea = document.getElementById("text");
+            const attachButton = document.getElementById("attach-button");
+            if ("${req.params.openMode}" !== "detached") {
+                attachButton.style.display = "none";
+                textarea.style.display = "none";
+                urlD.resolve(window.location.href);
+            }
+            attachButton.disabled = false;
+            attachButton.onclick = () => {
+                container.attach({url: window.location.href}).then(
+                    () => {
+                        const text = window.location.href.replace("create", container.id);
+                        textarea.innerText = text;
+                        urlD.resolve(text);
+                        attachButton.style.display = "none"; 
+                        console.log("Fully attached!");
+                    },
+                    (error) => {
+                        console.error(error);
+                    });
+            }
+        })
         .catch((error) => console.error(error));
-    </script>
-</body>
-</html>`;
-
-    res.setHeader("Content-Type", "text/html");
-    res.end(html);
-};
-
-const create = (req: express.Request, res: express.Response, baseDir: string, options: RouteOptions) => {
-
-    const documentId = req.params.id;
-    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-    const packageJson = require(path.join(baseDir, "./package.json"));
-
-    const html =
-        `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${documentId}</title>
-</head>
-<body style="margin: 0; padding: 0">  
-    <div>
-        <button id="attach-button" disabled>Attach!</button>
-    </div>
-    <div>
-        <textarea id="text" rows="1" cols="60" wrap="hard">Url will appear here!!</textarea>
-    </div>
-    <div id="content">
-    </div>  
-    <script src="/node_modules/@microsoft/fluid-webpack-component-loader/dist/fluid-loader.bundle.js"></script>
-    <script>
-        var pkgJson = ${JSON.stringify(packageJson)};
-        var options = ${JSON.stringify(options)};
-        const containerP = FluidLoader.create(
-            "${documentId}",
-            pkgJson,
-            options,
-            document.getElementById("content"));
-        containerP.then(
-            (container) => {
-                const attachButton = document.getElementById("attach-button");
-                attachButton.disabled = false;
-                attachButton.onclick = () => {
-                    container.attach({url: window.location.href}).then(
-                        () => {
-                            const textarea = document.getElementById("text");
-                            textarea.innerText = window.location.href.replace("create", container.id);
-                            console.log("Fully attached!");
-                        },
-                        (error) => {
-                            console.error(error);
-                        });
-                }
-            },
-            (error) => {
-                console.error(error);
-            });
     </script>
 </body>
 </html>`;
