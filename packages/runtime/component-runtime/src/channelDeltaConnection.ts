@@ -22,7 +22,8 @@ export class ChannelDeltaConnection implements IDeltaConnection {
     constructor(
         public objectId: string,
         private _state: ConnectionState,
-        private readonly submitFn: (message: IDocumentMessage) => number) {
+        private readonly submitFn: (message: IDocumentMessage) => number,
+        private readonly dirtyFn: () => void) {
     }
 
     public attach(handler: IDeltaHandler) {
@@ -44,5 +45,13 @@ export class ChannelDeltaConnection implements IDeltaConnection {
      */
     public submit(message: IDocumentMessage): number {
         return this.submitFn(message);
+    }
+
+    /**
+     * Indicates that the channel is dirty and needs to be part of the summary. It is called by a summarizable
+     * object that needs to be part of the summary but does not generate ops.
+     */
+    public dirty(): void {
+        this.dirtyFn();
     }
 }
