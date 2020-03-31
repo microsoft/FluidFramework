@@ -79,10 +79,6 @@ export class SummarizableObject extends SharedObject implements ISummarizableObj
      * {@inheritDoc ISummarizableObject.set}
      */
     public set(key: string, value: Jsonable): void {
-        if (SharedObject.is(value)) {
-            throw new Error("SharedObject sets are no longer supported. Instead set the SharedObject handle.");
-        }
-
         this.data[key] = value;
 
         // Set this object as dirty so that it is part of the next summary.

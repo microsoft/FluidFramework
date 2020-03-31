@@ -27,7 +27,6 @@ import {
 } from "@microsoft/fluid-runtime-definitions";
 import * as sequence from "@microsoft/fluid-sequence";
 import { createIError } from "@microsoft/fluid-driver-utils";
-import { SummarizableObject } from "@microsoft/fluid-summarizable-object";
 import { Document } from "./document";
 
 const rootMapId = "root";
@@ -51,7 +50,6 @@ export class Chaincode implements IComponentFactory {
         const sparseMatrixFactory = sequence.SparseMatrix.getFactory();
         const directoryFactory = map.SharedDirectory.getFactory();
         const sharedIntervalFactory = sequence.SharedIntervalCollection.getFactory();
-        const summarizableObjectFactory = SummarizableObject.getFactory();
 
         // Register channel factories
         const modules = new Map<string, any>();
@@ -66,7 +64,6 @@ export class Chaincode implements IComponentFactory {
         modules.set(sparseMatrixFactory.type, sparseMatrixFactory);
         modules.set(directoryFactory.type, directoryFactory);
         modules.set(sharedIntervalFactory.type, sharedIntervalFactory);
-        modules.set(summarizableObjectFactory.type, summarizableObjectFactory);
 
         const runtime = ComponentRuntime.load(context, modules);
 

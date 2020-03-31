@@ -60,7 +60,6 @@
     "@microsoft/fluid-runtime-definitions": "^0.15.0",
     "@microsoft/fluid-sequence": "^0.15.0",
     "@microsoft/fluid-shared-object-base": "^0.15.0",
-    "@microsoft/fluid-summarizable-object": "^0.15.0",
     "@types/node": "^10.14.6",
     "debug": "^4.1.1",
     "jwt-decode": "^2.2.0"

@@ -26,7 +26,6 @@ import {
 import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 import * as sequence from "@microsoft/fluid-sequence";
 import { ISharedObject } from "@microsoft/fluid-shared-object-base";
-import { ISummarizableObject, SummarizableObject } from "@microsoft/fluid-summarizable-object";
 import { CodeLoader } from "./codeLoader";
 import { debug } from "./debug";
 
@@ -159,13 +158,6 @@ export class Document extends EventEmitter {
      */
     public createInk(): ink.IInk {
         return ink.Ink.create(this.runtime);
-    }
-
-    /**
-     * Creates a new summarizable object.
-     */
-    public createSummarizableObject(): ISummarizableObject {
-        return SummarizableObject.create(this.runtime);
     }
 
     /**
