@@ -4,7 +4,7 @@
  */
 
 import * as React from "react";
-import { PlayerProgressKey, PlayerStateKey, PlayerStates } from '../interfaces/PlayerInterfaces';
+import { PlayerProgressKey, PlayerStateKey, PlayerState } from '../interfaces/PlayerInterfaces';
 
 interface SliderProps {
     value: number,
@@ -56,7 +56,7 @@ class Slider extends React.Component<SliderProps, SliderState> {
 
     private _onSeekMouseDown = e => {
         console.log("is seeking");
-        this.props.root.set(PlayerStateKey, PlayerStates.Seeking);
+        this.props.root.set(PlayerStateKey, PlayerState.Seeking);
         this.setState({isChanging: true});
       }
 
@@ -64,7 +64,7 @@ class Slider extends React.Component<SliderProps, SliderState> {
         const seekValue = parseFloat(e.target.value);
         console.log(seekValue);
         const seekSeconds = seekValue * this.props.reactPlayerRef.getDuration();
-        this.props.root.set(PlayerStateKey, PlayerStates.Seeking);
+        this.props.root.set(PlayerStateKey, PlayerState.Seeking);
         this.props.root.set(PlayerProgressKey, seekSeconds);
         this.setState({value: seekValue});
       }
@@ -74,9 +74,9 @@ class Slider extends React.Component<SliderProps, SliderState> {
         const seekValue = parseFloat(e.target.value);
         const seekSeconds = seekValue * this.props.reactPlayerRef.getDuration();
         this.props.root.set(PlayerProgressKey, seekSeconds);
-        this.props.root.set(PlayerStateKey, PlayerStates.Seeking);
+        this.props.root.set(PlayerStateKey, PlayerState.Seeking);
         setTimeout(() =>  {
-          this.props.root.set(PlayerStateKey, PlayerStates.Playing);
+          this.props.root.set(PlayerStateKey, PlayerState.Playing);
           this.props.root.set(PlayerProgressKey, seekSeconds);
         }, 500);
         this.setState({isChanging: false})

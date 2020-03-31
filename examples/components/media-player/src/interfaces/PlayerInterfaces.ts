@@ -11,11 +11,16 @@ export const PlaylistIndexKey = "playlistIndex";
 export const PlayerProgressProportionKey = "playerProgressProportion";
 export const AcceptableDelta = 3;
 
-export enum PlayerStates {
+export enum PlayerState {
     Playing = "Playing",
     Paused = "Paused",
     Buffering = "Buffering",
     Seeking = "Seeking"
+}
+
+export enum MediaSource {
+    Youtube,
+    Soundcloud
 }
   
 export interface IPlaylistItem {
@@ -25,4 +30,5 @@ export interface IPlaylistItem {
     thumbnailUrl: string;
     channelName: string;
     description: string;
+    mediaSource: MediaSource;
 }

@@ -19,9 +19,10 @@ import {
     TextField
 } from "office-ui-fabric-react";
 import YoutubeClient from "./clients/YoutubeClient";
-import { IPlaylistItem, PlaylistKey, PlayerStateKey, PlayerStates, PlayerProgressKey, PlaylistIndexKey, PlayerProgressProportionKey, AcceptableDelta } from "./interfaces/PlayerInterfaces";
+import { IPlaylistItem, PlaylistKey, PlayerStateKey, PlayerState, PlayerProgressKey, PlaylistIndexKey, PlayerProgressProportionKey, AcceptableDelta, MediaSource } from "./interfaces/PlayerInterfaces";
 import Slider from "./components/Slider";
 import Playlist from "./components/Playlist";
+import SoundcloudClient from "./clients/SoundcloudClient";
 
 export const MediaPlayerName = "media-player";
 
@@ -59,11 +60,12 @@ export class MediaPlayer extends PrimedComponent
                 id: newVideoId,
                 thumbnailUrl: response.snippet.thumbnails.standard.url,
                 channelName: response.snippet.channelTitle,
-                description: response.snippet.description
+                description: response.snippet.description,
+                mediaSource: MediaSource.Youtube
             };
             this.root.set(PlaylistKey, [firstPlaylistItem]);
             this.root.set(PlaylistIndexKey, 0);
-            this.root.set(PlayerStateKey, PlayerStates.Playing);
+            this.root.set(PlayerStateKey, PlayerState.Playing);
             this.root.set(PlayerProgressKey, -1);
         });
     }
@@ -101,7 +103,8 @@ interface IMediaPlayerViewProps {
 interface IMediaPlayerViewState {
     playedProportion: number;
     newUrl: string;
-    playlist: IPlaylistItem[]
+    playlist: IPlaylistItem[],
+    playerState: PlayerState
 }
 
 class MediaPlayerView extends React.Component<IMediaPlayerViewProps, IMediaPlayerViewState> {
@@ -123,7 +126,8 @@ class MediaPlayerView extends React.Component<IMediaPlayerViewProps, IMediaPlaye
         this.state = {
             playedProportion: root.get(PlayerProgressProportionKey),
             newUrl: "",
-            playlist: root.get<IPlaylistItem[]>(PlaylistKey)
+            playlist: root.get<IPlaylistItem[]>(PlaylistKey),
+            playerState: root.get(PlayerStateKey)
         }
         root.on("valueChanged", (change, local) => {
             if (root.get(PlayerProgressProportionKey) != this.state.playedProportion) {
@@ -136,33 +140,39 @@ class MediaPlayerView extends React.Component<IMediaPlayerViewProps, IMediaPlaye
                     playlist: root.get<IPlaylistItem[]>(PlaylistKey)
                 });
             }
+            if (root.get(PlayerStateKey) != this.state.playerState) {
+                this.setState({
+                    playerState: root.get(PlayerStateKey)
+                });
+            }
         });
     }
 
     render(){
         const { root } = this.props;
-        const { playedProportion, newUrl, playlist } = this.state;
+        const { playedProportion, newUrl, playlist, playerState } = this.state;
         const playlistIndex = root.get<number>(PlaylistIndexKey);
         if (playlistIndex < playlist.length && playlist[playlistIndex]) {
             const currentVideo = playlist[playlistIndex];
             const videoUrl = currentVideo.url;
             const videoChannelName = currentVideo.channelName;
             const videoName = currentVideo.name;
-            const playerState = root.get(PlayerStateKey);
+            
+            console.log(`Player State: ${playerState}`);
             return (
                 <Table style={this.styles.playerTableContainer}>
                     <td>
                         <tr>
                             <ReactPlayer
                                 url={videoUrl}
-                                playing={playerState === PlayerStates.Playing || playerState === PlayerStates.Buffering || playerState === PlayerStates.Seeking}
-                                onStart={() => root.set(PlayerStateKey, PlayerStates.Playing)}
+                                playing={playerState === PlayerState.Playing || playerState === PlayerState.Buffering || playerState === PlayerState.Seeking}
+                                onStart={() => root.set(PlayerStateKey, PlayerState.Playing)}
+                                onBuffer={() => root.set(PlayerStateKey, PlayerState.Buffering)}
                                 onPlay={() => {
                                     console.log("Clicked play");
-                                    root.set(PlayerStateKey, PlayerStates.Playing);
+                                    root.set(PlayerStateKey, PlayerState.Playing);
                                 }}
-                                onPause={() => root.set(PlayerStateKey, PlayerStates.Paused)}
-                                onBuffer={() => root.set(PlayerStateKey, PlayerStates.Buffering)}
+                                onPause={() => root.set(PlayerStateKey, PlayerState.Paused)}
                                 progressInterval={500}
                                 onProgress={({played, playedSeconds}) => this.onProgress(played, playedSeconds)}
                                 ref={(playerNode: any) => { this.reactPlayerRef = playerNode; }}
@@ -178,7 +188,8 @@ class MediaPlayerView extends React.Component<IMediaPlayerViewProps, IMediaPlaye
                                 as={"h2"} 
                                 content={videoName} 
                                 description={{
-                                    content: `By ${videoChannelName}`,
+                                    content: currentVideo.mediaSource === MediaSource.Soundcloud 
+                                        ? "From Soundcloud" : `By ${videoChannelName}`,
                                     as: 'span',
                                 }}
                             />
@@ -225,9 +236,9 @@ class MediaPlayerView extends React.Component<IMediaPlayerViewProps, IMediaPlaye
         const currentLeaderSeconds = root.get(PlayerProgressKey);
         const playerState = root.get(PlayerStateKey);
         if (Math.abs(currentLeaderSeconds - playedSeconds) > AcceptableDelta && playedSeconds > 2
-            || playerState === PlayerStates.Seeking) {
+            || playerState === PlayerState.Seeking) {
             this.seekPlayer(currentLeaderSeconds);
-        } else if (root.get(PlayerStateKey) !== PlayerStates.Seeking && !this.isSeeking) {
+        } else if (root.get(PlayerStateKey) !== PlayerState.Seeking && !this.isSeeking) {
             console.log(`PROGRESS ${played} ${playedSeconds}`)
             root.set(PlayerProgressKey, playedSeconds);
             root.set(PlayerProgressProportionKey, played);
@@ -245,20 +256,38 @@ class MediaPlayerView extends React.Component<IMediaPlayerViewProps, IMediaPlaye
         if (ReactPlayer.canPlay(newUrl)) {
             const { root } = this.props;
             const playlist = root.get<IPlaylistItem[]>(PlaylistKey);
-            const newVideoId = YoutubeClient.getYoutubeVideoId(newUrl);
-            YoutubeClient.getVideoById(newVideoId).then(response => {
-              var newPlaylistItem: IPlaylistItem = {
-                name: response.snippet.title,
-                url: newUrl,
-                id: newVideoId,
-                thumbnailUrl: response.snippet.thumbnails.standard.url,
-                channelName: response.snippet.channelTitle,
-                description: response.snippet.description
-              };
-              playlist.push(newPlaylistItem);
-              root.set<IPlaylistItem[]>(PlaylistKey, playlist);
-              this.setState({newUrl: ""});
-            })
+            if (newUrl.indexOf("youtube.com") > 0) {
+                const newVideoId = YoutubeClient.getYoutubeVideoId(newUrl);
+                YoutubeClient.getVideoById(newVideoId).then(response => {
+                  var newPlaylistItem: IPlaylistItem = {
+                    name: response.snippet.title,
+                    url: newUrl,
+                    id: newVideoId,
+                    thumbnailUrl: response.snippet.thumbnails.standard.url,
+                    channelName: response.snippet.channelTitle,
+                    description: response.snippet.description,
+                    mediaSource: MediaSource.Youtube
+                  };
+                  playlist.push(newPlaylistItem);
+                  root.set<IPlaylistItem[]>(PlaylistKey, playlist);
+                  this.setState({newUrl: ""});
+                })
+            } else if (newUrl.indexOf("soundcloud.com") > 0) {
+                const newTrackId = SoundcloudClient.getSouncloudTrackId(newUrl);
+                var newPlaylistItem: IPlaylistItem = {
+                    name: newUrl,
+                    url: newUrl,
+                    id: newTrackId,
+                    thumbnailUrl: "https://icons.iconarchive.com/icons/uiconstock/socialmedia/512/Soundcloud-icon.png",
+                    channelName: "",
+                    description: "",
+                    mediaSource: MediaSource.Soundcloud
+                };
+                playlist.push(newPlaylistItem);
+                root.set<IPlaylistItem[]>(PlaylistKey, playlist);
+                this.setState({newUrl: ""});
+            }
+            
         } else {
             alert("This URL is not currently supported! Please try again!");
         }
