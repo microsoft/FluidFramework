@@ -77,26 +77,15 @@
   resolved "https://packages.wu2.prague.office-int.com/@microsoft%2ffluid-common-definitions/-/fluid-common-definitions-0.13.20843.tgz#26cb366d016802641b971b6a78cdffaf93d0ea89"
   integrity sha512-vFCQOTTPR97Aoo7m2/ZXzFGPaQYVbBN1m8c0w0ws4KSo2ka7h1t84O2K90QCumVgiTN/Z/ZCuTXVZAzQV24i+g==
 
-"@microsoft/fluid-common-utils@^0.14.0":
-  version "0.14.21371"
-  resolved "https://packages.wu2.prague.office-int.com/@microsoft%2ffluid-common-utils/-/fluid-common-utils-0.14.21371.tgz#0c6426f1ba3ffb6131f4073e3e0c5808d6a5bffd"
-  integrity sha512-pp8dNw+oI5E3MEU9+44U0pv0B2fgXVr9QMzoz7eVt3NmoSI83HRsjUD1u73Zfi8LECH1CYR/an/ul6iwviwdiw==
-  dependencies:
-    "@microsoft/fluid-common-definitions" "^0.13.0"
-    debug "^4.1.1"
-    lodash "^4.17.11"
-    performance-now "^2.1.0"
-    sha.js "^2.4.11"
-
 "@microsoft/fluid-component-core-interfaces@^0.13.0", "@microsoft/fluid-component-core-interfaces@^0.13.21013":
   version "0.13.21013"
   resolved "https://packages.wu2.prague.office-int.com/@microsoft%2ffluid-component-core-interfaces/-/fluid-component-core-interfaces-0.13.21013.tgz#3f30d2c1571d99b34f00a87f45985f32c91860ed"
   integrity sha512-hy6gnyAi72dmaNBWzP9PxsgweSQ6zLJq/c7cSB4pwr9/dgtRr7RTPXfrPzKCgyREPU7I2R1ESWFwmQRsFpOAQQ==
 
-"@microsoft/fluid-component-core-interfaces@^0.14.21378":
-  version "0.14.21378"
-  resolved "https://packages.wu2.prague.office-int.com/@microsoft%2ffluid-component-core-interfaces/-/fluid-component-core-interfaces-0.14.21378.tgz#fa5d0a19261e66491b52f6093afc0477f6999a1f"
-  integrity sha512-Ov/dumT68fvl29UF8DK6uej0Ofv+PBD8XA5EXeEQHdiU0D+PGQSnHsYCICWBzrNn+S/Q6iqjVj4SwOdkxtWfpw==
+"@microsoft/fluid-component-core-interfaces@^0.13.21811":
+  version "0.13.21811"
+  resolved "https://packages.wu2.prague.office-int.com/@microsoft%2ffluid-component-core-interfaces/-/fluid-component-core-interfaces-0.13.21811.tgz#6e432b2e3b17da6246283e4fc8c84daeeb1aa4d1"
+  integrity sha512-sylQe39Sbs8sN+jeP0p66WL8+r2OhrwJeUwWYE7yNxEpkAwA1vNR8bA4hGKdF6ZvZ9yvT+5MxMq9Kq3MMLaJCQ==
 
 "@microsoft/fluid-component-runtime@^0.13.21013":
   version "0.13.21013"
@@ -127,15 +116,15 @@
     "@microsoft/fluid-driver-definitions" "^0.13.21013"
     "@microsoft/fluid-protocol-definitions" "^0.1001.0"
 
-"@microsoft/fluid-container-definitions@^0.14.21378":
-  version "0.14.21378"
-  resolved "https://packages.wu2.prague.office-int.com/@microsoft%2ffluid-container-definitions/-/fluid-container-definitions-0.14.21378.tgz#14bc8047b24a385364e6e58445d57d6e1c0fc68a"
-  integrity sha512-bYVrQy6NCKkQkOw5gAVvukKwwLj+uPfJQ68QmOD2oc5I25X4VmRjBurWMlCW+bMgmngy+OOArUUdw6c+6jtcTg==
+"@microsoft/fluid-container-definitions@^0.13.21811":
+  version "0.13.21811"
+  resolved "https://packages.wu2.prague.office-int.com/@microsoft%2ffluid-container-definitions/-/fluid-container-definitions-0.13.21811.tgz#7655762d59f8dd87fcc5a97780705bc8cd085782"
+  integrity sha512-Wvm5Gu5Z5tFUtoM6ffXbctovS7A1tk3n8ByuuWaJ+9ch7Q0hCnQ2/0j3TIvcDOuUgQ8Nis34ohNT5bo8gv0oig==
   dependencies:
     "@microsoft/fluid-common-definitions" "^0.13.0"
-    "@microsoft/fluid-component-core-interfaces" "^0.14.21378"
-    "@microsoft/fluid-driver-definitions" "^0.14.21378"
-    "@microsoft/fluid-protocol-definitions" "^0.1002.0"
+    "@microsoft/fluid-component-core-interfaces" "^0.13.21811"
+    "@microsoft/fluid-driver-definitions" "^0.13.21811"
+    "@microsoft/fluid-protocol-definitions" "^0.1001.0"
 
 "@microsoft/fluid-container-loader@^0.13.21013":
   version "0.13.21013"
@@ -212,13 +201,13 @@
     "@microsoft/fluid-component-core-interfaces" "^0.13.21013"
     "@microsoft/fluid-protocol-definitions" "^0.1001.0"
 
-"@microsoft/fluid-driver-definitions@^0.14.21378":
-  version "0.14.21378"
-  resolved "https://packages.wu2.prague.office-int.com/@microsoft%2ffluid-driver-definitions/-/fluid-driver-definitions-0.14.21378.tgz#b37df846a9582286bf03fa27d1097c34f905620b"
-  integrity sha512-R33YpzR3tDxCIrkHi82C+CT6c1N08+92C6T8iUTelK8VGP20l/g+WkJPpequc7lUsXdkTqXw7atzbS80gGhuHw==
+"@microsoft/fluid-driver-definitions@^0.13.21811":
+  version "0.13.21811"
+  resolved "https://packages.wu2.prague.office-int.com/@microsoft%2ffluid-driver-definitions/-/fluid-driver-definitions-0.13.21811.tgz#4f6a28647da5493f8b3cc9ae149f2cdc8597cde3"
+  integrity sha512-mq+4pP0M5FZ91lOgk7A47mkv7QlvsaGdQTfdwO5++ZkdV5ANY8YncBKGcUenE5Mmk5AIAUnxEGD/A+EhEIqQIg==
   dependencies:
-    "@microsoft/fluid-component-core-interfaces" "^0.14.21378"
-    "@microsoft/fluid-protocol-definitions" "^0.1002.0"
+    "@microsoft/fluid-component-core-interfaces" "^0.13.21811"
+    "@microsoft/fluid-protocol-definitions" "^0.1001.0"
 
 "@microsoft/fluid-driver-utils@^0.13.21013":
   version "0.13.21013"
@@ -240,11 +229,6 @@
   version "0.1001.20833"
   resolved "https://packages.wu2.prague.office-int.com/@microsoft%2ffluid-gitresources/-/fluid-gitresources-0.1001.20833.tgz#670ece29fbb494875ff571c42bbc1502050e678d"
   integrity sha512-kESeItgsAuEsrpfdFDOQqVWBMxezwkZrAqxDJYK2jBnyM+Y3svnLhJEvp9L++qKrUykPadJ9vCy3gi6GPDw1Ng==
-
-"@microsoft/fluid-gitresources@^0.1002.21380":
-  version "0.1002.21380"
-  resolved "https://packages.wu2.prague.office-int.com/@microsoft%2ffluid-gitresources/-/fluid-gitresources-0.1002.21380.tgz#a21735bc953b3e454b7d2d0363411db7f1b0a499"
-  integrity sha512-jbpHwI0sN7kjjJCFKu8eb5MVeAbUY4h5/u+nWA0WigjpASmWpyYkUcPfhdpWdf8CEhNKSFG8BVIXyk5oQ8gO2g==
 
 "@microsoft/fluid-local-test-server@^0.13.21013":
   version "0.13.21013"
@@ -284,29 +268,29 @@
     "@microsoft/fluid-shared-object-base" "^0.13.21013"
     debug "^4.1.1"
 
-"@microsoft/fluid-map@^0.14.21378":
-  version "0.14.21378"
-  resolved "https://packages.wu2.prague.office-int.com/@microsoft%2ffluid-map/-/fluid-map-0.14.21378.tgz#a6bf36a0edc84cb6b3dc5de46002c4f894e5646c"
-  integrity sha512-f6pc2c71U18DeDPCKy7s2D2QyxxrkaKIA25tIxTiJY3+zAWo4FPkwbQyYVMRecSLnPYAOrd/8SOKtiqoyT0lMQ==
+"@microsoft/fluid-map@^0.13.21811":
+  version "0.13.21811"
+  resolved "https://packages.wu2.prague.office-int.com/@microsoft%2ffluid-map/-/fluid-map-0.13.21811.tgz#7d8a33d1ae507d2786cc3ab39deb8503163f7930"
+  integrity sha512-x3FsZOeLEs5Hg8FuiMC2F6l64yn0yNF1v9Klw9yCfBfUdl6Kzi8KC36SQgZJ3RV8jd2STtww6UbB0AOLfJMmVg==
   dependencies:
-    "@microsoft/fluid-common-utils" "^0.14.0"
-    "@microsoft/fluid-component-core-interfaces" "^0.14.21378"
-    "@microsoft/fluid-protocol-base" "^0.1002.0"
-    "@microsoft/fluid-protocol-definitions" "^0.1002.0"
-    "@microsoft/fluid-runtime-definitions" "^0.14.21378"
-    "@microsoft/fluid-shared-object-base" "^0.14.21378"
+    "@microsoft/fluid-component-core-interfaces" "^0.13.21811"
+    "@microsoft/fluid-core-utils" "^0.13.0"
+    "@microsoft/fluid-protocol-base" "^0.1001.0"
+    "@microsoft/fluid-protocol-definitions" "^0.1001.0"
+    "@microsoft/fluid-runtime-definitions" "^0.13.21811"
+    "@microsoft/fluid-shared-object-base" "^0.13.21811"
     debug "^4.1.1"
 
-"@microsoft/fluid-merge-tree@^0.14.21378":
-  version "0.14.21378"
-  resolved "https://packages.wu2.prague.office-int.com/@microsoft%2ffluid-merge-tree/-/fluid-merge-tree-0.14.21378.tgz#d4b6165740ce5ec3894c848a1e14589e5f9cf860"
-  integrity sha512-THK01zeUcMH3fu+WznQ3e1dobSFYHRw/2+5oLG7T9WwOsFt1MKgQTMnOQW7jrGv8+xOGPXQpUnM2s+0Skt7Knw==
+"@microsoft/fluid-merge-tree@^0.13.21811":
+  version "0.13.21811"
+  resolved "https://packages.wu2.prague.office-int.com/@microsoft%2ffluid-merge-tree/-/fluid-merge-tree-0.13.21811.tgz#d665559ba9d618fa70dceb85fdc7d99a81b98621"
+  integrity sha512-zhplI6Mf4gJDhvvhRM2rATlTjZujaKgoctywMRRhHrCV0bD1PG6CnaYCWGHsDeG06Pigsy47C1sI5PNBfYmaPA==
   dependencies:
     "@microsoft/fluid-common-definitions" "^0.13.0"
-    "@microsoft/fluid-common-utils" "^0.14.0"
-    "@microsoft/fluid-component-core-interfaces" "^0.14.21378"
-    "@microsoft/fluid-protocol-definitions" "^0.1002.0"
-    "@microsoft/fluid-runtime-definitions" "^0.14.21378"
+    "@microsoft/fluid-component-core-interfaces" "^0.13.21811"
+    "@microsoft/fluid-core-utils" "^0.13.0"
+    "@microsoft/fluid-protocol-definitions" "^0.1001.0"
+    "@microsoft/fluid-runtime-definitions" "^0.13.21811"
 
 "@microsoft/fluid-protocol-base@^0.1001.0", "@microsoft/fluid-protocol-base@^0.1001.20833":
   version "0.1001.20833"
@@ -318,27 +302,10 @@
     "@microsoft/fluid-protocol-definitions" "^0.1001.20833"
     lodash "^4.17.11"
 
-"@microsoft/fluid-protocol-base@^0.1002.0":
-  version "0.1002.21380"
-  resolved "https://packages.wu2.prague.office-int.com/@microsoft%2ffluid-protocol-base/-/fluid-protocol-base-0.1002.21380.tgz#4ac6c395f629847c6df6bc9e280ecb4d3325eebc"
-  integrity sha512-drsDlEaJVLMhRdsGMgHB1ely3Bgwg9FBbJ82/M64QQ9a1CUyRbOPtBHvDkSwY/JgQ9D/8XQddWbTGsvnc9lEtw==
-  dependencies:
-    "@microsoft/fluid-common-utils" "^0.14.0"
-    "@microsoft/fluid-gitresources" "^0.1002.21380"
-    "@microsoft/fluid-protocol-definitions" "^0.1002.21380"
-    lodash "^4.17.11"
-
 "@microsoft/fluid-protocol-definitions@^0.1001.0", "@microsoft/fluid-protocol-definitions@^0.1001.20833":
   version "0.1001.20833"
   resolved "https://packages.wu2.prague.office-int.com/@microsoft%2ffluid-protocol-definitions/-/fluid-protocol-definitions-0.1001.20833.tgz#f12517fdbf644e8cbb7d962a4ae2f43ddaeba41c"
   integrity sha512-pYsma/JtIFlRK6EUxrRzrOzxrIawsuQCALXnd7en+gIGAZumKC6guQaHJmK+B8mApnYuTTbUnO0thdedoK7+nA==
-  dependencies:
-    "@microsoft/fluid-common-definitions" "^0.13.0"
-
-"@microsoft/fluid-protocol-definitions@^0.1002.0", "@microsoft/fluid-protocol-definitions@^0.1002.21380":
-  version "0.1002.21380"
-  resolved "https://packages.wu2.prague.office-int.com/@microsoft%2ffluid-protocol-definitions/-/fluid-protocol-definitions-0.1002.21380.tgz#ae5466d433bbde7f38c4a63ff8e3115cdd167012"
-  integrity sha512-UvyEswhfPXi+Fxrx0xxGvCHWXDO5vqA2TRJYjeg5vfRE8CPcrigr+n+1FMKOirl00HMJyVunWDELnwflZof4jA==
   dependencies:
     "@microsoft/fluid-common-definitions" "^0.13.0"
 
@@ -384,16 +351,16 @@
     "@microsoft/fluid-protocol-definitions" "^0.1001.0"
     "@types/node" "^10.14.6"
 
-"@microsoft/fluid-runtime-definitions@^0.14.21378":
-  version "0.14.21378"
-  resolved "https://packages.wu2.prague.office-int.com/@microsoft%2ffluid-runtime-definitions/-/fluid-runtime-definitions-0.14.21378.tgz#674213671dad47dbe545528d9d523a0c8cb131f1"
-  integrity sha512-IuR+J1QQWz3K7uLDDizCyW7j7JkKCABWsudN3r4LAxlVutjsKG5NQmTJpwVUfpUx4hWSZZIq+s6T4Ty+JyJ0ig==
+"@microsoft/fluid-runtime-definitions@^0.13.21811":
+  version "0.13.21811"
+  resolved "https://packages.wu2.prague.office-int.com/@microsoft%2ffluid-runtime-definitions/-/fluid-runtime-definitions-0.13.21811.tgz#70f8d126b17a49993a4cdcfa5d0b132db05847db"
+  integrity sha512-avyAb7ZiiTXs60UAXyk3rxCw4VYvSxDapIpNGT8sVke12byuSihDHp4L/dhUGp3ty7qjasTA8yGXr5fX4sxbMA==
   dependencies:
     "@microsoft/fluid-common-definitions" "^0.13.0"
-    "@microsoft/fluid-component-core-interfaces" "^0.14.21378"
-    "@microsoft/fluid-container-definitions" "^0.14.21378"
-    "@microsoft/fluid-driver-definitions" "^0.14.21378"
-    "@microsoft/fluid-protocol-definitions" "^0.1002.0"
+    "@microsoft/fluid-component-core-interfaces" "^0.13.21811"
+    "@microsoft/fluid-container-definitions" "^0.13.21811"
+    "@microsoft/fluid-driver-definitions" "^0.13.21811"
+    "@microsoft/fluid-protocol-definitions" "^0.1001.0"
     "@types/node" "^10.14.6"
 
 "@microsoft/fluid-runtime-utils@^0.13.21013":
@@ -404,28 +371,18 @@
     "@microsoft/fluid-component-core-interfaces" "^0.13.21013"
     "@microsoft/fluid-protocol-definitions" "^0.1001.0"
 
-"@microsoft/fluid-runtime-utils@^0.14.21378":
-  version "0.14.21378"
-  resolved "https://packages.wu2.prague.office-int.com/@microsoft%2ffluid-runtime-utils/-/fluid-runtime-utils-0.14.21378.tgz#dd1a70a9f82d384877e86a5e1ea26f0b300f472e"
-  integrity sha512-50WN03PFtQI8mIzj4be8u2mGxlhXFK9Zaw6CDBvdfOf/wq2irghQubttJhqsja4PfFuyYwZJDwLufyZBncJP9w==
+"@microsoft/fluid-sequence@^0.13.0":
+  version "0.13.21811"
+  resolved "https://packages.wu2.prague.office-int.com/@microsoft%2ffluid-sequence/-/fluid-sequence-0.13.21811.tgz#05021028cda8c80838e1825a37fa5d83f0a75859"
+  integrity sha512-H8L55kKzcf/7e17DTG7iMfQdfeY74rT824wj47aFs59D48vLpeqGRyJIAMeipn28szaccVQPCHayTawGyfajfg==
   dependencies:
-    "@microsoft/fluid-component-core-interfaces" "^0.14.21378"
-    "@microsoft/fluid-protocol-definitions" "^0.1002.0"
-    "@microsoft/fluid-runtime-definitions" "^0.14.21378"
-
-"@microsoft/fluid-sequence@^0.14.21378":
-  version "0.14.21378"
-  resolved "https://packages.wu2.prague.office-int.com/@microsoft%2ffluid-sequence/-/fluid-sequence-0.14.21378.tgz#f130bd4709549278c0ed304c5db5c6ddb3868117"
-  integrity sha512-J89xuN1veeg6gjvnY0AvfO0SUFRnf6VUep9eGbCJvGK1g+i2hLcVB8UJgNl0kk+uFhBmJVCCdj4uEICtOiS0pA==
-  dependencies:
-    "@microsoft/fluid-common-utils" "^0.14.0"
-    "@microsoft/fluid-component-core-interfaces" "^0.14.21378"
-    "@microsoft/fluid-map" "^0.14.21378"
-    "@microsoft/fluid-merge-tree" "^0.14.21378"
-    "@microsoft/fluid-protocol-definitions" "^0.1002.0"
-    "@microsoft/fluid-runtime-definitions" "^0.14.21378"
-    "@microsoft/fluid-runtime-utils" "^0.14.21378"
-    "@microsoft/fluid-shared-object-base" "^0.14.21378"
+    "@microsoft/fluid-component-core-interfaces" "^0.13.21811"
+    "@microsoft/fluid-core-utils" "^0.13.0"
+    "@microsoft/fluid-map" "^0.13.21811"
+    "@microsoft/fluid-merge-tree" "^0.13.21811"
+    "@microsoft/fluid-protocol-definitions" "^0.1001.0"
+    "@microsoft/fluid-runtime-definitions" "^0.13.21811"
+    "@microsoft/fluid-shared-object-base" "^0.13.21811"
     debug "^4.1.1"
     lodash "^4.17.11"
 
@@ -536,17 +493,17 @@
     debug "^4.1.1"
     double-ended-queue "^2.1.0-0"
 
-"@microsoft/fluid-shared-object-base@^0.14.21378":
-  version "0.14.21378"
-  resolved "https://packages.wu2.prague.office-int.com/@microsoft%2ffluid-shared-object-base/-/fluid-shared-object-base-0.14.21378.tgz#c4e4f7705b0c6470b59907b0863beaae321b1637"
-  integrity sha512-w4izeZzfityWW5OuQsxG3Lsw1WGBYHkNWzkaurLKigIm7GueO7nObiGSbA37Eadkt6Jow1SsaCQTpzHB1yRZSA==
+"@microsoft/fluid-shared-object-base@^0.13.21811":
+  version "0.13.21811"
+  resolved "https://packages.wu2.prague.office-int.com/@microsoft%2ffluid-shared-object-base/-/fluid-shared-object-base-0.13.21811.tgz#313b95b0057ba6ae5fa862c72431bc28c6356399"
+  integrity sha512-+kssuKn2hje1PyLw2dSkG6CJJS/t7lql7x/cgbbqoW7yMWcLMLI4WsK3hmZYUSdC7N9MVhRNdDiPzpf6iEmMIQ==
   dependencies:
     "@microsoft/fluid-common-definitions" "^0.13.0"
-    "@microsoft/fluid-common-utils" "^0.14.0"
-    "@microsoft/fluid-component-core-interfaces" "^0.14.21378"
-    "@microsoft/fluid-container-definitions" "^0.14.21378"
-    "@microsoft/fluid-protocol-definitions" "^0.1002.0"
-    "@microsoft/fluid-runtime-definitions" "^0.14.21378"
+    "@microsoft/fluid-component-core-interfaces" "^0.13.21811"
+    "@microsoft/fluid-container-definitions" "^0.13.21811"
+    "@microsoft/fluid-core-utils" "^0.13.0"
+    "@microsoft/fluid-protocol-definitions" "^0.1001.0"
+    "@microsoft/fluid-runtime-definitions" "^0.13.21811"
     "@types/debug" "^0.0.31"
     "@types/double-ended-queue" "^2.1.0"
     "@types/node" "^10.14.6"

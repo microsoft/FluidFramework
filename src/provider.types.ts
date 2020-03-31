@@ -4,9 +4,9 @@ export interface IViewProps {
 }
 
 export enum AvailabilityType {
-  No = 0,
-  Maybe = 1,
-  Yes = 2
+  No = "no",
+  Maybe = "maybe",
+  Yes = "yes"
 }
 
 export interface IViewActions {
