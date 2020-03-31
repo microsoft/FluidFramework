@@ -222,7 +222,7 @@ const fluid = (req: express.Request, res: express.Response, baseDir: string, opt
             fluidStarted = true;
             const textarea = document.getElementById("text");
             const attachButton = document.getElementById("attach-button");
-            if ("${req.params.openMode}" !== "detached") {
+            if (attached) {
                 attachButton.style.display = "none";
                 textarea.style.display = "none";
                 urlD.resolve(window.location.href);
