@@ -15,7 +15,6 @@ import {
     IComponentRuntime,
     IObjectStorageService,
     Jsonable,
-    JsonableObject,
 } from "@microsoft/fluid-runtime-definitions";
 import {
     ISharedObjectFactory,
@@ -25,6 +24,14 @@ import { ISummarizableObject } from "./interfaces";
 import { SummarizableObjectFactory } from "./summarizableObjectFactory";
 
 const snapshotFileName = "header";
+
+/**
+ * Defines the in-memory object structure to be used for the conversion to/from serialized.
+ * Directly used in JSON.stringify, direct result from JSON.parse.
+ */
+interface ISummarizableObjectDataSerializable {
+    [key: string]: Jsonable;
+}
 
 /**
  * Implementation of a summarizable object. It does not generate any ops. It is only part of the summary.
@@ -54,7 +61,7 @@ export class SummarizableObject extends SharedObject implements ISummarizableObj
     /**
      * The data held by this object.
      */
-    private data: JsonableObject<Jsonable> = {};
+    private readonly data = new Map<string, Jsonable>();
 
     /**
      * Constructs a new SummarizableObject. If the object is non-local, an id and service interfaces will
@@ -72,14 +79,14 @@ export class SummarizableObject extends SharedObject implements ISummarizableObj
      * {@inheritDoc ISummarizableObject.get}
      */
     public get(key: string): Jsonable {
-        return this.data[key] as Jsonable;
+        return this.data.get(key);
     }
 
     /**
      * {@inheritDoc ISummarizableObject.set}
      */
     public set(key: string, value: Jsonable): void {
-        this.data[key] = value;
+        this.data.set(key, value);
 
         // Set this object as dirty so that it is part of the next summary.
         this.dirty();
@@ -89,6 +96,11 @@ export class SummarizableObject extends SharedObject implements ISummarizableObj
      * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.snapshot}
      */
     public snapshot(): ITree {
+        const contentsBlob: ISummarizableObjectDataSerializable = {};
+        this.data.forEach((value, key) => {
+            contentsBlob[key] = value;
+        });
+
         // Construct the tree for the data.
         const tree: ITree = {
             entries: [
@@ -97,7 +109,7 @@ export class SummarizableObject extends SharedObject implements ISummarizableObj
                     path: snapshotFileName,
                     type: TreeEntry[TreeEntry.Blob],
                     value: {
-                        contents: JSON.stringify(this.data),
+                        contents: JSON.stringify(contentsBlob),
                         encoding: "utf-8",
                     },
                 },
@@ -117,7 +129,11 @@ export class SummarizableObject extends SharedObject implements ISummarizableObj
         storage: IObjectStorageService): Promise<void> {
 
         const rawContent = await storage.read(snapshotFileName);
-        this.data = rawContent !== undefined ? JSON.parse(fromBase64ToUtf8(rawContent)) : {};
+        const contents = JSON.parse(fromBase64ToUtf8(rawContent)) as ISummarizableObjectDataSerializable;
+
+        for (const [key, value] of Object.entries(contents)) {
+            this.data.set(key, value);
+        }
     }
 
     /**
