@@ -14,12 +14,14 @@ import {
     IChannelAttributes,
     IComponentRuntime,
     IObjectStorageService,
+    Jsonable,
+    JsonableObject,
 } from "@microsoft/fluid-runtime-definitions";
 import {
     ISharedObjectFactory,
     SharedObject,
 } from "@microsoft/fluid-shared-object-base";
-import { ISummarizableObject, SummarizableData } from "./interfaces";
+import { ISummarizableObject } from "./interfaces";
 import { SummarizableObjectFactory } from "./summarizableObjectFactory";
 
 const snapshotFileName = "header";
@@ -30,7 +32,7 @@ const snapshotFileName = "header";
  */
 export class SummarizableObject extends SharedObject implements ISummarizableObject {
     /**
-     * Create a new summariable object
+     * Create a new summarizable object
      *
      * @param runtime - component runtime the new summarizable object belongs to.
      * @param id - optional name of the summarizable object.
@@ -52,7 +54,7 @@ export class SummarizableObject extends SharedObject implements ISummarizableObj
     /**
      * The data held by this object.
      */
-    private data: SummarizableData = {};
+    private data: JsonableObject<Jsonable> = {};
 
     /**
      * Constructs a new SummarizableObject. If the object is non-local, an id and service interfaces will
@@ -66,29 +68,25 @@ export class SummarizableObject extends SharedObject implements ISummarizableObj
         super(id, runtime, attributes);
     }
 
-    public get(): SummarizableData {
-        return this.data;
-    }
-    public set(data: SummarizableData) {
-        if (SharedObject.is(data)) {
-            throw new Error("SharedObject sets are no longer supported. Instead set the SharedObject handle.");
-        }
-
-        Object.keys(data).forEach(
-            (key) => {
-                this.data[key] = data[key];
-            },
-        );
-
-        // Set this object as dirty so that it is part of the next summary.
-        this.dirty();
+    /**
+     * {@inheritDoc ISummarizableObject.get}
+     */
+    public get(key: string): Jsonable {
+        return this.data[key] as Jsonable;
     }
 
     /**
-     * Initialize a local instance of data.
+     * {@inheritDoc ISummarizableObject.set}
      */
-    protected initializeLocalCore() {
-        this.data = {};
+    public set(key: string, value: Jsonable): void {
+        if (SharedObject.is(value)) {
+            throw new Error("SharedObject sets are no longer supported. Instead set the SharedObject handle.");
+        }
+
+        this.data[key] = value;
+
+        // Set this object as dirty so that it is part of the next summary.
+        this.dirty();
     }
 
     /**
@@ -123,7 +121,6 @@ export class SummarizableObject extends SharedObject implements ISummarizableObj
         storage: IObjectStorageService): Promise<void> {
 
         const rawContent = await storage.read(snapshotFileName);
-
         this.data = rawContent !== undefined ? JSON.parse(fromBase64ToUtf8(rawContent)) : {};
     }
 
