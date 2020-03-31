@@ -45,7 +45,9 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         for (const r of event.ranges) {
             switch (event.deltaOperation) {
                 case MergeTree.MergeTreeDeltaType.ANNOTATE:
+                    // eslint-disable-next-line no-case-declarations
                     const lastAnnotate = ops[ops.length - 1] as MergeTree.IMergeTreeAnnotateMsg;
+                    // eslint-disable-next-line no-case-declarations
                     const props = {};
                     for (const key of Object.keys(r.propertyDeltas)) {
                         props[key] =
@@ -71,8 +73,9 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                     break;
 
                 case MergeTree.MergeTreeDeltaType.REMOVE:
+                    // eslint-disable-next-line no-case-declarations
                     const lastRem = ops[ops.length - 1] as MergeTree.IMergeTreeRemoveMsg;
-                    if (lastRem && lastRem.pos1 === r.position) {
+                    if (lastRem?.pos1 === r.position) {
                         lastRem.pos2 += r.segment.cachedLength;
                     } else {
                         ops.push(MergeTree.createRemoveRangeOp(

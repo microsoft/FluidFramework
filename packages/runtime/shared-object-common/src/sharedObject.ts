@@ -31,7 +31,7 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
      * @returns Returns true if the object is a SharedObject
      */
     public static is(obj: any): obj is SharedObject {
-        return obj && !!(obj as IComponent).ISharedObject;
+        return (obj as IComponent | undefined)?.ISharedObject !== undefined;
     }
 
     public get ISharedObject() { return this; }
@@ -175,7 +175,7 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
      * {@inheritDoc ISharedObject.isLocal}
      */
     public isLocal(): boolean {
-        return !this.services;
+        return this.services === undefined;
     }
 
     /**
@@ -361,6 +361,7 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
 
             case ConnectionState.Connected:
                 // Extract all un-ack'd payload operation
+                // eslint-disable-next-line no-case-declarations
                 const pendingOps = this.pendingOps.toArray().map((value) => value.content);
                 this.pendingOps.clear();
 

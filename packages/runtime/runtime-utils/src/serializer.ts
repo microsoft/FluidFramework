@@ -18,8 +18,8 @@ function toAbsoluteUrl(handle: IComponentHandle): string {
     let result = "";
     let context: IComponentHandleContext | undefined = handle;
 
-    while (context) {
-        if (context.path) {
+    while (context !== undefined) {
+        if (context.path !== "") {
             result = `/${context.path}${result}`;
         }
 
@@ -42,6 +42,7 @@ export class ComponentSerializer implements IComponentSerializer {
     ) {
         // If the given 'input' cannot contain handles, return it immediately.  Otherwise,
         // return the result of 'recursivelyReplaceHandles()'.
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         return !!input && typeof input === "object"
             ? this.recursivelyReplaceHandles(input, context, bind)
             : input;
@@ -51,8 +52,9 @@ export class ComponentSerializer implements IComponentSerializer {
         return JSON.stringify(input, (key, value) => {
             // If the current 'value' is not a handle, return it unmodified.  Otherwise,
             // return the result of 'serializeHandle'.
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             const handle = !!value && value.IComponentHandle;
-            return handle
+            return handle !== undefined
                 ? this.serializeHandle(handle, context, bind)
                 : value;
         });
@@ -73,10 +75,10 @@ export class ComponentSerializer implements IComponentSerializer {
                 // absolute URLs we load from the root context. Given this is not always needed we delay looking
                 // up the root component until needed.
                 const absoluteUrl = value.url.startsWith("/");
-                if (absoluteUrl && !root) {
+                if (absoluteUrl && root === undefined) {
                     // Find the root context to use for absolute requests
                     root = context;
-                    while (root.routeContext) {
+                    while (root.routeContext !== undefined) {
                         root = root.routeContext;
                     }
                 }
@@ -108,6 +110,7 @@ export class ComponentSerializer implements IComponentSerializer {
         let clone: object | undefined;
         for (const key of Object.keys(input)) {
             const value = input[key];
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (!!value && typeof value === "object") {
                 // Note: Except for IComponentHandle, `input` must not contain circular references (as object must
                 //       be JSON serializable.)  Therefore, guarding against infinite recursion here would only
@@ -119,7 +122,7 @@ export class ComponentSerializer implements IComponentSerializer {
                 // current property is replaced by the `replaced` value.
                 if (replaced !== value) {
                     // Lazily create a shallow clone of the `input` object if we haven't done so already.
-                    clone = clone || (Array.isArray(input)
+                    clone = clone ?? (Array.isArray(input)
                         ? [...input]
                         : { ...input });
 
@@ -128,7 +131,7 @@ export class ComponentSerializer implements IComponentSerializer {
                 }
             }
         }
-        return clone || input;
+        return clone ?? input;
     }
 
     private serializeHandle(handle: IComponentHandle, context: IComponentHandleContext, bind: IComponentHandle) {

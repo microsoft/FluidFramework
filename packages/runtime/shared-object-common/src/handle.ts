@@ -60,7 +60,7 @@ export class SharedObjectComponentHandle implements IComponentHandle {
      * When attaching the handle, it registers the associated shared object.
      */
     public attach(): void {
-        if (this.bound) {
+        if (this.bound !== undefined) {
             for (const handle of this.bound) {
                 handle.attach();
             }
@@ -76,7 +76,7 @@ export class SharedObjectComponentHandle implements IComponentHandle {
      * @param handle - The handle to bind
      */
     public bind(handle: IComponentHandle): void {
-        if (!this.bound) {
+        if (this.bound === undefined) {
             this.bound = new Set<IComponentHandle>();
         }
 
