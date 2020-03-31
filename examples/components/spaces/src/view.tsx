@@ -228,7 +228,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                             compactType={null} // null is required for the GridLayout
                             isDroppable={this.state.isEditable}
                             isDraggable={this.state.isEditable}
-                            isResizable={true}
+                            isResizable={this.state.isEditable}
                             preventCollision={true}
                             isRearrangeable={false}
                             onResizeStop={this.onGridChangeEvent}
