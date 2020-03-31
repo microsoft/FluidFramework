@@ -9,6 +9,7 @@ import {
     IResolvedUrl,
     IDocumentService,
 } from "@microsoft/fluid-driver-definitions";
+import { ensureFluidResolvedUrl } from "./fluidResolvedUrl";
 
 export class MultiDocumentServiceFactory implements IDocumentServiceFactory{
 
@@ -41,9 +42,7 @@ export class MultiDocumentServiceFactory implements IDocumentServiceFactory{
     }
     public readonly protocolName = "none:";
     async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
-        if(resolvedUrl.type !== "fluid"){
-            throw new Error("Must be a fluid url");
-        }
+        ensureFluidResolvedUrl(resolvedUrl);
         const urlObj = parse(resolvedUrl.url);
         if (!urlObj.protocol) {
             throw new Error("No protocol provided");
