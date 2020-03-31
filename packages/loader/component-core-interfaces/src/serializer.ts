@@ -16,10 +16,10 @@ export interface ISerializedHandle {
     url: string;
 }
 
-export const IComponentSerializer = "IComponentSerializer";
+export const IComponentSerializer: keyof IProvideComponentSerializer = "IComponentSerializer";
 
 export interface IProvideComponentSerializer {
-    readonly [IComponentSerializer]: IComponentSerializer;
+    readonly IComponentSerializer: IComponentSerializer;
 }
 
 export interface IComponentSerializer extends IProvideComponentSerializer {

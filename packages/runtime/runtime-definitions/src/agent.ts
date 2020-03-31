@@ -24,10 +24,10 @@ export interface ITask {
     instance: IComponentRunnable;
 }
 
-export const ITaskManager = "ITaskManager";
+export const ITaskManager: keyof IProvideTaskManager = "ITaskManager";
 
 export interface IProvideTaskManager {
-    readonly [ITaskManager]: ITaskManager;
+    readonly ITaskManager: ITaskManager;
 }
 
 /**
@@ -47,10 +47,10 @@ export interface ITaskManager extends IProvideTaskManager, IComponentLoadable, I
     pick(componentUrl: string, taskId: string, worker?: boolean): Promise<void>;
 }
 
-export const IAgentScheduler = "IAgentScheduler";
+export const IAgentScheduler: keyof IProvideAgentScheduler = "IAgentScheduler";
 
 export interface IProvideAgentScheduler {
-    readonly [IAgentScheduler]: IAgentScheduler;
+    readonly IAgentScheduler: IAgentScheduler;
 }
 
 /**

@@ -28,10 +28,10 @@ export interface IPackument {
     versions: { [version: string]: IPackage };
 }
 
-export const IPackageManager = "IPackageManager";
+export const IPackageManager: keyof IProvidePackageManager = "IPackageManager";
 
 export interface IProvidePackageManager {
-    readonly [IPackageManager]: IPackageManager;
+    readonly IPackageManager: IPackageManager;
 }
 
 export interface ISearchParams {

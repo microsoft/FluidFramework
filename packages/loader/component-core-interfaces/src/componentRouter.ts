@@ -19,13 +19,13 @@ export interface IResponse {
     headers?: { [key: string]: any };
 }
 
-export const IComponentRouter = "IComponentRouter";
+export const IComponentRouter: keyof IProvideComponentRouter = "IComponentRouter";
 
 /**
  * Request routing
  */
 export interface IProvideComponentRouter {
-    readonly [IComponentRouter]: IComponentRouter;
+    readonly IComponentRouter: IComponentRouter;
 }
 export interface IComponentRouter extends IProvideComponentRouter {
     request(request: IRequest): Promise<IResponse>;

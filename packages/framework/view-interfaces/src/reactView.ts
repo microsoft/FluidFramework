@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-export const IComponentReactViewable = "IComponentReactViewable";
+export const IComponentReactViewable: keyof IProvideComponentReactViewable = "IComponentReactViewable";
 
 export interface IProvideComponentReactViewable {
-    readonly [IComponentReactViewable]: IComponentReactViewable;
+    readonly IComponentReactViewable: IComponentReactViewable;
 }
 /**
  * If something is react viewable then render can simply return a JSX Element

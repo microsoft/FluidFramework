@@ -54,10 +54,10 @@ declare module "@microsoft/fluid-component-core-interfaces" {
     interface IComponent extends Readonly<Partial<IProvideDeltaSender>>{ }
 }
 
-export const IDeltaSender = "IDeltaSender";
+export const IDeltaSender: keyof IProvideDeltaSender = "IDeltaSender";
 
 export interface IProvideDeltaSender {
-    readonly [IDeltaSender]: IDeltaSender;
+    readonly IDeltaSender: IDeltaSender;
 }
 
 export interface IDeltaSender extends IProvideDeltaSender {

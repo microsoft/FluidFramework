@@ -5,10 +5,10 @@
 
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 
-export const IDocumentFactory = "IDocumentFactory";
+export const IDocumentFactory: keyof IProvideDocumentFactory = "IDocumentFactory";
 
 export interface IProvideDocumentFactory {
-    readonly [IDocumentFactory]: IDocumentFactory;
+    readonly IDocumentFactory: IDocumentFactory;
 }
 
 export interface IDocumentFactory extends IProvideDocumentFactory {

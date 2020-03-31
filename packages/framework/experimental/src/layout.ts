@@ -14,10 +14,10 @@ declare module "@microsoft/fluid-component-core-interfaces" {
     /* eslint-enable @typescript-eslint/indent */
 }
 
-export const IComponentLayout = "IComponentLayout";
+export const IComponentLayout: keyof IProvideComponentLayout = "IComponentLayout";
 
 export interface IProvideComponentLayout {
-    readonly [IComponentLayout]: IComponentLayout;
+    readonly IComponentLayout: IComponentLayout;
 }
 
 /**
@@ -46,10 +46,10 @@ export enum ComponentCursorDirection {
     Focus,
 }
 
-export const IComponentCursor = "IComponentCursor";
+export const IComponentCursor: keyof IProvideComponentCursor = "IComponentCursor";
 
 export interface IProvideComponentCursor {
-    readonly [IComponentCursor]: IComponentCursor;
+    readonly IComponentCursor: IComponentCursor;
 }
 
 export interface IComponentCursor extends IProvideComponentCursor {
@@ -60,10 +60,10 @@ export interface IComponentCursor extends IProvideComponentCursor {
     rev(): boolean;
 }
 
-export const IComponentKeyHandlers = "IComponentKeyHandlers";
+export const IComponentKeyHandlers: keyof IProvideComponentKeyHandlers = "IComponentKeyHandlers";
 
 export interface IProvideComponentKeyHandlers {
-    readonly [IComponentKeyHandlers]: IComponentKeyHandlers;
+    readonly IComponentKeyHandlers: IComponentKeyHandlers;
 }
 
 // Used when another component will forward keyboard events to this component

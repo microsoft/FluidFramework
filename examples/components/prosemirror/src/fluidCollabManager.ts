@@ -37,10 +37,10 @@ declare module "@microsoft/fluid-component-core-interfaces" {
     export interface IComponent extends Readonly<Partial<IProvideRichTextEditor>> { }
 }
 
-export const IRichTextEditor = "IRichTextEditor";
+export const IRichTextEditor: keyof IProvideRichTextEditor = "IRichTextEditor";
 
 export interface IProvideRichTextEditor {
-    readonly [IRichTextEditor]: IRichTextEditor;
+    readonly IRichTextEditor: IRichTextEditor;
 }
 
 export interface IRichTextEditor extends IProvideRichTextEditor {

@@ -9,10 +9,10 @@ declare module "@microsoft/fluid-component-core-interfaces" {
     export interface IComponent extends Readonly<Partial<IProvideComponentClipboardConsumer>> { }
 }
 
-export const IComponentClipboardConsumer = "IComponentClipboardConsumer";
+export const IComponentClipboardConsumer: keyof IProvideComponentClipboardConsumer = "IComponentClipboardConsumer";
 
 export interface IProvideComponentClipboardConsumer {
-    readonly [IComponentClipboardConsumer]: IComponentClipboardConsumer;
+    readonly IComponentClipboardConsumer: IComponentClipboardConsumer;
 }
 
 /**

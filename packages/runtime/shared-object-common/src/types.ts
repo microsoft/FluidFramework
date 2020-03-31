@@ -11,10 +11,10 @@ declare module "@microsoft/fluid-container-definitions" {
     interface IComponent extends Readonly<Partial<IProvideSharedObject>> { }
 }
 
-export const ISharedObject = "ISharedObject";
+export const ISharedObject: keyof IProvideSharedObject = "ISharedObject";
 
 export interface IProvideSharedObject {
-    readonly [ISharedObject]: ISharedObject;
+    readonly ISharedObject: ISharedObject;
 }
 
 /**

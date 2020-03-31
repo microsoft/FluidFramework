@@ -8,10 +8,10 @@ declare module "@microsoft/fluid-component-core-interfaces" {
     export interface IComponent extends Readonly<Partial<IProvideComponentToolbarConsumer>> { }
 }
 
-export const IComponentToolbarConsumer = "IComponentToolbarConsumer";
+export const IComponentToolbarConsumer: keyof IProvideComponentToolbarConsumer = "IComponentToolbarConsumer";
 
 export interface IProvideComponentToolbarConsumer {
-    readonly [IComponentToolbarConsumer]: IComponentToolbarConsumer;
+    readonly IComponentToolbarConsumer: IComponentToolbarConsumer;
 }
 
 /**

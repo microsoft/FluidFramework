@@ -177,10 +177,10 @@ export interface IMessageScheduler {
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 }
 
-export const IMessageScheduler = "IMessageScheduler";
+export const IMessageScheduler: keyof IProvideMessageScheduler = "IMessageScheduler";
 
 export interface IProvideMessageScheduler {
-    readonly [IMessageScheduler]: IMessageScheduler;
+    readonly IMessageScheduler: IMessageScheduler;
 }
 
 export interface IContainerContext extends EventEmitter, IMessageScheduler, IProvideMessageScheduler, IDisposable {
@@ -236,10 +236,10 @@ export interface IExperimentalContainerContext extends IContainerContext {
     createSummary(): Promise<ISummaryTree>;
 }
 
-export const IComponentTokenProvider = "IComponentTokenProvider";
+export const IComponentTokenProvider: keyof IProvideComponentTokenProvider = "IComponentTokenProvider";
 
 export interface IProvideComponentTokenProvider {
-    readonly [IComponentTokenProvider]: IComponentTokenProvider;
+    readonly IComponentTokenProvider: IComponentTokenProvider;
 }
 
 export interface IComponentTokenProvider extends IProvideComponentTokenProvider {
@@ -250,10 +250,10 @@ export interface IFluidModule {
     fluidExport: IComponent;
 }
 
-export const IRuntimeFactory = "IRuntimeFactory";
+export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";
 
 export interface IProvideRuntimeFactory {
-    readonly [IRuntimeFactory]: IRuntimeFactory;
+    readonly IRuntimeFactory: IRuntimeFactory;
 }
 /**
  * Exported module definition

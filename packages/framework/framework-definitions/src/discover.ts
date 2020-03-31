@@ -33,10 +33,11 @@ declare module "@microsoft/fluid-component-core-interfaces" {
     /* eslint-enable @typescript-eslint/indent */
 }
 
-export const IComponentDiscoverableInterfaces = "IComponentDiscoverableInterfaces";
+export const IComponentDiscoverableInterfaces: keyof IProvideComponentDiscoverableInterfaces
+    = "IComponentDiscoverableInterfaces";
 
 export interface IProvideComponentDiscoverableInterfaces {
-    readonly [IComponentDiscoverableInterfaces]: IComponentDiscoverableInterfaces;
+    readonly IComponentDiscoverableInterfaces: IComponentDiscoverableInterfaces;
 }
 
 /**
@@ -52,10 +53,10 @@ export interface IComponentDiscoverableInterfaces extends IProvideComponentDisco
     readonly discoverableInterfaces: (keyof IComponent)[];
 }
 
-export const IComponentDiscoverInterfaces = "IComponentDiscoverInterfaces";
+export const IComponentDiscoverInterfaces: keyof IProvideComponentDiscoverInterfaces = "IComponentDiscoverInterfaces";
 
 export interface IProvideComponentDiscoverInterfaces {
-    readonly [IComponentDiscoverInterfaces]: IComponentDiscoverInterfaces;
+    readonly IComponentDiscoverInterfaces: IComponentDiscoverInterfaces;
 }
 
 /**
@@ -87,10 +88,10 @@ export interface IComponentDiscoverInterfaces extends IProvideComponentDiscoverI
     notifyComponentsDiscovered(interfaceName: keyof IComponent, components: readonly IComponent[]): void;
 }
 
-export const IComponentInterfacesRegistry = "IComponentInterfacesRegistry";
+export const IComponentInterfacesRegistry: keyof IProvideComponentInterfacesRegistry = "IComponentInterfacesRegistry";
 
 export interface IProvideComponentInterfacesRegistry {
-    readonly [IComponentInterfacesRegistry]: IComponentInterfacesRegistry;
+    readonly IComponentInterfacesRegistry: IComponentInterfacesRegistry;
 }
 
 /**

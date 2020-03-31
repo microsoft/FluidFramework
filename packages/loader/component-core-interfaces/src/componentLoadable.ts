@@ -5,10 +5,10 @@
 
 import { IComponentHandle } from "./handles";
 
-export const IComponentLoadable = "IComponentLoadable";
+export const IComponentLoadable: keyof IProvideComponentLoadable = "IComponentLoadable";
 
 export interface IProvideComponentLoadable {
-    readonly [IComponentLoadable]: IComponentLoadable;
+    readonly IComponentLoadable: IComponentLoadable;
 }
 /**
  * A shared component has a URL from which it can be referenced
@@ -22,20 +22,20 @@ export interface IComponentLoadable extends IProvideComponentLoadable {
     handle?: IComponentHandle;
 }
 
-export const IComponentRunnable = "IComponentRunnable";
+export const IComponentRunnable: keyof IProvideComponentRunnable = "IComponentRunnable";
 
 export interface IProvideComponentRunnable {
-    readonly [IComponentRunnable]: IComponentRunnable;
+    readonly IComponentRunnable: IComponentRunnable;
 }
 export interface IComponentRunnable {
     run(...args: any[]): Promise<void>;
     stop?(reason?: string): void;
 }
 
-export const IComponentConfiguration = "IComponentConfiguration";
+export const IComponentConfiguration: keyof IProvideComponentConfiguration = "IComponentConfiguration";
 
 export interface IProvideComponentConfiguration {
-    readonly [IComponentConfiguration]: IComponentConfiguration;
+    readonly IComponentConfiguration: IComponentConfiguration;
 }
 
 export interface IComponentConfiguration extends IProvideComponentConfiguration {

@@ -15,10 +15,10 @@ export type ComponentRegistryEntry = Readonly<Partial<IProvideComponentRegistry 
 export type NamedComponentRegistryEntries =
     Iterable<[string, Promise<ComponentRegistryEntry>]>;
 
-export const IComponentRegistry = "IComponentRegistry";
+export const IComponentRegistry: keyof IProvideComponentRegistry = "IComponentRegistry";
 
 export interface IProvideComponentRegistry {
-    readonly [IComponentRegistry]: IComponentRegistry;
+    readonly IComponentRegistry: IComponentRegistry;
 }
 
 export interface IComponentRegistry extends IProvideComponentRegistry {
