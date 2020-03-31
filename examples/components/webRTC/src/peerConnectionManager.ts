@@ -3,21 +3,33 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 import { FluidRtcSignalingChannel, IFluidRtcSignalingChannel } from "./signalingChannel";
+import { IEmitter, IEvent } from "./events";
+
+interface IFluidRtcPeerConnectionManagerlEvents extends IEvent {
+    (event: RTCPeerConnectionState, listener: (clientId: string, connection: RTCPeerConnection) => void);
+    (event: "track", listener: (clientId: string, track: MediaStreamTrack) => void);
+}
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class FluidRtcPeerConnectionManager{
 
     private static readonly clientConnections = new Map<string, RTCPeerConnection>();
+    private static readonly eventEmitter = new EventEmitter();
 
-    public static async Initialize(context: IComponentContext){
+    public static get emitter(): IEmitter<IFluidRtcPeerConnectionManagerlEvents>{
+        return this.eventEmitter;
+    }
+
+    public static async Initialize(context: IComponentContext, mediaStream: MediaStream){
         const signalingClient = FluidRtcSignalingChannel.create(context.hostRuntime);
 
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         signalingClient.on("offer", async (fromClientId: string, offer)=>{
             if(!this.clientConnections.has(fromClientId)){
-                const peerCon = this.createPeerConnection(fromClientId, signalingClient);
+                const peerCon = this.createPeerConnection(mediaStream, fromClientId, signalingClient);
                 await peerCon.setRemoteDescription(new RTCSessionDescription(offer));
                 const answer = await peerCon.createAnswer();
                 await peerCon.setLocalDescription(answer);
@@ -54,7 +66,7 @@ export class FluidRtcPeerConnectionManager{
         const offers: [string, RTCSessionDescriptionInit][] = [];
         for(const memberClientId of audience.getMembers().keys()){
             if(memberClientId !== context.clientId && !this.clientConnections.has(memberClientId)){
-                const peerCon = this.createPeerConnection(memberClientId, signalingClient);
+                const peerCon = this.createPeerConnection(mediaStream, memberClientId, signalingClient);
                 const offer = await peerCon.createOffer();
                 await peerCon.setLocalDescription(offer);
                 offers.push([memberClientId, offer]);
@@ -65,15 +77,23 @@ export class FluidRtcPeerConnectionManager{
         }
     }
 
-    private static createPeerConnection(toClientId: string, signalingChannel: IFluidRtcSignalingChannel){
+    private static createPeerConnection(
+        mediaStream: MediaStream,
+        toClientId: string,
+        signalingChannel: IFluidRtcSignalingChannel){
         const configuration = {iceServers: [{urls: "stun:stun.l.google.com:19302"}]};
         const peerCon = new RTCPeerConnection(configuration);
+        mediaStream.getTracks().forEach((track) => {
+            peerCon.addTrack(track, mediaStream);
+        });
+        peerCon.addEventListener("track",(ev)=>this.eventEmitter.emit("track", toClientId, ev.track));
         this.clientConnections.set(toClientId, peerCon);
         peerCon.addEventListener("icecandidate", (ev) => signalingChannel.sendIceCandidate(toClientId, ev.candidate));
         peerCon.addEventListener("connectionstatechange",(ev)=>{
             if(peerCon.connectionState === "closed"){
                 this.clientConnections.delete(toClientId);
             }
+            this.eventEmitter.emit(peerCon.connectionState, toClientId, peerCon);
         });
         return peerCon;
     }
