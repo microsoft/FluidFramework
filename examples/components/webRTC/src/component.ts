@@ -41,6 +41,10 @@ export class WebRTCComponent extends PrimedComponent implements IComponentHTMLVi
             this.streamMap.set(clientId, remoteStream);
             remoteStream.addTrack(track);
         });
+        FluidRtcPeerConnectionManager.emitter.on("closed", (clientId) =>{
+            this.streamMap.delete(clientId);
+            this.realRender(clientId);
+        });
 
         await FluidRtcPeerConnectionManager.Initialize(this.context, mediaStream);
 

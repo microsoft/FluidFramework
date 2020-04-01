@@ -60,6 +60,7 @@ export class FluidRtcPeerConnectionManager{
             if(peerCon !== undefined){
                 peerCon.close();
                 this.clientConnections.delete(clientId);
+                this.eventEmitter.emit("closed", clientId, peerCon);
             }
         });
 
