@@ -16,6 +16,8 @@ declare module "@microsoft/fluid-component-core-interfaces" {
     export interface IComponent extends Readonly<Partial<IProvideSharedString>> { }
 }
 
+export const ISharedString: keyof IProvideSharedString = "ISharedString";
+
 export interface IProvideSharedString {
     readonly ISharedString: ISharedString;
 }

@@ -33,21 +33,7 @@ async function main() {
 
     logStatus(`Processing ${resolvedRoot}`);
 
-    // Load the package
-    // Repo info
-    const repo = new FluidRepo(resolvedRoot);
-    timer.time("Package scan completed");
-
-    // Check scripts
-    await repo.checkPackages(options.fix);
-    timer.time("Check scripts completed");
-
-    const matched = repo.setMatched(options);
-    if (!matched) {
-        console.error("ERROR: No package matched");
-        process.exit(-4)
-    }
-
+    // Detect nohoist state mismatch and infer uninstall switch
     if (options.install) {
         const hasRootNodeModules = existsSync(path.join(resolvedRoot, "node_modules"));
         if (hasRootNodeModules === options.nohoist) {
@@ -56,12 +42,25 @@ async function main() {
         }
     }
 
+    // Load the package
+    const repo = new FluidRepo(resolvedRoot);
+    timer.time("Package scan completed");
+
+    // Set matched package based on options filter
+    const matched = repo.setMatched(options);
+    if (!matched) {
+        console.error("ERROR: No package matched");
+        process.exit(-4)
+    }
+
     try {
+        // Dependency checks
         if (options.depcheck) {
             repo.depcheck();
             timer.time("Dependencies check completed", true)
         }
 
+        // Uninstall
         if (options.uninstall) {
             if (!await repo.uninstall()) {
                 console.error(`ERROR: uninstall failed`);
@@ -85,6 +84,7 @@ async function main() {
             }
         }
 
+        // Install
         if (options.install) {
             console.log("Installing packages");
             if (!await repo.install(options.nohoist)) {
@@ -94,6 +94,7 @@ async function main() {
             timer.time("Install completed", true);
         }
 
+        // Symlink check
         const symlinkTaskName = options.symlink ? "Symlink" : "Symlink check";
         const updated = await repo.symlink(options);
         if (updated) {
@@ -102,6 +103,11 @@ async function main() {
         }
         timer.time(`${symlinkTaskName} completed`, options.symlink);
 
+        // Check scripts
+        await repo.checkPackages(options.fix);
+        timer.time("Check scripts completed");
+
+        
         if (options.clean || options.build !== false) {
             logStatus(`Symlink in ${options.fullSymlink ? "full" : options.fullSymlink === false ? "isolated" : "non-dependent"} mode`);
 
@@ -133,6 +139,10 @@ async function main() {
             }
         }
 
+        if (options.build === false) {
+            logStatus(`Other switches with no explicit build script, not building.`);
+        }
+
         logStatus(`Total time: ${(timer.getTotalTime() / 1000).toFixed(3)}s`);
     } catch (e) {
         logStatus(`ERROR: ${e.message}`);
@@ -154,5 +164,3 @@ main().catch(error => {
     console.error("ERROR: Unexpected error");
     console.error(error.stack);
 });
-
-

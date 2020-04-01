@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+export const IComponentReactViewable: keyof IProvideComponentReactViewable = "IComponentReactViewable";
+
 export interface IProvideComponentReactViewable {
     readonly IComponentReactViewable: IComponentReactViewable;
 }
