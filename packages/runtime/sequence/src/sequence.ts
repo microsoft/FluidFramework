@@ -44,27 +44,26 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         const ops: MergeTree.IMergeTreeOp[] = [];
         for (const r of event.ranges) {
             switch (event.deltaOperation) {
-                case MergeTree.MergeTreeDeltaType.ANNOTATE:
-                    {
-                        const lastAnnotate = ops[ops.length - 1] as MergeTree.IMergeTreeAnnotateMsg;
-                        const props = {};
-                        for (const key of Object.keys(r.propertyDeltas)) {
-                            props[key] =
-                                // eslint-disable-next-line no-null/no-null
-                                r.segment.properties[key] === undefined ? null : r.segment.properties[key];
-                        }
-                        if (lastAnnotate && lastAnnotate.pos2 === r.position &&
-                            MergeTree.matchProperties(lastAnnotate.props, props)) {
-                            lastAnnotate.pos2 += r.segment.cachedLength;
-                        } else {
-                            ops.push(MergeTree.createAnnotateRangeOp(
-                                r.position,
-                                r.position + r.segment.cachedLength,
-                                props,
-                                undefined));
-                        }
+                case MergeTree.MergeTreeDeltaType.ANNOTATE: {
+                    const lastAnnotate = ops[ops.length - 1] as MergeTree.IMergeTreeAnnotateMsg;
+                    const props = {};
+                    for (const key of Object.keys(r.propertyDeltas)) {
+                        props[key] =
+                            // eslint-disable-next-line no-null/no-null
+                            r.segment.properties[key] === undefined ? null : r.segment.properties[key];
+                    }
+                    if (lastAnnotate && lastAnnotate.pos2 === r.position &&
+                        MergeTree.matchProperties(lastAnnotate.props, props)) {
+                        lastAnnotate.pos2 += r.segment.cachedLength;
+                    } else {
+                        ops.push(MergeTree.createAnnotateRangeOp(
+                            r.position,
+                            r.position + r.segment.cachedLength,
+                            props,
+                            undefined));
                     }
                     break;
+                }
 
                 case MergeTree.MergeTreeDeltaType.INSERT:
                     ops.push(MergeTree.createInsertOp(
@@ -72,18 +71,17 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
                         cloneDeep(r.segment.toJSONObject())));
                     break;
 
-                case MergeTree.MergeTreeDeltaType.REMOVE:
-                    {
-                        const lastRem = ops[ops.length - 1] as MergeTree.IMergeTreeRemoveMsg;
-                        if (lastRem?.pos1 === r.position) {
-                            lastRem.pos2 += r.segment.cachedLength;
-                        } else {
-                            ops.push(MergeTree.createRemoveRangeOp(
-                                r.position,
-                                r.position + r.segment.cachedLength));
-                        }
+                case MergeTree.MergeTreeDeltaType.REMOVE: {
+                    const lastRem = ops[ops.length - 1] as MergeTree.IMergeTreeRemoveMsg;
+                    if (lastRem?.pos1 === r.position) {
+                        lastRem.pos2 += r.segment.cachedLength;
+                    } else {
+                        ops.push(MergeTree.createRemoveRangeOp(
+                            r.position,
+                            r.position + r.segment.cachedLength));
                     }
                     break;
+                }
 
                 default:
             }

@@ -369,20 +369,18 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
                 debug(`${this.id} is now connecting`);
                 break;
 
-            case ConnectionState.Connected:
-                {
-                    // Extract all un-ack'd payload operation
-                    const pendingOps = this.pendingOps.toArray().map((value) => value.content);
-                    this.pendingOps.clear();
+            case ConnectionState.Connected: {
+                // Extract all un-ack'd payload operation
+                const pendingOps = this.pendingOps.toArray().map((value) => value.content);
+                this.pendingOps.clear();
 
-                    // And now we are fully connected
-                    // - we have a client ID
-                    // - we are caught up enough to attempt to send messages
-                    this.onConnect(pendingOps);
-                    this.emit("connected");
-                }
-
+                // And now we are fully connected
+                // - we have a client ID
+                // - we are caught up enough to attempt to send messages
+                this.onConnect(pendingOps);
+                this.emit("connected");
                 break;
+            }
 
             default:
                 assert.ok(false, `Unknown ConnectionState ${state}`);

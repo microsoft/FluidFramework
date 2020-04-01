@@ -99,25 +99,24 @@ export class SummaryTreeConverter {
                 let value: SummaryObject;
 
                 switch (entry.type) {
-                    case TreeEntry[TreeEntry.Blob]:
-                        {
-                            const blob = entry.value as IBlob;
-                            let content: string | Buffer;
-                            if (blob.encoding === "base64") {
-                                content = Buffer.from(blob.contents, "base64");
-                                summaryStats.totalBlobSize += content.byteLength;
-                            } else {
-                                content = blob.contents;
-                                summaryStats.totalBlobSize += Buffer.byteLength(content);
-                            }
-                            const summaryBlob: ISummaryBlob = {
-                                content,
-                                type: SummaryType.Blob,
-                            };
-                            value = summaryBlob;
-                            summaryStats.blobNodeCount++;
+                    case TreeEntry[TreeEntry.Blob]: {
+                        const blob = entry.value as IBlob;
+                        let content: string | Buffer;
+                        if (blob.encoding === "base64") {
+                            content = Buffer.from(blob.contents, "base64");
+                            summaryStats.totalBlobSize += content.byteLength;
+                        } else {
+                            content = blob.contents;
+                            summaryStats.totalBlobSize += Buffer.byteLength(content);
                         }
+                        const summaryBlob: ISummaryBlob = {
+                            content,
+                            type: SummaryType.Blob,
+                        };
+                        value = summaryBlob;
+                        summaryStats.blobNodeCount++;
                         break;
+                    }
 
                     case TreeEntry[TreeEntry.Tree]:
                         value = SummaryTreeConverter.convertToSummaryTreeCore(

@@ -269,29 +269,28 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
         if (message.type === MessageType.Operation) {
             const op: IRegisterOperation = message.contents;
             switch (op.type) {
-                case "write":
-                    {
-                        // add back-compat for pre-0.14 versions
-                        // when the refSeq property didn't exist
-                        if(op.refSeq === undefined){
-                            op.refSeq = message.referenceSequenceNumber;
-                        }
-                        // Message can be delivered with delay - resubmitted on reconnect.
-                        // As such, refSeq needs to reference seq # at the time op was created (here),
-                        // not when op was actually sent over wire (as client can ingest ops in between)
-                        // in other words, we can't use ISequencedDocumentMessage.referenceSequenceNumber
-                        assert(op.refSeq <= message.referenceSequenceNumber);
-                        const winner = this.processInboundWrite(
-                            op.refSeq,
-                            message.sequenceNumber,
-                            op,
-                            local);
-                        // If it is local operation, resolve the promise.
-                        if (local) {
-                            this.processLocalMessage(message, winner);
-                        }
+                case "write": {
+                    // add back-compat for pre-0.14 versions
+                    // when the refSeq property didn't exist
+                    if(op.refSeq === undefined){
+                        op.refSeq = message.referenceSequenceNumber;
+                    }
+                    // Message can be delivered with delay - resubmitted on reconnect.
+                    // As such, refSeq needs to reference seq # at the time op was created (here),
+                    // not when op was actually sent over wire (as client can ingest ops in between)
+                    // in other words, we can't use ISequencedDocumentMessage.referenceSequenceNumber
+                    assert(op.refSeq <= message.referenceSequenceNumber);
+                    const winner = this.processInboundWrite(
+                        op.refSeq,
+                        message.sequenceNumber,
+                        op,
+                        local);
+                    // If it is local operation, resolve the promise.
+                    if (local) {
+                        this.processLocalMessage(message, winner);
                     }
                     break;
+                }
 
                 default:
                     throw new Error("Unknown operation");
