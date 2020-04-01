@@ -4,8 +4,7 @@
  */
 
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
-
-export const tableViewType = "@fluid-example/table-view";
+import { tableViewType } from "./tableview";
 
 export const fluidExport = new SimpleModuleInstantiationFactory(
     tableViewType,

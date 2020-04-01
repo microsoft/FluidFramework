@@ -38,6 +38,18 @@ import { IParsedUrl, parseUrl } from "./utils";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const now = require("performance-now") as () => number;
 
+function canUseCache(request: IRequest): boolean {
+    if (!request.headers) {
+        return true;
+    }
+
+    const noCache =
+        request.headers[LoaderHeader.cache] === false ||
+        request.headers[LoaderHeader.reconnect] === false;
+
+    return !noCache;
+}
+
 export class RelativeLoader extends EventEmitter implements ILoader {
 
     // Because the loader is passed to the container during construction we need to resolve the target container
@@ -96,18 +108,6 @@ export class RelativeLoader extends EventEmitter implements ILoader {
     private needExecutionContext(request: IRequest): boolean {
         return (request.headers !== undefined && request.headers[LoaderHeader.executionContext] !== undefined);
     }
-}
-
-function canUseCache(request: IRequest): boolean {
-    if (!request.headers) {
-        return true;
-    }
-
-    const noCache =
-        request.headers[LoaderHeader.cache] === false ||
-        request.headers[LoaderHeader.reconnect] === false;
-
-    return !noCache;
 }
 
 function createCachedResolver(resolver: IUrlResolver){

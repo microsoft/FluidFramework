@@ -6,9 +6,6 @@
 import * as assert from "assert";
 import { ITelemetryErrorEvent, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import {
-    IComponent,
-} from "@microsoft/fluid-container-definitions";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@microsoft/fluid-common-utils";
 import { ConnectionState, ISequencedDocumentMessage, ITree, MessageType } from "@microsoft/fluid-protocol-definitions";
 import {
@@ -278,6 +275,19 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
 
         this.pendingOps.push({ clientSequenceNumber, content });
         return clientSequenceNumber;
+    }
+
+    /**
+     * Marks this object as dirty so that it is part of the next summary. It is called by a summarizable
+     * object that want to be part of summary but does not generate ops.
+     */
+    protected dirty(): void {
+        if (this.isLocal()) {
+            return;
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.services!.deltaConnection.dirty();
     }
 
     /**

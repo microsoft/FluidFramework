@@ -33,6 +33,8 @@ declare module "@microsoft/fluid-component-core-interfaces" {
     export interface IComponent extends Readonly<Partial<IProvideSummarizer>> { }
 }
 
+export const ISummarizer: keyof IProvideSummarizer = "ISummarizer";
+
 export interface IProvideSummarizer {
     readonly ISummarizer: ISummarizer;
 }

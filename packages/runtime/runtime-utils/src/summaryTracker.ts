@@ -102,6 +102,10 @@ export class SummaryTracker implements ISummaryTracker {
         return newChild;
     }
 
+    public getChild(key: string): ISummaryTracker | undefined {
+        return this.children.get(key);
+    }
+
     public constructor(
         public readonly useContext: boolean,
         private readonly _fullPath: string,

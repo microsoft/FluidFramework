@@ -6,11 +6,13 @@
 import { Template } from "@fluid-example/flow-util-lib";
 import { TableDocument, TableDocumentType } from "@fluid-example/table-document";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import { GridView } from "./grid";
 import * as styles from "./index.css";
-import { tableViewType } from "./runtime";
+
+export const tableViewType = "@fluid-example/table-view";
 
 const template = new Template({
     tag: "div",
@@ -30,6 +32,8 @@ const template = new Template({
         { tag: "input", ref: "goto" },
     ],
 });
+
+const innerDocKey = "innerDoc";
 
 export class TableView extends PrimedComponent implements IComponentHTMLView {
     // eslint-disable-next-line @typescript-eslint/no-use-before-define
@@ -55,7 +59,7 @@ export class TableView extends PrimedComponent implements IComponentHTMLView {
         elm.append(this.templateRoot);
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.getComponent<TableDocument>(this.docId, /* wait: */ true).then((doc) => {
+        this.root.get<IComponentHandle<TableDocument>>(innerDocKey).get().then((doc) => {
             const grid = template.get(this.templateRoot, "grid");
             const gridView = new GridView(doc, this);
             grid.appendChild(gridView.root);
@@ -92,12 +96,12 @@ export class TableView extends PrimedComponent implements IComponentHTMLView {
     // #endregion IComponentHTMLView
 
     protected async componentInitializingFirstTime() {
-        const doc = await this.createAndAttachComponent<TableDocument>(this.docId, TableDocumentType);
+        // Set up internal table doc
+        const doc = await TableDocument.getFactory().createComponent(this.context) as TableDocument;
+        this.root.set(innerDocKey, doc.handle);
         doc.insertRows(0, 5);
         doc.insertCols(0, 8);
     }
-
-    private get docId() { return `${this.id}-doc`; }
 }
 
 export class TableViewFactory extends PrimedComponentFactory {

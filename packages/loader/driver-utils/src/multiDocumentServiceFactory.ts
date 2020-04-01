@@ -44,11 +44,11 @@ export class MultiDocumentServiceFactory implements IDocumentServiceFactory{
     async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
         const urlObj = parse(resolvedUrl.url);
-        if (!urlObj.protocol) {
+        if (urlObj.protocol === undefined) {
             throw new Error("No protocol provided");
         }
         const factory: IDocumentServiceFactory | undefined = this.protocolToDocumentFactoryMap.get(urlObj.protocol);
-        if (!factory) {
+        if (factory === undefined) {
             throw new Error("Unknown fluid protocol");
         }
 
