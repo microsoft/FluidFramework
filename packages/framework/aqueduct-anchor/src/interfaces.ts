@@ -5,14 +5,23 @@
 
 import { IUser } from "@microsoft/fluid-protocol-definitions";
 
-export interface ILastEditDetails {
-    user: IUser;
-    timestamp: number;
+declare module "@microsoft/fluid-component-core-interfaces" {
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IComponent extends Readonly<Partial<IProvideLastEdited>> { }
 }
 
-export interface IAqueductAnchor {
+export interface IProvideLastEdited {
+    readonly ILastEdited: ILastEdited;
+}
+
+export interface ILastEdited extends IProvideLastEdited {
     /**
      * Returns the details of the last edit to the container.
      */
     getLastEditDetails(): ILastEditDetails | undefined;
+}
+
+export interface ILastEditDetails {
+    user: IUser;
+    timestamp: number;
 }

@@ -78,8 +78,8 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
     /**
      * {@inheritDoc ISharedSummaryBlock.get}
      */
-    public get(key: string): Jsonable {
-        return this.data.get(key);
+    public get<T = Jsonable>(key: string): T {
+        return this.data.get(key) as unknown as T;
     }
 
     /**

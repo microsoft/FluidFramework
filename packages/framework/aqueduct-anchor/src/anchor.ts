@@ -13,7 +13,7 @@ import {
     IEnvelope,
     Jsonable,
 } from "@microsoft/fluid-runtime-definitions";
-import { IAqueductAnchor, ILastEditDetails } from "./interfaces";
+import { ILastEdited, ILastEditDetails } from "./interfaces";
 
 /**
  * This component keeps track of container level information. It should be loaded when the container is
@@ -25,18 +25,18 @@ import { IAqueductAnchor, ILastEditDetails } from "./interfaces";
  * to store this data because it wants the data to be part of the summary but it should not generate addition ops
  * in the op listener.
  */
-export class AqueductAnchor extends PrimedComponent implements IAqueductAnchor {
-    public static getFactory() { return AqueductAnchor.factory; }
-
-    public get IAqueductAnchor() {
-        return this;
-    }
-
+export class AqueductAnchor extends PrimedComponent implements ILastEdited {
     private static readonly factory = new PrimedComponentFactory(
         AqueductAnchor, [
             SummarizableObject.getFactory(),
         ],
     );
+
+    public static getFactory() { return AqueductAnchor.factory; }
+
+    public get ILastEdited() {
+        return this;
+    }
 
     private _summarizableObject!: SummarizableObject;
 
@@ -45,11 +45,10 @@ export class AqueductAnchor extends PrimedComponent implements IAqueductAnchor {
     }
 
     /**
-     * Returns the details of the last edit to the container.
+     * {@inheritDoc ILastEdited.getLastEditDetails}
      */
     public getLastEditDetails(): ILastEditDetails | undefined {
-        const lastEditDetails = this._summarizableObject.get("lastEditDetails");
-        return lastEditDetails !== undefined ? lastEditDetails as unknown as ILastEditDetails : undefined;
+        return this._summarizableObject.get<ILastEditDetails>("lastEditDetails");
     }
 
     protected async componentInitializingFirstTime() {
