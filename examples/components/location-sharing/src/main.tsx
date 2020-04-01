@@ -30,7 +30,9 @@ interface IUserLocationData {
     lng: number;
     timestamp: number;
 }
+
 const UserLocationDataKey = "UserLocationData"
+const UpdateFrequencyMs = 1000;
 
 /**
  * A component to allow you to share your location with others
@@ -46,7 +48,8 @@ export class LocationSharing extends PrimedComponent
     }
 
     protected async componentInitializingFirstTime() {
-        this.root.set<IUserLocationData[]>(UserLocationDataKey, []);
+        const dataDict: { [key: string]: IUserLocationData } = {};
+        this.root.set(UserLocationDataKey, dataDict);
     }
 
     /**
@@ -86,7 +89,7 @@ interface ILocationSharingViewState {
         lng: number
     },
     mapZoom: number,
-    userLocationData: IUserLocationData[],
+    userLocationData: {[key: string]: IUserLocationData},
     isUserListOpen: boolean,
 }
 
@@ -111,6 +114,7 @@ class LocationSharingView extends React.Component<ILocationSharingViewProps, ILo
     }
 
     private setCurrentLocation(root: ISharedDirectory, userName: string, lastPosition?: Position) {
+        this.setState({ userLocationData: root.get(UserLocationDataKey)});
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition((position: Position) => {
                 if (!lastPosition || lastPosition.coords.latitude != position.coords.latitude || lastPosition.coords.longitude != position.coords.longitude) {
@@ -129,9 +133,9 @@ class LocationSharingView extends React.Component<ILocationSharingViewProps, ILo
                             userName: userName
                         };
                         const newData = this.state.userLocationData;
-                        newData.push(currentUserLocationData);
+                        newData[userName] = currentUserLocationData;
                         root.set(UserLocationDataKey, newData);
-                        setTimeout(() => this.setCurrentLocation(root, userName, position), 5000);
+                        setTimeout(() => this.setCurrentLocation(root, userName, position), UpdateFrequencyMs);
                     }
                     if (this.state.mapCenter)
                     {
@@ -140,7 +144,7 @@ class LocationSharingView extends React.Component<ILocationSharingViewProps, ILo
                         updateCurrentLocation();
                     }
                 } else {
-                    setTimeout(() => this.setCurrentLocation(root, userName, lastPosition), 5000);
+                    setTimeout(() => this.setCurrentLocation(root, userName, lastPosition), UpdateFrequencyMs);
                 }
             })
         }
@@ -148,7 +152,7 @@ class LocationSharingView extends React.Component<ILocationSharingViewProps, ILo
 
     render(){
         const { } = this.props;
-        const { isUserListOpen, mapCenter, mapZoom, userLocationData } = this.state;
+        const { isUserListOpen, mapCenter, mapZoom } = this.state;
         if (mapCenter) {
             const userListButton = (
                 <Button
@@ -160,6 +164,7 @@ class LocationSharingView extends React.Component<ILocationSharingViewProps, ILo
                 </Button>
             );
             const users = this.renderList();
+            const markers = this.renderMarkers();
             return (
                 <div style={{ height: '100vh', width: '100%' }}>
                     <GoogleMapReact
@@ -167,14 +172,7 @@ class LocationSharingView extends React.Component<ILocationSharingViewProps, ILo
                         defaultCenter={mapCenter}
                         defaultZoom={mapZoom}
                     >
-                        {userLocationData.map(place => (
-                            <Marker
-                                key={`${place.timestamp}-${place.userName}`}
-                                text={place.userName}
-                                lat={place.lat}
-                                lng={place.lng}
-                            />
-                        ))}
+                        {markers}
                     </GoogleMapReact>
                     <Collapsible open={isUserListOpen} trigger={userListButton}>{users}</Collapsible>
                 </div>
@@ -183,15 +181,39 @@ class LocationSharingView extends React.Component<ILocationSharingViewProps, ILo
         return <Header style={{margin: "3vh"}}>{"Loading..."}</Header>;
     }
 
+    private renderMarkers = () => {
+        const { userLocationData } = this.state;
+        const items = [];
+        for (var key in userLocationData) {
+            var item = userLocationData[key];
+            items.push(
+                <Marker
+                    key={`${item.timestamp}-${item.userName}`}
+                    text={item.userName}
+                    lat={item.lat}
+                    lng={item.lng}
+                />
+            )
+        }
+        return items;
+    }
+
     private renderList = () => {
         const { userLocationData, isUserListOpen } = this.state;
-        return userLocationData.length > 0  && isUserListOpen ? (
-          <ul style={{maxHeight: "356px", border: "1px solid grey", backgroundColor: "white", overflow: "auto", paddingInlineStart: "0px", overflowY: "scroll", position: "absolute", top: 0, margin: "2vh"}}>
-            {userLocationData.map(item => (
-              this.renderItem(item)
-            ))}
-          </ul>
-        ) : <h6 style={{marginBlockStart: "5px", marginBlockEnd: "0px", color: "grey"}}>User list is empty.</h6>;
+        if (isUserListOpen) {
+            const items = [];
+            for (var key in userLocationData) {
+                var item = userLocationData[key];
+                items.push(this.renderItem(item))
+            }
+            return (
+                <ul style={{maxHeight: "356px", border: "1px solid grey", backgroundColor: "white", overflow: "auto", paddingInlineStart: "0px", overflowY: "scroll", position: "absolute", top: 0, margin: "2vh"}}>
+                    {items}
+                </ul>
+            )
+        } else {
+            return <h6 style={{marginBlockStart: "5px", marginBlockEnd: "0px", color: "grey"}}>{"User list is empty."}</h6>;
+        }
     }
 
     private renderItem = (item: IUserLocationData) => {
