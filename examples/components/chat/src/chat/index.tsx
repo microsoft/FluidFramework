@@ -3,28 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { ISharedDirectory } from "@microsoft/fluid-map";
 import { Provider, themes } from "@stardust-ui/react";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-// eslint-disable-next-line import/no-internal-modules
-import { Runtime } from "../runtime/runtime";
 import { ChatContainer } from "./chatContainer";
 
-export function renderChat(runtime: Runtime, hostElement: HTMLElement) {
+export function renderChat(runtime: IComponentRuntime, root: ISharedDirectory, hostElement: HTMLElement) {
     if (runtime.connected) {
-        renderCore(runtime, runtime.opsBeforeConnection, hostElement);
+        renderCore(runtime, root, hostElement);
     } else {
-        runtime.once("connected", () => renderCore(runtime, runtime.opsBeforeConnection, hostElement));
+        runtime.once("connected", () => renderCore(runtime, root, hostElement));
     }
 }
 
-function renderCore(runtime: Runtime, opHistory: ISequencedDocumentMessage[], hostElement: HTMLElement) {
+function renderCore(runtime: IComponentRuntime, root: ISharedDirectory, hostElement: HTMLElement) {
     const user = runtime.clientId? runtime.getQuorum().getMember(runtime.clientId) : undefined;
     const userName = (user?.client.user as any).name;
     ReactDOM.render(
         <Provider theme={themes.teams}>
-            <ChatContainer runtime={runtime} clientId={userName} history={opHistory} />
+            <ChatContainer runtime={runtime} root={root} clientId={userName} />
         </Provider>,
         hostElement,
     );

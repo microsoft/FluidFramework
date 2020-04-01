@@ -27,9 +27,12 @@
     "webpack": "webpack --env=\"production\""
   },
   "dependencies": {
+    "@microsoft/fluid-aqueduct": "^0.16.0",
     "@microsoft/fluid-component-core-interfaces": "^0.16.0",
     "@microsoft/fluid-container-definitions": "^0.16.0",
+    "@microsoft/fluid-map": "^0.16.0",
     "@microsoft/fluid-protocol-definitions": "^0.1004.0-0",
+    "@microsoft/fluid-runtime-definitions": "^0.16.0",
     "@microsoft/fluid-view-interfaces": "^0.16.0",
     "@stardust-ui/react": "^0.17.0",
     "react": "^16.10.2",

@@ -43,10 +43,6 @@ export class MediaPlayer extends PrimedComponent
         return MediaPlayer.factory;
     }
 
-    protected async componentHasInitialized() {
-
-    }
-
     public changeEditState(isEditable: boolean){
         this.root.set("isEditable", isEditable);
     }

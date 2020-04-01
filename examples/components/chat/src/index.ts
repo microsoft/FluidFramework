@@ -3,30 +3,40 @@
  * Licensed under the MIT License.
  */
 
-import { IContainerContext } from "@microsoft/fluid-container-definitions";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+import {
+    PrimedComponent, PrimedComponentFactory,
+} from "@microsoft/fluid-aqueduct";
 
 import { renderChat } from "./chat";
-// eslint-disable-next-line import/no-internal-modules
-import { Runtime } from "./runtime/runtime";
 
-export class ChatRunner implements IComponentHTMLView {
+export const MessagesKey = "messages";
+
+export interface IMessage {
+    author: string;
+    content: string;
+    time: string;
+    language: string;
+    translated: boolean;
+}
+
+export class Chat extends PrimedComponent
+    implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
-    constructor(private readonly runtime: Runtime) {
+    private static readonly factory = new PrimedComponentFactory(Chat, []);
+
+    public static getFactory() {
+        return Chat.factory;
+    }
+
+    async componentInitializingFirstTime() {
+        this.root.set<IMessage[]>(MessagesKey, []);
     }
 
     public render(elm: HTMLElement) {
-        renderChat(this.runtime, elm);
+        renderChat(this.runtime, this.root, elm);
     }
 }
 
-export async function instantiateRuntime(context: IContainerContext): Promise<Runtime> {
-    const runtime = await Runtime.load(context);
-
-    runtime.registerRequestHandler(
-        async (request) => ({ status: 200, mimeType: "fluid/component", value: new ChatRunner(runtime) }),
-    );
-
-    return runtime;
-}
+export const fluidExport = Chat.getFactory();

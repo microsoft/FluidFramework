@@ -4,35 +4,24 @@
  */
 
 import { IQuorum, ISequencedDocumentMessage, MessageType } from "@microsoft/fluid-protocol-definitions";
+import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { ISharedDirectory, IDirectoryValueChanged } from "@microsoft/fluid-map";
 import { Chat } from "@stardust-ui/react";
 import * as React from "react";
-// eslint-disable-next-line import/no-internal-modules
-import { Runtime } from "../runtime/runtime";
 import { ChatRenderer } from "./chatRenderer";
 import { translate } from "./translator";
+import { IMessage, MessagesKey } from "..";
 
 const transPrefix = "translate:";
 
-interface IMessage {
-    author: string;
-    content: string;
-    time: string;
-    language: string;
-    translated: boolean;
-}
-
-interface IChatProps {
-    message: IMessage;
-}
-
 interface IChatContainerProps {
-    runtime: Runtime;
+    runtime: IComponentRuntime;
+    root: ISharedDirectory;
     clientId: string;
-    history: ISequencedDocumentMessage[];
 }
 
 interface IChatContainerState {
-    messages: IChatProps[];
+    messages: IMessage[];
     inputMessage: string;
 }
 
@@ -41,39 +30,37 @@ export class ChatContainer extends React.Component<IChatContainerProps, IChatCon
     private readonly toLanguages = new Set(["en"]);
     private alreadyLeader = false;
 
-    public componentDidMount() {
-        const quorum = this.props.runtime.getQuorum();
+    constructor(props: IChatContainerProps) {
+        super(props);
+        const {root, runtime} = props;
+        const quorum = runtime.getQuorum();
         this.initializeTranslator(quorum);
 
-        this.setState({ messages: this.getInitialChat(this.props.history), inputMessage: "" });
-        this.props.runtime.on("op", (op: ISequencedDocumentMessage) => {
-            const chatProp = this.convertMessage(op);
-            if (chatProp) {
-                const messages = Object.values(this.state.messages).concat([chatProp]);
-                this.setState({ messages });
+        this.state = { messages: root.get<IMessage[]>(MessagesKey), inputMessage: "" };
+        root.on("valueChanged", (changed: IDirectoryValueChanged, local: boolean) => {
+            const rootMessages = root.get<IMessage[]>(MessagesKey);
+            if (rootMessages !== this.state.messages) {
+                this.setState({
+                    messages: root.get<IMessage[]>(MessagesKey),
+                });
             }
         });
     }
 
     public render() {
-        // eslint-disable-next-line no-null/no-null
-        if (this.state === null) {
-            return <div> Fetching Messages </div>;
-        }
-
-        const { inputMessage } = this.state;
+        const { inputMessage, messages } = this.state;
         const messagesToRender: any[] = [];
 
         // Build up message history
-        for (const chatProp of Object.values(this.state.messages)) {
-            const isMine = chatProp.message.author === this.props.clientId;
-            const tss: string = new Date(Number.parseInt(chatProp.message.time, 10)).toLocaleString();
+        for (const message of messages) {
+            const isMine = message.author === this.props.clientId;
+            const tss: string = new Date(Number.parseInt(message.time, 10)).toLocaleString();
             messagesToRender.push({
                 message: {
                     content: (
                         <Chat.Message
-                            content={chatProp.message.content}
-                            author={chatProp.message.author}
+                            content={message.content}
+                            author={message.author}
                             timestamp={tss}
                             mine={isMine} />
                     ),
@@ -91,12 +78,12 @@ export class ChatContainer extends React.Component<IChatContainerProps, IChatCon
         );
     }
 
-    public getInitialChat(ops: ISequencedDocumentMessage[]): IChatProps[] {
-        const items: IChatProps[] = [];
-        for (const op of ops) {
-            const chatProp = this.convertMessage(op);
-            if (chatProp) {
-                items.push(chatProp);
+    public getInitialChat(oldMessages: IMessage[]): IMessage[] {
+        const items: IMessage[] = [];
+        for (const message of oldMessages) {
+            const convertedMessage = this.convertMessage(message);
+            if (convertedMessage) {
+                items.push(convertedMessage);
             }
         }
         return items;
@@ -107,38 +94,38 @@ export class ChatContainer extends React.Component<IChatContainerProps, IChatCon
 
     public appendMessage = () => {
         const { inputMessage } = this.state;
-        const { runtime, clientId } = this.props;
+        const { root, clientId } = this.props;
 
         if (inputMessage.length === 0) {
             return;
         }
 
         this.setState({ inputMessage: "" });
-
-        runtime.submitMessage(MessageType.Operation, {
+        const newMessage = {
             author: clientId,
             content: inputMessage,
             language: this.selfLanguage,
             time: Date.now().toString(),
             translated: false,
-        });
+        };
+        const newMessages = [...this.state.messages, newMessage];
+        root.set(MessagesKey, newMessages);
     };
 
-    private convertMessage(op: ISequencedDocumentMessage): IChatProps | undefined {
-        const message: IMessage = op.contents;
+    private convertMessage(message: IMessage): IMessage | undefined {
         if (message.content.startsWith(transPrefix)) {
             const lang = message.content.substr(transPrefix.length);
             if (message.author === this.props.clientId) {
                 this.selfLanguage = lang;
             }
             this.toLanguages.add(lang);
-            return { message };
+            return message;
         } else if (message.author === this.props.clientId) {
             if (!message.translated) {
-                return { message };
+                return message;
             }
         } else if (message.language === this.selfLanguage) {
-            return { message };
+            return message;
         }
     }
 

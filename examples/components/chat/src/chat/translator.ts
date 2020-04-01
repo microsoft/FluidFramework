@@ -60,7 +60,7 @@ async function translateCore(
     if (uri) {
         const requestBody = createRequestBody(text);
         return new Promise<ITranslatorOutput[]>((resolve, reject) => {
-            request(
+            request.post(
                 {
                     body: requestBody,
                     headers: {
@@ -69,7 +69,7 @@ async function translateCore(
                     },
                     json: true,
                     method: "POST",
-                    uri,
+                    url: uri,
                 },
                 (err, resp, body) => {
                     if (err || resp.statusCode !== 200) {

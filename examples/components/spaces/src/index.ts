@@ -13,6 +13,7 @@ import {
 import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
 import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
 import { MediaPlayer } from "../../media-player/src/main";
+import { Chat } from "../../chat/src/index";
 import {
     ComponentToolbar,
     ComponentToolbarName,
@@ -65,6 +66,13 @@ const generateFactory = () => {
             friendlyName: "Media Player",
             fabricIconName: "Media",
             capabilities: ["IComponentHTMLView"],
+        },
+        {
+            type: "chat",
+            factory: Promise.resolve(Chat.getFactory()),
+            capabilities: ["IComponentHTMLView"],
+            friendlyName: "Chat",
+            fabricIconName: "Edit",
         },
         {
             type: "codemirror",
