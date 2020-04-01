@@ -3,14 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import { IUser } from "@microsoft/fluid-protocol-definitions";
+
+export interface ILastEditDetails {
+    user: IUser;
+    timestamp: number;
+}
+
 export interface IAqueductAnchor {
     /**
-     * Returns the id of the last user that edited this document.
+     * Returns the details of the last edit to the container.
      */
-    getLastEditedUserId(): string | undefined;
-
-    /**
-     * Returns the timestamp of the last edit to this document.
-     */
-    getLastEditedTimeStamp(): number | undefined;
+    getLastEditDetails(): ILastEditDetails | undefined;
 }

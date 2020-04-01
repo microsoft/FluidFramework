@@ -5,22 +5,15 @@
 
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { SummarizableData, SummarizableObject } from "@microsoft/fluid-summarizable-object";
+import { SummarizableObject } from "@microsoft/fluid-summarizable-object";
 import { ISequencedDocumentMessage, IUser, MessageType } from "@microsoft/fluid-protocol-definitions";
 import {
     IComponentContext,
     IComponentRuntime,
     IEnvelope,
+    Jsonable,
 } from "@microsoft/fluid-runtime-definitions";
-import { IAqueductAnchor } from "./interfaces";
-
-/**
- * This interface describes the format of the data that we store in the SummarizableObject.
- */
-interface IAnchorData {
-    timestamp: number,
-    user: IUser,
-}
+import { IAqueductAnchor, ILastEditDetails } from "./interfaces";
 
 /**
  * This component keeps track of container level information. It should be loaded when the container is
@@ -35,7 +28,10 @@ interface IAnchorData {
 export class AqueductAnchor extends PrimedComponent implements IAqueductAnchor {
     public static getFactory() { return AqueductAnchor.factory; }
 
-    public name: string = "default";
+    public get IAqueductAnchor() {
+        return this;
+    }
+
     private static readonly factory = new PrimedComponentFactory(
         AqueductAnchor, [
             SummarizableObject.getFactory(),
@@ -49,19 +45,11 @@ export class AqueductAnchor extends PrimedComponent implements IAqueductAnchor {
     }
 
     /**
-     * Returns the id of the last user that edited this document.
+     * Returns the details of the last edit to the container.
      */
-    public getLastEditedUserId(): string | undefined {
-        const lastEdited: IAnchorData = this._summarizableObject.get() as unknown as IAnchorData;
-        return lastEdited?.user?.id;
-    }
-
-    /**
-     * Returns the timestamp of the last edit to this document.
-     */
-    public getLastEditedTimeStamp(): number | undefined {
-        const lastEdited: IAnchorData = this._summarizableObject.get() as unknown as IAnchorData;
-        return lastEdited?.timestamp;
+    public getLastEditDetails(): ILastEditDetails | undefined {
+        const lastEditDetails = this._summarizableObject.get("lastEditDetails");
+        return lastEditDetails !== undefined ? lastEditDetails as unknown as ILastEditDetails : undefined;
     }
 
     protected async componentInitializingFirstTime() {
@@ -81,11 +69,13 @@ export class AqueductAnchor extends PrimedComponent implements IAqueductAnchor {
                     // Get the user information from the client information in the quorum.
                     const client = this.context.getQuorum().getMember(message.clientId);
                     const user = client?.client.user as IUser;
-                    const lastEdited: IAnchorData = {
-                        timestamp: message.timestamp,
-                        user,
-                    };
-                    this._summarizableObject.set(lastEdited as unknown as SummarizableData);
+                    if (user !== undefined) {
+                        const lastEditDetails: ILastEditDetails = {
+                            user,
+                            timestamp: message.timestamp,
+                        };
+                        this._summarizableObject.set("lastEditDetails", lastEditDetails as unknown as Jsonable);
+                    }
                 }
             }
         });
