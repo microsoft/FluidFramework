@@ -27,6 +27,8 @@ export class DataModel extends PrimedComponent
   private _dates: SharedObjectSequence<number> | undefined;
   private _people: SharedObjectSequence<IPersonType> | undefined;
 
+  private _selectors;
+
   public get IComponentHTMLVisual() {
     return this;
   }
@@ -113,11 +115,11 @@ export class DataModel extends PrimedComponent
     // const ctx = this.reactContext;
     console.log(`render ${this.runtime.clientId}!`);
     const actions = this.actions;
-    const selectors = this.selectors;
+    this._selectors = this.selectors;
     const rerender = () => {
       console.log(`rerender ${this.runtime.clientId}!`);
       ReactDOM.render(
-        <PrimedContext.Provider value={{ actions, selectors }}>
+        <PrimedContext.Provider value={{ actions, selectors: this._selectors }}>
           <FluidApp />
         </PrimedContext.Provider>,
         div
@@ -136,6 +138,7 @@ export class DataModel extends PrimedComponent
             event.deltaOperation
           }] args[${JSON.stringify(event.deltaArgs.operation)}]`
         );
+        this._selectors = this.selectors;
         rerender();
       });
     }
@@ -146,6 +149,7 @@ export class DataModel extends PrimedComponent
             event.deltaOperation
           }] args[${JSON.stringify(event.deltaArgs.operation)}]`
         );
+        this._selectors = this.selectors;
         rerender();
       });
     }
