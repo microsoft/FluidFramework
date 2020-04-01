@@ -6,9 +6,9 @@
 import { EventEmitter } from "events";
 import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 import { FluidRtcSignalingChannel, IFluidRtcSignalingChannel } from "./signalingChannel";
-import { IEmitter, IEvent } from "./events";
+import { IEmitter, IErrorEvent } from "./events";
 
-interface IFluidRtcPeerConnectionManagerlEvents extends IEvent {
+interface IFluidRtcPeerConnectionManagerlEvents extends IErrorEvent {
     (event: RTCPeerConnectionState, listener: (clientId: string, connection: RTCPeerConnection) => void);
     (event: "track", listener: (clientId: string, track: MediaStreamTrack) => void);
 }
@@ -87,6 +87,7 @@ export class FluidRtcPeerConnectionManager{
         mediaStream.getTracks().forEach((track) => {
             peerCon.addTrack(track, mediaStream);
         });
+        peerCon.addEventListener("icecandidateerror",(ev)=>this.eventEmitter.emit("error",ev.errorText));
         peerCon.addEventListener("track",(ev)=>this.eventEmitter.emit("track", toClientId, ev.track));
         this.clientConnections.set(toClientId, peerCon);
         peerCon.addEventListener("icecandidate", (ev) => signalingChannel.sendIceCandidate(toClientId, ev.candidate));
