@@ -19,7 +19,7 @@ export function renderChat(runtime: IComponentRuntime, root: ISharedDirectory, h
 }
 
 function renderCore(runtime: IComponentRuntime, root: ISharedDirectory, hostElement: HTMLElement) {
-    const user = runtime.clientId? runtime.getQuorum().getMember(runtime.clientId) : undefined;
+    const user = runtime.clientId ? runtime.getQuorum().getMember(runtime.clientId) : undefined;
     const userName = (user?.client.user as any).name;
     ReactDOM.render(
         <Provider theme={themes.teams}>
