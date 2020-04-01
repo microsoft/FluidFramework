@@ -4,7 +4,6 @@
  */
 
 import { EventEmitter } from "events";
-import { delay } from "@microsoft/fluid-common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -313,6 +312,7 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
         documentStorageService: IDocumentDeltaStorageService,
         controller: ReplayController): Promise<void> {
         let done;
+        let replayPromiseChain = Promise.resolve();
 
         let currentOp = await controller.getStartingOpSequence();
 
@@ -327,14 +327,17 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
                 if (controller.isDoneFetch(currentOp, undefined)) {
                     break;
                 }
-                await delay(2000);
+                await new Promise((accept: () => void) => setTimeout(accept, 2000));
                 continue;
             }
 
-            await controller.replay((ops) => this.emit("op", ReplayDocumentId, ops), fetchedOps);
+            replayPromiseChain = replayPromiseChain.then(
+                async () => controller.replay((ops) => this.emit("op", ReplayDocumentId, ops), fetchedOps));
 
             currentOp += fetchedOps.length;
             done = controller.isDoneFetch(currentOp, fetchedOps[fetchedOps.length - 1].timestamp);
         } while (!done);
+
+        return replayPromiseChain;
     }
 }
