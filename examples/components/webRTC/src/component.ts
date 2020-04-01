@@ -4,7 +4,7 @@
  */
 
 import {
-    PrimedComponent,
+    PrimedComponent, PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import { IComponentRuntime, IComponentContext } from "@microsoft/fluid-runtime-definitions";
@@ -24,6 +24,7 @@ export class WebRTCComponent extends PrimedComponent implements IComponentHTMLVi
         const video: MediaTrackConstraints={
             aspectRatio:1,
             height:200,
+            facingMode: {exact: "user"},
         };
         const audio: MediaTrackConstraints={
             echoCancellation:true,
@@ -87,3 +88,5 @@ export class WebRTCComponent extends PrimedComponent implements IComponentHTMLVi
         }
     }
 }
+
+export const factory = new PrimedComponentFactory(WebRTCComponent);
