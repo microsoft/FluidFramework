@@ -31,7 +31,7 @@ export const MediaPlayerName = "media-player";
 initializeIcons();
 
 /**
- * A component to allow you to add and manipulate components
+ * A component to allow you to view media from YouTube, Soundcloud, and Vimeo
  */
 export class MediaPlayer extends PrimedComponent
     implements IComponentHTMLView {
@@ -42,10 +42,6 @@ export class MediaPlayer extends PrimedComponent
 
     public static getFactory() {
         return MediaPlayer.factory;
-    }
-
-    public changeEditState(isEditable: boolean){
-        this.root.set("isEditable", isEditable);
     }
 
     protected async componentInitializingFirstTime() {
