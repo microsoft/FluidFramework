@@ -13,6 +13,8 @@ declare module "@microsoft/fluid-component-core-interfaces" {
     }
 }
 
+export const IComponentFactory: keyof IProvideComponentFactory = "IComponentFactory";
+
 export interface IProvideComponentFactory {
     readonly IComponentFactory: IComponentFactory;
 }

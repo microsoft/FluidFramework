@@ -28,6 +28,8 @@ export interface IPackument {
     versions: { [version: string]: IPackage };
 }
 
+export const IPackageManager: keyof IProvidePackageManager = "IPackageManager";
+
 export interface IProvidePackageManager {
     readonly IPackageManager: IPackageManager;
 }

@@ -12,6 +12,8 @@ declare module "@microsoft/fluid-container-definitions" {
     interface IComponent extends Readonly<Partial<IProvideChannel>> { }
 }
 
+export const IChannel: keyof IProvideChannel = "IChannel";
+
 export interface IProvideChannel {
     readonly IChannel: IChannel;
 }
