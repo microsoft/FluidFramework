@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/web-rtc",
-  "version": "0.16.0-0",
+  "version": "0.16.0",
   "description": "WebRTC",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",

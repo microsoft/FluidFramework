@@ -64,18 +64,29 @@ export class FluidRtcPeerConnectionManager{
             }
         });
 
-        const offers: [string, RTCSessionDescriptionInit][] = [];
-        for(const memberClientId of audience.getMembers().keys()){
-            if(memberClientId !== context.clientId && !this.clientConnections.has(memberClientId)){
-                const peerCon = this.createPeerConnection(mediaStream, memberClientId, signalingClient);
-                const offer = await peerCon.createOffer();
-                await peerCon.setLocalDescription(offer);
-                offers.push([memberClientId, offer]);
+        const sendClientOffers= async () =>{
+            const offers: [string, RTCSessionDescriptionInit][] = [];
+            for(const memberClientId of audience.getMembers().keys()){
+                if(memberClientId !== context.clientId && !this.clientConnections.has(memberClientId)){
+                    const peerCon = this.createPeerConnection(mediaStream, memberClientId, signalingClient);
+                    const offer = await peerCon.createOffer();
+                    await peerCon.setLocalDescription(offer);
+                    offers.push([memberClientId, offer]);
+                }
             }
-        }
-        if(offers.length > 0){
             signalingClient.sendOffers(... offers);
+        };
+
+        if(context.connected === false) {
+            await new Promise((resolve)=>context.once("connected",()=>resolve()));
         }
+        await sendClientOffers();
+
+        audience.on("addMember",(clientId)=>{
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
+            setTimeout(async ()=>sendClientOffers(),10000);
+        });
+
     }
 
     private static createPeerConnection(

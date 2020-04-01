@@ -1,3 +1,7 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
 import { EventEmitter } from "events";
 import {IHostRuntime, IInboundSignalMessage} from "@microsoft/fluid-runtime-definitions";
 import { pkgName } from "./packageVersion";
@@ -48,7 +52,9 @@ export class FluidRtcSignalingChannel extends EventEmitter implements IFluidRtcS
     }
 
     public sendOffers(... offers: [string, RTCSessionDescriptionInit][]){
-        this.containerRuntime.submitSignal(pkgName, {offers});
+        if(offers.length > 0){
+            this.containerRuntime.submitSignal(pkgName, {offers});
+        }
     }
     public sendAnswer(clientId: string, answer: RTCSessionDescriptionInit){
         this.containerRuntime.submitSignal(pkgName, {clientId, answer});

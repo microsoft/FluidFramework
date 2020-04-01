@@ -8,8 +8,13 @@ import {
 } from "@microsoft/fluid-aqueduct";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import { IComponentRuntime, IComponentContext } from "@microsoft/fluid-runtime-definitions";
+// eslint-disable-next-line import/no-internal-modules
+import uuid from "uuid/v4";
 import { FluidRtcPeerConnectionManager } from "./peerConnectionManager";
 
+
+const videoHeight=200;
+const videoDivHeightString = `${videoHeight}px`;
 
 export class WebRTCComponent extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
@@ -23,7 +28,7 @@ export class WebRTCComponent extends PrimedComponent implements IComponentHTMLVi
     protected async componentHasInitialized(){
         const video: MediaTrackConstraints={
             aspectRatio:1,
-            height:200,
+            height: videoHeight,
             facingMode: {exact: "user"},
         };
         const audio: MediaTrackConstraints={
@@ -34,7 +39,7 @@ export class WebRTCComponent extends PrimedComponent implements IComponentHTMLVi
         this.streamMap.set("local", await navigator.mediaDevices.getUserMedia({video, audio: false}));
 
         FluidRtcPeerConnectionManager.emitter.on("connected", (clientId) =>{
-            this.realRender(clientId);
+            this.renderClients(clientId);
         });
         FluidRtcPeerConnectionManager.emitter.on("track", (clientId, track) =>{
             const remoteStream = this.streamMap.get(clientId) ?? new MediaStream();
@@ -43,7 +48,7 @@ export class WebRTCComponent extends PrimedComponent implements IComponentHTMLVi
         });
         FluidRtcPeerConnectionManager.emitter.on("closed", (clientId) =>{
             this.streamMap.delete(clientId);
-            this.realRender(clientId);
+            this.renderClients(clientId);
         });
 
         await FluidRtcPeerConnectionManager.Initialize(this.context, mediaStream);
@@ -52,8 +57,16 @@ export class WebRTCComponent extends PrimedComponent implements IComponentHTMLVi
     private savedDiv: HTMLElement | undefined;
     public render(div: HTMLElement) {
         const myDiv = document.createElement("div");
+        myDiv.style.display="flex";
+        myDiv.style.justifyContent="center";
+        myDiv.style.overflowY="hidden";
+        myDiv.style.height=videoDivHeightString;
+        myDiv.style.maxHeight=videoDivHeightString;
+
+        myDiv.style.overflowX="auto";
         myDiv.style.maxWidth="100vw";
-        myDiv.style.maxHeight="100vh";
+        myDiv.style.width = "100%";
+
         div.appendChild(myDiv);
         if(this.savedDiv === undefined){
             this.savedDiv = myDiv;
@@ -61,32 +74,32 @@ export class WebRTCComponent extends PrimedComponent implements IComponentHTMLVi
             this.savedDiv.remove();
             this.savedDiv = myDiv;
         }
-        this.realRender(... this.streamMap.keys());
+        this.renderClients(... this.streamMap.keys());
     }
 
-    private realRender(... clientIds: string[]){
+    private readonly viewId = uuid();
+    private renderClients(... clientIds: string[]){
         if(this.savedDiv !== undefined){
+
             for(const clientId of clientIds){
-                const elementId = `${this.id}-${clientId}`;
+                const elementId = `${this.id}${this.viewId}-${clientId}`;
                 const element = document.getElementById(elementId);
                 const remoteStream = this.streamMap.get(clientId);
                 if(remoteStream !== undefined){
                     // eslint-disable-next-line no-null/no-null
                     if(element === null){
-                        const media = document.createElement("video");
-                        media.id = elementId;
-                        media.srcObject = remoteStream;
-                        media.style.display="inline-block";
-                        media.style.float="left";
-                        media.style.maxHeight="100%";
-                        media.style.maxWidth="100%";
-                        media.controls=true;
-                        this.savedDiv.appendChild(media);
-                        media.play();
+                        const video = document.createElement("video");
+                        video.srcObject = remoteStream;
+                        video.height = videoHeight;
+                        video.controls=true;
+                        video.id = elementId;
+                        this.savedDiv.appendChild(video);
+                        video.play().catch((error) => console.error(error));
+                        video.muted = true;
                     }
                 // eslint-disable-next-line no-null/no-null
                 }else if(element !== null){
-                    this.savedDiv.removeChild(element);
+                    element.remove();
                 }
             }
         }
