@@ -27,11 +27,11 @@ import { ISharedObject } from "./types";
  */
 export abstract class SharedObject extends EventEmitterWithErrorHandling implements ISharedObject {
     /**
-     * @param obj - The object to check if it is a SharedObject
-     * @returns Returns true if the object is a SharedObject
+     * @param obj - The thing to check if it is a SharedObject
+     * @returns Returns true if the thing is a SharedObject
      */
     public static is(obj: any): obj is SharedObject {
-        return (obj as IComponent | undefined)?.ISharedObject !== undefined;
+        return obj?.ISharedObject !== undefined;
     }
 
     public get ISharedObject() { return this; }
