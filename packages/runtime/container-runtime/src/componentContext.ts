@@ -6,7 +6,7 @@
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { IDisposable } from "@microsoft/fluid-common-definitions";
-import { IComponent, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IComponentLoadable, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
     IAudience,
     IBlobManager,
@@ -207,32 +207,27 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         assert(pkgName);
         const id = pkg ? (pkgOrId ?? uuid()) : uuid();
 
-        const details = await this.getInitialSnapshotDetails();
-        let packagePath: string[] = [...details.pkg];
-
-        // A factory could not contain the registry for itself. So if it is the same the last snapshot
-        // pkg, create component with our package path.
-        if (packagePath.length > 0 && pkgName === packagePath[packagePath.length - 1]) {
-            return this.hostRuntime._createComponentWithProps(packagePath, props, id);
-        }
-
-        // Look for the package entry in our sub-registry. If we find the entry, we need to add our path
-        // to the packagePath. If not, look into the global registry and the packagePath becomes just the
-        // passed package.
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        let entry: ComponentRegistryEntry | undefined = await this.componentRuntime!.IComponentRegistry?.get(pkgName);
-        if (entry) {
-            packagePath.push(pkgName);
-        } else {
-            entry = await this._hostRuntime.IComponentRegistry.get(pkgName);
-            packagePath = [pkgName];
-        }
-
-        if (!entry) {
-            throw new Error(`Registry does not contain entry for package '${pkgName}'`);
-        }
+        const packagePath: string[] = await this.composeSubpackagePath(pkgName);
 
         return this.hostRuntime._createComponentWithProps(packagePath, props, id);
+    }
+
+    public async createComponentWithRealizationFn(
+        pkg: string,
+        realizationFn?: (context: IComponentContext) => void,
+    ): Promise<IComponent & IComponentLoadable> {
+        const packagePath = await this.composeSubpackagePath(pkg);
+
+        const componentRuntime = await this.hostRuntime.createComponentWithRealizationFn(
+            packagePath,
+            realizationFn,
+        );
+        const response = await componentRuntime.request({url: "/"});
+        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+            throw new Error("Failed to create component");
+        }
+
+        return response.value;
     }
 
     private async rejectDeferredRealize(reason: string) {
@@ -280,6 +275,15 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             // During this call we will invoke the instantiate method - which will call back into us
             // via the bindRuntime call to resolve componentRuntimeDeferred
             factory.instantiateComponent(this);
+        }
+
+        return this.componentRuntimeDeferred.promise;
+    }
+
+    public async realizeWithFn(realizationFn: (context: IComponentContext) => void): Promise<IComponentRuntime> {
+        if (!this.componentRuntimeDeferred) {
+            this.componentRuntimeDeferred = new Deferred<IComponentRuntime>();
+            realizationFn(this);
         }
 
         return this.componentRuntimeDeferred.promise;
@@ -385,6 +389,30 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this.submitOp(type, content);
     }
 
+    /**
+     * This is called from a summarizable object that does not generate ops but only wants to be part of the summary.
+     * It indicates that there is data in the object that needs to be summarized.
+     * We will update the latestSequenceNumber of the summary tracker of this component and of the object's channel.
+     *
+     * @param address - The address of the channel that is dirty.
+     *
+     */
+    public setChannelDirty(address: string): void {
+        this.verifyNotClosed();
+
+        // Get the latest sequence number.
+        const latestSequenceNumber = this.deltaManager.referenceSequenceNumber;
+
+        // Update our summary tracker's latestSequenceNumber.
+        this.summaryTracker.updateLatestSequenceNumber(latestSequenceNumber);
+
+        const channelSummaryTracker = this.summaryTracker.getChild(address);
+        // If there is a summary tracker for the channel that called us, update it's latestSequenceNumber.
+        if (channelSummaryTracker) {
+            channelSummaryTracker.updateLatestSequenceNumber(latestSequenceNumber);
+        }
+    }
+
     public submitSignal(type: string, content: any) {
         this.verifyNotClosed();
         assert(this.componentRuntime);
@@ -452,6 +480,39 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
         // And notify the pending promise it is now available
         this.componentRuntimeDeferred.resolve(this.componentRuntime);
+    }
+
+    /**
+     * Take a package name and transform it into a path that can be used to find it
+     * from this context, such as by looking into subregistries
+     * @param subpackage - The subpackage to find in this context
+     * @returns A list of packages to the subpackage destination if found,
+     * otherwise the original subpackage
+     */
+    protected async composeSubpackagePath(subpackage: string): Promise<string[]> {
+        const details = await this.getInitialSnapshotDetails();
+        let packagePath: string[] = [...details.pkg];
+
+        // A factory could not contain the registry for itself. So if it is the same the last snapshot
+        // pkg, return our package path.
+        if (packagePath.length > 0 && subpackage === packagePath[packagePath.length - 1]) {
+            return packagePath;
+        }
+
+        // Look for the package entry in our sub-registry. If we find the entry, we need to add our path
+        // to the packagePath. If not, look into the global registry and the packagePath becomes just the
+        // passed package.
+        if (await this.componentRuntime?.IComponentRegistry?.get(subpackage)) {
+            packagePath.push(subpackage);
+        } else {
+            if (!(await this._hostRuntime.IComponentRegistry.get(subpackage))) {
+                throw new Error(`Registry does not contain entry for package '${subpackage}'`);
+            }
+
+            packagePath = [subpackage];
+        }
+
+        return packagePath;
     }
 
     public abstract generateAttachMessage(): IAttachMessage;
