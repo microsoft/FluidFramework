@@ -126,6 +126,12 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
         }
     }
 
+    public emitAddTemplateEvent(template: Templates) {
+        if (this.props.callbacks.addTemplate) {
+            this.props.callbacks.addTemplate(template);
+        }
+    }
+
     public emitToggleEditable() {
         const newIsEditable = !this.state.isEditable;
         this.setState({ isEditable: newIsEditable });
@@ -185,7 +191,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
                             style={{width: "20vh"}}
                             key={`componentToolbarButton-${template}`}
                             onClick={async () => {
-                                this.emitAddComponentEvent(template, 20, 5);
+                                this.emitAddTemplateEvent(Templates[template]);
                                 this.setState({isTemplateListOpen: false});
                             }}
                         >

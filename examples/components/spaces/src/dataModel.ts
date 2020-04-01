@@ -21,8 +21,11 @@ export interface ISpacesDataModel extends EventEmitter {
         type: string,
         w?: number,
         h?: number,
+        x?: number,
+        y?: number,
         id?: string
     ): Promise<T>;
+    addFormattedComponents(componentsToAdd: ISpacesModel[]): Promise<void>;
     getComponent<T>(id: string): Promise<T>;
     removeComponent(id: string): void;
     updateGridItem(id: string, newLayout: Layout): void;
@@ -112,6 +115,14 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         return response;
     }
 
+    public async addFormattedComponents(componentsToAdd: ISpacesModel[]): Promise<void> {
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
+        componentsToAdd.forEach(async (componentTemplate) => {
+            await this.addComponent(componentTemplate.type, componentTemplate.layout.w,
+                componentTemplate.layout.h, componentTemplate.layout.x, componentTemplate.layout.y);
+        });
+    }
+
     public async setComponentToolbar(
         id: string,
         type: string,
@@ -164,9 +175,11 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         type: string,
         w: number = 6,
         h: number = 2,
+        x: number = 0,
+        y: number = 0,
         id?: string,
     ): Promise<T> {
-        const defaultLayout = { x: 0, y: 0, w, h };
+        const defaultLayout = { x, y, w, h };
         return this.addComponentInternal<T>(type, defaultLayout, id);
     }
 

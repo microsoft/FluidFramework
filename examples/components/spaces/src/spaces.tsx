@@ -5,6 +5,7 @@
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+import { Layout } from "react-grid-layout";
 import {
     PrimedComponent,
     PrimedComponentFactory,
@@ -17,7 +18,8 @@ import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import { ISpacesDataModel, SpacesDataModel } from "./dataModel";
 import { SpacesGridView } from "./view";
 import { ComponentToolbar, ComponentToolbarName } from "./components";
-import { IComponentToolbarConsumer } from "./interfaces";
+import { IComponentToolbarConsumer, Templates } from "./interfaces";
+import { InternalRegistry } from ".";
 
 /**
  * Spaces is the Fluid
@@ -57,12 +59,14 @@ export class Spaces extends PrimedComponent
     protected async componentInitializingFirstTime(props?: any) {
         this.root.createSubDirectory("component-list");
         this.root.set("componentToolbarId", this.componentToolbarId);
-        this.initializeDataModel();
+        await this.initializeDataModel();
         this.componentToolbar =
             await this.dataModel.addComponent<ComponentToolbar>(
                 ComponentToolbarName,
                 4,
                 4,
+                0,
+                0,
                 Spaces.defaultComponentToolbarId,
             );
         (this.componentToolbar as ComponentToolbar).changeEditState(true);
@@ -75,7 +79,7 @@ export class Spaces extends PrimedComponent
 
     protected async componentInitializingFromExisting() {
         this.componentToolbarId = this.root.get("componentToolbarId");
-        this.initializeDataModel();
+        await this.initializeDataModel();
         this.componentToolbar = await this.dataModel.getComponentToolbar();
     }
 
@@ -104,13 +108,29 @@ export class Spaces extends PrimedComponent
                     /* eslint-disable-next-line @typescript-eslint/no-floating-promises */
                     this.dataModel.addComponent(type, w, h);
                 },
+                addTemplate: async (template: Templates) => {
+                    const registry = await this.context.hostRuntime.IComponentRegistry.get("");
+                    if (registry) {
+                        const registryDetails = (registry as IComponent).IComponentRegistryDetails;
+                        if (registryDetails) {
+                            const componentRegistryEntries = (registryDetails as InternalRegistry)
+                                .getFromTemplate(template);
+                            // eslint-disable-next-line @typescript-eslint/no-misused-promises
+                            componentRegistryEntries.forEach(async (componentRegistryEntry) => {
+                                const templateLayout: Layout = componentRegistryEntry.templates[template];
+                                await this.dataModel.addComponent(
+                                    componentRegistryEntry.type, templateLayout.w, templateLayout.h);
+                            });
+                        }
+                    }
+                },
                 saveLayout: () => this.dataModel.saveLayout(),
                 toggleEditable: (isEditable?: boolean) =>  this.dataModel.emit("editableUpdated", isEditable),
             });
         }
     }
 
-    private initializeDataModel() {
+    private async initializeDataModel() {
         this.dataModelInternal =
             new SpacesDataModel(
                 this.root,

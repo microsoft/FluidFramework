@@ -57,6 +57,11 @@ export class InternalRegistry implements IComponentRegistry {
     public getFromCapabilities(type: keyof IComponent): IContainerComponentDetails[] {
         return this.containerComponentArray.filter((componentDetails) => componentDetails.capabilities.includes(type));
     }
+
+    public getFromTemplate(template: Templates): IContainerComponentDetails[] {
+        return this.containerComponentArray.filter((componentDetails) =>
+            componentDetails.templates[template] !== undefined);
+    }
 }
 
 const generateFactory = () => {
