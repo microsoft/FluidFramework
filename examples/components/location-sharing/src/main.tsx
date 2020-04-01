@@ -197,7 +197,7 @@ class LocationSharingView extends React.Component<ILocationSharingViewProps, ILo
                         bootstrapURLKeys={{ key: googleMapsApiKey }}
                         defaultCenter={mapCenter}
                         defaultZoom={mapZoom}
-                        onClick={({ x, y, lat, lng, event }) => this.setState({lastClickedPosition: {lat, lng}})}
+                        onClick={({ lat, lng }) => this.setState({lastClickedPosition: {lat, lng}})}
                     >
                         {markers}
                     </GoogleMapReact>

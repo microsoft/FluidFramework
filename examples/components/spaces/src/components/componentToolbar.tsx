@@ -23,6 +23,7 @@ import {
     IComponentCallable,
     IComponentCallbacks,
 } from "..";
+import { Templates } from "../interfaces";
 
 const componentToolbarStyle: React.CSSProperties = { position: "absolute", top: 10, left: 10, zIndex: 1000 };
 
@@ -97,6 +98,7 @@ interface IComponentToolbarViewProps {
 interface IComponentToolbarViewState {
     isEditable: boolean;
     isComponentListOpen: boolean;
+    isTemplateListOpen: boolean;
 }
 
 class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, IComponentToolbarViewState> {
@@ -109,6 +111,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
         this.state = {
             isEditable: props.root.get("isEditable"),
             isComponentListOpen: false,
+            isTemplateListOpen: false,
         };
         props.root.on("valueChanged", (change, local) => {
             if (change.key === "isEditable") {
@@ -132,24 +135,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
     }
 
     render(){
-        const { isComponentListOpen } = this.state;
-        const editableButtons: JSX.Element[] = [];
-        if (isComponentListOpen) {
-            this.supportedComponentList.forEach(((supportedComponent: IContainerComponentDetails) => {
-                editableButtons.push(
-                    <Button
-                        style={{width: "20vh"}}
-                        key={`componentToolbarButton-${supportedComponent.type}`}
-                        iconProps={{ iconName: supportedComponent.fabricIconName }}
-                        onClick={async () =>
-                            this.emitAddComponentEvent(supportedComponent.type, 20, 5)}
-                    >
-                        {supportedComponent.friendlyName}
-                    </Button>
-                    ,
-                );
-            }));
-        }
+        const { isComponentListOpen, isTemplateListOpen, isEditable } = this.state;
 
         const componentsButton = (
             <Button
@@ -160,6 +146,57 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
                 {"Add Components"}
             </Button>
         );
+        const componentButtonList: JSX.Element[] = [];
+        if (isComponentListOpen) {
+            this.supportedComponentList.forEach(((supportedComponent: IContainerComponentDetails) => {
+                componentButtonList.push(
+                    <Button
+                        style={{width: "20vh"}}
+                        key={`componentToolbarButton-${supportedComponent.type}`}
+                        iconProps={{ iconName: supportedComponent.fabricIconName }}
+                        onClick={async () => {
+                            this.emitAddComponentEvent(supportedComponent.type, 20, 5);
+                            this.setState({isComponentListOpen: false});
+                        }}
+                    >
+                        {supportedComponent.friendlyName}
+                    </Button>
+                    ,
+                );
+            }));
+        }
+
+        const templatesButton = (
+            <Button
+                iconProps={{ iconName: isTemplateListOpen ? "ChevronUpEnd6" : "ChevronDownEnd6" }}
+                style={{width: "20vh", height: "5vh"}}
+                onClick={() => this.setState({isTemplateListOpen: !isTemplateListOpen })}
+            >
+                {"Add Templates"}
+            </Button>
+        );
+        const templateButtonList: JSX.Element[] = [];
+        if (isTemplateListOpen) {
+            // eslint-disable-next-line no-restricted-syntax
+            for (const template in Templates){
+                if (template) {
+                    templateButtonList.push(
+                        <Button
+                            style={{width: "20vh"}}
+                            key={`componentToolbarButton-${template}`}
+                            onClick={async () => {
+                                this.emitAddComponentEvent(template, 20, 5);
+                                this.setState({isTemplateListOpen: false});
+                            }}
+                        >
+                            {Templates[template]}
+                        </Button>
+                        ,
+                    );
+                }
+            }
+        }
+
         return (
             <div style={componentToolbarStyle}>
                 <Button
@@ -168,16 +205,26 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
                     iconProps={{ iconName: "BullseyeTargetEdit"}}
                     onClick={() => this.emitToggleEditable()}
                 >
-                    {`Edit: ${this.state.isEditable}`}
+                    {`Edit: ${isEditable}`}
                 </Button>
                 {this.state.isEditable ?
-                    <div style={{width: "20vh", height: "5vh", position: "absolute", left: "20vh", top: 0, margin: "1vh", zIndex: -1} as React.CSSProperties}>
-                        <Collapsible
-                            open={this.state.isComponentListOpen}
-                            trigger={componentsButton}
-                        >
-                            {editableButtons}
-                        </Collapsible>
+                    <div>
+                        <div style={{width: "20vh", height: "5vh", position: "absolute", left: "20vh", top: 0, margin: "1vh", zIndex: -1} as React.CSSProperties}>
+                            <Collapsible
+                                open={isTemplateListOpen}
+                                trigger={templatesButton}
+                            >
+                                {templateButtonList}
+                            </Collapsible>
+                        </div>
+                        <div style={{width: "20vh", height: "5vh", position: "absolute", left: "40vh", top: 0, margin: "1vh", zIndex: -1} as React.CSSProperties}>
+                            <Collapsible
+                                open={isComponentListOpen}
+                                trigger={componentsButton}
+                            >
+                                {componentButtonList}
+                            </Collapsible>
+                        </div>
                     </div>
                     : undefined}
             </div>

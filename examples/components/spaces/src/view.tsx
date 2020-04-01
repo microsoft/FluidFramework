@@ -35,7 +35,7 @@ const buttonStyle: React.CSSProperties = {
     height: "2rem",
 };
 
-const gridContainerStyle: React.CSSProperties = { paddingTop: "5rem", minHeight: "3000px" };
+const gridContainerStyle: React.CSSProperties = { paddingTop: "7rem", minHeight: "3000px" };
 
 /**
  * This wrapper handles the async-ness of loading a component.
