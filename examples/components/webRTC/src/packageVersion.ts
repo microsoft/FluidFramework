@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluid-example/web-rtc";
-export const pkgVersion = "0.16.0-1";
+export const pkgVersion = "0.16.0";
