@@ -152,50 +152,62 @@ export class SinglePromise<T> {
 export const delay = async (ms?: number) => new Promise((res) => setTimeout(res, ms));
 
 /**
- * Wraps an async function and the resulting Promise,
- * such that you can safely cache the result of some
- * async work without fear of race conditions or running it twice.
+ * A simple wrapper around Promise for when dealing with the
+ * Promise object itself, to help avoid incorrect awaiting.
  */
-export class CachablePromise<T> {
-    private p: Promise<T> | undefined;
-    constructor(
-        private readonly asyncFn: () => Promise<T>,
-    ) {}
-
-    public get promise(): Promise<T> {
-        if (this.p === undefined) {
-            this.p = this.asyncFn();
-        }
-        return this.p;
-    }
-}
-
 export interface PromiseHandle<T> {
-    p: Promise<T>,
+    promise: Promise<T>,
 }
 
 /**
  * A specialized cache for async work, allowing you to
  * safely cache the result of some async work
  * without fear of race conditions or running it twice.
- */export class PromiseRegistry<T> {
-    protected readonly cache = new Map<string, PromiseHandle<T>>();
+ */
+export class PromiseRegistry<T> {
+    private readonly registry = new Map<string, PromiseHandle<T>>();
 
-    public lookup = (key: string) => this.cache.get(key);
+    /**
+     * Get the Promise for the given key, or undefined if it's not found
+     */
+    public lookup = async (key: string) => this.registry.get(key)?.promise;
 
-    public unregister = (key: string) => this.cache.delete(key);
+    /**
+     * Remove the Promise for the given key,
+     * returning true if it was found and removed
+     */
+    public unregister = (key: string) => this.registry.delete(key);
 
-    public register(key: string, asyncFn: () => Promise<T>, expiryTime?: number): PromiseHandle<T> {
-        let handle = this.lookup(key);
+    /**
+     * Register the given async work to the given key, or return an existing Promise at that key if it exists.
+     * @param key - key name where to store the async work
+     * @param asyncFn - the async work to do and store, if not already in progress under the given key
+     * @param expiryTime - (optional) Automatically unregister the given key after some time
+     * @param unregisterOnError - (optional) If the stored Promise is rejected, should the given key be unregistered?
+     */
+    public async register(
+        key: string,
+        asyncFn: () => Promise<T>,
+        unregisterOnError?: (e: any) => boolean,
+        expiryTime?: number,
+        ): Promise<T> {
+            return this.synchronousRegister(key, asyncFn, unregisterOnError, expiryTime).promise;
+        }
+
+    private synchronousRegister(key: string, asyncFn: () => Promise<T>, unregisterOnError?: (e: any) => boolean, expiryTime?: number): PromiseHandle<T> {
+        // NOTE: Do not await asyncFn! Let the caller do so once register returns
+        let handle = this.registry.get(key);
         if (handle === undefined) {
             // Start asyncFn and put the Promise in the cache
             const promiseToCache = asyncFn();
-            handle = { p: promiseToCache };
-            this.cache.set(key, handle);
+            handle = { promise: promiseToCache };
+            this.registry.set(key, handle);
 
             // If asyncFn throws, remove the Promise from the cache
             promiseToCache.catch((error) => {
-                this.unregister(key);
+                if (unregisterOnError?.(error)) {
+                    this.unregister(key);
+                }
             });
 
             // Schedule garbage collection if required
@@ -209,8 +221,6 @@ export interface PromiseHandle<T> {
 
     private async gc(key: string, expiryTime: number) {
         await delay(expiryTime);
-        if (this.cache.has(key)) {
-            this.cache.delete(key);
-        }
+        this.registry.delete(key);
     }
 }
