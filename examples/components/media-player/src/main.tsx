@@ -177,7 +177,7 @@ class MediaPlayerView extends React.Component<IMediaPlayerViewProps, IMediaPlaye
                             />
                         </tr>
                         <tr>
-                            <div style={{marginTop: "2vh", textAlign: "center"}}>
+                            <div style={{marginTop: "2vh", textAlign: "center", background: "transparent"}}>
                                 <Text style={{color: "green"}}>{this.toTimeStamp(playedSeconds)}</Text>
                                 <Text>{" / "}</Text>
                                 <Text style={{color: "red"}}>{this.toTimeStamp(leaderSeconds)}</Text>
