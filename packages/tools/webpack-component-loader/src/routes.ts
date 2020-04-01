@@ -212,37 +212,16 @@ const fluid = (req: express.Request, res: express.Response, baseDir: string, opt
         var options = ${JSON.stringify(options)};
         var fluidStarted = false;
         const attached = "${req.params.openMode}" !== "detached";
-        const containerP = FluidLoader.start(
+        FluidLoader.start(
             "${documentId}",
             pkgJson,
             options,
             document.getElementById("content"),
+            document.getElementById("attach-button"),
+            document.getElementById("text"),
             attached)
-        .then(({container, urlD}) => {
-            fluidStarted = true;
-            const textarea = document.getElementById("text");
-            const attachButton = document.getElementById("attach-button");
-            if (attached) {
-                attachButton.style.display = "none";
-                textarea.style.display = "none";
-                urlD.resolve(window.location.href);
-            }
-            attachButton.disabled = false;
-            attachButton.onclick = () => {
-                container.attach({url: window.location.href}).then(
-                    () => {
-                        const text = window.location.href.replace("create", container.id);
-                        textarea.innerText = text;
-                        urlD.resolve(text);
-                        attachButton.style.display = "none"; 
-                        console.log("Fully attached!");
-                    },
-                    (error) => {
-                        alert(error);
-                    });
-            }
-        })
-        .catch((error) => alert(error));
+        .then(() => fluidStarted = true)
+        .catch((error) => console.error(error));
     </script>
 </body>
 </html>`;

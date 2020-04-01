@@ -274,8 +274,15 @@ export async function start(
     packageJson: IPackage,
     options: RouteOptions,
     div: HTMLDivElement,
+    attachButton: HTMLButtonElement,
+    textArea: HTMLTextAreaElement,
     attached: boolean,
-): Promise<{ container: Container, urlD: Deferred<string> }> {
+): Promise<void> {
+    if (attached) {
+        attachButton.style.display = "none";
+        textArea.style.display = "none";
+    }
+
     const {documentServiceFactory, connection} = getDocumentServiceFactory(documentId, options);
 
     const urlResolver = getUrlResolver(documentId, options, connection);
@@ -295,7 +302,7 @@ export async function start(
         scriptIds,
     );
     let container1: Container;
-    if (options.openMode === "detached" && !attached) {
+    if (!attached) {
         if (!codeDetails) {
             throw new Error("Code details must be defined for detached mode!!");
         }
@@ -308,6 +315,7 @@ export async function start(
         );
     }
 
+    attachButton.disabled = false;
     const urlDeferred = new Deferred<string>();
     // Side-by-side mode
     if (options.mode === "local" && !options.single) {
@@ -338,7 +346,22 @@ export async function start(
     } else {
         await startRendering(container1, "/", div);
     }
-    return {container: container1, urlD: urlDeferred};
+    if (!attached) {
+        attachButton.onclick = async () => {
+            await container1.attach({url: window.location.href})
+                .then(() => {
+                    const text = window.location.href.replace("create", container1.id);
+                    textArea.innerText = text;
+                    urlDeferred.resolve(text);
+                    attachButton.style.display = "none";
+                },
+                (error) => {
+                    throw new Error(error);
+                });
+        };
+    } else {
+        urlDeferred.resolve(window.location.href);
+    }
 }
 
 async function startRendering(container: Container, url: string, div: HTMLDivElement) {
