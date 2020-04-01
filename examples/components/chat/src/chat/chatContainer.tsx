@@ -68,11 +68,6 @@ export class ChatContainer extends React.Component<IChatContainerProps, IChatCon
         );
     }
 
-    public getInitialChat(oldMessages: IMessage[]): IMessage[] {
-
-        return oldMessages;
-    }
-
     public inputChangeHandler = (event: React.ChangeEvent<HTMLInputElement>) =>
         this.setState({ inputMessage: event.target.value });
 
@@ -95,21 +90,4 @@ export class ChatContainer extends React.Component<IChatContainerProps, IChatCon
         newMessages.push(newMessage);
         root.set(MessagesKey, newMessages);
     };
-
-    // private convertMessage(message: IMessage): IMessage | undefined {
-    //     if (message.content.startsWith(transPrefix)) {
-    //         const lang = message.content.substr(transPrefix.length);
-    //         if (message.author === this.props.clientId) {
-    //             this.selfLanguage = lang;
-    //         }
-    //         this.toLanguages.add(lang);
-    //         return message;
-    //     } else if (message.author === this.props.clientId) {
-    //         if (!message.translated) {
-    //             return message;
-    //         }
-    //     } else if (message.language === this.selfLanguage) {
-    //         return message;
-    //     }
-    // }
 }
