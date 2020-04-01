@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-server-test-utils",
-  "version": "0.1004.0-0",
+  "version": "0.1004.0",
   "description": "Fluid test utility methods",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",

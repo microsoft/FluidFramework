@@ -3,12 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IComponentHandle,
-    IComponentHTMLView,
-    IProvideComponentHTMLView,
-} from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { IComponentHTMLView, IProvideComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 import uuid from "uuid/v4";
 

@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-server-memory-orderer",
-  "version": "0.1004.0-0",
+  "version": "0.1004.0",
   "description": "Fluid ordering services",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",

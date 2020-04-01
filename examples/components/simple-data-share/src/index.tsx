@@ -4,8 +4,8 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
-import { IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
 import { Counter, CounterValueType } from "@microsoft/fluid-map";
+import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 // Import our local components
 // eslint-disable-next-line import/no-internal-modules

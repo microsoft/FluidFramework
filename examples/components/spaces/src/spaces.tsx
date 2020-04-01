@@ -3,22 +3,18 @@
  * Licensed under the MIT License.
  */
 
+import * as React from "react";
+import * as ReactDOM from "react-dom";
 import {
     PrimedComponent,
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
-import {
-    IComponentHTMLView,
-    IComponent,
-} from "@microsoft/fluid-component-core-interfaces";
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IProvideComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { SharedObjectSequence } from "@microsoft/fluid-sequence";
-
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 import { ISpacesDataModel, SpacesDataModel } from "./dataModel";
-
 import { SpacesGridView } from "./view";
 import { ComponentToolbar, ComponentToolbarName } from "./components";
 import { IComponentToolbarConsumer } from "./interfaces";
