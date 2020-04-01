@@ -52,4 +52,4 @@ intel_modules/
 temp_modules/
 
 # Generated TypeScript typings files from css (https://github.com/Jimdo/typings-for-css-modules-loader)
-*.css.d.ts
+# *.css.d.ts
