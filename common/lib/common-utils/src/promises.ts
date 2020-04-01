@@ -148,3 +148,69 @@ export class SinglePromise<T> {
         return this.pResponse;
     }
 }
+
+export const delay = async (ms?: number) => new Promise((res) => setTimeout(res, ms));
+
+/**
+ * Wraps an async function and the resulting Promise,
+ * such that you can safely cache the result of some
+ * async work without fear of race conditions or running it twice.
+ */
+export class CachablePromise<T> {
+    private p: Promise<T> | undefined;
+    constructor(
+        private readonly asyncFn: () => Promise<T>,
+    ) {}
+
+    public get promise(): Promise<T> {
+        if (this.p === undefined) {
+            this.p = this.asyncFn();
+        }
+        return this.p;
+    }
+}
+
+export interface PromiseHandle<T> {
+    p: Promise<T>,
+}
+
+/**
+ * A specialized cache for async work, allowing you to
+ * safely cache the result of some async work
+ * without fear of race conditions or running it twice.
+ */export class PromiseRegistry<T> {
+    protected readonly cache = new Map<string, PromiseHandle<T>>();
+
+    public lookup = (key: string) => this.cache.get(key);
+
+    public unregister = (key: string) => this.cache.delete(key);
+
+    public register(key: string, asyncFn: () => Promise<T>, expiryTime?: number): PromiseHandle<T> {
+        let handle = this.lookup(key);
+        if (handle === undefined) {
+            // Start asyncFn and put the Promise in the cache
+            const promiseToCache = asyncFn();
+            handle = { p: promiseToCache };
+            this.cache.set(key, handle);
+
+            // If asyncFn throws, remove the Promise from the cache
+            promiseToCache.catch((error) => {
+                this.unregister(key);
+            });
+
+            // Schedule garbage collection if required
+            if (expiryTime) {
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                this.gc(key, expiryTime);
+            }
+        }
+        return handle;
+    }
+
+    private async gc(key: string, expiryTime: number) {
+        await delay(expiryTime);
+        if (this.cache.has(key)) {
+            this.cache.delete(key);
+        }
+    }
+}
