@@ -71,9 +71,9 @@ Fluid guarantees eventual consistency via total order broadcast. That is, when a
 changed locally by a client, that change – that is, the operation – is first sent to the Fluid server, which does three
 things:
 
-Assigns a monotonically increasing sequence number to the operation; this is the "total order" part of total order broadcast
-Broadcasts the operation to all other connected clients; this is the "broadcast" part of total order broadcast
-Stores the operation's data
+- Assigns a monotonically increasing sequence number to the operation; this is the "total order" part of total order broadcast
+- Broadcasts the operation to all other connected clients; this is the "broadcast" part of total order broadcast
+- Stores the operation's data
 
 This means that each client can apply every operation from the server to their local state in the same order, which in
 turn means that each client will eventually be consistent with the client that originated the change.
