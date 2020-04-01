@@ -62,6 +62,7 @@ import {
 import {
     FlushMode,
     IAttachMessage,
+    IComponentContext,
     IComponentRegistry,
     IComponentRuntime,
     IEnvelope,
@@ -963,6 +964,35 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.contexts.set(id, context);
 
         return context;
+    }
+
+    public async createComponentWithRealizationFn(
+        pkg: string[],
+        realizationFn?: (context: IComponentContext) => void,
+    ): Promise<IComponentRuntime> {
+        this.verifyNotClosed();
+
+        // tslint:disable-next-line: no-unsafe-any
+        const id: string = uuid();
+        const context = new LocalComponentContext(
+            id,
+            pkg,
+            this,
+            this.storage,
+            this.context.scope,
+            this.summaryTracker.createOrGetChild(id, this.deltaManager.referenceSequenceNumber),
+            (cr: IComponentRuntime) => this.attachComponent(cr),
+            undefined /* #1635: Remove LocalComponentContext createProps */);
+
+        const deferred = new Deferred<ComponentContext>();
+        this.contextsDeferred.set(id, deferred);
+        this.contexts.set(id, context);
+
+        if (realizationFn) {
+            return context.realizeWithFn(realizationFn);
+        } else {
+            return context.realize();
+        }
     }
 
     public getQuorum(): IQuorum {
