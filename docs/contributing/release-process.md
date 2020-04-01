@@ -17,8 +17,8 @@ sidebar: auto
 
 ## Release status
 
-Current release version: `0.14.x`
-Supported releases: `>=0.13.x, <=0.14.x`
+- Current release version: {{ $themeConfig.RELEASE_VERSION }}
+- Supported former releases: {{ $themeConfig.N1_VERSION }}
 
 
 ### Release v0.14.x - 2020-03-02
