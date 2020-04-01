@@ -33,6 +33,10 @@ export class ChannelStorageService implements IObjectStorageService {
         }
     }
 
+    public contains(path: string){
+        return this.flattenedTree[path] !== undefined;
+    }
+
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public read(path: string): Promise<string> {
         const id = this.getIdForPath(path);
