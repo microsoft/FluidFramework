@@ -123,25 +123,25 @@ export class LazyPromise<T> implements Promise<T> {
  */
 export class SinglePromise<T> {
     private pResponse: Promise<T> | undefined;
-    private active: boolean;
+    private isRunning: boolean;
     constructor(private readonly fn: () => Promise<T>) {
-        this.active = false;
+        this.isRunning = false;
     }
 
     public get response(): Promise<T> {
         // If we are actively running and we have a response return it
-        if (this.active && this.pResponse) {
+        if (this.isRunning && this.pResponse) {
             return this.pResponse;
         }
 
-        this.active = true;
+        this.isRunning = true;
         this.pResponse = this.fn()
             .then((response) => {
-                this.active = false;
+                this.isRunning = false;
                 return response;
             })
             .catch(async (e) => {
-                this.active = false;
+                this.isRunning = false;
                 return Promise.reject(e);
             });
 
@@ -149,6 +149,10 @@ export class SinglePromise<T> {
     }
 }
 
+/**
+ * A Promise wrapper for window.setTimeout
+ * @param ms - (optional) How many ms to wait before continuing
+ */
 export const delay = async (ms?: number) => new Promise((res) => setTimeout(res, ms));
 
 /**
@@ -190,11 +194,16 @@ export class PromiseRegistry<T> {
         asyncFn: () => Promise<T>,
         unregisterOnError?: (e: any) => boolean,
         expiryTime?: number,
-        ): Promise<T> {
-            return this.synchronousRegister(key, asyncFn, unregisterOnError, expiryTime).promise;
-        }
+    ): Promise<T> {
+        return this.synchronousRegister(key, asyncFn, unregisterOnError, expiryTime).promise;
+    }
 
-    private synchronousRegister(key: string, asyncFn: () => Promise<T>, unregisterOnError?: (e: any) => boolean, expiryTime?: number): PromiseHandle<T> {
+    private synchronousRegister(
+        key: string,
+        asyncFn: () => Promise<T>,
+        unregisterOnError?: (e: any) => boolean,
+        expiryTime?: number,
+    ): PromiseHandle<T> {
         // NOTE: Do not await asyncFn! Let the caller do so once register returns
         let handle = this.registry.get(key);
         if (handle === undefined) {
