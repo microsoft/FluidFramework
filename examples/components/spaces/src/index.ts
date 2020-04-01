@@ -24,7 +24,7 @@ import {
 } from "./components";
 import { Spaces } from "./spaces";
 import {
-    IContainerComponentDetails,
+    IContainerComponentDetails, Templates,
 } from "./interfaces";
 
 export * from "./spaces";
@@ -67,6 +67,12 @@ const generateFactory = () => {
             friendlyName: "Media Player",
             fabricIconName: "Media",
             capabilities: ["IComponentHTMLView"],
+            templates: {
+                [Templates.CollaborativeCoding]: { x: 0, y: 0, w: 6, h: 2 },
+                [Templates.MediaRoom]: { x: 0, y: 0, w: 6, h: 2 },
+                [Templates.CovidStarterKit]: { x: 0, y: 0, w: 6, h: 2 },
+                [Templates.Classroom]: { x: 0, y: 0, w: 6, h: 2 },
+            },
         },
         {
             type: "chat",
@@ -74,6 +80,12 @@ const generateFactory = () => {
             capabilities: ["IComponentHTMLView"],
             friendlyName: "Chat",
             fabricIconName: "ChatInviteFriend",
+            templates: {
+                [Templates.CollaborativeCoding]: { x: 0, y: 0, w: 6, h: 2 },
+                [Templates.MediaRoom]: { x: 0, y: 0, w: 6, h: 2 },
+                [Templates.CovidStarterKit]: { x: 0, y: 0, w: 6, h: 2 },
+                [Templates.Classroom]: { x: 0, y: 0, w: 6, h: 2 },
+            },
         },
         {
             type: "location",
@@ -81,6 +93,9 @@ const generateFactory = () => {
             capabilities: ["IComponentHTMLView"],
             friendlyName: "Location Sharing",
             fabricIconName: "Location",
+            templates: {
+                [Templates.CovidStarterKit]: { x: 0, y: 0, w: 6, h: 2 },
+            },
         },
         {
             type: "codemirror",
@@ -88,6 +103,9 @@ const generateFactory = () => {
             capabilities: ["IComponentHTMLView"],
             friendlyName: "Code",
             fabricIconName: "Code",
+            templates: {
+                [Templates.CollaborativeCoding]: { x: 0, y: 0, w: 6, h: 2 },
+            },
         },
         {
             type: TextBoxName as string,
@@ -95,6 +113,10 @@ const generateFactory = () => {
             friendlyName: FriendlyTextBoxName,
             fabricIconName: "Edit",
             capabilities: ["IComponentHTMLView"],
+            templates: {
+                [Templates.CollaborativeCoding]: { x: 0, y: 0, w: 6, h: 2 },
+                [Templates.Classroom]: { x: 0, y: 0, w: 6, h: 2 },
+            },
         },
         {
             type: "prosemirror",
@@ -102,6 +124,9 @@ const generateFactory = () => {
             capabilities: ["IComponentHTMLView"],
             friendlyName: "Rich Text",
             fabricIconName: "FabricTextHighlight",
+            templates: {
+                [Templates.Classroom]: { x: 0, y: 0, w: 6, h: 2 },
+            },
         },
     ];
 

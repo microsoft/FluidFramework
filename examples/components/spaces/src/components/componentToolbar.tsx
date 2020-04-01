@@ -5,6 +5,7 @@
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+import Collapsible from 'react-collapsible';
 import {
     PrimedComponent,
     PrimedComponentFactory,
@@ -95,6 +96,7 @@ interface IComponentToolbarViewProps {
 
 interface IComponentToolbarViewState {
     isEditable: boolean;
+    isComponentListOpen: boolean;
 }
 
 class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, IComponentToolbarViewState> {
@@ -106,6 +108,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
         this.supportedComponentList = props.supportedComponentList;
         this.state = {
             isEditable: props.root.get("isEditable"),
+            isComponentListOpen: false,
         };
         props.root.on("valueChanged", (change, local) => {
             if (change.key === "isEditable") {
@@ -129,30 +132,54 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
     }
 
     render(){
+        const { isComponentListOpen } = this.state;
         const editableButtons: JSX.Element[] = [];
-        this.supportedComponentList.forEach(((supportedComponent: IContainerComponentDetails) => {
-            editableButtons.push(
-                <Button
-                    key={`componentToolbarButton-${supportedComponent.type}`}
-                    iconProps={{ iconName: supportedComponent.fabricIconName }}
-                    onClick={async () =>
-                        this.emitAddComponentEvent(supportedComponent.type, 20, 5)}
-                >
-                    {supportedComponent.friendlyName}
-                </Button>,
-            );
-        }));
+        if (isComponentListOpen) {
+            this.supportedComponentList.forEach(((supportedComponent: IContainerComponentDetails) => {
+                editableButtons.push(
+                    <Button
+                        style={{width: "20vh"}}
+                        key={`componentToolbarButton-${supportedComponent.type}`}
+                        iconProps={{ iconName: supportedComponent.fabricIconName }}
+                        onClick={async () =>
+                            this.emitAddComponentEvent(supportedComponent.type, 20, 5)}
+                    >
+                        {supportedComponent.friendlyName}
+                    </Button>
+                    ,
+                );
+            }));
+        }
 
+        const componentsButton = (
+            <Button
+                iconProps={{ iconName: isComponentListOpen ? "ChevronUpEnd6" : "ChevronDownEnd6" }}
+                style={{width: "20vh", height: "5vh"}}
+                onClick={() => this.setState({isComponentListOpen: !isComponentListOpen })}
+            >
+                {"Add Components"}
+            </Button>
+        );
         return (
             <div style={componentToolbarStyle}>
                 <Button
                     id="edit"
+                    style={{width: "20vh", height: "5vh", position: "absolute", left: 0, top: 0, margin: "1vh"}}
                     iconProps={{ iconName: "BullseyeTargetEdit"}}
                     onClick={() => this.emitToggleEditable()}
                 >
                     {`Edit: ${this.state.isEditable}`}
                 </Button>
-                {this.state.isEditable ? editableButtons : undefined}
+                {this.state.isEditable ?
+                    <div style={{width: "20vh", height: "5vh", position: "absolute", left: "20vh", top: 0, margin: "1vh", zIndex: -1} as React.CSSProperties}>
+                        <Collapsible
+                            open={this.state.isComponentListOpen}
+                            trigger={componentsButton}
+                        >
+                            {editableButtons}
+                        </Collapsible>
+                    </div>
+                    : undefined}
             </div>
         );
     }
