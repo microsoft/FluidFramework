@@ -13,6 +13,7 @@ import {
 import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
 import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
 import { MediaPlayer } from "../../media-player/src/main";
+import { LocationSharing } from "../../location-sharing/src/main";
 import { Chat } from "../../chat/src/index";
 import {
     ComponentToolbar,
@@ -73,6 +74,13 @@ const generateFactory = () => {
             capabilities: ["IComponentHTMLView"],
             friendlyName: "Chat",
             fabricIconName: "ChatInviteFriend",
+        },
+        {
+            type: "location",
+            factory: Promise.resolve(LocationSharing.getFactory()),
+            capabilities: ["IComponentHTMLView"],
+            friendlyName: "Location Sharing",
+            fabricIconName: "Location",
         },
         {
             type: "codemirror",

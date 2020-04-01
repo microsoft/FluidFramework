@@ -4,12 +4,25 @@
  */
 
 import * as React from "react";
+import { MarkerType } from "../interfaces/MarkerInteraces";
+import {
+    IconButton,
+    IContextualMenuProps,
+    TextField,
+    initializeIcons,
+} from "office-ui-fabric-react";
 
+initializeIcons(); 
 interface MarkerProps {
-   key: string,
-   text: string,
-   lat: number,
-   lng: number
+    id: string,
+    key: string,
+    text: string,
+    lat: number,
+    lng: number,
+    type: MarkerType,
+    onValueChange?: (event: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>, newValue?: string) => void;
+    onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+    removeMarker?: (id: string) => void;
 }
 
 interface MarkerState {
@@ -23,16 +36,15 @@ class Marker extends React.Component<MarkerProps, MarkerState> {
             position: "absolute",
             top: "50%",
             left: "50%",
-            width: "18px",
-            height: "18px",
-            backgroundColor: "black",
-            border: "2px solid #fff",
-            borderRadius: "100%",
             userSelect: "none",
             transform: "translate(-50%, -50%)",
-            "&:hover": {
-                zIndex: 1
-            }
+            zIndex: 1
+        } as React.CSSProperties,
+        inputContainer: {
+            backgroundColor: "white",
+            border: "1px black solid",
+            borderRadius: "2px",
+            width: "10vh"
         } as React.CSSProperties
     }
 
@@ -45,11 +57,67 @@ class Marker extends React.Component<MarkerProps, MarkerState> {
     }
 
     public render() {
-        return (
-          <div style={this.styles.marker}>
-            <label>{this.props.text}</label>
-          </div>  
-        );
+        const {id, lat, lng, type, text, removeMarker, onKeyDown, onValueChange} = this.props;
+        var randomColor = '#'+Math.floor(Math.random()*16777215).toString(16);
+        const menuProps: IContextualMenuProps = {
+            items: [
+                {
+                    key: 'goTo',
+                    text: `Go to ${text}`,
+                    iconProps: { iconName: 'NavigateForward' },
+                    onClick: () => {
+                        window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`);
+                    }
+                },
+            ],
+            directionalHintFixed: true
+        };
+        const markerStyles = {...this.styles.marker, ...{
+            color: randomColor, 
+            border: `${randomColor} solid 1px`
+        }};
+        switch(type) {
+            case MarkerType.Pin:
+                if (removeMarker) {
+                    menuProps.items.push({
+                        key: 'remove',
+                        text: 'Remove',
+                        iconProps: { iconName: 'RemoveFilter' },
+                        onClick: () => removeMarker(id)
+                    });
+                }
+                return (
+                    <IconButton 
+                        style={markerStyles}
+                        menuProps={menuProps}
+                        iconProps={{iconName : "Location"}}
+                        title={this.props.text}
+                    />
+                );
+            case MarkerType.User:
+                return (
+                    <IconButton 
+                        style={markerStyles}
+                        menuProps={menuProps}
+                        iconProps={{iconName : "UserOptional"}}
+                        title={this.props.text}
+                    />
+                );
+            case MarkerType.Input:
+                return (
+                    <div style={this.styles.inputContainer}>
+                        <TextField
+                            style={{fontSize: "12px"}}
+                            onChange={onValueChange} 
+                            onKeyDown={onKeyDown} 
+                            value={this.props.text}
+                            onClick={(event) => event.stopPropagation() }
+                        />
+                    </div>
+                    
+                );
+        }
+        
     }
 }
 
