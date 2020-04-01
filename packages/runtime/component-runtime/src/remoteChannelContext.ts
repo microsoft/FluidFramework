@@ -111,7 +111,7 @@ export class RemoteChannelContext implements IChannelContext {
 
         let attributes: IChannelAttributes | undefined;
         if(this.services.objectStorage.contains(".attributes")){
-            await readAndParse<IChannelAttributes | undefined>(
+            attributes = await readAndParse<IChannelAttributes | undefined>(
                 this.services.objectStorage,
                 ".attributes");
         }
