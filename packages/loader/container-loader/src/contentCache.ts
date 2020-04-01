@@ -8,31 +8,6 @@ import { EventEmitter } from "events";
 import { IContentMessage } from "@microsoft/fluid-protocol-definitions";
 import { debug } from "./debug";
 
-export class ContentCache extends EventEmitter {
-    private readonly cache = new Map<string, RingBuffer>();
-
-    constructor(private readonly log2Capacity: number) {
-        super();
-    }
-
-    public set(message: IContentMessage) {
-        const clientId = message.clientId;
-        if (!this.cache.has(clientId)) {
-            this.cache.set(clientId, new RingBuffer(this.log2Capacity));
-        }
-        this.cache.get(clientId)!.enqueue(message);
-        this.emit("content", clientId);
-    }
-
-    public get(clientId: string): IContentMessage | undefined {
-        return this.cache.has(clientId) ? this.cache.get(clientId)!.dequeue() : undefined;
-    }
-
-    public peek(clientId: string): IContentMessage | undefined {
-        return this.cache.has(clientId) ? this.cache.get(clientId)!.peek() : undefined;
-    }
-}
-
 /* eslint-disable no-bitwise */
 class RingBuffer {
     private log2Capacity: number;
@@ -101,3 +76,28 @@ class RingBuffer {
     }
 }
 /* eslint-enable no-bitwise */
+
+export class ContentCache extends EventEmitter {
+    private readonly cache = new Map<string, RingBuffer>();
+
+    constructor(private readonly log2Capacity: number) {
+        super();
+    }
+
+    public set(message: IContentMessage) {
+        const clientId = message.clientId;
+        if (!this.cache.has(clientId)) {
+            this.cache.set(clientId, new RingBuffer(this.log2Capacity));
+        }
+        this.cache.get(clientId)!.enqueue(message);
+        this.emit("content", clientId);
+    }
+
+    public get(clientId: string): IContentMessage | undefined {
+        return this.cache.has(clientId) ? this.cache.get(clientId)!.dequeue() : undefined;
+    }
+
+    public peek(clientId: string): IContentMessage | undefined {
+        return this.cache.has(clientId) ? this.cache.get(clientId)!.peek() : undefined;
+    }
+}

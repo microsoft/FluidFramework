@@ -26,7 +26,7 @@ class ScriptManager {
 
     public async loadScript(scriptUrl: string, library: string): Promise<any> {
         let scriptP = this.loadCache.get(scriptUrl);
-        if (!scriptP) {
+        if (scriptP === undefined) {
             scriptP = new Promise<any>((resolve, reject) => {
                 if (this.isBrowser) {
                     const script = document.createElement("script");
@@ -103,7 +103,7 @@ export class WebCodeLoader implements ICodeLoader {
                 return maybePkg;
             }
         }
-        if (this.whiteList && !(await this.whiteList.testSource(resolved))) {
+        if (this.whiteList !== undefined && !(await this.whiteList.testSource(resolved))) {
             throw new Error("Attempted to load invalid code package url");
         }
 
