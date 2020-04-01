@@ -27,7 +27,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
     }
 
     public attach(handler: IDeltaHandler) {
-        assert(!this._handler);
+        assert(this._handler === undefined);
         this._handler = handler;
     }
 

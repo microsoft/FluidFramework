@@ -6,9 +6,6 @@
 import * as assert from "assert";
 import { ITelemetryErrorEvent, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import {
-    IComponent,
-} from "@microsoft/fluid-container-definitions";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@microsoft/fluid-common-utils";
 import { ConnectionState, ISequencedDocumentMessage, ITree, MessageType } from "@microsoft/fluid-protocol-definitions";
 import {
@@ -27,11 +24,11 @@ import { ISharedObject } from "./types";
  */
 export abstract class SharedObject extends EventEmitterWithErrorHandling implements ISharedObject {
     /**
-     * @param obj - The object to check if it is a SharedObject
-     * @returns Returns true if the object is a SharedObject
+     * @param obj - The thing to check if it is a SharedObject
+     * @returns Returns true if the thing is a SharedObject
      */
     public static is(obj: any): obj is SharedObject {
-        return obj && !!(obj as IComponent).ISharedObject;
+        return obj?.ISharedObject !== undefined;
     }
 
     public get ISharedObject() { return this; }
@@ -175,7 +172,7 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
      * {@inheritDoc ISharedObject.isLocal}
      */
     public isLocal(): boolean {
-        return !this.services;
+        return this.services === undefined;
     }
 
     /**
@@ -372,7 +369,7 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
                 debug(`${this.id} is now connecting`);
                 break;
 
-            case ConnectionState.Connected:
+            case ConnectionState.Connected: {
                 // Extract all un-ack'd payload operation
                 const pendingOps = this.pendingOps.toArray().map((value) => value.content);
                 this.pendingOps.clear();
@@ -382,8 +379,8 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
                 // - we are caught up enough to attempt to send messages
                 this.onConnect(pendingOps);
                 this.emit("connected");
-
                 break;
+            }
 
             default:
                 assert.ok(false, `Unknown ConnectionState ${state}`);

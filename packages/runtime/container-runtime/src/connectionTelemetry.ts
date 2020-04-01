@@ -11,14 +11,6 @@ import {
     ISequencedDocumentMessage,
 } from "@microsoft/fluid-protocol-definitions";
 
-export function ReportConnectionTelemetry(
-    clientId: string | undefined,
-    deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-    logger: ITelemetryLogger)
-{
-    new ConnectionTelemetry(clientId, deltaManager, logger);
-}
-
 class ConnectionTelemetry {
     private pongCount: number = 0;
     private socketLatency = 0;
@@ -92,4 +84,12 @@ class ConnectionTelemetry {
             this.clientSequenceNumberForLatencyStatistics = undefined;
         }
     }
+}
+
+export function ReportConnectionTelemetry(
+    clientId: string | undefined,
+    deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+    logger: ITelemetryLogger)
+{
+    new ConnectionTelemetry(clientId, deltaManager, logger);
 }

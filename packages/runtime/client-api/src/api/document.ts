@@ -228,7 +228,7 @@ async function initializeChaincode(container: Container, pkg: IFluidCodeDetails)
     let code = quorum.get("code");
 
     // Back compat
-    if (!code) {
+    if (code === undefined) {
         code = quorum.get("code2");
     }
 

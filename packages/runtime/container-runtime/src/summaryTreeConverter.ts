@@ -99,7 +99,7 @@ export class SummaryTreeConverter {
                 let value: SummaryObject;
 
                 switch (entry.type) {
-                    case TreeEntry[TreeEntry.Blob]:
+                    case TreeEntry[TreeEntry.Blob]: {
                         const blob = entry.value as IBlob;
                         let content: string | Buffer;
                         if (blob.encoding === "base64") {
@@ -116,6 +116,7 @@ export class SummaryTreeConverter {
                         value = summaryBlob;
                         summaryStats.blobNodeCount++;
                         break;
+                    }
 
                     case TreeEntry[TreeEntry.Tree]:
                         value = SummaryTreeConverter.convertToSummaryTreeCore(

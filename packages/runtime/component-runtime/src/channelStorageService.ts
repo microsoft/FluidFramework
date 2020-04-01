@@ -28,19 +28,15 @@ export class ChannelStorageService implements IObjectStorageService {
         private readonly extraBlobs?: Map<string, string>,
     ) {
         // Create a map from paths to blobs
-        if (tree) {
+        if (tree !== undefined) {
             ChannelStorageService.flattenTree("", tree, this.flattenedTree);
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public read(path: string): Promise<string> {
+    public async read(path: string): Promise<string> {
         const id = this.getIdForPath(path);
 
-        return this.extraBlobs && this.extraBlobs.has(id)
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            ? Promise.resolve(this.extraBlobs.get(id)!)
-            : this.storage.read(id);
+        return this.extraBlobs?.get(id) ?? this.storage.read(id);
     }
 
     private getIdForPath(path: string): string {

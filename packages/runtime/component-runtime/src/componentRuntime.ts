@@ -173,7 +173,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         const tree = componentContext.baseSnapshot;
 
         // Must always receive the component type inside of the attributes
-        if (tree && tree.trees) {
+        if (tree?.trees !== undefined) {
             Object.keys(tree.trees).forEach((path) => {
                 const channelContext = new RemoteChannelContext(
                     this,
@@ -247,7 +247,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         }
 
         // Otherwise defer to an attached request handler
-        if (!this.requestHandler) {
+        if (this.requestHandler === undefined) {
             return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
         } else {
             return this.requestHandler(request);
@@ -333,7 +333,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
             return;
         }
 
-        if (this.boundhandles) {
+        if (this.boundhandles !== undefined) {
             this.boundhandles.forEach((handle) => {
                 handle.attach();
             });
@@ -356,7 +356,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     }
 
     public bind(handle: IComponentHandle): void {
-        if (!this.boundhandles) {
+        if (this.boundhandles === undefined) {
             this.boundhandles = new Set<IComponentHandle>();
         }
 
@@ -437,18 +437,18 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
 
     public process(message: ISequencedDocumentMessage, local: boolean) {
         this.verifyNotClosed();
-        /* eslint-disable no-case-declarations */
         switch (message.type) {
-            case MessageType.Attach:
+            case MessageType.Attach: {
                 const attachMessage = message.contents as IAttachMessage;
 
-                // If a non-local operation then go and create the object - otherwise mark it as officially attached.
+                // If a non-local operation then go and create the object
+                // Otherwise mark it as officially attached.
                 if (local) {
                     assert(this.pendingAttach.has(attachMessage.id));
                     this.pendingAttach.delete(attachMessage.id);
                 } else {
                     // Create storage service that wraps the attach data
-                    const origin = message.origin ? message.origin.id : this.documentId;
+                    const origin = message.origin?.id ?? this.documentId;
 
                     const flatBlobs = new Map<string, string>();
                     const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
@@ -480,15 +480,14 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                         this.contextsDeferred.set(attachMessage.id, deferred);
                     }
                 }
-
                 break;
+            }
 
             case MessageType.Operation:
                 this.processOp(message, local);
                 break;
             default:
         }
-        /* eslint-enable no-case-declarations */
 
         this.emit("op", message);
     }
