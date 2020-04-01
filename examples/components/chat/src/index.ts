@@ -16,7 +16,6 @@ export interface IMessage {
     author: string;
     content: string;
     time: string;
-    language: string;
     translated: boolean;
 }
 
@@ -32,6 +31,10 @@ export class Chat extends PrimedComponent
 
     async componentInitializingFirstTime() {
         this.root.set<IMessage[]>(MessagesKey, []);
+    }
+
+    async componentHasInitialized() {
+        this.root.get("messages");
     }
 
     public render(elm: HTMLElement) {

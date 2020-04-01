@@ -16,7 +16,8 @@ import { Provider, themes, Header, Table } from '@fluentui/react-northstar';
 import {
     DefaultButton as Button,
     initializeIcons,
-    TextField
+    TextField,
+    Text
 } from "office-ui-fabric-react";
 import YoutubeClient from "./clients/YoutubeClient";
 import { IPlaylistItem, PlaylistKey, PlayerStateKey, PlayerState, PlayerProgressKey, PlaylistIndexKey, PlayerProgressProportionKey, AcceptableDelta, MediaSource, InitialBuffer } from "./interfaces/PlayerInterfaces";
@@ -64,7 +65,7 @@ export class MediaPlayer extends PrimedComponent
                 this.root.set(PlaylistKey, [firstPlaylistItem]);
                 this.root.set(PlaylistIndexKey, 0);
                 this.root.set(PlayerStateKey, PlayerState.Paused);
-                this.root.set(PlayerProgressKey, -1);
+                this.root.set(PlayerProgressKey, 0);
             });
         }
     }
@@ -91,6 +92,8 @@ interface IMediaPlayerViewProps {
 
 interface IMediaPlayerViewState {
     playedProportion: number;
+    playedSeconds: number;
+    leaderSeconds: number;
     newUrl: string;
     playlist: IPlaylistItem[],
     playerState: PlayerState
@@ -116,7 +119,9 @@ class MediaPlayerView extends React.Component<IMediaPlayerViewProps, IMediaPlaye
             playedProportion: root.get(PlayerProgressProportionKey),
             newUrl: "",
             playlist: root.get<IPlaylistItem[]>(PlaylistKey),
-            playerState: root.get(PlayerStateKey)
+            playerState: root.get(PlayerStateKey),
+            playedSeconds: 0,
+            leaderSeconds: 0
         }
         root.on("valueChanged", (change, local) => {
             if (root.get(PlayerProgressProportionKey) != this.state.playedProportion) {
@@ -139,13 +144,15 @@ class MediaPlayerView extends React.Component<IMediaPlayerViewProps, IMediaPlaye
 
     render(){
         const { root } = this.props;
-        const { playedProportion, newUrl, playlist, playerState } = this.state;
+        const { playedProportion, newUrl, playlist, playerState, playedSeconds, leaderSeconds } = this.state;
         const playlistIndex = root.get<number>(PlaylistIndexKey);
         if (playlistIndex < playlist.length && playlist[playlistIndex]) {
             const currentVideo = playlist[playlistIndex];
             const videoUrl = currentVideo.url;
             const videoChannelName = currentVideo.channelName;
             const videoName = currentVideo.name;
+
+   
             
             console.log(`Player State: ${playerState}`);
             return (
@@ -170,6 +177,12 @@ class MediaPlayerView extends React.Component<IMediaPlayerViewProps, IMediaPlaye
                             />
                         </tr>
                         <tr>
+                            <div style={{marginTop: "2vh", textAlign: "center"}}>
+                                <Text style={{color: "green"}}>{this.toTimeStamp(playedSeconds)}</Text>
+                                <Text>{" / "}</Text>
+                                <Text style={{color: "red"}}>{this.toTimeStamp(leaderSeconds)}</Text>
+                            </div>
+                            
                             <Slider value={playedProportion} root={root} reactPlayerRef={this.reactPlayerRef}></Slider>
                         </tr>
                         <tr>
@@ -226,6 +239,10 @@ class MediaPlayerView extends React.Component<IMediaPlayerViewProps, IMediaPlaye
         const {root} = this.props;
         const currentLeaderSeconds = root.get(PlayerProgressKey);
         const playerState = root.get(PlayerStateKey);
+        this.setState({
+            leaderSeconds: currentLeaderSeconds,
+            playedSeconds: playedSeconds,
+        })
         if (Math.abs(currentLeaderSeconds - playedSeconds) > AcceptableDelta || playerState === PlayerState.Seeking) {
             this.seekPlayer(currentLeaderSeconds);
         } else if (root.get(PlayerStateKey) !== PlayerState.Seeking && !this.isSeeking && playedSeconds > InitialBuffer) {
@@ -240,6 +257,13 @@ class MediaPlayerView extends React.Component<IMediaPlayerViewProps, IMediaPlaye
         if (this.reactPlayerRef) {
             this.reactPlayerRef.seekTo(seekSeconds);
         }
+    }
+
+    private toTimeStamp = (seconds: number) => {
+        var date = new Date(0);
+        date.setSeconds(seconds);
+        var timeString = date.toISOString().substr(11, 8);
+        return timeString;
     }
 
     private onAddClicked = (newUrl: string) => {

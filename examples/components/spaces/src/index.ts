@@ -72,7 +72,7 @@ const generateFactory = () => {
             factory: Promise.resolve(Chat.getFactory()),
             capabilities: ["IComponentHTMLView"],
             friendlyName: "Chat",
-            fabricIconName: "Edit",
+            fabricIconName: "ChatInviteFriend",
         },
         {
             type: "codemirror",
@@ -85,7 +85,7 @@ const generateFactory = () => {
             type: TextBoxName as string,
             factory: Promise.resolve(TextBox.getFactory()),
             friendlyName: FriendlyTextBoxName,
-            fabricIconName: "Text",
+            fabricIconName: "Edit",
             capabilities: ["IComponentHTMLView"],
         },
         {
@@ -93,7 +93,7 @@ const generateFactory = () => {
             factory: Promise.resolve(pmfe),
             capabilities: ["IComponentHTMLView"],
             friendlyName: "Rich Text",
-            fabricIconName: "Edit",
+            fabricIconName: "FabricTextHighlight",
         },
     ];
 

@@ -14,10 +14,6 @@ interface IChatRendererProps {
 }
 
 export class ChatRenderer extends React.Component<IChatRendererProps> {
-    public componentDidUpdate() {
-        window.scrollTo(0, document.body.scrollHeight);
-    }
-
     public render() {
         const { messagesToRender, inputMessage, appendMessageCb, onChangeHandler } = this.props;
         return (

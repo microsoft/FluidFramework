@@ -136,7 +136,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
                     key={`componentToolbarButton-${supportedComponent.type}`}
                     iconProps={{ iconName: supportedComponent.fabricIconName }}
                     onClick={async () =>
-                        this.emitAddComponentEvent(supportedComponent.type, 30, 10)}
+                        this.emitAddComponentEvent(supportedComponent.type, 20, 5)}
                 >
                     {supportedComponent.friendlyName}
                 </Button>,
