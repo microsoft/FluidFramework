@@ -35,7 +35,7 @@ const buttonStyle: React.CSSProperties = {
     height: "2rem",
 };
 
-const gridContainerStyle: React.CSSProperties = { paddingTop: "5rem" };
+const gridContainerStyle: React.CSSProperties = { paddingTop: "5rem", minHeight: "3000px" };
 
 /**
  * This wrapper handles the async-ness of loading a component.
@@ -224,6 +224,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                             cols={36}
                             rowHeight={50}
                             width={1800}
+                            height={10000}
                             // eslint-disable-next-line no-null/no-null
                             compactType={null} // null is required for the GridLayout
                             isDroppable={this.state.isEditable}

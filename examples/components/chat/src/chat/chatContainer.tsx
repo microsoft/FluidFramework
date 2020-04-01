@@ -108,7 +108,8 @@ export class ChatContainer extends React.Component<IChatContainerProps, IChatCon
             time: Date.now().toString(),
             translated: false,
         };
-        const newMessages = [...this.state.messages, newMessage];
+        const newMessages = this.state.messages;
+        newMessages.push(newMessage);
         root.set(MessagesKey, newMessages);
     };
 

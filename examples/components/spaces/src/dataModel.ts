@@ -162,8 +162,8 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
 
     public async addComponent<T extends IComponent & IComponentLoadable>(
         type: string,
-        w: number = 1,
-        h: number = 1,
+        w: number = 6,
+        h: number = 2,
         id?: string,
     ): Promise<T> {
         const defaultLayout = { x: 0, y: 0, w, h };
