@@ -121,8 +121,7 @@ export async function getWithRetryForTokenRefresh<T>(get: (refresh: boolean) => 
  * @param requestInit - fetch requestInit
  * @param retryPolicy - how to do retries
  */
-// eslint-disable-next-line @typescript-eslint/promise-function-async
-export function fetchHelper(
+export async function fetchHelper(
     requestInfo: RequestInfo,
     requestInit: RequestInit | undefined,
     retryFilter: RetryFilter = defaultRetryFilter,
@@ -136,8 +135,8 @@ export function fetchHelper(
             throwOdspNetworkError(`No response from the server`, 400, true, response);
         }
         if (!response.ok || response.status < 200 || response.status >= 300) {
-            // eslint-disable-next-line max-len
-            throwOdspNetworkError(`Error ${response.status} from the server`, response.status, retryFilter(response.status), response);
+            throwOdspNetworkError(
+                `Error ${response.status} from the server`, response.status, retryFilter(response.status), response);
         }
 
         // JSON.parse() can fail and message (that goes into telemetry) would container full request URI, including

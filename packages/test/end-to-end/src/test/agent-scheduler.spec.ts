@@ -35,7 +35,7 @@ describe("AgentScheduler", () => {
             const doc = await host.getDocumentDeltaEvent();
             docScheduler.registerDocuments(doc);
             await docScheduler.process(doc);
-            await docScheduler.resumeProcessing(doc);
+            docScheduler.resumeProcessing(doc);
         });
 
         afterEach(async () => { await host.close(); });
@@ -117,7 +117,7 @@ describe("AgentScheduler", () => {
             const doc2 = await host2.getDocumentDeltaEvent();
             docScheduler.registerDocuments(doc1, doc2);
             await docScheduler.process(doc1, doc2);
-            await docScheduler.resumeProcessing(doc1, doc2);
+            docScheduler.resumeProcessing(doc1, doc2);
         });
 
         afterEach(async () => {
