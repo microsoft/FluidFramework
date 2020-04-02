@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { delay } from "@microsoft/fluid-common-utils";
-
 export interface ICache {
     /**
      * Get the cache value of the key
@@ -71,6 +69,7 @@ export class CacheBase {
     }
 
     private async gc(key: string, expiryTime: number) {
+        const delay = async (ms?: number) => new Promise((res) => setTimeout(res, ms));
         await delay(expiryTime);
         if (this.cache.has(key)) {
             this.cache.delete(key);

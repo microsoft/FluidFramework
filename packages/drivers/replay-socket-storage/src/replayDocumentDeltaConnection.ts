@@ -310,7 +310,9 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
      */
     private async fetchAndEmitOps(
         documentStorageService: IDocumentDeltaStorageService,
-        controller: ReplayController): Promise<void> {
+        controller: ReplayController,
+    ): Promise<void> {
+        const delay = async (ms?: number) => new Promise((res) => setTimeout(res, ms));
         let done;
         let replayPromiseChain = Promise.resolve();
 
@@ -327,7 +329,7 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
                 if (controller.isDoneFetch(currentOp, undefined)) {
                     break;
                 }
-                await new Promise((accept: () => void) => setTimeout(accept, 2000));
+                await delay(2000);
                 continue;
             }
 
