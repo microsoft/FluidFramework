@@ -117,14 +117,17 @@ export class Spaces extends PrimedComponent
                                 .getFromTemplate(template);
                             // eslint-disable-next-line @typescript-eslint/no-misused-promises
                             componentRegistryEntries.forEach(async (componentRegistryEntry) => {
-                                const templateLayout: Layout = componentRegistryEntry.templates[template];
-                                await this.dataModel.addComponent(
-                                    componentRegistryEntry.type,
-                                    templateLayout.w,
-                                    templateLayout.h,
-                                    templateLayout.x,
-                                    templateLayout.y,
-                                );
+                                const templateLayouts: Layout[] = componentRegistryEntry.templates[template];
+                                // eslint-disable-next-line @typescript-eslint/no-misused-promises
+                                templateLayouts.forEach(async (templateLayout: Layout) => {
+                                    await this.dataModel.addComponent(
+                                        componentRegistryEntry.type,
+                                        templateLayout.w,
+                                        templateLayout.h,
+                                        templateLayout.x,
+                                        templateLayout.y,
+                                    );
+                                });
                             });
                         }
                     }
