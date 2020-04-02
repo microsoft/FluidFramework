@@ -8,12 +8,8 @@ export interface IEvent {
 }
 
 export interface IEventProvider<TEvent extends IEvent> {
-    readonly addListener: TEvent;
     readonly on: TEvent;
     readonly once: TEvent;
-    readonly prependListener: TEvent;
-    readonly prependOnceListener: TEvent;
-    readonly removeListener: TEvent;
     readonly off: TEvent;
 }
 
