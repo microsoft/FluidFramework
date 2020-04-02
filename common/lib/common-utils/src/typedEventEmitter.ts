@@ -21,7 +21,6 @@ export class TypedEventEmitter<TEvent extends IEvent> extends EventEmitter imple
         this.prependOnceListener = super.prependOnceListener as any as TEvent;
         this.removeListener = super.removeListener as any as TEvent;
         this.off = super.off as any as TEvent;
-        this.emit = super.emit as any;
         /* eslint-enable @typescript-eslint/unbound-method */
     }
     readonly addListener: TEvent;
