@@ -77,9 +77,9 @@ class Playlist extends React.Component<PlaylistProps, PlaylistState> {
 
   private _renderItem = (item: PlaylistItem) => {
     return(
-        <div style={{margin: "1vh", height: "12vh"}}>
+        <div style={{margin: "1vh", height: "15vh"}}>
             <div style={{float: "left"}}>
-                <img style={{maxWidth: "15vh", marginLeft: "2vh", marginRight: "2vh"}} src={item.thumbnailUrl}/>
+                <img style={{maxWidth: "15vh", maxHeight: "12vh", marginLeft: "2vh", marginRight: "2vh"}} src={item.thumbnailUrl}/>
             </div>
             <div>
                 <h3 style={{marginBlockStart: "0px", marginBlockEnd: "0px"}}>{item.name}</h3>
