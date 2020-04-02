@@ -40,7 +40,7 @@ Supported releases: `>=0.14.x, <=0.15.x`
 | @microsoft/fluid-build-common       |         | 0.15.0 (unchanged)   |
 | @microsoft/eslint-config-fluid      | ✔       | 0.15.0 -> 0.16.0     |
 | @microsoft/fluid-common-definitions |         | 0.14.0 (unchanged)   |
-| @microsoft/fluid-common-utils       |         | 0.15.0 (unchanged)   |
+| @microsoft/fluid-common-utils       |         | 0.14.0 -> 0.15.0     |
 | Server                              | ✔       | 0.1003.0 -> 0.1004.0 |
 | Client                              | ✔       | 0.15.0 -> 0.16.0     |
 | @microsoft/generator-fluid          | ✔       | 0.15.0 -> 0.16.0     |
