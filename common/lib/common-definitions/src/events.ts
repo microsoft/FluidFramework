@@ -4,7 +4,7 @@
  */
 
 export interface IEvent{
-    (event: string, listener: (...args: any[]) => void);
+    (event: string | symbol, listener: (...args: any[]) => void);
 }
 
 export interface IEmitter<TEvent extends IEvent> {
