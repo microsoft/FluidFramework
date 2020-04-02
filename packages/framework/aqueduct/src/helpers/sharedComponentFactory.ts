@@ -18,7 +18,16 @@ import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 
 // eslint-disable-next-line import/no-internal-modules
 import { SharedComponent } from "../components/sharedComponent";
-import { Scope } from "../container-modules";
+import { Scope, ModuleManager } from "../container-modules";
+
+import { IComponentFoo } from "./IComponentFoo";
+
+export class Foo implements IComponentFoo {
+    public get IComponentFoo() { return this; }
+    public foo() {
+        alert("foo ya!");
+    }
+}
 
 export class SharedComponentFactory<T extends SharedComponent, O extends IComponent, R  extends IComponent>
 implements IComponentFactory, Partial<IProvideComponentRegistry>
@@ -61,19 +70,22 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>
             this.registry,
         );
 
+        const moduleManager = new ModuleManager();
+        moduleManager.register(IComponentFoo, new Foo());
+
         let instanceP: Promise<SharedComponent>;
         // For new runtime, we need to force the component instance to be create
         // run the initialization.
         if (!this.onDemandInstantiation || !runtime.existing) {
             // Create a new instance of our component up front
-            instanceP = this.instantiateInstance(runtime, context);
+            instanceP = this.instantiateInstance(runtime, context, moduleManager);
         }
 
         runtime.registerRequestHandler(async (request: IRequest) => {
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             if (!instanceP) {
                 // Create a new instance of our component on demand
-                instanceP = this.instantiateInstance(runtime, context);
+                instanceP = this.instantiateInstance(runtime, context, moduleManager);
             }
             const instance = await instanceP;
             return instance.request(request);
@@ -85,9 +97,13 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>
      * @param runtime - component runtime created for the component context
      * @param context - component context used to load a component runtime
      */
-    private async instantiateInstance(runtime: ComponentRuntime, context: IComponentContext) {
+    private async instantiateInstance(
+        runtime: ComponentRuntime,
+        context: IComponentContext,
+        moduleManager: ModuleManager) {
+        const scope = moduleManager.resolve<IComponentFoo>({IComponentFoo}, {});
         // Create a new instance of our component
-        const instance = new this.ctor(runtime, context, {} as any);
+        const instance = new this.ctor(runtime, context, scope as any);
         await instance.initialize();
         return instance;
     }
