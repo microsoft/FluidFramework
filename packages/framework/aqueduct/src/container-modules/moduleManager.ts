@@ -7,6 +7,7 @@ import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IHostRuntime } from "@microsoft/fluid-runtime-definitions";
 
 import { Module, Scope } from "./types";
+import { IComponentModuleManager } from "./IComponentModuleManager";
 
 export interface IModuleEntry<T> {
     readonly type: (keyof IComponent & keyof T);
@@ -19,14 +20,16 @@ export type ContainerModuleRegistryEntries = Iterable<IModuleEntry<any>>;
 /**
  * ModuleManager is similar to a IoC Container.
  */
-export class ModuleManager {
+export class ModuleManager implements IComponentModuleManager {
     private readonly modules = new Map<keyof IComponent, Module<any>>();
+
+    public get IComponentModuleManager() { return this; }
 
     public get registeredModules(): Iterable<(keyof IComponent)> {
         return this.modules.keys();
     }
 
-    public constructor(public parent?: ModuleManager) { }
+    public constructor(public parent: IComponentModuleManager | undefined = undefined) { }
 
     /**
      * Add a module to the Manager

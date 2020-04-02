@@ -16,6 +16,12 @@ import {
     ContainerServiceRegistryEntries,
 } from "../containerServices";
 
+import { ModuleManager } from "../container-modules";
+
+// TODO: Foo is a place holder. Will be removed.
+import { Foo } from "./sharedComponentFactory";
+import { IComponentFoo } from "./IComponentFoo";
+
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class SimpleContainerRuntimeFactory {
     public static readonly defaultComponentId = "default";
@@ -30,7 +36,10 @@ export class SimpleContainerRuntimeFactory {
         serviceRegistry: ContainerServiceRegistryEntries = [],
         requestHandlers: RuntimeRequestHandler[] = [],
     ): Promise<ContainerRuntime> {
-        // Debug(`instantiateRuntime(chaincode=${chaincode},registry=${JSON.stringify(registry)})`);
+
+        const moduleManager = new ModuleManager();
+        moduleManager.register(IComponentFoo, new Foo());
+
         const runtime = await ContainerRuntime.load(
             context,
             registryEntries,

@@ -101,7 +101,7 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>
         runtime: ComponentRuntime,
         context: IComponentContext,
         moduleManager: ModuleManager) {
-        const scope = moduleManager.resolve<IComponentFoo>({IComponentFoo}, {});
+        const scope = moduleManager.resolve<{},IComponentFoo>({},{IComponentFoo});
         // Create a new instance of our component
         const instance = new this.ctor(runtime, context, scope as any);
         await instance.initialize();

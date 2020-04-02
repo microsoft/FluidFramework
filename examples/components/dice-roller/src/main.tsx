@@ -20,7 +20,7 @@ import * as ReactDOM from "react-dom";
 /**
  * Dice roller example using view interfaces and stock component classes.
  */
-export class DiceRoller extends PrimedComponent<{},IComponentFoo> implements IComponentHTMLView {
+export class DiceRoller extends PrimedComponent<IComponentFoo> implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
     /**
@@ -43,7 +43,7 @@ export class DiceRoller extends PrimedComponent<{},IComponentFoo> implements ICo
 
             ReactDOM.render(
                 <div>
-                    {this.scope.IComponentFoo.foo()}
+                    {this.scope.IComponentFoo?.foo()}
                     <span style={{ fontSize: 50 }}>{this.getDiceChar(diceValue)}</span>
                     <button onClick={this.rollDice.bind(this)}>Roll</button>
                 </div>,
