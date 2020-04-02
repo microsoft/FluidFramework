@@ -1,10 +1,10 @@
 import * as assert from "assert";
 import { IErrorEvent } from "@microsoft/fluid-common-definitions";
-import { TypedEventEmiter } from "../typedEventEmitter";
+import { TypedEventEmitter } from "../typedEventEmitter";
 
-describe("TypedEventEmiter", () => {
+describe("TypedEventEmitter", () => {
     it("Validate Function proxies",()=>{
-        const tee = new TypedEventEmiter<IErrorEvent>();
+        const tee = new TypedEventEmitter<IErrorEvent>();
         let once = 0;
 
         tee.once("error",() => once++);

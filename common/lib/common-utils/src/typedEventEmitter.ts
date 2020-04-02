@@ -8,11 +8,9 @@ import { IEventProvider, IEvent } from "@microsoft/fluid-common-definitions";
 
 
 /**
- * Event Emitter helper class
- * Any exceptions thrown by listeners will be caught and raised through "error" event.
- * Any exception thrown by "error" listeners will propagate to the caller.
+ * Event Emitter helper class the supports emitting typed events
  */
-export class TypedEventEmiter<TEvent extends IEvent> extends EventEmitter implements IEventProvider<TEvent> {
+export class TypedEventEmitter<TEvent extends IEvent> extends EventEmitter implements IEventProvider<TEvent> {
     constructor(){
         super();
         /* eslint-disable @typescript-eslint/unbound-method */

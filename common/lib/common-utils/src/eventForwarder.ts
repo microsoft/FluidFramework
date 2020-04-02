@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 import { IDisposable, IEventProvider, IEvent } from "@microsoft/fluid-common-definitions";
-import { TypedEventEmiter } from "./typedEventEmitter";
+import { TypedEventEmitter } from "./typedEventEmitter";
 
 /**
  * Base class used for forwarding events from a source EventEmitter.
@@ -13,7 +13,7 @@ import { TypedEventEmiter } from "./typedEventEmitter";
  * but the primary source needs to stay intact.
  */
 export class EventForwarder<TEvent extends IEvent = IEvent>
-    extends TypedEventEmiter<TEvent> implements IDisposable {
+    extends TypedEventEmitter<TEvent> implements IDisposable {
     protected static isEmitterEvent(event: string | symbol): boolean {
         return event === EventForwarder.newListenerEvent || event === EventForwarder.removeListenerEvent;
     }
