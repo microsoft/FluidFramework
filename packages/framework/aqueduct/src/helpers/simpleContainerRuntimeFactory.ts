@@ -49,7 +49,9 @@ export class SimpleContainerRuntimeFactory {
                 generateContainerServicesRequestHandler(serviceRegistry),
                 ...requestHandlers,
                 componentRuntimeRequestHandler,
-            ]);
+            ],
+            undefined,
+            moduleManager);
         // Debug("runtime loaded.");
 
         // On first boot create the base component

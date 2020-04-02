@@ -4,4 +4,5 @@
  */
 
 export * from "./moduleManager";
+export * from "./IComponentModuleManager";
 export { Scope } from "./types";

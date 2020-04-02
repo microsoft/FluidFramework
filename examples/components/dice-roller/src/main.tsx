@@ -74,5 +74,10 @@ export class DiceRoller extends PrimedComponent<IComponentFoo> implements ICompo
  */
 export const DiceRollerInstantiationFactory = new PrimedComponentFactory(
     DiceRoller,
+    {IComponentFoo},
+    {},
     [],
+    undefined,
+    undefined,
+    "dice-roller",
 );

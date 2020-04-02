@@ -18,7 +18,11 @@ import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 
 // eslint-disable-next-line import/no-internal-modules
 import { SharedComponent } from "../components/sharedComponent";
-import { Scope, ModuleManager } from "../container-modules";
+import {
+    IComponentModuleManager,
+    ModuleManager,
+    Scope,
+} from "../container-modules";
 
 import { IComponentFoo } from "./IComponentFoo";
 
@@ -43,6 +47,8 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>
         registryEntries?: NamedComponentRegistryEntries,
         private readonly onDemandInstantiation = true,
         public readonly type: string = "",
+        private readonly optionalTypes: Record<(keyof O & keyof IComponent), keyof IComponent> = {} as any,
+        private readonly requiredTypes: Record<(keyof R & keyof IComponent), keyof IComponent> = {} as any,
     ) {
         if (registryEntries !== undefined) {
             this.registry = new ComponentRegistry(registryEntries);
@@ -70,8 +76,7 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>
             this.registry,
         );
 
-        const moduleManager = new ModuleManager();
-        moduleManager.register(IComponentFoo, new Foo());
+        const moduleManager = context.scope.IComponentModuleManager ?? new ModuleManager();
 
         let instanceP: Promise<SharedComponent>;
         // For new runtime, we need to force the component instance to be create
@@ -100,10 +105,12 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>
     private async instantiateInstance(
         runtime: ComponentRuntime,
         context: IComponentContext,
-        moduleManager: ModuleManager) {
-        const scope = moduleManager.resolve<{},IComponentFoo>({},{IComponentFoo});
+        moduleManager: IComponentModuleManager) {
+
+        // Dynamically generate our scope object
+        const scope = moduleManager.resolve<O, R>(this.optionalTypes, this.requiredTypes);
         // Create a new instance of our component
-        const instance = new this.ctor(runtime, context, scope as any);
+        const instance = new this.ctor(runtime, context, scope);
         await instance.initialize();
         return instance;
     }

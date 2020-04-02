@@ -24,6 +24,8 @@ export class PrimedComponentFactory<T extends PrimedComponent, O extends ICompon
             context: IComponentContext,
             scope: Scope<O, R>,
         ) => T,
+        optionalTypes: Record<(keyof O & keyof IComponent), keyof IComponent>,
+        requiredTypes: Record<(keyof R & keyof IComponent), keyof IComponent>,
         sharedObjects: readonly ISharedObjectFactory[] = [],
         registryEntries?: NamedComponentRegistryEntries,
         onDemandInstantiation = true,
@@ -42,6 +44,6 @@ export class PrimedComponentFactory<T extends PrimedComponent, O extends ICompon
             mergedObjects.push(SharedMap.getFactory());
         }
 
-        super(ctor, mergedObjects, registryEntries, onDemandInstantiation, type);
+        super(ctor, mergedObjects, registryEntries, onDemandInstantiation, type, optionalTypes, requiredTypes);
     }
 }
