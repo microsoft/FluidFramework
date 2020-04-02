@@ -35,7 +35,7 @@ const buttonStyle: React.CSSProperties = {
     height: "2rem",
 };
 
-const gridContainerStyle: React.CSSProperties = { paddingTop: "7rem", minHeight: "3000px" };
+const gridContainerStyle: React.CSSProperties = { paddingTop: "7rem", minHeight: "3000px", width: "100%" };
 
 /**
  * This wrapper handles the async-ness of loading a component.
@@ -134,7 +134,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
         this.state.componentMap.forEach((layout, id) => {
             const editable = this.state.isEditable && id !== this.props.dataModel.componentToolbarId;
             // Do some CSS stuff depending on if the user is editing or not
-            const editableStyle: React.CSSProperties = { overflow: "scroll", padding: 2 };
+            const editableStyle: React.CSSProperties = { padding: 2 };
             const embeddedComponentStyle: React.CSSProperties = {
                 height: "100%",
             };
@@ -146,8 +146,8 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                 embeddedComponentStyle.pointerEvents = "none";
                 embeddedComponentStyle.opacity = 0.5;
             }
-            if (id !== this.props.dataModel.componentToolbarId) {
-                embeddedComponentStyle.overflow = "scroll";
+            if (id !== this.props.dataModel.componentToolbarId && !editable) {
+                editableStyle.overflow = "scroll";
             }
 
             // We use separate layout from array because using GridLayout
