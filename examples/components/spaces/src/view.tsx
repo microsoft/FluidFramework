@@ -121,6 +121,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
         event: MouseEvent,
         element: HTMLElement,
     ) {
+        console.log(newItem);
         const id = newItem.i.split("_")[0];
         this.props.dataModel.updateGridItem(id, newItem);
     }
@@ -133,7 +134,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
         this.state.componentMap.forEach((layout, id) => {
             const editable = this.state.isEditable && id !== this.props.dataModel.componentToolbarId;
             // Do some CSS stuff depending on if the user is editing or not
-            const editableStyle: React.CSSProperties = { overflow: "hidden", padding: 2 };
+            const editableStyle: React.CSSProperties = { overflow: "scroll", padding: 2 };
             const embeddedComponentStyle: React.CSSProperties = {
                 height: "100%",
             };
@@ -141,6 +142,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                 editableStyle.border = "1px solid black";
                 editableStyle.backgroundColor = "#d3d3d3";
                 editableStyle.boxSizing = "border-box";
+                editableStyle.overflow = "hidden";
                 embeddedComponentStyle.pointerEvents = "none";
                 embeddedComponentStyle.opacity = 0.5;
             }

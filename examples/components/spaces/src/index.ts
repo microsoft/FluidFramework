@@ -73,10 +73,10 @@ const generateFactory = () => {
             fabricIconName: "Media",
             capabilities: ["IComponentHTMLView"],
             templates: {
-                [Templates.CollaborativeCoding]: { x: 0, y: 0, w: 6, h: 2 },
-                [Templates.MediaRoom]: { x: 0, y: 0, w: 6, h: 2 },
-                [Templates.CovidStarterKit]: { x: 0, y: 0, w: 6, h: 2 },
-                [Templates.Classroom]: { x: 0, y: 0, w: 6, h: 2 },
+                [Templates.CollaborativeCoding]: { x: 0, y: 0, w: 26, h: 12 },
+                [Templates.MediaRoom]: { x: 0, y: 0, w: 36, h: 12 },
+                [Templates.CovidStarterKit]: { x: 0, y: 0, w: 36, h: 12 },
+                [Templates.Classroom]: { x: 0, y: 0, w: 26, h: 12 },
             },
         },
         {
@@ -86,10 +86,10 @@ const generateFactory = () => {
             friendlyName: "Chat",
             fabricIconName: "ChatInviteFriend",
             templates: {
-                [Templates.CollaborativeCoding]: { x: 0, y: 0, w: 6, h: 2 },
-                [Templates.MediaRoom]: { x: 0, y: 0, w: 6, h: 2 },
-                [Templates.CovidStarterKit]: { x: 0, y: 0, w: 6, h: 2 },
-                [Templates.Classroom]: { x: 0, y: 0, w: 6, h: 2 },
+                [Templates.CollaborativeCoding]: { x: 26, y: 0, w: 10, h: 12 },
+                [Templates.MediaRoom]: { x: 0, y: 12, w: 36, h: 4 },
+                [Templates.CovidStarterKit]: { x: 26, y: 12, w: 10, h: 8 },
+                [Templates.Classroom]: { x: 26, y: 0, w: 10, h: 12 },
             },
         },
         {
@@ -99,7 +99,7 @@ const generateFactory = () => {
             friendlyName: "Location Sharing",
             fabricIconName: "Location",
             templates: {
-                [Templates.CovidStarterKit]: { x: 0, y: 0, w: 6, h: 2 },
+                [Templates.CovidStarterKit]: { x: 0, y: 12, w: 26, h: 8 },
             },
         },
         {
@@ -109,7 +109,7 @@ const generateFactory = () => {
             friendlyName: "Code",
             fabricIconName: "Code",
             templates: {
-                [Templates.CollaborativeCoding]: { x: 0, y: 0, w: 6, h: 2 },
+                [Templates.CollaborativeCoding]: { x: 0, y: 12, w: 26, h: 6 },
             },
         },
         {
@@ -119,8 +119,8 @@ const generateFactory = () => {
             fabricIconName: "Edit",
             capabilities: ["IComponentHTMLView"],
             templates: {
-                [Templates.CollaborativeCoding]: { x: 0, y: 0, w: 6, h: 2 },
-                [Templates.Classroom]: { x: 0, y: 0, w: 6, h: 2 },
+                [Templates.CollaborativeCoding]: { x: 26, y: 12, w: 10, h: 6 },
+                [Templates.Classroom]: { x: 26, y: 12, w: 10, h: 6 },
             },
         },
         {
@@ -130,7 +130,7 @@ const generateFactory = () => {
             friendlyName: "Rich Text",
             fabricIconName: "FabricTextHighlight",
             templates: {
-                [Templates.Classroom]: { x: 0, y: 0, w: 6, h: 2 },
+                [Templates.Classroom]: { x: 0, y: 12, w: 26, h: 6 },
             },
         },
     ];

@@ -119,7 +119,12 @@ export class Spaces extends PrimedComponent
                             componentRegistryEntries.forEach(async (componentRegistryEntry) => {
                                 const templateLayout: Layout = componentRegistryEntry.templates[template];
                                 await this.dataModel.addComponent(
-                                    componentRegistryEntry.type, templateLayout.w, templateLayout.h);
+                                    componentRegistryEntry.type,
+                                    templateLayout.w,
+                                    templateLayout.h,
+                                    templateLayout.x,
+                                    templateLayout.y,
+                                );
                             });
                         }
                     }
