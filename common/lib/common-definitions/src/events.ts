@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-export interface IEvent{
+export interface IEvent {
     (event: string | symbol, listener: (...args: any[]) => void);
 }
 
-export interface IEmitter<TEvent extends IEvent> {
+export interface IEventProvider<TEvent extends IEvent> {
     addListener: TEvent;
     on: TEvent;
     once: TEvent;
