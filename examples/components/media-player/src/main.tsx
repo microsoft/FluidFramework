@@ -25,6 +25,8 @@ import Slider from "./components/Slider";
 import Playlist from "./components/Playlist";
 import SoundcloudClient from "./clients/SoundcloudClient";
 import VimeoClient from "./clients/VimeoClient";
+import TwitchClient from "./clients/TwitchClient";
+import { ITwitchStream } from "./interfaces/TwitchInterfaces";
 
 export const MediaPlayerName = "media-player";
 
@@ -148,8 +150,17 @@ class MediaPlayerView extends React.Component<IMediaPlayerViewProps, IMediaPlaye
             const videoChannelName = currentVideo.channelName;
             const videoName = currentVideo.name;
 
-   
-            
+            let description = "";
+            switch (currentVideo.mediaSource) {
+                case MediaSource.Soundcloud:
+                    description = "From Soundcloud";
+                    break;
+                case MediaSource.Twitch:
+                    description = currentVideo.description;
+                    break;
+                default:
+                    description = `By ${videoChannelName}`;
+            }
             console.log(`Player State: ${playerState}`);
             return (
                 <Table style={this.styles.playerTableContainer}>
@@ -186,8 +197,7 @@ class MediaPlayerView extends React.Component<IMediaPlayerViewProps, IMediaPlaye
                                 as={"h2"} 
                                 content={videoName} 
                                 description={{
-                                    content: currentVideo.mediaSource === MediaSource.Soundcloud 
-                                        ? "From Soundcloud" : `By ${videoChannelName}`,
+                                    content: description,
                                     as: 'span',
                                 }}
                             />
@@ -324,8 +334,27 @@ class MediaPlayerView extends React.Component<IMediaPlayerViewProps, IMediaPlaye
                     });
                 } else {
                     alert("No video id found in the URL!");
-                }
-                
+                } 
+            } else if (newUrl.indexOf("twitch.tv") > 0) {
+                const newStreamId = TwitchClient.getTwitchStreamId(newUrl);
+                if (newStreamId) {
+                    TwitchClient.getStreamById(newStreamId).then((response: ITwitchStream) => {
+                        var newPlaylistItem: IPlaylistItem = {
+                            name: response.display_name,
+                            url: newUrl,
+                            id: response.id,
+                            thumbnailUrl: response.profile_image_url,
+                            channelName: response.login,
+                            description: response.description,
+                            mediaSource: MediaSource.Twitch
+                        };
+                        playlist.push(newPlaylistItem);
+                        root.set<IPlaylistItem[]>(PlaylistKey, playlist);
+                        this.setState({newUrl: ""});
+                    });
+                } else {
+                    alert("No video id found in the URL!");
+                } 
             }
             
         } else {

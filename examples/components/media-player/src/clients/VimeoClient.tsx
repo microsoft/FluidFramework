@@ -11,7 +11,7 @@ import { IVimeoVideo } from '../interfaces/VimeoInterfaces';
 const _accessToken = 'c39da186d5e65704880194947c088136';
 const _vimeoHost = 'https://api.vimeo.com/';
 
-/** Fetch youtube info via the youtube REST api. */
+/** Fetch vimeo video info via the vimeo REST api. */
 class VimeoClient extends GenericRestClient {
     constructor() {
         super(_vimeoHost);

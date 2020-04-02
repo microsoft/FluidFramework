@@ -12,7 +12,7 @@ import * as SoundcloudInterfaces from '../interfaces/SoundcloudInterfaces';
 const _clientId = 'z21TN9SfM0GjGteSzk4ViM1KEwMRNWZF';
 const _youtubeHost = 'https://api.soundcloud.com/';
 
-/** Fetch youtube info via the youtube REST api. */
+/** Fetch soundcloud song info via the soundcloud REST api. */
 class SoundcloudClient extends GenericRestClient {
     constructor() {
         super(_youtubeHost);

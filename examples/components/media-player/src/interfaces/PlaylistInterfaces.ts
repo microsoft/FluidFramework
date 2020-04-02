@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-
+import { MediaSource } from "./PlayerInterfaces";
 
 export interface PlaylistItem {
     name: string;
@@ -11,4 +11,5 @@ export interface PlaylistItem {
     thumbnailUrl: string;
     channelName: string;
     description: string;
+    mediaSource: MediaSource;
 }

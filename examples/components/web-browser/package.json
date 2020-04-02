@@ -1,7 +1,7 @@
 {
-  "name": "@fluid-example/location-sharing",
+  "name": "@fluid-example/web-browsers",
   "version": "0.16.0",
-  "description": "Allow users to share their live location on a Google Map",
+  "description": "Allow users to browse the web together",
   "repository": "microsoft/FluidFramework",
   "author": "Microsoft",
   "main": "dist/index.js",
@@ -30,14 +30,14 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "google-map-react": "^1.1.7",
     "@microsoft/fluid-aqueduct": "^0.16.0",
     "@microsoft/fluid-map": "^0.16.0",
     "@microsoft/fluid-view-interfaces": "^0.16.0",
     "@fluentui/react-northstar": "^0.47.0",
     "react": "^16.10.2",
     "react-collapsible": "^2.7.0",
-    "react-dom": "^16.10.2"
+    "react-dom": "^16.10.2",
+    "simplerestclients": "^0.2.7"
   },
   "devDependencies": {
     "@microsoft/fluid-webpack-component-loader": "^0.16.0",
