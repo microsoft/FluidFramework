@@ -48,7 +48,7 @@ class TestRootComponent extends PrimedComponent implements IComponentRunnable {
     };
 
     constructor(runtime: IComponentRuntime, context: IComponentContext) {
-        super(runtime, context);
+        super(runtime, context, {} as any);
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async

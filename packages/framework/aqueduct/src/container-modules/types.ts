@@ -13,4 +13,4 @@ export type Module<T extends IComponent> =
 /**
  * A Scope is a collection of optional and required modules.
  */
-export type Scope<O, R = {}> = OptionalModule<O> & Module<R>;
+export type Scope<O extends IComponent, R extends IComponent = {}> = OptionalModule<O> & Module<R>;

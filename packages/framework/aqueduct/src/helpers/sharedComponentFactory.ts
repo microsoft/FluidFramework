@@ -15,15 +15,21 @@ import {
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+
 // eslint-disable-next-line import/no-internal-modules
 import { SharedComponent } from "../components/sharedComponent";
+import { Scope } from "../container-modules";
 
-export class SharedComponentFactory implements IComponentFactory, Partial<IProvideComponentRegistry> {
+export class SharedComponentFactory<T extends SharedComponent, O extends IComponent, R  extends IComponent>
+implements IComponentFactory, Partial<IProvideComponentRegistry>
+{
     private readonly sharedObjectRegistry: ISharedObjectRegistry;
     private readonly registry: IComponentRegistry | undefined;
 
     constructor(
-        private readonly ctor: new (runtime: IComponentRuntime, context: IComponentContext) => SharedComponent,
+        private readonly ctor: new (runtime: IComponentRuntime,
+            context: IComponentContext,
+            scope: Scope<O, R>) => T,
         sharedObjects: readonly ISharedObjectFactory[],
         registryEntries?: NamedComponentRegistryEntries,
         private readonly onDemandInstantiation = true,
@@ -81,7 +87,7 @@ export class SharedComponentFactory implements IComponentFactory, Partial<IProvi
      */
     private async instantiateInstance(runtime: ComponentRuntime, context: IComponentContext) {
         // Create a new instance of our component
-        const instance = new this.ctor(runtime, context);
+        const instance = new this.ctor(runtime, context, {} as any);
         await instance.initialize();
         return instance;
     }

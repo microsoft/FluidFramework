@@ -16,13 +16,15 @@ import {
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { ComponentHandle } from "@microsoft/fluid-component-runtime";
 import { serviceRoutePathRoot } from "../containerServices";
+import { Scope } from "../container-modules";
 
 /**
  * This is a bare-bones base class that does basic setup and enables for factory on an initialize call.
  * You probably don't want to inherit from this component directly unless you are creating another base component class
  */
-// eslint-disable-next-line max-len
-export abstract class SharedComponent extends EventEmitter implements IComponentLoadable, IComponentRouter, IProvideComponentHandle {
+export abstract class SharedComponent<O extends IComponent = {}, R extends IComponent = {}> extends EventEmitter
+    implements IComponentLoadable, IComponentRouter, IProvideComponentHandle
+{
     private initializeP: Promise<void> | undefined;
     private readonly innerHandle: IComponentHandle<this>;
     private _disposed = false;
@@ -41,6 +43,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     public constructor(
         protected readonly runtime: IComponentRuntime,
         protected readonly context: IComponentContext,
+        protected readonly scope: Scope<O, R>,
     ) {
         super();
         this.innerHandle = new ComponentHandle(this, this.url, runtime.IComponentHandleContext);

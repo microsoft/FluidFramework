@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { DirectoryFactory, MapFactory, SharedDirectory, SharedMap } from "@microsoft/fluid-map";
 import {
     IComponentContext,
@@ -10,12 +11,19 @@ import {
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-import { SharedComponent } from "../components";
+
+import { PrimedComponent } from "../components";
+import { Scope } from "../container-modules";
 import { SharedComponentFactory } from "./sharedComponentFactory";
 
-export class PrimedComponentFactory extends SharedComponentFactory {
+export class PrimedComponentFactory<T extends PrimedComponent, O extends IComponent, R extends IComponent>
+    extends SharedComponentFactory<T, O, R>
+{
     constructor(
-        ctor: new (runtime: IComponentRuntime, context: IComponentContext) => SharedComponent,
+        ctor: new (runtime: IComponentRuntime,
+            context: IComponentContext,
+            scope: Scope<O, R>,
+        ) => T,
         sharedObjects: readonly ISharedObjectFactory[] = [],
         registryEntries?: NamedComponentRegistryEntries,
         onDemandInstantiation = true,
