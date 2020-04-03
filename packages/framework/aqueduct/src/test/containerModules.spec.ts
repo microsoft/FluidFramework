@@ -36,18 +36,29 @@ class MockComponentConfiguration implements IComponentConfiguration {
 describe("Routerlicious", () => {
     describe("Aqueduct", () => {
         describe("ContainerModules", () => {
-            it(`One Optional Module registered`, async () => {
+            it(`One Optional Module registered via value`, async () => {
                 const manager = new ModuleManager();
-                manager.register(IComponentLoadable, new MockLoadable());
+                const module = new MockLoadable();
+                manager.register(IComponentLoadable, {value: module});
 
                 const s = manager.resolve<IComponentLoadable>({IComponentLoadable}, {});
                 assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
+                assert(s.IComponentLoadable === module, "IComponentLoadable is valid");
+            });
+
+            it(`One Optional Module registered via class`, async () => {
+                const manager = new ModuleManager();
+                manager.register(IComponentLoadable, {ctor: MockLoadable});
+
+                const s = manager.resolve<IComponentLoadable>({IComponentLoadable}, {});
+                assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
+                assert(s.IComponentLoadable?.url === "url123", "IComponentLoadable is valid");
             });
 
             it(`Multiple Optional Module all registered`, async () => {
                 const manager = new ModuleManager();
-                manager.register(IComponentLoadable, new MockLoadable());
-                manager.register(IComponentConfiguration, new MockComponentConfiguration());
+                manager.register(IComponentLoadable, {value: new MockLoadable()});
+                manager.register(IComponentConfiguration, {value: new MockComponentConfiguration()});
 
                 const s = manager.resolve<IComponentLoadable & IComponentConfiguration>(
                     {IComponentLoadable,IComponentConfiguration}, {});
@@ -65,7 +76,7 @@ describe("Routerlicious", () => {
 
             it(`Two Optional Module one registered`, async () => {
                 const manager = new ModuleManager();
-                manager.register(IComponentLoadable, new MockLoadable());
+                manager.register(IComponentLoadable, {value: new MockLoadable()});
                 const s = manager.resolve<IComponentLoadable & IComponentConfiguration>(
                     {IComponentLoadable,IComponentConfiguration}, {});
                 assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
@@ -74,7 +85,7 @@ describe("Routerlicious", () => {
 
             it(`One Required Module registered`, async () => {
                 const manager = new ModuleManager();
-                manager.register(IComponentLoadable, new MockLoadable());
+                manager.register(IComponentLoadable, {value: new MockLoadable()});
 
                 const s = manager.resolve<{}, IComponentLoadable>(
                     {},
@@ -86,7 +97,7 @@ describe("Routerlicious", () => {
 
             it(`One Required Module registered`, async () => {
                 const manager = new ModuleManager();
-                manager.register(IComponentLoadable, new MockLoadable());
+                manager.register(IComponentLoadable, {value: new MockLoadable()});
 
                 const s = manager.resolve<Empty, IComponentLoadable>(
                     {},
@@ -98,8 +109,8 @@ describe("Routerlicious", () => {
 
             it(`Multiple Required Module all registered`, async () => {
                 const manager = new ModuleManager();
-                manager.register(IComponentLoadable, new MockLoadable());
-                manager.register(IComponentConfiguration, new MockComponentConfiguration());
+                manager.register(IComponentLoadable, {value: new MockLoadable()});
+                manager.register(IComponentConfiguration, {value: new MockComponentConfiguration()});
 
                 const s = manager.resolve<Empty, IComponentLoadable & IComponentConfiguration>(
                     {},
@@ -121,7 +132,7 @@ describe("Routerlicious", () => {
 
             it(`Optional Module found in Parent`, async () => {
                 const parentManager = new ModuleManager();
-                parentManager.register(IComponentLoadable, new MockLoadable());
+                parentManager.register(IComponentLoadable, {value: new MockLoadable()});
                 const manager = new ModuleManager(parentManager);
 
                 const s = manager.resolve<IComponentLoadable>({IComponentLoadable}, {});
@@ -130,9 +141,9 @@ describe("Routerlicious", () => {
 
             it(`Optional Module found in Parent and Child`, async () => {
                 const parentManager = new ModuleManager();
-                parentManager.register(IComponentLoadable, new MockLoadable());
+                parentManager.register(IComponentLoadable, {value: new MockLoadable()});
                 const manager = new ModuleManager(parentManager);
-                manager.register(IComponentConfiguration, new MockComponentConfiguration());
+                manager.register(IComponentConfiguration, {value: new MockComponentConfiguration()});
 
                 const s = manager.resolve<IComponentLoadable & IComponentConfiguration>(
                     {IComponentLoadable, IComponentConfiguration}, {});
@@ -141,10 +152,10 @@ describe("Routerlicious", () => {
 
             it(`Optional Module in Parent and Child resolves Child`, async () => {
                 const parentManager = new ModuleManager();
-                parentManager.register(IComponentLoadable, new MockLoadable());
+                parentManager.register(IComponentLoadable, {value: new MockLoadable()});
                 const manager = new ModuleManager(parentManager);
                 const childLoadableModule = new MockLoadable();
-                manager.register(IComponentLoadable, childLoadableModule);
+                manager.register(IComponentLoadable, {value: childLoadableModule});
 
                 const s = manager.resolve<IComponentLoadable>(
                     {IComponentLoadable}, {});
@@ -153,7 +164,7 @@ describe("Routerlicious", () => {
 
             it(`Required Module found in Parent`, async () => {
                 const parentManager = new ModuleManager();
-                parentManager.register(IComponentLoadable, new MockLoadable());
+                parentManager.register(IComponentLoadable, {value: new MockLoadable()});
                 const manager = new ModuleManager(parentManager);
 
                 const s = manager.resolve<{}, IComponentLoadable>({}, {IComponentLoadable});
@@ -162,9 +173,9 @@ describe("Routerlicious", () => {
 
             it(`Required Module found in Parent and Child`, async () => {
                 const parentManager = new ModuleManager();
-                parentManager.register(IComponentLoadable, new MockLoadable());
+                parentManager.register(IComponentLoadable, {value: new MockLoadable()});
                 const manager = new ModuleManager(parentManager);
-                manager.register(IComponentConfiguration, new MockComponentConfiguration());
+                manager.register(IComponentConfiguration, {value: new MockComponentConfiguration()});
 
                 const s = manager.resolve<{}, IComponentLoadable & IComponentConfiguration>(
                     {}, {IComponentLoadable, IComponentConfiguration});
@@ -174,13 +185,13 @@ describe("Routerlicious", () => {
 
             it(`Registering the same type twice throws`, async () => {
                 const manager = new ModuleManager();
-                manager.register(IComponentLoadable, new MockLoadable());
-                assert.throws(() => manager.register(IComponentLoadable, new MockLoadable()), Error);
+                manager.register(IComponentLoadable, {value: new MockLoadable()});
+                assert.throws(() => manager.register(IComponentLoadable, {value: new MockLoadable()}), Error);
             });
 
             it(`Registering then Unregistering`, async () => {
                 const manager = new ModuleManager();
-                manager.register(IComponentLoadable, new MockLoadable());
+                manager.register(IComponentLoadable, {value: new MockLoadable()});
                 manager.unregister(IComponentLoadable);
                 assert(!manager.has(IComponentLoadable), "Manager doesn't have IComponentLoadable");
                 assert(Array.from(manager.registeredModules).length === 0, "Manager has no modules");
@@ -188,9 +199,9 @@ describe("Routerlicious", () => {
 
             it(`Registering then Unregistering then registering`, async () => {
                 const manager = new ModuleManager();
-                manager.register(IComponentLoadable, new MockLoadable());
+                manager.register(IComponentLoadable, {value: new MockLoadable()});
                 manager.unregister(IComponentLoadable);
-                manager.register(IComponentLoadable, new MockLoadable());
+                manager.register(IComponentLoadable, {value: new MockLoadable()});
                 assert(manager.has(IComponentLoadable), "Manager has IComponentLoadable");
             });
         });

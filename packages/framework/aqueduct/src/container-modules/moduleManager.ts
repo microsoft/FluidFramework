@@ -6,11 +6,17 @@
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 
 import {
-    Module,
     Scope,
     StrongOmitEmpty,
 } from "./types";
 import { IComponentModuleManager } from "./IComponentModuleManager";
+import {
+    ClassProvider,
+    ValueProvider,
+    Provider,
+    isValueProvider,
+    isClassProvider,
+} from "./providers";
 
 /**
  * Empty is used to provide safe type checking when the object coming in is an
@@ -32,12 +38,12 @@ declare module "@microsoft/fluid-component-core-interfaces" {
  * ModuleManager is similar to a IoC Container.
  */
 export class ModuleManager implements IComponentModuleManager {
-    private readonly modules = new Map<keyof IComponent, Module<any>>();
+    private readonly providers = new Map<keyof IComponent, Provider>();
 
     public get IComponentModuleManager() { return this; }
 
     public get registeredModules(): Iterable<(keyof IComponent)> {
-        return this.modules.keys();
+        return this.providers.keys();
     }
 
     public constructor(public parent: IComponentModuleManager | undefined = undefined) { }
@@ -45,16 +51,28 @@ export class ModuleManager implements IComponentModuleManager {
     /**
      * Add a module to the Manager
      * @param type - Type of module being registered
-     * @param value - An implementation of the type being registered.
+     * @param provider - An implementation of the type being registered.
      * @throws - If passing a type that's already registered
      */
-    public register<T extends IComponent>(type: (keyof IComponent & keyof T), value: Module<T>): void {
+    public register<T extends IComponent>(
+        type: (keyof IComponent & keyof T),
+        provider: ClassProvider<T>,
+    ): void;
+    public register<T extends IComponent>(
+        type: (keyof IComponent & keyof T),
+        // eslint-disable-next-line @typescript-eslint/unified-signatures
+        provider: ValueProvider<T>,
+    ): void;
+    public register<T extends IComponent>(
+        type: (keyof IComponent & keyof T),
+        provider: Provider<T>,
+    ): void {
         // Maybe support having an array of modules?
         if (this.has(type)){
             throw new Error(`Attempting to register a module of type ${type} that's already existing`);
         }
 
-        this.modules.set(type, value);
+        this.providers.set(type, provider);
     }
 
     /**
@@ -62,10 +80,10 @@ export class ModuleManager implements IComponentModuleManager {
      * @param type - Type of module to be remove
      * @returns - Module removed if any
      */
-    public unregister<T extends IComponent>(type: (keyof IComponent & keyof T)): Module<T> | undefined {
-        const module = this.modules.get(type);
+    public unregister<T extends IComponent>(type: (keyof IComponent & keyof T)): Provider | undefined {
+        const module = this.providers.get(type);
         if (module){
-            this.modules.delete(type);
+            this.providers.delete(type);
         }
 
         return module;
@@ -110,22 +128,22 @@ export class ModuleManager implements IComponentModuleManager {
     public has(types: keyof IComponent | (keyof IComponent)[]): boolean {
         if (Array.isArray(types)) {
             return types.every((type) => {
-                return this.modules.has(type);
+                return this.providers.has(type);
             });
         }
 
-        return this.modules.has(types);
+        return this.providers.has(types);
     }
 
-    public resolveModule<T extends IComponent>(type: (keyof IComponent & keyof T)): Module<T> | undefined {
-        // If we have it return it
-        const module = this.modules.get(type);
-        if (module) {
-            return module;
+    public getProvider<T extends IComponent>(type: (keyof IComponent & keyof T)): Provider<T> | undefined {
+        // If we have the provider return it
+        const provider = this.providers.get(type);
+        if (provider) {
+            return provider;
         }
 
         if (this.parent) {
-            return this.parent.resolveModule(type);
+            return this.parent.getProvider(type);
         }
 
         return undefined;
@@ -135,12 +153,13 @@ export class ModuleManager implements IComponentModuleManager {
         types: StrongOmitEmpty<keyof T & keyof IComponent>,
     ) {
         return Object.assign({}, ...Array.from(Object.values(types), (t) => {
-            const module = this.resolveModule(t);
+            const provider = this.getProvider(t);
+            const module = this.resolveProvider(provider);
             if (!module) {
                 throw new Error(`Object attempted to be created without required module ${t}`);
             }
 
-            return ({[t]: module});
+            return {[t]: module};
         }));
     }
 
@@ -148,7 +167,22 @@ export class ModuleManager implements IComponentModuleManager {
         types: StrongOmitEmpty<keyof T & keyof IComponent>,
     ) {
         return Object.assign({}, ...Array.from(Object.values(types), (t) => {
-            return ({[t]: this.resolveModule(t)});
+            const provider = this.getProvider(t);
+            return {[t]: this.resolveProvider(provider)};
         }));
+    }
+
+    private resolveProvider<T>(provider: Provider<T> | undefined) {
+        if (!provider) {
+            return undefined;
+        }
+
+        if(isValueProvider(provider)) {
+            return provider.value;
+        }
+
+        if(isClassProvider(provider)) {
+            return new provider.ctor();
+        }
     }
 }

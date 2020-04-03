@@ -5,10 +5,13 @@
 
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import {
-    Module,
     Scope,
     StrongOmitEmpty,
 } from "./types";
+
+import {
+    Provider,
+} from "./providers";
 
 declare module "@microsoft/fluid-component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -24,12 +27,12 @@ export interface IProvideComponentModuleManager {
 export interface IComponentModuleManager extends IProvideComponentModuleManager {
     parent: IComponentModuleManager | undefined;
     readonly registeredModules: Iterable<(keyof IComponent)>;
-    register<T extends IComponent>(type: (keyof IComponent & keyof T), value: Module<T>): void;
-    unregister<T extends IComponent>(type: (keyof IComponent & keyof T)): Module<T> | undefined;
+    register<T extends IComponent>(type: (keyof IComponent & keyof T), value: Provider<T>): void;
+    unregister<T extends IComponent>(type: (keyof IComponent & keyof T)): Provider<T> | undefined;
     resolve<O extends IComponent, R extends IComponent>(
         optionalTypes: StrongOmitEmpty<keyof O & keyof IComponent>,
         requiredTypes: StrongOmitEmpty<keyof R & keyof IComponent>,
     ): Scope<O, R>;
     has(types: keyof IComponent | (keyof IComponent)[]): boolean;
-    resolveModule<T extends IComponent>(type: (keyof IComponent & keyof T)): Module<T> | undefined;
+    getProvider<T extends IComponent>(type: (keyof IComponent & keyof T)): Provider<T> | undefined;
 }
