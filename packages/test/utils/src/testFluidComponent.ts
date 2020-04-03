@@ -10,15 +10,15 @@ import { IComponentContext, IComponentFactory, IComponentRuntime } from "@micros
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { ITestFluidComponent } from "./interfaces";
 
-export type TestComponentSharedObjectsMap = Map<string, ISharedObjectFactory>;
+export type TestSharedObjectFactoryEntries = Iterable<[string, ISharedObjectFactory]>;
 
 export class TestFluidComponent implements ITestFluidComponent {
     public static async load(
         runtime: IComponentRuntime,
         context: IComponentContext,
-        sharedObjects?: TestComponentSharedObjectsMap) {
+        factoryEntries: TestSharedObjectFactoryEntries) {
 
-        const component = new TestFluidComponent(runtime, context, sharedObjects);
+        const component = new TestFluidComponent(runtime, context, factoryEntries);
         await component.initialize();
 
         return component;
@@ -29,19 +29,22 @@ export class TestFluidComponent implements ITestFluidComponent {
     }
 
     private root!: ISharedMap;
+    private readonly factoryEntriesMap: Map<string, ISharedObjectFactory>;
 
     constructor(
         public readonly runtime: IComponentRuntime,
         public readonly context: IComponentContext,
-        private readonly sharedObjects?: TestComponentSharedObjectsMap,
-    ) {}
+        factoryEntries: TestSharedObjectFactoryEntries,
+    ) {
+        this.factoryEntriesMap = new Map(factoryEntries);
+    }
 
     public async getSharedObject<T = any>(id: string): Promise<T> {
-        if (this.sharedObjects === undefined) {
+        if (this.factoryEntriesMap === undefined) {
             throw new Error("Shared objects were not provided during creation.");
         }
 
-        for (const key of this.sharedObjects.keys()) {
+        for (const key of this.factoryEntriesMap.keys()) {
             if (key === id) {
                 const handle = this.root.get<IComponentHandle>(id);
                 return handle?.get() as unknown as T;
@@ -62,10 +65,12 @@ export class TestFluidComponent implements ITestFluidComponent {
     private async initialize() {
         if (!this.runtime.existing) {
             this.root = SharedMap.create(this.runtime, "root");
-            this.sharedObjects?.forEach((sharedObjectFactory: ISharedObjectFactory, key: string) => {
+
+            this.factoryEntriesMap.forEach((sharedObjectFactory: ISharedObjectFactory, key: string) => {
                 const sharedObject = this.runtime.createChannel(key, sharedObjectFactory.type);
                 this.root.set(key, sharedObject.handle);
             });
+
             this.root.register();
         }
 
@@ -79,7 +84,7 @@ export class TestFluidComponentFactory implements IComponentFactory {
 
     public get IComponentFactory() { return this; }
 
-    constructor(private readonly sharedObjects?: TestComponentSharedObjectsMap) {}
+    constructor(private readonly factoryEntries: TestSharedObjectFactoryEntries) {}
 
     public instantiateComponent(context: IComponentContext): void {
         const dataTypes = new Map<string, ISharedObjectFactory>();
@@ -89,16 +94,17 @@ export class TestFluidComponentFactory implements IComponentFactory {
         dataTypes.set(sharedMapFactory.type, sharedMapFactory);
 
         // Add the object factories to the list to be sent to component runtime.
-        this.sharedObjects?.forEach((objectFactory: ISharedObjectFactory) => {
-            dataTypes.set(objectFactory.type, objectFactory);
-        });
+        for (const entry of this.factoryEntries) {
+            const factory = entry[1];
+            dataTypes.set(factory.type, factory);
+        }
 
         const runtime = ComponentRuntime.load(
             context,
             dataTypes,
         );
 
-        const testFluidComponentP = TestFluidComponent.load(runtime, context, this.sharedObjects);
+        const testFluidComponentP = TestFluidComponent.load(runtime, context, this.factoryEntries);
         runtime.registerRequestHandler(async (request: IRequest) => {
             const testFluidComponent = await testFluidComponentP;
             return testFluidComponent.request(request);

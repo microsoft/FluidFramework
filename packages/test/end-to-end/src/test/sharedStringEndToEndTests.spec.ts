@@ -8,11 +8,9 @@ import { IFluidCodeDetails, ILoader } from "@microsoft/fluid-container-definitio
 import { Container } from "@microsoft/fluid-container-loader";
 import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";
 import { createLocalLoader, initializeLocalContainer } from "@microsoft/fluid-local-loader-utils";
-import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import {
-    TestComponentSharedObjectsMap,
     ITestFluidComponent,
     TestFluidComponentFactory,
 } from "@microsoft/fluid-test-utils";
@@ -36,9 +34,9 @@ describe("SharedString", () => {
     }
 
     beforeEach(async () => {
-        const sharedObjects: TestComponentSharedObjectsMap = new Map<string, ISharedObjectFactory>();
-        sharedObjects.set("sharedString", SharedString.getFactory());
-        const factory = new TestFluidComponentFactory(sharedObjects);
+        const factory = new TestFluidComponentFactory([
+            ["sharedString", SharedString.getFactory()],
+        ]);
 
         deltaConnectionServer = LocalDeltaConnectionServer.create();
         loader = createLocalLoader(factory, deltaConnectionServer);
