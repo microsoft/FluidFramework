@@ -30,7 +30,7 @@ export class PuppetMaster extends EventEmitter {
         cache?: ICache): Promise<PuppetMaster> {
 
         const browser = await puppeteer.launch({
-            headless: false, // headless: false launches a browser window
+            headless: true, // headless: false launches a browser window
         });
 
         const page = await browser.newPage();
