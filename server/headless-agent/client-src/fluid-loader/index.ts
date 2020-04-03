@@ -35,8 +35,6 @@ export async function startLoading(resolvedUrl: IResolvedUrl): Promise<Container
 
     return await new Promise((resolve, reject) => {
         container.on("op", () => {
-            console.log("Op Resolve");
-
             resolve(container);
         });
     });

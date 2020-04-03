@@ -102,7 +102,6 @@ export class PuppetMaster extends EventEmitter {
                 window.setTimeout(callback, 0);
             };
         });
-        // await this.attachEndOfLife();
 
         // Joining the gateway hostname to allow for localstorage
         await this.page.goto(`${this.gatewayUrl}/public/images/`);
