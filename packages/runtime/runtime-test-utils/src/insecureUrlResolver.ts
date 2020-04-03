@@ -8,20 +8,13 @@ import {
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
-    IExperimentalUrlResolver,
 } from "@microsoft/fluid-driver-definitions";
 import {
     ITokenClaims,
     IUser,
-    ISummaryTree,
 } from "@microsoft/fluid-protocol-definitions";
 import Axios from "axios";
 import * as jwt from "jsonwebtoken";
-import { getRandomName } from "@microsoft/fluid-server-services-client";
-import {
-    getDocAttributesFromProtocolSummary,
-    getQuorumValuesFromProtocolSummary,
-} from "@microsoft/fluid-driver-utils";
 
 /**
  * As the name implies this is not secure and should not be used in production. It simply makes the example easier
@@ -37,10 +30,8 @@ import {
  * part of the URL that the document interprets and maps to a component. It's exactly similar to how a web service
  * works or a router inside of a single page app framework.
  */
-export class InsecureUrlResolver implements IUrlResolver, IExperimentalUrlResolver {
+export class InsecureUrlResolver implements IUrlResolver {
     private readonly cache = new Map<string, Promise<IResolvedUrl>>();
-
-    public readonly isExperimentalUrlResolver = true;
 
     constructor(
         private readonly hostUrl: string,
@@ -58,9 +49,15 @@ export class InsecureUrlResolver implements IUrlResolver, IExperimentalUrlResolv
         // If hosts match then we use the local tenant information. Otherwise we make a REST call out to the hosting
         // service using our bearer token.
         if (parsedUrl.host === window.location.host) {
-            const documentId = parsedUrl.pathname.substr(1).split("/")[0];
-
-            return this.resolveHelper(documentId);
+            const path = parsedUrl.pathname.substr(1).split("/");
+            let documentId: string;
+            if(path.length > 1) {
+                documentId = path[1];
+            } else {
+                documentId = path[0];
+            }
+            const [siteUrl] = request.url.split("?");
+            return this.resolveHelper(documentId, siteUrl);
         } else {
             const maybeResolvedUrl = this.cache.get(request.url);
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -85,7 +82,7 @@ export class InsecureUrlResolver implements IUrlResolver, IExperimentalUrlResolv
         }
     }
 
-    private resolveHelper(documentId: string) {
+    private resolveHelper(documentId: string, siteUrl: string) {
         const encodedTenantId = encodeURIComponent(this.tenantId);
         const encodedDocId = encodeURIComponent(documentId);
 
@@ -102,32 +99,9 @@ export class InsecureUrlResolver implements IUrlResolver, IExperimentalUrlResolv
             tokens: { jwt: this.auth(this.tenantId, documentId) },
             type: "fluid",
             url: documentUrl,
+            siteUrl,
         };
         return response;
-    }
-
-    public async createContainer(
-        createNewSummary: ISummaryTree,
-        request: IRequest,
-    ): Promise<IResolvedUrl> {
-        const id = getRandomName("-", false);
-        const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
-        const appSummary = createNewSummary.tree[".app"] as ISummaryTree;
-        if (!(protocolSummary && appSummary)) {
-            throw new Error("Protocol and App Summary required in the full summary");
-        }
-        const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
-        const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
-        await Axios.post(
-            `${this.ordererUrl}/documents/${this.tenantId}`,
-            {
-                id,
-                summary: appSummary,
-                sequenceNumber: documentAttributes.sequenceNumber,
-                values: quorumValues,
-            });
-
-        return this.resolveHelper(id);
     }
 
     private auth(tenantId: string, documentId: string) {

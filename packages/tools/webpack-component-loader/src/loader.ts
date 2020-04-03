@@ -12,7 +12,7 @@ import {
     isFluidPackage,
 } from "@microsoft/fluid-container-definitions";
 import { Container } from "@microsoft/fluid-container-loader";
-import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
+import { IDocumentServiceFactory, IUrlResolver, NewFileParams } from "@microsoft/fluid-driver-definitions";
 import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { SessionStorageDbFactory } from "@microsoft/fluid-local-test-utils";
@@ -214,12 +214,60 @@ function getUrlResolver(
         case "spo-df":
             return new OdspUrlResolver(
                 options.server,
-                { accessToken: options.odspAccessToken },
-                options.driveId);
+                { accessToken: options.odspAccessToken });
 
         default: // Local
-            return new TestResolver(documentId, connection);
+            return new TestResolver(documentId);
     }
+}
+
+function getNewFileParams(
+    documentId: string,
+    options: RouteOptions,
+): NewFileParams {
+    let params: NewFileParams;
+    switch (options.mode) {
+        case "r11s":
+            params = {
+                ordererUrl: options.fluidHost.replace("www", "alfred"),
+                fileName: getRandomName("-"),
+                tenantId: options.tenantId,
+                siteUrl: `${new URL(window.location.href).origin}`,
+            };
+            break;
+        case "spo":
+        case "spo-df":
+            params = {
+                fileName: getRandomName("-"),
+                driveId: options.driveId,
+                filePath: "/r11s/",
+                siteUrl: `https://${options.server}`,
+            };
+            break;
+        case "docker":
+            params = {
+                ordererUrl: "http://localhost:3003",
+                fileName: getRandomName("-"),
+                tenantId: options.tenantId,
+                siteUrl: `${new URL(window.location.href).origin}`,
+            };
+            break;
+        case "tinylicious":
+            params = {
+                ordererUrl: "http://localhost:3000",
+                fileName: getRandomName("-"),
+                tenantId: "12345",
+                siteUrl: `${new URL(window.location.href).origin}`,
+            };
+            break;
+        default: // Local
+            params = {
+                fileName: documentId,
+                siteUrl: "",
+                tenantId: "tenantId",
+            };
+    }
+    return params;
 }
 
 // Invoked by `start()` when the 'double' option is enabled to create the side-by-side panes.
@@ -348,9 +396,10 @@ export async function start(
     }
     if (!attached) {
         attachButton.onclick = async () => {
-            await container1.attach({url: window.location.href})
+            const newFileParams = getNewFileParams(documentId, options);
+            await container1.attach({url: window.location.href}, newFileParams)
                 .then(() => {
-                    const text = window.location.href.replace("create", container1.id);
+                    const text = window.location.href.replace("create", newFileParams.fileName);
                     textArea.innerText = text;
                     urlDeferred.resolve(text);
                     attachButton.style.display = "none";

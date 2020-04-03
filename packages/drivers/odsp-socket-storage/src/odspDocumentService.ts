@@ -11,6 +11,7 @@ import {
     IDocumentService,
     IResolvedUrl,
     IDocumentStorageService,
+    IExperimentalDocumentService,
 } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionMode,
@@ -29,6 +30,7 @@ import { OdspDocumentStorageService } from "./odspDocumentStorageService";
 import { getWithRetryForTokenRefresh, isLocalStorageAvailable } from "./odspUtils";
 import { getSocketStorageDiscovery } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
+import { createOdspUrl } from "./createOdspUrl";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const performanceNow = require("performance-now") as (() => number);
@@ -40,7 +42,8 @@ const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
  * clients
  */
-export class OdspDocumentService implements IDocumentService {
+export class OdspDocumentService implements IDocumentService, IExperimentalDocumentService {
+    public readonly isExperimentalDocumentService = true;
     /**
      * @param appId - app id used for telemetry for network requests.
      * @param getStorageToken - function that can provide the storage token for a given site. This is
@@ -97,11 +100,7 @@ export class OdspDocumentService implements IDocumentService {
         }
         return new OdspDocumentService(
             appId,
-            odspResolvedUrl.hashedDocumentId,
-            odspResolvedUrl.siteUrl,
-            odspResolvedUrl.driveId,
-            odspResolvedUrl.itemId,
-            odspResolvedUrl.endpoints.snapshotStorageUrl,
+            odspResolvedUrl,
             getStorageToken,
             getWebsocketToken,
             logger,
@@ -128,12 +127,6 @@ export class OdspDocumentService implements IDocumentService {
 
     /**
      * @param appId - app id used for telemetry for network requests
-     * @param hashedDocumentId - A unique identifer for the document. The "hashed" here implies that the contents of
-     * this string contains no end user identifiable information.
-     * @param siteUrl - the url of the site that hosts this container
-     * @param driveId - the id of the drive that hosts this container
-     * @param itemId - the id of the container within the drive
-     * @param snapshotStorageUrl - the URL where snapshots should be obtained from
      * @param getStorageToken - function that can provide the storage token for a given site. This is is also referred
      * to as the "VROOM" token in SPO.
      * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also referred
@@ -145,11 +138,7 @@ export class OdspDocumentService implements IDocumentService {
      */
     constructor(
         private readonly appId: string,
-        private readonly hashedDocumentId: string,
-        private readonly siteUrl: string,
-        private readonly driveId: string,
-        private readonly itemId: string,
-        private readonly snapshotStorageUrl: string,
+        public readonly odspResolvedUrl: IOdspResolvedUrl,
         getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
         getWebsocketToken: (refresh) => Promise<string | null>,
         logger: ITelemetryBaseLogger,
@@ -160,12 +149,15 @@ export class OdspDocumentService implements IDocumentService {
         private readonly isFirstTimeDocumentOpened = true,
     ) {
 
-        this.joinSessionKey = `${this.hashedDocumentId}/joinsession`;
+        this.joinSessionKey = `${this.odspResolvedUrl.hashedDocumentId}/joinsession`;
 
         this.logger = DebugLogger.mixinDebugLogger(
             "fluid:telemetry:OdspDriver",
             logger,
-            { docId: hashedDocumentId, odc: isOdcOrigin(new URL(snapshotStorageUrl).origin) });
+            {
+                docId: this.odspResolvedUrl.hashedDocumentId,
+                odc: isOdcOrigin(new URL(this.odspResolvedUrl.endpoints.snapshotStorageUrl).origin),
+            });
 
         this.getStorageToken = async (refresh: boolean, name?: string) => {
             if (refresh) {
@@ -178,7 +170,7 @@ export class OdspDocumentService implements IDocumentService {
                 { eventName: `${name || "OdspDocumentService"}_GetToken` });
             let token: string | null;
             try {
-                token = await getStorageToken(this.siteUrl, refresh);
+                token = await getStorageToken(this.odspResolvedUrl.siteUrl, refresh);
             } catch (error) {
                 event.cancel({}, error);
                 throw error;
@@ -205,6 +197,17 @@ export class OdspDocumentService implements IDocumentService {
         this.localStorageAvailable = isLocalStorageAvailable();
     }
 
+    public createContainerUrl(): string {
+        return createOdspUrl(
+            this.odspResolvedUrl.siteUrl,
+            this.odspResolvedUrl.driveId,
+            this.odspResolvedUrl.itemId, "/");
+    }
+
+    public get resolvedUrl(): IResolvedUrl {
+        return this.odspResolvedUrl;
+    }
+
     /**
      * Connects to a storage endpoint for snapshot service.
      *
@@ -214,8 +217,8 @@ export class OdspDocumentService implements IDocumentService {
         const latestSha: string | null | undefined = undefined;
         this.storageManager = new OdspDocumentStorageManager(
             { app_id: this.appId },
-            this.hashedDocumentId,
-            this.snapshotStorageUrl,
+            this.odspResolvedUrl.hashedDocumentId,
+            this.odspResolvedUrl.endpoints.snapshotStorageUrl,
             latestSha,
             this.storageFetchWrapper,
             this.getStorageToken,
@@ -308,9 +311,9 @@ export class OdspDocumentService implements IDocumentService {
 
         this.joinSessionP = getSocketStorageDiscovery(
             this.appId,
-            this.driveId,
-            this.itemId,
-            this.siteUrl,
+            this.odspResolvedUrl.driveId,
+            this.odspResolvedUrl.itemId,
+            this.odspResolvedUrl.siteUrl,
             this.logger,
             this.getStorageToken,
             this.cache,

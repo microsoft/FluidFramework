@@ -4,7 +4,6 @@
  */
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
 
 export type IResolvedUrl = IWebResolvedUrl | IFluidResolvedUrl;
 
@@ -22,6 +21,7 @@ export interface IFluidResolvedUrl extends IResolvedUrlBase {
     url: string;
     tokens: { [name: string]: string };
     endpoints: { [name: string]: string };
+    siteUrl?: string;
 }
 
 export interface IUrlResolver {
@@ -30,14 +30,4 @@ export interface IUrlResolver {
     // the expiration of it could be relative to the lifetime of the token? Requests after need to refresh?
     // or do we split the token access from this?
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
-}
-
-
-export interface IExperimentalUrlResolver extends IUrlResolver {
-    readonly isExperimentalUrlResolver: true;
-    // Creates a new document on the host with the provided options. Returns the resolved URL.
-    createContainer(
-        createNewSummary: ISummaryTree,
-        request: IRequest,
-    ): Promise<IResolvedUrl>;
 }

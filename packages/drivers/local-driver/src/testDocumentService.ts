@@ -14,7 +14,8 @@ import { TestDeltaStorageService, TestDocumentDeltaConnection } from "./";
 /**
  * Basic implementation of a document service for testing.
  */
-export class TestDocumentService implements api.IDocumentService {
+export class TestDocumentService implements api.IDocumentService, api.IExperimentalDocumentService {
+    public readonly isExperimentalDocumentService = true;
     /**
      * @param localDeltaConnectionServer - delta connection server for ops
      * @param tokenProvider - token provider with a single token
@@ -22,11 +23,16 @@ export class TestDocumentService implements api.IDocumentService {
      * @param documentId - ID of document
      */
     constructor(
+        public readonly resolvedUrl: api.IResolvedUrl,
         private readonly localDeltaConnectionServer: ILocalDeltaConnectionServer,
         private readonly tokenProvider: socketStorage.TokenProvider,
         private readonly tenantId: string,
         private readonly documentId: string,
     ) { }
+
+    public createContainerUrl(): string {
+        return `https://localhost:3000/${this.tenantId}/${this.documentId}`;
+    }
 
     /**
      * Creates and returns a document storage service for testing.
@@ -88,9 +94,10 @@ export class TestDocumentService implements api.IDocumentService {
  */
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function createTestDocumentService(
+    resolvedUrl: api.IResolvedUrl,
     localDeltaConnectionServer: ILocalDeltaConnectionServer,
     tokenProvider: socketStorage.TokenProvider,
     tenantId: string,
     documentId: string): api.IDocumentService {
-    return new TestDocumentService(localDeltaConnectionServer, tokenProvider, tenantId, documentId);
+    return new TestDocumentService(resolvedUrl, localDeltaConnectionServer, tokenProvider, tenantId, documentId);
 }

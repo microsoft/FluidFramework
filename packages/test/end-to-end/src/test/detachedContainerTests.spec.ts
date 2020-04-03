@@ -11,7 +11,7 @@ import { Loader } from "@microsoft/fluid-container-loader";
 import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { ConnectionState } from "@microsoft/fluid-protocol-definitions";
-import { IDocumentServiceFactory } from "@microsoft/fluid-driver-definitions";
+import { IDocumentServiceFactory, ILocalNewFileParams } from "@microsoft/fluid-driver-definitions";
 
 describe("Detached Container", () => {
     let testDeltaConnectionServer: ILocalDeltaConnectionServer;
@@ -21,13 +21,18 @@ describe("Detached Container", () => {
         package: "@fluid-internal/client-api",
         config: {},
     };
+    const newFileParams: ILocalNewFileParams = {
+        fileName: "documentId",
+        siteUrl: "",
+        tenantId: "tenantId",
+    };
     let codeLoader: API.CodeLoader;
     let loader: Loader;
     let serviceFactory: IDocumentServiceFactory;
 
     beforeEach(async () => {
         testDeltaConnectionServer = LocalDeltaConnectionServer.create();
-        testResolver = new TestResolver("documentId", testDeltaConnectionServer);
+        testResolver = new TestResolver("documentId");
         serviceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
 
         codeLoader = new API.CodeLoader({ generateSummaries: false });
@@ -58,7 +63,7 @@ describe("Detached Container", () => {
 
     it("Attach detached container", async () => {
         const container = await loader.createDetachedContainer(pkg);
-        await container.attach(testRequest);
+        await container.attach(testRequest, newFileParams);
         assert.equal(container.isAttached(), true, "Container should be attached");
         assert.equal(container.closed, false, "Container should be open");
         assert.equal(container.deltaManager.inbound.length, 0, "Inbound queue should be empty");
@@ -93,7 +98,7 @@ describe("Detached Container", () => {
         await component.runtime.createAndAttachComponent(testCompId, "@fluid-internal/client-api");
 
         // Now attach the container
-        await container.attach(testRequest);
+        await container.attach(testRequest, newFileParams);
         const testResponse = await container.request({url: `/${testCompId}`});
         if (testResponse.mimeType !== "fluid/component" && testResponse.status !== 200) {
             assert.fail("New components should be created in detached container");
@@ -113,7 +118,7 @@ describe("Detached Container", () => {
         await component.runtime.createAndAttachComponent(testCompId, "@fluid-internal/client-api");
 
         // Now attach the container
-        await container.attach(testRequest);
+        await container.attach(testRequest, newFileParams);
         const response1 = await container.request({ url: `/${testCompId}` });
         const testComponent1 = response1.value as API.Document;
         // Now load the container from another loader

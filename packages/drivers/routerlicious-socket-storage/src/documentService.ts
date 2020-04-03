@@ -19,8 +19,10 @@ import { TokenProvider } from "./tokens";
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
  * clients
  */
-export class DocumentService implements api.IDocumentService {
+export class DocumentService implements api.IDocumentService, api.IExperimentalDocumentService {
+    public readonly isExperimentalDocumentService = true;
     constructor(
+        public readonly resolvedUrl: api.IResolvedUrl,
         protected ordererUrl: string,
         private readonly deltaStorageUrl: string,
         private readonly gitUrl: string,
@@ -33,6 +35,15 @@ export class DocumentService implements api.IDocumentService {
         protected tenantId: string,
         protected documentId: string,
     ) {
+    }
+
+    public createContainerUrl(): string {
+        const fluidResolvedUrl = this.resolvedUrl as api.IFluidResolvedUrl;
+        if (!fluidResolvedUrl.siteUrl) {
+            throw new Error("Site URl should be provided!!");
+        }
+        return `${new URL(fluidResolvedUrl.siteUrl).origin}/${encodeURIComponent(
+            this.tenantId)}/${encodeURIComponent(this.documentId)}`;
     }
 
     /**

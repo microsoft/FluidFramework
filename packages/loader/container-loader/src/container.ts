@@ -34,9 +34,11 @@ import {
     IDocumentStorageService,
     IError,
     IFluidResolvedUrl,
-    IExperimentalUrlResolver,
     IUrlResolver,
     IDocumentServiceFactory,
+    IExperimentalDocumentServiceFactory,
+    IExperimentalDocumentService,
+    NewFileParams,
 } from "@microsoft/fluid-driver-definitions";
 import {
     createIError,
@@ -226,6 +228,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private readonly connectionTransitionTimes: number[] = [];
     private messageCountAfterDisconnection: number = 0;
     private _loadedFromVersion: IVersion | undefined;
+    private _containerUrl: string | undefined;
 
     private lastVisible: number | undefined;
 
@@ -233,6 +236,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     public get loadedFromVersion(): IVersion | undefined {
         return this._loadedFromVersion;
+    }
+
+    public get containerUrl(): string | undefined {
+        return this._containerUrl;
     }
 
     public get readonly(): boolean | undefined {
@@ -412,7 +419,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this.attached;
     }
 
-    public async attach(request: IRequest): Promise<void> {
+    public async attach(request: IRequest, newFileParams: NewFileParams): Promise<void> {
         if (!this.context) {
             throw new Error("Context is undefined");
         }
@@ -426,19 +433,26 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             throw new Error("Protocol Handler is undefined");
         }
         const protocolSummary = this.protocolHandler.captureSummary();
-        this.originalRequest = request;
         // Actually go and create the resolved document
-        const expUrlResolver = this.urlResolver as IExperimentalUrlResolver;
-        if (!expUrlResolver?.isExperimentalUrlResolver) {
-            throw new Error("Not an Experimental UrlResolver");
+        const expDocFactory = this.serviceFactory as IExperimentalDocumentServiceFactory;
+        if (!expDocFactory?.isExperimentalDocumentServiceFactory) {
+            throw new Error("Not an Experimental Doc Factory");
         }
-        const resolvedUrl = await expUrlResolver.createContainer(
-            combineAppAndProtocolSummary(appSummary, protocolSummary),
-            request);
-        try {
-            ensureFluidResolvedUrl(resolvedUrl);
-            this.service = await this.serviceFactory.createDocumentService(resolvedUrl);
 
+        this.service = await expDocFactory.createContainer(
+            combineAppAndProtocolSummary(appSummary, protocolSummary),
+            newFileParams,
+            this.urlResolver,
+        );
+        try {
+            const expDocService = this.service as IExperimentalDocumentService;
+            if (!expDocService?.isExperimentalDocumentService) {
+                throw new Error("Not an Experimental Doc Service");
+            }
+            const resolvedUrl = expDocService.resolvedUrl;
+            ensureFluidResolvedUrl(resolvedUrl);
+            this._containerUrl = expDocService.createContainerUrl();
+            this.originalRequest = {url: this._containerUrl};
             this._canReconnect = !(request.headers?.[LoaderHeader.reconnect] === false);
             const parsedUrl = parseUrl(resolvedUrl.url);
             if (!parsedUrl) {

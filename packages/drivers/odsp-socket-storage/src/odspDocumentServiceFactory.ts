@@ -3,27 +3,67 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryBaseLogger, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
     IDocumentService,
     IDocumentServiceFactory,
     IResolvedUrl,
+    IExperimentalDocumentServiceFactory,
+    IUrlResolver,
+    IOdspNewFileParams,
 } from "@microsoft/fluid-driver-definitions";
+import { PerformanceEvent, DebugLogger } from "@microsoft/fluid-common-utils";
+import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import { getSocketIo } from "./getSocketIo";
 import { ICache, IOdspCache, OdspCache } from "./odspCache";
 import { OdspDocumentService } from "./odspDocumentService";
+import { createNewFluidFile } from "./createFile";
+
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
  * use the sharepoint implementation.
  */
-export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
+export class OdspDocumentServiceFactory implements IDocumentServiceFactory, IExperimentalDocumentServiceFactory {
+    public readonly isExperimentalDocumentServiceFactory = true;
     public readonly protocolName = "fluid-odsp:";
 
     private readonly documentsOpened = new Set<string>();
     private readonly cache: IOdspCache;
+
+    public async createContainer(
+        createNewSummary: ISummaryTree,
+        newFileParams: IOdspNewFileParams,
+        urlResolver: IUrlResolver,
+    ): Promise<IDocumentService> {
+        let odspResolvedUrl: IOdspResolvedUrl;
+        const templogger: ITelemetryLogger = DebugLogger.mixinDebugLogger(
+            "fluid:telemetry:OdspDriver",
+            this.logger);
+        const event = PerformanceEvent.start(templogger,
+            {
+                eventName: "CreateNew",
+                isWithSummaryUpload: true,
+            });
+        try {
+            odspResolvedUrl = await createNewFluidFile(
+                this.getStorageToken,
+                Promise.resolve(newFileParams),
+                this.cache,
+                createNewSummary);
+            const props = {
+                hashedDocumentId: odspResolvedUrl.hashedDocumentId,
+                itemId: odspResolvedUrl.itemId,
+            };
+            event.end(props);
+        } catch(error) {
+            event.cancel(undefined, error);
+            throw error;
+        }
+        return this.createDocumentService(odspResolvedUrl);
+    }
 
     /**
    * @param appId - app id used for telemetry for network requests.

@@ -5,8 +5,7 @@
 
 import * as assert from "assert";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IUrlResolver, IExperimentalUrlResolver } from "@microsoft/fluid-driver-definitions";
-import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
+import { IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import { IOdspResolvedUrl, ICreateNewOptions } from "./contracts";
 import { getHashedDocumentId } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";
@@ -28,8 +27,7 @@ function removeBeginningSlash(str: string): string {
     return str;
 }
 
-export class OdspDriverUrlResolver implements IUrlResolver, IExperimentalUrlResolver {
-    public readonly isExperimentalUrlResolver = true;
+export class OdspDriverUrlResolver implements IUrlResolver {
     constructor() { }
 
     public async resolve(request: IRequest): Promise<IOdspResolvedUrl> {
@@ -84,45 +82,6 @@ export class OdspDriverUrlResolver implements IUrlResolver, IExperimentalUrlReso
             siteUrl,
             driveId,
             itemId,
-        };
-    }
-
-    public async createContainer(
-        createNewSummary: ISummaryTree,
-        request: IRequest,
-    ): Promise<IOdspResolvedUrl> {
-        if(!request.headers) {
-            throw new Error("Request should contian headers!!");
-        }
-        assert(request.headers.newFileInfoPromise);
-        const createNewOptions: ICreateNewOptions = {
-            createNewSummary,
-            newFileInfoPromise: request.headers.newFileInfoPromise,
-        };
-        return this.resolveHelperForCreateNew(request.url, createNewOptions);
-    }
-
-    private resolveHelperForCreateNew(url: string, createNewOptions: ICreateNewOptions): IOdspResolvedUrl {
-        const [, queryString] = url.split("?");
-
-        const searchParams = new URLSearchParams(queryString);
-
-        const uniqueId = searchParams.get("uniqueId");
-        if (uniqueId === null) {
-            throw new Error("ODSP URL for new file should contain the uniqueId");
-        }
-        return {
-            type: "fluid",
-            endpoints: {
-                snapshotStorageUrl: "",
-            },
-            createNewOptions,
-            tokens: {},
-            url: `fluid-odsp://placeholder/placeholder/${uniqueId}?version=null`,
-            hashedDocumentId: "",
-            siteUrl: "",
-            driveId: "",
-            itemId: "",
         };
     }
 
