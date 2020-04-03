@@ -27,6 +27,11 @@ class MockLoadable implements IComponentLoadable {
     public get url() { return "url123"; }
 }
 
+class MockLoadableWithArgs implements IComponentLoadable{
+    public constructor(public readonly url: string) { }
+    public get IComponentLoadable() { return this; }
+}
+
 class MockComponentConfiguration implements IComponentConfiguration {
     public get IComponentConfiguration() { return this; }
     public get canReconnect() { return false; }
@@ -44,6 +49,15 @@ describe("Routerlicious", () => {
                 const s = manager.resolve<IComponentLoadable>({IComponentLoadable}, {});
                 assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
                 assert(s.IComponentLoadable === module, "IComponentLoadable is valid");
+            });
+
+            it(`One Optional Module registered via class`, async () => {
+                const manager = new ModuleManager();
+                manager.register(IComponentLoadable, {ctor: MockLoadableWithArgs, args: ["foo"]});
+
+                const s = manager.resolve<IComponentLoadable>({IComponentLoadable}, {});
+                assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
+                assert(s.IComponentLoadable?.url === "foo", "IComponentLoadable is valid");
             });
 
             it(`One Optional Module registered via class`, async () => {
