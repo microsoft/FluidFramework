@@ -1,0 +1,88 @@
+{
+  "name": "@microsoft/fluid-test-utils",
+  "version": "0.16.0",
+  "description": "Utilities for fluid tests",
+  "repository": "microsoft/FluidFramework",
+  "license": "MIT",
+  "author": "Microsoft",
+  "sideEffects": "false",
+  "main": "dist/index.js",
+  "module": "lib/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "npm run build:genver && concurrently npm:build:compile npm:lint",
+    "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:compile:min": "npm run build:compile",
+    "build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
+    "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
+    "build:genver": "gen-version",
+    "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+    "eslint": "eslint --ext=ts,tsx --format stylish src",
+    "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
+    "lint": "npm run eslint",
+    "lint:fix": "npm run eslint:fix",
+    "test": "npm run test:mocha",
+    "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
+    "test:mocha": "mocha --recursive dist/test/**/*.spec.js -r make-promises-safe",
+    "tsc": "tsc"
+  },
+  "nyc": {
+    "all": true,
+    "cache-dir": "nyc/.cache",
+    "exclude": [
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "exclude-after-remap": false,
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "report-dir": "nyc/report",
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output"
+  },
+  "dependencies": {
+    "@microsoft/fluid-component-core-interfaces": "^0.16.0",
+    "@microsoft/fluid-component-runtime": "^0.16.0",
+    "@microsoft/fluid-map": "^0.16.0",
+    "@microsoft/fluid-runtime-definitions": "^0.16.0",
+    "@microsoft/fluid-shared-object-base": "^0.16.0"
+  },
+  "devDependencies": {
+    "@microsoft/api-extractor": "^7.7.2",
+    "@microsoft/eslint-config-fluid": "^0.15.0",
+    "@types/debug": "^0.0.31",
+    "@types/diff": "^3.5.1",
+    "@types/mocha": "^5.2.5",
+    "@types/random-js": "^1.0.31",
+    "@types/xmldoc": "^1.1.3",
+    "@typescript-eslint/eslint-plugin": "~2.17.0",
+    "@typescript-eslint/parser": "~2.17.0",
+    "concurrently": "^4.1.0",
+    "copyfiles": "^2.1.0",
+    "diff": "^3.5.0",
+    "eslint": "~6.8.0",
+    "eslint-plugin-eslint-comments": "~3.1.2",
+    "eslint-plugin-import": "2.20.0",
+    "eslint-plugin-no-null": "~1.0.2",
+    "eslint-plugin-optimize-regex": "~1.1.7",
+    "eslint-plugin-prefer-arrow": "~1.1.7",
+    "eslint-plugin-react": "~7.18.0",
+    "eslint-plugin-unicorn": "~15.0.1",
+    "make-promises-safe": "^5.1.0",
+    "mocha": "^5.2.0",
+    "mocha-junit-reporter": "^1.18.0",
+    "nyc": "^15.0.0",
+    "random-js": "^1.0.8",
+    "rimraf": "^2.6.2",
+    "typescript": "~3.7.4",
+    "xmldoc": "^1.1.2"
+  }
+}
