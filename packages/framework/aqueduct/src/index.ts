@@ -15,4 +15,5 @@
 
 export * from "./components";
 export * from "./containerServices";
+export * from "./container-modules";
 export * from "./helpers";

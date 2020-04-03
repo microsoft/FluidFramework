@@ -24,15 +24,6 @@ import {
     Scope,
 } from "../container-modules";
 
-import { IComponentFoo } from "./IComponentFoo";
-
-export class Foo implements IComponentFoo {
-    public get IComponentFoo() { return this; }
-    public foo() {
-        alert("foo ya!");
-    }
-}
-
 export class SharedComponentFactory<T extends SharedComponent, O extends IComponent, R  extends IComponent>
 implements IComponentFactory, Partial<IProvideComponentRegistry>
 {

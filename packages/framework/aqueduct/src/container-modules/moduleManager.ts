@@ -4,18 +4,9 @@
  */
 
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { IHostRuntime } from "@microsoft/fluid-runtime-definitions";
 
 import { Module, Scope } from "./types";
 import { IComponentModuleManager } from "./IComponentModuleManager";
-
-export interface IModuleEntry<T> {
-    readonly type: (keyof IComponent & keyof T);
-    readonly ctor: (runtime?: IHostRuntime) => Promise<T>;
-    readonly optional: boolean;
-}
-
-export type ContainerModuleRegistryEntries = Iterable<IModuleEntry<any>>;
 
 /**
  * ModuleManager is similar to a IoC Container.

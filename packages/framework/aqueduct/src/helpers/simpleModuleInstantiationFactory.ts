@@ -12,6 +12,7 @@ import {
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 
+import { ModuleManager } from "../container-modules";
 import { ContainerServiceRegistryEntries } from "../containerServices";
 import { SimpleContainerRuntimeFactory } from "./";
 
@@ -35,6 +36,7 @@ export class SimpleModuleInstantiationFactory implements
         private readonly registryEntries: NamedComponentRegistryEntries,
         private readonly serviceRegistry: ContainerServiceRegistryEntries = [],
         private readonly requestHandlers: RuntimeRequestHandler[] = [],
+        private readonly moduleManager: ModuleManager = new ModuleManager(),
     ) {
         this.registry = new ComponentRegistry(registryEntries);
     }
@@ -51,6 +53,7 @@ export class SimpleModuleInstantiationFactory implements
             this.registryEntries,
             this.serviceRegistry,
             this.requestHandlers,
+            this.moduleManager,
         );
     }
 }

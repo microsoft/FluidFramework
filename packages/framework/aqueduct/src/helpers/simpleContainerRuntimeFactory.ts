@@ -19,8 +19,8 @@ import {
 import { ModuleManager } from "../container-modules";
 
 // TODO: Foo is a place holder. Will be removed.
-import { Foo } from "./sharedComponentFactory";
-import { IComponentFoo } from "./IComponentFoo";
+// import { Foo } from "./sharedComponentFactory";
+// import { IComponentFoo } from "./IComponentFoo";
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class SimpleContainerRuntimeFactory {
@@ -35,11 +35,11 @@ export class SimpleContainerRuntimeFactory {
         registryEntries: NamedComponentRegistryEntries,
         serviceRegistry: ContainerServiceRegistryEntries = [],
         requestHandlers: RuntimeRequestHandler[] = [],
+        // TODO: This probably shouldn't be the module manager but some registry or list or something
+        moduleManager: ModuleManager = new ModuleManager(),
     ): Promise<ContainerRuntime> {
-
-        const moduleManager = new ModuleManager();
-        moduleManager.register(IComponentFoo, new Foo());
-
+        // We can set the parent module manager to the one provided by the host.
+        moduleManager.parent = context.scope.IComponentModuleManager;
         const runtime = await ContainerRuntime.load(
             context,
             registryEntries,
