@@ -14,10 +14,12 @@ export interface IComponentCallbacks {
     toggleEditable?(isEditable?: boolean): void;
 }
 
+export const IComponentCallable: keyof IProvideComponentCallable = "IComponentCallable";
+
 // Experimental code, we are looking into seeing how we can use generics to allow components
 // to set interfaces to communicate between one another
 export interface IProvideComponentCallable {
-    IComponentCallable: IComponentCallable<IComponentCallbacks>;
+    readonly IComponentCallable: IComponentCallable<IComponentCallbacks>;
 }
 
 /**

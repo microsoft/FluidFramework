@@ -87,7 +87,7 @@ export class SummaryTracker implements ISummaryTracker {
 
     public createOrGetChild(key: string, latestSequenceNumber: number): SummaryTracker {
         const existingChild = this.children.get(key);
-        if (existingChild) {
+        if (existingChild !== undefined) {
             return existingChild;
         }
 

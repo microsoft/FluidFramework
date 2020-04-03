@@ -36,7 +36,7 @@ export class LocalChannelContext implements IChannelContext {
         dirtyFn: (address: string) => void,
     ) {
         const factory = registry.get(type);
-        if (!factory) {
+        if (factory === undefined) {
             throw new Error(`Channel Factory ${type} not registered`);
         }
 

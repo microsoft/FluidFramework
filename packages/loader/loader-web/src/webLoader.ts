@@ -48,7 +48,7 @@ export class WebCodeLoader implements ICodeLoader {
                 return maybePkg;
             }
         }
-        if (this.whiteList && !(await this.whiteList.testSource(resolved))) {
+        if (this.whiteList !== undefined && !(await this.whiteList.testSource(resolved))) {
             throw new Error("Attempted to load invalid code package url");
         }
 

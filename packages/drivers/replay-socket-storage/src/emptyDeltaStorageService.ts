@@ -14,8 +14,7 @@ export class EmptyDeltaStorageService implements IDocumentDeltaStorageService {
      * @param to - Op are returned from to - 1.
      * @returns Array of ops requested by the user.
      */
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public get(from?: number, to?: number): Promise<api.ISequencedDocumentMessage[]> {
-        return Promise.resolve([] as api.ISequencedDocumentMessage[]);
+    public async get(from?: number, to?: number): Promise<api.ISequencedDocumentMessage[]> {
+        return [];
     }
 }

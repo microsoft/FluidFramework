@@ -96,7 +96,7 @@ export interface IFluidPackage extends IPackage {
  * @param pkg - the package json data to check if it is a fluid package.
  */
 export const isFluidPackage = (pkg: IPackage): pkg is IFluidPackage =>
-    pkg.fluid && pkg.fluid.browser && pkg.fluid.browser.umd;
+    pkg.fluid?.browser?.umd !== undefined;
 
 /**
  * Package manager configuration. Provides a key value mapping of config values
@@ -177,6 +177,8 @@ export interface IMessageScheduler {
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 }
 
+export const IMessageScheduler: keyof IProvideMessageScheduler = "IMessageScheduler";
+
 export interface IProvideMessageScheduler {
     readonly IMessageScheduler: IMessageScheduler;
 }
@@ -234,6 +236,8 @@ export interface IExperimentalContainerContext extends IContainerContext {
     createSummary(): Promise<ISummaryTree>;
 }
 
+export const IComponentTokenProvider: keyof IProvideComponentTokenProvider = "IComponentTokenProvider";
+
 export interface IProvideComponentTokenProvider {
     readonly IComponentTokenProvider: IComponentTokenProvider;
 }
@@ -245,6 +249,8 @@ export interface IComponentTokenProvider extends IProvideComponentTokenProvider 
 export interface IFluidModule {
     fluidExport: IComponent;
 }
+
+export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";
 
 export interface IProvideRuntimeFactory {
     readonly IRuntimeFactory: IRuntimeFactory;

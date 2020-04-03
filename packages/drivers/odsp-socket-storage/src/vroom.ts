@@ -89,7 +89,7 @@ export async function fetchJoinSession(
  * @param getVroomToken - A function that gets the Vroom token
  * @param getPushToken - A function that gets the push token
  */
-// Function has to be syncronous (i.e. no awaits) in order to be correct!
+// Function has to be synchronous (i.e. no awaits) in order to be correct!
 // eslint-disable-next-line @typescript-eslint/promise-function-async
 export function getSocketStorageDiscovery(
     appId: string,
