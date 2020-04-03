@@ -103,7 +103,6 @@ export class OdspDocumentService implements IDocumentService {
 
     private readonly joinSessionKey: string;
 
-
     /**
      * @param appId - app id used for telemetry for network requests
      * @param hashedDocumentId - A unique identifer for the document. The "hashed" here implies that the contents of
@@ -262,7 +261,7 @@ export class OdspDocumentService implements IDocumentService {
                 websocketEndpoint.deltaStreamSocketUrl,
                 websocketEndpoint.deltaStreamSocketUrl2,
             ).catch((error) => {
-                this.cache.sessionStorage.remove(this.joinSessionKey);
+                this.cache.sessionRegistry.unregisterSession(this.joinSessionKey);
                 throw error;
             });
         });

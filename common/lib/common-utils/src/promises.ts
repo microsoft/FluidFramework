@@ -170,11 +170,11 @@ export interface PromiseHandle<T> {
  */
 export class PromiseRegistry<T> {
     private readonly cache = new Map<string, PromiseHandle<T>>();
-    private readonly expiryKeys = new Map<string, string>();
-    private readonly expirationOrders = new Map<string, void>();
+    private readonly gcKeys = new Map<string, string>();
+    private readonly pendingGcs = new Map<string, void>();
 
     constructor(
-        private readonly refreshExpiryOnReregister: boolean,
+        private readonly refreshExpiryOnReregister: boolean = false,  //** TODO: Move to param on register? */
     ) {}
 
     /**
@@ -204,6 +204,18 @@ export class PromiseRegistry<T> {
         return this.synchronousRegister(key, asyncFn, unregisterOnError, expiryTime).promise;
     }
 
+    /**
+     * Register the given value. Use lookup to get the Promise wrapping it in the registry
+     * @param key - key name where to store the value
+     * @param value - value to store
+     */
+    public registerValue(
+        key: string,
+        value: T,
+    ) {
+        this.synchronousRegister(key, async () => value);
+    }
+
     private synchronousRegister(
         key: string,
         asyncFn: () => Promise<T>,
@@ -218,7 +230,7 @@ export class PromiseRegistry<T> {
             handle = { promise: promiseToCache };
             this.cache.set(key, handle);
 
-            // If asyncFn throws, remove the Promise from the cache
+            // If asyncFn throws, possibly remove the Promise from the cache
             promiseToCache.catch((error) => {
                 if (unregisterOnError?.(error)) {
                     this.unregister(key);
@@ -228,28 +240,30 @@ export class PromiseRegistry<T> {
 
         // Schedule garbage collection if required
         if (expiryTime) {
-            const oldExpiryKey = this.expiryKeys.get(key);
-            if (this.refreshExpiryOnReregister && oldExpiryKey !== undefined) {
-                this.expirationOrders.delete(oldExpiryKey);
+            // If we're supposed to refresh expiry, cancel any pending gc attempt
+            const oldGcKey = this.gcKeys.get(key);
+            if (this.refreshExpiryOnReregister && oldGcKey !== undefined) {
+                this.pendingGcs.delete(oldGcKey);
             }
 
-            const newExpiryKey = `${key}-${Date()}`;
-            this.expiryKeys.set(key, newExpiryKey);
+            // Create and store a new expiry key to track this gc attempt
+            const newGcKey = `${key}-${new Date().getTime()}`;
+            this.gcKeys.set(key, newGcKey);
 
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            this.gc(key, newExpiryKey, expiryTime);
+            this.gc(key, newGcKey, expiryTime);
         }
 
         return handle;
     }
 
-    private async gc(key: string, expiryKey: string, expiryTime: number) {
-        this.expirationOrders.set(expiryKey);
+    private async gc(key: string, gcKey: string, expiryTime: number) {
+        this.pendingGcs.set(gcKey);
 
         await delay(expiryTime);
 
-        // Only execute the gc delete if our expiryKey is still present to be removed here
-        if (this.expirationOrders.delete(expiryKey)) {
+        // Only execute the gc delete if our expiryKey wasn't already deleted
+        if (this.pendingGcs.delete(gcKey)) {
             this.cache.delete(key);
         }
     }

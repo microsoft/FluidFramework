@@ -3,6 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import {delay, PromiseRegistry} from "@microsoft/fluid-common-utils";
+import { ISocketStorageDiscovery, IOdspResolvedUrl } from "./contracts";
+import { IFileCreateResponse } from "./createFile";
+
+type FileUrlRegistryItem = [IOdspResolvedUrl, IFileCreateResponse];
+
 export interface ICache {
     /**
      * Get the cache value of the key
@@ -20,22 +26,35 @@ export interface ICache {
     put(key: string, value: any, expiryTime?: number);
 }
 
-export interface ISessionCache {
+export interface ISessionRegistry {
     /**
-     * Get the cache value of the key
-     * This is syncronous API
+     * Registers a session, ensuring fetchJoinSession is called exactly once
      */
-    get(key: string): any;
+    registerSession(
+        joinSessionKey: string,
+        fetchJoinSession: () => Promise<ISocketStorageDiscovery>,
+        expiryTime?: number,
+    ): Promise<ISocketStorageDiscovery>
 
     /**
-     * Deletes value in storage
+     * Removes registration for joinSessionKey
      */
-    remove(key: string);
+    unregisterSession(joinSessionKey: string): boolean;
+}
+
+export interface IFileUrlRegistry {
+    /**
+     * Registers a file being created, ensuring resolveFileUrl is called exactly once
+     */
+    registerfile(
+        fileKey: string,
+        resolveFileUrl: () => Promise<FileUrlRegistryItem>,
+    ): Promise<FileUrlRegistryItem>
 
     /**
-     * puts value into cache
+     * Removes registration for fileKey
      */
-    put(key: string, value: any, expiryTime?: number);
+    unregisterFile(fileKey: string): boolean;
 }
 
 /**
@@ -48,9 +67,14 @@ export interface IOdspCache {
     readonly localStorage: ICache;
 
     /**
-     * session cache - non-serializable content is allowed
+     * cache of joined/joining sessions
      */
-    readonly sessionStorage: ISessionCache;
+    readonly sessionRegistry: ISessionRegistry;
+
+    /**
+     * cache of resolved/resolving file URLs
+     */
+    readonly fileUrlRegistry: IFileUrlRegistry;
 }
 
 export class CacheBase {
@@ -69,7 +93,6 @@ export class CacheBase {
     }
 
     private async gc(key: string, expiryTime: number) {
-        const delay = async (ms?: number) => new Promise((res) => setTimeout(res, ms));
         await delay(expiryTime);
         if (this.cache.has(key)) {
             this.cache.delete(key);
@@ -84,16 +107,42 @@ export class LocalCache extends CacheBase implements ICache {
     }
 }
 
-export class SessionCache extends CacheBase implements ISessionCache {
-    public get(key: string) {
-        return this.cache.get(key);
+export class SessionRegistry implements ISessionRegistry {
+    private readonly registry: PromiseRegistry<ISocketStorageDiscovery> = new PromiseRegistry(
+        true /*refreshExpiryOnReregister*/);
+
+    async registerSession(
+        joinSessionKey: string,
+        asyncFn: () => Promise<ISocketStorageDiscovery>,
+        expiryTime?: number | undefined,
+    ) {
+        return this.registry.register(joinSessionKey, asyncFn, (e) => true /*unregisterOnError*/, expiryTime);
+    }
+
+    unregisterSession(joinSessionKey: string) {
+        return this.registry.unregister(joinSessionKey);
     }
 }
 
+export class FileUrlRegistry implements IFileUrlRegistry {
+    private readonly registry: PromiseRegistry<FileUrlRegistryItem> = new PromiseRegistry();
+
+    async registerfile(
+        fileKey: string,
+        resolveFileUrl: () => Promise<FileUrlRegistryItem>,
+    ): Promise<FileUrlRegistryItem> {
+        return this.registry.register(fileKey, resolveFileUrl);
+    }
+
+    unregisterFile(fileKey: string): boolean {
+        return this.registry.unregister(fileKey);
+    }
+}
 
 export class OdspCache implements IOdspCache {
     public readonly localStorage: ICache;
-    public readonly sessionStorage: ICache = new SessionCache();
+    public readonly sessionRegistry: ISessionRegistry = new SessionRegistry();
+    public readonly fileUrlRegistry: IFileUrlRegistry = new FileUrlRegistry();
 
     constructor(permanentCache?: ICache) {
         this.localStorage = permanentCache !== undefined ? permanentCache : new LocalCache();

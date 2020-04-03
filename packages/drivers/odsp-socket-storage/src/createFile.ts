@@ -40,45 +40,42 @@ export function getKeyFromFileInfo(fileInfo: INewFileInfo): string {
  */
 export async function createNewFluidFile(
     getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
-    newFileInfoPromise: Promise<INewFileInfo> | undefined,
+    newFileInfoP: Promise<INewFileInfo> | undefined,
     cache: IOdspCache,
 ): Promise<IOdspResolvedUrl> {
-    if (!newFileInfoPromise) {
+    if (!newFileInfoP) {
         throw new Error("Odsp driver needs to create a new file but no newFileInfo supplied");
     }
-    const newFileInfo = await newFileInfoPromise;
+    const newFileInfo = await newFileInfoP;
 
-    const key = getKeyFromFileInfo(newFileInfo);
-    const responseP: Promise<IOdspResolvedUrl> = cache.sessionStorage.get(key);
-    let resolvedUrl: IOdspResolvedUrl;
-    if (responseP !== undefined) {
-        return responseP;
+    // We don't want to create a new file for different instances of a driver,
+    // and we don't know the order of execution of this code by driver instances.
+    // The FileUrlRegistry takes care of handling this potential concurrency for us.
+    const resultP = cache.fileUrlRegistry.registerfile(
+        getKeyFromFileInfo(newFileInfo),
+        async () => {
+            // Check for valid filename before the request to create file is actually made.
+            if (isInvalidFileName(newFileInfo.filename)) {
+                throw new Error("Invalid filename. Please try again.");
+            }
+
+            const fileResponse: IFileCreateResponse = await createNewFluidFileHelper(newFileInfo, getStorageToken);
+            const odspUrl = createOdspUrl(fileResponse.siteUrl, fileResponse.driveId, fileResponse.itemId, "/");
+            const resolver = new OdspDriverUrlResolver();
+            const resolvedUrl = await resolver.resolve({ url: odspUrl });
+
+            return [resolvedUrl, fileResponse];
+        },
+    );
+
+    {
+        const [resolvedUrl, fileResponse] = await resultP;
+        if (newFileInfo.callback) {
+            newFileInfo.callback(fileResponse.itemId, fileResponse.filename);
+        }
+
+        return resolvedUrl;
     }
-    // Check for valid filename before the request to create file is actually made.
-    if (isInvalidFileName(newFileInfo.filename)) {
-        throw new Error("Invalid filename. Please try again.");
-    }
-    // We don't want to create a new file for different instances of a driver. So we cache the
-    // response of previous create request as a deferred promise because this is async and we don't
-    // know the order of execution of this code by driver instances.
-    const odspResolvedUrlDeferred = new Deferred<IOdspResolvedUrl>();
-    cache.sessionStorage.put(key, odspResolvedUrlDeferred.promise);
-    let fileResponse: IFileCreateResponse;
-    try {
-        fileResponse = await createNewFluidFileHelper(newFileInfo, getStorageToken);
-        const odspUrl = createOdspUrl(fileResponse.siteUrl, fileResponse.driveId, fileResponse.itemId, "/");
-        const resolver = new OdspDriverUrlResolver();
-        resolvedUrl = await resolver.resolve({ url: odspUrl });
-    } catch (error) {
-        odspResolvedUrlDeferred.reject(error);
-        cache.sessionStorage.remove(key);
-        throw error;
-    }
-    odspResolvedUrlDeferred.resolve(resolvedUrl);
-    if (newFileInfo.callback) {
-        newFileInfo.callback(fileResponse.itemId, fileResponse.filename);
-    }
-    return resolvedUrl;
 }
 
 /**
