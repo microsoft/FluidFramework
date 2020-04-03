@@ -33,6 +33,10 @@ export class DiceRoller extends PrimedComponent<IComponentFoo> implements ICompo
         this.root.set("diceValue", 1);
     }
 
+    protected async componentHasInitialized() {
+        this.scope.IComponentFoo?.foo();
+    }
+
     /**
      * Render the dice.
      */
@@ -43,7 +47,6 @@ export class DiceRoller extends PrimedComponent<IComponentFoo> implements ICompo
 
             ReactDOM.render(
                 <div>
-                    {this.scope.IComponentFoo?.foo()}
                     <span style={{ fontSize: 50 }}>{this.getDiceChar(diceValue)}</span>
                     <button onClick={this.rollDice.bind(this)}>Roll</button>
                 </div>,

@@ -43,12 +43,12 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>
         private readonly ctor: new (runtime: IComponentRuntime,
             context: IComponentContext,
             scope: Scope<O, R>) => T,
+        private readonly optionalModuleTypes: Record<keyof O & keyof IComponent, keyof O & keyof IComponent>,
+        private readonly requiredModuleTypes: Record<keyof R & keyof IComponent, keyof R & keyof IComponent>,
         sharedObjects: readonly ISharedObjectFactory[],
         registryEntries?: NamedComponentRegistryEntries,
         private readonly onDemandInstantiation = true,
         public readonly type: string = "",
-        private readonly optionalModuleTypes: Record<(keyof O & keyof IComponent), keyof IComponent> = {} as any,
-        private readonly requiredModuleTypes: Record<(keyof R & keyof IComponent), keyof IComponent> = {} as any,
     ) {
         if (registryEntries !== undefined) {
             this.registry = new ComponentRegistry(registryEntries);

@@ -72,8 +72,8 @@ export class ModuleManager implements IComponentModuleManager {
      * @param requiredTypes - required types that need to be in the Scope object
      */
     public resolve<O extends IComponent, R extends IComponent = {}>(
-        optionalTypes: Record<(keyof O & keyof IComponent), keyof IComponent>,
-        requiredTypes: Record<(keyof R & keyof IComponent), keyof IComponent>,
+        optionalTypes: Record<keyof O & keyof IComponent, keyof O & keyof IComponent>,
+        requiredTypes: Record<keyof R & keyof IComponent, keyof R & keyof IComponent>,
     ): Scope<O, R> {
         const optionalValues = Object.values(optionalTypes);
         const requiredValues = Object.values(requiredTypes);
