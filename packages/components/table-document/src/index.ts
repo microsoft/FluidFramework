@@ -8,3 +8,4 @@ export { TableSlice } from "./slice";
 export { ITable } from "./table";
 export * from "./componentTypes";
 export { parseRange, colIndexToName } from "./cellrange";
+export * from "./interception";

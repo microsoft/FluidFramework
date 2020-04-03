@@ -11,6 +11,7 @@ import {
 } from "@microsoft/fluid-common-definitions";
 import { IComponent, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
+    IAudience,
     ICodeLoader,
     IConnectionDetails,
     IContainer,
@@ -38,7 +39,13 @@ import {
     IUrlResolver,
     IDocumentServiceFactory,
 } from "@microsoft/fluid-driver-definitions";
-import { createIError, readAndParse, OnlineStatus, isOnline } from "@microsoft/fluid-driver-utils";
+import {
+    createIError,
+    readAndParse,
+    OnlineStatus,
+    isOnline,
+    ensureFluidResolvedUrl,
+} from "@microsoft/fluid-driver-utils";
 import {
     buildSnapshotTree,
     isSystemMessage,
@@ -103,13 +110,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
      */
     public static async load(
         id: string,
-        service: IDocumentService,
+        serviceFactory: IDocumentServiceFactory,
         codeLoader: ICodeLoader,
         options: any,
         scope: IComponent,
         loader: Loader,
         request: IRequest,
         resolvedUrl: IFluidResolvedUrl,
+        urlResolver: IUrlResolver,
         logger?: ITelemetryBaseLogger,
     ): Promise<Container> {
         const container = new Container(
@@ -117,23 +125,26 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             scope,
             codeLoader,
             loader,
+            serviceFactory,
+            urlResolver,
             logger);
 
         const [, docId] = id.split("/");
         container._id = decodeURI(docId);
         container._scopes = container.getScopes(resolvedUrl);
         container._canReconnect = !(request.headers?.[LoaderHeader.reconnect] === false);
-        container.service = service;
+        container.service = await serviceFactory.createDocumentService(resolvedUrl);
         container.originalRequest = request;
 
         return new Promise<Container>((res, rej) => {
             let alreadyRaisedError = false;
-            const onError = (error) => {
+            const onError = (err) => {
                 container.removeListener("error", onError);
                 // Depending where error happens, we can be attempting to connect to web socket
                 // and continuously retrying (consider offline mode)
                 // Host has no container to close, so it's prudent to do it here
-                container.close();
+                const error = createIError(err, true);
+                container.close(error);
                 rej(error);
                 alreadyRaisedError = true;
             };
@@ -142,12 +153,16 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             const version = request.headers && request.headers[LoaderHeader.version];
             const pause = request.headers && request.headers[LoaderHeader.pause];
 
+            const perfEvent = PerformanceEvent.start(container.logger, { eventName: "Load" });
+
             container.load(version, !!pause)
-                .then(() => {
+                .then((props) => {
                     container.removeListener("error", onError);
                     res(container);
+                    perfEvent.end(props);
                 })
                 .catch((error) => {
+                    perfEvent.cancel(undefined, error);
                     const err = createIError(error, true);
                     if (!alreadyRaisedError) {
                         container.logCriticalError(err);
@@ -163,7 +178,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         scope: IComponent,
         loader: Loader,
         source: IFluidCodeDetails,
-        factoryProvider: (resolvedUrl: IFluidResolvedUrl) => IDocumentServiceFactory,
+        serviceFactory: IDocumentServiceFactory,
+        urlResolver: IUrlResolver,
         logger?: ITelemetryBaseLogger,
     ): Promise<Container> {
         const container = new Container(
@@ -171,8 +187,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             scope,
             codeLoader,
             loader,
+            serviceFactory,
+            urlResolver,
             logger);
-        container.factoryProvider = factoryProvider;
         await container.createDetached(source);
 
         return container;
@@ -198,8 +215,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private _id: string | undefined;
     private originalRequest: IRequest | undefined;
     private service: IDocumentService | undefined;
-    private factoryProvider: ((resolvedUrl: IFluidResolvedUrl) => IDocumentServiceFactory) | undefined;
-    private _parentBranch: string | undefined | null;
+    private _parentBranch: string | null = null;
     private _connectionState = ConnectionState.Disconnected;
     private _serviceConfiguration: IServiceConfiguration | undefined;
     private readonly _audience: Audience;
@@ -297,14 +313,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     /**
      * Retrieves the audience associated with the document
      */
-    public get audience(): Audience {
+    public get audience(): IAudience {
         return this._audience;
     }
 
     /**
      * Returns the parent branch for this document
      */
-    public get parentBranch(): string | undefined | null {
+    public get parentBranch(): string | null {
         return this._parentBranch;
     }
 
@@ -313,6 +329,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         private readonly scope: IComponent,
         private readonly codeLoader: ICodeLoader,
         private readonly loader: Loader,
+        private readonly serviceFactory: IDocumentServiceFactory,
+        private readonly urlResolver: IUrlResolver,
         logger?: ITelemetryBaseLogger,
     ) {
         super();
@@ -363,8 +381,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     public on(event: "readonly", listener: (readonly: boolean) => void): void;
     public on(event: "connected" | "contextChanged", listener: (clientId: string) => void): this;
-    public on(event: "disconnected" | "joining" | "closed", listener: () => void): this;
-    public on(event: "error", listener: (error: any) => void): this;
+    public on(event: "disconnected" | "joining", listener: () => void): this;
+    public on(event: "closed", listener: (error?: IError) => void): this;
+    public on(event: "error", listener: (error: IError) => void): this;
     public on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
     public on(event: "pong" | "processTime", listener: (latency: number) => void): this;
     public on(event: MessageType.BlobUploaded, listener: (contents: any) => void): this;
@@ -373,13 +392,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return super.on(event, listener);
     }
 
-    public close(reason?: string) {
+    public close(error?: IError) {
         if (this._closed) {
             return;
         }
         this._closed = true;
 
-        this._deltaManager.close(reason ? new Error(reason) : undefined, false /*raiseContainerError*/);
+        this._deltaManager.close(error, false /*raiseContainerError*/);
 
         if (this.protocolHandler) {
             this.protocolHandler.close();
@@ -389,7 +408,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         assert(this.connectionState === ConnectionState.Disconnected, "disconnect event was not raised!");
 
-        this.emit("closed");
+        this.emit("closed", error);
 
         this.removeAllListeners();
     }
@@ -398,7 +417,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this.attached;
     }
 
-    public async attach(resolver: IUrlResolver, request: IRequest): Promise<void> {
+    public async attach(request: IRequest): Promise<void> {
         if (!this.context) {
             throw new Error("Context is undefined");
         }
@@ -416,7 +435,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         this.originalRequest = request;
         // Actually go and create the resolved document
-        const expUrlResolver = resolver as IExperimentalUrlResolver;
+        const expUrlResolver = this.urlResolver as IExperimentalUrlResolver;
         if (!expUrlResolver?.isExperimentalUrlResolver) {
             throw new Error("Not an Experimental UrlResolver");
         }
@@ -426,15 +445,12 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             quorumSnapshot.values,
             request);
 
-        if (resolvedUrl.type !== "fluid") {
-            throw new Error("Only Fluid components currently supported");
-        }
-        if (!this.factoryProvider) {
+        ensureFluidResolvedUrl(resolvedUrl);
+
+        if (!this.serviceFactory) {
             throw new Error("Provide callback to get factory from resolved url");
         }
-        // TODO - https://github.com/microsoft/FluidFramework/issues/1427
-        const factory = this.factoryProvider(resolvedUrl);
-        const service = await factory.createDocumentService(resolvedUrl);
+        const service = await this.serviceFactory.createDocumentService(resolvedUrl);
 
         this.service = service;
         this._canReconnect = !(request.headers?.[LoaderHeader.reconnect] === false);
@@ -575,6 +591,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.raiseCriticalError(createIError(error, true));
             throw error;
         });
+    }
+
+    public hasNullRuntime() {
+        return this.context!.hasNullRuntime();
     }
 
     private async reloadContextCore(): Promise<void> {
@@ -732,9 +752,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
      *   - otherwise, version sha to load snapshot
      * @param pause - start the container in a paused state
      */
-    private async load(specifiedVersion: string | null | undefined, pause: boolean): Promise<void> {
-        const perfEvent = PerformanceEvent.start(this.logger, { eventName: "Load" });
-
+    private async load(specifiedVersion: string | null | undefined, pause: boolean) {
         let startConnectionP: Promise<IConnectionDetails> | undefined;
 
         // Ideally we always connect as "read" by default.
@@ -807,15 +825,15 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         assert(!connected || this._deltaManager.connectionMode === "read");
         this.propagateConnectionState();
 
-        perfEvent.end({
-            existing: this._existing,
-            sequenceNumber: attributes.sequenceNumber,
-            version: maybeSnapshotTree && maybeSnapshotTree.id !== null ? maybeSnapshotTree.id : undefined,
-        });
-
         if (!pause) {
             this.resume();
         }
+
+        return {
+            existing: this._existing,
+            sequenceNumber: attributes.sequenceNumber,
+            version: maybeSnapshotTree && maybeSnapshotTree.id !== null ? maybeSnapshotTree.id : undefined,
+        };
     }
 
     private async createDetached(source: IFluidCodeDetails) {
@@ -1070,8 +1088,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             // Back-compat for new client and old server.
             this._audience.clear();
 
-            const priorClients = details.initialClients ? details.initialClients : [];
-            for (const priorClient of priorClients) {
+            for (const priorClient of details.initialClients ?? []) {
                 this._audience.addMember(priorClient.clientId, priorClient.client);
             }
         });
@@ -1334,7 +1351,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             (type, contents, batch, metadata) => this.submitMessage(type, contents, batch, metadata),
             (message) => this.submitSignal(message),
             async (message) => this.snapshot(message),
-            (reason?: string) => this.close(reason),
+            (error?: IError) => this.close(error),
             Container.version,
             previousRuntimeState,
         );
@@ -1372,7 +1389,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             (type, contents, batch, metadata) => this.submitMessage(type, contents, batch, metadata),
             (message) => this.submitSignal(message),
             async (message) => this.snapshot(message),
-            (reason?: string) => this.close(reason),
+            (error?: IError) => this.close(error),
             Container.version,
             {},
         );

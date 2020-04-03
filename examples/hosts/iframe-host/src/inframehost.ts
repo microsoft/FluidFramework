@@ -15,9 +15,9 @@ import {
     IRuntimeFactory,
     IRuntimeState,
 } from "@microsoft/fluid-container-definitions";
-import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
-
-import { IBaseHostConfig } from "@microsoft/fluid-base-host";
+import { MultiUrlResolver, MultiDocumentServiceFactory } from "@microsoft/fluid-driver-utils";
+import { IRequest, IResponse, IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import { ISequencedDocumentMessage, ITree, ConnectionState } from "@microsoft/fluid-protocol-definitions";
 
 class ProxyRuntime implements IRuntime{
@@ -63,9 +63,23 @@ class ProxyCodeLoader implements ICodeLoader{
     }
 }
 
+export interface IFrameOuterHostConfig{
+    documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[];
+    urlResolver: IUrlResolver | IUrlResolver[];
+
+    // Any config to be provided to loader.
+    config?: any;
+
+    // A component that gives host provided capabilities/configurations
+    // to the component in the container(such as auth).
+    scope?: IComponent;
+
+    proxyLoaderFactories?: Map<string, IProxyLoaderFactory>;
+}
+
 export class IFrameOuterHost {
     private readonly loader: Loader;
-    constructor(private readonly hostConfig: IBaseHostConfig){
+    constructor(private readonly hostConfig: IFrameOuterHostConfig){
         // todo
         // disable summaries
         // set as non-user client
@@ -82,10 +96,10 @@ export class IFrameOuterHost {
     public async load(request: IRequest, iframe: HTMLIFrameElement): Promise<Container>{
 
         const proxy = await IFrameDocumentServiceProxyFactory.create(
-            this.hostConfig.documentServiceFactory,
+            MultiDocumentServiceFactory.create(this.hostConfig.documentServiceFactory),
             iframe,
             this.hostConfig.config,
-            this.hostConfig.urlResolver);
+            MultiUrlResolver.create(this.hostConfig.urlResolver));
 
         await proxy.createDocumentServiceFromRequest(request);
 

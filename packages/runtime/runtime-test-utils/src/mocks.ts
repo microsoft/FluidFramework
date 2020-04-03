@@ -193,6 +193,8 @@ class MockDeltaConnection implements IDeltaConnection {
         handler.setConnectionState(this.state);
     }
 
+    public dirty(): void {}
+
     public isLocal(msg: ISequencedDocumentMessage) {
         return msg.clientId === this.runtime.clientId || msg.clientId === this.pendingClientId;
     }
@@ -229,8 +231,8 @@ export class MockQuorum implements IQuorum, EventEmitter{
         throw new Error("Method not implemented.");
     }
 
-    addMember(id: string, client: ISequencedClient) {
-        this.members.set(id, client);
+    addMember(id: string, client: Partial<ISequencedClient>) {
+        this.members.set(id, client as ISequencedClient);
         this.eventEmitter.emit("addMember");
     }
 
@@ -288,7 +290,8 @@ export class MockQuorum implements IQuorum, EventEmitter{
         return this;
     }
     off(event: string | symbol, listener: (...args: any[]) => void): this {
-        throw new Error("Method not implemented.");
+        this.eventEmitter.off(event, listener);
+        return this;
     }
     removeAllListeners(event?: string | symbol | undefined): this {
         throw new Error("Method not implemented.");
@@ -609,6 +612,8 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
         assert(false);
         return 0;
     }
+
+    public dirty(): void {}
 }
 
 /**

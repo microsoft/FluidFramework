@@ -4,11 +4,11 @@
  */
 
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
-import { PerformanceEvent, Deferred } from "@microsoft/fluid-common-utils";
+import { PerformanceEvent } from "@microsoft/fluid-common-utils";
 import { ISocketStorageDiscovery } from "./contracts";
 import { IOdspCache } from "./odspCache";
 import { fetchHelper, getWithRetryForTokenRefresh, throwOdspNetworkError } from "./odspUtils";
-import { isOdcOrigin } from "./isOdc";
+import { getApiRoot } from "./odspUrlHelper";
 
 const getOrigin = (url: string) => new URL(url).origin;
 
@@ -55,13 +55,8 @@ export async function fetchJoinSession(
                 headers = { Authorization: `Bearer ${token}` };
             }
 
-            let prefix = "_api/";
-            if (isOdcOrigin(siteOrigin)) {
-                prefix = "";
-            }
-
             const response = await fetchHelper(
-                `${siteOrigin}/${prefix}v2.1/drives/${driveId}/items/${itemId}/${path}?${queryParams}`,
+                `${getApiRoot(siteOrigin)}/drives/${driveId}/items/${itemId}/${path}?${queryParams}`,
                 { method, headers },
             );
 
@@ -70,6 +65,11 @@ export async function fetchJoinSession(
                 sprequestguid: response.headers.get("sprequestguid"),
                 sprequestduration: response.headers.get("sprequestduration"),
             });
+
+            if (response.content.runtimeTenantId && !response.content.tenantId) {
+                response.content.tenantId = response.content.runtimeTenantId;
+            }
+
             return response.content;
         } catch (error) {
             joinSessionEvent.cancel({}, error);
@@ -89,7 +89,9 @@ export async function fetchJoinSession(
  * @param getVroomToken - A function that gets the Vroom token
  * @param getPushToken - A function that gets the push token
  */
-export async function getSocketStorageDiscovery(
+// Function has to be synchronous (i.e. no awaits) in order to be correct!
+// eslint-disable-next-line @typescript-eslint/promise-function-async
+export function getSocketStorageDiscovery(
     appId: string,
     driveId: string,
     itemId: string,
@@ -99,25 +101,13 @@ export async function getSocketStorageDiscovery(
     cache: IOdspCache,
     joinSessionKey: string,
 ): Promise<ISocketStorageDiscovery> {
-    // We invalidate the cache here because we will take the decision to put the joinsession result
-    // again based on the last time it was put in the cache. So if the result is valid and used within
-    // an hour we put the same result again with updated time so that we keep using the same result for
-    // consecutive join session calls because the server moved. If there is nothing in cache or the
-    // response was cached an hour ago, then we make the join session call again. Never expire the
-    // joinsession result. On error, the delta connection will invalidate it.
-    const cachedResultP: Promise<ISocketStorageDiscovery> = await cache.sessionStorage.get(joinSessionKey);
-    if (cachedResultP !== undefined) {
-        const content = await cachedResultP;
-        // Update result to keep it alive for another hour
-        cache.sessionStorage.put(joinSessionKey, Promise.resolve(content), 3600000);
-        return content;
-    }
+    // If the result is valid and used within an hour we put the same result again with updated time
+    // to keep using it for consecutive join session calls.
+    // On error, the delta connection will invalidate it.
+    let cachedResultP: Promise<ISocketStorageDiscovery> = cache.sessionStorage.get(joinSessionKey);
 
-    const responseDeferredP = new Deferred<ISocketStorageDiscovery>();
-    cache.sessionStorage.put(joinSessionKey, responseDeferredP.promise);
-    let response: ISocketStorageDiscovery;
-    try {
-        response = await fetchJoinSession(
+    if (cachedResultP === undefined) {
+        cachedResultP = fetchJoinSession(
             appId,
             driveId,
             itemId,
@@ -128,16 +118,12 @@ export async function getSocketStorageDiscovery(
             logger,
             getVroomToken,
         );
-
-        if (response.runtimeTenantId && !response.tenantId) {
-            response.tenantId = response.runtimeTenantId;
-        }
-    } catch (error) {
-        responseDeferredP.reject(error);
-        cache.sessionStorage.remove(joinSessionKey);
-        return responseDeferredP.promise;
+        cachedResultP.catch((error) => {
+            cache.sessionStorage.remove(joinSessionKey);
+        });
     }
-    responseDeferredP.resolve(response);
 
-    return response;
+    cache.sessionStorage.put(joinSessionKey, cachedResultP, 3600000);
+
+    return cachedResultP;
 }

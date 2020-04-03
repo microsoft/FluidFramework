@@ -17,7 +17,7 @@ import * as winston from "winston";
 import { spoEnsureLoggedIn } from "../gatewayOdspUtils";
 import { resolveUrl } from "../gatewayUrlResolver";
 import { IAlfred, IKeyValueWrapper } from "../interfaces";
-import { getConfig, getParam, getUserDetails } from "../utils";
+import { getConfig, getUserDetails } from "../utils";
 
 export function create(
     config: Provider,
@@ -74,7 +74,7 @@ export function create(
                 const documentId = rawPath.substring(0, slash !== -1 ? slash : rawPath.length);
                 const path = rawPath.substring(slash !== -1 ? slash : rawPath.length);
 
-                const tenantId = getParam(request.params, "tenantId");
+                const tenantId = request.params.tenantId;
 
                 const search = parse(request.url).search;
                 const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
@@ -86,7 +86,6 @@ export function create(
                     tenantId,
                     config.get("error:track"));
 
-                // eslint-disable-next-line @typescript-eslint/promise-function-async
                 const pkgP = fullTreeP.then((fullTree) => {
                     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     if (fullTree && fullTree.code) {
@@ -166,17 +165,19 @@ export function create(
 
                 Promise.all([resolvedP, fullTreeP, pkgP, scriptsP, timingsP])
                     .then(([resolved, fullTree, pkg, scripts, timings]) => {
-                        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-                        resolved.url += path + (search ? search : "");
+                        // Bug in TS3.7: https://github.com/microsoft/TypeScript/issues/33752
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        resolved!.url += path + (search ?? "");
                         winston.info(`render ${tenantId}/${documentId} +${Date.now() - start}`);
 
-                        timings.push(Date.now() - start);
+                        // Bug in TS3.7: https://github.com/microsoft/TypeScript/issues/33752
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        timings!.push(Date.now() - start);
 
                         response.render(
                             "loaderHost",
                             {
-                                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-                                cache: fullTree ? JSON.stringify(fullTree.cache) : undefined,
+                                cache: fullTree !== undefined ? JSON.stringify(fullTree.cache) : undefined,
                                 chaincode: JSON.stringify(pkg),
                                 clientId: config.get("login:microsoft").clientId,
                                 config: workerConfig,

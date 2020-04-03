@@ -11,8 +11,7 @@ import {
     IQuorum,
     ISequencedDocumentMessage,
 } from "@microsoft/fluid-protocol-definitions";
-import { IUrlResolver } from "@microsoft/fluid-driver-definitions";
-import { IFluidCodeDetails, IFluidModule } from "./chaincode";
+import { IFluidCodeDetails, IFluidModule, IFluidPackage } from "./chaincode";
 import { IDeltaManager } from "./deltas";
 
 /**
@@ -26,10 +25,44 @@ export interface ICodeLoader {
 }
 
 /**
+* The interface returned from a IFluidCodeResolver which represents IFluidCodeDetails
+ * that have been resolved and are ready to load
+ */
+export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
+    /**
+     * A resolved version of the fluid package. All fluid browser file entries should be absolute urls.
+     */
+    resolvedPackage: IFluidPackage;
+    /**
+     * If not undefined, this id will be used to cache the entry point for the code package
+     */
+    resolvedPackageCacheId: string | undefined;
+}
+
+/**
+ * Fluid code resolvers take a fluid code details, and resolve the
+ * full fuild package including absolute urls for the browser file entries.
+ * The fluid code resolver is coupled to a specific cdn and knows how to resolve
+ * the code detail for loading from that cdn. This include resolving to the most recent
+ * version of package that supports the provided code details.
+ */
+export interface IFluidCodeResolver{
+    /**
+     * Resolves a fluid code details into a form that can be loaded
+     * @param details - The fluid code details to resolve
+     * @returns - A IResolvedFluidCodeDetails where the
+     *            resolvedPackage's fluid file entries are absolute urls, and
+     *            an optional resolvedPackageCacheId if the loaded package should be
+     *            cached.
+     */
+    resolveCodeDetails(details: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails>;
+}
+
+/**
  * Code WhiteListing Interface
  */
 export interface ICodeWhiteList {
-    testSource(source: IFluidCodeDetails): Promise<boolean>;
+    testSource(source: IResolvedFluidCodeDetails): Promise<boolean>;
 }
 
 export interface IContainer extends EventEmitter {
@@ -54,7 +87,7 @@ export interface IExperimentalContainer extends IContainer {
      * TODO - in the case of failure options should give a retry policy. Or some continuation function
      * that allows attachment to a secondary document.
      */
-    attach(resolver: IUrlResolver, request: IRequest): Promise<void>;
+    attach(request: IRequest): Promise<void>;
 }
 
 export interface ILoader {

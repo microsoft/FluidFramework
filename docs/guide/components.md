@@ -94,15 +94,15 @@ easier re-use of HTML-based components along with other rich capabilities such a
 
 Fluid does provide a set of core interfaces on how components can be placed into containers or web experiences.
 
-### Core Rendering (IComponentHTMLVisual):
+### Core Rendering (IComponentHTMLView):
 
-The base interface for a Fluid Component that wants to draw on the screen is IComponentHTMLVisual. It supports a single
+The base interface for a Fluid Component that wants to draw on the screen is IComponentHTMLView. It supports a single
 method ‘render’, where HTML is written to output the display for the control.
 
 Here is the interface definition:
 
 ```typescript
-export interface IComponentHTMLVisual {
+export interface IComponentHTMLView {
     render(elm: HTMLElement, options?: IComponentHTMLOptions): void;
 }
 ```
@@ -110,7 +110,7 @@ export interface IComponentHTMLVisual {
 Here is a sample implementation:
 
 ```typescript
-class MyDisplayComponent implements IComponentHTMLVisual {
+class MyDisplayComponent implements IComponentHTMLView {
   public render(parent: HTMLElement) {
     if (parent) {
       const div = document.createElement("div");
@@ -201,9 +201,9 @@ export interface IComponentCursor extends IProvideComponentCursor {
 }
 ```
 
-[icomponenthtmlvisual]: ../api/fluid-component-core-interfaces.icomponenthtmlvisual.md
+[icomponenthtmlview]: ../api/fluid-component-core-interfaces.icomponenthtmlview.md
 [icomponentreactviewable]: ../api/fluid-aqueduct-react.icomponentreactviewable.md
-[iprovidecomponenthtmlvisual]: ../api/fluid-component-core-interfaces.iprovidecomponenthtmlvisual.md
+[iprovidecomponenthtmlview]: ../api/fluid-component-core-interfaces.iprovidecomponenthtmlview.md
 [primedcomponent]: ../api/fluid-aqueduct.primedcomponent.md
 [shareddirectory]: ../api/fluid-map.shareddirectory.md
 [sharedmap]: ../api/fluid-map.sharedmap.md

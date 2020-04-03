@@ -19,6 +19,8 @@ export interface IResponse {
     headers?: { [key: string]: any };
 }
 
+export const IComponentRouter: keyof IProvideComponentRouter = "IComponentRouter";
+
 /**
  * Request routing
  */

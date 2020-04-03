@@ -8,6 +8,7 @@ import { ITelemetryLogger, IDisposable } from "@microsoft/fluid-common-definitio
 import {
     IComponent,
     IComponentHandleContext,
+    IComponentLoadable,
     IComponentRouter,
     IComponentSerializer,
     IProvideComponentHandleContext,
@@ -63,7 +64,7 @@ export interface IComponentRuntime extends
 
     readonly existing: boolean;
 
-    readonly parentBranch: string;
+    readonly parentBranch: string | null;
 
     readonly connectionState: ConnectionState;
 
@@ -221,6 +222,12 @@ export interface ISummaryTracker {
      * @param latestSequenceNumber - inital value for latest sequence number of change
      */
     createOrGetChild(key: string, latestSequenceNumber: number): ISummaryTracker;
+    /**
+     * Retrives a child ISummaryTracker node based off the key.
+     * @param key - key of the child ISummaryTracker node.
+     * @returns - The child ISummaryTracker node.
+     */
+    getChild(key: string): ISummaryTracker | undefined;
 }
 
 /**
@@ -236,7 +243,7 @@ export interface IComponentContext extends EventEmitter {
     readonly existing: boolean;
     readonly options: any;
     readonly clientId: string | undefined;
-    readonly parentBranch: string;
+    readonly parentBranch: string | null;
     readonly connected: boolean;
     readonly leader: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
@@ -294,6 +301,18 @@ export interface IComponentContext extends EventEmitter {
     createComponent(pkgOrId: string | undefined, pkg?: string, props?: any): Promise<IComponentRuntime>;
 
     /**
+     * Create a new component using subregistries with fallback.
+     * @param pkg - Package name of the component
+     * @param realizationFn - Optional function to call to realize the component over the context default
+     * @returns A promise for a component that will have been initialized. Caller is responsible
+     * for attaching the component to the provided runtime's container such as by storing its handle
+     */
+    createComponentWithRealizationFn(
+        pkg: string,
+        realizationFn?: (context: IComponentContext) => void,
+    ): Promise<IComponent & IComponentLoadable>;
+
+    /**
      * Make request to the component.
      * @param request - Request.
      */
@@ -309,6 +328,12 @@ export interface IComponentContext extends EventEmitter {
      * @param componentRuntime - runtime to attach
      */
     attach(componentRuntime: IComponentRuntime): void;
+
+    /**
+     * Indicates that a channel is dirty and needs to be part of the summary.
+     * @param address - The address of the channe that is dirty.
+     */
+    setChannelDirty(address: string): void;
 }
 
 /**
@@ -340,7 +365,7 @@ export interface IHostRuntime extends
     readonly options: any;
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
-    readonly parentBranch: string;
+    readonly parentBranch: string | null;
     readonly connected: boolean;
     readonly leader: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
@@ -382,6 +407,18 @@ export interface IHostRuntime extends
      * @internal
      */
     _createComponentWithProps(pkg: string | string[], props: any, id: string): Promise<IComponentRuntime>;
+
+    /**
+     * Creates a new component using an optional realization function.  This API does not allow specifying
+     * the component's id and insteads generates a uuid.  Consumers must save another reference to the
+     * component, such as the handle.
+     * @param pkg - Package name of the component
+     * @param realizationFn - Optional function to call to realize the component over the context default
+     */
+    createComponentWithRealizationFn(
+        pkg: string[],
+        realizationFn?: (context: IComponentContext) => void,
+    ): Promise<IComponentRuntime>;
 
     /**
      * Creates a new IComponentContext instance.  The caller completes construction of the the component by

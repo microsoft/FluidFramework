@@ -42,6 +42,7 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import { BlobManager } from "./blobManager";
 import { Container } from "./container";
+import { NullRuntime } from "./nullRuntime";
 
 export class ContainerContext extends EventEmitter implements IContainerContext, IExperimentalContainerContext {
 
@@ -61,7 +62,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext,
         submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         submitSignalFn: (contents: any) => void,
         snapshotFn: (message: string) => Promise<void>,
-        closeFn: (reason?: string) => void,
+        closeFn: (error?: IError) => void,
         version: string,
         previousRuntimeState: IRuntimeState,
     ): Promise<ContainerContext> {
@@ -109,7 +110,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext,
         return this.attributes.branch;
     }
 
-    public get parentBranch(): string | undefined | null {
+    public get parentBranch(): string | null {
         return this.container.parentBranch;
     }
 
@@ -179,7 +180,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext,
         public readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         public readonly submitSignalFn: (contents: any) => void,
         public readonly snapshotFn: (message: string) => Promise<void>,
-        public readonly closeFn: () => void,
+        public readonly closeFn: (error?: IError) => void,
         public readonly version: string,
         public readonly previousRuntimeState: IRuntimeState,
     ) {
@@ -266,6 +267,10 @@ export class ContainerContext extends EventEmitter implements IContainerContext,
 
     public async reloadContext(): Promise<void> {
         return this.container.reloadContext();
+    }
+
+    public hasNullRuntime() {
+        return this.runtime! instanceof NullRuntime;
     }
 
     private async load() {

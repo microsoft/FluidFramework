@@ -10,15 +10,14 @@ import {
     IComponentRouter,
     IRequest,
     IResponse,
-    IComponentHTMLVisual,
     IComponent,
-    IComponentHTMLView,
 } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import { SharedDirectory, IDirectory } from "@microsoft/fluid-map";
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+import { IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-view-interfaces";
 import { initializeIcons } from "@uifabric/icons";
 import { PersonaView } from "./personaView";
 

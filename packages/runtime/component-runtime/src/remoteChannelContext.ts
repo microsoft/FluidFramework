@@ -20,37 +20,49 @@ import {
     IComponentRuntime,
     ISummaryTracker,
 } from "@microsoft/fluid-runtime-definitions";
+import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ISharedObjectRegistry } from "./componentRuntime";
 import { debug } from "./debug";
-
-type RequiredIChannelAttributes = Pick<IChannelAttributes, "type"> & Partial<IChannelAttributes>;
+import { ChannelStorageService } from "./channelStorageService";
 
 export class RemoteChannelContext implements IChannelContext {
-    private connection: ChannelDeltaConnection | undefined;
     private isLoaded = false;
     private pending: ISequencedDocumentMessage[] | undefined = [];
     private channelP: Promise<IChannel> | undefined;
     private channel: IChannel | undefined;
-
+    private readonly services: {
+        readonly deltaConnection: ChannelDeltaConnection,
+        readonly objectStorage: ChannelStorageService,
+    };
     constructor(
         private readonly runtime: IComponentRuntime,
         private readonly componentContext: IComponentContext,
-        private readonly storageService: IDocumentStorageService,
-        private readonly submitFn: (type: MessageType, content: any) => number,
+        storageService: IDocumentStorageService,
+        submitFn: (type: MessageType, content: any) => number,
+        dirtyFn: (address: string) => void,
         private readonly id: string,
-        private readonly baseSnapshot: ISnapshotTree,
+        baseSnapshot: ISnapshotTree,
         private readonly registry: ISharedObjectRegistry,
-        private readonly extraBlobs: Map<string, string>,
+        extraBlobs: Map<string, string>,
         private readonly branch: string,
         private readonly summaryTracker: ISummaryTracker,
-        private readonly attributes: RequiredIChannelAttributes | undefined,
-    ) {}
+        private readonly attachMessageType?: string,
+    ){
+        this.services = createServiceEndpoints(
+            this.id,
+            this.componentContext.connectionState,
+            submitFn,
+            () => dirtyFn(this.id),
+            storageService,
+            baseSnapshot,
+            extraBlobs);
+    }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public getChannel(): Promise<IChannel> {
-        if (!this.channelP) {
+        if (this.channelP === undefined) {
             this.channelP = this.loadChannel();
         }
 
@@ -68,16 +80,14 @@ export class RemoteChannelContext implements IChannelContext {
             return;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.connection!.setConnectionState(value);
+        this.services.deltaConnection.setConnectionState(value);
     }
 
     public processOp(message: ISequencedDocumentMessage, local: boolean): void {
         this.summaryTracker.updateLatestSequenceNumber(message.sequenceNumber);
 
         if (this.isLoaded) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.connection!.process(message, local);
+            this.services.deltaConnection.process(message, local);
         } else {
             assert(!local);
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -97,63 +107,66 @@ export class RemoteChannelContext implements IChannelContext {
         return snapshotChannel(channel);
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    private getAttributesFromBaseTree(): Promise<RequiredIChannelAttributes> {
-        return readAndParse<RequiredIChannelAttributes>(
-            this.storageService,
-            this.baseSnapshot.blobs[".attributes"]);
-    }
 
     private async loadChannel(): Promise<IChannel> {
         assert(!this.isLoaded);
 
-        // Create the channel if it hasn't already been passed in the constructor
-        const { type, snapshotFormatVersion, packageVersion } = this.attributes
-            ? this.attributes
-            : await this.getAttributesFromBaseTree();
+        let attributes = await readAndParse<IChannelAttributes | undefined>(
+            this.services.objectStorage,
+            ".attributes");
 
-        // Pass the transformedMessages - but the object really should be storing this
-        const factory = this.registry.get(type);
-        if (!factory) {
-            throw new Error(`Channel Factory ${type} not registered`);
+        let factory: ISharedObjectFactory | undefined;
+        // this is a back-compat case where
+        // the attach message doesn't include
+        // the attributes. Since old attach messages
+        // will not have attributes we need to keep
+        // this as long as we support old attach messages
+        if (attributes === undefined){
+            if(this.attachMessageType === undefined){
+                throw new Error("Channel type not available");
+            }
+            factory = this.registry.get(this.attachMessageType);
+            if (factory === undefined) {
+                throw new Error(`Channel Factory ${this.attachMessageType} for attach not registered`);
+            }
+            attributes = factory.attributes;
+        } else {
+            factory = this.registry.get(attributes.type);
+            if (factory === undefined) {
+                throw new Error(`Channel Factory ${attributes.type} not registered`);
+            }
         }
 
         // Compare snapshot version to collaborative object version
-        if (snapshotFormatVersion !== undefined && snapshotFormatVersion !== factory.attributes.snapshotFormatVersion) {
-            debug(`Snapshot version mismatch. Type: ${type}, ` +
-                `Snapshot format version: ${snapshotFormatVersion}, ` +
-                `client format version: ${factory.attributes.snapshotFormatVersion}`);
+        if (attributes.snapshotFormatVersion !== undefined
+            && attributes.snapshotFormatVersion !== factory.attributes.snapshotFormatVersion) {
+            debug(`Snapshot version mismatch. Type: ${attributes.type}, ` +
+                `Snapshot format@pkg version: ${attributes.snapshotFormatVersion}@${attributes.packageVersion}, ` +
+                // eslint-disable-next-line max-len
+                `client format@pkg version: ${factory.attributes.snapshotFormatVersion}@${factory.attributes.packageVersion}`);
         }
 
-        debug(`Loading channel ${type}@${packageVersion}, snapshot format version: ${snapshotFormatVersion}`);
+        // eslint-disable-next-line max-len
+        debug(`Loading channel ${attributes.type}@${factory.attributes.packageVersion}, snapshot format version: ${attributes.snapshotFormatVersion}`);
 
-        const services = createServiceEndpoints(
-            this.id,
-            this.componentContext.connectionState,
-            this.submitFn,
-            this.storageService,
-            this.baseSnapshot,
-            this.extraBlobs);
         this.channel = await factory.load(
             this.runtime,
             this.id,
-            services,
-            this.branch);
-
-        const connection = services.deltaConnection;
-        this.connection = connection;
+            this.services,
+            this.branch,
+            attributes);
 
         // Send all pending messages to the channel
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         for (const message of this.pending!) {
-            connection.process(message, false);
+            this.services.deltaConnection.process(message, false);
         }
         this.pending = undefined;
         this.isLoaded = true;
 
         // Because have some await between we created the service and here, the connection state might have changed
         // and we don't propagate the connection state when we are not loaded.  So we have to set it again here.
-        this.connection.setConnectionState(this.componentContext.connectionState);
+        this.services.deltaConnection.setConnectionState(this.componentContext.connectionState);
         return this.channel;
     }
 }

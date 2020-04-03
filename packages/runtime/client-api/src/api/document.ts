@@ -85,7 +85,7 @@ export class Document extends EventEmitter {
     /**
      * Returns the parent branch for this document
      */
-    public get parentBranch(): string {
+    public get parentBranch(): string | null {
         return this.runtime.parentBranch;
     }
 
@@ -228,7 +228,7 @@ async function initializeChaincode(container: Container, pkg: IFluidCodeDetails)
     let code = quorum.get("code");
 
     // Back compat
-    if (!code) {
+    if (code === undefined) {
         code = quorum.get("code2");
     }
 

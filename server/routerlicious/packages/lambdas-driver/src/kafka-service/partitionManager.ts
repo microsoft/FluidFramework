@@ -4,7 +4,12 @@
  */
 
 import { EventEmitter } from "events";
-import { IConsumer, IQueuedMessage, IPartition, IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
+import {
+    IConsumer,
+    IQueuedMessage,
+    IPartition,
+    IPartitionWithEpoch,
+    IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { Partition } from "./partition";
@@ -33,7 +38,7 @@ export class PartitionManager extends EventEmitter {
             this.rebalancing(partitions);
         });
 
-        this.consumer.on("rebalanced", (partitions) => {
+        this.consumer.on("rebalanced", (partitions: IPartitionWithEpoch[]) => {
             this.rebalanced(partitions);
         });
 
@@ -85,15 +90,17 @@ export class PartitionManager extends EventEmitter {
         }
     }
 
-    private rebalanced(partitions: IPartition[]) {
+    private rebalanced(partitions: IPartitionWithEpoch[]) {
         this.isRebalancing = false;
 
         this.partitions = new Map<number, Partition>();
         for (const partition of partitions) {
-            winston.info(`Creating ${partition.topic}:${partition.partition}@${partition.offset} due to rebalance`);
+            // eslint-disable-next-line max-len
+            winston.info(`Creating ${partition.topic}: Partition ${partition.partition}, Epoch ${partition.leaderEpoch}, Offset ${partition.offset} due to rebalance`);
 
             const newPartition = new Partition(
                 partition.partition,
+                partition.leaderEpoch,
                 this.factory,
                 this.consumer,
                 this.config);

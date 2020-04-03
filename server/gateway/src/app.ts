@@ -292,8 +292,7 @@ export function create(
     // The below is to check to make sure the session is available (redis could have gone down for instance) and if
     // not return an error
     app.use((request, response, next) => {
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        if (!request.session) {
+        if (request.session === undefined) {
             return next(new Error("Session not available"));
         } else {
             next();     // otherwise continue
@@ -313,8 +312,11 @@ export function create(
     const routes = gatewayRoutes.create(config, cache, alfred, tenants, getFingerprintUrl);
 
     app.use((request, response, next) => {
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        if (!request.session.guest) {
+        if (request.session === undefined) {
+            return next("Session is required");
+        }
+
+        if (request.session.guest === undefined) {
             const name = getRandomName(" ", true);
             request.session.guest = {
                 displayName: name,
