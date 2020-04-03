@@ -47,8 +47,8 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>
         registryEntries?: NamedComponentRegistryEntries,
         private readonly onDemandInstantiation = true,
         public readonly type: string = "",
-        private readonly optionalTypes: Record<(keyof O & keyof IComponent), keyof IComponent> = {} as any,
-        private readonly requiredTypes: Record<(keyof R & keyof IComponent), keyof IComponent> = {} as any,
+        private readonly optionalModuleTypes: Record<(keyof O & keyof IComponent), keyof IComponent> = {} as any,
+        private readonly requiredModuleTypes: Record<(keyof R & keyof IComponent), keyof IComponent> = {} as any,
     ) {
         if (registryEntries !== undefined) {
             this.registry = new ComponentRegistry(registryEntries);
@@ -108,7 +108,7 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>
         moduleManager: IComponentModuleManager) {
 
         // Dynamically generate our scope object
-        const scope = moduleManager.resolve<O, R>(this.optionalTypes, this.requiredTypes);
+        const scope = moduleManager.resolve<O, R>(this.optionalModuleTypes, this.requiredModuleTypes);
         // Create a new instance of our component
         const instance = new this.ctor(runtime, context, scope);
         await instance.initialize();
@@ -120,9 +120,32 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>
             throw new Error("undefined type member");
         }
 
+        // Check to ensure the required modules are available in the Container before attempting create.
+        if (!this.canCreateComponent(context)){
+            throw new Error("Failed to create Component because required Container Modules are missing");
+        }
+
         return context.createComponentWithRealizationFn(
             this.type,
             (newContext) => { this.instantiateComponent(newContext); },
         );
+    }
+
+    public canCreateComponent(context: IComponentContext): boolean {
+        const requiredModules = Object.values(this.requiredModuleTypes);
+        if (!requiredModules){
+            // If there are no required modules then scope creation will work at runtime.
+            return true;
+        }
+
+        // If there are required modules we need to check to ensure the container has provided them
+        const containerModuleManager = context.scope.IComponentModuleManager;
+        if (!containerModuleManager){
+            // If we have required modules but no module manager we will fail creation
+            return false;
+        }
+
+        // See if all the types are there
+        return containerModuleManager.has(requiredModules);
     }
 }

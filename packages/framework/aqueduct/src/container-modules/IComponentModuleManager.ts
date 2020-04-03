@@ -26,6 +26,6 @@ export interface IComponentModuleManager extends IProvideComponentModuleManager 
         optionalTypes: Record<(keyof O & keyof IComponent), keyof IComponent>,
         requiredTypes: Record<(keyof R & keyof IComponent), keyof IComponent>,
     ): Scope<O, R>;
-    has(type: keyof IComponent): boolean;
+    has(types: keyof IComponent | (keyof IComponent)[]): boolean;
     resolveModule<T extends IComponent>(type: (keyof IComponent & keyof T)): Module<T> | undefined;
 }

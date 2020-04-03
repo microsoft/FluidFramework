@@ -96,8 +96,14 @@ export class ModuleManager implements IComponentModuleManager {
         return { ...s, ...o };
     }
 
-    public has(type: keyof IComponent): boolean {
-        return this.modules.has(type);
+    public has(types: keyof IComponent | (keyof IComponent)[]): boolean {
+        if (Array.isArray(types)) {
+            return types.every((type) => {
+                return this.modules.has(type);
+            });
+        }
+
+        return this.modules.has(types);
     }
 
     public resolveModule<T extends IComponent>(type: (keyof IComponent & keyof T)): Module<T> | undefined {
