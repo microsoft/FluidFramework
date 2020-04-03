@@ -11,6 +11,11 @@ import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { ITestFluidComponent } from "./interfaces";
 import { TestSharedObjectFactoryEntries } from "./types";
 
+/**
+ * A test component that will create a shared object for each `id` and `ISharedObjectFactory` pair passed to load.
+ * The SharedObjects can be retrieved by passing the `id` to getSharedObject.
+ * It exposes the IComponentContext and IComponentRuntime.
+ */
 export class TestFluidComponent implements ITestFluidComponent {
     public static async load(
         runtime: IComponentRuntime,
@@ -30,6 +35,13 @@ export class TestFluidComponent implements ITestFluidComponent {
     private root!: ISharedMap;
     private readonly factoryEntriesMap: Map<string, ISharedObjectFactory>;
 
+    /**
+     * Creates a new TestFluidComponent.
+     * @param runtime The component runtime.
+     * @param context The componet context.
+     * @param factoryEntries A list of `id` to `ISharedObjectFactory` mapping. For each item in the list,
+     * a shared object is created which can be retrieved by calling getSharedObject() with the `id`;
+     */
     constructor(
         public readonly runtime: IComponentRuntime,
         public readonly context: IComponentContext,
@@ -38,6 +50,10 @@ export class TestFluidComponent implements ITestFluidComponent {
         this.factoryEntriesMap = new Map(factoryEntries);
     }
 
+    /**
+     * Retrieves a shared object with the given id.
+     * @param id The id of the shared object to retrieve.
+     */
     public async getSharedObject<T = any>(id: string): Promise<T> {
         if (this.factoryEntriesMap === undefined) {
             throw new Error("Shared objects were not provided during creation.");
@@ -77,6 +93,20 @@ export class TestFluidComponent implements ITestFluidComponent {
     }
 }
 
+/**
+ * Creates a factory for a TestFluidComponent with the given object factories. The component will create
+ * an object for each object factory.
+ *
+ * For example, to create a component with SharedString and SharedDirectory, create the factory as follows:
+ *      new TestFluidComponentFactory([
+ *          [ "sharedString", SharedString.getFactory() ],
+ *          [ "sharedDirectory", SharedDirectory.getFactory() ],
+ *      ]);
+ *
+ * The objects can then be retrieved via getSharedObject() on the TestFluidComponent as follows:
+ *      sharedString = testFluidComponent.getSharedObject<SharedString>("sharedString");
+ *      sharedDir = testFluidComponent.getSharedObject<SharedDirectory>("sharedDirectory");
+ */
 export class TestFluidComponentFactory implements IComponentFactory {
     public static readonly type = "TestFluidComponentFactory";
     public readonly type = TestFluidComponentFactory.type;
@@ -88,7 +118,7 @@ export class TestFluidComponentFactory implements IComponentFactory {
     public instantiateComponent(context: IComponentContext): void {
         const dataTypes = new Map<string, ISharedObjectFactory>();
 
-        // Add SharedMapFactory which will be the root for the component.
+        // Add SharedMap's factory which will be used to create the root map.
         const sharedMapFactory = SharedMap.getFactory();
         dataTypes.set(sharedMapFactory.type, sharedMapFactory);
 

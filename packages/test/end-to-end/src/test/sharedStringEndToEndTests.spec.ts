@@ -62,26 +62,28 @@ describe("SharedString", () => {
         const text = "syncSharedString";
         const sharedString1 = await component1.getSharedObject<SharedString>("sharedString");
         sharedString1.insertText(0, text);
-        assert.equal(sharedString1.getText(), text);
+        assert.equal(sharedString1.getText(), text, "The retrieved text should match the inserted text.");
 
+        // Wait for the ops to to be submitted and processed across the containers.
         await documentDeltaEventManager.process();
 
         const sharedString2 = await component2.getSharedObject<SharedString>("sharedString");
-        assert.equal(sharedString2.getText(), text);
+        assert.equal(sharedString2.getText(), text, "The inserted text should have synced across the containers");
     });
 
     it("can sync SharedString to a newly loaded container", async () => {
         const text = "syncToNewConatiner";
         const sharedString1 = await component1.getSharedObject<SharedString>("sharedString");
         sharedString1.insertText(0, text);
-        const text1 = sharedString1.getText();
-        assert.equal(text1, text);
+        assert.equal(sharedString1.getText(), text, "The retrieved text should match the inserted text.");
 
+        // Wait for the ops to to be submitted and processed across the containers.
         await documentDeltaEventManager.process();
 
+        // Create a initialize a new container with the same id.
         const newContainer = await initializeLocalContainer(id, loader, codeDetails);
         const newComponent = await getComponent("default", newContainer);
         const newSharedString = await newComponent.getSharedObject<SharedString>("sharedString");
-        assert.equal(newSharedString.getText(), text);
+        assert.equal(newSharedString.getText(), text, "The new container should receive the inserted text on creation");
     });
 });

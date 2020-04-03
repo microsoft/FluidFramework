@@ -13,6 +13,10 @@ import {
 import { IProvideComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import { TestFluidPackageEntries, TestFluidPackageType } from "./types";
 
+/**
+ * A simple code loader that caches a mapping of package name to a fluid entry point.
+ * On load, it retrieves the entry point matching the package name in the given code details.
+ */
 export class TestCodeLoader implements ICodeLoader {
     private readonly fluidPackageCache = new Map<string, TestFluidPackageType>();
 
@@ -27,6 +31,8 @@ export class TestCodeLoader implements ICodeLoader {
     }
 
     /**
+     * It finds the entry point for the package name in the given source and return it
+     * as a fluid module.
      * @param source - Details of where to find chaincode
      */
     public async load(
