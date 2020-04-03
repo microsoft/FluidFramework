@@ -13,11 +13,11 @@ import { IComponentModuleManager } from "./IComponentModuleManager";
 import {
     ClassProvider,
     ValueProvider,
-    ClassWithArgsProvider,
+    FactoryProvider,
     Provider,
     isValueProvider,
     isClassProvider,
-    isClassWithArgsProvider,
+    isFactoryProvider,
 } from "./providers";
 
 /**
@@ -63,7 +63,7 @@ export class ModuleManager implements IComponentModuleManager {
     public register<T extends IComponent>(
         type: (keyof IComponent & keyof T),
         // eslint-disable-next-line @typescript-eslint/unified-signatures
-        provider: ClassWithArgsProvider<T>,
+        provider: FactoryProvider<T>,
     ): void;
     public register<T extends IComponent>(
         type: (keyof IComponent & keyof T),
@@ -188,12 +188,12 @@ export class ModuleManager implements IComponentModuleManager {
             return provider.value;
         }
 
-        if(isClassWithArgsProvider(provider)) {
-            return new provider.ctor(...provider.args);
+        if(isClassProvider(provider)) {
+            return new provider.class();
         }
 
-        if(isClassProvider(provider)) {
-            return new provider.ctor();
+        if(isFactoryProvider(provider)) {
+            return provider.factory(this);
         }
     }
 }

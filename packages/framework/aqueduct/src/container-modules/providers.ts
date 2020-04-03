@@ -6,38 +6,30 @@
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { Module } from "./types";
 
+import { IComponentModuleManager } from "./IComponentModuleManager";
+
 export interface ClassProvider<T extends IComponent> {
-    ctor: new () => T;
+    class: new () => T;
 }
 
 export const isClassProvider = <T>(
     provider: Provider<T>,
 ): provider is ClassProvider<T> => {
     return (
-        (provider as ClassProvider<T>).ctor !== undefined &&
-        (provider as ClassWithArgsProvider<T>).args === undefined
+        (provider as ClassProvider<T>).class !== undefined
     );
 };
 
-export interface ClassWithArgsProvider
-<
-    T extends IComponent,
-    K extends new (...args: any[]) => T = new (...args: any[]) => T,
-    P extends ConstructorParameters<K> = ConstructorParameters<K>,
-> {
-    ctor: K;
-    args: P;
+export interface FactoryProvider<T extends IComponent> {
+    factory: (manager?: IComponentModuleManager) => T;
 }
 
 // , K extends ConstructorParameters<T>
 
-export const isClassWithArgsProvider = <T>(
+export const isFactoryProvider = <T>(
     provider: Provider<T>,
-): provider is ClassWithArgsProvider<T> => {
-    return (
-        (provider as ClassWithArgsProvider<T>).ctor !== undefined &&
-        (provider as ClassWithArgsProvider<T>).args !== undefined
-    );
+): provider is FactoryProvider<T> => {
+    return (provider as FactoryProvider<T>).factory !== undefined;
 };
 
 export interface ValueProvider<T extends IComponent> {
@@ -52,13 +44,13 @@ export const isValueProvider = <T>(
 
 export type Provider<T = any> =
     | ClassProvider<T>
-    | ClassWithArgsProvider<T>
+    | FactoryProvider<T>
     | ValueProvider<T>;
 
 export const isProvider = (provider: any): provider is Provider => {
     return (
         isValueProvider(provider) ||
         isClassProvider(provider) ||
-        isClassWithArgsProvider(provider)
+        isFactoryProvider(provider)
     );
 };

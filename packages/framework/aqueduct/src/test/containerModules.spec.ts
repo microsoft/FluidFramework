@@ -53,20 +53,23 @@ describe("Routerlicious", () => {
 
             it(`One Optional Module registered via class`, async () => {
                 const manager = new ModuleManager();
-                manager.register(IComponentLoadable, {ctor: MockLoadableWithArgs, args: ["foo"]});
-
-                const s = manager.resolve<IComponentLoadable>({IComponentLoadable}, {});
-                assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
-                assert(s.IComponentLoadable?.url === "foo", "IComponentLoadable is valid");
-            });
-
-            it(`One Optional Module registered via class`, async () => {
-                const manager = new ModuleManager();
-                manager.register(IComponentLoadable, {ctor: MockLoadable});
+                manager.register(IComponentLoadable, {class: MockLoadable});
 
                 const s = manager.resolve<IComponentLoadable>({IComponentLoadable}, {});
                 assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
                 assert(s.IComponentLoadable?.url === "url123", "IComponentLoadable is valid");
+            });
+
+            it(`One Optional Module registered via factory`, async () => {
+                const manager = new ModuleManager();
+                const url = "Foo123";
+
+                const factory = () => new MockLoadableWithArgs(url);
+                manager.register(IComponentLoadable, {factory});
+
+                const s = manager.resolve<IComponentLoadable>({IComponentLoadable}, {});
+                assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
+                assert(s.IComponentLoadable?.url === url, "IComponentLoadable is valid");
             });
 
             it(`Multiple Optional Module all registered`, async () => {
