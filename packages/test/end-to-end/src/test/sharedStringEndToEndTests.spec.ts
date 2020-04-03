@@ -14,11 +14,15 @@ import {
     ITestFluidComponent,
     initializeLocalContainer,
     TestFluidComponentFactory,
+    TestFluidPackageEntries,
 } from "@microsoft/fluid-test-utils";
 
 describe("SharedString", () => {
     const id = "fluid-test://test.com/test/sharedStringtest";
-    const codeDetails = {} as any as IFluidCodeDetails;
+    const codeDetails: IFluidCodeDetails = {
+        package: "sharedStringTestPackage",
+        config: {},
+    };
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
     let documentDeltaEventManager: DocumentDeltaEventManager;
@@ -38,9 +42,11 @@ describe("SharedString", () => {
         const factory = new TestFluidComponentFactory([
             ["sharedString", SharedString.getFactory()],
         ]);
-
+        const packageEntries: TestFluidPackageEntries = [
+            [ codeDetails, factory ],
+        ];
         deltaConnectionServer = LocalDeltaConnectionServer.create();
-        loader = createLocalLoader(factory, deltaConnectionServer);
+        loader = createLocalLoader(packageEntries, deltaConnectionServer);
 
         const container1 = await initializeLocalContainer(id, loader, codeDetails);
         component1 = await getComponent("default", container1);

@@ -18,10 +18,14 @@ export async function createLocalContainerFactory(
 ): Promise<() => Promise<Container>> {
 
     const documentId = uuid();
+    const codeDetails: IFluidCodeDetails = {
+        package: "localContainerFactoryPackage",
+        config: {},
+    };
     const deltaConnectionServer = LocalDeltaConnectionServer.create();
-    const loader = createLocalLoader(entryPoint, deltaConnectionServer);
+    const loader = createLocalLoader([[codeDetails, entryPoint]], deltaConnectionServer);
     return async () => {
-        return initializeLocalContainer(documentId, loader, {} as any as IFluidCodeDetails);
+        return initializeLocalContainer(documentId, loader, codeDetails);
     };
 }
 

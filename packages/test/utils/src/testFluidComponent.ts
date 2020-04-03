@@ -9,8 +9,7 @@ import { SharedMap, ISharedMap } from "@microsoft/fluid-map";
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { ITestFluidComponent } from "./interfaces";
-
-export type TestSharedObjectFactoryEntries = Iterable<[string, ISharedObjectFactory]>;
+import { TestSharedObjectFactoryEntries } from "./types";
 
 export class TestFluidComponent implements ITestFluidComponent {
     public static async load(

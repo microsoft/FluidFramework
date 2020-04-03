@@ -3,38 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { initializeContainerCode } from "@microsoft/fluid-base-host";
 import {
     IProxyLoaderFactory,
     ICodeLoader,
     ILoader,
-    IProvideRuntimeFactory,
-    IFluidModule,
     IFluidCodeDetails,
 } from "@microsoft/fluid-container-definitions";
 import { Loader, Container } from "@microsoft/fluid-container-loader";
 import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
-import { IProvideComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import { ILocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { TestCodeLoader } from "./testCodeLoader";
+import { TestFluidPackageEntries } from "./types";
 
 export function createLocalLoader(
-    entryPoint: Partial<IProvideRuntimeFactory & IProvideComponentFactory & IFluidModule>,
+    packageEntries: TestFluidPackageEntries,
     deltaConnectionServer: ILocalDeltaConnectionServer,
 ): ILoader {
 
     const urlResolver = new TestResolver();
     const documentServiceFactory = new TestDocumentServiceFactory(deltaConnectionServer);
-
-    const factory: Partial<IProvideRuntimeFactory & IProvideComponentFactory> =
-        entryPoint.fluidExport ?? entryPoint;
-    const runtimeFactory: IProvideRuntimeFactory =
-        factory.IRuntimeFactory ??
-            new SimpleModuleInstantiationFactory("default", [["default", Promise.resolve(factory)]]);
-
-    const codeLoader: ICodeLoader = {
-        load: async <T>() => ({fluidExport: runtimeFactory} as unknown as T),
-    };
+    const codeLoader: ICodeLoader = new TestCodeLoader(packageEntries);
 
     return new Loader(
         urlResolver,
