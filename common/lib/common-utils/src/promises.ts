@@ -169,18 +169,24 @@ export interface PromiseHandle<T> {
  * without fear of race conditions or running it twice.
  */
 export class PromiseRegistry<T> {
-    private readonly registry = new Map<string, PromiseHandle<T>>();
+    private readonly cache = new Map<string, PromiseHandle<T>>();
+    private readonly expiryKeys = new Map<string, string>();
+    private readonly expirationOrders = new Map<string, void>();
+
+    constructor(
+        private readonly refreshExpiryOnReregister: boolean,
+    ) {}
 
     /**
      * Get the Promise for the given key, or undefined if it's not found
      */
-    public lookup = async (key: string) => this.registry.get(key)?.promise;
+    public lookup = async (key: string) => this.cache.get(key)?.promise;
 
     /**
      * Remove the Promise for the given key,
      * returning true if it was found and removed
      */
-    public unregister = (key: string) => this.registry.delete(key);
+    public unregister = (key: string) => this.cache.delete(key);
 
     /**
      * Register the given async work to the given key, or return an existing Promise at that key if it exists.
@@ -205,12 +211,12 @@ export class PromiseRegistry<T> {
         expiryTime?: number,
     ): PromiseHandle<T> {
         // NOTE: Do not await asyncFn! Let the caller do so once register returns
-        let handle = this.registry.get(key);
+        let handle = this.cache.get(key);
         if (handle === undefined) {
             // Start asyncFn and put the Promise in the cache
             const promiseToCache = asyncFn();
             handle = { promise: promiseToCache };
-            this.registry.set(key, handle);
+            this.cache.set(key, handle);
 
             // If asyncFn throws, remove the Promise from the cache
             promiseToCache.catch((error) => {
@@ -218,18 +224,33 @@ export class PromiseRegistry<T> {
                     this.unregister(key);
                 }
             });
-
-            // Schedule garbage collection if required
-            if (expiryTime) {
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                this.gc(key, expiryTime);
-            }
         }
+
+        // Schedule garbage collection if required
+        if (expiryTime) {
+            const oldExpiryKey = this.expiryKeys.get(key);
+            if (this.refreshExpiryOnReregister && oldExpiryKey !== undefined) {
+                this.expirationOrders.delete(oldExpiryKey);
+            }
+
+            const newExpiryKey = `${key}-${Date()}`;
+            this.expiryKeys.set(key, newExpiryKey);
+
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            this.gc(key, newExpiryKey, expiryTime);
+        }
+
         return handle;
     }
 
-    private async gc(key: string, expiryTime: number) {
+    private async gc(key: string, expiryKey: string, expiryTime: number) {
+        this.expirationOrders.set(expiryKey);
+
         await delay(expiryTime);
-        this.registry.delete(key);
+
+        // Only execute the gc delete if our expiryKey is still present to be removed here
+        if (this.expirationOrders.delete(expiryKey)) {
+            this.cache.delete(key);
+        }
     }
 }
