@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { DocumentServiceFactoryProtocolMatcher } from "@microsoft/fluid-driver-utils";
 import { BaseTelemetryNullLogger } from "@microsoft/fluid-common-utils";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
     IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
+import { MultiDocumentServiceFactory } from "@microsoft/fluid-driver-utils";
 import {
     IFrameDocumentServiceProxyFactory,
 } from "@microsoft/fluid-iframe-driver";
@@ -63,11 +63,11 @@ export async function initialize(
         config,
         tokens: resolved.tokens,
     };
-    const serviceFactoryMatcher = new DocumentServiceFactoryProtocolMatcher(documentServiceFactories);
+    const factory = new MultiDocumentServiceFactory(documentServiceFactories);
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     (await IFrameDocumentServiceProxyFactory.create(
-        serviceFactoryMatcher.getFactory(resolved),
+        factory,
         document.getElementById("ifr") as HTMLIFrameElement,
         options,
         resolver,

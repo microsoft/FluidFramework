@@ -4,6 +4,7 @@
  */
 
 import { parse } from "url";
+import { BaseTelemetryNullLogger } from "@microsoft/fluid-common-utils";
 import {
     IComponentRunnable,
     IRequest,
@@ -11,17 +12,24 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { IContainer, ILoader } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
-import { BaseTelemetryNullLogger } from "@microsoft/fluid-common-utils";
 import {
-    IDocumentService,
     IDocumentServiceFactory,
     IFluidResolvedUrl,
+    IUrlResolver,
+    IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
 import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { WebCodeLoader } from "@microsoft/fluid-web-code-loader";
 import * as Comlink from "comlink";
+
+// Container load requires a URL resolver although it does not make use of it.
+class NotUsedUrlResolver implements IUrlResolver {
+    public async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
+        throw new Error("Method not implemented.");
+    }
+}
 
 // Loader class to load a container and proxy component interfaces from within a web worker.
 // Only supports IComponentRunnable for now.
@@ -56,16 +64,16 @@ class WorkerLoader implements ILoader, IComponentRunnable {
                 async () => Promise.resolve(this.resolved.tokens.socketToken),
                 new BaseTelemetryNullLogger());
         }
-        const documentService: IDocumentService = await factory.createDocumentService(this.resolved);
         const container = await Container.load(
             this.id,
-            documentService,
+            factory,
             new WebCodeLoader(),
             this.options,
             {},
             (this as unknown) as Loader,
             request,
             this.resolved,
+            new NotUsedUrlResolver(),
             new BaseTelemetryNullLogger());
         this.container = container;
 
