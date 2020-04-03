@@ -89,6 +89,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         private readonly fetchFullSnapshot: boolean,
         private readonly cache: IOdspCache,
         private readonly isFirstTimeDocumentOpened: boolean,
+        private readonly createNewFlag: boolean,
     ) {
         this.queryString = getQueryString(queryParams);
         this.appId = queryParams.app_id;
@@ -435,7 +436,11 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     public async uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string> {
         this.checkSnapshotUrl();
 
-        this.lastSummaryHandle = `${context.ackHandle}/.app`;
+        if (this.createNewFlag) {
+            this.lastSummaryHandle = `${context.ackHandle}/.app`;
+        } else {
+            this.lastSummaryHandle = context.proposalHandle;
+        }
         const { result, blobsShaToPathCacheLatest } = await this.writeSummaryTree({
             useContext: true,
             parentHandle: this.lastSummaryHandle,
