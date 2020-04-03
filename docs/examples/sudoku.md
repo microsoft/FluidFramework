@@ -465,10 +465,10 @@ Or check out [other examples](./README.md).
 
 <!-- Links -->
 
-[icomponenthtmlvisual]: ../api/fluid-component-core-interfaces.IComponentHTMLVisual.md
-[icomponentreactviewable]: ../api/fluid-aqueduct-react.IComponentReactViewable.md
-[iprovidecomponenthtmlvisual]: ../api/fluid-component-core-interfaces.IProvideComponentHTMLVisual.md
-[primedcomponent]: ../api/fluid-aqueduct.PrimedComponent.md
-[shareddirectory]: ../api/fluid-map.SharedDirectory.md
-[sharedmap]: ../api/fluid-map.SharedMap.md
+[IComponentHTMLVisual]: ../api/fluid-component-core-interfaces.icomponenthtmlvisual.md
+[IComponentReactViewable]: ../api/fluid-aqueduct-react.icomponentreactviewable.md
+[IProvideComponentHTMLVisual]: ../api/fluid-component-core-interfaces.iprovidecomponenthtmlvisual.md
+[PrimedComponent]: ../api/fluid-aqueduct.primedcomponent.md
+[SharedDirectory]: ../api/fluid-map.shareddirectory.md
+[SharedMap]: ../api/fluid-map.sharedmap.md
 [undo-redo]: ../api/fluid-undo-redo.md
