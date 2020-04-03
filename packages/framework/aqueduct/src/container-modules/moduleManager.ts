@@ -5,8 +5,28 @@
 
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 
-import { Module, Scope } from "./types";
+import {
+    Module,
+    Scope,
+    StrongOmitEmpty,
+} from "./types";
 import { IComponentModuleManager } from "./IComponentModuleManager";
+
+/**
+ * Empty is used to provide safe type checking when the object coming in is an
+ * empty object {}. If you use the actual empty object typescript doesn't do the
+ * right thing.
+ *
+ * This should not be used as a real interface for obvious reasons
+ */
+export interface Empty {
+    "": never;
+}
+
+declare module "@microsoft/fluid-component-core-interfaces" {
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IComponent extends Readonly<Partial<Empty>> { }
+}
 
 /**
  * ModuleManager is similar to a IoC Container.
@@ -62,9 +82,9 @@ export class ModuleManager implements IComponentModuleManager {
      * @param optionalTypes - optional types to be in the Scope object
      * @param requiredTypes - required types that need to be in the Scope object
      */
-    public resolve<O extends IComponent, R extends IComponent = {}>(
-        optionalTypes: Record<keyof O & keyof IComponent, keyof O & keyof IComponent>,
-        requiredTypes: Record<keyof R & keyof IComponent, keyof R & keyof IComponent>,
+    public resolve<O extends IComponent = Empty, R extends IComponent = Empty>(
+        optionalTypes: StrongOmitEmpty<keyof O & keyof IComponent>,
+        requiredTypes: StrongOmitEmpty<keyof R & keyof IComponent>,
     ): Scope<O, R> {
         const optionalValues = Object.values(optionalTypes);
         const requiredValues = Object.values(requiredTypes);
@@ -112,7 +132,7 @@ export class ModuleManager implements IComponentModuleManager {
     }
 
     private generateRequired<T extends IComponent>(
-        types: Record<(keyof T & keyof IComponent), keyof IComponent>,
+        types: StrongOmitEmpty<keyof T & keyof IComponent>,
     ) {
         return Object.assign({}, ...Array.from(Object.values(types), (t) => {
             const module = this.resolveModule(t);
@@ -125,7 +145,7 @@ export class ModuleManager implements IComponentModuleManager {
     }
 
     private generateOptional<T extends IComponent>(
-        types: Record<(keyof T & keyof IComponent), keyof IComponent>,
+        types: StrongOmitEmpty<keyof T & keyof IComponent>,
     ) {
         return Object.assign({}, ...Array.from(Object.values(types), (t) => {
             return ({[t]: this.resolveModule(t)});

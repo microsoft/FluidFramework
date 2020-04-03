@@ -10,7 +10,7 @@ import {
     IComponentLoadable,
 } from "@microsoft/fluid-component-core-interfaces";
 
-import { ModuleManager } from "../container-modules";
+import { ModuleManager, Empty } from "../container-modules";
 
 export interface IFoo {
     foo: string;
@@ -84,12 +84,24 @@ describe("Routerlicious", () => {
                 assert(s.IComponentLoadable, "Required IComponentLoadable was registered");
             });
 
+            it(`One Required Module registered`, async () => {
+                const manager = new ModuleManager();
+                manager.register(IComponentLoadable, new MockLoadable());
+
+                const s = manager.resolve<Empty, IComponentLoadable>(
+                    {},
+                    {IComponentLoadable},
+                );
+
+                assert(s.IComponentLoadable, "Required IComponentLoadable was registered");
+            });
+
             it(`Multiple Required Module all registered`, async () => {
                 const manager = new ModuleManager();
                 manager.register(IComponentLoadable, new MockLoadable());
                 manager.register(IComponentConfiguration, new MockComponentConfiguration());
 
-                const s = manager.resolve<{}, IComponentLoadable & IComponentConfiguration>(
+                const s = manager.resolve<Empty, IComponentLoadable & IComponentConfiguration>(
                     {},
                     {IComponentLoadable, IComponentConfiguration},
                 );
