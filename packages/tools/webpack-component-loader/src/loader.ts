@@ -247,27 +247,17 @@ function getDocumentServiceFactory(documentId: string, options: RouteOptions) {
         }
         case "spo":
         case "spo-df": {
-            if (options.openMode === "detached") {
-                // TODO: web socket token
-                documentServiceFactory = new OdspDocumentServiceFactory(
-                    "webpack-component-loader",
-                    async (siteUrl, refresh) => { return options.odspAccessToken; },
-                    async (refresh) => { return options.pushAccessToken; },
-                    { send: (event) => { return; } },
-                    undefined,
-                    undefined,
-                    undefined,
-                    true,
-                );
-            } else {
-                // TODO: web socket token
-                documentServiceFactory = new OdspDocumentServiceFactory(
-                    "webpack-component-loader",
-                    async (siteUrl, refresh) => { return options.odspAccessToken; },
-                    async (refresh) => { return options.pushAccessToken; },
-                    { send: (event) => { return; } },
-                );
-            }
+            // TODO: web socket token
+            documentServiceFactory = new OdspDocumentServiceFactory(
+                "webpack-component-loader",
+                async (siteUrl, refresh) => { return options.odspAccessToken; },
+                async (refresh) => { return options.pushAccessToken; },
+                { send: (event) => { return; } },
+                undefined,
+                undefined,
+                undefined,
+                options.openMode === "detached" ? true : false,
+            );
             break;
         }
         default: {
