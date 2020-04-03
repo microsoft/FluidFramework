@@ -4,4 +4,5 @@
  */
 
 export * from "./interfaces";
+export * from "./loader";
 export * from "./testFluidComponent";

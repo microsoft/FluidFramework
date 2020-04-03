@@ -8,7 +8,7 @@ import * as uuid from "uuid/v4";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IFluidCodeDetails, IFluidModule, IProvideRuntimeFactory } from "@microsoft/fluid-container-definitions";
 import { Container } from "@microsoft/fluid-container-loader";
-import { createLocalLoader, initializeLocalContainer } from "@microsoft/fluid-local-loader-utils";
+import { createLocalLoader, initializeLocalContainer } from "@microsoft/fluid-test-utils";
 import { IProvideComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import { LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
@@ -19,7 +19,7 @@ export async function createLocalContainerFactory(
 
     const documentId = uuid();
     const deltaConnectionServer = LocalDeltaConnectionServer.create();
-    const loader = createLocalLoader(entryPoint, deltaConnectionServer, documentId);
+    const loader = createLocalLoader(entryPoint, deltaConnectionServer);
     return async () => {
         return initializeLocalContainer(documentId, loader, {} as any as IFluidCodeDetails);
     };

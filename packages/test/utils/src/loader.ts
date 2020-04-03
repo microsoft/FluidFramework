@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
-import * as uuid from "uuid/v4";
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { initializeContainerCode } from "@microsoft/fluid-base-host";
 import {
@@ -23,18 +21,16 @@ import { ILocalDeltaConnectionServer } from "@microsoft/fluid-server-local-serve
 export function createLocalLoader(
     entryPoint: Partial<IProvideRuntimeFactory & IProvideComponentFactory & IFluidModule>,
     deltaConnectionServer: ILocalDeltaConnectionServer,
-    documentId: string = uuid(),
 ): ILoader {
 
-    const urlResolver = new TestResolver(documentId);
+    const urlResolver = new TestResolver();
     const documentServiceFactory = new TestDocumentServiceFactory(deltaConnectionServer);
 
     const factory: Partial<IProvideRuntimeFactory & IProvideComponentFactory> =
-        entryPoint.fluidExport ? entryPoint.fluidExport : entryPoint;
+        entryPoint.fluidExport ?? entryPoint;
     const runtimeFactory: IProvideRuntimeFactory =
-        factory.IRuntimeFactory ?
-            factory.IRuntimeFactory :
-            new SimpleModuleInstantiationFactory("default", [["default", Promise.resolve(factory.IComponentFactory)]]);
+        factory.IRuntimeFactory ??
+            new SimpleModuleInstantiationFactory("default", [["default", Promise.resolve(factory)]]);
 
     const codeLoader: ICodeLoader = {
         load: async <T>() => ({fluidExport: runtimeFactory} as unknown as T),
