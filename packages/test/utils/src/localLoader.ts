@@ -18,16 +18,16 @@ import { ILocalDeltaConnectionServer } from "@microsoft/fluid-server-local-serve
 import { IProvideComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import { LocalCodeLoader } from "./localCodeLoader";
 
-// This type represents the entry point for a fluid container.
-type fluidEntryPoint = Partial<IProvideRuntimeFactory & IProvideComponentFactory & IFluidModule>;
-
 /**
  * Creates a loader with the given package entries and a delta connection server.
  * @param packageEntries - A list of code details to fluid entry points.
  * @param deltaConnectionServer - The delta connection server to use as the server.
  */
 export function createLocalLoader(
-    packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
+    packageEntries: Iterable<[
+        IFluidCodeDetails,
+        Partial<IProvideRuntimeFactory & IProvideComponentFactory & IFluidModule>
+    ]>,
     deltaConnectionServer: ILocalDeltaConnectionServer,
 ): ILoader {
 

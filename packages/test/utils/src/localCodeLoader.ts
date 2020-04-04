@@ -12,8 +12,8 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import { IProvideComponentFactory } from "@microsoft/fluid-runtime-definitions";
 
-// This type represents the entry point for a fluid container.
-type fluidEntryPoint = Partial<IProvideRuntimeFactory & IProvideComponentFactory & IFluidModule>;
+// Represents the entry point for a fluid container.
+export type fluidEntryPoint = Partial<IProvideRuntimeFactory & IProvideComponentFactory & IFluidModule>;
 
 /**
  * A simple code loader that caches a mapping of package name to a fluid entry point.

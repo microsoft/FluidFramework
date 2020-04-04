@@ -51,7 +51,7 @@ export class TestFluidComponent implements ITestFluidComponent {
 
     /**
      * Retrieves a shared object with the given id.
-     * @param id The id of the shared object to retrieve.
+     * @param id - The id of the shared object to retrieve.
      */
     public async getSharedObject<T = any>(id: string): Promise<T> {
         if (this.factoryEntriesMap === undefined) {
