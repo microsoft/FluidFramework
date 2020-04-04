@@ -16,7 +16,7 @@ import { Loader, Container } from "@microsoft/fluid-container-loader";
 import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
 import { ILocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { IProvideComponentFactory } from "@microsoft/fluid-runtime-definitions";
-import { TestCodeLoader } from "./testCodeLoader";
+import { LocalCodeLoader } from "./localCodeLoader";
 
 // This type represents the entry point for a fluid container.
 type fluidEntryPoint = Partial<IProvideRuntimeFactory & IProvideComponentFactory & IFluidModule>;
@@ -33,7 +33,7 @@ export function createLocalLoader(
 
     const urlResolver = new TestResolver();
     const documentServiceFactory = new TestDocumentServiceFactory(deltaConnectionServer);
-    const codeLoader: ICodeLoader = new TestCodeLoader(packageEntries);
+    const codeLoader: ICodeLoader = new LocalCodeLoader(packageEntries);
 
     return new Loader(
         urlResolver,

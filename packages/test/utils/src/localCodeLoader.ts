@@ -19,16 +19,24 @@ type fluidEntryPoint = Partial<IProvideRuntimeFactory & IProvideComponentFactory
  * A simple code loader that caches a mapping of package name to a fluid entry point.
  * On load, it retrieves the entry point matching the package name in the given code details.
  */
-export class TestCodeLoader implements ICodeLoader {
+export class LocalCodeLoader implements ICodeLoader {
     private readonly fluidPackageCache = new Map<string, fluidEntryPoint>();
 
     constructor(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>) {
         for (const entry of packageEntries) {
-            const pkgName = entry[0].package;
-            if (pkgName === undefined || typeof(pkgName) !== "string") {
-                throw new Error("code details must contain a package name.");
+            // Store the entry point against a unique id in the fluidPackageCache.
+            // For code details containing a package name, use the package name as the id.
+            // For code details containing a fluid package, create a unique id from the package name and version.
+            let pkgId: string;
+
+            const source = entry[0];
+            if (typeof source.package === "string") {
+                pkgId = source.package;
+            } else {
+                pkgId = `${source.package.name}@${source.package.version}`;
             }
-            this.fluidPackageCache.set(pkgName, entry[1]);
+
+            this.fluidPackageCache.set(pkgId, entry[1]);
         }
     }
 
@@ -40,14 +48,20 @@ export class TestCodeLoader implements ICodeLoader {
     public async load(
         source: IFluidCodeDetails,
     ): Promise<IFluidModule> {
-        const pkgName = source.package;
-        if (pkgName === undefined || typeof(pkgName) !== "string") {
-            throw new Error("code details must contain a package name.");
+        // Get the entry point for from the fluidPackageCache for the given code details.
+        // For code details containing a package name, use the package name as the id.
+        // For code details containing a fluid package, create a unique id from the package name and version.
+        let pkdId: string;
+
+        if (typeof source.package === "string") {
+            pkdId = source.package;
+        } else {
+            pkdId = `${source.package.name}@${source.package.version}`;
         }
 
-        const entryPoint = this.fluidPackageCache.get(pkgName);
+        const entryPoint = this.fluidPackageCache.get(pkdId);
         if (entryPoint === undefined) {
-            throw new Error(`Cannot load package ${pkgName}`);
+            throw new Error(`Cannot find package ${pkdId}`);
         }
         const factory: Partial<IProvideRuntimeFactory & IProvideComponentFactory> =
             entryPoint.fluidExport ?? entryPoint;

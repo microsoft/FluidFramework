@@ -4,6 +4,6 @@
  */
 
 export * from "./interfaces";
-export * from "./loader";
-export * from "./testCodeLoader";
+export * from "./localLoader";
+export * from "./localCodeLoader";
 export * from "./testFluidComponent";
