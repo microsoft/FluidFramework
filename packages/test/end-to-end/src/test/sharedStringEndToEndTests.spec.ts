@@ -14,18 +14,17 @@ import {
     ITestFluidComponent,
     initializeLocalContainer,
     TestFluidComponentFactory,
-    TestFluidPackageEntries,
 } from "@microsoft/fluid-test-utils";
 
 describe("SharedString", () => {
-    const id = "fluid-test://test.com/test/sharedStringtest";
+    const id = "fluid-test://localhost/sharedStringtest";
     const codeDetails: IFluidCodeDetails = {
         package: "sharedStringTestPackage",
         config: {},
     };
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
-    let documentDeltaEventManager: DocumentDeltaEventManager;
+    let containerDeltaEventManager: DocumentDeltaEventManager;
     let loader: ILoader;
     let component1: ITestFluidComponent;
     let component2: ITestFluidComponent;
@@ -39,14 +38,11 @@ describe("SharedString", () => {
     }
 
     beforeEach(async () => {
-        const factory = new TestFluidComponentFactory([
-            ["sharedString", SharedString.getFactory()],
-        ]);
-        const packageEntries: TestFluidPackageEntries = [
-            [ codeDetails, factory ],
-        ];
         deltaConnectionServer = LocalDeltaConnectionServer.create();
-        loader = createLocalLoader(packageEntries, deltaConnectionServer);
+
+        const factory = new TestFluidComponentFactory([[ "sharedString", SharedString.getFactory() ]]);
+        loader = createLocalLoader([[ codeDetails, factory ]], deltaConnectionServer);
+
 
         const container1 = await initializeLocalContainer(id, loader, codeDetails);
         component1 = await getComponent("default", container1);
@@ -54,8 +50,8 @@ describe("SharedString", () => {
         const container2 = await initializeLocalContainer(id, loader, codeDetails);
         component2 = await getComponent("default", container2);
 
-        documentDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
-        documentDeltaEventManager.registerDocuments(container1, container2);
+        containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
+        containerDeltaEventManager.registerDocuments(container1, container2);
     });
 
     it("can sync SharedString across multiple containers", async () => {
@@ -65,7 +61,7 @@ describe("SharedString", () => {
         assert.equal(sharedString1.getText(), text, "The retrieved text should match the inserted text.");
 
         // Wait for the ops to to be submitted and processed across the containers.
-        await documentDeltaEventManager.process();
+        await containerDeltaEventManager.process();
 
         const sharedString2 = await component2.getSharedObject<SharedString>("sharedString");
         assert.equal(sharedString2.getText(), text, "The inserted text should have synced across the containers");
@@ -78,7 +74,7 @@ describe("SharedString", () => {
         assert.equal(sharedString1.getText(), text, "The retrieved text should match the inserted text.");
 
         // Wait for the ops to to be submitted and processed across the containers.
-        await documentDeltaEventManager.process();
+        await containerDeltaEventManager.process();
 
         // Create a initialize a new container with the same id.
         const newContainer = await initializeLocalContainer(id, loader, codeDetails);

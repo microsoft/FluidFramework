@@ -3,14 +3,22 @@
  * Licensed under the MIT License.
  */
 
+import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
+import { LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { IFluidCodeDetails, IFluidModule, IProvideRuntimeFactory } from "@microsoft/fluid-container-definitions";
-import { Container } from "@microsoft/fluid-container-loader";
-import { createLocalLoader, initializeLocalContainer } from "@microsoft/fluid-test-utils";
+import {
+    IProxyLoaderFactory,
+    ICodeLoader,
+    IProvideRuntimeFactory,
+    IFluidModule,
+    IFluidCodeDetails,
+} from "@microsoft/fluid-container-definitions";
+import {  Loader, Container } from "@microsoft/fluid-container-loader";
 import { IProvideComponentFactory } from "@microsoft/fluid-runtime-definitions";
-import { LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import { initializeContainerCode } from "@microsoft/fluid-base-host";
 import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 
 export async function createLocalContainerFactory(
@@ -18,14 +26,46 @@ export async function createLocalContainerFactory(
 ): Promise<() => Promise<Container>> {
 
     const documentId = uuid();
-    const codeDetails: IFluidCodeDetails = {
-        package: "localContainerFactoryPackage",
-        config: {},
+
+    const urlResolver = new TestResolver(documentId);
+
+    const deltaConn = LocalDeltaConnectionServer.create();
+    const documentServiceFactory = new TestDocumentServiceFactory(deltaConn);
+
+
+    const factory: Partial<IProvideRuntimeFactory & IProvideComponentFactory> =
+        entryPoint.fluidExport ? entryPoint.fluidExport : entryPoint;
+
+    const runtimeFactory: IProvideRuntimeFactory =
+        factory.IRuntimeFactory ?
+            factory.IRuntimeFactory :
+            new SimpleModuleInstantiationFactory("default", [["default", Promise.resolve(factory.IComponentFactory)]]);
+
+    const codeLoader: ICodeLoader = {
+        load: async <T>() => ({fluidExport: runtimeFactory} as unknown as T),
     };
-    const deltaConnectionServer = LocalDeltaConnectionServer.create();
-    const loader = createLocalLoader([[codeDetails, entryPoint]], deltaConnectionServer);
+
+    const loader =  new Loader(
+        urlResolver,
+        documentServiceFactory,
+        codeLoader,
+        {},
+        {},
+        new Map<string, IProxyLoaderFactory>());
+
     return async () => {
-        return initializeLocalContainer(documentId, loader, codeDetails);
+
+        const container = await loader.resolve({ url: documentId });
+
+        await initializeContainerCode(container, {} as any as IFluidCodeDetails);
+
+        // If we're loading from ops, the context might be in the middle of reloading.  Check for that case and wait
+        // for the contextChanged event to avoid returning before that reload completes.
+        if (container.hasNullRuntime()) {
+            await new Promise<void>((resolve) => container.once("contextChanged", () => resolve()));
+        }
+
+        return container;
     };
 }
 

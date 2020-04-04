@@ -11,16 +11,18 @@ import {
     IFluidCodeDetails,
 } from "@microsoft/fluid-container-definitions";
 import { IProvideComponentFactory } from "@microsoft/fluid-runtime-definitions";
-import { TestFluidPackageEntries, TestFluidPackageType } from "./types";
+
+// This type represents the entry point for a fluid container.
+type fluidEntryPoint = Partial<IProvideRuntimeFactory & IProvideComponentFactory & IFluidModule>;
 
 /**
  * A simple code loader that caches a mapping of package name to a fluid entry point.
  * On load, it retrieves the entry point matching the package name in the given code details.
  */
 export class TestCodeLoader implements ICodeLoader {
-    private readonly fluidPackageCache = new Map<string, TestFluidPackageType>();
+    private readonly fluidPackageCache = new Map<string, fluidEntryPoint>();
 
-    constructor(packageEntries: TestFluidPackageEntries) {
+    constructor(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>) {
         for (const entry of packageEntries) {
             const pkgName = entry[0].package;
             if (pkgName === undefined || typeof(pkgName) !== "string") {

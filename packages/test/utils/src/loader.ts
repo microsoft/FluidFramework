@@ -5,24 +5,29 @@
 
 import { initializeContainerCode } from "@microsoft/fluid-base-host";
 import {
-    IProxyLoaderFactory,
     ICodeLoader,
     ILoader,
     IFluidCodeDetails,
+    IFluidModule,
+    IProxyLoaderFactory,
+    IProvideRuntimeFactory,
 } from "@microsoft/fluid-container-definitions";
 import { Loader, Container } from "@microsoft/fluid-container-loader";
 import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
 import { ILocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { IProvideComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import { TestCodeLoader } from "./testCodeLoader";
-import { TestFluidPackageEntries } from "./types";
+
+// This type represents the entry point for a fluid container.
+type fluidEntryPoint = Partial<IProvideRuntimeFactory & IProvideComponentFactory & IFluidModule>;
 
 /**
  * Creates a loader with the given package entries and a delta connection server.
- * @param packageEntries A list of code details to fluid entry points.
- * @param deltaConnectionServer The delta connection server to use as the server.
+ * @param packageEntries - A list of code details to fluid entry points.
+ * @param deltaConnectionServer - The delta connection server to use as the server.
  */
 export function createLocalLoader(
-    packageEntries: TestFluidPackageEntries,
+    packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
     deltaConnectionServer: ILocalDeltaConnectionServer,
 ): ILoader {
 
@@ -41,9 +46,9 @@ export function createLocalLoader(
 
 /**
  * Gets and initializes a container with the given code details from the loader.
- * @param documentId The documentId for the container.
- * @param loader The loader to use to initialize the container.
- * @param codeDetails The code details to retrieve the fluid entry point.
+ * @param documentId - The documentId for the container.
+ * @param loader - The loader to use to initialize the container.
+ * @param codeDetails - The code details to retrieve the fluid entry point.
  */
 export async function initializeLocalContainer(
     documentId: string,

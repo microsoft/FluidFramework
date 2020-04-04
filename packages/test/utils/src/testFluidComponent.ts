@@ -9,7 +9,6 @@ import { SharedMap, ISharedMap } from "@microsoft/fluid-map";
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { ITestFluidComponent } from "./interfaces";
-import { TestSharedObjectFactoryEntries } from "./types";
 
 /**
  * A test component that will create a shared object for each `id` and `ISharedObjectFactory` pair passed to load.
@@ -20,7 +19,7 @@ export class TestFluidComponent implements ITestFluidComponent {
     public static async load(
         runtime: IComponentRuntime,
         context: IComponentContext,
-        factoryEntries: TestSharedObjectFactoryEntries) {
+        factoryEntries: Iterable<[string, ISharedObjectFactory]>) {
 
         const component = new TestFluidComponent(runtime, context, factoryEntries);
         await component.initialize();
@@ -37,15 +36,15 @@ export class TestFluidComponent implements ITestFluidComponent {
 
     /**
      * Creates a new TestFluidComponent.
-     * @param runtime The component runtime.
-     * @param context The componet context.
-     * @param factoryEntries A list of `id` to `ISharedObjectFactory` mapping. For each item in the list,
-     * a shared object is created which can be retrieved by calling getSharedObject() with the `id`;
+     * @param runtime - The component runtime.
+     * @param context - The componet context.
+     * @param factoryEntries - A list of id to ISharedObjectFactory mapping. For each item in the list,
+     * a shared object is created which can be retrieved by calling getSharedObject() with the id;
      */
     constructor(
         public readonly runtime: IComponentRuntime,
         public readonly context: IComponentContext,
-        factoryEntries: TestSharedObjectFactoryEntries,
+        factoryEntries: Iterable<[string, ISharedObjectFactory]>,
     ) {
         this.factoryEntriesMap = new Map(factoryEntries);
     }
@@ -113,7 +112,11 @@ export class TestFluidComponentFactory implements IComponentFactory {
 
     public get IComponentFactory() { return this; }
 
-    constructor(private readonly factoryEntries: TestSharedObjectFactoryEntries) {}
+    /**
+     * Creates a new TestFluidComponentFactory.
+     * @param factoryEntries - A list of id to ISharedObjectFactory mapping.
+     */
+    constructor(private readonly factoryEntries: Iterable<[string, ISharedObjectFactory]>) {}
 
     public instantiateComponent(context: IComponentContext): void {
         const dataTypes = new Map<string, ISharedObjectFactory>();
