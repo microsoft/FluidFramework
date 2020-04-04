@@ -138,12 +138,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         return new Promise<Container>((res, rej) => {
             let alreadyRaisedError = false;
-            const onError = (error) => {
+            const onError = (err) => {
                 container.removeListener("error", onError);
                 // Depending where error happens, we can be attempting to connect to web socket
                 // and continuously retrying (consider offline mode)
                 // Host has no container to close, so it's prudent to do it here
-                container.close();
+                const error = createIError(err, true);
+                container.close(error);
                 rej(error);
                 alreadyRaisedError = true;
             };
@@ -152,12 +153,16 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             const version = request.headers && request.headers[LoaderHeader.version];
             const pause = request.headers && request.headers[LoaderHeader.pause];
 
+            const perfEvent = PerformanceEvent.start(container.logger, { eventName: "Load" });
+
             container.load(version, !!pause)
-                .then(() => {
+                .then((props) => {
                     container.removeListener("error", onError);
                     res(container);
+                    perfEvent.end(props);
                 })
                 .catch((error) => {
+                    perfEvent.cancel(undefined, error);
                     const err = createIError(error, true);
                     if (!alreadyRaisedError) {
                         container.logCriticalError(err);
@@ -747,9 +752,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
      *   - otherwise, version sha to load snapshot
      * @param pause - start the container in a paused state
      */
-    private async load(specifiedVersion: string | null | undefined, pause: boolean): Promise<void> {
-        const perfEvent = PerformanceEvent.start(this.logger, { eventName: "Load" });
-
+    private async load(specifiedVersion: string | null | undefined, pause: boolean) {
         let startConnectionP: Promise<IConnectionDetails> | undefined;
 
         // Ideally we always connect as "read" by default.
@@ -822,15 +825,15 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         assert(!connected || this._deltaManager.connectionMode === "read");
         this.propagateConnectionState();
 
-        perfEvent.end({
-            existing: this._existing,
-            sequenceNumber: attributes.sequenceNumber,
-            version: maybeSnapshotTree && maybeSnapshotTree.id !== null ? maybeSnapshotTree.id : undefined,
-        });
-
         if (!pause) {
             this.resume();
         }
+
+        return {
+            existing: this._existing,
+            sequenceNumber: attributes.sequenceNumber,
+            version: maybeSnapshotTree && maybeSnapshotTree.id !== null ? maybeSnapshotTree.id : undefined,
+        };
     }
 
     private async createDetached(source: IFluidCodeDetails) {

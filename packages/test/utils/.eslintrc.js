@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
-export * from "./disposable";
-export * from "./events";
-export * from "./logger";
+module.exports = {
+    "extends": [
+        "@microsoft/eslint-config-fluid"
+    ]
+}
