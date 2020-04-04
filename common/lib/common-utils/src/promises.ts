@@ -194,11 +194,12 @@ export class PromiseRegistry<T> {
      * @param asyncFn - the async work to do and store, if not already in progress under the given key
      * @param expiryTime - (optional) Automatically unregister the given key after some time
      * @param unregisterOnError - (optional) If the stored Promise is rejected, should the given key be unregistered?
+     * Defaults to true for all errors if omitted.
      */
     public async register(
         key: string,
         asyncFn: () => Promise<T>,
-        unregisterOnError?: (e: any) => boolean,
+        unregisterOnError: (e: any) => boolean = () => true,
         expiryTime?: number,
     ): Promise<T> {
         return this.synchronousRegister(key, asyncFn, unregisterOnError, expiryTime).promise;
@@ -219,7 +220,7 @@ export class PromiseRegistry<T> {
     private synchronousRegister(
         key: string,
         asyncFn: () => Promise<T>,
-        unregisterOnError?: (e: any) => boolean,
+        unregisterOnError: (e: any) => boolean = () => true,
         expiryTime?: number,
     ): PromiseHandle<T> {
         // NOTE: Do not await asyncFn! Let the caller do so once register returns
@@ -232,7 +233,7 @@ export class PromiseRegistry<T> {
 
             // If asyncFn throws, possibly remove the Promise from the cache
             promiseToCache.catch((error) => {
-                if (unregisterOnError?.(error)) {
+                if (unregisterOnError(error)) {
                     this.unregister(key);
                 }
             });

@@ -41,6 +41,7 @@ export class ContainerUrlResolver implements IUrlResolver {
                     { headers });
                 return response.data;
             },
+            () => false, // unregisterOnError
         );
     }
 }
