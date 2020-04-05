@@ -6,18 +6,21 @@
 const fs = require("fs");
 const path = require("path");
 const process = require("process");
-const { logger, env } = require("@vuepress/shared-utils");
-const { build } = require("@vuepress/core");
-const { wrapCommand } = require("../node_modules/vuepress/lib/util");
 
-INCLUDE_PATH = ".vuepress/includes/";
-
-const fluidVarGroup = process.env[`FLUID_VAR_GROUP`] || "internal";
-const vuepressBase = process.env.VUEPRESS_BASE || "/";
-logger.debug(`VUEPRESS_BASE = ${process.env.VUEPRESS_BASE}`);
+const INCLUDE_PATH = ".vuepress/includes/";
+const BASE_URL = process.env.BASE_URL || "https://fluid-docs.azurewebsites.net";
+const DOCS_AUDIENCE = process.env.DOCS_AUDIENCE || process.env.FLUID_VAR_GROUP || "internal";
+const THIS_VERSION = process.env.THIS_VERSION || "0.16";
+const MASTER_BRANCH_VERSION = process.env.MASTER_BRANCH_VERSION || "0.16";
+const RELEASE_VERSION = process.env.RELEASE_VERSION || "0.15";
+const N1_VERSION = process.env.N1_VERSION || "0.14";
+const VUEPRESS_BASE = process.env.VUEPRESS_BASE || `/versions/${THIS_VERSION}/`;
+const RELEASE_URL = BASE_URL;
+const N1_URL = `${BASE_URL}/versions/${N1_VERSION}/`;
+const MASTER_BRANCH_URL = `${BASE_URL}/versions/latest/`;
 
 const internalOnly = (obj) => {
-    if (fluidVarGroup !== "internal") {
+    if (DOCS_AUDIENCE !== "internal") {
         return null;
     }
     return obj;
@@ -57,9 +60,9 @@ const getNav = () => {
         internalOnly({
             text: "Versions",
             items: [
-                { text: "v0.15 - Current release", link: "/" },
-                { text: "v0.14", link: "/versions/0.14/" },
-                { text: "Latest", link: "/versions/latest/" },
+                { text: `v${RELEASE_VERSION}`, link: BASE_URL },
+                { text: `v${N1_VERSION}`, link: N1_URL },
+                { text: `Bleeding edge`, link: MASTER_BRANCH_URL }
             ]
         }),
         {
@@ -77,6 +80,7 @@ const getNav = () => {
                         { text: "Breaking changes", link: "/contributing/breaking-changes" },
                         { text: "Compatibility", link: "/contributing/compatibility" },
                         { text: "Coding guidelines", link: "/contributing/coding-guidelines" },
+                        { text: "Documentation system", link: "/contributing/doc-system" },
                         { text: "Building documentation locally", link: "/contributing/building-documentation" },
                         { text: "Miscellaneous", link: "/contributing/misc" },
                     ]
@@ -245,8 +249,10 @@ const getGuideSidebar = () => {
         {
             title: "Guide",
             collapsable: false,
+            path: "./",
             children: compact([
                 "",
+                "package-feed.md",
                 "spfx.md",
                 "upload.md",
                 internalOnly("yo-fluid"),
@@ -384,13 +390,20 @@ const getAllSidebars = () => {
 
     return Object.assign({},
         sidebars.all,
-        fluidVarGroup === "internal" ? sidebars.internal : {}
+        DOCS_AUDIENCE === "internal" ? sidebars.internal : {}
     );
 }
 
 const getThemeConfig = () => {
     let config = {
-        fluidVarGroup: fluidVarGroup,
+        DOCS_AUDIENCE: DOCS_AUDIENCE,
+        THIS_VERSION: THIS_VERSION,
+        MASTER_BRANCH_VERSION: MASTER_BRANCH_VERSION,
+        MASTER_BRANCH_URL: MASTER_BRANCH_URL,
+        RELEASE_VERSION: RELEASE_VERSION,
+        RELEASE_URL: RELEASE_URL,
+        N1_VERSION: N1_VERSION,
+        N1_URL: N1_URL,
         editLinks: true,
         lastUpdated: false, // "Last Updated",
         docsDir: "docs",
@@ -400,7 +413,7 @@ const getThemeConfig = () => {
         nav: getNav(),
         sidebar: getAllSidebars(),
     };
-    if (fluidVarGroup === "internal") {
+    if (DOCS_AUDIENCE === "internal") {
         config.repo = "microsoft/FluidFramework";
     }
     return config;
@@ -417,10 +430,10 @@ function permalinkSymbol() {
 }
 
 module.exports = {
-    title: "Fluid Framework",
+    title: `Fluid Framework v${THIS_VERSION}`,
     description: "State that flows",
     evergreen: true,
-    base: vuepressBase,
+    base: VUEPRESS_BASE,
     head: [
         ["link", { rel: "icon", href: "/images/homescreen48.png" }],
         // ["link", { rel: "manifest", crossorigin: "use-credentials", href: "/manifest.webmanifest" }],
@@ -432,7 +445,6 @@ module.exports = {
         // ["meta", { name: "msapplication-TileColor", content: "#000000" }]
     ],
     plugins: [
-        ["code-switcher"],
         ["tabs"],
         ["vuepress-plugin-check-md"],
         // [
@@ -478,9 +490,12 @@ module.exports = {
         extendMarkdown: (md) => {
             md.set({ typographer: true });
             // use additional markdown-it plugins
-            md.use(require("markdown-it-include"), "./.vuepress/includes/")
+            md.use(require("markdown-it-replacements")) // typography enhancements
+                .use(require("markdown-it-smartarrows")) // typography enhancements
+                .use(require("markdown-it-include"), INCLUDE_PATH)
                 .use(require("markdown-it-deflist"))
-                .use(require("markdown-it-replacements"));
+                .use(require("markdown-it-regexp"))
+                .use(require("markdown-it-implicit-figures"), { figCaption: true });
         }
     },
     themeConfig: getThemeConfig(),

@@ -301,6 +301,10 @@ function getDocumentServiceFactory(documentId: string, options: RouteOptions) {
                 async (siteUrl, refresh) => { return options.odspAccessToken; },
                 async (refresh) => { return options.pushAccessToken; },
                 { send: (event) => { return; } },
+                undefined,
+                undefined,
+                undefined,
+                options.openMode === "detached" ? true : false,
             );
             break;
         }
