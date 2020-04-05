@@ -44,6 +44,7 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
         private readonly storageFetchWrapper: IFetchWrapper = new FetchWrapper(),
         private readonly deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),
         permanentCache?: ICache,
+        private readonly createNewFlag: boolean = false,
     ) {
         this.cache = new OdspCache(permanentCache);
     }
@@ -67,6 +68,7 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
             Promise.resolve(getSocketIo()),
             this.cache,
             isFirstTimeDocumentOpened,
+            this.createNewFlag,
         );
     }
 }
