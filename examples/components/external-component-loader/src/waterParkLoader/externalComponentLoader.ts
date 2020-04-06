@@ -172,7 +172,6 @@ export class ExternalComponentLoader extends PrimedComponent
                         if (component.IComponentCollection !== undefined) {
                             component = component.IComponentCollection.createCollectionItem();
                         }
-                        // The type value here looks sketchy
                         viewComponent.IComponentCollection.createCollectionItem({
                             handle: component.IComponentHandle,
                             type: value,

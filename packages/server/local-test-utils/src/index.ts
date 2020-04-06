@@ -7,4 +7,3 @@ export * from "./sessionStorageTestDb";
 export * from "./testCodeLoader";
 export * from "./testDataStore";
 export * from "./testHost";
-export * from "./testUtils";

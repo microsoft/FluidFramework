@@ -52,7 +52,11 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         private readonly createAndAttachComponent: <T extends IComponent & IComponentLoadable>(
             pkg: string,
             props?: any) => Promise<T>,
-        private readonly getComponent_UNSAFE: <T>(id: string) => Promise<T>,
+        private readonly getComponentFromDirectory: <T extends IComponent & IComponentLoadable>(
+            id: string,
+            directory: IDirectory,
+            getObjectFromDirectory: (id: string, directory: IDirectory) => string | IComponentHandle | undefined) =>
+        Promise<T | undefined>,
         public componentToolbarId: string,
     ) {
         super();
@@ -188,14 +192,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
     }
 
     public async getComponent<T extends IComponent & IComponentLoadable>(id: string): Promise<T | undefined> {
-        const data = this.componentSubDirectory.get<ISpacesModel>(id);
-        const handleOrId = data?.handleOrId;
-        if (typeof handleOrId === "string") {
-            return this.getComponent_UNSAFE<T>(handleOrId);
-        } else {
-            const handle = handleOrId?.IComponentHandle;
-            return await (handle ? handle.get() : this.getComponent_UNSAFE(id)) as T;
-        }
+        return this.getComponentFromDirectory<T>(id, this.componentSubDirectory, this.getObjectFromDirectory);
     }
 
     public getLayout(id: string): Layout {
@@ -225,6 +222,11 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
 
             await Promise.all(promises);
         }
+    }
+
+    private getObjectFromDirectory(id: string, directory: IDirectory): string | IComponentHandle | undefined {
+        const data = directory.get<ISpacesModel>(id);
+        return data?.handleOrId;
     }
 
     private async addComponentInternal<T extends IComponent & IComponentLoadable>(

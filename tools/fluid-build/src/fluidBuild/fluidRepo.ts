@@ -12,11 +12,13 @@ import {
     execWithErrorAsync,
 } from "../common/utils";
 import { FluidPackageCheck } from "./fluidPackageCheck";
-import { FluidRepoBase, MonoRepo } from "../common/fluidRepoBase";
+import { FluidRepoBase } from "../common/fluidRepoBase";
+import { MonoRepoKind } from "../common/monoRepo";
 import { NpmDepChecker } from "./npmDepChecker";
 import { ISymlinkOptions, symlinkPackage } from "./symlinkUtils";
 import { BuildGraph } from "./buildGraph";
 import { logVerbose } from "../common/logging";
+import { MonoRepo } from "../common/monoRepo";
 
 export interface IPackageMatchedOptions {
     match: string[];
@@ -31,10 +33,6 @@ export class FluidRepo extends FluidRepoBase {
         path.join(this.resolvedRoot, "common/build/eslint-config-fluid"),
         path.join(this.resolvedRoot, "common/lib/common-definitions"),
         path.join(this.resolvedRoot, "common/lib/common-utils"),
-    ];
-    private readonly monoReposInstallDirectories = [
-        path.join(this.resolvedRoot),
-        this.serverDirectory,
     ];
 
     constructor(resolvedRoot: string) {
@@ -51,7 +49,7 @@ export class FluidRepo extends FluidRepoBase {
         }
         const installScript = "npm i";
         const installPromises: Promise<ExecAsyncResult>[] = [];
-        for (const dir of [...this.packageInstallDirectories, ...this.monoReposInstallDirectories]) {
+        for (const dir of [...this.packageInstallDirectories, this.clientMonoRepo.repoPath, this.serverMonoRepo.repoPath]) {
             installPromises.push(execWithErrorAsync(installScript, { cwd: dir }, dir));
         }
         const rets = await Promise.all(installPromises);
@@ -62,7 +60,7 @@ export class FluidRepo extends FluidRepoBase {
     public async uninstall() {
         const cleanPackageNodeModules = this.packages.cleanNodeModules();
         const removePromise = Promise.all(
-            this.monoReposInstallDirectories.map(dir => rimrafWithErrorAsync(path.join(dir, "node_modules"), dir))
+            [ this.clientMonoRepo.uninstall(), this.serverMonoRepo.uninstall() ]
         );
 
         const r = await Promise.all([cleanPackageNodeModules, removePromise]);
@@ -87,8 +85,8 @@ export class FluidRepo extends FluidRepoBase {
             return this.matchWithFilter(pkg => true);
         }
 
-        const matchMonoRepo = options.server? MonoRepo.Server : MonoRepo.Client;
-        return this.matchWithFilter(pkg => this.getMonoRepo(pkg) == matchMonoRepo);
+        const matchMonoRepo = options.server? MonoRepoKind.Server : MonoRepoKind.Client;
+        return this.matchWithFilter(pkg => pkg.monoRepo?.kind === matchMonoRepo);
     }
 
     public async checkPackages(fix: boolean) {
@@ -128,9 +126,8 @@ export class FluidRepo extends FluidRepoBase {
     public createBuildGraph(options: ISymlinkOptions, buildScriptNames: string[]) {
         return new BuildGraph(this.packages.packages, buildScriptNames,
             (pkg: Package) => {
-                const monoRepo = this.getMonoRepo(pkg);
                 return (dep: Package) => {
-                    return options.fullSymlink || this.isSameMonoRepo(monoRepo, dep);
+                    return options.fullSymlink || MonoRepo.isSame(pkg.monoRepo, dep.monoRepo);
                 }
             });
     }

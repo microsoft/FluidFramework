@@ -22,7 +22,7 @@ const serHandle = {
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 function printHandle(target: any) {
     return JSON.stringify(target, (key, value) => {
-        return value && value.IComponentHandle
+        return value?.IComponentHandle !== undefined
             ? "#HANDLE"
             : value;
     });

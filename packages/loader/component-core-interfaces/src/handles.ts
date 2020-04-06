@@ -7,6 +7,8 @@ import { IComponentRouter } from "./componentRouter";
 import { IComponent } from "./components";
 import { IComponentLoadable } from "./componentLoadable";
 
+export const IComponentHandleContext: keyof IProvideComponentHandleContext = "IComponentHandleContext";
+
 export interface IProvideComponentHandleContext {
     readonly IComponentHandleContext: IComponentHandleContext;
 }
@@ -42,6 +44,8 @@ export interface IComponentHandleContext extends IComponentRouter, IProvideCompo
      */
     bind(handle: IComponentHandle): void;
 }
+
+export const IComponentHandle: keyof IProvideComponentHandle = "IComponentHandle";
 
 export interface IProvideComponentHandle {
     readonly IComponentHandle: IComponentHandle;

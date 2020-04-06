@@ -7,7 +7,7 @@
 
 import * as assert from "assert";
 import { AgentSchedulerFactory, TaskManager } from "@microsoft/fluid-agent-scheduler";
-import { TestHost, getComponent } from "@microsoft/fluid-local-test-utils";
+import { TestHost } from "@microsoft/fluid-local-test-utils";
 import { IAgentScheduler } from "@microsoft/fluid-runtime-definitions";
 import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";
 
@@ -25,7 +25,7 @@ describe("AgentScheduler", () => {
                 [AgentSchedulerType, Promise.resolve(new AgentSchedulerFactory())],
             ]);
 
-            scheduler = await getComponent<TaskManager>(host, AgentSchedulerFactory.type)
+            scheduler = await host.getComponent_UNSAFE<TaskManager>(AgentSchedulerFactory.type)
                 .then((taskmanager) => taskmanager.IAgentScheduler);
 
             // Make sure all initial ops (around leadership) are processed.
@@ -35,7 +35,7 @@ describe("AgentScheduler", () => {
             const doc = await host.getDocumentDeltaEvent();
             docScheduler.registerDocuments(doc);
             await docScheduler.process(doc);
-            await docScheduler.resumeProcessing(doc);
+            docScheduler.resumeProcessing(doc);
         });
 
         afterEach(async () => { await host.close(); });
@@ -104,9 +104,9 @@ describe("AgentScheduler", () => {
                 [AgentSchedulerType, Promise.resolve(new AgentSchedulerFactory())],
             ]);
             host2 = host1.clone();
-            scheduler1 = await getComponent<TaskManager>(host1, "_scheduler")
+            scheduler1 = await host1.getComponent_UNSAFE<TaskManager>("_scheduler")
                 .then((taskmanager) => taskmanager.IAgentScheduler);
-            scheduler2 = await getComponent<TaskManager>(host2, "_scheduler")
+            scheduler2 = await host2.getComponent_UNSAFE<TaskManager>("_scheduler")
                 .then((taskmanager) => taskmanager.IAgentScheduler);
 
             // Make sure all initial ops (around leadership) are processed.
@@ -117,7 +117,7 @@ describe("AgentScheduler", () => {
             const doc2 = await host2.getDocumentDeltaEvent();
             docScheduler.registerDocuments(doc1, doc2);
             await docScheduler.process(doc1, doc2);
-            await docScheduler.resumeProcessing(doc1, doc2);
+            docScheduler.resumeProcessing(doc1, doc2);
         });
 
         afterEach(async () => {

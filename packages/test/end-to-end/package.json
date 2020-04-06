@@ -71,6 +71,7 @@
     "@microsoft/fluid-sequence": "^0.16.0",
     "@microsoft/fluid-server-local-server": "^0.1004.0-0",
     "@microsoft/fluid-test-loader-utils": "^0.16.0",
+    "@microsoft/fluid-test-utils": "^0.16.0",
     "@types/mocha": "^5.2.5",
     "@types/nock": "^9.3.0",
     "@types/node": "^10.14.6",

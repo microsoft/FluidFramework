@@ -3,24 +3,21 @@
  * Licensed under the MIT License.
  */
 
+import * as React from "react";
+import * as ReactDOM from "react-dom";
 import {
     PrimedComponent,
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import {
     IComponent,
-    IResponse,
     IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IProvideComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { SharedObjectSequence } from "@microsoft/fluid-sequence";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
-import * as React from "react";
-import * as ReactDOM from "react-dom";
-
 import { ISpacesDataModel, SpacesDataModel } from "./dataModel";
-
 import { SpacesGridView } from "./view";
 import { ComponentToolbar, ComponentToolbarName } from "./components";
 import { IComponentToolbarConsumer } from "./interfaces";
@@ -54,23 +51,6 @@ export class Spaces extends PrimedComponent
             throw new Error("The Spaces DataModel was not properly initialized.");
         }
         return this.dataModelInternal;
-    }
-
-    public async asComponent<T extends IComponent>(response: Promise<IResponse>): Promise<T> {
-        return super.asComponent<T>(response);
-    }
-
-    /**
-     * Gets the component of a given id. Will follow the pattern of the container for waiting.
-     * @param id - component id
-     */
-    protected async getComponent_UNSAFE<T extends IComponent>(id: string, wait: boolean = true): Promise<T> {
-        const request = {
-            headers: [[wait]],
-            url: `/${id}`,
-        };
-
-        return this.asComponent<T>(this.context.hostRuntime.request(request));
     }
 
     public get IComponentHTMLView() { return this; }
@@ -134,7 +114,7 @@ export class Spaces extends PrimedComponent
             new SpacesDataModel(
                 this.root,
                 this.createAndAttachComponent.bind(this),
-                this.getComponent_UNSAFE.bind(this),
+                this.getComponentFromDirectory.bind(this),
                 this.componentToolbarId,
             );
     }

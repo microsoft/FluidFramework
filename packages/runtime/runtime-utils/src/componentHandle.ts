@@ -31,7 +31,7 @@ export class ComponentHandle implements IComponentHandle {
     }
 
     public async get(): Promise<any> {
-        if (!this.componentP) {
+        if (this.componentP === undefined) {
             /* eslint-disable @typescript-eslint/indent */
             this.componentP = this.routeContext.request({ url: this.path })
                 .then<IComponent>((response) =>
@@ -56,7 +56,7 @@ export class ComponentHandle implements IComponentHandle {
         const component = await this.get() as IComponent;
         const router = component.IComponentRouter;
 
-        return router
+        return router !== undefined
             ? router.request(request)
             : { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
     }

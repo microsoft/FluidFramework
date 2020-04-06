@@ -135,7 +135,6 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
             const editableStyle: React.CSSProperties = { overflow: "hidden", padding: 2 };
             const embeddedComponentStyle: React.CSSProperties = {
                 height: "100%",
-                overflow: "scroll",
             };
             if (editable) {
                 editableStyle.border = "1px solid black";
@@ -144,6 +143,9 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                 editableStyle.overflow = "visible";
                 embeddedComponentStyle.pointerEvents = "none";
                 embeddedComponentStyle.opacity = 0.5;
+            }
+            if (id !== this.props.dataModel.componentToolbarId) {
+                embeddedComponentStyle.overflow = "scroll";
             }
 
             // We use separate layout from array because using GridLayout
@@ -192,6 +194,36 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                             >
                                 {"↗️"}
                             </button>
+                            <input
+                                style={buttonStyle}
+                                value={layout.w}
+                                onMouseDown={(event: React.MouseEvent<HTMLInputElement>) => {
+                                    event.stopPropagation();
+                                }}
+                                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                                    this.props.dataModel.updateGridItem(id, {
+                                        x: layout.x,
+                                        y: layout.y,
+                                        w: event.target.value,
+                                        h: layout.h,
+                                    })
+                                }
+                            />
+                            <input
+                                style={buttonStyle}
+                                value={layout.h}
+                                onMouseDown={(event: React.MouseEvent<HTMLInputElement>) => {
+                                    event.stopPropagation();
+                                }}
+                                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                                    this.props.dataModel.updateGridItem(id, {
+                                        x: layout.x,
+                                        y: layout.y,
+                                        w: layout.w,
+                                        h: event.target.value,
+                                    })
+                                }
+                            />
                         </div>
                     }
                     <div style={embeddedComponentStyle}>

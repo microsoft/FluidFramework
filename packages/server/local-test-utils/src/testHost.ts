@@ -68,6 +68,11 @@ class TestRootComponent extends PrimedComponent implements IComponentRunnable {
         return super.createAndAttachComponent<T>(type, props);
     }
 
+    // Make this function public so TestHost can use them
+    public async getComponent_UNSAFE<T>(id: string): Promise<T> {
+        return super.getComponent_UNSAFE<T>(id);
+    }
+
     /**
      * Creates a channel and returns the instance as a shared object.
      * This will add the instance to the root directory.
@@ -152,9 +157,8 @@ export class TestHost {
     }
 
     public readonly deltaConnectionServer: ILocalDeltaConnectionServer;
-    private rootResolver: (accept: TestRootComponent) => void;
 
-    public readonly root = new Promise<TestRootComponent>((accept) => { this.rootResolver = accept; });
+    private readonly root: Promise<TestRootComponent>;
 
     /**
      * @param componentRegistry - array of key-value pairs of components available to the host
@@ -196,9 +200,7 @@ export class TestHost {
             new TestDocumentServiceFactory(this.deltaConnectionServer),
             new TestResolver());
 
-        store.open<TestRootComponent>("test-root-component", TestRootComponent.codeProposal, "", scope)
-            .then(this.rootResolver)
-            .catch((reason) => { throw new Error(`${reason}`); });
+        this.root = store.open<TestRootComponent>("test-root-component", TestRootComponent.codeProposal, "", scope);
     }
 
     /**
@@ -227,6 +229,12 @@ export class TestHost {
     ): Promise<T> {
         const root = await this.root;
         return root.createAndAttachComponent<T>(type, props);
+    }
+
+    // Make this function public so TestHost can use them
+    public async getComponent_UNSAFE<T>(id: string): Promise<T> {
+        const root = await this.root;
+        return root.getComponent_UNSAFE<T>(id);
     }
 
     /**

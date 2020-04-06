@@ -433,21 +433,19 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // This promise settles as soon as we know the outcome of the connection attempt
         this.connectionP = new Promise((resolve, reject) => {
             // Regardless of how the connection attempt concludes, we'll clear the promise and remove the listener
-            const cleanupConnectionAttempt = () => {
-                this.connectionP = undefined;
-                this.removeListener("closed", cleanupAndReject);
-            };
 
             // Reject the connection promise if the DeltaManager gets closed during connection
             const cleanupAndReject = (error) => {
-                cleanupConnectionAttempt();
+                this.connectionP = undefined;
+                this.removeListener("closed", cleanupAndReject);
                 reject(error);
             };
             this.on("closed", cleanupAndReject);
 
             // Attempt the connection
             connectCore().then((connection) => {
-                cleanupConnectionAttempt();
+                this.connectionP = undefined;
+                this.removeListener("closed", cleanupAndReject);
                 resolve(connection.details);
             }).catch(cleanupAndReject);
         });
@@ -755,7 +753,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 const throttlingError: IThrottlingError = {
                     errorType: ErrorType.throttlingError,
                     message: "Service busy/throttled.",
-                    retryAfterSeconds: delayTime,
+                    retryAfterSeconds: delayTime / 1000,
                 };
                 this.emit("error", throttlingError);
             }
@@ -943,7 +941,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     private getRetryDelayFromError(error): number | undefined {
-        return error !== null && typeof error === "object" && error.retryAfterSeconds ? error.retryAfterSeconds
+        return error !== null && typeof error === "object" && error.retryAfterSeconds ? error.retryAfterSeconds * 1000
             : undefined;
     }
 

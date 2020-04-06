@@ -4,14 +4,16 @@
  */
 
 import { EventEmitter } from "events";
-import { IDisposable } from "@microsoft/fluid-common-definitions";
+import { IDisposable, IEventProvider, IEvent } from "@microsoft/fluid-common-definitions";
+import { TypedEventEmitter } from "./typedEventEmitter";
 
 /**
  * Base class used for forwarding events from a source EventEmitter.
  * This can be useful when all arbitrary listeners need to be removed,
  * but the primary source needs to stay intact.
  */
-export class EventForwarder extends EventEmitter implements IDisposable {
+export class EventForwarder<TEvent extends IEvent = IEvent>
+    extends TypedEventEmitter<TEvent> implements IDisposable {
     protected static isEmitterEvent(event: string | symbol): boolean {
         return event === EventForwarder.newListenerEvent || event === EventForwarder.removeListenerEvent;
     }
@@ -25,7 +27,7 @@ export class EventForwarder extends EventEmitter implements IDisposable {
     private readonly forwardingEvents: Map<string | symbol, () => void> =
     new Map<string | symbol, () => void>();
 
-    constructor(source: EventEmitter) {
+    constructor(source: EventEmitter | IEventProvider<TEvent>) {
         super();
         if (source) {
             // NewListener event is raised whenever someone starts listening to this events, so
@@ -51,10 +53,10 @@ export class EventForwarder extends EventEmitter implements IDisposable {
         this.forwardingEvents.clear();
     }
 
-    protected forward(source: EventEmitter, event: string | symbol): void {
+    protected forward(source: EventEmitter | IEventProvider<TEvent>, event: string | symbol): void {
         if (source && event && !EventForwarder.isEmitterEvent(event) && !this.forwardingEvents.has(event)) {
             const listener = (...args: any[]) => this.emit(event, ...args);
-            this.forwardingEvents.set(event, () => source.removeListener(event, listener));
+            this.forwardingEvents.set(event, () => source.off(event, listener));
             source.on(event, listener);
         }
     }

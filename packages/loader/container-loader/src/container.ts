@@ -39,7 +39,13 @@ import {
     IUrlResolver,
     IDocumentServiceFactory,
 } from "@microsoft/fluid-driver-definitions";
-import { createIError, readAndParse, OnlineStatus, isOnline } from "@microsoft/fluid-driver-utils";
+import {
+    createIError,
+    readAndParse,
+    OnlineStatus,
+    isOnline,
+    ensureFluidResolvedUrl,
+} from "@microsoft/fluid-driver-utils";
 import {
     buildSnapshotTree,
     isSystemMessage,
@@ -111,6 +117,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         loader: Loader,
         request: IRequest,
         resolvedUrl: IFluidResolvedUrl,
+        urlResolver: IUrlResolver,
         logger?: ITelemetryBaseLogger,
     ): Promise<Container> {
         const container = new Container(
@@ -119,6 +126,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             codeLoader,
             loader,
             serviceFactory,
+            urlResolver,
             logger);
 
         const [, docId] = id.split("/");
@@ -130,12 +138,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         return new Promise<Container>((res, rej) => {
             let alreadyRaisedError = false;
-            const onError = (error) => {
+            const onError = (err) => {
                 container.removeListener("error", onError);
                 // Depending where error happens, we can be attempting to connect to web socket
                 // and continuously retrying (consider offline mode)
                 // Host has no container to close, so it's prudent to do it here
-                container.close();
+                const error = createIError(err, true);
+                container.close(error);
                 rej(error);
                 alreadyRaisedError = true;
             };
@@ -144,12 +153,16 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             const version = request.headers && request.headers[LoaderHeader.version];
             const pause = request.headers && request.headers[LoaderHeader.pause];
 
+            const perfEvent = PerformanceEvent.start(container.logger, { eventName: "Load" });
+
             container.load(version, !!pause)
-                .then(() => {
+                .then((props) => {
                     container.removeListener("error", onError);
                     res(container);
+                    perfEvent.end(props);
                 })
                 .catch((error) => {
+                    perfEvent.cancel(undefined, error);
                     const err = createIError(error, true);
                     if (!alreadyRaisedError) {
                         container.logCriticalError(err);
@@ -166,6 +179,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         loader: Loader,
         source: IFluidCodeDetails,
         serviceFactory: IDocumentServiceFactory,
+        urlResolver: IUrlResolver,
         logger?: ITelemetryBaseLogger,
     ): Promise<Container> {
         const container = new Container(
@@ -174,6 +188,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             codeLoader,
             loader,
             serviceFactory,
+            urlResolver,
             logger);
         await container.createDetached(source);
 
@@ -315,6 +330,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         private readonly codeLoader: ICodeLoader,
         private readonly loader: Loader,
         private readonly serviceFactory: IDocumentServiceFactory,
+        private readonly urlResolver: IUrlResolver,
         logger?: ITelemetryBaseLogger,
     ) {
         super();
@@ -401,7 +417,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this.attached;
     }
 
-    public async attach(resolver: IUrlResolver, request: IRequest): Promise<void> {
+    public async attach(request: IRequest): Promise<void> {
         if (!this.context) {
             throw new Error("Context is undefined");
         }
@@ -419,7 +435,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         this.originalRequest = request;
         // Actually go and create the resolved document
-        const expUrlResolver = resolver as IExperimentalUrlResolver;
+        const expUrlResolver = this.urlResolver as IExperimentalUrlResolver;
         if (!expUrlResolver?.isExperimentalUrlResolver) {
             throw new Error("Not an Experimental UrlResolver");
         }
@@ -429,9 +445,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             quorumSnapshot.values,
             request);
 
-        if (resolvedUrl.type !== "fluid") {
-            throw new Error("Only Fluid components currently supported");
-        }
+        ensureFluidResolvedUrl(resolvedUrl);
+
         if (!this.serviceFactory) {
             throw new Error("Provide callback to get factory from resolved url");
         }
@@ -737,9 +752,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
      *   - otherwise, version sha to load snapshot
      * @param pause - start the container in a paused state
      */
-    private async load(specifiedVersion: string | null | undefined, pause: boolean): Promise<void> {
-        const perfEvent = PerformanceEvent.start(this.logger, { eventName: "Load" });
-
+    private async load(specifiedVersion: string | null | undefined, pause: boolean) {
         let startConnectionP: Promise<IConnectionDetails> | undefined;
 
         // Ideally we always connect as "read" by default.
@@ -812,15 +825,15 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         assert(!connected || this._deltaManager.connectionMode === "read");
         this.propagateConnectionState();
 
-        perfEvent.end({
-            existing: this._existing,
-            sequenceNumber: attributes.sequenceNumber,
-            version: maybeSnapshotTree && maybeSnapshotTree.id !== null ? maybeSnapshotTree.id : undefined,
-        });
-
         if (!pause) {
             this.resume();
         }
+
+        return {
+            existing: this._existing,
+            sequenceNumber: attributes.sequenceNumber,
+            version: maybeSnapshotTree && maybeSnapshotTree.id !== null ? maybeSnapshotTree.id : undefined,
+        };
     }
 
     private async createDetached(source: IFluidCodeDetails) {

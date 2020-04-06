@@ -15,6 +15,7 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { ComponentHandle } from "@microsoft/fluid-component-runtime";
+import { IDirectory } from "@microsoft/fluid-map";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
 import { serviceRoutePathRoot } from "../containerServices";
@@ -145,6 +146,39 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
         const component = await this.asComponent<T>(componentRuntime.request({ url: "/" }));
         componentRuntime.attach();
         return component;
+    }
+
+    public async getComponentFromDirectory<T extends IComponent & IComponentLoadable>(
+        id: string,
+        directory: IDirectory,
+        getObjectFromDirectory?: (id: string, directory: IDirectory) => string | IComponentHandle | undefined):
+        Promise<T | undefined> {
+        const handleOrId = getObjectFromDirectory ? getObjectFromDirectory(id, directory) : directory.get(id);
+        if (typeof handleOrId === "string") {
+            // For backwards compatibility with older stored IDs
+            // We update the storage with the handle so that this code path is less and less trafficked
+            const component = await this.getComponent_UNSAFE<T>(handleOrId);
+            directory.set(id, component.handle);
+            return component;
+        } else {
+            const handle = handleOrId?.IComponentHandle;
+            return await (handle ? handle.get() : this.getComponent_UNSAFE(id)) as T;
+        }
+    }
+
+    /**
+     * @deprecated
+     * Gets the component of a given id. Will follow the pattern of the container for waiting.
+     * @param id - component id
+     * This is maintained for testing, to allow us to fetch the _scheduler for testHost since it is set at initializing
+     */
+    protected async getComponent_UNSAFE<T extends IComponent>(id: string, wait: boolean = true): Promise<T> {
+        const request = {
+            headers: [[wait]],
+            url: `/${id}`,
+        };
+
+        return this.asComponent<T>(this.context.hostRuntime.request(request));
     }
 
     /**
