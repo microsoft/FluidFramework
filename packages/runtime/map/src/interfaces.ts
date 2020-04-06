@@ -4,7 +4,7 @@
  */
 
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { ISharedObject } from "@microsoft/fluid-shared-object-base";
+import { ISharedObject, ISharedObjectEvents } from "@microsoft/fluid-shared-object-base";
 
 /**
  * Type of "valueChanged" event parameter.
@@ -190,22 +190,21 @@ export interface IDirectory extends Map<string, any>, IValueTypeCreator {
     getWorkingDirectory(relativePath: string): IDirectory;
 }
 
-/**
- * Interface describing a shared directory.
- */
-export interface ISharedDirectory extends ISharedObject, IDirectory {
-    /**
-     * Registers a listener on the specified events.
-     */
-    on(event: string | symbol, listener: (...args: any[]) => void): this;
-    on(
-        event: "pre-op" | "op",
-        listener: (op: ISequencedDocumentMessage, local: boolean, target: this) => void): this;
-    on(event: "valueChanged", listener: (
+export interface ISharedDirectoryEvents extends ISharedObjectEvents{
+    (event: "pre-op" | "op",
+        listener: (op: ISequencedDocumentMessage, local: boolean, target: this) => void);
+    (event: "valueChanged", listener: (
         changed: IDirectoryValueChanged,
         local: boolean,
         op: ISequencedDocumentMessage,
-        target: this) => void): this;
+        target: this) => void);
+}
+
+/**
+ * Interface describing a shared directory.
+ */
+export interface ISharedDirectory extends ISharedObject<ISharedDirectoryEvents>, IDirectory {
+
 }
 
 /**
@@ -218,10 +217,20 @@ export interface IDirectoryValueChanged extends IValueChanged {
     path: string;
 }
 
+export interface ISharedMapEvents extends ISharedObjectEvents{
+    (event: "pre-op" | "op",
+        listener: (op: ISequencedDocumentMessage, local: boolean, target: this) => void);
+    (event: "valueChanged", listener: (
+        changed: IValueChanged,
+        local: boolean,
+        op: ISequencedDocumentMessage,
+        target: this) => void);
+}
+
 /**
  * Shared map interface
  */
-export interface ISharedMap extends ISharedObject, Map<string, any>, IValueTypeCreator {
+export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any>, IValueTypeCreator {
     /**
      * Retrieves the given key from the map.
      * @param key - Key to retrieve from
@@ -244,18 +253,6 @@ export interface ISharedMap extends ISharedObject, Map<string, any>, IValueTypeC
      */
     set<T = any>(key: string, value: T): this;
 
-    /**
-     * Registers a listener on the specified events.
-     */
-    on(event: string | symbol, listener: (...args: any[]) => void): this;
-    on(
-        event: "pre-op" | "op",
-        listener: (op: ISequencedDocumentMessage, local: boolean, target: this) => void): this;
-    on(event: "valueChanged", listener: (
-        changed: IValueChanged,
-        local: boolean,
-        op: ISequencedDocumentMessage,
-        target: this) => void): this;
 }
 
 /**

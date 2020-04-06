@@ -18,7 +18,7 @@ export interface IProvideSharedObject {
     readonly ISharedObject: ISharedObject;
 }
 
-export interface ISharedObjectEvent extends IErrorEvent{
+export interface ISharedObjectEvents extends IErrorEvent {
     (event: "pre-op" | "op",
         listener: (op: ISequencedDocumentMessage, local: boolean, target: this) => void);
     (event: "disconnected" | "connected" | "processed", listener: () => void);
@@ -27,7 +27,7 @@ export interface ISharedObjectEvent extends IErrorEvent{
 /**
  * Base interface for shared objects from which other interfaces derive. Implemented by SharedObject
  */
-export interface ISharedObject<TEvent extends ISharedObjectEvent = ISharedObjectEvent>
+export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents>
     extends IProvideSharedObject, IChannel, IEventProvider<TEvent> {
     /**
      * Registers the given shared object to its containing component runtime, causing it to attach once

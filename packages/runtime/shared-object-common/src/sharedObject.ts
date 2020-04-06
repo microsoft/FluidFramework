@@ -17,12 +17,12 @@ import {
 import * as Deque from "double-ended-queue";
 import { debug } from "./debug";
 import { SharedObjectComponentHandle } from "./handle";
-import { ISharedObject, ISharedObjectEvent } from "./types";
+import { ISharedObject, ISharedObjectEvents } from "./types";
 
 /**
  *  Base class from which all shared objects derive
  */
-export abstract class SharedObject<TEvent extends ISharedObjectEvent = ISharedObjectEvent>
+export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents>
     extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
     /**
      * @param obj - The thing to check if it is a SharedObject

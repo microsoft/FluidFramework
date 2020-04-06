@@ -21,6 +21,7 @@ import {
     ConsensusResult,
     IConsensusOrderedCollection,
     IOrderedCollection,
+    IConsensusOrderedCollectionEvents,
 } from "./interfaces";
 
 const snapshotFileNameData = "header";
@@ -102,7 +103,8 @@ const belongsToUnattached = undefined;
  * Implements the shared object's communication, handles the sending/processing
  * operations, provides the asynchronous API and manage the promise resolution.
  */
-export class ConsensusOrderedCollection<T = any> extends SharedObject implements IConsensusOrderedCollection<T> {
+export class ConsensusOrderedCollection<T = any>
+    extends SharedObject<IConsensusOrderedCollectionEvents<T>> implements IConsensusOrderedCollection<T> {
     private readonly promiseResolveQueue: IPendingRecord<T>[] = [];
 
     private jobTracking: jobTrackingType<T> = new Map();
