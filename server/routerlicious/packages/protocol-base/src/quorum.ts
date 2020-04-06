@@ -4,13 +4,13 @@
  */
 
 import * as assert from "assert";
-import { EventEmitter } from "events";
-import { Deferred, doIfNotDisposed, EventForwarder } from "@microsoft/fluid-common-utils";
+import { Deferred, doIfNotDisposed, EventForwarder, TypedEventEmitter } from "@microsoft/fluid-common-utils";
 import {
     ConnectionState,
     ICommittedProposal,
     IPendingProposal,
     IQuorum,
+    IQuorumEvents,
     ISequencedClient,
     ISequencedDocumentMessage,
     ISequencedProposal,
@@ -65,7 +65,7 @@ export interface IQuorumSnapshot {
  * A quorum represents all clients currently within the collaboration window. As well as the values
  * they have agreed upon and any pending proposals.
  */
-export class Quorum extends EventEmitter implements IQuorum {
+export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum {
     private readonly members: Map<string, ISequencedClient>;
     private readonly proposals: Map<number, PendingProposal>;
     private readonly values: Map<string, ICommittedProposal>;
@@ -255,29 +255,6 @@ export class Quorum extends EventEmitter implements IQuorum {
         return;
     }
 
-    public on(event: "error", listener: (message: any) => void): this;
-    public on(event: "addMember", listener: (clientId: string, details: ISequencedClient) => void): this;
-    public on(event: "removeMember", listener: (clientId: string) => void): this;
-    public on(event: "addProposal", listener: (proposal: IPendingProposal) => void): this;
-    public on(
-        event: "approveProposal",
-        listener: (sequenceNumber: number, key: string, value: any, approvalSequenceNumber: number) => void): this;
-    public on(
-        event: "commitProposal",
-        listener: (
-            sequenceNumber: number,
-            key: string,
-            value: any,
-            approvalSequenceNumber: number,
-            commitSequenceNumber: number) => void): this;
-    public on(
-        event: "rejectProposal",
-        listener: (sequenceNumber: number, key: string, value: any, rejections: string[]) => void): this;
-
-    public on(event: string | symbol, listener: (...args: any[]) => void): this {
-        return super.on(event, listener);
-    }
-
     /**
      * Updates the minimum sequence number. If the MSN advances past the sequence number for any proposal without
      * a rejection then it becomes an accepted consensus value.  If the MSN advances past the sequence number
@@ -405,7 +382,7 @@ export class Quorum extends EventEmitter implements IQuorum {
 /**
  * Proxies Quorum events.
  */
-export class QuorumProxy extends EventForwarder implements IQuorum {
+export class QuorumProxy extends EventForwarder<IQuorumEvents> implements IQuorum {
     public readonly propose: (key: string, value: any) => Promise<void>;
     public readonly has: (key: string) => boolean;
     public readonly get: (key: string) => any;
