@@ -56,7 +56,7 @@ export class EventForwarder<TEvent extends IEvent = IEvent>
     protected forward(source: EventEmitter | IEventProvider<TEvent>, event: string | symbol): void {
         if (source && event && !EventForwarder.isEmitterEvent(event) && !this.forwardingEvents.has(event)) {
             const listener = (...args: any[]) => this.emit(event, ...args);
-            this.forwardingEvents.set(event, () => source.removeListener(event, listener));
+            this.forwardingEvents.set(event, () => source.off(event, listener));
             source.on(event, listener);
         }
     }
