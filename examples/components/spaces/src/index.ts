@@ -12,9 +12,9 @@ import {
 } from "@microsoft/fluid-runtime-definitions";
 import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
 import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
-import { MediaPlayer } from "../../media-player/src/main";
-import { LocationSharing } from "../../location-sharing/src/main";
-import { Chat } from "../../chat/src/index";
+import { MediaPlayer } from "@fluid-example/media-player/src/index";
+import { LocationSharing } from "@fluid-example/location-sharing/src/index";
+import { SimpleChat } from "@fluid-example/simple-chat/src/main";
 import {
     ComponentToolbar,
     ComponentToolbarName,
@@ -81,8 +81,8 @@ const generateFactory = () => {
             },
         },
         {
-            type: "chat",
-            factory: Promise.resolve(Chat.getFactory()),
+            type: "simple-chat",
+            factory: Promise.resolve(SimpleChat.getFactory()),
             capabilities: ["IComponentHTMLView"],
             friendlyName: "Chat",
             fabricIconName: "ChatInviteFriend",

@@ -1,6 +1,6 @@
 {
-  "name": "@fluid-example/chat",
-  "version": "0.16.0",
+  "name": "@fluid-example/chat-2.0",
+  "version": "0.16.0-sumbhatt-1",
   "description": "Fluid Framework Chat with minimal runtime",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -24,6 +24,7 @@
     "start:spo": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo",
     "start:spo-df": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo-df",
     "tsc": "tsc",
+    "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "webpack": "webpack --env=\"production\""
   },
   "dependencies": {
@@ -31,10 +32,9 @@
     "@microsoft/fluid-component-core-interfaces": "^0.16.0",
     "@microsoft/fluid-container-definitions": "^0.16.0",
     "@microsoft/fluid-map": "^0.16.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1004.0-0",
     "@microsoft/fluid-runtime-definitions": "^0.16.0",
     "@microsoft/fluid-view-interfaces": "^0.16.0",
-    "@stardust-ui/react": "^0.17.0",
+    "@fluentui/react-northstar": "^0.47.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2",
     "request": "^2.88.0"

@@ -29,7 +29,7 @@ export class ChatRenderer extends React.Component<IChatRendererProps> {
                             onChange={onChangeHandler}
                             placeholder="Message..."
                             onKeyPress={(event) => {
-                                if (event.keyCode === 13) {
+                                if (event.charCode === 13) {
                                     appendMessageCb();
                                 }
                             }}

@@ -5,7 +5,7 @@
 
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { ISharedDirectory } from "@microsoft/fluid-map";
-import { Provider, themes } from "@stardust-ui/react";
+import { Provider, themes } from "@fluentui/react-northstar";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { ChatContainer } from "./chatContainer";

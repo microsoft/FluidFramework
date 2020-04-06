@@ -26,6 +26,7 @@
     "start:spo-df": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo-df",
     "test:jest-disabled": "jest",
     "tsc": "tsc",
+    "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "webpack": "webpack --env.production",
     "webpack:dev": "webpack --env.development"
   },

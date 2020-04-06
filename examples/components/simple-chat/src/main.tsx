@@ -3,30 +3,88 @@
  * Licensed under the MIT License.
  */
 
+import * as React from "react";
+import * as ReactDOM from "react-dom";
+import {
+    PrimedComponent,
+    PrimedComponentFactory,
+} from "@microsoft/fluid-aqueduct";
+import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+import { Chat, Provider, themes } from '@fluentui/react-northstar';
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { ISharedDirectory, IDirectoryValueChanged } from "@microsoft/fluid-map";
-import { Chat } from "@fluentui/react-northstar";
-import * as React from "react";
-import { ChatRenderer } from "./chatRenderer";
-import { IMessage, MessagesKey } from "..";
+import { ChatRenderer } from "./components/ChatRenderer";
 
-interface IChatContainerProps {
+export const SimpleChatName = "simple-chat";
+
+export const MessagesKey = "messages";
+
+export interface IMessage {
+    author: string;
+    content: string;
+    time: string;
+    translated: boolean;
+}
+
+/**
+ * A component to allow you to chat with others
+ */
+export class SimpleChat extends PrimedComponent
+    implements IComponentHTMLView {
+    public get IComponentHTMLView() { return this; }
+
+    private static readonly factory = new PrimedComponentFactory(SimpleChat, []);
+
+    public static getFactory() {
+        return SimpleChat.factory;
+    }
+
+    async componentInitializingFirstTime() {
+        this.root.set<IMessage[]>(MessagesKey, []);
+    }
+
+    async componentHasInitialized() {
+        this.root.get("messages");
+    }
+
+    public render(elm: HTMLElement) {
+        if (this.runtime.connected) {
+            this.renderView(this.runtime, this.root, elm);
+        } else {
+            this.runtime.once("connected", () => this.renderView(this.runtime, this.root, elm));
+        }
+    }
+
+    private renderView(runtime: IComponentRuntime, root: ISharedDirectory, hostElement: HTMLElement) {
+        const user = runtime.clientId ? runtime.getQuorum().getMember(runtime.clientId) : undefined;
+        const userName = (user?.client.user as any).name;
+        ReactDOM.render(
+            <Provider theme={themes.teams}>
+                <SimpleChatView runtime={runtime} root={root} clientId={userName} />
+            </Provider>,
+            hostElement,
+        );
+    }
+}
+
+interface ISimpleChatViewProps {
     runtime: IComponentRuntime;
     root: ISharedDirectory;
     clientId: string;
 }
 
-interface IChatContainerState {
+interface ISimpleChatViewState {
     messages: IMessage[];
     inputMessage: string;
 }
 
-export class ChatContainer extends React.Component<IChatContainerProps, IChatContainerState> {
-    constructor(props: IChatContainerProps) {
-        super(props);
-        const {root} = props;
+class SimpleChatView extends React.Component<ISimpleChatViewProps, ISimpleChatViewState> {
 
+    constructor(props: ISimpleChatViewProps){
+        super(props);
+        const {root} = this.props;
         this.state = { messages: root.get<IMessage[]>(MessagesKey), inputMessage: "" };
+        
         root.on("valueChanged", (changed: IDirectoryValueChanged, local: boolean) => {
             const rootMessages = root.get<IMessage[]>(MessagesKey);
             if (rootMessages !== this.state.messages) {
@@ -37,7 +95,7 @@ export class ChatContainer extends React.Component<IChatContainerProps, IChatCon
         });
     }
 
-    public render() {
+    render(){
         const { inputMessage, messages } = this.state;
         const messagesToRender: any[] = [];
 
@@ -91,3 +149,5 @@ export class ChatContainer extends React.Component<IChatContainerProps, IChatCon
         root.set(MessagesKey, newMessages);
     };
 }
+
+export const fluidExport = SimpleChat.getFactory();

@@ -108,30 +108,7 @@ export class Spaces extends PrimedComponent
                     /* eslint-disable-next-line @typescript-eslint/no-floating-promises */
                     this.dataModel.addComponent(type, w, h);
                 },
-                addTemplate: async (template: Templates) => {
-                    const registry = await this.context.hostRuntime.IComponentRegistry.get("");
-                    if (registry) {
-                        const registryDetails = (registry as IComponent).IComponentRegistryDetails;
-                        if (registryDetails) {
-                            const componentRegistryEntries = (registryDetails as InternalRegistry)
-                                .getFromTemplate(template);
-                            // eslint-disable-next-line @typescript-eslint/no-misused-promises
-                            componentRegistryEntries.forEach(async (componentRegistryEntry) => {
-                                const templateLayouts: Layout[] = componentRegistryEntry.templates[template];
-                                // eslint-disable-next-line @typescript-eslint/no-misused-promises
-                                templateLayouts.forEach(async (templateLayout: Layout) => {
-                                    await this.dataModel.addComponent(
-                                        componentRegistryEntry.type,
-                                        templateLayout.w,
-                                        templateLayout.h,
-                                        templateLayout.x,
-                                        templateLayout.y,
-                                    );
-                                });
-                            });
-                        }
-                    }
-                },
+                addTemplate: this.addTemplateFromRegistry,
                 saveLayout: () => this.dataModel.saveLayout(),
                 toggleEditable: (isEditable?: boolean) =>  this.dataModel.emit("editableUpdated", isEditable),
             });
@@ -146,6 +123,31 @@ export class Spaces extends PrimedComponent
                 this.getComponent.bind(this),
                 this.componentToolbarId,
             );
+    }
+
+    private async addTemplateFromRegistry(template: Templates) {
+        const registry = await this.context.hostRuntime.IComponentRegistry.get("");
+        if (registry) {
+            const registryDetails = (registry as IComponent).IComponentRegistryDetails;
+            if (registryDetails) {
+                const componentRegistryEntries = (registryDetails as InternalRegistry)
+                    .getFromTemplate(template);
+                // eslint-disable-next-line @typescript-eslint/no-misused-promises
+                componentRegistryEntries.forEach(async (componentRegistryEntry) => {
+                    const templateLayouts: Layout[] = componentRegistryEntry.templates[template];
+                    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+                    templateLayouts.forEach(async (templateLayout: Layout) => {
+                        await this.dataModel.addComponent(
+                            componentRegistryEntry.type,
+                            templateLayout.w,
+                            templateLayout.h,
+                            templateLayout.x,
+                            templateLayout.y,
+                        );
+                    });
+                });
+            }
+        }
     }
 
     /**

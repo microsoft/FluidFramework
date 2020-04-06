@@ -170,7 +170,7 @@ class MediaPlayerView extends React.Component<IMediaPlayerViewProps, IMediaPlaye
                                 url={videoUrl}
                                 playing={playerState === PlayerState.Playing || playerState === PlayerState.Buffering || playerState === PlayerState.Seeking}
                                 onStart={() => root.set(PlayerStateKey, PlayerState.Playing)}
-                                onBuffer={() => root.set(PlayerStateKey, PlayerState.Buffering)}
+                                // onBuffer={() => root.set(PlayerStateKey, PlayerState.Buffering)}
                                 onPlay={() => {
                                     console.log("Clicked play");
                                     root.set(PlayerStateKey, PlayerState.Playing);
