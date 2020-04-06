@@ -36,7 +36,7 @@ import {
     MessageType,
     ScopeType,
 } from "@microsoft/fluid-protocol-definitions";
-import { createIError, createWriteError, createNetworkError } from "@microsoft/fluid-driver-utils";
+import { createIError, createWriteError, createNetworkError, createFatalError } from "@microsoft/fluid-driver-utils";
 import { ContentCache } from "./contentCache";
 import { debug } from "./debug";
 import { DeltaConnection } from "./deltaConnection";
@@ -811,6 +811,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             const nackReason = target === -1 ? "Nack: Start writing" : "Nack";
             if (this.readonlyPermissions) {
                 this.close(createWriteError("WriteOnReadOnlyDocument"));
+            }
+            if (this.connectionMode == "write") {
+                this.close(createFatalError("ServerRejectsWrites"));
             }
             if (!this.autoReconnect) {
                 this.logger.sendErrorEvent({ eventName: "NackWithNoReconnect", target, mode: this.connectionMode });
