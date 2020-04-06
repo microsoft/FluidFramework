@@ -164,10 +164,10 @@ export interface PromiseHandle<T> {
 }
 
 /**
- * @member refreshExpiryOnReregister - If a given key is attempted to be registered twice,
- * should the pending expiry be reset?
- * @member unregisterOnError - If the stored Promise is rejected, should the given key be unregistered?
- * Defaults to true for all errors if omitted.
+ * @member refreshExpiryOnReregister - When a registered key is registered again,
+ * should the pending expiration (if any) be extended?
+ * @member unregisterOnError - If the stored Promise is rejected with a particular error,
+ * should the given key be unregistered?
  */
 export interface PromiseRegistryConfig {
     refreshExpiryOnReregister?: boolean,
@@ -188,7 +188,7 @@ export class PromiseRegistry<T> {
     private readonly unregisterOnError: (e: any) => boolean;
 
     /**
-     * Create the PromiseRegistry given configuration preferences
+     * Create the PromiseRegistry with the configuration preferences provided
      * @param param0 - PromiseRegistryConfig with the following default values:
      * refreshExpiryOnReregister = false,
      * unregisterOnError = () => true,
@@ -233,12 +233,14 @@ export class PromiseRegistry<T> {
      * Register the given value. Use lookup to get the Promise wrapping it in the registry
      * @param key - key name where to store the value
      * @param value - value to store
+     * @param expiryTime - (optional) Automatically unregister the given key after some time
      */
     public registerValue(
         key: string,
         value: T,
+        expiryTime?: number,
     ) {
-        this.synchronousRegister(key, async () => value);
+        this.synchronousRegister(key, async () => value, expiryTime);
     }
 
     private synchronousRegister(
