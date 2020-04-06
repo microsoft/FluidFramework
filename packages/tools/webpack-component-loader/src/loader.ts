@@ -334,6 +334,9 @@ export async function start(
         attachButton.style.display = "none";
         textArea.style.display = "none";
     }
+    if (options.mode === "local") {
+        textArea.style.display = "none";
+    }
 
     const {documentServiceFactory, connection} = getDocumentServiceFactory(documentId, options);
 
