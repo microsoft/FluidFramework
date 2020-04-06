@@ -812,7 +812,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             if (this.readonlyPermissions) {
                 this.close(createWriteError("WriteOnReadOnlyDocument"));
             }
-            if (this.connectionMode == "write") {
+            if (this.connectionMode === "write") {
                 this.close(createFatalError("ServerRejectsWrites"));
             }
             if (!this.autoReconnect) {
