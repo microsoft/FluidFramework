@@ -1,0 +1,491 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import * as assert from "assert";
+
+import {
+    IComponentConfiguration,
+    IComponentLoadable,
+    IProvideComponentLoadable,
+} from "@microsoft/fluid-component-core-interfaces";
+
+import { Vessel } from "../";
+
+export interface IFoo {
+    foo: string;
+}
+
+export class Foo {
+    public foo() {
+        console.log("foo");
+    }
+}
+
+class MockLoadable implements IComponentLoadable {
+    public get IComponentLoadable() { return this; }
+    public get url() { return "url123"; }
+}
+
+class MockLoadableWithArgs implements IComponentLoadable {
+    public constructor(public readonly url: string) { }
+    public get IComponentLoadable() { return this; }
+}
+
+class MockProvideLoadable implements IProvideComponentLoadable {
+    public get IComponentLoadable() {
+        return new MockLoadable();
+    }
+}
+
+class MockComponentConfiguration implements IComponentConfiguration {
+    public get IComponentConfiguration() { return this; }
+    public get canReconnect() { return false; }
+    public get scopes() { return ["hello"]; }
+}
+
+describe("Routerlicious", () => {
+    describe("Aqueduct", () => {
+        describe("ContainerModules", () => {
+            it(`One Optional Module registered via value`, async () => {
+                const vessel = new Vessel();
+                const module = new MockLoadable();
+                vessel.register(IComponentLoadable, {value: module});
+
+                const s = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
+                assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
+                assert(s.IComponentLoadable === module, "IComponentLoadable is valid");
+            });
+
+            it(`One Optional Module registered via factory`, async () => {
+                const vessel = new Vessel();
+                const url = "Foo123";
+
+                const factory = () => new MockLoadableWithArgs(url);
+                vessel.register(IComponentLoadable, {factory});
+
+                const s = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
+                assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
+                assert(s.IComponentLoadable?.url === url, "IComponentLoadable is valid");
+            });
+
+            it(`One Optional Module registered via instance - lazy default`, async () => {
+                const vessel = new Vessel();
+                vessel.register(IComponentLoadable, {instance: MockLoadable});
+
+                const s = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
+                const s1 = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
+
+                assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
+                assert(s.IComponentLoadable?.url === "url123", "IComponentLoadable is valid");
+                assert(s.IComponentLoadable !== s1.IComponentLoadable, "Should not be a singleton");
+            });
+
+            it(`One Optional Module registered via instance - lazy true`, async () => {
+                const vessel = new Vessel();
+                vessel.register(IComponentLoadable, {instance: MockLoadable, lazy: true});
+
+                const s = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
+                const s1 = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
+
+                assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
+                assert(s.IComponentLoadable?.url === "url123", "IComponentLoadable is valid");
+                assert(s.IComponentLoadable !== s1.IComponentLoadable, "Should not be a singleton");
+            });
+
+            it(`One Optional Module registered via instance - lazy false`, async () => {
+                const vessel = new Vessel();
+                vessel.register(IComponentLoadable, {instance: MockLoadable, lazy: false});
+
+                const s = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
+                const s1 = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
+
+                assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
+                assert(s.IComponentLoadable?.url === "url123", "IComponentLoadable is valid");
+                assert(s.IComponentLoadable !== s1.IComponentLoadable, "Should not be a singleton");
+            });
+
+            it(`One Optional Module registered via instance - IProvideComponent pattern`, async () => {
+                const vessel = new Vessel();
+                vessel.register(IComponentLoadable, {instance: MockProvideLoadable});
+
+                const s = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
+                assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
+                assert(s.IComponentLoadable?.url === "url123", "IComponentLoadable is valid");
+            });
+
+            it(`One Optional Module registered via instance - IProvideComponent pattern - lazy false`, async () => {
+                const vessel = new Vessel();
+                vessel.register(IComponentLoadable, {instance: MockProvideLoadable, lazy: false});
+
+                const s = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
+                assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
+                assert(s.IComponentLoadable?.url === "url123", "IComponentLoadable is valid");
+            });
+
+            it(`One Optional Module registered via singleton - lazy default`, async () => {
+                const vessel = new Vessel();
+                vessel.register(IComponentLoadable, {singleton: MockLoadable});
+
+                const s = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
+                const s1 = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
+
+                assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
+                assert(s.IComponentLoadable?.url === "url123", "IComponentLoadable is valid");
+                assert(s.IComponentLoadable === s1.IComponentLoadable, "Should be a singleton");
+            });
+
+            it(`One Optional Module registered via singleton - lazy true`, async () => {
+                const vessel = new Vessel();
+                vessel.register(IComponentLoadable, {singleton: MockLoadable, lazy: true});
+
+                const s = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
+                const s1 = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
+
+                assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
+                assert(s.IComponentLoadable?.url === "url123", "IComponentLoadable is valid");
+                assert(s.IComponentLoadable === s1.IComponentLoadable, "Should be a singleton");
+            });
+
+            it(`One Optional Module registered via singleton - lazy false`, async () => {
+                const vessel = new Vessel();
+                vessel.register(IComponentLoadable, {singleton: MockLoadable, lazy: false});
+
+                const s = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
+                const s1 = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
+
+                assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
+                assert(s.IComponentLoadable?.url === "url123", "IComponentLoadable is valid");
+                assert(s.IComponentLoadable === s1.IComponentLoadable, "Should be a singleton");
+            });
+
+            it(`One Optional Module registered via singleton - IProvideComponent pattern`, async () => {
+                const vessel = new Vessel();
+                vessel.register(IComponentLoadable, {singleton: MockProvideLoadable});
+
+                const s = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
+                assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
+                assert(s.IComponentLoadable?.url === "url123", "IComponentLoadable is valid");
+            });
+
+            it(`One Optional Module registered via singleton - IProvideComponent pattern - lazy false`, async () => {
+                const vessel = new Vessel();
+                vessel.register(IComponentLoadable, {singleton: MockProvideLoadable, lazy: false});
+
+                const s = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
+                assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
+                assert(s.IComponentLoadable?.url === "url123", "IComponentLoadable is valid");
+            });
+
+            it(`One Required Module registered via value`, async () => {
+                const vessel = new Vessel();
+                const mock = new MockLoadable();
+                vessel.register(IComponentLoadable, {value: mock});
+
+                const s = vessel.synthesize<{}, IComponentLoadable>(
+                    {},
+                    {IComponentLoadable},
+                );
+
+                assert(s.IComponentLoadable, "Required IComponentLoadable was returned");
+                assert(s.IComponentLoadable === mock, "Required IComponentLoadable is valid");
+            });
+
+            it(`One Required Module registered via factory`, async () => {
+                const vessel = new Vessel();
+                const mock = new MockLoadable();
+                vessel.register(IComponentLoadable, {factory: () => mock});
+
+                const s = vessel.synthesize<{}, IComponentLoadable>(
+                    {},
+                    {IComponentLoadable},
+                );
+
+                assert(s.IComponentLoadable, "Required IComponentLoadable was returned");
+                assert(s.IComponentLoadable?.url === mock.url, "Required IComponentLoadable is valid");
+            });
+
+            it(`One Required Module registered via instance - lazy default`, async () => {
+                const vessel = new Vessel();
+                vessel.register(IComponentLoadable, {instance: MockLoadable});
+
+                const s = vessel.synthesize<{}, IComponentLoadable>(
+                    {},
+                    {IComponentLoadable},
+                );
+
+                const s1 = vessel.synthesize<{}, IComponentLoadable>(
+                    {},
+                    {IComponentLoadable},
+                );
+
+                assert(s.IComponentLoadable, "Required IComponentLoadable was returned");
+                assert(s.IComponentLoadable?.url === "url123", "Required IComponentLoadable is valid");
+                assert(s.IComponentLoadable !== s1.IComponentLoadable, "Should not be a singleton");
+            });
+
+            it(`One Required Module registered via instance - lazy true`, async () => {
+                const vessel = new Vessel();
+                vessel.register(IComponentLoadable, {instance: MockLoadable, lazy: true});
+
+                const s = vessel.synthesize<{}, IComponentLoadable>(
+                    {},
+                    {IComponentLoadable},
+                );
+
+                const s1 = vessel.synthesize<{}, IComponentLoadable>(
+                    {},
+                    {IComponentLoadable},
+                );
+
+                assert(s.IComponentLoadable, "Required IComponentLoadable was returned");
+                assert(s.IComponentLoadable?.url === "url123", "Required IComponentLoadable is valid");
+                assert(s.IComponentLoadable !== s1.IComponentLoadable, "Should not be a singleton");
+            });
+
+            it(`One Required Module registered via instance - lazy false`, async () => {
+                const vessel = new Vessel();
+                vessel.register(IComponentLoadable, {instance: MockLoadable, lazy: false});
+
+                const s = vessel.synthesize<{}, IComponentLoadable>(
+                    {},
+                    {IComponentLoadable},
+                );
+
+                const s1 = vessel.synthesize<{}, IComponentLoadable>(
+                    {},
+                    {IComponentLoadable},
+                );
+
+                assert(s.IComponentLoadable, "Required IComponentLoadable was returned");
+                assert(s.IComponentLoadable?.url === "url123", "Required IComponentLoadable is valid");
+                assert(s.IComponentLoadable !== s1.IComponentLoadable, "Should not be a singleton");
+            });
+
+            it(`One Required Module registered via singleton - lazy default`, async () => {
+                const vessel = new Vessel();
+                vessel.register(IComponentLoadable, {singleton: MockLoadable});
+
+                const s = vessel.synthesize<{}, IComponentLoadable>(
+                    {},
+                    {IComponentLoadable},
+                );
+
+                const s1 = vessel.synthesize<{}, IComponentLoadable>(
+                    {},
+                    {IComponentLoadable},
+                );
+
+                assert(s.IComponentLoadable, "Required IComponentLoadable was returned");
+                assert(s.IComponentLoadable?.url === "url123", "Required IComponentLoadable is valid");
+                assert(s.IComponentLoadable === s1.IComponentLoadable, "Should be a singleton");
+            });
+
+            it(`One Required Module registered via singleton - lazy true`, async () => {
+                const vessel = new Vessel();
+                vessel.register(IComponentLoadable, {singleton: MockLoadable, lazy: true});
+
+                const s = vessel.synthesize<{}, IComponentLoadable>(
+                    {},
+                    {IComponentLoadable},
+                );
+
+                const s1 = vessel.synthesize<{}, IComponentLoadable>(
+                    {},
+                    {IComponentLoadable},
+                );
+
+                assert(s.IComponentLoadable, "Required IComponentLoadable was returned");
+                assert(s.IComponentLoadable?.url === "url123", "Required IComponentLoadable is valid");
+                assert(s.IComponentLoadable === s1.IComponentLoadable, "Should be a singleton");
+            });
+
+            it(`One Required Module registered via singleton - lazy false`, async () => {
+                const vessel = new Vessel();
+                vessel.register(IComponentLoadable, {singleton: MockLoadable, lazy: false});
+
+                const s = vessel.synthesize<{}, IComponentLoadable>(
+                    {},
+                    {IComponentLoadable},
+                );
+
+                const s1 = vessel.synthesize<{}, IComponentLoadable>(
+                    {},
+                    {IComponentLoadable},
+                );
+
+                assert(s.IComponentLoadable, "Required IComponentLoadable was returned");
+                assert(s.IComponentLoadable?.url === "url123", "Required IComponentLoadable is valid");
+                assert(s.IComponentLoadable === s1.IComponentLoadable, "Should be a singleton");
+            });
+
+            it(`Two Optional Modules all registered`, async () => {
+                const vessel = new Vessel();
+                vessel.register(IComponentLoadable, {value: new MockLoadable()});
+                vessel.register(IComponentConfiguration, {value: new MockComponentConfiguration()});
+
+                const s = vessel.synthesize<IComponentLoadable & IComponentConfiguration>(
+                    {IComponentLoadable,IComponentConfiguration}, {});
+                assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
+                assert(s.IComponentConfiguration, "Optional IComponentConfiguration was registered");
+            });
+
+            it(`Two Optional Modules none registered`, async () => {
+                const vessel = new Vessel();
+                const s = vessel.synthesize<IComponentLoadable & IComponentConfiguration>(
+                    {IComponentLoadable,IComponentConfiguration}, {});
+                assert(!s.IComponentLoadable, "Optional IComponentLoadable was not registered");
+                assert(!s.IComponentConfiguration, "Optional IComponentConfiguration was not registered");
+            });
+
+            it(`Two Optional Modules one registered`, async () => {
+                const vessel = new Vessel();
+                vessel.register(IComponentLoadable, {value: new MockLoadable()});
+                const s = vessel.synthesize<IComponentLoadable & IComponentConfiguration>(
+                    {IComponentLoadable,IComponentConfiguration}, {});
+                assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
+                assert(!s.IComponentConfiguration, "Optional IComponentConfiguration was not registered");
+            });
+
+            it(`Two Required Modules all registered`, async () => {
+                const vessel = new Vessel();
+                vessel.register(IComponentLoadable, {value: new MockLoadable()});
+                vessel.register(IComponentConfiguration, {value: new MockComponentConfiguration()});
+
+                const s = vessel.synthesize<{}, IComponentLoadable & IComponentConfiguration>(
+                    {},
+                    {IComponentLoadable, IComponentConfiguration},
+                );
+
+                assert(s.IComponentLoadable, "Required IComponentLoadable was registered");
+                assert(s.IComponentConfiguration, "Required IComponentConfiguration was registered");
+            });
+
+            it(`Required Module not registered should throw`, async () => {
+                const vessel = new Vessel();
+
+                assert.throws(() => vessel.synthesize<{}, IComponentLoadable>(
+                    {},
+                    {IComponentLoadable},
+                ), Error);
+            });
+
+            it(`Optional Module found in Parent`, async () => {
+                const parentVessel = new Vessel();
+                parentVessel.register(IComponentLoadable, {value: new MockLoadable()});
+                const vessel = new Vessel(parentVessel);
+
+                const s = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
+                assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
+            });
+
+            it(`Optional Modules found in Parent and Child`, async () => {
+                const parentVessel = new Vessel();
+                parentVessel.register(IComponentLoadable, {value: new MockLoadable()});
+                const vessel = new Vessel(parentVessel);
+                vessel.register(IComponentConfiguration, {value: new MockComponentConfiguration()});
+
+                const s = vessel.synthesize<IComponentLoadable & IComponentConfiguration>(
+                    {IComponentLoadable, IComponentConfiguration}, {});
+                assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
+            });
+
+            it(`Optional Module in Parent and Child. Resolves Child`, async () => {
+                const parentVessel = new Vessel();
+                parentVessel.register(IComponentLoadable, {value: new MockLoadable()});
+                const vessel = new Vessel(parentVessel);
+                const childLoadableModule = new MockLoadable();
+                vessel.register(IComponentLoadable, {value: childLoadableModule});
+
+                const s = vessel.synthesize<IComponentLoadable>(
+                    {IComponentLoadable}, {});
+                assert(s.IComponentLoadable === childLoadableModule, "Child Module loaded");
+            });
+
+            it(`Required Module found in Parent`, async () => {
+                const parentVessel = new Vessel();
+                parentVessel.register(IComponentLoadable, {value: new MockLoadable()});
+                const vessel = new Vessel(parentVessel);
+
+                const s = vessel.synthesize<{}, IComponentLoadable>({}, {IComponentLoadable});
+                assert(s.IComponentLoadable, "Required IComponentLoadable was registered");
+            });
+
+            it(`Required Module found in Parent and Child`, async () => {
+                const parentVessel = new Vessel();
+                parentVessel.register(IComponentLoadable, {value: new MockLoadable()});
+                const vessel = new Vessel(parentVessel);
+                vessel.register(IComponentConfiguration, {value: new MockComponentConfiguration()});
+
+                const s = vessel.synthesize<{}, IComponentLoadable & IComponentConfiguration>(
+                    {}, {IComponentLoadable, IComponentConfiguration});
+                assert(s.IComponentLoadable, "Required IComponentLoadable was registered");
+                assert(s.IComponentConfiguration, "Required IComponentConfiguration was registered");
+            });
+
+            it(`Required Module in Parent and Child. Resolves Child`, async () => {
+                const parentVessel = new Vessel();
+                parentVessel.register(IComponentLoadable, {value: new MockLoadable()});
+                const vessel = new Vessel(parentVessel);
+                const mock = new MockLoadable();
+                vessel.register(IComponentLoadable, {value: mock});
+
+                const s = vessel.synthesize<{}, IComponentLoadable>(
+                    {}, {IComponentLoadable});
+                assert(s.IComponentLoadable === mock, "Child Module loaded");
+            });
+
+            it(`Registering`, async () => {
+                const vessel = new Vessel();
+                vessel.register(IComponentLoadable, {value: new MockLoadable()});
+                assert(vessel.has(IComponentLoadable), "Manager has IComponentLoadable");
+                assert(Array.from(vessel.registeredTypes).length === 1, "Manager has one module");
+            });
+
+            it(`Registering the same type twice throws`, async () => {
+                const vessel = new Vessel();
+                vessel.register(IComponentLoadable, {value: new MockLoadable()});
+                assert.throws(() => vessel.register(IComponentLoadable, {value: new MockLoadable()}), Error);
+            });
+
+            it(`Registering then Unregistering`, async () => {
+                const vessel = new Vessel();
+                vessel.register(IComponentLoadable, {value: new MockLoadable()});
+                vessel.unregister(IComponentLoadable);
+                assert(!vessel.has(IComponentLoadable), "Manager doesn't have IComponentLoadable");
+                assert(Array.from(vessel.registeredTypes).length === 0, "Manager has no modules");
+            });
+
+            it(`Registering then Unregistering then registering`, async () => {
+                const vessel = new Vessel();
+                vessel.register(IComponentLoadable, {value: new MockLoadable()});
+                vessel.unregister(IComponentLoadable);
+                vessel.register(IComponentLoadable, {value: new MockLoadable()});
+                assert(vessel.has(IComponentLoadable), "Manager has IComponentLoadable");
+            });
+
+            it(`has() resolves correctly in all variations`, async () => {
+                const vessel = new Vessel();
+                vessel.register(IComponentLoadable, {instance: MockLoadable});
+                vessel.register(IComponentConfiguration, {instance: MockComponentConfiguration});
+                assert(vessel.has(IComponentLoadable), "Manager has IComponentLoadable");
+                assert(vessel.has(IComponentConfiguration), "Manager has IComponentConfiguration");
+                assert(
+                    vessel.has([IComponentLoadable, IComponentConfiguration]),
+                    "Manager has IComponentLoadable & IComponentConfiguration");
+                assert(Array.from(vessel.registeredTypes).length === 2, "Manager has two modules");
+            });
+
+            it(`registeredModules() resolves correctly`, async () => {
+                const vessel = new Vessel();
+                vessel.register(IComponentLoadable, {instance: MockLoadable});
+                vessel.register(IComponentConfiguration, {instance: MockComponentConfiguration});
+                const modules = Array.from(vessel.registeredTypes);
+                assert(modules.length === 2, "Manager has two modules");
+                assert(modules.includes(IComponentLoadable), "Manager has IComponentLoadable");
+                assert(modules.includes(IComponentConfiguration), "Manager has IComponentConfiguration");
+            });
+        });
+    });
+});
