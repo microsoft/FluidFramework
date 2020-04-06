@@ -23,7 +23,7 @@ import {
 import { debug } from "./debug";
 import {
     ISharedMap,
-    IValueChanged,
+    ISharedMapEvents,
 } from "./interfaces";
 import {
     valueTypes,
@@ -101,7 +101,7 @@ export class MapFactory implements ISharedObjectFactory {
 /**
  * A SharedMap is a map-like distributed data structure.
  */
-export class SharedMap extends SharedObject implements ISharedMap {
+export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
     /**
    * Create a new shared map.
    * @param runtime - Component runtime the new shared map belongs to
@@ -243,23 +243,6 @@ export class SharedMap extends SharedObject implements ISharedMap {
    */
     public clear(): void {
         this.kernel.clear();
-    }
-
-    /**
-   * Registers a listener on the specified events
-   */
-    public on(
-        event: "pre-op" | "op",
-        listener: (op: ISequencedDocumentMessage, local: boolean, target: this) => void): this;
-    public on(event: "valueChanged", listener: (
-        changed: IValueChanged,
-        local: boolean,
-        op: ISequencedDocumentMessage,
-        target: this) => void): this;
-    public on(event: string | symbol, listener: (...args: any[]) => void): this;
-
-    public on(event: string | symbol, listener: (...args: any[]) => void): this {
-        return super.on(event, listener);
     }
 
     /**
