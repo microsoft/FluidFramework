@@ -109,14 +109,14 @@ export class LocalCache extends CacheBase implements ICache {
 
 export class SessionRegistry implements ISessionRegistry {
     private readonly registry: PromiseRegistry<ISocketStorageDiscovery> = new PromiseRegistry(
-        true /*refreshExpiryOnReregister*/);
+        {refreshExpiryOnReregister: true});
 
     async registerSession(
         joinSessionKey: string,
         asyncFn: () => Promise<ISocketStorageDiscovery>,
         expiryTime?: number | undefined,
     ) {
-        return this.registry.register(joinSessionKey, asyncFn, (e) => true /*unregisterOnError*/, expiryTime);
+        return this.registry.register(joinSessionKey, asyncFn, expiryTime);
     }
 
     unregisterSession(joinSessionKey: string) {

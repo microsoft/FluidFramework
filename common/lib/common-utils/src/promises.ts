@@ -164,6 +164,17 @@ export interface PromiseHandle<T> {
 }
 
 /**
+ * @member refreshExpiryOnReregister - If a given key is attempted to be registered twice,
+ * should the pending expiry be reset?
+ * @member unregisterOnError - If the stored Promise is rejected, should the given key be unregistered?
+ * Defaults to true for all errors if omitted.
+ */
+export interface PromiseRegistryConfig {
+    refreshExpiryOnReregister?: boolean,
+    unregisterOnError?: (e: any) => boolean,
+}
+
+/**
  * A specialized cache for async work, allowing you to
  * safely cache the result of some async work
  * without fear of race conditions or running it twice.
@@ -173,9 +184,22 @@ export class PromiseRegistry<T> {
     private readonly gcIds = new Map<string, number>();
     private gcIdCounter = 0;
 
-    constructor(
-        private readonly refreshExpiryOnReregister: boolean = false,  //** TODO: Move to param on register? */
-    ) {}
+    private readonly refreshExpiryOnReregister: boolean;
+    private readonly unregisterOnError: (e: any) => boolean;
+
+    /**
+     * Create the PromiseRegistry given configuration preferences
+     * @param param0 - PromiseRegistryConfig with the following default values:
+     * refreshExpiryOnReregister = false,
+     * unregisterOnError = () => true,
+     */
+    constructor({
+        refreshExpiryOnReregister = false,
+        unregisterOnError = () => true,
+    }: PromiseRegistryConfig = {}) {
+        this.refreshExpiryOnReregister = refreshExpiryOnReregister;
+        this.unregisterOnError = unregisterOnError;
+    }
 
     /**
      * Get the Promise for the given key, or undefined if it's not found
@@ -196,16 +220,13 @@ export class PromiseRegistry<T> {
      * @param key - key name where to store the async work
      * @param asyncFn - the async work to do and store, if not already in progress under the given key
      * @param expiryTime - (optional) Automatically unregister the given key after some time
-     * @param unregisterOnError - (optional) If the stored Promise is rejected, should the given key be unregistered?
-     * Defaults to true for all errors if omitted.
      */
     public async register(
         key: string,
         asyncFn: () => Promise<T>,
-        unregisterOnError: (e: any) => boolean = () => true,
         expiryTime?: number,
     ): Promise<T> {
-        return this.synchronousRegister(key, asyncFn, unregisterOnError, expiryTime).promise;
+        return this.synchronousRegister(key, asyncFn, expiryTime).promise;
     }
 
     /**
@@ -223,20 +244,19 @@ export class PromiseRegistry<T> {
     private synchronousRegister(
         key: string,
         asyncFn: () => Promise<T>,
-        unregisterOnError: (e: any) => boolean = () => true,
         expiryTime?: number,
     ): PromiseHandle<T> {
-        // NOTE: Do not await asyncFn! Let the caller do so once register returns
+        // NOTE: Do not await asyncFn() or handle.promise!
+        // Let the caller do so once register returns
         let handle = this.cache.get(key);
         if (handle === undefined) {
             // Start asyncFn and put the Promise in the cache
-            const promiseToCache = asyncFn();
-            handle = { promise: promiseToCache };
+            handle = { promise: asyncFn() };
             this.cache.set(key, handle);
 
             // If asyncFn throws, possibly remove the Promise from the cache
-            promiseToCache.catch((error) => {
-                if (unregisterOnError(error)) {
+            handle.promise.catch((error) => {
+                if (this.unregisterOnError(error)) {
                     this.unregister(key);
                 }
             });

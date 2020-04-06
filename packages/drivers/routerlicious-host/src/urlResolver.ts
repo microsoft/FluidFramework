@@ -14,7 +14,7 @@ import {
 import Axios from "axios";
 
 export class ContainerUrlResolver implements IUrlResolver {
-    private readonly registry = new PromiseRegistry<IResolvedUrl>();
+    private readonly registry = new PromiseRegistry<IResolvedUrl>({unregisterOnError: () => false});
 
     constructor(
         private readonly baseUrl: string,
@@ -41,7 +41,6 @@ export class ContainerUrlResolver implements IUrlResolver {
                     { headers });
                 return response.data;
             },
-            () => false, // unregisterOnError
         );
     }
 }
