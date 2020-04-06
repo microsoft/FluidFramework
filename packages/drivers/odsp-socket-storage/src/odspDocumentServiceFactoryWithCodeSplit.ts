@@ -16,7 +16,8 @@ import { IOdspResolvedUrl } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import { ICache, IOdspCache, OdspCache } from "./odspCache";
 import { OdspDocumentService } from "./odspDocumentService";
-import { createNewFluidFile } from ".";
+import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
+import { createNewFluidFile } from "./createFile";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
@@ -50,6 +51,7 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
                 this.getStorageToken,
                 Promise.resolve(newFileParams),
                 this.cache,
+                urlResolver as OdspDriverUrlResolver,
                 createNewSummary);
             const props = {
                 hashedDocumentId: odspResolvedUrl.hashedDocumentId,

@@ -20,6 +20,7 @@ import { getSocketIo } from "./getSocketIo";
 import { ICache, IOdspCache, OdspCache } from "./odspCache";
 import { OdspDocumentService } from "./odspDocumentService";
 import { createNewFluidFile } from "./createFile";
+import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
 
 
 /**
@@ -52,6 +53,7 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory, IExp
                 this.getStorageToken,
                 Promise.resolve(newFileParams),
                 this.cache,
+                urlResolver as OdspDriverUrlResolver,
                 createNewSummary);
             const props = {
                 hashedDocumentId: odspResolvedUrl.hashedDocumentId,

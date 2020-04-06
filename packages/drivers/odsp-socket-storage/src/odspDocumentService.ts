@@ -88,6 +88,7 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
                     getStorageToken,
                     odspResolvedUrl.createNewOptions.newFileInfoPromise,
                     cache,
+                    undefined,
                     createNewSummary);
                 const props = {
                     hashedDocumentId: odspResolvedUrl.hashedDocumentId,
