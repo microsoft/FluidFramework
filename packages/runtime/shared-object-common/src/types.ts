@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ITree } from "@microsoft/fluid-protocol-definitions";
+import { ITree, ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { IChannel, ISharedObjectServices } from "@microsoft/fluid-runtime-definitions";
+import { IEventProvider, IErrorEvent } from "@microsoft/fluid-common-definitions";
 
 declare module "@microsoft/fluid-container-definitions" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -17,20 +18,17 @@ export interface IProvideSharedObject {
     readonly ISharedObject: ISharedObject;
 }
 
+export interface ISharedObjectEvent extends IErrorEvent{
+    (event: "pre-op" | "op",
+        listener: (op: ISequencedDocumentMessage, local: boolean, target: this) => void);
+    (event: "disconnected" | "connected" | "processed", listener: () => void);
+}
+
 /**
  * Base interface for shared objects from which other interfaces derive. Implemented by SharedObject
  */
-export interface ISharedObject extends IProvideSharedObject, IChannel {
-    /**
-     * Attaches an event listener for the given event
-     */
-    on(event: string | symbol, listener: (...args: any[]) => void): this;
-
-    /**
-     * Removes the specified listener
-     */
-    removeListener(event: string | symbol, listener: (...args: any[]) => void): this;
-
+export interface ISharedObject<TEvent extends ISharedObjectEvent = ISharedObjectEvent>
+    extends IProvideSharedObject, IChannel, IEventProvider<TEvent> {
     /**
      * Registers the given shared object to its containing component runtime, causing it to attach once
      * the runtime attaches.
