@@ -14,7 +14,6 @@ import {
     IComponentHandle,
     IComponentLoadable,
     IComponentRunnable,
-    IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import {
