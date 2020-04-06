@@ -10,9 +10,12 @@ import {
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
+    MessageType,
 } from "@microsoft/fluid-protocol-definitions";
 import { IFluidCodeDetails, IFluidModule, IFluidPackage } from "./chaincode";
 import { IDeltaManager } from "./deltas";
+import { IErrorEvent, IEvent } from "@microsoft/fluid-common-definitions";
+import { IError } from "@microsoft/fluid-driver-definitions";
 
 /**
  * Code loading interface
@@ -63,6 +66,17 @@ export interface IFluidCodeResolver{
  */
 export interface ICodeWhiteList {
     testSource(source: IResolvedFluidCodeDetails): Promise<boolean>;
+}
+
+export interface IContainerEvents extends IEvent {
+    (event: "readonly", listener: (readonly: boolean) => void): void;
+    (event: "connected" | "contextChanged", listener: (clientId: string) => void);
+    (event: "disconnected" | "joining", listener: () => void);
+    (event: "closed", listener: (error?: IError) => void);
+    (event: "error", listener: (error: IError) => void);
+    (event: "op", listener: (message: ISequencedDocumentMessage) => void);
+    (event: "pong" | "processTime", listener: (latency: number) => void);
+    (event: MessageType.BlobUploaded, listener: (contents: any) => void);
 }
 
 export interface IContainer extends EventEmitter {
