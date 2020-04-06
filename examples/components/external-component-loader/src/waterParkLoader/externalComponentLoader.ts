@@ -46,7 +46,7 @@ export class ExternalComponentLoader extends PrimedComponent
     public get IComponentHTMLView() { return this; }
     public get IComponentCallable() { return this; }
 
-    public setViewComponent(component: IComponentLoadable & PrimedComponent) {
+    public setViewComponent(component: IComponent & IComponentLoadable) {
         this.root.set(this.viewComponentMapID, component.IComponentHandle);
         this.viewComponentP = Promise.resolve(component);
     }
