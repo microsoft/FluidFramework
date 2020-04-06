@@ -34,5 +34,5 @@ export type OptionalComponentProvider<T extends IComponent> =
 /**
  * A Scope is a collection of optional and required providers.
  */
-export type Scope<O extends IComponent, R extends IComponent = {}>
+export type Scope<O extends IComponent, R extends IComponent>
     = OptionalComponentProvider<O> & ComponentProvider<R>;
