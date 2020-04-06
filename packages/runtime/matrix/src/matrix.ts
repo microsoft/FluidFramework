@@ -26,19 +26,13 @@ import { pointToKey } from "./keys";
 import { IMatrixCellMsg, MatrixOp } from "./ops";
 import { PermutationVector } from "./permutationvector";
 import { SparseArray2D } from "./sparsearray2d";
-import { SharedMatrixFactory } from ".";
-
-const unallocated = -1 as const;
+import { SharedMatrixFactory } from "./runtime";
+import { Handle } from "./handletable";
 
 export const enum SnapshotPath {
     rows = "rows",
     cols = "cols",
     cells = "cells"
-}
-
-export interface WritableArrayLike<T> {
-    readonly length: number;
-    [n: number]: T;
 }
 
 export class SharedMatrix<T extends Serializable = Serializable> extends SharedObject
@@ -88,12 +82,12 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
     public read(row: number, col: number): T | undefined | null {
         // Map the logical (row, col) to associated storage handles.
         const rowHandle = this.rows.toHandle(row, /* alloc: */ false);
-        if (rowHandle === unallocated) {
+        if (rowHandle === Handle.unallocated) {
             return undefined;
         }
 
         const colHandle = this.cols.toHandle(col, /* alloc: */ false);
-        if (colHandle === unallocated) {
+        if (colHandle === Handle.unallocated) {
             return undefined;
         }
 
@@ -256,12 +250,12 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
         // Map the logical row/col to the allocated storage handles (if any).
         // If clearing and either the row and/or col is unallocated, no further work is necessary.
         const rowHandle = this.rows.toHandle(row, /* alloc: */ true);
-        if (clear && rowHandle === unallocated) {
+        if (clear && rowHandle === Handle.unallocated) {
             return;
         }
 
         const colHandle = this.cols.toHandle(col, /* alloc: */ true);
-        if (clear && colHandle === unallocated) {
+        if (clear && colHandle === Handle.unallocated) {
             return;
         }
 
