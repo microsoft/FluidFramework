@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
     IClientDetails,
@@ -12,10 +11,10 @@ import {
     ISequencedDocumentMessage,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
+import { IError } from "@microsoft/fluid-driver-definitions";
+import { IEvent, IEventProvider } from "@microsoft/fluid-common-definitions";
 import { IFluidCodeDetails, IFluidModule, IFluidPackage } from "./chaincode";
 import { IDeltaManager } from "./deltas";
-import { IErrorEvent, IEvent } from "@microsoft/fluid-common-definitions";
-import { IError } from "@microsoft/fluid-driver-definitions";
 
 /**
  * Code loading interface
@@ -79,7 +78,7 @@ export interface IContainerEvents extends IEvent {
     (event: MessageType.BlobUploaded, listener: (contents: any) => void);
 }
 
-export interface IContainer extends EventEmitter {
+export interface IContainer extends IEventProvider<IContainerEvents> {
 
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 

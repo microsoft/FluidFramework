@@ -15,6 +15,7 @@ import {
     ICodeLoader,
     IConnectionDetails,
     IContainer,
+    IContainerEvents,
     IDeltaManager,
     IFluidCodeDetails,
     IGenericBlob,
@@ -100,7 +101,8 @@ const merge = require("lodash/merge");
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
-export class Container extends EventEmitterWithErrorHandling implements IContainer, IExperimentalContainer {
+export class Container
+    extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer, IExperimentalContainer {
     public static version = "^0.1.0";
 
     public readonly isExperimentalContainer = true;
