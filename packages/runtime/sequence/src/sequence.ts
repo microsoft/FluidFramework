@@ -25,6 +25,7 @@ import {
 } from "./intervalCollection";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
 import { ISharedIntervalCollection } from "./sharedIntervalCollection";
+import { ISharedSegmentSequenceEvents } from "./interfaces";
 // eslint-disable-next-line max-len
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, import/no-internal-modules
 const cloneDeep = require("lodash/cloneDeep");
@@ -33,7 +34,7 @@ const snapshotFileName = "header";
 const contentPath = "content";
 
 export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
-    extends SharedObject
+    extends SharedObject<ISharedSegmentSequenceEvents>
     implements ISharedIntervalCollection<SequenceInterval> {
 
     get loaded(): Promise<void> {
@@ -149,18 +150,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             this.handle,
             (op) => this.submitLocalMessage(op),
             [new SequenceIntervalCollectionValueType()]);
-    }
-
-    /**
-     * Registers a listener on the specified events
-     */
-    public on(event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: this) => void): this;
-    public on(
-        event: "pre-op" | "op",
-        listener: (op: ISequencedDocumentMessage, local: boolean, target: this) => void): this;
-    public on(event: string | symbol, listener: (...args: any[]) => void): this;
-    public on(event: string | symbol, listener: (...args: any[]) => void): this {
-        return super.on(event, listener);
     }
 
     /**
