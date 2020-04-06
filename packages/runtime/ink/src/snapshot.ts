@@ -42,8 +42,8 @@ export class InkData {
      * @param snapshot - Existing data to initialize with
      */
     constructor(snapshot?: ISerializableInk) {
-        this.strokes = snapshot ? snapshot.strokes : [];
-        this.strokeIndex = snapshot ? snapshot.strokeIndex : {};
+        this.strokes = snapshot?.strokes ?? [];
+        this.strokeIndex = snapshot?.strokeIndex ?? {};
     }
 
     /**

@@ -233,8 +233,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
                 this.setNextSummarizer(summarizer.setSummarizer());
                 this.run(summarizer);
             } else {
-                // eslint-disable-next-line max-len
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 summarizer.stop!(this.getStopReason());
                 this.state = SummaryManagerState.Off;
             }

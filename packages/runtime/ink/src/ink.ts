@@ -155,7 +155,7 @@ export class Ink extends SharedObject implements IInk {
     ): Promise<void> {
 
         const header = await storage.read(snapshotFileName);
-        if (header) {
+        if (header !== undefined) {
             this.inkData = new InkData(
                 JSON.parse(fromBase64ToUtf8(header)) as ISerializableInk,
             );

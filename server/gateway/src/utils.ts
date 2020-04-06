@@ -34,6 +34,7 @@ export function getConfig(
     updatedConfig.trackError = trackError;
     const client: IClient = {
         details: { capabilities: { interactive: true } },
+        mode: "write",
         permission: [],
         scopes: [],
         user: { id: "" },

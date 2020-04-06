@@ -17,7 +17,7 @@ export function extractPackageIdentifierDetails(codeDetailsPackage: string | IFl
 
     const packageString = typeof codeDetailsPackage === "string"
         ? codeDetailsPackage // Just return it if it's a string e.g. "@fluid-example/clicker@0.1.1"
-        : !codeDetailsPackage.version // If it doesn't exist, let's make it from the package details
+        : codeDetailsPackage.version === undefined // If it doesn't exist, let's make it from the package details
             ? `${codeDetailsPackage.name}` // E.g. @fluid-example/clicker
             : `${codeDetailsPackage.name}@${codeDetailsPackage.version}`; // Rebuild e.g. @fluid-example/clicker@0.1.1
 
@@ -31,14 +31,16 @@ export function extractPackageIdentifierDetails(codeDetailsPackage: string | IFl
     if (packageString.indexOf("@") !== packageString.lastIndexOf("@")) {
         // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
         const componentsWithVersion = packageString.match(/(@(.*)\/)?((.*)@(.*))/);
-        if ((!componentsWithVersion || componentsWithVersion.length !== 6)) {
+        // eslint-disable-next-line no-null/no-null
+        if ((componentsWithVersion === null || componentsWithVersion.length !== 6)) {
             throw new Error("Invalid package");
         }
         [fullId, , scope, nameAndVersion, name, version] = componentsWithVersion;
     } else {
         // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
         const componentsWithoutVersion = packageString.match(/(@(.*)\/)?((.*))/);
-        if ((!componentsWithoutVersion || componentsWithoutVersion.length !== 5)) {
+        // eslint-disable-next-line no-null/no-null
+        if ((componentsWithoutVersion === null || componentsWithoutVersion.length !== 5)) {
             throw new Error("Invalid package");
         }
         [fullId, , scope, nameAndVersion, name] = componentsWithoutVersion;

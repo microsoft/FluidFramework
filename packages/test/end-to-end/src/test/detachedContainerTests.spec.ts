@@ -58,7 +58,7 @@ describe("Detached Container", () => {
 
     it("Attach detached container", async () => {
         const container = await loader.createDetachedContainer(pkg);
-        await container.attach(testResolver, testRequest);
+        await container.attach(testRequest);
         assert.equal(container.isAttached(), true, "Container should be attached");
         assert.equal(container.closed, false, "Container should be open");
         assert.equal(container.deltaManager.inbound.length, 0, "Inbound queue should be empty");
@@ -95,7 +95,7 @@ describe("Detached Container", () => {
         await component.runtime.createAndAttachComponent(testCompId, "@fluid-internal/client-api");
 
         // Now attach the container
-        await container.attach(testResolver, testRequest);
+        await container.attach(testRequest);
         const testResponse = await container.request({url: `/${testCompId}`});
         if (testResponse.mimeType !== "fluid/component" && testResponse.status !== 200) {
             assert.fail("New components should be created in detached container");
@@ -115,7 +115,7 @@ describe("Detached Container", () => {
         await component.runtime.createAndAttachComponent(testCompId, "@fluid-internal/client-api");
 
         // Now attach the container
-        await container.attach(testResolver, testRequest);
+        await container.attach(testRequest);
         const response1 = await container.request({ url: `/${testCompId}` });
         const testComponent1 = response1.value as API.Document;
         // Now load the container from another loader

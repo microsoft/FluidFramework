@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
- module.exports = {
+module.exports = {
     "extends": [
         "@microsoft/eslint-config-fluid"
-    ],
-    "rules": {
-    }
+    ]
 }

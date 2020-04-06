@@ -58,7 +58,8 @@ describe("Container", () => {
                 {},
                 loader,
                 testRequest,
-                testResolved);
+                testResolved,
+                testResolver);
             success = true;
         } catch (error) {
             success = false;
@@ -88,7 +89,8 @@ describe("Container", () => {
                 {},
                 loader,
                 testRequest,
-                testResolved);
+                testResolved,
+                testResolver);
             assert.fail("Error expected");
         } catch (error) {
             const err = error as IGeneralError;
@@ -118,7 +120,8 @@ describe("Container", () => {
                 {},
                 loader,
                 testRequest,
-                testResolved);
+                testResolved,
+                testResolver);
             assert.fail("Error expected");
         } catch (error) {
             assert.equal(error.errorType, ErrorType.generalError, "Error is not a general error");
@@ -151,7 +154,8 @@ describe("Container", () => {
             {},
             loader,
             testRequest,
-            testResolved);
+            testResolved,
+            testResolver);
         assert.equal(container.connectionState, ConnectionState.Connecting,
             "Container should be in Connecting state");
         deltaConnection.disconnect();
@@ -183,7 +187,8 @@ describe("Container", () => {
             {},
             loader,
             testRequest,
-            testResolved);
+            testResolved,
+            testResolver);
         assert.equal(container.connectionState, ConnectionState.Connecting,
             "Container should be in Connecting state");
         deltaConnection.emitError("Test Error");
@@ -216,7 +221,8 @@ describe("Container", () => {
             {},
             loader,
             testRequest,
-            testResolved);
+            testResolved,
+            testResolver);
         container.on("error", () => {
             errorRaised = true;
         });
@@ -256,7 +262,8 @@ describe("Container", () => {
             {},
             loader,
             testRequest,
-            testResolved);
+            testResolved,
+            testResolver);
         container.on("error", () => {
             assert.ok(false, "Error event should not be raised.");
         });

@@ -16,6 +16,8 @@ declare module "@microsoft/fluid-component-core-interfaces" {
         extends Readonly<Partial<IProvideSearchMenuHost & ISearchMenuClient>> { }
 }
 
+export const ISearchMenuHost: keyof IProvideSearchMenuHost = "ISearchMenuHost";
+
 export interface IProvideSearchMenuHost {
     readonly ISearchMenuHost: ISearchMenuHost;
 }
@@ -29,6 +31,8 @@ export interface ISearchMenuHost {
         cmdParser?: (searchString: string, cmd?: ISearchMenuCommand) => void): boolean;
     cancelSearchMenu(): void;
 }
+
+export const ISearchMenuClient: keyof IProvideSearchMenuClient = "ISearchMenuClient";
 
 export interface IProvideSearchMenuClient {
     readonly ISearchMenuClient: ISearchMenuClient;
