@@ -18,7 +18,7 @@ describe("FlowDocument", () => {
 
     before(async () => {
         host = new TestHost([
-            [flowDocumentFactory.type, Promise.resolve(flowDocumentFactory)],
+            [flowDocumentFactory.type ?? "flowDocument", Promise.resolve(flowDocumentFactory)],
         ]);
     });
 

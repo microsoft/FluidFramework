@@ -48,14 +48,8 @@ class TestRootComponent extends PrimedComponent implements IComponentRunnable {
         config: {},
     };
 
-    public context: IComponentContext;
-
     constructor(runtime: IComponentRuntime, context: IComponentContext) {
         super(runtime, context);
-    }
-
-    public async asComponent<T extends IComponent>(response: Promise<IResponse>): Promise<T> {
-        return super.asComponent<T>(response);
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -231,7 +225,10 @@ export class TestHost {
         return root.createAndAttachComponent<T>(type, props);
     }
 
-    // Make this function public so TestHost can use them
+    /* Wait and get the component with the id.
+     * @param id component Id
+     * @returns Component object
+     */
     public async getComponent_UNSAFE<T>(id: string): Promise<T> {
         const root = await this.root;
         return root.getComponent_UNSAFE<T>(id);
