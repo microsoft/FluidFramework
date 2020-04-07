@@ -11,8 +11,6 @@ import {
     BaseSegment,
     ISegment,
     IJSONSegment,
-    IMergeTreeInsertMsg,
-    createGroupOp,
     LocalReferenceCollection,
     Client,
     IMergeTreeDeltaOpArgs,
@@ -23,71 +21,85 @@ import {
 import { HandleTable, Handle } from "./handletable";
 import { SnapshotPath } from "./matrix";
 
+export class PermutationSegment extends BaseSegment {
+    public static readonly typeString: string = "PermutationSegment";
 
-type PermutationSegmentSpec = [number, number];
-
-class PermutationSegment extends BaseSegment {
-    public static readonly typeString = "PermutationSegment";
-
-    public static fromJSONObject(spec: IJSONSegment) {
-        const [start, length] = spec as PermutationSegmentSpec;
-        return new PermutationSegment(start, length);
+    public static fromJSONObject(spec: any) {
+        const segment = new PermutationSegment(spec.handles);
+        if (spec.props !== undefined) {
+            segment.addProperties(spec.props);
+        }
+        return segment;
     }
 
     public readonly type = PermutationSegment.typeString;
 
-    constructor(public readonly start: number, length: number) {
+    constructor(public handles: Handle[]) {
         super();
-        this.cachedLength = length;
+        this.cachedLength = handles.length;
     }
 
     public toJSONObject() {
-        return [ this.start, this.cachedLength ];
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        const obj = { handles: this.handles } as IJSONSegment;
+        super.addSerializedProps(obj);
+        return obj;
     }
 
-    public clone() {
-        const b = new PermutationSegment(Handle.unallocated, this.cachedLength);
+    public clone(start = 0, end?: number) {
+        const clonedItems = this.handles.slice(start, end);
+        const b = new PermutationSegment(clonedItems);
         this.cloneInto(b);
         return b;
     }
 
-    public canAppend(segment: ISegment) {
-        return (segment as PermutationSegment).start === this.start + this.cachedLength;
-    }
+    public canAppend(segment: ISegment) { return true; }
 
     public toString() {
-        return `[Permutation: ${this.cachedLength}]`;
+        return this.handles.toString();
     }
 
     public append(segment: ISegment) {
-        // Note: Must call 'LocalReferenceCollection.append(..)' before modifying this segment's length as
+        // Note: Must call 'appendLocalRefs' before modifying this segment's length as
         //       'this.cachedLength' is used to adjust the offsets of the local refs.
         LocalReferenceCollection.append(this, segment);
 
-        this.cachedLength += segment.cachedLength;
+        const asPermutationSegment = segment as PermutationSegment;
+
+        this.handles = this.handles.concat(asPermutationSegment.handles);
+        this.cachedLength = this.handles.length;
     }
 
+    // TODO: retain removed items for undo
     // returns true if entire run removed
     public removeRange(start: number, end: number) {
-        assert(start === 0 || end === this.cachedLength);
-        this.cachedLength -= (end - start);
-        return this.cachedLength === 0;
+        let remnantItems: Handle[] = [];
+        const len = this.handles.length;
+        if (start > 0) {
+            remnantItems = remnantItems.concat(this.handles.slice(0, start));
+        }
+        if (end < len) {
+            remnantItems = remnantItems.concat(this.handles.slice(end));
+        }
+        this.handles = remnantItems;
+        this.cachedLength = this.handles.length;
+        return (this.handles.length === 0);
     }
 
     protected createSplitSegmentAt(pos: number) {
-        const leftLength = pos;
-        const rightLength = this.cachedLength - pos;
+        assert(0 < pos && pos < this.handles.length);
 
-        this.cachedLength = leftLength;
-        return new PermutationSegment(this.start + leftLength, rightLength);
+        const remainingItems = this.handles.slice(pos);
+        this.handles = this.handles.slice(0, pos);
+        this.cachedLength = this.handles.length;
+        const leafSegment = new PermutationSegment(remainingItems);
+
+        return leafSegment;
     }
 }
 
 export class PermutationVector extends Client {
-    private readonly handleTable = new HandleTable<number>(); // Tracks available storage handles for rows.
-    private cacheStart = 0;
-    private cacheEnd = 0;
-    private cacheHandle = 0;
+    private readonly handleTable = new HandleTable<never>(); // Tracks available storage handles for rows.
 
     constructor(
         path: SnapshotPath,
@@ -107,59 +119,47 @@ export class PermutationVector extends Client {
     }
 
     public insert(start: number, length: number) {
-        // Allocate the number of requested handles and sort them to encourage contiguous runs.
-        const handles = this.handleTable.allocateMany(length).sort();
-
-        // For each contiguous run of handles, insert a PermunationSegment.
-        let prev = handles[0];
-        let startHandle = prev;
-        const ops: IMergeTreeInsertMsg[] = [];
-
-        let runLength = 1;
-        for (let i = 1; i < handles.length; i++) {
-            const next = handles[i];
-
-            // If the next handle is not contiguous, insert the previous PermutationSegment.
-            if (next !== prev + 1) {
-                ops.push(this.insertSegmentLocal(start, new PermutationSegment(startHandle, runLength)));
-                length -= i;                    // eslint-disable-line no-param-reassign
-                startHandle = handles[i];
-                runLength = 0;
-            }
-            prev = next;
-            runLength++;
-        }
-
-        // When we exit the above loop, there will always be at least one handle remaining.
-        ops.push(this.insertSegmentLocal(start, new PermutationSegment(startHandle, runLength)));
-
-        return ops.length === 1
-            ? ops[0]
-            : createGroupOp(...ops);
+        return this.insertSegmentLocal(
+            start,
+            new PermutationSegment(new Array(length).fill(Handle.unallocated)));
     }
 
-    public toHandle(pos: number, alloc: boolean): number {
-        {
-            const start = this.cacheStart;
-            if (start <= pos && pos < this.cacheEnd) {
-                return this.cacheHandle + (pos - start);
-            }
+    public remove(start: number, length: number) {
+        return this.removeRangeLocal(start, start + length);
+    }
+
+    public toHandle(pos: number, refSeq: number, clientId: number, alloc: boolean): Handle {
+        const { segment, offset } = this.mergeTree.getContainingSegment<PermutationSegment>(pos, refSeq, clientId);
+        if (segment === undefined) {
+            return Handle.deleted;
         }
 
-        const { segment, offset } = this.getContainingSegment<PermutationSegment>(pos);
-        this.cacheStart = pos - offset;
-        this.cacheEnd = this.cacheStart + segment.cachedLength;
-        this.cacheHandle = segment.start;
+        let handle = segment.handles[offset];
+        if (alloc && handle === Handle.unallocated) {
+            handle = segment.handles[offset] = this.handleTable.allocate();
+        }
 
-        return segment.start + offset;
+        return handle;
+    }
+
+    public adjustPosition(pos: number, fromSeq: number, toSeq: number, clientId: number) {
+        if (fromSeq >= this.getCurrentSeq()) {
+            return pos;
+        }
+
+        const { segment, offset } = this.mergeTree.getContainingSegment(pos, fromSeq, clientId);
+        if (segment === undefined) {
+            return undefined;
+        }
+
+        const toPos = this.mergeTree.getPosition(segment, toSeq, clientId);
+        return toPos + offset;
     }
 
     private readonly onDelta = (
         opArgs: IMergeTreeDeltaOpArgs,
         { operation, deltaSegments }: IMergeTreeDeltaCallbackArgs,
     ) => {
-        this.cacheEnd = 0;
-
         switch (operation) {
             case MergeTreeDeltaType.INSERT:
                 this.enumerateDeltaRanges(deltaSegments, (position, length) => {
@@ -177,23 +177,37 @@ export class PermutationVector extends Client {
     };
 
     private enumerateDeltaRanges(deltas: IMergeTreeSegmentDelta[], callback: (position, length) => void) {
-        const segment0 = deltas[0].segment;
-        let rangeStart = this.getPosition(segment0);
-        let rangeLength = segment0.cachedLength;
+        if (deltas.length > 0) {
+            const segment0 = deltas[0].segment;
+            let rangeStart = this.getPosition(segment0);
+            let rangeLength = segment0.cachedLength;
 
-        for (let i = 1; i < deltas.length; i++) {
-            const segment = deltas[i].segment;
-            const segStart = this.getPosition(segment);
+            for (let i = 1; i < deltas.length; i++) {
+                const segment = deltas[i].segment;
+                const segStart = this.getPosition(segment);
 
-            if (segStart === rangeLength) {
-                rangeLength += segment.cachedLength;
-            } else {
-                callback(rangeStart, rangeLength);
-                rangeStart = segStart;
-                rangeLength = segment.cachedLength;
+                if (segStart === rangeLength) {
+                    rangeLength += segment.cachedLength;
+                } else {
+                    callback(rangeStart, rangeLength);
+                    rangeStart = segStart;
+                    rangeLength = segment.cachedLength;
+                }
             }
+
+            callback(rangeStart, rangeLength);
+        }
+    }
+
+    public toString() {
+        let s = "";
+
+        const collab = this.getCollabWindow();
+
+        for (let i = 0; i < this.getLength(); i++) {
+            s += `${i}:${this.toHandle(i, collab.currentSeq, collab.clientId, /* alloc: */ false)} `;
         }
 
-        callback(rangeStart, rangeLength);
+        return s;
     }
 }

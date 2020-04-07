@@ -22,8 +22,7 @@ import { fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
 import { ObjectStoragePartition } from "@microsoft/fluid-runtime-utils";
 import { IMatrixProducer, IMatrixConsumer, IMatrixReader } from "@tiny-calc/nano";
 import { debug } from "./debug";
-import { pointToKey } from "./keys";
-import { IMatrixCellMsg, MatrixOp } from "./ops";
+import { MatrixOp } from "./ops";
 import { PermutationVector } from "./permutationvector";
 import { SparseArray2D } from "./sparsearray2d";
 import { SharedMatrixFactory } from "./runtime";
@@ -45,10 +44,9 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
     private readonly rows: PermutationVector;   // Map logical row to storage handle (if any)
     private readonly cols: PermutationVector;   // Map logical col to storage handle (if any)
 
-    private cells = new SparseArray2D<T>();     // Stores cell values.
-
-    // Map 'cliSeq' of pending cell write (if any).
-    private cellKeyToPendingCliSeq = new Map<number | undefined, number>();
+    private cells = new SparseArray2D<T>();                             // Stores cell values.
+    private pendingCliSeqs = new SparseArray2D<number>();      // Tracks pending writes.
+    private readonly pendingQueue: { cliSeq: number, rowHandle: number, colHandle: number }[] = [];
 
     constructor(runtime: IComponentRuntime, public id: string, attributes: IChannelAttributes) {
         super(id, runtime, attributes);
@@ -81,12 +79,14 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
 
     public read(row: number, col: number): T | undefined | null {
         // Map the logical (row, col) to associated storage handles.
-        const rowHandle = this.rows.toHandle(row, /* alloc: */ false);
+        const rowCollab = this.rows.getCollabWindow();
+        const rowHandle = this.rows.toHandle(row, rowCollab.currentSeq, rowCollab.clientId, /* alloc: */ false);
         if (rowHandle === Handle.unallocated) {
             return undefined;
         }
 
-        const colHandle = this.cols.toHandle(col, /* alloc: */ false);
+        const colCollab = this.cols.getCollabWindow();
+        const colHandle = this.cols.toHandle(col, colCollab.currentSeq, colCollab.clientId, /* alloc: */ false);
         if (colHandle === Handle.unallocated) {
             return undefined;
         }
@@ -97,24 +97,83 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
     // #endregion IMatrixReader
 
     public setCell(row: number, col: number, value: T) {
-        // Write or clear the value in storage.
-        const key = this.storeCell(row, col, value);
+        assert(0 <= row && row < this.numRows);
+        assert(0 <= col && col < this.numCols);
 
-        // And queue a 'set' op.
-        this.submitCellMessage(key, {
+        const { currentSeq: rowRefSeq, clientId: rowClientId } = this.rows.getCollabWindow();
+        const { currentSeq: colRefSeq, clientId: colClientId } = this.cols.getCollabWindow();
+
+        const clear = value === undefined;
+
+        // Map the logical row/col to the allocated storage handles (if any).
+        // If clearing and either the row and/or col is Handle.unallocated, no further work is necessary.
+        const rowHandle = this.rows.toHandle(row, rowRefSeq, rowClientId, /* alloc: */ !clear);
+        if (rowHandle === Handle.unallocated) {
+            assert(clear);
+            return;
+        }
+
+        const colHandle = this.cols.toHandle(col, colRefSeq, colClientId, /* alloc: */ !clear);
+        if (colHandle === Handle.unallocated) {
+            assert(clear);
+            return;
+        }
+
+        this.cells.setCell(rowHandle, colHandle, value);
+
+        // TODO: Pretty lame to alloc an array to send a single value.  Probably warrants a
+        //       singular `cellChanged` API.
+        for (const consumer of this.consumers.values()) {
+            consumer.cellsChanged(row, col, 1, 1, [value], this);
+        }
+
+        const cliSeq = this.submitLocalMessage({
             type: MatrixOp.set,
             row,
             col,
             value,
         });
+
+        if (cliSeq !== -1) {
+            this.pendingCliSeqs.setCell(rowHandle, colHandle, cliSeq);
+            this.pendingQueue.push({ cliSeq, rowHandle, colHandle });
+        }
+    }
+
+    public setCells(row: number, col: number, numCols: number, values: Iterable<T>) {
+        assert(1 <= numCols && numCols <= (this.numCols - col));
+
+        const endCol = col + numCols;
+        let r = row;
+        let c = col;
+
+        for (const value of values) {
+            assert(r < this.numRows);
+
+            // TODO: Add a `setRange` op to more efficiently send values.
+            this.setCell(r, c, value);
+
+            if (++c === endCol) {
+                c = col;
+                r++;
+            }
+        }
     }
 
     public insertCols(start: number, count: number) {
         this.insert(this.cols, SnapshotPath.cols, start, count);
     }
 
+    public removeCols(start: number, count: number) {
+        this.remove(this.cols, SnapshotPath.cols, start, count);
+    }
+
     public insertRows(start: number, count: number) {
         this.insert(this.rows, SnapshotPath.rows, start, count);
+    }
+
+    public removeRows(start: number, count: number) {
+        this.remove(this.rows, SnapshotPath.rows, start, count);
     }
 
     public snapshot(): ITree {
@@ -192,28 +251,61 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
             default: {
                 assert(contents.type === MatrixOp.set);
 
-                const rowHandle = this.rows.toHandle(contents.row, /* alloc: */ true);
-                const colHandle = this.cols.toHandle(contents.col, /* alloc: */ true);
-                const key = pointToKey(rowHandle, colHandle);
-                const pendingCliSeq = this.cellKeyToPendingCliSeq.get(key);
+                const { referenceSequenceNumber: refSeq, clientId } = rawMessage;
+                const { row, col } = contents;
 
-                // If there is a local set op pending for this cell position...
-                if (pendingCliSeq !== undefined) {
-                    // The incoming set operation either:
-                    //  a) precedes our pending set operation, or...
-                    //  b) is the ACK for our pending set operation
-                    //
-                    // In either case, we keep the current cell value.
+                if (local) {
+                    // We are receiving the ACK for a local pending set operation.
 
-                    // If this is the ACK for our pending set op, remove our pending cliSeq # so later
-                    // operations will resume updating the cell.
-                    if (local && pendingCliSeq === rawMessage.clientSequenceNumber) {
-                        // Then our pending write has been ACKed.  Remove it from the pending map.
-                        this.cellKeyToPendingCliSeq.delete(contents.key);
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    const { cliSeq, rowHandle, colHandle } = this.pendingQueue.shift()!;
+
+                    assert.equal(rawMessage.clientSequenceNumber, cliSeq);
+
+                    const actualCliSeq = this.pendingCliSeqs.read(rowHandle, colHandle)!;
+                    assert(actualCliSeq >= cliSeq);
+
+                    // If this is the most recent write to the cell by the local client, remove our
+                    // entry from 'pendingCliSeqs' to resume allowing remote writes.
+                    if (actualCliSeq === cliSeq) {
+                        this.pendingCliSeqs.setCell(rowHandle, colHandle, undefined);
                     }
-                    return;
                 } else {
-                    this.storeCell(contents.row, contents.col, contents.value);
+                    const rowClientId = this.rows.getOrAddShortClientId(clientId);
+                    const rowHandle = this.rows.toHandle(row, refSeq, rowClientId, /* alloc: */ true);
+
+                    if (rowHandle !== Handle.deleted) {
+                        const colClientId = this.cols.getOrAddShortClientId(clientId);
+                        const colHandle = this.cols.toHandle(col, refSeq, colClientId, /* alloc: */ true);
+
+                        if (colHandle !== Handle.deleted) {
+                            assert(rowHandle >= Handle.valid);
+                            assert(colHandle >= Handle.valid);
+
+                            if (this.pendingCliSeqs.read(rowHandle, colHandle) === undefined) {
+                                const { value } = contents;
+                                this.cells.setCell(rowHandle, colHandle, value);
+
+                                const adjustedRow = this.rows.adjustPosition(
+                                    row,
+                                    refSeq,
+                                    this.rows.getCurrentSeq(),
+                                    rowClientId);
+
+                                const adjustedCol = this.cols.adjustPosition(
+                                    col,
+                                    refSeq,
+                                    this.cols.getCurrentSeq(),
+                                    colClientId);
+
+                                if (adjustedRow !== undefined && adjustedCol !== undefined) {
+                                    for (const consumer of this.consumers.values()) {
+                                        consumer.cellsChanged(adjustedRow, adjustedCol, 1, 1, [value], this);
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -241,47 +333,23 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
         this.submitLocalMessage(op);
     }
 
-    private storeCell(row: number, col: number, value: T | undefined) {
-        const clear = value === undefined;
+    private remove(
+        vector: PermutationVector,
+        dimension: SnapshotPath.rows | SnapshotPath.cols,
+        start: number,
+        count: number,
+    ) {
+        const op = vector.remove(start, count);
 
-        // TODO: `toHandle()` should take the refSeq and client to produce the current handle from
-        //       past positions.
+        // Note whether this `op` targets rows or cols.  (See dispatch in `processCore()`)
+        (op as any).target = dimension;
 
-        // Map the logical row/col to the allocated storage handles (if any).
-        // If clearing and either the row and/or col is unallocated, no further work is necessary.
-        const rowHandle = this.rows.toHandle(row, /* alloc: */ true);
-        if (clear && rowHandle === Handle.unallocated) {
-            return;
-        }
-
-        const colHandle = this.cols.toHandle(col, /* alloc: */ true);
-        if (clear && colHandle === Handle.unallocated) {
-            return;
-        }
-
-        this.cells.setCell(rowHandle, colHandle, value);
-        const key = pointToKey(rowHandle, colHandle);
-
-        // TODO: row/col position should be tardised to the current seq# before notification.
-        // TODO: Pretty lame to alloc an array to send a single value.  Probably warrants a
-        //       singular `cellChanged` API.
-        for (const consumer of this.consumers.values()) {
-            consumer.cellsChanged(row, col, 1, 1, [value], this);
-        }
-
-        return key;
-    }
-
-    private submitCellMessage(key: number | undefined, message: IMatrixCellMsg) {
-        const clientSequenceNumber = this.submitLocalMessage(message);
-        if (clientSequenceNumber !== -1) {
-            this.cellKeyToPendingCliSeq.set(key, clientSequenceNumber);
-        }
+        this.submitLocalMessage(op);
     }
 
     // Constructs an ITreeEntry for the cell data.
     private snapshotCells(): ITreeEntry {
-        const chunk = [this.cells.snapshot(), Array.from(this.cellKeyToPendingCliSeq.entries())];
+        const chunk = [this.cells.snapshot(), this.pendingCliSeqs.snapshot()];
 
         const serializer = this.runtime.IComponentSerializer;
         return {
@@ -307,7 +375,7 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
             : JSON.parse(utf8);
 
         this.cells = SparseArray2D.load(cellData[0]);
-        this.cellKeyToPendingCliSeq = new Map(cellData[1]);
+        this.pendingCliSeqs = SparseArray2D.load(cellData[1]);
     }
 
     // Invoked by PermutationVector to notify IMatrixConsumers of row insertion/deletions.
@@ -323,4 +391,22 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
             consumer.colsChanged(position, numRemoved, numInserted, this);
         }
     };
+
+    public toString() {
+        let s = `client:${this.runtime.clientId}\nrows: ${this.rows.toString()}\ncols: ${this.cols.toString()}\n\n`;
+
+        for (let r = 0; r < this.numRows; r++) {
+            s += `  [`;
+            for (let c = 0; c < this.numCols; c++) {
+                if (c > 0) {
+                    s += ", ";
+                }
+
+                s += `${JSON.stringify(this.read(r, c))}`;
+            }
+            s += "]\n";
+        }
+
+        return `${s}\n`;
+    }
 }
