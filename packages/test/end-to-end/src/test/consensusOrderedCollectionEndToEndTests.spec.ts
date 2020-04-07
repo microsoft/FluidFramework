@@ -36,7 +36,6 @@ function generate(
     describe(name, () => {
         const id = "fluid-test://localhost/consensusOrderedCollectionTest";
         const mapId = "mapKey";
-        const consensusQueueId = "consensusQueueKey";
         const codeDetails: IFluidCodeDetails = {
             package: "consensusOrderedCollectionTestPackage",
             config: {},
@@ -60,7 +59,7 @@ function generate(
         async function createContainer(): Promise<Container> {
             const factory = new TestFluidComponentFactory([
                 [ mapId, SharedMap.getFactory() ],
-                [ consensusQueueId, ConsensusQueue.getFactory() ],
+                [ undefined, ConsensusQueue.getFactory() ],
             ]);
             const loader = createLocalLoader([[ codeDetails, factory ]], deltaConnectionServer);
             return initializeLocalContainer(id, loader, codeDetails);

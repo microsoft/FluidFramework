@@ -30,7 +30,6 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
     describe(name, () => {
         const id = "fluid-test://localhost/consensusRegisterCollectionTest";
         const mapId = "mapKey";
-        const consensusId = "consensusKey";
         const codeDetails: IFluidCodeDetails = {
             package: "consensusRegisterCollectionTestPackage",
             config: {},
@@ -53,7 +52,7 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
         async function createContainer(): Promise<Container> {
             const factory = new TestFluidComponentFactory([
                 [ mapId, SharedMap.getFactory() ],
-                [ consensusId, ConsensusRegisterCollection.getFactory() ],
+                [ undefined, ConsensusRegisterCollection.getFactory() ],
             ]);
             const loader = createLocalLoader([[ codeDetails, factory ]], deltaConnectionServer);
             return initializeLocalContainer(id, loader, codeDetails);
