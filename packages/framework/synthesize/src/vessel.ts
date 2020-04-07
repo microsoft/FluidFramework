@@ -8,7 +8,6 @@ import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import {
     Scope,
     ComponentSymbolProvider,
-    KeyOfIComponent,
 } from "./types";
 import { IComponentSynthesizer } from "./IComponentSynthesize";
 import {
@@ -92,11 +91,11 @@ export class Vessel implements IComponentSynthesizer {
      * {@inheritDoc (IComponentSynthesizer:interface).synthesize}
      */
     public synthesize<
-        O extends IComponent,
-        R extends IComponent = object>(
-        optionalTypes: ComponentSymbolProvider<KeyOfIComponent<O>>,
-        requiredTypes: ComponentSymbolProvider<KeyOfIComponent<R>>,
-    ): Scope<KeyOfIComponent<O>, KeyOfIComponent<R>> {
+        O extends keyof IComponent,
+        R extends keyof IComponent>(
+        optionalTypes: ComponentSymbolProvider<O>,
+        requiredTypes: ComponentSymbolProvider<R>,
+    ): Scope<O, R> {
         const optionalValues = Object.values(optionalTypes);
         const requiredValues = Object.values(requiredTypes);
 
@@ -113,8 +112,8 @@ export class Vessel implements IComponentSynthesizer {
             }
         });
 
-        const required = this.generateRequired<KeyOfIComponent<R>>(requiredTypes);
-        const optional = this.generateOptional<KeyOfIComponent<O>>(optionalTypes);
+        const required = this.generateRequired<R>(requiredTypes);
+        const optional = this.generateOptional<O>(optionalTypes);
         return { ...required, ...optional };
     }
 

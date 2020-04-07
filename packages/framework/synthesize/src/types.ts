@@ -38,5 +38,3 @@ export type OptionalComponentProvider<T extends keyof IComponent> = {
  */
 export type Scope<O extends keyof IComponent, R extends keyof IComponent>
     = OptionalComponentProvider<O> & ComponentProvider<R>;
-
-export type KeyOfIComponent<T extends IComponent> = keyof T & keyof IComponent;

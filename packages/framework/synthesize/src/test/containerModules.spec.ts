@@ -46,7 +46,7 @@ describe("Routerlicious", () => {
                 const module = new MockLoadable();
                 vessel.register(IComponentLoadable, {value: module});
 
-                const s = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
+                const s = vessel.synthesize({IComponentLoadable}, {});
                 console.log(s.IComponentLoadable?.url);
                 assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
                 assert(s.IComponentLoadable === module, "IComponentLoadable is valid");
@@ -59,7 +59,7 @@ describe("Routerlicious", () => {
                 const factory = () => new MockLoadableWithArgs(url);
                 vessel.register(IComponentLoadable, {factory});
 
-                const s = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
+                const s = vessel.synthesize({IComponentLoadable}, {});
                 assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
                 assert(s.IComponentLoadable?.url === url, "IComponentLoadable is valid");
             });
@@ -68,8 +68,8 @@ describe("Routerlicious", () => {
                 const vessel = new Vessel();
                 vessel.register(IComponentLoadable, {instance: MockLoadable});
 
-                const s = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
-                const s1 = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
+                const s = vessel.synthesize({IComponentLoadable}, {});
+                const s1 = vessel.synthesize({IComponentLoadable}, {});
 
                 assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
                 assert(s.IComponentLoadable?.url === "url123", "IComponentLoadable is valid");
@@ -80,8 +80,8 @@ describe("Routerlicious", () => {
                 const vessel = new Vessel();
                 vessel.register(IComponentLoadable, {instance: MockLoadable, lazy: true});
 
-                const s = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
-                const s1 = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
+                const s = vessel.synthesize({IComponentLoadable}, {});
+                const s1 = vessel.synthesize({IComponentLoadable}, {});
 
                 assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
                 assert(s.IComponentLoadable?.url === "url123", "IComponentLoadable is valid");
@@ -92,8 +92,8 @@ describe("Routerlicious", () => {
                 const vessel = new Vessel();
                 vessel.register(IComponentLoadable, {instance: MockLoadable, lazy: false});
 
-                const s = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
-                const s1 = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
+                const s = vessel.synthesize({IComponentLoadable}, {});
+                const s1 = vessel.synthesize({IComponentLoadable}, {});
 
                 assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
                 assert(s.IComponentLoadable?.url === "url123", "IComponentLoadable is valid");
@@ -104,8 +104,8 @@ describe("Routerlicious", () => {
                 const vessel = new Vessel();
                 vessel.register(IComponentLoadable, {singleton: MockLoadable});
 
-                const s = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
-                const s1 = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
+                const s = vessel.synthesize({IComponentLoadable}, {});
+                const s1 = vessel.synthesize({IComponentLoadable}, {});
 
                 assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
                 assert(s.IComponentLoadable?.url === "url123", "IComponentLoadable is valid");
@@ -116,8 +116,8 @@ describe("Routerlicious", () => {
                 const vessel = new Vessel();
                 vessel.register(IComponentLoadable, {singleton: MockLoadable, lazy: true});
 
-                const s = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
-                const s1 = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
+                const s = vessel.synthesize({IComponentLoadable}, {});
+                const s1 = vessel.synthesize({IComponentLoadable}, {});
 
                 assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
                 assert(s.IComponentLoadable?.url === "url123", "IComponentLoadable is valid");
@@ -128,8 +128,8 @@ describe("Routerlicious", () => {
                 const vessel = new Vessel();
                 vessel.register(IComponentLoadable, {singleton: MockLoadable, lazy: false});
 
-                const s = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
-                const s1 = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
+                const s = vessel.synthesize({IComponentLoadable}, {});
+                const s1 = vessel.synthesize({IComponentLoadable}, {});
 
                 assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
                 assert(s.IComponentLoadable?.url === "url123", "IComponentLoadable is valid");
@@ -141,7 +141,7 @@ describe("Routerlicious", () => {
                 const mock = new MockLoadable();
                 vessel.register(IComponentLoadable, {value: mock});
 
-                const s = vessel.synthesize<{}, IComponentLoadable>(
+                const s = vessel.synthesize(
                     {},
                     {IComponentLoadable},
                 );
@@ -155,7 +155,7 @@ describe("Routerlicious", () => {
                 const mock = new MockLoadable();
                 vessel.register(IComponentLoadable, {factory: () => mock});
 
-                const s = vessel.synthesize<{}, IComponentLoadable>(
+                const s = vessel.synthesize(
                     {},
                     {IComponentLoadable},
                 );
@@ -168,12 +168,12 @@ describe("Routerlicious", () => {
                 const vessel = new Vessel();
                 vessel.register(IComponentLoadable, {instance: MockLoadable});
 
-                const s = vessel.synthesize<{}, IComponentLoadable>(
+                const s = vessel.synthesize(
                     {},
                     {IComponentLoadable},
                 );
 
-                const s1 = vessel.synthesize<{}, IComponentLoadable>(
+                const s1 = vessel.synthesize(
                     {},
                     {IComponentLoadable},
                 );
@@ -187,12 +187,12 @@ describe("Routerlicious", () => {
                 const vessel = new Vessel();
                 vessel.register(IComponentLoadable, {instance: MockLoadable, lazy: true});
 
-                const s = vessel.synthesize<{}, IComponentLoadable>(
+                const s = vessel.synthesize(
                     {},
                     {IComponentLoadable},
                 );
 
-                const s1 = vessel.synthesize<{}, IComponentLoadable>(
+                const s1 = vessel.synthesize(
                     {},
                     {IComponentLoadable},
                 );
@@ -206,12 +206,12 @@ describe("Routerlicious", () => {
                 const vessel = new Vessel();
                 vessel.register(IComponentLoadable, {instance: MockLoadable, lazy: false});
 
-                const s = vessel.synthesize<{}, IComponentLoadable>(
+                const s = vessel.synthesize(
                     {},
                     {IComponentLoadable},
                 );
 
-                const s1 = vessel.synthesize<{}, IComponentLoadable>(
+                const s1 = vessel.synthesize(
                     {},
                     {IComponentLoadable},
                 );
@@ -225,12 +225,12 @@ describe("Routerlicious", () => {
                 const vessel = new Vessel();
                 vessel.register(IComponentLoadable, {singleton: MockLoadable});
 
-                const s = vessel.synthesize<{}, IComponentLoadable>(
+                const s = vessel.synthesize(
                     {},
                     {IComponentLoadable},
                 );
 
-                const s1 = vessel.synthesize<{}, IComponentLoadable>(
+                const s1 = vessel.synthesize(
                     {},
                     {IComponentLoadable},
                 );
@@ -244,12 +244,12 @@ describe("Routerlicious", () => {
                 const vessel = new Vessel();
                 vessel.register(IComponentLoadable, {singleton: MockLoadable, lazy: true});
 
-                const s = vessel.synthesize<{}, IComponentLoadable>(
+                const s = vessel.synthesize(
                     {},
                     {IComponentLoadable},
                 );
 
-                const s1 = vessel.synthesize<{}, IComponentLoadable>(
+                const s1 = vessel.synthesize(
                     {},
                     {IComponentLoadable},
                 );
@@ -263,12 +263,12 @@ describe("Routerlicious", () => {
                 const vessel = new Vessel();
                 vessel.register(IComponentLoadable, {singleton: MockLoadable, lazy: false});
 
-                const s = vessel.synthesize<{}, IComponentLoadable>(
+                const s = vessel.synthesize(
                     {},
                     {IComponentLoadable},
                 );
 
-                const s1 = vessel.synthesize<{}, IComponentLoadable>(
+                const s1 = vessel.synthesize(
                     {},
                     {IComponentLoadable},
                 );
@@ -283,15 +283,15 @@ describe("Routerlicious", () => {
                 vessel.register(IComponentLoadable, {value: new MockLoadable()});
                 vessel.register(IComponentConfiguration, {value: new MockComponentConfiguration()});
 
-                const s = vessel.synthesize<IComponentLoadable & IComponentConfiguration>(
-                    {IComponentLoadable,IComponentConfiguration}, {});
+                const s = vessel.synthesize(
+                    {IComponentLoadable, IComponentConfiguration}, {});
                 assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
                 assert(s.IComponentConfiguration, "Optional IComponentConfiguration was registered");
             });
 
             it(`Two Optional Modules none registered`, async () => {
                 const vessel = new Vessel();
-                const s = vessel.synthesize<IComponentLoadable & IComponentConfiguration>(
+                const s = vessel.synthesize(
                     {IComponentLoadable,IComponentConfiguration}, {});
                 assert(!s.IComponentLoadable, "Optional IComponentLoadable was not registered");
                 assert(!s.IComponentConfiguration, "Optional IComponentConfiguration was not registered");
@@ -300,7 +300,7 @@ describe("Routerlicious", () => {
             it(`Two Optional Modules one registered`, async () => {
                 const vessel = new Vessel();
                 vessel.register(IComponentLoadable, {value: new MockLoadable()});
-                const s = vessel.synthesize<IComponentLoadable & IComponentConfiguration>(
+                const s = vessel.synthesize(
                     {IComponentLoadable,IComponentConfiguration}, {});
                 assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
                 assert(!s.IComponentConfiguration, "Optional IComponentConfiguration was not registered");
@@ -311,7 +311,7 @@ describe("Routerlicious", () => {
                 vessel.register(IComponentLoadable, {value: new MockLoadable()});
                 vessel.register(IComponentConfiguration, {value: new MockComponentConfiguration()});
 
-                const s = vessel.synthesize<{}, IComponentLoadable & IComponentConfiguration>(
+                const s = vessel.synthesize(
                     {},
                     {IComponentLoadable, IComponentConfiguration},
                 );
@@ -323,7 +323,7 @@ describe("Routerlicious", () => {
             it(`Required Module not registered should throw`, async () => {
                 const vessel = new Vessel();
 
-                assert.throws(() => vessel.synthesize<{}, IComponentLoadable>(
+                assert.throws(() => vessel.synthesize(
                     {},
                     {IComponentLoadable},
                 ), Error);
@@ -334,7 +334,7 @@ describe("Routerlicious", () => {
                 parentVessel.register(IComponentLoadable, {value: new MockLoadable()});
                 const vessel = new Vessel(parentVessel);
 
-                const s = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
+                const s = vessel.synthesize({IComponentLoadable}, {});
                 assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
             });
 
@@ -344,7 +344,7 @@ describe("Routerlicious", () => {
                 const vessel = new Vessel(parentVessel);
                 vessel.register(IComponentConfiguration, {value: new MockComponentConfiguration()});
 
-                const s = vessel.synthesize<IComponentLoadable & IComponentConfiguration>(
+                const s = vessel.synthesize(
                     {IComponentLoadable, IComponentConfiguration}, {});
                 assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
             });
@@ -356,7 +356,7 @@ describe("Routerlicious", () => {
                 const childLoadableModule = new MockLoadable();
                 vessel.register(IComponentLoadable, {value: childLoadableModule});
 
-                const s = vessel.synthesize<IComponentLoadable>(
+                const s = vessel.synthesize(
                     {IComponentLoadable}, {});
                 assert(s.IComponentLoadable === childLoadableModule, "Child Module loaded");
             });
@@ -366,7 +366,7 @@ describe("Routerlicious", () => {
                 parentVessel.register(IComponentLoadable, {value: new MockLoadable()});
                 const vessel = new Vessel(parentVessel);
 
-                const s = vessel.synthesize<{}, IComponentLoadable>({}, {IComponentLoadable});
+                const s = vessel.synthesize({}, {IComponentLoadable});
                 assert(s.IComponentLoadable, "Required IComponentLoadable was registered");
             });
 
@@ -376,7 +376,7 @@ describe("Routerlicious", () => {
                 const vessel = new Vessel(parentVessel);
                 vessel.register(IComponentConfiguration, {value: new MockComponentConfiguration()});
 
-                const s = vessel.synthesize<{}, IComponentLoadable & IComponentConfiguration>(
+                const s = vessel.synthesize(
                     {}, {IComponentLoadable, IComponentConfiguration});
                 assert(s.IComponentLoadable, "Required IComponentLoadable was registered");
                 assert(s.IComponentConfiguration, "Required IComponentConfiguration was registered");
@@ -389,7 +389,7 @@ describe("Routerlicious", () => {
                 const mock = new MockLoadable();
                 vessel.register(IComponentLoadable, {value: mock});
 
-                const s = vessel.synthesize<{}, IComponentLoadable>(
+                const s = vessel.synthesize(
                     {}, {IComponentLoadable});
                 assert(s.IComponentLoadable === mock, "Child Module loaded");
             });
