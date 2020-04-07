@@ -18,10 +18,7 @@ import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 // eslint-disable-next-line import/no-internal-modules
 import { SharedComponent } from "../components/sharedComponent";
 
-export class SharedComponentFactory implements
-    IComponentFactory,
-    Partial<IProvideComponentRegistry>
-{
+export class SharedComponentFactory implements IComponentFactory, Partial<IProvideComponentRegistry> {
     private readonly sharedObjectRegistry: ISharedObjectRegistry;
     private readonly registry: IComponentRegistry | undefined;
 
@@ -90,6 +87,10 @@ export class SharedComponentFactory implements
     }
 
     public async createComponent(context: IComponentContext): Promise<IComponent & IComponentLoadable> {
+        if (this.type === "") {
+            throw new Error("undefined type member");
+        }
+
         return context.createComponentWithRealizationFn(
             this.type,
             (newContext) => { this.instantiateComponent(newContext); },

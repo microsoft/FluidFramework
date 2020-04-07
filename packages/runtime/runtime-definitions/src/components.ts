@@ -222,6 +222,12 @@ export interface ISummaryTracker {
      * @param latestSequenceNumber - inital value for latest sequence number of change
      */
     createOrGetChild(key: string, latestSequenceNumber: number): ISummaryTracker;
+    /**
+     * Retrives a child ISummaryTracker node based off the key.
+     * @param key - key of the child ISummaryTracker node.
+     * @returns - The child ISummaryTracker node.
+     */
+    getChild(key: string): ISummaryTracker | undefined;
 }
 
 /**
@@ -324,13 +330,10 @@ export interface IComponentContext extends EventEmitter {
     attach(componentRuntime: IComponentRuntime): void;
 
     /**
-     * Take a package name and transform it into a path that can be used to find it
-     * from this context, such as by looking into subregistries
-     * @param subpackage - The subpackage to find in this context
-     * @returns A list of packages to the subpackage destination if found,
-     * otherwise the original subpackage
+     * Indicates that a channel is dirty and needs to be part of the summary.
+     * @param address - The address of the channe that is dirty.
      */
-    composeSubpackagePath(subpackage: string): Promise<string[]>;
+    setChannelDirty(address: string): void;
 }
 
 /**

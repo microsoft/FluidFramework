@@ -38,12 +38,12 @@ export class MockDocumentService implements IDocumentService {
         throw new Error("Method not implemented.");
     }
     public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
-        return this.deltaStorageFactory
+        return this.deltaStorageFactory !== undefined
             ? this.deltaStorageFactory()
             : new MockDocumentDeltaStorageService(this.deltaStorageMessages);
     }
     public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
-        return this.deltaConnectionFactory
+        return this.deltaConnectionFactory !== undefined
             ? this.deltaConnectionFactory()
             : new MockDocumentDeltaConnection(`mock_client_${this.nextClientId++}`);
     }

@@ -150,9 +150,8 @@ export class TestHost {
     }
 
     public readonly deltaConnectionServer: ILocalDeltaConnectionServer;
-    private rootResolver: (accept: TestRootComponent) => void;
 
-    private readonly root = new Promise<TestRootComponent>((accept) => { this.rootResolver = accept; });
+    private readonly root: Promise<TestRootComponent>;
 
     /**
      * @param componentRegistry - array of key-value pairs of components available to the host
@@ -194,9 +193,7 @@ export class TestHost {
             new TestDocumentServiceFactory(this.deltaConnectionServer),
             new TestResolver());
 
-        store.open<TestRootComponent>("test-root-component", TestRootComponent.codeProposal, "", scope)
-            .then(this.rootResolver)
-            .catch((reason) => { throw new Error(`${reason}`); });
+        this.root = store.open<TestRootComponent>("test-root-component", TestRootComponent.codeProposal, "", scope);
     }
 
     /**
