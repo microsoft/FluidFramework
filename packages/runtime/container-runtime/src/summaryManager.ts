@@ -172,10 +172,6 @@ export class SummaryManager extends EventEmitter implements IDisposable {
             this.emit("summarizer", newSummarizerClientId);
         }
 
-        if (this.opsUntilFirstConnect === undefined) {
-
-        }
-
         // Transition states depending on shouldSummarize, which is a calculated
         // property that is only true if this client is connected and has the
         // computed summarizer client id

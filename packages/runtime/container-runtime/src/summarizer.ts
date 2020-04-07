@@ -227,8 +227,8 @@ export class Summarizer implements ISummarizer {
     }
 
     private async generateSummary(full: boolean, safe: boolean): Promise<GenerateSummaryData | undefined> {
-        if (this.runtime.summarizerClientId !== undefined
-            && this.onBehalfOfClientId !== this.runtime.summarizerClientId) {
+        if (this.onBehalfOfClientId !== this.runtime.summarizerClientId
+            && this.runtime.clientId !== this.runtime.summarizerClientId) {
             // We are no longer the summarizer; a different client is, so we should stop ourself
             this.stop("parentNoLongerSummarizer");
             return undefined;
