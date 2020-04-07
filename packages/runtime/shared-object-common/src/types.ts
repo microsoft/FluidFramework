@@ -20,7 +20,7 @@ export interface IProvideSharedObject {
 
 export interface ISharedObjectEvents extends IErrorEvent {
     (event: "pre-op" | "op",
-        listener: (op: ISequencedDocumentMessage, local: boolean, target: this) => void);
+        listener: (op: ISequencedDocumentMessage, local: boolean, target: ISharedObject) => void);
     (event: "disconnected" | "connected" | "processed", listener: () => void);
 }
 
