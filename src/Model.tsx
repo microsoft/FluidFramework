@@ -11,6 +11,9 @@ import {
   IPersonType,
   IViewProps,
   PrimedContext,
+  ICommentType,
+  IViewActions,
+  IViewSelectors,
 } from "./provider";
 import { SharedObjectSequence } from "@microsoft/fluid-sequence";
 import { ScheduleIt } from "./View";
@@ -26,9 +29,11 @@ export class DataModel extends PrimedComponent
   implements IViewProps, IComponentHTMLVisual {
   private _datesKey = "dates";
   private _peopleKey = "people";
+  private _commentsKey = "comment";
 
   private _dates: SharedObjectSequence<number> | undefined;
   private _people: SharedObjectSequence<IPersonType> | undefined;
+  private _comments: SharedObjectSequence<ICommentType> | undefined;
 
   private _selectors;
 
@@ -43,9 +48,14 @@ export class DataModel extends PrimedComponent
 
     let people = SharedObjectSequence.create<IPersonType>(this.runtime);
     this.root.set(this._peopleKey, people.handle);
+
+    let comments = SharedObjectSequence.create<ICommentType>(this.runtime);
+    this.root.set(this._commentsKey, comments.handle);
+
     // if (this.context.leader) {
     BadArray.push<number>(dates, defaultDatesNumbers);
     BadArray.push<IPersonType>(people, defaultPeople);
+    BadArray.push<ICommentType>(comments, undefined);
     // }
   }
 
@@ -57,9 +67,21 @@ export class DataModel extends PrimedComponent
     this._people = await this.root
       .get<IComponentHandle>(this._peopleKey)
       .get<SharedObjectSequence<IPersonType>>();
+    this._comments = await this.root
+      .get<IComponentHandle>(this._commentsKey)
+      .get<SharedObjectSequence<ICommentType>>();
   }
 
-  public setDate = (index: number, value: Date): void => {
+  private setPerson = (index: number, person: IPersonType): void => {
+    if (this._people) {
+      BadArray.set(this._people, this.context.hostRuntime, index, person);
+    }
+  };
+
+  public setDate: IViewActions["setDate"] = (
+    index: number,
+    value: Date
+  ): void => {
     if (this._dates) {
       BadArray.set(
         this._dates,
@@ -71,25 +93,22 @@ export class DataModel extends PrimedComponent
     }
   };
 
-  public setPerson = (index: number, person: IPersonType): void => {
-    if (this._people) {
-      BadArray.set(this._people, this.context.hostRuntime, index, person);
-    }
-  };
-
-  public setAvailability = (
+  public setAvailability: IViewActions["setAvailability"] = (
     personIndex: number,
     dayIndex: number,
-    available: AvailabilityType
+    value: number | string
   ) => {
     if (this._people) {
       let person = BadArray.get(this._people, personIndex);
-      person.availability[dayIndex] = available;
+      person.availability[dayIndex] = AvailabilityType[value];
       this.setPerson(personIndex, person);
     }
   };
 
-  public setName = (personIndex: number, name: string) => {
+  public setName: IViewActions["setName"] = (
+    personIndex: number,
+    name: string
+  ) => {
     if (this._people) {
       let person = BadArray.get(this._people, personIndex);
       person.name = name;
@@ -97,7 +116,38 @@ export class DataModel extends PrimedComponent
     }
   };
 
-  public get dates(): Date[] {
+  public addRow: IViewActions["addRow"] = () => {
+    if (this._people) {
+      BadArray.push(this._people, [
+        {
+          name: undefined,
+          availability: [
+            AvailabilityType.No,
+            AvailabilityType.No,
+            AvailabilityType.No,
+          ],
+        },
+      ]);
+    }
+  };
+
+  public removeRow: IViewActions["removeRow"] = () => {
+    if (this._people) {
+      BadArray.pop(this._people);
+    }
+  };
+
+  public addComment: IViewActions["addComment"] = (
+    name: string,
+    message: string
+  ): void => {
+    if (this._comments) {
+      const length = this._comments.getLength();
+      BadArray.push(this._comments, [{ name, message }]);
+    }
+  };
+
+  public get dates(): IViewSelectors["dates"] {
     if (!this._dates) {
       return [];
     }
@@ -106,11 +156,18 @@ export class DataModel extends PrimedComponent
     });
   }
 
-  public get people(): IPersonType[] {
+  public get people(): IViewSelectors["people"] {
     if (!this._people) {
       return [];
     }
     return this._people.getItems(0);
+  }
+
+  public get comments(): IViewSelectors["comments"] {
+    if (!this._comments) {
+      return [];
+    }
+    return this._comments.getItems(0);
   }
 
   // todo this should just be a data component with no rendering; rendering should be done elsewhere
@@ -156,6 +213,17 @@ export class DataModel extends PrimedComponent
         rerender();
       });
     }
+    if (this._comments) {
+      this._comments.on("sequenceDelta", (event) => {
+        console.log(
+          `${this.runtime.clientId} dates sequenceDelta: op[${
+            event.deltaOperation
+          }] args[${JSON.stringify(event.deltaArgs.operation)}]`
+        );
+        this._selectors = this.selectors;
+        rerender();
+      });
+    }
   }
 
   //#region IViewProps
@@ -164,9 +232,9 @@ export class DataModel extends PrimedComponent
       setAvailability: this.setAvailability,
       setName: this.setName,
       setDate: this.setDate,
-      addRow: () => {},
-      removeRow: () => {},
-      addComment: (name: string, message: string) => {},
+      addRow: this.addRow,
+      removeRow: this.removeRow,
+      addComment: this.addComment,
     };
   }
 
@@ -174,7 +242,7 @@ export class DataModel extends PrimedComponent
     return {
       dates: this.dates,
       people: this.people,
-      comments: [],
+      comments: this.comments,
     };
   }
   //#endregion
