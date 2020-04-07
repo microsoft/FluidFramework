@@ -57,6 +57,7 @@ enum SummaryManagerState {
 
 const defaultMaxRestarts = 5;
 const defaultInitialDelayMs = 5000;
+const opsToBypassInitialDelay = 4000;
 
 export class SummaryManager extends EventEmitter implements IDisposable {
     private readonly logger: ITelemetryLogger;
@@ -69,6 +70,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     private state = SummaryManagerState.Off;
     private runningSummarizer?: IComponentRunnable;
     private _disposed = false;
+    private opsUntilFirstConnect: number | undefined;
 
     public get summarizer() {
         return this.summarizerClientId;
@@ -108,6 +110,9 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         }
 
         context.quorum.on("addMember", (clientId: string, details: ISequencedClient) => {
+            if (this.opsUntilFirstConnect === undefined && clientId === this.clientId) {
+                this.opsUntilFirstConnect = details.sequenceNumber - this.context.deltaManager.initialSequenceNumber;
+            }
             this.quorumHeap.addClient(clientId, details);
             this.refreshSummarizer();
         });
@@ -165,6 +170,10 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         if (newSummarizerClientId !== this.summarizerClientId) {
             this.summarizerClientId = newSummarizerClientId;
             this.emit("summarizer", newSummarizerClientId);
+        }
+
+        if (this.opsUntilFirstConnect === undefined) {
+
         }
 
         // Transition states depending on shouldSummarize, which is a calculated
@@ -272,7 +281,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
 
     private async createSummarizer(delayMs: number): Promise<ISummarizer | undefined> {
         await Promise.all([
-            this.initialDelayP,
+            this.opsUntilFirstConnect >= opsToBypassInitialDelay ? Promise.resolve() : this.initialDelayP,
             delayMs > 0 ? new Promise((resolve) => setTimeout(resolve, delayMs)) : Promise.resolve(),
         ]);
 
