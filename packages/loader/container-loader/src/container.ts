@@ -404,14 +404,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.protocolHandler.close();
         }
 
+        this.context?.dispose();
+
         assert(this.connectionState === ConnectionState.Disconnected, "disconnect event was not raised!");
 
         this.emit("closed", error);
-
-        // This should be the last action we do before un-registering listeners,
-        // as it will fully disconnect runtime and it will no longer "hear" any
-        // events from loader layer.
-        this.context?.dispose();
 
         this.removeAllListeners();
     }
