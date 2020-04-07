@@ -17,7 +17,8 @@ import {
 } from "@microsoft/fluid-test-utils";
 
 describe("Detached Container", () => {
-    const id = "fluid-test://localhost/detachedContainerTest";
+    const documentId = "detachedContainerTest";
+    const id = `fluid-test://localhost/${documentId}`;
     const testRequest: IRequest = { url: id };
     const pkg: IFluidCodeDetails = {
         package: "detachedContainerTestPackage",
@@ -55,7 +56,7 @@ describe("Detached Container", () => {
         assert.equal(container.deltaManager.inbound.length, 0, "Inbound queue should be empty");
         assert.equal(container.connectionState, ConnectionState.Connected,
             "Container should be in connected state!!");
-        assert.equal(container.id, "documentId", "Doc id is not matching!!");
+        assert.equal(container.id, documentId, "Doc id is not matching!!");
     });
 
     it("Components in detached container", async () => {

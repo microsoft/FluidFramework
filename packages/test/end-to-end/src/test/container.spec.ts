@@ -20,11 +20,13 @@ import { MockDocumentDeltaConnection } from "@microsoft/fluid-test-loader-utils"
 import { LocalCodeLoader } from "@microsoft/fluid-test-utils";
 
 describe("Container", () => {
+    const id = "fluid-test://localhost/containerTest";
+    const testRequest: IRequest = { url: id };
+
     let testDeltaConnectionServer: ILocalDeltaConnectionServer;
     let testResolver: TestResolver;
     let testResolved: IFluidResolvedUrl;
     let deltaConnection: MockDocumentDeltaConnection;
-    const testRequest: IRequest = { url: "" };
     let serviceFactory: Readonly<IDocumentServiceFactory>;
     let codeLoader: LocalCodeLoader;
     let loader: Loader;
