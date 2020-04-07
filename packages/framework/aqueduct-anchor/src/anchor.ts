@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { SummarizableObject } from "@microsoft/fluid-summarizable-object";
-import { ISequencedDocumentMessage, IUser, MessageType } from "@microsoft/fluid-protocol-definitions";
+import { ISequencedDocumentMessage, IUser } from "@microsoft/fluid-protocol-definitions";
 import {
     IComponentContext,
     IComponentRuntime,
-    IEnvelope,
     Jsonable,
 } from "@microsoft/fluid-runtime-definitions";
 import { ILastEdited, ILastEditDetails } from "./interfaces";
@@ -20,10 +20,8 @@ import { ILastEdited, ILastEditDetails } from "./interfaces";
  * loaded so that it can correctly track such information. For example, it tracks the following:
  * - The last user who edited this container.
  * - The timestamp of the last time the container was edited.
- *
- * It listens to all the ops in the container and updates the tracking information. It uses a SummarizableObject
- * to store this data because it wants the data to be part of the summary but it should not generate addition ops
- * in the op listener.
+ * It uses a SummarizableObject to store the last edited data because it wants the data to be part of
+ * the summary but it should not generate addition ops in the op listener.
  */
 export class AqueductAnchor extends PrimedComponent implements ILastEdited {
     private static readonly factory = new PrimedComponentFactory(
@@ -38,6 +36,7 @@ export class AqueductAnchor extends PrimedComponent implements ILastEdited {
         return this;
     }
 
+    private _message!: ISequencedDocumentMessage;
     private _summarizableObject!: SummarizableObject;
 
     constructor(runtime: IComponentRuntime, context: IComponentContext) {
@@ -51,6 +50,27 @@ export class AqueductAnchor extends PrimedComponent implements ILastEdited {
         return this._summarizableObject.get<ILastEditDetails>("lastEditDetails");
     }
 
+    public get message(): ISequencedDocumentMessage {
+        assert(this._message !== undefined, "Message should not be retrieved before setting it first");
+        return this._message;
+    }
+
+    public set message(message: ISequencedDocumentMessage) {
+        this._message = message;
+
+        // Get the user information from the client information in the quorum and set the
+        // summarizable object.
+        const client = this.context.getQuorum().getMember(message.clientId);
+        const user = client?.client.user as IUser;
+        if (user !== undefined) {
+            const lastEditDetails: ILastEditDetails = {
+                user,
+                timestamp: message.timestamp,
+            };
+            this._summarizableObject.set("lastEditDetails", lastEditDetails as unknown as Jsonable);
+        }
+    }
+
     protected async componentInitializingFirstTime() {
         const object = SummarizableObject.create(this.runtime);
         this.root.set("summarizable-object", object.handle);
@@ -59,24 +79,5 @@ export class AqueductAnchor extends PrimedComponent implements ILastEdited {
     protected async componentHasInitialized() {
         this._summarizableObject =
             await this.root.get<IComponentHandle<SummarizableObject>>("summarizable-object").get();
-
-        this.context.hostRuntime.on("op", (message: ISequencedDocumentMessage) => {
-            if (message.type === MessageType.Operation) {
-                const envelope = message.contents as IEnvelope;
-                // Filter out scheduler ops.
-                if (!envelope.address.includes("_scheduler")) {
-                    // Get the user information from the client information in the quorum.
-                    const client = this.context.getQuorum().getMember(message.clientId);
-                    const user = client?.client.user as IUser;
-                    if (user !== undefined) {
-                        const lastEditDetails: ILastEditDetails = {
-                            user,
-                            timestamp: message.timestamp,
-                        };
-                        this._summarizableObject.set("lastEditDetails", lastEditDetails as unknown as Jsonable);
-                    }
-                }
-            }
-        });
     }
 }
