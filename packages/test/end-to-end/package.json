@@ -47,7 +47,6 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "devDependencies": {
-    "@fluid-internal/client-api": "^0.16.0",
     "@microsoft/eslint-config-fluid": "^0.15.0",
     "@microsoft/fluid-agent-scheduler": "^0.16.0",
     "@microsoft/fluid-aqueduct": "^0.16.0",
