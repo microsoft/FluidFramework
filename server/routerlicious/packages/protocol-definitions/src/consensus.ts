@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import { IDisposable } from "@microsoft/fluid-common-definitions";
+import { IDisposable, IErrorEvent, IEventProvider } from "@microsoft/fluid-common-definitions";
 import { ISequencedClient } from "./clients";
 
 /**
@@ -41,10 +40,30 @@ export interface IPendingProposal extends ISequencedProposal {
     reject();
 }
 
+export interface IQuorumEvents extends IErrorEvent {
+    (event: "addMember", listener: (clientId: string, details: ISequencedClient) => void);
+    (event: "removeMember", listener: (clientId: string) => void);
+    (event: "addProposal", listener: (proposal: IPendingProposal) => void);
+    (
+        event: "approveProposal",
+        listener: (sequenceNumber: number, key: string, value: any, approvalSequenceNumber: number) => void);
+    (
+        event: "commitProposal",
+        listener: (
+            sequenceNumber: number,
+            key: string,
+            value: any,
+            approvalSequenceNumber: number,
+            commitSequenceNumber: number) => void);
+    (
+        event: "rejectProposal",
+        listener: (sequenceNumber: number, key: string, value: any, rejections: string[]) => void);
+}
+
 /**
  * Class representing agreed upon values in a quorum
  */
-export interface IQuorum extends EventEmitter, IDisposable {
+export interface IQuorum extends IEventProvider<IQuorumEvents>, IDisposable {
     propose(key: string, value: any): Promise<void>;
 
     has(key: string): boolean;
@@ -56,25 +75,6 @@ export interface IQuorum extends EventEmitter, IDisposable {
     getMembers(): Map<string, ISequencedClient>;
 
     getMember(clientId: string): ISequencedClient | undefined;
-
-    on(event: "error", listener: (message: any) => void): this;
-    on(event: "addMember", listener: (clientId: string, details: ISequencedClient) => void): this;
-    on(event: "removeMember", listener: (clientId: string) => void): this;
-    on(event: "addProposal", listener: (proposal: IPendingProposal) => void): this;
-    on(
-        event: "approveProposal",
-        listener: (sequenceNumber: number, key: string, value: any, approvalSequenceNumber: number) => void): this;
-    on(
-        event: "commitProposal",
-        listener: (
-            sequenceNumber: number,
-            key: string,
-            value: any,
-            approvalSequenceNumber: number,
-            commitSequenceNumber: number) => void): this;
-    on(
-        event: "rejectProposal",
-        listener: (sequenceNumber: number, key: string, value: any, rejections: string[]) => void): this;
 }
 
 export interface IProtocolState {

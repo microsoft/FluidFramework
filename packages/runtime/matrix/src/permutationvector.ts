@@ -20,10 +20,9 @@ import {
     MergeTreeDeltaType,
     IMergeTreeSegmentDelta,
 } from "@microsoft/fluid-merge-tree";
-import { HandleTable } from "./handletable";
+import { HandleTable, Handle } from "./handletable";
 import { SnapshotPath } from "./matrix";
 
-const unallocated = -1 as const;
 
 type PermutationSegmentSpec = [number, number];
 
@@ -47,7 +46,7 @@ class PermutationSegment extends BaseSegment {
     }
 
     public clone() {
-        const b = new PermutationSegment(unallocated, this.cachedLength);
+        const b = new PermutationSegment(Handle.unallocated, this.cachedLength);
         this.cloneInto(b);
         return b;
     }
