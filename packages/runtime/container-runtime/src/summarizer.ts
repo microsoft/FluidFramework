@@ -62,6 +62,7 @@ export class Summarizer implements ISummarizer {
     private opListener?: (error: any, op: ISequencedDocumentMessage) => void;
     private immediateSummary: boolean = false;
     public readonly summaryCollection: SummaryCollection;
+    private stopReason?: string;
 
     constructor(
         public readonly url: string,
@@ -91,10 +92,14 @@ export class Summarizer implements ISummarizer {
             await this.runCore(onBehalfOf);
         } finally {
             // Cleanup after running
-            this.dispose();
             if (this.runtime.connected) {
-                this.stop("runEnded");
+                if (this.runningSummarizer) {
+                    // let running summarizer finish
+                    await this.runningSummarizer.waitStop();
+                }
+                this.runtime.closeFn(`Summarizer: ${this.stopReason ?? "runEnded"}`);
             }
+            this.dispose();
         }
     }
 
@@ -104,13 +109,17 @@ export class Summarizer implements ISummarizer {
      * @param reason - reason code for stopping
      */
     public stop(reason?: string) {
+        if (this.stopReason) {
+            // already stopping
+            return;
+        }
+        this.stopReason = reason;
         this.logger.sendTelemetryEvent({
             eventName: "StoppingSummarizer",
             onBehalfOf: this.onBehalfOfClientId,
             reason,
         });
         this.runCoordinator.stop();
-        this.runtime.closeFn(`Summarizer: ${reason}`);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -218,8 +227,9 @@ export class Summarizer implements ISummarizer {
     }
 
     private async generateSummary(full: boolean, safe: boolean): Promise<GenerateSummaryData | undefined> {
-        if (this.onBehalfOfClientId !== this.runtime.summarizerClientId) {
-            // We are no longer the summarizer, we should stop ourself
+        if (this.runtime.summarizerClientId !== undefined
+            && this.onBehalfOfClientId !== this.runtime.summarizerClientId) {
+            // We are no longer the summarizer; a different client is, so we should stop ourself
             this.stop("parentNoLongerSummarizer");
             return undefined;
         }
@@ -310,7 +320,7 @@ export class RunningSummarizer implements IDisposable {
     public get disposed() { return this._disposed; }
 
     private _disposed = false;
-    private summarizing = false;
+    private summarizing: Deferred<void> | undefined;
     private summarizeCount: number = 0;
     private tryWhileSummarizing = false;
     private readonly summarizeTimer: Timer;
@@ -398,6 +408,20 @@ export class RunningSummarizer implements IDisposable {
         }
     }
 
+    public async waitStop(): Promise<void> {
+        if (this.disposed) {
+            return;
+        }
+        if (this.heuristics.lastOpSeqNumber > this.heuristics.lastAcked.refSequenceNumber) {
+            if (this.summarizing === undefined) {
+                this.trySummarize("lastSummary");
+            }
+            if (this.summarizing) {
+                await this.summarizing.promise;
+            }
+        }
+    }
+
     private async waitStart() {
         // Wait no longer than ack timeout for all pending
         const maybeLastAck = await Promise.race([
@@ -431,7 +455,7 @@ export class RunningSummarizer implements IDisposable {
 
         // GenerateSummary could take some time
         // mark that we are currently summarizing to prevent concurrent summarizing
-        this.summarizing = true;
+        this.summarizing = new Deferred();
 
         try {
             const result = await this.summarize(reason, false);
@@ -440,8 +464,9 @@ export class RunningSummarizer implements IDisposable {
                 await this.summarize(reason, true);
             }
         } finally {
-            this.summarizing = false;
-            if (this.tryWhileSummarizing) {
+            this.summarizing.resolve();
+            this.summarizing = undefined;
+            if (this.tryWhileSummarizing && !this.disposed) {
                 this.tryWhileSummarizing = false;
                 this.heuristics.run();
             }
@@ -458,7 +483,7 @@ export class RunningSummarizer implements IDisposable {
         this.summarizeTimer.start();
 
         try {
-            return this.summarizeCore(reason, safe);
+            return await this.summarizeCore(reason, safe);
         } finally {
             this.summarizeTimer.clear();
             this.pendingAckTimer.clear();
@@ -483,6 +508,7 @@ export class RunningSummarizer implements IDisposable {
 
         // Wait for broadcast
         const summaryOp = await Promise.race([summary.waitBroadcast(), pendingTimeoutP]);
+        this.summarizing.resolve(); // broadcast means client is free to close
         if (!summaryOp) {
             return undefined;
         }
