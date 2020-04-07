@@ -7,15 +7,11 @@ import {
   TextField,
   FocusZoneDirection,
   IconButton,
-  PrimaryButton
+  PrimaryButton,
 } from "office-ui-fabric-react";
 import { DatePicker, defaultDayPickerStrings } from "@uifabric/date-time";
-import { PrimedContext } from "./provider";
-import {
-  AvailabilityType,
-  IPersonType,
-  IViewSelectors
-} from "./provider.types";
+import { PrimedContext } from "./provider/provider";
+import { AvailabilityType, IPersonType, IViewSelectors } from "./provider";
 initializeIcons();
 
 export const ScheduleIt = () => {
@@ -26,9 +22,9 @@ export const ScheduleIt = () => {
       setDate,
       addRow,
       removeRow,
-      addComment
+      addComment,
     },
-    selectors: { dates, people, comments }
+    selectors: { dates, people, comments },
   } = React.useContext(PrimedContext);
 
   const [currentComment, setCurrentComment] = React.useState("");
@@ -40,7 +36,7 @@ export const ScheduleIt = () => {
           <DatePicker
             strings={defaultDayPickerStrings}
             value={date}
-            onSelectDate={date => setDate(i, date)}
+            onSelectDate={(date) => setDate(i, date)}
           />
         </div>
       );
@@ -71,7 +67,7 @@ export const ScheduleIt = () => {
             options={[
               { key: AvailabilityType.No, text: "No" },
               { key: AvailabilityType.Maybe, text: "Maybe" },
-              { key: AvailabilityType.Yes, text: "Yes" }
+              { key: AvailabilityType.Yes, text: "Yes" },
             ]}
             selectedKey={value}
             onChange={(e, o) => {

@@ -1,13 +1,9 @@
-import {
-  PrimedComponentFactory
-} from "@microsoft/fluid-aqueduct";
+import { PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { SharedMap } from "@microsoft/fluid-map";
 import { SharedObjectSequence } from "@microsoft/fluid-sequence";
-import { DataModel } from "./DataModel";
+import { DataModel } from "./Model";
 
-export const fluidExport = new PrimedComponentFactory(
-  DataModel,
-  [
-    SharedMap.getFactory(),
-    SharedObjectSequence.getFactory(),
-  ]);
+export const fluidExport = new PrimedComponentFactory(DataModel, [
+  SharedMap.getFactory(),
+  SharedObjectSequence.getFactory(),
+]);
