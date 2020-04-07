@@ -5,4 +5,5 @@
 
 export * from "./vessel";
 export * from "./IComponentSynthesize";
+export * from "./providers";
 export * from "./types";

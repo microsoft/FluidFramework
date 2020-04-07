@@ -34,7 +34,7 @@ export class Vessel implements IComponentSynthesizer {
     public get IComponentSynthesizer() { return this; }
 
     /**
-     * @see IComponentSynthesizer.registeredTypes
+     * {@inheritDoc (IComponentSynthesizer:interface).registeredTypes}
      */
     public get registeredTypes(): Iterable<(keyof IComponent)> {
         return this.providers.keys();
@@ -43,7 +43,7 @@ export class Vessel implements IComponentSynthesizer {
     public constructor(public parent: IComponentSynthesizer | undefined = undefined) { }
 
     /**
-     * @see IComponentSynthesizer.register
+     * {@inheritDoc (IComponentSynthesizer:interface).register}
      */
     public register<T extends IComponent>(
         type: (keyof IComponent & keyof T),
@@ -77,7 +77,7 @@ export class Vessel implements IComponentSynthesizer {
     }
 
     /**
-     * @see IComponentSynthesizer.unregister
+     * {@inheritDoc (IComponentSynthesizer:interface).unregister}
      */
     public unregister<T extends IComponent>(type: (keyof IComponent & keyof T)): Provider | undefined {
         const module = this.providers.get(type);
@@ -89,9 +89,7 @@ export class Vessel implements IComponentSynthesizer {
     }
 
     /**
-     * Resolution happens for in the child then upward to the parent
-     *
-     * @see IComponentSynthesizer.synthesize
+     * {@inheritDoc (IComponentSynthesizer:interface).synthesize}
      */
     public synthesize<O extends IComponent, R extends IComponent = {}>(
         optionalTypes: ComponentSymbolProvider<O>,
@@ -119,7 +117,7 @@ export class Vessel implements IComponentSynthesizer {
     }
 
     /**
-     * @see IComponentSynthesizer.has
+     * {@inheritDoc (IComponentSynthesizer:interface).has}
      */
     public has(types: keyof IComponent | (keyof IComponent)[]): boolean {
         if (Array.isArray(types)) {
@@ -132,7 +130,7 @@ export class Vessel implements IComponentSynthesizer {
     }
 
     /**
-     * @see IComponentSynthesizer.getProvider
+     * {@inheritDoc (IComponentSynthesizer:interface).getProvider}
      */
     public getProvider<T extends IComponent>(type: (keyof IComponent & keyof T)): Provider<T> | undefined {
         // If we have the provider return it

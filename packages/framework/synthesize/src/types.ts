@@ -9,7 +9,7 @@ import { IComponent } from "@microsoft/fluid-component-core-interfaces";
  * the IComponent properties as its type mapped to a string representation
  * of that property.
  *
- * @example - { IComponentFoo: "IComponentFoo" }
+ * @example - \{ IComponentFoo: "IComponentFoo" \}
  */
 export type ComponentSymbolProvider<T extends IComponent> = {
     [P in (keyof T & keyof IComponent)]: P;
