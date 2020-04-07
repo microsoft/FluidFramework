@@ -4,21 +4,23 @@
  */
 
 import * as assert from "assert";
-import * as api from "@fluid-internal/client-api";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import {
-    DocumentDeltaEventManager,
-    TestDocumentServiceFactory,
-    TestResolver,
-} from "@microsoft/fluid-local-driver";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
-import { ISharedMap } from "@microsoft/fluid-map";
+import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
+import { Container } from "@microsoft/fluid-container-loader";
+import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import {
     ConsensusRegisterCollection,
     IConsensusRegisterCollection,
     ReadPolicy,
 } from "@microsoft/fluid-register-collection";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import {
+    createLocalLoader,
+    ITestFluidComponent,
+    initializeLocalContainer,
+    TestFluidComponentFactory,
+} from "@microsoft/fluid-test-utils";
 
 interface ISharedObjectConstructor<T> {
     create(runtime: IComponentRuntime, id?: string): T;
@@ -26,40 +28,55 @@ interface ISharedObjectConstructor<T> {
 
 function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegisterCollection>) {
     describe(name, () => {
-        const id = "fluid://test.com/test/test";
+        const id = "fluid-test://localhost/consensusRegisterCollectionTest";
+        const mapId = "mapKey";
+        const consensusId = "consensusKey";
+        const codeDetails: IFluidCodeDetails = {
+            package: "consensusRegisterCollectionTestPackage",
+            config: {},
+        };
 
-        let testDeltaConnectionServer: ILocalDeltaConnectionServer;
-        let documentDeltaEventManager: DocumentDeltaEventManager;
-        let user1Document: api.Document;
-        let user2Document: api.Document;
-        let user3Document: api.Document;
-        let root1: ISharedMap;
-        let root2: ISharedMap;
-        let root3: ISharedMap;
+        let deltaConnectionServer: ILocalDeltaConnectionServer;
+        let component1: ITestFluidComponent;
+        let sharedMap1: ISharedMap;
+        let sharedMap2: ISharedMap;
+        let sharedMap3: ISharedMap;
+
+        async function getComponent(componentId: string, container: Container): Promise<ITestFluidComponent> {
+            const response = await container.request({ url: componentId });
+            if (response.status !== 200 || response.mimeType !== "fluid/component") {
+                throw new Error(`Component with id: ${componentId} not found`);
+            }
+            return response.value as ITestFluidComponent;
+        }
+
+        async function createContainer(): Promise<Container> {
+            const factory = new TestFluidComponentFactory([
+                [ mapId, SharedMap.getFactory() ],
+                [ consensusId, ConsensusRegisterCollection.getFactory() ],
+            ]);
+            const loader = createLocalLoader([[ codeDetails, factory ]], deltaConnectionServer);
+            return initializeLocalContainer(id, loader, codeDetails);
+        }
 
         beforeEach(async () => {
-            testDeltaConnectionServer = LocalDeltaConnectionServer.create();
-            documentDeltaEventManager = new DocumentDeltaEventManager(testDeltaConnectionServer);
-            const documentService = new TestDocumentServiceFactory(testDeltaConnectionServer);
-            const resolver = new TestResolver();
-            user1Document = await api.load(
-                id, resolver, {}, documentService);
-            documentDeltaEventManager.registerDocuments(user1Document);
+            deltaConnectionServer = LocalDeltaConnectionServer.create();
 
-            user2Document = await api.load(
-                id, resolver, {}, documentService);
-            documentDeltaEventManager.registerDocuments(user2Document);
+            const container1 = await createContainer();
+            component1 = await getComponent("default", container1);
+            sharedMap1 = await component1.getSharedObject<SharedMap>(mapId);
 
-            user3Document = await api.load(
-                id, resolver, {}, documentService);
-            documentDeltaEventManager.registerDocuments(user3Document);
-            root1 = user1Document.getRoot();
-            root2 = user2Document.getRoot();
-            root3 = user3Document.getRoot();
+            const container2 = await createContainer();
+            const component2 = await getComponent("default", container2);
+            sharedMap2 = await component2.getSharedObject<SharedMap>(mapId);
+
+            const container3 = await createContainer();
+            const component3 = await getComponent("default", container3);
+            sharedMap3 = await component3.getSharedObject<SharedMap>(mapId);
         });
 
         it("Should not work before attach", async () => {
-            const collection1 = ctor.create(user1Document.runtime);
+            const collection1 = ctor.create(component1.runtime);
             collection1.write("test-key", "test-value").then(() => {
                 assert(false, "Writing to local did not fail");
             }).catch((reason) => {
@@ -68,14 +85,14 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
         });
 
         it("Should work after attach", async () => {
-            const collection1 = ctor.create(user1Document.runtime);
-            root1.set("collection", collection1.handle);
+            const collection1 = ctor.create(component1.runtime);
+            sharedMap1.set("collection", collection1.handle);
             await collection1.write("key1", "value1");
             await collection1.write("key2", "value2");
 
             const [collection2Handle, collection3Handle] = await Promise.all([
-                root2.wait<IComponentHandle<IConsensusRegisterCollection>>("collection"),
-                root3.wait<IComponentHandle<IConsensusRegisterCollection>>("collection"),
+                sharedMap2.wait<IComponentHandle<IConsensusRegisterCollection>>("collection"),
+                sharedMap3.wait<IComponentHandle<IConsensusRegisterCollection>>("collection"),
             ]);
             const collection2 = await collection2Handle.get();
             const collection3 = await collection3Handle.get();
@@ -93,12 +110,12 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
         });
 
         it("Should store all concurrent writings on a key in sequenced order", async () => {
-            const collection1 = ctor.create(user1Document.runtime);
-            root1.set("collection", collection1.handle);
+            const collection1 = ctor.create(component1.runtime);
+            sharedMap1.set("collection", collection1.handle);
 
             const [collection2Handle, collection3Handle] = await Promise.all([
-                root2.wait<IComponentHandle<IConsensusRegisterCollection>>("collection"),
-                root3.wait<IComponentHandle<IConsensusRegisterCollection>>("collection"),
+                sharedMap2.wait<IComponentHandle<IConsensusRegisterCollection>>("collection"),
+                sharedMap3.wait<IComponentHandle<IConsensusRegisterCollection>>("collection"),
             ]);
             const collection2 = await collection2Handle.get();
             const collection3 = await collection3Handle.get();
@@ -119,12 +136,12 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
         });
 
         it("Happened after updates should overwrite previous versions", async () => {
-            const collection1 = ctor.create(user1Document.runtime);
-            root1.set("collection", collection1.handle);
+            const collection1 = ctor.create(component1.runtime);
+            sharedMap1.set("collection", collection1.handle);
 
             const [collection2Handle, collection3Handle] = await Promise.all([
-                root2.wait<IComponentHandle<IConsensusRegisterCollection>>("collection"),
-                root3.wait<IComponentHandle<IConsensusRegisterCollection>>("collection"),
+                sharedMap2.wait<IComponentHandle<IConsensusRegisterCollection>>("collection"),
+                sharedMap3.wait<IComponentHandle<IConsensusRegisterCollection>>("collection"),
             ]);
             const collection2 = await collection2Handle.get();
             const collection3 = await collection3Handle.get();
@@ -168,12 +185,7 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
         });
 
         afterEach(async () => {
-            await Promise.all([
-                user1Document.close(),
-                user2Document.close(),
-                user3Document.close(),
-            ]);
-            await testDeltaConnectionServer.webSocketServer.close();
+            await deltaConnectionServer.webSocketServer.close();
         });
     });
 }

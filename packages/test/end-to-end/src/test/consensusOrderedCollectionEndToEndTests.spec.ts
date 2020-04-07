@@ -4,15 +4,11 @@
  */
 
 import * as assert from "assert";
-import * as api from "@fluid-internal/client-api";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import {
-    DocumentDeltaEventManager,
-    TestDocumentServiceFactory,
-    TestResolver,
-} from "@microsoft/fluid-local-driver";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
-import { ISharedMap } from "@microsoft/fluid-map";
+import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
+import { Container } from "@microsoft/fluid-container-loader";
+import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";
+import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import {
     acquireAndComplete,
     ConsensusQueue,
@@ -21,6 +17,13 @@ import {
     waitAcquireAndComplete,
 } from "@microsoft/fluid-ordered-collection";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import {
+    createLocalLoader,
+    ITestFluidComponent,
+    initializeLocalContainer,
+    TestFluidComponentFactory,
+} from "@microsoft/fluid-test-utils";
 
 interface ISharedObjectConstructor<T> {
     create(runtime: IComponentRuntime, id?: string): T;
@@ -31,48 +34,67 @@ function generate(
     input: any[], output: any[]) {
 
     describe(name, () => {
-        const id = "fluid://test.com/test/test";
+        const id = "fluid-test://localhost/consensusOrderedCollectionTest";
+        const mapId = "mapKey";
+        const consensusQueueId = "consensusQueueKey";
+        const codeDetails: IFluidCodeDetails = {
+            package: "consensusOrderedCollectionTestPackage",
+            config: {},
+        };
 
-        let testDeltaConnectionServer: ILocalDeltaConnectionServer;
-        let documentDeltaEventManager: DocumentDeltaEventManager;
-        let user1Document: api.Document;
-        let user2Document: api.Document;
-        let user3Document: api.Document;
-        let root1: ISharedMap;
-        let root2: ISharedMap;
-        let root3: ISharedMap;
+        let deltaConnectionServer: ILocalDeltaConnectionServer;
+        let containerDeltaEventManager: DocumentDeltaEventManager;
+        let component1: ITestFluidComponent;
+        let sharedMap1: ISharedMap;
+        let sharedMap2: ISharedMap;
+        let sharedMap3: ISharedMap;
+
+        async function getComponent(componentId: string, container: Container): Promise<ITestFluidComponent> {
+            const response = await container.request({ url: componentId });
+            if (response.status !== 200 || response.mimeType !== "fluid/component") {
+                throw new Error(`Component with id: ${componentId} not found`);
+            }
+            return response.value as ITestFluidComponent;
+        }
+
+        async function createContainer(): Promise<Container> {
+            const factory = new TestFluidComponentFactory([
+                [ mapId, SharedMap.getFactory() ],
+                [ consensusQueueId, ConsensusQueue.getFactory() ],
+            ]);
+            const loader = createLocalLoader([[ codeDetails, factory ]], deltaConnectionServer);
+            return initializeLocalContainer(id, loader, codeDetails);
+        }
 
         beforeEach(async () => {
-            testDeltaConnectionServer = LocalDeltaConnectionServer.create();
-            documentDeltaEventManager = new DocumentDeltaEventManager(testDeltaConnectionServer);
-            const documentService = new TestDocumentServiceFactory(testDeltaConnectionServer);
-            const resolver = new TestResolver();
-            user1Document = await api.load(
-                id, resolver, {}, documentService);
-            documentDeltaEventManager.registerDocuments(user1Document);
+            deltaConnectionServer = LocalDeltaConnectionServer.create();
 
-            user2Document = await api.load(
-                id, resolver, {}, documentService);
-            documentDeltaEventManager.registerDocuments(user2Document);
+            const container1 = await createContainer();
+            component1 = await getComponent("default", container1);
+            sharedMap1 = await component1.getSharedObject<SharedMap>(mapId);
 
-            user3Document = await api.load(
-                id, resolver, {}, documentService);
-            documentDeltaEventManager.registerDocuments(user3Document);
-            root1 = user1Document.getRoot();
-            root2 = user2Document.getRoot();
-            root3 = user3Document.getRoot();
+            const container2 = await createContainer();
+            const component2 = await getComponent("default", container2);
+            sharedMap2 = await component2.getSharedObject<SharedMap>(mapId);
+
+            const container3 = await createContainer();
+            const component3 = await getComponent("default", container3);
+            sharedMap3 = await component3.getSharedObject<SharedMap>(mapId);
+
+            containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
+            containerDeltaEventManager.registerDocuments(component1.runtime, component2.runtime);
         });
 
         it("Should initialize after attach", async () => {
-            const collection1 = ctor.create(user1Document.runtime);
+            const collection1 = ctor.create(component1.runtime);
             for (const item of input) {
                 await collection1.add(item);
             }
-            root1.set("collection", collection1.handle);
+            sharedMap1.set("collection", collection1.handle);
 
             const [collection2Handle, collection3Handle] = await Promise.all([
-                root2.wait<IComponentHandle<IConsensusOrderedCollection>>("collection"),
-                root3.wait<IComponentHandle<IConsensusOrderedCollection>>("collection"),
+                sharedMap2.wait<IComponentHandle<IConsensusOrderedCollection>>("collection"),
+                sharedMap3.wait<IComponentHandle<IConsensusOrderedCollection>>("collection"),
             ]);
             const collection2 = await collection2Handle.get();
             const collection3 = await collection3Handle.get();
@@ -97,37 +119,37 @@ function generate(
         });
 
         it("Simultaneous add and remove should be ordered and value return to only one client", async () => {
-            const collection1 = ctor.create(user1Document.runtime);
-            root1.set("collection", collection1.handle);
+            const collection1 = ctor.create(component1.runtime);
+            sharedMap1.set("collection", collection1.handle);
 
             const [collection2Handle, collection3Handle] = await Promise.all([
-                root2.wait<IComponentHandle<IConsensusOrderedCollection>>("collection"),
-                root3.wait<IComponentHandle<IConsensusOrderedCollection>>("collection"),
+                sharedMap2.wait<IComponentHandle<IConsensusOrderedCollection>>("collection"),
+                sharedMap3.wait<IComponentHandle<IConsensusOrderedCollection>>("collection"),
             ]);
             const collection2 = await collection2Handle.get();
             const collection3 = await collection3Handle.get();
 
-            await documentDeltaEventManager.pauseProcessing();
+            await containerDeltaEventManager.pauseProcessing();
 
             const addP = [];
             for (const item of input) {
                 addP.push(collection1.add(item));
             }
-            await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
+            await containerDeltaEventManager.process();
             await Promise.all(addP);
 
             const removeP1 = acquireAndComplete(collection3);
             // drain the outgoing so that the next set will come after
-            await documentDeltaEventManager.processOutgoing(user1Document, user2Document, user3Document);
+            await containerDeltaEventManager.processOutgoing();
             const removeP2 = acquireAndComplete(collection2);
             // drain the outgoing so that the next set will come after
-            await documentDeltaEventManager.processOutgoing(user1Document, user2Document, user3Document);
+            await containerDeltaEventManager.processOutgoing();
             const removeP3 = acquireAndComplete(collection1);
 
             const removeEmptyP = acquireAndComplete(collection1);
 
             // Now process all the incoming and outgoing
-            await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
+            await containerDeltaEventManager.process();
 
             // Verify the value is in the correct order
             assert.strictEqual(await removeP1, output[0], "Unexpected value in document 1");
@@ -137,20 +159,20 @@ function generate(
         });
 
         it("Wait resolves", async () => {
-            const collection1 = ctor.create(user1Document.runtime);
-            root1.set("collection", collection1.handle);
+            const collection1 = ctor.create(component1.runtime);
+            sharedMap1.set("collection", collection1.handle);
 
             const [collection2Handle, collection3Handle] = await Promise.all([
-                root2.wait<IComponentHandle<IConsensusOrderedCollection>>("collection"),
-                root3.wait<IComponentHandle<IConsensusOrderedCollection>>("collection"),
+                sharedMap2.wait<IComponentHandle<IConsensusOrderedCollection>>("collection"),
+                sharedMap3.wait<IComponentHandle<IConsensusOrderedCollection>>("collection"),
             ]);
             const collection2 = await collection2Handle.get();
             const collection3 = await collection3Handle.get();
 
-            await documentDeltaEventManager.pauseProcessing();
+            await containerDeltaEventManager.pauseProcessing();
 
             const waitOn2P = waitAcquireAndComplete(collection2);
-            await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
+            await containerDeltaEventManager.process();
             let added = false;
             waitOn2P.then(
                 (value) => {
@@ -163,58 +185,59 @@ function generate(
 
             const addP1 = collection1.add(input[0]);
             // drain the outgoing so that the next set will come after
-            await documentDeltaEventManager.processOutgoing(user1Document, user2Document, user3Document);
+            await containerDeltaEventManager.processOutgoing();
             const addP2 = collection3.add(input[1]);
             // drain the outgoing so that the next set will come after
-            await documentDeltaEventManager.processOutgoing(user1Document, user2Document, user3Document);
+            await containerDeltaEventManager.processOutgoing();
             const addP3 = collection2.add(input[2]);
             // drain the outgoing so that the next set will come after
-            await documentDeltaEventManager.processOutgoing(user1Document, user2Document, user3Document);
+            await containerDeltaEventManager.processOutgoing();
             added = true;
 
             // Now process the incoming
-            await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
+            await containerDeltaEventManager.process();
             await Promise.all([addP1, addP2, addP3]);
             assert.strictEqual(await waitOn2P, output[0],
                 "Unexpected wait before add resolved value in document 2 added in document 1");
 
             const waitOn1P = waitAcquireAndComplete(collection1);
-            await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
+            await containerDeltaEventManager.process();
             assert.strictEqual(await waitOn1P, output[1],
                 "Unexpected wait after add resolved value in document 1 added in document 3");
 
             const waitOn3P = waitAcquireAndComplete(collection3);
-            await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
+            await containerDeltaEventManager.process();
             assert.strictEqual(await waitOn3P, output[2],
                 "Unexpected wait after add resolved value in document 13added in document 2");
         });
 
         it("Can store handles", async () => {
-            const collection1 = ctor.create(user1Document.runtime);
-            root1.set("test", "sampleValue");
-            root1.set("collection", collection1.handle);
-            await collection1.add(root1.handle);
-            await collection1.add(root1.handle);
+            const collection1 = ctor.create(component1.runtime);
+            sharedMap1.set("test", "sampleValue");
+            sharedMap1.set("collection", collection1.handle);
+            await collection1.add(sharedMap1.handle);
+            await collection1.add(sharedMap1.handle);
 
-            const collection2Handle = await root2.wait<IComponentHandle<IConsensusOrderedCollection>>("collection");
+            const collection2Handle =
+                await sharedMap2.wait<IComponentHandle<IConsensusOrderedCollection>>("collection");
             const collection2 = await collection2Handle.get();
 
-            const root1Handle = await acquireAndComplete(collection1) as IComponentHandle<ISharedMap>;
-            const root1Prime = await root1Handle.get();
+            const sharedMap1Handle = await acquireAndComplete(collection1) as IComponentHandle<ISharedMap>;
+            const sharedMap1Prime = await sharedMap1Handle.get();
 
-            const root2Handle = await acquireAndComplete(collection2) as IComponentHandle<ISharedMap>;
-            const root2Prime = await root2Handle.get();
+            const sharedMap2Handle = await acquireAndComplete(collection2) as IComponentHandle<ISharedMap>;
+            const sharedMap2Prime = await sharedMap2Handle.get();
 
-            assert.equal(root1Prime.get("test"), "sampleValue");
-            assert.equal(root2Prime.get("test"), "sampleValue");
+            assert.equal(sharedMap1Prime.get("test"), "sampleValue");
+            assert.equal(sharedMap2Prime.get("test"), "sampleValue");
         });
 
         it("Can add and release data", async () => {
-            const collection1 = ctor.create(user1Document.runtime);
-            root1.set("collection", collection1.handle);
+            const collection1 = ctor.create(component1.runtime);
+            sharedMap1.set("collection", collection1.handle);
 
             const collection2Handle =
-                await root2.wait<IComponentHandle<IConsensusOrderedCollection>>("collection");
+                await sharedMap2.wait<IComponentHandle<IConsensusOrderedCollection>>("collection");
             const collection2 = await collection2Handle.get();
 
             await collection1.add("testValue");
@@ -229,15 +252,15 @@ function generate(
         });
 
         it("Events", async () => {
-            const collection1 = ctor.create(user1Document.runtime);
-            root1.set("collection", collection1.handle);
+            const collection1 = ctor.create(component1.runtime);
+            sharedMap1.set("collection", collection1.handle);
             const [collection2Handle, collection3Handle] = await Promise.all([
-                root2.wait<IComponentHandle<IConsensusOrderedCollection>>("collection"),
-                root3.wait<IComponentHandle<IConsensusOrderedCollection>>("collection"),
+                sharedMap2.wait<IComponentHandle<IConsensusOrderedCollection>>("collection"),
+                sharedMap3.wait<IComponentHandle<IConsensusOrderedCollection>>("collection"),
             ]);
             const collection2 = await collection2Handle.get();
             const collection3 = await collection3Handle.get();
-            await documentDeltaEventManager.pauseProcessing();
+            await containerDeltaEventManager.pauseProcessing();
 
             let addCount1 = 0;
             let addCount2 = 0;
@@ -275,26 +298,26 @@ function generate(
             const p = [];
             p.push(collection1.add(input[0]));
             // drain the outgoing so that the next set will come after
-            await documentDeltaEventManager.processOutgoing(user1Document, user2Document, user3Document);
+            await containerDeltaEventManager.processOutgoing();
             p.push(collection2.add(input[1]));
             // drain the outgoing so that the next set will come after
-            await documentDeltaEventManager.processOutgoing(user1Document, user2Document, user3Document);
+            await containerDeltaEventManager.processOutgoing();
             p.push(collection3.add(input[2]));
             // drain the outgoing so that the next set will come after
-            await documentDeltaEventManager.processOutgoing(user1Document, user2Document, user3Document);
+            await containerDeltaEventManager.processOutgoing();
             p.push(acquireAndComplete(collection2));
             // drain the outgoing so that the next set will come after
-            await documentDeltaEventManager.processOutgoing(user1Document, user2Document, user3Document);
+            await containerDeltaEventManager.processOutgoing();
             p.push(acquireAndComplete(collection3));
             // drain the outgoing so that the next set will come after
-            await documentDeltaEventManager.processOutgoing(user1Document, user2Document, user3Document);
+            await containerDeltaEventManager.processOutgoing();
             p.push(acquireAndComplete(collection1));
             // drain the outgoing so that the next set will come after
-            await documentDeltaEventManager.processOutgoing(user1Document, user2Document, user3Document);
+            await containerDeltaEventManager.processOutgoing();
             const removeEmptyP = acquireAndComplete(collection1);
 
             // Now process all
-            await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
+            await containerDeltaEventManager.process();
             await Promise.all(p);
             assert.strictEqual(await removeEmptyP, undefined, "Remove of empty collection should be undefined");
             assert.strictEqual(addCount1, 3, "Incorrect number add events in document 1");
@@ -306,12 +329,7 @@ function generate(
         });
 
         afterEach(async () => {
-            await Promise.all([
-                user1Document.close(),
-                user2Document.close(),
-                user3Document.close(),
-            ]);
-            await testDeltaConnectionServer.webSocketServer.close();
+            await deltaConnectionServer.webSocketServer.close();
         });
     });
 }
