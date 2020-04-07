@@ -7,6 +7,7 @@ import {
     BaseSegment, IJSONSegment, ISegment, PropertySet, LocalReferenceCollection } from "@microsoft/fluid-merge-tree";
 import { IChannelAttributes, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedSegmentSequence } from "./sequence";
+import { ISharedSegmentSequenceEvents } from "./interfaces";
 
 const MaxRun = 128;
 
@@ -100,7 +101,8 @@ export class SubSequence<T> extends BaseSegment {
 
 }
 
-export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
+export class SharedSequence<T>
+    extends SharedSegmentSequence<SubSequence<T>, ISharedSegmentSequenceEvents<SharedSequence<T>>> {
     constructor(
         document: IComponentRuntime,
         public id: string,

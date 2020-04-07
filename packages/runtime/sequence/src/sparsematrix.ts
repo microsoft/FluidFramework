@@ -21,6 +21,7 @@ import {
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { pkgVersion } from "./packageVersion";
+import { ISharedSegmentSequenceEvents } from "./interfaces";
 import { SharedSegmentSequence, SubSequence } from "./";
 
 // An empty segment that occupies 'cachedLength' positions.  SparseMatrix uses PaddingSegment
@@ -187,7 +188,7 @@ export function positionToRowCol(position: number) {
     return { row, col };
 }
 
-export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
+export class SparseMatrix extends SharedSegmentSequence<MatrixSegment, ISharedSegmentSequenceEvents<SparseMatrix>> {
     /**
      * Create a new sparse matrix
      *

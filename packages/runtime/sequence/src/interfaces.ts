@@ -3,13 +3,15 @@
  * Licensed under the MIT License.
  */
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { ISharedObjectEvents } from "@microsoft/fluid-shared-object-base";
+import { ISharedObjectEvents, ISharedObject } from "@microsoft/fluid-shared-object-base";
 import { SequenceDeltaEvent } from "./sequenceDeltaEvent";
 
 
-export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
-    (event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: this) => void);
+export interface ISharedSegmentSequenceEvents<TTarget extends ISharedObject =ISharedObject>
+    extends ISharedObjectEvents {
+
+    (event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: TTarget) => void);
     (
         event: "pre-op" | "op",
-        listener: (op: ISequencedDocumentMessage, local: boolean, target: this) => void);
+        listener: (op: ISequencedDocumentMessage, local: boolean, target: TTarget) => void);
 }

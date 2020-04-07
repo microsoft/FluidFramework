@@ -33,8 +33,10 @@ const cloneDeep = require("lodash/cloneDeep");
 const snapshotFileName = "header";
 const contentPath = "content";
 
-export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
-    extends SharedObject<ISharedSegmentSequenceEvents>
+export abstract class SharedSegmentSequence
+<T extends MergeTree.ISegment,
+    TEvents extends ISharedSegmentSequenceEvents = ISharedSegmentSequenceEvents<SharedObject>>
+    extends SharedObject<TEvents>
     implements ISharedIntervalCollection<SequenceInterval> {
 
     get loaded(): Promise<void> {
