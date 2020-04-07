@@ -10,8 +10,12 @@ import {
   PrimaryButton,
 } from "office-ui-fabric-react";
 import { DatePicker, defaultDayPickerStrings } from "@uifabric/date-time";
-import { PrimedContext } from "./provider/provider";
-import { AvailabilityType, IPersonType, IViewSelectors } from "./provider";
+import {
+  AvailabilityType,
+  IPersonType,
+  IViewSelectors,
+  PrimedContext,
+} from "./provider";
 initializeIcons();
 
 export const ScheduleIt = () => {

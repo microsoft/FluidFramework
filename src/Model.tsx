@@ -5,14 +5,13 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { BadArray } from "./utils/BadArray";
+import { BadArray, defaultDatesNumbers, defaultPeople } from "./utils";
 import {
-  defaultDatesNumbers,
-  defaultPeople,
-  defaultDates,
-} from "./utils/defaultData";
-import { AvailabilityType, IPersonType, IViewProps } from "./provider";
-import { PrimedContext } from "./provider/provider";
+  AvailabilityType,
+  IPersonType,
+  IViewProps,
+  PrimedContext,
+} from "./provider";
 import { SharedObjectSequence } from "@microsoft/fluid-sequence";
 import { ScheduleIt } from "./View";
 
