@@ -1,5 +1,5 @@
 import * as React from "react";
-import { IViewProps } from "./provider.types";
+import { IViewProps } from "./";
 
 export const PrimedContext: React.Context<IViewProps> = React.createContext(
   null
