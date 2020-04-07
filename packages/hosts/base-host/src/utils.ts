@@ -32,35 +32,42 @@ export class UpgradeManager extends EventEmitter {
             proposal.reject();
         } else {
             // The proposal we're tracking is not the first. It should've been rejected but we missed our chance.
+            this.logger.sendErrorEvent({
+                eventName: "ProposalOutOfOrder",
+                trackedSequenceNumber: this.proposedSeqNum,
+                olderSequenceNumber: proposal.sequenceNumber,
+            });
             this.proposedSeqNum = undefined;
-            this.logger.sendErrorEvent({ eventName: "proposalOutOfOrder" });
         }
     }
 
     private onApprove(seqNum: number) {
         if (seqNum === this.proposedSeqNum) {
-            this.proposedSeqNum = undefined;
             this.logger.sendTelemetryEvent({
-                eventName: "upgradeSucceeded",
-                proposalSequenceNumber: this.proposedSeqNum,
+                eventName: "UpgradeSucceeded",
+                trackedSequenceNumber: this.proposedSeqNum,
             });
             this.emit("upgradeSucceeded");
+            this.proposedSeqNum = undefined;
         }
     }
 
     private onReject(seqNum: number) {
         if (seqNum === this.proposedSeqNum) {
             // the proposal we're tracking was rejected, which probably means the upgrade failed
-            this.proposedSeqNum = undefined;
-            this.logger.sendTelemetryEvent({ eventName: "upgradeFailed", proposalSequenceNumber: this.proposedSeqNum });
+            this.logger.sendTelemetryEvent({ eventName: "UpgradeFailed", trackedSequenceNumber: this.proposedSeqNum });
             this.emit("upgradeFailed");
+            this.proposedSeqNum = undefined;
         }
     }
 
     public async upgrade(code: IFluidCodeDetails) {
         if (this.proposedSeqNum) {
             // don't propose if we know there's already one pending
-            this.logger.sendTelemetryEvent({ eventName: "skippedProposal"});
+            this.logger.sendTelemetryEvent({
+                eventName: "SkippedProposal",
+                trackedSequenceNumber: this.proposedSeqNum,
+            });
             return;
         }
 
