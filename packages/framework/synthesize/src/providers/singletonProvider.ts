@@ -7,12 +7,12 @@ import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 
 import { Provider } from "./provider";
 
-export interface SingletonProvider<T extends IComponent> {
-    singleton: new () => T;
+export interface SingletonProvider<T extends keyof IComponent> {
+    singleton: new () => NonNullable<IComponent[T]>;
     lazy?: boolean;
 }
 
-export const isSingletonProvider = <T>(
+export const isSingletonProvider = <T extends keyof IComponent>(
     provider: Provider<T>,
 ): provider is SingletonProvider<T> => {
     return (

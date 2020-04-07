@@ -28,7 +28,7 @@ import {
  * synthesize an object based on them when requested.
  */
 export class Vessel implements IComponentSynthesizer {
-    private readonly providers = new Map<keyof IComponent, Provider>();
+    private readonly providers = new Map<keyof IComponent, Provider<any>>();
     private readonly singletons = new Map<keyof IComponent, IComponent>();
 
     public get IComponentSynthesizer() { return this; }
@@ -45,30 +45,29 @@ export class Vessel implements IComponentSynthesizer {
     /**
      * {@inheritDoc (IComponentSynthesizer:interface).register}
      */
-    public register<T extends IComponent>(
-        type: (keyof IComponent & keyof T),
+    public register<T extends keyof IComponent>(
+        type: T,
         provider: InstanceProvider<T>,
     ): void;
-    public register<T extends IComponent>(
-        type: (keyof IComponent & keyof T),
+    public register<T extends keyof IComponent>(
+        type: T,
         // eslint-disable-next-line @typescript-eslint/unified-signatures
         provider: FactoryProvider<T>,
     ): void;
-    public register<T extends IComponent>(
-        type: (keyof IComponent & keyof T),
+    public register<T extends keyof IComponent>(
+        type: T,
         // eslint-disable-next-line @typescript-eslint/unified-signatures
         provider: SingletonProvider<T>,
     ): void;
-    public register<T extends IComponent>(
-        type: (keyof IComponent & keyof T),
+    public register<T extends keyof IComponent>(
+        type: T,
         // eslint-disable-next-line @typescript-eslint/unified-signatures
         provider: ValueProvider<T>,
     ): void;
-    public register<T extends IComponent>(
-        type: (keyof IComponent & keyof T),
+    public register<T extends keyof IComponent>(
+        type: T,
         provider: Provider<T>,
     ): void {
-        // TODO: Maybe support having an array of providers?
         if (this.has(type)){
             throw new Error(`Attempting to register a provider of type ${type} that already exists`);
         }
@@ -79,7 +78,7 @@ export class Vessel implements IComponentSynthesizer {
     /**
      * {@inheritDoc (IComponentSynthesizer:interface).unregister}
      */
-    public unregister<T extends IComponent>(type: (keyof IComponent & keyof T)): Provider | undefined {
+    public unregister<T extends keyof IComponent>(type: T): Provider<T> | undefined {
         const module = this.providers.get(type);
         if (module){
             this.providers.delete(type);
@@ -95,8 +94,8 @@ export class Vessel implements IComponentSynthesizer {
         optionalTypes: ComponentSymbolProvider<O>,
         requiredTypes: ComponentSymbolProvider<R>,
     ): Scope<O, R> {
-        const optionalValues = Object.values(optionalTypes ?? {});
-        const requiredValues = Object.values(requiredTypes ?? {});
+        const optionalValues = Object.values(optionalTypes);
+        const requiredValues = Object.values(requiredTypes);
 
         if (optionalValues === [] && requiredValues === []) {
             // There was nothing passed in so we can return
@@ -111,9 +110,9 @@ export class Vessel implements IComponentSynthesizer {
             }
         });
 
-        const s = this.generateRequired<R>(requiredTypes);
-        const o = this.generateOptional<O>(optionalTypes);
-        return { ...s, ...o };
+        const required = this.generateRequired<R>(requiredTypes);
+        const optional = this.generateOptional<O>(optionalTypes);
+        return { ...required, ...optional };
     }
 
     /**
@@ -132,7 +131,7 @@ export class Vessel implements IComponentSynthesizer {
     /**
      * {@inheritDoc (IComponentSynthesizer:interface).getProvider}
      */
-    public getProvider<T extends IComponent>(type: (keyof IComponent & keyof T)): Provider<T> | undefined {
+    public getProvider<T extends keyof IComponent>(type: T): Provider<T> | undefined {
         // If we have the provider return it
         const provider = this.providers.get(type);
         if (provider) {
@@ -180,7 +179,7 @@ export class Vessel implements IComponentSynthesizer {
         }));
     }
 
-    private resolveProvider<T>(provider: Provider<T> | undefined, t: keyof IComponent) {
+    private resolveProvider<T extends keyof IComponent>(provider: Provider<T> | undefined, t: keyof IComponent) {
         if (!provider) {
             return undefined;
         }
@@ -208,7 +207,9 @@ export class Vessel implements IComponentSynthesizer {
         if(isInstanceProvider(provider)) {
             if(isLazy(provider)){
                 return { get [t]() {
-                    return new (provider as InstanceProvider<T>).instance()[t];
+                    if (provider && isInstanceProvider(provider)) {
+                        return new provider.instance()[t];
+                    }
                 }};
             }
 
@@ -216,7 +217,7 @@ export class Vessel implements IComponentSynthesizer {
         }
     }
 
-    private getSingleton<T>(type: keyof IComponent, provider: SingletonProvider<T>) {
+    private getSingleton<T extends keyof IComponent>(type: keyof IComponent, provider: SingletonProvider<T>) {
         if(!this.singletons.has(type)) {
             this.singletons.set(type, new provider.singleton()[type]);
         }

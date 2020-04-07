@@ -8,7 +8,7 @@ import * as assert from "assert";
 import {
     IComponentConfiguration,
     IComponentLoadable,
-    IProvideComponentLoadable,
+    // IProvideComponentLoadable,
 } from "@microsoft/fluid-component-core-interfaces";
 
 import { Vessel } from "../";
@@ -31,12 +31,6 @@ class MockLoadable implements IComponentLoadable {
 class MockLoadableWithArgs implements IComponentLoadable {
     public constructor(public readonly url: string) { }
     public get IComponentLoadable() { return this; }
-}
-
-class MockProvideLoadable implements IProvideComponentLoadable {
-    public get IComponentLoadable() {
-        return new MockLoadable();
-    }
 }
 
 class MockComponentConfiguration implements IComponentConfiguration {
@@ -106,24 +100,6 @@ describe("Routerlicious", () => {
                 assert(s.IComponentLoadable !== s1.IComponentLoadable, "Should not be a singleton");
             });
 
-            it(`One Optional Module registered via instance - IProvideComponent pattern`, async () => {
-                const vessel = new Vessel();
-                vessel.register(IComponentLoadable, {instance: MockProvideLoadable});
-
-                const s = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
-                assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
-                assert(s.IComponentLoadable?.url === "url123", "IComponentLoadable is valid");
-            });
-
-            it(`One Optional Module registered via instance - IProvideComponent pattern - lazy false`, async () => {
-                const vessel = new Vessel();
-                vessel.register(IComponentLoadable, {instance: MockProvideLoadable, lazy: false});
-
-                const s = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
-                assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
-                assert(s.IComponentLoadable?.url === "url123", "IComponentLoadable is valid");
-            });
-
             it(`One Optional Module registered via singleton - lazy default`, async () => {
                 const vessel = new Vessel();
                 vessel.register(IComponentLoadable, {singleton: MockLoadable});
@@ -158,24 +134,6 @@ describe("Routerlicious", () => {
                 assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
                 assert(s.IComponentLoadable?.url === "url123", "IComponentLoadable is valid");
                 assert(s.IComponentLoadable === s1.IComponentLoadable, "Should be a singleton");
-            });
-
-            it(`One Optional Module registered via singleton - IProvideComponent pattern`, async () => {
-                const vessel = new Vessel();
-                vessel.register(IComponentLoadable, {singleton: MockProvideLoadable});
-
-                const s = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
-                assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
-                assert(s.IComponentLoadable?.url === "url123", "IComponentLoadable is valid");
-            });
-
-            it(`One Optional Module registered via singleton - IProvideComponent pattern - lazy false`, async () => {
-                const vessel = new Vessel();
-                vessel.register(IComponentLoadable, {singleton: MockProvideLoadable, lazy: false});
-
-                const s = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
-                assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
-                assert(s.IComponentLoadable?.url === "url123", "IComponentLoadable is valid");
             });
 
             it(`One Required Module registered via value`, async () => {

@@ -31,11 +31,6 @@ export interface IProvideComponentSynthesizer {
  */
 export interface IComponentSynthesizer extends IProvideComponentSynthesizer {
     /**
-     * Parent IComponentSynthesizer if available
-     */
-    parent: IComponentSynthesizer | undefined;
-
-    /**
      * All the registered types available
      */
     readonly registeredTypes: Iterable<(keyof IComponent)>;
@@ -46,14 +41,14 @@ export interface IComponentSynthesizer extends IProvideComponentSynthesizer {
      * @param provider - A provider that will resolve the T correctly when asked
      * @throws - If passing a type that's already registered
      */
-    register<T extends IComponent>(type: (keyof IComponent & keyof T), provider: Provider<T>): void;
+    register<T extends keyof IComponent>(type: T, provider: Provider<T>): void;
 
     /**
      * Remove a provider
      * @param type - Name of the provider to remove
      * @returns - Module removed if removed or undefined if it was not there.
      */
-    unregister<T extends IComponent>(type: (keyof IComponent & keyof T)): Provider<T> | undefined;
+    unregister<T extends keyof IComponent>(type: T): Provider<T> | undefined;
 
     /**
      * synthesize takes optional and required types and returns an object that will fulfill the
@@ -77,5 +72,5 @@ export interface IComponentSynthesizer extends IProvideComponentSynthesizer {
      * Get a provider. undefined if not available.
      * @param type - Type to get
      */
-    getProvider<T extends IComponent>(type: (keyof IComponent & keyof T)): Provider<T> | undefined;
+    getProvider<T extends keyof IComponent>(type: T): Provider<T> | undefined;
 }

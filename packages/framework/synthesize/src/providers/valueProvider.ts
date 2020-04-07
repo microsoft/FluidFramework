@@ -7,11 +7,11 @@ import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentProvider } from "../types";
 import { Provider } from "./provider";
 
-export interface ValueProvider<T extends IComponent> {
+export interface ValueProvider<T extends keyof IComponent> {
     value: ComponentProvider<T>;
 }
 
-export const isValueProvider = <T>(
+export const isValueProvider = <T extends keyof IComponent>(
     provider: Provider<T>,
 ): provider is ValueProvider<T> => {
     return (provider as ValueProvider<T>).value !== undefined;
