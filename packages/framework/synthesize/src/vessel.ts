@@ -8,6 +8,7 @@ import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import {
     Scope,
     ComponentSymbolProvider,
+    KeyOfIComponent,
 } from "./types";
 import { IComponentSynthesizer } from "./IComponentSynthesize";
 import {
@@ -90,10 +91,12 @@ export class Vessel implements IComponentSynthesizer {
     /**
      * {@inheritDoc (IComponentSynthesizer:interface).synthesize}
      */
-    public synthesize<O extends IComponent, R extends IComponent = {}>(
-        optionalTypes: ComponentSymbolProvider<O>,
-        requiredTypes: ComponentSymbolProvider<R>,
-    ): Scope<O, R> {
+    public synthesize<
+        O extends IComponent,
+        R extends IComponent = object>(
+        optionalTypes: ComponentSymbolProvider<KeyOfIComponent<O>>,
+        requiredTypes: ComponentSymbolProvider<KeyOfIComponent<R>>,
+    ): Scope<KeyOfIComponent<O>, KeyOfIComponent<R>> {
         const optionalValues = Object.values(optionalTypes);
         const requiredValues = Object.values(requiredTypes);
 
@@ -110,8 +113,8 @@ export class Vessel implements IComponentSynthesizer {
             }
         });
 
-        const required = this.generateRequired<R>(requiredTypes);
-        const optional = this.generateOptional<O>(optionalTypes);
+        const required = this.generateRequired<KeyOfIComponent<R>>(requiredTypes);
+        const optional = this.generateOptional<KeyOfIComponent<O>>(optionalTypes);
         return { ...required, ...optional };
     }
 
@@ -145,10 +148,11 @@ export class Vessel implements IComponentSynthesizer {
         return undefined;
     }
 
-    private generateRequired<T extends IComponent>(
+    private generateRequired<T extends keyof IComponent>(
         types: ComponentSymbolProvider<T>,
     ) {
-        return Object.assign({}, ...Array.from(Object.values(types), (t) => {
+        const values: (keyof IComponent)[] = Object.values(types);
+        return Object.assign({}, ...Array.from(values, (t) => {
             const provider = this.getProvider(t);
             const module = this.resolveProvider(provider, t);
             if (!module) {
@@ -166,10 +170,11 @@ export class Vessel implements IComponentSynthesizer {
         }));
     }
 
-    private generateOptional<T extends IComponent>(
+    private generateOptional<T extends keyof IComponent>(
         types: ComponentSymbolProvider<T>,
     ) {
-        return Object.assign({}, ...Array.from(Object.values(types), (t) => {
+        const values: (keyof IComponent)[] = Object.values(types);
+        return Object.assign({}, ...Array.from(values, (t) => {
             const provider = this.getProvider(t);
             const module = this.resolveProvider(provider, t);
 

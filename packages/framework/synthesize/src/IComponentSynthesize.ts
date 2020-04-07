@@ -7,6 +7,7 @@ import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import {
     Scope,
     ComponentSymbolProvider,
+    KeyOfIComponent,
 } from "./types";
 
 import {
@@ -57,10 +58,12 @@ export interface IComponentSynthesizer extends IProvideComponentSynthesizer {
      * @param optionalTypes - optional types to be in the Scope object
      * @param requiredTypes - required types that need to be in the Scope object
      */
-    synthesize<O extends IComponent, R extends IComponent>(
-        optionalTypes: ComponentSymbolProvider<O>,
-        requiredTypes: ComponentSymbolProvider<R>,
-    ): Scope<O, R>;
+    synthesize<
+        O extends IComponent,
+        R extends IComponent>(
+        optionalTypes: ComponentSymbolProvider<KeyOfIComponent<O>>,
+        requiredTypes: ComponentSymbolProvider<KeyOfIComponent<R>>,
+    ): Scope<KeyOfIComponent<O>, KeyOfIComponent<R>>;
 
     /**
      * Check if a given type is registered

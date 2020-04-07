@@ -8,7 +8,6 @@ import * as assert from "assert";
 import {
     IComponentConfiguration,
     IComponentLoadable,
-    // IProvideComponentLoadable,
 } from "@microsoft/fluid-component-core-interfaces";
 
 import { Vessel } from "../";
@@ -48,6 +47,7 @@ describe("Routerlicious", () => {
                 vessel.register(IComponentLoadable, {value: module});
 
                 const s = vessel.synthesize<IComponentLoadable>({IComponentLoadable}, {});
+                console.log(s.IComponentLoadable?.url);
                 assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
                 assert(s.IComponentLoadable === module, "IComponentLoadable is valid");
             });
@@ -161,7 +161,7 @@ describe("Routerlicious", () => {
                 );
 
                 assert(s.IComponentLoadable, "Required IComponentLoadable was returned");
-                assert(s.IComponentLoadable?.url === mock.url, "Required IComponentLoadable is valid");
+                assert(s.IComponentLoadable.url === mock.url, "Required IComponentLoadable is valid");
             });
 
             it(`One Required Module registered via instance - lazy default`, async () => {
@@ -179,7 +179,7 @@ describe("Routerlicious", () => {
                 );
 
                 assert(s.IComponentLoadable, "Required IComponentLoadable was returned");
-                assert(s.IComponentLoadable?.url === "url123", "Required IComponentLoadable is valid");
+                assert(s.IComponentLoadable.url === "url123", "Required IComponentLoadable is valid");
                 assert(s.IComponentLoadable !== s1.IComponentLoadable, "Should not be a singleton");
             });
 

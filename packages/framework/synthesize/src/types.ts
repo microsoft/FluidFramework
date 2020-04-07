@@ -11,8 +11,8 @@ import { IComponent } from "@microsoft/fluid-component-core-interfaces";
  *
  * @example - \{ IComponentFoo: "IComponentFoo" \}
  */
-export type ComponentSymbolProvider<T extends IComponent> = {
-    [P in (keyof T & keyof IComponent)]: P;
+export type ComponentSymbolProvider<T extends keyof IComponent> = {
+    [P in T]: NonNullable<P>;
 };
 
 /**
@@ -25,14 +25,18 @@ export type ComponentProvider<T extends keyof IComponent> = {
 };
 
 /**
- * Note: This is can also be represented as `ProvideComponent<T> | undefined` but typescript
- * says it's too complex to represent so we have to duplicate some code.
+  * This is a condensed version of Record that requires the object has all
+ * the IComponent properties as its type, mapped to an object that implements
+ * the property or undefined.
  */
-export type OptionalComponentProvider<T extends IComponent> =
-    { [type in (keyof T & keyof IComponent)]: T[type] | undefined };
+export type OptionalComponentProvider<T extends keyof IComponent> = {
+    [P in T]: IComponent[T] | undefined;
+};
 
 /**
  * A Scope is a collection of optional and required providers.
  */
-export type Scope<O extends IComponent, R extends IComponent>
-    = OptionalComponentProvider<O> & ComponentProvider<keyof R & keyof IComponent>;
+export type Scope<O extends keyof IComponent, R extends keyof IComponent>
+    = OptionalComponentProvider<O> & ComponentProvider<R>;
+
+export type KeyOfIComponent<T extends IComponent> = keyof T & keyof IComponent;
