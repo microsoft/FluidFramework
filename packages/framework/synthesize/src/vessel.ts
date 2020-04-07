@@ -47,26 +47,11 @@ export class Vessel implements IComponentSynthesizer {
      */
     public register<T extends keyof IComponent>(
         type: T,
-        provider: InstanceProvider<T>,
-    ): void;
-    public register<T extends keyof IComponent>(
-        type: T,
-        // eslint-disable-next-line @typescript-eslint/unified-signatures
-        provider: FactoryProvider<T>,
-    ): void;
-    public register<T extends keyof IComponent>(
-        type: T,
-        // eslint-disable-next-line @typescript-eslint/unified-signatures
-        provider: SingletonProvider<T>,
-    ): void;
-    public register<T extends keyof IComponent>(
-        type: T,
-        // eslint-disable-next-line @typescript-eslint/unified-signatures
-        provider: ValueProvider<T>,
-    ): void;
-    public register<T extends keyof IComponent>(
-        type: T,
-        provider: Provider<T>,
+        provider: InstanceProvider<T> |
+        FactoryProvider<T> |
+        SingletonProvider<T> |
+        ValueProvider<T> |
+        Provider<T>,
     ): void {
         if (this.has(type)){
             throw new Error(`Attempting to register a provider of type ${type} that already exists`);
