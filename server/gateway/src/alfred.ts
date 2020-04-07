@@ -114,7 +114,7 @@ export class Alfred implements IAlfred {
     }
 
     public getTenantManager(): ITenantManager {
-        return new TenantManager(this.riddlerUrl, this.historianUrl);
+        return new TenantManager(this.riddlerUrl);
     }
 
     private getGitManager(id: string): GitManager {

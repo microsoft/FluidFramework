@@ -180,8 +180,7 @@ export class SharedCell extends SharedObject implements ISharedCell {
 
         const rawContent = await storage.read(snapshotFileName);
 
-        // tslint:disable-next-line:strict-boolean-expressions
-        const content = rawContent
+        const content = rawContent !== undefined
             ? JSON.parse(fromBase64ToUtf8(rawContent)) as ICellValue
             : { type: ValueType[ValueType.Plain], value: undefined };
 
@@ -232,8 +231,7 @@ export class SharedCell extends SharedObject implements ISharedCell {
 
             switch (op.type) {
                 case "setCell":
-                    const value = this.fromSerializable(op.value);
-                    this.setCore(value);
+                    this.setCore(this.fromSerializable(op.value));
                     break;
 
                 case "deleteCell":

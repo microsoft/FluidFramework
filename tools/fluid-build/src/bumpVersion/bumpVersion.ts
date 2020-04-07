@@ -8,10 +8,11 @@ import * as path from "path";
 import { commonOptions, commonOptionString, parseOption } from "../common/commonOptions";
 import { Timer } from "../common/timer";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
-import { FluidRepoBase, MonoRepo } from "../common/fluidRepoBase";
+import { FluidRepoBase } from "../common/fluidRepoBase";
+import { MonoRepo, MonoRepoKind } from "../common/monoRepo";
 import * as semver from "semver";
 import { Package } from "../common/npmPackage";
-import { execWithErrorAsync, ExecAsyncResult } from "../common/utils";
+import { execWithErrorAsync } from "../common/utils";
 import { logVerbose } from "../common/logging";
 
 function printUsage() {
@@ -64,18 +65,18 @@ function parseOptions(argv: string[]) {
 
 parseOptions(process.argv);
 
-function saveVersion(versions: { [key: string]: string }, name: string, version: string, monoRepo: MonoRepo = MonoRepo.None) {
-    if (monoRepo == MonoRepo.None) {
+function saveVersion(versions: { [key: string]: string }, name: string, version: string, monoRepo?: MonoRepo) {
+    if (monoRepo === undefined) {
         versions[name] = version;
     } else if (name.startsWith("@fluid-example/version-test")) {
         // Ignore example packages
         return;
-    } else if (versions[MonoRepo[monoRepo]]) {
-        if (versions[MonoRepo[monoRepo]] !== version) {
+    } else if (versions[MonoRepoKind[monoRepo.kind]]) {
+        if (versions[MonoRepoKind[monoRepo.kind]] !== version) {
             throw new Error(`Inconsistent version within Monorepo ${name} ${version}`);
         }
     } else {
-        versions[MonoRepo[monoRepo]] = version;
+        versions[MonoRepoKind[monoRepo.kind]] = version;
     }
 }
 
@@ -83,8 +84,7 @@ function collectVersions(repo: FluidRepoBase, generatorPackage: Package, templat
     const versions: { [key: string]: string } = {};
 
     repo.packages.packages.forEach(pkg => {
-        const monoRepo = repo.getMonoRepo(pkg);
-        saveVersion(versions, pkg.name, pkg.version, monoRepo);
+        saveVersion(versions, pkg.name, pkg.version, pkg.monoRepo);
     });
 
     saveVersion(versions, generatorPackage.name, generatorPackage.version);
@@ -123,13 +123,13 @@ async function main() {
         process.exit(1);
     }
 
-    const branchName = result.stdout;
-    if (branchName !== "master\n" && !branchName.startsWith("release/")) {
+    const branchName = result.stdout.split("\n")[0];
+    if (branchName !== "master" && !branchName.startsWith("release/")) {
         console.error(`ERROR: Unrecognized branch '${branchName}'`);
         process.exit(2)
     }
 
-    const versionBump = result.stdout == "master\n" ? "minor" : "patch";
+    const versionBump = branchName === "master" ? "minor" : "patch";
     console.log(`Bumping ${versionBump} version`);
 
     // Load the package
@@ -145,37 +145,38 @@ async function main() {
         for (const { name: dep, version } of pkg.combinedDependencies) {
             const depBuildPackage = buildPackages.get(dep);
             if (depBuildPackage) {
-                const depMonoRepo = repo.getMonoRepo(depBuildPackage);
-                saveVersion(depVersions, dep, semver.minVersion(version)!.version, depMonoRepo);
-                if (semver.satisfies(depBuildPackage.version, version)) {
-                    if (depMonoRepo === MonoRepo.None) {
+                let depVersion = depBuildPackage.version;
+                if (semver.satisfies(depVersion, version)) {
+                    if (depBuildPackage.monoRepo === undefined) {
                         if (!packageNeedBump.has(depBuildPackage)) {
                             packageNeedBump.add(depBuildPackage);
                             logVerbose(`${depBuildPackage.nameColored}: Add from ${pkg.nameColored} ${version}`)
                             checkPackageNeedBump(depBuildPackage);
                         }
-                    } else if (depMonoRepo === MonoRepo.Server) {
+                    } else if (depBuildPackage.monoRepo.kind === MonoRepoKind.Server) {
                         serverNeedBump = true;
                     }
+                } else {
+                    depVersion = semver.minVersion(version)!.version;
                 }
+                saveVersion(depVersions, dep, depVersion, depBuildPackage.monoRepo);
             }
         }
     };
 
-    const checkMonoRepoNeedBump = (checkRepo: MonoRepo) => {
+    const checkMonoRepoNeedBump = (checkRepo: MonoRepoKind) => {
         repo.packages.packages.forEach(pkg => {
-            const monoRepo = repo.getMonoRepo(pkg);
-            if (monoRepo !== checkRepo) {
+            if (pkg.monoRepo?.kind !== checkRepo) {
                 return;
             }
             checkPackageNeedBump(pkg);
         });
     };
 
-    checkMonoRepoNeedBump(MonoRepo.Client);
+    checkMonoRepoNeedBump(MonoRepoKind.Client);
 
     if (serverNeedBump) {
-        checkMonoRepoNeedBump(MonoRepo.Server);
+        checkMonoRepoNeedBump(MonoRepoKind.Server);
     }
 
     const generatorDir = path.join(resolvedRoot, "tools", "generator-fluid");
@@ -192,18 +193,18 @@ async function main() {
     console.log();
 
     const bumpMonoRepo = async (monoRepo: MonoRepo) => {
-        const repoPath = repo.getMonoRepoPath(monoRepo)!;
+        const repoPath = monoRepo.repoPath;
         return await execWithErrorAsync(`npx lerna version ${versionBump} --no-push --no-git-tag-version -y && npm run build:genver`, {
             cwd: repoPath,
         }, repoPath, false);
     }
 
     console.log("Bumping client version");
-    await bumpMonoRepo(MonoRepo.Client)
+    await bumpMonoRepo(repo.clientMonoRepo)
 
     if (serverNeedBump) {
         console.log("Bumping server version");
-        await bumpMonoRepo(MonoRepo.Server);
+        await bumpMonoRepo(repo.serverMonoRepo);
     }
 
     for (const pkg of packageNeedBump) {

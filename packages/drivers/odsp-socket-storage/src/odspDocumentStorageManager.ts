@@ -94,8 +94,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         this.appId = queryParams.app_id;
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public createBlob(file: Buffer): Promise<api.ICreateBlobResponse> {
+    public async createBlob(file: Buffer): Promise<api.ICreateBlobResponse> {
         this.checkSnapshotUrl();
 
         const event = PerformanceEvent.start(this.logger, {
@@ -106,7 +105,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         try {
             // Future implementation goes here
             // Need to wrap implementation with getWithRetryForTokenRefresh()
-            return Promise.reject(new Error("StandardDocumentStorageManager.createBlob() not implemented"));
+            throw new Error("StandardDocumentStorageManager.createBlob() not implemented");
         } catch (error) {
             event.cancel({}, error);
             throw error;
@@ -387,11 +386,10 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         });
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion> {
+    public async write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion> {
         this.checkSnapshotUrl();
 
-        return Promise.reject("Not supported");
+        throw new Error("Not supported");
     }
 
     // back-compat: 0.14 uploadSummary
@@ -436,9 +434,8 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         return result.sha;
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public downloadSummary(commit: api.ISummaryHandle): Promise<api.ISummaryTree> {
-        return Promise.reject("Not implemented yet");
+    public async downloadSummary(commit: api.ISummaryHandle): Promise<api.ISummaryTree> {
+        throw new Error("Not implemented yet");
     }
 
     private initTreesCache(trees: resources.ITree[]) {

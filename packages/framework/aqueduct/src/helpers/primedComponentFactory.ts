@@ -19,6 +19,7 @@ export class PrimedComponentFactory extends SharedComponentFactory {
         sharedObjects: readonly ISharedObjectFactory[] = [],
         registryEntries?: NamedComponentRegistryEntries,
         onDemandInstantiation = true,
+        type: string = "",
     ) {
         const mergedObjects = [...sharedObjects];
 
@@ -33,6 +34,6 @@ export class PrimedComponentFactory extends SharedComponentFactory {
             mergedObjects.push(SharedMap.getFactory());
         }
 
-        super(ctor, mergedObjects, registryEntries, onDemandInstantiation);
+        super(ctor, mergedObjects, registryEntries, onDemandInstantiation, type);
     }
 }

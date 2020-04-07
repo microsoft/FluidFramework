@@ -193,6 +193,8 @@ class MockDeltaConnection implements IDeltaConnection {
         handler.setConnectionState(this.state);
     }
 
+    public dirty(): void {}
+
     public isLocal(msg: ISequencedDocumentMessage) {
         return msg.clientId === this.runtime.clientId || msg.clientId === this.pendingClientId;
     }
@@ -610,6 +612,8 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
         assert(false);
         return 0;
     }
+
+    public dirty(): void {}
 }
 
 /**

@@ -35,7 +35,7 @@ export class ComponentHandle implements IComponentHandle {
     }
 
     public attach(): void {
-        if (this.bound) {
+        if (this.bound !== undefined) {
             for (const handle of this.bound) {
                 handle.attach();
             }
@@ -47,7 +47,7 @@ export class ComponentHandle implements IComponentHandle {
     }
 
     public bind(handle: IComponentHandle) {
-        if (!this.bound) {
+        if (this.bound === undefined) {
             this.bound = new Set<IComponentHandle>();
         }
 
@@ -55,7 +55,7 @@ export class ComponentHandle implements IComponentHandle {
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        if (this.value.IComponentRouter) {
+        if (this.value.IComponentRouter !== undefined) {
             return this.value.IComponentRouter.request(request);
         } else {
             return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };

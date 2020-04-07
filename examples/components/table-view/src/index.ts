@@ -7,5 +7,5 @@
 // eslint-disable-next-line import/no-unassigned-import
 import "./publicpath";
 
-export { fluidExport, tableViewType } from "./runtime";
-export { TableView } from "./tableview";
+export { fluidExport } from "./runtime";
+export { TableView, tableViewType } from "./tableview";

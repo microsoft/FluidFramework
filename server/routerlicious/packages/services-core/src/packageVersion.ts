@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@microsoft/fluid-server-services-core";
-export const pkgVersion = "0.1004.0";
+export const pkgVersion = "0.1004.1";

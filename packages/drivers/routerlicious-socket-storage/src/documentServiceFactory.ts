@@ -11,6 +11,7 @@ import {
 } from "@microsoft/fluid-driver-definitions";
 import { IErrorTrackingService } from "@microsoft/fluid-protocol-definitions";
 import { ICredentials, IGitCache } from "@microsoft/fluid-server-services-client";
+import { ensureFluidResolvedUrl } from "@microsoft/fluid-driver-utils";
 import { DocumentService } from "./documentService";
 import { DocumentService2 } from "./documentService2";
 import { DefaultErrorTracking } from "./errorTracking";
@@ -39,37 +40,34 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
      * @returns Routerlicious document service.
      */
     // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
-        if (resolvedUrl.type !== "fluid") {
-            // eslint-disable-next-line max-len
-            return Promise.reject("Only Fluid components currently supported in the RouterliciousDocumentServiceFactory");
-        }
+    public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
+        ensureFluidResolvedUrl(resolvedUrl);
 
         const fluidResolvedUrl = resolvedUrl;
         const storageUrl = fluidResolvedUrl.endpoints.storageUrl;
         const ordererUrl = fluidResolvedUrl.endpoints.ordererUrl;
         const deltaStorageUrl = fluidResolvedUrl.endpoints.deltaStorageUrl;
         if (!ordererUrl || !deltaStorageUrl) {
-            // eslint-disable-next-line max-len
-            return Promise.reject(`All endpoints urls must be provided. [ordererUrl:${ordererUrl}][deltaStorageUrl:${deltaStorageUrl}]`);
+            throw new Error(
+                `All endpoints urls must be provided. [ordererUrl:${ordererUrl}][deltaStorageUrl:${deltaStorageUrl}]`);
         }
 
         const parsedUrl = parse(fluidResolvedUrl.url);
         const [, tenantId, documentId] = parsedUrl.pathname!.split("/");
         if (!documentId || !tenantId) {
-            // eslint-disable-next-line max-len
-            return Promise.reject(`Couldn't parse documentId and/or tenantId. [documentId:${documentId}][tenantId:${tenantId}]`);
+            throw new Error(
+                `Couldn't parse documentId and/or tenantId. [documentId:${documentId}][tenantId:${tenantId}]`);
         }
 
         const jwtToken = fluidResolvedUrl.tokens.jwt;
         if (!jwtToken) {
-            return Promise.reject(`Token was not provided.`);
+            throw new Error(`Token was not provided.`);
         }
 
         const tokenProvider = new TokenProvider(jwtToken);
 
         if (this.useDocumentService2) {
-            return Promise.resolve(new DocumentService2(
+            return new DocumentService2(
                 ordererUrl,
                 deltaStorageUrl,
                 storageUrl,
@@ -79,9 +77,9 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 this.credentials,
                 tokenProvider,
                 tenantId,
-                documentId));
+                documentId);
         } else {
-            return Promise.resolve(new DocumentService(
+            return new DocumentService(
                 ordererUrl,
                 deltaStorageUrl,
                 storageUrl,
@@ -92,7 +90,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 this.gitCache,
                 tokenProvider,
                 tenantId,
-                documentId));
+                documentId);
         }
     }
 }

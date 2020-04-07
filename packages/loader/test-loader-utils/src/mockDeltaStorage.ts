@@ -19,12 +19,12 @@ export class MockDocumentDeltaStorageService implements IDocumentDeltaStorageSer
         let index: number = -1;
 
         // Find first
-        if (from) {
+        if (from !== undefined) {
             while (this.messages[++index].sequenceNumber <= from) { }
         }
 
         // start reading
-        while (++index < this.messages.length && (!to || this.messages[++index].sequenceNumber < to)) {
+        while (++index < this.messages.length && (to === undefined || this.messages[++index].sequenceNumber < to)) {
             ret.push(this.messages[index]);
         }
 

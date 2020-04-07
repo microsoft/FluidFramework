@@ -28,13 +28,14 @@ export class ContainerUrlResolver implements IUrlResolver {
         }
     }
 
+    // This function is handling caching of Promises, not awaiting them.
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public resolve(request: IRequest): Promise<IResolvedUrl> {
         if (!this.cache.has(request.url)) {
             const headers = {
                 Authorization: `Bearer ${this.jwt}`,
             };
-            const resolvedP = Axios.post<IResolvedUrl>(
+            const resolvedUrlP = Axios.post<IResolvedUrl>(
                 `${this.baseUrl}/api/v1/load`,
                 {
                     url: request.url,
@@ -43,7 +44,7 @@ export class ContainerUrlResolver implements IUrlResolver {
                     headers,
                 });
 
-            this.cache.set(request.url, resolvedP.then((resolved) => resolved.data));
+            this.cache.set(request.url, resolvedUrlP.then((response) => response.data));
         }
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return this.cache.get(request.url)!;
