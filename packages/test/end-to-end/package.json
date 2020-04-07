@@ -60,7 +60,6 @@
     "@microsoft/fluid-driver-definitions": "^0.16.0",
     "@microsoft/fluid-driver-utils": "^0.16.0",
     "@microsoft/fluid-local-driver": "^0.16.0",
-    "@microsoft/fluid-local-test-utils": "^0.16.0",
     "@microsoft/fluid-map": "^0.16.0",
     "@microsoft/fluid-merge-tree": "^0.16.0",
     "@microsoft/fluid-odsp-driver": "^0.16.0",
