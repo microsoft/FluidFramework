@@ -1,8 +1,4 @@
-import {
-  AvailabilityType,
-  IPersonType,
-  IViewSelectors
-} from "./provider.types";
+import { AvailabilityType, IPersonType, IViewSelectors } from "../provider";
 
 export const defaultPeople: IPersonType[] = [
   {
@@ -10,33 +6,33 @@ export const defaultPeople: IPersonType[] = [
     availability: [
       AvailabilityType.Yes,
       AvailabilityType.Maybe,
-      AvailabilityType.Maybe
-    ]
+      AvailabilityType.Maybe,
+    ],
   },
   {
     name: "Tamine",
     availability: [
       AvailabilityType.Yes,
       AvailabilityType.Yes,
-      AvailabilityType.No
-    ]
+      AvailabilityType.No,
+    ],
   },
   {
     name: "Jodom",
     availability: [
       AvailabilityType.Maybe,
       AvailabilityType.No,
-      AvailabilityType.Yes
-    ]
+      AvailabilityType.Yes,
+    ],
   },
   {
     name: "Michelle",
     availability: [
       AvailabilityType.Yes,
       AvailabilityType.No,
-      AvailabilityType.Maybe
-    ]
-  }
+      AvailabilityType.Maybe,
+    ],
+  },
 ];
 
 const today = new Date();
@@ -44,7 +40,7 @@ const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
 const dayAfter = new Date(today.getTime() + 24 * 60 * 60 * 1000 * 2);
 export const defaultDates: Date[] = [today, tomorrow, dayAfter];
 
-export const defaultDatesNumbers: number[] = defaultDates.map(date =>
+export const defaultDatesNumbers: number[] = defaultDates.map((date) =>
   date.valueOf()
 );
 
@@ -79,7 +75,7 @@ export const peopleReducer: React.Reducer<IViewSelectors["people"], any> = (
     case "name":
       const newPerson = {
         ...state[action.personKey],
-        name: action.name
+        name: action.name,
       };
       newState[action.personKey] = newPerson;
       break;
@@ -95,8 +91,8 @@ export const peopleReducer: React.Reducer<IViewSelectors["people"], any> = (
         availability: [
           AvailabilityType.No,
           AvailabilityType.No,
-          AvailabilityType.No
-        ]
+          AvailabilityType.No,
+        ],
       });
       break;
     case "remove":

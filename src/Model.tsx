@@ -1,16 +1,20 @@
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
 import {
   IComponentHandle,
-  IComponentHTMLVisual
+  IComponentHTMLVisual,
 } from "@microsoft/fluid-component-core-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { BadArray } from "./BadArray";
-import { defaultDatesNumbers, defaultPeople, defaultDates } from "./data";
-import { FluidApp } from "./FluidApp";
-import { AvailabilityType, IPersonType, IViewProps } from "./provider.types";
-import { PrimedContext } from "./provider";
+import { BadArray } from "./utils/BadArray";
+import {
+  defaultDatesNumbers,
+  defaultPeople,
+  defaultDates,
+} from "./utils/defaultData";
+import { AvailabilityType, IPersonType, IViewProps } from "./provider";
+import { PrimedContext } from "./provider/provider";
 import { SharedObjectSequence } from "@microsoft/fluid-sequence";
+import { ScheduleIt } from "./View";
 
 // export interface IDataModel {
 //     dates(): readonly Date[],
@@ -120,7 +124,7 @@ export class DataModel extends PrimedComponent
       console.log(`rerender ${this.runtime.clientId}!`);
       ReactDOM.render(
         <PrimedContext.Provider value={{ actions, selectors: this._selectors }}>
-          <FluidApp />
+          <ScheduleIt />
         </PrimedContext.Provider>,
         div
       );
@@ -132,7 +136,7 @@ export class DataModel extends PrimedComponent
       rerender();
     });
     if (this._people) {
-      this._people.on("sequenceDelta", event => {
+      this._people.on("sequenceDelta", (event) => {
         console.log(
           `${this.runtime.clientId} people sequenceDelta: op[${
             event.deltaOperation
@@ -143,7 +147,7 @@ export class DataModel extends PrimedComponent
       });
     }
     if (this._dates) {
-      this._dates.on("sequenceDelta", event => {
+      this._dates.on("sequenceDelta", (event) => {
         console.log(
           `${this.runtime.clientId} dates sequenceDelta: op[${
             event.deltaOperation
@@ -163,7 +167,7 @@ export class DataModel extends PrimedComponent
       setDate: this.setDate,
       addRow: () => {},
       removeRow: () => {},
-      addComment: (name: string, message: string) => {}
+      addComment: (name: string, message: string) => {},
     };
   }
 
@@ -171,7 +175,7 @@ export class DataModel extends PrimedComponent
     return {
       dates: this.dates,
       people: this.people,
-      comments: []
+      comments: [],
     };
   }
   //#endregion

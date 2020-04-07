@@ -1,11 +1,11 @@
 import * as React from "react";
-import { ScheduleIt } from "./View";
-import { PrimedContext } from "./provider";
+import { ScheduleIt } from "../View";
 import {
   IViewActions,
   IViewSelectors,
-  AvailabilityType
-} from "./provider.types";
+  AvailabilityType,
+  PrimedContext,
+} from "../provider";
 
 export const App = () => {
   // Default Dates
@@ -21,33 +21,33 @@ export const App = () => {
       availability: [
         AvailabilityType.No,
         AvailabilityType.Maybe,
-        AvailabilityType.Yes
-      ]
+        AvailabilityType.Yes,
+      ],
     },
     {
       name: "Tamine",
       availability: [
         AvailabilityType.No,
         AvailabilityType.Maybe,
-        AvailabilityType.Yes
-      ]
+        AvailabilityType.Yes,
+      ],
     },
     {
       name: "Jodom",
       availability: [
         AvailabilityType.No,
         AvailabilityType.Maybe,
-        AvailabilityType.Yes
-      ]
+        AvailabilityType.Yes,
+      ],
     },
     {
       name: "Michelle",
       availability: [
         AvailabilityType.No,
         AvailabilityType.Maybe,
-        AvailabilityType.Yes
-      ]
-    }
+        AvailabilityType.Yes,
+      ],
+    },
   ];
 
   // Default Comments
@@ -84,7 +84,7 @@ export const App = () => {
       case "name":
         const newPerson = {
           ...state[action.personKey],
-          name: action.name
+          name: action.name,
         };
         newState[action.personKey] = newPerson;
         break;
@@ -100,8 +100,8 @@ export const App = () => {
           availability: [
             AvailabilityType.No,
             AvailabilityType.No,
-            AvailabilityType.No
-          ]
+            AvailabilityType.No,
+          ],
         });
         break;
       case "remove":
@@ -126,13 +126,13 @@ export const App = () => {
     updateComments({
       type: "add",
       name,
-      message
+      message,
     });
   };
   const setDate: IViewActions["setDate"] = (dateKey, date) => {
     updateDate({
       key: dateKey,
-      date: date
+      date: date,
     });
   };
 
@@ -145,7 +145,7 @@ export const App = () => {
       type: "availability",
       personKey: personKey,
       dayKey: dayKey,
-      availability: availability
+      availability: availability,
     });
   };
 
@@ -153,18 +153,18 @@ export const App = () => {
     updatePerson({
       type: "name",
       personKey: personKey,
-      name: name
+      name: name,
     });
   };
 
   const addRow: IViewActions["addRow"] = () => {
     updatePerson({
-      type: "add"
+      type: "add",
     });
   };
   const removeRow: IViewActions["removeRow"] = () => {
     updatePerson({
-      type: "remove"
+      type: "remove",
     });
   };
 
@@ -174,7 +174,7 @@ export const App = () => {
     setDate,
     addRow,
     removeRow,
-    addComment
+    addComment,
   };
   const selectors = { dates, people, comments };
 
