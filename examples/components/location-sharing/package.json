@@ -1,8 +1,9 @@
 {
-  "name": "@fluid-example/simple-chat",
+  "name": "@fluid-example/location-sharing",
   "version": "0.16.0",
-  "description": "Allow users to chat in a group",
+  "description": "Allow users to share their live location on a Google Map",
   "repository": "microsoft/FluidFramework",
+  "license": "MIT",
   "author": "Microsoft",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -34,13 +35,12 @@
     "@fluentui/react-northstar": "^0.47.0",
     "@microsoft/fluid-aqueduct": "^0.16.0",
     "@microsoft/fluid-map": "^0.16.0",
-    "@microsoft/fluid-runtime-definitions": "^0.16.0",
     "@microsoft/fluid-view-interfaces": "^0.16.0",
+    "google-map-react": "^1.1.7",
+    "office-ui-fabric-react": "^7.28.1",
     "react": "^16.10.2",
     "react-collapsible": "^2.7.0",
-    "react-dom": "^16.10.2",
-    "react-player": "^1.15.3",
-    "simplerestclients": "^0.2.7"
+    "react-dom": "^16.10.2"
   },
   "devDependencies": {
     "@microsoft/fluid-webpack-component-loader": "^0.16.0",
