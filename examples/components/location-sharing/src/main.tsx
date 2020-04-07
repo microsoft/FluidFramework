@@ -10,7 +10,7 @@ import {
     PrimedComponent,
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
-import { ISharedDirectory } from "@microsoft/fluid-map";
+import { ISharedDirectory, IDirectory } from "@microsoft/fluid-map";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import { Provider, themes, Header } from "@fluentui/react-northstar";
 import {
@@ -61,8 +61,7 @@ export class LocationSharing extends PrimedComponent
     }
 
     protected async componentInitializingFirstTime() {
-        const dataDict = new Map<string, ILocationData>();
-        this.root.set(UserLocationDataKey, dataDict);
+        this.root.createSubDirectory(UserLocationDataKey);
     }
 
     /**
@@ -102,7 +101,7 @@ interface ILocationSharingViewState {
         lng: number
     },
     mapZoom: number,
-    userLocationData: Map<string, ILocationData>,
+    userLocationData: IDirectory,
     isUserListOpen: boolean,
     lastClickedPosition?: {
         lat: number,
@@ -118,29 +117,35 @@ class LocationSharingView extends React.Component<ILocationSharingViewProps, ILo
         this.state = {
             mapCenter: undefined,
             mapZoom: 11,
-            userLocationData: root.get(UserLocationDataKey),
+            userLocationData: root.getSubDirectory(UserLocationDataKey),
             isUserListOpen: false,
             newPinName: "",
         };
         this.setCurrentLocation();
         root.on("valueChanged", (change, local) => {
-            const newData = root.get(UserLocationDataKey);
-            if (newData !== this.state.userLocationData) {
-                this.setState({ userLocationData: newData});
-            }
+            const newData = root.getSubDirectory(UserLocationDataKey);
+            newData.forEach((value, key) => {
+                const currentValue = this.state.userLocationData.get(key);
+                const areValuesEqual = value.lng.toFixed(2) === currentValue.lng.toFixed(2)
+                    && value.lat.toFixed(2) === currentValue.lat.toFixed(2);
+                if (!areValuesEqual) {
+                    this.setState({ userLocationData: newData});
+                }
+            });
         });
     }
 
     private setCurrentLocation(lastPosition?: Position) {
         const {root, userName} = this.props;
-        this.setState({ userLocationData: root.get(UserLocationDataKey)});
+        const { userLocationData } = this.state;
+        this.setState({ userLocationData: root.getSubDirectory(UserLocationDataKey)});
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition((position: Position) => {
-                const currentData = root.get(UserLocationDataKey);
+                const currentData = root.getSubDirectory(UserLocationDataKey);
                 if (!lastPosition
-                    || currentData[`user-${userName}`] === undefined
-                    || lastPosition.coords.latitude !== position.coords.latitude
-                    || lastPosition.coords.longitude !== position.coords.longitude) {
+                    || currentData.get(`user-${userName}`) === undefined
+                    || lastPosition.coords.latitude.toFixed(2) !== position.coords.latitude.toFixed(2)
+                    || lastPosition.coords.longitude.toFixed(2) !== position.coords.longitude.toFixed(2)) {
                     const updateCurrentLocation = () => {
                         console.log("Setting location...");
                         this.setState({
@@ -156,8 +161,7 @@ class LocationSharingView extends React.Component<ILocationSharingViewProps, ILo
                             text: userName,
                             type: MarkerType.User,
                         };
-                        currentData[`user-${userName}`] = currentUserLocationData;
-                        root.set(UserLocationDataKey, currentData);
+                        userLocationData.set(`user-${userName}`, currentUserLocationData);
                         setTimeout(() => this.setCurrentLocation(position), UpdateFrequencyMs);
                     };
                     if (this.state.mapCenter)
@@ -234,8 +238,8 @@ class LocationSharingView extends React.Component<ILocationSharingViewProps, ILo
     };
 
     private readonly onPinKeyDown = (event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { root, userName } = this.props;
-        const { lastClickedPosition, newPinName } = this.state;
+        const { userName } = this.props;
+        const { lastClickedPosition, newPinName, userLocationData } = this.state;
         if (event.key === "Enter" && lastClickedPosition && newPinName && newPinName !== "") {
             const currentUserLocationData: ILocationData = {
                 lat: lastClickedPosition.lat,
@@ -244,9 +248,7 @@ class LocationSharingView extends React.Component<ILocationSharingViewProps, ILo
                 text: newPinName,
                 type: MarkerType.Pin,
             };
-            const newData = root.get(UserLocationDataKey);
-            newData[`pin-${userName}-${newPinName}`] = currentUserLocationData;
-            root.set(UserLocationDataKey, newData);
+            userLocationData.set(`pin-${userName}-${newPinName}`, currentUserLocationData);
             this.setState({lastClickedPosition: undefined, newPinName: ""});
         }
     };
