@@ -31,11 +31,11 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
+    "@fluentui/react-northstar": "^0.47.0",
     "@microsoft/fluid-aqueduct": "^0.16.0",
     "@microsoft/fluid-map": "^0.16.0",
     "@microsoft/fluid-runtime-definitions": "^0.16.0",
     "@microsoft/fluid-view-interfaces": "^0.16.0",
-    "@fluentui/react-northstar": "^0.47.0",
     "react": "^16.10.2",
     "react-collapsible": "^2.7.0",
     "react-dom": "^16.10.2",
@@ -46,6 +46,7 @@
     "@microsoft/fluid-webpack-component-loader": "^0.16.0",
     "@types/node": "^10.14.6",
     "@types/react-dom": "^16.9.4",
+    "rimraf": "^2.6.2",
     "ts-loader": "^6.1.2",
     "typescript": "~3.7.4",
     "webpack": "^4.16.5",

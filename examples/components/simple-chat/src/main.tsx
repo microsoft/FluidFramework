@@ -10,7 +10,7 @@ import {
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
-import { Chat, Provider, themes } from '@fluentui/react-northstar';
+import { Chat, Provider, themes } from "@fluentui/react-northstar";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { ISharedDirectory, IDirectoryValueChanged } from "@microsoft/fluid-map";
 import { ChatRenderer } from "./components/ChatRenderer";
@@ -84,7 +84,7 @@ class SimpleChatView extends React.Component<ISimpleChatViewProps, ISimpleChatVi
         super(props);
         const {root} = this.props;
         this.state = { messages: root.get<IMessage[]>(MessagesKey), inputMessage: "" };
-        
+
         root.on("valueChanged", (changed: IDirectoryValueChanged, local: boolean) => {
             const rootMessages = root.get<IMessage[]>(MessagesKey);
             if (rootMessages !== this.state.messages) {
