@@ -57,7 +57,7 @@ export interface IComponentFoo extends IProvideComponentFoo {
 
 ### SharedComponentFactory and PrimedComponentFactory changes
 
-Class definitions for SharedComponentFactory and PrimedComponentFactory have been updated.  Both now specify a required `type: string` parameter in their constructors, along with a generics type specification indicating the component class the factory produces.
+Class definitions for SharedComponentFactory and PrimedComponentFactory have been updated.  Both now specify a required `type: string` parameter in their constructors.
 
 ## 0.15 Breaking Changes
 
