@@ -262,6 +262,7 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
 
                     assert.equal(rawMessage.clientSequenceNumber, cliSeq);
 
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     const actualCliSeq = this.pendingCliSeqs.read(rowHandle, colHandle)!;
                     assert(actualCliSeq >= cliSeq);
 
