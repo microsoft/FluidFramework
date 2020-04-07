@@ -3,6 +3,17 @@
  * Licensed under the MIT License.
  */
 
+export const enum Handle {
+    /** Minimum valid handle. */
+    valid = 1,
+
+    /** Sentinel representing an unallocated Handle. */
+    unallocated = -1,
+
+    /** Sentinel representing a handle to a row/col that is no longer part of the matrix. */
+    deleted = -2
+}
+
 /**
  * A handle table provides a fast mapping from an integer `handle` to a value `T`.
  */
@@ -10,7 +21,7 @@ export class HandleTable<T> {
     // Note: the first slot of the 'handles' array is reserved to store the pointer to the first
     //       free handle.  We initialize this slot with a pointer to slot '1', which will cause
     //       us to delay allocate the following slot in the array on the first allocation.
-    private readonly handles: (number | T)[] = [1];
+    private readonly handles: (Handle | T)[] = [1];
 
     public clear() {
         // Restore the HandleTable's initial state by deleting all items in the handles array
@@ -22,17 +33,16 @@ export class HandleTable<T> {
     /**
      * Allocates and returns the next available handle.  Note that freed handles are recycled.
      */
-    public allocate(): number {
+    public allocate(): Handle {
         const free = this.next;
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        this.next = (this.handles[free] as number) || free + 1;
+        this.next = (this.handles[free] as Handle) ?? (free + 1);
         return free;
     }
 
     /**
      * Allocates and returns the next available `count` handles.
      */
-    public allocateMany(count: number) {
+    public allocateMany(count: Handle) {
         const handles = new Uint32Array(count);
         for (let i = 0; i < count; i++) {
             handles[i] = this.allocate();
@@ -43,7 +53,7 @@ export class HandleTable<T> {
     /**
      * Returns the given handle to the free list.
      */
-    public free(handle: number) {
+    public free(handle: Handle) {
         this.handles[handle] = this.next;
         this.next = handle;
     }
@@ -51,19 +61,19 @@ export class HandleTable<T> {
     /**
      * Get the value `T` associated with the given handle, if any.
      */
-    public get(handle: number): T {
+    public get(handle: Handle): T {
         return this.handles[handle] as T;
     }
 
     /**
      * Set the value `T` associated with the given handle.
      */
-    public set(handle: number, value: T) {
+    public set(handle: Handle, value: T) {
         this.handles[handle] = value;
     }
 
     // Private helpers to get/set the head of the free list, which is stored in the 0th slot
     // of the handle array.
-    private get next() { return this.handles[0] as number; }
-    private set next(handle: number) { this.handles[0] = handle; }
+    private get next() { return this.handles[0] as Handle; }
+    private set next(handle: Handle) { this.handles[0] = handle; }
 }
