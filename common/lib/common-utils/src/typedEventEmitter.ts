@@ -14,6 +14,10 @@ import {
 
 export type TypedEventTransform<TTHis, TEvent extends IEvent> =
     IEventTransformer<TTHis, TEvent> &
+    // Event emitter support some special events for the emitter itself to use
+    // this exposes those events for the TypedEventEmitter.
+    // Since we know what the shape of these events are, we can describe them directly via a TransformedEvent
+    // which easier than trying to extend TEvent directly
     // eslint-disable-next-line max-len
     TransformedEvent<TTHis,"newListener" | "removeListener", Parameters<(event: string, listener: (...args: any[]) => void) => void>>;
 
