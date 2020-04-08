@@ -20,9 +20,9 @@
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
-    "test": "npm run test:mocha --max-old-space-size=8000",
+    "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml --exit",
-    "test:mocha": "mocha -r ts-node/register -r source-map-support/register -r ignore-styles --recursive dist/test/**/*.spec.js --exit -r make-promises-safe",
+    "test:mocha": "cross-env NODE_OPTIONS=\"--max-old-space-size=8192\" mocha --max-old-space-size=8192 -r ts-node/register -r source-map-support/register -r ignore-styles --recursive dist/test/**/*.spec.js --exit -r make-promises-safe",
     "tsc": "tsc"
   },
   "nyc": {
