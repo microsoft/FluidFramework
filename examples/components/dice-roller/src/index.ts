@@ -7,11 +7,7 @@ import {
     SimpleModuleInstantiationFactory,
 } from "@microsoft/fluid-aqueduct";
 
-import { DiceRollerInstantiationFactory } from "./main";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../package.json");
-export const diceRollerName = pkg.name as string;
+import { DiceRollerInstantiationFactory, DiceRollerName } from "./main";
 
 /**
  * This does setup for the Container. The SimpleModuleInstantiationFactory also enables dynamic loading in the
@@ -25,8 +21,8 @@ export const diceRollerName = pkg.name as string;
  * components.
  */
 export const fluidExport = new SimpleModuleInstantiationFactory(
-    diceRollerName,
+    DiceRollerName,
     new Map([
-        [diceRollerName, Promise.resolve(DiceRollerInstantiationFactory)],
+        [DiceRollerName, Promise.resolve(DiceRollerInstantiationFactory)],
     ]),
 );

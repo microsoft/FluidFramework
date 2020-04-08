@@ -25,8 +25,11 @@ import {
     SharedString,
 } from "@microsoft/fluid-sequence";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
-import { textAreaNoReactName } from "./index";
 /******************************************************************************/
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+const pkg = require("../package.json");
+export const TextAreaNoReactName = pkg.name as string;
 
 /**
  * A simple interface to help manage state - in the style of React. We could do
@@ -402,7 +405,7 @@ export class TextareaNoReact extends PrimedComponent implements IComponentHTMLVi
  */
 export const TextareaNoReactInstantiationFactory =
     new PrimedComponentFactory(
-        textAreaNoReactName,
+        TextAreaNoReactName,
         TextareaNoReact,
         [
             SharedString.getFactory(),

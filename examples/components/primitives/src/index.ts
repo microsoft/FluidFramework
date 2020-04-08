@@ -7,11 +7,8 @@ import {
     SimpleModuleInstantiationFactory,
 } from "@microsoft/fluid-aqueduct";
 
+import { PrimitivesName } from "./main";
 import { PrimitivesInstantiationFactory } from "./primitivesInstantiationFactory";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../package.json");
-export const primitivesName = pkg.name as string;
 
 /**
  * This does setup for the Container. The SimpleModuleInstantiationFactory also enables dynamic loading in the
@@ -25,8 +22,8 @@ export const primitivesName = pkg.name as string;
  * components.
  */
 export const fluidExport = new SimpleModuleInstantiationFactory(
-    primitivesName,
+    PrimitivesName,
     new Map([
-        [primitivesName, Promise.resolve(PrimitivesInstantiationFactory)],
+        [PrimitivesName, Promise.resolve(PrimitivesInstantiationFactory)],
     ]),
 );

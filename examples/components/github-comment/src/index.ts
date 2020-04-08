@@ -7,11 +7,7 @@ import {
     SimpleModuleInstantiationFactory,
 } from "@microsoft/fluid-aqueduct";
 
-import { GithubCommentInstantiationFactory } from "./main";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../package.json");
-export const githubCommentName = pkg.name as string;
+import { GithubCommentInstantiationFactory, GithubCommentName } from "./main";
 
 /**
  * This does setup for the Container. The SimpleModuleInstantiationFactory also
@@ -22,9 +18,9 @@ export const githubCommentName = pkg.name as string;
  * 2. Map of string to factory for all components
  */
 export const fluidExport = new SimpleModuleInstantiationFactory(
-    githubCommentName,
+    GithubCommentName,
     new Map([
-        [githubCommentName,
+        [GithubCommentName,
             Promise.resolve(GithubCommentInstantiationFactory)],
     ]),
 );
