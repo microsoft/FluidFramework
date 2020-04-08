@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as assert from "assert";
 import { ProtocolOpHandler } from "@microsoft/fluid-protocol-base";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
