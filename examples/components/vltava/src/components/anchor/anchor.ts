@@ -7,6 +7,9 @@ import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { IComponentHTMLView, IProvideComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
+
+export const AnchorName = "anchor";
+
 /**
  * Anchor is an default component is responsible for managing creation and the default component
  */
