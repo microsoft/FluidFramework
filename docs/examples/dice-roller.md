@@ -272,13 +272,13 @@ const pkg = require("../package.json");
 const componentName = pkg.name as string;
 ```
 
-Finally we use `SimpleModuleInstantiationFactory` to create the `fluidExport`. The factory takes a default component
+Finally we use `DefaultComponentContainerRuntimeFactory` to create the `fluidExport`. The factory takes a default component
 name `componentName` that is used to load the default component. It also takes the registry of components pointing to
 the creation factory. In our case just our one component
 (`[componentName, Promise.resolve(ExampleFluidComponentInstantiationFactory)]`).
 
 ```typescript
-export const fluidExport = new SimpleModuleInstantiationFactory(
+export const fluidExport = new DefaultComponentContainerRuntimeFactory(
   componentName,
   new Map([
     [componentName, Promise.resolve(ExampleFluidComponentInstantiationFactory)],
