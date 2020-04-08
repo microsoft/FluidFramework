@@ -5,7 +5,6 @@
 
 const fluidRoute = require("@microsoft/fluid-webpack-component-loader");
 const path = require("path");
-const webpack = require("webpack");
 const merge = require("webpack-merge");
 
 const pkg = require("./package.json");
@@ -27,11 +26,6 @@ module.exports = env => {
                 loader: "ts-loader",
             }]
         },
-        plugins: [
-            new webpack.DefinePlugin({
-                '__REACT_DEVTOOLS_GLOBAL_HOOK__': '({ isDisabled: true })'
-            }),
-        ],
         output: {
             filename: "[name].bundle.js",
             path: path.resolve(__dirname, "dist"),
