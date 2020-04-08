@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import {
+    DefaultComponentContainerRuntimeFactory,
+    PrimedComponent,
+    PrimedComponentFactory,
+} from "@microsoft/fluid-aqueduct";
 import { Counter, CounterValueType } from "@microsoft/fluid-map";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
@@ -94,7 +98,7 @@ export const SimpleDataSharingInstantiationFactory = new PrimedComponentFactory(
     [],
 );
 
-export const fluidExport = new SimpleModuleInstantiationFactory(
+export const fluidExport = new DefaultComponentContainerRuntimeFactory(
     chaincodeName,
     new Map([
         [chaincodeName, Promise.resolve(SimpleDataSharingInstantiationFactory)],

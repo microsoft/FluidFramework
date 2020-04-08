@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import { DefaultComponentContainerRuntimeFactory } from "@microsoft/fluid-aqueduct";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
 import {
@@ -118,7 +118,7 @@ const generateFactory = () => {
 
     // TODO: You should be able to specify the default registry instead of just a list of components
     // and the default registry is already determined Issue:#1138
-    return new SimpleModuleInstantiationFactory(
+    return new DefaultComponentContainerRuntimeFactory(
         SpacesComponentName,
         [
             ...containerComponents,

@@ -4,7 +4,11 @@
  */
 
 import { CounterValueType } from "@microsoft/fluid-map";
-import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import {
+    DefaultComponentContainerRuntimeFactory,
+    PrimedComponent,
+    PrimedComponentFactory,
+} from "@microsoft/fluid-aqueduct";
 import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -71,14 +75,14 @@ const ScoreboardComponentInstantiationFactory = new PrimedComponentFactory(
 );
 
 /**
- * This does setup for the Container. The SimpleModuleInstantiationFactory also enables dynamic loading in the
+ * This does setup for the Container. The DefaultComponentContainerRuntimeFactory also enables dynamic loading in the
  * EmbeddedComponentLoader.
  *
  * There are two important things here:
  * 1. Default Component name
  * 2. Map of string to factory for all components
  */
-export const fluidExport = new SimpleModuleInstantiationFactory(
+export const fluidExport = new DefaultComponentContainerRuntimeFactory(
     Scoreboard.componentName,
     new Map([
         [Scoreboard.componentName, Promise.resolve(ScoreboardComponentInstantiationFactory)],

@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { SimpleContainerRuntimeFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import {
+    DefaultComponentContainerRuntimeFactory,
+    SimpleContainerRuntimeFactory,
+} from "@microsoft/fluid-aqueduct";
 import { IContainerContext, IRuntime } from "@microsoft/fluid-container-definitions";
 import { NamedComponentRegistryEntries } from "@microsoft/fluid-runtime-definitions";
 import { SpacesComponentName } from "@fluid-example/spaces";
@@ -13,7 +16,7 @@ import { ExternalComponentLoader, WaterParkLoaderName } from "./waterParkLoader"
  * This class creates two components: A loader and a view component for water park and then
  * add loader component to the view component to be rendered.
  */
-export class WaterParkModuleInstantiationFactory extends SimpleModuleInstantiationFactory {
+export class WaterParkModuleInstantiationFactory extends DefaultComponentContainerRuntimeFactory {
 
     private loaderComponentId: string | undefined;
 

@@ -4,9 +4,9 @@
  */
 
 import {
+    DefaultComponentContainerRuntimeFactory,
     PrimedComponent,
     PrimedComponentFactory,
-    SimpleModuleInstantiationFactory,
 } from "@microsoft/fluid-aqueduct";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { SharedDirectory } from "@microsoft/fluid-map";
@@ -125,10 +125,8 @@ export class Pond extends PrimedComponent implements IComponentHTMLView {
         ]),
     );
 }
-
-// ----- CONTAINER SETUP STUFF -----
-
-export const fluidExport = new SimpleModuleInstantiationFactory(
+export const fluidExport = new DefaultComponentContainerRuntimeFactory(
+    // ----- CONTAINER SETUP STUFF -----
     PondName,
     new Map([
         [PondName, Promise.resolve(Pond.getFactory())],
