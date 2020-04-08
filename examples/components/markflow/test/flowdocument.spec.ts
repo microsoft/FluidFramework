@@ -29,7 +29,7 @@ describe("FlowDocument", () => {
     });
 
     beforeEach(async () => {
-        doc = await host.createAndAttachComponent(randomId(), FlowDocumentType);
+        doc = await host.createAndAttachComponent(FlowDocumentType);
     });
 
     function expect(expected: string) {

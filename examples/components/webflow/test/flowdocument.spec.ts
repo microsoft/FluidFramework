@@ -27,7 +27,7 @@ describe("FlowDocument", () => {
     });
 
     beforeEach(async () => {
-        doc = await host.createAndAttachComponent(randomId(), flowDocumentFactory.type);
+        doc = await host.createAndAttachComponent(flowDocumentFactory.type);
     });
 
     function expect(expected: string) {

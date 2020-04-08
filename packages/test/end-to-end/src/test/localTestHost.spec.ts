@@ -85,8 +85,8 @@ describe("TestHost", () => {
                 "Cloned hosts must share the deltaConnectionServer.");
 
             // Create/open both instance of TestComponent before applying ops.
-            const comp1 = await host1.createAndAttachComponent<TestComponent>("documentId", TestComponent.type);
-            const comp2 = await comp1.handle.get();
+            const comp1 = await host1.createAndAttachComponent<TestComponent>(TestComponent.type);
+            const comp2 = await host2.createAndAttachComponent<TestComponent>(TestComponent.type);
             assert(comp1 !== comp2, "Each host must return a separate TestComponent instance.");
 
             comp1.increment();
