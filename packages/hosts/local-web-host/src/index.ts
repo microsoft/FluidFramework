@@ -51,7 +51,8 @@ export async function createLocalContainerFactory(
         {},
         new Map<string, IProxyLoaderFactory>());
 
-    const url = "fluid://localhost/localContainer";
+    const documentId = uuid();
+    const url = `fluid://localhost/${documentId}`;
 
     return async () => {
 
