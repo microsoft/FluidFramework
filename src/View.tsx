@@ -123,7 +123,10 @@ export const ScheduleIt = () => {
     );
   };
   return (
-    <Stack tokens={{ childrenGap: 10 }}>
+    <Stack
+      style={{ background: "#ddd", padding: 20 }}
+      tokens={{ childrenGap: 10 }}
+    >
       <FocusZone direction={FocusZoneDirection.bidirectional}>
         {onRenderHeader(dates)}
         {onRenderRows(people)}

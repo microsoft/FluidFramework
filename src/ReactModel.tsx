@@ -1,55 +1,14 @@
 import * as React from "react";
-import { ScheduleIt } from "../View";
+import { ScheduleIt } from "./View";
+import { defaultDates, defaultPeople } from "./utils";
 import {
   IViewActions,
   IViewSelectors,
   AvailabilityType,
   PrimedContext,
-} from "../provider";
+} from "./provider";
 
 export const App = () => {
-  // Default Dates
-  const today = new Date();
-  const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
-  const dayAfter = new Date(today.getTime() + 24 * 60 * 60 * 1000 * 2);
-  const defaultDates: IViewSelectors["dates"] = [today, tomorrow, dayAfter];
-
-  // Default People
-  const defaultPeople: IViewSelectors["people"] = [
-    {
-      name: "Bruno",
-      availability: [
-        AvailabilityType.No,
-        AvailabilityType.Maybe,
-        AvailabilityType.Yes,
-      ],
-    },
-    {
-      name: "Tamine",
-      availability: [
-        AvailabilityType.No,
-        AvailabilityType.Maybe,
-        AvailabilityType.Yes,
-      ],
-    },
-    {
-      name: "Jodom",
-      availability: [
-        AvailabilityType.No,
-        AvailabilityType.Maybe,
-        AvailabilityType.Yes,
-      ],
-    },
-    {
-      name: "Michelle",
-      availability: [
-        AvailabilityType.No,
-        AvailabilityType.Maybe,
-        AvailabilityType.Yes,
-      ],
-    },
-  ];
-
   // Default Comments
   const defaultComments = [];
 
