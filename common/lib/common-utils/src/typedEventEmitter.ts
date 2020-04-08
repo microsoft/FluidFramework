@@ -13,6 +13,7 @@ import { IEventProvider, IEvent } from "@microsoft/fluid-common-definitions";
 export class TypedEventEmitter<TEvent extends IEvent> extends EventEmitter implements IEventProvider<TEvent> {
     constructor(){
         super();
+        // Disable due to false positive (https://github.com/typescript-eslint/typescript-eslint/issues/1866)
         /* eslint-disable @typescript-eslint/unbound-method */
         this.addListener = super.addListener as any as TEvent;
         this.on = super.on as any as TEvent;
