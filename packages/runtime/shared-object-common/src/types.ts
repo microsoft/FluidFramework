@@ -25,10 +25,10 @@ export type IEventThisPlaceHolder={thisPlaceHolder: "thisPlaceHolder"};
 type ReplaceThisPlaceHolderWithTThis<L extends any[], TThis> =
   L extends any[] ? { [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K] } : never;
 
-export type TransformedEvent<TThis, E, A extends any[]> =
+type TransformedEvent<TThis, E, A extends any[]> =
     (event: E, listener: (...args: ReplaceThisPlaceHolderWithTThis<A, TThis>) => void) => TThis;
 
-export type IEventTransformer<TThis, TEvent extends IEvent> =
+type IEventTransformer<TThis, TEvent extends IEvent> =
 TEvent extends
 {
     (event: infer E0, listener: (...args: infer A0) => void),

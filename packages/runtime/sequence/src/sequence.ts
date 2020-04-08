@@ -16,7 +16,13 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import { IChannelAttributes, IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
 import { ObjectStoragePartition } from "@microsoft/fluid-runtime-utils";
-import { makeHandlesSerializable, parseHandles, SharedObject } from "@microsoft/fluid-shared-object-base";
+import {
+    makeHandlesSerializable,
+    parseHandles,
+    IEventThisPlaceHolder,
+    SharedObject,
+    ISharedObjectEvents,
+} from "@microsoft/fluid-shared-object-base";
 import { debug } from "./debug";
 import {
     IntervalCollection,
@@ -25,7 +31,6 @@ import {
 } from "./intervalCollection";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
 import { ISharedIntervalCollection } from "./sharedIntervalCollection";
-import { ISharedSegmentSequenceEvents } from "./interfaces";
 // eslint-disable-next-line max-len
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, import/no-internal-modules
 const cloneDeep = require("lodash/cloneDeep");
@@ -33,10 +38,19 @@ const cloneDeep = require("lodash/cloneDeep");
 const snapshotFileName = "header";
 const contentPath = "content";
 
-export abstract class SharedSegmentSequence
-<T extends MergeTree.ISegment,
-    TEvents extends ISharedSegmentSequenceEvents = ISharedSegmentSequenceEvents<SharedObject>>
-    extends SharedObject<TEvents>
+
+export interface ISharedSegmentSequenceEvents
+    extends ISharedObjectEvents {
+
+    (event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: IEventThisPlaceHolder) => void);
+    (
+        event: "pre-op" | "op",
+        listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void);
+}
+
+
+export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
+    extends SharedObject<ISharedSegmentSequenceEvents>
     implements ISharedIntervalCollection<SequenceInterval> {
 
     get loaded(): Promise<void> {

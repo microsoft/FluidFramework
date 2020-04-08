@@ -7,10 +7,8 @@
 import { } from "@microsoft/fluid-component-core-interfaces";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { IComponentRuntime, IChannelAttributes } from "@microsoft/fluid-runtime-definitions";
-import { ISharedObject } from "@microsoft/fluid-shared-object-base";
 import { SharedSegmentSequence } from "./sequence";
 import { SharedStringFactory } from "./sequenceFactory";
-import { ISharedSegmentSequenceEvents } from "./interfaces";
 
 
 declare module "@microsoft/fluid-component-core-interfaces" {
@@ -27,8 +25,7 @@ export interface IProvideSharedString {
 /**
  * Component interface describing access methods on a SharedString
  */
-export interface ISharedString
-    extends ISharedObject<ISharedSegmentSequenceEvents<ISharedString>>, IProvideSharedString {
+export interface ISharedString extends IProvideSharedString {
     insertText(pos: number, text: string, props?: MergeTree.PropertySet);
 
     insertMarker(pos: number, refType: MergeTree.ReferenceType, props?: MergeTree.PropertySet);
@@ -38,9 +35,7 @@ export interface ISharedString
 
 export type SharedStringSegment = MergeTree.TextSegment | MergeTree.Marker | MergeTree.ExternalSegment;
 
-export class SharedString
-    extends SharedSegmentSequence<SharedStringSegment, ISharedSegmentSequenceEvents<SharedString>>
-    implements ISharedString {
+export class SharedString extends SharedSegmentSequence<SharedStringSegment> implements ISharedString {
     /**
      * Create a new shared string
      *

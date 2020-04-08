@@ -4,7 +4,7 @@
  */
 
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { ISharedObject, ISharedObjectEvents } from "@microsoft/fluid-shared-object-base";
+import { IEventThisPlaceHolder, ISharedObject, ISharedObjectEvents } from "@microsoft/fluid-shared-object-base";
 
 /**
  * Type of "valueChanged" event parameter.
@@ -191,12 +191,11 @@ export interface IDirectory extends Map<string, any>, IValueTypeCreator {
 }
 
 export interface ISharedDirectoryEvents extends ISharedObjectEvents{
-    (event: "pre-op" | "op",
-        listener: (op: ISequencedDocumentMessage, local: boolean) => void);
     (event: "valueChanged", listener: (
         changed: IDirectoryValueChanged,
         local: boolean,
-        op: ISequencedDocumentMessage) => void);
+        op: ISequencedDocumentMessage,
+        target: IEventThisPlaceHolder) => void);
 }
 
 /**
@@ -217,12 +216,11 @@ export interface IDirectoryValueChanged extends IValueChanged {
 }
 
 export interface ISharedMapEvents extends ISharedObjectEvents{
-    (event: "pre-op" | "op",
-        listener: (op: ISequencedDocumentMessage, local: boolean) => void);
     (event: "valueChanged", listener: (
-        changed: IValueChanged,
+        changed: IDirectoryValueChanged,
         local: boolean,
-        op: ISequencedDocumentMessage) => void);
+        op: ISequencedDocumentMessage,
+        target: IEventThisPlaceHolder) => void);
 }
 
 /**
