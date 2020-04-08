@@ -7,7 +7,6 @@ import * as assert from "assert";
 import { EventEmitter } from "events";
 import { IErrorEvent } from "@microsoft/fluid-common-definitions";
 import { EventForwarder } from "../eventForwarder";
-import { TypedEventEmitter } from "../typedEventEmitter";
 
 interface ITestEvents extends IErrorEvent{
     (event: "testEvent", listener: (name: string, count: number) => void);
@@ -17,7 +16,7 @@ describe("Loader", () => {
     describe("Utils", () => {
         describe("Event Forwarder", () => {
             describe("Forwarding", () => {
-                let source: TypedEventEmitter<ITestEvents>;
+                let source: EventEmitter;
                 let forwarder: EventForwarder<ITestEvents>;
                 const testEvent = "testEvent";
                 const errorEvent = "error";
