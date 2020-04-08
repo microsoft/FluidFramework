@@ -28,6 +28,7 @@ export class TestComponent extends PrimedComponent {
     public static getFactory() { return TestComponent.factory; }
 
     private static readonly factory = new PrimedComponentFactory(
+        TestComponent.type,
         TestComponent,
         [],
     );
@@ -62,6 +63,7 @@ export class TestComponent extends PrimedComponent {
 }
 
 const testComponentFactory = new PrimedComponentFactory(
+    TestComponent.type,
     TestComponent,
     [ SharedString.getFactory() ],
 );
