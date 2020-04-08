@@ -4,11 +4,10 @@
  */
 
 import {
+    createAndAttachComponent,
     DefaultComponentContainerRuntimeFactory,
-    SimpleContainerRuntimeFactory,
 } from "@microsoft/fluid-aqueduct";
-import { IContainerContext, IRuntime } from "@microsoft/fluid-container-definitions";
-import { NamedComponentRegistryEntries } from "@microsoft/fluid-runtime-definitions";
+import { IHostRuntime, NamedComponentRegistryEntries } from "@microsoft/fluid-runtime-definitions";
 import { SpacesComponentName } from "@fluid-example/spaces";
 import * as uuid from "uuid";
 import { ExternalComponentLoader, WaterParkLoaderName } from "./waterParkLoader";
@@ -17,43 +16,24 @@ import { ExternalComponentLoader, WaterParkLoaderName } from "./waterParkLoader"
  * add loader component to the view component to be rendered.
  */
 export class WaterParkModuleInstantiationFactory extends DefaultComponentContainerRuntimeFactory {
-
-    private loaderComponentId: string | undefined;
-
     constructor(
-        private readonly entries: NamedComponentRegistryEntries,
+        entries: NamedComponentRegistryEntries,
         private readonly loaderComponentName: string = WaterParkLoaderName,
         private readonly viewComponentName: string = SpacesComponentName) {
         super(viewComponentName, entries);
     }
 
-    public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        this.loaderComponentId = uuid();
-        const runtimeP = SimpleContainerRuntimeFactory.instantiateRuntime(
-            context,
-            this.viewComponentName,
-            this.entries,
-        );
+    protected async containerInitializingFirstTime(runtime: IHostRuntime) {
+        const viewComponent = await createAndAttachComponent<any>(
+            runtime, DefaultComponentContainerRuntimeFactory.defaultComponentId, this.viewComponentName);
+        const loaderComponent = await createAndAttachComponent<ExternalComponentLoader>(
+            runtime, uuid(), this.loaderComponentName);
 
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        runtimeP.then(async (runtime) => {
-            if (!runtime.existing) {
-                const loaderComponent = await SimpleContainerRuntimeFactory
-                    .createAndAttachComponent<ExternalComponentLoader>(
-                    runtime,
-                    this.loaderComponentId,
-                    this.loaderComponentName,
-                );
-                const viewResponse = await runtime.request({ url: SimpleContainerRuntimeFactory.defaultComponentId });
-                const viewComponent = viewResponse.value;
-                // Only add the component toolbar if the view component supports it
-                if (viewComponent.IComponentToolbarConsumer) {
-                    await viewComponent.IComponentToolbarConsumer
-                        .setComponentToolbar(loaderComponent.id, this.loaderComponentName, loaderComponent.url);
-                }
-                loaderComponent.setViewComponent(viewComponent);
-            }
-        });
-        return runtimeP;
+        // Only add the component toolbar if the view component supports it
+        if (viewComponent.IComponentToolbarConsumer) {
+            await viewComponent.IComponentToolbarConsumer
+                .setComponentToolbar(loaderComponent.id, this.loaderComponentName, loaderComponent.url);
+        }
+        loaderComponent.setViewComponent(viewComponent);
     }
 }
