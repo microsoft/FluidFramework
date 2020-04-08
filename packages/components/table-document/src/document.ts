@@ -19,6 +19,7 @@ import {
 import { createSheetlet, ISheetlet } from "@tiny-calc/micro";
 import { CellRange } from "./cellrange";
 import { TableDocumentType, TableSliceType } from "./componentTypes";
+import { ConfigKey } from "./configKey";
 import { debug } from "./debug";
 import { TableSlice } from "./slice";
 import { ITable, TableDocumentItem } from "./table";
@@ -158,6 +159,9 @@ export class TableDocument extends PrimedComponent implements ITable {
 
         const matrix = SparseMatrix.create(this.runtime, "matrix");
         this.root.set("matrix", matrix.handle);
+
+        const docId = this.root.get(ConfigKey.docId);
+        this.root.set(docId, this.handle);
     }
 
     protected async componentHasInitialized() {
