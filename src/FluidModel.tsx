@@ -17,6 +17,7 @@ import {
 } from "./provider";
 import { SharedObjectSequence } from "@microsoft/fluid-sequence";
 import { ScheduleIt } from "./View";
+import { App } from "./ReactModel";
 
 // export interface IDataModel {
 //     dates(): readonly Date[],
@@ -179,9 +180,26 @@ export class DataModel extends PrimedComponent
     const rerender = () => {
       console.log(`rerender ${this.runtime.clientId}!`);
       ReactDOM.render(
-        <PrimedContext.Provider value={{ actions, selectors: this._selectors }}>
-          <ScheduleIt />
-        </PrimedContext.Provider>,
+        <div>
+          <h2>React State Powered</h2>
+          <App />
+          <div style={{ margin: "80px" }} />
+          <h2>Fluid Powered</h2>
+          <PrimedContext.Provider
+            value={{ actions, selectors: this._selectors }}
+          >
+            <ScheduleIt />
+          </PrimedContext.Provider>
+          <div style={{ margin: "80px" }} />
+
+          <h3>Shared Elements</h3>
+          <ul>
+            <li>View</li>
+            <li>Starting Data</li>
+            <li>Context Interface</li>
+            <li>Context Provider</li>
+          </ul>
+        </div>,
         div
       );
     };
