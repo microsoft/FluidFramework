@@ -34,7 +34,7 @@ import { TestCodeLoader } from "./";
 /**
  * Basic component implementation for testing.
  */
-class TestRootComponent extends PrimedComponent implements IComponentRunnable {
+export class TestRootComponent extends PrimedComponent implements IComponentRunnable {
     public get IComponentRunnable() { return this; }
 
     /**
@@ -56,9 +56,16 @@ class TestRootComponent extends PrimedComponent implements IComponentRunnable {
 
     // Make this function public so TestHost can use them
     public async createAndAttachComponent<T extends IComponentLoadable>(
-        type: string, props?: any,
+        type: string, props?: any, id?: string,
     ): Promise<T> {
-        return super.createAndAttachComponent<T>(type, props);
+        if (id) {
+            const componentRuntime = await this.context.createComponent(id, type, props);
+            const component = await this.asComponent<T>(componentRuntime.request({ url: "/" }));
+            componentRuntime.attach();
+            return component;
+        } else {
+            return super.createAndAttachComponent<T>(type, props);
+        }
     }
 
     // Make this function public so TestHost can use them
@@ -151,7 +158,7 @@ export class TestHost {
 
     public readonly deltaConnectionServer: ILocalDeltaConnectionServer;
 
-    private readonly root: Promise<TestRootComponent>;
+    public readonly root: Promise<TestRootComponent>;
 
     /**
      * @param componentRegistry - array of key-value pairs of components available to the host
@@ -219,9 +226,10 @@ export class TestHost {
     public async createAndAttachComponent<T extends IComponentLoadable>(
         type: string,
         props?: any,
+        id?: any,
     ): Promise<T> {
         const root = await this.root;
-        return root.createAndAttachComponent<T>(type, props);
+        return root.createAndAttachComponent<T>(type, props, id);
     }
 
     /* Wait and get the component with the id.

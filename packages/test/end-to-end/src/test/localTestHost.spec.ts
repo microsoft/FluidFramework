@@ -85,8 +85,8 @@ describe("TestHost", () => {
                 "Cloned hosts must share the deltaConnectionServer.");
 
             // Create/open both instance of TestComponent before applying ops.
-            const comp1 = await host1.createAndAttachComponent<TestComponent>(TestComponent.type);
-            const comp2 = await host2.createAndAttachComponent<TestComponent>(TestComponent.type);
+            const comp1 = await host1.createAndAttachComponent<TestComponent>(TestComponent.type, {}, "documentId");
+            const comp2 = await host2.getComponent_UNSAFE<TestComponent>("documentId");
             assert(comp1 !== comp2, "Each host must return a separate TestComponent instance.");
 
             comp1.increment();
@@ -108,13 +108,13 @@ describe("TestHost", () => {
 
         it("late open / early close", async () => {
             const host1 = new TestHost(testComponents, [SharedString.getFactory()]);
-            const comp1 = await host1.createAndAttachComponent<TestComponent>(TestComponent.type);
+            const comp1 = await host1.createAndAttachComponent<TestComponent>(TestComponent.type, "", "documentId");
             comp1.increment();
             assert.equal(comp1.value, 1, "Local update by 'comp1' must be promptly observable");
 
             // Wait until ops are pending before opening second TestComponent instance.
             const host2 = host1.clone();
-            const comp2 = await comp1.handle.get();
+            const comp2 = await host2.getComponent_UNSAFE<TestComponent>("documentId");
             assert(comp1 !== comp2, "Each host must return a separate TestComponent instance.");
 
             await TestHost.sync(host1, host2);
@@ -206,8 +206,8 @@ describe("TestHost", () => {
                 deltaEventManager.registerDocuments(user1DocumentDeltaEvent, user2DocumentDeltaEvent);
 
                 const user1Component =
-                    await host1.createAndAttachComponent<TestComponent>(TestComponent.type);
-                const user2Component = await user1Component.handle.get();
+                    await host1.createAndAttachComponent<TestComponent>(TestComponent.type, {}, "documentId");
+                const user2Component = await host2.getComponent_UNSAFE<TestComponent>("documentId");
 
                 await deltaEventManager.pauseProcessing();
 
