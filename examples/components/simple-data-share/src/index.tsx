@@ -89,6 +89,7 @@ export class SimpleDataSharing extends PrimedComponent implements IComponentHTML
 }
 
 export const SimpleDataSharingInstantiationFactory = new PrimedComponentFactory(
+    chaincodeName,
     SimpleDataSharing,
     [],
 );

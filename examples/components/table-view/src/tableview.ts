@@ -110,6 +110,7 @@ export class TableViewFactory extends PrimedComponentFactory {
 
     constructor() {
         super(
+            tableViewType,
             TableView,
             [],
             [
