@@ -32,12 +32,12 @@ export interface IEventProvider<TEvent extends IEvent>{
 export type IEventThisPlaceHolder={thisPlaceHolder: "thisPlaceHolder"};
 
 // This does the type replacement by changing types of IEventThisPlaceHolder to TThis
-type ReplaceThisPlaceHolderWithTThis<L extends any[], TThis> =
+export type ReplaceThisPlaceHolderWithTThis<L extends any[], TThis> =
   L extends any[] ? { [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K] } : never;
 
 // this transforms the event overload by replacing IEventThisPlaceHolder with TThis in the event listener arguments
 // and having the overload return TTHis as well
-type TransformedEvent<TThis, E, A extends any[]> =
+export type TransformedEvent<TThis, E, A extends any[]> =
     (event: E, listener: (...args: ReplaceThisPlaceHolderWithTThis<A, TThis>) => void) => TThis;
 
 // This type is a conditional type for transforming all the overloads provides in TEvent.
@@ -46,7 +46,7 @@ type TransformedEvent<TThis, E, A extends any[]> =
 // but could be easily extended to support more, by adding more layers.
 //
 /* eslint-disable max-len */
-type IEventTransformer<TThis, TEvent extends IEvent> =
+export type IEventTransformer<TThis, TEvent extends IEvent> =
 TEvent extends
 {
     (event: infer E0, listener: (...args: infer A0) => void),
