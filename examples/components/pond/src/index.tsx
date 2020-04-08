@@ -125,8 +125,10 @@ export class Pond extends PrimedComponent implements IComponentHTMLView {
         ]),
     );
 }
+
+// ----- CONTAINER SETUP STUFF -----
+
 export const fluidExport = new DefaultComponentContainerRuntimeFactory(
-    // ----- CONTAINER SETUP STUFF -----
     PondName,
     new Map([
         [PondName, Promise.resolve(Pond.getFactory())],
