@@ -192,12 +192,11 @@ export interface IDirectory extends Map<string, any>, IValueTypeCreator {
 
 export interface ISharedDirectoryEvents extends ISharedObjectEvents{
     (event: "pre-op" | "op",
-        listener: (op: ISequencedDocumentMessage, local: boolean, target: ISharedDirectory) => void);
+        listener: (op: ISequencedDocumentMessage, local: boolean) => void);
     (event: "valueChanged", listener: (
         changed: IDirectoryValueChanged,
         local: boolean,
-        op: ISequencedDocumentMessage,
-        target: ISharedDirectory) => void);
+        op: ISequencedDocumentMessage) => void);
 }
 
 /**
@@ -219,12 +218,11 @@ export interface IDirectoryValueChanged extends IValueChanged {
 
 export interface ISharedMapEvents extends ISharedObjectEvents{
     (event: "pre-op" | "op",
-        listener: (op: ISequencedDocumentMessage, local: boolean, target: ISharedMap) => void);
+        listener: (op: ISequencedDocumentMessage, local: boolean) => void);
     (event: "valueChanged", listener: (
         changed: IValueChanged,
         local: boolean,
-        op: ISequencedDocumentMessage,
-        target: ISharedMap) => void);
+        op: ISequencedDocumentMessage) => void);
 }
 
 /**

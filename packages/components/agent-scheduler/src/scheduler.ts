@@ -241,15 +241,16 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
 
         // Listeners for new/released tasks. All clients will try to grab at the same time.
         // May be we want a randomized timer (Something like raft) to reduce chattiness?
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        this.scheduler.on("atomicChanged", async (key: string, currentClient: string | null) => {
-            // Check if this client was chosen.
-            if (this.isActive() && currentClient === this.clientId) {
-                this.onNewTaskAssigned(key);
-            } else {
-                await this.onTaskReasigned(key, currentClient);
-            }
-        });
+        this.scheduler.on("atomicChanged",
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
+            async (target: ConsensusRegisterCollection<string | null>, key: string, currentClient: string | null) => {
+                // Check if this client was chosen.
+                if (this.isActive() && currentClient === this.clientId) {
+                    this.onNewTaskAssigned(key);
+                } else {
+                    await this.onTaskReasigned(key, currentClient);
+                }
+            });
 
         if (this.isActive()) {
             this.initializeCore();

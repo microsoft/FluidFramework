@@ -991,14 +991,14 @@ class SubDirectory implements IDirectory {
 
         // Otherwise subscribe to changes
         return new Promise<T>((resolve, reject) => {
-            const callback = (changed: IDirectoryValueChanged) => {
+            const callback = (target: SharedDirectory, changed: IDirectoryValueChanged) => {
                 if (this.absolutePath === changed.path && key === changed.key) {
                     resolve(this.get<T>(changed.key));
                     this.directory.removeListener("valueChanged", callback);
                 }
             };
 
-            this.directory.on("valueChanged", callback);
+            this.directory.on("valueChanged",callback);
         });
     }
 

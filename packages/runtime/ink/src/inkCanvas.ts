@@ -115,7 +115,6 @@ export class InkCanvas {
     constructor(private readonly canvas: HTMLCanvasElement, private readonly model: IInk) {
         this.model.on("clear", this.redraw.bind(this));
         this.model.on("stylus", this.handleStylus.bind(this));
-
         this.canvas.style.touchAction = "none";
 
         this.canvas.addEventListener("pointerdown", this.handlePointerDown.bind(this));
@@ -255,7 +254,7 @@ export class InkCanvas {
         drawShapes(this.context, previous, current, pen);
     }
 
-    private handleStylus(operation: IStylusOperation) {
+    private handleStylus(target: IInk, operation: IStylusOperation) {
         // Render the dirty stroke
         const dirtyStrokeId = operation.id;
         const stroke = this.model.getStroke(dirtyStrokeId);

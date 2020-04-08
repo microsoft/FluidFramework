@@ -6,7 +6,7 @@
 import * as assert from "assert";
 import { ITelemetryErrorEvent, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { ChildLogger, EventEmitterWithErrorHandling } from "@microsoft/fluid-common-utils";
+import { ChildLogger } from "@microsoft/fluid-common-utils";
 import { ConnectionState, ISequencedDocumentMessage, ITree, MessageType } from "@microsoft/fluid-protocol-definitions";
 import {
     IChannelAttributes,
@@ -17,7 +17,7 @@ import {
 import * as Deque from "double-ended-queue";
 import { debug } from "./debug";
 import { SharedObjectComponentHandle } from "./handle";
-import { ISharedObject, ISharedObjectEvents } from "./types";
+import { ISharedObject, ISharedObjectEvents, EventEmitterWithErrorHandling } from "./types";
 
 /**
  *  Base class from which all shared objects derive
@@ -104,7 +104,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
             // eslint-disable-next-line no-null/no-null
             runtime !== null ? runtime.logger : undefined, this.attributes.type, { SharedObjectId: id });
 
-        this.on("error", (error: any) => {
+        this.on("error", (target: this, error: any) => {
             runtime.emit("error", error);
         });
     }
