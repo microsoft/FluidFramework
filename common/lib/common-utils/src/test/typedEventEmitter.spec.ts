@@ -25,4 +25,28 @@ describe("TypedEventEmitter", () => {
         assert.equal(once, 1);
         assert.equal(on, 5);
     });
+
+    it("Validate new and remove Listener",()=>{
+        const tee = new TypedEventEmitter<IErrorEvent>();
+        let newListenerCalls = 0;
+        let removeListenerCalls = 0;
+        const errListener = ()=>{};
+        tee.on("removeListener",(event, listener)=>{
+            assert.equal(event, "error");
+            assert.equal(listener, errListener);
+            removeListenerCalls ++;
+        });
+        tee.on("newListener",(event, listener)=>{
+            assert.equal(event, "error");
+            assert.equal(listener, errListener);
+            newListenerCalls ++;
+        });
+
+
+        tee.on("error", errListener);
+        tee.removeListener("error", errListener);
+
+        assert.equal(newListenerCalls, 1);
+        assert.equal(removeListenerCalls, 1);
+    });
 });

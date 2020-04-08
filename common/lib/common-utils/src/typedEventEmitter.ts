@@ -4,30 +4,40 @@
  * Licensed under the MIT License.
  */
 import { EventEmitter } from "events";
-import { IEventProvider, IEvent } from "@microsoft/fluid-common-definitions";
+import {
+    IEventProvider,
+    IEvent,
+    IEventTransformer,
+    TransformedEvent,
+} from "@microsoft/fluid-common-definitions";
+
+
+export type TypedEventTransform<TTHis, TEvent extends IEvent> =
+    IEventTransformer<TTHis, TEvent> &
+    // eslint-disable-next-line max-len
+    TransformedEvent<TTHis,"newListener" | "removeListener", Parameters<(event: string, listener: (...args: any[]) => void) => void>>;
 
 
 /**
  * Event Emitter helper class the supports emitting typed events
  */
 export class TypedEventEmitter<TEvent extends IEvent> extends EventEmitter implements IEventProvider<TEvent> {
+
     constructor(){
         super();
-        /* eslint-disable @typescript-eslint/unbound-method */
-        this.addListener = super.addListener as any as TEvent;
-        this.on = super.on as any as TEvent;
-        this.once = super.once as any as TEvent;
-        this.prependListener = super.prependListener as any as TEvent;
-        this.prependOnceListener = super.prependOnceListener as any as TEvent;
-        this.removeListener = super.removeListener as any as TEvent;
-        this.off = super.off as any as TEvent;
-        /* eslint-enable @typescript-eslint/unbound-method */
+        this.addListener = super.addListener.bind(this) as TypedEventTransform<this, TEvent>;
+        this.on = super.on.bind(this) as  TypedEventTransform<this, TEvent>;
+        this.once = super.once.bind(this) as  TypedEventTransform<this, TEvent>;
+        this.prependListener = super.prependListener.bind(this) as  TypedEventTransform<this, TEvent>;
+        this.prependOnceListener = super.prependOnceListener.bind(this) as  TypedEventTransform<this, TEvent>;
+        this.removeListener = super.removeListener.bind(this) as  TypedEventTransform<this, TEvent>;
+        this.off = super.off.bind(this) as  TypedEventTransform<this, TEvent>;
     }
-    readonly addListener: TEvent;
-    readonly on: TEvent;
-    readonly once: TEvent;
-    readonly prependListener: TEvent;
-    readonly prependOnceListener: TEvent;
-    readonly removeListener: TEvent;
-    readonly off: TEvent;
+    readonly addListener: TypedEventTransform<this, TEvent>;
+    readonly on: TypedEventTransform<this, TEvent>;
+    readonly once: TypedEventTransform<this, TEvent>;
+    readonly prependListener: TypedEventTransform<this, TEvent>;
+    readonly prependOnceListener: TypedEventTransform<this, TEvent>;
+    readonly removeListener: TypedEventTransform<this, TEvent>;
+    readonly off: TypedEventTransform<this, TEvent>;
 }
