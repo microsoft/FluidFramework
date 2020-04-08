@@ -6,4 +6,3 @@
 export * from "./baseContainerRuntimeFactory";
 export * from "./defaultComponentContainerRuntimeFactory";
 export * from "./simpleContainerRuntimeFactory";
-export * from "./simpleModuleInstantiationFactory";

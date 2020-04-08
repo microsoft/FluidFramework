@@ -5,6 +5,7 @@
 - [View interfaces moved to separate package](#View-interfaces-moved-to-separate-package)
 - [IComponent* Interfaces should now have string literal identifiers](#IComponent*-Interfaces-should-now-have-string-literal-identifiers)
 - [SharedComponentFactory and PrimedComponentFactory changes](#SharedComponentFactory-and-PrimedComponentFactory-changes)
+- [SimpleModuleInstantiationFactory renamed and SimpleContainerRuntimeFactory deprecated](#SimpleModuleInstantiationFactory-renamed-and-SimpleContainerRuntimeFactory-deprecated)
 
 ### View interfaces moved to separate package
 
@@ -58,6 +59,12 @@ export interface IComponentFoo extends IProvideComponentFoo {
 ### SharedComponentFactory and PrimedComponentFactory changes
 
 Class definitions for SharedComponentFactory and PrimedComponentFactory have been updated.  Both now specify a required `type: string` parameter in their constructors.
+
+### `SimpleModuleInstantiationFactory` renamed and `SimpleContainerRuntimeFactory` deprecated
+
+`SimpleModuleInstantiationFactory` is now named `DefaultComponentContainerRuntimeFactory`.  Its functionality is unchanged.
+
+`SimpleContainerRuntimeFactory` is deprecated, as its functionality is provided by `DefaultComponentContainerRuntimeFactory` and the newly added helper `createAndAttachComponent()` which should be used instead.  It will be removed in a future version of the framework.
 
 ## 0.15 Breaking Changes
 
