@@ -4,13 +4,13 @@
  */
 
 import {
-    SimpleModuleInstantiationFactory,
+    DefaultComponentContainerRuntimeFactory,
 } from "@microsoft/fluid-aqueduct";
 
 import { DiceRollerInstantiationFactory, DiceRollerName } from "./main";
 
 /**
- * This does setup for the Container. The SimpleModuleInstantiationFactory also enables dynamic loading in the
+ * This does setup for the Container. The DefaultComponentContainerRuntimeFactory also enables dynamic loading in the
  * EmbeddedComponentLoader.
  *
  * There are two important things here:
@@ -20,7 +20,7 @@ import { DiceRollerInstantiationFactory, DiceRollerName } from "./main";
  * In this example, we are only registering a single component, but more complex examples will register multiple
  * components.
  */
-export const fluidExport = new SimpleModuleInstantiationFactory(
+export const fluidExport = new DefaultComponentContainerRuntimeFactory(
     DiceRollerName,
     new Map([
         [DiceRollerName, Promise.resolve(DiceRollerInstantiationFactory)],
