@@ -254,7 +254,7 @@ export class InkCanvas {
         drawShapes(this.context, previous, current, pen);
     }
 
-    private handleStylus(target: IInk, operation: IStylusOperation) {
+    private handleStylus(operation: IStylusOperation) {
         // Render the dirty stroke
         const dirtyStrokeId = operation.id;
         const stroke = this.model.getStroke(dirtyStrokeId);

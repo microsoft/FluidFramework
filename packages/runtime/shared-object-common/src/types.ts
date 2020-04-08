@@ -20,8 +20,13 @@ export interface IProvideSharedObject {
     readonly ISharedObject: ISharedObject;
 }
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type IEventThisPlaceHolder={thisPlaceHolder: "thisPlaceHolder"};
+type ReplaceThisPlaceHolderWithTThis<L extends any[], TThis> =
+  L extends any[] ? { [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K] } : never;
+
 export type TransformedEvent<TThis, E, A extends any[]> =
-    (event: E, listener: (target: TThis, ...args: A) => void) => TThis;
+    (event: E, listener: (...args: ReplaceThisPlaceHolderWithTThis<A, TThis>) => void) => TThis;
 
 export type IEventTransformer<TThis, TEvent extends IEvent> =
 TEvent extends
@@ -184,8 +189,8 @@ export class EventEmitterWithErrorHandling<TEvent extends IErrorEvent = IErrorEv
     }
 }
 
-export interface ISharedObjectEvents extends IErrorEvent {
-    (event: "pre-op" | "op", listener: (op: ISequencedDocumentMessage, local: boolean) => void);
+export interface ISharedObjectEvents extends IErrorEvent  {
+    (event: "pre-op" | "op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void);
 }
 
 /**

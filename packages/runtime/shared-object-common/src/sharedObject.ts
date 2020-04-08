@@ -104,9 +104,10 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
             // eslint-disable-next-line no-null/no-null
             runtime !== null ? runtime.logger : undefined, this.attributes.type, { SharedObjectId: id });
 
-        this.on("error", (target: this, error: any) => {
+        this.on("error", (error: any) => {
             runtime.emit("error", error);
         });
+
     }
 
     /**
