@@ -171,6 +171,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
      * Gets the component of a given id. Will follow the pattern of the container for waiting.
      * @param id - component id
      * This is maintained for testing, to allow us to fetch the _scheduler for testHost since it is set at initializing
+     * Removal is tracked by issue #1628
      */
     protected async getComponent_UNSAFE<T extends IComponent>(id: string, wait: boolean = true): Promise<T> {
         const request = {
