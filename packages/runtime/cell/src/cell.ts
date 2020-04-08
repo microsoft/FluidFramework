@@ -16,7 +16,7 @@ import { IComponentRuntime, IObjectStorageService, IChannelAttributes } from "@m
 import { ISharedObjectFactory, SharedObject, ValueType } from "@microsoft/fluid-shared-object-base";
 import { CellFactory } from "./cellFactory";
 import { debug } from "./debug";
-import { ISharedCell } from "./interfaces";
+import { ISharedCell, ISharedCellEvents } from "./interfaces";
 
 /**
  * Description of a cell delta operation
@@ -45,7 +45,7 @@ const snapshotFileName = "header";
 /**
  * Implementation of a cell shared object
  */
-export class SharedCell extends SharedObject implements ISharedCell {
+export class SharedCell extends SharedObject<ISharedCellEvents> implements ISharedCell {
     /**
      * Create a new shared cell
      *

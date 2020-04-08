@@ -25,7 +25,7 @@ export interface IProvideSharedString {
 /**
  * Component interface describing access methods on a SharedString
  */
-export interface ISharedString extends IProvideSharedString {
+export interface ISharedString extends SharedSegmentSequence<SharedStringSegment>, IProvideSharedString {
     insertText(pos: number, text: string, props?: MergeTree.PropertySet);
 
     insertMarker(pos: number, refType: MergeTree.ReferenceType, props?: MergeTree.PropertySet);
