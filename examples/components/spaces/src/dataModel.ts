@@ -11,7 +11,6 @@ import {
 import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { Layout } from "react-grid-layout";
 
-
 export interface ISpacesDataModel extends EventEmitter {
     componentList: Map<string, Layout>;
     setComponentToolbar(id: string, type: string, handle: IComponentHandle): Promise<IComponent>;

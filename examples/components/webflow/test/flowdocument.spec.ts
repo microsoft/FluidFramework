@@ -3,7 +3,7 @@
 * Licensed under the MIT License.
 */
 
-import { randomId, TagName } from "@fluid-example/flow-util-lib";
+import { TagName } from "@fluid-example/flow-util-lib";
 import { Marker, ReferenceType } from "@microsoft/fluid-merge-tree";
 import { TestHost } from "@microsoft/fluid-local-test-utils";
 import * as assert from "assert";
