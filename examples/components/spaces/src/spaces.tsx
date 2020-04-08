@@ -18,6 +18,7 @@ import { ISpacesDataModel, SpacesDataModel } from "./dataModel";
 import { SpacesGridView } from "./view";
 import { ComponentToolbar, ComponentToolbarName } from "./components";
 import { IComponentToolbarConsumer } from "./interfaces";
+import { SpacesComponentName } from "./index";
 
 /**
  * Spaces is the Fluid
@@ -32,6 +33,7 @@ export class Spaces extends PrimedComponent
     // TODO #1188 - Component registry should automatically add ComponentToolbar
     // to the registry since it's required for the spaces component
     private static readonly factory = new PrimedComponentFactory(
+        SpacesComponentName,
         Spaces,
         [
             SharedObjectSequence.getFactory(),

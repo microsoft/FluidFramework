@@ -65,6 +65,7 @@ export class Scoreboard extends PrimedComponent implements IComponentHTMLView {
  * This is where we define the Distributed Data Structures this component uses
  */
 const ScoreboardComponentInstantiationFactory = new PrimedComponentFactory(
+    Scoreboard.componentName,
     Scoreboard,
     [],
 );

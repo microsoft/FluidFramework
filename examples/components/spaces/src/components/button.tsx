@@ -41,7 +41,7 @@ export const FriendlyButtonName = "Button";
 export class Button extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
-    private static readonly factory = new PrimedComponentFactory(Button, []);
+    private static readonly factory = new PrimedComponentFactory(ButtonName, Button, []);
 
     public static getFactory() {
         return Button.factory;

@@ -17,6 +17,7 @@ import * as ReactDOM from "react-dom";
 const pkg = require("../package.json");
 const pkgversion = pkg.version as string;
 const upgradeKey = "u p g r a d e";
+const versionTest1Name = pkg.name as string;
 
 export class VersionTest extends PrimedComponent implements IComponentHTMLView {
   public get IComponentHTMLView() { return this; }
@@ -95,4 +96,4 @@ export class VersionTest extends PrimedComponent implements IComponentHTMLView {
   }
 }
 
-export const VersiontestInstantiationFactory = new PrimedComponentFactory(VersionTest, []);
+export const VersiontestInstantiationFactory = new PrimedComponentFactory(versionTest1Name, VersionTest, []);

@@ -9,6 +9,8 @@ import { IComponentHTMLView, IProvideComponentHTMLView } from "@microsoft/fluid-
 
 import uuid from "uuid/v4";
 
+export const AnchorName = "anchor";
+
 /**
  * Anchor is an default component is responsible for managing creation and the default component
  */
@@ -24,7 +26,7 @@ export class Anchor extends PrimedComponent implements IProvideComponentHTMLView
         return this.defaultComponentInternal;
     }
 
-    private static readonly factory = new PrimedComponentFactory(Anchor, []);
+    private static readonly factory = new PrimedComponentFactory(AnchorName, Anchor, []);
 
     public static getFactory() {
         return Anchor.factory;

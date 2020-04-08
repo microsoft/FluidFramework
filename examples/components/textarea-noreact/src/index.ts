@@ -7,11 +7,7 @@ import {
     SimpleModuleInstantiationFactory,
 } from "@microsoft/fluid-aqueduct";
 
-import { TextareaNoReactInstantiationFactory } from "./main";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../package.json");
-export const chaincodeName = pkg.name as string;
+import { TextareaNoReactInstantiationFactory, TextAreaNoReactName } from "./main";
 
 /**
  * This does setup for the Container. The SimpleModuleInstantiationFactory also
@@ -22,9 +18,9 @@ export const chaincodeName = pkg.name as string;
  * 2. Map of string to factory for all components
  */
 export const fluidExport = new SimpleModuleInstantiationFactory(
-    chaincodeName,
+    TextAreaNoReactName,
     new Map([
-        [chaincodeName,
+        [TextAreaNoReactName,
             Promise.resolve(TextareaNoReactInstantiationFactory)],
     ]),
 );

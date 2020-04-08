@@ -27,6 +27,7 @@ export class TableDocument extends PrimedComponent implements ITable {
     public static getFactory() { return TableDocument.factory; }
 
     private static readonly factory = new PrimedComponentFactory(
+        TableDocumentType,
         TableDocument,
         [
             SparseMatrix.getFactory(),
@@ -34,7 +35,6 @@ export class TableDocument extends PrimedComponent implements ITable {
         ],
         undefined,
         true,
-        TableDocumentType,
     );
 
     public get numCols() { return this.maybeCols.getLength(); }

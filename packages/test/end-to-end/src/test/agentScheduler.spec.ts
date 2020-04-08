@@ -7,38 +7,58 @@
 
 import * as assert from "assert";
 import { AgentSchedulerFactory, TaskManager } from "@microsoft/fluid-agent-scheduler";
-import { TestHost } from "@microsoft/fluid-local-test-utils";
-import { IAgentScheduler } from "@microsoft/fluid-runtime-definitions";
+import { IFluidCodeDetails, ILoader } from "@microsoft/fluid-container-definitions";
+import { Container } from "@microsoft/fluid-container-loader";
 import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";
-
-const AgentSchedulerType = "@microsoft/fluid-agent-scheduler";
+import { IAgentScheduler } from "@microsoft/fluid-runtime-definitions";
+import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { createLocalLoader, initializeLocalContainer } from "@microsoft/fluid-test-utils";
 
 describe("AgentScheduler", () => {
     const leader = "leader";
+    const id = "fluid-test://localhost/agentSchedulerTest";
+    const codeDetails: IFluidCodeDetails = {
+        package: "agentSchedulerTestPackage",
+        config: {},
+    };
+
+    let deltaConnectionServer: ILocalDeltaConnectionServer;
+    let containerDeltaEventManager: DocumentDeltaEventManager;
+
+    async function createContainer(): Promise<Container> {
+        const loader: ILoader = createLocalLoader([
+            [ codeDetails, new AgentSchedulerFactory() ],
+        ], deltaConnectionServer);
+
+        return initializeLocalContainer(id, loader, codeDetails);
+    }
+
+    async function getComponent(componentId: string, container: Container): Promise<TaskManager> {
+        const response = await container.request({ url: componentId });
+        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+            throw new Error(`Component with id: ${componentId} not found`);
+        }
+        return response.value as TaskManager;
+    }
 
     describe("Single client", () => {
-        let host: TestHost;
         let scheduler: IAgentScheduler;
 
         beforeEach(async () => {
-            host = new TestHost([
-                [AgentSchedulerType, Promise.resolve(new AgentSchedulerFactory())],
-            ]);
+            deltaConnectionServer = LocalDeltaConnectionServer.create();
 
-            scheduler = await host.getComponent<TaskManager>(AgentSchedulerFactory.type)
-                .then((taskmanager) => taskmanager.IAgentScheduler);
+            const container = await createContainer();
+            scheduler = await getComponent("_scheduler", container)
+                .then((taskManager) => taskManager.IAgentScheduler);
 
             // Make sure all initial ops (around leadership) are processed.
             // It takes a while because we start in unattached mode, and attach scheduler,
-            // which causes loss of all tasks and reassignment
-            const docScheduler = new DocumentDeltaEventManager(host.deltaConnectionServer);
-            const doc = await host.getDocumentDeltaEvent();
-            docScheduler.registerDocuments(doc);
-            await docScheduler.process(doc);
-            docScheduler.resumeProcessing(doc);
+            // which causes loss of all tasks and reassignment.
+            containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
+            containerDeltaEventManager.registerDocuments(container);
+            await containerDeltaEventManager.process();
+            containerDeltaEventManager.resumeProcessing(container);
         });
-
-        afterEach(async () => { await host.close(); });
 
         it("No tasks initially", async () => {
             assert.deepStrictEqual(scheduler.pickedTasks(), [leader]);
@@ -91,39 +111,43 @@ describe("AgentScheduler", () => {
             await scheduler.release("task1");
             assert.deepStrictEqual(scheduler.pickedTasks() , [leader]);
         });
+
+        afterEach(async () => {
+            await deltaConnectionServer.webSocketServer.close();
+        });
     });
 
     describe("Multiple clients", () => {
-        let host1: TestHost;
-        let host2: TestHost;
+        let container1: Container;
+        let container2: Container;
         let scheduler1: IAgentScheduler;
         let scheduler2: IAgentScheduler;
 
+        async function syncContainers() {
+            // Pauses the deltaQueues of the containers. Waits until all pending ops in the container
+            // and the server are processed.
+            await containerDeltaEventManager.process();
+            // Resume the containes because they would have been paused by the above process call.
+            containerDeltaEventManager.resumeProcessing(container1, container2);
+        }
+
         beforeEach(async () => {
-            host1 = new TestHost([
-                [AgentSchedulerType, Promise.resolve(new AgentSchedulerFactory())],
-            ]);
-            host2 = host1.clone();
-            scheduler1 = await host1.getComponent<TaskManager>("_scheduler")
-                .then((taskmanager) => taskmanager.IAgentScheduler);
-            scheduler2 = await host2.getComponent<TaskManager>("_scheduler")
-                .then((taskmanager) => taskmanager.IAgentScheduler);
+            deltaConnectionServer = LocalDeltaConnectionServer.create();
+
+            container1 = await createContainer();
+            scheduler1 = await getComponent("_scheduler", container1)
+                .then((taskManager) => taskManager.IAgentScheduler);
+
+            container2 = await createContainer();
+            scheduler2 = await getComponent("_scheduler", container2)
+                .then((taskManager) => taskManager.IAgentScheduler);
 
             // Make sure all initial ops (around leadership) are processed.
             // It takes a while because we start in unattached mode, and attach scheduler,
-            // which causes loss of all tasks and reassignment
-            const docScheduler = new DocumentDeltaEventManager(host1.deltaConnectionServer);
-            const doc1 = await host1.getDocumentDeltaEvent();
-            const doc2 = await host2.getDocumentDeltaEvent();
-            docScheduler.registerDocuments(doc1, doc2);
-            await docScheduler.process(doc1, doc2);
-            docScheduler.resumeProcessing(doc1, doc2);
-        });
-
-        afterEach(async () => {
-            await TestHost.sync(host1, host2);
-            await host1.close();
-            await host2.close();
+            // which causes loss of all tasks and reassignment.
+            containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
+            containerDeltaEventManager.registerDocuments(container1, container2);
+            await syncContainers();
         });
 
         it("No tasks initially", async () => {
@@ -133,11 +157,13 @@ describe("AgentScheduler", () => {
 
         it("Clients agree on picking tasks sequentially", async () => {
             await scheduler1.pick("task1", async () => {});
-            await TestHost.sync(host1, host2);
+
+            await syncContainers();
             assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1"]);
             assert.deepStrictEqual(scheduler2.pickedTasks(), []);
             await scheduler2.pick("task2", async () => {});
-            await TestHost.sync(host1, host2);
+
+            await syncContainers();
             assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1"]);
             assert.deepStrictEqual(scheduler2.pickedTasks(), ["task2"]);
         });
@@ -149,7 +175,8 @@ describe("AgentScheduler", () => {
             await scheduler2.pick("task2", async () => {});
             await scheduler2.pick("task3", async () => {});
             await scheduler2.pick("task4", async () => {});
-            await TestHost.sync(host1, host2);
+
+            await syncContainers();
             assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1", "task2", "task3"]);
             assert.deepStrictEqual(scheduler2.pickedTasks(), ["task4"]);
         });
@@ -164,7 +191,8 @@ describe("AgentScheduler", () => {
             await scheduler1.pick("task5", async () => {});
             await scheduler2.pick("task5", async () => {});
             await scheduler2.pick("task6", async () => {});
-            await TestHost.sync(host1, host2);
+
+            await syncContainers();
             assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1", "task2", "task5"]);
             assert.deepStrictEqual(scheduler2.pickedTasks(), ["task4", "task6"]);
         });
@@ -179,7 +207,8 @@ describe("AgentScheduler", () => {
             await scheduler1.pick("task5", async () => {});
             await scheduler2.pick("task5", async () => {});
             await scheduler2.pick("task6", async () => {});
-            await TestHost.sync(host1, host2);
+
+            await syncContainers();
             await scheduler1.release("task4").catch((err) => {
                 assert.deepStrictEqual(err, "task4 was never picked");
             });
@@ -201,29 +230,38 @@ describe("AgentScheduler", () => {
             await scheduler1.pick("task5", async () => {});
             await scheduler2.pick("task5", async () => {});
             await scheduler2.pick("task6", async () => {});
-            await TestHost.sync(host1, host2);
+
+            await syncContainers();
             assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1", "task2", "task5"]);
             assert.deepStrictEqual(scheduler2.pickedTasks(), ["task4", "task6"]);
             await scheduler1.release("task2", "task1", "task5");
-            await TestHost.sync(host1, host2);
+
+            await syncContainers();
             assert.deepStrictEqual(scheduler1.pickedTasks(), [leader]);
-            await TestHost.sync(host2);
+
+            await syncContainers();
             assert.deepStrictEqual(scheduler2.pickedTasks().sort(), ["task1", "task2", "task4", "task5", "task6"]);
             await scheduler1.pick("task1", async () => {});
             await scheduler1.pick("task2", async () => {});
             await scheduler1.pick("task5", async () => {});
             await scheduler1.pick("task6", async () => {});
             await scheduler2.release("task2", "task1", "task4", "task5", "task6");
-            await TestHost.sync(host1, host2);
+
+            await syncContainers();
             assert.deepStrictEqual(scheduler1.pickedTasks().sort(),
                 [leader, "task1", "task2", "task4", "task5", "task6"]);
         });
 
         it("Releasing leadership should automatically elect a new leader", async () => {
             await scheduler1.release(leader);
-            await TestHost.sync(host1, host2);
+
+            await syncContainers();
             assert.deepStrictEqual(scheduler1.pickedTasks(), []);
             assert.deepStrictEqual(scheduler2.pickedTasks(), [leader]);
+        });
+
+        afterEach(async () => {
+            await deltaConnectionServer.webSocketServer.close();
         });
     });
 });

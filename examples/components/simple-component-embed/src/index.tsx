@@ -7,6 +7,8 @@ import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFacto
 import { ClickerInstantiationFactory, Clicker } from "@fluid-example/clicker";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
+const simpleComponentEmbedName = "@fluid-example/simple-component-embed";
+
 export class SimpleComponentEmbed extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
@@ -42,14 +44,15 @@ export class SimpleComponentEmbed extends PrimedComponent implements IComponentH
 }
 
 export const SimpleComponentEmbedInstantiationFactory = new PrimedComponentFactory(
+    simpleComponentEmbedName,
     SimpleComponentEmbed,
     [],
 );
 
 export const fluidExport = new SimpleModuleInstantiationFactory(
-    "@fluid-example/simple-component-embed",
+    simpleComponentEmbedName,
     new Map([
-        ["@fluid-example/simple-component-embed", Promise.resolve(SimpleComponentEmbedInstantiationFactory)],
+        [simpleComponentEmbedName, Promise.resolve(SimpleComponentEmbedInstantiationFactory)],
         ["@fluid-example/clicker", Promise.resolve(ClickerInstantiationFactory)],
     ]),
 );
