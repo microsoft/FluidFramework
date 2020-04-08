@@ -14,6 +14,8 @@ import "react-image-gallery/styles/css/image-gallery.css";
 import "./Styles.css";
 import { ISharedMap } from "@microsoft/fluid-map";
 
+const imageGalleryName = "@fluid-example/image-gallery";
+
 export class ImageGalleryComponent extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
@@ -93,13 +95,14 @@ export class ImageGalleryComponent extends PrimedComponent implements IComponent
 }
 
 export const ImageGalleryInstantiationFactory = new PrimedComponentFactory(
+    imageGalleryName,
     ImageGalleryComponent,
     [],
 );
 
 export const fluidExport = new SimpleModuleInstantiationFactory(
-    "@fluid-example/image-gallery",
+    imageGalleryName,
     new Map([
-        ["@fluid-example/image-gallery", Promise.resolve(ImageGalleryInstantiationFactory)],
+        [imageGalleryName, Promise.resolve(ImageGalleryInstantiationFactory)],
     ]),
 );

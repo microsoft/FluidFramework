@@ -21,8 +21,10 @@ import {
 
 import {
     Anchor,
+    AnchorName,
     TabsComponent,
     Vltava,
+    VltavaName,
 } from "./components";
 
 export class InternalRegistry implements IComponentRegistry, IComponentRegistryDetails {
@@ -96,8 +98,8 @@ const generateFactory = () => {
     });
 
     // We don't want to include the default wrapper component in our list of available components
-    containerComponents.push([ "anchor", Promise.resolve(Anchor.getFactory())]);
-    containerComponents.push([ "vltava", Promise.resolve(Vltava.getFactory())]);
+    containerComponents.push([ AnchorName, Promise.resolve(Anchor.getFactory())]);
+    containerComponents.push([ VltavaName, Promise.resolve(Vltava.getFactory())]);
 
     const containerRegistries: NamedComponentRegistryEntries = [
         ["", Promise.resolve(new InternalRegistry(containerComponentsDefinition))],

@@ -116,6 +116,7 @@ export class Pond extends PrimedComponent implements IComponentHTMLView {
     public static getFactory() { return Pond.factory; }
 
     private static readonly factory = new PrimedComponentFactory(
+        PondName,
         Pond,
         [SharedDirectory.getFactory()],
         new Map([

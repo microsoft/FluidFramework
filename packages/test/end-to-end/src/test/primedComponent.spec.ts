@@ -30,7 +30,7 @@ describe("PrimedComponent", () => {
         let component: Component;
 
         beforeEach(async () => {
-            const factory = new PrimedComponentFactory(Component, []);
+            const factory = new PrimedComponentFactory(PrimedType, Component, []);
             host = new TestHost([
                 [PrimedType, Promise.resolve(factory)],
             ]);

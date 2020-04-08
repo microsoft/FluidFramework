@@ -11,6 +11,7 @@ import { CellRange } from "./cellrange";
 import { ConfigKey } from "./configKey";
 import { TableDocument } from "./document";
 import { ITable, TableDocumentItem } from "./table";
+import { TableSliceType } from "./componentTypes";
 
 export interface ITableSliceConfig {
     docId: string;
@@ -25,6 +26,7 @@ export class TableSlice extends PrimedComponent implements ITable {
     public static getFactory() { return TableSlice.factory; }
 
     private static readonly factory = new PrimedComponentFactory(
+        TableSliceType,
         TableSlice,
         [],
     );

@@ -45,6 +45,7 @@ export class Pollster extends PrimedComponent implements IComponentHTMLView {
 }
 
 export const PollInstantiationFactory = new PrimedComponentFactory(
+    chaincodeName,
     Pollster,
     [SharedMap.getFactory()],
 );

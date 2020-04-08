@@ -11,11 +11,14 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { OwnedSharedMap } from "./ownedMap";
 
+const ownedMapName = "@fluid-example/owned-map";
+
 export class OwnedMap extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
     public static getFactory() { return OwnedMap.factory; }
 
     private static readonly factory = new PrimedComponentFactory(
+        ownedMapName,
         OwnedMap,
         [
             OwnedSharedMap.getFactory(),
