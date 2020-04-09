@@ -13,10 +13,12 @@ import * as ReactDOM from "react-dom";
 import { TabsDataModel, ITabsDataModel } from "./dataModel";
 import { TabsView } from "./view";
 
+export const TabsName = "tabs";
+
 export class TabsComponent extends PrimedComponent implements IComponentHTMLView {
     private dataModelInternal: ITabsDataModel | undefined;
 
-    private static readonly factory = new PrimedComponentFactory(TabsComponent, []);
+    private static readonly factory = new PrimedComponentFactory(TabsName, TabsComponent, []);
 
     public static getFactory() {
         return TabsComponent.factory;
@@ -46,7 +48,6 @@ export class TabsComponent extends PrimedComponent implements IComponentHTMLView
                 this.root,
                 registryDetails,
                 this.createAndAttachComponent.bind(this),
-                this.getComponent.bind(this),
             );
     }
 

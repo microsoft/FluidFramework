@@ -3,7 +3,6 @@
 * Licensed under the MIT License.
 */
 
-import { randomId } from "@fluid-example/flow-util-lib";
 import { Marker, ReferenceType } from "@microsoft/fluid-merge-tree";
 // tslint:disable:binary-expression-operand-order
 import { TestHost } from "@microsoft/fluid-local-test-utils";
@@ -29,7 +28,7 @@ describe("FlowDocument", () => {
     });
 
     beforeEach(async () => {
-        doc = await host.createAndAttachComponent(randomId(), FlowDocumentType);
+        doc = await host.createAndAttachComponent(FlowDocumentType);
     });
 
     function expect(expected: string) {

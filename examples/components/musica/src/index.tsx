@@ -16,6 +16,8 @@ import { Player, NoteProperties } from "./Player";
 import { PianoUtility } from "./PianoUtility";
 import { DAW } from "./daw";
 
+const musicaName = "@fluid-example/musica";
+
 // TODO: Is this right?
 const audioContext = new AudioContext();
 
@@ -96,13 +98,14 @@ export class Musica extends PrimedComponent implements IComponentHTMLView {
 }
 
 export const MusicaInstantiationFactory = new PrimedComponentFactory(
+    musicaName,
     Musica,
     [],
 );
 
 export const fluidExport = new SimpleModuleInstantiationFactory(
-    "@fluid-example/musica",
+    musicaName,
     new Map([
-        ["@fluid-example/musica", Promise.resolve(MusicaInstantiationFactory)],
+        [musicaName, Promise.resolve(MusicaInstantiationFactory)],
     ]),
 );

@@ -21,8 +21,10 @@ import {
 
 import {
     Anchor,
+    AnchorName,
     TabsComponent,
     Vltava,
+    VltavaName,
 } from "./components";
 
 export class InternalRegistry implements IComponentRegistry, IComponentRegistryDetails {
@@ -56,35 +58,35 @@ const generateFactory = () => {
         {
             type: "clicker",
             factory: Promise.resolve(ClickerInstantiationFactory),
-            capabilities: ["IComponentHTMLVisual"],
+            capabilities: ["IComponentHTMLView"],
             friendlyName: "Clicker",
             fabricIconName: "NumberField",
         },
         {
             type: "tabs",
             factory: Promise.resolve(TabsComponent.getFactory()),
-            capabilities: ["IComponentHTMLVisual"],
+            capabilities: ["IComponentHTMLView"],
             friendlyName: "Tabs",
             fabricIconName: "BrowserTab",
         },
         {
             type: "spaces",
             factory: Promise.resolve(Spaces.getFactory()),
-            capabilities: ["IComponentHTMLVisual"],
+            capabilities: ["IComponentHTMLView"],
             friendlyName: "Spaces",
             fabricIconName: "SnapToGrid",
         },
         {
             type: "codemirror",
             factory: Promise.resolve(cmfe),
-            capabilities: ["IComponentHTMLVisual"],
+            capabilities: ["IComponentHTMLView"],
             friendlyName: "Codemirror",
             fabricIconName: "Code",
         },
         {
             type: "prosemirror",
             factory: Promise.resolve(pmfe),
-            capabilities: ["IComponentHTMLVisual"],
+            capabilities: ["IComponentHTMLView"],
             friendlyName: "Prosemirror",
             fabricIconName: "Edit",
         },
@@ -96,8 +98,8 @@ const generateFactory = () => {
     });
 
     // We don't want to include the default wrapper component in our list of available components
-    containerComponents.push([ "anchor", Promise.resolve(Anchor.getFactory())]);
-    containerComponents.push([ "vltava", Promise.resolve(Vltava.getFactory())]);
+    containerComponents.push([ AnchorName, Promise.resolve(Anchor.getFactory())]);
+    containerComponents.push([ VltavaName, Promise.resolve(Vltava.getFactory())]);
 
     const containerRegistries: NamedComponentRegistryEntries = [
         ["", Promise.resolve(new InternalRegistry(containerComponentsDefinition))],

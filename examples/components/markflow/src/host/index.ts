@@ -4,14 +4,11 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import {
-    IComponent,
-    IResponse,
-} from "@microsoft/fluid-component-core-interfaces";
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-view-interfaces";
 import { FlowDocument } from "../document";
-import { FlowDocumentType } from "../runtime";
+import { FlowDocumentType, webflowType } from "../runtime";
 import { WebflowView } from "./host";
 import { importDoc } from "./import";
 
@@ -24,21 +21,22 @@ export class WebFlow extends PrimedComponent implements IComponentHTMLVisual {
 
     // #region IComponentHTMLVisual
     public addView(scope?: IComponent): IComponentHTMLView {
-        return new WebflowView(this.getComponent<FlowDocument>(this.docId), this.context.documentId);
+        const componentHandle = this.root.get(this.docId);
+        if (componentHandle) {
+            return new WebflowView(componentHandle.get(), this.context.documentId);
+        }
     }
     // #endregion IComponentHTMLVisual
 
     protected async componentInitializingFirstTime() {
-        const componentRuntime: IComponentRuntime = await this.context.createComponent(FlowDocumentType);
-        const response: IResponse = await componentRuntime.request({ url: "/" });
-        componentRuntime.attach();
-        this.docId = `${componentRuntime.id}`;
-        const doc = response.value as FlowDocument;
+        const component = await this.createAndAttachComponent<FlowDocument>(FlowDocumentType);
+        this.docId = `${component.IComponentLoadable.url}`;
+        this.root.set(this.docId, component.handle);
         const url = new URL(window.location.href);
         const template = url.searchParams.get("template");
         if (template) {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            importDoc(Promise.resolve(doc), template);
+            importDoc(Promise.resolve(component), template);
         }
     }
 
@@ -57,6 +55,6 @@ export class WebFlow extends PrimedComponent implements IComponentHTMLVisual {
     }
 }
 
-export const webFlowFactory = new PrimedComponentFactory(WebFlow, [], new Map([
+export const webFlowFactory = new PrimedComponentFactory(webflowType, WebFlow, [], new Map([
     [FlowDocumentType, import(/* webpackChunkName: "flowdoc", webpackPreload: true */ "../document").then((m) => m.flowDocumentFactory)],
 ]));

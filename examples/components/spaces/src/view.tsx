@@ -7,12 +7,15 @@ import { ReactViewAdapter } from "@microsoft/fluid-view-adapters";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 
 import * as React from "react";
-import GridLayout, { Layout } from "react-grid-layout";
+import RGL, { WidthProvider, Layout } from "react-grid-layout";
+import "react-grid-layout/css/styles.css";
+const ReactGridLayout = WidthProvider(RGL);
 import { ISpacesDataModel } from "./dataModel";
+
 
 interface IEmbeddedComponentWrapperProps {
     id: string;
-    getComponent: (componentId: string) => Promise<IComponent>;
+    getComponent: (componentId: string) => Promise<IComponent | undefined>;
 }
 
 interface IEmbeddedComponentWrapperState {
@@ -48,8 +51,10 @@ class EmbeddedComponentWrapper extends React.Component<IEmbeddedComponentWrapper
 
     async componentDidMount() {
         const component = await this.props.getComponent(this.props.id);
-        const element = <ReactViewAdapter component={component} />;
-        this.setState({ element });
+        if (component) {
+            const element = <ReactViewAdapter component={component} />;
+            this.setState({ element });
+        }
     }
 
     public render() {
@@ -192,40 +197,14 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                             >
                                 {"↗️"}
                             </button>
-                            <input
-                                style={buttonStyle}
-                                value={layout.w}
-                                onMouseDown={(event: React.MouseEvent<HTMLInputElement>) => {
-                                    event.stopPropagation();
-                                }}
-                                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                                    this.props.dataModel.updateGridItem(id, {
-                                        x: layout.x,
-                                        y: layout.y,
-                                        w: event.target.value,
-                                        h: layout.h,
-                                    })
-                                }
-                            />
-                            <input
-                                style={buttonStyle}
-                                value={layout.h}
-                                onMouseDown={(event: React.MouseEvent<HTMLInputElement>) => {
-                                    event.stopPropagation();
-                                }}
-                                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                                    this.props.dataModel.updateGridItem(id, {
-                                        x: layout.x,
-                                        y: layout.y,
-                                        w: layout.w,
-                                        h: event.target.value,
-                                    })
-                                }
-                            />
                         </div>
                     }
                     <div style={embeddedComponentStyle}>
-                        <EmbeddedComponentWrapper id={id} getComponent={this.props.dataModel.getComponent} />
+                        <EmbeddedComponentWrapper
+                            id={id}
+                            getComponent={async (componentId: string) =>
+                                this.props.dataModel.getComponent(componentId)}
+                        />
                     </div>
                 </div>;
             if (id !== this.props.dataModel.componentToolbarId) {
@@ -246,7 +225,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                 {componentToolbar}
                 {
                     this.state.componentMap.size > 0 &&
-                        <GridLayout
+                        <ReactGridLayout
                             className="layout"
                             cols={36}
                             rowHeight={50}
@@ -264,7 +243,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                             style={gridContainerStyle}
                         >
                             {components}
-                        </GridLayout>
+                        </ReactGridLayout>
                 }
             </div>
         );

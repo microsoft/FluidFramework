@@ -51,6 +51,7 @@ export class ClickerWithInitialValue extends PrimedComponent implements ICompone
     public static getFactory() { return ClickerWithInitialValue.factory; }
 
     private static readonly factory = new PrimedComponentFactory(
+        ClickerWithInitialValueName,
         ClickerWithInitialValue,
         [],
     );

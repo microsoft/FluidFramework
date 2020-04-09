@@ -6,8 +6,9 @@
 import { ClickerName } from "@fluid-example/clicker";
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
 import { ISharedCell, SharedCell } from "@microsoft/fluid-cell";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import {
+    IComponentHandle,
+} from "@microsoft/fluid-component-core-interfaces";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { IComponentHTMLView, IComponentReactViewable } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
@@ -162,9 +163,9 @@ export class TodoItem extends PrimedComponent
     }
 
     public async getInnerComponent() {
-        const innerComponentId = this.innerIdCell.get();
-        if (innerComponentId) {
-            return this.getComponent(innerComponentId);
+        const innerComponentHandle = this.innerIdCell.get();
+        if (innerComponentHandle) {
+            return innerComponentHandle.get();
         } else {
             return undefined;
         }
@@ -176,27 +177,26 @@ export class TodoItem extends PrimedComponent
      * @param props - props to be passed into component creation
      */
     public async createInnerComponent(type: TodoItemSupportedComponents, props?: any): Promise<void> {
-        let componentRuntime: IComponentRuntime;
+        let componentType: string | undefined;
         switch (type) {
             case "todo":
-                componentRuntime = await this.context.createComponent(undefined, TodoItemName, props);
+                componentType = TodoItemName;
                 break;
             case "clicker":
-                componentRuntime = await this.context.createComponent(undefined, ClickerName, props);
+                componentType = ClickerName;
                 break;
             case "textBox":
-                componentRuntime = await this.context.createComponent(undefined, TextBoxName, props);
+                componentType = TextBoxName;
                 break;
             case "textList":
-                componentRuntime = await this.context.createComponent(undefined, TextListName, props);
+                componentType = TextListName;
                 break;
             default:
         }
 
-        await componentRuntime.request({ url: "/" });
-        componentRuntime.attach();
+        const component = await this.createAndAttachComponent(componentType, props);
         // Update the inner component id
-        this.innerIdCell.set(componentRuntime.id);
+        this.innerIdCell.set(component.handle);
 
         this.emit("innerComponentChanged");
     }

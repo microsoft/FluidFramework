@@ -9,9 +9,12 @@ import { SharedMap } from "@microsoft/fluid-map";
 import { IComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { TodoItemInstantiationFactory, TodoItemName } from "../TodoItem";
+
+import { TodoName } from "./Todo";
 import { Todo } from "./index";
 
 export const TodoInstantiationFactory: IComponentFactory = new PrimedComponentFactory(
+    TodoName,
     Todo,
     [
         SharedMap.getFactory(),
