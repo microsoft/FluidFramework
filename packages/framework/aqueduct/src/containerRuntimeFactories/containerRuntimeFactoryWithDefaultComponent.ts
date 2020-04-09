@@ -16,9 +16,6 @@ import {
 import {
     ContainerServiceRegistryEntries,
 } from "../containerServices";
-import {
-    createAndAttachComponent,
-} from "../helpers";
 import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory";
 
 const defaultComponentId = "default";
@@ -62,11 +59,10 @@ export class ContainerRuntimeFactoryWithDefaultComponent extends BaseContainerRu
      * {@inheritDoc BaseContainerRuntimeFactory.containerInitializingFirstTime}
      */
     protected async containerInitializingFirstTime(runtime: IHostRuntime) {
-        // Debug(`createAndAttachComponent(chaincode=${chaincode})`);
-        await createAndAttachComponent(
-            runtime,
+        const componentRuntime = await runtime.createComponent(
             ContainerRuntimeFactoryWithDefaultComponent.defaultComponentId,
             this.defaultComponentName,
         );
+        componentRuntime.attach();
     }
 }
