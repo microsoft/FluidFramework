@@ -10,7 +10,7 @@ import {
     OptionalComponentProvider,
     RequiredComponentProvider,
 } from "./types";
-import { IComponentSynthesizer } from "./IComponentSynthesize";
+import { IComponentDependencySynthesizer } from "./IComponentDependencySynthesizer";
 import {
     InstanceProvider,
     ValueProvider,
@@ -28,11 +28,11 @@ import {
  * DependencyContainer is similar to a IoC Container. It takes providers and will
  * synthesize an object based on them when requested.
  */
-export class DependencyContainer implements IComponentSynthesizer {
+export class DependencyContainer implements IComponentDependencySynthesizer {
     private readonly providers = new Map<keyof IComponent, Provider<any>>();
     private readonly singletons = new Map<keyof IComponent, IComponent>();
 
-    public get IComponentSynthesizer() { return this; }
+    public get IComponentDependencySynthesizer() { return this; }
 
     /**
      * {@inheritDoc (IComponentSynthesizer:interface).registeredTypes}
@@ -41,7 +41,7 @@ export class DependencyContainer implements IComponentSynthesizer {
         return this.providers.keys();
     }
 
-    public constructor(public parent: IComponentSynthesizer | undefined = undefined) { }
+    public constructor(public parent: IComponentDependencySynthesizer | undefined = undefined) { }
 
     /**
      * {@inheritDoc (IComponentSynthesizer:interface).register}

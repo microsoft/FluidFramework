@@ -5,11 +5,11 @@
 
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 
-import { IComponentSynthesizer } from "../IComponentSynthesize";
+import { IComponentDependencySynthesizer } from "../IComponentDependencySynthesizer";
 import { Provider } from "./provider";
 
 export interface FactoryProvider<T extends keyof IComponent> {
-    factory: (manager?: IComponentSynthesizer) => NonNullable<IComponent[T]>;
+    factory: (manager?: IComponentDependencySynthesizer) => NonNullable<IComponent[T]>;
 }
 
 export const isFactoryProvider = <T extends keyof IComponent>(

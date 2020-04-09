@@ -5,8 +5,9 @@
 
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import {
-    Scope,
     ComponentSymbolProvider,
+    OptionalComponentProvider,
+    RequiredComponentProvider,
 } from "./types";
 
 import {
@@ -15,13 +16,14 @@ import {
 
 declare module "@microsoft/fluid-component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideComponentSynthesizer>> { }
+    export interface IComponent extends Readonly<Partial<IProvideComponentDependencySynthesizer>> { }
 }
 
-export const IComponentSynthesizer: keyof IProvideComponentSynthesizer = "IComponentSynthesizer";
+export const IComponentDependencySynthesizer: keyof IProvideComponentDependencySynthesizer
+    = "IComponentDependencySynthesizer";
 
-export interface IProvideComponentSynthesizer {
-    IComponentSynthesizer: IComponentSynthesizer;
+export interface IProvideComponentDependencySynthesizer {
+    IComponentDependencySynthesizer: IComponentDependencySynthesizer;
 }
 
 /**
@@ -29,7 +31,7 @@ export interface IProvideComponentSynthesizer {
  * It allow for registering providers and uses synthesize to genera a new object with the optional
  * and required types.
  */
-export interface IComponentSynthesizer extends IProvideComponentSynthesizer {
+export interface IComponentDependencySynthesizer extends IProvideComponentDependencySynthesizer {
     /**
      * All the registered types available
      */
@@ -62,7 +64,7 @@ export interface IComponentSynthesizer extends IProvideComponentSynthesizer {
         R extends keyof IComponent>(
         optionalTypes: ComponentSymbolProvider<O>,
         requiredTypes: ComponentSymbolProvider<R>,
-    ): Scope<O, R>;
+    ): OptionalComponentProvider<O> & RequiredComponentProvider<R>;
 
     /**
      * Check if a given type is registered
