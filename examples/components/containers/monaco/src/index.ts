@@ -66,7 +66,7 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
 
     // On first boot create the base component
     if (!runtime.existing) {
-        const componentRuntime = await runtime.createComponent("code", "@fluid-example/monaco");
+        const componentRuntime = await runtime.createComponent_UNSAFE("code", "@fluid-example/monaco");
         componentRuntime.attach();
     }
 

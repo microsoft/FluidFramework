@@ -39,8 +39,6 @@ import {
     IInboundSignalMessage,
 } from "@microsoft/fluid-runtime-definitions";
 import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
-// eslint-disable-next-line import/no-internal-modules
-import * as uuid from "uuid/v4";
 
 // Snapshot Format Version to be used in component attributes.
 const currentSnapshotFormatVersion = "0.1";
@@ -200,16 +198,10 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         }
     }
 
-    public async createComponent(pkgOrId: string | undefined, pkg?: string, props?: any): Promise<IComponentRuntime> {
-        // pkgOrId can't be undefined if pkg is undefined
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const pkgName = pkg ?? pkgOrId!;
-        assert(pkgName);
-        const id = pkg ? (pkgOrId ?? uuid()) : uuid();
+    public async createComponentWithId(pkg: string, props?: any): Promise<IComponentRuntime> {
+        const packagePath: string[] = await this.composeSubpackagePath(pkg);
 
-        const packagePath: string[] = await this.composeSubpackagePath(pkgName);
-
-        return this.hostRuntime._createComponentWithProps(packagePath, props, id);
+        return this.hostRuntime._createComponentWithProps(packagePath, props);
     }
 
     public async createComponentWithRealizationFn(

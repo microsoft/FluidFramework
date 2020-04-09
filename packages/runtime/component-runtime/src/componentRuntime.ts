@@ -222,8 +222,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         this.emit("dispose");
     }
 
-    public async createAndAttachComponent(id: string, pkg: string): Promise<IComponentRuntime> {
-        const newComponentRuntime = await this.componentContext.createComponent(id, pkg);
+    public async createAndAttachComponent(pkg: string): Promise<IComponentRuntime> {
+        const newComponentRuntime = await this.componentContext.createComponentWithId(pkg);
         newComponentRuntime.attach();
         return newComponentRuntime;
     }

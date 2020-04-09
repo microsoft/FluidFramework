@@ -413,7 +413,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         // Create all internal components in first load.
         if (!context.existing) {
-            await runtime.createComponent(schedulerId, schedulerId)
+            await runtime.createComponentWithId(schedulerId)
                 .then((componentRuntime) => {
                     componentRuntime.attach();
                 });
@@ -946,13 +946,18 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         }
     }
 
-    public async createComponent(idOrPkg: string, maybePkg?: string | string[]) {
+    public async createComponentWithId(pkg: string | string[]) {
+        return this._createComponentWithProps(pkg, undefined);
+    }
+
+    public async createComponent_UNSAFE(idOrPkg: string, maybePkg?: string | string[]) {
         const id = maybePkg === undefined ? uuid() : idOrPkg;
         const pkg = maybePkg === undefined ? idOrPkg : maybePkg;
         return this._createComponentWithProps(pkg, undefined, id);
     }
 
-    public async _createComponentWithProps(pkg: string | string[], props: any, id: string): Promise<IComponentRuntime> {
+    public async _createComponentWithProps(pkg: string | string[], props: any, id?: string):
+    Promise<IComponentRuntime> {
         return this.createComponentContext(Array.isArray(pkg) ? pkg : [pkg], props, id).realize();
     }
 

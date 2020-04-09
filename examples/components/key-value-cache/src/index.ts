@@ -165,7 +165,7 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFact
         );
 
         if (!runtime.existing) {
-            const created = await runtime.createComponent(ComponentName, ComponentName);
+            const created = await runtime.createComponent_UNSAFE(ComponentName, ComponentName);
             created.attach();
         }
 

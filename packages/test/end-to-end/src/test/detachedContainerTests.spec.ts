@@ -69,9 +69,9 @@ describe("Detached Container", () => {
         const component = response.value as ITestFluidComponent;
 
         // Create a sub component of type TestFluidComponent and verify that it is attached.
-        const subCompId = "SubComponent1";
         const runtime = component.runtime as ComponentRuntime;
-        await runtime.createAndAttachComponent(subCompId, "default");
+        const subComponentInit = await runtime.createAndAttachComponent("default");
+        const subCompId = subComponentInit.id;
         const subResponse = await container.request({url: `/${subCompId}`});
         if (subResponse.mimeType !== "fluid/component" && subResponse.status !== 200) {
             assert.fail("New components should be created in detached container");
@@ -94,7 +94,7 @@ describe("Detached Container", () => {
         // Create a sub component of type TestFluidComponent.
         const subCompId = "SubComponent1";
         const runtime = component.runtime as ComponentRuntime;
-        await runtime.createAndAttachComponent(subCompId, "default");
+        await runtime.createAndAttachComponent("default");
 
         // Now attach the container
         await container.attach(testRequest);
@@ -120,13 +120,12 @@ describe("Detached Container", () => {
         const component = response.value as ITestFluidComponent;
 
         // Create a sub component of type TestFluidComponent.
-        const subCompId = "SubComponent1";
         const runtime = component.runtime as ComponentRuntime;
-        await runtime.createAndAttachComponent(subCompId, "default");
+        const subCompInit = await runtime.createAndAttachComponent("default");
 
         // Now attach the container and get the sub component.
         await container.attach(testRequest);
-        const response1 = await container.request({ url: `/${subCompId}` });
+        const response1 = await container.request({ url: `/${subCompInit.id}` });
         const subComponent1 = response1.value as ITestFluidComponent;
 
         // Now load the container from another loader.
@@ -134,7 +133,7 @@ describe("Detached Container", () => {
         const container2 = await loader2.resolve(testRequest);
 
         // Get the sub component and assert that it is attached.
-        const response2 = await container2.request({ url: `/${subCompId}` });
+        const response2 = await container2.request({ url: `/${subCompInit.id}` });
         const subComponent2 = response2.value as ITestFluidComponent;
         assert.equal(subComponent2.runtime.isAttached, true, "Component should be attached!!");
 

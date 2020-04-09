@@ -292,13 +292,10 @@ export interface IComponentContext extends EventEmitter {
 
     /**
      * Creates a new component by using subregistries.
-     * @param pkgOrId - Package name if a second parameter is not provided. Otherwise an explicit ID.
-     *                  ID is being deprecated, so prefer passing undefined instead (the runtime will
-     *                  generate an ID in this case).
      * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
      * @param props - Properties to be passed to the instantiateComponent through the context.
      */
-    createComponent(pkgOrId: string | undefined, pkg?: string | string[], props?: any): Promise<IComponentRuntime>;
+    createComponentWithId(pkg?: string | string[], props?: any): Promise<IComponentRuntime>;
 
     /**
      * Create a new component using subregistries with fallback.
@@ -389,24 +386,30 @@ export interface IHostRuntime extends
     getComponentRuntime(id: string, wait?: boolean): Promise<IComponentRuntime>;
 
     /**
+     * @deprecated
      * Creates a new component.
      * @param pkgOrId - Package name if a second parameter is not provided. Otherwise an explicit ID.
      * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
      */
-    createComponent(pkgOrId: string, pkg?: string | string[]): Promise<IComponentRuntime>;
+    createComponent_UNSAFE(pkgOrId: string, pkg?: string | string[]): Promise<IComponentRuntime>;
+
+    /**
+     * Creates a new component.
+     * @param pkg - Package name of the component
+     */
+    createComponentWithId(pkg: string | string[]): Promise<IComponentRuntime>;
 
     /**
      * Creates a new component with props
      * @param pkg - Package name of the component
      * @param props - properties to be passed to the instantiateComponent thru the context
-     * @param id - id of the component.
-     *
+     * @param id - Only supplied if the component is explicitly passing its ID, only used for default components
      * @remarks
      * Only used by aqueduct PrimedComponent to pass param to the instantiateComponent function thru the context.
      * Further change to the component create flow to split the local create vs remote instantiate make this deprecated.
      * @internal
      */
-    _createComponentWithProps(pkg: string | string[], props: any, id: string): Promise<IComponentRuntime>;
+    _createComponentWithProps(pkg: string | string[], props: any, id?: string): Promise<IComponentRuntime>;
 
     /**
      * Creates a new component using an optional realization function.  This API does not allow specifying

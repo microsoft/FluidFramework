@@ -473,8 +473,8 @@ const commands: IFlowViewCmd[] = [
         key: "underline",
     },
     {
-        exec: (c, p, f) => {
-            f.insertComponentNew("code", "@fluid-example/monaco");
+        exec: async (c, p, f) => {
+            await f.insertComponentNew("code", "@fluid-example/monaco");
         },
         key: "insert new monaco",
     },
@@ -4528,11 +4528,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    public insertComponentNew(prefix: string, chaincode: string, inline = false) {
-        const id = `${prefix}-${Date.now()}`;
-
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.collabDocument.runtime.createAndAttachComponent(id, chaincode);
+    public async insertComponentNew(prefix: string, chaincode: string, inline = false) {
+        const doc = await this.collabDocument.runtime.createAndAttachComponent(chaincode);
 
         const props = {
             crefTest: {
@@ -4540,9 +4537,9 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 type: {
                     name: "component",
                 } as IReferenceDocType,
-                url: id,
+                url: doc.id,
             },
-            leafId: id,
+            leafId: doc.id,
         };
 
         if (!inline) {

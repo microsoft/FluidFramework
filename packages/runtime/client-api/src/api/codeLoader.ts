@@ -137,7 +137,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
 
         // On first boot create the base component
         if (!runtime.existing) {
-            runtime.createComponent("root", "@fluid-internal/client-api")
+            runtime.createComponentWithId("@fluid-internal/client-api")
                 .then((componentRuntime) => {
                     componentRuntime.attach();
                 })
