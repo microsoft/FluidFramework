@@ -24,7 +24,7 @@ describe("MergeTree", () => {
             undefined);
 
         currentSequenceNumber = 0;
-        mergeTree.startCollaboration(
+        mergeTree.startOrUpdateCollaboration(
             localClientId,
             /* minSeq: */ currentSequenceNumber,
             /* currentSeq: */ currentSequenceNumber,

@@ -1041,18 +1041,30 @@ export class Client {
         const segmentWindow = this.getCollabWindow();
         return this.mergeTree.getLength(segmentWindow.currentSeq, segmentWindow.clientId);
     }
-    startCollaboration(longClientId: string | undefined, minSeq = 0, currentSeq = 0, branchId = 0) {
-        this.longClientId = longClientId ? longClientId : "original";
-        this.addLongClientId(this.longClientId, branchId);
-        this.mergeTree.startCollaboration(this.getShortClientId(this.longClientId), minSeq, currentSeq, branchId);
+
+    startOrUpdateCollaboration(longClientId: string | undefined, minSeq = 0, currentSeq = 0, branchId = 0){
+        // we should always have a client id if we are collaborating
+        // if the client id is undefined we are likly bound to detached
+        // container, so we should keep going in local mode. once
+        // the container attaches this will be called again with the
+        // client id
+        if(longClientId !== undefined){
+            if(this.longClientId === undefined){
+                this.longClientId = longClientId;
+                this.addLongClientId(this.longClientId, branchId);
+                this.mergeTree.startCollaboration(
+                    this.getShortClientId(this.longClientId), minSeq, currentSeq, branchId);
+            } else{
+                const oldClientId = this.longClientId;
+                const oldData = this.clientNameToIds.get(oldClientId).data;
+                this.longClientId = longClientId;
+                this.clientNameToIds.put(longClientId, oldData);
+                this.shortClientIdMap[oldData.clientId] = longClientId;
+            }
+        }
     }
-    updateCollaboration(longClientId: string) {
-        const oldClientId = this.longClientId;
-        const oldData = this.clientNameToIds.get(oldClientId).data;
-        this.longClientId = longClientId;
-        this.clientNameToIds.put(longClientId, oldData);
-        this.shortClientIdMap[oldData.clientId] = longClientId;
-    }
+
+
     findTile(startPos: number | undefined, tileLabel: string, preceding = true) {
         const clientId = this.getClientId();
         return this.mergeTree.findTile(startPos, clientId, tileLabel, preceding);
