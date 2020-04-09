@@ -41,7 +41,7 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
         return this.providers.keys();
     }
 
-    public constructor(public parent: IComponentDependencySynthesizer | undefined = undefined) { }
+    public constructor(public parent: DependencyContainer | undefined = undefined) { }
 
     /**
      * {@inheritDoc (IComponentSynthesizer:interface).register}
