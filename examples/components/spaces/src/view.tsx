@@ -15,7 +15,7 @@ import { ISpacesDataModel } from "./dataModel";
 
 interface IEmbeddedComponentWrapperProps {
     id: string;
-    getComponent: (componentId: string) => Promise<IComponent>;
+    getComponent: (componentId: string) => Promise<IComponent | undefined>;
 }
 
 interface IEmbeddedComponentWrapperState {
@@ -51,8 +51,10 @@ class EmbeddedComponentWrapper extends React.Component<IEmbeddedComponentWrapper
 
     async componentDidMount() {
         const component = await this.props.getComponent(this.props.id);
-        const element = <ReactViewAdapter component={component} />;
-        this.setState({ element });
+        if (component) {
+            const element = <ReactViewAdapter component={component} />;
+            this.setState({ element });
+        }
     }
 
     public render() {
@@ -198,7 +200,11 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
                         </div>
                     }
                     <div style={embeddedComponentStyle}>
-                        <EmbeddedComponentWrapper id={id} getComponent={this.props.dataModel.getComponent} />
+                        <EmbeddedComponentWrapper
+                            id={id}
+                            getComponent={async (componentId: string) =>
+                                this.props.dataModel.getComponent(componentId)}
+                        />
                     </div>
                 </div>;
             if (id !== this.props.dataModel.componentToolbarId) {

@@ -8,6 +8,7 @@ import {
     IComponent,
     IComponentLoadable,
     IResponse,
+    IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IPackage } from "@microsoft/fluid-container-definitions";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
@@ -43,11 +44,10 @@ export class ExternalComponentLoader extends PrimedComponent
     private callbacks: IComponentCallbacks;
 
     public get IComponentHTMLView() { return this; }
-
     public get IComponentCallable() { return this; }
 
-    public setViewComponent(component: IComponentLoadable) {
-        this.root.set(this.viewComponentMapID, component.IComponentLoadable.url);
+    public setViewComponent(component: IComponent & IComponentLoadable) {
+        this.root.set(this.viewComponentMapID, component.IComponentHandle);
         this.viewComponentP = Promise.resolve(component);
     }
 
@@ -120,9 +120,9 @@ export class ExternalComponentLoader extends PrimedComponent
     }
 
     protected async componentHasInitialized() {
-        const viewComponentUrl: string = this.root.get(this.viewComponentMapID);
-        if (viewComponentUrl) {
-            this.viewComponentP = this.getComponent(viewComponentUrl);
+        const viewComponentHandle = this.root.get<IComponentHandle>(this.viewComponentMapID);
+        if (viewComponentHandle) {
+            this.viewComponentP = viewComponentHandle.get();
         }
     }
 
@@ -170,10 +170,13 @@ export class ExternalComponentLoader extends PrimedComponent
                         let component: IComponent = response.value as IComponent;
                         componentRuntime.attach();
                         if (component.IComponentCollection !== undefined) {
-                            // eslint-disable-next-line @typescript-eslint/await-thenable
-                            component = await component.IComponentCollection.createCollectionItem();
+                            component = component.IComponentCollection.createCollectionItem();
                         }
-                        viewComponent.IComponentCollection.createCollectionItem({id, type: value});
+                        viewComponent.IComponentCollection.createCollectionItem({
+                            handle: component.IComponentHandle,
+                            type: value,
+                            id,
+                        });
                     } else {
                         throw new Error("View component is empty or is not an IComponentCollection!!");
                     }
