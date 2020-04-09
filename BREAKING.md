@@ -5,8 +5,7 @@
 - [View interfaces moved to separate package](#View-interfaces-moved-to-separate-package)
 - [IComponent* Interfaces should now have string literal identifiers](#IComponent*-Interfaces-should-now-have-string-literal-identifiers)
 - [SharedComponentFactory and PrimedComponentFactory changes](#SharedComponentFactory-and-PrimedComponentFactory-changes)
-- [PrimedComponent and SharedComponent interface changes]
-(#PrimedComponent-and-Shared-Component-interface-changes)
+- [PrimedComponent and SharedComponent interface changes](#PrimedComponent-and-Shared-Component-interface-changes)
 
 ### View interfaces moved to separate package
 
