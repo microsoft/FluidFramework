@@ -4,10 +4,11 @@
  */
 
 import * as assert from "assert";
+import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { PropertySet } from "@microsoft/fluid-merge-tree";
 import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
-import { createLocalContainerFactory } from "@microsoft/fluid-local-web-host";
-import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import { LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { createLocalLoader, initializeLocalContainer } from "@microsoft/fluid-test-utils";
 import { ITable } from "../table";
 import { TableDocument } from "../document";
 import { TableSlice } from "../slice";
@@ -16,6 +17,12 @@ import { createTableWithInterception } from "../interception";
 
 describe("Table Document with Interception", () => {
     describe("Simple User Attribution", () => {
+        const id = "fluid-test://localhost/tableWithInterceptionTest";
+        const codeDetails = {
+            package: "tableWithInterceptionTestPkg",
+            config: {},
+        };
+
         const userAttributes = { userId: "Fake User" };
         let tableDocument: TableDocument;
         let componentContext: IComponentContext;
@@ -58,7 +65,7 @@ describe("Table Document with Interception", () => {
         }
 
         beforeEach(async () => {
-            const fluidExport = new SimpleModuleInstantiationFactory(
+            const factory = new SimpleModuleInstantiationFactory(
                 TableDocumentType,
                 new Map([
                     [TableDocumentType, Promise.resolve(TableDocument.getFactory())],
@@ -66,9 +73,14 @@ describe("Table Document with Interception", () => {
                 ]),
             );
 
-            const containerFactory = await createLocalContainerFactory(fluidExport);
-            const container = await containerFactory();
-            const response = await container.request({ url: "/" });
+            const deltaConnectionServer = LocalDeltaConnectionServer.create();
+            const loader = createLocalLoader([[ codeDetails, factory ]], deltaConnectionServer);
+            const container = await initializeLocalContainer(id, loader, codeDetails);
+
+            const response = await container.request({ url: "default" });
+            if (response.status !== 200 || response.mimeType !== "fluid/component") {
+                throw new Error(`Default component not found`);
+            }
             tableDocument = response.value;
 
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions

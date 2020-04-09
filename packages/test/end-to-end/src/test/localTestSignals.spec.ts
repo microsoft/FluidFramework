@@ -4,35 +4,55 @@
  */
 
 import * as assert from "assert";
-import { Document, load } from "@fluid-internal/client-api";
-import {
-    DocumentDeltaEventManager,
-    TestDocumentServiceFactory,
-    TestResolver,
-} from "@microsoft/fluid-local-driver";
+import { IFluidCodeDetails, ILoader } from "@microsoft/fluid-container-definitions";
+import { Container } from "@microsoft/fluid-container-loader";
+import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { IInboundSignalMessage } from "@microsoft/fluid-runtime-definitions";
+import {
+    createLocalLoader,
+    ITestFluidComponent,
+    initializeLocalContainer,
+    TestFluidComponentFactory,
+} from "@microsoft/fluid-test-utils";
 
 describe("TestSignals", () => {
-    const id = "fluid-test://test.com/test/test";
+    const id = "fluid-test://localhost/localSignalsTest";
+    const codeDetails: IFluidCodeDetails = {
+        package: "localSignalsTestPackage",
+        config: {},
+    };
 
-    let testDeltaConnectionServer: ILocalDeltaConnectionServer;
-    let documentDeltaEventManager: DocumentDeltaEventManager;
-    let user1Document: Document;
-    let user2Document: Document;
+    let deltaConnectionServer: ILocalDeltaConnectionServer;
+    let containerDeltaEventManager: DocumentDeltaEventManager;
+    let component1: ITestFluidComponent;
+    let component2: ITestFluidComponent;
+
+    async function createContainer(): Promise<Container> {
+        const factory = new TestFluidComponentFactory([]);
+        const loader: ILoader = createLocalLoader([[ codeDetails, factory ]], deltaConnectionServer);
+        return initializeLocalContainer(id, loader, codeDetails);
+    }
+
+    async function getComponent(componentId: string, container: Container): Promise<ITestFluidComponent> {
+        const response = await container.request({ url: componentId });
+        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+            throw new Error(`Component with id: ${componentId} not found`);
+        }
+        return response.value as ITestFluidComponent;
+    }
 
     beforeEach(async () => {
-        testDeltaConnectionServer = LocalDeltaConnectionServer.create();
-        documentDeltaEventManager = new DocumentDeltaEventManager(testDeltaConnectionServer);
+        deltaConnectionServer = LocalDeltaConnectionServer.create();
 
-        const resolver = new TestResolver();
-        const serviceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
-        user1Document = await load(
-            id, resolver, {}, serviceFactory);
+        const container1 = await createContainer();
+        component1 = await getComponent("default", container1);
 
-        user2Document = await load(
-            id, resolver, {}, serviceFactory);
-        documentDeltaEventManager.registerDocuments(user1Document, user2Document);
+        const container2 = await createContainer();
+        component2 = await getComponent("default", container2);
+
+        containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
+        containerDeltaEventManager.registerDocuments(component1.runtime, component2.runtime);
     });
 
     describe("Attach signal Handlers on Both Clients", () => {
@@ -40,25 +60,25 @@ describe("TestSignals", () => {
             let user1SignalReceivedCount = 0;
             let user2SignalReceivedCount = 0;
 
-            user1Document.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+            component1.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
                 if (message.type === "TestSignal") {
                     user1SignalReceivedCount += 1;
                 }
             });
 
-            user2Document.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+            component2.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
                 if (message.type === "TestSignal") {
                     user2SignalReceivedCount += 1;
                 }
             });
 
-            user1Document.runtime.submitSignal("TestSignal", true);
-            await documentDeltaEventManager.process();
+            component1.runtime.submitSignal("TestSignal", true);
+            await containerDeltaEventManager.process();
             assert.equal(user1SignalReceivedCount, 1, "client 1 did not received signal");
             assert.equal(user2SignalReceivedCount, 1, "client 2 did not received signal");
 
-            user2Document.runtime.submitSignal("TestSignal", true);
-            await documentDeltaEventManager.process();
+            component2.runtime.submitSignal("TestSignal", true);
+            await containerDeltaEventManager.process();
             assert.equal(user1SignalReceivedCount, 2, "client 1 did not received signal");
             assert.equal(user2SignalReceivedCount, 2, "client 2 did not received signal");
 
@@ -67,8 +87,8 @@ describe("TestSignals", () => {
         it("Validate host runtime signals", async () => {
             let user1SignalReceivedCount = 0;
             let user2SignalReceivedCount = 0;
-            const user1HostRuntime = user1Document.context.hostRuntime;
-            const user2HostRuntime = user2Document.context.hostRuntime;
+            const user1HostRuntime = component1.context.hostRuntime;
+            const user2HostRuntime = component2.context.hostRuntime;
 
             user1HostRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
                 if (message.type === "TestSignal") {
@@ -83,12 +103,12 @@ describe("TestSignals", () => {
             });
 
             user1HostRuntime.submitSignal("TestSignal", true);
-            await documentDeltaEventManager.process();
+            await containerDeltaEventManager.process();
             assert.equal(user1SignalReceivedCount, 1, "client 1 did not receive signal");
             assert.equal(user2SignalReceivedCount, 1, "client 2 did not receive signal");
 
             user2HostRuntime.submitSignal("TestSignal", true);
-            await documentDeltaEventManager.process();
+            await containerDeltaEventManager.process();
             assert.equal(user1SignalReceivedCount, 2, "client 1 did not receive signal");
             assert.equal(user2SignalReceivedCount, 2, "client 2 did not receive signal");
         });
@@ -99,10 +119,10 @@ describe("TestSignals", () => {
         let user2HostSignalReceivedCount = 0;
         let user1CompSignalReceivedCount = 0;
         let user2CompSignalReceivedCount = 0;
-        const user1HostRuntime = user1Document.context.hostRuntime;
-        const user2HostRuntime = user2Document.context.hostRuntime;
-        const user1ComponentRuntime = user1Document.runtime;
-        const user2ComponentRuntime = user2Document.runtime;
+        const user1HostRuntime = component1.context.hostRuntime;
+        const user2HostRuntime = component2.context.hostRuntime;
+        const user1ComponentRuntime = component1.runtime;
+        const user2ComponentRuntime = component2.runtime;
 
         user1ComponentRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
             if (message.type === "TestSignal") {
@@ -129,14 +149,14 @@ describe("TestSignals", () => {
         });
 
         user1HostRuntime.submitSignal("TestSignal", true);
-        await documentDeltaEventManager.process();
+        await containerDeltaEventManager.process();
         assert.equal(user1HostSignalReceivedCount, 1, "client 1 did not receive signal on host runtime");
         assert.equal(user2HostSignalReceivedCount, 1, "client 2 did not receive signal on host runtime");
         assert.equal(user1CompSignalReceivedCount, 0, "client 1 should not receive signal on component runtime");
         assert.equal(user2CompSignalReceivedCount, 0, "client 2 should not receive signal on component runtime");
 
         user2ComponentRuntime.submitSignal("TestSignal", true);
-        await documentDeltaEventManager.process();
+        await containerDeltaEventManager.process();
         assert.equal(user1HostSignalReceivedCount, 1, "client 1 should not receive signal on host runtime");
         assert.equal(user2HostSignalReceivedCount, 1, "client 2 should not receive signal on host runtime");
         assert.equal(user1CompSignalReceivedCount, 1, "client 1 did not receive signal on component runtime");
@@ -144,10 +164,6 @@ describe("TestSignals", () => {
     });
 
     afterEach(async () => {
-        await Promise.all([
-            user1Document.close(),
-            user2Document.close(),
-        ]);
-        await testDeltaConnectionServer.webSocketServer.close();
+        await deltaConnectionServer.webSocketServer.close();
     });
 });
