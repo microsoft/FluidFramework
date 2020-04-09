@@ -160,9 +160,7 @@ export class TableDocument extends PrimedComponent implements ITable {
         const matrix = SparseMatrix.create(this.runtime, "matrix");
         this.root.set("matrix", matrix.handle);
 
-        const tableDocument = await super.createAndAttachComponent<TableDocument>(TableDocumentType);
         this.root.set(ConfigKey.docId, this.runtime.id);
-        this.root.set(this.runtime.id, tableDocument.handle);
     }
 
     protected async componentHasInitialized() {

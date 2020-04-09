@@ -22,7 +22,7 @@
     "lint:fix": "npm run eslint:fix",
     "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml --exit",
-    "test:mocha": "cross-env NODE_OPTIONS=\"--max-old-space-size=8192\" mocha --max-old-space-size=8192 -r ts-node/register -r source-map-support/register -r ignore-styles --recursive dist/test/**/*.spec.js --exit -r make-promises-safe",
+    "test:mocha": "mocha --recursive dist/test -r make-promises-safe",
     "tsc": "tsc"
   },
   "nyc": {

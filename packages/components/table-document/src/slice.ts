@@ -120,6 +120,8 @@ export class TableSlice extends PrimedComponent implements ITable {
         const maybeConfig = props;
         this.root.set(ConfigKey.docId, maybeConfig.docId);
         this.root.set(ConfigKey.name, maybeConfig.name);
+        this.maybeDoc = await this.getComponent_UNSAFE(maybeConfig.docId);
+        this.root.set(maybeConfig.docId, this.maybeDoc.handle);
         await this.ensureDoc();
         this.createValuesRange(maybeConfig.minCol, maybeConfig.minRow, maybeConfig.maxCol, maybeConfig.maxRow);
     }
@@ -138,6 +140,7 @@ export class TableSlice extends PrimedComponent implements ITable {
     private async ensureDoc() {
         if (!this.maybeDoc) {
             const docId = this.root.get(ConfigKey.docId);
+            // fetch handle from root
             const handle = this.root.get<IComponentHandle<TableDocument>>(docId);
             this.maybeDoc = await handle.get();
         }
