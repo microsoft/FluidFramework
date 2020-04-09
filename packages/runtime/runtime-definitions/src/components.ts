@@ -291,9 +291,11 @@ export interface IComponentContext extends EventEmitter {
     submitSignal(type: string, content: any): void;
 
     /**
+     * @deprecated
      * Creates a new component by using subregistries.
      * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
      * @param props - Properties to be passed to the instantiateComponent through the context.
+     * Remove once issue #1756 is closed
      */
     createComponent_UNSAFE(pkgOrId: string | undefined, pkg?: string | string[], props?: any):
     Promise<IComponentRuntime>;
@@ -398,6 +400,7 @@ export interface IHostRuntime extends
      * Creates a new component.
      * @param pkgOrId - Package name if a second parameter is not provided. Otherwise an explicit ID.
      * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
+     * Remove once issue #1756 is closed
      */
     createComponent_UNSAFE(pkgOrId: string, pkg?: string | string[]): Promise<IComponentRuntime>;
 
