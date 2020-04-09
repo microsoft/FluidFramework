@@ -39,6 +39,7 @@ import {
     IInboundSignalMessage,
 } from "@microsoft/fluid-runtime-definitions";
 import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
+import { v4 as uuid } from "uuid";
 
 // Snapshot Format Version to be used in component attributes.
 const currentSnapshotFormatVersion = "0.1";
@@ -196,6 +197,19 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
                     error);
             });
         }
+    }
+
+    public async createComponent_UNSAFE(pkgOrId: string | undefined, pkg?: string, props?: any):
+    Promise<IComponentRuntime> {
+        // pkgOrId can't be undefined if pkg is undefined
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const pkgName = pkg ?? pkgOrId!;
+        assert(pkgName);
+        const id = pkg ? (pkgOrId ?? uuid()) : uuid();
+
+        const packagePath: string[] = await this.composeSubpackagePath(pkgName);
+
+        return this.hostRuntime._createComponentWithProps(packagePath, props, id);
     }
 
     public async createComponentWithId(pkg: string, props?: any): Promise<IComponentRuntime> {

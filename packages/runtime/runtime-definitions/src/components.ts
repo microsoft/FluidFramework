@@ -295,6 +295,14 @@ export interface IComponentContext extends EventEmitter {
      * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
      * @param props - Properties to be passed to the instantiateComponent through the context.
      */
+    createComponent_UNSAFE(pkgOrId: string | undefined, pkg?: string | string[], props?: any):
+    Promise<IComponentRuntime>;
+
+    /**
+     * Creates a new component by using subregistries.
+     * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
+     * @param props - Properties to be passed to the instantiateComponent through the context.
+     */
     createComponentWithId(pkg?: string | string[], props?: any): Promise<IComponentRuntime>;
 
     /**

@@ -179,7 +179,7 @@ class TourOfHeroesContainerInstantiationFactory implements IRuntimeFactory, ICom
 
         // On first boot create the base component
         if (!runtime.existing) {
-            const componentRuntime = await runtime.createComponent("app", TourOfHeroesType);
+            const componentRuntime = await runtime.createComponent_UNSAFE("app", TourOfHeroesType);
             componentRuntime.attach();
         }
 

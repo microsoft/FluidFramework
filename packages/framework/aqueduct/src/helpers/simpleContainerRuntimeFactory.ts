@@ -48,7 +48,7 @@ export class SimpleContainerRuntimeFactory {
             // Debug(`createAndAttachComponent(chaincode=${chaincode})`);
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             SimpleContainerRuntimeFactory.createAndAttachComponent(
-                runtime, chaincode);
+                runtime, this.defaultComponentId, chaincode);
         }
 
         return runtime;
@@ -63,10 +63,11 @@ export class SimpleContainerRuntimeFactory {
      */
     public static async createAndAttachComponent<T>(
         runtime: IHostRuntime,
+        id: string,
         pkg: string,
     ): Promise<T> {
         try {
-            const componentRuntime = await runtime.createComponentWithId(pkg);
+            const componentRuntime = await runtime.createComponent_UNSAFE(id, pkg);
 
             const result = await componentRuntime.request({ url: "/" });
             if (result.status !== 200 || result.mimeType !== "fluid/component") {

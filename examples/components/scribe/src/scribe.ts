@@ -476,7 +476,7 @@ class ScribeFactory implements IComponentFactory, IRuntimeFactory {
         // On first boot create the base component
         if (!runtime.existing) {
             await Promise.all([
-                runtime.createComponent(defaultComponentId, ScribeFactory.type).then((componentRuntime) => {
+                runtime.createComponent_UNSAFE(defaultComponentId, ScribeFactory.type).then((componentRuntime) => {
                     componentRuntime.attach();
                 }),
             ])

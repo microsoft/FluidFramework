@@ -251,7 +251,7 @@ class SharedMapVisualizerFactory implements IComponentFactory, IRuntimeFactory {
         // On first boot create the base component
         if (!runtime.existing) {
             await Promise.all([
-                runtime.createComponent(
+                runtime.createComponent_UNSAFE(
                     defaultComponentId,
                     SharedMapVisualizerFactory.type,
                 ).then((componentRuntime) => {

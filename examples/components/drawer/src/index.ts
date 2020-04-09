@@ -52,7 +52,7 @@ class DrawerDocumentFactory implements IRuntimeFactory {
         // On first boot create the base component
         if (!runtime.existing) {
             await Promise.all([
-                runtime.createComponent(defaultComponentId, defaultComponent).then((componentRuntime) => {
+                runtime.createComponent_UNSAFE(defaultComponentId, defaultComponent).then((componentRuntime) => {
                     componentRuntime.attach();
                 }),
             ])
