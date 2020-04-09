@@ -25,18 +25,19 @@ export class TestResolver implements IUrlResolver, IExperimentalUrlResolver {
     private readonly tokenKey = "tokenKey";
 
     constructor(
-        private readonly id: string = "documentId",
         private readonly testDeltaConnectionServer?: ILocalDeltaConnectionServer,
     ) {}
 
     /**
      * Resolves URL requests by providing fake URLs with an actually generated
-     * token from constant test strings.  The root of the URL is fake, but the
+     * token from constant test strings. The root of the URL is fake, but the
      * remaining relative URL can still be parsed.
-     * @param request - request to handle; not used
+     * @param request - request to handle
      */
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
-        return this.resolveHelper();
+        const parsedUrl = new URL(request.url);
+        const documentId = parsedUrl.pathname.substr(1).split("/")[0];
+        return this.resolveHelper(documentId);
     }
 
     public async createContainer(
@@ -53,27 +54,31 @@ export class TestResolver implements IUrlResolver, IExperimentalUrlResolver {
         if (!(expDocumentStorage && expDocumentStorage.isExperimentalDocumentStorage)) {
             throw new Error("Storage has no experimental features!!");
         }
+
+        const parsedUrl = new URL(request.url);
+        const documentId = parsedUrl.pathname.substr(1).split("/")[0];
+
         await expDocumentStorage.createDocument(
             this.tenantId,
-            this.id,
+            documentId,
             summary,
             sequenceNumber,
             values,
         );
-        return this.resolveHelper();
+        return this.resolveHelper(documentId);
     }
 
-    private resolveHelper() {
+    private resolveHelper(documentId: string) {
         const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
         const resolved: IFluidResolvedUrl = {
             endpoints: {
-                deltaStorageUrl: `http://localhost:3000/deltas/${this.tenantId}/${this.id}`,
+                deltaStorageUrl: `http://localhost:3000/deltas/${this.tenantId}/${documentId}`,
                 ordererUrl: "http://localhost:3000",
                 storageUrl: `http://localhost:3000/repos/${this.tenantId}`,
             },
-            tokens: { jwt: generateToken(this.tenantId, this.id, this.tokenKey, scopes) },
+            tokens: { jwt: generateToken(this.tenantId, documentId, this.tokenKey, scopes) },
             type: "fluid",
-            url: `fluid-test://localhost:3000/${this.tenantId}/${this.id}`,
+            url: `fluid-test://localhost:3000/${this.tenantId}/${documentId}`,
         };
 
         return resolved;

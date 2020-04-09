@@ -25,9 +25,7 @@ export async function createLocalContainerFactory(
     entryPoint: Partial<IProvideRuntimeFactory & IProvideComponentFactory & IFluidModule>,
 ): Promise<() => Promise<Container>> {
 
-    const documentId = uuid();
-
-    const urlResolver = new TestResolver(documentId);
+    const urlResolver = new TestResolver();
 
     const deltaConn = LocalDeltaConnectionServer.create();
     const documentServiceFactory = new TestDocumentServiceFactory(deltaConn);
@@ -53,9 +51,12 @@ export async function createLocalContainerFactory(
         {},
         new Map<string, IProxyLoaderFactory>());
 
+    const documentId = uuid();
+    const url = `fluid://localhost/${documentId}`;
+
     return async () => {
 
-        const container = await loader.resolve({ url: documentId });
+        const container = await loader.resolve({ url });
 
         await initializeContainerCode(container, {} as any as IFluidCodeDetails);
 

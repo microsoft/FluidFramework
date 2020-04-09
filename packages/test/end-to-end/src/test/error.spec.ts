@@ -18,10 +18,12 @@ import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@micros
 import { LocalCodeLoader } from "@microsoft/fluid-test-utils";
 
 describe("Errors Types", () => {
+    const id = "fluid-test://localhost/errorTest";
+    const testRequest: IRequest = { url: id };
+
     let testDeltaConnectionServer: ILocalDeltaConnectionServer;
     let testResolver: TestResolver;
     let testResolved: IFluidResolvedUrl;
-    const testRequest: IRequest = { url: "" };
     let serviceFactory: IDocumentServiceFactory;
     let codeLoader: LocalCodeLoader;
     let loader: Loader;
