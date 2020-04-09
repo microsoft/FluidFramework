@@ -2,7 +2,7 @@
 
 An Ioc type library for synthesizing a fluid IComponent object based on registered providers.
 
-It allows for the creation of a `Vessel` (Container) that can have providers registered with. It exposes a `synthesize` method
+It allows for the creation of a `DependencyContainer` that can have providers registered with. It exposes a `synthesize` method
 that will return an object with the correct optional and required types requested.
 
 The returned object is defined as a `Scope` and uses the `IProvideComponent` paradigm to expose the requested types.
@@ -10,11 +10,11 @@ The returned object is defined as a `Scope` and uses the `IProvideComponent` par
 ## Simple Example
 
 ```typescript
-const vessel = new Vessel();
+const dc = new DependencyContainer();
 const foo = new Foo();
-vessel.register(IComponentFoo, {value: foo});
+dc.register(IComponentFoo, {value: foo});
 
-const s = vessel.synthesize<IComponentFoo>({IComponentFoo}, {});
+const s = dc.synthesize<IComponentFoo>({IComponentFoo}, {});
 
 console.log(s.IComponentFoo?.foo;)
 ```
@@ -58,11 +58,11 @@ the `Scope` is synthesized.
 #### Usage
 
 ```typescript
-const vessel = new Vessel();
-vessel.register(IComponentFoo, {instance: Foo});
+const dc = new DependencyContainer();
+dc.register(IComponentFoo, {instance: Foo});
 
 // register instance with lazy loading disabled
-vessel.register(IComponentFoo, {instance: Foo, lazy: false});
+dc.register(IComponentFoo, {instance: Foo, lazy: false});
 ```
 
 ### Singleton Provider
@@ -76,17 +76,17 @@ interface SingletonProvider<T extends IComponent> {
 
 Provide a parameterless class constructor and a single instance will be created and used for all `Scope` objects synthesized.
 
-`lazy` defaults to true if not provide. The singleton will be created the first time anyone requests it from the `Vessel` and not
+`lazy` defaults to true if not provide. The singleton will be created the first time anyone requests it from the `DependencyContainer` and not
 when a `Scope` is synthesized.
 
 #### Usage
 
 ```typescript
-const vessel = new Vessel();
-vessel.register(IComponentFoo, {singleton: Foo});
+const dc = new DependencyContainer();
+dc.register(IComponentFoo, {singleton: Foo});
 
 // register singleton with lazy loading disabled
-vessel.register(IComponentFoo, {singleton: Foo, lazy: false});
+dc.register(IComponentFoo, {singleton: Foo, lazy: false});
 ```
 
 ### Value Provider
@@ -102,10 +102,10 @@ Provide any existing object. Used if your object takes parameters.
 #### Usage
 
 ```typescript
-const vessel = new Vessel();
+const dc = new DependencyContainer();
 const foo = new Foo("bar");
 
-vessel.register(IComponentFoo, {value: foo});
+dc.register(IComponentFoo, {value: foo});
 ```
 
 ### Factory Provider
@@ -122,15 +122,15 @@ wants to use it to generate the Provider.
 #### Usage
 
 ```typescript
-const vessel = new Vessel();
-const fooFactory = (vessel) => new Foo("bar", vessel);
+const dc = new DependencyContainer();
+const fooFactory = (dc) => new Foo("bar", dc);
 
-vessel.register(IComponentFoo, {factory: fooFactory});
+dc.register(IComponentFoo, {factory: fooFactory});
 ```
 
 ## Synthesize
 
-Once you have a `Vessel` with registered providers you can synthesize/generate a new IComponent object from it. The
+Once you have a `DependencyContainer` with registered providers you can synthesize/generate a new IComponent object from it. The
 object that is returned is called a `Scope` and will have the correct typing of optional and required types.
 
 `synthesize` takes `optionalTypes` and `requiredTypes` as well as their corresponding types. `ComponentSymbolProvider<>`
@@ -150,9 +150,9 @@ Optional types will return an object that will have your requested type as a pro
 in the example below.
 
 ```typescript
-const vessel = new Vessel();
+const dc = new DependencyContainer();
 
-const scope = vessel.synthesize<IComponentFoo>({IComponentFoo}, {});
+const scope = dc.synthesize<IComponentFoo>({IComponentFoo}, {});
 
 console.log(scope.IComponentFoo?.foo);
 ```
@@ -167,9 +167,9 @@ Required types will return and object that will have your request type as a prop
 You can see below that we don't need to add the `?` to check our requested type.
 
 ```typescript
-const vessel = new Vessel();
+const dc = new DependencyContainer();
 
-const scope = vessel.synthesize<{}, IComponentFoo>({}, {IComponentFoo});
+const scope = dc.synthesize<{}, IComponentFoo>({}, {IComponentFoo});
 
 console.log(scope.IComponentFoo.foo);
 ```
@@ -179,9 +179,9 @@ console.log(scope.IComponentFoo.foo);
 You can declare multiple types for both Optional and Required using the `&` or creating a separate type.
 
 ```typescript
-const vessel = new Vessel();
+const dc = new DependencyContainer();
 
-const scope = vessel.synthesize<IComponentFoo & IComponentBar>({IComponentFoo, IComponentBar}, {});
+const scope = dc.synthesize<IComponentFoo & IComponentBar>({IComponentFoo, IComponentBar}, {});
 
 console.log(scope.IComponentFoo?.foo);
 console.log(scope.IComponentBar?.bar);
@@ -192,9 +192,9 @@ type MyAwesomeOptionalType = IComponentFoo & IComponentBar;
 
 // ...
 
-const vessel = new Vessel();
+const dc = new DependencyContainer();
 
-const scope = vessel.synthesize<{}, MyAwesomeOptionalType>({}, {IComponentFoo, IComponentBar});
+const scope = dc.synthesize<{}, MyAwesomeOptionalType>({}, {IComponentFoo, IComponentBar});
 
 console.log(scope.IComponentFoo.foo);
 console.log(scope.IComponentBar.bar);
@@ -202,7 +202,7 @@ console.log(scope.IComponentBar.bar);
 
 ## Parent
 
-The `Vessel` takes one optional parameter which is the `parent`. When resolving providers the `Vessel` will first
+The `DependencyContainer` takes one optional parameter which is the `parent`. When resolving providers the `DependencyContainer` will first
 check the current the look in the parent.
 
-The `parent` can also be set after `Vessel` creation.
+The `parent` can also be set after `DependencyContainer` creation.

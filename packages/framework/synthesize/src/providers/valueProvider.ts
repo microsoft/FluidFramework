@@ -4,11 +4,11 @@
  */
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 
-import { ComponentProvider } from "../types";
+import { RequiredComponentProvider } from "../types";
 import { Provider } from "./provider";
 
 export interface ValueProvider<T extends keyof IComponent> {
-    value: ComponentProvider<T>;
+    value: RequiredComponentProvider<T>;
 }
 
 export const isValueProvider = <T extends keyof IComponent>(

@@ -20,7 +20,7 @@ export type ComponentSymbolProvider<T extends keyof IComponent> = {
  * the IComponent properties as its type mapped to an object that implements
  * the property.
  */
-export type ComponentProvider<T extends keyof IComponent> = {
+export type RequiredComponentProvider<T extends keyof IComponent> = {
     [P in T]: NonNullable<IComponent[T]>
 };
 
@@ -32,9 +32,3 @@ export type ComponentProvider<T extends keyof IComponent> = {
 export type OptionalComponentProvider<T extends keyof IComponent> = {
     [P in T]: IComponent[T] | undefined;
 };
-
-/**
- * A Scope is a collection of optional and required providers.
- */
-export type Scope<O extends keyof IComponent, R extends keyof IComponent>
-    = OptionalComponentProvider<O> & ComponentProvider<R>;

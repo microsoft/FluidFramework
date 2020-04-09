@@ -6,8 +6,9 @@
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 
 import {
-    Scope,
     ComponentSymbolProvider,
+    OptionalComponentProvider,
+    RequiredComponentProvider,
 } from "./types";
 import { IComponentSynthesizer } from "./IComponentSynthesize";
 import {
@@ -24,10 +25,10 @@ import {
 } from "./providers";
 
 /**
- * Vessel is similar to a IoC Container. It takes providers and will
+ * DependencyContainer is similar to a IoC Container. It takes providers and will
  * synthesize an object based on them when requested.
  */
-export class Vessel implements IComponentSynthesizer {
+export class DependencyContainer implements IComponentSynthesizer {
     private readonly providers = new Map<keyof IComponent, Provider<any>>();
     private readonly singletons = new Map<keyof IComponent, IComponent>();
 
@@ -80,22 +81,14 @@ export class Vessel implements IComponentSynthesizer {
         R extends keyof IComponent>(
         optionalTypes: ComponentSymbolProvider<O>,
         requiredTypes: ComponentSymbolProvider<R>,
-    ): Scope<O, R> {
+    ): OptionalComponentProvider<O> & RequiredComponentProvider<R> {
         const optionalValues = Object.values(optionalTypes);
         const requiredValues = Object.values(requiredTypes);
 
+        // There was nothing passed in so we can return
         if (optionalValues === [] && requiredValues === []) {
-            // There was nothing passed in so we can return
             return {} as any;
         }
-
-        // Ensure there are no shared types
-        // Maybe I can just use Omit and do a type check instead
-        requiredValues.forEach((r) => {
-            if (optionalValues.indexOf(r) > 0) {
-                throw new Error(`Type cannot be defined as both optional and required. [Type:${r}]`);
-            }
-        });
 
         const required = this.generateRequired<R>(requiredTypes);
         const optional = this.generateOptional<O>(optionalTypes);

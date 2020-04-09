@@ -10,7 +10,7 @@ import {
     IComponentLoadable,
 } from "@microsoft/fluid-component-core-interfaces";
 
-import { Vessel } from "../";
+import { DependencyContainer } from "../";
 
 export interface IFoo {
     foo: string;
@@ -42,7 +42,7 @@ describe("Routerlicious", () => {
     describe("Aqueduct", () => {
         describe("ContainerModules", () => {
             it(`One Optional Module registered via value`, async () => {
-                const vessel = new Vessel();
+                const vessel = new DependencyContainer();
                 const module = new MockLoadable();
                 vessel.register(IComponentLoadable, {value: module});
 
@@ -53,7 +53,7 @@ describe("Routerlicious", () => {
             });
 
             it(`One Optional Module registered via factory`, async () => {
-                const vessel = new Vessel();
+                const vessel = new DependencyContainer();
                 const url = "Foo123";
 
                 const factory = () => new MockLoadableWithArgs(url);
@@ -65,7 +65,7 @@ describe("Routerlicious", () => {
             });
 
             it(`One Optional Module registered via instance - lazy default`, async () => {
-                const vessel = new Vessel();
+                const vessel = new DependencyContainer();
                 vessel.register(IComponentLoadable, {instance: MockLoadable});
 
                 const s = vessel.synthesize({IComponentLoadable}, {});
@@ -77,7 +77,7 @@ describe("Routerlicious", () => {
             });
 
             it(`One Optional Module registered via instance - lazy true`, async () => {
-                const vessel = new Vessel();
+                const vessel = new DependencyContainer();
                 vessel.register(IComponentLoadable, {instance: MockLoadable, lazy: true});
 
                 const s = vessel.synthesize({IComponentLoadable}, {});
@@ -89,7 +89,7 @@ describe("Routerlicious", () => {
             });
 
             it(`One Optional Module registered via instance - lazy false`, async () => {
-                const vessel = new Vessel();
+                const vessel = new DependencyContainer();
                 vessel.register(IComponentLoadable, {instance: MockLoadable, lazy: false});
 
                 const s = vessel.synthesize({IComponentLoadable}, {});
@@ -101,7 +101,7 @@ describe("Routerlicious", () => {
             });
 
             it(`One Optional Module registered via singleton - lazy default`, async () => {
-                const vessel = new Vessel();
+                const vessel = new DependencyContainer();
                 vessel.register(IComponentLoadable, {singleton: MockLoadable});
 
                 const s = vessel.synthesize({IComponentLoadable}, {});
@@ -113,7 +113,7 @@ describe("Routerlicious", () => {
             });
 
             it(`One Optional Module registered via singleton - lazy true`, async () => {
-                const vessel = new Vessel();
+                const vessel = new DependencyContainer();
                 vessel.register(IComponentLoadable, {singleton: MockLoadable, lazy: true});
 
                 const s = vessel.synthesize({IComponentLoadable}, {});
@@ -125,7 +125,7 @@ describe("Routerlicious", () => {
             });
 
             it(`One Optional Module registered via singleton - lazy false`, async () => {
-                const vessel = new Vessel();
+                const vessel = new DependencyContainer();
                 vessel.register(IComponentLoadable, {singleton: MockLoadable, lazy: false});
 
                 const s = vessel.synthesize({IComponentLoadable}, {});
@@ -137,7 +137,7 @@ describe("Routerlicious", () => {
             });
 
             it(`One Required Module registered via value`, async () => {
-                const vessel = new Vessel();
+                const vessel = new DependencyContainer();
                 const mock = new MockLoadable();
                 vessel.register(IComponentLoadable, {value: mock});
 
@@ -151,7 +151,7 @@ describe("Routerlicious", () => {
             });
 
             it(`One Required Module registered via factory`, async () => {
-                const vessel = new Vessel();
+                const vessel = new DependencyContainer();
                 const mock = new MockLoadable();
                 vessel.register(IComponentLoadable, {factory: () => mock});
 
@@ -165,7 +165,7 @@ describe("Routerlicious", () => {
             });
 
             it(`One Required Module registered via instance - lazy default`, async () => {
-                const vessel = new Vessel();
+                const vessel = new DependencyContainer();
                 vessel.register(IComponentLoadable, {instance: MockLoadable});
 
                 const s = vessel.synthesize(
@@ -184,7 +184,7 @@ describe("Routerlicious", () => {
             });
 
             it(`One Required Module registered via instance - lazy true`, async () => {
-                const vessel = new Vessel();
+                const vessel = new DependencyContainer();
                 vessel.register(IComponentLoadable, {instance: MockLoadable, lazy: true});
 
                 const s = vessel.synthesize(
@@ -203,7 +203,7 @@ describe("Routerlicious", () => {
             });
 
             it(`One Required Module registered via instance - lazy false`, async () => {
-                const vessel = new Vessel();
+                const vessel = new DependencyContainer();
                 vessel.register(IComponentLoadable, {instance: MockLoadable, lazy: false});
 
                 const s = vessel.synthesize(
@@ -222,7 +222,7 @@ describe("Routerlicious", () => {
             });
 
             it(`One Required Module registered via singleton - lazy default`, async () => {
-                const vessel = new Vessel();
+                const vessel = new DependencyContainer();
                 vessel.register(IComponentLoadable, {singleton: MockLoadable});
 
                 const s = vessel.synthesize(
@@ -241,7 +241,7 @@ describe("Routerlicious", () => {
             });
 
             it(`One Required Module registered via singleton - lazy true`, async () => {
-                const vessel = new Vessel();
+                const vessel = new DependencyContainer();
                 vessel.register(IComponentLoadable, {singleton: MockLoadable, lazy: true});
 
                 const s = vessel.synthesize(
@@ -260,7 +260,7 @@ describe("Routerlicious", () => {
             });
 
             it(`One Required Module registered via singleton - lazy false`, async () => {
-                const vessel = new Vessel();
+                const vessel = new DependencyContainer();
                 vessel.register(IComponentLoadable, {singleton: MockLoadable, lazy: false});
 
                 const s = vessel.synthesize(
@@ -279,7 +279,7 @@ describe("Routerlicious", () => {
             });
 
             it(`Two Optional Modules all registered`, async () => {
-                const vessel = new Vessel();
+                const vessel = new DependencyContainer();
                 vessel.register(IComponentLoadable, {value: new MockLoadable()});
                 vessel.register(IComponentConfiguration, {value: new MockComponentConfiguration()});
 
@@ -290,7 +290,7 @@ describe("Routerlicious", () => {
             });
 
             it(`Two Optional Modules none registered`, async () => {
-                const vessel = new Vessel();
+                const vessel = new DependencyContainer();
                 const s = vessel.synthesize(
                     {IComponentLoadable,IComponentConfiguration}, {});
                 assert(!s.IComponentLoadable, "Optional IComponentLoadable was not registered");
@@ -298,7 +298,7 @@ describe("Routerlicious", () => {
             });
 
             it(`Two Optional Modules one registered`, async () => {
-                const vessel = new Vessel();
+                const vessel = new DependencyContainer();
                 vessel.register(IComponentLoadable, {value: new MockLoadable()});
                 const s = vessel.synthesize(
                     {IComponentLoadable,IComponentConfiguration}, {});
@@ -307,7 +307,7 @@ describe("Routerlicious", () => {
             });
 
             it(`Two Required Modules all registered`, async () => {
-                const vessel = new Vessel();
+                const vessel = new DependencyContainer();
                 vessel.register(IComponentLoadable, {value: new MockLoadable()});
                 vessel.register(IComponentConfiguration, {value: new MockComponentConfiguration()});
 
@@ -321,7 +321,7 @@ describe("Routerlicious", () => {
             });
 
             it(`Required Module not registered should throw`, async () => {
-                const vessel = new Vessel();
+                const vessel = new DependencyContainer();
 
                 assert.throws(() => vessel.synthesize(
                     {},
@@ -330,18 +330,18 @@ describe("Routerlicious", () => {
             });
 
             it(`Optional Module found in Parent`, async () => {
-                const parentVessel = new Vessel();
+                const parentVessel = new DependencyContainer();
                 parentVessel.register(IComponentLoadable, {value: new MockLoadable()});
-                const vessel = new Vessel(parentVessel);
+                const vessel = new DependencyContainer(parentVessel);
 
                 const s = vessel.synthesize({IComponentLoadable}, {});
                 assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
             });
 
             it(`Optional Modules found in Parent and Child`, async () => {
-                const parentVessel = new Vessel();
+                const parentVessel = new DependencyContainer();
                 parentVessel.register(IComponentLoadable, {value: new MockLoadable()});
-                const vessel = new Vessel(parentVessel);
+                const vessel = new DependencyContainer(parentVessel);
                 vessel.register(IComponentConfiguration, {value: new MockComponentConfiguration()});
 
                 const s = vessel.synthesize(
@@ -350,9 +350,9 @@ describe("Routerlicious", () => {
             });
 
             it(`Optional Module in Parent and Child. Resolves Child`, async () => {
-                const parentVessel = new Vessel();
+                const parentVessel = new DependencyContainer();
                 parentVessel.register(IComponentLoadable, {value: new MockLoadable()});
-                const vessel = new Vessel(parentVessel);
+                const vessel = new DependencyContainer(parentVessel);
                 const childLoadableModule = new MockLoadable();
                 vessel.register(IComponentLoadable, {value: childLoadableModule});
 
@@ -362,18 +362,18 @@ describe("Routerlicious", () => {
             });
 
             it(`Required Module found in Parent`, async () => {
-                const parentVessel = new Vessel();
+                const parentVessel = new DependencyContainer();
                 parentVessel.register(IComponentLoadable, {value: new MockLoadable()});
-                const vessel = new Vessel(parentVessel);
+                const vessel = new DependencyContainer(parentVessel);
 
                 const s = vessel.synthesize({}, {IComponentLoadable});
                 assert(s.IComponentLoadable, "Required IComponentLoadable was registered");
             });
 
             it(`Required Module found in Parent and Child`, async () => {
-                const parentVessel = new Vessel();
+                const parentVessel = new DependencyContainer();
                 parentVessel.register(IComponentLoadable, {value: new MockLoadable()});
-                const vessel = new Vessel(parentVessel);
+                const vessel = new DependencyContainer(parentVessel);
                 vessel.register(IComponentConfiguration, {value: new MockComponentConfiguration()});
 
                 const s = vessel.synthesize(
@@ -383,9 +383,9 @@ describe("Routerlicious", () => {
             });
 
             it(`Required Module in Parent and Child. Resolves Child`, async () => {
-                const parentVessel = new Vessel();
+                const parentVessel = new DependencyContainer();
                 parentVessel.register(IComponentLoadable, {value: new MockLoadable()});
-                const vessel = new Vessel(parentVessel);
+                const vessel = new DependencyContainer(parentVessel);
                 const mock = new MockLoadable();
                 vessel.register(IComponentLoadable, {value: mock});
 
@@ -395,20 +395,20 @@ describe("Routerlicious", () => {
             });
 
             it(`Registering`, async () => {
-                const vessel = new Vessel();
+                const vessel = new DependencyContainer();
                 vessel.register(IComponentLoadable, {value: new MockLoadable()});
                 assert(vessel.has(IComponentLoadable), "Manager has IComponentLoadable");
                 assert(Array.from(vessel.registeredTypes).length === 1, "Manager has one module");
             });
 
             it(`Registering the same type twice throws`, async () => {
-                const vessel = new Vessel();
+                const vessel = new DependencyContainer();
                 vessel.register(IComponentLoadable, {value: new MockLoadable()});
                 assert.throws(() => vessel.register(IComponentLoadable, {value: new MockLoadable()}), Error);
             });
 
             it(`Registering then Unregistering`, async () => {
-                const vessel = new Vessel();
+                const vessel = new DependencyContainer();
                 vessel.register(IComponentLoadable, {value: new MockLoadable()});
                 vessel.unregister(IComponentLoadable);
                 assert(!vessel.has(IComponentLoadable), "Manager doesn't have IComponentLoadable");
@@ -416,7 +416,7 @@ describe("Routerlicious", () => {
             });
 
             it(`Registering then Unregistering then registering`, async () => {
-                const vessel = new Vessel();
+                const vessel = new DependencyContainer();
                 vessel.register(IComponentLoadable, {value: new MockLoadable()});
                 vessel.unregister(IComponentLoadable);
                 vessel.register(IComponentLoadable, {value: new MockLoadable()});
@@ -424,7 +424,7 @@ describe("Routerlicious", () => {
             });
 
             it(`has() resolves correctly in all variations`, async () => {
-                const vessel = new Vessel();
+                const vessel = new DependencyContainer();
                 vessel.register(IComponentLoadable, {instance: MockLoadable});
                 vessel.register(IComponentConfiguration, {instance: MockComponentConfiguration});
                 assert(vessel.has(IComponentLoadable), "Manager has IComponentLoadable");
@@ -436,7 +436,7 @@ describe("Routerlicious", () => {
             });
 
             it(`registeredModules() resolves correctly`, async () => {
-                const vessel = new Vessel();
+                const vessel = new DependencyContainer();
                 vessel.register(IComponentLoadable, {instance: MockLoadable});
                 vessel.register(IComponentConfiguration, {instance: MockComponentConfiguration});
                 const modules = Array.from(vessel.registeredTypes);

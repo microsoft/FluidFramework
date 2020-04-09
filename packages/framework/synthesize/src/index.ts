@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export * from "./vessel";
+export * from "./dependencyContainer";
 export * from "./IComponentSynthesize";
 export * from "./providers";
 export * from "./types";
