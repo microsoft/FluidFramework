@@ -63,12 +63,7 @@ export class BaseContainerRuntimeFactory implements
 
         // On first boot create the base component
         if (!runtime.existing) {
-            try {
-                await this.containerInitializingFirstTime(runtime);
-            } catch (error) {
-                runtime.error(error);
-                throw error;
-            }
+            await this.containerInitializingFirstTime(runtime);
         }
 
         return runtime;

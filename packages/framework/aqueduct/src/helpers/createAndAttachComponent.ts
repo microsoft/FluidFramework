@@ -19,19 +19,14 @@ export async function createAndAttachComponent<T>(
     id: string,
     pkg: string,
 ): Promise<T> {
-    try {
-        const componentRuntime = await runtime.createComponent(id, pkg);
+    const componentRuntime = await runtime.createComponent(id, pkg);
 
-        const result = await componentRuntime.request({ url: "/" });
-        if (result.status !== 200 || result.mimeType !== "fluid/component") {
-            throw new Error("Failed to get component.");
-        }
-
-        componentRuntime.attach();
-
-        return result.value as T;
-    } catch (error) {
-        runtime.error(error);
-        throw error;
+    const result = await componentRuntime.request({ url: "/" });
+    if (result.status !== 200 || result.mimeType !== "fluid/component") {
+        throw new Error("Failed to get component.");
     }
+
+    componentRuntime.attach();
+
+    return result.value as T;
 }
