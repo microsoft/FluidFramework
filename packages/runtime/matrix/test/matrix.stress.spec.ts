@@ -231,13 +231,14 @@ describe("Matrix", () => {
         test(/* numClients: */ 3, /* numIterations: */ 500, /* syncProbability: */ 0.1, 0xa42c4fe5);
 
         it.skip("stress-loop", async function() {
+            console.log("\n*** Begin Stress-Loop ***");
             this.timeout(0);    // Disable timeouts for stress loop
 
             const start = Date.now();
             while (true) {
                 await stress(/* numClients: */ 5, /* numIterations: */ 2000, /* syncProbability: */ 0.05, (Math.random() * 0x100000000) >>> 0);
                 console.log(matrices[0].toString());
-                console.log(`Elapsed: ${((Date.now() - start) / 1000).toFixed(2)}s\n`)
+                console.log(`Total Elapsed: ${((Date.now() - start) / 1000).toFixed(2)}s\n`)
             }
         });
     });

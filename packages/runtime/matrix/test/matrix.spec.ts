@@ -21,7 +21,7 @@ async function snapshot<T extends Serializable>(matrix: SharedMatrix<T>) {
 
     // Load the snapshot into a newly created 2nd SharedMatrix.
     const runtime = new MockRuntime();
-    const matrix2 = new SharedMatrix(runtime, `load(${matrix.id})`, SharedMatrixFactory.Attributes);
+    const matrix2 = new SharedMatrix<T>(runtime, `load(${matrix.id})`, SharedMatrixFactory.Attributes);
     await matrix2.load(/*branchId: */ null as any, {
         deltaConnection: new MockEmptyDeltaConnection(),
         objectStorage
@@ -205,6 +205,44 @@ describe("Matrix", () => {
                 check(matrix, /* row: */ 0, /* col: */ 0, /* numRows: */ 16, /* numCols: */ 16);
             });
         });
+
+        describe("snapshot", () => {
+            it("mutate after load", async () => {
+                matrix.insertCols(0, 2);
+                matrix.insertRows(0, 2);
+                matrix.setCells(0, 0, 2, [
+                    0, 1,
+                    2, 3,
+                ]);
+
+                // The 'matrix' returned by 'expect' is the result of snapshotting and loading 'matrix'.
+                const matrix2 = await expect([
+                    [0, 1],
+                    [2, 3],
+                ]);
+
+                matrix2.insertRows(1, 1);
+                assert.deepEqual(extract(matrix2), [
+                    [0, 1],
+                    [undefined, undefined],
+                    [2, 3],
+                ]);
+
+                matrix2.setCells(1, 0, 2, [10, 11]);
+                assert.deepEqual(extract(matrix2), [
+                    [0, 1],
+                    [10, 11],
+                    [2, 3],
+                ]);
+
+                matrix2.insertCols(1, 1);
+                assert.deepEqual(extract(matrix2), [
+                    [0, undefined, 1],
+                    [10, undefined, 11],
+                    [2, undefined, 3],
+                ]);
+            });
+        })
     });
 
     describe("2 clients", () => {
@@ -439,6 +477,22 @@ describe("Matrix", () => {
                 matrix2.setCells(/* row: */ 0, /* col: */ 0, /* numCols: */ 4, ["A","B","C","D"]);
                 matrix1.insertCols(1,1);
 
+                await expect();
+            });
+
+            // Vets that writes to delete handles are ignored.
+            it("remove rows vs. set cells", async () => {
+                matrix1.insertRows(0,3);
+                matrix1.insertCols(0,2);
+                matrix1.setCells(0, 0, 2, [0, 1, 2, 3]);
+
+                // In order to hit the recycled handle case, ensure that the 'setCells()' below intersects
+                // an empty row, which will cause the next available handle to be allocated.
+                matrix2.insertRows(0,1);
+                await expect();
+
+                matrix1.removeRows(1,1);
+                matrix2.setCells(/* row: */ 0, /* col: */ 0, /* numCols: */ 1, ["A", "B", "C"]);
                 await expect();
             });
         });

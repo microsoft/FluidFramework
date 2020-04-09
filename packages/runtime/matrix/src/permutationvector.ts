@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { ChildLogger } from "@microsoft/fluid-common-utils";
-import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { ChildLogger, fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
+import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
 import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
 import {
     BaseSegment,
@@ -18,8 +18,15 @@ import {
     MergeTreeDeltaType,
     IMergeTreeSegmentDelta,
 } from "@microsoft/fluid-merge-tree";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { FileMode, TreeEntry, ITree } from "@microsoft/fluid-protocol-definitions";
 import { HandleTable, Handle } from "./handletable";
-import { SnapshotPath } from "./matrix";
+import { ObjectStoragePartition } from "@microsoft/fluid-runtime-utils";
+
+const enum SnapshotPath {
+    segments = "segments",
+    handleTable = "handleTable",
+}
 
 export class PermutationSegment extends BaseSegment {
     public static readonly typeString: string = "PermutationSegment";
@@ -99,13 +106,14 @@ export class PermutationSegment extends BaseSegment {
 }
 
 export class PermutationVector extends Client {
-    private readonly handleTable = new HandleTable<never>(); // Tracks available storage handles for rows.
+    private handleTable = new HandleTable<never>(); // Tracks available storage handles for rows.
 
     constructor(
-        path: SnapshotPath,
+        path: string,
         logger: ITelemetryBaseLogger,
         runtime: IComponentRuntime,
         private readonly deltaCallback: (position: number, numRemoved: number, numInserted: number) => void,
+        private readonly clearCallback: (handles: Handle[]) => void,
     ) {
         super(
             PermutationSegment.fromJSONObject,
@@ -130,7 +138,11 @@ export class PermutationVector extends Client {
 
     public toHandle(pos: number, refSeq: number, clientId: number, alloc: boolean): Handle {
         const { segment, offset } = this.mergeTree.getContainingSegment<PermutationSegment>(pos, refSeq, clientId);
-        if (segment === undefined) {
+
+        // Note that until the MergeTree GCs, the segment is still reachable via `getContainingSegment()` with
+        // a `refSeq` in the past.  Prevent remote ops from accidentally allocating or using recycled handles
+        // by checking for the presence of 'removedSeq'.
+        if (segment === undefined || segment.removedSeq !== undefined) {
             return Handle.deleted;
         }
 
@@ -156,6 +168,49 @@ export class PermutationVector extends Client {
         return toPos + offset;
     }
 
+    // Constructs an ITreeEntry for the cell data.
+    public snapshot(runtime: IComponentRuntime, handle: IComponentHandle): ITree {
+        const serializer = runtime.IComponentSerializer;
+        const handleTableChunk = this.handleTable.snapshot();
+
+        return {
+            entries: [
+                {
+                    mode: FileMode.Directory,
+                    path: SnapshotPath.segments,
+                    type: TreeEntry[TreeEntry.Tree],
+                    value: super.snapshot(runtime, handle, /* tardisMsgs: */ []),
+                },
+                {
+                    mode: FileMode.File,
+                    path: SnapshotPath.handleTable,
+                    type: TreeEntry[TreeEntry.Blob],
+                    value: {
+                        contents: serializer !== undefined
+                            ? serializer.stringify(handleTableChunk, runtime.IComponentHandleContext, handle)
+                            : JSON.stringify(handleTableChunk),
+                        encoding: "utf-8",
+                    },
+                },
+            ],
+            id: null,   // eslint-disable-line no-null/no-null
+        };
+    }
+
+    public async load(runtime: IComponentRuntime, storage: IObjectStorageService, branchId?: string) {
+        const handleTableChunk = await storage.read(SnapshotPath.handleTable);
+        const utf8 = fromBase64ToUtf8(handleTableChunk);
+
+        const serializer = runtime.IComponentSerializer;
+        const handleTableData = serializer !== undefined
+            ? serializer.parse(utf8, runtime.IComponentHandleContext)
+            : JSON.parse(utf8);
+
+        this.handleTable = HandleTable.load<never>(handleTableData);
+
+        return super.load(runtime, new ObjectStoragePartition(storage, SnapshotPath.segments), branchId);
+    }
+
     private readonly onDelta = (
         opArgs: IMergeTreeDeltaOpArgs,
         { operation, deltaSegments }: IMergeTreeDeltaCallbackArgs,
@@ -167,9 +222,22 @@ export class PermutationVector extends Client {
                 });
                 break;
             case MergeTreeDeltaType.REMOVE:
+                const freed: Handle[] = [];
+
+                for (const delta of deltaSegments) {
+                    const segment = delta.segment as PermutationSegment;
+
+                    freed.splice(freed.length, 0, ...segment.handles.filter((handle) => handle !== Handle.unallocated));
+                }
+
                 this.enumerateDeltaRanges(deltaSegments, (position, length) => {
                     this.deltaCallback(position, /* numRemoved: */ length, /* numInsert: */ 0);
                 });
+
+                this.clearCallback(freed);
+                for (const handle of freed) {
+                    this.handleTable.free(handle);
+                }
                 break;
             default:
                 assert.fail();

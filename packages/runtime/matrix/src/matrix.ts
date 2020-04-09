@@ -28,10 +28,10 @@ import { SparseArray2D } from "./sparsearray2d";
 import { SharedMatrixFactory } from "./runtime";
 import { Handle } from "./handletable";
 
-export const enum SnapshotPath {
+const enum SnapshotPath {
     rows = "rows",
     cols = "cols",
-    cells = "cells"
+    cells = "cells",
 }
 
 export class SharedMatrix<T extends Serializable = Serializable> extends SharedObject
@@ -44,19 +44,19 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
     private readonly rows: PermutationVector;   // Map logical row to storage handle (if any)
     private readonly cols: PermutationVector;   // Map logical col to storage handle (if any)
 
-    private cells = new SparseArray2D<T>();                             // Stores cell values.
+    private cells = new SparseArray2D<T>();                    // Stores cell values.
     private pendingCliSeqs = new SparseArray2D<number>();      // Tracks pending writes.
     private readonly pendingQueue: { cliSeq: number, rowHandle: number, colHandle: number }[] = [];
 
     constructor(runtime: IComponentRuntime, public id: string, attributes: IChannelAttributes) {
         super(id, runtime, attributes);
 
-        this.rows = new PermutationVector(SnapshotPath.rows, this.logger, runtime.options, this.onRowDelta);
-        this.cols = new PermutationVector(SnapshotPath.cols, this.logger, runtime.options, this.onColDelta);
+        this.rows = new PermutationVector(SnapshotPath.rows, this.logger, runtime.options, this.onRowDelta, this.onRowRemoval);
+        this.cols = new PermutationVector(SnapshotPath.cols, this.logger, runtime.options, this.onColDelta, this.onColRemoval);
     }
 
-    public static create(runtime: IComponentRuntime, id?: string) {
-        return runtime.createChannel(id, SharedMatrixFactory.Type) as SharedMatrix;
+    public static create<T extends Serializable = Serializable>(runtime: IComponentRuntime, id?: string) {
+        return runtime.createChannel(id, SharedMatrixFactory.Type) as SharedMatrix<T>;
     }
 
     // #region IMatrixProducer
@@ -78,6 +78,9 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
     public get numCols() { return this.cols.getLength(); }
 
     public read(row: number, col: number): T | undefined | null {
+        assert((0 <= row && row < this.numRows)
+            && (0 <= col && col < this.numCols));
+
         // Map the logical (row, col) to associated storage handles.
         const rowCollab = this.rows.getCollabWindow();
         const rowHandle = this.rows.toHandle(row, rowCollab.currentSeq, rowCollab.clientId, /* alloc: */ false);
@@ -97,8 +100,8 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
     // #endregion IMatrixReader
 
     public setCell(row: number, col: number, value: T) {
-        assert(0 <= row && row < this.numRows);
-        assert(0 <= col && col < this.numCols);
+        assert(0 <= row && row < this.numRows
+            && 0 <= col && col < this.numCols);
 
         const { currentSeq: rowRefSeq, clientId: rowClientId } = this.rows.getCollabWindow();
         const { currentSeq: colRefSeq, clientId: colClientId } = this.cols.getCollabWindow();
@@ -160,20 +163,20 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
         }
     }
 
-    public insertCols(start: number, count: number) {
-        this.insert(this.cols, SnapshotPath.cols, start, count);
+    public insertCols(startCol: number, count: number) {
+        this.insert(this.cols, SnapshotPath.cols, startCol, count);
     }
 
-    public removeCols(start: number, count: number) {
-        this.remove(this.cols, SnapshotPath.cols, start, count);
+    public removeCols(startCol: number, count: number) {
+        this.remove(this.cols, SnapshotPath.cols, startCol, count);
     }
 
     public insertRows(start: number, count: number) {
         this.insert(this.rows, SnapshotPath.rows, start, count);
     }
 
-    public removeRows(start: number, count: number) {
-        this.remove(this.rows, SnapshotPath.rows, start, count);
+    public removeRows(startRow: number, count: number) {
+        this.remove(this.rows, SnapshotPath.rows, startRow, count);
     }
 
     public snapshot(): ITree {
@@ -183,13 +186,13 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
                     mode: FileMode.Directory,
                     path: SnapshotPath.rows,
                     type: TreeEntry[TreeEntry.Tree],
-                    value: this.rows.snapshot(this.runtime, this.handle, []),
+                    value: this.rows.snapshot(this.runtime, this.handle),
                 },
                 {
                     mode: FileMode.Directory,
                     path: SnapshotPath.cols,
                     type: TreeEntry[TreeEntry.Tree],
-                    value: this.cols.snapshot(this.runtime, this.handle, []),
+                    value: this.cols.snapshot(this.runtime, this.handle),
                 },
                 this.snapshotCells(),
             ],
@@ -264,7 +267,11 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
 
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     const actualCliSeq = this.pendingCliSeqs.read(rowHandle, colHandle)!;
-                    assert(actualCliSeq >= cliSeq);
+
+                    // Note while we're awaiting the local set, it's possible for the row/col to be locally
+                    // removed and the row/col handles recycled.  If this happens, the actualCliSeq will be
+                    // 'undefined' or > 'cliSeq'.
+                    assert(!(actualCliSeq < cliSeq));
 
                     // If this is the most recent write to the cell by the local client, remove our
                     // entry from 'pendingCliSeqs' to resume allowing remote writes.
@@ -392,6 +399,34 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
             consumer.colsChanged(position, numRemoved, numInserted, this);
         }
     };
+
+    private readonly onRowRemoval = (rowHandles: Handle[]) => {
+        const { currentSeq: colRefSeq, clientId: colClientId } = this.cols.getCollabWindow();
+
+        for (let col = 0; col < this.numCols; col++) {
+            const colHandle = this.cols.toHandle(col, colRefSeq, colClientId, /* alloc: */ false);
+            if (colHandle !== Handle.unallocated) {
+                for (const rowHandle of rowHandles) {
+                    this.cells.setCell(rowHandle, colHandle, undefined);
+                    this.pendingCliSeqs.setCell(rowHandle, colHandle, undefined);
+                }
+            }
+        }
+    }
+
+    private readonly onColRemoval = (colHandles: Handle[]) => {
+        const { currentSeq: rowRefSeq, clientId: rowClientId } = this.rows.getCollabWindow();
+
+        for (let row = 0; row < this.numRows; row++) {
+            const rowHandle = this.rows.toHandle(row, rowRefSeq, rowClientId, /* alloc: */ false);
+            if (rowHandle !== Handle.unallocated) {
+                for (const colHandle of colHandles) {
+                    this.cells.setCell(rowHandle, colHandle, undefined);
+                    this.pendingCliSeqs.setCell(rowHandle, colHandle, undefined);
+                }
+            }
+        }
+    }
 
     public toString() {
         let s = `client:${this.runtime.clientId}\nrows: ${this.rows.toString()}\ncols: ${this.cols.toString()}\n\n`;
