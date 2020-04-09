@@ -5,8 +5,7 @@
 
 import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
 import { LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
-// eslint-disable-next-line import/no-internal-modules
-import * as uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
 import {
     IProxyLoaderFactory,
     ICodeLoader,
