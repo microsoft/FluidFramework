@@ -195,7 +195,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     public subLogger: TelemetryLogger;
     private _canReconnect: boolean = true;
-    private logger: ITelemetryLogger;
+    private readonly logger: ITelemetryLogger;
 
     private pendingClientId: string | undefined;
     private loaded = false;
@@ -329,7 +329,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         private readonly urlResolver: IUrlResolver,
         private originalRequest: IRequest | undefined,
         private _id: string | undefined,
-        private readonly originalLogger: ITelemetryBaseLogger | undefined,
+        logger: ITelemetryBaseLogger | undefined,
     ) {
         super();
         this._audience = new Audience();
@@ -340,7 +340,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const clientType = `${interactive ? "interactive" : "noninteractive"}${type ? `/${type}` : ""}`;
         this.subLogger = DebugLogger.mixinDebugLogger(
             "fluid:telemetry",
-            this.originalLogger,
+            logger,
             {
                 clientType, // Differentiating summarizer container from main container
                 loaderVersion: pkgVersion,
