@@ -149,16 +149,16 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     }
 
     public async getComponentFromDirectory<T extends IComponent & IComponentLoadable>(
-        id: string,
+        key: string,
         directory: IDirectory,
         getObjectFromDirectory?: (id: string, directory: IDirectory) => string | IComponentHandle | undefined):
         Promise<T | undefined> {
-        const handleOrId = getObjectFromDirectory ? getObjectFromDirectory(id, directory) : directory.get(id);
+        const handleOrId = getObjectFromDirectory ? getObjectFromDirectory(key, directory) : directory.get(id);
         if (typeof handleOrId === "string") {
             // For backwards compatibility with older stored IDs
             // We update the storage with the handle so that this code path is less and less trafficked
             const component = await this.getComponent_UNSAFE<T>(handleOrId);
-            directory.set(id, component.handle);
+            directory.set(key, component.handle);
             return component;
         } else {
             const handle = handleOrId?.IComponentHandle;
