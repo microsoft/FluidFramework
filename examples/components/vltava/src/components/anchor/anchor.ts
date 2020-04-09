@@ -7,7 +7,6 @@ import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { IComponentHTMLView, IProvideComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
-import uuid from "uuid/v4";
 
 export const AnchorName = "anchor";
 
@@ -35,7 +34,7 @@ export class Anchor extends PrimedComponent implements IProvideComponentHTMLView
     public get IComponentHTMLView() { return this.defaultComponent; }
 
     protected async componentInitializingFirstTime(props: any) {
-        const defaultComponent = await this.createAndAttachComponent(uuid(), "vltava");
+        const defaultComponent = await this.createAndAttachComponent("vltava");
         this.root.set(this.defaultComponentId, defaultComponent.handle);
     }
 

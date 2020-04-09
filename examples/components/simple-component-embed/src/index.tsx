@@ -24,14 +24,16 @@ export class SimpleComponentEmbed extends PrimedComponent implements IComponentH
    * but in this scenario we only want it to be created once.
    */
     protected async componentInitializingFirstTime() {
-        await this.createAndAttachComponent("myEmbeddedCounter", "@fluid-example/clicker");
+        const component = await this.createAndAttachComponent("@fluid-example/clicker");
+        this.root.set("myEmbeddedCounter", component.handle);
     }
 
     /**
    * Get Clicker component using ID from before
    */
     protected async componentHasInitialized() {
-        this.clicker = await this.getComponent<Clicker>("myEmbeddedCounter");
+        const handle = this.root.get("myEmbeddedCounter");
+        this.clicker = await handle.get();
     }
 
     public render(div: HTMLDivElement) {

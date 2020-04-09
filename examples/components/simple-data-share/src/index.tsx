@@ -8,6 +8,7 @@ import {
     PrimedComponent,
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { Counter, CounterValueType } from "@microsoft/fluid-map";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
@@ -54,19 +55,19 @@ export class SimpleDataSharing extends PrimedComponent implements IComponentHTML
         this.root.createValueType("clicks", CounterValueType.Name, 0);
 
         // Create a button, textDisplay, and incrementor component
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.createAndAttachComponent(this.buttonId, Button.chaincodeName);
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.createAndAttachComponent(this.textDisplayId, TextDisplay.chaincodeName);
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.createAndAttachComponent(this.incrementorId, Incrementor.chaincodeName);
+        const buttonComponent = await this.createAndAttachComponent(Button.chaincodeName);
+        this.root.set(this.buttonId, buttonComponent.handle);
+        const textComponent = await this.createAndAttachComponent(TextDisplay.chaincodeName);
+        this.root.set(this.textDisplayId, textComponent.handle);
+        const incrementorComponent = await this.createAndAttachComponent(Incrementor.chaincodeName);
+        this.root.set(this.incrementorId, incrementorComponent.handle);
     }
 
     protected async componentHasInitialized() {
     // Get all of our components
-        const buttonP = this.getComponent<Button>(this.buttonId, true);
-        const textDisplayP = this.getComponent<TextDisplay>(this.textDisplayId, true);
-        const incrementorP = this.getComponent<Incrementor>(this.incrementorId, true);
+        const buttonP = this.root.get<IComponentHandle<Button>>(this.buttonId).get();
+        const textDisplayP = this.root.get<IComponentHandle<TextDisplay>>(this.textDisplayId).get();
+        const incrementorP = this.root.get<IComponentHandle<Incrementor>>(this.incrementorId).get();
 
         // This is just an optimization to load all the components in parallel.
         [this.button, this.textDisplay, this.incrementor] = await Promise.all([buttonP, textDisplayP, incrementorP]);

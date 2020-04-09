@@ -5,6 +5,7 @@
 - [View interfaces moved to separate package](#View-interfaces-moved-to-separate-package)
 - [IComponent* Interfaces should now have string literal identifiers](#IComponent*-Interfaces-should-now-have-string-literal-identifiers)
 - [SharedComponentFactory and PrimedComponentFactory changes](#SharedComponentFactory-and-PrimedComponentFactory-changes)
+- [PrimedComponent and SharedComponent interface changes](#PrimedComponent-and-Shared-Component-interface-changes)
 - [SimpleModuleInstantiationFactory renamed and SimpleContainerRuntimeFactory deprecated](#SimpleModuleInstantiationFactory-renamed-and-SimpleContainerRuntimeFactory-deprecated)
 
 ### View interfaces moved to separate package
@@ -59,6 +60,16 @@ export interface IComponentFoo extends IProvideComponentFoo {
 ### SharedComponentFactory and PrimedComponentFactory changes
 
 Class definitions for SharedComponentFactory and PrimedComponentFactory have been updated.  Both now specify a required `type: string` parameter in their constructors.
+
+### PrimedComponent and SharedComponent interface changes
+
+There have been a few changes to the exposed interfaces on Primed & SharedComponents so that the id of components is generated uniquely by the runtime. Components can instead implement IComponentLoadable and be stored and retrieved from DDS' using their handles.
+1. createAndAttachComponent no longer has an id first parameter. This is to enforce a unique generation of the id by the runtime itself
+2. getComponent is now marked as deprecated and renamed to getComponent_UNSAFE. Instead, users should return their component in the following manner:
+directoryWhereHandleIsStored.get<IComponentHandle<TypeOfHandle>>(idOfHandleInDirectory).get();
+
+Alternatively, a new helper function is provided for compatibility called getComponentFromDirectory that takes the string key and the directory where either the component handle or the id used for the old getComponent call is stored. It will appropriately fetch the component using the handle/id stored in the directory and then update the stored value with a handle now so that there are fewer and fewer IDs stored. 
+Users can also pass in an optional function to get the value from their directory in case they have some specially defined types. Look at dataModel.ts in the examples/components/spaces for an implentation of such.
 
 ### `SimpleModuleInstantiationFactory` renamed and `SimpleContainerRuntimeFactory` deprecated
 
