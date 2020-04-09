@@ -430,7 +430,7 @@ describe("Routerlicious", () => {
                 assert(vessel.has(IComponentLoadable), "Manager has IComponentLoadable");
                 assert(vessel.has(IComponentConfiguration), "Manager has IComponentConfiguration");
                 assert(
-                    vessel.has([IComponentLoadable, IComponentConfiguration]),
+                    vessel.has(IComponentLoadable, IComponentConfiguration),
                     "Manager has IComponentLoadable & IComponentConfiguration");
                 assert(Array.from(vessel.registeredTypes).length === 2, "Manager has two modules");
             });

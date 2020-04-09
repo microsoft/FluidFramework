@@ -98,14 +98,10 @@ export class DependencyContainer implements IComponentSynthesizer {
     /**
      * {@inheritDoc (IComponentSynthesizer:interface).has}
      */
-    public has(types: keyof IComponent | (keyof IComponent)[]): boolean {
-        if (Array.isArray(types)) {
-            return types.every((type) => {
-                return this.providers.has(type);
-            });
-        }
-
-        return this.providers.has(types);
+    public has(...types: (keyof IComponent)[]): boolean {
+        return types.every((type) => {
+            return this.providers.has(type);
+        });
     }
 
     /**
@@ -131,18 +127,18 @@ export class DependencyContainer implements IComponentSynthesizer {
         const values: (keyof IComponent)[] = Object.values(types);
         return Object.assign({}, ...Array.from(values, (t) => {
             const provider = this.getProvider(t);
-            const module = this.resolveProvider(provider, t);
-            if (!module) {
-                throw new Error(`Object attempted to be created without required module ${t}`);
+            const value = this.resolveProvider(provider, t);
+            if (!value) {
+                throw new Error(`Object attempted to be created without registered required provider ${t}`);
             }
 
             // Using a getter enables lazy loading scenarios
-            // Returning module[t] is required for the IProvideComponent* pattern to work
+            // Returning value[t] is required for the IProvideComponent* pattern to work
             return {get [t](){
-                if (!module) {
+                if (!value) {
                     throw new Error(`This should never be hit and is simply used as a type check`);
                 }
-                return module[t];
+                return value[t];
             }};
         }));
     }
@@ -153,11 +149,11 @@ export class DependencyContainer implements IComponentSynthesizer {
         const values: (keyof IComponent)[] = Object.values(types);
         return Object.assign({}, ...Array.from(values, (t) => {
             const provider = this.getProvider(t);
-            const module = this.resolveProvider(provider, t);
+            const value = this.resolveProvider(provider, t);
 
             // Using a getter enables lazy loading scenarios
             // Returning module[t] is required for the IProvideComponent* pattern to work
-            return {get [t]() { return module ? module[t] : undefined; }};
+            return {get [t]() { return value ? value[t] : undefined; }};
         }));
     }
 
