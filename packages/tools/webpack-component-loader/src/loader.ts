@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aqueduct";
 import { BaseHost, IBaseHostConfig } from "@microsoft/fluid-base-host";
 import {
     IFluidModule,
@@ -87,7 +87,7 @@ function wrapIfComponentPackage(packageJson: IFluidPackage, fluidModule: IFluidM
     if (fluidModule.fluidExport.IRuntimeFactory === undefined) {
         const componentFactory = fluidModule.fluidExport.IComponentFactory;
 
-        const runtimeFactory = new SimpleModuleInstantiationFactory(
+        const runtimeFactory = new ContainerRuntimeFactoryWithDefaultComponent(
             packageJson.name,
             new Map([
                 [packageJson.name, Promise.resolve(componentFactory)],
