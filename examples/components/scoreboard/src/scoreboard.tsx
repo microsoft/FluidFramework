@@ -5,7 +5,7 @@
 
 import { CounterValueType } from "@microsoft/fluid-map";
 import {
-    DefaultComponentContainerRuntimeFactory,
+    ContainerRuntimeFactoryWithDefaultComponent,
     PrimedComponent,
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
@@ -75,14 +75,14 @@ const ScoreboardComponentInstantiationFactory = new PrimedComponentFactory(
 );
 
 /**
- * This does setup for the Container. The DefaultComponentContainerRuntimeFactory also enables dynamic loading in the
- * EmbeddedComponentLoader.
+ * This does setup for the Container. The ContainerRuntimeFactoryWithDefaultComponent also enables dynamic loading in
+ * the EmbeddedComponentLoader.
  *
  * There are two important things here:
  * 1. Default Component name
  * 2. Map of string to factory for all components
  */
-export const fluidExport = new DefaultComponentContainerRuntimeFactory(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
     Scoreboard.componentName,
     new Map([
         [Scoreboard.componentName, Promise.resolve(ScoreboardComponentInstantiationFactory)],

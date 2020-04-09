@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { DefaultComponentContainerRuntimeFactory } from "@microsoft/fluid-aqueduct";
+import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aqueduct";
 import { TyperaceInstantiationFactory as ComponentInstantiationFactory, TypeRaceName } from "./main";
 
 /**
- * This does setup for the Container. The DefaultComponentContainerRuntimeFactory also enables dynamic loading in the
- * EmbeddedComponentLoader.
+ * This does setup for the Container. The ContainerRuntimeFactoryWithDefaultComponent also enables dynamic loading in
+ * the EmbeddedComponentLoader.
  *
  * There are two important things here:
  * 1. Default Component name
  * 2. Map of string to factory for all components
  */
-export const fluidExport = new DefaultComponentContainerRuntimeFactory(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
     TypeRaceName,
     new Map([
         [TypeRaceName, Promise.resolve(ComponentInstantiationFactory)],

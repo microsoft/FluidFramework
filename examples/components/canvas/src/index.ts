@@ -4,7 +4,7 @@
  */
 
 import {
-    DefaultComponentContainerRuntimeFactory,
+    ContainerRuntimeFactoryWithDefaultComponent,
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import { Ink } from "@microsoft/fluid-ink";
@@ -22,7 +22,7 @@ export const CanvasInstantiationFactory = new PrimedComponentFactory(
     ],
 );
 
-export const fluidExport = new DefaultComponentContainerRuntimeFactory(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
     CanvasName,
     new Map([
         [CanvasName, Promise.resolve(CanvasInstantiationFactory)],

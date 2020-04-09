@@ -4,7 +4,7 @@
  */
 
 import {
-    DefaultComponentContainerRuntimeFactory,
+    ContainerRuntimeFactoryWithDefaultComponent,
     PrimedComponent,
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
@@ -109,7 +109,7 @@ export class OwnedMap extends PrimedComponent implements IComponentHTMLView {
     }
 }
 
-export const fluidExport = new DefaultComponentContainerRuntimeFactory(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
     "@fluid-example/owned-map",
     new Map([
         ["@fluid-example/owned-map", Promise.resolve(OwnedMap.getFactory())],

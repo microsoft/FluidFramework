@@ -4,7 +4,7 @@
  */
 
 import {
-    DefaultComponentContainerRuntimeFactory,
+    ContainerRuntimeFactoryWithDefaultComponent,
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import { IProvideRuntimeFactory } from "@microsoft/fluid-container-definitions";
@@ -24,7 +24,7 @@ const componentFactory = new PrimedComponentFactory(
     ],
 );
 
-const runtimeFactory = new DefaultComponentContainerRuntimeFactory(
+const runtimeFactory = new ContainerRuntimeFactoryWithDefaultComponent(
     monacoName,
     new Map([
         [monacoName, Promise.resolve(componentFactory)],

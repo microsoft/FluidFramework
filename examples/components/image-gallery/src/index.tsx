@@ -4,7 +4,7 @@
  */
 
 import {
-    DefaultComponentContainerRuntimeFactory,
+    ContainerRuntimeFactoryWithDefaultComponent,
     PrimedComponent,
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
@@ -104,7 +104,7 @@ export const ImageGalleryInstantiationFactory = new PrimedComponentFactory(
     [],
 );
 
-export const fluidExport = new DefaultComponentContainerRuntimeFactory(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
     imageGalleryName,
     new Map([
         [imageGalleryName, Promise.resolve(ImageGalleryInstantiationFactory)],

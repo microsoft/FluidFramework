@@ -62,9 +62,9 @@ Class definitions for SharedComponentFactory and PrimedComponentFactory have bee
 
 ### `SimpleModuleInstantiationFactory` renamed and `SimpleContainerRuntimeFactory` deprecated
 
-`SimpleModuleInstantiationFactory` is now named `DefaultComponentContainerRuntimeFactory`.  Its functionality is unchanged.
+`SimpleModuleInstantiationFactory` is now named `ContainerRuntimeFactoryWithDefaultComponent`.  Its functionality is unchanged.
 
-`SimpleContainerRuntimeFactory` is deprecated, as its functionality is provided by `DefaultComponentContainerRuntimeFactory` and the newly added helper `createAndAttachComponent()` which should be used instead.  It will be removed in a future version of the framework.
+`SimpleContainerRuntimeFactory` is deprecated, as its functionality is provided by `ContainerRuntimeFactoryWithDefaultComponent` and the newly added helper `createAndAttachComponent()` which should be used instead.  It will be removed in a future version of the framework.
 
 ## 0.15 Breaking Changes
 

@@ -4,7 +4,7 @@
  */
 
 import {
-  DefaultComponentContainerRuntimeFactory
+  ContainerRuntimeFactoryWithDefaultComponent
 } from "@microsoft/fluid-aqueduct";
 
 import { VersiontestInstantiationFactory } from "./main";
@@ -13,7 +13,7 @@ import { VersiontestInstantiationFactory } from "./main";
 const pkg = require("../package.json");
 const chaincodeName = pkg.name as string;
 
-export const fluidExport = new DefaultComponentContainerRuntimeFactory(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
   chaincodeName,
   new Map([
       [chaincodeName, Promise.resolve(VersiontestInstantiationFactory)],

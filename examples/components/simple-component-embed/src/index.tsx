@@ -4,7 +4,7 @@
  */
 
 import {
-    DefaultComponentContainerRuntimeFactory,
+    ContainerRuntimeFactoryWithDefaultComponent,
     PrimedComponent,
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
@@ -53,7 +53,7 @@ export const SimpleComponentEmbedInstantiationFactory = new PrimedComponentFacto
     [],
 );
 
-export const fluidExport = new DefaultComponentContainerRuntimeFactory(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
     simpleComponentEmbedName,
     new Map([
         [simpleComponentEmbedName, Promise.resolve(SimpleComponentEmbedInstantiationFactory)],

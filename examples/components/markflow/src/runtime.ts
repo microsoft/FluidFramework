@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { DefaultComponentContainerRuntimeFactory } from "@microsoft/fluid-aqueduct";
+import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aqueduct";
 
 export const webflowType = "@fluid-example/webflow";
 export const FlowDocumentType = "@chaincode/flow-document";
 
-export const fluidExport = new DefaultComponentContainerRuntimeFactory(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
     webflowType,
     new Map([
         [webflowType, import(/* webpackChunkName: "webflow", webpackPreload: true */ "./host")

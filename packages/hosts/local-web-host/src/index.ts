@@ -17,7 +17,7 @@ import {
 import {  Loader, Container } from "@microsoft/fluid-container-loader";
 import { IProvideComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { DefaultComponentContainerRuntimeFactory } from "@microsoft/fluid-aqueduct";
+import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aqueduct";
 import { initializeContainerCode } from "@microsoft/fluid-base-host";
 import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 
@@ -39,7 +39,7 @@ export async function createLocalContainerFactory(
     const runtimeFactory: IProvideRuntimeFactory =
         factory.IRuntimeFactory ?
             factory.IRuntimeFactory :
-            new DefaultComponentContainerRuntimeFactory(
+            new ContainerRuntimeFactoryWithDefaultComponent(
                 "default",
                 [["default", Promise.resolve(factory.IComponentFactory)]],
             );

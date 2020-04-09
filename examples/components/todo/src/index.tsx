@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { DefaultComponentContainerRuntimeFactory } from "@microsoft/fluid-aqueduct";
+import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aqueduct";
 import { TodoInstantiationFactory, TodoName } from "./Todo";
 
-export const fluidExport = new DefaultComponentContainerRuntimeFactory(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
     TodoName,
     new Map([
         [TodoName, Promise.resolve(TodoInstantiationFactory)],

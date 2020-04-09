@@ -42,7 +42,7 @@ const defaultComponentRuntimeRequestHandler: RuntimeRequestHandler =
  *
  * This factory should be exposed as fluidExport off the entry point to your module.
  */
-export class DefaultComponentContainerRuntimeFactory extends BaseContainerRuntimeFactory implements
+export class ContainerRuntimeFactoryWithDefaultComponent extends BaseContainerRuntimeFactory implements
     IComponentDefaultFactoryName {
     public static readonly defaultComponentId = defaultComponentId;
 
@@ -65,7 +65,7 @@ export class DefaultComponentContainerRuntimeFactory extends BaseContainerRuntim
         // Debug(`createAndAttachComponent(chaincode=${chaincode})`);
         await createAndAttachComponent(
             runtime,
-            DefaultComponentContainerRuntimeFactory.defaultComponentId,
+            ContainerRuntimeFactoryWithDefaultComponent.defaultComponentId,
             this.defaultComponentName,
         );
     }

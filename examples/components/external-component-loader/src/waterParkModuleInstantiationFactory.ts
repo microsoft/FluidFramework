@@ -5,7 +5,7 @@
 
 import {
     createAndAttachComponent,
-    DefaultComponentContainerRuntimeFactory,
+    ContainerRuntimeFactoryWithDefaultComponent,
 } from "@microsoft/fluid-aqueduct";
 import { IHostRuntime, NamedComponentRegistryEntries } from "@microsoft/fluid-runtime-definitions";
 import { SpacesComponentName } from "@fluid-example/spaces";
@@ -15,7 +15,7 @@ import { ExternalComponentLoader, WaterParkLoaderName } from "./waterParkLoader"
  * This class creates two components: A loader and a view component for water park and then
  * add loader component to the view component to be rendered.
  */
-export class WaterParkModuleInstantiationFactory extends DefaultComponentContainerRuntimeFactory {
+export class WaterParkModuleInstantiationFactory extends ContainerRuntimeFactoryWithDefaultComponent {
     constructor(
         entries: NamedComponentRegistryEntries,
         private readonly loaderComponentName: string = WaterParkLoaderName,
@@ -25,7 +25,7 @@ export class WaterParkModuleInstantiationFactory extends DefaultComponentContain
 
     protected async containerInitializingFirstTime(runtime: IHostRuntime) {
         const viewComponent = await createAndAttachComponent<any>(
-            runtime, DefaultComponentContainerRuntimeFactory.defaultComponentId, this.viewComponentName);
+            runtime, ContainerRuntimeFactoryWithDefaultComponent.defaultComponentId, this.viewComponentName);
         const loaderComponent = await createAndAttachComponent<ExternalComponentLoader>(
             runtime, uuid(), this.loaderComponentName);
 
