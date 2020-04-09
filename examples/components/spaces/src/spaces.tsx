@@ -9,7 +9,10 @@ import {
     PrimedComponent,
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import {
+    IComponent,
+    IComponentHandle,
+} from "@microsoft/fluid-component-core-interfaces";
 import { IProvideComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { SharedObjectSequence } from "@microsoft/fluid-sequence";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
@@ -28,7 +31,7 @@ export class Spaces extends PrimedComponent
     private dataModelInternal: ISpacesDataModel | undefined;
     private componentToolbar: IComponent | undefined;
     private static readonly defaultComponentToolbarId = "spaces-component-toolbar";
-    private componentToolbarId = Spaces.defaultComponentToolbarId;
+    private componentToolbarId: string = Spaces.defaultComponentToolbarId;
 
     // TODO #1188 - Component registry should automatically add ComponentToolbar
     // to the registry since it's required for the spaces component
@@ -58,15 +61,19 @@ export class Spaces extends PrimedComponent
 
     protected async componentInitializingFirstTime(props?: any) {
         this.root.createSubDirectory("component-list");
-        this.root.set("componentToolbarId", this.componentToolbarId);
         this.initializeDataModel();
-        this.componentToolbar =
+        const componentToolbar =
             await this.dataModel.addComponent<ComponentToolbar>(
                 ComponentToolbarName,
                 4,
                 4,
                 Spaces.defaultComponentToolbarId,
             );
+        this.componentToolbar = componentToolbar;
+        await this.dataModel.setComponentToolbar(
+            Spaces.defaultComponentToolbarId,
+            ComponentToolbarName,
+            componentToolbar.handle);
         (this.componentToolbar as ComponentToolbar).changeEditState(true);
         // Set the saved template if there is a template query param
         const urlParams = new URLSearchParams(window.location.search);
@@ -76,24 +83,16 @@ export class Spaces extends PrimedComponent
     }
 
     protected async componentInitializingFromExisting() {
-        this.componentToolbarId = this.root.get("componentToolbarId");
+        this.componentToolbarId = this.root.get("component-toolbar-id");
         this.initializeDataModel();
-        this.componentToolbar = await this.dataModel.getComponentToolbar();
-    }
-
-    public async setComponentToolbar(id: string, type: string, url: string) {
-        this.componentToolbarId = id;
-        const componentToolbar = await this.dataModel.setComponentToolbar(id, type, url);
-        this.componentToolbar = componentToolbar;
-        this.root.set("componentToolbarId", id);
-        this.addToolbarListeners();
+        this.componentToolbar = await this.dataModel.getComponent<ComponentToolbar>(this.componentToolbarId);
     }
 
     protected async componentHasInitialized() {
         this.addToolbarListeners();
         const isEditable = this.dataModel.componentList.size - 1 === 0;
         this.dataModel.emit("editableUpdated", isEditable);
-        if (this.root.get("componentToolbarId") === Spaces.defaultComponentToolbarId) {
+        if (this.root.get("component-toolbar-id") === Spaces.defaultComponentToolbarId) {
             (this.componentToolbar as ComponentToolbar).changeEditState(isEditable);
         }
     }
@@ -117,9 +116,16 @@ export class Spaces extends PrimedComponent
             new SpacesDataModel(
                 this.root,
                 this.createAndAttachComponent.bind(this),
-                this.getComponent.bind(this),
+                this.getComponentFromDirectory.bind(this),
                 this.componentToolbarId,
             );
+    }
+
+    public async setComponentToolbar(id: string, type: string, handle: IComponentHandle) {
+        this.componentToolbarId = id;
+        const componentToolbar = await this.dataModel.setComponentToolbar(id, type, handle);
+        this.componentToolbar = componentToolbar;
+        this.addToolbarListeners();
     }
 
     /**

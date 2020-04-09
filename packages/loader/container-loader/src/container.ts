@@ -45,6 +45,7 @@ import {
     OnlineStatus,
     isOnline,
     ensureFluidResolvedUrl,
+    combineAppAndProtocolSummary,
 } from "@microsoft/fluid-driver-utils";
 import {
     buildSnapshotTree,
@@ -77,6 +78,7 @@ import {
     IVersion,
     MessageType,
     TreeEntry,
+    ISummaryTree,
 } from "@microsoft/fluid-protocol-definitions";
 import * as jwtDecode from "jwt-decode";
 import { Audience } from "./audience";
@@ -426,13 +428,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         assert(!this.deltaManager.inbound.length);
         // Get the document state post attach - possibly can just call attach but we need to change the semantics
         // around what the attach means as far as async code goes.
-        const summary = await this.context.createSummary();
+        const appSummary: ISummaryTree = await this.context.createSummary();
         if (!this.protocolHandler) {
             throw new Error("Protocol Handler is undefined");
         }
-        const protocolHandler = this.protocolHandler;
-        const quorumSnapshot = protocolHandler.quorum.snapshot();
-
+        const protocolSummary = this.protocolHandler.captureSummary();
         this.originalRequest = request;
         // Actually go and create the resolved document
         const expUrlResolver = this.urlResolver as IExperimentalUrlResolver;
@@ -440,49 +440,47 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             throw new Error("Not an Experimental UrlResolver");
         }
         const resolvedUrl = await expUrlResolver.createContainer(
-            summary,
-            protocolHandler.sequenceNumber,
-            quorumSnapshot.values,
+            combineAppAndProtocolSummary(appSummary, protocolSummary),
             request);
+        try {
+            ensureFluidResolvedUrl(resolvedUrl);
+            this.service = await this.serviceFactory.createDocumentService(resolvedUrl);
 
-        ensureFluidResolvedUrl(resolvedUrl);
+            this._canReconnect = !(request.headers?.[LoaderHeader.reconnect] === false);
+            const parsedUrl = parseUrl(resolvedUrl.url);
+            if (!parsedUrl) {
+                throw new Error("Unable to parse Url");
+            }
+            const [, docId] = parsedUrl.id.split("/");
+            this._id = decodeURI(docId);
 
-        if (!this.serviceFactory) {
-            throw new Error("Provide callback to get factory from resolved url");
+            this.storageService = await this.getDocumentStorageService();
+
+            // This we can probably just pass the storage service to the blob manager - although ideally
+            // there just isn't a blob manager
+            this.blobManager = await this.loadBlobManager(this.storageService, undefined);
+            this.attached = true;
+
+            const startConnectionP = this.connectToDeltaStream();
+            startConnectionP.catch((error) => {
+                debug(`Error in connecting to delta stream from unpaused case ${error}`);
+            });
+
+            // We know this is create new flow.
+            this._existing = false;
+            this._parentBranch = this._id;
+
+            // Propagate current connection state through the system.
+            const connected = this.connectionState === ConnectionState.Connected;
+            assert(!connected || this._deltaManager.connectionMode === "read");
+            this.propagateConnectionState();
+            this.resume();
+        } catch (error) {
+            const err = createIError(error, true);
+            this.raiseCriticalError(err);
+            this.close();
+            throw error;
         }
-        const service = await this.serviceFactory.createDocumentService(resolvedUrl);
-
-        this.service = service;
-        this._canReconnect = !(request.headers?.[LoaderHeader.reconnect] === false);
-        const parsedUrl = parseUrl(resolvedUrl.url);
-        if (!parsedUrl) {
-            throw new Error("Unable to parse Url");
-        }
-        const [, docId] = parsedUrl.id.split("/");
-        this._id = decodeURI(docId);
-
-        this.storageService = await this.getDocumentStorageService();
-
-        // This we can probably just pass the storage service to the blob manager - although ideally
-        // there just isn't a blob manager
-        this.blobManager = await this.loadBlobManager(this.storageService, undefined);
-
-        this.attached = true;
-
-        const startConnectionP = this.connectToDeltaStream();
-        startConnectionP.catch((error) => {
-            debug(`Error in connecting to delta stream from unpaused case ${error}`);
-        });
-
-        await startConnectionP.then((details) => {
-            this._existing = details.existing;
-            this._parentBranch = details.parentBranch;
-        });
-
-        // Propagate current connection state through the system.
-        const connected = this.connectionState === ConnectionState.Connected;
-        assert(!connected || this._deltaManager.connectionMode === "read");
-        this.propagateConnectionState();
     }
 
     public async request(path: IRequest): Promise<IResponse> {

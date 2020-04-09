@@ -4,53 +4,68 @@
  */
 
 import * as assert from "assert";
-import * as api from "@fluid-internal/client-api";
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import {
-    DocumentDeltaEventManager,
-    TestDocumentServiceFactory,
-    TestResolver,
-} from "@microsoft/fluid-local-driver";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { IFluidCodeDetails, ILoader } from "@microsoft/fluid-container-definitions";
+import { Container } from "@microsoft/fluid-container-loader";
+import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";
 import { MessageType } from "@microsoft/fluid-protocol-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
+import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import {
+    createLocalLoader,
+    ITestFluidComponent,
+    initializeLocalContainer,
+    TestFluidComponentFactory,
+} from "@microsoft/fluid-test-utils";
 
 describe("LocalTestServer", () => {
-    const id = "fluid://test.com/test/test";
+    const id = "fluid-test://localhost/localServerTest";
+    const stringId = "stringKey";
+    const codeDetails: IFluidCodeDetails = {
+        package: "localServerTestPackage",
+        config: {},
+    };
 
-    let testDeltaConnectionServer: ILocalDeltaConnectionServer;
-    let documentDeltaEventManager: DocumentDeltaEventManager;
-    let user1Document: api.Document;
-    let user2Document: api.Document;
-    let user1SharedString: SharedString;
-    let user2SharedString: SharedString;
+    let deltaConnectionServer: ILocalDeltaConnectionServer;
+    let containerDeltaEventManager: DocumentDeltaEventManager;
+    let component1: ITestFluidComponent;
+    let component2: ITestFluidComponent;
+    let sharedString1: SharedString;
+    let sharedString2: SharedString;
+
+    async function createContainer(): Promise<Container> {
+        const factory = new TestFluidComponentFactory([[ stringId, SharedString.getFactory() ]]);
+        const loader: ILoader = createLocalLoader([[ codeDetails, factory ]], deltaConnectionServer);
+        return initializeLocalContainer(id, loader, codeDetails);
+    }
+
+    async function getComponent(componentId: string, container: Container): Promise<ITestFluidComponent> {
+        const response = await container.request({ url: componentId });
+        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+            throw new Error(`Component with id: ${componentId} not found`);
+        }
+        return response.value as ITestFluidComponent;
+    }
 
     beforeEach(async () => {
-        testDeltaConnectionServer = LocalDeltaConnectionServer.create();
-        documentDeltaEventManager = new DocumentDeltaEventManager(testDeltaConnectionServer);
+        deltaConnectionServer = LocalDeltaConnectionServer.create();
 
-        const resolver = new TestResolver();
-        const serviceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
-        user1Document = await api.load(
-            id, resolver, {}, serviceFactory);
-        let root = user1Document.getRoot();
-        user1SharedString = user1Document.createString();
-        root.set("SharedString", user1SharedString.handle);
-        documentDeltaEventManager.registerDocuments(user1Document);
+        const container1 = await createContainer();
+        component1 = await getComponent("default", container1);
+        sharedString1 = await component1.getSharedObject<SharedString>(stringId);
 
-        user2Document = await api.load(
-            id, resolver, {}, serviceFactory);
-        root = user2Document.getRoot();
-        const handle = await root.wait<IComponentHandle<SharedString>>("SharedString");
-        user2SharedString = await handle.get();
-        documentDeltaEventManager.registerDocuments(user2Document);
+        const container2 = await createContainer();
+        component2 = await getComponent("default", container2);
+        sharedString2 = await component2.getSharedObject<SharedString>(stringId);
+
+        containerDeltaEventManager = new DocumentDeltaEventManager(deltaConnectionServer);
+        containerDeltaEventManager.registerDocuments(component1.runtime, component2.runtime);
     });
 
     describe("Document.existing", () => {
         it("Validate document is new for user1 1 and exists for client 2", () => {
-            assert.equal(user1Document.existing, false, "Document already exists");
-            assert.equal(user2Document.existing, true, "Document does not exist on the server");
-            assert.notEqual(user2SharedString, undefined, "Document does not contain a SharedString");
+            assert.equal(component1.runtime.existing, false, "Document already exists");
+            assert.equal(component2.runtime.existing, true, "Document does not exist on the server");
+            assert.notEqual(sharedString2, undefined, "Document does not contain a SharedString");
         });
     });
 
@@ -59,7 +74,7 @@ describe("LocalTestServer", () => {
             let user1ReceivedMsgCount: number = 0;
             let user2ReceivedMsgCount: number = 0;
 
-            user1SharedString.on("op", (msg, local) => {
+            sharedString1.on("op", (msg, local) => {
                 if (!local) {
                     if (msg.type === MessageType.Operation) {
                         user1ReceivedMsgCount = user1ReceivedMsgCount + 1;
@@ -67,7 +82,7 @@ describe("LocalTestServer", () => {
                 }
             });
 
-            user2SharedString.on("op", (msg, local) => {
+            sharedString2.on("op", (msg, local) => {
                 if (!local) {
                     if (msg.type === MessageType.Operation) {
                         user2ReceivedMsgCount = user2ReceivedMsgCount + 1;
@@ -75,40 +90,36 @@ describe("LocalTestServer", () => {
                 }
             });
 
-            await documentDeltaEventManager.pauseProcessing();
+            await containerDeltaEventManager.pauseProcessing();
 
-            user1SharedString.insertText(0, "A");
-            user2SharedString.insertText(0, "C");
+            sharedString1.insertText(0, "A");
+            sharedString2.insertText(0, "C");
             assert.equal(user1ReceivedMsgCount, 0, "User1 received message count is incorrect");
             assert.equal(user2ReceivedMsgCount, 0, "User2 received message count is incorrect");
 
-            await documentDeltaEventManager.processOutgoing(user1Document);
+            await containerDeltaEventManager.processOutgoing(component1.runtime);
             assert.equal(user1ReceivedMsgCount, 0, "User1 received message count is incorrect");
             assert.equal(user2ReceivedMsgCount, 0, "User2 received message count is incorrect");
 
-            await documentDeltaEventManager.process(user2Document);
+            await containerDeltaEventManager.process(component2.runtime);
             assert.equal(user1ReceivedMsgCount, 0, "User1 received message count is incorrect");
             assert.equal(user2ReceivedMsgCount, 1, "User2 received message count is incorrect");
 
-            await documentDeltaEventManager.processIncoming(user1Document);
+            await containerDeltaEventManager.processIncoming(component1.runtime);
             assert.equal(user1ReceivedMsgCount, 1, "User1 received message count is incorrect");
             assert.equal(user2ReceivedMsgCount, 1, "User2 received message count is incorrect");
 
-            user1SharedString.insertText(0, "B");
-            await documentDeltaEventManager.process(user1Document, user2Document);
+            sharedString1.insertText(0, "B");
+            await containerDeltaEventManager.process();
 
-            assert.equal(user1SharedString.getText(), user2SharedString.getText());
-            assert.equal(user1SharedString.getText().length, 3, user1SharedString.getText());
+            assert.equal(sharedString1.getText(), sharedString2.getText(), "Shared string not synced");
+            assert.equal(sharedString1.getText().length, 3, sharedString1.getText());
             assert.equal(user1ReceivedMsgCount, 1, "User1 received message count is incorrect");
             assert.equal(user2ReceivedMsgCount, 2, "User2 received message count is incorrect");
         });
     });
 
     afterEach(async () => {
-        await Promise.all([
-            user1Document.close(),
-            user2Document.close(),
-        ]);
-        await testDeltaConnectionServer.webSocketServer.close();
+        await deltaConnectionServer.webSocketServer.close();
     });
 });

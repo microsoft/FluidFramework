@@ -6,8 +6,7 @@
 import { debug } from "util";
 import { ITokenClaims, IUser, ScopeType } from "@microsoft/fluid-protocol-definitions";
 import * as jwt from "jsonwebtoken";
-// eslint-disable-next-line import/no-internal-modules
-import * as uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
 import { getRandomName } from "./dockerNames";
 
 /**
