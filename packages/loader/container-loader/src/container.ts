@@ -121,6 +121,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         urlResolver: IUrlResolver,
         logger?: ITelemetryBaseLogger,
     ): Promise<Container> {
+        const [, docId] = id.split("/");
         const container = new Container(
             options,
             scope,
@@ -129,10 +130,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             serviceFactory,
             urlResolver,
             request,
+            decodeURI(docId),
             logger);
 
-        const [, docId] = id.split("/");
-        container._id = decodeURI(docId);
         container._scopes = container.getScopes(resolvedUrl);
         container._canReconnect = !(request.headers?.[LoaderHeader.reconnect] === false);
         container.service = await serviceFactory.createDocumentService(resolvedUrl);
@@ -186,6 +186,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             serviceFactory,
             urlResolver,
             undefined,
+            undefined,
             logger);
         await container.createDetached(source);
 
@@ -194,7 +195,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     public subLogger: TelemetryLogger;
     private _canReconnect: boolean = true;
-    private readonly logger: ITelemetryLogger;
+    private logger: ITelemetryLogger;
 
     private pendingClientId: string | undefined;
     private loaded = false;
@@ -209,7 +210,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private _scopes: string[] | undefined;
     private readonly _deltaManager: DeltaManager;
     private _existing: boolean | undefined;
-    private _id: string | undefined;
     private service: IDocumentService | undefined;
     private _parentBranch: string | null = null;
     private _connectionState = ConnectionState.Disconnected;
@@ -328,7 +328,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         private readonly serviceFactory: IDocumentServiceFactory,
         private readonly urlResolver: IUrlResolver,
         private originalRequest: IRequest | undefined,
-        logger?: ITelemetryBaseLogger,
+        private _id: string | undefined,
+        private readonly originalLogger: ITelemetryBaseLogger | undefined,
     ) {
         super();
         this._audience = new Audience();
@@ -339,7 +340,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const clientType = `${interactive ? "interactive" : "noninteractive"}${type ? `/${type}` : ""}`;
         this.subLogger = DebugLogger.mixinDebugLogger(
             "fluid:telemetry",
-            logger,
+            this.originalLogger,
             {
                 docId: this.id,
                 clientType, // Differentiating summarizer container from main container
@@ -367,6 +368,24 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 }
             });
         }
+    }
+
+    private createLogger() {
+        // Create logger for components to use
+        const type = this.client.details.type;
+        const interactive = this.client.details.capabilities.interactive;
+        const clientType = `${interactive ? "interactive" : "noninteractive"}${type ? `/${type}` : ""}`;
+        this.subLogger = DebugLogger.mixinDebugLogger(
+            "fluid:telemetry",
+            this.originalLogger,
+            {
+                docId: this.id,
+                clientType, // Differentiating summarizer container from main container
+                loaderVersion: pkgVersion,
+            });
+
+        // Prefix all events in this file with container-loader
+        this.logger = ChildLogger.create(this.subLogger, "Container");
     }
 
     /**
@@ -448,6 +467,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             const [, docId] = parsedUrl.id.split("/");
             this._id = decodeURI(docId);
 
+            this.createLogger();
             this.storageService = await this.getDocumentStorageService();
 
             // This we can probably just pass the storage service to the blob manager - although ideally
