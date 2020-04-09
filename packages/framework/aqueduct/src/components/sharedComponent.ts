@@ -148,6 +148,14 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
         return component;
     }
 
+    /**
+     * Retreive component using the handle get or the older getComponent_UNSAFE call to fetch by ID
+     *
+     * @param key - key that object (handle/id) is stored with in the directory
+     * @param directory - directory containing the object
+     * @param getObjectFromDirectory - optional callback for fetching object from the directory, allows users to
+     * define custom types/getters for object retrieval
+     */
     public async getComponentFromDirectory<T extends IComponent & IComponentLoadable>(
         key: string,
         directory: IDirectory,
