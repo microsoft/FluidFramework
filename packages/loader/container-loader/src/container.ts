@@ -1074,7 +1074,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const deltaManager = new DeltaManager(
             () => this.service,
             this.client,
-            ChildLogger.create(this.subLogger, "DeltaManager"),
+            () => ChildLogger.create(this.subLogger, "DeltaManager"),
             this.canReconnect,
         );
 
