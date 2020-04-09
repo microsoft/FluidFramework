@@ -108,6 +108,7 @@ class CounterReactView extends React.Component<CounterProps, CounterState> {
 // ----- FACTORY SETUP -----
 
 export const ClickerInstantiationFactory = new PrimedComponentFactory(
+    ClickerName,
     Clicker,
     [],
 );

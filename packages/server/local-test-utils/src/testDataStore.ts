@@ -47,7 +47,7 @@ export class TestDataStore {
             { blockUpdateMarkers: true },
             scope || {},
             new Map<string, IProxyLoaderFactory>());
-        const baseUrl = `https://test.com/tenantId/documentId/${encodeURIComponent(componentId)}`;
+        const baseUrl = `https://test.com/${encodeURIComponent(componentId)}`;
         const url = `${baseUrl}${
             // Ensure '/' separator when concatenating 'baseUrl' and 'path'.
             (path && path.charAt(0)) !== "/" ? "/" : ""

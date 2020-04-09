@@ -103,7 +103,7 @@ function wrapIfComponentPackage(packageJson: IFluidPackage, fluidModule: IFluidM
     return fluidModule;
 }
 
-function getUrlResolver(documentId: string, options: RouteOptions): IUrlResolver {
+function getUrlResolver(options: RouteOptions): IUrlResolver {
     switch (options.mode) {
         case "docker":
             return new InsecureUrlResolver(
@@ -142,7 +142,7 @@ function getUrlResolver(documentId: string, options: RouteOptions): IUrlResolver
                 { accessToken: options.odspAccessToken });
 
         default: // Local
-            return new TestResolver(documentId);
+            return new TestResolver();
     }
 }
 
@@ -227,7 +227,7 @@ export async function start(
         }
     }
 
-    const urlResolver = getUrlResolver(documentId, options);
+    const urlResolver = getUrlResolver(options);
 
     // Construct a request
     const url = window.location.href;

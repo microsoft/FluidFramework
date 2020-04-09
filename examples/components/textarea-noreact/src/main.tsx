@@ -27,6 +27,10 @@ import {
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 /******************************************************************************/
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+const pkg = require("../package.json");
+export const TextAreaNoReactName = pkg.name as string;
+
 /**
  * A simple interface to help manage state - in the style of React. We could do
  * without this interface and just use manual calls, but having a private
@@ -401,6 +405,7 @@ export class TextareaNoReact extends PrimedComponent implements IComponentHTMLVi
  */
 export const TextareaNoReactInstantiationFactory =
     new PrimedComponentFactory(
+        TextAreaNoReactName,
         TextareaNoReact,
         [
             SharedString.getFactory(),
