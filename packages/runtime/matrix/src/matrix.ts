@@ -51,8 +51,19 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
     constructor(runtime: IComponentRuntime, public id: string, attributes: IChannelAttributes) {
         super(id, runtime, attributes);
 
-        this.rows = new PermutationVector(SnapshotPath.rows, this.logger, runtime.options, this.onRowDelta, this.onRowRemoval);
-        this.cols = new PermutationVector(SnapshotPath.cols, this.logger, runtime.options, this.onColDelta, this.onColRemoval);
+        this.rows = new PermutationVector(
+            SnapshotPath.rows,
+            this.logger,
+            runtime.options,
+            this.onRowDelta,
+            this.onRowHandlesRecycled);
+
+        this.cols = new PermutationVector(
+            SnapshotPath.cols,
+            this.logger,
+            runtime.options,
+            this.onColDelta,
+            this.onColHandlesRecycled);
     }
 
     public static create<T extends Serializable = Serializable>(runtime: IComponentRuntime, id?: string) {
@@ -400,7 +411,7 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
         }
     };
 
-    private readonly onRowRemoval = (rowHandles: Handle[]) => {
+    private readonly onRowHandlesRecycled = (rowHandles: Handle[]) => {
         const { currentSeq: colRefSeq, clientId: colClientId } = this.cols.getCollabWindow();
 
         for (let col = 0; col < this.numCols; col++) {
@@ -412,9 +423,9 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
                 }
             }
         }
-    }
+    };
 
-    private readonly onColRemoval = (colHandles: Handle[]) => {
+    private readonly onColHandlesRecycled = (colHandles: Handle[]) => {
         const { currentSeq: rowRefSeq, clientId: rowClientId } = this.rows.getCollabWindow();
 
         for (let row = 0; row < this.numRows; row++) {
@@ -426,7 +437,7 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
                 }
             }
         }
-    }
+    };
 
     public toString() {
         let s = `client:${this.runtime.clientId}\nrows: ${this.rows.toString()}\ncols: ${this.cols.toString()}\n\n`;

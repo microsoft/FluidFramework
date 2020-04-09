@@ -20,8 +20,8 @@ import {
 } from "@microsoft/fluid-merge-tree";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { FileMode, TreeEntry, ITree } from "@microsoft/fluid-protocol-definitions";
-import { HandleTable, Handle } from "./handletable";
 import { ObjectStoragePartition } from "@microsoft/fluid-runtime-utils";
+import { HandleTable, Handle } from "./handletable";
 
 const enum SnapshotPath {
     segments = "segments",
@@ -113,7 +113,7 @@ export class PermutationVector extends Client {
         logger: ITelemetryBaseLogger,
         runtime: IComponentRuntime,
         private readonly deltaCallback: (position: number, numRemoved: number, numInserted: number) => void,
-        private readonly clearCallback: (handles: Handle[]) => void,
+        private readonly handlesRecycledCallback: (handles: Handle[]) => void,
     ) {
         super(
             PermutationSegment.fromJSONObject,
@@ -217,28 +217,36 @@ export class PermutationVector extends Client {
     ) => {
         switch (operation) {
             case MergeTreeDeltaType.INSERT:
+                // Notify the matrix of inserted positions.  The matrix in turn notifies any IMatrixConsumers.
                 this.enumerateDeltaRanges(deltaSegments, (position, length) => {
                     this.deltaCallback(position, /* numRemoved: */ 0, /* numInserted: */ length);
                 });
                 break;
-            case MergeTreeDeltaType.REMOVE:
-                const freed: Handle[] = [];
 
+            case MergeTreeDeltaType.REMOVE: {
+                // Build a list of non-null handles referenced by the segment.
+                const freed: Handle[] = [];
                 for (const delta of deltaSegments) {
                     const segment = delta.segment as PermutationSegment;
-
                     freed.splice(freed.length, 0, ...segment.handles.filter((handle) => handle !== Handle.unallocated));
                 }
 
-                this.enumerateDeltaRanges(deltaSegments, (position, length) => {
-                    this.deltaCallback(position, /* numRemoved: */ length, /* numInsert: */ 0);
-                });
+                // Notify matrix that handles are about to be freed.  The matrix is responsible for clearing
+                // the rows/cols prior to free to ensure recycled row/cols are initially empty.
+                this.handlesRecycledCallback(freed);
 
-                this.clearCallback(freed);
+                // Now that the physical storage has been cleared, add the recycled handles back to the free pool.
                 for (const handle of freed) {
                     this.handleTable.free(handle);
                 }
+
+                // Notify the matrix of removed positions.  The matrix in turn notifies any IMatrixConsumers.
+                this.enumerateDeltaRanges(deltaSegments, (position, length) => {
+                    this.deltaCallback(position, /* numRemoved: */ length, /* numInsert: */ 0);
+                });
                 break;
+            }
+
             default:
                 assert.fail();
         }
