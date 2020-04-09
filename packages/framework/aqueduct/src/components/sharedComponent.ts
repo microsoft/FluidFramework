@@ -140,7 +140,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     protected async createAndAttachComponent<T extends IComponent & IComponentLoadable>(
         pkg: string, props?: any,
     ): Promise<T> {
-        const componentRuntime = await this.context.createComponentWithId(pkg, props);
+        const componentRuntime = await this.context.createComponent(pkg, props);
         const component = await this.asComponent<T>(componentRuntime.request({ url: "/" }));
         componentRuntime.attach();
         return component;

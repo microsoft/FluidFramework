@@ -222,7 +222,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     }
 
     public async createAndAttachComponent(pkg: string): Promise<IComponentRuntime> {
-        const newComponentRuntime = await this.componentContext.createComponentWithId(pkg);
+        const newComponentRuntime = await this.componentContext.createComponent(pkg);
         newComponentRuntime.attach();
         return newComponentRuntime;
     }

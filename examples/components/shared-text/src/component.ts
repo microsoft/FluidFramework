@@ -141,10 +141,10 @@ export class SharedTextRunner
 
             const hostRuntime = this.context.hostRuntime;
             const [progressBars, math, videoPlayers, images] = await Promise.all([
-                getHandle(hostRuntime.createComponentWithId("@fluid-example/progress-bars")),
-                getHandle(hostRuntime.createComponentWithId("@fluid-example/math")),
-                getHandle(hostRuntime.createComponentWithId("@fluid-example/video-players")),
-                getHandle(hostRuntime.createComponentWithId("@fluid-example/image-collection")),
+                getHandle(hostRuntime.createComponent("@fluid-example/progress-bars")),
+                getHandle(hostRuntime.createComponent("@fluid-example/math")),
+                getHandle(hostRuntime.createComponent("@fluid-example/video-players")),
+                getHandle(hostRuntime.createComponent("@fluid-example/image-collection")),
             ]);
 
             this.rootView.set("progressBars", progressBars);

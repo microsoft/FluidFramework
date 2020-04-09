@@ -69,7 +69,7 @@ export class WebFlowHost extends SharedComponent<ISharedDirectory> implements IC
     }
 
     public readonly createSubComponent = async (pkg: string, props?: any) => {
-        const componentRuntime = await this.context.createComponentWithId(pkg);
+        const componentRuntime = await this.context.createComponent(pkg);
         const response = await componentRuntime.request({ url: "/" });
         componentRuntime.attach();
         return response.value.handle;
