@@ -50,7 +50,7 @@ export class SimpleContainerRuntimeFactory {
             // Debug(`createAndAttachComponent(chaincode=${chaincode})`);
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             SimpleContainerRuntimeFactory.createAndAttachComponent(
-                runtime, this.defaultComponentId, chaincode);
+                runtime, SimpleContainerRuntimeFactory.defaultComponentId, chaincode);
         }
 
         return runtime;
