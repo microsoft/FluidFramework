@@ -6,6 +6,7 @@
 - [IComponent* Interfaces should now have string literal identifiers](#IComponent*-Interfaces-should-now-have-string-literal-identifiers)
 - [SharedComponentFactory and PrimedComponentFactory changes](#SharedComponentFactory-and-PrimedComponentFactory-changes)
 - [PrimedComponent and SharedComponent interface changes](#PrimedComponent-and-Shared-Component-interface-changes)
+- [SimpleModuleInstantiationFactory renamed and SimpleContainerRuntimeFactory deprecated](#SimpleModuleInstantiationFactory-renamed-and-SimpleContainerRuntimeFactory-deprecated)
 
 ### View interfaces moved to separate package
 
@@ -69,6 +70,12 @@ directoryWhereHandleIsStored.get<IComponentHandle<TypeOfHandle>>(idOfHandleInDir
 
 Alternatively, a new helper function is provided for compatibility called getComponentFromDirectory that takes the string key and the directory where either the component handle or the id used for the old getComponent call is stored. It will appropriately fetch the component using the handle/id stored in the directory and then update the stored value with a handle now so that there are fewer and fewer IDs stored. 
 Users can also pass in an optional function to get the value from their directory in case they have some specially defined types. Look at dataModel.ts in the examples/components/spaces for an implentation of such.
+
+### `SimpleModuleInstantiationFactory` renamed and `SimpleContainerRuntimeFactory` deprecated
+
+`SimpleModuleInstantiationFactory` is now named `ContainerRuntimeFactoryWithDefaultComponent`.  Its functionality is unchanged.
+
+`SimpleContainerRuntimeFactory` is deprecated, as most of its functionality is provided by `ContainerRuntimeFactoryWithDefaultComponent` which should be used instead.  It does not provide `createAndAttachComponent()`, but this functionality can be achieved using direct calls to `createComponent()` and `attach()`.  `SimpleContainerRuntimeFactory` will be removed in a future version of the framework.
 
 ## 0.15 Breaking Changes
 

@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aqueduct";
 import { PropertySet } from "@microsoft/fluid-merge-tree";
 import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 import { LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
@@ -65,7 +65,7 @@ describe("Table Document with Interception", () => {
         }
 
         beforeEach(async () => {
-            const factory = new SimpleModuleInstantiationFactory(
+            const factory = new ContainerRuntimeFactoryWithDefaultComponent(
                 TableDocumentType,
                 new Map([
                     [TableDocumentType, Promise.resolve(TableDocument.getFactory())],
