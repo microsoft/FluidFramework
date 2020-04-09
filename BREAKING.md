@@ -75,7 +75,7 @@ Users can also pass in an optional function to get the value from their director
 
 `SimpleModuleInstantiationFactory` is now named `ContainerRuntimeFactoryWithDefaultComponent`.  Its functionality is unchanged.
 
-`SimpleContainerRuntimeFactory` is deprecated, as its functionality is provided by `ContainerRuntimeFactoryWithDefaultComponent` and the newly added helper `createAndAttachComponent()` which should be used instead.  It will be removed in a future version of the framework.
+`SimpleContainerRuntimeFactory` is deprecated, as most of its functionality is provided by `ContainerRuntimeFactoryWithDefaultComponent` which should be used instead.  It does not provide `createAndAttachComponent()`, but this functionality can be achieved using direct calls to `createComponent()` and `attach()`.  `SimpleContainerRuntimeFactory` will be removed in a future version of the framework.
 
 ## 0.15 Breaking Changes
 
