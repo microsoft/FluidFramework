@@ -342,9 +342,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             "fluid:telemetry",
             this.originalLogger,
             {
-                docId: this.id,
                 clientType, // Differentiating summarizer container from main container
                 loaderVersion: pkgVersion,
+            },
+            {
+                docId: () => this.id,
             });
 
         // Prefix all events in this file with container-loader
@@ -368,24 +370,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 }
             });
         }
-    }
-
-    private createLogger() {
-        // Create logger for components to use
-        const type = this.client.details.type;
-        const interactive = this.client.details.capabilities.interactive;
-        const clientType = `${interactive ? "interactive" : "noninteractive"}${type ? `/${type}` : ""}`;
-        this.subLogger = DebugLogger.mixinDebugLogger(
-            "fluid:telemetry",
-            this.originalLogger,
-            {
-                docId: this.id,
-                clientType, // Differentiating summarizer container from main container
-                loaderVersion: pkgVersion,
-            });
-
-        // Prefix all events in this file with container-loader
-        this.logger = ChildLogger.create(this.subLogger, "Container");
     }
 
     /**
@@ -467,7 +451,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             const [, docId] = parsedUrl.id.split("/");
             this._id = decodeURI(docId);
 
-            this.createLogger();
             this.storageService = await this.getDocumentStorageService();
 
             // This we can probably just pass the storage service to the blob manager - although ideally
@@ -1074,7 +1057,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const deltaManager = new DeltaManager(
             () => this.service,
             this.client,
-            () => ChildLogger.create(this.subLogger, "DeltaManager"),
+            ChildLogger.create(this.subLogger, "DeltaManager", undefined, ),
             this.canReconnect,
         );
 

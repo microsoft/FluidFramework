@@ -83,7 +83,7 @@ describe("Loader", () => {
                 deltaManager = new DeltaManager(
                     () => service,
                     client as IClient,
-                    () => logger,
+                    logger,
                     false,
                 );
                 deltaManager.attachOpHandler(0, 0, {
