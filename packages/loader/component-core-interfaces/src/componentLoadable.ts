@@ -15,7 +15,7 @@ export interface IProvideComponentLoadable {
  */
 export interface IComponentLoadable extends IProvideComponentLoadable {
     // Absolute URL to the component within the document
-    url: string;
+    readonly url: string;
 
     // Handle to the loadable component. Will eventually replace the url property. But currently marked optional while
     // handles are integrated into the system.

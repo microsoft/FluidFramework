@@ -4,7 +4,11 @@
  */
 
 // Fluid
-import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import {
+    ContainerRuntimeFactoryWithDefaultComponent,
+    PrimedComponent,
+    PrimedComponentFactory,
+} from "@microsoft/fluid-aqueduct";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 // React
@@ -103,7 +107,7 @@ export const MusicaInstantiationFactory = new PrimedComponentFactory(
     [],
 );
 
-export const fluidExport = new SimpleModuleInstantiationFactory(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
     musicaName,
     new Map([
         [musicaName, Promise.resolve(MusicaInstantiationFactory)],

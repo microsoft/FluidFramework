@@ -11,7 +11,7 @@ import {
     IContainerComponentDetails,
     IComponentRegistryDetails,
 } from "@fluid-example/spaces";
-import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aqueduct";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import {
     IComponentRegistry,
@@ -58,35 +58,35 @@ const generateFactory = () => {
         {
             type: "clicker",
             factory: Promise.resolve(ClickerInstantiationFactory),
-            capabilities: ["IComponentHTMLVisual"],
+            capabilities: ["IComponentHTMLView"],
             friendlyName: "Clicker",
             fabricIconName: "NumberField",
         },
         {
             type: "tabs",
             factory: Promise.resolve(TabsComponent.getFactory()),
-            capabilities: ["IComponentHTMLVisual"],
+            capabilities: ["IComponentHTMLView"],
             friendlyName: "Tabs",
             fabricIconName: "BrowserTab",
         },
         {
             type: "spaces",
             factory: Promise.resolve(Spaces.getFactory()),
-            capabilities: ["IComponentHTMLVisual"],
+            capabilities: ["IComponentHTMLView"],
             friendlyName: "Spaces",
             fabricIconName: "SnapToGrid",
         },
         {
             type: "codemirror",
             factory: Promise.resolve(cmfe),
-            capabilities: ["IComponentHTMLVisual"],
+            capabilities: ["IComponentHTMLView"],
             friendlyName: "Codemirror",
             fabricIconName: "Code",
         },
         {
             type: "prosemirror",
             factory: Promise.resolve(pmfe),
-            capabilities: ["IComponentHTMLVisual"],
+            capabilities: ["IComponentHTMLView"],
             friendlyName: "Prosemirror",
             fabricIconName: "Edit",
         },
@@ -107,7 +107,7 @@ const generateFactory = () => {
 
     // TODO: You should be able to specify the default registry instead of just a list of components
     // and the default registry is already determined Issue:#1138
-    return new SimpleModuleInstantiationFactory(
+    return new ContainerRuntimeFactoryWithDefaultComponent(
         "anchor",
         [
             ...containerComponents,

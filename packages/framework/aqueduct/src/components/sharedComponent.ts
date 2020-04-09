@@ -15,6 +15,9 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { ComponentHandle } from "@microsoft/fluid-component-runtime";
+import { IDirectory } from "@microsoft/fluid-map";
+// eslint-disable-next-line import/no-internal-modules
+import * as uuid from "uuid/v4";
 import { serviceRoutePathRoot } from "../containerServices";
 
 /**
@@ -131,26 +134,54 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     }
 
     /**
-     * Calls create, initialize, and attach on a new component.
+     * Calls create, initialize, and attach on a new component with random generated ID
      *
-     * @param id - unique component id for the new component
      * @param pkg - package name for the new component
      * @param props - optional props to be passed in
      */
     protected async createAndAttachComponent<T extends IComponent & IComponentLoadable>(
-        id: string | undefined, pkg: string, props?: any,
+        pkg: string, props?: any,
     ): Promise<T> {
-        const componentRuntime = await this.context.createComponent(id, pkg, props);
+        const componentRuntime = await this.context.createComponent(uuid(), pkg, props);
         const component = await this.asComponent<T>(componentRuntime.request({ url: "/" }));
         componentRuntime.attach();
         return component;
     }
 
     /**
+     * Retreive component using the handle get or the older getComponent_UNSAFE call to fetch by ID
+     *
+     * @param key - key that object (handle/id) is stored with in the directory
+     * @param directory - directory containing the object
+     * @param getObjectFromDirectory - optional callback for fetching object from the directory, allows users to
+     * define custom types/getters for object retrieval
+     */
+    public async getComponentFromDirectory<T extends IComponent & IComponentLoadable>(
+        key: string,
+        directory: IDirectory,
+        getObjectFromDirectory?: (id: string, directory: IDirectory) => string | IComponentHandle | undefined):
+        Promise<T | undefined> {
+        const handleOrId = getObjectFromDirectory ? getObjectFromDirectory(key, directory) : directory.get(key);
+        if (typeof handleOrId === "string") {
+            // For backwards compatibility with older stored IDs
+            // We update the storage with the handle so that this code path is less and less trafficked
+            const component = await this.getComponent_UNSAFE<T>(handleOrId);
+            directory.set(key, component.handle);
+            return component;
+        } else {
+            const handle = handleOrId?.IComponentHandle;
+            return await (handle ? handle.get() : this.getComponent_UNSAFE(key)) as T;
+        }
+    }
+
+    /**
+     * @deprecated
      * Gets the component of a given id. Will follow the pattern of the container for waiting.
      * @param id - component id
+     * This is maintained for testing, to allow us to fetch the _scheduler for testHost since it is set at initializing
+     * Removal is tracked by issue #1628
      */
-    protected async getComponent<T extends IComponent>(id: string, wait: boolean = true): Promise<T> {
+    protected async getComponent_UNSAFE<T extends IComponent>(id: string, wait: boolean = true): Promise<T> {
         const request = {
             headers: [[wait]],
             url: `/${id}`,

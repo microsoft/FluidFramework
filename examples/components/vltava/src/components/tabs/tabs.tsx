@@ -48,7 +48,6 @@ export class TabsComponent extends PrimedComponent implements IComponentHTMLView
                 this.root,
                 registryDetails,
                 this.createAndAttachComponent.bind(this),
-                this.getComponent.bind(this),
             );
     }
 

@@ -13,7 +13,6 @@
         "jsx": "react",
         "allowSyntheticDefaultImports": true,
         "types": [
-            "node",
             "react",
             "react-dom",
             "jest",

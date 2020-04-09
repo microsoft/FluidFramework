@@ -13,8 +13,7 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import { IComponentRuntime, IObjectStorageService, IChannelAttributes } from "@microsoft/fluid-runtime-definitions";
 import { SharedObject } from "@microsoft/fluid-shared-object-base";
-// eslint-disable-next-line import/no-internal-modules
-import * as uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
 import { InkFactory } from "./inkFactory";
 import {
     IClearOperation,
