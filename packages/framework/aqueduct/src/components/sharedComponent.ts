@@ -153,7 +153,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
         directory: IDirectory,
         getObjectFromDirectory?: (id: string, directory: IDirectory) => string | IComponentHandle | undefined):
         Promise<T | undefined> {
-        const handleOrId = getObjectFromDirectory ? getObjectFromDirectory(key, directory) : directory.get(id);
+        const handleOrId = getObjectFromDirectory ? getObjectFromDirectory(key, directory) : directory.get(key);
         if (typeof handleOrId === "string") {
             // For backwards compatibility with older stored IDs
             // We update the storage with the handle so that this code path is less and less trafficked
@@ -162,7 +162,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
             return component;
         } else {
             const handle = handleOrId?.IComponentHandle;
-            return await (handle ? handle.get() : this.getComponent_UNSAFE(id)) as T;
+            return await (handle ? handle.get() : this.getComponent_UNSAFE(key)) as T;
         }
     }
 
