@@ -82,7 +82,7 @@ export abstract class PrimedComponent extends SharedComponent {
     /**
      * Calls existing, and opened().  Caller is responsible for ensuring this is only invoked once.
      */
-    protected async initializeInternal(props?: any): Promise<void> {
+    protected async initializeInternal(initialState?: any): Promise<void> {
         // Initialize task manager.
         this.internalTaskManager = await this.getComponent<ITaskManager>("_scheduler");
 
@@ -90,7 +90,7 @@ export abstract class PrimedComponent extends SharedComponent {
             // Create a root directory and register it before calling componentInitializingFirstTime
             this.internalRoot = SharedDirectory.create(this.runtime, this.rootDirectoryId);
             this.internalRoot.register();
-            await this.componentInitializingFirstTime(props);
+            await this.componentInitializingFirstTime(initialState);
         } else {
             // Component has a root directory so we just need to set it before calling componentInitializingFromExisting
             this.internalRoot = await this.runtime.getChannel(this.rootDirectoryId) as ISharedDirectory;

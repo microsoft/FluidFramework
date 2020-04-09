@@ -5,6 +5,7 @@
 - [View interfaces moved to separate package](#View-interfaces-moved-to-separate-package)
 - [IComponent* Interfaces should now have string literal identifiers](#IComponent*-Interfaces-should-now-have-string-literal-identifiers)
 - [SharedComponentFactory and PrimedComponentFactory changes](#SharedComponentFactory-and-PrimedComponentFactory-changes)
+- [ContainerRuntime and LocalComponentContext createProps removal](#ContainerRuntime-and-LocalComponentContext-createProps-removal)
 
 ### View interfaces moved to separate package
 
@@ -58,6 +59,10 @@ export interface IComponentFoo extends IProvideComponentFoo {
 ### SharedComponentFactory and PrimedComponentFactory changes
 
 Class definitions for SharedComponentFactory and PrimedComponentFactory have been updated.  Both now specify a required `type: string` parameter in their constructors.
+
+### ContainerRuntime and LocalComponentContext createProps removal
+
+Creation props will no longer be specified through the `LocalComponentContext` after 0.16, such as through `ContainerRuntime`'s `createComponentContext` method.  To specify creation props, consumers should use the new `IComponentFactory` component creation flow, which allows initial state to be specified in the call to `createComponent(...)`.
 
 ## 0.15 Breaking Changes
 

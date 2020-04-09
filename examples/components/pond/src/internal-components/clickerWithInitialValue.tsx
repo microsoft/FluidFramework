@@ -4,7 +4,9 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { IComponent, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
 import { Counter, CounterValueType, ISharedDirectory } from "@microsoft/fluid-map";
+import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -12,6 +14,20 @@ import * as ReactDOM from "react-dom";
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../../package.json");
 export const ClickerWithInitialValueName = `${pkg.name as string}-clickerWithInitialValue`;
+
+export interface IClickerInitialState {
+    initialValue: number;
+}
+
+export class ClickerWithInitialValueFactory extends PrimedComponentFactory {
+    // Override the createComponent method to specify/enforce a narrower initialState type
+    public async createComponent(
+        context: IComponentContext,
+        initialState?: IClickerInitialState,
+    ): Promise<IComponent & IComponentLoadable> {
+        return super.createComponent(context, initialState);
+    }
+}
 
 /**
  * Basic Clicker example using new interfaces and stock component classes.
@@ -50,7 +66,7 @@ export class ClickerWithInitialValue extends PrimedComponent implements ICompone
 
     public static getFactory() { return ClickerWithInitialValue.factory; }
 
-    private static readonly factory = new PrimedComponentFactory(
+    private static readonly factory = new ClickerWithInitialValueFactory(
         ClickerWithInitialValueName,
         ClickerWithInitialValue,
         [],

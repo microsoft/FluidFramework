@@ -46,7 +46,7 @@ export class SharedComponentFactory implements IComponentFactory, Partial<IProvi
      *
      * @param context - component context used to load a component runtime
      */
-    public instantiateComponent(context: IComponentContext): void {
+    public instantiateComponent(context: IComponentContext, initialState?: any): void {
         // Create a new runtime for our component
         // The runtime is what Fluid uses to create DDS' and route to your component
         const runtime = ComponentRuntime.load(
@@ -60,14 +60,14 @@ export class SharedComponentFactory implements IComponentFactory, Partial<IProvi
         // run the initialization.
         if (!this.onDemandInstantiation || !runtime.existing) {
             // Create a new instance of our component up front
-            instanceP = this.instantiateInstance(runtime, context);
+            instanceP = this.instantiateInstance(runtime, context, initialState);
         }
 
         runtime.registerRequestHandler(async (request: IRequest) => {
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             if (!instanceP) {
                 // Create a new instance of our component on demand
-                instanceP = this.instantiateInstance(runtime, context);
+                instanceP = this.instantiateInstance(runtime, context, initialState);
             }
             const instance = await instanceP;
             return instance.request(request);
@@ -79,21 +79,24 @@ export class SharedComponentFactory implements IComponentFactory, Partial<IProvi
      * @param runtime - component runtime created for the component context
      * @param context - component context used to load a component runtime
      */
-    private async instantiateInstance(runtime: ComponentRuntime, context: IComponentContext) {
+    private async instantiateInstance(runtime: ComponentRuntime, context: IComponentContext, initialState?: any) {
         // Create a new instance of our component
         const instance = new this.ctor(runtime, context);
-        await instance.initialize();
+        await instance.initialize(initialState);
         return instance;
     }
 
-    public async createComponent(context: IComponentContext): Promise<IComponent & IComponentLoadable> {
+    public async createComponent(
+        context: IComponentContext,
+        initialState?: any,
+    ): Promise<IComponent & IComponentLoadable> {
         if (this.type === "") {
             throw new Error("undefined type member");
         }
 
         return context.createComponentWithRealizationFn(
             this.type,
-            (newContext) => { this.instantiateComponent(newContext); },
+            (newContext) => { this.instantiateComponent(newContext, initialState); },
         );
     }
 }

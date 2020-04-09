@@ -626,6 +626,9 @@ export class LocalComponentContext extends ComponentContext {
         scope: IComponent,
         summaryTracker: SummaryTracker,
         attachCb: (componentRuntime: IComponentRuntime) => void,
+        /**
+         * @deprecated 0.16 Use the IComponentFactory creation methods instead to specify initial state
+         */
         public readonly createProps?: any,
     ) {
         super(runtime, id, false, storage, scope, summaryTracker, false, attachCb, pkg);

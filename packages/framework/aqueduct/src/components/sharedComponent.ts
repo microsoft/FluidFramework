@@ -55,11 +55,12 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     /**
      * Allow inheritors to plugin to an initialize flow
      * We guarantee that this part of the code will only happen once
+     * @param initialState - Optional initial state for the component
      */
-    public async initialize(): Promise<void> {
+    public async initialize(initialState?: any): Promise<void> {
         // We want to ensure if this gets called more than once it only executes the initialize code once.
         if (!this.initializeP) {
-            this.initializeP = this.initializeInternal(this.context.createProps);
+            this.initializeP = this.initializeInternal(initialState ?? this.context.createProps);
         }
 
         await this.initializeP;
@@ -117,10 +118,10 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
      * Calls componentInitializingFirstTime, componentInitializingFromExisting, and componentHasInitialized. Caller is
      * responsible for ensuring this is only invoked once.
      */
-    protected async initializeInternal(props?: any): Promise<void> {
+    protected async initializeInternal(initialState?: any): Promise<void> {
         if (!this.runtime.existing) {
             // If it's the first time through
-            await this.componentInitializingFirstTime(props);
+            await this.componentInitializingFirstTime(initialState);
         } else {
             // Else we are loading from existing
             await this.componentInitializingFromExisting();
@@ -174,9 +175,9 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     /**
      * Called the first time the component is initialized.
      *
-     * @param props - Optional props to be passed in on create
+     * @param initialState - Optional initial state to be passed in on create
      */
-    protected async componentInitializingFirstTime(props?: any): Promise<void> { }
+    protected async componentInitializingFirstTime(initialState?: any): Promise<void> { }
 
     /**
      * Called every time but the first time the component is initialized

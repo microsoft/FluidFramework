@@ -291,6 +291,7 @@ export interface IComponentContext extends EventEmitter {
     submitSignal(type: string, content: any): void;
 
     /**
+     * @deprecated 0.16 Components should be created using IComponentFactory methods instead
      * Creates a new component by using subregistries.
      * @param pkgOrId - Package name if a second parameter is not provided. Otherwise an explicit ID.
      *                  ID is being deprecated, so prefer passing undefined instead (the runtime will
@@ -396,6 +397,7 @@ export interface IHostRuntime extends
     createComponent(pkgOrId: string, pkg?: string | string[]): Promise<IComponentRuntime>;
 
     /**
+     * @deprecated 0.16 Properties should be passed to the component factory method rather than to the runtime
      * Creates a new component with props
      * @param pkg - Package name of the component
      * @param props - properties to be passed to the instantiateComponent thru the context
@@ -426,6 +428,8 @@ export interface IHostRuntime extends
      *
      * @param pkg - Package path for the component to be created
      * @param props - Properties to be passed to the instantiateComponent thru the context
+     *  @deprecated 0.16 Properties should be passed directly to the component's initialization or to the
+     *  factory method rather than be stored in/passed from the context
      */
     createComponentContext(pkg: string[], props?: any): IComponentContext;
 
