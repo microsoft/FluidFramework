@@ -16,7 +16,6 @@
             "puppeteer",
             "jest-environment-puppeteer",
             "expect-puppeteer",
-            "node",
             "react",
             "react-dom"
         ]
