@@ -17,7 +17,8 @@ import {
 import * as Deque from "double-ended-queue";
 import { debug } from "./debug";
 import { SharedObjectComponentHandle } from "./handle";
-import { ISharedObject, ISharedObjectEvents, EventEmitterWithErrorHandling } from "./types";
+import { ISharedObject, ISharedObjectEvents } from "./types";
+import { EventEmitterWithErrorHandling } from "./eventEmitterWithErrorHandling";
 
 /**
  *  Base class from which all shared objects derive
@@ -343,7 +344,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
                 //
                 // - nack could get a new msn - but might as well do it in the join?
                 this.onDisconnect();
-                this.emit("disconnected");
+                this.emit("disconnected", this);
                 break;
 
             case ConnectionState.Connecting:
@@ -365,7 +366,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
                 // - we have a client ID
                 // - we are caught up enough to attempt to send messages
                 this.onConnect(pendingOps);
-                this.emit("connected");
+                this.emit("connected", this);
                 break;
             }
 
@@ -384,9 +385,9 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
             this.processPendingOp(message);
         }
 
-        this.emit("pre-op", message, local);
+        this.emit("pre-op", message, local, this);
         this.processCore(message, local);
-        this.emit("op", message, local);
+        this.emit("op", message, local, this);
     }
 
     /**
@@ -414,7 +415,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 
         this.pendingOps.shift();
         if (this.pendingOps.length === 0) {
-            this.emit("processed");
+            this.emit("processed", this);
         }
     }
 }

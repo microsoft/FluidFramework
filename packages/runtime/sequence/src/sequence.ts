@@ -43,9 +43,8 @@ export interface ISharedSegmentSequenceEvents
     extends ISharedObjectEvents {
 
     (event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: IEventThisPlaceHolder) => void);
-    (
-        event: "pre-op" | "op",
-        listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void);
+    (event: "maintenance",
+        listener: (event: SequenceMaintenanceEvent, target: IEventThisPlaceHolder) => void);
 }
 
 

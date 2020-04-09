@@ -32,6 +32,7 @@ import {
     SharedStringSegment,
 } from "@microsoft/fluid-sequence";
 import { IComponentHTMLOptions } from "@microsoft/fluid-view-interfaces";
+import { IEvent } from "@microsoft/fluid-shared-object-base";
 import { FlowDocumentType } from "../runtime";
 import { clamp, emptyArray } from "../util";
 import { IHTMLAttributes } from "../util/attr";
@@ -134,7 +135,12 @@ const accumAsLeafAction = (
 //       See: https://github.com/microsoft/Prague/issues/2408
 const endOfTextSegment = undefined as unknown as SharedStringSegment;
 
-export class FlowDocument extends PrimedComponent {
+export interface IFlowDocumentEvents extends IEvent {
+    (event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: SharedString) => void);
+    (event: "maintenance", listener: (event: SequenceMaintenanceEvent, target: SharedString) => void);
+}
+
+export class FlowDocument extends PrimedComponent<IFlowDocumentEvents> {
     private get sharedString() { return this.maybeSharedString; }
 
     public get length() {
@@ -421,20 +427,6 @@ export class FlowDocument extends PrimedComponent {
         return this.sharedString.getText(start, end);
     }
 
-    public on(event: "maintenance", listener: (event: SequenceMaintenanceEvent, target: SharedString, ...args: any[]) => void): this;
-    public on(event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: SharedString, ...args: any[]) => void): this;
-    public on(event: "maintenance" | "sequenceDelta", listener: (event: any, target: SharedString, ...args: any[]) => void): this {
-        this.maybeSharedString.on(event, listener);
-        return this;
-    }
-
-    public off(event: "maintenance", listener: (event: SequenceMaintenanceEvent, target: SharedString, ...args: any[]) => void): this;
-    public off(event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: SharedString, ...args: any[]) => void): this;
-    public off(event: "maintenance" | "sequenceDelta", listener: (event: any, target: SharedString, ...args: any[]) => void): this {
-        this.maybeSharedString.removeListener(event, listener);
-        return this;
-    }
-
     public getPreviousSegment(current: ISegment) {
         const position = this.getPosition(current);
         return position > 0
@@ -483,6 +475,9 @@ export class FlowDocument extends PrimedComponent {
     protected async componentHasInitialized() {
         const handle = await this.root.wait<IComponentHandle<SharedString>>("text");
         this.maybeSharedString = await handle.get();
+        if(this.maybeSharedString !== undefined){
+            this.forwardEvent(this.maybeSharedString, "sequenceDelta", "maintenance");
+        }
     }
 
     private getOppositeMarker(marker: Marker, oldPrefixLength: number, newPrefix: string) {

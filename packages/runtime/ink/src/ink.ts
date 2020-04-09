@@ -25,6 +25,7 @@ import {
     IInkStroke,
     IPen,
     IStylusOperation,
+    IInkEvents,
 } from "./interfaces";
 import { InkData, ISerializableInk } from "./snapshot";
 
@@ -37,7 +38,7 @@ const snapshotFileName = "header";
  * Inking data structure.
  * @sealed
  */
-export class Ink extends SharedObject implements IInk {
+export class Ink extends SharedObject<IInkEvents> implements IInk {
     /**
      * Create a new Ink.
      * @param runtime - Component runtime the new Ink belongs to
