@@ -48,18 +48,15 @@ The project has the following folder layout:
 
 ```
 └───src
-    |   Component.sppkg.manifest.json
-    |   main.ts
-    └───fluid-components
-        |   fluidSudoku.tsx
-        │   index.ts
-        ├───helpers
+    |   fluidSudoku.tsx
+    │   index.ts
+    ├───helpers
         │       coordinate.ts
         │       puzzles.ts
         |       styles.css
         │       sudokuCell.ts
         └───react
-                sudokuView.tsx
+            sudokuView.tsx
 ```
 
 The _src/fluid-components_ folder contains the source files for the Sudoku Fluid component.
