@@ -11,16 +11,20 @@ import {
     TransformedEvent,
 } from "@microsoft/fluid-common-definitions";
 
+// the event emitter polyfil and the not event emitter have different event types:
+// string | symbol vs. string | number
+// this allow us to correctly handle either type
+export type TEventEmitterEvent = EventEmitter extends {on(event: infer E, listener: any)} ? E : never;
 
-export type TypedEventTransform<TTHis, TEvent extends IEvent> =
-    IEventTransformer<TTHis, TEvent> &
+export type TypedEventTransform<TThis, TEvent extends IEvent> =
+    IEventTransformer<TThis, TEvent> &
     // Event emitter support some special events for the emitter itself to use
     // this exposes those events for the TypedEventEmitter.
     // Since we know what the shape of these events are, we can describe them directly via a TransformedEvent
     // which easier than trying to extend TEvent directly
     // eslint-disable-next-line max-len
-    TransformedEvent<TTHis,"newListener" | "removeListener", Parameters<(event: string, listener: (...args: any[]) => void) => void>>;
-
+    TransformedEvent<TThis,"newListener" | "removeListener", Parameters<(event: string, listener: (...args: any[]) => void) => void>> &
+    TransformedEvent<TThis, TEventEmitterEvent, Parameters<(...args: any[]) => void>>;
 
 /**
  * Event Emitter helper class the supports emitting typed events

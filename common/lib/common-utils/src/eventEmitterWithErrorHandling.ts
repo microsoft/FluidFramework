@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { IErrorEvent } from "@microsoft/fluid-common-definitions";
-import { TypedEventEmitter } from "./typedEventEmitter";
+import { TypedEventEmitter, TEventEmitterEvent } from "./typedEventEmitter";
 
 /**
  * Event Emitter helper class
@@ -11,7 +11,7 @@ import { TypedEventEmitter } from "./typedEventEmitter";
  * Any exception thrown by "error" listeners will propagate to the caller.
  */
 export class EventEmitterWithErrorHandling<TEvent extends IErrorEvent = IErrorEvent> extends TypedEventEmitter<TEvent> {
-    public emit(event: string | symbol, ...args: any[]): boolean {
+    public emit(event: TEventEmitterEvent, ...args: any[]): boolean {
         if (event === "error") {
             const anyListeners = super.emit(event, ...args);
             if (!anyListeners) {
