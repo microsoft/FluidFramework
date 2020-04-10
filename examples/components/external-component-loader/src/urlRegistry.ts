@@ -81,8 +81,7 @@ export class UrlRegistry implements IComponentRegistry {
             const entrypointName = fluidPackage.fluid.browser.umd.library;
             const scripts = fluidPackage.fluid.browser.umd.files;
 
-            if (entrypointName && scripts) {
-
+            if (entrypointName !== undefined && scripts !== undefined) {
                 while (this.loadingEntrypoints.has(entrypointName)) {
                     await this.loadingEntrypoints.get(entrypointName);
                 }

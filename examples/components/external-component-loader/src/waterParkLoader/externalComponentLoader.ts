@@ -60,15 +60,16 @@ export class ExternalComponentLoader extends PrimedComponent
             return;
         }
 
-        if (this.savedElement) {
-            while (this.savedElement.firstChild) {
+        if (this.savedElement !== undefined) {
+            // eslint-disable-next-line no-null/no-null
+            while (this.savedElement.firstChild !== null) {
                 this.savedElement.removeChild(this.savedElement.firstChild);
             }
         }
 
         this.savedElement = element;
 
-        if (this.savedElement) {
+        if (this.savedElement !== undefined) {
             const mainDiv = document.createElement("div");
             this.savedElement.appendChild(mainDiv);
 
@@ -109,12 +110,12 @@ export class ExternalComponentLoader extends PrimedComponent
             inputDiv.append(editableButton);
             editableButton.textContent = "Toggle Edit";
             editableButton.onclick = () => {
-                if (this.callbacks?.toggleEditable) {
+                if (this.callbacks?.toggleEditable !== undefined) {
                     this.callbacks.toggleEditable();
                 }
             };
 
-            if (this.error) {
+            if (this.error !== undefined) {
                 const errorDiv = document.createElement("div");
                 inputDiv.appendChild(errorDiv);
                 errorDiv.innerText = this.error;
@@ -124,7 +125,7 @@ export class ExternalComponentLoader extends PrimedComponent
 
     protected async componentHasInitialized() {
         const viewComponentHandle = this.root.get<IComponentHandle>(this.viewComponentMapID);
-        if (viewComponentHandle) {
+        if (viewComponentHandle !== undefined) {
             this.viewComponentP = viewComponentHandle.get();
         }
     }
@@ -161,7 +162,7 @@ export class ExternalComponentLoader extends PrimedComponent
             const pkgReg = await urlReg.IComponentRegistry.get(url) as IComponent;
             let componentRuntime: IComponentRuntime;
             const id = uuid();
-            if (pkgReg.IComponentDefaultFactoryName) {
+            if (pkgReg.IComponentDefaultFactoryName !== undefined) {
                 componentRuntime = await this.context.hostRuntime.createComponent(
                     id,
                     [
@@ -170,7 +171,7 @@ export class ExternalComponentLoader extends PrimedComponent
                         url,
                         pkgReg.IComponentDefaultFactoryName.getDefaultFactoryName(),
                     ]);
-            } else if (pkgReg.IComponentFactory) {
+            } else if (pkgReg.IComponentFactory !== undefined) {
                 componentRuntime = await this.context.hostRuntime.createComponent(
                     id,
                     [
@@ -195,7 +196,7 @@ export class ExternalComponentLoader extends PrimedComponent
             });
         } catch (error) {
             this.error = error;
-            if (this.savedElement) {
+            if (this.savedElement !== undefined) {
                 this.render(this.savedElement);
             }
         }
