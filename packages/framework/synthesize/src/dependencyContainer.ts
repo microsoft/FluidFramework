@@ -134,9 +134,11 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
     private resolveProvider<T extends keyof IComponent>(provider: Provider<T>, t: keyof IComponent) {
         // The double nested gets are required for lazy loading the provider resolution
         if(typeof provider === "function"){
+            // eslint-disable-next-line @typescript-eslint/no-this-alias
+            const self = this;
             return {get [t]() {
                 if (provider && typeof provider === "function") {
-                    return Promise.resolve(provider()).then((p) => p[t]);
+                    return Promise.resolve(provider(self)).then((p) => p[t]);
                 }
             }};
         }

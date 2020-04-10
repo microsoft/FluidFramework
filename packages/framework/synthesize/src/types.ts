@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { DependencyContainer } from "./dependencyContainer";
 
 /**
  * This is a condensed version of Record that requires the object has all
@@ -45,5 +46,5 @@ export type ComponentProvider<T extends keyof IComponent> = {
 export type Provider<T extends keyof IComponent> =
     ComponentProvider<T>
     | Promise<ComponentProvider<T>>
-    | (() => ComponentProvider<T>)
-    | (() => Promise<ComponentProvider<T>>);
+    | ((dependencyContainer: DependencyContainer) => ComponentProvider<T>)
+    | ((dependencyContainer: DependencyContainer) => Promise<ComponentProvider<T>>);
