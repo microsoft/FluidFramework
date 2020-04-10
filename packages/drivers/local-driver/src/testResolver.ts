@@ -54,8 +54,8 @@ export class TestResolver implements IUrlResolver, IExperimentalUrlResolver {
                 endpoints: {},
                 tokens: {},
                 type: "fluid",
-                url: `fluid-test://localhost:3000/${this.tenantId}/${this.id}`,
-                siteUrl: "https://localhost:3000",
+                url: `fluid-test://localhost:3000/${tenantId}/${this.id}`,
+                siteUrl,
                 newFileParams,
             };
             return resolved;
