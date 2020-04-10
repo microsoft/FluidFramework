@@ -11,10 +11,24 @@ import {
     IContainerComponentDetails,
     IComponentRegistryDetails,
 } from "@fluid-example/spaces";
+<<<<<<< HEAD
 import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aqueduct";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+=======
+import { IComponent, IRequest } from "@microsoft/fluid-component-core-interfaces";
+import {
+    IContainerContext,
+    IRuntime,
+    IRuntimeFactory,
+} from "@microsoft/fluid-container-definitions";
+import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
+import { setupLastEditedTracker } from "@microsoft/fluid-last-edited";
+import { ISequencedDocumentMessage, MessageType } from "@microsoft/fluid-protocol-definitions";
+>>>>>>> AqueductAnchor -> LastEditedTracker. Changed it to a class, added setup helper. Updated Vtlava to demonstrate LastEditedTracker.
 import {
     IComponentRegistry,
+    IHostRuntime,
+    IEnvelope,
     IProvideComponentFactory,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
@@ -26,6 +40,7 @@ import {
     Vltava,
     VltavaName,
 } from "./components";
+import { LastEditedViewer } from "./components/last-edited";
 
 export class InternalRegistry implements IComponentRegistry, IComponentRegistryDetails {
     public get IComponentRegistry() { return this; }
@@ -58,6 +73,62 @@ export class InternalRegistry implements IComponentRegistry, IComponentRegistryD
             (containerComponent) => type === containerComponent.type,
         );
         return index >= 0 && this.containerComponentArray[index].capabilities.includes(capability);
+    }
+}
+
+export class VltavaRuntimeFactory implements IRuntimeFactory {
+    public static readonly defaultComponentId = "default";
+    constructor(
+        private readonly defaultComponentName: string,
+        private readonly registryEntries: NamedComponentRegistryEntries) {}
+
+    public get IRuntimeFactory() { return this; }
+
+    public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
+        const runtime = await ContainerRuntime.load(
+            context,
+            this.registryEntries,
+            [this.componentRuntimeRequestHandler],
+            { generateSummaries: true });
+
+        // On first boot create the root component
+        if (!runtime.existing) {
+            await runtime.createComponent(VltavaRuntimeFactory.defaultComponentId, this.defaultComponentName)
+                .then((componentRuntime) => {
+                    componentRuntime.attach();
+                }).catch((error) => {
+                    context.error(error);
+                });
+        }
+
+        setupLastEditedTracker(VltavaRuntimeFactory.defaultComponentId, runtime, this.shouldDiscardMessage)
+            .catch((error) => {
+                throw error;
+            });
+
+        return runtime;
+    }
+
+    private async componentRuntimeRequestHandler(request: IRequest, runtime: IHostRuntime) {
+        const requestUrl = request.url.length > 0 && request.url.startsWith("/")
+            ? request.url.substr(1)
+            : request.url;
+        const trailingSlash = requestUrl.indexOf("/");
+
+        const componentId = requestUrl
+            ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
+            : VltavaRuntimeFactory.defaultComponentId;
+        const component = await runtime.getComponentRuntime(componentId, true);
+
+        return component.request({ url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash + 1) });
+    }
+
+    private shouldDiscardMessage(message: ISequencedDocumentMessage): boolean {
+        const envelope = message.contents as IEnvelope;
+        if ((message.type !== MessageType.Operation) || envelope.address.includes("_scheduler")) {
+            return true;
+        }
+        return false;
     }
 }
 

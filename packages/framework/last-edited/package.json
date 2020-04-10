@@ -1,7 +1,7 @@
 {
-  "name": "@microsoft/fluid-aqueduct-anchor",
+  "name": "@microsoft/fluid-last-edited",
   "version": "0.15.0",
-  "description": "Anchor component for the Aqueduct framework.",
+  "description": "Tracks the last edited information in the Container.",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

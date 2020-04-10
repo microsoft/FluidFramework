@@ -18,8 +18,10 @@ import {
 
 export interface IVltavaDataModel extends EventEmitter {
     getDefaultComponent(): Promise<IComponent>;
+    getRootComponent(): Promise<IComponent>;
     getTitle(): string;
     getUsers(): string[];
+    getUserFromId(id: string): string;
 }
 
 export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
@@ -52,6 +54,17 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
         return this.root.get<IComponentHandle>("tabs-component-id").get();
     }
 
+    /**
+     * Gets the root (Anchor) component from the ContainerRuntime.
+     */
+    public async getRootComponent(): Promise<IComponent> {
+        const response = await this.context.hostRuntime.request({ url: "/" });
+        if (response.status !== 200 && response.mimeType !== "fluid/component") {
+            throw new Error("Unable to get root component");
+        }
+        return response.value as IComponent;
+    }
+
     public getTitle(): string {
         return this.context.documentId;
     }
@@ -65,5 +78,17 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
             }
         });
         return users;
+    }
+
+    public getUserFromId(id: string): string {
+        const members = this.quorum.getMembers();
+        let user: string = "";
+        members.forEach((value) => {
+            if (value.client.user.id === id) {
+                user = (value.client.user as any).name;
+                return;
+            }
+        });
+        return user;
     }
 }
