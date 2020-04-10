@@ -16,7 +16,7 @@ import { ILastEditedTracker } from "./interfaces";
  *   if the message should be discarded. If not, it passes the message to the last edited tracker in the component.
  * - Any messages received before the component is loaded are stored in a buffer and passed to the tracker once the
  *   component loads.
- * @param componentId: The id of the root component whose last edited tracker is to be set up.
+ * @param componentId - The id of the root component whose last edited tracker is to be set up.
  * @param runtime - The container runtime whose messages are to be tracked.
  * @param shouldDiscardMessageFn - Function that tells if a message should not be considered in computing last edited.
  */
