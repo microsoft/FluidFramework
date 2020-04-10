@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable unicorn/filename-case */
-
 import * as assert from "assert";
 import { AgentSchedulerFactory, TaskManager } from "@microsoft/fluid-agent-scheduler";
 import { IFluidCodeDetails, ILoader } from "@microsoft/fluid-container-definitions";
