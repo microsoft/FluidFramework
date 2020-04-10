@@ -28,7 +28,7 @@ export interface IOdspResolvedUrl extends IResolvedUrlBase {
 
     createNewOptions?: ICreateNewOptions;
 
-    newFileParams?: INewFileInfo;
+    newFileParams?: IOdspNewFileParams;
 
     // A hashed identifier that is unique to this document
     hashedDocumentId: string;

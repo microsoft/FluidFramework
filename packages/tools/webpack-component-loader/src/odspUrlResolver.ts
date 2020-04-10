@@ -56,7 +56,7 @@ export class OdspUrlResolver implements IUrlResolver, IExperimentalUrlResolver {
         return this.driverUrlResolver.requestUrl(resolvedUrl, request);
     }
 
-    public createCreateNewRequest(rawUrl: string, newFileParams: IOdspNewFileParams) {
+    public createCreateNewRequest(rawUrl: string, newFileParams: IOdspNewFileParams): IRequest {
         return this.driverUrlResolver.createCreateNewRequest(rawUrl, newFileParams);
     }
 
