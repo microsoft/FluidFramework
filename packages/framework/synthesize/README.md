@@ -1,21 +1,31 @@
 # Fluid Synthesize
 
-An Ioc type library for synthesizing a fluid IComponent object based on registered providers.
+An Ioc type library for synthesizing a fluid IComponent object based on registered IComponent providers.
 
-It allows for the creation of a `DependencyContainer` that can have providers registered with. It exposes a `synthesize` method
-that will return an object with the correct optional and required types requested.
+It allows for the creation of a `DependencyContainer` that can have IComponent objects registered with it
+based on their interface Symbol. So for example if I wanted to register something as `IComponentFoo` I would
+need to provide and object that implements `IComponentFoo` along side it.
 
-The returned object is defined as a `Scope` and uses the `IProvideComponent` paradigm to expose the requested types.
+The `DependencyContainer` also exposes a `synthesize` method that returns an object with a `Promise` to the
+correct optional and required symbols requested.
+
+So if I wanted an object with an optional `IComponentFoo` and a required `IComponentBar` I would get back:
+
+```typescript
+{
+    IComponentFoo: Promise<IComponentFoo | undefined>
+    IComponentBar: Promise<IComponentBar>
+}
+```
 
 ## Simple Example
 
 ```typescript
 const dc = new DependencyContainer();
-const foo = new Foo();
-dc.register(IComponentFoo, {value: foo});
+dc.register(IComponentFoo, new Foo());
 
 const s = dc.synthesize<IComponentFoo>({IComponentFoo}, {});
-
+const foo = await s.IComponentFoo;
 console.log(s.IComponentFoo?.foo;)
 ```
 
@@ -32,16 +42,24 @@ console.log(s.IComponentFoo?.foo;)
   - [Multiple Types](###Multiple-Types)
 - [Parent](##Parent)
 
-## Providers
+## Component Providers
+
+```typescript
+type ComponentProvider<T extends keyof IComponent> =
+    IComponent[T]
+    | Promise<IComponent[T]>
+    | ((dependencyContainer: DependencyContainer) => IComponent[T])
+    | ((dependencyContainer: DependencyContainer) => Promise<IComponent[T]>);
+```
 
 There are four types of providers
 
-1. [`InstanceProvider`](###Instance-Provider)
-2. [`SingletonProvider`](###Singleton-Provider)
-3. [`ValueProvider`](###Value-Provider)
-4. [`FactoryProvider`](###Factory-Provider)
+1. [`Value Provider`](###Instance-Provider)
+2. [`Async Value Provider`](###Singleton-Provider)
+3. [`Factory Provider`](###Value-Provider)
+4. [`Async Factory Provider`](###Factory-Provider)
 
-### Instance Provider
+### Value Provider
 
 ```typescript
 interface InstanceProvider<T extends IComponent> {

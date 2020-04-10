@@ -26,7 +26,7 @@ export type AsyncRequiredComponentProvider<T extends keyof IComponent> = {
 };
 
 /**
-  * This is a condensed version of Record that requires the object has all
+ * This is a condensed version of Record that requires the object has all
  * the IComponent properties as its type, mapped to an object that implements
  * the property or undefined.
  */
@@ -34,7 +34,10 @@ export type AsyncOptionalComponentProvider<T extends keyof IComponent> = {
     [P in T]: Promise<IComponent[P] | undefined>;
 };
 
-export type Provider<T extends keyof IComponent> =
+/**
+ * Multiple ways to provide a component.
+ */
+export type ComponentProvider<T extends keyof IComponent> =
     IComponent[T]
     | Promise<IComponent[T]>
     | ((dependencyContainer: DependencyContainer) => IComponent[T])

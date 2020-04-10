@@ -8,7 +8,7 @@ import {
     AsyncOptionalComponentProvider,
     AsyncRequiredComponentProvider,
     ComponentSymbolProvider,
-    Provider,
+    ComponentProvider,
 } from "./types";
 
 declare module "@microsoft/fluid-component-core-interfaces" {
@@ -40,7 +40,7 @@ export interface IComponentDependencySynthesizer extends IProvideComponentDepend
      * @param provider - A provider that will resolve the T correctly when asked
      * @throws - If passing a type that's already registered
      */
-    register<T extends keyof IComponent>(type: T, provider: Provider<T>): void;
+    register<T extends keyof IComponent>(type: T, provider: ComponentProvider<T>): void;
 
     /**
      * Remove a provider
@@ -72,5 +72,5 @@ export interface IComponentDependencySynthesizer extends IProvideComponentDepend
      * Get a provider. undefined if not available.
      * @param type - Type to get
      */
-    getProvider<T extends keyof IComponent>(type: T): Provider<T> | undefined;
+    getProvider<T extends keyof IComponent>(type: T): ComponentProvider<T> | undefined;
 }

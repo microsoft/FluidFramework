@@ -9,7 +9,7 @@ import {
     AsyncOptionalComponentProvider,
     AsyncRequiredComponentProvider,
     ComponentSymbolProvider,
-    Provider,
+    ComponentProvider,
 } from "./types";
 import { IComponentDependencySynthesizer } from "./IComponentDependencySynthesizer";
 
@@ -18,7 +18,7 @@ import { IComponentDependencySynthesizer } from "./IComponentDependencySynthesiz
  * synthesize an object based on them when requested.
  */
 export class DependencyContainer implements IComponentDependencySynthesizer {
-    private readonly providers = new Map<keyof IComponent, Provider<any>>();
+    private readonly providers = new Map<keyof IComponent, ComponentProvider<any>>();
 
     public get IComponentDependencySynthesizer() { return this; }
 
@@ -34,7 +34,7 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
     /**
      * {@inheritDoc (IComponentSynthesizer:interface).register}
      */
-    public register<T extends keyof IComponent>(type: T, provider: Provider<T>): void {
+    public register<T extends keyof IComponent>(type: T, provider: ComponentProvider<T>): void {
         // Maybe this should just overwrite?
         if (this.has(type)){
             throw new Error(`Attempting to register a provider of type ${type} that already exists`);
@@ -86,7 +86,7 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
     /**
      * {@inheritDoc (IComponentSynthesizer:interface).getProvider}
      */
-    public getProvider<T extends keyof IComponent>(type: T): Provider<T> | undefined {
+    public getProvider<T extends keyof IComponent>(type: T): ComponentProvider<T> | undefined {
         // If we have the provider return it
         const provider = this.providers.get(type);
         if (provider) {
@@ -128,21 +128,27 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
         }));
     }
 
-    private resolveProvider<T extends keyof IComponent>(provider: Provider<T>, t: keyof IComponent) {
+    private resolveProvider<T extends keyof IComponent>(provider: ComponentProvider<T>, t: keyof IComponent) {
         // The double nested gets are required for lazy loading the provider resolution
         if(typeof provider === "function"){
             // eslint-disable-next-line @typescript-eslint/no-this-alias
             const self = this;
             return {get [t]() {
                 if (provider && typeof provider === "function") {
-                    return Promise.resolve(provider(self)).then((p) => p[t]);
+                    return Promise.resolve(provider(self)).then((p) => {
+                        if (p){
+                            return p[t];
+                        }});
                 }
             }};
         }
 
         return {get [t]() {
             if (provider) {
-                return Promise.resolve(provider).then((p) => p[t]);
+                return Promise.resolve(provider).then((p) => {
+                    if (p) {
+                        return p[t];
+                    }});
             }
         }};
     }
