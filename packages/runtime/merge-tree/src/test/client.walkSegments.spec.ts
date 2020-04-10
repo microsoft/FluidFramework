@@ -16,7 +16,7 @@ describe("client.applyMsg", () => {
         client = new TestClient();
         client.insertTextLocal(client.getLength(), seg1);
         client.insertTextLocal(client.getLength(), seg2);
-        client.startCollaboration(localUserLongId);
+        client.startOrUpdateCollaboration(localUserLongId);
     });
 
     it("Walk All Segments", () => {

@@ -14,8 +14,8 @@ describe("MergeTree.Client", () => {
         const client1 = new TestClient();
         const client2 = new TestClient();
 
-        client1.startCollaboration("1");
-        client2.startCollaboration("2");
+        client1.startOrUpdateCollaboration("1");
+        client2.startOrUpdateCollaboration("2");
         let seq = 0;
         for (let i = 0; i < 5; i++) {
             const insert =
@@ -62,8 +62,8 @@ describe("MergeTree.Client", () => {
         const client1 = new TestClient();
         const client2 = new TestClient();
 
-        client1.startCollaboration("1");
-        client2.startCollaboration("2");
+        client1.startOrUpdateCollaboration("1");
+        client2.startOrUpdateCollaboration("2");
         let seq = 0;
         for (let i = 0; i < 5; i++) {
             const insert =
@@ -108,8 +108,8 @@ describe("MergeTree.Client", () => {
         const client1 = new TestClient();
         const client2 = new TestClient();
 
-        client1.startCollaboration("1");
-        client2.startCollaboration("2");
+        client1.startOrUpdateCollaboration("1");
+        client2.startOrUpdateCollaboration("2");
         let seq = 0;
         for (let i = 0; i < 5; i++) {
             const insert =
@@ -143,8 +143,8 @@ describe("MergeTree.Client", () => {
         const client1 = new TestClient();
         const client2 = new TestClient();
 
-        client1.startCollaboration("1");
-        client2.startCollaboration("2");
+        client1.startOrUpdateCollaboration("1");
+        client2.startOrUpdateCollaboration("2");
         let seq = 0;
         for (let i = 0; i < 5; i++) {
             const insert =
