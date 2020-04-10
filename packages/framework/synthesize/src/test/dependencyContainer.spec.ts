@@ -10,7 +10,7 @@ import {
     IComponentLoadable,
 } from "@microsoft/fluid-component-core-interfaces";
 
-import { DependencyContainer } from "../";
+import { DependencyContainer } from "..";
 
 class MockLoadable implements IComponentLoadable {
     public get IComponentLoadable() { return this; }
@@ -25,8 +25,8 @@ class MockComponentConfiguration implements IComponentConfiguration {
 
 describe("Routerlicious", () => {
     describe("Aqueduct", () => {
-        describe("ContainerModules", () => {
-            it(`One Optional Module registered via value`, async () => {
+        describe("DependencyContainer", () => {
+            it(`One Optional Provider registered via value`, async () => {
                 const dc = new DependencyContainer();
                 const mock = new MockLoadable();
                 dc.register(IComponentLoadable, mock);
@@ -38,7 +38,7 @@ describe("Routerlicious", () => {
                 assert(loadable?.url === mock.url, "IComponentLoadable is valid");
             });
 
-            it(`One Optional Module registered via Promise value`, async () => {
+            it(`One Optional Provider registered via Promise value`, async () => {
                 const dc = new DependencyContainer();
                 const mock = new MockLoadable();
                 dc.register(IComponentLoadable, Promise.resolve(mock));
@@ -50,7 +50,7 @@ describe("Routerlicious", () => {
                 assert(loadable?.url === mock.url, "IComponentLoadable is valid");
             });
 
-            it(`One Optional Module registered via factory`, async () => {
+            it(`One Optional Provider registered via factory`, async () => {
                 const dc = new DependencyContainer();
                 const mock = new MockLoadable();
                 const factory = () => mock;
@@ -63,7 +63,7 @@ describe("Routerlicious", () => {
                 assert(loadable?.url === mock.url, "IComponentLoadable is valid");
             });
 
-            it(`One Optional Module registered via Promise factory`, async () => {
+            it(`One Optional Provider registered via Promise factory`, async () => {
                 const dc = new DependencyContainer();
                 const mock = new MockLoadable();
                 const factory = async () => mock;
@@ -76,7 +76,7 @@ describe("Routerlicious", () => {
                 assert(loadable?.url === mock.url, "IComponentLoadable is valid");
             });
 
-            it(`One Required Module registered via value`, async () => {
+            it(`One Required Provider registered via value`, async () => {
                 const dc = new DependencyContainer();
                 const mock = new MockLoadable();
                 dc.register(IComponentLoadable, mock);
@@ -88,7 +88,7 @@ describe("Routerlicious", () => {
                 assert(loadable?.url === mock.url, "IComponentLoadable is valid");
             });
 
-            it(`One Required Module registered via Promise value`, async () => {
+            it(`One Required Provider registered via Promise value`, async () => {
                 const dc = new DependencyContainer();
                 const mock = new MockLoadable();
                 dc.register(IComponentLoadable, Promise.resolve(mock));
@@ -100,7 +100,7 @@ describe("Routerlicious", () => {
                 assert(loadable?.url === mock.url, "IComponentLoadable is valid");
             });
 
-            it(`One Required Module registered via factory`, async () => {
+            it(`One Required Provider registered via factory`, async () => {
                 const dc = new DependencyContainer();
                 const mock = new MockLoadable();
                 const factory = () => mock;
@@ -113,7 +113,7 @@ describe("Routerlicious", () => {
                 assert(loadable?.url === mock.url, "IComponentLoadable is valid");
             });
 
-            it(`One Required Module registered via Promise factory`, async () => {
+            it(`One Required Provider registered via Promise factory`, async () => {
                 const dc = new DependencyContainer();
                 const mock = new MockLoadable();
                 const factory = async () => mock;
@@ -184,7 +184,7 @@ describe("Routerlicious", () => {
                 assert(config === configMock, "IComponentConfiguration is expected");
             });
 
-            it(`Required Module not registered should throw`, async () => {
+            it(`Required Provider not registered should throw`, async () => {
                 const dc = new DependencyContainer();
 
                 assert.throws(() => dc.synthesize(
@@ -193,7 +193,7 @@ describe("Routerlicious", () => {
                 ), Error);
             });
 
-            it(`Optional Module found in Parent`, async () => {
+            it(`Optional Provider found in Parent`, async () => {
                 const parentDc = new DependencyContainer();
                 const mock = new MockLoadable();
                 parentDc.register(IComponentLoadable, mock);
@@ -224,7 +224,7 @@ describe("Routerlicious", () => {
                 assert(config === configMock, "IComponentConfiguration is expected");
             });
 
-            it(`Optional Module found in Parent and Child resolves Child`, async () => {
+            it(`Optional Provider found in Parent and Child resolves Child`, async () => {
                 const parentDc = new DependencyContainer();
                 parentDc.register(IComponentLoadable, new MockLoadable());
                 const dc = new DependencyContainer(parentDc);
@@ -237,7 +237,7 @@ describe("Routerlicious", () => {
                 assert(loadable === loadableMock, "IComponentLoadable is expected");
             });
 
-            it(`Required Module found in Parent`, async () => {
+            it(`Required Provider found in Parent`, async () => {
                 const parentDc = new DependencyContainer();
                 const mock = new MockLoadable();
                 parentDc.register(IComponentLoadable, mock);
@@ -268,7 +268,7 @@ describe("Routerlicious", () => {
                 assert(config === configMock, "IComponentConfiguration is expected");
             });
 
-            it(`Required Module found in Parent and Child resolves Child`, async () => {
+            it(`Required Provider found in Parent and Child resolves Child`, async () => {
                 const parentDc = new DependencyContainer();
                 parentDc.register(IComponentLoadable, new MockLoadable());
                 const dc = new DependencyContainer(parentDc);
