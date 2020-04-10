@@ -39,6 +39,7 @@ import {
     IExperimentalDocumentServiceFactory,
     IExperimentalDocumentService,
     IExperimentalUrlResolver,
+    IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
 import {
     createIError,
@@ -135,6 +136,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             decodeURI(docId),
             logger);
 
+        container._resolvedUrl = resolvedUrl;
         container._scopes = container.getScopes(resolvedUrl);
         container._canReconnect = !(request.headers?.[LoaderHeader.reconnect] === false);
         container.service = await serviceFactory.createDocumentService(resolvedUrl);
@@ -228,10 +230,15 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private readonly connectionTransitionTimes: number[] = [];
     private messageCountAfterDisconnection: number = 0;
     private _loadedFromVersion: IVersion | undefined;
+    private _resolvedUrl: IResolvedUrl | undefined;
 
     private lastVisible: number | undefined;
 
     private _closed = false;
+
+    public get resolvedUrl(): IResolvedUrl | undefined {
+        return this._resolvedUrl;
+    }
 
     public get loadedFromVersion(): IVersion | undefined {
         return this._loadedFromVersion;
@@ -451,6 +458,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             assert(expDocService?.isExperimentalDocumentService);
             const resolvedUrl = expDocService.resolvedUrl;
             ensureFluidResolvedUrl(resolvedUrl);
+            this._resolvedUrl = resolvedUrl;
             const expUrlResolver = this.urlResolver as IExperimentalUrlResolver;
             assert(expUrlResolver?.isExperimentalUrlResolver);
             this.originalRequest = {url: await expUrlResolver.requestUrl(resolvedUrl, {url: ""})};
