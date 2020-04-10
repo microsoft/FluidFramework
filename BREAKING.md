@@ -5,6 +5,7 @@
 - [View interfaces moved to separate package](#View-interfaces-moved-to-separate-package)
 - [IComponent* Interfaces should now have string literal identifiers](#IComponent*-Interfaces-should-now-have-string-literal-identifiers)
 - [SharedComponentFactory and PrimedComponentFactory changes](#SharedComponentFactory-and-PrimedComponentFactory-changes)
+- [Change to the ErrorType enum on IError](#Change-to-the-ErrorType-enum-on-IError)
 
 ### View interfaces moved to separate package
 
@@ -58,6 +59,13 @@ export interface IComponentFoo extends IProvideComponentFoo {
 ### SharedComponentFactory and PrimedComponentFactory changes
 
 Class definitions for SharedComponentFactory and PrimedComponentFactory have been updated.  Both now specify a required `type: string` parameter in their constructors.
+
+### Change to the ErrorType enum on IError
+
+`ErrorType.connectionError` has been replaced by the more granular set of `genericNetworkError`, `accessDeniedError`, and `fileNotFoundError`.
+
+Corresponding interfaces have been introduced as well: `IGenericNetworkError`, `IAccessDeniedError`, and `IFileNotFoundError`;
+they are functionally identical to the former `IConnectionError`, just differentiated for ease of use.
 
 ## 0.15 Breaking Changes
 
