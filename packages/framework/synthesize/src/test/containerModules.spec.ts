@@ -87,219 +87,51 @@ describe("Routerlicious", () => {
                 assert(loadable === mock, "IComponentLoadable is valid");
             });
 
-            // it(`One Optional Module registered via instance - lazy default`, async () => {
-            //     const vessel = new DependencyContainer();
-            //     vessel.register(IComponentLoadable, {instance: MockLoadable});
+            it(`One Required Module registered via value`, async () => {
+                const dc = new DependencyContainer();
+                const mock = new MockLoadable();
+                dc.register(IComponentLoadable, mock);
 
-            //     const s = vessel.synthesize({IComponentLoadable}, {});
-            //     const s1 = vessel.synthesize({IComponentLoadable}, {});
+                const s = dc.synthesize({}, {IComponentLoadable});
+                const loadable = await s.IComponentLoadable;
+                assert(loadable, "Required IComponentLoadable was registered");
+                assert(loadable === mock, "IComponentLoadable is valid");
+            });
 
-            //     assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
-            //     assert(s.IComponentLoadable?.url === "url123", "IComponentLoadable is valid");
-            //     assert(s.IComponentLoadable !== s1.IComponentLoadable, "Should not be a singleton");
-            // });
+            it(`One Required Module registered via Promise value`, async () => {
+                const dc = new DependencyContainer();
+                const mock = new MockLoadable();
+                dc.register(IComponentLoadable, Promise.resolve(mock));
 
-            // it(`One Optional Module registered via instance - lazy true`, async () => {
-            //     const vessel = new DependencyContainer();
-            //     vessel.register(IComponentLoadable, {instance: MockLoadable, lazy: true});
+                const s = dc.synthesize({}, {IComponentLoadable});
+                const loadable = await s.IComponentLoadable;
+                assert(loadable, "Required IComponentLoadable was registered");
+                assert(loadable === mock, "IComponentLoadable is valid");
+            });
 
-            //     const s = vessel.synthesize({IComponentLoadable}, {});
-            //     const s1 = vessel.synthesize({IComponentLoadable}, {});
+            it(`One Required Module registered via factory`, async () => {
+                const dc = new DependencyContainer();
+                const mock = new MockLoadable();
+                const factory = () => mock;
+                dc.register(IComponentLoadable, factory);
 
-            //     assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
-            //     assert(s.IComponentLoadable?.url === "url123", "IComponentLoadable is valid");
-            //     assert(s.IComponentLoadable !== s1.IComponentLoadable, "Should not be a singleton");
-            // });
+                const s = dc.synthesize({}, {IComponentLoadable});
+                const loadable = await s.IComponentLoadable;
+                assert(loadable, "Required IComponentLoadable was registered");
+                assert(loadable === mock, "IComponentLoadable is valid");
+            });
 
-            // it(`One Optional Module registered via instance - lazy false`, async () => {
-            //     const vessel = new DependencyContainer();
-            //     vessel.register(IComponentLoadable, {instance: MockLoadable, lazy: false});
+            it(`One Required Module registered via Promise factory`, async () => {
+                const dc = new DependencyContainer();
+                const mock = new MockLoadable();
+                const factory = async () => mock;
+                dc.register(IComponentLoadable, factory);
 
-            //     const s = vessel.synthesize({IComponentLoadable}, {});
-            //     const s1 = vessel.synthesize({IComponentLoadable}, {});
-
-            //     assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
-            //     assert(s.IComponentLoadable?.url === "url123", "IComponentLoadable is valid");
-            //     assert(s.IComponentLoadable !== s1.IComponentLoadable, "Should not be a singleton");
-            // });
-
-            // it(`One Optional Module registered via singleton - lazy default`, async () => {
-            //     const vessel = new DependencyContainer();
-            //     vessel.register(IComponentLoadable, {singleton: MockLoadable});
-
-            //     const s = vessel.synthesize({IComponentLoadable}, {});
-            //     const s1 = vessel.synthesize({IComponentLoadable}, {});
-
-            //     assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
-            //     assert(s.IComponentLoadable?.url === "url123", "IComponentLoadable is valid");
-            //     assert(s.IComponentLoadable === s1.IComponentLoadable, "Should be a singleton");
-            // });
-
-            // it(`One Optional Module registered via singleton - lazy true`, async () => {
-            //     const vessel = new DependencyContainer();
-            //     vessel.register(IComponentLoadable, {singleton: MockLoadable, lazy: true});
-
-            //     const s = vessel.synthesize({IComponentLoadable}, {});
-            //     const s1 = vessel.synthesize({IComponentLoadable}, {});
-
-            //     assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
-            //     assert(s.IComponentLoadable?.url === "url123", "IComponentLoadable is valid");
-            //     assert(s.IComponentLoadable === s1.IComponentLoadable, "Should be a singleton");
-            // });
-
-            // it(`One Optional Module registered via singleton - lazy false`, async () => {
-            //     const vessel = new DependencyContainer();
-            //     vessel.register(IComponentLoadable, {singleton: MockLoadable, lazy: false});
-
-            //     const s = vessel.synthesize({IComponentLoadable}, {});
-            //     const s1 = vessel.synthesize({IComponentLoadable}, {});
-
-            //     assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
-            //     assert(s.IComponentLoadable?.url === "url123", "IComponentLoadable is valid");
-            //     assert(s.IComponentLoadable === s1.IComponentLoadable, "Should be a singleton");
-            // });
-
-            // it(`One Required Module registered via value`, async () => {
-            //     const vessel = new DependencyContainer();
-            //     const mock = new MockLoadable();
-            //     vessel.register(IComponentLoadable, {value: mock});
-
-            //     const s = vessel.synthesize(
-            //         {},
-            //         {IComponentLoadable},
-            //     );
-
-            //     assert(s.IComponentLoadable, "Required IComponentLoadable was returned");
-            //     assert(s.IComponentLoadable === mock, "Required IComponentLoadable is valid");
-            // });
-
-            // it(`One Required Module registered via factory`, async () => {
-            //     const vessel = new DependencyContainer();
-            //     const mock = new MockLoadable();
-            //     vessel.register(IComponentLoadable, {factory: () => mock});
-
-            //     const s = vessel.synthesize(
-            //         {},
-            //         {IComponentLoadable},
-            //     );
-
-            //     assert(s.IComponentLoadable, "Required IComponentLoadable was returned");
-            //     assert(s.IComponentLoadable.url === mock.url, "Required IComponentLoadable is valid");
-            // });
-
-            // it(`One Required Module registered via instance - lazy default`, async () => {
-            //     const vessel = new DependencyContainer();
-            //     vessel.register(IComponentLoadable, {instance: MockLoadable});
-
-            //     const s = vessel.synthesize(
-            //         {},
-            //         {IComponentLoadable},
-            //     );
-
-            //     const s1 = vessel.synthesize(
-            //         {},
-            //         {IComponentLoadable},
-            //     );
-
-            //     assert(s.IComponentLoadable, "Required IComponentLoadable was returned");
-            //     assert(s.IComponentLoadable.url === "url123", "Required IComponentLoadable is valid");
-            //     assert(s.IComponentLoadable !== s1.IComponentLoadable, "Should not be a singleton");
-            // });
-
-            // it(`One Required Module registered via instance - lazy true`, async () => {
-            //     const vessel = new DependencyContainer();
-            //     vessel.register(IComponentLoadable, {instance: MockLoadable, lazy: true});
-
-            //     const s = vessel.synthesize(
-            //         {},
-            //         {IComponentLoadable},
-            //     );
-
-            //     const s1 = vessel.synthesize(
-            //         {},
-            //         {IComponentLoadable},
-            //     );
-
-            //     assert(s.IComponentLoadable, "Required IComponentLoadable was returned");
-            //     assert(s.IComponentLoadable?.url === "url123", "Required IComponentLoadable is valid");
-            //     assert(s.IComponentLoadable !== s1.IComponentLoadable, "Should not be a singleton");
-            // });
-
-            // it(`One Required Module registered via instance - lazy false`, async () => {
-            //     const vessel = new DependencyContainer();
-            //     vessel.register(IComponentLoadable, {instance: MockLoadable, lazy: false});
-
-            //     const s = vessel.synthesize(
-            //         {},
-            //         {IComponentLoadable},
-            //     );
-
-            //     const s1 = vessel.synthesize(
-            //         {},
-            //         {IComponentLoadable},
-            //     );
-
-            //     assert(s.IComponentLoadable, "Required IComponentLoadable was returned");
-            //     assert(s.IComponentLoadable?.url === "url123", "Required IComponentLoadable is valid");
-            //     assert(s.IComponentLoadable !== s1.IComponentLoadable, "Should not be a singleton");
-            // });
-
-            // it(`One Required Module registered via singleton - lazy default`, async () => {
-            //     const vessel = new DependencyContainer();
-            //     vessel.register(IComponentLoadable, {singleton: MockLoadable});
-
-            //     const s = vessel.synthesize(
-            //         {},
-            //         {IComponentLoadable},
-            //     );
-
-            //     const s1 = vessel.synthesize(
-            //         {},
-            //         {IComponentLoadable},
-            //     );
-
-            //     assert(s.IComponentLoadable, "Required IComponentLoadable was returned");
-            //     assert(s.IComponentLoadable?.url === "url123", "Required IComponentLoadable is valid");
-            //     assert(s.IComponentLoadable === s1.IComponentLoadable, "Should be a singleton");
-            // });
-
-            // it(`One Required Module registered via singleton - lazy true`, async () => {
-            //     const vessel = new DependencyContainer();
-            //     vessel.register(IComponentLoadable, {singleton: MockLoadable, lazy: true});
-
-            //     const s = vessel.synthesize(
-            //         {},
-            //         {IComponentLoadable},
-            //     );
-
-            //     const s1 = vessel.synthesize(
-            //         {},
-            //         {IComponentLoadable},
-            //     );
-
-            //     assert(s.IComponentLoadable, "Required IComponentLoadable was returned");
-            //     assert(s.IComponentLoadable?.url === "url123", "Required IComponentLoadable is valid");
-            //     assert(s.IComponentLoadable === s1.IComponentLoadable, "Should be a singleton");
-            // });
-
-            // it(`One Required Module registered via singleton - lazy false`, async () => {
-            //     const vessel = new DependencyContainer();
-            //     vessel.register(IComponentLoadable, {singleton: MockLoadable, lazy: false});
-
-            //     const s = vessel.synthesize(
-            //         {},
-            //         {IComponentLoadable},
-            //     );
-
-            //     const s1 = vessel.synthesize(
-            //         {},
-            //         {IComponentLoadable},
-            //     );
-
-            //     assert(s.IComponentLoadable, "Required IComponentLoadable was returned");
-            //     assert(s.IComponentLoadable?.url === "url123", "Required IComponentLoadable is valid");
-            //     assert(s.IComponentLoadable === s1.IComponentLoadable, "Should be a singleton");
-            // });
+                const s = dc.synthesize({}, {IComponentLoadable});
+                const loadable = await s.IComponentLoadable;
+                assert(loadable, "Required IComponentLoadable was registered");
+                assert(loadable === mock, "IComponentLoadable is valid");
+            });
 
             // it(`Two Optional Modules all registered`, async () => {
             //     const vessel = new DependencyContainer();

@@ -22,7 +22,7 @@ export type ComponentSymbolProvider<T extends keyof IComponent> = {
  * the property.
  */
 export type AsyncRequiredComponentProvider<T extends keyof IComponent> = {
-    [P in T]: NonNullable<IComponent[T]>
+    [P in T]: Promise<NonNullable<IComponent[T]>>
 };
 
 /**
