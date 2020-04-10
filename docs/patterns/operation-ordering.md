@@ -200,8 +200,8 @@ function set(
   }
 
     hostRuntime.orderSequentially(() => {
-      // Insert the value at the index, which will shift the current item at that index
-      // "farther" away per the sequence merge behavior...
+      // Insert the value at the index, which will shift the current item at
+      // that index "farther" away per the sequence merge behavior
       sequence.insert(index, [value]);
 
       // Now we remove the item that was shifted away
@@ -225,14 +225,13 @@ The runtime limits the size of an outgoing server request, and ordering ops sequ
 all the operations into a single request to the server, so that it can assign sequential sequence numbers. This means
 that there is a technical limit to the number of ops that can be ordered sequentially.
 
-In addition, practically speaking, ordering a large number ops sequentially can result in performance issues, and excessive
-use of sequential ordering can negate many of the performance gains that Fluid's eventual consistency guarantee
-provides.
+In addition, ordering a large number of ops sequentially can result in performance issues, and excessive use of
+sequential ordering can negate many of the performance gains that Fluid's eventual consistency guarantee provides.
 
 If you find yourself turning to sequential ordering often, you should examine your data model and look for ways to take
-better advantage of the distributed data structures and their default merge behaviors. The Fluid teams' experience is
-that while it is tempting to use pattern, many problems can be addressed in better ways, while maintaining performance,
-by making changes to the data model.
+better advantage of the distributed data structures and their default merge behaviors. The Fluid team's experience is
+that while it is tempting to use this pattern, many problems can be addressed in better ways, while maintaining
+performance, by making changes to the data model.
 
 <!-- Random thoughts I'm not sure how to fit in or if they should -->
 ## Grave yard
