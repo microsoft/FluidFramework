@@ -17,7 +17,7 @@ describe("client.applyMsg", () => {
     beforeEach(() => {
         client = new TestClient();
         client.insertTextLocal(0, "hello world");
-        client.startCollaboration(localUserLongId);
+        client.startOrUpdateCollaboration(localUserLongId);
     });
 
     it("Interleaved inserts, annotates, and deletes", () => {
@@ -238,7 +238,7 @@ describe("client.applyMsg", () => {
     it("overlapping insert and delete", () => {
         const remoteClient = new TestClient();
         remoteClient.insertTextLocal(0, client.getText());
-        remoteClient.startCollaboration("remoteUser");
+        remoteClient.startOrUpdateCollaboration("remoteUser");
         const logger = new TestClientLogger([client, remoteClient]);
         logger.log();
         let seq = 0;
@@ -265,11 +265,11 @@ describe("client.applyMsg", () => {
 
     it("intersecting insert after local delete", () => {
         const clientA = new TestClient();
-        clientA.startCollaboration("A");
+        clientA.startOrUpdateCollaboration("A");
         const clientB = new TestClient();
-        clientB.startCollaboration("B");
+        clientB.startOrUpdateCollaboration("B");
         const clientC = new TestClient();
-        clientC.startCollaboration("C");
+        clientC.startOrUpdateCollaboration("C");
 
         const clients = [clientA, clientB, clientC];
 
@@ -297,13 +297,13 @@ describe("client.applyMsg", () => {
     it("conflicting insert after shared delete", () => {
         const clientA = new TestClient();
         clientA.insertTextLocal(0, "a");
-        clientA.startCollaboration("A");
+        clientA.startOrUpdateCollaboration("A");
         const clientB = new TestClient();
         clientB.insertTextLocal(0, clientA.getText());
-        clientB.startCollaboration("B");
+        clientB.startOrUpdateCollaboration("B");
         const clientC = new TestClient();
         clientC.insertTextLocal(0, clientA.getText());
-        clientC.startCollaboration("C");
+        clientC.startOrUpdateCollaboration("C");
 
         const clients = [clientA, clientB, clientC];
         let seq = 0;
@@ -328,11 +328,11 @@ describe("client.applyMsg", () => {
 
     it("local remove followed by conflicting insert", () => {
         const clientA = new TestClient();
-        clientA.startCollaboration("A");
+        clientA.startOrUpdateCollaboration("A");
         const clientB = new TestClient();
-        clientB.startCollaboration("B");
+        clientB.startOrUpdateCollaboration("B");
         const clientC = new TestClient();
-        clientC.startCollaboration("C");
+        clientC.startOrUpdateCollaboration("C");
 
         const clients = [clientA, clientB, clientC];
         let seq = 0;
@@ -358,11 +358,11 @@ describe("client.applyMsg", () => {
 
     it("insersecting insert with unack insert and delete", () => {
         const clientA = new TestClient();
-        clientA.startCollaboration("A");
+        clientA.startOrUpdateCollaboration("A");
         const clientB = new TestClient();
-        clientB.startCollaboration("B");
+        clientB.startOrUpdateCollaboration("B");
         const clientC = new TestClient();
-        clientC.startCollaboration("C");
+        clientC.startOrUpdateCollaboration("C");
 
         const clients = [clientA, clientB, clientC];
         let seq = 0;

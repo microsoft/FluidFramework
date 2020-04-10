@@ -25,6 +25,7 @@
     "docker:build": "docker build -t tinylicious .",
     "docker:start": "docker run --rm -t -p 3000:3000 tinylicious"
   },
+  "bin": "dist/index.js",
   "dependencies": {
     "@microsoft/fluid-core-utils": "^0.13.17538",
     "@microsoft/fluid-gitresources": "^0.1003.0",

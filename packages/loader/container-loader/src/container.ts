@@ -123,6 +123,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         urlResolver: IUrlResolver,
         logger?: ITelemetryBaseLogger,
     ): Promise<Container> {
+        const [, docId] = id.split("/");
         const container = new Container(
             options,
             scope,
@@ -131,10 +132,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             serviceFactory,
             urlResolver,
             request,
+            decodeURI(docId),
             logger);
 
-        const [, docId] = id.split("/");
-        container._id = decodeURI(docId);
         container._scopes = container.getScopes(resolvedUrl);
         container._canReconnect = !(request.headers?.[LoaderHeader.reconnect] === false);
         container.service = await serviceFactory.createDocumentService(resolvedUrl);
@@ -188,6 +188,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             serviceFactory,
             urlResolver,
             undefined,
+            undefined,
             logger);
         await container.createDetached(source);
 
@@ -211,7 +212,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private _scopes: string[] | undefined;
     private readonly _deltaManager: DeltaManager;
     private _existing: boolean | undefined;
-    private _id: string | undefined;
     private service: IDocumentService | undefined;
     private _parentBranch: string | null = null;
     private _connectionState = ConnectionState.Disconnected;
@@ -330,7 +330,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         private readonly serviceFactory: IDocumentServiceFactory,
         private readonly urlResolver: IUrlResolver,
         private originalRequest: IRequest | undefined,
-        logger?: ITelemetryBaseLogger,
+        private _id: string | undefined,
+        logger: ITelemetryBaseLogger | undefined,
     ) {
         super();
         this._audience = new Audience();
@@ -339,13 +340,17 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const type = this.client.details.type;
         const interactive = this.client.details.capabilities.interactive;
         const clientType = `${interactive ? "interactive" : "noninteractive"}${type ? `/${type}` : ""}`;
+        // Need to use the property getter for docId because for detached flow we don't have the docId initially.
+        // We assign the id later so property getter is used.
         this.subLogger = DebugLogger.mixinDebugLogger(
             "fluid:telemetry",
             logger,
             {
-                docId: this.id,
                 clientType, // Differentiating summarizer container from main container
                 loaderVersion: pkgVersion,
+            },
+            {
+                docId: () => this.id,
             });
 
         // Prefix all events in this file with container-loader

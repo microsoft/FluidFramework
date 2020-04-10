@@ -55,7 +55,7 @@ class SubSequenceTestClient extends TestClient {
 describe("SubSequence", () => {
     it("firstItemTest", () => {
         const cli = new SubSequenceTestClient();
-        cli.startCollaboration("Fred1");
+        cli.startOrUpdateCollaboration("Fred1");
         for (const cname of clientNames) {
             cli.addLongClientId(cname);
         }

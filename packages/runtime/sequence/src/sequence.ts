@@ -451,10 +451,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         }
 
         // Update merge tree collaboration information with new client ID and then resend pending ops
-        if (this.client.getCollabWindow().collaborating) {
-            this.client.updateCollaboration(this.runtime.clientId);
-        }
-
+        this.client.startOrUpdateCollaboration(this.runtime.clientId);
         const groupOp = this.client.resetPendingSegmentsToOp();
         if (groupOp) {
             this.submitSequenceMessage(groupOp);
@@ -504,7 +501,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             }
         }
 
-        this.client.startCollaboration(this.runtime.clientId);
+        this.client.startOrUpdateCollaboration(this.runtime.clientId);
     }
 
     protected initializeLocalCore() {
