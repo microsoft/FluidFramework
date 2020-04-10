@@ -24,7 +24,7 @@ So if I wanted an object with an optional `IComponentFoo` and a required `ICompo
 const dc = new DependencyContainer();
 dc.register(IComponentFoo, new Foo());
 
-const s = dc.synthesize<IComponentFoo>({IComponentFoo}, {});
+const s = dc.synthesize({IComponentFoo}, {});
 const foo = await s.IComponentFoo;
 console.log(s.IComponentFoo?.foo;)
 ```
@@ -44,6 +44,15 @@ console.log(s.IComponentFoo?.foo;)
 
 ## Component Providers
 
+Component Providers are the the different ways you can return a Component when registering.  
+
+There are four types of providers:
+
+1. [`Value Provider`](###Value-Provider)
+2. [`Async Value Provider`](###Async-Value-Provider)
+3. [`Factory Provider`](###Factory-Provider)
+4. [`Async Factory Provider`](###Async-Factory-Provider)
+
 ```typescript
 type ComponentProvider<T extends keyof IComponent> =
     IComponent[T]
@@ -52,127 +61,126 @@ type ComponentProvider<T extends keyof IComponent> =
     | ((dependencyContainer: DependencyContainer) => Promise<IComponent[T]>);
 ```
 
-There are four types of providers
-
-1. [`Value Provider`](###Instance-Provider)
-2. [`Async Value Provider`](###Singleton-Provider)
-3. [`Factory Provider`](###Value-Provider)
-4. [`Async Factory Provider`](###Factory-Provider)
-
 ### Value Provider
 
-```typescript
-interface InstanceProvider<T extends IComponent> {
-    instance: new () => T;
-    lazy?: boolean;
-}
-```
-
-Provide a parameterless class constructor and a new instance will be created every time a `Scope` is synthesized.
-
-`lazy` defaults to true if not provide. The instance will be created the first time someone requests it and not when
-the `Scope` is synthesized.
+Provide an IComponent of a given type.
 
 #### Usage
 
 ```typescript
 const dc = new DependencyContainer();
-dc.register(IComponentFoo, {instance: Foo});
 
-// register instance with lazy loading disabled
-dc.register(IComponentFoo, {instance: Foo, lazy: false});
+// Singleton
+const foo = new Foo();
+dc.register(IComponentFoo, Foo);
+
+// Instance
+dc.register(IComponentFoo, new Foo())
 ```
 
-### Singleton Provider
+### Async Value Provider
 
-```typescript
-interface SingletonProvider<T extends IComponent> {
-    singleton: new () => T;
-    lazy?: boolean;
-}
-```
-
-Provide a parameterless class constructor and a single instance will be created and used for all `Scope` objects synthesized.
-
-`lazy` defaults to true if not provide. The singleton will be created the first time anyone requests it from the `DependencyContainer` and not
-when a `Scope` is synthesized.
+Provide a Promise to an IComponent of a given type.
 
 #### Usage
 
 ```typescript
 const dc = new DependencyContainer();
-dc.register(IComponentFoo, {singleton: Foo});
 
-// register singleton with lazy loading disabled
-dc.register(IComponentFoo, {singleton: Foo, lazy: false});
-```
-
-### Value Provider
-
-```typescript
-interface ValueProvider<T extends IComponent> {
-    value: ComponentProvider<T>;
+const generateFoo: Promise<IComponentFoo> = await() => {
+    const foo = new Foo();
+    await foo.initialize();
+    return foo;
 }
-```
 
-Provide any existing object. Used if your object takes parameters.
+// Singleton
+const foo = generateFoo();
+dc.register(IComponentFoo, foo);
 
-#### Usage
-
-```typescript
-const dc = new DependencyContainer();
-const foo = new Foo("bar");
-
-dc.register(IComponentFoo, {value: foo});
+// Instance
+dc.register(IComponentFoo, generateFoo());
 ```
 
 ### Factory Provider
 
 ```typescript
-interface FactoryProvider<T extends IComponent> {
-    factory: (synthesizer: IComponentSynthesizer) => ComponentProvider<T>;
-}
+(dependencyContainer: DependencyContainer) => IComponent[T]
 ```
 
-Dynamically generate the object you want to return. Provides the current synthesizer if the factory
-wants to use it to generate the Provider.
+Provide a function that will resolve an IComponent object of a given type.
 
 #### Usage
 
 ```typescript
 const dc = new DependencyContainer();
-const fooFactory = (dc) => new Foo("bar", dc);
+const fooFactory = () => new Foo();
+dc.register(IComponentFoo, fooFactory);
 
-dc.register(IComponentFoo, {factory: fooFactory});
+// Factories can utilize the DependencyContainer if the IComponent object depends
+// on other providers
+const barFactory = (dc) => new Bar(dc);
+dc.register(IComponentBar, barFactory);
+```
+
+### Async Factory Provider
+
+```typescript
+(dependencyContainer: DependencyContainer) => Promise<IComponent[T]>
+```
+
+Provide a function that will resolve a Promise to an IComponent object of a given type.
+
+#### Usage
+
+```typescript
+const dc = new DependencyContainer();
+
+const generateFoo: Promise<IComponentFoo> = await() => {
+    const foo = new Foo();
+    await foo.initialize();
+    return foo;
+}
+
+dc.register(IComponentFoo, generateFoo);
+
+const generateBar: Promise<IComponentBar> = await(dc) => {
+    const bar = new Bar();
+    await bar.initialize(dc);
+    return bar;
+}
+
+dc.register(IComponentBar, generateBar);
 ```
 
 ## Synthesize
 
 Once you have a `DependencyContainer` with registered providers you can synthesize/generate a new IComponent object from it. The
-object that is returned is called a `Scope` and will have the correct typing of optional and required types.
+object that is returned will have the correct typing of optional and required types.
+
+An Example:
+
+If I wanted an object with an optional `IComponentFoo` and a required `IComponentBar` I would get back:
+
+```typescript
+{
+    IComponentFoo: Promise<IComponentFoo | undefined>
+    IComponentBar: Promise<IComponentBar>
+}
+```
 
 `synthesize` takes `optionalTypes` and `requiredTypes` as well as their corresponding types. `ComponentSymbolProvider<>`
 is a TypeScript `type` that ensures the types being passed match the ones in the object being provided.
 
-```typescript
-class synthesize<O extends IComponent, R extends IComponent>(
-        optionalTypes: ComponentSymbolProvider<O>,
-        requiredTypes: ComponentSymbolProvider<R>,
-    ): Scope<O, R> { ... }
-```
-
 ### Optional Types
 
-Optional types will return an object that will have your requested type as a property but may have an
-`undefined` backing it. Because of this we need to do an if check to validate the object or use the `?` like
-in the example below.
+Optional types will return a Promise to it's corresponding IComponent object or undefined. Because of this we need to do an if check to validate the object or use the `?` like in the example below.
 
 ```typescript
 const dc = new DependencyContainer();
 
-const scope = dc.synthesize<IComponentFoo>({IComponentFoo}, {});
-
-console.log(scope.IComponentFoo?.foo);
+const s = dc.synthesize({IComponentFoo}, {});
+const foo = await s.IComponentFoo;
+console.log(foo?.foo);
 ```
 
 *Note: Because of how generics in TypeScript work we need to provide an empty `requiredTypes` object even though we don't
@@ -180,16 +188,16 @@ need to provide the type.*
 
 ### Required Types
 
-Required types will return and object that will have your request type as a property or it will throw creating the Scope.
+Required types will return a Promise to it's corresponding IComponent object or it will throw.
 
 You can see below that we don't need to add the `?` to check our requested type.
 
 ```typescript
 const dc = new DependencyContainer();
 
-const scope = dc.synthesize<{}, IComponentFoo>({}, {IComponentFoo});
-
-console.log(scope.IComponentFoo.foo);
+const scope = dc.synthesize({}, {IComponentFoo});
+const foo = await s.IComponentFoo;
+console.log(foo.foo);
 ```
 
 ### Multiple Types
@@ -199,28 +207,39 @@ You can declare multiple types for both Optional and Required using the `&` or c
 ```typescript
 const dc = new DependencyContainer();
 
-const scope = dc.synthesize<IComponentFoo & IComponentBar>({IComponentFoo, IComponentBar}, {});
-
-console.log(scope.IComponentFoo?.foo);
-console.log(scope.IComponentBar?.bar);
+const scope = dc.synthesize({IComponentFoo, IComponentBar}, {});
+const fooP = s.IComponentFoo;
+const barP = s.IComponentBar;
+const [foo, bar] = Promise.all([foo, bar]);
+console.log(foo?.foo);
+console.log(bar?.bar);
 ```
 
 ```typescript
-type MyAwesomeOptionalType = IComponentFoo & IComponentBar;
-
-// ...
-
 const dc = new DependencyContainer();
 
-const scope = dc.synthesize<{}, MyAwesomeOptionalType>({}, {IComponentFoo, IComponentBar});
+const scope = dc.synthesize({}, {IComponentFoo, IComponentBar});
+const fooP = s.IComponentFoo;
+const barP = s.IComponentBar;
+const [foo, bar] = Promise.all([foo, bar]);
+console.log(foo.foo);
+console.log(bar.bar);
+```
 
-console.log(scope.IComponentFoo.foo);
-console.log(scope.IComponentBar.bar);
+```typescript
+const dc = new DependencyContainer();
+
+const scope = dc.synthesize({IComponentFoo}, {IComponentBar});
+const fooP = s.IComponentFoo;
+const barP = s.IComponentBar;
+const [foo, bar] = Promise.all([foo, bar]);
+console.log(foo?.foo);
+console.log(bar.bar);
 ```
 
 ## Parent
 
 The `DependencyContainer` takes one optional parameter which is the `parent`. When resolving providers the `DependencyContainer` will first
-check the current the look in the parent.
+check the current container then look in the parent.
 
 The `parent` can also be set after `DependencyContainer` creation.
