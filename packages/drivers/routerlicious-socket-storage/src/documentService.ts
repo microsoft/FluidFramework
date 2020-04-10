@@ -37,15 +37,6 @@ export class DocumentService implements api.IDocumentService, api.IExperimentalD
     ) {
     }
 
-    public createContainerUrl(): string {
-        const fluidResolvedUrl = this.resolvedUrl as api.IFluidResolvedUrl;
-        if (!fluidResolvedUrl.siteUrl) {
-            throw new Error("Site URl should be provided!!");
-        }
-        return `${new URL(fluidResolvedUrl.siteUrl).origin}/${encodeURIComponent(
-            this.tenantId)}/${encodeURIComponent(this.documentId)}`;
-    }
-
     /**
      * Connects to a storage endpoint for snapshot service.
      *

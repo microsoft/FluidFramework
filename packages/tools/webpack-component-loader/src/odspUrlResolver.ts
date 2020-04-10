@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IUrlResolver, IResolvedUrl } from "@microsoft/fluid-driver-definitions";
+import { IUrlResolver, IResolvedUrl, IExperimentalUrlResolver } from "@microsoft/fluid-driver-definitions";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { OdspDriverUrlResolver, createOdspUrl } from "@microsoft/fluid-odsp-driver";
 import {
@@ -11,7 +11,8 @@ import {
     getDriveItemByRootFileName,
 } from "@microsoft/fluid-odsp-utils";
 
-export class OdspUrlResolver implements IUrlResolver {
+export class OdspUrlResolver implements IUrlResolver, IExperimentalUrlResolver {
+    public readonly isExperimentalUrlResolver = true;
     private readonly driverUrlResolver = new OdspDriverUrlResolver();
 
     constructor(
@@ -49,5 +50,9 @@ export class OdspUrlResolver implements IUrlResolver {
     private formFilePath(documentId: string): string {
         const encoded = encodeURIComponent(`${documentId}.fluid`);
         return `/r11s/${encoded}`;
+    }
+
+    public createUrl(resolvedUrl: IResolvedUrl, request: IRequest): string {
+        return this.driverUrlResolver.createUrl(resolvedUrl, request);
     }
 }

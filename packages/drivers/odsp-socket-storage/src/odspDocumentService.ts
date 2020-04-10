@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { DebugLogger, PerformanceEvent, TelemetryLogger, TelemetryNullLogger } from "@microsoft/fluid-common-utils";
 import {
@@ -12,12 +13,17 @@ import {
     IResolvedUrl,
     IDocumentStorageService,
     IExperimentalDocumentService,
+    IUrlResolver,
+    IOdspNewFileParams,
+    IDocumentServiceFactory,
 } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionMode,
     IClient,
     IErrorTrackingService,
+    ISummaryTree,
 } from "@microsoft/fluid-protocol-definitions";
+import { ensureFluidResolvedUrl } from "@microsoft/fluid-driver-utils";
 import { IOdspResolvedUrl, ISocketStorageDiscovery } from "./contracts";
 import { createNewFluidFile } from "./createFile";
 import { debug } from "./debug";
@@ -30,7 +36,7 @@ import { OdspDocumentStorageService } from "./odspDocumentStorageService";
 import { getWithRetryForTokenRefresh, isLocalStorageAvailable } from "./odspUtils";
 import { getSocketStorageDiscovery } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
-import { createOdspUrl } from "./createOdspUrl";
+import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const performanceNow = require("performance-now") as (() => number);
@@ -88,7 +94,7 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
                     getStorageToken,
                     odspResolvedUrl.createNewOptions.newFileInfoPromise,
                     cache,
-                    undefined,
+                    new OdspDriverUrlResolver(),
                     createNewSummary);
                 const props = {
                     hashedDocumentId: odspResolvedUrl.hashedDocumentId,
@@ -113,6 +119,45 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
             isFirstTimeDocumentOpened,
             createNewFlag,
         );
+    }
+
+    public static async createContainer(
+        createNewSummary: ISummaryTree,
+        createNewResolvedUrl: IResolvedUrl,
+        urlResolver: IUrlResolver,
+        logger: ITelemetryLogger,
+        cache: IOdspCache,
+        getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
+        factory: IDocumentServiceFactory,
+    ): Promise<IDocumentService> {
+        ensureFluidResolvedUrl(createNewResolvedUrl);
+        const newFileParams = createNewResolvedUrl.newFileParams as IOdspNewFileParams;
+        assert(newFileParams);
+        let odspResolvedUrl: IOdspResolvedUrl;
+        const event = PerformanceEvent.start(logger,
+            {
+                eventName: "CreateNew",
+                isWithSummaryUpload: true,
+            });
+        try {
+            odspResolvedUrl = await createNewFluidFile(
+                getStorageToken,
+                Promise.resolve(newFileParams),
+                cache,
+                urlResolver as OdspDriverUrlResolver,
+                createNewSummary);
+            const props = {
+                hashedDocumentId: odspResolvedUrl.hashedDocumentId,
+                itemId: odspResolvedUrl.itemId,
+            };
+
+            const docService = factory.createDocumentService(odspResolvedUrl);
+            event.end(props);
+            return docService;
+        } catch(error) {
+            event.cancel(undefined, error);
+            throw error;
+        }
     }
 
     private storageManager?: OdspDocumentStorageManager;
@@ -199,13 +244,6 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
         };
 
         this.localStorageAvailable = isLocalStorageAvailable();
-    }
-
-    public createContainerUrl(): string {
-        return createOdspUrl(
-            this.odspResolvedUrl.siteUrl,
-            this.odspResolvedUrl.driveId,
-            this.odspResolvedUrl.itemId, "/");
     }
 
     public get resolvedUrl(): IResolvedUrl {

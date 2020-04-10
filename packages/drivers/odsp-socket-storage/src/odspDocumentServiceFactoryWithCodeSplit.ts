@@ -2,22 +2,19 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
     IDocumentService,
     IDocumentServiceFactory,
     IResolvedUrl,
-    IOdspNewFileParams,
     IUrlResolver,
 } from "@microsoft/fluid-driver-definitions";
 import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
-import { DebugLogger, PerformanceEvent } from "@microsoft/fluid-common-utils";
 import { IOdspResolvedUrl } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import { ICache, IOdspCache, OdspCache } from "./odspCache";
 import { OdspDocumentService } from "./odspDocumentService";
-import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
-import { createNewFluidFile } from "./createFile";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
@@ -34,35 +31,19 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
 
     public async createContainer(
         createNewSummary: ISummaryTree,
-        newFileParams: IOdspNewFileParams,
+        createNewResolvedUrl: IResolvedUrl,
         urlResolver: IUrlResolver,
+        logger: ITelemetryLogger,
     ): Promise<IDocumentService> {
-        let odspResolvedUrl: IOdspResolvedUrl;
-        const templogger: ITelemetryLogger = DebugLogger.mixinDebugLogger(
-            "fluid:telemetry:OdspDriver",
-            this.logger);
-        const event = PerformanceEvent.start(templogger,
-            {
-                eventName: "CreateNew",
-                isWithSummaryUpload: true,
-            });
-        try {
-            odspResolvedUrl = await createNewFluidFile(
-                this.getStorageToken,
-                Promise.resolve(newFileParams),
-                this.cache,
-                urlResolver as OdspDriverUrlResolver,
-                createNewSummary);
-            const props = {
-                hashedDocumentId: odspResolvedUrl.hashedDocumentId,
-                itemId: odspResolvedUrl.itemId,
-            };
-            event.end(props);
-        } catch(error) {
-            event.cancel(undefined, error);
-            throw error;
-        }
-        return this.createDocumentService(odspResolvedUrl);
+        return OdspDocumentService.createContainer(
+            createNewSummary,
+            createNewResolvedUrl,
+            urlResolver,
+            logger ?? this.logger,
+            this.cache,
+            this.getStorageToken,
+            this,
+        );
     }
 
     /**

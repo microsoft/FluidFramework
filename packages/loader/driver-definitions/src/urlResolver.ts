@@ -4,6 +4,7 @@
  */
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { INewFileParams } from "./newFileParams";
 
 export type IResolvedUrl = IWebResolvedUrl | IFluidResolvedUrl;
 
@@ -21,7 +22,13 @@ export interface IFluidResolvedUrl extends IResolvedUrlBase {
     url: string;
     tokens: { [name: string]: string };
     endpoints: { [name: string]: string };
-    siteUrl?: string;
+    siteUrl?: string,
+    newFileParams?: INewFileParams;
+}
+
+export enum OpenMode {
+    CreateNew,
+    OpenExisting,
 }
 
 export interface IUrlResolver {
@@ -30,4 +37,13 @@ export interface IUrlResolver {
     // the expiration of it could be relative to the lifetime of the token? Requests after need to refresh?
     // or do we split the token access from this?
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
+}
+
+export interface IExperimentalUrlResolver extends IUrlResolver {
+    readonly isExperimentalUrlResolver: true;
+    // Creates a url for the created container.
+    createUrl(
+        resolvedUrl: IResolvedUrl,
+        request: IRequest,
+    ): string;
 }

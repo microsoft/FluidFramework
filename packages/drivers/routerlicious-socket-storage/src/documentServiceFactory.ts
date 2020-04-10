@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { parse } from "url";
 import {
     IDocumentService,
@@ -12,6 +13,7 @@ import {
     IUrlResolver,
     IExperimentalDocumentServiceFactory,
 } from "@microsoft/fluid-driver-definitions";
+import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { IErrorTrackingService, ISummaryTree } from "@microsoft/fluid-protocol-definitions";
 import { ICredentials, IGitCache } from "@microsoft/fluid-server-services-client";
 import {
@@ -46,9 +48,13 @@ export class RouterliciousDocumentServiceFactory implements
 
     public async createContainer(
         createNewSummary: ISummaryTree,
-        newFileParams: IRouterliciousNewFileParams,
+        createNewResolvedUrl: IResolvedUrl,
         urlResolver: IUrlResolver,
+        logger: ITelemetryLogger,
     ): Promise<IDocumentService> {
+        ensureFluidResolvedUrl(createNewResolvedUrl);
+        const newFileParams = createNewResolvedUrl.newFileParams as IRouterliciousNewFileParams;
+        assert(newFileParams);
         const id = newFileParams.fileName;
         const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
         const appSummary = createNewSummary.tree[".app"] as ISummaryTree;

@@ -5,7 +5,13 @@
 
 import * as assert from "assert";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IUrlResolver } from "@microsoft/fluid-driver-definitions";
+import {
+    IUrlResolver,
+    IExperimentalUrlResolver,
+    IResolvedUrl,
+    OpenMode,
+    IOdspNewFileParams,
+} from "@microsoft/fluid-driver-definitions";
 import { IOdspResolvedUrl, ICreateNewOptions } from "./contracts";
 import { getHashedDocumentId } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";
@@ -27,35 +33,69 @@ function removeBeginningSlash(str: string): string {
     return str;
 }
 
-export class OdspDriverUrlResolver implements IUrlResolver {
+export class OdspDriverUrlResolver implements IUrlResolver, IExperimentalUrlResolver {
+    public readonly isExperimentalUrlResolver = true;
     constructor() { }
 
     public async resolve(request: IRequest): Promise<IOdspResolvedUrl> {
-        if (request.headers && request.headers.newFileInfoPromise) {
-            const createNewOptions: ICreateNewOptions = {
-                newFileInfoPromise: request.headers.newFileInfoPromise,
-            };
-            const [, queryString] = request.url.split("?");
+        if (request.headers) {
+            if (request.headers.newFileInfoPromise) {
+                const createNewOptions: ICreateNewOptions = {
+                    newFileInfoPromise: request.headers.newFileInfoPromise,
+                };
+                const [, queryString] = request.url.split("?");
 
-            const searchParams = new URLSearchParams(queryString);
+                const searchParams = new URLSearchParams(queryString);
 
-            const uniqueId = searchParams.get("uniqueId");
-            if (uniqueId === null) {
-                throw new Error("ODSP URL for new file should contain the uniqueId");
+                const uniqueId = searchParams.get("uniqueId");
+                if (uniqueId === null) {
+                    throw new Error("ODSP URL for new file should contain the uniqueId");
+                }
+                return {
+                    type: "fluid",
+                    endpoints: {
+                        snapshotStorageUrl: "",
+                    },
+                    createNewOptions,
+                    tokens: {},
+                    url: `fluid-odsp://placeholder/placeholder/${uniqueId}?version=null`,
+                    hashedDocumentId: "",
+                    siteUrl: "",
+                    driveId: "",
+                    itemId: "",
+                };
+            } else if (request.headers.openMode === OpenMode.CreateNew) {
+                const [, queryString] = request.url.split("?");
+
+                const searchParams = new URLSearchParams(queryString);
+                const fileName = searchParams.get("fileName");
+                const siteURL = searchParams.get("siteUrl");
+                const driveID = searchParams.get("driveId");
+                const filePath = searchParams.get("filePath");
+                if (!(fileName && siteURL && driveID && filePath)) {
+                    throw new Error("Proper new file params should be there!!");
+                }
+                const newFileParams: IOdspNewFileParams = {
+                    fileName,
+                    siteUrl: siteURL,
+                    driveId: driveID,
+                    filePath,
+                };
+                const hashedDocumentID = getHashedDocumentId(driveID, fileName);
+                return {
+                    endpoints: {
+                        snapshotStorageUrl: "",
+                    },
+                    tokens: {},
+                    type: "fluid",
+                    url: `fluid-odsp://placeholder/placeholder/${hashedDocumentID}?version=null`,
+                    siteUrl: siteURL,
+                    newFileParams,
+                    hashedDocumentId: hashedDocumentID,
+                    driveId: driveID,
+                    itemId: "",
+                };
             }
-            return {
-                type: "fluid",
-                endpoints: {
-                    snapshotStorageUrl: "",
-                },
-                createNewOptions,
-                tokens: {},
-                url: `fluid-odsp://placeholder/placeholder/${uniqueId}?version=null`,
-                hashedDocumentId: "",
-                siteUrl: "",
-                driveId: "",
-                itemId: "",
-            };
         }
         const { siteUrl, driveId, itemId, path } = this.decodeOdspUrl(request.url);
         const hashedDocumentId = getHashedDocumentId(driveId, itemId);
@@ -83,6 +123,14 @@ export class OdspDriverUrlResolver implements IUrlResolver {
             driveId,
             itemId,
         };
+    }
+
+    public createUrl(resolvedUrl: IResolvedUrl, request: IRequest): string {
+        const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
+        return `${odspResolvedUrl.siteUrl}${request.url}?driveId=${encodeURIComponent(
+            odspResolvedUrl.driveId)}&itemId=${encodeURIComponent(
+            odspResolvedUrl.itemId,
+        )}&path=${encodeURIComponent("/")}`;
     }
 
     private decodeOdspUrl(url: string): { siteUrl: string; driveId: string; itemId: string; path: string } {

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as querystring from "querystring";
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { BaseHost, IBaseHostConfig } from "@microsoft/fluid-base-host";
 import {
@@ -12,7 +13,7 @@ import {
     isFluidPackage,
 } from "@microsoft/fluid-container-definitions";
 import { Container } from "@microsoft/fluid-container-loader";
-import { IDocumentServiceFactory, IUrlResolver, NewFileParams } from "@microsoft/fluid-driver-definitions";
+import { IDocumentServiceFactory, IUrlResolver, INewFileParams, OpenMode } from "@microsoft/fluid-driver-definitions";
 import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { SessionStorageDbFactory } from "@microsoft/fluid-local-test-utils";
@@ -27,7 +28,7 @@ import * as uuid from "uuid/v4";
 import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
 import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 import { InsecureUrlResolver } from "@microsoft/fluid-test-runtime-utils";
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { OdspUrlResolver } from "./odspUrlResolver";
 
 export interface IDevServerUser extends IUser {
@@ -224,8 +225,8 @@ function getUrlResolver(
 function getNewFileParams(
     documentId: string,
     options: RouteOptions,
-): NewFileParams {
-    let params: NewFileParams;
+): INewFileParams {
+    let params: INewFileParams;
     switch (options.mode) {
         case "r11s":
             params = {
@@ -263,7 +264,7 @@ function getNewFileParams(
         default: // Local
             params = {
                 fileName: documentId,
-                siteUrl: "",
+                siteUrl: "http://localhost:3000",
                 tenantId: "tenantId",
             };
     }
@@ -404,7 +405,7 @@ export async function start(
     if (!attached) {
         attachButton.onclick = async () => {
             const newFileParams = getNewFileParams(documentId, options);
-            await container1.attach({url: window.location.href}, newFileParams)
+            await container1.attach(createRequestForCreateNew(window.location.href, newFileParams))
                 .then(() => {
                     const text = window.location.href.replace("create", newFileParams.fileName);
                     textArea.innerText = text;
@@ -418,6 +419,16 @@ export async function start(
     } else {
         urlDeferred.resolve(window.location.href);
     }
+}
+
+function createRequestForCreateNew(url: string, newFileParams: INewFileParams): IRequest {
+    const request: IRequest = {
+        url: `${url}?${querystring.stringify(newFileParams)}`,
+        headers: {
+            openMode: OpenMode.CreateNew,
+        },
+    };
+    return request;
 }
 
 async function startRendering(container: Container, url: string, div: HTMLDivElement) {

@@ -8,6 +8,9 @@ import {
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
+    IExperimentalUrlResolver,
+    ILocalNewFileParams,
+    OpenMode,
 } from "@microsoft/fluid-driver-definitions";
 import { ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { generateToken } from "@microsoft/fluid-server-services-client";
@@ -16,7 +19,8 @@ import { generateToken } from "@microsoft/fluid-server-services-client";
  * Resolves URLs by providing fake URLs which succeed with the other
  * related test classes.
  */
-export class TestResolver implements IUrlResolver {
+export class TestResolver implements IUrlResolver, IExperimentalUrlResolver {
+    public readonly isExperimentalUrlResolver = true;
     private readonly tenantId = "tenantId";
     private readonly tokenKey = "tokenKey";
 
@@ -31,6 +35,31 @@ export class TestResolver implements IUrlResolver {
      * @param request - request to handle; not used
      */
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
+        if (request.headers && request.headers.openMode === OpenMode.CreateNew) {
+            const [, queryString] = request.url.split("?");
+
+            const searchParams = new URLSearchParams(queryString);
+            const fileName = searchParams.get("fileName");
+            const siteUrl = searchParams.get("siteUrl");
+            const tenantId = searchParams.get("tenantId");
+            if (!(fileName && siteUrl && tenantId)) {
+                throw new Error("Proper new file params should be there!!");
+            }
+            const newFileParams: ILocalNewFileParams = {
+                fileName,
+                siteUrl,
+                tenantId,
+            };
+            const resolved: IFluidResolvedUrl = {
+                endpoints: {},
+                tokens: {},
+                type: "fluid",
+                url: `fluid-test://localhost:3000/${this.tenantId}/${this.id}`,
+                siteUrl: "https://localhost:3000",
+                newFileParams,
+            };
+            return resolved;
+        }
         return this.resolveHelper();
     }
 
@@ -48,5 +77,9 @@ export class TestResolver implements IUrlResolver {
         };
 
         return resolved;
+    }
+
+    public createUrl(resolvedUrl: IResolvedUrl, request: IRequest): string {
+        return `https://localhost:3000/${this.tenantId}/${this.id}${request.url}`;
     }
 }

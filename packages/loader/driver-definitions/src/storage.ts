@@ -23,8 +23,8 @@ import {
     ITree,
     IVersion,
 } from "@microsoft/fluid-protocol-definitions";
+import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { IResolvedUrl, IUrlResolver } from "./urlResolver";
-import { NewFileParams } from "./newFileParams";
 
 /**
  * Interface to provide access to stored deltas for a shared object
@@ -229,11 +229,6 @@ export interface IExperimentalDocumentService extends IDocumentService {
     readonly isExperimentalDocumentService: true;
 
     resolvedUrl: IResolvedUrl;
-
-    /**
-     * Creates URL to the created/attached contianer.
-     */
-    createContainerUrl(): string;
 }
 
 export interface IDocumentServiceFactory {
@@ -253,8 +248,9 @@ export interface IExperimentalDocumentServiceFactory extends IDocumentServiceFac
     // Creates a new document on the host with the provided options. Returns the document service.
     createContainer(
         createNewSummary: ISummaryTree,
-        newFileParams: NewFileParams,
+        createNewResolvedUrl: IResolvedUrl,
         urlResolver: IUrlResolver,
+        logger: ITelemetryLogger,
     ): Promise<IDocumentService>;
 }
 

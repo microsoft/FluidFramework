@@ -30,10 +30,6 @@ export class TestDocumentService implements api.IDocumentService, api.IExperimen
         private readonly documentId: string,
     ) { }
 
-    public createContainerUrl(): string {
-        return `https://localhost:3000/${this.tenantId}/${this.documentId}`;
-    }
-
     /**
      * Creates and returns a document storage service for testing.
      */

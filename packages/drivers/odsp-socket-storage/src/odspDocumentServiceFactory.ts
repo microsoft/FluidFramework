@@ -10,17 +10,13 @@ import {
     IResolvedUrl,
     IExperimentalDocumentServiceFactory,
     IUrlResolver,
-    IOdspNewFileParams,
 } from "@microsoft/fluid-driver-definitions";
-import { PerformanceEvent, DebugLogger } from "@microsoft/fluid-common-utils";
 import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import { getSocketIo } from "./getSocketIo";
 import { ICache, IOdspCache, OdspCache } from "./odspCache";
 import { OdspDocumentService } from "./odspDocumentService";
-import { createNewFluidFile } from "./createFile";
-import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
 
 
 /**
@@ -36,35 +32,19 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory, IExp
 
     public async createContainer(
         createNewSummary: ISummaryTree,
-        newFileParams: IOdspNewFileParams,
+        createNewResolvedUrl: IResolvedUrl,
         urlResolver: IUrlResolver,
+        logger: ITelemetryLogger,
     ): Promise<IDocumentService> {
-        let odspResolvedUrl: IOdspResolvedUrl;
-        const templogger: ITelemetryLogger = DebugLogger.mixinDebugLogger(
-            "fluid:telemetry:OdspDriver",
-            this.logger);
-        const event = PerformanceEvent.start(templogger,
-            {
-                eventName: "CreateNew",
-                isWithSummaryUpload: true,
-            });
-        try {
-            odspResolvedUrl = await createNewFluidFile(
-                this.getStorageToken,
-                Promise.resolve(newFileParams),
-                this.cache,
-                urlResolver as OdspDriverUrlResolver,
-                createNewSummary);
-            const props = {
-                hashedDocumentId: odspResolvedUrl.hashedDocumentId,
-                itemId: odspResolvedUrl.itemId,
-            };
-            event.end(props);
-        } catch(error) {
-            event.cancel(undefined, error);
-            throw error;
-        }
-        return this.createDocumentService(odspResolvedUrl);
+        return OdspDocumentService.createContainer(
+            createNewSummary,
+            createNewResolvedUrl,
+            urlResolver,
+            logger ?? this.logger,
+            this.cache,
+            this.getStorageToken,
+            this,
+        );
     }
 
     /**

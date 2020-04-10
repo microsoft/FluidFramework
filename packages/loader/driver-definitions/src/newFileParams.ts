@@ -25,4 +25,4 @@ export interface ILocalNewFileParams extends IBaseNewFileParams {
 /**
  * Parameters to be used for different drivers to create a new file while attaching the container.
  */
-export type NewFileParams = IOdspNewFileParams | IRouterliciousNewFileParams | ILocalNewFileParams;
+export type INewFileParams = IOdspNewFileParams | IRouterliciousNewFileParams | ILocalNewFileParams;

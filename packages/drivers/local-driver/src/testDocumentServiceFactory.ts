@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { parse } from "url";
 import {
     IDocumentService,
@@ -12,6 +13,7 @@ import {
     ILocalNewFileParams,
     IUrlResolver,
 } from "@microsoft/fluid-driver-definitions";
+import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { TokenProvider } from "@microsoft/fluid-routerlicious-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import {
@@ -37,9 +39,13 @@ export class TestDocumentServiceFactory implements IDocumentServiceFactory, IExp
 
     public async createContainer(
         createNewSummary: ISummaryTree,
-        newFileParams: ILocalNewFileParams,
+        createNewResolvedUrl: IResolvedUrl,
         urlResolver: IUrlResolver,
+        logger: ITelemetryLogger,
     ): Promise<IDocumentService> {
+        ensureFluidResolvedUrl(createNewResolvedUrl);
+        const newFileParams = createNewResolvedUrl.newFileParams as ILocalNewFileParams;
+        assert(newFileParams);
         if (!this.localDeltaConnectionServer) {
             throw new Error("Provide the localDeltaConnectionServer!!");
         }

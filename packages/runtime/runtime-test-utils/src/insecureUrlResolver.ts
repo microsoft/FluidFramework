@@ -3,11 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
+import { parse } from "url";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import {
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
+    IExperimentalUrlResolver,
+    IRouterliciousNewFileParams,
+    OpenMode,
 } from "@microsoft/fluid-driver-definitions";
 import {
     ITokenClaims,
@@ -30,7 +35,8 @@ import * as jwt from "jsonwebtoken";
  * part of the URL that the document interprets and maps to a component. It's exactly similar to how a web service
  * works or a router inside of a single page app framework.
  */
-export class InsecureUrlResolver implements IUrlResolver {
+export class InsecureUrlResolver implements IUrlResolver, IExperimentalUrlResolver {
+    public readonly isExperimentalUrlResolver = true;
     private readonly cache = new Map<string, Promise<IResolvedUrl>>();
 
     constructor(
@@ -44,6 +50,32 @@ export class InsecureUrlResolver implements IUrlResolver {
     ) { }
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
+        if (request.headers && request.headers.openMode === OpenMode.CreateNew) {
+            const [, queryString] = request.url.split("?");
+
+            const searchParams = new URLSearchParams(queryString);
+            const fileName = searchParams.get("fileName");
+            const siteUrl = searchParams.get("siteUrl");
+            const tenantId = searchParams.get("tenantId");
+            const ordererUrl = searchParams.get("ordererUrl");
+            if (!(fileName && siteUrl && tenantId && ordererUrl)) {
+                throw new Error("Proper new file params should be there!!");
+            }
+            const newFileParams: IRouterliciousNewFileParams = {
+                fileName,
+                siteUrl,
+                tenantId,
+                ordererUrl,
+            };
+            const resolved: IFluidResolvedUrl = {
+                endpoints: {},
+                tokens: {},
+                type: "fluid",
+                url: `fluid-test://localhost:3000/${tenantId}/${fileName}`,
+                newFileParams,
+            };
+            return resolved;
+        }
         const parsedUrl = new URL(request.url);
 
         // If hosts match then we use the local tenant information. Otherwise we make a REST call out to the hosting
@@ -102,6 +134,19 @@ export class InsecureUrlResolver implements IUrlResolver {
             siteUrl,
         };
         return response;
+    }
+
+    public createUrl(resolvedUrl: IResolvedUrl, request: IRequest): string {
+        const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
+        if (!fluidResolvedUrl.siteUrl) {
+            throw new Error("Resolved Url should have the siteUrl!!");
+        }
+
+        const parsedUrl = parse(fluidResolvedUrl.url);
+        const [, , documentId] = parsedUrl.pathname?.split("/");
+        assert(documentId);
+        return `${new URL(fluidResolvedUrl.siteUrl).origin}/${encodeURIComponent(
+            this.tenantId)}/${encodeURIComponent(documentId)}${request.url}`;
     }
 
     private auth(tenantId: string, documentId: string) {

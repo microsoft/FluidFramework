@@ -38,7 +38,7 @@ import {
     IDocumentServiceFactory,
     IExperimentalDocumentServiceFactory,
     IExperimentalDocumentService,
-    NewFileParams,
+    IExperimentalUrlResolver,
 } from "@microsoft/fluid-driver-definitions";
 import {
     createIError,
@@ -228,7 +228,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private readonly connectionTransitionTimes: number[] = [];
     private messageCountAfterDisconnection: number = 0;
     private _loadedFromVersion: IVersion | undefined;
-    private _containerUrl: string | undefined;
 
     private lastVisible: number | undefined;
 
@@ -236,10 +235,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     public get loadedFromVersion(): IVersion | undefined {
         return this._loadedFromVersion;
-    }
-
-    public get containerUrl(): string | undefined {
-        return this._containerUrl;
     }
 
     public get readonly(): boolean | undefined {
@@ -420,7 +415,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this.attached;
     }
 
-    public async attach(request: IRequest, newFileParams: NewFileParams): Promise<void> {
+    public async attach(request: IRequest): Promise<void> {
         if (!this.context) {
             throw new Error("Context is undefined");
         }
@@ -434,26 +429,27 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             throw new Error("Protocol Handler is undefined");
         }
         const protocolSummary = this.protocolHandler.captureSummary();
-        // Actually go and create the resolved document
-        const expDocFactory = this.serviceFactory as IExperimentalDocumentServiceFactory;
-        if (!expDocFactory?.isExperimentalDocumentServiceFactory) {
-            throw new Error("Not an Experimental Doc Factory");
-        }
 
-        this.service = await expDocFactory.createContainer(
-            combineAppAndProtocolSummary(appSummary, protocolSummary),
-            newFileParams,
-            this.urlResolver,
-        );
+        const createNewResolvedUrl = await this.urlResolver.resolve(request);
+        ensureFluidResolvedUrl(createNewResolvedUrl);
+
         try {
+            // Actually go and create the resolved document
+            const expDocFactory = this.serviceFactory as IExperimentalDocumentServiceFactory;
+            assert(expDocFactory?.isExperimentalDocumentServiceFactory);
+            this.service = await expDocFactory.createContainer(
+                combineAppAndProtocolSummary(appSummary, protocolSummary),
+                createNewResolvedUrl,
+                this.urlResolver,
+                ChildLogger.create(this.subLogger, "fluid:telemetry:CreateNewContainer"),
+            );
             const expDocService = this.service as IExperimentalDocumentService;
-            if (!expDocService?.isExperimentalDocumentService) {
-                throw new Error("Not an Experimental Doc Service");
-            }
+            assert(expDocService?.isExperimentalDocumentService);
             const resolvedUrl = expDocService.resolvedUrl;
             ensureFluidResolvedUrl(resolvedUrl);
-            this._containerUrl = expDocService.createContainerUrl();
-            this.originalRequest = {url: this._containerUrl};
+            const expUrlResolver = this.urlResolver as IExperimentalUrlResolver;
+            assert(expUrlResolver?.isExperimentalUrlResolver);
+            this.originalRequest = {url: expUrlResolver.createUrl(resolvedUrl, {url: ""})};
             this._canReconnect = !(request.headers?.[LoaderHeader.reconnect] === false);
             const parsedUrl = parseUrl(resolvedUrl.url);
             if (!parsedUrl) {

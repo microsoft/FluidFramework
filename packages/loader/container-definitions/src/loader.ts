@@ -11,7 +11,6 @@ import {
     IQuorum,
     ISequencedDocumentMessage,
 } from "@microsoft/fluid-protocol-definitions";
-import { NewFileParams } from "@microsoft/fluid-driver-definitions";
 import { IFluidCodeDetails, IFluidModule } from "./chaincode";
 import { IDeltaManager } from "./deltas";
 
@@ -44,11 +43,6 @@ export interface IExperimentalContainer extends IContainer {
     isExperimentalContainer: true;
 
     /**
-     * Provides the URL to the created container.
-     */
-    containerUrl: string | undefined;
-
-    /**
      * Flag indicating if the given container has been attached to a host service.
      */
     isAttached(): boolean;
@@ -59,7 +53,7 @@ export interface IExperimentalContainer extends IContainer {
      * TODO - in the case of failure options should give a retry policy. Or some continuation function
      * that allows attachment to a secondary document.
      */
-    attach(request: IRequest, newFileParams: NewFileParams): Promise<void>;
+    attach(request: IRequest): Promise<void>;
 }
 
 export interface ILoader {
