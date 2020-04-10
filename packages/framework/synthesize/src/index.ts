@@ -5,5 +5,5 @@
 
 export * from "./dependencyContainer";
 export * from "./IComponentDependencySynthesizer";
-export * from "./providers";
+// export * from "./providers";
 export * from "./types";

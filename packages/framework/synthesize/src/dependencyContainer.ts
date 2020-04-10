@@ -6,23 +6,12 @@
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 
 import {
+    AsyncOptionalComponentProvider,
+    AsyncRequiredComponentProvider,
     ComponentSymbolProvider,
-    OptionalComponentProvider,
-    RequiredComponentProvider,
+    Provider,
 } from "./types";
 import { IComponentDependencySynthesizer } from "./IComponentDependencySynthesizer";
-import {
-    InstanceProvider,
-    ValueProvider,
-    FactoryProvider,
-    SingletonProvider,
-    Provider,
-    isInstanceProvider,
-    isValueProvider,
-    isFactoryProvider,
-    isSingletonProvider,
-    isLazy,
-} from "./providers";
 
 /**
  * DependencyContainer is similar to a IoC Container. It takes providers and will
@@ -30,7 +19,6 @@ import {
  */
 export class DependencyContainer implements IComponentDependencySynthesizer {
     private readonly providers = new Map<keyof IComponent, Provider<any>>();
-    private readonly singletons = new Map<keyof IComponent, IComponent>();
 
     public get IComponentDependencySynthesizer() { return this; }
 
@@ -46,14 +34,8 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
     /**
      * {@inheritDoc (IComponentSynthesizer:interface).register}
      */
-    public register<T extends keyof IComponent>(
-        type: T,
-        provider: InstanceProvider<T> |
-        FactoryProvider<T> |
-        SingletonProvider<T> |
-        ValueProvider<T> |
-        Provider<T>,
-    ): void {
+    public register<T extends keyof IComponent>(type: T, provider: Provider<T>): void {
+        // Maybe this should just overwrite?
         if (this.has(type)){
             throw new Error(`Attempting to register a provider of type ${type} that already exists`);
         }
@@ -81,7 +63,7 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
         R extends keyof IComponent>(
         optionalTypes: ComponentSymbolProvider<O>,
         requiredTypes: ComponentSymbolProvider<R>,
-    ): OptionalComponentProvider<O> & RequiredComponentProvider<R> {
+    ): AsyncOptionalComponentProvider<O> & AsyncRequiredComponentProvider<R> {
         const optionalValues = Object.values(optionalTypes);
         const requiredValues = Object.values(requiredTypes);
 
@@ -127,19 +109,11 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
         const values: (keyof IComponent)[] = Object.values(types);
         return Object.assign({}, ...Array.from(values, (t) => {
             const provider = this.getProvider(t);
-            const value = this.resolveProvider(provider, t);
-            if (!value) {
+            if (!provider) {
                 throw new Error(`Object attempted to be created without registered required provider ${t}`);
             }
 
-            // Using a getter enables lazy loading scenarios
-            // Returning value[t] is required for the IProvideComponent* pattern to work
-            return {get [t](){
-                if (!value) {
-                    throw new Error(`This should never be hit and is simply used as a type check`);
-                }
-                return value[t];
-            }};
+            return this.resolveProvider(provider, t);
         }));
     }
 
@@ -149,57 +123,28 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
         const values: (keyof IComponent)[] = Object.values(types);
         return Object.assign({}, ...Array.from(values, (t) => {
             const provider = this.getProvider(t);
-            const value = this.resolveProvider(provider, t);
+            if (!provider) {
+                return{get [t]() { return Promise.resolve(undefined); }};
+            }
 
-            // Using a getter enables lazy loading scenarios
-            // Returning module[t] is required for the IProvideComponent* pattern to work
-            return {get [t]() { return value ? value[t] : undefined; }};
+            return this.resolveProvider(provider, t);
         }));
     }
 
-    private resolveProvider<T extends keyof IComponent>(provider: Provider<T> | undefined, t: keyof IComponent) {
-        if (!provider) {
-            return undefined;
+    private resolveProvider<T extends keyof IComponent>(provider: Provider<T>, t: keyof IComponent) {
+        // The double nested gets are required for lazy loading the provider resolution
+        if(typeof provider === "function"){
+            return {get [t]() {
+                if (provider && typeof provider === "function") {
+                    return Promise.resolve(provider()).then((p) => p[t]);
+                }
+            }};
         }
 
-        if(isValueProvider(provider)) {
-            return provider.value;
-        }
-
-        if(isFactoryProvider(provider)) {
-            return provider.factory(this);
-        }
-
-        if (isSingletonProvider(provider)) {
-            if (isLazy(provider)) {
-                const getSingleton = this.getSingleton.bind(this);
-                return { get [t]() {
-                    const p = provider as SingletonProvider<T>;
-                    return getSingleton(t, p);
-                }};
+        return {get [t]() {
+            if (provider) {
+                return Promise.resolve(provider).then((p) => p[t]);
             }
-
-            return this.getSingleton(t, provider);
-        }
-
-        if(isInstanceProvider(provider)) {
-            if(isLazy(provider)){
-                return { get [t]() {
-                    if (provider && isInstanceProvider(provider)) {
-                        return new provider.instance()[t];
-                    }
-                }};
-            }
-
-            return new provider.instance()[t];
-        }
-    }
-
-    private getSingleton<T extends keyof IComponent>(type: keyof IComponent, provider: SingletonProvider<T>) {
-        if(!this.singletons.has(type)) {
-            this.singletons.set(type, new provider.singleton()[type]);
-        }
-
-        return this.singletons.get(type);
+        }};
     }
 }

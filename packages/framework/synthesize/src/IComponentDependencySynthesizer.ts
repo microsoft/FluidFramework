@@ -5,14 +5,11 @@
 
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import {
+    AsyncOptionalComponentProvider,
+    AsyncRequiredComponentProvider,
     ComponentSymbolProvider,
-    OptionalComponentProvider,
-    RequiredComponentProvider,
-} from "./types";
-
-import {
     Provider,
-} from "./providers";
+} from "./types";
 
 declare module "@microsoft/fluid-component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -64,7 +61,7 @@ export interface IComponentDependencySynthesizer extends IProvideComponentDepend
         R extends keyof IComponent>(
         optionalTypes: ComponentSymbolProvider<O>,
         requiredTypes: ComponentSymbolProvider<R>,
-    ): OptionalComponentProvider<O> & RequiredComponentProvider<R>;
+    ): AsyncOptionalComponentProvider<O> & AsyncRequiredComponentProvider<R>;
 
     /**
      * Check if a given type is registered

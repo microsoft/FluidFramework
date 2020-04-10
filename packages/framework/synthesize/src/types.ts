@@ -20,7 +20,7 @@ export type ComponentSymbolProvider<T extends keyof IComponent> = {
  * the IComponent properties as its type mapped to an object that implements
  * the property.
  */
-export type RequiredComponentProvider<T extends keyof IComponent> = {
+export type AsyncRequiredComponentProvider<T extends keyof IComponent> = {
     [P in T]: NonNullable<IComponent[T]>
 };
 
@@ -29,6 +29,21 @@ export type RequiredComponentProvider<T extends keyof IComponent> = {
  * the IComponent properties as its type, mapped to an object that implements
  * the property or undefined.
  */
-export type OptionalComponentProvider<T extends keyof IComponent> = {
-    [P in T]: IComponent[T] | undefined;
+export type AsyncOptionalComponentProvider<T extends keyof IComponent> = {
+    [P in T]: Promise<IComponent[T] | undefined>;
 };
+
+/**
+ * This is a condensed version of Record that requires the object has all
+ * the IComponent properties as its type mapped to an object that implements
+ * the property.
+ */
+export type ComponentProvider<T extends keyof IComponent> = {
+    [P in T]: NonNullable<IComponent[T]>
+};
+
+export type Provider<T extends keyof IComponent> =
+    ComponentProvider<T>
+    | Promise<ComponentProvider<T>>
+    | (() => ComponentProvider<T>)
+    | (() => Promise<ComponentProvider<T>>);
