@@ -51,8 +51,11 @@ export class RouterliciousDocumentServiceFactory implements
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
         assert(resolvedUrl.endpoints.ordererUrl);
-        const pathName = new URL(resolvedUrl.url).pathname;
-        const [, tenantId, id] = pathName.substr(2).split("/");
+        const parsedUrl = parse(resolvedUrl.url);
+        if (!parsedUrl.pathname) {
+            throw new Error("Parsed url should contain tenant and doc Id!!");
+        }
+        const [, tenantId, id] = parsedUrl.pathname.split("/");
         const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
         const appSummary = createNewSummary.tree[".app"] as ISummaryTree;
         if (!(protocolSummary && appSummary)) {

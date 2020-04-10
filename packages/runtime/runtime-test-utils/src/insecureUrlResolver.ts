@@ -118,9 +118,8 @@ export class InsecureUrlResolver implements IUrlResolver, IExperimentalUrlResolv
     }
 
     public createCreateNewRequest(rawUrl: string, fileName: string): IRequest {
-        const [path, queryString] = rawUrl.split("?");
         const createNewRequest: IRequest = {
-            url: `${path}/${fileName}?${queryString}`,
+            url: `${rawUrl}/${fileName}`,
             headers: {
                 openMode: OpenMode.CreateNew,
             },
