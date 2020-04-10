@@ -126,7 +126,8 @@ describe("Detached Container", () => {
             {},
             new Map<string, IProxyLoaderFactory>(),
         );
-        const container2 = await loader2.resolve({url: ""});
+        const container2 = await loader2.resolve({url:
+            await testResolver.requestUrl(container.resolvedUrl, {url : ""})});
         const response2 = await container2.request({ url: `/${testCompId}` });
         const testComponent2 = response2.value as API.Document;
         assert.equal(testComponent2.runtime.isAttached, true, "Component should be attached!!");

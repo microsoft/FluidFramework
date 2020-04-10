@@ -41,7 +41,10 @@ export class TestDocumentServiceFactory implements IDocumentServiceFactory, IExp
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
         const pathName = new URL(resolvedUrl.url).pathname;
-        const [, tenantId, id] = pathName.substr(2).split("/");
+        const pathArr = pathName.split("/");
+        const len = pathArr.length;
+        const tenantId = pathArr[len - 2];
+        const id = pathArr[len - 1];
         if (!this.localDeltaConnectionServer) {
             throw new Error("Provide the localDeltaConnectionServer!!");
         }
