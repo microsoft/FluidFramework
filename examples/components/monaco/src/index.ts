@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import {
+    ContainerRuntimeFactoryWithDefaultComponent,
+    PrimedComponentFactory,
+} from "@microsoft/fluid-aqueduct";
 import { IProvideRuntimeFactory } from "@microsoft/fluid-container-definitions";
 import { IProvideComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import * as sequence from "@microsoft/fluid-sequence";
@@ -21,7 +24,7 @@ const componentFactory = new PrimedComponentFactory(
     ],
 );
 
-const runtimeFactory = new SimpleModuleInstantiationFactory(
+const runtimeFactory = new ContainerRuntimeFactoryWithDefaultComponent(
     monacoName,
     new Map([
         [monacoName, Promise.resolve(componentFactory)],

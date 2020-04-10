@@ -14,15 +14,24 @@ import {
     IChannelAttributes,
     IComponentRuntime,
     IObjectStorageService,
+    Jsonable,
 } from "@microsoft/fluid-runtime-definitions";
 import {
     ISharedObjectFactory,
     SharedObject,
 } from "@microsoft/fluid-shared-object-base";
-import { ISummarizableObject, SummarizableData } from "./interfaces";
+import { ISummarizableObject } from "./interfaces";
 import { SummarizableObjectFactory } from "./summarizableObjectFactory";
 
 const snapshotFileName = "header";
+
+/**
+ * Defines the in-memory object structure to be used for the conversion to/from serialized.
+ * Directly used in JSON.stringify, direct result from JSON.parse.
+ */
+interface ISummarizableObjectDataSerializable {
+    [key: string]: Jsonable;
+}
 
 /**
  * Implementation of a summarizable object. It does not generate any ops. It is only part of the summary.
@@ -30,7 +39,7 @@ const snapshotFileName = "header";
  */
 export class SummarizableObject extends SharedObject implements ISummarizableObject {
     /**
-     * Create a new summariable object
+     * Create a new summarizable object
      *
      * @param runtime - component runtime the new summarizable object belongs to.
      * @param id - optional name of the summarizable object.
@@ -52,7 +61,7 @@ export class SummarizableObject extends SharedObject implements ISummarizableObj
     /**
      * The data held by this object.
      */
-    private data: SummarizableData = {};
+    private readonly data = new Map<string, Jsonable>();
 
     /**
      * Constructs a new SummarizableObject. If the object is non-local, an id and service interfaces will
@@ -66,35 +75,32 @@ export class SummarizableObject extends SharedObject implements ISummarizableObj
         super(id, runtime, attributes);
     }
 
-    public get(): SummarizableData {
-        return this.data;
+    /**
+     * {@inheritDoc ISummarizableObject.get}
+     */
+    public get(key: string): Jsonable {
+        return this.data.get(key);
     }
-    public set(data: SummarizableData) {
-        if (SharedObject.is(data)) {
-            throw new Error("SharedObject sets are no longer supported. Instead set the SharedObject handle.");
-        }
 
-        Object.keys(data).forEach(
-            (key) => {
-                this.data[key] = data[key];
-            },
-        );
+    /**
+     * {@inheritDoc ISummarizableObject.set}
+     */
+    public set(key: string, value: Jsonable): void {
+        this.data.set(key, value);
 
         // Set this object as dirty so that it is part of the next summary.
         this.dirty();
     }
 
     /**
-     * Initialize a local instance of data.
-     */
-    protected initializeLocalCore() {
-        this.data = {};
-    }
-
-    /**
      * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.snapshot}
      */
     public snapshot(): ITree {
+        const contentsBlob: ISummarizableObjectDataSerializable = {};
+        this.data.forEach((value, key) => {
+            contentsBlob[key] = value;
+        });
+
         // Construct the tree for the data.
         const tree: ITree = {
             entries: [
@@ -103,7 +109,7 @@ export class SummarizableObject extends SharedObject implements ISummarizableObj
                     path: snapshotFileName,
                     type: TreeEntry[TreeEntry.Blob],
                     value: {
-                        contents: JSON.stringify(this.data),
+                        contents: JSON.stringify(contentsBlob),
                         encoding: "utf-8",
                     },
                 },
@@ -123,8 +129,11 @@ export class SummarizableObject extends SharedObject implements ISummarizableObj
         storage: IObjectStorageService): Promise<void> {
 
         const rawContent = await storage.read(snapshotFileName);
+        const contents = JSON.parse(fromBase64ToUtf8(rawContent)) as ISummarizableObjectDataSerializable;
 
-        this.data = rawContent !== undefined ? JSON.parse(fromBase64ToUtf8(rawContent)) : {};
+        for (const [key, value] of Object.entries(contents)) {
+            this.data.set(key, value);
+        }
     }
 
     /**

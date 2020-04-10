@@ -148,6 +148,14 @@ export abstract class SharedComponent<TEvents extends IEvent= IEvent> extends Ev
         return component;
     }
 
+    /**
+     * Retreive component using the handle get or the older getComponent_UNSAFE call to fetch by ID
+     *
+     * @param key - key that object (handle/id) is stored with in the directory
+     * @param directory - directory containing the object
+     * @param getObjectFromDirectory - optional callback for fetching object from the directory, allows users to
+     * define custom types/getters for object retrieval
+     */
     public async getComponentFromDirectory<T extends IComponent & IComponentLoadable>(
         key: string,
         directory: IDirectory,
@@ -158,7 +166,9 @@ export abstract class SharedComponent<TEvents extends IEvent= IEvent> extends Ev
             // For backwards compatibility with older stored IDs
             // We update the storage with the handle so that this code path is less and less trafficked
             const component = await this.getComponent_UNSAFE<T>(handleOrId);
-            directory.set(key, component.handle);
+            if (component.IComponentLoadable && component.handle) {
+                directory.set(key, component.handle);
+            }
             return component;
         } else {
             const handle = handleOrId?.IComponentHandle;

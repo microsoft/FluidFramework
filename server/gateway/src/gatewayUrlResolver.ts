@@ -13,8 +13,7 @@ import { IAlfredTenant, IGitCache } from "@microsoft/fluid-server-services-clien
 import { chooseCelaName } from "@microsoft/fluid-server-services-core";
 import { Request } from "express";
 import { Provider } from "nconf";
-// eslint-disable-next-line import/no-internal-modules
-import * as uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
 import { IAlfred } from "./interfaces";
 
 interface FullTree {

@@ -4,9 +4,9 @@
  */
 
 import {
+    ContainerRuntimeFactoryWithDefaultComponent,
     PrimedComponent,
     PrimedComponentFactory,
-    SimpleModuleInstantiationFactory,
 } from "@microsoft/fluid-aqueduct";
 import { SharedMap } from "@microsoft/fluid-map";
 import { SharedString } from "@microsoft/fluid-sequence";
@@ -61,7 +61,7 @@ export const DraftInstantiationFactory = new PrimedComponentFactory(
     [SharedMap.getFactory(), SharedString.getFactory()],
 );
 
-export const fluidExport = new SimpleModuleInstantiationFactory(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
     DraftJsName,
     new Map([[DraftJsName, Promise.resolve(DraftInstantiationFactory)]]),
 );
