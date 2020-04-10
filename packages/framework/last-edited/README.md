@@ -96,4 +96,9 @@ lastEditedTracker.on("lastEditedChanged", (lastEditDetails: ILastEditDetails) =>
 ```
 
 ## Example
-Take a look at the Vltava under example/components for a detailed example of how the above can be implemented.
+
+The Vltava component under examples demonstrates how LastEditedTracker can be implemented with a root component to track last edited in a document:
+- [instantiateRuntime implementation that loads the root (Anchor) component](../../../examples/components/vltava/src/index.ts)
+- [LastEditedViewer component that implements IComponentLastEditedTracker](../../../examples/components/vltava/src/components/last-edited/lastEditedViewer.tsx)
+- [Anchor Component that creates and provides LastEditedViewer component via IProvideLastEditedTracker](../../../examples/components/vltava/src/components/anchor/anchor.ts)
+- [Vltava view that gets the LastEditedTracker from the Anchor and displays the last edited data](../../../examples/components/vltava/src/components/vltava/view.tsx)
