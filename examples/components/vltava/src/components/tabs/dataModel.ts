@@ -19,7 +19,6 @@ import {
 } from "@fluid-example/spaces";
 
 import { v4 as uuid } from "uuid";
-import { SharedComponent } from "@microsoft/fluid-aqueduct";
 
 export interface ITabsTypes {
     type: string;
@@ -27,8 +26,13 @@ export interface ITabsTypes {
     fabricIconName: string;
 }
 
+export interface ITabsModel {
+    type: string;
+    handleOrId?: IComponentHandle | string;
+}
+
 export interface ITabsDataModel extends EventEmitter {
-    getComponentTab(id: string): Promise<IComponent>;
+    getComponentTab(id: string): Promise<IComponent | undefined>;
     getTabIds(): string[];
     createTab(type: string): Promise<string>;
     getNewTabTypes(): ITabsTypes[];
@@ -41,8 +45,15 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
     constructor(
         public root: ISharedDirectory,
         private readonly internalRegistry: IComponentRegistryDetails,
-        private readonly createAndAttachComponent: <T extends IComponent & IComponentLoadable>(pkg: string, props?: any)
-        => Promise<T>,
+        private readonly createAndAttachComponent: <T extends IComponent & IComponentLoadable>
+        (pkg: string, props?: any) => Promise<T>,
+        private readonly createAndAttachComponentWithId:
+        <T extends IComponent & IComponentLoadable>(id: string, pkg: string, props?: any) => Promise<T>,
+        private readonly getComponentFromDirectory: <T extends IComponent & IComponentLoadable>(
+            id: string,
+            directory: IDirectory,
+            getObjectFromDirectory?: (id: string, directory: IDirectory) => string | IComponentHandle | undefined) =>
+        Promise<T | undefined>,
     ) {
         super();
 
@@ -67,30 +78,38 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
     }
 
     public async createTab(type: string): Promise<string> {
-        const newId = uuid();
-        const component = await this.createAndAttachComponent(type);
-        if (component instanceof SharedComponent) {
-            this.tabs.set(newId, component.handle);
-            this.emit("newTab", true);
-            return newId;
+        const newKey = uuid();
+        if (this.internalRegistry.hasCapability(type, "IComponentLoadable")) {
+            const component = await this.createAndAttachComponent<IComponent & IComponentLoadable>(type);
+            this.tabs.set(newKey, {
+                type,
+                handleOrId: component.handle,
+            });
         } else {
-            throw Error("Please only use Shared and Primed Components in Vltava");
+            const newComponentId = uuid();
+            await this.createAndAttachComponentWithId(newComponentId, type);
+            this.tabs.set(newKey, {
+                type,
+                handleOrId: newComponentId,
+            });
         }
+        this.emit("newTab", true);
+        return newKey;
     }
 
-    public async getComponentTab(id: string): Promise<IComponent> {
+    private getObjectFromDirectory(id: string, directory: IDirectory): string | IComponentHandle | undefined {
+        const data = directory.get<ITabsModel>(id);
+        return data?.handleOrId;
+    }
+
+    public async getComponentTab(id: string): Promise<IComponent | undefined> {
         this.tabs = this.root.getSubDirectory("tab-ids");
-        const handle = this.tabs.get<IComponentHandle>(id);
-        if (handle) {
-            return handle.get();
-        } else {
-            throw Error("Tried to render a tab with no created component");
-        }
+        return this.getComponentFromDirectory(id, this.tabs, this.getObjectFromDirectory);
     }
 
     public getNewTabTypes(): ITabsTypes[] {
         const response: ITabsTypes[] = [];
-        this.internalRegistry.getFromCapabilities("IComponentHTMLView").forEach((e) => {
+        this.internalRegistry.getFromCapability("IComponentHTMLView").forEach((e) => {
             response.push({
                 type: e.type,
                 friendlyName: e.friendlyName,
