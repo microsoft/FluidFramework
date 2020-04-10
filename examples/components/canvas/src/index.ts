@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import {
+    ContainerRuntimeFactoryWithDefaultComponent,
+    PrimedComponentFactory,
+} from "@microsoft/fluid-aqueduct";
 import { Ink } from "@microsoft/fluid-ink";
 import { Canvas } from "./canvas";
 
@@ -19,7 +22,7 @@ export const CanvasInstantiationFactory = new PrimedComponentFactory(
     ],
 );
 
-export const fluidExport = new SimpleModuleInstantiationFactory(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
     CanvasName,
     new Map([
         [CanvasName, Promise.resolve(CanvasInstantiationFactory)],
