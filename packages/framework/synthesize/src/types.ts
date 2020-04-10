@@ -34,17 +34,8 @@ export type AsyncOptionalComponentProvider<T extends keyof IComponent> = {
     [P in T]: Promise<IComponent[P] | undefined>;
 };
 
-/**
- * This is a condensed version of Record that requires the object has all
- * the IComponent properties as its type mapped to an object that implements
- * the property.
- */
-export type ComponentProvider<T extends keyof IComponent> = {
-    [P in T]: NonNullable<IComponent[P]>
-};
-
 export type Provider<T extends keyof IComponent> =
-    ComponentProvider<T>
-    | Promise<ComponentProvider<T>>
-    | ((dependencyContainer: DependencyContainer) => ComponentProvider<T>)
-    | ((dependencyContainer: DependencyContainer) => Promise<ComponentProvider<T>>);
+    IComponent[T]
+    | Promise<IComponent[T]>
+    | ((dependencyContainer: DependencyContainer) => IComponent[T])
+    | ((dependencyContainer: DependencyContainer) => Promise<IComponent[T]>);
