@@ -24,7 +24,7 @@ import {
     IVersion,
 } from "@microsoft/fluid-protocol-definitions";
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
-import { IResolvedUrl, IUrlResolver } from "./urlResolver";
+import { IResolvedUrl } from "./urlResolver";
 
 /**
  * Interface to provide access to stored deltas for a shared object
@@ -249,7 +249,6 @@ export interface IExperimentalDocumentServiceFactory extends IDocumentServiceFac
     createContainer(
         createNewSummary: ISummaryTree,
         createNewResolvedUrl: IResolvedUrl,
-        urlResolver: IUrlResolver,
         logger: ITelemetryLogger,
     ): Promise<IDocumentService>;
 }

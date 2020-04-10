@@ -54,7 +54,6 @@ export async function createNewFluidFile(
     getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
     newFileInfoPromise: Promise<INewFileInfo> | undefined,
     cache: IOdspCache,
-    urlResolver: OdspDriverUrlResolver,
     createNewSummary?: ISummaryTree,
 ): Promise<IOdspResolvedUrl> {
     if (!newFileInfoPromise) {
@@ -85,7 +84,8 @@ export async function createNewFluidFile(
     try {
         fileResponse = await createNewFluidFileHelper(newFileInfo, getStorageToken, containerSnapshot);
         const odspUrl = createOdspUrl(fileResponse.siteUrl, fileResponse.driveId, fileResponse.itemId, "/");
-        resolvedUrl = await urlResolver.resolve({ url: odspUrl });
+        const resolver = new OdspDriverUrlResolver();
+        resolvedUrl = await resolver.resolve({ url: odspUrl });
     } catch (error) {
         odspResolvedUrlDeferred.reject(error);
         cache.sessionStorage.remove(key);

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { DebugLogger, PerformanceEvent, TelemetryLogger, TelemetryNullLogger } from "@microsoft/fluid-common-utils";
 import {
@@ -13,8 +12,6 @@ import {
     IResolvedUrl,
     IDocumentStorageService,
     IExperimentalDocumentService,
-    IUrlResolver,
-    IOdspNewFileParams,
     IDocumentServiceFactory,
 } from "@microsoft/fluid-driver-definitions";
 import {
@@ -36,7 +33,6 @@ import { OdspDocumentStorageService } from "./odspDocumentStorageService";
 import { getWithRetryForTokenRefresh, isLocalStorageAvailable } from "./odspUtils";
 import { getSocketStorageDiscovery } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
-import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const performanceNow = require("performance-now") as (() => number);
@@ -94,7 +90,6 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
                     getStorageToken,
                     odspResolvedUrl.createNewOptions.newFileInfoPromise,
                     cache,
-                    new OdspDriverUrlResolver(),
                     createNewSummary);
                 const props = {
                     hashedDocumentId: odspResolvedUrl.hashedDocumentId,
@@ -124,27 +119,26 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
     public static async createContainer(
         createNewSummary: ISummaryTree,
         createNewResolvedUrl: IResolvedUrl,
-        urlResolver: IUrlResolver,
         logger: ITelemetryLogger,
         cache: IOdspCache,
         getStorageToken: (siteUrl: string, refresh: boolean) => Promise<string | null>,
         factory: IDocumentServiceFactory,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(createNewResolvedUrl);
-        const newFileParams = createNewResolvedUrl.newFileParams as IOdspNewFileParams;
-        assert(newFileParams);
-        let odspResolvedUrl: IOdspResolvedUrl;
+        const newFileParams = (createNewResolvedUrl as IOdspResolvedUrl).newFileParams;
+        if (!newFileParams) {
+            throw new Error("New file params should be provided!!");
+        }
         const event = PerformanceEvent.start(logger,
             {
                 eventName: "CreateNew",
                 isWithSummaryUpload: true,
             });
         try {
-            odspResolvedUrl = await createNewFluidFile(
+            const odspResolvedUrl = await createNewFluidFile(
                 getStorageToken,
                 Promise.resolve(newFileParams),
                 cache,
-                urlResolver as OdspDriverUrlResolver,
                 createNewSummary);
             const props = {
                 hashedDocumentId: odspResolvedUrl.hashedDocumentId,

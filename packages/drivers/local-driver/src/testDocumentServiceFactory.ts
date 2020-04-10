@@ -3,15 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
 import { parse } from "url";
 import {
     IDocumentService,
     IDocumentServiceFactory,
     IResolvedUrl,
     IExperimentalDocumentServiceFactory,
-    ILocalNewFileParams,
-    IUrlResolver,
 } from "@microsoft/fluid-driver-definitions";
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { TokenProvider } from "@microsoft/fluid-routerlicious-driver";
@@ -39,13 +36,12 @@ export class TestDocumentServiceFactory implements IDocumentServiceFactory, IExp
 
     public async createContainer(
         createNewSummary: ISummaryTree,
-        createNewResolvedUrl: IResolvedUrl,
-        urlResolver: IUrlResolver,
+        resolvedUrl: IResolvedUrl,
         logger: ITelemetryLogger,
     ): Promise<IDocumentService> {
-        ensureFluidResolvedUrl(createNewResolvedUrl);
-        const newFileParams = createNewResolvedUrl.newFileParams as ILocalNewFileParams;
-        assert(newFileParams);
+        ensureFluidResolvedUrl(resolvedUrl);
+        const pathName = new URL(resolvedUrl.url).pathname;
+        const [, tenantId, id] = pathName.substr(2).split("/");
         if (!this.localDeltaConnectionServer) {
             throw new Error("Provide the localDeltaConnectionServer!!");
         }
@@ -64,17 +60,12 @@ export class TestDocumentServiceFactory implements IDocumentServiceFactory, IExp
         const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
         const sequenceNumber = documentAttributes.sequenceNumber;
         await expDocumentStorage.createDocument(
-            newFileParams.tenantId,
-            newFileParams.fileName,
+            tenantId,
+            id,
             appSummary,
             sequenceNumber,
             quorumValues,
         );
-        const request = {url: ""};
-        const resolvedUrl = await urlResolver.resolve(request);
-        if (!resolvedUrl) {
-            throw new Error("Not able to resolve URL!!");
-        }
         return this.createDocumentService(resolvedUrl);
     }
 

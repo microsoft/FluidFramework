@@ -9,8 +9,6 @@ import {
     IDocumentService,
     IDocumentServiceFactory,
     IResolvedUrl,
-    IRouterliciousNewFileParams,
-    IUrlResolver,
     IExperimentalDocumentServiceFactory,
 } from "@microsoft/fluid-driver-definitions";
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
@@ -48,14 +46,13 @@ export class RouterliciousDocumentServiceFactory implements
 
     public async createContainer(
         createNewSummary: ISummaryTree,
-        createNewResolvedUrl: IResolvedUrl,
-        urlResolver: IUrlResolver,
+        resolvedUrl: IResolvedUrl,
         logger: ITelemetryLogger,
     ): Promise<IDocumentService> {
-        ensureFluidResolvedUrl(createNewResolvedUrl);
-        const newFileParams = createNewResolvedUrl.newFileParams as IRouterliciousNewFileParams;
-        assert(newFileParams);
-        const id = newFileParams.fileName;
+        ensureFluidResolvedUrl(resolvedUrl);
+        assert(resolvedUrl.endpoints.ordererUrl);
+        const pathName = new URL(resolvedUrl.url).pathname;
+        const [, tenantId, id] = pathName.substr(2).split("/");
         const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
         const appSummary = createNewSummary.tree[".app"] as ISummaryTree;
         if (!(protocolSummary && appSummary)) {
@@ -64,23 +61,14 @@ export class RouterliciousDocumentServiceFactory implements
         const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
         const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
         await Axios.post(
-            `${newFileParams.ordererUrl}/documents/${newFileParams.tenantId}`,
+            `${resolvedUrl.endpoints.ordererUrl}/documents/${tenantId}`,
             {
                 id,
                 summary: appSummary,
                 sequenceNumber: documentAttributes.sequenceNumber,
                 values: quorumValues,
             });
-        const request = {url: this.createContainerUrl(newFileParams.siteUrl, newFileParams.tenantId, id)};
-        const resolvedUrl = await urlResolver.resolve(request);
-        if (!resolvedUrl) {
-            throw new Error("Not able to resolve URL!!");
-        }
         return this.createDocumentService(resolvedUrl);
-    }
-
-    private createContainerUrl(siteUrl: string, tenantId: string, documentId: string) {
-        return `${siteUrl}/${encodeURIComponent(tenantId)}/${encodeURIComponent(documentId)}`;
     }
 
     /**

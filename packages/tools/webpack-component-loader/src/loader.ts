@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import * as querystring from "querystring";
 import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
 import { BaseHost, IBaseHostConfig } from "@microsoft/fluid-base-host";
 import {
@@ -13,7 +12,7 @@ import {
     isFluidPackage,
 } from "@microsoft/fluid-container-definitions";
 import { Container } from "@microsoft/fluid-container-loader";
-import { IDocumentServiceFactory, IUrlResolver, INewFileParams, OpenMode } from "@microsoft/fluid-driver-definitions";
+import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { SessionStorageDbFactory } from "@microsoft/fluid-local-test-utils";
@@ -25,7 +24,7 @@ import { Deferred } from "@microsoft/fluid-common-utils";
 import * as jwt from "jsonwebtoken";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
-import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
+import { OdspDocumentServiceFactory, IOdspNewFileParams } from "@microsoft/fluid-odsp-driver";
 import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 import { InsecureUrlResolver } from "@microsoft/fluid-test-runtime-utils";
 import { IComponent, IRequest } from "@microsoft/fluid-component-core-interfaces";
@@ -178,7 +177,6 @@ async function getResolvedPackage(
 function getUrlResolver(
     documentId: string,
     options: RouteOptions,
-    connection: ILocalDeltaConnectionServer,
 ): IUrlResolver {
     switch (options.mode) {
         case "docker":
@@ -222,53 +220,37 @@ function getUrlResolver(
     }
 }
 
-function getNewFileParams(
-    documentId: string,
+function createRequestForCreateNew(
+    rawUrl: string,
     options: RouteOptions,
-): INewFileParams {
-    let params: INewFileParams;
+    resolver: IUrlResolver,
+    fileName: string,
+): IRequest {
+    let request: IRequest;
     switch (options.mode) {
         case "r11s":
-            params = {
-                ordererUrl: options.fluidHost.replace("www", "alfred"),
-                fileName: getRandomName("-"),
-                tenantId: options.tenantId,
-                siteUrl: `${new URL(window.location.href).origin}`,
-            };
+            request = (resolver as InsecureUrlResolver).createCreateNewRequest(rawUrl, fileName);
             break;
         case "spo":
         case "spo-df":
-            params = {
-                fileName: getRandomName("-"),
+            const params: IOdspNewFileParams = {
+                fileName,
                 driveId: options.driveId,
                 filePath: "/r11s/",
                 siteUrl: `https://${options.server}`,
             };
+            request = (resolver as OdspUrlResolver).createCreateNewRequest(rawUrl, params);
             break;
         case "docker":
-            params = {
-                ordererUrl: "http://localhost:3003",
-                fileName: getRandomName("-"),
-                tenantId: options.tenantId,
-                siteUrl: `${new URL(window.location.href).origin}`,
-            };
+            request = (resolver as InsecureUrlResolver).createCreateNewRequest(rawUrl, fileName);
             break;
         case "tinylicious":
-            params = {
-                ordererUrl: "http://localhost:3000",
-                fileName: getRandomName("-"),
-                tenantId: "12345",
-                siteUrl: `${new URL(window.location.href).origin}`,
-            };
+            request = (resolver as InsecureUrlResolver).createCreateNewRequest(rawUrl, fileName);
             break;
         default: // Local
-            params = {
-                fileName: documentId,
-                siteUrl: "http://localhost:3000",
-                tenantId: "tenantId",
-            };
+            request = (resolver as TestResolver).createCreateNewRequest();
     }
-    return params;
+    return request;
 }
 
 // Invoked by `start()` when the 'double' option is enabled to create the side-by-side panes.
@@ -331,17 +313,20 @@ export async function start(
     textArea: HTMLTextAreaElement,
     attached: boolean,
 ): Promise<void> {
+    let finalDocId = documentId;
     if (attached) {
         attachButton.style.display = "none";
         textArea.style.display = "none";
+    } else {
+        finalDocId = getRandomName("-");
     }
     if (options.mode === "local") {
         textArea.style.display = "none";
     }
 
-    const {documentServiceFactory, connection} = getDocumentServiceFactory(documentId, options);
+    const {documentServiceFactory, connection} = getDocumentServiceFactory(finalDocId, options);
 
-    const urlResolver = getUrlResolver(documentId, options, connection);
+    const urlResolver = getUrlResolver(finalDocId, options);
 
     // Construct a request
     const url = window.location.href;
@@ -404,10 +389,9 @@ export async function start(
     }
     if (!attached) {
         attachButton.onclick = async () => {
-            const newFileParams = getNewFileParams(documentId, options);
-            await container1.attach(createRequestForCreateNew(window.location.href, newFileParams))
+            await container1.attach(createRequestForCreateNew(window.location.href, options, urlResolver, finalDocId))
                 .then(() => {
-                    const text = window.location.href.replace("create", newFileParams.fileName);
+                    const text = window.location.href.replace("create", finalDocId);
                     textArea.innerText = text;
                     urlDeferred.resolve(text);
                     attachButton.style.display = "none";
@@ -419,16 +403,6 @@ export async function start(
     } else {
         urlDeferred.resolve(window.location.href);
     }
-}
-
-function createRequestForCreateNew(url: string, newFileParams: INewFileParams): IRequest {
-    const request: IRequest = {
-        url: `${url}?${querystring.stringify(newFileParams)}`,
-        headers: {
-            openMode: OpenMode.CreateNew,
-        },
-    };
-    return request;
 }
 
 async function startRendering(container: Container, url: string, div: HTMLDivElement) {

@@ -9,7 +9,6 @@ import {
     IDocumentServiceFactory,
     IResolvedUrl,
     IExperimentalDocumentServiceFactory,
-    IUrlResolver,
 } from "@microsoft/fluid-driver-definitions";
 import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
 import { IOdspResolvedUrl } from "./contracts";
@@ -33,13 +32,11 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory, IExp
     public async createContainer(
         createNewSummary: ISummaryTree,
         createNewResolvedUrl: IResolvedUrl,
-        urlResolver: IUrlResolver,
         logger: ITelemetryLogger,
     ): Promise<IDocumentService> {
         return OdspDocumentService.createContainer(
             createNewSummary,
             createNewResolvedUrl,
-            urlResolver,
             logger ?? this.logger,
             this.cache,
             this.getStorageToken,

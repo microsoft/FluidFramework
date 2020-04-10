@@ -445,7 +445,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.service = await expDocFactory.createContainer(
                 combineAppAndProtocolSummary(appSummary, protocolSummary),
                 createNewResolvedUrl,
-                this.urlResolver,
                 ChildLogger.create(this.subLogger, "fluid:telemetry:CreateNewContainer"),
             );
             const expDocService = this.service as IExperimentalDocumentService;
@@ -454,7 +453,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             ensureFluidResolvedUrl(resolvedUrl);
             const expUrlResolver = this.urlResolver as IExperimentalUrlResolver;
             assert(expUrlResolver?.isExperimentalUrlResolver);
-            this.originalRequest = {url: expUrlResolver.createUrl(resolvedUrl, {url: ""})};
+            this.originalRequest = {url: await expUrlResolver.requestUrl(resolvedUrl, {url: ""})};
             this._canReconnect = !(request.headers?.[LoaderHeader.reconnect] === false);
             const parsedUrl = parseUrl(resolvedUrl.url);
             if (!parsedUrl) {

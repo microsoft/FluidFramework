@@ -9,7 +9,6 @@ import {
     IResolvedUrl,
     IUrlResolver,
     IExperimentalUrlResolver,
-    ILocalNewFileParams,
     OpenMode,
 } from "@microsoft/fluid-driver-definitions";
 import { ScopeType } from "@microsoft/fluid-protocol-definitions";
@@ -35,31 +34,6 @@ export class TestResolver implements IUrlResolver, IExperimentalUrlResolver {
      * @param request - request to handle; not used
      */
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
-        if (request.headers && request.headers.openMode === OpenMode.CreateNew) {
-            const [, queryString] = request.url.split("?");
-
-            const searchParams = new URLSearchParams(queryString);
-            const fileName = searchParams.get("fileName");
-            const siteUrl = searchParams.get("siteUrl");
-            const tenantId = searchParams.get("tenantId");
-            if (!(fileName && siteUrl && tenantId)) {
-                throw new Error("Proper new file params should be there!!");
-            }
-            const newFileParams: ILocalNewFileParams = {
-                fileName,
-                siteUrl,
-                tenantId,
-            };
-            const resolved: IFluidResolvedUrl = {
-                endpoints: {},
-                tokens: {},
-                type: "fluid",
-                url: `fluid-test://localhost:3000/${tenantId}/${this.id}`,
-                siteUrl,
-                newFileParams,
-            };
-            return resolved;
-        }
         return this.resolveHelper();
     }
 
@@ -79,7 +53,17 @@ export class TestResolver implements IUrlResolver, IExperimentalUrlResolver {
         return resolved;
     }
 
-    public createUrl(resolvedUrl: IResolvedUrl, request: IRequest): string {
+    public async requestUrl(resolvedUrl: IResolvedUrl, request: IRequest): Promise<string> {
         return `https://localhost:3000/${this.tenantId}/${this.id}${request.url}`;
+    }
+
+    public createCreateNewRequest(): IRequest {
+        const createNewRequest: IRequest = {
+            url: `http://localhost:3000/${this.tenantId}/${this.id}`,
+            headers: {
+                openMode: OpenMode.CreateNew,
+            },
+        };
+        return createNewRequest;
     }
 }

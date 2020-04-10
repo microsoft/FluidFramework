@@ -4,7 +4,6 @@
  */
 
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { INewFileParams } from "./newFileParams";
 
 export type IResolvedUrl = IWebResolvedUrl | IFluidResolvedUrl;
 
@@ -22,8 +21,6 @@ export interface IFluidResolvedUrl extends IResolvedUrlBase {
     url: string;
     tokens: { [name: string]: string };
     endpoints: { [name: string]: string };
-    siteUrl?: string,
-    newFileParams?: INewFileParams;
 }
 
 export enum OpenMode {
@@ -41,9 +38,9 @@ export interface IUrlResolver {
 
 export interface IExperimentalUrlResolver extends IUrlResolver {
     readonly isExperimentalUrlResolver: true;
-    // Creates a url for the created container.
-    createUrl(
+    // Creates a url for the created container with any component path given in request.
+    requestUrl(
         resolvedUrl: IResolvedUrl,
         request: IRequest,
-    ): string;
+    ): Promise<string>;
 }

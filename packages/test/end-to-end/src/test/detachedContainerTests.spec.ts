@@ -11,22 +11,12 @@ import { Loader } from "@microsoft/fluid-container-loader";
 import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { ConnectionState } from "@microsoft/fluid-protocol-definitions";
-import { IDocumentServiceFactory, ILocalNewFileParams, OpenMode } from "@microsoft/fluid-driver-definitions";
+import { IDocumentServiceFactory } from "@microsoft/fluid-driver-definitions";
 
 describe("Detached Container", () => {
     let testDeltaConnectionServer: ILocalDeltaConnectionServer;
     let testResolver: TestResolver;
-    const newFileParams: ILocalNewFileParams = {
-        fileName: "documentId",
-        siteUrl: "http://localhost:3000",
-        tenantId: "tenantId",
-    };
-    const testRequest: IRequest = {
-        url: `?fileName=${newFileParams.fileName}&tenantId=${newFileParams.tenantId}&siteUrl=${newFileParams.siteUrl}`,
-        headers: {
-            openMode: OpenMode.CreateNew,
-        },
-    };
+    let testRequest: IRequest;
     const pkg: IFluidCodeDetails = {
         package: "@fluid-internal/client-api",
         config: {},
@@ -37,7 +27,8 @@ describe("Detached Container", () => {
 
     beforeEach(async () => {
         testDeltaConnectionServer = LocalDeltaConnectionServer.create();
-        testResolver = new TestResolver("documentId");
+        testResolver = new TestResolver();
+        testRequest = testResolver.createCreateNewRequest();
         serviceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
 
         codeLoader = new API.CodeLoader({ generateSummaries: false });

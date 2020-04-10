@@ -4,15 +4,15 @@
  */
 
 import * as assert from "assert";
+import * as querystring from "querystring";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import {
     IUrlResolver,
     IExperimentalUrlResolver,
     IResolvedUrl,
     OpenMode,
-    IOdspNewFileParams,
 } from "@microsoft/fluid-driver-definitions";
-import { IOdspResolvedUrl, ICreateNewOptions } from "./contracts";
+import { IOdspResolvedUrl, ICreateNewOptions, IOdspNewFileParams } from "./contracts";
 import { getHashedDocumentId } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";
 
@@ -125,12 +125,22 @@ export class OdspDriverUrlResolver implements IUrlResolver, IExperimentalUrlReso
         };
     }
 
-    public createUrl(resolvedUrl: IResolvedUrl, request: IRequest): string {
+    public async requestUrl(resolvedUrl: IResolvedUrl, request: IRequest): Promise<string> {
         const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
         return `${odspResolvedUrl.siteUrl}${request.url}?driveId=${encodeURIComponent(
             odspResolvedUrl.driveId)}&itemId=${encodeURIComponent(
             odspResolvedUrl.itemId,
         )}&path=${encodeURIComponent("/")}`;
+    }
+
+    public createCreateNewRequest(rawUrl: string, newFileParams: IOdspNewFileParams): IRequest {
+        const createNewRequest: IRequest = {
+            url: `${rawUrl}?${querystring.stringify(newFileParams)}`,
+            headers: {
+                openMode: OpenMode.CreateNew,
+            },
+        };
+        return createNewRequest;
     }
 
     private decodeOdspUrl(url: string): { siteUrl: string; driveId: string; itemId: string; path: string } {

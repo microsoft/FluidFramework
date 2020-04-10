@@ -11,7 +11,6 @@ import {
     IResolvedUrl,
     IUrlResolver,
     IExperimentalUrlResolver,
-    IRouterliciousNewFileParams,
     OpenMode,
 } from "@microsoft/fluid-driver-definitions";
 import {
@@ -50,32 +49,6 @@ export class InsecureUrlResolver implements IUrlResolver, IExperimentalUrlResolv
     ) { }
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
-        if (request.headers && request.headers.openMode === OpenMode.CreateNew) {
-            const [, queryString] = request.url.split("?");
-
-            const searchParams = new URLSearchParams(queryString);
-            const fileName = searchParams.get("fileName");
-            const siteUrl = searchParams.get("siteUrl");
-            const tenantId = searchParams.get("tenantId");
-            const ordererUrl = searchParams.get("ordererUrl");
-            if (!(fileName && siteUrl && tenantId && ordererUrl)) {
-                throw new Error("Proper new file params should be there!!");
-            }
-            const newFileParams: IRouterliciousNewFileParams = {
-                fileName,
-                siteUrl,
-                tenantId,
-                ordererUrl,
-            };
-            const resolved: IFluidResolvedUrl = {
-                endpoints: {},
-                tokens: {},
-                type: "fluid",
-                url: `fluid-test://localhost:3000/${tenantId}/${fileName}`,
-                newFileParams,
-            };
-            return resolved;
-        }
         const parsedUrl = new URL(request.url);
 
         // If hosts match then we use the local tenant information. Otherwise we make a REST call out to the hosting
@@ -88,8 +61,7 @@ export class InsecureUrlResolver implements IUrlResolver, IExperimentalUrlResolv
             } else {
                 documentId = path[0];
             }
-            const [siteUrl] = request.url.split("?");
-            return this.resolveHelper(documentId, siteUrl);
+            return this.resolveHelper(documentId);
         } else {
             const maybeResolvedUrl = this.cache.get(request.url);
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -114,7 +86,7 @@ export class InsecureUrlResolver implements IUrlResolver, IExperimentalUrlResolv
         }
     }
 
-    private resolveHelper(documentId: string, siteUrl: string) {
+    private resolveHelper(documentId: string) {
         const encodedTenantId = encodeURIComponent(this.tenantId);
         const encodedDocId = encodeURIComponent(documentId);
 
@@ -131,22 +103,29 @@ export class InsecureUrlResolver implements IUrlResolver, IExperimentalUrlResolv
             tokens: { jwt: this.auth(this.tenantId, documentId) },
             type: "fluid",
             url: documentUrl,
-            siteUrl,
         };
         return response;
     }
 
-    public createUrl(resolvedUrl: IResolvedUrl, request: IRequest): string {
+    public async requestUrl(resolvedUrl: IResolvedUrl, request: IRequest): Promise<string> {
         const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
-        if (!fluidResolvedUrl.siteUrl) {
-            throw new Error("Resolved Url should have the siteUrl!!");
-        }
 
         const parsedUrl = parse(fluidResolvedUrl.url);
         const [, , documentId] = parsedUrl.pathname?.split("/");
         assert(documentId);
-        return `${new URL(fluidResolvedUrl.siteUrl).origin}/${encodeURIComponent(
+        return `${new URL(window.location.href).origin}/${encodeURIComponent(
             this.tenantId)}/${encodeURIComponent(documentId)}${request.url}`;
+    }
+
+    public createCreateNewRequest(rawUrl: string, fileName: string): IRequest {
+        const [path, queryString] = rawUrl.split("?");
+        const createNewRequest: IRequest = {
+            url: `${path}/${fileName}?${queryString}`,
+            headers: {
+                openMode: OpenMode.CreateNew,
+            },
+        };
+        return createNewRequest;
     }
 
     private auth(tenantId: string, documentId: string) {
