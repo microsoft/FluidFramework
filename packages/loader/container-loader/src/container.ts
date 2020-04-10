@@ -338,6 +338,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const type = this.client.details.type;
         const interactive = this.client.details.capabilities.interactive;
         const clientType = `${interactive ? "interactive" : "noninteractive"}${type ? `/${type}` : ""}`;
+        // Need to use the property getter for docId because for detached flow we don't have the docId initially.
+        // We assign the id later so property getter is used.
         this.subLogger = DebugLogger.mixinDebugLogger(
             "fluid:telemetry",
             logger,
