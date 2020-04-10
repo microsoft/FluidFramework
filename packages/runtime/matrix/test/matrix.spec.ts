@@ -5,12 +5,13 @@
 
 import "mocha";
 
+import { strict as assert } from "assert";
+import { v4 as uuid } from "uuid";
 import { TestHost } from "@microsoft/fluid-local-test-utils";
 import { Serializable } from "@microsoft/fluid-runtime-definitions";
 import { MockEmptyDeltaConnection, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
-import { strict as assert } from "assert";
 import { SharedMatrix, SharedMatrixFactory } from "../src";
-import { fill, check, insertFragmented, extract, expectSize, randomId } from "./utils";
+import { fill, check, insertFragmented, extract, expectSize } from "./utils";
 import { TestConsumer } from "./testconsumer";
 
 // Snapshots the given `SharedMatrix`, loads the snapshot into a 2nd SharedMatrix, vets that the two are
@@ -72,7 +73,7 @@ describe("Matrix", () => {
 
         beforeEach(async () => {
             // Create a new matrix for each test case
-            matrix = await host1.createType(randomId(), SharedMatrixFactory.Type);
+            matrix = await host1.createType(uuid(), SharedMatrixFactory.Type);
 
             // Attach a new IMatrixConsumer
             consumer = new TestConsumer();
@@ -265,7 +266,7 @@ describe("Matrix", () => {
         };
 
         beforeEach(async () => {
-            matrix1 = await host1.createType(randomId(), SharedMatrixFactory.Type);
+            matrix1 = await host1.createType(uuid(), SharedMatrixFactory.Type);
             matrix2 = await host2.getType(matrix1.id);
         });
 

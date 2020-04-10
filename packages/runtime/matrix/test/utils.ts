@@ -48,15 +48,6 @@ export function check<T extends IArray2D<U>, U>(
 }
 
 /**
- * Returns a random string, suitable for use as a unique 'id'.
- */
-export function randomId() {
-    return Math.random()
-        .toString(36)
-        .slice(2);
-}
-
-/**
  * Extracts the contents of the given `SharedMatrix` as a jagged 2D array.  This is convenient for
  * comparing matrices via `assert.deepEqual()`.
  */
