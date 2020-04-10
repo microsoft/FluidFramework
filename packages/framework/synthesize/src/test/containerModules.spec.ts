@@ -12,30 +12,15 @@ import {
 
 import { DependencyContainer } from "../";
 
-export interface IFoo {
-    foo: string;
-}
-
-export class Foo {
-    public foo() {
-        console.log("foo");
-    }
-}
-
 class MockLoadable implements IComponentLoadable {
     public get IComponentLoadable() { return this; }
     public get url() { return "url123"; }
 }
 
-export class MockLoadableWithArgs implements IComponentLoadable {
-    public constructor(public readonly url: string) { }
-    public get IComponentLoadable() { return this; }
-}
-
-export class MockComponentConfiguration implements IComponentConfiguration {
+class MockComponentConfiguration implements IComponentConfiguration {
     public get IComponentConfiguration() { return this; }
     public get canReconnect() { return false; }
-    public get scopes() { return ["hello"]; }
+    public get scopes() { return ["scope"]; }
 }
 
 describe("Routerlicious", () => {
@@ -49,7 +34,8 @@ describe("Routerlicious", () => {
                 const s = dc.synthesize({IComponentLoadable}, {});
                 const loadable = await s.IComponentLoadable;
                 assert(loadable, "Optional IComponentLoadable was registered");
-                assert(loadable === mock, "IComponentLoadable is valid");
+                assert(loadable === mock, "IComponentLoadable is expected");
+                assert(loadable?.url === mock.url, "IComponentLoadable is valid");
             });
 
             it(`One Optional Module registered via Promise value`, async () => {
@@ -60,7 +46,8 @@ describe("Routerlicious", () => {
                 const s = dc.synthesize({IComponentLoadable}, {});
                 const loadable = await s.IComponentLoadable;
                 assert(loadable, "Optional IComponentLoadable was registered");
-                assert(loadable === mock, "IComponentLoadable is valid");
+                assert(loadable === mock, "IComponentLoadable is expected");
+                assert(loadable?.url === mock.url, "IComponentLoadable is valid");
             });
 
             it(`One Optional Module registered via factory`, async () => {
@@ -72,7 +59,8 @@ describe("Routerlicious", () => {
                 const s = dc.synthesize({IComponentLoadable}, {});
                 const loadable = await s.IComponentLoadable;
                 assert(loadable, "Optional IComponentLoadable was registered");
-                assert(loadable === mock, "IComponentLoadable is valid");
+                assert(loadable === mock, "IComponentLoadable is expected");
+                assert(loadable?.url === mock.url, "IComponentLoadable is valid");
             });
 
             it(`One Optional Module registered via Promise factory`, async () => {
@@ -84,7 +72,8 @@ describe("Routerlicious", () => {
                 const s = dc.synthesize({IComponentLoadable}, {});
                 const loadable = await s.IComponentLoadable;
                 assert(loadable, "Optional IComponentLoadable was registered");
-                assert(loadable === mock, "IComponentLoadable is valid");
+                assert(loadable === mock, "IComponentLoadable is expected");
+                assert(loadable?.url === mock.url, "IComponentLoadable is valid");
             });
 
             it(`One Required Module registered via value`, async () => {
@@ -95,7 +84,8 @@ describe("Routerlicious", () => {
                 const s = dc.synthesize({}, {IComponentLoadable});
                 const loadable = await s.IComponentLoadable;
                 assert(loadable, "Required IComponentLoadable was registered");
-                assert(loadable === mock, "IComponentLoadable is valid");
+                assert(loadable === mock, "IComponentLoadable is expected");
+                assert(loadable?.url === mock.url, "IComponentLoadable is valid");
             });
 
             it(`One Required Module registered via Promise value`, async () => {
@@ -106,7 +96,8 @@ describe("Routerlicious", () => {
                 const s = dc.synthesize({}, {IComponentLoadable});
                 const loadable = await s.IComponentLoadable;
                 assert(loadable, "Required IComponentLoadable was registered");
-                assert(loadable === mock, "IComponentLoadable is valid");
+                assert(loadable === mock, "IComponentLoadable is expected");
+                assert(loadable?.url === mock.url, "IComponentLoadable is valid");
             });
 
             it(`One Required Module registered via factory`, async () => {
@@ -118,7 +109,8 @@ describe("Routerlicious", () => {
                 const s = dc.synthesize({}, {IComponentLoadable});
                 const loadable = await s.IComponentLoadable;
                 assert(loadable, "Required IComponentLoadable was registered");
-                assert(loadable === mock, "IComponentLoadable is valid");
+                assert(loadable === mock, "IComponentLoadable is expected");
+                assert(loadable?.url === mock.url, "IComponentLoadable is valid");
             });
 
             it(`One Required Module registered via Promise factory`, async () => {
@@ -130,175 +122,215 @@ describe("Routerlicious", () => {
                 const s = dc.synthesize({}, {IComponentLoadable});
                 const loadable = await s.IComponentLoadable;
                 assert(loadable, "Required IComponentLoadable was registered");
-                assert(loadable === mock, "IComponentLoadable is valid");
+                assert(loadable === mock, "IComponentLoadable is expected");
+                assert(loadable?.url === mock.url, "IComponentLoadable is valid");
             });
 
-            // it(`Two Optional Modules all registered`, async () => {
-            //     const vessel = new DependencyContainer();
-            //     vessel.register(IComponentLoadable, {value: new MockLoadable()});
-            //     vessel.register(IComponentConfiguration, {value: new MockComponentConfiguration()});
+            it(`Two Optional Modules all registered`, async () => {
+                const dc = new DependencyContainer();
+                const loadableMock = new MockLoadable();
+                dc.register(IComponentLoadable, loadableMock);
+                const configMock = new MockComponentConfiguration();
+                dc.register(IComponentConfiguration, configMock);
 
-            //     const s = vessel.synthesize(
-            //         {IComponentLoadable, IComponentConfiguration}, {});
-            //     assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
-            //     assert(s.IComponentConfiguration, "Optional IComponentConfiguration was registered");
-            // });
+                const s = dc.synthesize({IComponentLoadable, IComponentConfiguration}, {});
+                const loadable = await s.IComponentLoadable;
+                assert(loadable, "Optional IComponentLoadable was registered");
+                assert(loadable === loadableMock, "IComponentLoadable is expected");
 
-            // it(`Two Optional Modules none registered`, async () => {
-            //     const vessel = new DependencyContainer();
-            //     const s = vessel.synthesize(
-            //         {IComponentLoadable,IComponentConfiguration}, {});
-            //     assert(!s.IComponentLoadable, "Optional IComponentLoadable was not registered");
-            //     assert(!s.IComponentConfiguration, "Optional IComponentConfiguration was not registered");
-            // });
+                const config = await s.IComponentConfiguration;
+                assert(config, "Optional IComponentConfiguration was registered");
+                assert(config === configMock, "IComponentConfiguration is expected");
+            });
 
-            // it(`Two Optional Modules one registered`, async () => {
-            //     const vessel = new DependencyContainer();
-            //     vessel.register(IComponentLoadable, {value: new MockLoadable()});
-            //     const s = vessel.synthesize(
-            //         {IComponentLoadable,IComponentConfiguration}, {});
-            //     assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
-            //     assert(!s.IComponentConfiguration, "Optional IComponentConfiguration was not registered");
-            // });
+            it(`Two Optional Modules one registered`, async () => {
+                const dc = new DependencyContainer();
+                const loadableMock = new MockLoadable();
+                dc.register(IComponentLoadable, loadableMock);
 
-            // it(`Two Required Modules all registered`, async () => {
-            //     const vessel = new DependencyContainer();
-            //     vessel.register(IComponentLoadable, {value: new MockLoadable()});
-            //     vessel.register(IComponentConfiguration, {value: new MockComponentConfiguration()});
+                const s = dc.synthesize({IComponentLoadable, IComponentConfiguration}, {});
+                const loadable = await s.IComponentLoadable;
+                assert(loadable, "Optional IComponentLoadable was registered");
+                assert(loadable === loadableMock, "IComponentLoadable is expected");
 
-            //     const s = vessel.synthesize(
-            //         {},
-            //         {IComponentLoadable, IComponentConfiguration},
-            //     );
+                const config = await s.IComponentConfiguration;
+                assert(!config, "Optional IComponentConfiguration was not registered");
+            });
 
-            //     assert(s.IComponentLoadable, "Required IComponentLoadable was registered");
-            //     assert(s.IComponentConfiguration, "Required IComponentConfiguration was registered");
-            // });
+            it(`Two Optional Modules none registered`, async () => {
+                const dc = new DependencyContainer();
 
-            // it(`Required Module not registered should throw`, async () => {
-            //     const vessel = new DependencyContainer();
+                const s = dc.synthesize({IComponentLoadable, IComponentConfiguration}, {});
+                const loadable = await s.IComponentLoadable;
+                assert(!loadable, "Optional IComponentLoadable was not registered");
+                const config = await s.IComponentConfiguration;
+                assert(!config, "Optional IComponentConfiguration was not registered");
+            });
 
-            //     assert.throws(() => vessel.synthesize(
-            //         {},
-            //         {IComponentLoadable},
-            //     ), Error);
-            // });
+            it(`Two Required Modules all registered`, async () => {
+                const dc = new DependencyContainer();
+                const loadableMock = new MockLoadable();
+                dc.register(IComponentLoadable, loadableMock);
+                const configMock = new MockComponentConfiguration();
+                dc.register(IComponentConfiguration, configMock);
 
-            // it(`Optional Module found in Parent`, async () => {
-            //     const parentVessel = new DependencyContainer();
-            //     parentVessel.register(IComponentLoadable, {value: new MockLoadable()});
-            //     const vessel = new DependencyContainer(parentVessel);
+                const s = dc.synthesize({}, {IComponentLoadable, IComponentConfiguration});
+                const loadable = await s.IComponentLoadable;
+                assert(loadable, "Required IComponentLoadable was registered");
+                assert(loadable === loadableMock, "IComponentLoadable is expected");
 
-            //     const s = vessel.synthesize({IComponentLoadable}, {});
-            //     assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
-            // });
+                const config = await s.IComponentConfiguration;
+                assert(config, "Required IComponentConfiguration was registered");
+                assert(config === configMock, "IComponentConfiguration is expected");
+            });
 
-            // it(`Optional Modules found in Parent and Child`, async () => {
-            //     const parentVessel = new DependencyContainer();
-            //     parentVessel.register(IComponentLoadable, {value: new MockLoadable()});
-            //     const vessel = new DependencyContainer(parentVessel);
-            //     vessel.register(IComponentConfiguration, {value: new MockComponentConfiguration()});
+            it(`Required Module not registered should throw`, async () => {
+                const dc = new DependencyContainer();
 
-            //     const s = vessel.synthesize(
-            //         {IComponentLoadable, IComponentConfiguration}, {});
-            //     assert(s.IComponentLoadable, "Optional IComponentLoadable was registered");
-            // });
+                assert.throws(() => dc.synthesize(
+                    {},
+                    {IComponentLoadable},
+                ), Error);
+            });
 
-            // it(`Optional Module in Parent and Child. Resolves Child`, async () => {
-            //     const parentVessel = new DependencyContainer();
-            //     parentVessel.register(IComponentLoadable, {value: new MockLoadable()});
-            //     const vessel = new DependencyContainer(parentVessel);
-            //     const childLoadableModule = new MockLoadable();
-            //     vessel.register(IComponentLoadable, {value: childLoadableModule});
+            it(`Optional Module found in Parent`, async () => {
+                const parentDc = new DependencyContainer();
+                const mock = new MockLoadable();
+                parentDc.register(IComponentLoadable, mock);
+                const dc = new DependencyContainer(parentDc);
 
-            //     const s = vessel.synthesize(
-            //         {IComponentLoadable}, {});
-            //     assert(s.IComponentLoadable === childLoadableModule, "Child Module loaded");
-            // });
+                const s = dc.synthesize({IComponentLoadable}, {});
+                const loadable = await s.IComponentLoadable;
+                assert(loadable, "Optional IComponentLoadable was registered");
+                assert(loadable === mock, "IComponentLoadable is expected");
+                assert(loadable?.url === mock.url, "IComponentLoadable is valid");
+            });
 
-            // it(`Required Module found in Parent`, async () => {
-            //     const parentVessel = new DependencyContainer();
-            //     parentVessel.register(IComponentLoadable, {value: new MockLoadable()});
-            //     const vessel = new DependencyContainer(parentVessel);
+            it(`Optional Modules found in Parent and Child`, async () => {
+                const parentDc = new DependencyContainer();
+                const loadableMock = new MockLoadable();
+                parentDc.register(IComponentLoadable, loadableMock);
+                const dc = new DependencyContainer(parentDc);
+                const configMock = new MockComponentConfiguration();
+                dc.register(IComponentConfiguration, configMock);
 
-            //     const s = vessel.synthesize({}, {IComponentLoadable});
-            //     assert(s.IComponentLoadable, "Required IComponentLoadable was registered");
-            // });
+                const s = dc.synthesize({IComponentLoadable, IComponentConfiguration}, {});
+                const loadable = await s.IComponentLoadable;
+                assert(loadable, "Optional IComponentLoadable was registered");
+                assert(loadable === loadableMock, "IComponentLoadable is expected");
 
-            // it(`Required Module found in Parent and Child`, async () => {
-            //     const parentVessel = new DependencyContainer();
-            //     parentVessel.register(IComponentLoadable, {value: new MockLoadable()});
-            //     const vessel = new DependencyContainer(parentVessel);
-            //     vessel.register(IComponentConfiguration, {value: new MockComponentConfiguration()});
+                const config = await s.IComponentConfiguration;
+                assert(config, "Optional IComponentConfiguration was registered");
+                assert(config === configMock, "IComponentConfiguration is expected");
+            });
 
-            //     const s = vessel.synthesize(
-            //         {}, {IComponentLoadable, IComponentConfiguration});
-            //     assert(s.IComponentLoadable, "Required IComponentLoadable was registered");
-            //     assert(s.IComponentConfiguration, "Required IComponentConfiguration was registered");
-            // });
+            it(`Optional Module found in Parent and Child resolves Child`, async () => {
+                const parentDc = new DependencyContainer();
+                parentDc.register(IComponentLoadable, new MockLoadable());
+                const dc = new DependencyContainer(parentDc);
+                const loadableMock = new MockLoadable();
+                dc.register(IComponentLoadable, loadableMock);
 
-            // it(`Required Module in Parent and Child. Resolves Child`, async () => {
-            //     const parentVessel = new DependencyContainer();
-            //     parentVessel.register(IComponentLoadable, {value: new MockLoadable()});
-            //     const vessel = new DependencyContainer(parentVessel);
-            //     const mock = new MockLoadable();
-            //     vessel.register(IComponentLoadable, {value: mock});
+                const s = dc.synthesize({IComponentLoadable}, {});
+                const loadable = await s.IComponentLoadable;
+                assert(loadable, "Optional IComponentLoadable was registered");
+                assert(loadable === loadableMock, "IComponentLoadable is expected");
+            });
 
-            //     const s = vessel.synthesize(
-            //         {}, {IComponentLoadable});
-            //     assert(s.IComponentLoadable === mock, "Child Module loaded");
-            // });
+            it(`Required Module found in Parent`, async () => {
+                const parentDc = new DependencyContainer();
+                const mock = new MockLoadable();
+                parentDc.register(IComponentLoadable, mock);
+                const dc = new DependencyContainer(parentDc);
 
-            // it(`Registering`, async () => {
-            //     const vessel = new DependencyContainer();
-            //     vessel.register(IComponentLoadable, {value: new MockLoadable()});
-            //     assert(vessel.has(IComponentLoadable), "Manager has IComponentLoadable");
-            //     assert(Array.from(vessel.registeredTypes).length === 1, "Manager has one module");
-            // });
+                const s = dc.synthesize({}, {IComponentLoadable});
+                const loadable = await s.IComponentLoadable;
+                assert(loadable, "Required IComponentLoadable was registered");
+                assert(loadable === mock, "IComponentLoadable is expected");
+                assert(loadable?.url === mock.url, "IComponentLoadable is valid");
+            });
 
-            // it(`Registering the same type twice throws`, async () => {
-            //     const vessel = new DependencyContainer();
-            //     vessel.register(IComponentLoadable, {value: new MockLoadable()});
-            //     assert.throws(() => vessel.register(IComponentLoadable, {value: new MockLoadable()}), Error);
-            // });
+            it(`Required Modules found in Parent and Child`, async () => {
+                const parentDc = new DependencyContainer();
+                const loadableMock = new MockLoadable();
+                parentDc.register(IComponentLoadable, loadableMock);
+                const dc = new DependencyContainer(parentDc);
+                const configMock = new MockComponentConfiguration();
+                dc.register(IComponentConfiguration, configMock);
 
-            // it(`Registering then Unregistering`, async () => {
-            //     const vessel = new DependencyContainer();
-            //     vessel.register(IComponentLoadable, {value: new MockLoadable()});
-            //     vessel.unregister(IComponentLoadable);
-            //     assert(!vessel.has(IComponentLoadable), "Manager doesn't have IComponentLoadable");
-            //     assert(Array.from(vessel.registeredTypes).length === 0, "Manager has no modules");
-            // });
+                const s = dc.synthesize({}, {IComponentLoadable, IComponentConfiguration});
+                const loadable = await s.IComponentLoadable;
+                assert(loadable, "Required IComponentLoadable was registered");
+                assert(loadable === loadableMock, "IComponentLoadable is expected");
 
-            // it(`Registering then Unregistering then registering`, async () => {
-            //     const vessel = new DependencyContainer();
-            //     vessel.register(IComponentLoadable, {value: new MockLoadable()});
-            //     vessel.unregister(IComponentLoadable);
-            //     vessel.register(IComponentLoadable, {value: new MockLoadable()});
-            //     assert(vessel.has(IComponentLoadable), "Manager has IComponentLoadable");
-            // });
+                const config = await s.IComponentConfiguration;
+                assert(config, "Required IComponentConfiguration was registered");
+                assert(config === configMock, "IComponentConfiguration is expected");
+            });
 
-            // it(`has() resolves correctly in all variations`, async () => {
-            //     const vessel = new DependencyContainer();
-            //     vessel.register(IComponentLoadable, {instance: MockLoadable});
-            //     vessel.register(IComponentConfiguration, {instance: MockComponentConfiguration});
-            //     assert(vessel.has(IComponentLoadable), "Manager has IComponentLoadable");
-            //     assert(vessel.has(IComponentConfiguration), "Manager has IComponentConfiguration");
-            //     assert(
-            //         vessel.has(IComponentLoadable, IComponentConfiguration),
-            //         "Manager has IComponentLoadable & IComponentConfiguration");
-            //     assert(Array.from(vessel.registeredTypes).length === 2, "Manager has two modules");
-            // });
+            it(`Required Module found in Parent and Child resolves Child`, async () => {
+                const parentDc = new DependencyContainer();
+                parentDc.register(IComponentLoadable, new MockLoadable());
+                const dc = new DependencyContainer(parentDc);
+                const loadableMock = new MockLoadable();
+                dc.register(IComponentLoadable, loadableMock);
 
-            // it(`registeredModules() resolves correctly`, async () => {
-            //     const vessel = new DependencyContainer();
-            //     vessel.register(IComponentLoadable, {instance: MockLoadable});
-            //     vessel.register(IComponentConfiguration, {instance: MockComponentConfiguration});
-            //     const modules = Array.from(vessel.registeredTypes);
-            //     assert(modules.length === 2, "Manager has two modules");
-            //     assert(modules.includes(IComponentLoadable), "Manager has IComponentLoadable");
-            //     assert(modules.includes(IComponentConfiguration), "Manager has IComponentConfiguration");
-            // });
+                const s = dc.synthesize({}, {IComponentLoadable});
+                const loadable = await s.IComponentLoadable;
+                assert(loadable, "Required IComponentLoadable was registered");
+                assert(loadable === loadableMock, "IComponentLoadable is expected");
+            });
+
+            it(`Registering`, async () => {
+                const dc = new DependencyContainer();
+                dc.register(IComponentLoadable, new MockLoadable());
+                assert(dc.has(IComponentLoadable), "DependencyContainer has IComponentLoadable");
+                assert(Array.from(dc.registeredTypes).length === 1, "DependencyContainer has one module");
+            });
+
+            it(`Registering the same type twice throws`, async () => {
+                const dc = new DependencyContainer();
+                dc.register(IComponentLoadable, new MockLoadable());
+                assert.throws(() => dc.register(IComponentLoadable, new MockLoadable()), Error);
+            });
+
+            it(`Registering then Unregistering`, async () => {
+                const dc = new DependencyContainer();
+                dc.register(IComponentLoadable, new MockLoadable());
+                dc.unregister(IComponentLoadable);
+                assert(!dc.has(IComponentLoadable), "DependencyContainer doesn't have IComponentLoadable");
+                assert(Array.from(dc.registeredTypes).length === 0, "Manager has no modules");
+            });
+
+            it(`Registering then Unregistering then Registering`, async () => {
+                const dc = new DependencyContainer();
+                dc.register(IComponentLoadable, new MockLoadable());
+                dc.unregister(IComponentLoadable);
+                dc.register(IComponentLoadable, new MockLoadable());
+                assert(dc.has(IComponentLoadable), "DependencyContainer has IComponentLoadable");
+            });
+
+            it(`has() resolves correctly in all variations`, async () => {
+                const dc = new DependencyContainer();
+                dc.register(IComponentLoadable, new MockLoadable());
+                dc.register(IComponentConfiguration, new MockComponentConfiguration());
+                assert(dc.has(IComponentLoadable), "Manager has IComponentLoadable");
+                assert(dc.has(IComponentConfiguration), "Manager has IComponentConfiguration");
+                assert(
+                    dc.has(IComponentLoadable, IComponentConfiguration),
+                    "Manager has IComponentLoadable & IComponentConfiguration");
+                assert(Array.from(dc.registeredTypes).length === 2, "Manager has two modules");
+            });
+
+            it(`registeredModules() resolves correctly`, async () => {
+                const dc = new DependencyContainer();
+                dc.register(IComponentLoadable, new MockLoadable());
+                dc.register(IComponentConfiguration, new MockComponentConfiguration());
+                const modules = Array.from(dc.registeredTypes);
+                assert(modules.length === 2, "Manager has two modules");
+                assert(modules.includes(IComponentLoadable), "Manager has IComponentLoadable");
+                assert(modules.includes(IComponentConfiguration), "Manager has IComponentConfiguration");
+            });
         });
     });
 });

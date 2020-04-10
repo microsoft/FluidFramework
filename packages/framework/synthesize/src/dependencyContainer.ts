@@ -46,13 +46,10 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
     /**
      * {@inheritDoc (IComponentSynthesizer:interface).unregister}
      */
-    public unregister<T extends keyof IComponent>(type: T): Provider<T> | undefined {
-        const module = this.providers.get(type);
-        if (module){
+    public unregister<T extends keyof IComponent>(type: T): void {
+        if (this.providers.has(type)){
             this.providers.delete(type);
         }
-
-        return module;
     }
 
     /**

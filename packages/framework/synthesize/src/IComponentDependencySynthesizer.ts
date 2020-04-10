@@ -45,9 +45,8 @@ export interface IComponentDependencySynthesizer extends IProvideComponentDepend
     /**
      * Remove a provider
      * @param type - Name of the provider to remove
-     * @returns - Module removed if removed or undefined if it was not there.
      */
-    unregister<T extends keyof IComponent>(type: T): Provider<T> | undefined;
+    unregister<T extends keyof IComponent>(type: T): void;
 
     /**
      * synthesize takes optional and required types and returns an object that will fulfill the

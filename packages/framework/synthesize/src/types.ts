@@ -22,7 +22,7 @@ export type ComponentSymbolProvider<T extends keyof IComponent> = {
  * the property.
  */
 export type AsyncRequiredComponentProvider<T extends keyof IComponent> = {
-    [P in T]: Promise<NonNullable<IComponent[T]>>
+    [P in T]: Promise<NonNullable<IComponent[P]>>
 };
 
 /**
@@ -31,7 +31,7 @@ export type AsyncRequiredComponentProvider<T extends keyof IComponent> = {
  * the property or undefined.
  */
 export type AsyncOptionalComponentProvider<T extends keyof IComponent> = {
-    [P in T]: Promise<IComponent[T] | undefined>;
+    [P in T]: Promise<IComponent[P] | undefined>;
 };
 
 /**
@@ -40,7 +40,7 @@ export type AsyncOptionalComponentProvider<T extends keyof IComponent> = {
  * the property.
  */
 export type ComponentProvider<T extends keyof IComponent> = {
-    [P in T]: NonNullable<IComponent[T]>
+    [P in T]: NonNullable<IComponent[P]>
 };
 
 export type Provider<T extends keyof IComponent> =
