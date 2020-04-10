@@ -13,7 +13,7 @@ import { RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlici
 import { NodeCodeLoader, NodeWhiteList } from "@microsoft/fluid-server-services";
 import * as jwt from "jsonwebtoken";
 import { Provider } from "nconf";
-import * as uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
 import * as winston from "winston";
 
 const packageManagerUrl = "https://packages.wu2.prague.office-int.com";

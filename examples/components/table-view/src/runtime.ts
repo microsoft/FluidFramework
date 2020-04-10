@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aqueduct";
 import { tableViewType } from "./tableview";
 
-export const fluidExport = new SimpleModuleInstantiationFactory(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
     tableViewType,
     new Map([
         // eslint-disable-next-line max-len
