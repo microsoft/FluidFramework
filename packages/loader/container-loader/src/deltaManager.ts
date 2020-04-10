@@ -253,7 +253,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             });
 
         this._inbound.on("error", (error) => {
-            this.emit("error", createIError(error));
+            this.emit("error", createIError(error, true));
         });
 
         // Outbound message queue. The outbound queue is represented as a queue of an array of ops. Ops contained
@@ -264,7 +264,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             });
 
         this._outbound.on("error", (error) => {
-            this.emit("error", createIError(error));
+            this.emit("error", createIError(error, true));
         });
 
         // Inbound signal queue
@@ -276,7 +276,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         });
 
         this._inboundSignal.on("error", (error) => {
-            this.emit("error", createIError(error));
+            this.emit("error", createIError(error, true));
         });
 
         // Require the user to start the processing
