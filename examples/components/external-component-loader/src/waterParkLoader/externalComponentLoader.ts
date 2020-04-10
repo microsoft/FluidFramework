@@ -37,11 +37,11 @@ export class ExternalComponentLoader extends PrimedComponent
         "@fluid-example/table-view",
     ];
     private readonly viewComponentMapID: string = "ViewComponentUrl";
-    private viewComponentP: Promise<IComponent>;
+    private viewComponentP: Promise<IComponent> | undefined;
 
-    private savedElement: HTMLElement;
-    private error: string;
-    private callbacks: IComponentCallbacks;
+    private savedElement: HTMLElement | undefined;
+    private error: string | undefined;
+    private callbacks: IComponentCallbacks | undefined;
 
     public get IComponentHTMLView() { return this; }
     public get IComponentCallable() { return this; }
@@ -108,7 +108,11 @@ export class ExternalComponentLoader extends PrimedComponent
             const editableButton = document.createElement("button");
             inputDiv.append(editableButton);
             editableButton.textContent = "Toggle Edit";
-            editableButton.onclick = () => this.callbacks.toggleEditable();
+            editableButton.onclick = () => {
+                if (this.callbacks?.toggleEditable) {
+                    this.callbacks.toggleEditable();
+                }
+            };
 
             if (this.error) {
                 const errorDiv = document.createElement("div");
@@ -145,6 +149,12 @@ export class ExternalComponentLoader extends PrimedComponent
                 const viewComponent = await this.viewComponentP;
                 if (viewComponent && viewComponent.IComponentCollection && this.runtime.IComponentRegistry) {
                     const urlReg = await this.runtime.IComponentRegistry.get("url");
+                    if (urlReg === undefined) {
+                        throw new Error("urlReg is undefined");
+                    }
+                    if (urlReg.IComponentRegistry === undefined) {
+                        throw new Error("urlReg is not a registry");
+                    }
                     const pkgReg = await urlReg.IComponentRegistry.get(url) as IComponent;
                     let componentRuntime: IComponentRuntime;
                     const id = uuid();
@@ -188,7 +198,9 @@ export class ExternalComponentLoader extends PrimedComponent
             }
         } catch (error) {
             this.error = error;
-            this.render(this.savedElement);
+            if (this.savedElement) {
+                this.render(this.savedElement);
+            }
         }
     }
 }

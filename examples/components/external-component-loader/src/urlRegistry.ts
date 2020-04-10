@@ -38,8 +38,7 @@ export class UrlRegistry implements IComponentRegistry {
 
     public get IComponentRegistry() { return this; }
 
-    public async get(name: string): Promise<ComponentRegistryEntry> {
-
+    public async get(name: string): Promise<ComponentRegistryEntry | undefined> {
         if (!this.urlRegistryMap.has(name)
             && (name.startsWith("http://") || name.startsWith("https://"))) {
 
@@ -96,7 +95,7 @@ export class UrlRegistry implements IComponentRegistry {
                         scripts.map(
                             async (bundle) => loadScript(`${name}/${bundle}`));
 
-                    const errors = [];
+                    const errors: any[] = [];
                     while (scriptLoadPromises.length > 0) {
                         try {
                             await scriptLoadPromises.shift();
