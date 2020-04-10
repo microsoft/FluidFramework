@@ -51,7 +51,17 @@ export class ClientSequenceNumberManager {
     public cloneValues(): IClientSequenceNumber[] {
         const clients: IClientSequenceNumber[] = [];
         for (const [, value] of this.clientNodeMap) {
-            clients.push(_.clone(value.value));
+            const source = value.value;
+            const copy: IClientSequenceNumber = {
+                canEvict: source.canEvict,
+                clientId: source.clientId,
+                clientSequenceNumber: source.clientSequenceNumber,
+                lastUpdate: source.lastUpdate,
+                nack: source.nack,
+                referenceSequenceNumber: source.referenceSequenceNumber,
+                scopes: source.scopes,
+            };
+            clients.push(copy);
         }
         return clients;
     }
