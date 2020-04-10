@@ -35,14 +35,14 @@ export class LastEditedTracker extends EventEmitter implements ILastEditedTracke
     }
 
     /**
-     * {@inheritDoc ILastEdited.getLastEditDetails}
+     * {@inheritDoc ILastEditedTracker.getLastEditDetails}
      */
     public getLastEditDetails(): ILastEditDetails | undefined {
         return this.summarizableObject.get<ILastEditDetails>(this.lastEditedDetailsKey);
     }
 
     /**
-     * {@inheritDoc ILastEdited.updateLastEditDetails}
+     * {@inheritDoc ILastEditedTracker.updateLastEditDetails}
      */
     public updateLastEditDetails(message: ISequencedDocumentMessage) {
         // Get the user information from the client information in the quorum and set the
