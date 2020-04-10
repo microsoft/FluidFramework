@@ -56,7 +56,6 @@ export class ExternalComponentLoader extends PrimedComponent
     }
 
     public render(element: HTMLElement) {
-
         if (element === undefined) {
             return;
         }
@@ -130,65 +129,66 @@ export class ExternalComponentLoader extends PrimedComponent
         const value = input.value;
         input.value = "";
         this.error = undefined;
-        if (value !== undefined && value.length > 0) {
-            let url = value;
-            if (url.startsWith("@")) {
-                url = `https://pragueauspkn-3873244262.azureedge.net/${url}`;
-            }
-
-            try {
-                // eslint-disable-next-line @typescript-eslint/no-misused-promises
-                if (this.viewComponentP) {
-                    const viewComponent = await this.viewComponentP;
-                    if (viewComponent && viewComponent.IComponentCollection && this.runtime.IComponentRegistry) {
-                        const urlReg = await this.runtime.IComponentRegistry.get("url");
-                        const pkgReg = await urlReg.IComponentRegistry.get(url) as IComponent;
-                        let componentRuntime: IComponentRuntime;
-                        const id = uuid();
-                        if (pkgReg.IComponentDefaultFactoryName) {
-                            componentRuntime = await this.context.hostRuntime.createComponent(
-                                id,
-                                [
-                                    ...this.context.packagePath,
-                                    "url",
-                                    url,
-                                    pkgReg.IComponentDefaultFactoryName.getDefaultFactoryName(),
-                                ]);
-                        } else if (pkgReg.IComponentFactory) {
-                            componentRuntime = await this.context.hostRuntime.createComponent(
-                                id,
-                                [
-                                    ...this.context.packagePath,
-                                    "url",
-                                    url,
-                                ]);
-                        } else {
-                            throw new Error(`${url} is not a factory, and does not provide default component name`);
-                        }
-
-                        const response: IResponse = await componentRuntime.request({ url: "/" });
-                        let component: IComponent = response.value as IComponent;
-                        componentRuntime.attach();
-                        if (component.IComponentCollection !== undefined) {
-                            component = component.IComponentCollection.createCollectionItem();
-                        }
-                        viewComponent.IComponentCollection.createCollectionItem({
-                            handle: component.IComponentHandle,
-                            type: value,
-                            id,
-                        });
-                    } else {
-                        throw new Error("View component is empty or is not an IComponentCollection!!");
-                    }
-                } else {
-                    throw new Error("View component promise not set!!");
-                }
-            } catch (error) {
-                this.error = error;
-                this.render(this.savedElement);
-            }
-        } else {
+        if (value === undefined || value.length === 0) {
             input.style.backgroundColor = "#FEE";
+            return;
+        }
+
+        let url = value;
+        if (url.startsWith("@")) {
+            url = `https://pragueauspkn-3873244262.azureedge.net/${url}`;
+        }
+
+        try {
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
+            if (this.viewComponentP) {
+                const viewComponent = await this.viewComponentP;
+                if (viewComponent && viewComponent.IComponentCollection && this.runtime.IComponentRegistry) {
+                    const urlReg = await this.runtime.IComponentRegistry.get("url");
+                    const pkgReg = await urlReg.IComponentRegistry.get(url) as IComponent;
+                    let componentRuntime: IComponentRuntime;
+                    const id = uuid();
+                    if (pkgReg.IComponentDefaultFactoryName) {
+                        componentRuntime = await this.context.hostRuntime.createComponent(
+                            id,
+                            [
+                                ...this.context.packagePath,
+                                "url",
+                                url,
+                                pkgReg.IComponentDefaultFactoryName.getDefaultFactoryName(),
+                            ]);
+                    } else if (pkgReg.IComponentFactory) {
+                        componentRuntime = await this.context.hostRuntime.createComponent(
+                            id,
+                            [
+                                ...this.context.packagePath,
+                                "url",
+                                url,
+                            ]);
+                    } else {
+                        throw new Error(`${url} is not a factory, and does not provide default component name`);
+                    }
+
+                    const response: IResponse = await componentRuntime.request({ url: "/" });
+                    let component: IComponent = response.value as IComponent;
+                    componentRuntime.attach();
+                    if (component.IComponentCollection !== undefined) {
+                        component = component.IComponentCollection.createCollectionItem();
+                    }
+                    viewComponent.IComponentCollection.createCollectionItem({
+                        handle: component.IComponentHandle,
+                        type: value,
+                        id,
+                    });
+                } else {
+                    throw new Error("View component is empty or is not an IComponentCollection!!");
+                }
+            } else {
+                throw new Error("View component promise not set!!");
+            }
+        } catch (error) {
+            this.error = error;
+            this.render(this.savedElement);
         }
     }
 }
