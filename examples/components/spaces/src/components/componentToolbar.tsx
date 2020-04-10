@@ -17,7 +17,6 @@ import {
 import { ISharedDirectory } from "@microsoft/fluid-map";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import {
-    InternalRegistry,
     IContainerComponentDetails,
     IComponentCallable,
     IComponentCallbacks,
@@ -52,8 +51,7 @@ export class ComponentToolbar extends PrimedComponent
         if (registry) {
             const registryDetails = (registry as IComponent).IComponentRegistryDetails;
             if (registryDetails) {
-                this.supportedComponentList = (registryDetails as InternalRegistry)
-                    .getFromCapabilities("IComponentHTMLView");
+                this.supportedComponentList = registryDetails.getFromCapabilities("IComponentHTMLView");
             }
         }
     }
