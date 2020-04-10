@@ -35,7 +35,6 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
      * {@inheritDoc (IComponentSynthesizer:interface).register}
      */
     public register<T extends keyof IComponent>(type: T, provider: ComponentProvider<T>): void {
-        // Maybe this should just overwrite?
         if (this.has(type)){
             throw new Error(`Attempting to register a provider of type ${type} that already exists`);
         }

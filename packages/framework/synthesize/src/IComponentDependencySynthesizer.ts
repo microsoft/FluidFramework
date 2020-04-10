@@ -66,7 +66,7 @@ export interface IComponentDependencySynthesizer extends IProvideComponentDepend
      * Check if a given type is registered
      * @param types - Type to check
      */
-    has(types: keyof IComponent | (keyof IComponent)[]): boolean;
+    has(...types: (keyof IComponent)[]): boolean;
 
     /**
      * Get a provider. undefined if not available.
