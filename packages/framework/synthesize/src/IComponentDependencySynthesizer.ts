@@ -25,7 +25,7 @@ export interface IProvideComponentDependencySynthesizer {
 
 /**
  * IComponentSynthesizer can generate IComponent Objects based on the IProvideComponent pattern.
- * It allow for registering providers and uses synthesize to genera a new object with the optional
+ * It allow for registering providers and uses synthesize to generate a new object with the optional
  * and required types.
  */
 export interface IComponentDependencySynthesizer extends IProvideComponentDependencySynthesizer {
