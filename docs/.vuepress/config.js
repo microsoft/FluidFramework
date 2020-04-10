@@ -368,6 +368,7 @@ const getPatternsSidebar = () => {
             collapsable: false,
             children: [
                 "leader-election",
+                "operation-ordering",
             ]
         },
     ];
