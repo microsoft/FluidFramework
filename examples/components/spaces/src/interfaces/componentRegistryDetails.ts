@@ -18,7 +18,7 @@ export interface IProvideComponentRegistryDetails {
 }
 
 export interface IComponentRegistryDetails extends IProvideComponentRegistryDetails {
-    getFromCapabilities(type: keyof IComponent): IContainerComponentDetails[];
+    getFromCapability(type: keyof IComponent): IContainerComponentDetails[];
     hasCapability(type: string, capability: keyof IComponent): boolean;
 }
 

@@ -20,6 +20,7 @@ import {
     IContainerComponentDetails,
     IComponentCallable,
     IComponentCallbacks,
+    InternalRegistry,
 } from "..";
 
 const componentToolbarStyle: React.CSSProperties = { position: "absolute", top: 10, left: 10, zIndex: 1000 };
@@ -51,7 +52,8 @@ export class ComponentToolbar extends PrimedComponent
         if (registry) {
             const registryDetails = (registry as IComponent).IComponentRegistryDetails;
             if (registryDetails) {
-                this.supportedComponentList = registryDetails.getFromCapabilities("IComponentHTMLView");
+                this.supportedComponentList = (registryDetails as InternalRegistry)
+                    .getFromCapability("IComponentHTMLView");
             }
         }
     }
