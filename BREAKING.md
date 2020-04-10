@@ -1,10 +1,88 @@
 # Breaking changes
 
+## 0.16 Breaking Changes
+
+- [View interfaces moved to separate package](#View-interfaces-moved-to-separate-package)
+- [IComponent* Interfaces should now have string literal identifiers](#IComponent*-Interfaces-should-now-have-string-literal-identifiers)
+- [SharedComponentFactory and PrimedComponentFactory changes](#SharedComponentFactory-and-PrimedComponentFactory-changes)
+- [PrimedComponent and SharedComponent interface changes](#PrimedComponent-and-Shared-Component-interface-changes)
+- [SimpleModuleInstantiationFactory renamed and SimpleContainerRuntimeFactory deprecated](#SimpleModuleInstantiationFactory-renamed-and-SimpleContainerRuntimeFactory-deprecated)
+
+### View interfaces moved to separate package
+
+View-related interfaces have been moved to package `@microsoft/fluid-view-interfaces`.  This includes `IComponentHTMLView`, `IComponentHTMLVisual`, `IComponentHTMLOptions`, `IComponentReactViewable`, and their related "provide" interfaces.
+
+### `IComponent*` Interfaces should now have string literal identifiers
+
+This change is non-breaking, but an update to our IComponent interface paradigm. Interfaces that use module augmentation on IComponent should export a string literal const with the same name as the interface.
+
+This const provides two benefits:
+
+1. This additional syntax will provide circular type safety so it's hared to mix up typings.
+2. This string can be used as a global runtime identifier for the interface. Since interfaces are a TypeScript concept and compiled away, we can now use this const as a way to identify interfaces at runtime.
+
+#### Old Pattern
+
+```typescript
+declare module "@microsoft/fluid-component-core-interfaces" {
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IComponent extends Readonly<Partial<IProvideComponentFactory>> { }
+}
+
+export interface IProvideComponentFoo {
+    readonly IComponentFoo: IComponentFoo;
+}
+
+export interface IComponentFoo extends IProvideComponentFoo {
+    bar()
+}
+```
+
+#### New Pattern
+
+```typescript
+declare module "@microsoft/fluid-component-core-interfaces" {
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IComponent extends Readonly<Partial<IProvideComponentFactory>> { }
+}
+
+export const IComponentFoo: keyof IProvideComponentFoo  = "IComponentFoo";
+
+export interface IProvideComponentFoo {
+    readonly IComponentFoo: IComponentFoo;
+}
+
+export interface IComponentFoo extends IProvideComponentFoo {
+    bar()
+}
+```
+
+### SharedComponentFactory and PrimedComponentFactory changes
+
+Class definitions for SharedComponentFactory and PrimedComponentFactory have been updated.  Both now specify a required `type: string` parameter in their constructors.
+
+### PrimedComponent and SharedComponent interface changes
+
+There have been a few changes to the exposed interfaces on Primed & SharedComponents so that the id of components is generated uniquely by the runtime. Components can instead implement IComponentLoadable and be stored and retrieved from DDS' using their handles.
+1. createAndAttachComponent no longer has an id first parameter. This is to enforce a unique generation of the id by the runtime itself
+2. getComponent is now marked as deprecated and renamed to getComponent_UNSAFE. Instead, users should return their component in the following manner:
+directoryWhereHandleIsStored.get<IComponentHandle<TypeOfHandle>>(idOfHandleInDirectory).get();
+
+Alternatively, a new helper function is provided for compatibility called getComponentFromDirectory that takes the string key and the directory where either the component handle or the id used for the old getComponent call is stored. It will appropriately fetch the component using the handle/id stored in the directory and then update the stored value with a handle now so that there are fewer and fewer IDs stored. 
+Users can also pass in an optional function to get the value from their directory in case they have some specially defined types. Look at dataModel.ts in the examples/components/spaces for an implentation of such.
+
+### `SimpleModuleInstantiationFactory` renamed and `SimpleContainerRuntimeFactory` deprecated
+
+`SimpleModuleInstantiationFactory` is now named `ContainerRuntimeFactoryWithDefaultComponent`.  Its functionality is unchanged.
+
+`SimpleContainerRuntimeFactory` is deprecated, as most of its functionality is provided by `ContainerRuntimeFactoryWithDefaultComponent` which should be used instead.  It does not provide `createAndAttachComponent()`, but this functionality can be achieved using direct calls to `createComponent()` and `attach()`.  `SimpleContainerRuntimeFactory` will be removed in a future version of the framework.
+
 ## 0.15 Breaking Changes
 
 - [`getComponentRuntime` no longer on `IComponentContext`](#getComponentRuntime-no-longer-on-IComponentContext)
 - [Container.autoReconnect & Container.reconnect changes](#Container.reconnect-Container.reconnect-changes)
 - [0.13 backwards compatibility removed](#013-backwards-compatibility-removed)
+- [Base host no longer renders](#Base-host-no-longer-renders)
 
 ### `getComponentRuntime` no longer on `IComponentContext`
 
@@ -18,7 +96,7 @@ scenario.
 
 ### Container.reconnect, Container.reconnect changes
 
-autoReconnect property is gone, as well as reconnect() method.  
+autoReconnect property is gone, as well as reconnect() method.
 Use Container.setAutoReconnect() instead.
 
 Note that there is difference in behavior. It used to be that one needed to do
@@ -36,6 +114,12 @@ in order to trigger reconnect. Now, calling Container.setAutoReconnect(true) is 
     - While `IContainerContext.baseSnapshot` was defined to be possibly `null`, `ContainerContext` and `ContainerRuntime` would not correctly handle being passed `baseSnapshot` as `null` in 0.13 and below, and `Container` would not pass it as `null`, passing an empty snapshot instead. `Container` will now potentially pass `baseSnapshot` as `null`.
     - `ContainerRuntime.stop()` is now expected to return an `IRuntimeState`, rather than `void` as previously returned in 0.13 and below. This `IRuntimeState` can be an empty object, but cannot be null.
 
+### Base host no longer renders
+
+`BaseHost.start()` and `BaseHost.loadAndRender()` have been removed.  They have been replaced by `initializeContainer()`, which similarly resolves a container at the url provided and initializes it with the package provided if needed, but does not perform any rendering.
+
+To facilitate rendering `getComponent()` has also been added, which requests the component at the given url.  Once you've requested a component, you can take whatever steps you would like to render it (e.g. querying its interfaces or passing it into an adapter like `ReactAdapter` or `HTMLViewAdapter` from `@microsoft/fluid-view-adapters`).
+
 ## 0.14 Breaking Changes
 
 - [Packages move and renamed](#packages-moved-and-renamed)
@@ -46,6 +130,7 @@ in order to trigger reconnect. Now, calling Container.setAutoReconnect(true) is 
 - [`IComponentHandle` - Moved type parameter from get to interface](#icomponenthandle---type-parameter-moved)
 - [Changes to the render interfaces](#changes-to-the-render-interfaces)
 - [Old runtime container cannot load new components](#old-runtime-container-cannot-load-new-components)
+- [PrimedComponent and SharedComponent interfaces are now more restrictive](#restricted-component-interfaces)
 
 ### Packages moved and renamed
 
@@ -150,6 +235,18 @@ The rendering interfaces have undergone several changes:
 
 The way that summaries are generated has changed in such a way that the runtime container is backwards compatible with 0.13 components, but 0.13 runtime container cannot load 0.14 or later components.
 
+### PrimedComponent and SharedComponent interfaces are now more restrictive
+The following class variables have been changed from public -> protected
+In PrimedComponent:
+- root
+- taskManager
+- writeBlob
+In SharedComponent:
+- asComponent
+If you still need to access these methods, you can still do so by overloading the needed method in your class
+and making it public.
+An example of this can be seen in primedComponent.spec.ts
+
 ## 0.13 Breaking Changes
 
 - [Fluid Packages Require Consumers on TypeScript `>=3.6`](##Fluid-Packages-Require-Consumers-on-TypeScript->=3.6)
@@ -170,7 +267,7 @@ TypeScript now emits `get/set` accessors in `.d.ts` files. TypeScript versions `
 
 More about the changes:
 
-- [Class Field Mitigations](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#class-field-mitigations)  
+- [Class Field Mitigations](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#class-field-mitigations)
 - [Full list of TypeScript changes](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html)
 
 ### IHost interface removed, Loader constructor signature updated

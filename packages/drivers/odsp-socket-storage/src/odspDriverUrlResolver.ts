@@ -5,20 +5,15 @@
 
 import * as assert from "assert";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { IUrlResolver, OpenMode } from "@microsoft/fluid-driver-definitions";
-import { IOdspResolvedUrl } from "./contracts";
+import { IUrlResolver, IExperimentalUrlResolver } from "@microsoft/fluid-driver-definitions";
+import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
+import { IOdspResolvedUrl, ICreateNewOptions } from "./contracts";
 import { getHashedDocumentId } from "./odspUtils";
-import { isOdcOrigin } from "./isOdc";
+import { getApiRoot } from "./odspUrlHelper";
 
 function getSnapshotUrl(siteUrl: string, driveId: string, itemId: string) {
     const siteOrigin = new URL(siteUrl).origin;
-
-    let prefix = "_api/";
-    if (isOdcOrigin(siteOrigin)) {
-        prefix = "";
-    }
-
-    return `${siteOrigin}/${prefix}v2.1/drives/${driveId}/items/${itemId}/opStream/snapshots`;
+    return `${getApiRoot(siteOrigin)}/drives/${driveId}/items/${itemId}/opStream/snapshots`;
 }
 
 /**
@@ -33,11 +28,15 @@ function removeBeginningSlash(str: string): string {
     return str;
 }
 
-export class OdspDriverUrlResolver implements IUrlResolver {
+export class OdspDriverUrlResolver implements IUrlResolver, IExperimentalUrlResolver {
+    public readonly isExperimentalUrlResolver = true;
     constructor() { }
 
     public async resolve(request: IRequest): Promise<IOdspResolvedUrl> {
-        if (request.headers && request.headers.openMode === OpenMode.CreateNew && request.headers.newFileInfoPromise) {
+        if (request.headers && request.headers.newFileInfoPromise) {
+            const createNewOptions: ICreateNewOptions = {
+                newFileInfoPromise: request.headers.newFileInfoPromise,
+            };
             const [, queryString] = request.url.split("?");
 
             const searchParams = new URLSearchParams(queryString);
@@ -51,8 +50,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
                 endpoints: {
                     snapshotStorageUrl: "",
                 },
-                openMode: OpenMode.CreateNew,
-                newFileInfoPromise: request.headers.newFileInfoPromise,
+                createNewOptions,
                 tokens: {},
                 url: `fluid-odsp://placeholder/placeholder/${uniqueId}?version=null`,
                 hashedDocumentId: "",
@@ -86,6 +84,45 @@ export class OdspDriverUrlResolver implements IUrlResolver {
             siteUrl,
             driveId,
             itemId,
+        };
+    }
+
+    public async createContainer(
+        createNewSummary: ISummaryTree,
+        request: IRequest,
+    ): Promise<IOdspResolvedUrl> {
+        if(!request.headers) {
+            throw new Error("Request should contian headers!!");
+        }
+        assert(request.headers.newFileInfoPromise);
+        const createNewOptions: ICreateNewOptions = {
+            createNewSummary,
+            newFileInfoPromise: request.headers.newFileInfoPromise,
+        };
+        return this.resolveHelperForCreateNew(request.url, createNewOptions);
+    }
+
+    private resolveHelperForCreateNew(url: string, createNewOptions: ICreateNewOptions): IOdspResolvedUrl {
+        const [, queryString] = url.split("?");
+
+        const searchParams = new URLSearchParams(queryString);
+
+        const uniqueId = searchParams.get("uniqueId");
+        if (uniqueId === null) {
+            throw new Error("ODSP URL for new file should contain the uniqueId");
+        }
+        return {
+            type: "fluid",
+            endpoints: {
+                snapshotStorageUrl: "",
+            },
+            createNewOptions,
+            tokens: {},
+            url: `fluid-odsp://placeholder/placeholder/${uniqueId}?version=null`,
+            hashedDocumentId: "",
+            siteUrl: "",
+            driveId: "",
+            itemId: "",
         };
     }
 

@@ -8,17 +8,19 @@ import {
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import {
-    IComponentHTMLView,
-} from "@microsoft/fluid-component-core-interfaces";
-import {
     SharedMap,
 } from "@microsoft/fluid-map";
+import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { TextGenerator } from "./textGenerator";
 import { OtherTextView } from "./otherTextView";
 import { TextMatch } from "./textMatch";
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+const pkg = require("../package.json");
+export const TypeRaceName = pkg.name as string;
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const style = require("./style.css");
 
@@ -273,6 +275,7 @@ export class TypeRace extends PrimedComponent implements IComponentHTMLView {
  * This is where you define all your Distributed Data Structures
  */
 export const TyperaceInstantiationFactory = new PrimedComponentFactory(
+    TypeRaceName,
     TypeRace,
     [
         SharedMap.getFactory(),

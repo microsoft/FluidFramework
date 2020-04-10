@@ -20,23 +20,35 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import { Deferred } from "@microsoft/fluid-common-utils";
 import {
-    IDocumentService,
     IDocumentServiceFactory,
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
 } from "@microsoft/fluid-driver-definitions";
-import {
-    configurableUrlResolver,
-    DocumentServiceFactoryProtocolMatcher,
-} from "@microsoft/fluid-driver-utils";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import {
+    ensureFluidResolvedUrl,
+    MultiUrlResolver,
+    MultiDocumentServiceFactory,
+} from "@microsoft/fluid-driver-utils";
 import { Container } from "./container";
 import { debug } from "./debug";
 import { IParsedUrl, parseUrl } from "./utils";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const now = require("performance-now") as () => number;
+
+function canUseCache(request: IRequest): boolean {
+    if (!request.headers) {
+        return true;
+    }
+
+    const noCache =
+        request.headers[LoaderHeader.cache] === false ||
+        request.headers[LoaderHeader.reconnect] === false;
+
+    return !noCache;
+}
 
 export class RelativeLoader extends EventEmitter implements ILoader {
 
@@ -75,7 +87,7 @@ export class RelativeLoader extends EventEmitter implements ILoader {
                 return this.loader.requestWorker(baseRequest.url, request);
             } else {
                 let container: Container;
-                if (this.canUseCache(request)) {
+                if (canUseCache(request)) {
                     container = await this.containerDeferred.promise;
                 } else if (!baseRequest) {
                     throw new Error("Base Request is not provided");
@@ -93,21 +105,26 @@ export class RelativeLoader extends EventEmitter implements ILoader {
         this.containerDeferred.resolve(container);
     }
 
-    private canUseCache(request: IRequest): boolean {
-        if (!request.headers) {
-            return true;
-        }
-
-        const noCache =
-            request.headers[LoaderHeader.cache] === false ||
-            request.headers[LoaderHeader.reconnect] === false;
-
-        return !noCache;
-    }
-
     private needExecutionContext(request: IRequest): boolean {
         return (request.headers !== undefined && request.headers[LoaderHeader.executionContext] !== undefined);
     }
+}
+
+function createCachedResolver(resolver: IUrlResolver){
+    const cacheResolver = Object.create(resolver) as IUrlResolver;
+    const resolveCache = new Map<string, Promise<IResolvedUrl | undefined>>();
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    cacheResolver.resolve = async (request: IRequest): Promise<IResolvedUrl | undefined> => {
+        if(!canUseCache(request)){
+            return resolver.resolve(request);
+        }
+        if(!resolveCache.has(request.url)){
+            resolveCache.set(request.url, resolver.resolve(request));
+        }
+
+        return resolveCache.get(request.url);
+    };
+    return cacheResolver;
 }
 
 /**
@@ -116,14 +133,14 @@ export class RelativeLoader extends EventEmitter implements ILoader {
 export class Loader extends EventEmitter implements ILoader, IExperimentalLoader {
 
     private readonly containers = new Map<string, Promise<Container>>();
-    private readonly resolveCache = new Map<string, IResolvedUrl>();
-    private readonly protocolToDocumentFactoryMap: DocumentServiceFactoryProtocolMatcher;
+    private readonly resolver: IUrlResolver;
+    private readonly documentServiceFactory: IDocumentServiceFactory;
 
     public readonly isExperimentalLoader = true;
 
     constructor(
-        private readonly resolver: IUrlResolver | IUrlResolver[],
-        documentServiceFactories: IDocumentServiceFactory | IDocumentServiceFactory[],
+        resolver: IUrlResolver | IUrlResolver[],
+        documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[],
         private readonly codeLoader: ICodeLoader,
         private readonly options: any,
         private readonly scope: IComponent,
@@ -135,16 +152,16 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
         if (!resolver) {
             throw new Error("An IUrlResolver must be provided");
         }
+        this.resolver = createCachedResolver(MultiUrlResolver.create(resolver));
 
-        if (!documentServiceFactories) {
-            throw new Error("An IDocumentService must be provided");
+        if (!documentServiceFactory) {
+            throw new Error("An IDocumentServiceFactory must be provided");
         }
+        this.documentServiceFactory = MultiDocumentServiceFactory.create(documentServiceFactory);
 
         if (!codeLoader) {
             throw new Error("An ICodeLoader must be provided");
         }
-
-        this.protocolToDocumentFactoryMap = new DocumentServiceFactoryProtocolMatcher(documentServiceFactories);
     }
 
     public async createDetachedContainer(source: IFluidCodeDetails): Promise<Container> {
@@ -156,9 +173,8 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
             this.scope,
             this,
             source,
-            (resolvedUrl: IFluidResolvedUrl) => {
-                return this.protocolToDocumentFactoryMap.getFactory(resolvedUrl);
-            },
+            this.documentServiceFactory,
+            this.resolver,
             this.logger);
     }
 
@@ -188,7 +204,7 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
             const container = await this.resolve({ url: baseUrl, headers: request.headers });
             return container.request(request);
         } else {
-            const resolved = await this.getResolvedUrl({ url: baseUrl, headers: request.headers });
+            const resolved = await this.resolver.resolve({ url: baseUrl, headers: request.headers });
             const resolvedAsFluid = resolved as IFluidResolvedUrl;
             const parsed = parseUrl(resolvedAsFluid.url);
             if (!parsed) {
@@ -206,39 +222,12 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
         }
     }
 
-    private async getResolvedUrl(request: IRequest): Promise<IResolvedUrl> {
-        // Resolve the given request to a URL
-        // Check for an already resolved URL otherwise make a new request
-        const maybeResolvedUrl = this.resolveCache.get(request.url);
-        if (maybeResolvedUrl) {
-            return maybeResolvedUrl;
-        }
-
-        let toCache: IResolvedUrl | undefined;
-        if (Array.isArray(this.resolver)) {
-            toCache = await configurableUrlResolver(this.resolver, request);
-        } else {
-            toCache = await this.resolver.resolve(request);
-        }
-        if (!toCache) {
-            return Promise.reject(`Invalid URL ${request.url}`);
-        }
-        if (toCache.type !== "fluid") {
-            return Promise.reject("Only Fluid components currently supported");
-        }
-        this.resolveCache.set(request.url, toCache);
-
-        return toCache;
-    }
-
     private async resolveCore(
         request: IRequest,
     ): Promise<{ container: Container; parsed: IParsedUrl }> {
 
-        const resolvedAsFluid = await this.getResolvedUrl(request);
-        if (resolvedAsFluid.type !== "fluid") {
-            throw new Error(`Cannot resolve non fluid container request: ${JSON.stringify(resolvedAsFluid)}`);
-        }
+        const resolvedAsFluid = await this.resolver.resolve(request);
+        ensureFluidResolvedUrl(resolvedAsFluid);
 
         // Parse URL into components
         const parsed = parseUrl(resolvedAsFluid.url);
@@ -250,8 +239,6 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
         const { canCache, fromSequenceNumber } = this.parseHeader(parsed, request);
 
         debug(`${canCache} ${request.headers[LoaderHeader.pause]} ${request.headers[LoaderHeader.version]}`);
-        const factory: IDocumentServiceFactory =
-            this.protocolToDocumentFactoryMap.getFactory(resolvedAsFluid);
 
         let container: Container;
         if (canCache) {
@@ -265,7 +252,6 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
                 const containerP =
                     this.loadContainer(
                         parsed.id,
-                        await factory.createDocumentService(resolvedAsFluid),
                         request,
                         resolvedAsFluid,
                         this.logger);
@@ -276,7 +262,6 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
             container =
                 await this.loadContainer(
                     parsed.id,
-                    await factory.createDocumentService(resolvedAsFluid),
                     request,
                     resolvedAsFluid,
                     this.logger);
@@ -337,20 +322,20 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
 
     private async loadContainer(
         id: string,
-        documentService: IDocumentService,
         request: IRequest,
         resolved: IFluidResolvedUrl,
         logger?: ITelemetryBaseLogger,
     ): Promise<Container> {
         const container = Container.load(
             id,
-            documentService,
+            this.documentServiceFactory,
             this.codeLoader,
             this.options,
             this.scope,
             this,
             request,
             resolved,
+            this.resolver,
             logger);
 
         return container;

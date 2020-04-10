@@ -15,20 +15,21 @@ import {
     PrimedComponent,
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
-import {
-    IComponentHTMLView,
-    IComponentHandle,
-} from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import {
     IComponentContext,
     IComponentRuntime,
 } from "@microsoft/fluid-runtime-definitions";
-
 import {
     SequenceDeltaEvent,
     SharedString,
 } from "@microsoft/fluid-sequence";
+import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 /******************************************************************************/
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+const pkg = require("../package.json");
+export const TextAreaNoReactName = pkg.name as string;
 
 /**
  * A simple interface to help manage state - in the style of React. We could do
@@ -404,6 +405,7 @@ export class TextareaNoReact extends PrimedComponent implements IComponentHTMLVi
  */
 export const TextareaNoReactInstantiationFactory =
     new PrimedComponentFactory(
+        TextAreaNoReactName,
         TextareaNoReact,
         [
             SharedString.getFactory(),

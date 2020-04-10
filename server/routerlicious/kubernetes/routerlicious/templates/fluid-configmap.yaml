@@ -41,6 +41,9 @@ data:
             },
             "maxMessageSize": "1MB"
         },
+        "zookeeper": {
+            "endpoint": "{{ .Values.zookeeper.url }}"
+        },
         {{- if .Values.eventHub }}
         "eventHub": {
             "endpoint": "{{ .Values.eventHub.endpoint }}",
@@ -51,6 +54,7 @@ data:
         "alfred": {
             "kafkaClientId": "{{ template "alfred.fullname" . }}",
             "maxMessageSize": "16KB",
+            "maxNumberOfClientsPerDocument": {{ .Values.alfred.maxNumberOfClientsPerDocument }},
             "topic": "{{ .Values.kafka.topics.rawdeltas }}",
             "bucket": "snapshots",
             "restJsonSize": "50mb",

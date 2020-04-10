@@ -47,8 +47,7 @@ import {
 } from "@microsoft/fluid-runtime-definitions";
 import { ComponentSerializer } from "@microsoft/fluid-runtime-utils";
 import { IHistorian } from "@microsoft/fluid-server-services-client";
-// eslint-disable-next-line import/no-internal-modules
-import * as uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas";
 
 export class MockDeltaManagerWithConnectionFactory extends MockDeltaManager {
@@ -193,6 +192,8 @@ class MockDeltaConnection implements IDeltaConnection {
         handler.setConnectionState(this.state);
     }
 
+    public dirty(): void {}
+
     public isLocal(msg: ISequencedDocumentMessage) {
         return msg.clientId === this.runtime.clientId || msg.clientId === this.pendingClientId;
     }
@@ -229,8 +230,8 @@ export class MockQuorum implements IQuorum, EventEmitter{
         throw new Error("Method not implemented.");
     }
 
-    addMember(id: string, client: ISequencedClient) {
-        this.members.set(id, client);
+    addMember(id: string, client: Partial<ISequencedClient>) {
+        this.members.set(id, client as ISequencedClient);
         this.eventEmitter.emit("addMember");
     }
 
@@ -288,7 +289,8 @@ export class MockQuorum implements IQuorum, EventEmitter{
         return this;
     }
     off(event: string | symbol, listener: (...args: any[]) => void): this {
-        throw new Error("Method not implemented.");
+        this.eventEmitter.off(event, listener);
+        return this;
     }
     removeAllListeners(event?: string | symbol | undefined): this {
         throw new Error("Method not implemented.");
@@ -609,6 +611,8 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
         assert(false);
         return 0;
     }
+
+    public dirty(): void {}
 }
 
 /**

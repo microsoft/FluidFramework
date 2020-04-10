@@ -3,14 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IComponentHandle,
-    IComponentHTMLView,
-    IProvideComponentHTMLView,
-} from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { IComponentHTMLView, IProvideComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
-import uuid from "uuid/v4";
+
+export const AnchorName = "anchor";
 
 /**
  * Anchor is an default component is responsible for managing creation and the default component
@@ -27,7 +25,7 @@ export class Anchor extends PrimedComponent implements IProvideComponentHTMLView
         return this.defaultComponentInternal;
     }
 
-    private static readonly factory = new PrimedComponentFactory(Anchor, []);
+    private static readonly factory = new PrimedComponentFactory(AnchorName, Anchor, []);
 
     public static getFactory() {
         return Anchor.factory;
@@ -36,7 +34,7 @@ export class Anchor extends PrimedComponent implements IProvideComponentHTMLView
     public get IComponentHTMLView() { return this.defaultComponent; }
 
     protected async componentInitializingFirstTime(props: any) {
-        const defaultComponent = await this.createAndAttachComponent(uuid(), "vltava");
+        const defaultComponent = await this.createAndAttachComponent("vltava");
         this.root.set(this.defaultComponentId, defaultComponent.handle);
     }
 

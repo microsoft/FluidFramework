@@ -37,12 +37,12 @@ The [`SharedComponent`](./src/components/sharedComponent.ts) provides the follow
 
 #### Component Object Example
 
-In the below example we have a simple Component Object that will render a value alongside a button the the page. Every time the button is pressed the value will increment. Because this Component Object renders to the DOM it also extends `IComponentHTMLVisual`.
+In the below example we have a simple Component Object that will render a value alongside a button the the page. Every time the button is pressed the value will increment. Because this Component Object renders to the DOM it also extends `IComponentHTMLView`.
 
 ```jsx
-export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
+export class Clicker extends PrimedComponent implements IComponentHTMLView {
 
-    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLView() { return this; }
 
     protected async componentInitializingFirstTime() {
         this.root.createValueType("clicks", CounterValueType.Name, 0);
@@ -76,8 +76,8 @@ The Component Factory Object is used to initialize a Component Object within the
 
 The Aqueduct offers a factory for each of the Component Objects provided.
 
-> [`SharedComponentFactory`](./src/helpers/sharedComponentFactory.ts) for the `SharedComponent`  
-> [`PrimedComponentFactory`](./src/helpers/primedComponentFactory.ts) for the `PrimedComponent`
+> [`SharedComponentFactory`](./src/componentFactories/sharedComponentFactory.ts) for the `SharedComponent`
+> [`PrimedComponentFactory`](./src/componentFactories/primedComponentFactory.ts) for the `PrimedComponent`
 
 #### Component Factory Object Example
 
@@ -94,7 +94,7 @@ export const ClickerInstantiationFactory = new PrimedComponentFactory(
 
 A Container is a collection of Components and functionality that produce an experience. Containers hold the instances of Component Objects as well as defining the Component Objects that can be created within the Container. Because of this Component Objects cannot be consumed except for when they are within a Container.
 
-The Aqueduct provides the [`SimpleModuleInstantiationFactory`](./src/helpers/simpleModuleInstantiationFactory.ts) that allows you as a Container developer to:
+The Aqueduct provides the [`ContainerRuntimeFactoryWithDefaultComponent`](./src/containerRuntimeFactories/containerRuntimeFactoryWithDefaultComponent.ts) that allows you as a Container developer to:
 
 - Define the registry of Component Objects that can be created
 - Declare the Default Component
@@ -106,7 +106,7 @@ The Aqueduct provides the [`SimpleModuleInstantiationFactory`](./src/helpers/sim
 In the below example we will write a Container that exposes the above [`Clicker`](####Component-Object-Example) using the [`Clicker Factory`](####Component-Factory-Object-Example). You will notice below that the Container developer defines the registry name (component type) of the component. We also pass in the type of component we want to be the default. The default component is created the first time the Container is created.
 
 ```typescript
-export fluidExport = new SimpleModuleInstantiationFactory(
+export fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
   "clicker", // Default Component Type
   ["clicker", Promise.resolve(ClickerInstantiationFactory)], // Component Registry
   [], // Container Services

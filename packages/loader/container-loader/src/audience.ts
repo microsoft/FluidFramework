@@ -12,6 +12,12 @@ import { IClient } from "@microsoft/fluid-protocol-definitions";
 export class Audience extends EventEmitter implements IAudience {
     private readonly members = new Map<string, IClient>();
 
+    public on(event: "addMember", listener: (clientId: string, details: IClient) => void): this;
+    public on(event: "removeMember", listener: (clientId: string) => void): this;
+    public on(event: string, listener: (...args: any[]) => void): this {
+        return super.on(event, listener);
+    }
+
     /**
      * Adds a new client to the audience
      */

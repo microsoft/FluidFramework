@@ -4,7 +4,8 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { IComponent, IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -12,10 +13,12 @@ import * as ReactDOM from "react-dom";
 import { TabsDataModel, ITabsDataModel } from "./dataModel";
 import { TabsView } from "./view";
 
+export const TabsName = "tabs";
+
 export class TabsComponent extends PrimedComponent implements IComponentHTMLView {
     private dataModelInternal: ITabsDataModel | undefined;
 
-    private static readonly factory = new PrimedComponentFactory(TabsComponent, []);
+    private static readonly factory = new PrimedComponentFactory(TabsName, TabsComponent, []);
 
     public static getFactory() {
         return TabsComponent.factory;
@@ -36,6 +39,15 @@ export class TabsComponent extends PrimedComponent implements IComponentHTMLView
         this.root.createSubDirectory("tab-ids");
     }
 
+    protected async createAndAttachComponentWithId<T extends IComponent & IComponentLoadable>(
+        id: string, pkg: string, props?: any,
+    ): Promise<T> {
+        const componentRuntime = await this.context.createComponent(id, pkg, props);
+        const component = await this.asComponent<T>(componentRuntime.request({ url: "/" }));
+        componentRuntime.attach();
+        return component;
+    }
+
     protected async componentHasInitialized() {
         const registry = await this.context.hostRuntime.IComponentRegistry.get("");
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -45,7 +57,8 @@ export class TabsComponent extends PrimedComponent implements IComponentHTMLView
                 this.root,
                 registryDetails,
                 this.createAndAttachComponent.bind(this),
-                this.getComponent.bind(this),
+                this.createAndAttachComponentWithId.bind(this),
+                this.getComponentFromDirectory.bind(this),
             );
     }
 

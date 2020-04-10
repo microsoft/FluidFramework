@@ -4,8 +4,12 @@
  */
 
 // Fluid
-import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
-import { IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
+import {
+    ContainerRuntimeFactoryWithDefaultComponent,
+    PrimedComponent,
+    PrimedComponentFactory,
+} from "@microsoft/fluid-aqueduct";
+import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 // React
 import * as React from "react";
@@ -15,6 +19,8 @@ import * as ReactDOM from "react-dom";
 import { Player, NoteProperties } from "./Player";
 import { PianoUtility } from "./PianoUtility";
 import { DAW } from "./daw";
+
+const musicaName = "@fluid-example/musica";
 
 // TODO: Is this right?
 const audioContext = new AudioContext();
@@ -96,13 +102,14 @@ export class Musica extends PrimedComponent implements IComponentHTMLView {
 }
 
 export const MusicaInstantiationFactory = new PrimedComponentFactory(
+    musicaName,
     Musica,
     [],
 );
 
-export const fluidExport = new SimpleModuleInstantiationFactory(
-    "@fluid-example/musica",
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
+    musicaName,
     new Map([
-        ["@fluid-example/musica", Promise.resolve(MusicaInstantiationFactory)],
+        [musicaName, Promise.resolve(MusicaInstantiationFactory)],
     ]),
 );

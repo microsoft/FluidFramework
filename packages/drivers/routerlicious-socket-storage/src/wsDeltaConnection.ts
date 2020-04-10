@@ -39,17 +39,15 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
      * @param urlStr - url to connect to delta stream.
      * @returns Delta connection to the stream.
      */
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public static create(
+    public static async create(
         tenantId: string,
         id: string,
         token: string,
         client: IClient,
-        urlStr: string,
-        mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
+        urlStr: string): Promise<IDocumentDeltaConnection> {
 
         return new Promise<IDocumentDeltaConnection>((resolve, reject) => {
-            const connection = new WSDeltaConnection(tenantId, id, token, client, urlStr, mode);
+            const connection = new WSDeltaConnection(tenantId, id, token, client, urlStr);
 
             const resolveHandler = () => {
                 resolve(connection);
@@ -99,20 +97,20 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
         return this.details!.version;
     }
 
-    public get initialMessages(): ISequencedDocumentMessage[] | undefined {
+    public get initialMessages(): ISequencedDocumentMessage[] {
         return this.details!.initialMessages;
     }
 
-    public get initialContents(): IContentMessage[] | undefined {
+    public get initialContents(): IContentMessage[] {
         return this.details!.initialContents;
     }
 
-    public get initialSignals(): ISignalMessage[] | undefined {
+    public get initialSignals(): ISignalMessage[] {
         return this.details!.initialSignals;
     }
 
     public get initialClients(): ISignalClient[] {
-        return this.details!.initialClients ? this.details!.initialClients : [];
+        return this.details!.initialClients;
     }
 
     public get serviceConfiguration(): IServiceConfiguration {
@@ -124,8 +122,7 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
         public documentId: string,
         token: string,
         client: IClient,
-        urlStr: string,
-        mode: ConnectionMode) {
+        urlStr: string) {
         super();
 
         const p = url.parse(urlStr);
@@ -139,7 +136,7 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
             const connectMessage: IConnect = {
                 client,
                 id: documentId,
-                mode,
+                mode: client.mode,
                 tenantId,
                 token,
                 versions: [protocolVersion],
@@ -165,6 +162,19 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
         };
 
         this.once("connect_document_success", (connectedMessage: IConnected) => {
+            /* Issue #1566: Backward compat */
+            if (connectedMessage.initialMessages === undefined) {
+                connectedMessage.initialMessages = [];
+            }
+            if (connectedMessage.initialClients === undefined) {
+                connectedMessage.initialClients = [];
+            }
+            if (connectedMessage.initialContents === undefined) {
+                connectedMessage.initialContents = [];
+            }
+            if (connectedMessage.initialSignals === undefined) {
+                connectedMessage.initialSignals = [];
+            }
             this.details = connectedMessage;
         });
 

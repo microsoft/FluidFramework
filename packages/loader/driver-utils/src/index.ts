@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
-export * from "./configurableUrlResolver";
-export * from "./driverProtocolMapping";
 export * from "./documentStorageServiceProxy";
+export * from "./multiDocumentServiceFactory";
+export * from "./multiUrlResolver";
 export * from "./network";
 export * from "./readAndParse";
 export * from "./error";
+export * from "./fluidResolvedUrl";
+export * from "./summaryForCreateNew";

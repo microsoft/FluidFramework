@@ -14,8 +14,7 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import { IChannelAttributes, IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
 import { SharedObject } from "@microsoft/fluid-shared-object-base";
-// eslint-disable-next-line import/no-internal-modules
-import * as uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
 import {
     ConsensusCallback,
     ConsensusResult,
@@ -306,14 +305,14 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
 
         assert(this.jobTracking.size === 0);
         const rawContentTracking = await storage.read(snapshotFileNameTracking);
-        if (rawContentTracking) {
+        if (rawContentTracking !== undefined) {
             const content = this.deserializeValue(fromBase64ToUtf8(rawContentTracking));
             this.jobTracking = new Map(content) as jobTrackingType<T>;
         }
 
         assert(this.data.size() === 0);
         const rawContentData = await storage.read(snapshotFileNameData);
-        if (rawContentData) {
+        if (rawContentData !== undefined) {
             const content = this.deserializeValue(fromBase64ToUtf8(rawContentData)) as T[];
             this.data.loadFrom(content);
         }

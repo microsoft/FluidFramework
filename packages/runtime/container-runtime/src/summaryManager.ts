@@ -57,17 +57,9 @@ enum SummaryManagerState {
 
 const defaultInitialDelayMs = 5000;
 
-interface IThrottleConfig {
-    maxDelayMs: number,
-    delayWindowMs: number,
-    delayFunction: (n: number) => number,
-}
-
-const defaultThrottleConfig: IThrottleConfig = {
-    maxDelayMs: 30 * 1000,
-    delayWindowMs: 60 * 1000,
-    delayFunction: (n: number) => 20 * (Math.pow(2, n) - 1),
-};
+const defaultThrottleMaxDelayMs = 30 * 1000;
+const defaultThrottleDelayWindowMs = 60 * 1000;
+const defaultThrottleDelayFunction = (n: number) => 20 * (Math.pow(2, n) - 1);
 
 /**
  * Used to give increasing delay times for throttling a single functionality.
@@ -75,11 +67,12 @@ const defaultThrottleConfig: IThrottleConfig = {
  * Default throttling function increases exponentially (0ms, 20ms, 60ms, 140ms, etc) up to max delay (default 30s)
  */
 class Throttler {
-    private readonly config: IThrottleConfig;
     private startTimes: number[] = [];
-    constructor(config: Partial<IThrottleConfig> = {}) {
-        this.config = { ...defaultThrottleConfig, ...config };
-    }
+    constructor(
+        private readonly delayWindowMs,
+        private readonly maxDelayMs,
+        private readonly delayFunction,
+    ) { }
 
     public get attempts() {
         return this.startTimes.length;
@@ -87,11 +80,11 @@ class Throttler {
 
     public getDelay() {
         const now = Date.now();
-        this.startTimes = this.startTimes.filter((t) => now - t < this.config.delayWindowMs);
-        const delayMs = Math.min(this.config.delayFunction(this.startTimes.length), this.config.maxDelayMs);
+        this.startTimes = this.startTimes.filter((t) => now - t < this.delayWindowMs);
+        const delayMs = Math.min(this.delayFunction(this.startTimes.length), this.maxDelayMs);
         this.startTimes.push(now);
         this.startTimes = this.startTimes.map((t) => t + delayMs); // account for delay time
-        if (delayMs === this.config.maxDelayMs) {
+        if (delayMs === this.maxDelayMs) {
             // we hit max delay so adding more won't affect anything
             // shift off oldest time to stop this array from growing forever
             this.startTimes.shift();
@@ -112,7 +105,11 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     private state = SummaryManagerState.Off;
     private runningSummarizer?: IComponentRunnable;
     private _disposed = false;
-    private readonly startThrottler = new Throttler();
+    private readonly startThrottler = new Throttler(
+        defaultThrottleMaxDelayMs,
+        defaultThrottleDelayWindowMs,
+        defaultThrottleDelayFunction,
+    );
 
     public get summarizer() {
         return this.summarizerClientId;
@@ -161,7 +158,6 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         });
 
         this.initialDelayTimer = immediateSummary ? undefined : new PromiseTimer(initialDelayMs, () => { });
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         this.initialDelayP = this.initialDelayTimer?.start().catch(() => { }) ?? Promise.resolve();
 
         this.refreshSummarizer();
@@ -232,8 +228,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
                     // a change in states when the running summarizer closes
 
                     if (this.runningSummarizer) {
-                        // eslint-disable-next-line max-len
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                         this.runningSummarizer.stop!(this.getStopReason());
                     }
                 }
@@ -272,8 +267,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
                 this.setNextSummarizer(summarizer.setSummarizer());
                 this.run(summarizer);
             } else {
-                // eslint-disable-next-line max-len
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 summarizer.stop!(this.getStopReason());
                 this.state = SummaryManagerState.Off;
             }
@@ -321,7 +315,6 @@ export class SummaryManager extends EventEmitter implements IDisposable {
             return undefined;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         if (this.nextSummarizerP) {
             return this.nextSummarizerP;
         }

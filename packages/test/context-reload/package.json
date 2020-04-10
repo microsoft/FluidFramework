@@ -21,6 +21,7 @@
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
     "start:localhost": "webpack-dev-server --config webpack.config.js --package package.json --env.mode localhost",
     "start:r11s": "webpack-dev-server --config webpack.config.js --package package.json --env.mode r11s",
+    "test": "npm run test:jest",
     "test:jest": "npm run build-v2 && jest",
     "tsc": "tsc",
     "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
@@ -29,7 +30,8 @@
   },
   "dependencies": {
     "@microsoft/fluid-aqueduct": "^0.16.0",
-    "@microsoft/fluid-component-core-interfaces": "^0.16.0",
+    "@microsoft/fluid-base-host": "^0.16.0",
+    "@microsoft/fluid-view-interfaces": "^0.16.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },

@@ -19,6 +19,8 @@ export interface IGraphUser {
     id: string;
 }
 
+export const IMicrosoftGraph: keyof IProvideMicrosoftGraph = "IMicrosoftGraph";
+
 export interface IProvideMicrosoftGraph {
     readonly IMicrosoftGraph: IMicrosoftGraph;
 }

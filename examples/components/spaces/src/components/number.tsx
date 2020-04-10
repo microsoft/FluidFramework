@@ -7,10 +7,8 @@ import {
     PrimedComponent,
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
-import {
-    IComponentHTMLView,
-} from "@microsoft/fluid-component-core-interfaces";
 import { CounterValueType, Counter } from "@microsoft/fluid-map";
+import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -25,7 +23,7 @@ export const FriendlyNumberName = "Number";
 export class Number extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
-    private static readonly factory = new PrimedComponentFactory(Number, []);
+    private static readonly factory = new PrimedComponentFactory(NumberName, Number, []);
 
     public static getFactory() {
         return Number.factory;

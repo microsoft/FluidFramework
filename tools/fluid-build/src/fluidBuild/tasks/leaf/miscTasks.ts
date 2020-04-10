@@ -7,14 +7,15 @@ import { LeafTask } from "./leafTask";
 import { toPosixPath, globFn, unquote, statAsync, readFileAsync } from "../../../common/utils";
 import { logVerbose } from "../../../common/logging";
 import * as path from "path";
+import { BuildPackage } from "../../buildGraph";
 
 export class EchoTask extends LeafTask {
-    protected addDependentTasks(dependentTasks: LeafTask[]) {}
+    protected addDependentTasks(dependentTasks: LeafTask[]) { }
     protected async checkLeafIsUpToDate() { return true; }
 }
 
 export class LesscTask extends LeafTask {
-    protected addDependentTasks(dependentTasks: LeafTask[]) {}
+    protected addDependentTasks(dependentTasks: LeafTask[]) { }
     protected async checkLeafIsUpToDate() {
         // TODO: assume lessc <src> <dst>
         const args = this.command.split(" ");
@@ -41,21 +42,72 @@ export class LesscTask extends LeafTask {
 }
 
 export class CopyfilesTask extends LeafTask {
-    protected addDependentTasks(dependentTasks: LeafTask[]) {}
-    protected async checkLeafIsUpToDate() {
-        // TODO: assume copyfiles -u 1 <src> <dst>
+    private parsed: boolean = false;
+    private readonly upLevel: number = 0;
+    private readonly copySrcArg: string = "";
+    private readonly copyDstArg: string = "";
+
+    constructor(node: BuildPackage, command: string) {
+        super(node, command);
+
+        // TODO: something better
         const args = this.command.split(" ");
-        if (args.length !== 5 && args[1] !== "-u" && args[2] !== "1") {
+
+        // Only handle -u arg
+        let srcArgIndex = 1;
+        if (args[1] === "-u" || args[1] === "--up") {
+            if (3 >= args.length) {
+                return;
+            }
+            this.upLevel = parseInt(args[2]);
+            srcArgIndex = 3;
+        }
+        if (srcArgIndex !== args.length - 2) {
+            return;
+        }
+
+        this.copySrcArg = unquote(args[srcArgIndex]);
+        this.copyDstArg = unquote(args[srcArgIndex + 1]);
+
+        this.parsed = true;
+    }
+
+    protected addDependentTasks(dependentTasks: LeafTask[]) {
+        if (this.parsed) {
+            if (this.copySrcArg.startsWith("src")) {
+                return;
+            }
+
+            if (this.copySrcArg.startsWith("./_api-extractor-temp/doc-models/")) {
+                this.addChildTask(dependentTasks, this.node, "api-extractor run --local");
+                return;
+            }
+        }
+        this.addAllDependentPackageTasks(dependentTasks);
+    }
+    protected async checkLeafIsUpToDate() {
+        if (!this.parsed) {
+            // If we could parse the argument, just say it is not up to date and run the command
             return false;
         }
-        const copySrcArg = unquote(args[3]);
-        const copyDstArg = unquote(args[4]);
-        const srcGlob = path.join(this.node.pkg.directory, copySrcArg);
+
+        const srcGlob = path.join(this.node.pkg.directory, this.copySrcArg!);
         const srcFiles = await globFn(srcGlob);
         const directory = toPosixPath(this.node.pkg.directory);
-        const srcPath = directory + "/src/";
-        const dstPath = directory + "/" + copyDstArg;
-        const dstFiles = srcFiles.map((match) => toPosixPath(match).replace(srcPath, dstPath));
+        const dstPath = directory + "/" + this.copyDstArg;
+        const dstFiles = srcFiles.map(match => {
+            const relPath = path.relative(directory, match);
+            let currRelPath = relPath;
+            for (let i = 0; i < this.upLevel; i++) {
+                const index = currRelPath.indexOf(path.sep);
+                if (index === -1) {
+                    break;
+                }
+                currRelPath = currRelPath.substring(index + 1);
+            }
+            
+            return path.join(dstPath, currRelPath);
+        });
         return this.isFileSame(srcFiles, dstFiles);
     }
 
@@ -86,7 +138,7 @@ export class CopyfilesTask extends LeafTask {
 }
 
 export class GenVerTask extends LeafTask {
-    protected addDependentTasks(dependentTasks: LeafTask[]) {}
+    protected addDependentTasks(dependentTasks: LeafTask[]) { }
     protected async checkLeafIsUpToDate() {
         try {
             const file = path.join(this.node.pkg.directory, "src/packageVersion.ts");

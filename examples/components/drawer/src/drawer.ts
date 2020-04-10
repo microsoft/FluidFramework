@@ -9,9 +9,7 @@ import {
     IComponentRouter,
     IRequest,
     IResponse,
-    IComponentHTMLVisual,
     IComponent,
-    IComponentHTMLView,
 } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import { IPackageManager } from "@microsoft/fluid-host-service-interfaces";
@@ -19,6 +17,7 @@ import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+import { IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-view-interfaces";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { initializeIcons } from "@uifabric/icons";
 import * as semver from "semver";

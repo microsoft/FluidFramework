@@ -5,58 +5,25 @@
 
 import * as path from "path";
 import { Package, Packages } from "./npmPackage";
+import { MonoRepo, MonoRepoKind } from "./monoRepo";
+import { rimrafWithErrorAsync } from "./utils";
 
-export enum MonoRepo {
-    None,
-    Client,
-    Server,
-};
 
 export class FluidRepoBase {
-    // TODO: Should read lerna.json to determine
-    protected readonly clientDirectory = path.join(this.resolvedRoot, "packages");
-    protected readonly serverDirectory = path.join(this.resolvedRoot, "server/routerlicious/packages");
-    protected readonly exampleDirectory = path.join(this.resolvedRoot, "examples/components");
-    protected readonly baseDirectories = [
-        path.join(this.resolvedRoot, "common"),
-        this.serverDirectory,
-        this.clientDirectory,
-        this.exampleDirectory,
-    ];
+    public readonly clientMonoRepo: MonoRepo;
+    public readonly serverMonoRepo: MonoRepo;
 
     public readonly packages: Packages;
     constructor(protected readonly resolvedRoot: string) {
-        this.packages = Packages.load(this.baseDirectories);
-    }
-
-    public getMonoRepo(pkg: Package) {
-        return pkg.directory.startsWith(this.serverDirectory) ? MonoRepo.Server :
-            pkg.directory.startsWith(this.clientDirectory) || pkg.directory.startsWith(this.exampleDirectory) ? MonoRepo.Client : MonoRepo.None
-    }
-
-    public isSameMonoRepo(monoRepo: MonoRepo, pkg: Package) {
-        return monoRepo !== MonoRepo.None && monoRepo === this.getMonoRepo(pkg);
-    }
-
-    public getMonoRepoPath(monoRepo: MonoRepo) {
-        switch (monoRepo) {
-            case MonoRepo.Client:
-                return path.join(this.clientDirectory, "..");
-            case MonoRepo.Server:
-                return path.join(this.serverDirectory, "..");
-            default:
-                return undefined;
-        }
-    }
-    public getMonoRepoNodeModulePath(monoRepo: MonoRepo) {
-        switch (monoRepo) {
-            case MonoRepo.Client:
-                return path.join(this.clientDirectory, "..", "node_modules");
-            case MonoRepo.Server:
-                return path.join(this.serverDirectory, "..", "node_modules");
-            default:
-                return undefined;
-        }
+        this.clientMonoRepo = new MonoRepo(MonoRepoKind.Client, this.resolvedRoot);
+        this.serverMonoRepo = new MonoRepo(MonoRepoKind.Server, path.join(this.resolvedRoot, "server/routerlicious"));
+        this.packages = new Packages(
+            [
+                ...Packages.loadDir(path.join(this.resolvedRoot, "common")), 
+                ...this.clientMonoRepo.packages, 
+                ...this.serverMonoRepo.packages,
+            ]
+        );
     }
 
     public createPackageMap() {

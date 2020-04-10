@@ -12,6 +12,10 @@ export interface IHelpTasks {
     browser: string[];
 }
 
+const isRobot = (client: ISequencedClient): boolean => {
+    return !(client.client?.details?.capabilities?.interactive ?? true);
+};
+
 /**
  * For a given list of connected clients and tasks to run, this function calculates need for local & remote help.
  * Right now only one client (aka leader) is allowed to run tasks and ask for local and remote.
@@ -42,8 +46,4 @@ export function analyzeTasks(
             robot: robotNeeded,
         };
     }
-}
-
-function isRobot(client: ISequencedClient): boolean {
-    return !(client.client?.details?.capabilities?.interactive ?? true);
 }

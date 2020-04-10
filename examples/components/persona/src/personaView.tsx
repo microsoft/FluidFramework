@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-component-core-interfaces";
 import { IDirectory } from "@microsoft/fluid-map";
+import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import { mergeStyles } from "office-ui-fabric-react";
 // eslint-disable-next-line import/no-internal-modules
 import { Persona, PersonaPresence } from "office-ui-fabric-react/lib/Persona";

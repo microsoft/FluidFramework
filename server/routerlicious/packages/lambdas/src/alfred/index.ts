@@ -93,7 +93,7 @@ function sanitizeMessage(message: any): IDocumentMessage {
     }
 }
 
-const protocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
+const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 
 function selectProtocolVersion(connectVersions: string[]): string {
     let version: string = null;
@@ -115,7 +115,8 @@ export function configureWebSocketServices(
     contentCollection: core.ICollection<any>,
     clientManager: core.IClientManager,
     metricLogger: core.IMetricClient,
-    logger: core.ILogger) {
+    logger: core.ILogger,
+    maxNumberOfClientsPerDocument: number = 1000000) {
 
 
     webSocketServer.on("connection", (socket: core.IWebSocket) => {
@@ -195,13 +196,22 @@ export function configureWebSocketServices(
 
             const detailsP = storage.getOrCreateDocument(claims.tenantId, claims.documentId);
             const clientsP = clientManager.getClients(claims.tenantId, claims.documentId);
-            const addP = clientManager.addClient(
+
+            const [details, clients] = await Promise.all([detailsP, clientsP]);
+
+            if (clients.length > maxNumberOfClientsPerDocument) {
+                return Promise.reject({
+                    code: 400,
+                    message: "Too many clients are already connected to this document.",
+                    retryAfter: 5*60,
+                });
+            }
+
+            await clientManager.addClient(
                 claims.tenantId,
                 claims.documentId,
                 clientId,
                 messageClient as IClient);
-
-            const [details, , clients] = await Promise.all([detailsP, addP, clientsP]);
 
             let connectedMessage: IConnected;
             if (isWriter(messageClient.scopes, details.existing, message.mode)) {
@@ -224,6 +234,9 @@ export function configureWebSocketServices(
                     parentBranch: connection.parentBranch,
                     serviceConfiguration: connection.serviceConfiguration,
                     initialClients: clients,
+                    initialContents: [],
+                    initialMessages: [],
+                    initialSignals: [],
                     supportedVersions: protocolVersions,
                     version,
                 };
@@ -237,6 +250,9 @@ export function configureWebSocketServices(
                     parentBranch: null, // Does not matter for now.
                     serviceConfiguration: DefaultServiceConfiguration,
                     initialClients: clients,
+                    initialContents: [],
+                    initialMessages: [],
+                    initialSignals: [],
                     supportedVersions: protocolVersions,
                     version,
                 };

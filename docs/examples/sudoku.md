@@ -14,7 +14,20 @@ environment](../guide/README.md#set-up-your-development-environment).
 
 ### Clone the tutorial repository
 
-First, clone [the tutorial repository](https://github.com/microsoft/fluid-tutorial-sudoku).
+<vue-markdown v-if="$themeConfig.fluidVarGroup === 'internal'">
+
+First, clone the tutorial repository here: <https://github.com/microsoft/fluid-tutorial-sudoku>.
+
+</vue-markdown>
+<vue-markdown v-else>
+
+First, clone the tutorial repository here:
+   <https://dev.azure.com/FluidDeveloperProgram/Developer%20Preview/_git/fluid-sudoku-tutorial>.
+
+Since the Git repository is authenticated, it is easiest to visit the link above and click the "Clone" button in the
+top-right corner of the UI. Follow the resulting instructions to clone the repo.
+
+</vue-markdown>
 
 Once you've cloned the repo, you'll need to set up access to the [private Fluid NPM feed](../guide/package-feed.md). On
 Windows, you can run the `npm run auth` command to automate this process.
@@ -38,15 +51,15 @@ The project has the following folder layout:
     |   fluidSudoku.tsx
     │   index.ts
     ├───helpers
-    │       coordinate.ts
-    │       puzzles.ts
-    |       styles.css
-    │       sudokuCell.ts
-    └───react
+        │       coordinate.ts
+        │       puzzles.ts
+        |       styles.css
+        │       sudokuCell.ts
+        └───react
             sudokuView.tsx
 ```
 
-The _src_ folder contains the source files for the Sudoku Fluid component.
+The _src/fluid-components_ folder contains the source files for the Sudoku Fluid component.
 
 ### Run the sample
 
@@ -54,7 +67,7 @@ After you've cloned the sample repo and installed dependencies using `npm instal
 a local dev environment for testing and debugging. Visit <http://localhost:8080/> in a browser to load the Fluid
 development server, which will load two instances of the component side by side.
 
-!!!include(../includes/browsers.md)!!!
+!!!include(browsers.md)!!!
 
 <style>
   iframe#sudoku {
@@ -118,12 +131,12 @@ in `src/fluidSudoku.tsx`.
 
 ```typescript
 export class FluidSudoku extends PrimedComponent
-  implements IComponentHTMLVisual, IComponentReactViewable {}
+  implements IComponentHTMLView, IComponentReactViewable {}
 ```
 
 This class extends the [PrimedComponent][] abstract base class. Our component is visual, so we need to implement the
-[IComponentHTMLVisual][] or [IProvideComponentHTMLVisual][] interfaces. In our case, we want to handle rendering
-ourselves rather than delegate it to another object, so we implement [IComponentHTMLVisual][].
+[IComponentHTMLView][] or [IProvideComponentHTMLView][] interfaces. In our case, we want to handle rendering
+ourselves rather than delegate it to another object, so we implement [IComponentHTMLView][].
 
 Since we are using React, we also implement the [IComponentReactViewable][] interface. This will enable a Fluid host or
 container to use this component both with and without React. A host using React will call the `createJSXElement` method
@@ -155,9 +168,9 @@ public createJSXElement(props?: any): JSX.Element {
 Notice that we pass the puzzle data, a `SharedMap` distributed data structure that we will discuss more below, to the
 SudokuView React component as props.
 
-##### IComponentHTMLVisual
+##### IComponentHTMLView
 
-[IComponentHTMLVisual][] requires us to implement the `render()` method, which is straightforward since we're using the
+[IComponentHTMLView][] requires us to implement the `render()` method, which is straightforward since we're using the
 `SudokuView` React component to do the heavy lifting.
 
 ```typescript
@@ -452,9 +465,9 @@ Or check out [other examples](./README.md).
 
 <!-- Links -->
 
-[icomponenthtmlvisual]: ../api/fluid-component-core-interfaces.icomponenthtmlvisual.md
+[icomponenthtmlview]: ../api/fluid-component-core-interfaces.icomponenthtmlview.md
 [icomponentreactviewable]: ../api/fluid-aqueduct-react.icomponentreactviewable.md
-[iprovidecomponenthtmlvisual]: ../api/fluid-component-core-interfaces.iprovidecomponenthtmlvisual.md
+[iprovidecomponenthtmlview]: ../api/fluid-component-core-interfaces.iprovidecomponenthtmlview.md
 [primedcomponent]: ../api/fluid-aqueduct.primedcomponent.md
 [shareddirectory]: ../api/fluid-map.shareddirectory.md
 [sharedmap]: ../api/fluid-map.sharedmap.md

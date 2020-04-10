@@ -12,7 +12,7 @@ import {
     MessageType,
     TreeEntry,
 } from "@microsoft/fluid-protocol-definitions";
-import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+import { IComponentRuntime, IObjectStorageService, IChannelAttributes } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory, SharedObject, ValueType } from "@microsoft/fluid-shared-object-base";
 import { CellFactory } from "./cellFactory";
 import { debug } from "./debug";
@@ -82,8 +82,8 @@ export class SharedCell extends SharedObject implements ISharedCell {
      * @param runtime - component runtime the shared map belongs to
      * @param id - optional name of the shared map
      */
-    constructor(id: string, runtime: IComponentRuntime) {
-        super(id, runtime, CellFactory.Attributes);
+    constructor(id: string, runtime: IComponentRuntime, attributes: IChannelAttributes) {
+        super(id, runtime, attributes);
         this.pendingClientSequenceNumber = -1;
     }
 
@@ -180,8 +180,7 @@ export class SharedCell extends SharedObject implements ISharedCell {
 
         const rawContent = await storage.read(snapshotFileName);
 
-        // tslint:disable-next-line:strict-boolean-expressions
-        const content = rawContent
+        const content = rawContent !== undefined
             ? JSON.parse(fromBase64ToUtf8(rawContent)) as ICellValue
             : { type: ValueType[ValueType.Plain], value: undefined };
 
@@ -232,8 +231,7 @@ export class SharedCell extends SharedObject implements ISharedCell {
 
             switch (op.type) {
                 case "setCell":
-                    const value = this.fromSerializable(op.value);
-                    this.setCore(value);
+                    this.setCore(this.fromSerializable(op.value));
                     break;
 
                 case "deleteCell":

@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 
-import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IComponentHandle, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
 import {
     ISharedDirectory,
     IDirectory,
@@ -18,7 +18,7 @@ import {
     IComponentRegistryDetails,
 } from "@fluid-example/spaces";
 
-import uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
 
 export interface ITabsTypes {
     type: string;
@@ -26,8 +26,13 @@ export interface ITabsTypes {
     fabricIconName: string;
 }
 
-export interface ITabsDataModel extends EventEmitter{
-    getComponent(id: string): Promise<IComponent>;
+export interface ITabsModel {
+    type: string;
+    handleOrId?: IComponentHandle | string;
+}
+
+export interface ITabsDataModel extends EventEmitter {
+    getComponentTab(id: string): Promise<IComponent | undefined>;
     getTabIds(): string[];
     createTab(type: string): Promise<string>;
     getNewTabTypes(): ITabsTypes[];
@@ -35,13 +40,20 @@ export interface ITabsDataModel extends EventEmitter{
 
 export class TabsDataModel extends EventEmitter implements ITabsDataModel {
 
-    private readonly tabs: IDirectory;
+    private tabs: IDirectory;
 
     constructor(
-        root: ISharedDirectory,
+        public root: ISharedDirectory,
         private readonly internalRegistry: IComponentRegistryDetails,
-        private readonly createAndAttachComponent: (id: string, pkg: string, props?: any) => Promise<IComponent>,
-        public getComponent: (id: string) => Promise<IComponent>,
+        private readonly createAndAttachComponent: <T extends IComponent & IComponentLoadable>
+        (pkg: string, props?: any) => Promise<T>,
+        private readonly createAndAttachComponentWithId:
+        <T extends IComponent & IComponentLoadable>(id: string, pkg: string, props?: any) => Promise<T>,
+        private readonly getComponentFromDirectory: <T extends IComponent & IComponentLoadable>(
+            id: string,
+            directory: IDirectory,
+            getObjectFromDirectory?: (id: string, directory: IDirectory) => string | IComponentHandle | undefined) =>
+        Promise<T | undefined>,
     ) {
         super();
 
@@ -66,16 +78,38 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
     }
 
     public async createTab(type: string): Promise<string> {
-        const newId = uuid();
-        const component = await this.createAndAttachComponent(newId, type);
-        this.tabs.set(newId, component.IComponentHandle);
+        const newKey = uuid();
+        if (this.internalRegistry.hasCapability(type, "IComponentLoadable")) {
+            const component = await this.createAndAttachComponent<IComponent & IComponentLoadable>(type);
+            this.tabs.set(newKey, {
+                type,
+                handleOrId: component.handle,
+            });
+        } else {
+            const newComponentId = uuid();
+            await this.createAndAttachComponentWithId(newComponentId, type);
+            this.tabs.set(newKey, {
+                type,
+                handleOrId: newComponentId,
+            });
+        }
         this.emit("newTab", true);
-        return newId;
+        return newKey;
+    }
+
+    private getObjectFromDirectory(id: string, directory: IDirectory): string | IComponentHandle | undefined {
+        const data = directory.get<ITabsModel>(id);
+        return data?.handleOrId;
+    }
+
+    public async getComponentTab(id: string): Promise<IComponent | undefined> {
+        this.tabs = this.root.getSubDirectory("tab-ids");
+        return this.getComponentFromDirectory(id, this.tabs, this.getObjectFromDirectory);
     }
 
     public getNewTabTypes(): ITabsTypes[] {
         const response: ITabsTypes[] = [];
-        this.internalRegistry.getFromCapabilities("IComponentHTMLVisual").forEach((e) => {
+        this.internalRegistry.getFromCapability("IComponentHTMLView").forEach((e) => {
             response.push({
                 type: e.type,
                 friendlyName: e.friendlyName,

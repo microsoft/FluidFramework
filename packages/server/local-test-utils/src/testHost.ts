@@ -34,7 +34,7 @@ import { TestCodeLoader } from "./";
 /**
  * Basic component implementation for testing.
  */
-class TestRootComponent extends PrimedComponent implements IComponentRunnable {
+export class TestRootComponent extends PrimedComponent implements IComponentRunnable {
     public get IComponentRunnable() { return this; }
 
     /**
@@ -56,14 +56,21 @@ class TestRootComponent extends PrimedComponent implements IComponentRunnable {
 
     // Make this function public so TestHost can use them
     public async createAndAttachComponent<T extends IComponentLoadable>(
-        id: string, type: string, props?: any,
+        type: string, props?: any, id?: string,
     ): Promise<T> {
-        return super.createAndAttachComponent<T>(id, type, props);
+        if (id) {
+            const componentRuntime = await this.context.createComponent(id, type, props);
+            const component = await this.asComponent<T>(componentRuntime.request({ url: "/" }));
+            componentRuntime.attach();
+            return component;
+        } else {
+            return super.createAndAttachComponent<T>(type, props);
+        }
     }
 
     // Make this function public so TestHost can use them
-    public async getComponent<T>(id: string): Promise<T> {
-        return super.getComponent<T>(id);
+    public async getComponent_UNSAFE<T>(id: string): Promise<T> {
+        return super.getComponent_UNSAFE<T>(id);
     }
 
     /**
@@ -150,9 +157,8 @@ export class TestHost {
     }
 
     public readonly deltaConnectionServer: ILocalDeltaConnectionServer;
-    private rootResolver: (accept: TestRootComponent) => void;
 
-    private readonly root = new Promise<TestRootComponent>((accept) => { this.rootResolver = accept; });
+    public readonly root: Promise<TestRootComponent>;
 
     /**
      * @param componentRegistry - array of key-value pairs of components available to the host
@@ -177,7 +183,7 @@ export class TestHost {
                 [
                     ...componentRegistry,
                     [TestRootComponent.type, Promise.resolve(
-                        new PrimedComponentFactory(TestRootComponent, sharedObjectFactories),
+                        new PrimedComponentFactory(TestRootComponent.type, TestRootComponent, sharedObjectFactories),
                     )],
                 ],
                 this.containerServiceRegistry),
@@ -194,9 +200,7 @@ export class TestHost {
             new TestDocumentServiceFactory(this.deltaConnectionServer),
             new TestResolver());
 
-        store.open<TestRootComponent>("test-root-component", TestRootComponent.codeProposal, "", scope)
-            .then(this.rootResolver)
-            .catch((reason) => { throw new Error(`${reason}`); });
+        this.root = store.open<TestRootComponent>("test-root-component", TestRootComponent.codeProposal, "", scope);
     }
 
     /**
@@ -220,24 +224,21 @@ export class TestHost {
      * @returns Component object
      */
     public async createAndAttachComponent<T extends IComponentLoadable>(
-        id: string,
         type: string,
         props?: any,
+        id?: any,
     ): Promise<T> {
         const root = await this.root;
-        return root.createAndAttachComponent<T>(id, type, props);
+        return root.createAndAttachComponent<T>(type, props, id);
     }
 
-    /**
-     * Wait and get the component with the id.
+    /* Wait and get the component with the id.
      * @param id component Id
      * @returns Component object
      */
-    public async getComponent<T extends IComponentLoadable>(
-        id: string,
-    ): Promise<T> {
+    public async getComponent_UNSAFE<T>(id: string): Promise<T> {
         const root = await this.root;
-        return root.getComponent<T>(id);
+        return root.getComponent_UNSAFE<T>(id);
     }
 
     /**
