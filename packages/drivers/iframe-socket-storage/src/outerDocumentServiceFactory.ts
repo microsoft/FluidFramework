@@ -120,7 +120,6 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
             tokens: {},
             type: "fluid",
             url: this.resolvedUrl.url,
-            openMode: this.resolvedUrl.openMode,
         });
     }
 
