@@ -7,7 +7,7 @@
 import { EventEmitter } from "events";
 import { IDisposable } from "@microsoft/fluid-common-definitions";
 import { TypedEventEmitter } from "./typedEventEmitter";
-import { IEvent } from "./events";
+import { IEvent, IEventProvider } from "./events";
 
 /**
  * Base class used for forwarding events from a source EventEmitter.
@@ -16,7 +16,7 @@ import { IEvent } from "./events";
  */
 export class EventForwarder<TEvent extends IEvent = IEvent>
     extends TypedEventEmitter<TEvent> implements IDisposable {
-    protected static isEmitterEvent(event: string | symbol): boolean {
+    protected static isEmitterEvent(event: string): boolean {
         return event === EventForwarder.newListenerEvent || event === EventForwarder.removeListenerEvent;
     }
 
@@ -26,16 +26,16 @@ export class EventForwarder<TEvent extends IEvent = IEvent>
     public get disposed() { return this.isDisposed; }
     private isDisposed: boolean = false;
 
-    private readonly forwardingEvents = new Map<string | symbol, () => void>();
+    private readonly forwardingEvents = new Map<string, Map<EventEmitter | IEventProvider<TEvent>, () => void>>();
 
-    constructor(source?: EventEmitter) {
+    constructor(source?: EventEmitter | IEventProvider<TEvent>) {
         super();
         if (source) {
             // NewListener event is raised whenever someone starts listening to this events, so
             // we keep track of events being listened to, and start forwarding from the source
             // event emitter per event listened to on this
-            const removeListenerHandler = (event: string | symbol) => this.unforwardEvent(event);
-            const newListenerHandler = (event: string | symbol) => this.forwardEvent(source, event);
+            const removeListenerHandler = (event: string) => this.unforwardEvent(source, event);
+            const newListenerHandler = (event: string) => this.forwardEvent(source, event);
             this.on(EventForwarder.removeListenerEvent, removeListenerHandler);
             this.on(EventForwarder.newListenerEvent, newListenerHandler);
         }
@@ -43,36 +43,51 @@ export class EventForwarder<TEvent extends IEvent = IEvent>
 
     public dispose() {
         this.isDisposed = true;
-        for (const listenerRemover of this.forwardingEvents.values()) {
-            try {
-                listenerRemover();
-            } catch {
-                // Should be fine because of removeAllListeners below
+        for (const listenerRemovers of this.forwardingEvents.values()) {
+            for(const listenerRemover of listenerRemovers.values()){
+                try {
+                    listenerRemover();
+                } catch {
+                    // Should be fine because of removeAllListeners below
+                }
             }
         }
         this.removeAllListeners();
         this.forwardingEvents.clear();
     }
 
-    protected forwardEvent(source: EventEmitter, ...events: (string | symbol)[]): void {
+    protected forwardEvent(source: EventEmitter | IEventProvider<TEvent>, ...events: string[]): void {
         for(const event of events){
-            if (source && event && !EventForwarder.isEmitterEvent(event) && !this.forwardingEvents.has(event)) {
-                const listener = (...args: any[]) => this.emit(event, ...args);
-                this.forwardingEvents.set(event, () => source.off(event, listener));
-                source.on(event, listener);
+            if (source && event && !EventForwarder.isEmitterEvent(event)) {
+                let sources = this.forwardingEvents.get(event);
+                if(sources === undefined){
+                    sources = new Map();
+                    this.forwardingEvents.set(event, sources);
+                }
+                if(!sources.has(source)){
+                    const listener = (...args: any[]) => this.emit(event, ...args);
+                    sources.set(source, () => source.off(event, listener));
+                    source.on(event, listener);
+                }
             }
         }
     }
 
-    protected unforwardEvent(...events: (string | symbol)[]): void {
+    protected unforwardEvent(source: EventEmitter | IEventProvider<TEvent>, ...events: string[]): void {
         for(const event of events){
-            if (event && !EventForwarder.isEmitterEvent(event) && this.forwardingEvents.has(event)) {
-                if (this.listenerCount(event) === 0) {
-                    const listenerRemover = this.forwardingEvents.get(event);
-                    if (listenerRemover) {
-                        listenerRemover();
+            if (event && !EventForwarder.isEmitterEvent(event)) {
+                const sources = this.forwardingEvents.get(event);
+                if(sources?.has(source)){
+                    if (this.listenerCount(event) === 0) {
+                        const listenerRemover = sources.get(source);
+                        if (listenerRemover) {
+                            listenerRemover();
+                        }
+                        sources.delete(source);
+                        if(sources.size === 0){
+                            this.forwardingEvents.delete(event);
+                        }
                     }
-                    this.forwardingEvents.delete(event);
                 }
             }
         }

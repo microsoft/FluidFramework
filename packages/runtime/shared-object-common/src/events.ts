@@ -4,7 +4,10 @@
  */
 
 export interface IEvent {
-    (event: string | symbol, listener: (...args: any[]) => void);
+    // the event emitter polyfill and the node event emitter have different event types:
+    // string | symbol vs. string | number
+    // so for our typing we'll contrain to string, so we work with both
+    (event: string, listener: (...args: any[]) => void);
 }
 
 export interface IErrorEvent extends IEvent {
@@ -32,13 +35,13 @@ export interface IEventProvider<TEvent extends IEvent>{
 export type IEventThisPlaceHolder={thisPlaceHolder: "thisPlaceHolder"};
 
 // This does the type replacement by changing types of IEventThisPlaceHolder to TThis
-export type ReplaceThisPlaceHolderWithTThis<L extends any[], TThis> =
+export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> =
   L extends any[] ? { [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K] } : L;
 
 // this transforms the event overload by replacing IEventThisPlaceHolder with TThis in the event listener arguments
 // and having the overload return TTHis as well
 export type TransformedEvent<TThis, E, A extends any[]> =
-    (event: E, listener: (...args: ReplaceThisPlaceHolderWithTThis<A, TThis>) => void) => TThis;
+    (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;
 
 // This type is a conditional type for transforming all the overloads provides in TEvent.
 // Due to limitations of the typescript typing system, we need to handle each number of overload individually.
@@ -59,7 +62,7 @@ TEvent extends
     (event: infer E7, listener: (...args: infer A7) => void),
     (event: infer E8, listener: (...args: infer A8) => void),
     (event: infer E9, listener: (...args: infer A9) => void),
-    (event: string | symbol, listener: (...args: any[]) => void),
+    (event: string, listener: (...args: any[]) => void),
 }
     ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> &
     TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> &
@@ -76,7 +79,7 @@ TEvent extends
         (event: infer E6, listener: (...args: infer A6) => void),
         (event: infer E7, listener: (...args: infer A7) => void),
         (event: infer E8, listener: (...args: infer A8) => void),
-        (event: string | symbol, listener: (...args: any[]) => void),
+        (event: string, listener: (...args: any[]) => void),
     }
         ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> &
         TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> &
@@ -91,7 +94,7 @@ TEvent extends
             (event: infer E5, listener: (...args: infer A5) => void),
             (event: infer E6, listener: (...args: infer A6) => void),
             (event: infer E7, listener: (...args: infer A7) => void),
-            (event: string | symbol, listener: (...args: any[]) => void),
+            (event: string, listener: (...args: any[]) => void),
         }
             ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> &
             TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> &
@@ -105,7 +108,7 @@ TEvent extends
                 (event: infer E4, listener: (...args: infer A4) => void),
                 (event: infer E5, listener: (...args: infer A5) => void),
                 (event: infer E6, listener: (...args: infer A6) => void),
-                (event: string | symbol, listener: (...args: any[]) => void),
+                (event: string, listener: (...args: any[]) => void),
             }
                 ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> &
                 TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> &
@@ -118,7 +121,7 @@ TEvent extends
                     (event: infer E3, listener: (...args: infer A3) => void),
                     (event: infer E4, listener: (...args: infer A4) => void),
                     (event: infer E5, listener: (...args: infer A5) => void),
-                    (event: string | symbol, listener: (...args: any[]) => void),
+                    (event: string, listener: (...args: any[]) => void),
                 }
                     ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> &
                     TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5>
@@ -129,7 +132,7 @@ TEvent extends
                         (event: infer E2, listener: (...args: infer A2) => void),
                         (event: infer E3, listener: (...args: infer A3) => void),
                         (event: infer E4, listener: (...args: infer A4) => void),
-                        (event: string | symbol, listener: (...args: any[]) => void),
+                        (event: string, listener: (...args: any[]) => void),
                     }
                         ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> &
                         TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4>
@@ -139,7 +142,7 @@ TEvent extends
                             (event: infer E1, listener: (...args: infer A1) => void),
                             (event: infer E2, listener: (...args: infer A2) => void),
                             (event: infer E3, listener: (...args: infer A3) => void),
-                            (event: string | symbol, listener: (...args: any[]) => void),
+                            (event: string, listener: (...args: any[]) => void),
                         }
                             ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> &
                             TransformedEvent<TThis, E3, A3>
@@ -148,21 +151,21 @@ TEvent extends
                                 (event: infer E0, listener: (...args: infer A0) => void),
                                 (event: infer E1, listener: (...args: infer A1) => void),
                                 (event: infer E2, listener: (...args: infer A2) => void),
-                                (event: string | symbol, listener: (...args: any[]) => void),
+                                (event: string, listener: (...args: any[]) => void),
                             }
                                 ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2>
                                 : TEvent extends
                                 {
                                     (event: infer E0, listener: (...args: infer A0) => void),
                                     (event: infer E1, listener: (...args: infer A1) => void),
-                                    (event: string | symbol, listener: (...args: any[]) => void),
+                                    (event: string, listener: (...args: any[]) => void),
                                 }
                                     ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1>
                                     : TEvent extends
                                     {
                                         (event: infer E0, listener: (...args: infer A0) => void),
-                                        (event: string | symbol, listener: (...args: any[]) => void),
+                                        (event: string, listener: (...args: any[]) => void),
                                     }
                                         ? TransformedEvent<TThis, E0, A0>
-                                        : TransformedEvent<TThis, string | symbol, Parameters<(...args: any[]) => void>>;
+                                        : TransformedEvent<TThis, string, any[]>;
 /* eslint-enable max-len */

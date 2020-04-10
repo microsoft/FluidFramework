@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, IErrorEvent, IEventProvider } from "@microsoft/fluid-common-definitions";
+import { IDisposable} from "@microsoft/fluid-common-definitions";
 import { ISequencedClient } from "./clients";
+import { IErrorEvent, IEventProvider } from "./events";
+
 
 /**
  * Proposal to set the given key/value pair.

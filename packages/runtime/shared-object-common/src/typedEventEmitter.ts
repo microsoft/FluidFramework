@@ -4,24 +4,30 @@
  * Licensed under the MIT License.
  */
 import { EventEmitter } from "events";
-import {  IEvent, IEventTransformer, TransformedEvent } from "./events";
+import { IEventTransformer, TransformedEvent, IEvent, IEventProvider } from "./events";
 
+
+// the event emitter polyfill and the node event emitter have different event types:
+// string | symbol vs. string | number
+// this allow us to correctly handle either type
+export type EventEmitterEventType = EventEmitter extends {on(event: infer E, listener: any)} ? E : never;
 
 export type TypedEventTransform<TThis, TEvent extends IEvent> =
-    IEventTransformer<TThis, TEvent> &
-    // Event emitter support some special events for the emitter itself to use
+    // Event emitter supports some special events for the emitter itself to use
     // this exposes those events for the TypedEventEmitter.
     // Since we know what the shape of these events are, we can describe them directly via a TransformedEvent
     // which easier than trying to extend TEvent directly
     // eslint-disable-next-line max-len
-    TransformedEvent<TThis, "newListener" | "removeListener", Parameters<(event: string, listener: (...args: any[]) => void) => void>> &
-    TransformedEvent<TThis, string | symbol | number, Parameters<(...args: any[]) => void>>;
+    TransformedEvent<TThis,"newListener" | "removeListener", Parameters<(event: string, listener: (...args: any[]) => void) => void>> &
+    // Expose all the events provides by TEvent
+    IEventTransformer<TThis, TEvent> &
+    // Add the default overload so this is covertable to EventEmitter
+    TransformedEvent<TThis, EventEmitterEventType, any[]>;
 
 /**
  * Event Emitter helper class the supports emitting typed events
  */
-export class TypedEventEmitter<TEvent extends IEvent> extends EventEmitter  {
-
+export class TypedEventEmitter<TEvent extends IEvent> extends EventEmitter implements IEventProvider<TEvent> {
     constructor(){
         super();
         this.addListener = super.addListener.bind(this) as TypedEventTransform<this, TEvent>;
