@@ -158,7 +158,9 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
             // For backwards compatibility with older stored IDs
             // We update the storage with the handle so that this code path is less and less trafficked
             const component = await this.getComponent_UNSAFE<T>(handleOrId);
-            directory.set(key, component.handle);
+            if (component.IComponentLoadable && component.handle) {
+                directory.set(key, component.handle);
+            }
             return component;
         } else {
             const handle = handleOrId?.IComponentHandle;

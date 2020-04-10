@@ -48,8 +48,16 @@ export class InternalRegistry implements IComponentRegistry, IComponentRegistryD
         return undefined;
     }
 
-    public getFromCapabilities(type: keyof IComponent): IContainerComponentDetails[] {
-        return this.containerComponentArray.filter((componentDetails) => componentDetails.capabilities.includes(type));
+    public getFromCapability(capability: keyof IComponent): IContainerComponentDetails[] {
+        return this.containerComponentArray.filter(
+            (componentDetails) =>componentDetails.capabilities.includes(capability));
+    }
+
+    public hasCapability(type: string, capability: keyof IComponent) {
+        const index = this.containerComponentArray.findIndex(
+            (containerComponent) => type === containerComponent.type,
+        );
+        return index >=0 && this.containerComponentArray[index].capabilities.includes(capability);
     }
 }
 
@@ -58,21 +66,21 @@ const generateFactory = () => {
         {
             type: "clicker",
             factory: Promise.resolve(ClickerInstantiationFactory),
-            capabilities: ["IComponentHTMLView"],
+            capabilities: ["IComponentHTMLView", "IComponentLoadable"],
             friendlyName: "Clicker",
             fabricIconName: "NumberField",
         },
         {
             type: "tabs",
             factory: Promise.resolve(TabsComponent.getFactory()),
-            capabilities: ["IComponentHTMLView"],
+            capabilities: ["IComponentHTMLView", "IComponentLoadable"],
             friendlyName: "Tabs",
             fabricIconName: "BrowserTab",
         },
         {
             type: "spaces",
             factory: Promise.resolve(Spaces.getFactory()),
-            capabilities: ["IComponentHTMLView"],
+            capabilities: ["IComponentHTMLView", "IComponentLoadable"],
             friendlyName: "Spaces",
             fabricIconName: "SnapToGrid",
         },
