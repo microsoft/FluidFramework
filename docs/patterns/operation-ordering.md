@@ -8,11 +8,10 @@ operation level._ This can present challenges when using the distributed data st
 don't match completely with the operations that the DDS provides.
 
 Consider the SharedNumberSequence DDS. It stores a list/array of numbers, and, like all SharedSequences, provides
-methods for inserting new numbers at a particular index, removing numbers, and retrieving numbers. Each of these methods
-(`insert`, `remove`, and `getRange`) corresponds to an operation on the SharedNumberSequence. Fluid guarantees that
-these operations will be totally ordered along with all other ops, and that all clients will eventually reach the same
-state. However, operations may be interleaved with other operations from other clients, and sometimes, this isn't
-desirable.
+methods for inserting new numbers at a particular index, removing numbers, and retrieving numbers. The `insert` and
+`remove` methods correspond to an operation on the SharedNumberSequence. Fluid guarantees that these operations will be
+totally ordered along with all other ops, and that all clients will eventually reach the same state. However, operations
+may be interleaved with other operations from other clients, and sometimes, this isn't desirable.
 
 For example, consider implementing a `set` method for a SharedNumberSequence. For simplicity, we'll pass all the
 necessary arguments to the method in this example, but in a practical application the method signature may look
