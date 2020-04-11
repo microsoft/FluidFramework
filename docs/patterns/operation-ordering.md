@@ -4,7 +4,7 @@
 # Explicit operation ordering
 
 Fluid is strictly based on operations. This means that the Fluid runtime makes guarantees about behavior _at the
-operation level._ This can present challenges when using the distributed data structures, when your needs as a developer
+operation level._ This can present challenges when using the distributed data structures when your needs as a developer
 don't match completely with the operations that the DDS provides.
 
 Consider the SharedNumberSequence DDS. It stores a list/array of numbers, and, like all SharedSequences, provides
@@ -72,10 +72,10 @@ Client A wants to replace the number at index 2 with a 9, so it calls the functi
 
 ```ts
 // Client A
-set(theSequence, hostRuntime, 2, 9);
+set(theSequence, hostRuntime, 2 /* index */, 9 /* value */);
 ```
 
-At the same time, Client B removes the number at index 1
+At the same time, Client B removes the number at index 1:
 
 ```ts
 // Client B
@@ -164,10 +164,10 @@ is not intended: `092`.
 // positions: 01234
 ```
 
-From Fluid's perspective, this is perfectly fine. Each client will reach the same consistent state eventually. However,
-that end state isn't what we wanted. We have a guarantee that Client A's `remove` will be ordered after its `insert`,
-but we need to further guarantee that those two operations will be ordered sequentially. In other words, we need to make
-sure that the third combination can't happen.
+From Fluid's perspective, this is perfectly fine. Each client will reach the same consistent state -- `092` --
+eventually. However, that end state isn't what we wanted. We have a guarantee that Client A's `remove` will be ordered
+after its `insert`, but we need to further guarantee that those two operations will be ordered sequentially. In other
+words, we need to make sure that the third combination can't happen.
 
 ## Fixing the problem: `orderSequentially`
 
