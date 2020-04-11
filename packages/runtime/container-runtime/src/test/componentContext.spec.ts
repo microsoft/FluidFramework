@@ -82,7 +82,7 @@ describe("Component Context Tests", () => {
                 "Test1",
                 ["TestComp", "SubComp"],
                 containerRuntime,
-                storage,
+                storageGetter,
                 scope,
                 new SummaryTracker(true, "", 0, 0, async () => undefined),
                 attachCb);
