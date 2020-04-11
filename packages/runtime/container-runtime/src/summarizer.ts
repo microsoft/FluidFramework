@@ -416,6 +416,8 @@ export class RunningSummarizer implements IDisposable {
         }
         const outstandingOps = this.heuristics.lastOpSeqNumber - this.heuristics.lastAcked.refSequenceNumber;
         if (outstandingOps > minOpsForLastSummary) {
+            // This resolves when the current pending summary is broadcast.
+            // We don't stick around and wait to see if it is acked or not.
             await this.trySummarize("lastSummary").broadcastP;
         }
     }
