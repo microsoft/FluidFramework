@@ -28,6 +28,8 @@ import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
 const maxSummarizeTimeoutTime = 20000; // 20 sec
 const maxSummarizeTimeoutCount = 5; // Double and resend 5 times
 
+const minOpsForLastSummary = 50;
+
 declare module "@microsoft/fluid-component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IComponent extends Readonly<Partial<IProvideSummarizer>> { }
@@ -412,13 +414,9 @@ export class RunningSummarizer implements IDisposable {
         if (this.disposed) {
             return;
         }
-        if (this.heuristics.lastOpSeqNumber > this.heuristics.lastAcked.refSequenceNumber) {
-            if (this.summarizing === undefined) {
-                this.trySummarize("lastSummary");
-            }
-            if (this.summarizing) {
-                await this.summarizing.promise;
-            }
+        const outstandingOps = this.heuristics.lastOpSeqNumber - this.heuristics.lastAcked.refSequenceNumber;
+        if (outstandingOps > minOpsForLastSummary) {
+            await this.trySummarize("lastSummary").broadcastP;
         }
     }
 
@@ -440,37 +438,36 @@ export class RunningSummarizer implements IDisposable {
         }
     }
 
-    private trySummarize(reason: string) {
-        this.trySummarizeCore(reason).catch((error) => {
-            this.logger.sendErrorEvent({ eventName: "UnexpectedSummarizeError" }, error);
-        });
-    }
-
-    private async trySummarizeCore(reason: string) {
+    private trySummarize(reason: string): { broadcastP: Promise<void> } {
         if (this.summarizing) {
             // We can't summarize if we are already
             this.tryWhileSummarizing = true;
-            return;
+            return { broadcastP: Promise.resolve() };
         }
 
         // GenerateSummary could take some time
         // mark that we are currently summarizing to prevent concurrent summarizing
         this.summarizing = new Deferred();
 
-        try {
+        (async () => {
             const result = await this.summarize(reason, false);
             if (result === false) {
                 // On nack, try again in safe mode
                 await this.summarize(reason, true);
             }
-        } finally {
+        })().finally(() => {
+            // Make sure to always exit summarizing state
             this.summarizing.resolve();
             this.summarizing = undefined;
             if (this.tryWhileSummarizing && !this.disposed) {
                 this.tryWhileSummarizing = false;
                 this.heuristics.run();
             }
-        }
+        }).catch((error) => {
+            this.logger.sendErrorEvent({ eventName: "UnexpectedSummarizeError" }, error);
+        });
+
+        return { broadcastP: this.summarizing.promise };
     }
 
     /**
