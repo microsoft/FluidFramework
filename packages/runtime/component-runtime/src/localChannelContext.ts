@@ -31,7 +31,7 @@ export class LocalChannelContext implements IChannelContext {
         type: string,
         runtime: IComponentRuntime,
         private readonly componentContext: IComponentContext,
-        private readonly storageService: IDocumentStorageService,
+        private readonly storageServiceGetter: () => IDocumentStorageService,
         private readonly submitFn: (type: MessageType, content: any) => number,
         dirtyFn: (address: string) => void,
     ) {
@@ -88,7 +88,7 @@ export class LocalChannelContext implements IChannelContext {
             this.componentContext.connectionState,
             this.submitFn,
             this.dirtyFn,
-            this.storageService);
+            this.storageServiceGetter);
         this.connection = services.deltaConnection;
         this.channel.connect(services);
 

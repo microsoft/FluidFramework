@@ -414,7 +414,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.removeAllListeners();
     }
 
-    public isAttached(): boolean {
+    public isContainerAttached(): boolean {
         return this.attached;
     }
 

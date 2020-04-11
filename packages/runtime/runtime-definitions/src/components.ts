@@ -256,7 +256,7 @@ export interface IComponentContext extends EventEmitter {
     readonly leader: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly blobManager: IBlobManager;
-    readonly storage: IDocumentStorageService;
+    readonly storageGetter: () => IDocumentStorageService;
     readonly connectionState: ConnectionState;
     readonly branch: string;
     readonly baseSnapshot: ISnapshotTree | undefined;
@@ -331,6 +331,15 @@ export interface IComponentContext extends EventEmitter {
      * @param address - The address of the channe that is dirty.
      */
     setChannelDirty(address: string): void;
+}
+
+export interface IExperimentalComponentContext extends IComponentContext {
+    readonly isExperimentalComponentContext: true;
+
+    /**
+     * Indicates whether the container is attached to storage.
+     */
+    isContainerAttached(): boolean;
 }
 
 /**
@@ -469,4 +478,14 @@ export interface IHostRuntime extends
      * @param content - Content of the signal.
      */
     submitSignal(type: string, content: any): void;
+}
+
+export interface IExperimentalHostRuntime extends IHostRuntime {
+
+    isExperimentalHostRuntime: true;
+
+    /**
+     * Indicates whether the container is attached to storage.
+     */
+    isContainerAttached(): boolean;
 }

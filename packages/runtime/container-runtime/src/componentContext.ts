@@ -36,6 +36,8 @@ import {
     IEnvelope,
     IHostRuntime,
     IInboundSignalMessage,
+    IExperimentalHostRuntime,
+    IExperimentalComponentContext,
 } from "@microsoft/fluid-runtime-definitions";
 import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
 // eslint-disable-next-line import/no-internal-modules
@@ -62,7 +64,17 @@ interface ISnapshotDetails {
 /**
  * Represents the context for the component. This context is passed to the component runtime.
  */
-export abstract class ComponentContext extends EventEmitter implements IComponentContext, IDisposable {
+export abstract class ComponentContext extends EventEmitter implements IComponentContext, IDisposable,
+    IExperimentalComponentContext
+{
+    public readonly isExperimentalComponentContext = true;
+
+    public isContainerAttached(): boolean {
+        const expHostRuntime = this._hostRuntime as IExperimentalHostRuntime;
+        assert(expHostRuntime?.isExperimentalHostRuntime);
+        return expHostRuntime.isContainerAttached();
+    }
+
     public get documentId(): string {
         return this._hostRuntime.id;
     }
@@ -155,7 +167,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         private readonly _hostRuntime: IHostRuntime,
         public readonly id: string,
         public readonly existing: boolean,
-        public readonly storage: IDocumentStorageService,
+        public readonly storageGetter: () => IDocumentStorageService,
         public readonly scope: IComponent,
         public readonly summaryTracker: SummaryTracker,
         private _isAttached: boolean,
@@ -500,7 +512,7 @@ export class RemotedComponentContext extends ComponentContext {
         id: string,
         private readonly initSnapshotValue: ISnapshotTree | string,
         runtime: IHostRuntime,
-        storage: IDocumentStorageService,
+        storageGetter: () => IDocumentStorageService,
         scope: IComponent,
         summaryTracker: SummaryTracker,
         pkg?: string[],
@@ -509,7 +521,7 @@ export class RemotedComponentContext extends ComponentContext {
             runtime,
             id,
             true,
-            storage,
+            storageGetter,
             scope,
             summaryTracker,
             true,
@@ -531,8 +543,8 @@ export class RemotedComponentContext extends ComponentContext {
             let tree: ISnapshotTree;
 
             if (typeof this.initSnapshotValue === "string") {
-                const commit = (await this.storage.getVersions(this.initSnapshotValue, 1))[0];
-                tree = await this.storage.getSnapshotTree(commit);
+                const commit = (await this.storageGetter().getVersions(this.initSnapshotValue, 1))[0];
+                tree = await this.storageGetter().getSnapshotTree(commit);
             } else {
                 tree = this.initSnapshotValue;
             }
@@ -541,7 +553,7 @@ export class RemotedComponentContext extends ComponentContext {
                 // Need to rip through snapshot and use that to populate extraBlobs
                 const { pkg, snapshotFormatVersion } =
                     await readAndParse<IComponentAttributes>(
-                        this.storage,
+                        this.storageGetter(),
                         tree.blobs[".component"]);
 
                 let pkgFromSnapshot: string[];
@@ -574,13 +586,13 @@ export class LocalComponentContext extends ComponentContext {
         id: string,
         pkg: string[],
         runtime: IHostRuntime,
-        storage: IDocumentStorageService,
+        storageGetter: () => IDocumentStorageService,
         scope: IComponent,
         summaryTracker: SummaryTracker,
         attachCb: (componentRuntime: IComponentRuntime) => void,
         public readonly createProps?: any,
     ) {
-        super(runtime, id, false, storage, scope, summaryTracker, false, attachCb, pkg);
+        super(runtime, id, false, storageGetter, scope, summaryTracker, false, attachCb, pkg);
     }
 
     public generateAttachMessage(): IAttachMessage {

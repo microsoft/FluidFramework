@@ -28,7 +28,7 @@ describe("Component Context Tests", () => {
     describe("LocalComponentContext Initialization", () => {
 
         let localComponentContext: LocalComponentContext;
-        let storage: IDocumentStorageService;
+        let storageGetter: () => IDocumentStorageService;
         let scope: IComponent;
         const attachCb = (mR: IComponentRuntime) => { };
         let containerRuntime: ContainerRuntime;
@@ -50,7 +50,7 @@ describe("Component Context Tests", () => {
                 "Test1",
                 ["TestComponent1"],
                 containerRuntime,
-                storage,
+                storageGetter,
                 scope,
                 summaryTracker,
                 attachCb);
@@ -107,7 +107,7 @@ describe("Component Context Tests", () => {
                 "Test1",
                 ["TestComp", "SubComp"],
                 containerRuntime,
-                storage,
+                storageGetter,
                 scope,
                 summaryTracker,
                 attachCb);
@@ -170,7 +170,7 @@ describe("Component Context Tests", () => {
                 "Test1",
                 snapshotTree,
                 containerRuntime,
-                new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
+                () => new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                 scope,
                 summaryTracker,
             );
@@ -202,7 +202,7 @@ describe("Component Context Tests", () => {
                 "Test1",
                 snapshotTree,
                 containerRuntime,
-                new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
+                () => new BlobCacheStorageService(storage as IDocumentStorageService, blobCache),
                 scope,
                 summaryTracker,
             );

@@ -68,6 +68,7 @@ import {
     IHostRuntime,
     IInboundSignalMessage,
     NamedComponentRegistryEntries,
+    IExperimentalHostRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 import { ComponentSerializer, SummaryTracker } from "@microsoft/fluid-runtime-utils";
 // eslint-disable-next-line import/no-internal-modules
@@ -368,9 +369,12 @@ const schedulerRuntimeRequestHandler: RuntimeRequestHandler =
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the component level mappings.
  */
-export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRuntime, IExperimentalRuntime {
+export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRuntime,
+    IExperimentalRuntime, IExperimentalHostRuntime
+{
 
     public readonly isExperimentalRuntime = true;
+    public readonly isExperimentalHostRuntime = true;
     /**
      * Load the components from a snapshot and returns the runtime.
      * @param context - Context of the container.
@@ -489,6 +493,12 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this.registry;
     }
 
+    public isContainerAttached(): boolean {
+        const expContainerContext = this.context as IExperimentalContainerContext;
+        assert(expContainerContext?.isExperimentalContainerContext);
+        return expContainerContext.isContainerAttached();
+    }
+
     public nextSummarizerP?: Promise<Summarizer>;
     public nextSummarizerD?: Deferred<Summarizer>;
 
@@ -601,7 +611,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 key,
                 value,
                 this,
-                this.storage,
+                () => this.storage,
                 this.containerScope,
                 this.summaryTracker.createOrGetChild(key, this.summaryTracker.referenceSequenceNumber));
             const deferred = new Deferred<ComponentContext>();
@@ -947,7 +957,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             id,
             pkg,
             this,
-            this.storage,
+            () => this.storage,
             this.containerScope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.referenceSequenceNumber),
             (cr: IComponentRuntime) => this.attachComponent(cr),
@@ -1086,7 +1096,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     attachMessage.id,
                     snapshotTree,
                     this,
-                    new BlobCacheStorageService(this.storage, flatBlobs),
+                    () => new BlobCacheStorageService(this.storage, flatBlobs),
                     this.containerScope,
                     this.summaryTracker.createOrGetChild(attachMessage.id, message.sequenceNumber),
                     [attachMessage.type]);
@@ -1143,7 +1153,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         const context = this.contexts.get(componentRuntime.id);
         // If storage is not available then we are not yet fully attached and so will defer to the initial snapshot
         const expContainerContext = this.context as IExperimentalContainerContext;
-        if (expContainerContext?.isExperimentalContainerContext ? expContainerContext.isAttached() : true) {
+        if (expContainerContext?.isExperimentalContainerContext ? expContainerContext.isContainerAttached() : true) {
             const message = context.generateAttachMessage();
 
             this.pendingAttach.set(componentRuntime.id, message);
