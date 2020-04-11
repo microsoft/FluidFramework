@@ -3,9 +3,36 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { IHostRuntime } from "@microsoft/fluid-runtime-definitions";
+import { ISequencedDocumentMessage, MessageType } from "@microsoft/fluid-protocol-definitions";
+import { IAttachMessage, IEnvelope, IHostRuntime } from "@microsoft/fluid-runtime-definitions";
 import { ILastEditedTracker } from "./interfaces";
+
+const schedulerId = "_schdeuler";
+
+// Returns if an "Attach" or "Operation" type message is from the scheduler.
+function isSchedulerMessage(message: ISequencedDocumentMessage) {
+    if (message.type === MessageType.Attach) {
+        const attachMessage = message.contents as IAttachMessage;
+        if (attachMessage.id === schedulerId) {
+            return true;
+        }
+    } else if (message.type === MessageType.Operation) {
+        const envelope = message.contents as IEnvelope;
+        if (envelope.address === schedulerId) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Default implementation of the shouldDiscardMessageFn function below that tells that all messages other
+// than "Attach" and "Operation" type messages should be discarded.
+function shouldDiscardMessageDefault(message: ISequencedDocumentMessage) {
+    if (message.type === MessageType.Attach || message.type === MessageType.Operation) {
+        return false;
+    }
+    return true;
+}
 
 /**
  * Helper function to set up last edited tracker in the component with the given id. The component must implement
@@ -13,7 +40,8 @@ import { ILastEditedTracker } from "./interfaces";
  * It does the following:
  * - Requests the component with the given id from the runtime and waits for it to load.
  * - Registers an "op" listener on the runtime. On each message, it calls the shouldDiscardMessageFn to check
- *   if the message should be discarded. If not, it passes the message to the last edited tracker in the component.
+ *   if the message should be discarded. It also discards all scheduler message. If a message is not discarded,
+ *   it is passed to the last edited tracker in the component.
  * - Any messages received before the component is loaded are stored in a buffer and passed to the tracker once the
  *   component loads.
  * @param componentId - The id of the root component whose last edited tracker is to be set up.
@@ -23,18 +51,19 @@ import { ILastEditedTracker } from "./interfaces";
 export async function setupLastEditedTracker(
     componentId: string,
     runtime: IHostRuntime,
-    shouldDiscardMessageFn: (message: ISequencedDocumentMessage) => boolean,
+    shouldDiscardMessageFn: (message: ISequencedDocumentMessage) => boolean = shouldDiscardMessageDefault,
 ) {
-    // eslint-disable-next-line prefer-const
-    let lastEditedTracker: ILastEditedTracker;
     // Stores messages until the component has loaded.
     const pendingMessageBuffer: ISequencedDocumentMessage[] = [];
+
+    // eslint-disable-next-line prefer-const
+    let lastEditedTracker: ILastEditedTracker;
 
     // Register an op listener on the runtime. If the component has loaded, it passes the message to its last
     // edited tracker. If the component hasn't loaded, it stores the messages in a temporary buffer.
     runtime.on("op", (message: ISequencedDocumentMessage) => {
-        // Filter out messages that should be discarded.
-        if (!shouldDiscardMessageFn(message)) {
+        // Discard scheduler messages and other messages as per shouldDiscardMessageFn.
+        if (!shouldDiscardMessageFn(message) && !isSchedulerMessage(message)) {
             if (lastEditedTracker !== undefined) {
                 lastEditedTracker.updateLastEditDetails(message);
             } else {

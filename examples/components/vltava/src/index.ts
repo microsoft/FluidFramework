@@ -23,12 +23,14 @@ import {
 } from "@microsoft/fluid-container-definitions";
 import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
 import { setupLastEditedTracker } from "@microsoft/fluid-last-edited";
+<<<<<<< HEAD
 import { ISequencedDocumentMessage, MessageType } from "@microsoft/fluid-protocol-definitions";
 >>>>>>> AqueductAnchor -> LastEditedTracker. Changed it to a class, added setup helper. Updated Vtlava to demonstrate LastEditedTracker.
+=======
+>>>>>>> Discard scheduler ops by default. Provide a default shouldDiscardMessage function.
 import {
     IComponentRegistry,
     IHostRuntime,
-    IEnvelope,
     IProvideComponentFactory,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
@@ -101,7 +103,7 @@ export class VltavaRuntimeFactory implements IRuntimeFactory {
                 });
         }
 
-        setupLastEditedTracker(VltavaRuntimeFactory.defaultComponentId, runtime, this.shouldDiscardMessage)
+        setupLastEditedTracker(VltavaRuntimeFactory.defaultComponentId, runtime)
             .catch((error) => {
                 throw error;
             });
@@ -121,14 +123,6 @@ export class VltavaRuntimeFactory implements IRuntimeFactory {
         const component = await runtime.getComponentRuntime(componentId, true);
 
         return component.request({ url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash + 1) });
-    }
-
-    private shouldDiscardMessage(message: ISequencedDocumentMessage): boolean {
-        const envelope = message.contents as IEnvelope;
-        if ((message.type !== MessageType.Operation) || envelope.address.includes("_scheduler")) {
-            return true;
-        }
-        return false;
     }
 }
 

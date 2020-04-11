@@ -37,14 +37,27 @@ This package also provides a `setupLastEditedTracker` method that can be used to
 async function setupLastEditedTracker(
     componentId: string,
     runtime: IHostRuntime,
-    shouldDiscardMessageFn: (message: ISequencedDocumentMessage) => boolean,
+    shouldDiscardMessageFn: (message: ISequencedDocumentMessage) => boolean = shouldDiscardMessageDefault,
 )
 ```
 
-- The component with componentId must implement an IComponentLastEditedTracker.
+The function does the following:
 - Requests the component with the componentId from the runtime and waits for it to load.
-- Registers an "op" listener on the runtime. On each op, it calls the shouldDiscardMessageFn to check if the message should be discarded. If not, it passes the message to the last edited tracker in the component.
+- Registers an "op" listener on the runtime. On each message, it calls the shouldDiscardMessageFn to check if the message should be discarded. It also discards all scheduler message. If a message is not discarded, it is passed to the last edited tracker in the component.
 - Any messages received before the component is loaded are stored in a buffer and passed to the tracker once the component loads.
+
+Note:
+- The component with componentId must implement an IComponentLastEditedTracker.
+- By default, message that are not of "Attach" and "Operation" type are discarded as per the shouldDiscardMessageDefault function:
+```
+function shouldDiscardMessageDefault(message: ISequencedDocumentMessage) {
+    if (message.type === MessageType.Attach || message.type === MessageType.Operation) {
+        return false;
+    }
+    return true;
+}.
+```
+- To discard specific ops, provide the shouldDiscardMessageFn funtion that takes in the message and returns if it should be discarded.
 
 ## Usage
 
@@ -63,21 +76,12 @@ public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         await runtime.createComponent(rootComponentId, "rootComponent");
     }
 
-    setupLastEditedTracker(rootComponentId, runtime, shouldDiscardMessage)
+    setupLastEditedTracker(rootComponentId, runtime)
         .catch((error) => {
             throw error;
         });
 
     return runtime;
-}
-
-// Function that discards non-op and scheduler messages.
-private shouldDiscardMessage(message: ISequencedDocumentMessage): boolean {
-    const envelope = message.contents as IEnvelope;
-    if ((message.type !== MessageType.Operation) || envelope.address.includes("_scheduler")) {
-        return true;
-    }
-    return false;
 }
 ```
 
@@ -97,8 +101,8 @@ lastEditedTracker.on("lastEditedChanged", (lastEditDetails: ILastEditDetails) =>
 
 ## Example
 
-The Vltava component under examples demonstrates how LastEditedTracker can be implemented with a root component to track last edited in a document:
+Vltava in examples demonstrates how LastEditedTracker can be implemented with a root component to track last edited in a document:
 - [instantiateRuntime implementation that loads the root (Anchor) component](../../../examples/components/vltava/src/index.ts)
 - [LastEditedViewer component that implements IComponentLastEditedTracker](../../../examples/components/vltava/src/components/last-edited/lastEditedViewer.tsx)
-- [Anchor Component that creates and provides LastEditedViewer component via IProvideLastEditedTracker](../../../examples/components/vltava/src/components/anchor/anchor.ts)
-- [Vltava view that gets the LastEditedTracker from the Anchor and displays the last edited data](../../../examples/components/vltava/src/components/vltava/view.tsx)
+- [Root (Anchor) Component that creates and provides LastEditedViewer component via IProvideLastEditedTracker](../../../examples/components/vltava/src/components/anchor/anchor.ts)
+- [Vltava view that gets the LastEditedTracker from the root and displays the last edited data](../../../examples/components/vltava/src/components/vltava/view.tsx)
