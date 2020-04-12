@@ -502,7 +502,7 @@ export class RunningSummarizer implements IDisposable {
             summaryTime: Date.now(),
         };
 
-        const pendingTimeoutP = this.pendingAckTimer.start();
+        const pendingTimeoutP = this.pendingAckTimer.start().catch(() => undefined);
         const summary = this.summaryWatcher.watchSummary(summaryData.clientSequenceNumber);
 
         // Wait for broadcast
