@@ -45,6 +45,6 @@ export class LastEditedViewer extends PrimedComponent implements IComponentLastE
     protected async componentHasInitialized() {
         const summarizableObject =
             await this.root.get<IComponentHandle<SummarizableObject>>(this.summarizableObjectId).get();
-        this._lastEditedTracker = new LastEditedTracker(summarizableObject, this.runtime.getQuorum());
+        this._lastEditedTracker = new LastEditedTracker(summarizableObject);
     }
 }

@@ -11,6 +11,8 @@ import {
 } from "office-ui-fabric-react/lib/Facepile";
 import { PersonaInitialsColor } from "office-ui-fabric-react";
 
+import { IVltavaUserDetails } from "../vltava/dataModel";
+
 const facepileStyle: React.CSSProperties = {
     position: "absolute",
     bottom: 50,
@@ -18,13 +20,12 @@ const facepileStyle: React.CSSProperties = {
 };
 
 interface ILastEditedFacepileProps {
-    user: string;
+    user: IVltavaUserDetails;
     time: string;
 }
 
 export const LastEditedFacepile = (props: ILastEditedFacepileProps) => {
-    const personaName = props.user;
-    let count = 0;
+    const personaName = props.user.name;
     // Split the names on spaces and underscores
     const nameParts = personaName.split(" ")
         .reduce((acc: string[], val) => { acc.push(...val.split("_")); return acc; }, []);
@@ -32,7 +33,7 @@ export const LastEditedFacepile = (props: ILastEditedFacepileProps) => {
     // This is just a way to iterate through all colors in PersonaInitialColor in order
     const initialsColor =
         PersonaInitialsColor[
-            PersonaInitialsColor[count++ % Object.keys(PersonaInitialsColor).length]
+            PersonaInitialsColor[props.user.colorCode % Object.keys(PersonaInitialsColor).length]
         ];
     const persona: IFacepilePersona = {
         imageInitials,

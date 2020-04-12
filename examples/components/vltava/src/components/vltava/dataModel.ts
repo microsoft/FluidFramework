@@ -11,23 +11,27 @@ import {
     IComponentRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedDirectory } from "@microsoft/fluid-map";
-import {
-    IQuorum,
-    ISequencedClient,
-} from "@microsoft/fluid-protocol-definitions";
+import { IQuorum, ISequencedClient } from "@microsoft/fluid-protocol-definitions";
+
+export interface IVltavaUserDetails {
+    name: string,
+    colorCode: number,
+}
 
 export interface IVltavaDataModel extends EventEmitter {
     getDefaultComponent(): Promise<IComponent>;
     getRootComponent(): Promise<IComponent>;
     getTitle(): string;
-    getUsers(): string[];
-    getUserFromId(id: string): string;
+    getUsers(): IVltavaUserDetails[];
+    getUser(id: string): IVltavaUserDetails | undefined;
 }
 
 export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
     private readonly quorum: IQuorum;
+    private readonly users: Map<string, IVltavaUserDetails> = new Map();
+    private refColorCode = 0;
 
-    public on(event: "membersChanged", listener: (users: Map<string, ISequencedClient>) => void): this;
+    public on(event: "membersChanged", listener: () => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
     }
@@ -40,13 +44,17 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
         super();
 
         this.quorum = runtime.getQuorum();
-        this.quorum.on("addMember", () => {
-            const users = this.getUsers();
-            this.emit("membersChanged", users);
+        this.quorum.getMembers().forEach((member: ISequencedClient, clientId: string) => {
+            this.addUser(clientId, member);
         });
-        this.quorum.on("removeMember", () => {
-            const users = this.getUsers();
-            this.emit("membersChanged", users);
+
+        this.quorum.on("addMember", (clientId: string, member: ISequencedClient) => {
+            this.addUser(clientId, member);
+            this.emit("membersChanged");
+        });
+        this.quorum.on("removeMember", (clientId) => {
+            this.removeUser(clientId);
+            this.emit("membersChanged");
         });
     }
 
@@ -69,26 +77,29 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
         return this.context.documentId;
     }
 
-    public getUsers(): string[] {
-        const members = this.quorum.getMembers();
-        const users: string[] = [];
-        members.forEach((value) => {
-            if (value.client.details?.capabilities?.interactive) {
-                users.push((value.client.user as any).name);
-            }
+    public getUsers(): IVltavaUserDetails[] {
+        const users: IVltavaUserDetails[] = [];
+        this.users.forEach((user: IVltavaUserDetails) => {
+            users.push(user);
         });
         return users;
     }
 
-    public getUserFromId(id: string): string {
-        const members = this.quorum.getMembers();
-        let user: string = "";
-        members.forEach((value) => {
-            if (value.client.user.id === id) {
-                user = (value.client.user as any).name;
-                return;
-            }
-        });
-        return user;
+    public getUser(clientId: string): IVltavaUserDetails | undefined {
+        return this.users.get(clientId);
+    }
+
+    private addUser(clientId: string, member: ISequencedClient) {
+        if (member && member.client.details?.capabilities?.interactive) {
+            const userDetails: IVltavaUserDetails = {
+                name: (member.client.user as any).name,
+                colorCode: this.refColorCode++,
+            };
+            this.users.set(clientId, userDetails);
+        }
+    }
+
+    private removeUser(clientId: string) {
+        this.users.delete(clientId);
     }
 }

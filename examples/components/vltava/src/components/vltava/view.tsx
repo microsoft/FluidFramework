@@ -8,7 +8,7 @@ import { ReactViewAdapter } from "@microsoft/fluid-view-adapters";
 import * as React from "react";
 
 import { LastEditedFacepile } from "../last-edited/facePile";
-import { IVltavaDataModel } from "./dataModel";
+import { IVltavaUserDetails, IVltavaDataModel } from "./dataModel";
 import { VltavaFacepile } from "./facePile";
 
 interface IVltavaViewProps {
@@ -16,9 +16,9 @@ interface IVltavaViewProps {
 }
 
 interface IVltavaViewState {
-    users: string[];
+    users: IVltavaUserDetails[];
     view: JSX.Element;
-    lastEditedUser: string;
+    lastEditedUser: IVltavaUserDetails;
     lastEditedTime: string;
 }
 
@@ -30,24 +30,27 @@ export class VltavaView extends React.Component<IVltavaViewProps,IVltavaViewStat
         this.state = {
             users: props.dataModel.getUsers(),
             view: <div/>,
-            lastEditedUser: "",
+            lastEditedUser: { name: "", colorCode: 0 },
             lastEditedTime: "",
         };
 
-        props.dataModel.on("membersChanged", (users) => {
+        props.dataModel.on("membersChanged", () => {
+            const users = props.dataModel.getUsers();
             this.setState({users});
         });
     }
 
     private setLastEditedState(lastEditDetails: ILastEditDetails) {
-        const lastEditedUser = this.props.dataModel.getUserFromId(lastEditDetails.userId);
-        const date = new Date(lastEditDetails.timestamp);
-        const lastEditedTime = date.toUTCString();
+        const lastEditedUser = this.props.dataModel.getUser(lastEditDetails.clientId);
+        if (lastEditedUser) {
+            const date = new Date(lastEditDetails.timestamp);
+            const lastEditedTime = date.toUTCString();
 
-        this.setState({
-            lastEditedUser,
-            lastEditedTime,
-        });
+            this.setState({
+                lastEditedUser,
+                lastEditedTime,
+            });
+        }
     }
 
     async componentDidMount() {
