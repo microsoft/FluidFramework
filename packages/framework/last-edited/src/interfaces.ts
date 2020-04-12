@@ -33,6 +33,6 @@ export interface ILastEditedTracker extends EventEmitter {
 }
 
 export interface ILastEditDetails {
-    userId: string;
+    clientId: string;
     timestamp: number;
 }

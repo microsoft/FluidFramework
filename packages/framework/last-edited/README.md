@@ -1,14 +1,14 @@
 # Last Edited Tracker
 
-A tracker that tracks the last edit to a document, such as the user who last edited the document and the time it happened.
+A tracker that tracks the last edit to a document, such as the client who last edited the document and the time it happened.
 
-It has to be created by passing a `SummarizableObject` and `IQuorum`:
+It has to be created by passing a `SummarizableObject`:
 ```
 constructor(
     private readonly summarizableObject: SummarizableObject,
-    private readonly quorum: IQuorum);
+);
 ```
-It uses the SummarizableObject to store the last edit details. The quorum is used to retrieve user information.
+It uses the SummarizableObject to store the last edit details.
 
 ## API
 
@@ -22,6 +22,7 @@ public updateLastEditDetails(message: ISequencedDocumentMessage);
 The update should always be called in response to a remote op because:
 1. It updates its state from the remote op.
 2. It uses a SummarizableObject as storage which must be set in response to a remote op.
+3. The details returned in getLastEditDetails contain the clientId and the timestamp of the last edit.
 
 ## Events
 
