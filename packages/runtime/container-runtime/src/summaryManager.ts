@@ -14,12 +14,14 @@ import { ISummarizer, Summarizer } from "./summarizer";
 interface ITrackedClient {
     clientId: string;
     sequenceNumber: number;
+    isSummarizer: boolean;
 }
 
 class ClientComparer implements IComparer<ITrackedClient> {
     public readonly min: ITrackedClient = {
         clientId: "",
         sequenceNumber: -1,
+        isSummarizer: false,
     };
 
     public compare(a: ITrackedClient, b: ITrackedClient): number {
@@ -30,10 +32,15 @@ class ClientComparer implements IComparer<ITrackedClient> {
 class QuorumHeap {
     private readonly heap = new Heap<ITrackedClient>((new ClientComparer()));
     private readonly heapMembers = new Map<string, IHeapNode<ITrackedClient>>();
+    private summarizerCount = 0;
 
     public addClient(clientId: string, client: ISequencedClient) {
-        const heapNode = this.heap.add({ clientId, sequenceNumber: client.sequenceNumber });
+        const isSummarizer = client.client.details.type === "summarizer";
+        const heapNode = this.heap.add({ clientId, sequenceNumber: client.sequenceNumber, isSummarizer });
         this.heapMembers.set(clientId, heapNode);
+        if (isSummarizer) {
+            this.summarizerCount++;
+        }
     }
 
     public removeClient(clientId: string) {
@@ -41,11 +48,18 @@ class QuorumHeap {
         if (member) {
             this.heap.remove(member);
             this.heapMembers.delete(clientId);
+            if (member.value.isSummarizer) {
+                this.summarizerCount--;
+            }
         }
     }
 
     public getFirstClientId(): string | undefined {
         return this.heap.count() > 0 ? this.heap.peek().value.clientId : undefined;
+    }
+
+    public getSummarizerCount(): number {
+        return this.summarizerCount;
     }
 }
 
@@ -208,6 +222,12 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     }
 
     private start(attempt: number = 1) {
+        if (this.quorumHeap.getSummarizerCount() > 0) {
+            // Need to wait for any other existing summarizer clients to close,
+            // because they can live longer than their parent container.
+            return;
+        }
+
         if (attempt > this.maxRestarts) {
             this.logger.sendErrorEvent({ eventName: "MaxRestarts", maxRestarts: this.maxRestarts });
             this.state = SummaryManagerState.Off;
