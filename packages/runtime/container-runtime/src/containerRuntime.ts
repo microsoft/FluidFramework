@@ -1029,16 +1029,20 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         let summaryStats = SummaryTreeConverter.mergeStats();
 
         // Iterate over each component and ask it to snapshot
-        await Promise.all(Array.from(this.contexts).map(async ([key, value]) => {
-            const snapshot = await value.snapshot(fullTree);
-            const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
-                snapshot,
-                `/${encodeURIComponent(key)}`,
-                fullTree,
-            );
-            summaryTree.tree[key] = treeWithStats.summaryTree;
-            summaryStats = SummaryTreeConverter.mergeStats(summaryStats, treeWithStats.summaryStats);
-        }));
+        await Promise.all(Array.from(this.contexts)
+            .filter(([key, value]) =>
+                value.isAttached,
+            )
+            .map(async ([key, value]) => {
+                const snapshot = await value.snapshot(fullTree);
+                const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
+                    snapshot,
+                    `/${encodeURIComponent(key)}`,
+                    fullTree,
+                );
+                summaryTree.tree[key] = treeWithStats.summaryTree;
+                summaryStats = SummaryTreeConverter.mergeStats(summaryStats, treeWithStats.summaryStats);
+            }));
 
         if (this.chunkMap.size > 0) {
             summaryTree.tree[".chunks"] = {
