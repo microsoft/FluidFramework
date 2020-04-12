@@ -32,16 +32,14 @@ export interface IComponentFactory extends IProvideComponentFactory {
      * Create a component described by the factory
      * @param context - The component context being used to create the component
      * (the created component will have its own new context created as well)
-     * @param initialState - Optional initial state to provide the component during initialization.
-     * The component decides how to use this state.
      * @returns A promise for a component that will have been initialized. Caller is responsible
      * for attaching the component to the provided runtime's container such as by storing its handle
      */
-    createComponent?(context: IComponentContext, initialState?: any): Promise<IComponent & IComponentLoadable>;
+    createComponent?(context: IComponentContext): Promise<IComponent & IComponentLoadable>;
 
     /**
      * Generates runtime for the component from the component context. Once created should be bound to the context.
      * @param context - Context for the component.
      */
-    instantiateComponent(context: IComponentContext, initialState?: any): void;
+    instantiateComponent(context: IComponentContext): void;
 }

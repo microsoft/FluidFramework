@@ -80,7 +80,39 @@ Users can also pass in an optional function to get the value from their director
 
 ### ContainerRuntime and LocalComponentContext createProps removal
 
-Creation props will no longer be specified through the `LocalComponentContext` after 0.16, such as through `ContainerRuntime`'s `createComponentContext` method.  To specify creation props, consumers should use the new `IComponentFactory` component creation flow, which allows initial state to be specified in the call to `createComponent(...)`.
+Creation props will no longer be specified through the `LocalComponentContext` after 0.16, such as through `ContainerRuntime`'s `createComponentContext` method.  To specify creation props, consumers should do the following:
+1. Create an interface for the initial state that defines what may be provided to the component.
+```typescript
+export interface IClickerInitialState {
+    initialValue: number;
+}
+```
+2. Override the constructor for the component to provide an optional initial state option.
+```typescript
+public constructor(
+    runtime: IComponentRuntime,
+    context: IComponentContext,
+    private initialState?: IClickerInitialState,
+) {
+    super(runtime, context);
+}
+```
+3. Implement `componentInitializingFirstTime()` in the component to optionally consume the initial state.
+4. Extend `PrimedComponentFactory` and override `createComponent(...)` to take an initial state object.  Wrap a call to the component constructor with the initial state in a function, and pass it to `super.createComponentWithConstructorFn(...)`.
+```typescript
+export class ClickerWithInitialValueFactory extends PrimedComponentFactory {
+    public async createComponent(
+        context: IComponentContext,
+        initialState?: IClickerInitialState,
+    ): Promise<IComponent & IComponentLoadable> {
+        const ctorFn = (r: IComponentRuntime, c: IComponentContext) => {
+            return new ClickerWithInitialValue(r, c, initialState);
+        };
+        return super.createComponentWithConstructorFn(context, ctorFn);
+    }
+}
+```
+Components should ensure that only strongly typed initial state objects are provided.  `SharedComponentFactory` and `PrimedComponentFactory` do not provide a way to supply a generic initial state, and component consumers must have access to the specific component factory in order to create with initial state.
 
 ## 0.15 Breaking Changes
 
