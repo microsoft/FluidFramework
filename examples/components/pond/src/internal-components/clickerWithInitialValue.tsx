@@ -78,7 +78,7 @@ export class ClickerWithInitialValueFactory extends PrimedComponentFactory {
         const ctorFn = (r: IComponentRuntime, c: IComponentContext) => {
             return new ClickerWithInitialValue(r, c, initialState);
         };
-        return super.createComponentWithConstructorFn(context, ctorFn);
+        return this.createComponentWithConstructorFn(context, ctorFn);
     }
 }
 
