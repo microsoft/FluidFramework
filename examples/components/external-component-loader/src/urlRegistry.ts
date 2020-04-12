@@ -10,9 +10,8 @@ import {
     IComponentRegistry,
 } from "@microsoft/fluid-runtime-definitions";
 
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-async function loadScript(scriptUrl: string): Promise<{}> {
-    return new Promise((resolve, reject) => {
+const loadScript = async (scriptUrl: string) => {
+    return new Promise<void>((resolve, reject) => {
         const script = document.createElement("script");
         script.src = scriptUrl;
 
@@ -21,13 +20,12 @@ async function loadScript(scriptUrl: string): Promise<{}> {
         // its dependencies have been loaded and executed.
         script.async = false;
 
-        script.onload = resolve;
+        script.onload = () => resolve();
         script.onerror = () => reject(new Error(`Failed to download the script at url: ${scriptUrl}`));
 
         document.head.appendChild(script);
     });
-}
-
+};
 
 /**
  * A component registry that can load component via their url
