@@ -4,7 +4,7 @@
  * Licensed under the MIT License.
  */
 import { EventEmitter } from "events";
-import { IEventTransformer, TransformedEvent, IEvent, IEventProvider } from "./events";
+import { IEvent, TransformedEvent, IEventTransformer, IEventProvider } from "@microsoft/fluid-common-definitions";
 
 
 // the event emitter polyfill and the node event emitter have different event types:
@@ -21,7 +21,7 @@ export type TypedEventTransform<TThis, TEvent extends IEvent> =
     TransformedEvent<TThis,"newListener" | "removeListener", Parameters<(event: string, listener: (...args: any[]) => void) => void>> &
     // Expose all the events provides by TEvent
     IEventTransformer<TThis, TEvent> &
-    // Add the default overload so this is covertable to EventEmitter
+    // Add the default overload so this is covertable to EventEmitter regardless of environment
     TransformedEvent<TThis, EventEmitterEventType, any[]>;
 
 /**

@@ -1,13 +1,11 @@
-/* eslint-disable @typescript-eslint/strict-boolean-expressions */
 /*!
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import { EventEmitter } from "events";
-import { IDisposable } from "@microsoft/fluid-common-definitions";
+import { IDisposable, IEvent, IEventProvider } from "@microsoft/fluid-common-definitions";
 import { TypedEventEmitter } from "./typedEventEmitter";
-import { IEvent, IEventProvider } from "./events";
 
 /**
  * Base class used for forwarding events from a source EventEmitter.
@@ -58,7 +56,7 @@ export class EventForwarder<TEvent extends IEvent = IEvent>
 
     protected forwardEvent(source: EventEmitter | IEventProvider<TEvent>, ...events: string[]): void {
         for(const event of events){
-            if (source && event && !EventForwarder.isEmitterEvent(event)) {
+            if (source !== undefined && event !== undefined && !EventForwarder.isEmitterEvent(event)) {
                 let sources = this.forwardingEvents.get(event);
                 if(sources === undefined){
                     sources = new Map();
@@ -75,12 +73,12 @@ export class EventForwarder<TEvent extends IEvent = IEvent>
 
     protected unforwardEvent(source: EventEmitter | IEventProvider<TEvent>, ...events: string[]): void {
         for(const event of events){
-            if (event && !EventForwarder.isEmitterEvent(event)) {
+            if (event !== undefined && !EventForwarder.isEmitterEvent(event)) {
                 const sources = this.forwardingEvents.get(event);
                 if(sources?.has(source)){
                     if (this.listenerCount(event) === 0) {
                         const listenerRemover = sources.get(source);
-                        if (listenerRemover) {
+                        if (listenerRemover  !== undefined) {
                             listenerRemover();
                         }
                         sources.delete(source);
