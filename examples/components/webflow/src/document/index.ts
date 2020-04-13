@@ -167,6 +167,9 @@ export class FlowDocument extends SharedComponent<ISharedDirectory, IFlowDocumen
 
         this.maybeSharedString = SharedString.create(this.runtime, "text");
         this.root.set("text", this.maybeSharedString.handle);
+        if(this.maybeSharedString !== undefined){
+            this.forwardEvent(this.maybeSharedString, "sequenceDelta", "maintenance");
+        }
     }
 
     public async load() {
