@@ -689,6 +689,17 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         ReportConnectionTelemetry(this.context.clientId, this.deltaManager, this.logger);
     }
 
+    public on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
+    public on(event: "dirtyDocument" | "disconnected" | "dispose" | "savedDocument", listener: () => void): this;
+    public on(event: "leader" | "noleader", listener: (clientId?: string) => void): this;
+    public on(event: "localHelp", listener: (message: IHelpMessage) => void): this;
+    public on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
+    public on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): this;
+
+    public on(event: string | symbol, listener: (...args: any[]) => void): this {
+        return super.on(event, listener);
+    }
+
     public dispose(): void {
         if (this._disposed) {
             return;
@@ -706,6 +717,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 this.logger.sendErrorEvent({ eventName: "ComponentContextDisposeError", componentId }, error);
             });
         }
+
+        this.emit("dispose");
+        this.removeAllListeners();
     }
 
     public get IComponentTokenProvider() {
@@ -1029,10 +1043,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         if (this.leader) {
             this.runTaskAnalyzer();
         }
-    }
-
-    public on(event: string | symbol, listener: (...args: any[]) => void): this {
-        return super.on(event, listener);
     }
 
     /**
