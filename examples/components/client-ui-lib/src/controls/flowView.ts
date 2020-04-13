@@ -473,8 +473,8 @@ const commands: IFlowViewCmd[] = [
         key: "underline",
     },
     {
-        exec: async (c, p, f) => {
-            await f.insertComponentNew("code", "@fluid-example/monaco");
+        exec: (c, p, f) => {
+            f.insertComponentNew("code", "@fluid-example/monaco");
         },
         key: "insert new monaco",
     },
@@ -4528,10 +4528,9 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    public async insertComponentNew(prefix: string, chaincode: string, inline = false) {
+    public insertComponentNew(prefix: string, chaincode: string, inline = false) {
         const id = `${prefix}-${Date.now()}`;
-        const doc = await this.collabDocument.context.createComponent(id, chaincode);
-        doc.attach();
+        this.collabDocument.context.createComponent(id, chaincode).then((doc) => doc.attach());
         const props = {
             crefTest: {
                 layout: { inline },
