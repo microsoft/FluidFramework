@@ -122,13 +122,13 @@ export class LazyPromise<T> implements Promise<T> {
 export const delay = async (ms?: number) => new Promise((res) => setTimeout(res, ms));
 
 /**
- * @member refreshExpiryOnReregister - When a registered key is registered again,
+ * @member extendExpiryOnReregister - When a registered key is registered again,
  * should the pending expiration (if any) be extended?
  * @member unregisterOnError - If the stored Promise is rejected with a particular error,
  * should the given key be unregistered?
  */
 export interface PromiseRegistryOptions {
-    refreshExpiryOnReregister?: boolean,
+    extendExpiryOnReregister?: boolean,
     unregisterOnError?: (e: any) => boolean,
 }
 
@@ -140,20 +140,20 @@ export class PromiseRegistry<TKey, TResult> {
     private readonly cache = new Map<TKey, Promise<TResult>>();
     private readonly gcTimeouts = new Map<TKey, NodeJS.Timeout>();
 
-    private readonly refreshExpiryOnReregister: boolean;
+    private readonly extendExpiryOnReregister: boolean;
     private readonly unregisterOnError: (e: any) => boolean;
 
     /**
      * Create the PromiseRegistry with the options provided
      * @param param0 - PromiseRegistryOptions with the following default values:
-     * refreshExpiryOnReregister = false,
-     * unregisterOnError = () => true,
+     *   extendExpiryOnReregister = false,
+     *   unregisterOnError = () => true,
      */
     constructor({
-        refreshExpiryOnReregister = false,
+        extendExpiryOnReregister = false,
         unregisterOnError = () => true,
     }: PromiseRegistryOptions = {}) {
-        this.refreshExpiryOnReregister = refreshExpiryOnReregister;
+        this.extendExpiryOnReregister = extendExpiryOnReregister;
         this.unregisterOnError = unregisterOnError;
     }
 
@@ -227,29 +227,30 @@ export class PromiseRegistry<TKey, TResult> {
         }
 
         // Schedule or reschedule garbage collection if required
-        if (expiryTime) {
-            this.scheduleGC(key, expiryTime);
-        }
+        this.handleGC(key, expiryTime);
 
         return promise;
     }
 
-    private scheduleGC(key: TKey, expiryTime: number) {
+    private handleGC(key: TKey, expiryTime: number) {
         // If we have a GC scheduled and we're not supposed to refresh, do nothing.
-        if (this.gcTimeouts.has(key) && !this.refreshExpiryOnReregister) {
+        if (this.gcTimeouts.has(key) && !this.extendExpiryOnReregister) {
             return;
         }
 
         // Cancel any existing GC Timeout
         clearTimeout(this.gcTimeouts.get(key));
 
-        // Schedule GC and save the Timeout ID in case we need to cancel it
-        this.gcTimeouts.set(
-            key,
-            setTimeout(
-                () => this.unregister(key),
-                expiryTime,
-            )
-        );
+        if (expiryTime) {
+            // Schedule GC and save the Timeout ID in case we need to cancel it,
+            // but only if expiryTime is provided (undefined means no expiration).
+            this.gcTimeouts.set(
+                key,
+                setTimeout(
+                    () => this.unregister(key),
+                    expiryTime,
+                )
+            );
+        }
     }
 }

@@ -97,9 +97,9 @@ export class LocalCache implements ICache {
 
 export class SessionRegistry implements ISessionRegistry {
     // We want to keep using the same join session for consecutive join session calls
-    // within the given expiry, so set refreshExpiryOnReregister: true
+    // within the given expiry, so set extendExpiryOnReregister: true
     private readonly registry: PromiseRegistry<string, ISocketStorageDiscovery> = new PromiseRegistry(
-        {refreshExpiryOnReregister: true});
+        {extendExpiryOnReregister: true});
 
     async getSession(
         joinSessionKey: string,
