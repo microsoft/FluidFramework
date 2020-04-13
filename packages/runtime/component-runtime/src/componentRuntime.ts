@@ -221,12 +221,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         this.emit("dispose");
     }
 
-    public async createAndAttachComponent(pkg: string): Promise<IComponentRuntime> {
-        const newComponentRuntime = await this.componentContext.createComponent(pkg);
-        newComponentRuntime.attach();
-        return newComponentRuntime;
-    }
-
     public async request(request: IRequest): Promise<IResponse> {
         // System routes
         if (request.url === "/_scheduler") {

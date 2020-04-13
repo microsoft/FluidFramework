@@ -16,6 +16,7 @@ import {
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { ComponentHandle } from "@microsoft/fluid-component-runtime";
 import { IDirectory } from "@microsoft/fluid-map";
+import { v4 as uuid } from "uuid";
 import { serviceRoutePathRoot } from "../containerServices";
 
 /**
@@ -140,7 +141,8 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     protected async createAndAttachComponent<T extends IComponent & IComponentLoadable>(
         pkg: string, props?: any,
     ): Promise<T> {
-        const componentRuntime = await this.context.createComponent(pkg, props);
+        const id = uuid();
+        const componentRuntime = await this.context.createComponent_UNSAFE(id, pkg, props);
         const component = await this.asComponent<T>(componentRuntime.request({ url: "/" }));
         componentRuntime.attach();
         return component;
