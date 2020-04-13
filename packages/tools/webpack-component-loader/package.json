@@ -68,6 +68,8 @@
     "@microsoft/fluid-tool-utils": "^0.16.0",
     "@microsoft/fluid-view-adapters": "^0.16.0",
     "@microsoft/fluid-web-code-loader": "^0.16.0",
+    "@microsoft/fluid-common-utils": "^0.14.0",
+    "@microsoft/fluid-container-loader": "^0.16.0",
     "express": "^4.16.3",
     "jsonwebtoken": "^8.4.0",
     "moniker": "^0.1.2",
