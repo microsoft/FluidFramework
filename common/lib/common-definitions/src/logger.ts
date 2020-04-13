@@ -11,11 +11,6 @@ export type TelemetryEventCategory = "generic" | "error" | "performance";
 // General best practice is to explicitly log the fields you care about from objects
 export type TelemetryEventPropertyType = string | number | boolean | undefined;
 
-// Name of the error event property indicating if error was raised through Container.emit("error");
-// Presence of this property is a signal to the app not to raise this event to the user second time (if app chooses
-// to raise all telemetry errors to user in non-production builds in addition to raising all container events)
-export const TelemetryEventRaisedOnContainer = "criticalErrorRaisedOnContainer";
-
 export interface ITelemetryProperties {
     [index: string]: TelemetryEventPropertyType;
 }

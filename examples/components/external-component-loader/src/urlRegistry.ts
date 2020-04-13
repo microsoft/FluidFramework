@@ -10,6 +10,22 @@ import {
     IComponentRegistry,
 } from "@microsoft/fluid-runtime-definitions";
 
+const loadScript = async (scriptUrl: string) =>
+    new Promise<void>((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = scriptUrl;
+
+        // Dynamically added scripts are async by default. By setting async to false, we are enabling the scripts
+        // to be downloaded in parallel, but executed in order. This ensures that a script is executed after all of
+        // its dependencies have been loaded and executed.
+        script.async = false;
+
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error(`Failed to download the script at url: ${scriptUrl}`));
+
+        document.head.appendChild(script);
+    });
+
 /**
  * A component registry that can load component via their url
  */
@@ -38,8 +54,7 @@ export class UrlRegistry implements IComponentRegistry {
 
     public get IComponentRegistry() { return this; }
 
-    public async get(name: string): Promise<ComponentRegistryEntry> {
-
+    public async get(name: string): Promise<ComponentRegistryEntry | undefined> {
         if (!this.urlRegistryMap.has(name)
             && (name.startsWith("http://") || name.startsWith("https://"))) {
 
@@ -82,8 +97,7 @@ export class UrlRegistry implements IComponentRegistry {
             const entrypointName = fluidPackage.fluid.browser.umd.library;
             const scripts = fluidPackage.fluid.browser.umd.files;
 
-            if (entrypointName && scripts) {
-
+            if (entrypointName !== undefined && scripts !== undefined) {
                 while (this.loadingEntrypoints.has(entrypointName)) {
                     await this.loadingEntrypoints.get(entrypointName);
                 }
@@ -96,7 +110,7 @@ export class UrlRegistry implements IComponentRegistry {
                         scripts.map(
                             async (bundle) => loadScript(`${name}/${bundle}`));
 
-                    const errors = [];
+                    const errors: any[] = [];
                     while (scriptLoadPromises.length > 0) {
                         try {
                             await scriptLoadPromises.shift();
@@ -125,22 +139,4 @@ export class UrlRegistry implements IComponentRegistry {
             }
         }
     }
-}
-
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-async function loadScript(scriptUrl: string): Promise<{}> {
-    return new Promise((resolve, reject) => {
-        const script = document.createElement("script");
-        script.src = scriptUrl;
-
-        // Dynamically added scripts are async by default. By setting async to false, we are enabling the scripts
-        // to be downloaded in parallel, but executed in order. This ensures that a script is executed after all of
-        // its dependencies have been loaded and executed.
-        script.async = false;
-
-        script.onload = resolve;
-        script.onerror = () => reject(new Error(`Failed to download the script at url: ${scriptUrl}`));
-
-        document.head.appendChild(script);
-    });
 }

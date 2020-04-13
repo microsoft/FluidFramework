@@ -37,11 +37,11 @@ export class ExternalComponentLoader extends PrimedComponent
         "@fluid-example/table-view",
     ];
     private readonly viewComponentMapID: string = "ViewComponentUrl";
-    private viewComponentP: Promise<IComponent>;
+    private viewComponentP: Promise<IComponent> | undefined;
 
-    private savedElement: HTMLElement;
-    private error: string;
-    private callbacks: IComponentCallbacks;
+    private savedElement: HTMLElement | undefined;
+    private error: string | undefined;
+    private callbacks: IComponentCallbacks | undefined;
 
     public get IComponentHTMLView() { return this; }
     public get IComponentCallable() { return this; }
@@ -56,20 +56,20 @@ export class ExternalComponentLoader extends PrimedComponent
     }
 
     public render(element: HTMLElement) {
-
         if (element === undefined) {
             return;
         }
 
-        if (this.savedElement) {
-            while (this.savedElement.firstChild) {
+        if (this.savedElement !== undefined) {
+            // eslint-disable-next-line no-null/no-null
+            while (this.savedElement.firstChild !== null) {
                 this.savedElement.removeChild(this.savedElement.firstChild);
             }
         }
 
         this.savedElement = element;
 
-        if (this.savedElement) {
+        if (this.savedElement !== undefined) {
             const mainDiv = document.createElement("div");
             this.savedElement.appendChild(mainDiv);
 
@@ -109,9 +109,13 @@ export class ExternalComponentLoader extends PrimedComponent
             const editableButton = document.createElement("button");
             inputDiv.append(editableButton);
             editableButton.textContent = "Toggle Edit";
-            editableButton.onclick = () => this.callbacks.toggleEditable();
+            editableButton.onclick = () => {
+                if (this.callbacks?.toggleEditable !== undefined) {
+                    this.callbacks.toggleEditable();
+                }
+            };
 
-            if (this.error) {
+            if (this.error !== undefined) {
                 const errorDiv = document.createElement("div");
                 inputDiv.appendChild(errorDiv);
                 errorDiv.innerText = this.error;
@@ -121,7 +125,7 @@ export class ExternalComponentLoader extends PrimedComponent
 
     protected async componentHasInitialized() {
         const viewComponentHandle = this.root.get<IComponentHandle>(this.viewComponentMapID);
-        if (viewComponentHandle) {
+        if (viewComponentHandle !== undefined) {
             this.viewComponentP = viewComponentHandle.get();
         }
     }
@@ -130,65 +134,71 @@ export class ExternalComponentLoader extends PrimedComponent
         const value = input.value;
         input.value = "";
         this.error = undefined;
-        if (value !== undefined && value.length > 0) {
-            let url = value;
-            if (url.startsWith("@")) {
-                url = `https://pragueauspkn-3873244262.azureedge.net/${url}`;
+        if (value === undefined || value.length === 0) {
+            input.style.backgroundColor = "#FEE";
+            return;
+        }
+
+        let url = value;
+        if (url.startsWith("@")) {
+            url = `https://pragueauspkn-3873244262.azureedge.net/${url}`;
+        }
+
+        try {
+            if (this.viewComponentP === undefined) {
+                throw new Error("View component promise not set!!");
             }
 
-            try {
-                // eslint-disable-next-line @typescript-eslint/no-misused-promises
-                if (this.viewComponentP) {
-                    const viewComponent = await this.viewComponentP;
-                    if (viewComponent && viewComponent.IComponentCollection && this.runtime.IComponentRegistry) {
-                        const urlReg = await this.runtime.IComponentRegistry.get("url");
-                        const pkgReg = await urlReg.IComponentRegistry.get(url) as IComponent;
-                        let componentRuntime: IComponentRuntime;
-                        const id = uuid();
-                        if (pkgReg.IComponentDefaultFactoryName) {
-                            componentRuntime = await this.context.hostRuntime.createComponent_UNSAFE(
-                                id,
-                                [
-                                    ...this.context.packagePath,
-                                    "url",
-                                    url,
-                                    pkgReg.IComponentDefaultFactoryName.getDefaultFactoryName(),
-                                ]);
-                        } else if (pkgReg.IComponentFactory) {
-                            componentRuntime = await this.context.hostRuntime.createComponent_UNSAFE(
-                                id,
-                                [
-                                    ...this.context.packagePath,
-                                    "url",
-                                    url,
-                                ]);
-                        } else {
-                            throw new Error(`${url} is not a factory, and does not provide default component name`);
-                        }
+            const viewComponent = await this.viewComponentP;
+            if (viewComponent.IComponentCollection === undefined || this.runtime.IComponentRegistry === undefined) {
+                throw new Error("View component is empty or is not an IComponentCollection!!");
+            }
 
-                        const response: IResponse = await componentRuntime.request({ url: "/" });
-                        let component: IComponent = response.value as IComponent;
-                        componentRuntime.attach();
-                        if (component.IComponentCollection !== undefined) {
-                            component = component.IComponentCollection.createCollectionItem();
-                        }
-                        viewComponent.IComponentCollection.createCollectionItem({
-                            handle: component.IComponentHandle,
-                            type: value,
-                            id,
-                        });
-                    } else {
-                        throw new Error("View component is empty or is not an IComponentCollection!!");
-                    }
-                } else {
-                    throw new Error("View component promise not set!!");
-                }
-            } catch (error) {
-                this.error = error;
+            const urlReg = await this.runtime.IComponentRegistry.get("url");
+            if (urlReg?.IComponentRegistry === undefined) {
+                throw new Error("Couldn't get url component registry");
+            }
+
+            const pkgReg = await urlReg.IComponentRegistry.get(url) as IComponent;
+            let componentRuntime: IComponentRuntime;
+            const id = uuid();
+            if (pkgReg.IComponentDefaultFactoryName !== undefined) {
+                componentRuntime = await this.context.hostRuntime.createComponent_UNSAFE(
+                    id,
+                    [
+                        ...this.context.packagePath,
+                        "url",
+                        url,
+                        pkgReg.IComponentDefaultFactoryName.getDefaultFactoryName(),
+                    ]);
+            } else if (pkgReg.IComponentFactory !== undefined) {
+                componentRuntime = await this.context.hostRuntime.createComponent_UNSAFE(
+                    id,
+                    [
+                        ...this.context.packagePath,
+                        "url",
+                        url,
+                    ]);
+            } else {
+                throw new Error(`${url} is not a factory, and does not provide default component name`);
+            }
+
+            const response: IResponse = await componentRuntime.request({ url: "/" });
+            let component: IComponent = response.value as IComponent;
+            componentRuntime.attach();
+            if (component.IComponentCollection !== undefined) {
+                component = component.IComponentCollection.createCollectionItem();
+            }
+            viewComponent.IComponentCollection.createCollectionItem({
+                handle: component.IComponentHandle,
+                type: value,
+                id,
+            });
+        } catch (error) {
+            this.error = error;
+            if (this.savedElement !== undefined) {
                 this.render(this.savedElement);
             }
-        } else {
-            input.style.backgroundColor = "#FEE";
         }
     }
 }
