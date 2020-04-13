@@ -451,13 +451,7 @@ export class RunningSummarizer implements IDisposable {
         // mark that we are currently summarizing to prevent concurrent summarizing
         this.summarizing = new Deferred();
 
-        (async () => {
-            const result = await this.summarize(reason, false);
-            if (result === false) {
-                // On nack, try again in safe mode
-                await this.summarize(reason, true);
-            }
-        })().finally(() => {
+        this.trySummarizeCore(reason).finally(() => {
             // Make sure to always exit summarizing state
             this.summarizing.resolve();
             this.summarizing = undefined;
@@ -470,6 +464,14 @@ export class RunningSummarizer implements IDisposable {
         });
 
         return { broadcastP: this.summarizing.promise };
+    }
+    
+    private async trySummarizeCore(reason: string): Promise<void> {
+        const result = await this.summarize(reason, false);
+        if (result === false) {
+            // On nack, try again in safe mode
+            await this.summarize(reason, true);
+        }
     }
 
     /**
