@@ -13,7 +13,7 @@ export const AnchorName = "anchor";
 /**
  * Anchor is an default component is responsible for managing creation and the default component
  */
-export class Anchor extends PrimedComponent implements IProvideComponentHTMLView, IProvideLastEditedTracker {
+export class Anchor extends PrimedComponent implements IProvideComponentHTMLView, IProvideComponentLastEditedTracker {
     private readonly defaultComponentId = "default-component-id";
     private readonly lastEditedViewerComponentId = "last-edited-viewer-component-id";
     private defaultComponentInternal: IComponentHTMLView | undefined;

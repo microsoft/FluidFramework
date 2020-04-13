@@ -8,18 +8,16 @@ import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions
 
 declare module "@microsoft/fluid-component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    export interface IComponent extends Readonly<Partial<IProvideLastEditedTracker>> { }
+    export interface IComponent extends Readonly<Partial<IProvideComponentLastEditedTracker>> { }
 }
 
-export interface IProvideLastEditedTracker {
+export const IComponentLastEditedTracker: keyof IProvideComponentLastEditedTracker = "IComponentLastEditedTracker";
+
+export interface IProvideComponentLastEditedTracker {
     readonly IComponentLastEditedTracker: IComponentLastEditedTracker;
 }
 
-export interface IComponentLastEditedTracker extends IProvideLastEditedTracker {
-    readonly lastEditedTracker: ILastEditedTracker;
-}
-
-export interface ILastEditedTracker extends EventEmitter {
+export interface IComponentLastEditedTracker extends EventEmitter, IProvideComponentLastEditedTracker {
     /**
      * Returns the details of the last edit to the container.
      */

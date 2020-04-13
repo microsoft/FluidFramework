@@ -7,9 +7,8 @@ import { ILastEditDetails } from "@microsoft/fluid-last-edited";
 import { ReactViewAdapter } from "@microsoft/fluid-view-adapters";
 import * as React from "react";
 
-import { LastEditedFacepile } from "../last-edited/facePile";
 import { IVltavaUserDetails, IVltavaDataModel } from "./dataModel";
-import { VltavaFacepile } from "./facePile";
+import { LastEditedFacepile, VltavaFacepile } from "./facePile";
 
 interface IVltavaViewProps {
     dataModel: IVltavaDataModel;
@@ -60,7 +59,7 @@ export class VltavaView extends React.Component<IVltavaViewProps,IVltavaViewStat
         });
 
         const rootComponent = await this.props.dataModel.getRootComponent();
-        const lastEditedTracker = rootComponent.IComponentLastEditedTracker?.lastEditedTracker;
+        const lastEditedTracker = rootComponent.IComponentLastEditedTracker;
         if (lastEditedTracker === undefined) {
             throw new Error("Last edited tracker not found.");
         }

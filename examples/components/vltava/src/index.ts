@@ -11,26 +11,10 @@ import {
     IContainerComponentDetails,
     IComponentRegistryDetails,
 } from "@fluid-example/spaces";
-<<<<<<< HEAD
 import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aqueduct";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-=======
-import { IComponent, IRequest } from "@microsoft/fluid-component-core-interfaces";
-import {
-    IContainerContext,
-    IRuntime,
-    IRuntimeFactory,
-} from "@microsoft/fluid-container-definitions";
-import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
-import { setupLastEditedTracker } from "@microsoft/fluid-last-edited";
-<<<<<<< HEAD
-import { ISequencedDocumentMessage, MessageType } from "@microsoft/fluid-protocol-definitions";
->>>>>>> AqueductAnchor -> LastEditedTracker. Changed it to a class, added setup helper. Updated Vtlava to demonstrate LastEditedTracker.
-=======
->>>>>>> Discard scheduler ops by default. Provide a default shouldDiscardMessage function.
 import {
     IComponentRegistry,
-    IHostRuntime,
     IProvideComponentFactory,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
@@ -42,7 +26,6 @@ import {
     Vltava,
     VltavaName,
 } from "./components";
-import { LastEditedViewer } from "./components/last-edited";
 
 export class InternalRegistry implements IComponentRegistry, IComponentRegistryDetails {
     public get IComponentRegistry() { return this; }
@@ -103,7 +86,7 @@ export class VltavaRuntimeFactory implements IRuntimeFactory {
                 });
         }
 
-        setupLastEditedTracker(VltavaRuntimeFactory.defaultComponentId, runtime)
+        setupLastEditedTrackerForContainer(VltavaRuntimeFactory.defaultComponentId, runtime)
             .catch((error) => {
                 throw error;
             });

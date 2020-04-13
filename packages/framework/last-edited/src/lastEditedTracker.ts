@@ -7,7 +7,7 @@ import { EventEmitter } from "events";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { Jsonable } from "@microsoft/fluid-runtime-definitions";
 import { SummarizableObject } from "@microsoft/fluid-summarizable-object";
-import { ILastEditedTracker, ILastEditDetails } from "./interfaces";
+import { IComponentLastEditedTracker, ILastEditDetails } from "./interfaces";
 
 /**
  * Tracks the last edit details such as the last edited client's id and the last edited timestamp. The details
@@ -15,7 +15,7 @@ import { ILastEditedTracker, ILastEditDetails } from "./interfaces";
  * as storage.
  * It emits a "lastEditedChanged" event when the detail is updated.
  */
-export class LastEditedTracker extends EventEmitter implements ILastEditedTracker {
+export class LastEditedTracker extends EventEmitter implements IComponentLastEditedTracker {
     private readonly lastEditedDetailsKey = "lastEditDetailsKey";
 
     /**
@@ -30,6 +30,10 @@ export class LastEditedTracker extends EventEmitter implements ILastEditedTracke
     public on(event: "lastEditedChanged", listener: (lastEditDetails: ILastEditDetails) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
+    }
+
+    public get IComponentLastEditedTracker() {
+        return this;
     }
 
     /**

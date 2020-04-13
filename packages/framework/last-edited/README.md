@@ -1,6 +1,6 @@
 # Last Edited Tracker
 
-A tracker that tracks the last edit to a document, such as the client who last edited the document and the time it happened.
+LastEditedTracker tracks the last edit to a document, such as the client who last edited the document and the time it happened.
 
 It has to be created by passing a `SummarizableObject`:
 ```
@@ -10,9 +10,13 @@ constructor(
 ```
 It uses the SummarizableObject to store the last edit details.
 
+# Last Edited Tracker Component
+
+LastEditedTrackerComponent is a runtime component built on top of the LastEditedTracker that creates and manages the SummarizableObject. The developer doesn't have to know about the SummarizableObject and doesn't have to manage it.
+
 ## API
 
-It provides the following APIs to get and update the last edit details:
+Both the classes above provides the following APIs to get and update the last edit details:
 
 ```
 public getLastEditDetails(): ILastEditDetails | undefined;
@@ -22,34 +26,35 @@ public updateLastEditDetails(message: ISequencedDocumentMessage);
 The update should always be called in response to a remote op because:
 1. It updates its state from the remote op.
 2. It uses a SummarizableObject as storage which must be set in response to a remote op.
-3. The details returned in getLastEditDetails contain the clientId and the timestamp of the last edit.
+
+The details returned in getLastEditDetails contain the clientId and the timestamp of the last edit.
 
 ## Events
 
-It emits an `"lastEditedChanged"` event with ILastEditDetails whenever the details are updated:
+Both the classes above emits an `"lastEditedChanged"` event with ILastEditDetails whenever the details are updated:
 ```
 public on(event: "lastEditedChanged", listener: (lastEditDetails: ILastEditDetails) => void): this;
 ```
 
 ## Setup
 
-This package also provides a `setupLastEditedTracker` method that can be used to easily set up the tracker:
+This package also provides a `setupLastEditedTrackerForContainer` method that can be used to set up a root component that provides IComponentLastEditedTracker to track last edited in a Container:
 ```
-async function setupLastEditedTracker(
-    componentId: string,
+async function setupLastEditedTrackerForContainer(
+    rootComponentId: string,
     runtime: IHostRuntime,
     shouldDiscardMessageFn: (message: ISequencedDocumentMessage) => boolean = shouldDiscardMessageDefault,
 )
 ```
 
-The function does the following:
-- Requests the component with the componentId from the runtime and waits for it to load.
-- Registers an "op" listener on the runtime. On each message, it calls the shouldDiscardMessageFn to check if the message should be discarded. It also discards all scheduler message. If a message is not discarded, it is passed to the last edited tracker in the component.
+- The root component with id "rootComponentId" must implement an IComponentLastEditedTracker.
+- This setup function should be called during container instantiation so that ops are not missed.
+- Requests the root component from the runtime and waits for it to load.
+- Registers an "op" listener on the runtime. On each message, it calls the shouldDiscardMessageFn to check if the message should be discarded. It also discards all scheduler message. If a message is not discarded, it is passed to the IComponentLastEditedTracker in the root component.
 - Any messages received before the component is loaded are stored in a buffer and passed to the tracker once the component loads.
 
 Note:
-- The component with componentId must implement an IComponentLastEditedTracker.
-- By default, message that are not of "Attach" and "Operation" type are discarded as per the shouldDiscardMessageDefault function:
+- By default, message that are not of `"Attach"` and `"Operation"` type are discarded as per the `shouldDiscardMessageDefault` function:
 ```
 function shouldDiscardMessageDefault(message: ISequencedDocumentMessage) {
     if (message.type === MessageType.Attach || message.type === MessageType.Operation) {
@@ -58,13 +63,15 @@ function shouldDiscardMessageDefault(message: ISequencedDocumentMessage) {
     return true;
 }.
 ```
-- To discard specific ops, provide the shouldDiscardMessageFn funtion that takes in the message and returns if it should be discarded.
+- To discard specific ops, provide the `shouldDiscardMessageFn` funtion that takes in the message and returns a boolean indicating if the message should be discarded.
+
+Take a look at [Vltava instantiateRuntime](../../../examples/components/vltava/src/index.ts) for an example of how this can be done.
 
 ## Usage
 
-For tracking last edited in a Container:
+### For tracking the last edit on a Container:
 
-In instantiateRuntime, create a root component that implements IComponentLastEditedTracker. Then call `setupLastEditedTracker` with the component id of the root component:
+In instantiateRuntime, create a root component that implements IComponentLastEditedTracker. Then call `setupLastEditedTrackerForContainer` with the component id of the root component:
 ```
 public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
     const rootComponentId = "root";
@@ -77,7 +84,7 @@ public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         await runtime.createComponent(rootComponentId, "rootComponent");
     }
 
-    setupLastEditedTracker(rootComponentId, runtime)
+    setupLastEditedTrackerForContainer(rootComponentId, runtime)
         .catch((error) => {
             throw error;
         });
@@ -88,22 +95,22 @@ public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
 
 This will make sure that the root component loads before any other component and it tracks every op in the Container.
 
-Any component in the Container can now get the root component and get ILastEditedTracker from it. It can then register for "lastEditedChanged" events on the tracker and get the details.
-The following can be in the view implementation of a component:
+The IComponentLastEditedTracker can be retrieved from the root component. Registering for "lastEditedChanged" event on the IComponentLastEditedTracker will give the last edited details everytime it changes. For example:
 ```
-const response = await this.context.hostRuntime.request({ url: "/");
+const response = await containerRuntime.request({ url: "/" });
 const rootComponent = response.value;
-const lastEditedTracker = rootComponent.IComponentLastEditedTracker.lastEditedTracker;
+const lastEditedTracker = rootComponent.IComponentLastEditedTracker;
 
 lastEditedTracker.on("lastEditedChanged", (lastEditDetails: ILastEditDetails) => {
     // Do something cool.
 });
 ```
 
+Take a look at the [example](##Example) of how this can be done.
+
 ## Example
 
-Vltava in examples demonstrates how LastEditedTracker can be implemented with a root component to track last edited in a document:
-- [instantiateRuntime implementation that loads the root (Anchor) component](../../../examples/components/vltava/src/index.ts)
-- [LastEditedViewer component that implements IComponentLastEditedTracker](../../../examples/components/vltava/src/components/last-edited/lastEditedViewer.tsx)
-- [Root (Anchor) Component that creates and provides LastEditedViewer component via IProvideLastEditedTracker](../../../examples/components/vltava/src/components/anchor/anchor.ts)
-- [Vltava view that gets the LastEditedTracker from the root and displays the last edited data](../../../examples/components/vltava/src/components/vltava/view.tsx)
+Vltava in examples demonstrates how LastEditedTrackerComponent can be used with a root component to track last edited in the Container:
+- [instantiateRuntime implementation that loads the root (Anchor) component and sets up the tracker](../../../examples/components/vltava/src/index.ts)
+- [Root (Anchor) Component that creates and loads a LastEditedTrackerComponent](../../../examples/components/vltava/src/components/anchor/anchor.ts)
+- [Vltava view that gets the IComponentLastEditedTracker from the root component and displays the last edited data](../../../examples/components/vltava/src/components/vltava/view.tsx)
