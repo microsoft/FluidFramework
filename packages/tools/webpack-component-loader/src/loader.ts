@@ -319,6 +319,9 @@ export async function start(
         );
     }
 
+    const urlParts = new URL(url).pathname.split("/");
+    const componentUrl = `/${urlParts[2] === undefined ? "" : urlParts[2]}`;
+
     attachButton.disabled = false;
     const urlDeferred = new Deferred<string>();
     // Side-by-side mode
@@ -326,7 +329,7 @@ export async function start(
         const leftDiv = makeSideBySideDiv("sbs-left");
         const rightDiv = makeSideBySideDiv("sbs-right");
         div.append(leftDiv, rightDiv);
-        await startRendering(container1, "/", leftDiv);
+        await startRendering(container1, componentUrl, leftDiv);
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         urlDeferred.promise.then(async (containerUrl) => {
             // New documentServiceFactory for right div, same everything else
@@ -345,10 +348,10 @@ export async function start(
                 codeDetails,
             );
 
-            await startRendering(container2, "/", rightDiv);
+            await startRendering(container2, componentUrl, rightDiv);
         });
     } else {
-        await startRendering(container1, "/", div);
+        await startRendering(container1, componentUrl, div);
     }
     if (!attached) {
         attachButton.onclick = async () => {
