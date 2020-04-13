@@ -64,9 +64,6 @@ export class ClickerWithInitialValue extends PrimedComponent implements ICompone
     // ----- COMPONENT SETUP STUFF -----
 
     // ----- COMPONENT SETUP STUFF -----
-
-    // eslint-disable-next-line @typescript-eslint/no-use-before-define
-    public static getFactory() { return factory; }
 }
 
 export class ClickerWithInitialValueFactory extends PrimedComponentFactory {
@@ -80,13 +77,16 @@ export class ClickerWithInitialValueFactory extends PrimedComponentFactory {
         };
         return this.createComponentWithConstructorFn(context, ctorFn);
     }
+
+    public static getFactory() { return ClickerWithInitialValueFactory.factory; }
+
+    private static readonly factory = new ClickerWithInitialValueFactory(
+        ClickerWithInitialValueName,
+        ClickerWithInitialValue,
+        [],
+    );
 }
 
-const factory = new ClickerWithInitialValueFactory(
-    ClickerWithInitialValueName,
-    ClickerWithInitialValue,
-    [],
-);
 
 // ----- REACT STUFF -----
 

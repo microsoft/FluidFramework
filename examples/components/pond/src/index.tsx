@@ -16,7 +16,7 @@ import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import {
     Clicker,
     ClickerName,
-    ClickerWithInitialValue,
+    ClickerWithInitialValueFactory,
     ClickerWithInitialValueName,
     IClickerInitialState,
 } from "./internal-components";
@@ -52,7 +52,7 @@ export class Pond extends PrimedComponent implements IComponentHTMLView {
 
         const initialState: IClickerInitialState = { initialValue: 100 };
         const clickerWithInitialValueComponent =
-            await ClickerWithInitialValue.getFactory().createComponent(this.context, initialState);
+            await ClickerWithInitialValueFactory.getFactory().createComponent(this.context, initialState);
         this.root.set(this.clickerWithInitialValueKey, clickerWithInitialValueComponent.handle);
     }
 
@@ -119,7 +119,7 @@ export class Pond extends PrimedComponent implements IComponentHTMLView {
         [SharedDirectory.getFactory()],
         new Map([
             [ClickerName, Promise.resolve(Clicker.getFactory())],
-            [ClickerWithInitialValueName, Promise.resolve(ClickerWithInitialValue.getFactory())],
+            [ClickerWithInitialValueName, Promise.resolve(ClickerWithInitialValueFactory.getFactory())],
         ]),
     );
 }
