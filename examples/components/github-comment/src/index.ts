@@ -4,27 +4,23 @@
  */
 
 import {
-    SimpleModuleInstantiationFactory,
+    ContainerRuntimeFactoryWithDefaultComponent,
 } from "@microsoft/fluid-aqueduct";
 
-import { GithubCommentInstantiationFactory } from "./main";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../package.json");
-export const chaincodeName = pkg.name as string;
+import { GithubCommentInstantiationFactory, GithubCommentName } from "./main";
 
 /**
- * This does setup for the Container. The SimpleModuleInstantiationFactory also
+ * This does setup for the Container. The ContainerRuntimeFactoryWithDefaultComponent also
  * enables dynamic loading in the EmbeddedComponentLoader.
  *
  * There are two important things here:
  * 1. Default Component name
  * 2. Map of string to factory for all components
  */
-export const fluidExport = new SimpleModuleInstantiationFactory(
-    chaincodeName,
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
+    GithubCommentName,
     new Map([
-        [chaincodeName,
+        [GithubCommentName,
             Promise.resolve(GithubCommentInstantiationFactory)],
     ]),
 );

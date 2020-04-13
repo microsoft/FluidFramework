@@ -4,7 +4,6 @@
  */
 
 import * as assert from "assert";
-import * as API from "@fluid-internal/client-api";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
@@ -15,18 +14,21 @@ import {
     IDocumentServiceFactory,
 } from "@microsoft/fluid-driver-definitions";
 import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
+import { ConnectionState } from "@microsoft/fluid-protocol-definitions";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { MockDocumentDeltaConnection } from "@microsoft/fluid-test-loader-utils";
-import { ConnectionState } from "@microsoft/fluid-protocol-definitions";
+import { LocalCodeLoader } from "@microsoft/fluid-test-utils";
 
 describe("Container", () => {
+    const id = "fluid-test://localhost/containerTest";
+    const testRequest: IRequest = { url: id };
+
     let testDeltaConnectionServer: ILocalDeltaConnectionServer;
     let testResolver: TestResolver;
     let testResolved: IFluidResolvedUrl;
     let deltaConnection: MockDocumentDeltaConnection;
-    const testRequest: IRequest = { url: "" };
     let serviceFactory: Readonly<IDocumentServiceFactory>;
-    let codeLoader: API.CodeLoader;
+    let codeLoader: LocalCodeLoader;
     let loader: Loader;
 
     beforeEach(async () => {
@@ -34,7 +36,7 @@ describe("Container", () => {
         testResolver = new TestResolver();
         testResolved = await testResolver.resolve(testRequest) as IFluidResolvedUrl;
         serviceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
-        codeLoader = new API.CodeLoader({ generateSummaries: false });
+        codeLoader = new LocalCodeLoader([]);
         const options = {};
 
         loader = new Loader(

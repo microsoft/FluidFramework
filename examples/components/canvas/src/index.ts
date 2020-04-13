@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import {
+    ContainerRuntimeFactoryWithDefaultComponent,
+    PrimedComponentFactory,
+} from "@microsoft/fluid-aqueduct";
 import { Ink } from "@microsoft/fluid-ink";
 import { Canvas } from "./canvas";
 
@@ -12,13 +15,14 @@ const pkg = require("../package.json");
 export const CanvasName = pkg.name as string;
 
 export const CanvasInstantiationFactory = new PrimedComponentFactory(
+    CanvasName,
     Canvas,
     [
         Ink.getFactory(),
     ],
 );
 
-export const fluidExport = new SimpleModuleInstantiationFactory(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
     CanvasName,
     new Map([
         [CanvasName, Promise.resolve(CanvasInstantiationFactory)],

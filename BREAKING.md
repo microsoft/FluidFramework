@@ -4,6 +4,10 @@
 
 - [View interfaces moved to separate package](#View-interfaces-moved-to-separate-package)
 - [IComponent* Interfaces should now have string literal identifiers](#IComponent*-Interfaces-should-now-have-string-literal-identifiers)
+- [SharedComponentFactory and PrimedComponentFactory changes](#SharedComponentFactory-and-PrimedComponentFactory-changes)
+- [PrimedComponent and SharedComponent interface changes](#PrimedComponent-and-Shared-Component-interface-changes)
+- [SimpleModuleInstantiationFactory renamed and SimpleContainerRuntimeFactory deprecated](#SimpleModuleInstantiationFactory-renamed-and-SimpleContainerRuntimeFactory-deprecated)
+- [Change to the ErrorType enum on IError](#Change-to-the-ErrorType-enum-on-IError)
 
 ### View interfaces moved to separate package
 
@@ -54,6 +58,33 @@ export interface IComponentFoo extends IProvideComponentFoo {
 }
 ```
 
+### SharedComponentFactory and PrimedComponentFactory changes
+
+Class definitions for SharedComponentFactory and PrimedComponentFactory have been updated.  Both now specify a required `type: string` parameter in their constructors.
+
+### PrimedComponent and SharedComponent interface changes
+
+There have been a few changes to the exposed interfaces on Primed & SharedComponents so that the id of components is generated uniquely by the runtime. Components can instead implement IComponentLoadable and be stored and retrieved from DDS' using their handles.
+1. createAndAttachComponent no longer has an id first parameter. This is to enforce a unique generation of the id by the runtime itself
+2. getComponent is now marked as deprecated and renamed to getComponent_UNSAFE. Instead, users should return their component in the following manner:
+directoryWhereHandleIsStored.get<IComponentHandle<TypeOfHandle>>(idOfHandleInDirectory).get();
+
+Alternatively, a new helper function is provided for compatibility called getComponentFromDirectory that takes the string key and the directory where either the component handle or the id used for the old getComponent call is stored. It will appropriately fetch the component using the handle/id stored in the directory and then update the stored value with a handle now so that there are fewer and fewer IDs stored. 
+Users can also pass in an optional function to get the value from their directory in case they have some specially defined types. Look at dataModel.ts in the examples/components/spaces for an implentation of such.
+
+### `SimpleModuleInstantiationFactory` renamed and `SimpleContainerRuntimeFactory` deprecated
+
+`SimpleModuleInstantiationFactory` is now named `ContainerRuntimeFactoryWithDefaultComponent`.  Its functionality is unchanged.
+
+`SimpleContainerRuntimeFactory` is deprecated, as most of its functionality is provided by `ContainerRuntimeFactoryWithDefaultComponent` which should be used instead.  It does not provide `createAndAttachComponent()`, but this functionality can be achieved using direct calls to `createComponent()` and `attach()`.  `SimpleContainerRuntimeFactory` will be removed in a future version of the framework.
+
+### Change to the ErrorType enum on IError
+
+`ErrorType.connectionError` has been replaced by the more granular set of `genericNetworkError`, `accessDeniedError`, and `fileNotFoundError`.
+
+Corresponding interfaces have been introduced as well: `IGenericNetworkError`, `IAccessDeniedError`, and `IFileNotFoundError`;
+they are functionally identical to the former `IConnectionError`, just differentiated for ease of use.
+
 ## 0.15 Breaking Changes
 
 - [`getComponentRuntime` no longer on `IComponentContext`](#getComponentRuntime-no-longer-on-IComponentContext)
@@ -73,7 +104,7 @@ scenario.
 
 ### Container.reconnect, Container.reconnect changes
 
-autoReconnect property is gone, as well as reconnect() method.  
+autoReconnect property is gone, as well as reconnect() method.
 Use Container.setAutoReconnect() instead.
 
 Note that there is difference in behavior. It used to be that one needed to do
@@ -222,7 +253,7 @@ In SharedComponent:
 - asComponent
 If you still need to access these methods, you can still do so by overloading the needed method in your class
 and making it public.
-An example of this can be seen in primedComponent.spec.ts 
+An example of this can be seen in primedComponent.spec.ts
 
 ## 0.13 Breaking Changes
 
@@ -244,7 +275,7 @@ TypeScript now emits `get/set` accessors in `.d.ts` files. TypeScript versions `
 
 More about the changes:
 
-- [Class Field Mitigations](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#class-field-mitigations)  
+- [Class Field Mitigations](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#class-field-mitigations)
 - [Full list of TypeScript changes](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html)
 
 ### IHost interface removed, Loader constructor signature updated

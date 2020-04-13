@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import {
+    ContainerRuntimeFactoryWithDefaultComponent,
+    PrimedComponent,
+    PrimedComponentFactory,
+} from "@microsoft/fluid-aqueduct";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
@@ -45,11 +49,12 @@ export class Pollster extends PrimedComponent implements IComponentHTMLView {
 }
 
 export const PollInstantiationFactory = new PrimedComponentFactory(
+    chaincodeName,
     Pollster,
     [SharedMap.getFactory()],
 );
 
-export const fluidExport = new SimpleModuleInstantiationFactory(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
     chaincodeName,
     new Map([
         [chaincodeName, Promise.resolve(PollInstantiationFactory)],

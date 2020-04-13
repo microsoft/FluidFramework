@@ -66,6 +66,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
     public static getFactory() { return Clicker.factory; }
 
     private static readonly factory = new PrimedComponentFactory(
+        ClickerName,
         Clicker,
         [SharedMap.getFactory()],
     );

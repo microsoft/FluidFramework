@@ -4,7 +4,6 @@
  */
 
 import * as assert from "assert";
-import * as API from "@fluid-internal/client-api";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IProxyLoaderFactory } from "@microsoft/fluid-container-definitions";
 import { Container, Loader } from "@microsoft/fluid-container-loader";
@@ -13,17 +12,20 @@ import {
     ErrorType,
     IDocumentServiceFactory,
 } from "@microsoft/fluid-driver-definitions";
+import { createIError, createNetworkError, createWriteError } from "@microsoft/fluid-driver-utils";
 import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
-import { createIError, createNetworkError, createWriteError } from "@microsoft/fluid-driver-utils";
+import { LocalCodeLoader } from "@microsoft/fluid-test-utils";
 
 describe("Errors Types", () => {
+    const id = "fluid-test://localhost/errorTest";
+    const testRequest: IRequest = { url: id };
+
     let testDeltaConnectionServer: ILocalDeltaConnectionServer;
     let testResolver: TestResolver;
     let testResolved: IFluidResolvedUrl;
-    const testRequest: IRequest = { url: "" };
     let serviceFactory: IDocumentServiceFactory;
-    let codeLoader: API.CodeLoader;
+    let codeLoader: LocalCodeLoader;
     let loader: Loader;
 
     it("GeneralError Test", async () => {
@@ -33,7 +35,7 @@ describe("Errors Types", () => {
         testResolved = await testResolver.resolve(testRequest) as IFluidResolvedUrl;
         serviceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
 
-        codeLoader = new API.CodeLoader({ generateSummaries: false });
+        codeLoader = new LocalCodeLoader([]);
         const options = {};
 
         loader = new Loader(

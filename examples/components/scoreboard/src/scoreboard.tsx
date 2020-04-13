@@ -4,7 +4,11 @@
  */
 
 import { CounterValueType } from "@microsoft/fluid-map";
-import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import {
+    ContainerRuntimeFactoryWithDefaultComponent,
+    PrimedComponent,
+    PrimedComponentFactory,
+} from "@microsoft/fluid-aqueduct";
 import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -65,19 +69,20 @@ export class Scoreboard extends PrimedComponent implements IComponentHTMLView {
  * This is where we define the Distributed Data Structures this component uses
  */
 const ScoreboardComponentInstantiationFactory = new PrimedComponentFactory(
+    Scoreboard.componentName,
     Scoreboard,
     [],
 );
 
 /**
- * This does setup for the Container. The SimpleModuleInstantiationFactory also enables dynamic loading in the
- * EmbeddedComponentLoader.
+ * This does setup for the Container. The ContainerRuntimeFactoryWithDefaultComponent also enables dynamic loading in
+ * the EmbeddedComponentLoader.
  *
  * There are two important things here:
  * 1. Default Component name
  * 2. Map of string to factory for all components
  */
-export const fluidExport = new SimpleModuleInstantiationFactory(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
     Scoreboard.componentName,
     new Map([
         [Scoreboard.componentName, Promise.resolve(ScoreboardComponentInstantiationFactory)],

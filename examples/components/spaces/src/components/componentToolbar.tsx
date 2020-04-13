@@ -17,10 +17,10 @@ import {
 import { ISharedDirectory } from "@microsoft/fluid-map";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import {
-    InternalRegistry,
     IContainerComponentDetails,
     IComponentCallable,
     IComponentCallbacks,
+    InternalRegistry,
 } from "..";
 
 const componentToolbarStyle: React.CSSProperties = { position: "absolute", top: 10, left: 10, zIndex: 1000 };
@@ -39,7 +39,7 @@ export class ComponentToolbar extends PrimedComponent
 
     private callbacks: IComponentCallbacks = {};
 
-    private static readonly factory = new PrimedComponentFactory(ComponentToolbar, []);
+    private static readonly factory = new PrimedComponentFactory(ComponentToolbarName, ComponentToolbar, []);
 
     private supportedComponentList: IContainerComponentDetails[] | undefined;
 
@@ -53,7 +53,7 @@ export class ComponentToolbar extends PrimedComponent
             const registryDetails = (registry as IComponent).IComponentRegistryDetails;
             if (registryDetails) {
                 this.supportedComponentList = (registryDetails as InternalRegistry)
-                    .getFromCapabilities("IComponentHTMLView");
+                    .getFromCapability("IComponentHTMLView");
             }
         }
     }

@@ -3,15 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryBaseLogger, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { DebugLogger, PerformanceEvent, TelemetryLogger, TelemetryNullLogger } from "@microsoft/fluid-common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
     IDocumentService,
-    IDocumentStorageService,
     IResolvedUrl,
-    OpenMode,
+    IDocumentStorageService,
 } from "@microsoft/fluid-driver-definitions";
 import {
     IClient,
@@ -41,7 +40,6 @@ const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
  * clients
  */
 export class OdspDocumentService implements IDocumentService {
-
     /**
      * @param appId - app id used for telemetry for network requests.
      * @param getStorageToken - function that can provide the storage token for a given site. This is
@@ -68,11 +66,33 @@ export class OdspDocumentService implements IDocumentService {
         isFirstTimeDocumentOpened = true,
     ): Promise<IDocumentService> {
         let odspResolvedUrl: IOdspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
-        if (odspResolvedUrl.openMode === OpenMode.CreateNew && odspResolvedUrl.newFileInfoPromise) {
-            odspResolvedUrl = await createNewFluidFile(
-                getStorageToken,
-                odspResolvedUrl.newFileInfoPromise,
-                cache);
+        const templogger: ITelemetryLogger = DebugLogger.mixinDebugLogger(
+            "fluid:telemetry:OdspDriver",
+            logger,
+            { docId: odspResolvedUrl.hashedDocumentId });
+        if (odspResolvedUrl.createNewOptions) {
+            const createNewOptions = odspResolvedUrl.createNewOptions;
+            const createNewSummary = createNewOptions.createNewSummary;
+            const event = PerformanceEvent.start(templogger,
+                {
+                    eventName: "CreateNew",
+                    isWithSummaryUpload: createNewSummary ? true : false,
+                });
+            try {
+                odspResolvedUrl = await createNewFluidFile(
+                    getStorageToken,
+                    odspResolvedUrl.createNewOptions.newFileInfoPromise,
+                    cache,
+                    createNewSummary);
+                const props = {
+                    hashedDocumentId: odspResolvedUrl.hashedDocumentId,
+                    itemId: odspResolvedUrl.itemId,
+                };
+                event.end(props);
+            } catch(error) {
+                event.cancel(undefined, error);
+                throw error;
+            }
         }
         return new OdspDocumentService(
             appId,

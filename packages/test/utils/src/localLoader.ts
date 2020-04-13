@@ -31,7 +31,7 @@ export function createLocalLoader(
     deltaConnectionServer: ILocalDeltaConnectionServer,
 ): ILoader {
 
-    const urlResolver = new TestResolver();
+    const urlResolver = new TestResolver(deltaConnectionServer);
     const documentServiceFactory = new TestDocumentServiceFactory(deltaConnectionServer);
     const codeLoader: ICodeLoader = new LocalCodeLoader(packageEntries);
 

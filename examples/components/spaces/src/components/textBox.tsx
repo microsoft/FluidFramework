@@ -27,6 +27,7 @@ export class TextBox extends PrimedComponent implements IComponentHTMLView, ICom
     public get IComponentReactViewable() { return this; }
 
     private static readonly factory =  new PrimedComponentFactory(
+        TextBoxName,
         TextBox,
         [SharedString.getFactory()],
     );
