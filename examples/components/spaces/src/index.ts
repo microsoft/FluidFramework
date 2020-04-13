@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aqueduct";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
 import {
@@ -59,8 +59,16 @@ export class InternalRegistry implements IComponentRegistry {
         return undefined;
     }
 
-    public getFromCapabilities(type: keyof IComponent): IContainerComponentDetails[] {
-        return this.containerComponentArray.filter((componentDetails) => componentDetails.capabilities.includes(type));
+    public getFromCapability(capability: keyof IComponent): IContainerComponentDetails[] {
+        return this.containerComponentArray.filter((componentDetails) =>
+            componentDetails.capabilities.includes(capability));
+    }
+
+    public hasCapability(type: string, capability: keyof IComponent) {
+        const index = this.containerComponentArray.findIndex(
+            (containerComponent) => type === containerComponent.type,
+        );
+        return index >= 0 && this.containerComponentArray[index].capabilities.includes(capability);
     }
 }
 
@@ -71,21 +79,21 @@ const generateFactory = () => {
             factory: Promise.resolve(ClickerInstantiationFactory),
             friendlyName: "Clicker",
             fabricIconName: "Touch",
-            capabilities: ["IComponentHTMLView"],
+            capabilities: ["IComponentHTMLView", "IComponentLoadable"],
         },
         {
             type: ButtonName as string,
             factory: Promise.resolve(Button.getFactory()),
             friendlyName: FriendlyButtonName,
             fabricIconName: "ButtonControl",
-            capabilities: ["IComponentHTMLView"],
+            capabilities: ["IComponentHTMLView", "IComponentLoadable"],
         },
         {
             type: NumberName as string,
             factory: Promise.resolve(Number.getFactory()),
             friendlyName: FriendlyNumberName,
             fabricIconName: "NumberField",
-            capabilities: ["IComponentHTMLView"],
+            capabilities: ["IComponentHTMLView", "IComponentLoadable"],
         },
         {
             type: FacePileName as string,
@@ -118,7 +126,7 @@ const generateFactory = () => {
 
     // TODO: You should be able to specify the default registry instead of just a list of components
     // and the default registry is already determined Issue:#1138
-    return new SimpleModuleInstantiationFactory(
+    return new ContainerRuntimeFactoryWithDefaultComponent(
         SpacesComponentName,
         [
             ...containerComponents,

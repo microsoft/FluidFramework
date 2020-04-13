@@ -16,6 +16,8 @@ import {
     ContainerServiceRegistryEntries,
 } from "../containerServices";
 
+// TODO: Remove this after moving test host over to ContainerRuntimeFactoryWithDefaultComponent
+// (server will need a new build of the runtime first)
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class SimpleContainerRuntimeFactory {
     public static readonly defaultComponentId = "default";
