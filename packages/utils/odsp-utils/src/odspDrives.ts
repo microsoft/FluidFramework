@@ -172,7 +172,7 @@ async function getDrives(
     if (getDriveResult.status !== 200) {
         throw createErrorFromResponse("Failed to get drives.", getDriveResult);
     }
-    return getDriveResult.data as IOdspDriveInfo[];
+    return getDriveResult.data.value as IOdspDriveInfo[];
 }
 
 function toIODSPDriveItem(parsedDriveItemBody: any): IOdspDriveItem {

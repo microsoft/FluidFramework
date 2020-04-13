@@ -5,10 +5,12 @@
         "node_modules"
     ],
     "compilerOptions": {
-        "module": "esnext",
-        "outDir": "dist",
-        "jsx": "react",
-        "types": ["jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer", "react", "react-dom"],
+        "declarationDir": "./dist",
+        "rootDir": "./src",
+        "outDir": "./dist",
+        "types": [
+            "mocha"
+        ]
     },
     "include": [
         "src/**/*"

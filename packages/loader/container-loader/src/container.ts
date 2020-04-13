@@ -7,7 +7,6 @@ import * as assert from "assert";
 import {
     ITelemetryBaseLogger,
     ITelemetryLogger,
-    TelemetryEventRaisedOnContainer,
 } from "@microsoft/fluid-common-definitions";
 import { IComponent, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
@@ -169,7 +168,7 @@ export class Container
                     perfEvent.cancel(undefined, error);
                     const err = createIError(error, true);
                     if (!alreadyRaisedError) {
-                        container.logCriticalError(err);
+                        container.logContainerError(err);
                     }
                     onError(err);
                 });
@@ -357,7 +356,7 @@ export class Container
         this.logger = ChildLogger.create(this.subLogger, "Container");
 
         this.on("error", (error: any) => {
-            this.logCriticalError(error);
+            this.logContainerError(error);
         });
 
         this._deltaManager = this.createDeltaManager();
@@ -466,7 +465,7 @@ export class Container
             this.resume();
         } catch (error) {
             const err = createIError(error, true);
-            this.raiseCriticalError(err);
+            this.raiseContainerError(err);
             this.close();
             throw error;
         }
@@ -569,13 +568,13 @@ export class Container
         return this.blobsCacheStorageService || this.storageService;
     }
 
-    public raiseCriticalError(error: IError) {
+    public raiseContainerError(error: IError) {
         this.emit("error", error);
     }
 
     public async reloadContext(): Promise<void> {
         return this.reloadContextCore().catch((error) => {
-            this.raiseCriticalError(createIError(error, true));
+            this.raiseContainerError(createIError(error, true));
             throw error;
         });
     }
@@ -1086,7 +1085,7 @@ export class Container
         });
 
         deltaManager.on("error", (error: IError) => {
-            this.raiseCriticalError(error);
+            this.raiseContainerError(error);
         });
 
         deltaManager.on("pong", (latency) => {
@@ -1334,7 +1333,7 @@ export class Container
             new DeltaManagerProxy(this._deltaManager),
             new QuorumProxy(this.protocolHandler!.quorum),
             loader,
-            (err: IError) => this.raiseCriticalError(err),
+            (err: IError) => this.raiseContainerError(err),
             (type, contents, batch, metadata) => this.submitMessage(type, contents, batch, metadata),
             (message) => this.submitSignal(message),
             async (message) => this.snapshot(message),
@@ -1372,7 +1371,7 @@ export class Container
             new DeltaManagerProxy(this._deltaManager),
             new QuorumProxy(this.protocolHandler!.quorum),
             loader,
-            (err: IError) => this.raiseCriticalError(err),
+            (err: IError) => this.raiseContainerError(err),
             (type, contents, batch, metadata) => this.submitMessage(type, contents, batch, metadata),
             (message) => this.submitSignal(message),
             async (message) => this.snapshot(message),
@@ -1386,8 +1385,8 @@ export class Container
     }
 
     // Please avoid calling it directly.
-    // raiseCriticalError() is the right flow for most cases
-    private logCriticalError(error: any) {
-        this.logger.sendErrorEvent({ eventName: "onError", [TelemetryEventRaisedOnContainer]: true }, error);
+    // raiseContainerError() is the right flow for most cases
+    private logContainerError(error: any) {
+        this.logger.sendErrorEvent({ eventName: "onError" }, error);
     }
 }
