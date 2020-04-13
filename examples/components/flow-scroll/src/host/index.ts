@@ -21,7 +21,6 @@ import { VideoPlayerCollection } from "@fluid-example/video-players";
 import { ImageCollection } from "@fluid-example/image-collection";
 import { SharedComponentFactory, SharedComponent } from "@microsoft/fluid-component-base";
 import { IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-view-interfaces";
-import { v4 as uuid } from "uuid";
 import { hostType } from "../package";
 import { importDoc } from "./template";
 import { HostView } from "./host";
@@ -70,8 +69,7 @@ export class WebFlowHost extends SharedComponent<ISharedDirectory> implements IC
     }
 
     public readonly createSubComponent = async (pkg: string, props?: any) => {
-        const id = uuid();
-        const componentRuntime = await this.context.createComponent(id, pkg);
+        const componentRuntime = await this.context.createComponent(undefined, pkg, props);
         const response = await componentRuntime.request({ url: "/" });
         componentRuntime.attach();
         return response.value.handle;

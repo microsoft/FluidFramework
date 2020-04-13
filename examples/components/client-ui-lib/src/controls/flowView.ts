@@ -28,7 +28,6 @@ import * as Sequence from "@microsoft/fluid-sequence";
 import { SharedSegmentSequenceUndoRedoHandler, UndoRedoStackManager } from "@microsoft/fluid-undo-redo";
 import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
-import { v4 as uuid } from "uuid";
 import { blobUploadHandler } from "../blob";
 import { CharacterCodes, Paragraph, Table } from "../text";
 import * as ui from "../ui";
@@ -4530,7 +4529,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     public async insertComponentNew(prefix: string, chaincode: string, inline = false) {
-        const id = uuid();
+        const id = `${prefix}-${Date.now()}`;
         const doc = await this.collabDocument.context.createComponent(id, chaincode);
         doc.attach();
         const props = {
@@ -4539,9 +4538,9 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 type: {
                     name: "component",
                 } as IReferenceDocType,
-                url: doc.id,
+                url: id,
             },
-            leafId: doc.id,
+            leafId: id,
         };
 
         if (!inline) {
