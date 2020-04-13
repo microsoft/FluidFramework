@@ -400,8 +400,9 @@ export interface IHostRuntime extends
     /**
      * Creates a new component.
      * @param pkg - Package name of the component
+     * @param props - optional properties to be passed to the instantiateComponent thru the context
      */
-    createComponent_NEW(pkg: string | string[]): Promise<IComponentRuntime>;
+    createComponentWithProps(pkg: string | string[], props?: any): Promise<IComponentRuntime>;
 
     /**
      * Creates a new component with props
