@@ -82,6 +82,8 @@ export class PromiseRegistry<TKey, TResult> {
       value: TResult,
       expiryTime?: number,
   ) {
+      // The Promise is stored in the cache and will be fetched and awaited later
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       this.synchronousRegister(key, async () => value, expiryTime);
   }
 
@@ -114,16 +116,17 @@ export class PromiseRegistry<TKey, TResult> {
       return promise;
   }
 
-  private handleGC(key: TKey, expiryTime: number) {
+  private handleGC(key: TKey, expiryTime?: number) {
       // If we have a GC scheduled and we're not supposed to refresh, do nothing.
       if (this.gcTimeouts.has(key) && !this.extendExpiryOnReregister) {
           return;
       }
 
       // Cancel any existing GC Timeout
-      clearTimeout(this.gcTimeouts.get(key));
-
-      if (expiryTime) {
+      if (this.gcTimeouts.has(key)) {
+          clearTimeout(this.gcTimeouts.get(key)!);
+      }
+      if (expiryTime !== undefined) {
           // Schedule GC and save the Timeout ID in case we need to cancel it,
           // but only if expiryTime is provided (undefined means no expiration).
           this.gcTimeouts.set(
