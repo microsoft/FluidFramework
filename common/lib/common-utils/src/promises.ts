@@ -116,12 +116,6 @@ export class LazyPromise<T> implements Promise<T> {
 }
 
 /**
- * A Promise wrapper for window.setTimeout
- * @param ms - (optional) How many ms to wait before continuing
- */
-export const delay = async (ms?: number) => new Promise((res) => setTimeout(res, ms));
-
-/**
  * @member extendExpiryOnReregister - When a registered key is registered again,
  * should the pending expiration (if any) be extended?
  * @member unregisterOnError - If the stored Promise is rejected with a particular error,

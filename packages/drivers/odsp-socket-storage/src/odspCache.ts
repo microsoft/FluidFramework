@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { delay, PromiseRegistry } from "@microsoft/fluid-common-utils";
+import { PromiseRegistry } from "@microsoft/fluid-common-utils";
 import { ISocketStorageDiscovery, IOdspResolvedUrl } from "./contracts";
 import { IFileCreateResponse } from "./createFile";
 
