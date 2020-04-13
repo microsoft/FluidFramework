@@ -465,7 +465,7 @@ export class RunningSummarizer implements IDisposable {
 
         return { broadcastP: this.summarizing.promise };
     }
-    
+
     private async trySummarizeCore(reason: string): Promise<void> {
         const result = await this.summarize(reason, false);
         if (result === false) {
