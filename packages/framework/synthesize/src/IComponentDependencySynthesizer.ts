@@ -5,8 +5,7 @@
 
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import {
-    AsyncOptionalComponentProvider,
-    AsyncRequiredComponentProvider,
+    AsyncComponentProvider,
     ComponentSymbolProvider,
     ComponentProvider,
 } from "./types";
@@ -60,7 +59,7 @@ export interface IComponentDependencySynthesizer extends IProvideComponentDepend
         R extends keyof IComponent>(
         optionalTypes: ComponentSymbolProvider<O>,
         requiredTypes: ComponentSymbolProvider<R>,
-    ): AsyncOptionalComponentProvider<O> & AsyncRequiredComponentProvider<R>;
+    ): AsyncComponentProvider<O,R>;
 
     /**
      * Check if a given type is registered

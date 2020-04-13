@@ -6,8 +6,7 @@
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 
 import {
-    AsyncOptionalComponentProvider,
-    AsyncRequiredComponentProvider,
+    AsyncComponentProvider,
     ComponentSymbolProvider,
     ComponentProvider,
 } from "./types";
@@ -59,7 +58,7 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
         R extends keyof IComponent>(
         optionalTypes: ComponentSymbolProvider<O>,
         requiredTypes: ComponentSymbolProvider<R>,
-    ): AsyncOptionalComponentProvider<O> & AsyncRequiredComponentProvider<R> {
+    ): AsyncComponentProvider<O,R> {
         const optionalValues = Object.values(optionalTypes);
         const requiredValues = Object.values(requiredTypes);
 

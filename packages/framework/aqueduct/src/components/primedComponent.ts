@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
+import {
+    IComponent,
+    IComponentHandle,
+    IRequest,
+    IResponse,
+} from "@microsoft/fluid-component-core-interfaces";
 import { ISharedDirectory, MapFactory, SharedDirectory } from "@microsoft/fluid-map";
 import { ITaskManager } from "@microsoft/fluid-runtime-definitions";
 import { v4 as uuid } from "uuid";
@@ -18,7 +23,9 @@ import { SharedComponent } from "./sharedComponent";
  * and registering channels with the runtime any new DDS that is set on the root
  * will automatically be registered.
  */
-export abstract class PrimedComponent extends SharedComponent {
+export abstract class PrimedComponent<O extends IComponent = object, R extends IComponent = object>
+    extends SharedComponent<O,R>
+{
     private internalRoot: ISharedDirectory | undefined;
     private internalTaskManager: ITaskManager | undefined;
     private readonly rootDirectoryId = "root";

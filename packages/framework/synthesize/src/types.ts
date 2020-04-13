@@ -35,6 +35,12 @@ export type AsyncOptionalComponentProvider<T extends keyof IComponent> = {
 };
 
 /**
+ * Combined type for Optional and Required Async Component Providers
+ */
+export type AsyncComponentProvider<O extends keyof IComponent, R extends keyof IComponent>
+    = AsyncOptionalComponentProvider<O> & AsyncRequiredComponentProvider<R>;
+
+/**
  * Multiple ways to provide a component.
  */
 export type ComponentProvider<T extends keyof IComponent> =
