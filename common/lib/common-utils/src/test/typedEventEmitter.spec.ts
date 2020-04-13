@@ -42,7 +42,6 @@ describe("TypedEventEmitter", () => {
             newListenerCalls ++;
         });
 
-
         tee.on("error", errListener);
         tee.removeListener("error", errListener);
 

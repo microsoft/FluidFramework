@@ -28,7 +28,7 @@ export class EventForwarder<TEvent extends IEvent = IEvent>
 
     constructor(source?: EventEmitter | IEventProvider<TEvent>) {
         super();
-        if (source) {
+        if (source !== undefined) {
             // NewListener event is raised whenever someone starts listening to this events, so
             // we keep track of events being listened to, and start forwarding from the source
             // event emitter per event listened to on this
