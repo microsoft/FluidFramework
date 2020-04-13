@@ -4,27 +4,25 @@
  * Licensed under the MIT License.
  */
 import { EventEmitter } from "events";
-import {
-    IEventProvider,
-    IEvent,
-    IEventTransformer,
-    TransformedEvent,
-} from "@microsoft/fluid-common-definitions";
+import { IEvent, TransformedEvent, IEventTransformer, IEventProvider } from "@microsoft/fluid-common-definitions";
 
-// the event emitter polyfil and the not event emitter have different event types:
+
+// the event emitter polyfill and the node event emitter have different event types:
 // string | symbol vs. string | number
 // this allow us to correctly handle either type
-export type TEventEmitterEvent = EventEmitter extends {on(event: infer E, listener: any)} ? E : never;
+export type EventEmitterEventType = EventEmitter extends {on(event: infer E, listener: any)} ? E : never;
 
 export type TypedEventTransform<TThis, TEvent extends IEvent> =
-    IEventTransformer<TThis, TEvent> &
-    // Event emitter support some special events for the emitter itself to use
+    // Event emitter supports some special events for the emitter itself to use
     // this exposes those events for the TypedEventEmitter.
     // Since we know what the shape of these events are, we can describe them directly via a TransformedEvent
     // which easier than trying to extend TEvent directly
     // eslint-disable-next-line max-len
     TransformedEvent<TThis,"newListener" | "removeListener", Parameters<(event: string, listener: (...args: any[]) => void) => void>> &
-    TransformedEvent<TThis, TEventEmitterEvent, Parameters<(...args: any[]) => void>>;
+    // Expose all the events provides by TEvent
+    IEventTransformer<TThis, TEvent> &
+    // Add the default overload so this is covertable to EventEmitter regardless of environment
+    TransformedEvent<TThis, EventEmitterEventType, any[]>;
 
 /**
  * Event Emitter helper class the supports emitting typed events
