@@ -297,7 +297,7 @@ export interface IComponentContext extends EventEmitter {
      * @param props - Properties to be passed to the instantiateComponent through the context.
      * Remove once issue #1756 is closed
      */
-    createComponent_UNSAFE(pkgOrId: string | undefined, pkg?: string | string[], props?: any):
+    createComponent(pkgOrId: string | undefined, pkg?: string | string[], props?: any):
     Promise<IComponentRuntime>;
 
     /**

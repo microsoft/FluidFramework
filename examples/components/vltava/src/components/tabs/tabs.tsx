@@ -42,7 +42,7 @@ export class TabsComponent extends PrimedComponent implements IComponentHTMLView
     protected async createAndAttachComponentWithId<T extends IComponent & IComponentLoadable>(
         id: string, pkg: string, props?: any,
     ): Promise<T> {
-        const componentRuntime = await this.context.createComponent_UNSAFE(id, pkg, props);
+        const componentRuntime = await this.context.createComponent(id, pkg, props);
         const component = await this.asComponent<T>(componentRuntime.request({ url: "/" }));
         componentRuntime.attach();
         return component;

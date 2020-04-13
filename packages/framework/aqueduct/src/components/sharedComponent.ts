@@ -142,7 +142,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
         pkg: string, props?: any,
     ): Promise<T> {
         const id = uuid();
-        const componentRuntime = await this.context.createComponent_UNSAFE(id, pkg, props);
+        const componentRuntime = await this.context.createComponent(id, pkg, props);
         const component = await this.asComponent<T>(componentRuntime.request({ url: "/" }));
         componentRuntime.attach();
         return component;

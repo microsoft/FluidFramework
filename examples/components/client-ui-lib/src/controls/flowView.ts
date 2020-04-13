@@ -4531,7 +4531,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
     public async insertComponentNew(prefix: string, chaincode: string, inline = false) {
         const id = uuid();
-        const doc = await this.collabDocument.context.createComponent_UNSAFE(id, chaincode);
+        const doc = await this.collabDocument.context.createComponent(id, chaincode);
         doc.attach();
         const props = {
             crefTest: {

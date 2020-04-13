@@ -34,7 +34,7 @@ describe("Detached Container", () => {
         componentId: string,
         type: string,
     ) => {
-        const doc = await componentContext.createComponent_UNSAFE(componentId, type);
+        const doc = await componentContext.createComponent(componentId, type);
         doc.attach();
     });
 
