@@ -15,29 +15,13 @@ import {
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import {WebCodeLoader, SemVerCdnCodeResolver} from "@microsoft/fluid-web-code-loader";
 
-const loadScript = async (scriptUrl: string) =>
-    new Promise<void>((resolve, reject) => {
-        const script = document.createElement("script");
-        script.src = scriptUrl;
-
-        // Dynamically added scripts are async by default. By setting async to false, we are enabling the scripts
-        // to be downloaded in parallel, but executed in order. This ensures that a script is executed after all of
-        // its dependencies have been loaded and executed.
-        script.async = false;
-
-        script.onload = () => resolve();
-        script.onerror = () => reject(new Error(`Failed to download the script at url: ${scriptUrl}`));
-
-        document.head.appendChild(script);
-    });
-
 /**
  * A component registry that can load component via their url
  */
 export class UrlRegistry implements IComponentRegistry {
     private static readonly WindowKeyPrefix = "FluidExternalComponent";
 
-    private readonly urlRegistryMap = new Map<string, Promise<ComponentRegistryEntry>>();
+    private readonly urlRegistryMap = new Map<string, Promise<ComponentRegistryEntry | undefined>>();
     private readonly loadingPackages: Map<string, Promise<IFluidPackage>>;
     private readonly webloader = new WebCodeLoader(new SemVerCdnCodeResolver());
 
@@ -68,7 +52,7 @@ export class UrlRegistry implements IComponentRegistry {
                 this.loadingPackages.set(name, this.loadPackage(name));
             }
         }
-        const fluidPackage = this.loadingPackages.has(name) ? await this.loadingPackages.get(name) : name;
+        const fluidPackage = await this.loadingPackages.get(name) ?? name;
         const codeDetails: IFluidCodeDetails = {
             package: fluidPackage,
             config:{
