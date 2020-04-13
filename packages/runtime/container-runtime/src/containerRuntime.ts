@@ -412,7 +412,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         // Create all internal components in first load.
         if (!context.existing) {
-            await runtime.createComponent_UNSAFE(schedulerId, schedulerId)
+            await runtime.createComponent(schedulerId, schedulerId)
                 .then((componentRuntime) => {
                     componentRuntime.attach();
                 });
@@ -949,7 +949,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this._createComponentWithProps(pkg, undefined);
     }
 
-    public async createComponent_UNSAFE(idOrPkg: string, maybePkg?: string | string[]) {
+    public async createComponent(idOrPkg: string, maybePkg?: string | string[]) {
         const id = maybePkg === undefined ? uuid() : idOrPkg;
         const pkg = maybePkg === undefined ? idOrPkg : maybePkg;
         return this._createComponentWithProps(pkg, undefined, id);

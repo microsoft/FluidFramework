@@ -69,7 +69,7 @@ export class SimpleContainerRuntimeFactory {
         pkg: string,
     ): Promise<T> {
         try {
-            const componentRuntime = await runtime.createComponent_UNSAFE(id, pkg);
+            const componentRuntime = await runtime.createComponent(id, pkg);
 
             const result = await componentRuntime.request({ url: "/" });
             if (result.status !== 200 || result.mimeType !== "fluid/component") {

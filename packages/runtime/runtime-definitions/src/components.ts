@@ -395,7 +395,7 @@ export interface IHostRuntime extends
      * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
      * Remove once issue #1756 is closed
      */
-    createComponent_UNSAFE(pkgOrId: string, pkg?: string | string[]): Promise<IComponentRuntime>;
+    createComponent(pkgOrId: string, pkg?: string | string[]): Promise<IComponentRuntime>;
 
     /**
      * Creates a new component.

@@ -138,7 +138,7 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
         // On first boot create the base component
         if (!runtime.existing) {
             await Promise.all([
-                runtime.createComponent_UNSAFE(DefaultComponentName, SharedTextFactoryComponent.type)
+                runtime.createComponent(DefaultComponentName, SharedTextFactoryComponent.type)
                     .then((componentRuntime) => componentRuntime.attach()),
             ])
                 .catch((error) => {
