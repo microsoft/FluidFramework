@@ -10,8 +10,8 @@ import {
     IComponentRegistry,
 } from "@microsoft/fluid-runtime-definitions";
 
-const loadScript = async (scriptUrl: string) => {
-    return new Promise<void>((resolve, reject) => {
+const loadScript = async (scriptUrl: string) =>
+    new Promise<void>((resolve, reject) => {
         const script = document.createElement("script");
         script.src = scriptUrl;
 
@@ -25,7 +25,6 @@ const loadScript = async (scriptUrl: string) => {
 
         document.head.appendChild(script);
     });
-};
 
 /**
  * A component registry that can load component via their url
