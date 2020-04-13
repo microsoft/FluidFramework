@@ -138,8 +138,7 @@ export interface PromiseRegistryOptions {
  */
 export class PromiseRegistry<TKey, TResult> {
     private readonly cache = new Map<TKey, Promise<TResult>>();
-    private readonly gcIds = new Map<TKey, number>();
-    private gcIdCounter = 0;
+    private readonly gcTimeouts = new Map<TKey, NodeJS.Timeout>();
 
     private readonly refreshExpiryOnReregister: boolean;
     private readonly unregisterOnError: (e: any) => boolean;
@@ -168,7 +167,7 @@ export class PromiseRegistry<TKey, TResult> {
      * returning true if it was found and removed
      */
     public unregister(key: TKey){
-        this.gcIds.delete(key);
+        this.gcTimeouts.delete(key);
         return this.cache.delete(key);
     }
 
@@ -204,6 +203,8 @@ export class PromiseRegistry<TKey, TResult> {
         this.synchronousRegister(key, async () => value, expiryTime);
     }
 
+    // Leaving this non-async to discourage accidental awaiting before cache state is resolved.
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
     private synchronousRegister(
         key: TKey,
         asyncFn: () => Promise<TResult>,
@@ -225,31 +226,30 @@ export class PromiseRegistry<TKey, TResult> {
             });
         }
 
-        // Schedule garbage collection if required
+        // Schedule or reschedule garbage collection if required
         if (expiryTime) {
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            this.gc(key, expiryTime);
+            this.scheduleGC(key, expiryTime);
         }
 
         return promise;
     }
 
-    private async gc(key: TKey, expiryTime: number) {
+    private scheduleGC(key: TKey, expiryTime: number) {
         // If we have a GC scheduled and we're not supposed to refresh, do nothing.
-        if (this.gcIds.has(key) && !this.refreshExpiryOnReregister) {
+        if (this.gcTimeouts.has(key) && !this.refreshExpiryOnReregister) {
             return;
         }
 
-        // Create and store a new gcId to track this GC attempt
-        const gcId = ++this.gcIdCounter;
-        this.gcIds.set(key, gcId);
+        // Cancel any existing GC Timeout
+        clearTimeout(this.gcTimeouts.get(key));
 
-        await delay(expiryTime);
-
-        // Only unregister if the stored gcId hasn't changed since before the delay
-        // (could be changed by either refreshing or unregistering)
-        if (this.gcIds.get(key) === gcId) {
-            this.unregister(key);
-        }
+        // Schedule GC and save the Timeout ID in case we need to cancel it
+        this.gcTimeouts.set(
+            key,
+            setTimeout(
+                () => this.unregister(key),
+                expiryTime,
+            )
+        );
     }
 }
