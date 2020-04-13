@@ -3,139 +3,214 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
+
 /**
- * @member extendExpiryOnReregister - When a registered key is registered again,
- * should the pending expiration (if any) be extended?
- * @member unregisterOnError - If the stored Promise is rejected with a particular error,
- * should the given key be unregistered?
+ * Three supported expiry policies:
+ * - indefinite: entries don't expire and must be explicitly removed
+ * - absolute: entries expire after the given duration in MS, even if accessed multiple times in the mean time
+ * - sliding: entries expire after the given duration in MS of inactivity (i.e. get resets the clock)
  */
-export interface PromiseRegistryOptions {
-    extendExpiryOnReregister?: boolean,
-    unregisterOnError?: (e: any) => boolean,
+export type PromiseCacheExpiry = {
+    policy: "indefinite"
+} | {
+    policy: "absolute" | "sliding",
+    durationMs: number,
+};
+
+/**
+ * @member expiry - Common expiration policy for all items added to this cache
+ * @member removeOnError - If the stored Promise is rejected with a particular error,
+ * should the given key be removed?
+ */
+export interface PromiseCacheOptions {
+    expiry?: PromiseCacheExpiry,
+    removeOnError?: (e: any) => boolean,
 }
 
 /**
 * A specialized cache for async work, allowing you to safely cache the promised result of some async work
-* without fear of running it multiple times.
+* without fear of running it multiple times or losing track of errors.
 */
-export class PromiseRegistry<TKey, TResult> {
+export class PromiseCache<TKey, TResult> {
     private readonly cache = new Map<TKey, Promise<TResult>>();
     private readonly gcTimeouts = new Map<TKey, NodeJS.Timeout>();
 
-    private readonly extendExpiryOnReregister: boolean;
-    private readonly unregisterOnError: (e: any) => boolean;
+    private readonly expiry: PromiseCacheExpiry;
+    private readonly removeOnError: (e: any) => boolean;
 
     /**
-     * Create the PromiseRegistry with the options provided
-     * @param param0 - PromiseRegistryOptions with the following default values:
-     *   extendExpiryOnReregister = false,
-     *   unregisterOnError = () => true,
+     * Create the PromiseCache with the options provided
+     * @param param0 - PromiseCacheOptions with the following default values:
+     *   expiry = { policy: "indefinite" },
+     *   removeOnError = () => true,
      */
     constructor({
-        extendExpiryOnReregister = false,
-        unregisterOnError = () => true,
-    }: PromiseRegistryOptions = {}) {
-        this.extendExpiryOnReregister = extendExpiryOnReregister;
-        this.unregisterOnError = unregisterOnError;
+        expiry = { policy: "indefinite" },
+        removeOnError = () => true,
+    }: PromiseCacheOptions = {}) {
+        this.expiry = expiry;
+        this.removeOnError = removeOnError;
     }
 
     /**
-     * Get the Promise for the given key, or undefined if it's not found
+     * Get the Promise for the given key, or undefined if it's not found.
+     * Extend expiry if applicable.
      */
-    public lookup = async (key: TKey) => this.cache.get(key);
+    public async get(key: TKey) {
+        this.updateGC(key);
+        return this.cache.get(key);
+    }
 
     /**
      * Remove the Promise for the given key,
      * returning true if it was found and removed
      */
-    public unregister(key: TKey){
-        this.gcTimeouts.delete(key);
-        return this.cache.delete(key);
+    public remove(key: TKey){
+        const deleted = this.cache.delete(key);
+        this.updateGC(key);
+        return deleted;
     }
 
     /**
-     * Register the given async work to the given key, or return an existing Promise at that key if it exists.
-     * IMPORTANT: This will NOT overwrite an existing key - it's idempotent (within the expiryTime window),
-     * so you must unregister a key if you want to register a different function/value.
+     * Try to add the result of the given asyncFn, without overwriting an existing cache entry at that key.
+     * Returns true if the add succeeded, or false if the cache already contained an entry at that key.
      * @param key - key name where to store the async work
      * @param asyncFn - the async work to do and store, if not already in progress under the given key
-     * @param expiryTime - (optional) Automatically unregister the given key after some time
+     * @throws - If the cache mechanism fails, will throw and nothing will have been added
      */
-    public async register(
+    public add(
         key: TKey,
         asyncFn: () => Promise<TResult>,
-        expiryTime?: number,
-    ): Promise<TResult> {
-        return this.synchronousRegister(key, asyncFn, expiryTime);
+    ): boolean {
+        const alreadyPresent = this.cache.has(key);
+
+        // This Promise has been stored in the cache and will be fetched and awaited later
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        this.synchronousAddOrGet(key, asyncFn);
+
+        return !alreadyPresent;
     }
 
     /**
-     * Register the given value. Use lookup to get the Promise wrapping it in the registry
-     * IMPORTANT: This will NOT overwrite an existing key - it's idempotent (within the expiryTime window),
-     * so you must unregister a key if you want to register a different function/value.
-     * @param key - key name where to store the value
-     * @param value - value to store
-     * @param expiryTime - (optional) Automatically unregister the given key after some time
+     * Try to add the result of the given asyncFn, without overwriting an existing cache entry at that key.
+     * Returns a Promise for the added or existing async work being done at that key.
+     * If the cache mechanism fails, the returned Promise will be rejected and the cache will not contain the key.
+     * @param key - key name where to store the async work
+     * @param asyncFn - the async work to do and store, if not already in progress under the given key
      */
-    public registerValue(
-        key: TKey,
-        value: TResult,
-        expiryTime?: number,
-    ) {
-        // The Promise is stored in the cache and will be fetched and awaited later
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.synchronousRegister(key, async () => value, expiryTime);
-    }
-
-    // Leaving this non-async to discourage accidental awaiting before cache state is resolved.
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    private synchronousRegister(
+    public async addOrGet(
         key: TKey,
         asyncFn: () => Promise<TResult>,
-        expiryTime?: number,
     ): Promise<TResult> {
-        // NOTE: Do not await asyncFn() or handle.promise!
-        // Let the caller do so once register returns
-        let promise = this.cache.get(key);
-        if (promise === undefined) {
-            // Start asyncFn and put the Promise in the cache
-            promise = asyncFn();
-            this.cache.set(key, promise);
-
-            // If asyncFn throws, possibly remove the Promise from the cache
-            promise.catch((error) => {
-                if (this.unregisterOnError(error)) {
-                    this.unregister(key);
-                }
-            });
-        }
-
-        // Schedule or reschedule garbage collection if required
-        this.handleGC(key, expiryTime);
-
-        return promise;
+        return this.synchronousAddOrGet(key, asyncFn);
     }
 
-    private handleGC(key: TKey, expiryTime?: number) {
-        // If we have a GC scheduled and we're not supposed to refresh, do nothing.
-        if (this.gcTimeouts.has(key) && !this.extendExpiryOnReregister) {
+    /**
+     * Try to add the given value, without overwriting an existing cache entry at that key.
+     * Returns true if the add succeeded, or false if the cache already contained an entry at that key.
+     * @param key - key name where to store the value
+     * @param value - value to store
+     * @throws - If the cache mechanism fails, will throw and nothing will have been added
+     */
+    public addValue(
+        key: TKey,
+        value: TResult,
+    ): boolean {
+        return this.add(key, async () => value);
+    }
+
+    /**
+     * Try to add the given value, without overwriting an existing cache entry at that key.
+     * Returns a Promise for the added or existing async work being done at that key.
+     * If the cache mechanism fails, the returned Promise will be rejected and the cache will not contain the key.
+     * @param key - key name where to store the async work
+     * @param value - value to store
+     */
+    public async addValueOrGet(
+        key: TKey,
+        value: TResult,
+    ): Promise<TResult> {
+        return this.synchronousAddOrGet(key, async () => value);
+    }
+
+    // We want to be able to throw synchronously to callers if something goes wrong with the cache mechanism itself
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    private synchronousAddOrGet(
+        key: TKey,
+        asyncFn: () => Promise<TResult>,
+    ): Promise<TResult> {
+        // NOTE: Do not await the Promise returned by asyncFn!
+        // Let the caller do so once we return
+        try {
+            let promise = this.cache.get(key);
+            if (promise === undefined) {
+                // Start asyncFn and put the Promise in the cache
+                promise = asyncFn();
+                this.cache.set(key, promise);
+
+                // If asyncFn throws, we may remove the Promise from the cache
+                promise.catch((error) => {
+                    if (this.removeOnError(error)) {
+                        this.remove(key);
+                    }
+                });
+            }
+
+            // Schedule or reschedule garbage collection if required
+            this.updateGC(key);
+
+            return promise;
+        }
+        catch(e) {
+            // Something went horribly wrong. Remove this key and rethrow the error
+            this.remove(key);
+            throw e;  // Actually throw to the caller
+        }
+    }
+
+    private updateGC(key: TKey) {
+        // If the key is not present in the cache, we shouldn't have a pending GC
+        if (!this.cache.has(key)) {
+            this.gcTimeouts.delete(key);
             return;
         }
 
-        // Cancel any existing GC Timeout
-        if (this.gcTimeouts.has(key)) {
-            clearTimeout(this.gcTimeouts.get(key)!);
-        }
-        if (expiryTime !== undefined) {
-            // Schedule GC and save the Timeout ID in case we need to cancel it,
-            // but only if expiryTime is provided (undefined means no expiration).
-            this.gcTimeouts.set(
-                key,
-                setTimeout(
-                    () => this.unregister(key),
-                    expiryTime,
-                )
-            );
+        switch (this.expiry.policy) {
+            case "indefinite": {
+                return;
+            }
+            case "absolute": {
+                // Only schedule GC if it's not already pending
+                if (!this.gcTimeouts.has(key)) {
+                    setTimeout(
+                        () => this.remove(key),
+                        this.expiry.durationMs,
+                    );
+                }
+                return;
+            }
+            case "sliding": {
+                // Cancel any existing GC Timeout
+                const timeout = this.gcTimeouts.get(key);
+                if (timeout !== undefined) {
+                    clearTimeout(timeout);
+                }
+
+                // Schedule GC and save the Timeout ID so we're ready to cancel it to extend the expiration
+                this.gcTimeouts.set(
+                    key,
+                    setTimeout(
+                        () => this.remove(key),
+                        this.expiry.durationMs,
+                    ),
+                );
+                return;
+            }
+            default: {
+                // Help tsc ensure the completeness of the switch statement
+                return assert.fail(new Error(`Unexpected object: ${this.expiry}`));
+            }
         }
     }
 }
