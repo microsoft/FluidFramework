@@ -59,19 +59,17 @@ export async function createNewFluidFile(
         throw new Error("Odsp driver needs to create a new file but no newFileInfo supplied");
     }
     const newFileInfo = await newFileInfoP;
-    let containerSnapshot: ISnapshotTree | undefined;
-    if (createNewSummary) {
-        containerSnapshot = convertSummaryIntoContainerSnapshot(createNewSummary);
-    }
-    // We don't want to create a new file for different instances of a driver,
-    // and we don't know the order of execution of this code by driver instances.
-    // The FileUrlRegistry takes care of handling this potential concurrency for us.
-    const resultP = cache.fileUrlRegistry.registerfile(
-        getKeyFromFileInfo(newFileInfo),
+
+    const resolveNewFileUrl =
         async () => {
             // Check for valid filename before the request to create file is actually made.
             if (isInvalidFileName(newFileInfo.filename)) {
                 throw new Error("Invalid filename. Please try again.");
+            }
+
+            let containerSnapshot: ISnapshotTree | undefined;
+            if (createNewSummary) {
+                containerSnapshot = convertSummaryIntoContainerSnapshot(createNewSummary);
             }
 
             const fileResponse: IFileCreateResponse =
@@ -80,18 +78,20 @@ export async function createNewFluidFile(
             const resolver = new OdspDriverUrlResolver();
             const resolvedUrl = await resolver.resolve({ url: odspUrl });
 
-            return [resolvedUrl, fileResponse];
-        },
+            if (newFileInfo.callback) {
+                newFileInfo.callback(fileResponse.itemId, fileResponse.filename);
+            }
+
+            return resolvedUrl;
+        };
+
+    // We don't want to create a new file for different instances of a driver,
+    // and we don't know the order of execution of this code by driver instances.
+    // The FileUrlRegistry takes care of handling this potential concurrency for us.
+    return cache.fileUrlRegistry.getFileUrl(
+        getKeyFromFileInfo(newFileInfo),
+        resolveNewFileUrl,
     );
-
-    {
-        const [resolvedUrl, fileResponse] = await resultP;
-        if (newFileInfo.callback) {
-            newFileInfo.callback(fileResponse.itemId, fileResponse.filename);
-        }
-
-        return resolvedUrl;
-    }
 }
 
 /**

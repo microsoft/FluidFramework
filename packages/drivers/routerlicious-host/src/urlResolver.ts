@@ -27,20 +27,23 @@ export class ContainerUrlResolver implements IUrlResolver {
             }
         }
     }
-
+ ad
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
         const headers = {
             Authorization: `Bearer ${this.jwt}`,
         };
-        return this.registry.register(
-            request.url,
+        const fetchResolvedUrl =
             async () => {
                 const response = await Axios.post<IResolvedUrl>(
                     `${this.baseUrl}/api/v1/load`,
                     { url: request.url },
                     { headers });
                 return response.data;
-            },
+            };
+
+        return this.registry.register(
+            request.url,
+            fetchResolvedUrl,
         );
     }
 }

@@ -3,11 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import {delay, PromiseRegistry} from "@microsoft/fluid-common-utils";
+import { delay, PromiseRegistry } from "@microsoft/fluid-common-utils";
 import { ISocketStorageDiscovery, IOdspResolvedUrl } from "./contracts";
 import { IFileCreateResponse } from "./createFile";
-
-type FileUrlRegistryItem = [IOdspResolvedUrl, IFileCreateResponse];
 
 export interface ICache {
     /**
@@ -30,7 +28,7 @@ export interface ISessionRegistry {
     /**
      * Registers a session, ensuring fetchJoinSession is called exactly once
      */
-    registerSession(
+    getSession(
         joinSessionKey: string,
         fetchJoinSession: () => Promise<ISocketStorageDiscovery>,
         expiryTime?: number,
@@ -39,22 +37,22 @@ export interface ISessionRegistry {
     /**
      * Removes registration for joinSessionKey
      */
-    unregisterSession(joinSessionKey: string): boolean;
+    deleteSessionInfo(joinSessionKey: string): void;
 }
 
 export interface IFileUrlRegistry {
     /**
      * Registers a file being created, ensuring resolveFileUrl is called exactly once
      */
-    registerfile(
+    getFileUrl(
         fileKey: string,
-        resolveFileUrl: () => Promise<FileUrlRegistryItem>,
-    ): Promise<FileUrlRegistryItem>
+        resolveFileUrl: () => Promise<IOdspResolvedUrl>,
+    ): Promise<IOdspResolvedUrl>
 
     /**
      * Removes registration for fileKey
      */
-    unregisterFile(fileKey: string): boolean;
+    deleteFileUrl(fileKey: string): void;
 }
 
 /**
@@ -77,8 +75,12 @@ export interface IOdspCache {
     readonly fileUrlRegistry: IFileUrlRegistry;
 }
 
-export class CacheBase {
-    protected readonly cache = new Map<string, any>();
+export class LocalCache implements ICache {
+    private readonly cache = new Map<string, any>();
+
+    public async get(key: string) {
+        return this.cache.get(key);
+    }
 
     public remove(key: string) {
         this.cache.delete(key);
@@ -91,27 +93,15 @@ export class CacheBase {
             this.gc(key, expiryTime);
         }
     }
-
-    private async gc(key: string, expiryTime: number) {
-        await delay(expiryTime);
-        if (this.cache.has(key)) {
-            this.cache.delete(key);
-        }
-    }
-
-}
-
-export class LocalCache extends CacheBase implements ICache {
-    public async get(key: string) {
-        return this.cache.get(key);
-    }
 }
 
 export class SessionRegistry implements ISessionRegistry {
-    private readonly registry: PromiseRegistry<ISocketStorageDiscovery> = new PromiseRegistry(
+    // We want to keep using the same join session for consecutive join session calls
+    // within the given expiry, so set refreshExpiryOnReregister: true
+    private readonly registry: PromiseRegistry<string, ISocketStorageDiscovery> = new PromiseRegistry(
         {refreshExpiryOnReregister: true});
 
-    async registerSession(
+    async getSession(
         joinSessionKey: string,
         asyncFn: () => Promise<ISocketStorageDiscovery>,
         expiryTime?: number | undefined,
@@ -119,23 +109,23 @@ export class SessionRegistry implements ISessionRegistry {
         return this.registry.register(joinSessionKey, asyncFn, expiryTime);
     }
 
-    unregisterSession(joinSessionKey: string) {
-        return this.registry.unregister(joinSessionKey);
+    deleteSessionInfo(joinSessionKey: string) {
+        this.registry.unregister(joinSessionKey);
     }
 }
 
 export class FileUrlRegistry implements IFileUrlRegistry {
-    private readonly registry: PromiseRegistry<FileUrlRegistryItem> = new PromiseRegistry();
+    private readonly registry: PromiseRegistry<IOdspResolvedUrl> = new PromiseRegistry();
 
-    async registerfile(
+    async getFileUrl(
         fileKey: string,
-        resolveFileUrl: () => Promise<FileUrlRegistryItem>,
-    ): Promise<FileUrlRegistryItem> {
+        resolveFileUrl: () => Promise<IOdspResolvedUrl>,
+    ): Promise<IOdspResolvedUrl> {
         return this.registry.register(fileKey, resolveFileUrl);
     }
 
-    unregisterFile(fileKey: string): boolean {
-        return this.registry.unregister(fileKey);
+    deleteFileUrl(fileKey: string): boolean {
+        this.registry.unregister(fileKey);
     }
 }
 

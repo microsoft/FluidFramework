@@ -116,52 +116,10 @@ export class LazyPromise<T> implements Promise<T> {
 }
 
 /**
- * Utility that makes sure that an expensive function fn
- * only has a single running instance at a time. For example,
- * this can ensure that only a single web request is pending at a
- * given time.
- */
-export class SinglePromise<T> {
-    private pResponse: Promise<T> | undefined;
-    private isRunning: boolean;
-    constructor(private readonly fn: () => Promise<T>) {
-        this.isRunning = false;
-    }
-
-    public get response(): Promise<T> {
-        // If we are actively running and we have a response return it
-        if (this.isRunning && this.pResponse) {
-            return this.pResponse;
-        }
-
-        this.isRunning = true;
-        this.pResponse = this.fn()
-            .then((response) => {
-                this.isRunning = false;
-                return response;
-            })
-            .catch(async (e) => {
-                this.isRunning = false;
-                return Promise.reject(e);
-            });
-
-        return this.pResponse;
-    }
-}
-
-/**
  * A Promise wrapper for window.setTimeout
  * @param ms - (optional) How many ms to wait before continuing
  */
 export const delay = async (ms?: number) => new Promise((res) => setTimeout(res, ms));
-
-/**
- * A simple wrapper around Promise for when dealing with the
- * Promise object itself, to help avoid incorrect awaiting.
- */
-export interface PromiseHandle<T> {
-    promise: Promise<T>,
-}
 
 /**
  * @member refreshExpiryOnReregister - When a registered key is registered again,
@@ -169,34 +127,33 @@ export interface PromiseHandle<T> {
  * @member unregisterOnError - If the stored Promise is rejected with a particular error,
  * should the given key be unregistered?
  */
-export interface PromiseRegistryConfig {
+export interface PromiseRegistryOptions {
     refreshExpiryOnReregister?: boolean,
     unregisterOnError?: (e: any) => boolean,
 }
 
 /**
- * A specialized cache for async work, allowing you to
- * safely cache the result of some async work
- * without fear of race conditions or running it twice.
+ * A specialized cache for async work, allowing you to safely cache the promised result of some async work
+ * without fear of running it multiple times.
  */
-export class PromiseRegistry<T> {
-    private readonly cache = new Map<string, PromiseHandle<T>>();
-    private readonly gcIds = new Map<string, number>();
+export class PromiseRegistry<TKey, TResult> {
+    private readonly cache = new Map<TKey, Promise<TResult>>();
+    private readonly gcIds = new Map<TKey, number>();
     private gcIdCounter = 0;
 
     private readonly refreshExpiryOnReregister: boolean;
     private readonly unregisterOnError: (e: any) => boolean;
 
     /**
-     * Create the PromiseRegistry with the configuration preferences provided
-     * @param param0 - PromiseRegistryConfig with the following default values:
+     * Create the PromiseRegistry with the options provided
+     * @param param0 - PromiseRegistryOptions with the following default values:
      * refreshExpiryOnReregister = false,
      * unregisterOnError = () => true,
      */
     constructor({
         refreshExpiryOnReregister = false,
         unregisterOnError = () => true,
-    }: PromiseRegistryConfig = {}) {
+    }: PromiseRegistryOptions = {}) {
         this.refreshExpiryOnReregister = refreshExpiryOnReregister;
         this.unregisterOnError = unregisterOnError;
     }
@@ -204,60 +161,64 @@ export class PromiseRegistry<T> {
     /**
      * Get the Promise for the given key, or undefined if it's not found
      */
-    public lookup = async (key: string) => this.cache.get(key)?.promise;
+    public lookup = async (key: TKey) => this.cache.get(key);
 
     /**
      * Remove the Promise for the given key,
      * returning true if it was found and removed
      */
-    public unregister(key: string){
+    public unregister(key: TKey){
         this.gcIds.delete(key);
         return this.cache.delete(key);
     }
 
     /**
      * Register the given async work to the given key, or return an existing Promise at that key if it exists.
+     * IMPORTANT: This will NOT overwrite an existing key - it's idempotent (within the expiryTime window),
+     * so you must unregister a key if you want to register a different function/value.
      * @param key - key name where to store the async work
      * @param asyncFn - the async work to do and store, if not already in progress under the given key
      * @param expiryTime - (optional) Automatically unregister the given key after some time
      */
     public async register(
-        key: string,
-        asyncFn: () => Promise<T>,
+        key: TKey,
+        asyncFn: () => Promise<TResult>,
         expiryTime?: number,
-    ): Promise<T> {
-        return this.synchronousRegister(key, asyncFn, expiryTime).promise;
+    ): Promise<TResult> {
+        return this.synchronousRegister(key, asyncFn, expiryTime);
     }
 
     /**
      * Register the given value. Use lookup to get the Promise wrapping it in the registry
+     * IMPORTANT: This will NOT overwrite an existing key - it's idempotent (within the expiryTime window),
+     * so you must unregister a key if you want to register a different function/value.
      * @param key - key name where to store the value
      * @param value - value to store
      * @param expiryTime - (optional) Automatically unregister the given key after some time
      */
     public registerValue(
-        key: string,
-        value: T,
+        key: TKey,
+        value: TResult,
         expiryTime?: number,
     ) {
         this.synchronousRegister(key, async () => value, expiryTime);
     }
 
     private synchronousRegister(
-        key: string,
-        asyncFn: () => Promise<T>,
+        key: TKey,
+        asyncFn: () => Promise<TResult>,
         expiryTime?: number,
-    ): PromiseHandle<T> {
+    ): Promise<TResult> {
         // NOTE: Do not await asyncFn() or handle.promise!
         // Let the caller do so once register returns
-        let handle = this.cache.get(key);
-        if (handle === undefined) {
+        let promise = this.cache.get(key);
+        if (promise === undefined) {
             // Start asyncFn and put the Promise in the cache
-            handle = { promise: asyncFn() };
-            this.cache.set(key, handle);
+            promise = asyncFn();
+            this.cache.set(key, promise);
 
             // If asyncFn throws, possibly remove the Promise from the cache
-            handle.promise.catch((error) => {
+            promise.catch((error) => {
                 if (this.unregisterOnError(error)) {
                     this.unregister(key);
                 }
@@ -270,10 +231,10 @@ export class PromiseRegistry<T> {
             this.gc(key, expiryTime);
         }
 
-        return handle;
+        return promise;
     }
 
-    private async gc(key: string, expiryTime: number) {
+    private async gc(key: TKey, expiryTime: number) {
         // If we have a GC scheduled and we're not supposed to refresh, do nothing.
         if (this.gcIds.has(key) && !this.refreshExpiryOnReregister) {
             return;

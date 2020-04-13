@@ -281,7 +281,7 @@ export class OdspDocumentService implements IDocumentService {
                 websocketEndpoint.deltaStreamSocketUrl,
                 websocketEndpoint.deltaStreamSocketUrl2,
             ).catch((error) => {
-                this.cache.sessionRegistry.unregisterSession(this.joinSessionKey);
+                this.cache.sessionRegistry.deleteSessionInfo(this.joinSessionKey);
                 throw error;
             });
         });

@@ -99,9 +99,7 @@ export async function getSocketStorageDiscovery(
     cache: IOdspCache,
     joinSessionKey: string,
 ): Promise<ISocketStorageDiscovery> {
-    // If the result is valid and used within an hour we put the same result again with updated time
-    // to keep using it for consecutive join session calls.
-    return cache.sessionRegistry.registerSession(
+    return cache.sessionRegistry.getSession(
         joinSessionKey,
         async () => fetchJoinSession(
             appId,
@@ -114,6 +112,6 @@ export async function getSocketStorageDiscovery(
             logger,
             getVroomToken,
         ),
-        3600000, // expiryTime
+        60*60*1000, // 1 hour expiryTime
     );
 }
