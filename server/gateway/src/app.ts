@@ -312,7 +312,11 @@ export function create(
     const routes = gatewayRoutes.create(config, cache, alfred, tenants, getFingerprintUrl);
 
     app.use((request, response, next) => {
-        if (request.session?.guest !== undefined) {
+        if (request.session === undefined) {
+            return next("Session is required");
+        }
+
+        if (request.session.guest === undefined) {
             const name = getRandomName(" ", true);
             request.session.guest = {
                 displayName: name,

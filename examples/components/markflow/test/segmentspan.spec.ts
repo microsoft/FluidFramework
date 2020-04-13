@@ -21,7 +21,7 @@ describe("SegmentSpan", () => {
             [FlowDocumentType, Promise.resolve(flowDocumentFactory)],
         ]);
 
-        doc = await host.createAndAttachComponent("fd", FlowDocumentType);
+        doc = await host.createAndAttachComponent(FlowDocumentType);
     });
 
     after(async () => {

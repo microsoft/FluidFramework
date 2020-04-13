@@ -7,7 +7,6 @@ import * as assert from "assert";
 import {
     ITelemetryBaseLogger,
     ITelemetryLogger,
-    TelemetryEventRaisedOnContainer,
 } from "@microsoft/fluid-common-definitions";
 import { IComponent, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
@@ -45,6 +44,7 @@ import {
     OnlineStatus,
     isOnline,
     ensureFluidResolvedUrl,
+    combineAppAndProtocolSummary,
 } from "@microsoft/fluid-driver-utils";
 import {
     buildSnapshotTree,
@@ -77,6 +77,7 @@ import {
     IVersion,
     MessageType,
     TreeEntry,
+    ISummaryTree,
 } from "@microsoft/fluid-protocol-definitions";
 import * as jwtDecode from "jwt-decode";
 import { Audience } from "./audience";
@@ -165,7 +166,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     perfEvent.cancel(undefined, error);
                     const err = createIError(error, true);
                     if (!alreadyRaisedError) {
-                        container.logCriticalError(err);
+                        container.logContainerError(err);
                     }
                     onError(err);
                 });
@@ -353,7 +354,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.logger = ChildLogger.create(this.subLogger, "Container");
 
         this.on("error", (error: any) => {
-            this.logCriticalError(error);
+            this.logContainerError(error);
         });
 
         this._deltaManager = this.createDeltaManager();
@@ -426,13 +427,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         assert(!this.deltaManager.inbound.length);
         // Get the document state post attach - possibly can just call attach but we need to change the semantics
         // around what the attach means as far as async code goes.
-        const summary = await this.context.createSummary();
+        const appSummary: ISummaryTree = await this.context.createSummary();
         if (!this.protocolHandler) {
             throw new Error("Protocol Handler is undefined");
         }
-        const protocolHandler = this.protocolHandler;
-        const quorumSnapshot = protocolHandler.quorum.snapshot();
-
+        const protocolSummary = this.protocolHandler.captureSummary();
         this.originalRequest = request;
         // Actually go and create the resolved document
         const expUrlResolver = this.urlResolver as IExperimentalUrlResolver;
@@ -440,49 +439,47 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             throw new Error("Not an Experimental UrlResolver");
         }
         const resolvedUrl = await expUrlResolver.createContainer(
-            summary,
-            protocolHandler.sequenceNumber,
-            quorumSnapshot.values,
+            combineAppAndProtocolSummary(appSummary, protocolSummary),
             request);
+        try {
+            ensureFluidResolvedUrl(resolvedUrl);
+            this.service = await this.serviceFactory.createDocumentService(resolvedUrl);
 
-        ensureFluidResolvedUrl(resolvedUrl);
+            this._canReconnect = !(request.headers?.[LoaderHeader.reconnect] === false);
+            const parsedUrl = parseUrl(resolvedUrl.url);
+            if (!parsedUrl) {
+                throw new Error("Unable to parse Url");
+            }
+            const [, docId] = parsedUrl.id.split("/");
+            this._id = decodeURI(docId);
 
-        if (!this.serviceFactory) {
-            throw new Error("Provide callback to get factory from resolved url");
+            this.storageService = await this.getDocumentStorageService();
+
+            // This we can probably just pass the storage service to the blob manager - although ideally
+            // there just isn't a blob manager
+            this.blobManager = await this.loadBlobManager(this.storageService, undefined);
+            this.attached = true;
+
+            const startConnectionP = this.connectToDeltaStream();
+            startConnectionP.catch((error) => {
+                debug(`Error in connecting to delta stream from unpaused case ${error}`);
+            });
+
+            // We know this is create new flow.
+            this._existing = false;
+            this._parentBranch = this._id;
+
+            // Propagate current connection state through the system.
+            const connected = this.connectionState === ConnectionState.Connected;
+            assert(!connected || this._deltaManager.connectionMode === "read");
+            this.propagateConnectionState();
+            this.resume();
+        } catch (error) {
+            const err = createIError(error, true);
+            this.raiseContainerError(err);
+            this.close();
+            throw error;
         }
-        const service = await this.serviceFactory.createDocumentService(resolvedUrl);
-
-        this.service = service;
-        this._canReconnect = !(request.headers?.[LoaderHeader.reconnect] === false);
-        const parsedUrl = parseUrl(resolvedUrl.url);
-        if (!parsedUrl) {
-            throw new Error("Unable to parse Url");
-        }
-        const [, docId] = parsedUrl.id.split("/");
-        this._id = decodeURI(docId);
-
-        this.storageService = await this.getDocumentStorageService();
-
-        // This we can probably just pass the storage service to the blob manager - although ideally
-        // there just isn't a blob manager
-        this.blobManager = await this.loadBlobManager(this.storageService, undefined);
-
-        this.attached = true;
-
-        const startConnectionP = this.connectToDeltaStream();
-        startConnectionP.catch((error) => {
-            debug(`Error in connecting to delta stream from unpaused case ${error}`);
-        });
-
-        await startConnectionP.then((details) => {
-            this._existing = details.existing;
-            this._parentBranch = details.parentBranch;
-        });
-
-        // Propagate current connection state through the system.
-        const connected = this.connectionState === ConnectionState.Connected;
-        assert(!connected || this._deltaManager.connectionMode === "read");
-        this.propagateConnectionState();
     }
 
     public async request(path: IRequest): Promise<IResponse> {
@@ -582,13 +579,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this.blobsCacheStorageService || this.storageService;
     }
 
-    public raiseCriticalError(error: IError) {
+    public raiseContainerError(error: IError) {
         this.emit("error", error);
     }
 
     public async reloadContext(): Promise<void> {
         return this.reloadContextCore().catch((error) => {
-            this.raiseCriticalError(createIError(error, true));
+            this.raiseContainerError(createIError(error, true));
             throw error;
         });
     }
@@ -1099,7 +1096,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         });
 
         deltaManager.on("error", (error: IError) => {
-            this.raiseCriticalError(error);
+            this.raiseContainerError(error);
         });
 
         deltaManager.on("pong", (latency) => {
@@ -1347,7 +1344,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             new DeltaManagerProxy(this._deltaManager),
             new QuorumProxy(this.protocolHandler!.quorum),
             loader,
-            (err: IError) => this.raiseCriticalError(err),
+            (err: IError) => this.raiseContainerError(err),
             (type, contents, batch, metadata) => this.submitMessage(type, contents, batch, metadata),
             (message) => this.submitSignal(message),
             async (message) => this.snapshot(message),
@@ -1385,7 +1382,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             new DeltaManagerProxy(this._deltaManager),
             new QuorumProxy(this.protocolHandler!.quorum),
             loader,
-            (err: IError) => this.raiseCriticalError(err),
+            (err: IError) => this.raiseContainerError(err),
             (type, contents, batch, metadata) => this.submitMessage(type, contents, batch, metadata),
             (message) => this.submitSignal(message),
             async (message) => this.snapshot(message),
@@ -1399,8 +1396,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
 
     // Please avoid calling it directly.
-    // raiseCriticalError() is the right flow for most cases
-    private logCriticalError(error: any) {
-        this.logger.sendErrorEvent({ eventName: "onError", [TelemetryEventRaisedOnContainer]: true }, error);
+    // raiseContainerError() is the right flow for most cases
+    private logContainerError(error: any) {
+        this.logger.sendErrorEvent({ eventName: "onError" }, error);
     }
 }

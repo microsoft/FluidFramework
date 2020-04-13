@@ -3,9 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import {
+    ContainerRuntimeFactoryWithDefaultComponent,
+    PrimedComponent,
+    PrimedComponentFactory,
+} from "@microsoft/fluid-aqueduct";
 import { ClickerInstantiationFactory, Clicker } from "@fluid-example/clicker";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+
+const simpleComponentEmbedName = "@fluid-example/simple-component-embed";
 
 export class SimpleComponentEmbed extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
@@ -18,14 +24,16 @@ export class SimpleComponentEmbed extends PrimedComponent implements IComponentH
    * but in this scenario we only want it to be created once.
    */
     protected async componentInitializingFirstTime() {
-        await this.createAndAttachComponent("myEmbeddedCounter", "@fluid-example/clicker");
+        const component = await this.createAndAttachComponent("@fluid-example/clicker");
+        this.root.set("myEmbeddedCounter", component.handle);
     }
 
     /**
    * Get Clicker component using ID from before
    */
     protected async componentHasInitialized() {
-        this.clicker = await this.getComponent<Clicker>("myEmbeddedCounter");
+        const handle = this.root.get("myEmbeddedCounter");
+        this.clicker = await handle.get();
     }
 
     public render(div: HTMLDivElement) {
@@ -42,14 +50,15 @@ export class SimpleComponentEmbed extends PrimedComponent implements IComponentH
 }
 
 export const SimpleComponentEmbedInstantiationFactory = new PrimedComponentFactory(
+    simpleComponentEmbedName,
     SimpleComponentEmbed,
     [],
 );
 
-export const fluidExport = new SimpleModuleInstantiationFactory(
-    "@fluid-example/simple-component-embed",
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
+    simpleComponentEmbedName,
     new Map([
-        ["@fluid-example/simple-component-embed", Promise.resolve(SimpleComponentEmbedInstantiationFactory)],
+        [simpleComponentEmbedName, Promise.resolve(SimpleComponentEmbedInstantiationFactory)],
         ["@fluid-example/clicker", Promise.resolve(ClickerInstantiationFactory)],
     ]),
 );

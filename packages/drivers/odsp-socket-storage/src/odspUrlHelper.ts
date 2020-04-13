@@ -94,12 +94,10 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts|undefined
         // 5: Drive ID portion of Item ID
         joinSessionMatch = /(.*)\/v2\.1\/drive(s\/([\dA-Za-z]+))?\/items\/(([\dA-Za-z]+)!\d+)/.exec(pathname);
 
-        // eslint-disable-next-line no-null/no-null
         if (joinSessionMatch === null) {
             // Try again but with the OData format ( `/drives('ABC123')/items('ABC123!456')` )
             joinSessionMatch = /(.*)\/v2\.1\/drives\('([\dA-Za-z]+)'\)\/items\('(([\dA-Za-z]+)!\d+)'\)/.exec(pathname);
 
-            // eslint-disable-next-line no-null/no-null
             if (joinSessionMatch === null) {
                 return undefined;
             }
@@ -112,7 +110,6 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts|undefined
     } else {
         joinSessionMatch = /(.*)\/_api\/v2.1\/drives\/([^/]*)\/items\/([^/]*)(.*)/.exec(pathname);
 
-        // eslint-disable-next-line no-null/no-null
         if (joinSessionMatch === null) {
             return undefined;
         }

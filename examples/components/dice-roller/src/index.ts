@@ -4,18 +4,14 @@
  */
 
 import {
-    SimpleModuleInstantiationFactory,
+    ContainerRuntimeFactoryWithDefaultComponent,
 } from "@microsoft/fluid-aqueduct";
 
-import { DiceRollerInstantiationFactory } from "./main";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-const pkg = require("../package.json");
-const componentName = pkg.name as string;
+import { DiceRollerInstantiationFactory, DiceRollerName } from "./main";
 
 /**
- * This does setup for the Container. The SimpleModuleInstantiationFactory also enables dynamic loading in the
- * EmbeddedComponentLoader.
+ * This does setup for the Container. The ContainerRuntimeFactoryWithDefaultComponent also enables dynamic loading in
+ * the EmbeddedComponentLoader.
  *
  * There are two important things here:
  * 1. Default Component name
@@ -24,9 +20,9 @@ const componentName = pkg.name as string;
  * In this example, we are only registering a single component, but more complex examples will register multiple
  * components.
  */
-export const fluidExport = new SimpleModuleInstantiationFactory(
-    componentName,
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
+    DiceRollerName,
     new Map([
-        [componentName, Promise.resolve(DiceRollerInstantiationFactory)],
+        [DiceRollerName, Promise.resolve(DiceRollerInstantiationFactory)],
     ]),
 );

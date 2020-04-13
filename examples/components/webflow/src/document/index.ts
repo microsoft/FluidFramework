@@ -125,7 +125,7 @@ const accumAsLeafAction = (
 const endOfTextSegment = undefined as unknown as SharedStringSegment;
 
 export class FlowDocument extends SharedComponent<ISharedDirectory> {
-    private static readonly factory = new SharedComponentFactory(
+    private static readonly factory = new SharedComponentFactory<FlowDocument>(
         documentType,
         FlowDocument,
         /* root: */ SharedDirectory.getFactory(),

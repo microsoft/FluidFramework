@@ -149,7 +149,11 @@ class GraphIQLView implements IComponentHTMLView {
 }
 
 const TourOfHeroesType = "@chaincode/tourofheroes";
-const TourOfHeroesInstantiationFactory = new PrimedComponentFactory(TourOfHeroes, []);
+const TourOfHeroesInstantiationFactory = new PrimedComponentFactory(
+    TourOfHeroesType,
+    TourOfHeroes,
+    [],
+);
 class TourOfHeroesContainerInstantiationFactory implements IRuntimeFactory, IComponentRegistry, IComponentFactory {
     public get IComponentFactory() { return this; }
     public get IComponentRegistry() { return this; }

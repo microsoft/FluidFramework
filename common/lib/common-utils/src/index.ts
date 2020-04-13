@@ -17,3 +17,4 @@ export * from "./rateLimiter";
 export * from "./safeParser";
 export * from "./timer";
 export * from "./trace";
+export * from "./typedEventEmitter";

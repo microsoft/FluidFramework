@@ -3,7 +3,7 @@
 * Licensed under the MIT License.
 */
 
-import { randomId, TagName } from "@fluid-example/flow-util-lib";
+import { TagName } from "@fluid-example/flow-util-lib";
 import { Marker, ReferenceType } from "@microsoft/fluid-merge-tree";
 import { TestHost } from "@microsoft/fluid-local-test-utils";
 import * as assert from "assert";
@@ -18,7 +18,7 @@ describe("FlowDocument", () => {
 
     before(async () => {
         host = new TestHost([
-            [flowDocumentFactory.type, Promise.resolve(flowDocumentFactory)],
+            [flowDocumentFactory.type ?? "flowDocument", Promise.resolve(flowDocumentFactory)],
         ]);
     });
 
@@ -27,7 +27,7 @@ describe("FlowDocument", () => {
     });
 
     beforeEach(async () => {
-        doc = await host.createAndAttachComponent(randomId(), flowDocumentFactory.type);
+        doc = await host.createAndAttachComponent(flowDocumentFactory.type);
     });
 
     function expect(expected: string) {
