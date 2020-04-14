@@ -27,9 +27,9 @@ export class PrimedComponentFactory<O extends IComponent = object, R extends ICo
     constructor(
         type: string,
         ctor: SharedComponentCtor<O,R>,
-        optionalProviders: ComponentSymbolProvider<keyof O & keyof IComponent>,
-        requiredProviders: ComponentSymbolProvider<keyof R & keyof IComponent>,
         sharedObjects: readonly ISharedObjectFactory[] = [],
+        optionalProviders: ComponentSymbolProvider<keyof O & keyof IComponent> = ({} as any),
+        requiredProviders: ComponentSymbolProvider<keyof R & keyof IComponent> = ({} as any),
         registryEntries?: NamedComponentRegistryEntries,
         onDemandInstantiation = true,
     ) {
