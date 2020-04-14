@@ -32,6 +32,7 @@ import {
     SharedStringSegment,
 } from "@microsoft/fluid-sequence";
 import { IComponentHTMLOptions } from "@microsoft/fluid-view-interfaces";
+import { FlowDocumentType } from "../runtime";
 import { clamp, emptyArray } from "../util";
 import { IHTMLAttributes } from "../util/attr";
 import { Tag } from "../util/tag";
@@ -511,4 +512,8 @@ export class FlowDocument extends PrimedComponent {
     }
 }
 
-export const flowDocumentFactory = new PrimedComponentFactory(FlowDocument, [new SharedStringFactory()]);
+export const flowDocumentFactory = new PrimedComponentFactory(
+    FlowDocumentType,
+    FlowDocument,
+    [new SharedStringFactory()],
+);

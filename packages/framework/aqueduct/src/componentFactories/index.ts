@@ -4,6 +4,4 @@
  */
 
 export * from "./primedComponentFactory";
-export * from "./simpleContainerRuntimeFactory";
-export * from "./simpleModuleInstantiationFactory";
 export * from "./sharedComponentFactory";

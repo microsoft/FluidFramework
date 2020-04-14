@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import {
+    ContainerRuntimeFactoryWithDefaultComponent,
+    PrimedComponent,
+    PrimedComponentFactory,
+} from "@microsoft/fluid-aqueduct";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { Counter, CounterValueType } from "@microsoft/fluid-map";
 import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
@@ -11,11 +15,14 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { OwnedSharedMap } from "./ownedMap";
 
+const ownedMapName = "@fluid-example/owned-map";
+
 export class OwnedMap extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
     public static getFactory() { return OwnedMap.factory; }
 
     private static readonly factory = new PrimedComponentFactory(
+        ownedMapName,
         OwnedMap,
         [
             OwnedSharedMap.getFactory(),
@@ -102,7 +109,7 @@ export class OwnedMap extends PrimedComponent implements IComponentHTMLView {
     }
 }
 
-export const fluidExport = new SimpleModuleInstantiationFactory(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
     "@fluid-example/owned-map",
     new Map([
         ["@fluid-example/owned-map", Promise.resolve(OwnedMap.getFactory())],

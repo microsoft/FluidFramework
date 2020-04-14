@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aqueduct";
 import { BaseHost, IBaseHostConfig } from "@microsoft/fluid-base-host";
 import {
     IFluidModule,
@@ -21,8 +21,7 @@ import { IUser } from "@microsoft/fluid-protocol-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { getRandomName } from "@microsoft/fluid-server-services-client";
 import * as jwt from "jsonwebtoken";
-// eslint-disable-next-line import/no-internal-modules
-import * as uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
 import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
 import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 import { InsecureUrlResolver } from "@microsoft/fluid-test-runtime-utils";
@@ -87,7 +86,7 @@ function wrapIfComponentPackage(packageJson: IFluidPackage, fluidModule: IFluidM
     if (fluidModule.fluidExport.IRuntimeFactory === undefined) {
         const componentFactory = fluidModule.fluidExport.IComponentFactory;
 
-        const runtimeFactory = new SimpleModuleInstantiationFactory(
+        const runtimeFactory = new ContainerRuntimeFactoryWithDefaultComponent(
             packageJson.name,
             new Map([
                 [packageJson.name, Promise.resolve(componentFactory)],
@@ -103,7 +102,7 @@ function wrapIfComponentPackage(packageJson: IFluidPackage, fluidModule: IFluidM
     return fluidModule;
 }
 
-function getUrlResolver(documentId: string, options: RouteOptions): IUrlResolver {
+function getUrlResolver(options: RouteOptions): IUrlResolver {
     switch (options.mode) {
         case "docker":
             return new InsecureUrlResolver(
@@ -142,7 +141,7 @@ function getUrlResolver(documentId: string, options: RouteOptions): IUrlResolver
                 { accessToken: options.odspAccessToken });
 
         default: // Local
-            return new TestResolver(documentId);
+            return new TestResolver();
     }
 }
 
@@ -227,7 +226,7 @@ export async function start(
         }
     }
 
-    const urlResolver = getUrlResolver(documentId, options);
+    const urlResolver = getUrlResolver(options);
 
     // Construct a request
     const url = window.location.href;

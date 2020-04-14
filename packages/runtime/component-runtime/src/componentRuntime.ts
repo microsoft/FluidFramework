@@ -47,8 +47,7 @@ import {
     IInboundSignalMessage,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-// eslint-disable-next-line import/no-internal-modules
-import * as uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
 import { IChannelContext, snapshotChannel } from "./channelContext";
 import { LocalChannelContext } from "./localChannelContext";
 import { RemoteChannelContext } from "./remoteChannelContext";
@@ -220,12 +219,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         this.closed = true;
 
         this.emit("dispose");
-    }
-
-    public async createAndAttachComponent(id: string, pkg: string): Promise<IComponentRuntime> {
-        const newComponentRuntime = await this.componentContext.createComponent(id, pkg);
-        newComponentRuntime.attach();
-        return newComponentRuntime;
     }
 
     public async request(request: IRequest): Promise<IResponse> {

@@ -39,8 +39,7 @@ import {
     IInboundSignalMessage,
 } from "@microsoft/fluid-runtime-definitions";
 import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
-// eslint-disable-next-line import/no-internal-modules
-import * as uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
 
 // Snapshot Format Version to be used in component attributes.
 const currentSnapshotFormatVersion = "0.1";
@@ -200,6 +199,10 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         }
     }
 
+    /**
+     * @deprecated
+     * Remove once issue #1756 is closed
+     */
     public async createComponent(pkgOrId: string | undefined, pkg?: string, props?: any): Promise<IComponentRuntime> {
         // pkgOrId can't be undefined if pkg is undefined
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -626,6 +629,9 @@ export class LocalComponentContext extends ComponentContext {
         scope: IComponent,
         summaryTracker: SummaryTracker,
         attachCb: (componentRuntime: IComponentRuntime) => void,
+        /**
+         * @deprecated 0.16 Issue #1635 Use the IComponentFactory creation methods instead to specify initial state
+         */
         public readonly createProps?: any,
     ) {
         super(runtime, id, false, storage, scope, summaryTracker, false, attachCb, pkg);

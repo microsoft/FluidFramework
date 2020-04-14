@@ -10,10 +10,18 @@ import {
     IUrlResolver,
     IExperimentalUrlResolver,
 } from "@microsoft/fluid-driver-definitions";
-import { ITokenClaims, IUser, ISummaryTree, ICommittedProposal } from "@microsoft/fluid-protocol-definitions";
+import {
+    ITokenClaims,
+    IUser,
+    ISummaryTree,
+} from "@microsoft/fluid-protocol-definitions";
 import Axios from "axios";
 import * as jwt from "jsonwebtoken";
 import { getRandomName } from "@microsoft/fluid-server-services-client";
+import {
+    getDocAttributesFromProtocolSummary,
+    getQuorumValuesFromProtocolSummary,
+} from "@microsoft/fluid-driver-utils";
 
 /**
  * As the name implies this is not secure and should not be used in production. It simply makes the example easier
@@ -99,20 +107,24 @@ export class InsecureUrlResolver implements IUrlResolver, IExperimentalUrlResolv
     }
 
     public async createContainer(
-        summary: ISummaryTree,
-        sequenceNumber: number,
-        values: [string, ICommittedProposal][],
+        createNewSummary: ISummaryTree,
         request: IRequest,
     ): Promise<IResolvedUrl> {
         const id = getRandomName("-", false);
-
+        const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
+        const appSummary = createNewSummary.tree[".app"] as ISummaryTree;
+        if (!(protocolSummary && appSummary)) {
+            throw new Error("Protocol and App Summary required in the full summary");
+        }
+        const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
+        const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
         await Axios.post(
             `${this.ordererUrl}/documents/${this.tenantId}`,
             {
                 id,
-                summary,
-                sequenceNumber,
-                values,
+                summary: appSummary,
+                sequenceNumber: documentAttributes.sequenceNumber,
+                values: quorumValues,
             });
 
         return this.resolveHelper(id);

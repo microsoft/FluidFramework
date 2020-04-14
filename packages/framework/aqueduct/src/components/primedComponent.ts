@@ -6,8 +6,7 @@
 import { IComponentHandle, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import { ISharedDirectory, MapFactory, SharedDirectory } from "@microsoft/fluid-map";
 import { ITaskManager } from "@microsoft/fluid-runtime-definitions";
-// eslint-disable-next-line import/no-internal-modules
-import * as uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
 import { BlobHandle } from "./blobHandle";
 import { SharedComponent } from "./sharedComponent";
 
@@ -84,7 +83,12 @@ export abstract class PrimedComponent extends SharedComponent {
      */
     protected async initializeInternal(props?: any): Promise<void> {
         // Initialize task manager.
-        this.internalTaskManager = await this.getComponent<ITaskManager>("_scheduler");
+        const request = {
+            headers: [[true]],
+            url: `/_scheduler`,
+        };
+
+        this.internalTaskManager = await this.asComponent<ITaskManager>(this.context.hostRuntime.request(request));
 
         if (!this.runtime.existing) {
             // Create a root directory and register it before calling componentInitializingFirstTime

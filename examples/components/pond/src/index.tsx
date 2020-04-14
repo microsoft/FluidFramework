@@ -4,17 +4,22 @@
  */
 
 import {
+    ContainerRuntimeFactoryWithDefaultComponent,
     PrimedComponent,
     PrimedComponentFactory,
-    SimpleModuleInstantiationFactory,
 } from "@microsoft/fluid-aqueduct";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { SharedDirectory } from "@microsoft/fluid-map";
-import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
-import { Clicker, ClickerName, ClickerWithInitialValue, ClickerWithInitialValueName } from "./internal-components";
+import {
+    Clicker,
+    ClickerName,
+    ClickerWithInitialValueFactory,
+    ClickerWithInitialValueName,
+    IClickerInitialState,
+} from "./internal-components";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
@@ -42,20 +47,13 @@ export class Pond extends PrimedComponent implements IComponentHTMLView {
    * Do setup work here
    */
     protected async componentInitializingFirstTime() {
-        await this.createSubComponent<Clicker>(this.clickerKey, ClickerName);
-        await this.createSubComponent<ClickerWithInitialValue>(
-            this.clickerWithInitialValueKey,
-            ClickerWithInitialValueName,
-            { initialValue: 100 },
-        );
-    }
+        const clickerComponent = await Clicker.getFactory().createComponent(this.context);
+        this.root.set(this.clickerKey, clickerComponent.handle);
 
-    async createSubComponent<T extends PrimedComponent>(rootKey: string, pkgName: string, props?: any) {
-        const componentRuntime: IComponentRuntime = await this.context.createComponent(undefined, pkgName, props);
-        componentRuntime.attach();
-        const response = componentRuntime.request({url: "/"});
-        const responseValue = await this.asComponent<T>(response);
-        this.root.set(rootKey, responseValue.handle);
+        const initialState: IClickerInitialState = { initialValue: 100 };
+        const clickerWithInitialValueComponent =
+            await ClickerWithInitialValueFactory.getFactory().createComponent(this.context, initialState);
+        this.root.set(this.clickerWithInitialValueKey, clickerWithInitialValueComponent.handle);
     }
 
     protected async componentHasInitialized() {
@@ -116,18 +114,19 @@ export class Pond extends PrimedComponent implements IComponentHTMLView {
     public static getFactory() { return Pond.factory; }
 
     private static readonly factory = new PrimedComponentFactory(
+        PondName,
         Pond,
         [SharedDirectory.getFactory()],
         new Map([
             [ClickerName, Promise.resolve(Clicker.getFactory())],
-            [ClickerWithInitialValueName, Promise.resolve(ClickerWithInitialValue.getFactory())],
+            [ClickerWithInitialValueName, Promise.resolve(ClickerWithInitialValueFactory.getFactory())],
         ]),
     );
 }
 
 // ----- CONTAINER SETUP STUFF -----
 
-export const fluidExport = new SimpleModuleInstantiationFactory(
+export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
     PondName,
     new Map([
         [PondName, Promise.resolve(Pond.getFactory())],

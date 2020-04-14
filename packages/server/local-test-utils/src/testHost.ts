@@ -34,7 +34,7 @@ import { TestCodeLoader } from "./";
 /**
  * Basic component implementation for testing.
  */
-class TestRootComponent extends PrimedComponent implements IComponentRunnable {
+export class TestRootComponent extends PrimedComponent implements IComponentRunnable {
     public get IComponentRunnable() { return this; }
 
     /**
@@ -56,14 +56,14 @@ class TestRootComponent extends PrimedComponent implements IComponentRunnable {
 
     // Make this function public so TestHost can use them
     public async createAndAttachComponent<T extends IComponentLoadable>(
-        id: string, type: string, props?: any,
+        type: string, props?: any,
     ): Promise<T> {
-        return super.createAndAttachComponent<T>(id, type, props);
+        return super.createAndAttachComponent<T>(type, props);
     }
 
     // Make this function public so TestHost can use them
-    public async getComponent<T>(id: string): Promise<T> {
-        return super.getComponent<T>(id);
+    public async getComponent_UNSAFE<T>(id: string): Promise<T> {
+        return super.getComponent_UNSAFE<T>(id);
     }
 
     /**
@@ -151,7 +151,7 @@ export class TestHost {
 
     public readonly deltaConnectionServer: ILocalDeltaConnectionServer;
 
-    private readonly root: Promise<TestRootComponent>;
+    public readonly root: Promise<TestRootComponent>;
 
     /**
      * @param componentRegistry - array of key-value pairs of components available to the host
@@ -176,7 +176,7 @@ export class TestHost {
                 [
                     ...componentRegistry,
                     [TestRootComponent.type, Promise.resolve(
-                        new PrimedComponentFactory(TestRootComponent, sharedObjectFactories),
+                        new PrimedComponentFactory(TestRootComponent.type, TestRootComponent, sharedObjectFactories),
                     )],
                 ],
                 this.containerServiceRegistry),
@@ -217,24 +217,20 @@ export class TestHost {
      * @returns Component object
      */
     public async createAndAttachComponent<T extends IComponentLoadable>(
-        id: string,
         type: string,
         props?: any,
     ): Promise<T> {
         const root = await this.root;
-        return root.createAndAttachComponent<T>(id, type, props);
+        return root.createAndAttachComponent<T>(type, props);
     }
 
-    /**
-     * Wait and get the component with the id.
+    /* Wait and get the component with the id.
      * @param id component Id
      * @returns Component object
      */
-    public async getComponent<T extends IComponentLoadable>(
-        id: string,
-    ): Promise<T> {
+    public async getComponent_UNSAFE<T>(id: string): Promise<T> {
         const root = await this.root;
-        return root.getComponent<T>(id);
+        return root.getComponent_UNSAFE<T>(id);
     }
 
     /**

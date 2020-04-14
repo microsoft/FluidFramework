@@ -4,6 +4,12 @@
 
 - [View interfaces moved to separate package](#View-interfaces-moved-to-separate-package)
 - [IComponent* Interfaces should now have string literal identifiers](#IComponent*-Interfaces-should-now-have-string-literal-identifiers)
+- [SharedComponentFactory and PrimedComponentFactory changes](#SharedComponentFactory-and-PrimedComponentFactory-changes)
+- [PrimedComponent and SharedComponent interface changes](#PrimedComponent-and-Shared-Component-interface-changes)
+- [SimpleModuleInstantiationFactory renamed and SimpleContainerRuntimeFactory deprecated](#SimpleModuleInstantiationFactory-renamed-and-SimpleContainerRuntimeFactory-deprecated)
+- [Change to the ErrorType enum on IError](#Change-to-the-ErrorType-enum-on-IError)
+- [Changes to createComponent in IComponentContext, IHostRuntime, and ComponentRuntime](#Change-to-createComponent-in-IComponentContext-IHostRuntime-and-ComponentRuntime)
+- [ContainerRuntime and LocalComponentContext createProps removal](#ContainerRuntime-and-LocalComponentContext-createProps-removal)
 
 ### View interfaces moved to separate package
 
@@ -54,6 +60,74 @@ export interface IComponentFoo extends IProvideComponentFoo {
 }
 ```
 
+### SharedComponentFactory and PrimedComponentFactory changes
+
+Class definitions for SharedComponentFactory and PrimedComponentFactory have been updated.  Both now specify a required `type: string` parameter in their constructors.
+
+### PrimedComponent and SharedComponent interface changes
+
+There have been a few changes to the exposed interfaces on Primed & SharedComponents so that the id of components is generated uniquely by the runtime. Components can instead implement IComponentLoadable and be stored and retrieved from DDS' using their handles.
+1. createAndAttachComponent no longer has an id first parameter. This is to enforce a unique generation of the id by the runtime itself
+2. getComponent is now marked as deprecated and renamed to getComponent_UNSAFE. Instead, users should return their component in the following manner:
+directoryWhereHandleIsStored.get<IComponentHandle<TypeOfHandle>>(idOfHandleInDirectory).get();
+
+Alternatively, a new helper function is provided for compatibility called getComponentFromDirectory that takes the string key and the directory where either the component handle or the id used for the old getComponent call is stored. It will appropriately fetch the component using the handle/id stored in the directory and then update the stored value with a handle now so that there are fewer and fewer IDs stored.
+Users can also pass in an optional function to get the value from their directory in case they have some specially defined types. Look at dataModel.ts in the examples/components/spaces for an implentation of such.
+
+### `SimpleModuleInstantiationFactory` renamed and `SimpleContainerRuntimeFactory` deprecated
+
+`SimpleModuleInstantiationFactory` is now named `ContainerRuntimeFactoryWithDefaultComponent`.  Its functionality is unchanged.
+
+`SimpleContainerRuntimeFactory` is deprecated, as most of its functionality is provided by `ContainerRuntimeFactoryWithDefaultComponent` which should be used instead.  It does not provide `createAndAttachComponent()`, but this functionality can be achieved using direct calls to `createComponent()` and `attach()`.  `SimpleContainerRuntimeFactory` will be removed in a future version of the framework.
+
+### Change to the ErrorType enum on IError
+
+`ErrorType.connectionError` has been replaced by the more granular set of `genericNetworkError`, `accessDeniedError`, and `fileNotFoundError`.
+
+Corresponding interfaces have been introduced as well: `IGenericNetworkError`, `IAccessDeniedError`, and `IFileNotFoundError`;
+they are functionally identical to the former `IConnectionError`, just differentiated for ease of use.
+
+### Changes to createComponent in IComponentContext, IHostRuntime, and ContainerRuntime
+
+The createComponent call in IHostRuntime is now deprecated, affecting ContainerRuntime and any other classes that implement that interface.
+The createComponent call in IComponentContext is now deprecated. Instead, users should either use the createAndAttachComponent call available in SharedComponent to add them from within a component or _createComponentWithProps in IHostRuntime to add component from the runtime.
+
+### ContainerRuntime and LocalComponentContext createProps removal
+
+Creation props will no longer be specified through the `LocalComponentContext` after 0.16, such as through `ContainerRuntime`'s `createComponentContext` method.  To specify creation props, consumers should do the following:
+1. Create an interface for the initial state that defines what may be provided to the component.
+```typescript
+export interface IClickerInitialState {
+    initialValue: number;
+}
+```
+2. Override the constructor for the component to provide an optional initial state option.
+```typescript
+public constructor(
+    runtime: IComponentRuntime,
+    context: IComponentContext,
+    private initialState?: IClickerInitialState,
+) {
+    super(runtime, context);
+}
+```
+3. Implement `componentInitializingFirstTime()` in the component to optionally consume the initial state.
+4. Extend `PrimedComponentFactory` and override `createComponent(...)` to take an initial state object.  Wrap a call to the component constructor with the initial state in a function, and pass it to `super.createComponentWithConstructorFn(...)`.
+```typescript
+export class ClickerWithInitialValueFactory extends PrimedComponentFactory {
+    public async createComponent(
+        context: IComponentContext,
+        initialState?: IClickerInitialState,
+    ): Promise<IComponent & IComponentLoadable> {
+        const ctorFn = (r: IComponentRuntime, c: IComponentContext) => {
+            return new ClickerWithInitialValue(r, c, initialState);
+        };
+        return super.createComponentWithConstructorFn(context, ctorFn);
+    }
+}
+```
+Components should ensure that only strongly typed initial state objects are provided.  `SharedComponentFactory` and `PrimedComponentFactory` do not provide a way to supply a generic initial state, and component consumers must have access to the specific component factory in order to create with initial state.
+
 ## 0.15 Breaking Changes
 
 - [`getComponentRuntime` no longer on `IComponentContext`](#getComponentRuntime-no-longer-on-IComponentContext)
@@ -73,7 +147,7 @@ scenario.
 
 ### Container.reconnect, Container.reconnect changes
 
-autoReconnect property is gone, as well as reconnect() method.  
+autoReconnect property is gone, as well as reconnect() method.
 Use Container.setAutoReconnect() instead.
 
 Note that there is difference in behavior. It used to be that one needed to do
@@ -222,7 +296,7 @@ In SharedComponent:
 - asComponent
 If you still need to access these methods, you can still do so by overloading the needed method in your class
 and making it public.
-An example of this can be seen in primedComponent.spec.ts 
+An example of this can be seen in primedComponent.spec.ts
 
 ## 0.13 Breaking Changes
 
@@ -244,7 +318,7 @@ TypeScript now emits `get/set` accessors in `.d.ts` files. TypeScript versions `
 
 More about the changes:
 
-- [Class Field Mitigations](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#class-field-mitigations)  
+- [Class Field Mitigations](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#class-field-mitigations)
 - [Full list of TypeScript changes](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html)
 
 ### IHost interface removed, Loader constructor signature updated
