@@ -118,6 +118,16 @@ export class BuildGraph {
         return isUpToDateArr.every((isUpToDate) => isUpToDate);
     }
 
+    public async checkInstall() {
+        let succeeded = true;
+        for (const buildPackage of this.buildPackages.values()) {
+            if (!await buildPackage.pkg.checkInstall()) {
+                succeeded = false;
+            }
+        };
+        return succeeded;
+    }
+
     public async build(timer?: Timer): Promise<BuildResult> {
         // TODO: This function can only be called once
         const isUpToDate = await this.isUpToDate();

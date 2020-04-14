@@ -12,9 +12,14 @@ import {
     IComponentRegistry,
     IProvideComponentRegistry,
     NamedComponentRegistryEntries,
+    IComponentRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-import { ComponentSymbolProvider, DependencyContainer } from "@microsoft/fluid-synthesize";
+import {
+    ComponentSymbolProvider,
+    DependencyContainer,
+    AsyncComponentProvider,
+} from "@microsoft/fluid-synthesize";
 
 import { SharedComponent, SharedComponentCtor } from "../components";
 
@@ -51,6 +56,12 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>
      * @param context - component context used to load a component runtime
      */
     public instantiateComponent(context: IComponentContext): void {
+        this.instantiateComponentWithConstructorFn(context, undefined);
+    }
+
+    private instantiateComponentWithConstructorFn(
+        context: IComponentContext,
+        ctorFn?: ((r: IComponentRuntime, c: IComponentContext) => SharedComponent)): void {
         // Create a new runtime for our component
         // The runtime is what Fluid uses to create DDS' and route to your component
         const runtime = ComponentRuntime.load(
@@ -59,21 +70,19 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>
             this.registry,
         );
 
-        const dependencyContainer = new DependencyContainer(undefined);
-
         let instanceP: Promise<SharedComponent>;
         // For new runtime, we need to force the component instance to be create
         // run the initialization.
         if (!this.onDemandInstantiation || !runtime.existing) {
             // Create a new instance of our component up front
-            instanceP = this.instantiateInstance(runtime, context, dependencyContainer);
+            instanceP = this.instantiateInstance(runtime, context, ctorFn);
         }
 
         runtime.registerRequestHandler(async (request: IRequest) => {
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             if (!instanceP) {
                 // Create a new instance of our component on demand
-                instanceP = this.instantiateInstance(runtime, context, dependencyContainer);
+                instanceP = this.instantiateInstance(runtime, context, ctorFn);
             }
             const instance = await instanceP;
             return instance.request(request);
@@ -88,23 +97,35 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>
     private async instantiateInstance(
         runtime: ComponentRuntime,
         context: IComponentContext,
-        dependencyContainer: DependencyContainer,
+        ctorFn?: ((
+            r: IComponentRuntime,
+            c: IComponentContext,
+            providers: AsyncComponentProvider<keyof O & keyof IComponent, keyof R & keyof IComponent>,
+        ) => SharedComponent),
     ) {
-        // Create a new instance of our component
+        const dependencyContainer = new DependencyContainer(undefined);
         const providers = dependencyContainer.synthesize(this.optionalProviders,this.requiredProviders);
-        const instance = new this.ctor(runtime, context, providers);
+        // Create a new instance of our component
+        const instance = ctorFn ? ctorFn(runtime, context, providers) : new this.ctor(runtime, context, providers);
         await instance.initialize();
         return instance;
     }
 
     public async createComponent(context: IComponentContext): Promise<IComponent & IComponentLoadable> {
+        return this.createComponentWithConstructorFn(context, undefined);
+    }
+
+    protected async createComponentWithConstructorFn(
+        context: IComponentContext,
+        ctorFn?: (r: IComponentRuntime, c: IComponentContext) => SharedComponent,
+    ): Promise<IComponent & IComponentLoadable> {
         if (this.type === "") {
             throw new Error("undefined type member");
         }
 
         return context.createComponentWithRealizationFn(
             this.type,
-            (newContext) => { this.instantiateComponent(newContext); },
+            (newContext) => { this.instantiateComponentWithConstructorFn(newContext, ctorFn); },
         );
     }
 }
