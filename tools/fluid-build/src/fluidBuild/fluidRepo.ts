@@ -7,7 +7,6 @@ import * as path from "path";
 import { Package, Packages } from "../common/npmPackage";
 import {
     globFn,
-    rimrafWithErrorAsync,
     ExecAsyncResult,
     execWithErrorAsync,
 } from "../common/utils";
