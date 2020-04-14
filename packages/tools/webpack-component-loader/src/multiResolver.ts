@@ -84,11 +84,12 @@ export class MultiUrlResolver implements IExperimentalUrlResolver{
     public createRequestForCreateNew(
         fileName: string,
     ): IRequest {
-        let request: IRequest;
         switch (this.options.mode) {
             case "r11s":
-                request = (this.urlResolver as InsecureUrlResolver).createCreateNewRequest(this.rawUrl, fileName);
-                break;
+            case "docker":
+            case "tinylicious":
+                return (this.urlResolver as InsecureUrlResolver).createCreateNewRequest(this.rawUrl, fileName);
+
             case "spo":
             case "spo-df":
                 const params: IOdspNewFileParams = {
@@ -97,17 +98,11 @@ export class MultiUrlResolver implements IExperimentalUrlResolver{
                     filePath: "/r11s/",
                     siteUrl: `https://${this.options.server}`,
                 };
-                request = (this.urlResolver as OdspUrlResolver).createCreateNewRequest(this.rawUrl, params);
+                return (this.urlResolver as OdspUrlResolver).createCreateNewRequest(this.rawUrl, params);
                 break;
-            case "docker":
-                request = (this.urlResolver as InsecureUrlResolver).createCreateNewRequest(this.rawUrl, fileName);
-                break;
-            case "tinylicious":
-                request = (this.urlResolver as InsecureUrlResolver).createCreateNewRequest(this.rawUrl, fileName);
-                break;
+
             default: // Local
-                request = (this.urlResolver as TestResolver).createCreateNewRequest();
+                return (this.urlResolver as TestResolver).createCreateNewRequest();
         }
-        return request;
     }
 }
