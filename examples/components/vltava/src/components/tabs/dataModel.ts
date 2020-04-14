@@ -75,7 +75,7 @@ export class TabsDataModel extends EventEmitter implements ITabsDataModel {
 
     public getNewTabTypes(): ITabsTypes[] {
         const response: ITabsTypes[] = [];
-        this.internalRegistry.getFromCapabilities("IComponentHTMLVisual").forEach((e) => {
+        this.internalRegistry.getFromCapabilities("IComponentHTMLView").forEach((e) => {
             response.push({
                 type: e.type,
                 friendlyName: e.friendlyName,
