@@ -42,8 +42,8 @@ function shouldDiscardMessageDefault(message: ISequencedDocumentMessage) {
  * - Registers an "op" listener on the runtime. On each message, it calls the shouldDiscardMessageFn to check
  *   if the message should be discarded. It also discards all scheduler message. If a message is not discarded,
  *   it is passed to the last edited tracker in the component.
- * - Any messages received before the component is loaded are stored in a buffer and passed to the tracker once the
- *   component loads.
+ * - The last message received before the component is loaded is stored and passed to the tracker once the component
+ *   loads.
  * @param rootComponentId - The id of the root component whose last edited tracker is to be set up.
  * @param runtime - The container runtime whose messages are to be tracked.
  * @param shouldDiscardMessageFn - Function that tells if a message should not be considered in computing last edited.
@@ -53,21 +53,20 @@ export async function setupLastEditedTrackerForContainer(
     runtime: IHostRuntime,
     shouldDiscardMessageFn: (message: ISequencedDocumentMessage) => boolean = shouldDiscardMessageDefault,
 ) {
-    // Stores messages until the component has loaded.
-    const pendingMessageBuffer: ISequencedDocumentMessage[] = [];
-
     // eslint-disable-next-line prefer-const
     let lastEditedTracker: IComponentLastEditedTracker;
+    // Stores messages until the component has loaded.
+    let pendingMessage: ISequencedDocumentMessage | undefined;
 
     // Register an op listener on the runtime. If the component has loaded, it passes the message to its last
-    // edited tracker. If the component hasn't loaded, it stores the messages in a temporary buffer.
+    // edited tracker. If the component hasn't loaded, store the message temporarily.
     runtime.on("op", (message: ISequencedDocumentMessage) => {
         // Discard scheduler messages and other messages as per shouldDiscardMessageFn.
         if (!shouldDiscardMessageFn(message) && !isSchedulerMessage(message)) {
             if (lastEditedTracker !== undefined) {
                 lastEditedTracker.updateLastEditDetails(message);
             } else {
-                pendingMessageBuffer.push(message);
+                pendingMessage = message;
             }
         }
     });
@@ -84,8 +83,8 @@ export async function setupLastEditedTrackerForContainer(
         throw new Error(`Component with id ${rootComponentId} does not have IComponentLastEditedTracker.`);
     }
 
-    // Now that the component has loaded, pass any pending messages to its last edited tracker.
-    pendingMessageBuffer.forEach((message: ISequencedDocumentMessage) => {
-        lastEditedTracker.updateLastEditDetails(message);
-    });
+    // Now that the component has loaded, pass any pending message to its last edited tracker.
+    if (pendingMessage !== undefined) {
+        lastEditedTracker.updateLastEditDetails(pendingMessage);
+    }
 }

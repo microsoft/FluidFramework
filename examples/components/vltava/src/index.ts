@@ -61,54 +61,6 @@ export class InternalRegistry implements IComponentRegistry, IComponentRegistryD
     }
 }
 
-export class VltavaRuntimeFactory implements IRuntimeFactory {
-    public static readonly defaultComponentId = "default";
-    constructor(
-        private readonly defaultComponentName: string,
-        private readonly registryEntries: NamedComponentRegistryEntries) {}
-
-    public get IRuntimeFactory() { return this; }
-
-    public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const runtime = await ContainerRuntime.load(
-            context,
-            this.registryEntries,
-            [this.componentRuntimeRequestHandler],
-            { generateSummaries: true });
-
-        // On first boot create the root component
-        if (!runtime.existing) {
-            await runtime.createComponent(VltavaRuntimeFactory.defaultComponentId, this.defaultComponentName)
-                .then((componentRuntime) => {
-                    componentRuntime.attach();
-                }).catch((error) => {
-                    context.error(error);
-                });
-        }
-
-        setupLastEditedTrackerForContainer(VltavaRuntimeFactory.defaultComponentId, runtime)
-            .catch((error) => {
-                throw error;
-            });
-
-        return runtime;
-    }
-
-    private async componentRuntimeRequestHandler(request: IRequest, runtime: IHostRuntime) {
-        const requestUrl = request.url.length > 0 && request.url.startsWith("/")
-            ? request.url.substr(1)
-            : request.url;
-        const trailingSlash = requestUrl.indexOf("/");
-
-        const componentId = requestUrl
-            ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
-            : VltavaRuntimeFactory.defaultComponentId;
-        const component = await runtime.getComponentRuntime(componentId, true);
-
-        return component.request({ url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash + 1) });
-    }
-}
-
 const generateFactory = () => {
     const containerComponentsDefinition: IContainerComponentDetails[] = [
         {

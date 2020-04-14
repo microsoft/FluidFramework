@@ -2,7 +2,7 @@
 
 LastEditedTracker tracks the last edit to a document, such as the client who last edited the document and the time it happened.
 
-It has to be created by passing a `SummarizableObject`:
+It is created by passing a `SummarizableObject`:
 ```
 constructor(
     private readonly summarizableObject: SummarizableObject,
@@ -10,13 +10,9 @@ constructor(
 ```
 It uses the SummarizableObject to store the last edit details.
 
-# Last Edited Tracker Component
-
-LastEditedTrackerComponent is a runtime component built on top of the LastEditedTracker that creates and manages the SummarizableObject. The developer doesn't have to know about the SummarizableObject and doesn't have to manage it.
-
 ## API
 
-Both the classes above provides the following APIs to get and update the last edit details:
+It provides the following APIs to get and update the last edit details:
 
 ```
 public getLastEditDetails(): ILastEditDetails | undefined;
@@ -27,16 +23,22 @@ The update should always be called in response to a remote op because:
 1. It updates its state from the remote op.
 2. It uses a SummarizableObject as storage which must be set in response to a remote op.
 
-The details returned in getLastEditDetails contain the clientId and the timestamp of the last edit.
+The details returned in getLastEditDetails contain the `clientId` and the `timestamp` of the last edit.
 
 ## Events
 
-Both the classes above emits an `"lastEditedChanged"` event with ILastEditDetails whenever the details are updated:
+It emits an `"lastEditedChanged"` event with ILastEditDetails whenever the details are updated:
 ```
 public on(event: "lastEditedChanged", listener: (lastEditDetails: ILastEditDetails) => void): this;
 ```
 
-## Setup
+# Last Edited Tracker Component
+
+LastEditedTrackerComponent is a runtime component built on top of the LastEditedTracker. It creates and manages the SummarizableObject so that the developer doesn't have to know about it or manage it.
+
+It implements IProvideComponentLastEditedTracker and returns an IComponentLastEditedTracker which is an instance of LastEditedTracker above.
+
+# Setup
 
 This package also provides a `setupLastEditedTrackerForContainer` method that can be used to set up a root component that provides IComponentLastEditedTracker to track last edited in a Container:
 ```
@@ -51,7 +53,7 @@ async function setupLastEditedTrackerForContainer(
 - This setup function should be called during container instantiation so that ops are not missed.
 - Requests the root component from the runtime and waits for it to load.
 - Registers an "op" listener on the runtime. On each message, it calls the shouldDiscardMessageFn to check if the message should be discarded. It also discards all scheduler message. If a message is not discarded, it is passed to the IComponentLastEditedTracker in the root component.
-- Any messages received before the component is loaded are stored in a buffer and passed to the tracker once the component loads.
+- The last message received before the component is loaded is stored and passed to the tracker once the component loads.
 
 Note:
 - By default, message that are not of `"Attach"` and `"Operation"` type are discarded as per the `shouldDiscardMessageDefault` function:
@@ -65,11 +67,9 @@ function shouldDiscardMessageDefault(message: ISequencedDocumentMessage) {
 ```
 - To discard specific ops, provide the `shouldDiscardMessageFn` funtion that takes in the message and returns a boolean indicating if the message should be discarded.
 
-Take a look at [Vltava instantiateRuntime](../../../examples/components/vltava/src/index.ts) for an example of how this can be done.
+# Usage
 
-## Usage
-
-### For tracking the last edit on a Container:
+## For tracking the last edit on a Container:
 
 In instantiateRuntime, create a root component that implements IComponentLastEditedTracker. Then call `setupLastEditedTrackerForContainer` with the component id of the root component:
 ```
@@ -105,12 +105,3 @@ lastEditedTracker.on("lastEditedChanged", (lastEditDetails: ILastEditDetails) =>
     // Do something cool.
 });
 ```
-
-Take a look at the [example](##Example) of how this can be done.
-
-## Example
-
-Vltava in examples demonstrates how LastEditedTrackerComponent can be used with a root component to track last edited in the Container:
-- [instantiateRuntime implementation that loads the root (Anchor) component and sets up the tracker](../../../examples/components/vltava/src/index.ts)
-- [Root (Anchor) Component that creates and loads a LastEditedTrackerComponent](../../../examples/components/vltava/src/components/anchor/anchor.ts)
-- [Vltava view that gets the IComponentLastEditedTracker from the root component and displays the last edited data](../../../examples/components/vltava/src/components/vltava/view.tsx)
