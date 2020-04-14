@@ -6,16 +6,18 @@
 import { ReactViewAdapter } from "@microsoft/fluid-view-adapters";
 import * as React from "react";
 
-import { IVltavaDataModel } from "./dataModel";
-import { VltavaFacepile } from "./facePile";
+import { IVltavaUserDetails, IVltavaDataModel } from "./dataModel";
+import { LastEditedFacepile, VltavaFacepile } from "./facePile";
 
 interface IVltavaViewProps {
     dataModel: IVltavaDataModel;
 }
 
 interface IVltavaViewState {
-    users: string[];
+    users: IVltavaUserDetails[];
     view: JSX.Element;
+    lastEditedUser: IVltavaUserDetails;
+    lastEditedTime: string;
 }
 
 export class VltavaView extends React.Component<IVltavaViewProps,IVltavaViewState> {
@@ -25,11 +27,22 @@ export class VltavaView extends React.Component<IVltavaViewProps,IVltavaViewStat
         this.state = {
             users: props.dataModel.getUsers(),
             view: <div/>,
+            lastEditedUser: { name: "", colorCode: 0 },
+            lastEditedTime: "",
         };
+    }
 
-        props.dataModel.on("membersChanged", (users) => {
-            this.setState({ users });
-        });
+    private setLastEditedState(lastEditDetails: ILastEditDetails) {
+        const lastEditedUser = this.props.dataModel.getUser(lastEditDetails.clientId);
+        if (lastEditedUser) {
+            const date = new Date(lastEditDetails.timestamp);
+            const lastEditedTime = date.toUTCString();
+
+            this.setState({
+                lastEditedUser,
+                lastEditedTime,
+            });
+        }
     }
 
     async componentDidMount() {
@@ -56,6 +69,7 @@ export class VltavaView extends React.Component<IVltavaViewProps,IVltavaViewStat
                         </h2>
                     </div>
                     <VltavaFacepile users={this.state.users}/>
+                    <LastEditedFacepile user={this.state.lastEditedUser} time={this.state.lastEditedTime}/>
                 </div>
                 {this.state.view}
             </div>
