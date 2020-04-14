@@ -191,8 +191,8 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
         this.remove(this.cols, SnapshotPath.cols, startCol, count);
     }
 
-    public insertRows(start: number, count: number) {
-        this.insert(this.rows, SnapshotPath.rows, start, count);
+    public insertRows(startRow: number, count: number) {
+        this.insert(this.rows, SnapshotPath.rows, startRow, count);
     }
 
     public removeRows(startRow: number, count: number) {
@@ -307,28 +307,22 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
                         const colHandle = this.cols.toHandle(col, refSeq, colClientId, /* alloc: */ true);
 
                         if (colHandle !== Handle.deleted) {
-                            assert(rowHandle >= Handle.valid);
-                            assert(colHandle >= Handle.valid);
+                            assert(rowHandle >= Handle.valid
+                                && colHandle >= Handle.valid);
 
                             if (this.pendingCliSeqs.read(rowHandle, colHandle) === undefined) {
                                 const { value } = contents;
                                 this.cells.setCell(rowHandle, colHandle, value);
 
-                                const adjustedRow = this.rows.adjustPosition(
-                                    row,
-                                    refSeq,
-                                    this.rows.getCurrentSeq(),
-                                    rowClientId);
+                                const adjustedRow = this.rows.adjustPosition(row, refSeq, rowClientId);
 
-                                const adjustedCol = this.cols.adjustPosition(
-                                    col,
-                                    refSeq,
-                                    this.cols.getCurrentSeq(),
-                                    colClientId);
+                                if (adjustedRow !== undefined) {
+                                    const adjustedCol = this.cols.adjustPosition(col, refSeq, colClientId);
 
-                                if (adjustedRow !== undefined && adjustedCol !== undefined) {
-                                    for (const consumer of this.consumers.values()) {
-                                        consumer.cellsChanged(adjustedRow, adjustedCol, 1, 1, [value], this);
+                                    if (adjustedCol !== undefined) {
+                                        for (const consumer of this.consumers.values()) {
+                                            consumer.cellsChanged(adjustedRow, adjustedCol, 1, 1, [value], this);
+                                        }
                                     }
                                 }
                             }

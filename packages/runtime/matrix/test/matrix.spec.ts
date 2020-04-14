@@ -249,6 +249,8 @@ describe("Matrix", () => {
     describe("2 clients", () => {
         let matrix1: SharedMatrix;
         let matrix2: SharedMatrix;
+        let consumer1: TestConsumer;     // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
+        let consumer2: TestConsumer;     // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
 
         // TODO: Vet IMatrixConsumers w/multiple clients
 
@@ -263,15 +265,25 @@ describe("Matrix", () => {
             if (expected !== undefined) {
                 assert.deepEqual(actual1, expected);
             }
+
+            for (const consumer of [consumer1, consumer2]) {
+                assert.deepEqual(consumer.extract(), actual1, "Matrix must notify IMatrixConsumers of all changes.");
+            }
         };
 
         beforeEach(async () => {
             matrix1 = await host1.createType(uuid(), SharedMatrixFactory.Type);
+            matrix1.openMatrix(consumer1 = new TestConsumer());
+
             matrix2 = await host2.getType(matrix1.id);
+            matrix2.openMatrix(consumer2 = new TestConsumer());
         });
 
         afterEach(async () => {
             await expect();
+
+            matrix1.removeMatrixConsumer(consumer1);
+            matrix2.removeMatrixConsumer(consumer2);
         });
 
         describe("conflict", () => {
@@ -287,6 +299,23 @@ describe("Matrix", () => {
 
                 await expect([
                     ["2nd"],
+                ]);
+            });
+
+            // Vets that clearing a cell at an unallocated row/col will locally discard
+            // the an earlier remote write.
+            it("clear unallocated cell", async () => {
+                matrix1.insertCols(0, 1);
+                matrix1.insertRows(0, 1);
+                await expect([
+                    [undefined]
+                ]);
+
+                matrix1.setCell(0, 0, "x");
+                matrix2.setCell(0, 0, undefined);
+
+                await expect([
+                    [undefined],
                 ]);
             });
 

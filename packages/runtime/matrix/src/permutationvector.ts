@@ -154,17 +154,13 @@ export class PermutationVector extends Client {
         return handle;
     }
 
-    public adjustPosition(pos: number, fromSeq: number, toSeq: number, clientId: number) {
-        if (fromSeq >= this.getCurrentSeq()) {
-            return pos;
-        }
-
+    public adjustPosition(pos: number, fromSeq: number, clientId: number) {
         const { segment, offset } = this.mergeTree.getContainingSegment(pos, fromSeq, clientId);
         if (segment === undefined) {
             return undefined;
         }
 
-        const toPos = this.mergeTree.getPosition(segment, toSeq, clientId);
+        const toPos = this.getPosition(segment);
         return toPos + offset;
     }
 
