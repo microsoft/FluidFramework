@@ -955,7 +955,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return this._createComponentWithProps(pkg, undefined, id);
     }
 
-    public async _createComponentWithProps(pkg: string | string[], props: any, id?: string):
+    public async _createComponentWithProps(pkg: string | string[], props?: any, id?: string):
     Promise<IComponentRuntime> {
         return this.createComponentContext(Array.isArray(pkg) ? pkg : [pkg], props, id).realize();
     }
