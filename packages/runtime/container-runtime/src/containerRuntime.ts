@@ -690,8 +690,12 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     public on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
-    public on(event: "dirtyDocument" | "disconnected" | "dispose" | "savedDocument", listener: () => void): this;
-    public on(event: "leader" | "noleader", listener: (clientId?: string) => void): this;
+    public on(
+        event: "dirtyDocument" | "disconnected" | "dispose" | "savedDocument",
+        listener: () => void): this;
+    public on(
+        event: "leader" | "noleader",
+        listener: (clientId?: string) => void): this;
     public on(event: "localHelp", listener: (message: IHelpMessage) => void): this;
     public on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
     public on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): this;
