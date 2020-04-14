@@ -28,8 +28,8 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>
         public readonly type: string,
         private readonly ctor: SharedComponentCtor<O,R>,
         sharedObjects: readonly ISharedObjectFactory[],
-        public readonly optionalProviders: ComponentSymbolProvider<keyof O & keyof IComponent>,
-        public readonly requiredProviders: ComponentSymbolProvider<keyof R & keyof IComponent>,
+        private readonly optionalProviders: ComponentSymbolProvider<keyof O & keyof IComponent>,
+        private readonly requiredProviders: ComponentSymbolProvider<keyof R & keyof IComponent>,
         registryEntries?: NamedComponentRegistryEntries,
         private readonly onDemandInstantiation = true,
     ) {
