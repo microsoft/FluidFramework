@@ -13,20 +13,19 @@ import {
     IRequest,
     IResponse,
 } from "@microsoft/fluid-component-core-interfaces";
-import { AsyncComponentProvider } from "@microsoft/fluid-synthesize";
+import { AsyncComponentProvider, ComponentKey } from "@microsoft/fluid-synthesize";
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { ComponentHandle } from "@microsoft/fluid-component-runtime";
 import { IDirectory } from "@microsoft/fluid-map";
 import { v4 as uuid } from "uuid";
 import { serviceRoutePathRoot } from "../containerServices";
 
-export type SharedComponentCtor<O extends IComponent,R extends IComponent> =
-    new <O,R>
-    (
+export type AqueductComponentCtor<O extends IComponent,R extends IComponent,T extends SharedComponent<O,R>> =
+    new (
         runtime: IComponentRuntime,
         context: IComponentContext,
-        providers: AsyncComponentProvider<keyof O & keyof IComponent, keyof R & keyof IComponent>,
-    ) => SharedComponent;
+        providers: AsyncComponentProvider<ComponentKey<O>,ComponentKey<R>>,
+    ) => T;
 
 /**
  * This is a bare-bones base class that does basic setup and enables for factory on an initialize call.
@@ -54,8 +53,8 @@ export abstract class SharedComponent<O extends IComponent = object, R extends I
     public constructor(
         protected readonly runtime: IComponentRuntime,
         protected readonly context: IComponentContext,
-        // eslint-disable-next-line max-len
-        protected readonly providers: AsyncComponentProvider<keyof O & keyof IComponent, keyof R & keyof IComponent> = ({} as any),
+        // Probably shouldn't be providers?
+        protected readonly providers: AsyncComponentProvider<ComponentKey<O>,ComponentKey<R>>,
     ) {
         super();
         this.innerHandle = new ComponentHandle(this, this.url, runtime.IComponentHandleContext);

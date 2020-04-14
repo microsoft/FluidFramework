@@ -8,6 +8,7 @@ import {
     AsyncComponentProvider,
     ComponentSymbolProvider,
     ComponentProvider,
+    ComponentKey,
 } from "./types";
 
 declare module "@microsoft/fluid-component-core-interfaces" {
@@ -55,11 +56,11 @@ export interface IComponentDependencySynthesizer extends IProvideComponentDepend
      * @param requiredTypes - required types that need to be in the Scope object
      */
     synthesize<
-        O extends keyof IComponent,
-        R extends keyof IComponent>(
+        O extends IComponent,
+        R extends IComponent,>(
         optionalTypes: ComponentSymbolProvider<O>,
         requiredTypes: ComponentSymbolProvider<R>,
-    ): AsyncComponentProvider<O,R>;
+    ): AsyncComponentProvider<ComponentKey<O>,ComponentKey<R>>;
 
     /**
      * Check if a given type is registered

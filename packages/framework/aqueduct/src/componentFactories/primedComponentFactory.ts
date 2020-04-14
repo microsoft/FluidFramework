@@ -18,18 +18,18 @@ import {
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { ComponentSymbolProvider } from "@microsoft/fluid-synthesize";
 
-import { SharedComponentCtor } from "../components";
+import { AqueductComponentCtor, PrimedComponent } from "../components";
 import { SharedComponentFactory } from "./sharedComponentFactory";
 
-export class PrimedComponentFactory<O extends IComponent = object, R extends IComponent = object>
+export class PrimedComponentFactory<O extends IComponent = {}, R extends IComponent = {}>
     extends SharedComponentFactory<O,R>
 {
     constructor(
         type: string,
-        ctor: SharedComponentCtor<O,R>,
+        ctor: AqueductComponentCtor<O,R, PrimedComponent<O,R>>,
         sharedObjects: readonly ISharedObjectFactory[] = [],
-        optionalProviders: ComponentSymbolProvider<keyof O & keyof IComponent> = ({} as any),
-        requiredProviders: ComponentSymbolProvider<keyof R & keyof IComponent> = ({} as any),
+        optionalProviders: ComponentSymbolProvider<O>,
+        requiredProviders: ComponentSymbolProvider<R>,
         registryEntries?: NamedComponentRegistryEntries,
         onDemandInstantiation = true,
     ) {

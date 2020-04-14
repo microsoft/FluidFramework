@@ -16,25 +16,27 @@ import {
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import {
+    AsyncComponentProvider,
+    ComponentKey,
     ComponentSymbolProvider,
     DependencyContainer,
-    AsyncComponentProvider,
 } from "@microsoft/fluid-synthesize";
 
-import { SharedComponent, SharedComponentCtor } from "../components";
+import { SharedComponent, AqueductComponentCtor } from "../components";
 
-export class SharedComponentFactory<O extends IComponent = object, R extends IComponent = object>
+export class SharedComponentFactory<O extends IComponent, R extends IComponent>
 implements IComponentFactory, Partial<IProvideComponentRegistry>
 {
     private readonly sharedObjectRegistry: ISharedObjectRegistry;
     private readonly registry: IComponentRegistry | undefined;
+    private readonly dependencyContainer: DependencyContainer;
 
     constructor(
         public readonly type: string,
-        private readonly ctor: SharedComponentCtor<O,R>,
+        private readonly ctor: AqueductComponentCtor<O,R, SharedComponent<O,R>>,
         sharedObjects: readonly ISharedObjectFactory[],
-        private readonly optionalProviders: ComponentSymbolProvider<keyof O & keyof IComponent>,
-        private readonly requiredProviders: ComponentSymbolProvider<keyof R & keyof IComponent>,
+        private readonly optionalProviders: ComponentSymbolProvider<O>,
+        private readonly requiredProviders: ComponentSymbolProvider<R>,
         registryEntries?: NamedComponentRegistryEntries,
         private readonly onDemandInstantiation = true,
     ) {
@@ -42,6 +44,8 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>
             this.registry = new ComponentRegistry(registryEntries);
         }
         this.sharedObjectRegistry = new Map(sharedObjects.map((ext) => [ext.type, ext]));
+
+        this.dependencyContainer = new DependencyContainer(undefined);
     }
 
     public get IComponentFactory() { return this; }
@@ -100,11 +104,10 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>
         ctorFn?: ((
             r: IComponentRuntime,
             c: IComponentContext,
-            providers: AsyncComponentProvider<keyof O & keyof IComponent, keyof R & keyof IComponent>,
+            providers: AsyncComponentProvider<ComponentKey<O>, ComponentKey<R>>,
         ) => SharedComponent),
     ) {
-        const dependencyContainer = new DependencyContainer(undefined);
-        const providers = dependencyContainer.synthesize(this.optionalProviders,this.requiredProviders);
+        const providers = this.dependencyContainer.synthesize<O, R>(this.optionalProviders,this.requiredProviders);
         // Create a new instance of our component
         const instance = ctorFn ? ctorFn(runtime, context, providers) : new this.ctor(runtime, context, providers);
         await instance.initialize();

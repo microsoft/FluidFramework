@@ -5,6 +5,8 @@
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { DependencyContainer } from "./dependencyContainer";
 
+export type ComponentKey<T extends IComponent> = keyof T & keyof IComponent;
+
 /**
  * This is a condensed version of Record that requires the object has all
  * the IComponent properties as its type mapped to a string representation
@@ -12,8 +14,8 @@ import { DependencyContainer } from "./dependencyContainer";
  *
  * @example - \{ IComponentFoo: "IComponentFoo" \}
  */
-export type ComponentSymbolProvider<T extends keyof IComponent> = {
-    [P in T]: NonNullable<P>;
+export type ComponentSymbolProvider<T extends IComponent> = {
+    [P in ComponentKey<T>]: ComponentKey<T> & P;
 };
 
 /**

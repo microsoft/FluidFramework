@@ -9,6 +9,7 @@ import {
     AsyncComponentProvider,
     ComponentSymbolProvider,
     ComponentProvider,
+    ComponentKey,
 } from "./types";
 import { IComponentDependencySynthesizer } from "./IComponentDependencySynthesizer";
 
@@ -54,11 +55,11 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
      * {@inheritDoc (IComponentSynthesizer:interface).synthesize}
      */
     public synthesize<
-        O extends keyof IComponent,
-        R extends keyof IComponent>(
+        O extends IComponent,
+        R extends IComponent = {}>(
         optionalTypes: ComponentSymbolProvider<O>,
         requiredTypes: ComponentSymbolProvider<R>,
-    ): AsyncComponentProvider<O,R> {
+    ): AsyncComponentProvider<ComponentKey<O>,ComponentKey<R>> {
         const optionalValues = Object.values(optionalTypes);
         const requiredValues = Object.values(requiredTypes);
 
@@ -98,7 +99,7 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
         return undefined;
     }
 
-    private generateRequired<T extends keyof IComponent>(
+    private generateRequired<T extends IComponent>(
         types: ComponentSymbolProvider<T>,
     ) {
         const values: (keyof IComponent)[] = Object.values(types);
@@ -112,7 +113,7 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
         }));
     }
 
-    private generateOptional<T extends keyof IComponent>(
+    private generateOptional<T extends IComponent>(
         types: ComponentSymbolProvider<T>,
     ) {
         const values: (keyof IComponent)[] = Object.values(types);

@@ -7,5 +7,5 @@ export { BlobHandle } from "./blobHandle";
 export { PrimedComponent } from "./primedComponent";
 export {
     SharedComponent,
-    SharedComponentCtor,
+    AqueductComponentCtor,
 } from "./sharedComponent";
