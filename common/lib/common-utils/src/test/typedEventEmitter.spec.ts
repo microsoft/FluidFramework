@@ -34,12 +34,12 @@ describe("TypedEventEmitter", () => {
         tee.on("removeListener",(event, listener)=>{
             assert.equal(event, "error");
             assert.equal(listener, errListener);
-            removeListenerCalls ++;
+            removeListenerCalls++;
         });
         tee.on("newListener",(event, listener)=>{
             assert.equal(event, "error");
             assert.equal(listener, errListener);
-            newListenerCalls ++;
+            newListenerCalls++;
         });
 
         tee.on("error", errListener);
