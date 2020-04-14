@@ -451,6 +451,11 @@ export interface IHostRuntime extends
     notifyPendingMessages(): void;
 
     /**
+     * Used to notify the HostingRuntime that the ComponentRuntime has be instantiated.
+     */
+    notifyComponentInstantiated(componentContext: IComponentContext): void;
+
+    /**
      * Returns true of document is dirty, i.e. there are some pending local changes that
      * either were not sent out to delta stream or were not yet acknowledged.
      */
