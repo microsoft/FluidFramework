@@ -117,30 +117,59 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
         const { currentSeq: rowRefSeq, clientId: rowClientId } = this.rows.getCollabWindow();
         const { currentSeq: colRefSeq, clientId: colClientId } = this.cols.getCollabWindow();
 
-        const clear = value === undefined;
+        this.setCellCore(row, rowRefSeq, rowClientId, col, colRefSeq, colClientId, value);
 
-        // Map the logical row/col to the allocated storage handles (if any).
-        // If clearing and either the row and/or col is Handle.unallocated, no further work is necessary.
-        const rowHandle = this.rows.toHandle(row, rowRefSeq, rowClientId, /* alloc: */ !clear);
-        if (rowHandle === Handle.unallocated) {
-            assert(clear);
-            return;
-        }
-
-        const colHandle = this.cols.toHandle(col, colRefSeq, colClientId, /* alloc: */ !clear);
-        if (colHandle === Handle.unallocated) {
-            assert(clear);
-            return;
-        }
-
-        this.cells.setCell(rowHandle, colHandle, value);
-
-        // TODO: Pretty lame to alloc an array to send a single value.  Probably warrants a
-        //       singular `cellChanged` API.
+        // Avoid reentrancy by raising change notifications after the op is queued.
         for (const consumer of this.consumers.values()) {
+            // TODO: Pretty lame to alloc an array to send a single value.  Probably warrants a
+            //       singular `cellChanged` API.
             consumer.cellsChanged(row, col, 1, 1, [value], this);
         }
+    }
 
+    public setCells(row: number, col: number, numCols: number, values: readonly T[]) {
+        const numRows = Math.ceil(values.length / numCols);
+
+        assert((0 <= row && row < this.numRows)
+            && (0 <= col && col < this.numCols)
+            && (1 <= numCols && numCols <= (this.numCols - col))
+            && (numRows <= (this.numRows - row)));
+
+        const { currentSeq: rowRefSeq, clientId: rowClientId } = this.rows.getCollabWindow();
+        const { currentSeq: colRefSeq, clientId: colClientId } = this.cols.getCollabWindow();
+
+        const endCol = col + numCols;
+        let r = row;
+        let c = col;
+
+        for (const value of values) {
+            this.setCellCore(r, rowRefSeq, rowClientId, c, colRefSeq, colClientId, value);
+
+            if (++c === endCol) {
+                c = col;
+                r++;
+            }
+        }
+
+        // Avoid reentrancy by raising change notifications after the op is queued.
+        for (const consumer of this.consumers.values()) {
+            consumer.cellsChanged(row, col, numRows, numCols, values, this);
+        }
+    }
+
+    private setCellCore(
+        row: number,
+        rowRefSeq: number,
+        rowClientId: number,
+        col: number,
+        colRefSeq: number,
+        colClientId: number,
+        value: T,
+    ) {
+        const rowHandle = this.rows.toHandle(row, rowRefSeq, rowClientId, /* alloc: */ true);
+        const colHandle = this.cols.toHandle(col, colRefSeq, colClientId, /* alloc: */ true);
+
+        this.cells.setCell(rowHandle, colHandle, value);
         const cliSeq = this.submitLocalMessage({
             type: MatrixOp.set,
             row,
@@ -151,26 +180,6 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
         if (cliSeq !== -1) {
             this.pendingCliSeqs.setCell(rowHandle, colHandle, cliSeq);
             this.pendingQueue.push({ cliSeq, rowHandle, colHandle });
-        }
-    }
-
-    public setCells(row: number, col: number, numCols: number, values: Iterable<T>) {
-        assert(1 <= numCols && numCols <= (this.numCols - col));
-
-        const endCol = col + numCols;
-        let r = row;
-        let c = col;
-
-        for (const value of values) {
-            assert(r < this.numRows);
-
-            // TODO: Add a `setRange` op to more efficiently send values.
-            this.setCell(r, c, value);
-
-            if (++c === endCol) {
-                c = col;
-                r++;
-            }
         }
     }
 
