@@ -10,7 +10,7 @@ import * as React from "react";
 
 interface IEmbeddedComponentWrapperProps {
     id: string;
-    getComponent(id: string): Promise<IComponent>;
+    getComponent(id: string): Promise<IComponent | undefined>;
 }
 
 interface IEmbeddedComponentWrapperState {
@@ -33,8 +33,10 @@ export class EmbeddedComponentWrapper
 
     async componentDidMount() {
         const component = await this.props.getComponent(this.props.id);
-        const element = <ReactViewAdapter component={component} />;
-        this.setState({ element });
+        if (component) {
+            const element = <ReactViewAdapter component={component} />;
+            this.setState({ element });
+        }
     }
 
     public render() {
