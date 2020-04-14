@@ -13,7 +13,10 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { ComponentHandle } from "@microsoft/fluid-component-runtime";
-import { ISharedObject, EventForwarder, IEvent } from "@microsoft/fluid-shared-object-base";
+import { ISharedObject } from "@microsoft/fluid-shared-object-base";
+import { EventForwarder } from "@microsoft/fluid-common-utils";
+import { IEvent } from "@microsoft/fluid-common-definitions";
+
 
 export abstract class SharedComponent<
     TRoot extends ISharedObject = ISharedObject,

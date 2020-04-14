@@ -19,10 +19,10 @@ import { ObjectStoragePartition } from "@microsoft/fluid-runtime-utils";
 import {
     makeHandlesSerializable,
     parseHandles,
-    IEventThisPlaceHolder,
     SharedObject,
     ISharedObjectEvents,
 } from "@microsoft/fluid-shared-object-base";
+import { IEventThisPlaceHolder } from "@microsoft/fluid-common-definitions";
 import { debug } from "./debug";
 import {
     IntervalCollection,

@@ -32,7 +32,7 @@ import {
 } from "@microsoft/fluid-sequence";
 import { ISharedDirectory, SharedDirectory } from "@microsoft/fluid-map";
 import { IComponentHTMLOptions } from "@microsoft/fluid-view-interfaces";
-import { IEvent } from "@microsoft/fluid-shared-object-base";
+import { IEvent } from "@microsoft/fluid-common-definitions";
 import { clamp, emptyArray } from "../util";
 import { IHTMLAttributes } from "../util/attr";
 import { documentType } from "../package";

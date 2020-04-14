@@ -17,7 +17,8 @@ import { ComponentHandle } from "@microsoft/fluid-component-runtime";
 import { IDirectory } from "@microsoft/fluid-map";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
-import { EventForwarder, IEvent } from "@microsoft/fluid-shared-object-base";
+import { EventForwarder } from "@microsoft/fluid-common-utils";
+import { IEvent } from "@microsoft/fluid-common-definitions";
 import { serviceRoutePathRoot } from "../containerServices";
 
 /**

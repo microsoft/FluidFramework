@@ -18,8 +18,8 @@ import {
     SequenceDeltaEvent,
 } from "@microsoft/fluid-sequence";
 import { createSheetlet, ISheetlet } from "@tiny-calc/micro";
-import { IEvent } from "@microsoft/fluid-shared-object-base";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import { IEvent } from "@microsoft/fluid-common-definitions";
 import { CellRange } from "./cellrange";
 import { TableDocumentType, TableSliceType } from "./componentTypes";
 import { ConfigKey } from "./configKey";

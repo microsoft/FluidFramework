@@ -4,7 +4,8 @@
  */
 
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { IEventThisPlaceHolder, ISharedObject, ISharedObjectEvents } from "@microsoft/fluid-shared-object-base";
+import { ISharedObject, ISharedObjectEvents } from "@microsoft/fluid-shared-object-base";
+import { IEventThisPlaceHolder } from "@microsoft/fluid-common-definitions";
 
 /**
  * Type of "valueChanged" event parameter.

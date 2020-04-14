@@ -32,13 +32,14 @@ import {
     SharedStringSegment,
 } from "@microsoft/fluid-sequence";
 import { IComponentHTMLOptions } from "@microsoft/fluid-view-interfaces";
-import { IEvent } from "@microsoft/fluid-shared-object-base";
+import { IEvent } from "@microsoft/fluid-common-definitions";
 import { FlowDocumentType } from "../runtime";
 import { clamp, emptyArray } from "../util";
 import { IHTMLAttributes } from "../util/attr";
 import { Tag } from "../util/tag";
 import { debug } from "./debug";
 import { SegmentSpan } from "./segmentspan";
+
 
 export { SegmentSpan };
 
