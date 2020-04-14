@@ -27,14 +27,63 @@ export interface PromiseCacheOptions {
 }
 
 /**
+ * Handles garbage collection of expiring cache entries.
+ * Not exported.
+ */
+class GarbageCollector<TKey> {
+    private readonly gcTimeouts = new Map<TKey, NodeJS.Timeout>();
+
+    constructor(
+        private readonly expiry: PromiseCacheExpiry,
+        private readonly cleanup: (key: TKey) => void,
+    ) {}
+
+    /**
+     * Schedule GC for the given key, as applicable
+     */
+    public schedule(key: TKey) {
+        if (this.expiry.policy !== "indefinite") {
+            this.gcTimeouts.set(
+                key,
+                setTimeout(
+                    () => this.cleanup(key),
+                    this.expiry.durationMs,
+                ),
+            );
+        }
+    }
+
+    /**
+     * Cancel any pending GC for the given key
+     */
+    public cancel(key: TKey) {
+        const timeout = this.gcTimeouts.get(key);
+        if (timeout !== undefined) {
+            clearTimeout(timeout);
+            this.gcTimeouts.delete(key);
+        }
+    }
+
+    /**
+     * Update any pending GC for the given key, as applicable
+     */
+    public update(key: TKey) {
+        // Cancel/reschedule new GC if the policy is sliding
+        if (this.expiry.policy === "sliding") {
+            this.cancel(key);
+            this.schedule(key);
+        }
+    }
+}
+
+/**
 * A specialized cache for async work, allowing you to safely cache the promised result of some async work
 * without fear of running it multiple times or losing track of errors.
 */
 export class PromiseCache<TKey, TResult> {
     private readonly cache = new Map<TKey, Promise<TResult>>();
-    private readonly gcTimeouts = new Map<TKey, NodeJS.Timeout>();
+    private readonly gc: GarbageCollector<TKey>;
 
-    private readonly expiry: PromiseCacheExpiry;
     private readonly removeOnError: (e: any) => boolean;
 
     /**
@@ -47,8 +96,8 @@ export class PromiseCache<TKey, TResult> {
         expiry = { policy: "indefinite" },
         removeOnError = () => true,
     }: PromiseCacheOptions = {}) {
-        this.expiry = expiry;
         this.removeOnError = removeOnError;
+        this.gc = new GarbageCollector<TKey>(expiry, (key) => this.remove(key));
     }
 
     /**
@@ -56,7 +105,9 @@ export class PromiseCache<TKey, TResult> {
      * Extend expiry if applicable.
      */
     public async get(key: TKey) {
-        this.updateGC(key);
+        if (this.cache.has(key)) {
+            this.gc.update(key);
+        }
         return this.cache.get(key);
     }
 
@@ -65,9 +116,45 @@ export class PromiseCache<TKey, TResult> {
      * returning true if it was found and removed
      */
     public remove(key: TKey) {
-        const deleted = this.cache.delete(key);
-        this.updateGC(key);
-        return deleted;
+        this.gc.cancel(key);
+        return this.cache.delete(key);
+    }
+
+    /**
+     * Try to add the result of the given asyncFn, without overwriting an existing cache entry at that key.
+     * Returns a Promise for the added or existing async work being done at that key.
+     * @param key - key name where to store the async work
+     * @param asyncFn - the async work to do and store, if not already in progress under the given key
+     */
+    public async addOrGet(
+        key: TKey,
+        asyncFn: () => Promise<TResult>,
+    ): Promise<TResult> {
+        // NOTE: Do not await the Promise returned by asyncFn!
+        // Let the caller do so once we return
+        let promise = this.cache.get(key);
+        if (promise === undefined) {
+            // Wrap in an async lambda in case asyncFn disabled @typescript-eslint/promise-function-async
+            const safeAsyncFn = async () => asyncFn();
+
+            // Start the async work and put the Promise in the cache
+            promise = safeAsyncFn();
+            this.cache.set(key, promise);
+
+            // If asyncFn throws, we may remove the Promise from the cache
+            promise.catch((error) => {
+                if (this.removeOnError(error)) {
+                    this.remove(key);
+                }
+            });
+
+            this.gc.schedule(key);
+        }
+        else {
+            this.gc.update(key);
+        }
+
+        return promise;
     }
 
     /**
@@ -75,7 +162,6 @@ export class PromiseCache<TKey, TResult> {
      * Returns true if the add succeeded, or false if the cache already contained an entry at that key.
      * @param key - key name where to store the async work
      * @param asyncFn - the async work to do and store, if not already in progress under the given key
-     * @throws - If the cache mechanism fails, will throw and nothing will have been added
      */
     public add(
         key: TKey,
@@ -85,43 +171,14 @@ export class PromiseCache<TKey, TResult> {
 
         // This Promise has been stored in the cache and will be fetched and awaited later
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.synchronousAddOrGet(key, asyncFn);
+        this.addOrGet(key, asyncFn);
 
         return !alreadyPresent;
     }
 
     /**
-     * Try to add the result of the given asyncFn, without overwriting an existing cache entry at that key.
-     * Returns a Promise for the added or existing async work being done at that key.
-     * If the cache mechanism fails, the returned Promise will be rejected and the cache will not contain the key.
-     * @param key - key name where to store the async work
-     * @param asyncFn - the async work to do and store, if not already in progress under the given key
-     */
-    public async addOrGet(
-        key: TKey,
-        asyncFn: () => Promise<TResult>,
-    ): Promise<TResult> {
-        return this.synchronousAddOrGet(key, asyncFn);
-    }
-
-    /**
-     * Try to add the given value, without overwriting an existing cache entry at that key.
-     * Returns true if the add succeeded, or false if the cache already contained an entry at that key.
-     * @param key - key name where to store the value
-     * @param value - value to store
-     * @throws - If the cache mechanism fails, will throw and nothing will have been added
-     */
-    public addValue(
-        key: TKey,
-        value: TResult,
-    ): boolean {
-        return this.add(key, async () => value);
-    }
-
-    /**
      * Try to add the given value, without overwriting an existing cache entry at that key.
      * Returns a Promise for the added or existing async work being done at that key.
-     * If the cache mechanism fails, the returned Promise will be rejected and the cache will not contain the key.
      * @param key - key name where to store the async work
      * @param value - value to store
      */
@@ -129,87 +186,19 @@ export class PromiseCache<TKey, TResult> {
         key: TKey,
         value: TResult,
     ): Promise<TResult> {
-        return this.synchronousAddOrGet(key, async () => value);
+        return this.addOrGet(key, async () => value);
     }
 
-    // We want to be able to throw synchronously to callers if something goes wrong in here
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    private synchronousAddOrGet(
+    /**
+     * Try to add the given value, without overwriting an existing cache entry at that key.
+     * Returns true if the add succeeded, or false if the cache already contained an entry at that key.
+     * @param key - key name where to store the value
+     * @param value - value to store
+     */
+    public addValue(
         key: TKey,
-        asyncFn: () => Promise<TResult>,
-    ): Promise<TResult> {
-        // NOTE: Do not await the Promise returned by asyncFn!
-        // Let the caller do so once we return
-        try {
-            let promise = this.cache.get(key);
-            if (promise === undefined) {
-                // Start asyncFn and put the Promise in the cache
-                promise = asyncFn();
-                this.cache.set(key, promise);
-
-                // If asyncFn throws, we may remove the Promise from the cache
-                promise.catch((error) => {
-                    if (this.removeOnError(error)) {
-                        this.remove(key);
-                    }
-                });
-            }
-
-            // Schedule or reschedule garbage collection if required
-            this.updateGC(key);
-
-            return promise;
-        }
-        catch(e) {
-            // Something went horribly wrong. Remove this key and rethrow the error
-            this.remove(key);
-            throw e;  // This will throw to the caller since we're not async
-        }
-        }
-    }
-
-    private updateGC(key: TKey) {
-        // If the key is not present in the cache, we shouldn't have a pending GC
-        if (!this.cache.has(key)) {
-            this.gcTimeouts.delete(key);
-            return;
-        }
-
-        switch (this.expiry.policy) {
-            case "indefinite": {
-                return;
-            }
-            case "absolute": {
-                // Only schedule GC if it's not already pending
-                if (!this.gcTimeouts.has(key)) {
-                    setTimeout(
-                        () => this.remove(key),
-                        this.expiry.durationMs,
-                    );
-                }
-                return;
-            }
-            case "sliding": {
-                // Cancel any existing GC Timeout
-                const timeout = this.gcTimeouts.get(key);
-                if (timeout !== undefined) {
-                    clearTimeout(timeout);
-                }
-
-                // Schedule GC and save the Timeout ID so we're ready to cancel it to extend the expiration
-                this.gcTimeouts.set(
-                    key,
-                    setTimeout(
-                        () => this.remove(key),
-                        this.expiry.durationMs,
-                    ),
-                );
-                return;
-            }
-            default: {
-                // Help tsc ensure the completeness of the switch statement
-                return assert.fail(new Error(`Unexpected object: ${this.expiry}`));
-            }
-        }
+        value: TResult,
+    ): boolean {
+        return this.add(key, async () => value);
     }
 }
