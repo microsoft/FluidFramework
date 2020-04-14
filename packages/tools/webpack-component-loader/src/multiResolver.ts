@@ -99,7 +99,6 @@ export class MultiUrlResolver implements IExperimentalUrlResolver{
                     siteUrl: `https://${this.options.server}`,
                 };
                 return (this.urlResolver as OdspUrlResolver).createCreateNewRequest(this.rawUrl, params);
-                break;
 
             default: // Local
                 return (this.urlResolver as TestResolver).createCreateNewRequest();
