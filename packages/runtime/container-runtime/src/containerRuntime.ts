@@ -963,13 +963,18 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         }
     }
 
-    public async createComponent(idOrPkg: string, maybePkg?: string | string[]) {
+    /**
+     * @deprecated
+     * Remove once issue #1756 is closed
+     */
+    public async createComponent(idOrPkg: string, maybePkg: string | string[]) {
         const id = maybePkg === undefined ? uuid() : idOrPkg;
         const pkg = maybePkg === undefined ? idOrPkg : maybePkg;
         return this._createComponentWithProps(pkg, undefined, id);
     }
 
-    public async _createComponentWithProps(pkg: string | string[], props: any, id: string): Promise<IComponentRuntime> {
+    public async _createComponentWithProps(pkg: string | string[], props?: any, id?: string):
+    Promise<IComponentRuntime> {
         return this.createComponentContext(Array.isArray(pkg) ? pkg : [pkg], props, id).realize();
     }
 
