@@ -199,6 +199,10 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         }
     }
 
+    /**
+     * @deprecated
+     * Remove once issue #1756 is closed
+     */
     public async createComponent(pkgOrId: string | undefined, pkg?: string, props?: any): Promise<IComponentRuntime> {
         // pkgOrId can't be undefined if pkg is undefined
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

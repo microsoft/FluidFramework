@@ -10,7 +10,6 @@ import {
 } from "@microsoft/fluid-aqueduct";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { SharedDirectory } from "@microsoft/fluid-map";
-import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
@@ -51,11 +50,8 @@ export class Pond extends PrimedComponent implements IComponentHTMLView {
     }
 
     async createSubComponent<T extends PrimedComponent>(rootKey: string, pkgName: string, props?: any) {
-        const componentRuntime: IComponentRuntime = await this.context.createComponent(undefined, pkgName, props);
-        componentRuntime.attach();
-        const response = componentRuntime.request({url: "/"});
-        const responseValue = await this.asComponent<T>(response);
-        this.root.set(rootKey, responseValue.handle);
+        const component =  await this.createAndAttachComponent<T>(pkgName, props);
+        this.root.set(rootKey, component.handle);
     }
 
     protected async componentHasInitialized() {
