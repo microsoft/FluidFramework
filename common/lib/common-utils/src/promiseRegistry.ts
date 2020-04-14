@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-
 /**
  * Three supported expiry policies:
  * - indefinite: entries don't expire and must be explicitly removed
@@ -66,7 +64,7 @@ export class PromiseCache<TKey, TResult> {
      * Remove the Promise for the given key,
      * returning true if it was found and removed
      */
-    public remove(key: TKey){
+    public remove(key: TKey) {
         const deleted = this.cache.delete(key);
         this.updateGC(key);
         return deleted;
@@ -134,7 +132,7 @@ export class PromiseCache<TKey, TResult> {
         return this.synchronousAddOrGet(key, async () => value);
     }
 
-    // We want to be able to throw synchronously to callers if something goes wrong with the cache mechanism itself
+    // We want to be able to throw synchronously to callers if something goes wrong in here
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     private synchronousAddOrGet(
         key: TKey,
@@ -165,7 +163,8 @@ export class PromiseCache<TKey, TResult> {
         catch(e) {
             // Something went horribly wrong. Remove this key and rethrow the error
             this.remove(key);
-            throw e;  // Actually throw to the caller
+            throw e;  // This will throw to the caller since we're not async
+        }
         }
     }
 
