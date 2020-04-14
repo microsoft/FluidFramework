@@ -23,6 +23,7 @@ import { SharedComponent } from "./sharedComponent";
  * and registering channels with the runtime any new DDS that is set on the root
  * will automatically be registered.
  */
+
 export abstract class PrimedComponent<O extends IComponent = object, R extends IComponent = object>
     extends SharedComponent<O,R>
 {

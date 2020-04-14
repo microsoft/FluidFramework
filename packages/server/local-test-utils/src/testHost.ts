@@ -17,8 +17,6 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import {
-    IComponentContext,
-    IComponentRuntime,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
@@ -46,10 +44,6 @@ export class TestRootComponent extends PrimedComponent implements IComponentRunn
         package: TestRootComponent.type,
         config: {},
     };
-
-    constructor(runtime: IComponentRuntime, context: IComponentContext) {
-        super(runtime, context);
-    }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public run = () => Promise.resolve();

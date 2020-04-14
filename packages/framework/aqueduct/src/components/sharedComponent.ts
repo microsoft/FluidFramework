@@ -21,6 +21,14 @@ import { IDirectory } from "@microsoft/fluid-map";
 import * as uuid from "uuid/v4";
 import { serviceRoutePathRoot } from "../containerServices";
 
+export type SharedComponentCtor<O extends IComponent,R extends IComponent> =
+    new <O,R>
+    (
+        runtime: IComponentRuntime,
+        context: IComponentContext,
+        providers: AsyncComponentProvider<keyof O & keyof IComponent, keyof R & keyof IComponent>,
+    ) => SharedComponent;
+
 /**
  * This is a bare-bones base class that does basic setup and enables for factory on an initialize call.
  * You probably don't want to inherit from this component directly unless you are creating another base component class
@@ -47,7 +55,8 @@ export abstract class SharedComponent<O extends IComponent = object, R extends I
     public constructor(
         protected readonly runtime: IComponentRuntime,
         protected readonly context: IComponentContext,
-        protected readonly providers: AsyncComponentProvider<keyof O & keyof IComponent, keyof R & keyof IComponent>,
+        // eslint-disable-next-line max-len
+        protected readonly providers: AsyncComponentProvider<keyof O & keyof IComponent, keyof R & keyof IComponent> = ({} as any),
     ) {
         super();
         this.innerHandle = new ComponentHandle(this, this.url, runtime.IComponentHandleContext);

@@ -3,20 +3,32 @@
  * Licensed under the MIT License.
  */
 
-import { DirectoryFactory, MapFactory, SharedDirectory, SharedMap } from "@microsoft/fluid-map";
 import {
-    IComponentContext,
-    IComponentRuntime,
+    IComponent,
+} from "@microsoft/fluid-component-core-interfaces";
+import {
+    DirectoryFactory,
+    MapFactory,
+    SharedDirectory,
+    SharedMap,
+} from "@microsoft/fluid-map";
+import {
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-import { SharedComponent } from "../components";
+import { ComponentSymbolProvider } from "@microsoft/fluid-synthesize";
+
+import { SharedComponentCtor } from "../components";
 import { SharedComponentFactory } from "./sharedComponentFactory";
 
-export class PrimedComponentFactory extends SharedComponentFactory {
+export class PrimedComponentFactory<O extends IComponent = object, R extends IComponent = object>
+    extends SharedComponentFactory<O,R>
+{
     constructor(
         type: string,
-        ctor: new (runtime: IComponentRuntime, context: IComponentContext) => SharedComponent,
+        ctor: SharedComponentCtor<O,R>,
+        optionalProviders: ComponentSymbolProvider<keyof O & keyof IComponent>,
+        requiredProviders: ComponentSymbolProvider<keyof R & keyof IComponent>,
         sharedObjects: readonly ISharedObjectFactory[] = [],
         registryEntries?: NamedComponentRegistryEntries,
         onDemandInstantiation = true,
@@ -34,6 +46,14 @@ export class PrimedComponentFactory extends SharedComponentFactory {
             mergedObjects.push(SharedMap.getFactory());
         }
 
-        super(type, ctor, mergedObjects, registryEntries, onDemandInstantiation);
+        super(
+            type,
+            ctor,
+            mergedObjects,
+            optionalProviders,
+            requiredProviders,
+            registryEntries,
+            onDemandInstantiation,
+        );
     }
 }
