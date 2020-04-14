@@ -1,5 +1,5 @@
 {
-  "name": "@microsoft/fluid-last-edited",
+  "name": "@microsoft/fluid-last-edited-experimental",
   "version": "0.15.0",
   "description": "Tracks the last edited information in the Container.",
   "repository": "microsoft/FluidFramework",
