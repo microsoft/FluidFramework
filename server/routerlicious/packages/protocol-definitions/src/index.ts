@@ -15,7 +15,3 @@ export * from "./users";
 export * from "./tokens";
 export * from "./scopes";
 export * from "./sockets";
-export * from "./eventEmitterWithErrorHandling";
-export * from "./eventForwarder";
-export * from "./events";
-export * from "./typedEventEmitter";

@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { Deferred, doIfNotDisposed } from "@microsoft/fluid-common-utils";
+import { Deferred, doIfNotDisposed, EventForwarder, TypedEventEmitter } from "@microsoft/fluid-common-utils";
 import {
     ConnectionState,
     ICommittedProposal,
@@ -14,8 +14,7 @@ import {
     ISequencedClient,
     ISequencedDocumentMessage,
     ISequencedProposal,
-    EventForwarder,
-    TypedEventEmitter,
+
 } from "@microsoft/fluid-protocol-definitions";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-internal-modules

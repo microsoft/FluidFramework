@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 /*!
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
@@ -6,7 +5,7 @@
 
 import { ITree, ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { IChannel, ISharedObjectServices } from "@microsoft/fluid-runtime-definitions";
-import { IErrorEvent, IEventThisPlaceHolder, IEventProvider } from "@microsoft/fluid-common-definitions";
+import { IErrorEvent, IEventProvider } from "@microsoft/fluid-common-definitions";
 
 declare module "@microsoft/fluid-container-definitions" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -20,8 +19,8 @@ export interface IProvideSharedObject {
 }
 
 export interface ISharedObjectEvents extends IErrorEvent  {
-    (event: "pre-op" | "op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void);
-    (event: "disconnected" | "connected" | "processed", listener: (target: IEventThisPlaceHolder) => void);
+    (event: "pre-op" | "op", listener: (op: ISequencedDocumentMessage, local: boolean) => void);
+    (event: "disconnected" | "connected" | "processed", listener: () => void);
 }
 
 /**
