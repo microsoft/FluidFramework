@@ -8,7 +8,7 @@
 - [PrimedComponent and SharedComponent interface changes](#PrimedComponent-and-Shared-Component-interface-changes)
 - [SimpleModuleInstantiationFactory renamed and SimpleContainerRuntimeFactory deprecated](#SimpleModuleInstantiationFactory-renamed-and-SimpleContainerRuntimeFactory-deprecated)
 - [Change to the ErrorType enum on IError](#Change-to-the-ErrorType-enum-on-IError)
-- [Changes to createComponent in IComponentContext and IHostRuntime](#Change-to-createComponent-in-IComponentContext-and-IHostRuntime)
+- [Changes to createComponent in IComponentContext, IHostRuntime, and ComponentRuntime](#Change-to-createComponent-in-IComponentContext-IHostRuntime-and-ComponentRuntime)
 
 ### View interfaces moved to separate package
 
@@ -86,13 +86,10 @@ Users can also pass in an optional function to get the value from their director
 Corresponding interfaces have been introduced as well: `IGenericNetworkError`, `IAccessDeniedError`, and `IFileNotFoundError`;
 they are functionally identical to the former `IConnectionError`, just differentiated for ease of use.
 
-### Changes to createComponent in IComponentContext and IHostRuntime
+### Changes to createComponent in IComponentContext, IHostRuntime, and ContainerRuntime
 
-The createComponent call in IHostRuntime is now deprecated, affecting ContainerRuntime and any other classes that implement that interface. Instead, users should take advantage of the new createComponentWithProps call. The two main differences here are:
-1) createComponentWithProps no longer takes an ID parameter as we want to move away from component set IDs and instead have them be set by the runtime. Components should instead be referred to by their handles.
-2) createComponentWithProps takes an optional props parameter that will be passed to the new component during initialization
-
-The createComponent call in IComponentContext is now deprecated. Instead, users should either use createComponentWithProps in IHostRuntime to add component from the runtime or the createAndAttachComponent call available in SharedComponent to add them from within a component 
+The createComponent call in IHostRuntime is now deprecated, affecting ContainerRuntime and any other classes that implement that interface.
+The createComponent call in IComponentContext is now deprecated. Instead, users should either use the createAndAttachComponent call available in SharedComponent to add them from within a component or _createComponentWithProps in IHostRuntime to add component from the runtime.
 
 ## 0.15 Breaking Changes
 

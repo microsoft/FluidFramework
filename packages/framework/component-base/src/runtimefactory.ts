@@ -70,7 +70,7 @@ export class RuntimeFactory implements IRuntimeFactory {
         // On first boot create the base component
         if (!runtime.existing && this.defaultComponent.type) {
             await runtime
-                .createComponentWithProps(this.defaultComponent.type)
+                ._createComponentWithProps(this.defaultComponent.type)
                 .then((componentRuntime) => { componentRuntime.attach(); })
                 .catch((error) => { context.error(error); });
         }

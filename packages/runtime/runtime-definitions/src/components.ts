@@ -401,13 +401,6 @@ export interface IHostRuntime extends
     createComponent(pkgOrId: string, pkg?: string | string[]): Promise<IComponentRuntime>;
 
     /**
-     * Creates a new component with optional props passed in.
-     * @param pkg - Package name of the component
-     * @param props - optional properties to be passed to the instantiateComponent thru the context
-     */
-    createComponentWithProps(pkg: string | string[], props?: any): Promise<IComponentRuntime>;
-
-    /**
      * Creates a new component with props
      * @param pkg - Package name of the component
      * @param props - properties to be passed to the instantiateComponent thru the context
@@ -417,7 +410,7 @@ export interface IHostRuntime extends
      * Further change to the component create flow to split the local create vs remote instantiate make this deprecated.
      * @internal
      */
-    _createComponentWithProps(pkg: string | string[], props: any, id?: string): Promise<IComponentRuntime>;
+    _createComponentWithProps(pkg: string | string[], props?: any, id?: string): Promise<IComponentRuntime>;
 
     /**
      * Creates a new component using an optional realization function.  This API does not allow specifying
