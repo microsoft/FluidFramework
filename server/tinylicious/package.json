@@ -10,6 +10,7 @@
   "author": "Microsoft",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
+  "bin": "dist/index.js",
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
     "build:compile": "npm run tsc",
@@ -25,7 +26,6 @@
     "start:debug": "node --inspect=0.0.0.0:9229 dist/index.js",
     "tsc": "tsc"
   },
-  "bin": "dist/index.js",
   "dependencies": {
     "@microsoft/fluid-core-utils": "^0.13.17538",
     "@microsoft/fluid-gitresources": "^0.1004.0-0",
