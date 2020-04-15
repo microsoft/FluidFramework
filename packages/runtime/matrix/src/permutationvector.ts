@@ -44,7 +44,6 @@ export class PermutationSegment extends BaseSegment {
     }
 
     public toJSONObject() {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         return this.cachedLength;
     }
 

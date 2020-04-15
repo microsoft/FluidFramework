@@ -8,7 +8,6 @@ import {
     FileMode,
     ISequencedDocumentMessage,
     ITree,
-    ITreeEntry,
     TreeEntry,
 } from "@microsoft/fluid-protocol-definitions";
 import {
@@ -18,7 +17,6 @@ import {
     IChannelAttributes,
 } from "@microsoft/fluid-runtime-definitions";
 import { makeHandlesSerializable, parseHandles, SharedObject } from "@microsoft/fluid-shared-object-base";
-import { fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
 import { ObjectStoragePartition } from "@microsoft/fluid-runtime-utils";
 import { IMatrixProducer, IMatrixConsumer, IMatrixReader } from "@tiny-calc/nano";
 import { debug } from "./debug";
@@ -27,6 +25,7 @@ import { PermutationVector } from "./permutationvector";
 import { SparseArray2D } from "./sparsearray2d";
 import { SharedMatrixFactory } from "./runtime";
 import { Handle } from "./handletable";
+import { deserializeBlob, serializeBlob } from "./serialization";
 
 const enum SnapshotPath {
     rows = "rows",
@@ -202,7 +201,10 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
                     type: TreeEntry[TreeEntry.Tree],
                     value: this.cols.snapshot(this.runtime, this.handle),
                 },
-                this.snapshotCells(),
+                serializeBlob(this.runtime, this.handle, SnapshotPath.cells, [
+                    this.cells.snapshot(),
+                    this.pendingCliSeqs.snapshot(),
+                ]),
             ],
             id: null,   // eslint-disable-line no-null/no-null
         };
@@ -241,7 +243,10 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
         try {
             await this.rows.load(this.runtime, new ObjectStoragePartition(storage, SnapshotPath.rows), branchId);
             await this.cols.load(this.runtime, new ObjectStoragePartition(storage, SnapshotPath.cols), branchId);
-            this.loadCells(await storage.read(SnapshotPath.cells));
+            const [cellData, pendingCliSeqData] = await deserializeBlob(this.runtime, storage, SnapshotPath.cells);
+
+            this.cells = SparseArray2D.load(cellData);
+            this.pendingCliSeqs = SparseArray2D.load(pendingCliSeqData);
         } catch (error) {
             this.logger.sendErrorEvent({ eventName: "MatrixLoadFailed" }, error);
         }
@@ -350,37 +355,6 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
         (op as any).target = dimension;
 
         this.submitLocalMessage(op);
-    }
-
-    // Constructs an ITreeEntry for the cell data.
-    private snapshotCells(): ITreeEntry {
-        const chunk = [this.cells.snapshot(), this.pendingCliSeqs.snapshot()];
-
-        const serializer = this.runtime.IComponentSerializer;
-        return {
-            mode: FileMode.File,
-            path: SnapshotPath.cells,
-            type: TreeEntry[TreeEntry.Blob],
-            value: {
-                contents: serializer !== undefined
-                    ? serializer.stringify(chunk, this.runtime.IComponentHandleContext, this.handle)
-                    : JSON.stringify(chunk),
-                encoding: "utf-8",
-            },
-        };
-    }
-
-    // Loads cell data from the given Base64 encoded chunk.
-    private loadCells(chunk: string) {
-        const utf8 = fromBase64ToUtf8(chunk);
-
-        const serializer = this.runtime.IComponentSerializer;
-        const cellData = serializer !== undefined
-            ? serializer.parse(utf8, this.runtime.IComponentHandleContext)
-            : JSON.parse(utf8);
-
-        this.cells = SparseArray2D.load(cellData[0]);
-        this.pendingCliSeqs = SparseArray2D.load(cellData[1]);
     }
 
     // Invoked by PermutationVector to notify IMatrixConsumers of row insertion/deletions.
