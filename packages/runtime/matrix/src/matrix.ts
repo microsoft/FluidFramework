@@ -112,10 +112,7 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
         assert(0 <= row && row < this.numRows
             && 0 <= col && col < this.numCols);
 
-        const { currentSeq: rowRefSeq, clientId: rowClientId } = this.rows.getCollabWindow();
-        const { currentSeq: colRefSeq, clientId: colClientId } = this.cols.getCollabWindow();
-
-        this.setCellCore(row, rowRefSeq, rowClientId, col, colRefSeq, colClientId, value);
+        this.setCellCore(row, col, value);
 
         // Avoid reentrancy by raising change notifications after the op is queued.
         for (const consumer of this.consumers.values()) {
@@ -133,15 +130,12 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
             && (1 <= numCols && numCols <= (this.numCols - col))
             && (numRows <= (this.numRows - row)));
 
-        const { currentSeq: rowRefSeq, clientId: rowClientId } = this.rows.getCollabWindow();
-        const { currentSeq: colRefSeq, clientId: colClientId } = this.cols.getCollabWindow();
-
         const endCol = col + numCols;
         let r = row;
         let c = col;
 
         for (const value of values) {
-            this.setCellCore(r, rowRefSeq, rowClientId, c, colRefSeq, colClientId, value);
+            this.setCellCore(r, c, value);
 
             if (++c === endCol) {
                 c = col;
@@ -157,11 +151,7 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
 
     private setCellCore(
         row: number,
-        rowRefSeq: number,
-        rowClientId: number,
         col: number,
-        colRefSeq: number,
-        colClientId: number,
         value: T,
     ) {
         const rowHandle = this.rows.getAllocatedHandle(row);
