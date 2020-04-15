@@ -35,7 +35,8 @@ class QuorumHeap {
     private summarizerCount = 0;
 
     public addClient(clientId: string, client: ISequencedClient) {
-        const isSummarizer = client.client.details.type === "summarizer";
+        // Have to undefined-check client.details for backwards compatibility
+        const isSummarizer = client.client.details?.type === "summarizer";
         const heapNode = this.heap.add({ clientId, sequenceNumber: client.sequenceNumber, isSummarizer });
         this.heapMembers.set(clientId, heapNode);
         if (isSummarizer) {
