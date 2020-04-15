@@ -47,6 +47,7 @@
   "dependencies": {
     "@microsoft/fluid-server-lambdas": "^0.1004.1-0",
     "@microsoft/fluid-server-memory-orderer": "^0.1004.1-0",
+    "@microsoft/fluid-server-services-client": "^0.1004.1-0",
     "@microsoft/fluid-server-services-core": "^0.1004.1-0",
     "@microsoft/fluid-server-test-utils": "^0.1004.1-0"
   },
