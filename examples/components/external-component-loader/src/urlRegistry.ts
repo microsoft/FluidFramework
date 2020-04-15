@@ -83,20 +83,11 @@ export class UrlRegistry implements IComponentRegistry {
         if (!this.urlRegistryMap.has(name)
             && (name.startsWith("http://") || name.startsWith("https://"))) {
 
-            // eslint-disable-next-line @typescript-eslint/no-misused-promises, no-async-promise-executor
-            const entryPointPromise = new Promise<any>(async (resolve, reject) => {
-                if (!this.loadingPackages.has(name)) {
-                    this.loadingPackages.set(name, this.loadEntrypoint(name));
-                }
-
-                const entrypoint = await this.loadingPackages.get(name);
-
-                if (entrypoint === undefined) {
-                    reject(`UrlRegistry: ${name}: Entrypoint is undefined`);
-                } else {
-                    resolve(entrypoint);
-                }
-            });
+            let entryPointPromise = this.loadingPackages.get(name);
+            if (entryPointPromise === undefined) {
+                entryPointPromise = this.loadEntrypoint(name);
+                this.loadingPackages.set(name, entryPointPromise);
+            }
 
             this.urlRegistryMap.set(
                 name,
@@ -131,7 +122,7 @@ export class UrlRegistry implements IComponentRegistry {
 
             const errors: Error[] = [];
             for (const scriptLoadPromise of scriptLoadPromises) {
-                await scriptLoadPromise.catch(errors.push);
+                await scriptLoadPromise.catch((error) => { errors.push(error); });
             }
             if (errors.length > 0) {
                 throw new Error(errors.join("\n"));
