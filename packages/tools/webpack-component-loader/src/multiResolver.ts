@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IExperimentalUrlResolver, IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import { TestResolver } from "@microsoft/fluid-local-driver";
