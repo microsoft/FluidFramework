@@ -22,7 +22,8 @@ import {
     DependencyContainer,
 } from "@microsoft/fluid-synthesize";
 
-import { SharedComponent, AqueductComponentCtor } from "../components";
+import { SharedComponent } from "../components";
+import { AqueductComponentCtor } from "../types";
 
 export class SharedComponentFactory<O extends IComponent, R extends IComponent>
 implements IComponentFactory, Partial<IProvideComponentRegistry>

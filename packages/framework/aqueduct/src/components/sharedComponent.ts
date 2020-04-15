@@ -20,13 +20,6 @@ import { IDirectory } from "@microsoft/fluid-map";
 import { v4 as uuid } from "uuid";
 import { serviceRoutePathRoot } from "../containerServices";
 
-export type AqueductComponentCtor<O extends IComponent,R extends IComponent,T extends SharedComponent<O,R>> =
-    new (
-        runtime: IComponentRuntime,
-        context: IComponentContext,
-        providers: AsyncComponentProvider<ComponentKey<O>,ComponentKey<R>>,
-    ) => T;
-
 /**
  * This is a bare-bones base class that does basic setup and enables for factory on an initialize call.
  * You probably don't want to inherit from this component directly unless you are creating another base component class

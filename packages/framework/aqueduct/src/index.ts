@@ -17,3 +17,4 @@ export * from "./componentFactories";
 export * from "./components";
 export * from "./containerRuntimeFactories";
 export * from "./containerServices";
+export * from "./types";

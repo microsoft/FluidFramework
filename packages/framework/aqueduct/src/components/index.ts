@@ -5,7 +5,4 @@
 
 export { BlobHandle } from "./blobHandle";
 export { PrimedComponent } from "./primedComponent";
-export {
-    SharedComponent,
-    AqueductComponentCtor,
-} from "./sharedComponent";
+export { SharedComponent } from "./sharedComponent";
