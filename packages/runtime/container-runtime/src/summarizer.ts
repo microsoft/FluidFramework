@@ -178,7 +178,7 @@ export class RunningSummarizer implements IDisposable {
     public get disposed() { return this._disposed; }
 
     private _disposed = false;
-    private summarizing: Deferred<void> | undefined;
+    private summarizing = false;
     private summarizeCount: number = 0;
     private tryWhileSummarizing = false;
     private readonly summarizeTimer: Timer;
@@ -297,7 +297,7 @@ export class RunningSummarizer implements IDisposable {
     }
 
     private trySummarize(reason: string): { broadcastP: Promise<void> } {
-        if (this.summarizing !== undefined) {
+        if (this.summarizing === true) {
             // We can't summarize if we are already
             this.tryWhileSummarizing = true;
             return { broadcastP: Promise.resolve() };
@@ -305,19 +305,18 @@ export class RunningSummarizer implements IDisposable {
 
         // GenerateSummary could take some time
         // mark that we are currently summarizing to prevent concurrent summarizing
-        this.summarizing = new Deferred();
+        this.summarizing = true;
+        const broadcastDeferred = new Deferred<void>();
 
         (async () => {
-            const result = await this.summarize(reason, false);
+            const result = await this.summarize(reason, false, broadcastDeferred);
             if (result === false) {
                 // On nack, try again in safe mode
-                await this.summarize(reason, true);
+                await this.summarize(reason, true, broadcastDeferred);
             }
         })().finally(() => {
-            if (this.summarizing !== undefined) {
-                this.summarizing.resolve();
-                this.summarizing = undefined;
-            }
+            this.summarizing = false;
+            broadcastDeferred.resolve();
             if (this.tryWhileSummarizing) {
                 this.tryWhileSummarizing = false;
                 this.heuristics.run();
@@ -326,7 +325,7 @@ export class RunningSummarizer implements IDisposable {
             this.logger.sendErrorEvent({ eventName: "UnexpectedSummarizeError" }, error);
         });
 
-        return { broadcastP: this.summarizing.promise };
+        return { broadcastP: broadcastDeferred.promise };
     }
 
     /**
@@ -335,18 +334,22 @@ export class RunningSummarizer implements IDisposable {
      * @param reason - reason for summarizing
      * @param safe - true to generate summary in safe mode
      */
-    private async summarize(reason: string, safe: boolean): Promise<boolean | undefined> {
+    private async summarize(reason: string, safe: boolean, broadcastDef: Deferred<void>): Promise<boolean | undefined> {
         this.summarizeTimer.start();
 
         try {
-            return this.summarizeCore(reason, safe);
+            return this.summarizeCore(reason, safe, broadcastDef);
         } finally {
             this.summarizeTimer.clear();
             this.pendingAckTimer.clear();
         }
     }
 
-    private async summarizeCore(reason: string, safe: boolean): Promise<boolean | undefined> {
+    private async summarizeCore(
+        reason: string,
+        safe: boolean,
+        broadcastDef: Deferred<void>,
+    ): Promise<boolean | undefined> {
         // Wait to generate and send summary
         const summaryData = await this.generateSummaryWithLogging(reason, safe);
         if (!summaryData || !summaryData.submitted) {
@@ -364,7 +367,7 @@ export class RunningSummarizer implements IDisposable {
 
         // Wait for broadcast
         const summaryOp = await Promise.race([summary.waitBroadcast(), pendingTimeoutP]);
-        this.summarizing?.resolve(); // broadcast means client is free to close
+        broadcastDef.resolve(); // broadcast means client is free to close
         if (!summaryOp) {
             return undefined;
         }
