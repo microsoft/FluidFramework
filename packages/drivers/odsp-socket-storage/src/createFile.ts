@@ -26,7 +26,7 @@ import { getOrigin } from "./vroom";
 export interface INewFileInfo {
     siteUrl: string;
     driveId: string;
-    filename: string;
+    fileName: string;
     filePath: string;
     callback?(itemId: string, filename: string): void;
 }
@@ -44,7 +44,7 @@ const isInvalidFileName = (fileName: string): boolean => {
 };
 
 export function getKeyFromFileInfo(fileInfo: INewFileInfo): string {
-    return `${fileInfo.siteUrl}:${fileInfo.driveId}:${fileInfo.filePath}:${fileInfo.filename}`;
+    return `${fileInfo.siteUrl}:${fileInfo.driveId}:${fileInfo.filePath}:${fileInfo.fileName}`;
 }
 
 /**
@@ -68,7 +68,7 @@ export async function createNewFluidFile(
         return responseP;
     }
     // Check for valid filename before the request to create file is actually made.
-    if (isInvalidFileName(newFileInfo.filename)) {
+    if (isInvalidFileName(newFileInfo.fileName)) {
         throw new Error("Invalid filename. Please try again.");
     }
     let containerSnapshot: ISnapshotTree | undefined;
@@ -109,7 +109,7 @@ async function createNewFluidFileHelper(
     const fileResponse = await getWithRetryForTokenRefresh(async (refresh: boolean) => {
         const storageToken = await getStorageToken(newFileInfo.siteUrl, refresh);
 
-        const encodedFilename = encodeURIComponent(`${newFileInfo.filename}.fluid`);
+        const encodedFilename = encodeURIComponent(`${newFileInfo.fileName}.fluid`);
 
         let fetchResponse;
         if (containerSnapshot) {
@@ -137,7 +137,7 @@ async function createNewFluidFileHelper(
                 itemId: content.itemId,
                 siteUrl: newFileInfo.siteUrl,
                 driveId: newFileInfo.driveId,
-                filename: newFileInfo.filename,
+                filename: newFileInfo.fileName,
             };
         } else {
             const initialUrl =

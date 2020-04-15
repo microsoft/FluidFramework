@@ -57,6 +57,7 @@
     "@microsoft/fluid-container-loader": "^0.15.0",
     "@microsoft/fluid-container-runtime": "^0.15.0",
     "@microsoft/fluid-driver-definitions": "^0.15.0",
+    "@microsoft/fluid-driver-utils": "^0.15.0",
     "@microsoft/fluid-local-driver": "^0.15.0",
     "@microsoft/fluid-local-test-utils": "^0.15.0",
     "@microsoft/fluid-odsp-driver": "^0.15.0",

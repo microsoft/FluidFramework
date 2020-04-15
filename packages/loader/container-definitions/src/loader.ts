@@ -11,6 +11,7 @@ import {
     IQuorum,
     ISequencedDocumentMessage,
 } from "@microsoft/fluid-protocol-definitions";
+import { IResolvedUrl } from "@microsoft/fluid-driver-definitions";
 import { IFluidCodeDetails, IFluidModule } from "./chaincode";
 import { IDeltaManager } from "./deltas";
 
@@ -41,6 +42,11 @@ export interface IContainer extends EventEmitter {
 export interface IExperimentalContainer extends IContainer {
 
     isExperimentalContainer: true;
+
+    /**
+     * Represents the resolved url to the container.
+     */
+    resolvedUrl: IResolvedUrl | undefined;
 
     /**
      * Flag indicating if the given container has been attached to a host service.

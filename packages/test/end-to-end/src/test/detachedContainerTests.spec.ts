@@ -16,7 +16,7 @@ import { IDocumentServiceFactory } from "@microsoft/fluid-driver-definitions";
 describe("Detached Container", () => {
     let testDeltaConnectionServer: ILocalDeltaConnectionServer;
     let testResolver: TestResolver;
-    const testRequest: IRequest = { url: "" };
+    let testRequest: IRequest;
     const pkg: IFluidCodeDetails = {
         package: "@fluid-internal/client-api",
         config: {},
@@ -27,7 +27,8 @@ describe("Detached Container", () => {
 
     beforeEach(async () => {
         testDeltaConnectionServer = LocalDeltaConnectionServer.create();
-        testResolver = new TestResolver("documentId", testDeltaConnectionServer);
+        testResolver = new TestResolver();
+        testRequest = testResolver.createCreateNewRequest();
         serviceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
 
         codeLoader = new API.CodeLoader({ generateSummaries: false });
@@ -125,7 +126,8 @@ describe("Detached Container", () => {
             {},
             new Map<string, IProxyLoaderFactory>(),
         );
-        const container2 = await loader2.resolve(testRequest);
+        const container2 = await loader2.resolve({url:
+            (await testResolver.requestUrl(container.resolvedUrl, {url : ""})).value});
         const response2 = await container2.request({ url: `/${testCompId}` });
         const testComponent2 = response2.value as API.Document;
         assert.equal(testComponent2.runtime.isAttached, true, "Component should be attached!!");
