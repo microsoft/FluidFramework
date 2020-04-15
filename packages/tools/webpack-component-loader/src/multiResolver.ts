@@ -1,11 +1,10 @@
 import { IExperimentalUrlResolver, IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions";
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import { TestResolver } from "@microsoft/fluid-local-driver";
 import { InsecureUrlResolver } from "@microsoft/fluid-test-runtime-utils";
 // eslint-disable-next-line import/no-internal-modules
 import * as uuid from "uuid/v4";
 import { getRandomName } from "@microsoft/fluid-server-services-client";
-import { IOdspNewFileParams } from "@microsoft/fluid-odsp-driver";
 import { RouteOptions, IDevServerUser } from "./loader";
 import { OdspUrlResolver } from "./odspUrlResolver";
 
@@ -72,8 +71,17 @@ export class MultiUrlResolver implements IExperimentalUrlResolver{
         this.urlResolver = getUrlResolver(documentId, options);
     }
 
-    async requestUrl(resolvedUrl: IResolvedUrl, request: IRequest): Promise<string> {
-        return `${this.rawUrl}/${this.documentId}/${request.url}`;
+    async requestUrl(resolvedUrl: IResolvedUrl, request: IRequest): Promise<IResponse> {
+        let url = request.url;
+        if (url.startsWith("/")) {
+            url = url.substr(1);
+        }
+        const response: IResponse = {
+            mimeType: "text/plain",
+            value: `${this.rawUrl}/${this.documentId}/${url}`,
+            status: 200,
+        };
+        return response;
     }
 
     async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
@@ -88,17 +96,15 @@ export class MultiUrlResolver implements IExperimentalUrlResolver{
             case "r11s":
             case "docker":
             case "tinylicious":
-                return (this.urlResolver as InsecureUrlResolver).createCreateNewRequest(this.rawUrl, fileName);
+                return (this.urlResolver as InsecureUrlResolver).createCreateNewRequest(fileName);
 
             case "spo":
             case "spo-df":
-                const params: IOdspNewFileParams = {
-                    fileName,
-                    driveId: this.options.driveId,
-                    filePath: "/r11s/",
-                    siteUrl: `https://${this.options.server}`,
-                };
-                return (this.urlResolver as OdspUrlResolver).createCreateNewRequest(this.rawUrl, params);
+                return (this.urlResolver as OdspUrlResolver).createCreateNewRequest(
+                    `https://${this.options.server}`,
+                    this.options.driveId,
+                    "/r11s/",
+                    fileName);
 
             default: // Local
                 return (this.urlResolver as TestResolver).createCreateNewRequest();

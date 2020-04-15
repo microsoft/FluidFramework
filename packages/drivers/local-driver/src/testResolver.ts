@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
     IFluidResolvedUrl,
     IResolvedUrl,
@@ -53,8 +53,17 @@ export class TestResolver implements IUrlResolver, IExperimentalUrlResolver {
         return resolved;
     }
 
-    public async requestUrl(resolvedUrl: IResolvedUrl, request: IRequest): Promise<string> {
-        return `https://localhost:3000/${this.tenantId}/${this.id}${request.url}`;
+    public async requestUrl(resolvedUrl: IResolvedUrl, request: IRequest): Promise<IResponse> {
+        let url = request.url;
+        if (url.startsWith("/")) {
+            url = url.substr(1);
+        }
+        const response: IResponse = {
+            mimeType: "text/plain",
+            value: `https://localhost:3000/${this.tenantId}/${this.id}/${request.url}`,
+            status: 200,
+        };
+        return response;
     }
 
     public createCreateNewRequest(): IRequest {

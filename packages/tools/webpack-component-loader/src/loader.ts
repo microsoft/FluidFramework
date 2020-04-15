@@ -200,7 +200,7 @@ export async function start(
 
     // Construct a request
     const url = window.location.href;
-    const urlResolver = new MultiUrlResolver(url, documentId, options);
+    const urlResolver = new MultiUrlResolver(window.location.origin, finalDocId, options);
 
     // Create Package
     const scriptIds: string[] = [];

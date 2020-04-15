@@ -5,7 +5,7 @@
 
 import * as assert from "assert";
 import { parse } from "url";
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
     IFluidResolvedUrl,
     IResolvedUrl,
@@ -49,6 +49,16 @@ export class InsecureUrlResolver implements IUrlResolver, IExperimentalUrlResolv
     ) { }
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
+        if (request.headers && request.headers.openMode === OpenMode.CreateNew) {
+            const [, queryString] = request.url.split("?");
+
+            const searchParams = new URLSearchParams(queryString);
+            const fileName = searchParams.get("fileName");
+            if (!fileName) {
+                throw new Error("FileName should be there!!");
+            }
+            return this.resolveHelper(fileName);
+        }
         const parsedUrl = new URL(request.url);
 
         // If hosts match then we use the local tenant information. Otherwise we make a REST call out to the hosting
@@ -59,6 +69,9 @@ export class InsecureUrlResolver implements IUrlResolver, IExperimentalUrlResolv
             if(path.length > 1) {
                 documentId = path[1];
             } else {
+                documentId = path[0];
+            }
+            if (documentId === "") {
                 documentId = path[0];
             }
             return this.resolveHelper(documentId);
@@ -107,19 +120,29 @@ export class InsecureUrlResolver implements IUrlResolver, IExperimentalUrlResolv
         return response;
     }
 
-    public async requestUrl(resolvedUrl: IResolvedUrl, request: IRequest): Promise<string> {
+    public async requestUrl(resolvedUrl: IResolvedUrl, request: IRequest): Promise<IResponse> {
         const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
 
         const parsedUrl = parse(fluidResolvedUrl.url);
         const [, , documentId] = parsedUrl.pathname?.split("/");
         assert(documentId);
-        return `${new URL(window.location.href).origin}/${encodeURIComponent(
-            this.tenantId)}/${encodeURIComponent(documentId)}${request.url}`;
+
+        let url = request.url;
+        if (url.startsWith("/")) {
+            url = url.substr(1);
+        }
+        const response: IResponse = {
+            mimeType: "text/plain",
+            value: `${new URL(window.location.href).origin}/${encodeURIComponent(
+                this.tenantId)}/${encodeURIComponent(documentId)}/${url}`,
+            status: 200,
+        };
+        return response;
     }
 
-    public createCreateNewRequest(rawUrl: string, fileName: string): IRequest {
+    public createCreateNewRequest(fileName: string): IRequest {
         const createNewRequest: IRequest = {
-            url: `${rawUrl}/${fileName}`,
+            url: `/?fileName=${fileName}`,
             headers: {
                 openMode: OpenMode.CreateNew,
             },

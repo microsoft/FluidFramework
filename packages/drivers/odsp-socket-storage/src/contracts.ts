@@ -13,13 +13,6 @@ export interface ICreateNewOptions {
     newFileInfoPromise: Promise<INewFileInfo>,
 }
 
-export interface IOdspNewFileParams {
-    fileName: string;
-    siteUrl: string;
-    driveId: string;
-    filePath: string;
-}
-
 export interface IOdspResolvedUrl extends IResolvedUrlBase {
     type: "fluid";
 
@@ -28,7 +21,7 @@ export interface IOdspResolvedUrl extends IResolvedUrlBase {
 
     createNewOptions?: ICreateNewOptions;
 
-    newFileParams?: IOdspNewFileParams;
+    newFileParams?: INewFileInfo;
 
     // A hashed identifier that is unique to this document
     hashedDocumentId: string;

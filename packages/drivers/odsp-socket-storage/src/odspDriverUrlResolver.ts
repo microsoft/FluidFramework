@@ -4,17 +4,17 @@
  */
 
 import * as assert from "assert";
-import * as querystring from "querystring";
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
     IUrlResolver,
     IExperimentalUrlResolver,
     IResolvedUrl,
     OpenMode,
 } from "@microsoft/fluid-driver-definitions";
-import { IOdspResolvedUrl, ICreateNewOptions, IOdspNewFileParams } from "./contracts";
+import { IOdspResolvedUrl, ICreateNewOptions } from "./contracts";
 import { getHashedDocumentId } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";
+import { INewFileInfo } from "./createFile";
 
 function getSnapshotUrl(siteUrl: string, driveId: string, itemId: string) {
     const siteOrigin = new URL(siteUrl).origin;
@@ -65,17 +65,16 @@ export class OdspDriverUrlResolver implements IUrlResolver, IExperimentalUrlReso
                     itemId: "",
                 };
             } else if (request.headers.openMode === OpenMode.CreateNew) {
-                const [, queryString] = request.url.split("?");
+                const [siteURL, queryString] = request.url.split("?");
 
                 const searchParams = new URLSearchParams(queryString);
-                const fileName = searchParams.get("fileName");
-                const siteURL = searchParams.get("siteUrl");
+                const fileName = request.headers.fileName;
                 const driveID = searchParams.get("driveId");
-                const filePath = searchParams.get("filePath");
+                const filePath = searchParams.get("path");
                 if (!(fileName && siteURL && driveID && filePath)) {
                     throw new Error("Proper new file params should be there!!");
                 }
-                const newFileParams: IOdspNewFileParams = {
+                const newFileParams: INewFileInfo = {
                     fileName,
                     siteUrl: siteURL,
                     driveId: driveID,
@@ -125,19 +124,29 @@ export class OdspDriverUrlResolver implements IUrlResolver, IExperimentalUrlReso
         };
     }
 
-    public async requestUrl(resolvedUrl: IResolvedUrl, request: IRequest): Promise<string> {
+    public async requestUrl(resolvedUrl: IResolvedUrl, request: IRequest): Promise<IResponse> {
+        let url = request.url;
+        if (url.startsWith("/")) {
+            url = url.substr(1);
+        }
         const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
-        return `${odspResolvedUrl.siteUrl}${request.url}?driveId=${encodeURIComponent(
-            odspResolvedUrl.driveId)}&itemId=${encodeURIComponent(
-            odspResolvedUrl.itemId,
-        )}&path=${encodeURIComponent("/")}`;
+        const response: IResponse = {
+            mimeType: "text/plain",
+            value: `${odspResolvedUrl.siteUrl}/${url}?driveId=${encodeURIComponent(
+                odspResolvedUrl.driveId)}&itemId=${encodeURIComponent(
+                odspResolvedUrl.itemId,
+            )}&path=${encodeURIComponent("/")}`,
+            status: 200,
+        };
+        return response;
     }
 
-    public createCreateNewRequest(rawUrl: string, newFileParams: IOdspNewFileParams): IRequest {
+    public createCreateNewRequest(siteUrl: string, driveId: string, filePath: string, fileName: string): IRequest {
         const createNewRequest: IRequest = {
-            url: `${rawUrl}?${querystring.stringify(newFileParams)}`,
+            url: `${siteUrl}?driveId=${encodeURIComponent(driveId)}&path=${encodeURIComponent(filePath)}`,
             headers: {
                 openMode: OpenMode.CreateNew,
+                fileName,
             },
         };
         return createNewRequest;

@@ -461,7 +461,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this._resolvedUrl = resolvedUrl;
             const expUrlResolver = this.urlResolver as IExperimentalUrlResolver;
             assert(expUrlResolver?.isExperimentalUrlResolver);
-            this.originalRequest = {url: await expUrlResolver.requestUrl(resolvedUrl, {url: ""})};
+            const response = await expUrlResolver.requestUrl(resolvedUrl, {url: ""});
+            if (response.status !== 200) {
+                throw new Error(`Not able to get requested Url: value: ${response.value} status: ${response.status}`);
+            }
+            this.originalRequest = {url: response.value};
             this._canReconnect = !(request.headers?.[LoaderHeader.reconnect] === false);
             const parsedUrl = parseUrl(resolvedUrl.url);
             if (!parsedUrl) {
