@@ -12,7 +12,7 @@ import { SharedComponent } from "../components";
 /**
  * Define a default constructor for an Aqueduct Component
  */
-export type AqueductComponentCtor<O extends IComponent,R extends IComponent,T extends SharedComponent<O,R>> =
+export type ComponentCtor<O extends IComponent,R extends IComponent,T extends SharedComponent<O,R>> =
     new (
         runtime: IComponentRuntime,
         context: IComponentContext,

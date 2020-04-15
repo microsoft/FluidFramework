@@ -23,7 +23,7 @@ import {
 } from "@microsoft/fluid-synthesize";
 
 import { SharedComponent } from "../components";
-import { AqueductComponentCtor } from "../types";
+import { ComponentCtor } from "../types";
 
 export class SharedComponentFactory<O extends IComponent, R extends IComponent>
 implements IComponentFactory, Partial<IProvideComponentRegistry>
@@ -34,7 +34,7 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>
 
     constructor(
         public readonly type: string,
-        private readonly ctor: AqueductComponentCtor<O,R, SharedComponent<O,R>>,
+        private readonly ctor: ComponentCtor<O,R, SharedComponent<O,R>>,
         sharedObjects: readonly ISharedObjectFactory[],
         private readonly optionalProviders: ComponentSymbolProvider<O>,
         private readonly requiredProviders: ComponentSymbolProvider<R>,

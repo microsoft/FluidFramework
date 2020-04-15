@@ -20,7 +20,7 @@ export const VltavaName = "vltava";
 export class Vltava extends PrimedComponent implements IComponentHTMLView {
     private dataModelInternal: IVltavaDataModel | undefined;
 
-    private static readonly factory = new PrimedComponentFactory(VltavaName, Vltava, []);
+    private static readonly factory = new PrimedComponentFactory(VltavaName, Vltava, [], {}, {});
 
     public static getFactory() {
         return Vltava.factory;
