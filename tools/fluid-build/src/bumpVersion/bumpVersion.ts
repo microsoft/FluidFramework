@@ -32,6 +32,11 @@ function versionCheck() {
     }
 }
 
+let paramVersionBump: string | undefined;
+let bumpDep: boolean = false;
+let bumpDepClient: boolean = false;
+let bumpDepServer: boolean = false;
+const bumpDepPackage = new Set<string>();
 function parseOptions(argv: string[]) {
     let error = false;
     for (let i = 2; i < process.argv.length; i++) {
@@ -50,6 +55,33 @@ function parseOptions(argv: string[]) {
         if (arg === "-?" || arg === "--help") {
             printUsage();
             process.exit(0);
+        }
+
+        if (arg === "-d" || arg === "--dep") {
+            const dep = process.argv[++i];
+            if (dep === undefined) {
+                console.error("ERROR: Missing arguments for --dep");
+                process.exit(-1);
+            }
+            if (dep.toLowerCase() === "client") {
+                bumpDepClient = true;
+            } else if (dep.toLowerCase() === "server") {
+                bumpDepServer = true;
+            } else {
+                bumpDepPackage.add(dep);
+            }
+            bumpDep = true;
+            continue;
+        }
+
+        if (arg === "--minor") {
+            paramVersionBump = "minor";
+            continue;
+        }
+
+        if (arg === "--patch") {
+            paramVersionBump = "patch";
+            continue;
         }
 
         console.error(`ERROR: Invalid arguments ${arg}`);
@@ -92,32 +124,34 @@ function collectVersions(repo: FluidRepoBase, generatorPackage: Package, templat
     return versions;
 }
 
-async function bumpGeneratorFluid(buildPackages: Map<string, Package>, generatorPackage: Package, templatePackage: Package, versionBump: string) {
-    console.log("Bumping generator version");
-
-    for (const { name, dev } of templatePackage.combinedDependencies) {
-        const pkg = buildPackages.get(name);
-        if (pkg) {
+async function bumpPackageDependencies(pkg: Package, packageMap: Map<string, Package>) {
+    for (const { name, dev } of pkg.combinedDependencies) {
+        const depPackage = packageMap.get(name);
+        if (depPackage && !MonoRepo.isSame(depPackage.monoRepo, pkg.monoRepo)) {
             if (dev) {
-                templatePackage.packageJson.devDependencies[name] = `^${pkg.version}`;
+                pkg.packageJson.devDependencies[name] = `^${depPackage.version}-0`;
             } else {
-                templatePackage.packageJson.dependencies[name] = `^${pkg.version}`;
+                pkg.packageJson.dependencies[name] = `^${depPackage.version}-0`;
             }
         }
     }
-    await templatePackage.savePackageJson();
+    return pkg.savePackageJson();
+}
+
+async function bumpGeneratorFluid(packageMap: Map<string, Package>, generatorPackage: Package, templatePackage: Package, versionBump: string) {
+    console.log("Bumping generator version");
+
+    await bumpPackageDependencies(templatePackage, packageMap);
     await execWithErrorAsync(`npm version ${versionBump}`, { cwd: templatePackage.directory }, templatePackage.directory, false);
     await execWithErrorAsync(`npm version ${versionBump}`, { cwd: generatorPackage.directory }, generatorPackage.directory, false);
 }
 
-async function main() {
-    const timer = new Timer(commonOptions.timer);
-
-    versionCheck();
-
-    const resolvedRoot = await getResolvedFluidRoot();
-
-    // Determine the line of bump
+async function getVersionBumpKind(resolvedRoot: string) {
+    if (paramVersionBump !== undefined) {
+        return paramVersionBump;
+    }
+    
+    // Determine the kind of bump
     const result = await execWithErrorAsync("git rev-parse --abbrev-ref HEAD", { cwd: resolvedRoot }, resolvedRoot, false);
     if (result.error) {
         process.exit(1);
@@ -129,21 +163,21 @@ async function main() {
         process.exit(2)
     }
 
-    const versionBump = branchName === "master" ? "minor" : "patch";
+    return branchName === "master" ? "minor" : "patch";
+}
+
+async function bumpVersion(repo: FluidRepoBase) {
+    const versionBump = await getVersionBumpKind(repo.resolvedRoot);
     console.log(`Bumping ${versionBump} version`);
-
-    // Load the package
-    const repo = new FluidRepoBase(resolvedRoot);
-    timer.time("Package scan completed");
-
+    
     const packageNeedBump = new Set<Package>();
     let serverNeedBump = false;
-    const buildPackages = repo.createPackageMap();
+    const packageMap = repo.createPackageMap();
 
     const depVersions: { [key: string]: string } = {};
     const checkPackageNeedBump = (pkg: Package) => {
         for (const { name: dep, version } of pkg.combinedDependencies) {
-            const depBuildPackage = buildPackages.get(dep);
+            const depBuildPackage = packageMap.get(dep);
             if (depBuildPackage) {
                 let depVersion = depBuildPackage.version;
                 if (semver.satisfies(depVersion, version)) {
@@ -179,7 +213,7 @@ async function main() {
         checkMonoRepoNeedBump(MonoRepoKind.Server);
     }
 
-    const generatorDir = path.join(resolvedRoot, "tools", "generator-fluid");
+    const generatorDir = path.join(repo.resolvedRoot, "tools", "generator-fluid");
     const generatorPackage = new Package(path.join(generatorDir, "package.json"));
     const templatePackage = new Package(path.join(generatorDir, "app", "templates", "package.json"));
     saveVersion(depVersions, generatorPackage.name, generatorPackage.version);
@@ -219,7 +253,7 @@ async function main() {
     // Package json has changed. Reload.
     repo.reload();
 
-    await bumpGeneratorFluid(buildPackages, generatorPackage, templatePackage, versionBump);
+    await bumpGeneratorFluid(packageMap, generatorPackage, templatePackage, versionBump);
 
     // Generate has changed. Reload.
     generatorPackage.reload();
@@ -235,6 +269,52 @@ async function main() {
         }
     }
 }
+
+async function bumpDependencies(repo: FluidRepoBase) {
+
+    const bumpPackages = repo.packages.packages.filter(pkg => {
+        if (bumpDepClient && pkg.monoRepo === repo.clientMonoRepo) {
+            return true;
+        }
+        if (bumpDepServer && pkg.monoRepo === repo.serverMonoRepo) {
+            return true;
+        }
+        if (bumpDepPackage.has(pkg.name)) {
+            return true;
+        }
+        return false;
+    });
+
+    if (bumpPackages.length === 0) {
+        console.error("ERROR: Unable to find dependencies to bump");
+        process.exit(-2);
+    }
+
+    const bumpPackageMap = new Map<string, Package>(bumpPackages.map(pkg => [pkg.name, pkg]));
+
+    for (const pkg of repo.packages.packages) {
+        await bumpPackageDependencies(pkg, bumpPackageMap);
+    }
+}
+
+
+async function main() {
+    const timer = new Timer(commonOptions.timer);
+
+    versionCheck();
+
+    const resolvedRoot = await getResolvedFluidRoot();
+
+    // Load the package
+    const repo = new FluidRepoBase(resolvedRoot);
+    timer.time("Package scan completed");
+
+    if (bumpDep) {
+        return bumpDependencies(repo);
+    }
+    return bumpVersion(repo);
+}
+
 
 main().catch(e => {
     console.error("ERROR: unexpected error", JSON.stringify(e, undefined, 2))

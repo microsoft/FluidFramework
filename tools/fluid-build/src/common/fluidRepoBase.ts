@@ -6,15 +6,13 @@
 import * as path from "path";
 import { Package, Packages } from "./npmPackage";
 import { MonoRepo, MonoRepoKind } from "./monoRepo";
-import { rimrafWithErrorAsync } from "./utils";
-
 
 export class FluidRepoBase {
     public readonly clientMonoRepo: MonoRepo;
     public readonly serverMonoRepo: MonoRepo;
 
     public readonly packages: Packages;
-    constructor(protected readonly resolvedRoot: string) {
+    constructor(public readonly resolvedRoot: string) {
         this.clientMonoRepo = new MonoRepo(MonoRepoKind.Client, this.resolvedRoot);
         this.serverMonoRepo = new MonoRepo(MonoRepoKind.Server, path.join(this.resolvedRoot, "server/routerlicious"));
         this.packages = new Packages(
