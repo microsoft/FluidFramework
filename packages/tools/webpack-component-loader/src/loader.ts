@@ -28,6 +28,7 @@ import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
 import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 import { InsecureUrlResolver } from "@microsoft/fluid-test-runtime-utils";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { RequestParser } from "@microsoft/fluid-container-runtime";
 import { OdspUrlResolver } from "./odspUrlResolver";
 
 export interface IDevServerUser extends IUser {
@@ -318,10 +319,8 @@ export async function start(
             codeDetails,
         );
     }
-
-    const urlParts = new URL(url).pathname.split("/");
-    const componentUrl = `/${urlParts[2] === undefined ? "" : urlParts[2]}`;
-
+    const reqParser = new RequestParser({url});
+    const componentUrl = `/${reqParser.createSubRequest(3).url}`;
     attachButton.disabled = false;
     const urlDeferred = new Deferred<string>();
     // Side-by-side mode
