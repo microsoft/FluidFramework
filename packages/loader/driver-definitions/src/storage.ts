@@ -23,6 +23,7 @@ import {
     ITree,
     IVersion,
 } from "@microsoft/fluid-protocol-definitions";
+import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { IResolvedUrl } from "./urlResolver";
 
 /**
@@ -224,6 +225,12 @@ export interface IDocumentService {
     getErrorTrackingService(): IErrorTrackingService | null;
 }
 
+export interface IExperimentalDocumentService extends IDocumentService {
+    readonly isExperimentalDocumentService: true;
+
+    resolvedUrl: IResolvedUrl;
+}
+
 export interface IDocumentServiceFactory {
     /**
      * Name of the protocol used by factory
@@ -234,6 +241,16 @@ export interface IDocumentServiceFactory {
      * Returns an instance of IDocumentService
      */
     createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService>;
+}
+
+export interface IExperimentalDocumentServiceFactory extends IDocumentServiceFactory {
+    readonly isExperimentalDocumentServiceFactory: true;
+    // Creates a new document on the host with the provided options. Returns the document service.
+    createContainer(
+        createNewSummary: ISummaryTree,
+        createNewResolvedUrl: IResolvedUrl,
+        logger: ITelemetryLogger,
+    ): Promise<IDocumentService>;
 }
 
 /**
