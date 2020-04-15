@@ -468,8 +468,8 @@ export class RunningSummarizer implements IDisposable {
 
     private async trySummarizeCore(reason: string): Promise<void> {
         const result = await this.summarize(reason, false);
-        if (result === false) {
-            // On nack, try again in safe mode
+        if (result !== true) {
+            // On nack or error, try again in safe mode
             await this.summarize(reason, true);
         }
     }
