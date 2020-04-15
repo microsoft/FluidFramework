@@ -338,7 +338,7 @@ export class RunningSummarizer implements IDisposable {
         this.summarizeTimer.start();
 
         try {
-            return this.summarizeCore(reason, safe, broadcastDef);
+            return await this.summarizeCore(reason, safe, broadcastDef);
         } finally {
             this.summarizeTimer.clear();
             this.pendingAckTimer.clear();

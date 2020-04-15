@@ -281,9 +281,9 @@ export function TestPack(verbose = true) {
             if (annotateProps) {
                 clients[i].annotateRangeLocal(0, clients[i].getLength(), annotateProps, undefined);
             }
-            clients[i].startCollaboration(`Fred${i}`);
+            clients[i].startOrUpdateCollaboration(`Fred${i}`);
         }
-        server.startCollaboration("theServer");
+        server.startOrUpdateCollaboration("theServer");
         server.addClients(clients);
         if (measureBookmarks) {
             references = makeReferences(server, referenceCount);
@@ -313,7 +313,7 @@ export function TestPack(verbose = true) {
             } else {
                 snapClient.insertTextLocal(0, initString);
             }
-            snapClient.startCollaboration("snapshot");
+            snapClient.startOrUpdateCollaboration("snapshot");
             server.addListeners([snapClient]);
         }
 
@@ -887,7 +887,7 @@ export function TestPack(verbose = true) {
             } else {
                 clientsA[i].insertTextLocal(0, initString);
             }
-            clientsA[i].startCollaboration(`FredA${i}`);
+            clientsA[i].startOrUpdateCollaboration(`FredA${i}`);
         }
 
         for (let i = 0; i < clientCountB; i++) {
@@ -898,7 +898,7 @@ export function TestPack(verbose = true) {
             } else {
                 clientsB[i].insertTextLocal(0, initString);
             }
-            clientsB[i].startCollaboration(`FredB${i}`, /* minSeq: */ 0, /* currentSeq: */ 0, /* branchId: */ 1);
+            clientsB[i].startOrUpdateCollaboration(`FredB${i}`, /* minSeq: */ 0, /* currentSeq: */ 0, /* branchId: */ 1);
         }
         for (let i = 0; i < clientCountB; i++) {
             const clientB = clientsB[i];
@@ -910,10 +910,10 @@ export function TestPack(verbose = true) {
                 }
             }
         }
-        serverA.startCollaboration("theServerA");
+        serverA.startOrUpdateCollaboration("theServerA");
         serverA.addClients(clientsA);
         serverA.addListeners([serverB]);
-        serverB.startCollaboration("theServerB", /* minSeq: */ 0, /* currentSeq: */ 0, /* branchId: */ 1);
+        serverB.startOrUpdateCollaboration("theServerB", /* minSeq: */ 0, /* currentSeq: */ 0, /* branchId: */ 1);
         serverB.addClients(clientsB);
         serverB.addUpstreamClients(clientsA);
 
@@ -1192,7 +1192,7 @@ export function TestPack(verbose = true) {
     function firstTest() {
         let cli = new TestClient();
         cli.insertTextLocal(0, "on the mat.");
-        cli.startCollaboration("Fred1");
+        cli.startOrUpdateCollaboration("Fred1");
         for (const cname of clientNames) {
             cli.addLongClientId(cname);
         }
@@ -1244,7 +1244,7 @@ export function TestPack(verbose = true) {
 
         cli = new TestClient();
         cli.insertTextLocal(0, " old sock!");
-        cli.startCollaboration("Fred2");
+        cli.startOrUpdateCollaboration("Fred2");
         for (const cname of clientNames) {
             cli.addLongClientId(cname);
         }
@@ -1289,7 +1289,7 @@ export function TestPack(verbose = true) {
         }
         cli = new TestClient();
         cli.insertTextLocal(0, "abcdefgh");
-        cli.startCollaboration("Fred3");
+        cli.startOrUpdateCollaboration("Fred3");
         for (const cname of clientNames) {
             cli.addLongClientId(cname);
         }
@@ -1858,7 +1858,7 @@ export class DocumentTree {
 
     private generateClient() {
         const client = new TestClient({ blockUpdateMarkers: true });
-        client.startCollaboration("Fred");
+        client.startOrUpdateCollaboration("Fred");
         for (const child of this.children) {
             this.addToMergeTree(client, child);
         }

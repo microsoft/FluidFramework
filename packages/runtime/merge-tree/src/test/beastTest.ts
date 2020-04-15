@@ -598,9 +598,9 @@ export function TestPack(verbose = true) {
             if (startFile) {
                 loadTextFromFile(startFile, clients[i].mergeTree, fileSegCount);
             }
-            clients[i].startCollaboration(`Fred${i}`);
+            clients[i].startOrUpdateCollaboration(`Fred${i}`);
         }
-        server.startCollaboration("theServer");
+        server.startOrUpdateCollaboration("theServer");
         server.addClients(clients);
 
         function checkTextMatch() {
@@ -934,10 +934,10 @@ export function TestPack(verbose = true) {
 
         const cliA = new TestClient();
         cliA.insertTextLocal(0, "a stitch in time saves nine");
-        cliA.startCollaboration("FredA");
+        cliA.startOrUpdateCollaboration("FredA");
         const cliB = new TestClient();
         cliB.insertTextLocal(0, "a stitch in time saves nine");
-        cliB.startCollaboration("FredB");
+        cliB.startOrUpdateCollaboration("FredB");
         function checkTextMatch(checkSeq: number) {
             let error = false;
             if (cliA.getCurrentSeq() != checkSeq) {
@@ -1105,7 +1105,7 @@ export function TestPack(verbose = true) {
     function firstTest() {
         let cli = new TestClient();
         cli.insertTextLocal(0, "on the mat.");
-        cli.startCollaboration("Fred1");
+        cli.startOrUpdateCollaboration("Fred1");
         for (const cname of clientNames) {
             cli.addLongClientId(cname, null);
         }
@@ -1157,7 +1157,7 @@ export function TestPack(verbose = true) {
         }
         cli = new TestClient();
         cli.insertTextLocal(0, " old sock!");
-        cli.startCollaboration("Fred2");
+        cli.startOrUpdateCollaboration("Fred2");
         for (const cname of clientNames) {
             cli.addLongClientId(cname, null);
         }
@@ -1188,7 +1188,7 @@ export function TestPack(verbose = true) {
         }
         cli = new TestClient();
         cli.insertTextLocal(0, "abcdefgh");
-        cli.startCollaboration("Fred3");
+        cli.startOrUpdateCollaboration("Fred3");
         for (const cname of clientNames) {
             cli.addLongClientId(cname, null);
         }
@@ -1607,7 +1607,7 @@ export class DocumentTree {
 
     private generateClient() {
         const client = new TestClient({ blockUpdateMarkers: true });
-        client.startCollaboration("Fred");
+        client.startOrUpdateCollaboration("Fred");
         for (const child of this.children) {
             this.addToMergeTree(client, child);
         }
