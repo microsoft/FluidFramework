@@ -3,17 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedComponentProps, PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { IComponent, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
+import { ISharedComponentProps, PrimedComponent } from "@microsoft/fluid-aqueduct";
 import { Counter, CounterValueType, ISharedDirectory } from "@microsoft/fluid-map";
-import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
+import { ClickerWithInitialValueFactory } from "./clickerWithInitialValueFactory";
+
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../../package.json");
-export const ClickerWithInitialValueName = `${pkg.name as string}-clickerWithInitialValue`;
 
 export interface IClickerInitialState {
     initialValue: number;
@@ -24,6 +23,8 @@ export interface IClickerInitialState {
  */
 export class ClickerWithInitialValue extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
+
+    public static readonly ComponentName = `${pkg.name as string}-clicker-with-initial-value`;
 
     public constructor(
         props: ISharedComponentProps,
@@ -58,29 +59,10 @@ export class ClickerWithInitialValue extends PrimedComponent implements ICompone
         );
     }
 
-    // end IComponentHTMLView
-
-    // ----- COMPONENT SETUP STUFF -----
-
-    // ----- COMPONENT SETUP STUFF -----
-}
-
-export class ClickerWithInitialValueFactory extends PrimedComponentFactory {
-    // Override the createComponent method to allow an initial value
-    public async createComponent(
-        context: IComponentContext,
-        initialState?: IClickerInitialState,
-    ): Promise<IComponent & IComponentLoadable> {
-        const ctorFn = (props: ISharedComponentProps) => {
-            return new ClickerWithInitialValue(props, initialState);
-        };
-        return this.createComponentWithConstructorFn(context, ctorFn);
-    }
-
-    public static getFactory() { return ClickerWithInitialValueFactory.factory; }
+    public static getFactory() { return ClickerWithInitialValue.factory; }
 
     private static readonly factory = new ClickerWithInitialValueFactory(
-        ClickerWithInitialValueName,
+        ClickerWithInitialValue.ComponentName,
         ClickerWithInitialValue,
         [],
         {},

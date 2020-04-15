@@ -10,19 +10,22 @@ import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
+import { IComponentUserInformation } from "./interfaces";
+
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../../package.json");
 
 /**
  * Basic Clicker example using new interfaces and stock component classes.
  */
-export class Clicker extends PrimedComponent implements IComponentHTMLView {
+export class ClickerUsingProviders extends PrimedComponent<IComponentUserInformation> implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
     private storedMap: ISharedMap | undefined;
     private counter: Counter | undefined;
+    private userInformation: IComponentUserInformation | undefined;
 
-    public static readonly ComponentName = `${pkg.name as string}-clicker`;
+    public static readonly ComponentName = `${pkg.name as string}-clicker-using-provider`;
 
     /**
      * Do setup work here
@@ -32,6 +35,13 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
 
         const clicks = this.root.get<Counter>("clicks");
         clicks.increment(5);
+
+        this.userInformation = await this.providers.IComponentUserInformation;
+        if(this.userInformation) {
+            console.log("IComponentUserInformation available");
+        } else {
+            console.log("IComponentUserInformation not available");
+        }
 
         // Create a map on the root.
         const storedMap = SharedMap.create(this.runtime);
@@ -64,13 +74,13 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
 
     // ----- COMPONENT SETUP STUFF -----
 
-    public static getFactory() { return Clicker.factory; }
+    public static getFactory() { return ClickerUsingProviders.factory; }
 
     private static readonly factory = new PrimedComponentFactory(
-        Clicker.ComponentName,
-        Clicker,
+        ClickerUsingProviders.ComponentName,
+        ClickerUsingProviders,
         [SharedMap.getFactory()],
-        {},
+        {IComponentUserInformation},
         {},
     );
 }
