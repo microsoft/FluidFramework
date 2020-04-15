@@ -25,6 +25,7 @@
     "start:debug": "node --inspect=0.0.0.0:9229 dist/index.js",
     "tsc": "tsc"
   },
+  "bin": "dist/index.js",
   "dependencies": {
     "@microsoft/fluid-core-utils": "^0.13.17538",
     "@microsoft/fluid-gitresources": "^0.1004.0-0",
