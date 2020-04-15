@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 
 declare module "@microsoft/fluid-component-core-interfaces" {
@@ -17,7 +16,7 @@ export interface IProvideComponentLastEditedTracker {
     readonly IComponentLastEditedTracker: IComponentLastEditedTracker;
 }
 
-export interface IComponentLastEditedTracker extends EventEmitter, IProvideComponentLastEditedTracker {
+export interface IComponentLastEditedTracker extends IProvideComponentLastEditedTracker {
     /**
      * Returns the details of the last edit to the container.
      */

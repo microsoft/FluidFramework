@@ -12,11 +12,16 @@ import {
 } from "./interfaces";
 import { LastEditedTracker } from "./lastEditedTracker";
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+const pkg = require("../package.json");
+export const LastEditedTrackerComponentName = pkg.name as string;
+
 /**
  * LastEditedTrackerComponent creates a LastEditedTracker that keeps track of the latest edits to the document.
  */
 export class LastEditedTrackerComponent extends PrimedComponent implements IProvideComponentLastEditedTracker {
     private static readonly factory = new PrimedComponentFactory(
+        LastEditedTrackerComponentName,
         LastEditedTrackerComponent,
         [ SummarizableObject.getFactory() ],
     );
