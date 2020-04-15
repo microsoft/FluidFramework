@@ -10,7 +10,6 @@ import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
 import {
     BaseSegment,
     ISegment,
-    IJSONSegment,
     LocalReferenceCollection,
     Client,
     IMergeTreeDeltaOpArgs,
@@ -26,6 +25,7 @@ import { serializeBlob, deserializeBlob } from "./serialization";
 
 const enum SnapshotPath {
     segments = "segments",
+    handles = "handles",
     handleTable = "handleTable",
 }
 
@@ -33,74 +33,49 @@ export class PermutationSegment extends BaseSegment {
     public static readonly typeString: string = "PermutationSegment";
 
     public static fromJSONObject(spec: any) {
-        const segment = new PermutationSegment(spec.handles);
-        if (spec.props !== undefined) {
-            segment.addProperties(spec.props);
-        }
-        return segment;
+        return new PermutationSegment(spec);
     }
 
     public readonly type = PermutationSegment.typeString;
 
-    constructor(public handles: Handle[]) {
+    constructor(length: number) {
         super();
-        this.cachedLength = handles.length;
+        this.cachedLength = length;
     }
 
     public toJSONObject() {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        const obj = { handles: this.handles } as IJSONSegment;
-        super.addSerializedProps(obj);
-        return obj;
+        return this.cachedLength;
     }
 
-    public clone(start = 0, end?: number) {
-        const clonedItems = this.handles.slice(start, end);
-        const b = new PermutationSegment(clonedItems);
+    public clone(start = 0, end = this.cachedLength) {
+        const b = new PermutationSegment(end - start);
         this.cloneInto(b);
         return b;
     }
 
     public canAppend(segment: ISegment) { return true; }
 
-    public toString() {
-        return this.handles.toString();
-    }
-
     public append(segment: ISegment) {
         // Note: Must call 'appendLocalRefs' before modifying this segment's length as
         //       'this.cachedLength' is used to adjust the offsets of the local refs.
         LocalReferenceCollection.append(this, segment);
 
-        const asPermutationSegment = segment as PermutationSegment;
-
-        this.handles = this.handles.concat(asPermutationSegment.handles);
-        this.cachedLength = this.handles.length;
+        this.cachedLength += segment.cachedLength;
     }
 
     // TODO: retain removed items for undo
     // returns true if entire run removed
     public removeRange(start: number, end: number) {
-        let remnantItems: Handle[] = [];
-        const len = this.handles.length;
-        if (start > 0) {
-            remnantItems = remnantItems.concat(this.handles.slice(0, start));
-        }
-        if (end < len) {
-            remnantItems = remnantItems.concat(this.handles.slice(end));
-        }
-        this.handles = remnantItems;
-        this.cachedLength = this.handles.length;
-        return (this.handles.length === 0);
+        this.cachedLength -= (end - start);
+        return this.cachedLength === 0;
     }
 
     protected createSplitSegmentAt(pos: number) {
-        assert(0 < pos && pos < this.handles.length);
+        assert(0 < pos && pos < this.cachedLength);
 
-        const remainingItems = this.handles.slice(pos);
-        this.handles = this.handles.slice(0, pos);
-        this.cachedLength = this.handles.length;
-        const leafSegment = new PermutationSegment(remainingItems);
+        const leafSegment = new PermutationSegment(this.cachedLength - pos);
+        this.cachedLength = pos;
 
         return leafSegment;
     }
@@ -108,6 +83,7 @@ export class PermutationSegment extends BaseSegment {
 
 export class PermutationVector extends Client {
     private handleTable = new HandleTable<never>(); // Tracks available storage handles for rows.
+    public handles: number[] = [];
 
     constructor(
         path: string,
@@ -130,26 +106,18 @@ export class PermutationVector extends Client {
     public insert(start: number, length: number) {
         return this.insertSegmentLocal(
             start,
-            new PermutationSegment(new Array(length).fill(Handle.unallocated)));
+            new PermutationSegment(length));
     }
 
     public remove(start: number, length: number) {
         return this.removeRangeLocal(start, start + length);
     }
 
-    public toHandle(pos: number, refSeq: number, clientId: number, alloc: boolean): Handle {
-        const { segment, offset } = this.mergeTree.getContainingSegment<PermutationSegment>(pos, refSeq, clientId);
+    public getAllocatedHandle(pos: number): Handle {
+        let handle = this.handles[pos];
 
-        // Note that until the MergeTree GCs, the segment is still reachable via `getContainingSegment()` with
-        // a `refSeq` in the past.  Prevent remote ops from accidentally allocating or using recycled handles
-        // by checking for the presence of 'removedSeq'.
-        if (segment === undefined || segment.removedSeq !== undefined) {
-            return Handle.deleted;
-        }
-
-        let handle = segment.handles[offset];
-        if (alloc && handle === Handle.unallocated) {
-            handle = segment.handles[offset] = this.handleTable.allocate();
+        if (handle === Handle.unallocated) {
+            handle = this.handles[pos] = this.handleTable.allocate();
         }
 
         return handle;
@@ -180,17 +148,20 @@ export class PermutationVector extends Client {
                     value: super.snapshot(runtime, handle, /* tardisMsgs: */ []),
                 },
                 serializeBlob(runtime, handle, SnapshotPath.handleTable, this.handleTable.snapshot()),
+                serializeBlob(runtime, handle, SnapshotPath.handles, this.handles),
             ],
             id: null,   // eslint-disable-line no-null/no-null
         };
     }
 
     public async load(runtime: IComponentRuntime, storage: IObjectStorageService, branchId?: string) {
-        const [handleTableData] = await Promise.all([
+        const [handleTableData, handles] = await Promise.all([
             await deserializeBlob(runtime, storage, SnapshotPath.handleTable),
+            await deserializeBlob(runtime, storage, SnapshotPath.handles),
         ]);
 
         this.handleTable = HandleTable.load<never>(handleTableData);
+        this.handles = handles;
 
         return super.load(runtime, new ObjectStoragePartition(storage, SnapshotPath.segments), branchId);
     }
@@ -201,6 +172,10 @@ export class PermutationVector extends Client {
     ) => {
         switch (operation) {
             case MergeTreeDeltaType.INSERT:
+                this.enumerateDeltaRanges(deltaSegments, (position, length) => {
+                    this.handles.splice(position, 0, ...new Array(length).fill(Handle.unallocated));
+                });
+
                 // Notify the matrix of inserted positions.  The matrix in turn notifies any IMatrixConsumers.
                 this.enumerateDeltaRanges(deltaSegments, (position, length) => {
                     this.deltaCallback(position, /* numRemoved: */ 0, /* numInserted: */ length);
@@ -208,12 +183,12 @@ export class PermutationVector extends Client {
                 break;
 
             case MergeTreeDeltaType.REMOVE: {
-                // Build a list of non-null handles referenced by the segment.
-                const freed: Handle[] = [];
-                for (const delta of deltaSegments) {
-                    const segment = delta.segment as PermutationSegment;
-                    freed.splice(freed.length, 0, ...segment.handles.filter((handle) => handle !== Handle.unallocated));
-                }
+                const freed: number[] = [];
+
+                this.enumerateDeltaRanges(deltaSegments, (position, length) => {
+                    freed.concat(this.handles.splice(position, length)
+                        .filter((handle) => handle !== Handle.unallocated));
+                });
 
                 // Notify matrix that handles are about to be freed.  The matrix is responsible for clearing
                 // the rows/cols prior to free to ensure recycled row/cols are initially empty.
@@ -260,14 +235,6 @@ export class PermutationVector extends Client {
     }
 
     public toString() {
-        let s = "";
-
-        const collab = this.getCollabWindow();
-
-        for (let i = 0; i < this.getLength(); i++) {
-            s += `${i}:${this.toHandle(i, collab.currentSeq, collab.clientId, /* alloc: */ false)} `;
-        }
-
-        return s;
+        return this.handles.map((handle, index) => `${index}:${handle}`).join(" ");
     }
 }

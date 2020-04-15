@@ -93,14 +93,12 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
             && (0 <= col && col < this.numCols));
 
         // Map the logical (row, col) to associated storage handles.
-        const rowCollab = this.rows.getCollabWindow();
-        const rowHandle = this.rows.toHandle(row, rowCollab.currentSeq, rowCollab.clientId, /* alloc: */ false);
+        const rowHandle = this.rows.handles[row];
         if (rowHandle === Handle.unallocated) {
             return undefined;
         }
 
-        const colCollab = this.cols.getCollabWindow();
-        const colHandle = this.cols.toHandle(col, colCollab.currentSeq, colCollab.clientId, /* alloc: */ false);
+        const colHandle = this.cols.handles[col];
         if (colHandle === Handle.unallocated) {
             return undefined;
         }
@@ -166,8 +164,8 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
         colClientId: number,
         value: T,
     ) {
-        const rowHandle = this.rows.toHandle(row, rowRefSeq, rowClientId, /* alloc: */ true);
-        const colHandle = this.cols.toHandle(col, colRefSeq, colClientId, /* alloc: */ true);
+        const rowHandle = this.rows.getAllocatedHandle(row);
+        const colHandle = this.cols.getAllocatedHandle(col);
 
         this.cells.setCell(rowHandle, colHandle, value);
         const cliSeq = this.submitLocalMessage({
@@ -300,13 +298,16 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
                     }
                 } else {
                     const rowClientId = this.rows.getOrAddShortClientId(clientId);
-                    const rowHandle = this.rows.toHandle(row, refSeq, rowClientId, /* alloc: */ true);
+                    const adjustedRow = this.rows.adjustPosition(row, refSeq, rowClientId);
 
-                    if (rowHandle !== Handle.deleted) {
+                    if (adjustedRow !== undefined) {
                         const colClientId = this.cols.getOrAddShortClientId(clientId);
-                        const colHandle = this.cols.toHandle(col, refSeq, colClientId, /* alloc: */ true);
+                        const adjustedCol = this.cols.adjustPosition(col, refSeq, colClientId);
 
-                        if (colHandle !== Handle.deleted) {
+                        if (adjustedCol !== undefined) {
+                            const rowHandle = this.rows.getAllocatedHandle(adjustedRow);
+                            const colHandle = this.cols.getAllocatedHandle(adjustedCol);
+
                             assert(rowHandle >= Handle.valid
                                 && colHandle >= Handle.valid);
 
@@ -314,16 +315,8 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
                                 const { value } = contents;
                                 this.cells.setCell(rowHandle, colHandle, value);
 
-                                const adjustedRow = this.rows.adjustPosition(row, refSeq, rowClientId);
-
-                                if (adjustedRow !== undefined) {
-                                    const adjustedCol = this.cols.adjustPosition(col, refSeq, colClientId);
-
-                                    if (adjustedCol !== undefined) {
-                                        for (const consumer of this.consumers.values()) {
-                                            consumer.cellsChanged(adjustedRow, adjustedCol, 1, 1, [value], this);
-                                        }
-                                    }
+                                for (const consumer of this.consumers.values()) {
+                                    consumer.cellsChanged(adjustedRow, adjustedCol, 1, 1, [value], this);
                                 }
                             }
                         }
@@ -415,10 +408,8 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
     };
 
     private readonly onRowHandlesRecycled = (rowHandles: Handle[]) => {
-        const { currentSeq: colRefSeq, clientId: colClientId } = this.cols.getCollabWindow();
-
         for (let col = 0; col < this.numCols; col++) {
-            const colHandle = this.cols.toHandle(col, colRefSeq, colClientId, /* alloc: */ false);
+            const colHandle = this.cols.handles[col];
             if (colHandle !== Handle.unallocated) {
                 for (const rowHandle of rowHandles) {
                     this.cells.setCell(rowHandle, colHandle, undefined);
@@ -429,10 +420,8 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
     };
 
     private readonly onColHandlesRecycled = (colHandles: Handle[]) => {
-        const { currentSeq: rowRefSeq, clientId: rowClientId } = this.rows.getCollabWindow();
-
         for (let row = 0; row < this.numRows; row++) {
-            const rowHandle = this.rows.toHandle(row, rowRefSeq, rowClientId, /* alloc: */ false);
+            const rowHandle = this.rows.handles[row];
             if (rowHandle !== Handle.unallocated) {
                 for (const colHandle of colHandles) {
                     this.cells.setCell(rowHandle, colHandle, undefined);
