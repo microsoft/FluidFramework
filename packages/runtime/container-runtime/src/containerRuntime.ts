@@ -706,6 +706,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 this.logger.sendErrorEvent({ eventName: "ComponentContextDisposeError", componentId }, error);
             });
         }
+
+        this.emit("dispose");
+        this.removeAllListeners();
     }
 
     public get IComponentTokenProvider() {
