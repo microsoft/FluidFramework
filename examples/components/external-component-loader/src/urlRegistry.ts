@@ -27,6 +27,32 @@ const loadScript = async (scriptUrl: string) =>
     });
 
 /**
+ * Fetch the package.json and verify it is a valid IFluidPackage with the info we need to be able to load.
+ * @param packageUrl - The URL to the package we're loading
+ */
+const fetchAndValidatePackageInfo = async (packageUrl: string) => {
+    const response = await fetch(`${packageUrl}/package.json`);
+    if (!response.ok) {
+        throw new Error(`UrlRegistry: ${packageUrl}: fetch was no ok. status code: ${response.status}`);
+    }
+
+    const fluidPackage = await response.json();
+    if (!isFluidPackage(fluidPackage)) {
+        throw new Error(`UrlRegistry: ${packageUrl}: Package json not deserializable as IFluidPackage`);
+    }
+
+    if (fluidPackage.fluid.browser.umd.library === undefined) {
+        throw new Error(`UrlRegistry: Missing entrypoint name`);
+    }
+
+    if (fluidPackage.fluid.browser.umd.files === undefined) {
+        throw new Error(`UrlRegistry: Missing scripts`);
+    }
+
+    return fluidPackage;
+};
+
+/**
  * A component registry that can load component via their url
  */
 export class UrlRegistry implements IComponentRegistry {
@@ -37,7 +63,6 @@ export class UrlRegistry implements IComponentRegistry {
     private readonly loadingEntrypoints: Map<string, Promise<unknown>>;
 
     constructor() {
-
         // Stash on the window so multiple instance can coordinate
         const loadingPackagesKey = `${UrlRegistry.WindowKeyPrefix}LoadingPackages`;
         if (window[loadingPackagesKey] === undefined) {
@@ -81,26 +106,15 @@ export class UrlRegistry implements IComponentRegistry {
         return this.urlRegistryMap.get(name);
     }
 
-    private async loadEntrypoint(name: string): Promise<any> {
-        const response = await fetch(`${name}/package.json`);
-        if (!response.ok) {
-            throw new Error(`UrlRegistry: ${name}: fetch was no ok. status code: ${response.status}`);
-        }
-
-        const packageJson = await response.json();
-        if (!isFluidPackage(packageJson)) {
-            throw new Error(`UrlRegistry: ${name}: Package json not deserializable as IFluidPackage`);
-        }
-
-        const fluidPackage = packageJson;
-
+    /**
+     * Load and retrieve an entrypoint to a Fluid package from a URL
+     * @param packageUrl - The URL to the package we're loading
+     */
+    private async loadEntrypoint(packageUrl: string): Promise<any> {
+        // First get the info from the package about what we're loading
+        const fluidPackage = await fetchAndValidatePackageInfo(packageUrl);
         const entrypointName = fluidPackage.fluid.browser.umd.library;
         const scripts = fluidPackage.fluid.browser.umd.files;
-
-        if (entrypointName === undefined || scripts === undefined) {
-            throw new Error(`UrlRegistry: Missing entrypointName or scripts: \
-                entrypointName: ${entrypointName}, scripts: ${scripts}`);
-        }
 
         while (this.loadingEntrypoints.has(entrypointName)) {
             await this.loadingEntrypoints.get(entrypointName);
@@ -113,7 +127,7 @@ export class UrlRegistry implements IComponentRegistry {
         try {
             const scriptLoadPromises =
                 scripts.map(
-                    async (bundle) => loadScript(`${name}/${bundle}`));
+                    async (bundle) => loadScript(`${packageUrl}/${bundle}`));
 
             const errors: any[] = [];
             while (scriptLoadPromises.length > 0) {
@@ -131,9 +145,8 @@ export class UrlRegistry implements IComponentRegistry {
             const entrypoint = window[entrypointName];
             if (entrypoint === undefined) {
                 throw new Error(
-                    `UrlRegistry: ${name}: Entrypoint: ${entrypointName}: Entry point is undefined`);
+                    `UrlRegistry: ${packageUrl}: Entrypoint: ${entrypointName}: Entry point is undefined`);
             }
-            console.log(entrypoint);
             return entrypoint;
 
         } finally {
