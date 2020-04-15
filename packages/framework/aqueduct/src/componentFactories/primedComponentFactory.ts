@@ -22,7 +22,7 @@ import { PrimedComponent } from "../components";
 import { ComponentCtor } from "../types";
 import { SharedComponentFactory } from "./sharedComponentFactory";
 
-export class PrimedComponentFactory<O extends IComponent = {}, R extends IComponent = {}>
+export class PrimedComponentFactory<O extends IComponent = object, R extends IComponent = object>
     extends SharedComponentFactory<O,R>
 {
     constructor(

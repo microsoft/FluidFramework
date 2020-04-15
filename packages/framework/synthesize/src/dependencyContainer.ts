@@ -11,7 +11,16 @@ import {
     ComponentProvider,
     ComponentKey,
 } from "./types";
-import { IComponentDependencySynthesizer } from "./IComponentDependencySynthesizer";
+import {
+    IComponentDependencySynthesizer,
+} from "./IComponentDependencySynthesizer";
+
+export interface ProviderEntry<T extends keyof IComponent> {
+    type: T;
+    provider: NonNullable<IComponent[T]>
+}
+
+export type DependencyContainerRegistry = Iterable<ProviderEntry<any>>;
 
 /**
  * DependencyContainer is similar to a IoC Container. It takes providers and will
@@ -29,7 +38,7 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
         return this.providers.keys();
     }
 
-    public constructor(public parent: DependencyContainer | undefined = undefined) { }
+    public constructor(public parent: IComponentDependencySynthesizer | undefined = undefined) { }
 
     /**
      * {@inheritDoc (IComponentSynthesizer:interface).register}

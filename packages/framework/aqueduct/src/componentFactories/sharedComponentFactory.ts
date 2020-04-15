@@ -30,7 +30,6 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>
 {
     private readonly sharedObjectRegistry: ISharedObjectRegistry;
     private readonly registry: IComponentRegistry | undefined;
-    private readonly dependencyContainer: DependencyContainer;
 
     constructor(
         public readonly type: string,
@@ -45,8 +44,6 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>
             this.registry = new ComponentRegistry(registryEntries);
         }
         this.sharedObjectRegistry = new Map(sharedObjects.map((ext) => [ext.type, ext]));
-
-        this.dependencyContainer = new DependencyContainer(undefined);
     }
 
     public get IComponentFactory() { return this; }
@@ -104,7 +101,8 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>
         context: IComponentContext,
         ctorFn?: (props: ISharedComponentProps) => SharedComponent,
     ) {
-        const providers = this.dependencyContainer.synthesize<O, R>(this.optionalProviders,this.requiredProviders);
+        const dependencyContainer = new DependencyContainer(context.scope.IComponentDependencySynthesizer);
+        const providers = dependencyContainer.synthesize<O, R>(this.optionalProviders,this.requiredProviders);
         // Create a new instance of our component
         const instance = ctorFn ? ctorFn({runtime, context, providers}) : new this.ctor({runtime, context, providers});
         await instance.initialize();

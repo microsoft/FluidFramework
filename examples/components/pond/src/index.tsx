@@ -19,6 +19,8 @@ import {
     ClickerWithInitialValue,
     IClickerInitialState,
 } from "./internal-components";
+import { IComponentUserInformation } from "./interfaces";
+import { UserInfo } from "./providers";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
@@ -142,4 +144,10 @@ export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
     PondName,
     new Map([
         [PondName, Promise.resolve(Pond.getFactory())],
-    ]));
+    ]),
+    [
+        {
+            type: IComponentUserInformation,
+            provider: new UserInfo(),
+        },
+    ]);
