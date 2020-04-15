@@ -20,6 +20,13 @@ import { IDirectory } from "@microsoft/fluid-map";
 import { v4 as uuid } from "uuid";
 import { serviceRoutePathRoot } from "../containerServices";
 
+export interface ISharedComponentProps<O extends IComponent = object, R extends IComponent = object> {
+    readonly runtime: IComponentRuntime,
+    readonly context: IComponentContext,
+    // Probably shouldn't be providers?
+    readonly providers: AsyncComponentProvider<ComponentKey<O>,ComponentKey<R>>,
+}
+
 /**
  * This is a bare-bones base class that does basic setup and enables for factory on an initialize call.
  * You probably don't want to inherit from this component directly unless you are creating another base component class
@@ -31,6 +38,11 @@ export abstract class SharedComponent<O extends IComponent = object, R extends I
     private initializeP: Promise<void> | undefined;
     private readonly innerHandle: IComponentHandle<this>;
     private _disposed = false;
+
+    protected readonly runtime: IComponentRuntime;
+    protected readonly context: IComponentContext;
+    protected readonly providers: AsyncComponentProvider<ComponentKey<O>,ComponentKey<R>>;
+
     public get disposed() { return this._disposed; }
 
     public get id() { return this.runtime.id; }
@@ -43,14 +55,13 @@ export abstract class SharedComponent<O extends IComponent = object, R extends I
      */
     public get handle(): IComponentHandle<this> { return this.innerHandle; }
 
-    public constructor(
-        protected readonly runtime: IComponentRuntime,
-        protected readonly context: IComponentContext,
-        // Probably shouldn't be providers?
-        protected readonly providers: AsyncComponentProvider<ComponentKey<O>,ComponentKey<R>>,
-    ) {
+    public constructor(props: ISharedComponentProps<O,R>) {
         super();
-        this.innerHandle = new ComponentHandle(this, this.url, runtime.IComponentHandleContext);
+        this.runtime = props.runtime;
+        this.context = props.context;
+        this.providers = props.providers;
+
+        this.innerHandle = new ComponentHandle(this, this.url, this.runtime.IComponentHandleContext);
 
         // Container event handlers
         this.runtime.once("dispose", () => {

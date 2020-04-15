@@ -12,17 +12,17 @@ import {
     IComponentRegistry,
     IProvideComponentRegistry,
     NamedComponentRegistryEntries,
-    IComponentRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import {
-    AsyncComponentProvider,
-    ComponentKey,
     ComponentSymbolProvider,
     DependencyContainer,
 } from "@microsoft/fluid-synthesize";
 
-import { SharedComponent } from "../components";
+import {
+    ISharedComponentProps,
+    SharedComponent,
+} from "../components";
 import { ComponentCtor } from "../types";
 
 export class SharedComponentFactory<O extends IComponent, R extends IComponent>
@@ -66,7 +66,7 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>
 
     private instantiateComponentWithConstructorFn(
         context: IComponentContext,
-        ctorFn?: ((r: IComponentRuntime, c: IComponentContext) => SharedComponent)): void {
+        ctorFn?: (props: ISharedComponentProps) => SharedComponent) {
         // Create a new runtime for our component
         // The runtime is what Fluid uses to create DDS' and route to your component
         const runtime = ComponentRuntime.load(
@@ -102,15 +102,11 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>
     private async instantiateInstance(
         runtime: ComponentRuntime,
         context: IComponentContext,
-        ctorFn?: ((
-            r: IComponentRuntime,
-            c: IComponentContext,
-            providers: AsyncComponentProvider<ComponentKey<O>, ComponentKey<R>>,
-        ) => SharedComponent),
+        ctorFn?: (props: ISharedComponentProps) => SharedComponent,
     ) {
         const providers = this.dependencyContainer.synthesize<O, R>(this.optionalProviders,this.requiredProviders);
         // Create a new instance of our component
-        const instance = ctorFn ? ctorFn(runtime, context, providers) : new this.ctor(runtime, context, providers);
+        const instance = ctorFn ? ctorFn({runtime, context, providers}) : new this.ctor({runtime, context, providers});
         await instance.initialize();
         return instance;
     }
@@ -121,7 +117,7 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>
 
     protected async createComponentWithConstructorFn(
         context: IComponentContext,
-        ctorFn?: (r: IComponentRuntime, c: IComponentContext) => SharedComponent,
+        ctorFn?: (props: ISharedComponentProps) => SharedComponent,
     ): Promise<IComponent & IComponentLoadable> {
         if (this.type === "") {
             throw new Error("undefined type member");

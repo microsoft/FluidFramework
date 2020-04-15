@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { ISharedComponentProps, PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { IComponent, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
 import { Counter, CounterValueType, ISharedDirectory } from "@microsoft/fluid-map";
-import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -26,11 +26,10 @@ export class ClickerWithInitialValue extends PrimedComponent implements ICompone
     public get IComponentHTMLView() { return this; }
 
     public constructor(
-        runtime: IComponentRuntime,
-        context: IComponentContext,
+        props: ISharedComponentProps,
         private initialState?: IClickerInitialState,
     ) {
-        super(runtime, context);
+        super(props);
     }
 
     /**
@@ -72,8 +71,8 @@ export class ClickerWithInitialValueFactory extends PrimedComponentFactory {
         context: IComponentContext,
         initialState?: IClickerInitialState,
     ): Promise<IComponent & IComponentLoadable> {
-        const ctorFn = (r: IComponentRuntime, c: IComponentContext) => {
-            return new ClickerWithInitialValue(r, c, initialState);
+        const ctorFn = (props: ISharedComponentProps) => {
+            return new ClickerWithInitialValue(props, initialState);
         };
         return this.createComponentWithConstructorFn(context, ctorFn);
     }
@@ -84,6 +83,8 @@ export class ClickerWithInitialValueFactory extends PrimedComponentFactory {
         ClickerWithInitialValueName,
         ClickerWithInitialValue,
         [],
+        {},
+        {},
     );
 }
 
