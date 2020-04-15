@@ -128,6 +128,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             loader,
             serviceFactory,
             urlResolver,
+            request,
             logger);
 
         const [, docId] = id.split("/");
@@ -135,7 +136,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         container._scopes = container.getScopes(resolvedUrl);
         container._canReconnect = !(request.headers?.[LoaderHeader.reconnect] === false);
         container.service = await serviceFactory.createDocumentService(resolvedUrl);
-        container.originalRequest = request;
 
         return new Promise<Container>((res, rej) => {
             let alreadyRaisedError = false;
@@ -190,6 +190,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             loader,
             serviceFactory,
             urlResolver,
+            undefined,
             logger);
         await container.createDetached(source);
 
@@ -214,7 +215,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private readonly _deltaManager: DeltaManager;
     private _existing: boolean | undefined;
     private _id: string | undefined;
-    private originalRequest: IRequest | undefined;
     private service: IDocumentService | undefined;
     private _parentBranch: string | null = null;
     private _connectionState = ConnectionState.Disconnected;
@@ -332,6 +332,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         private readonly loader: Loader,
         private readonly serviceFactory: IDocumentServiceFactory,
         private readonly urlResolver: IUrlResolver,
+        private originalRequest: IRequest | undefined,
         logger?: ITelemetryBaseLogger,
     ) {
         super();
