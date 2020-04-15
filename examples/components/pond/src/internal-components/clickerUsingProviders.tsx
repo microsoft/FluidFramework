@@ -10,7 +10,7 @@ import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-import { IComponentUserInformation } from "./interfaces";
+import { IComponentUserInformation } from "../interfaces";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../../package.json");
