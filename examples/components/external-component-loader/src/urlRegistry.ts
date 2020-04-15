@@ -114,7 +114,8 @@ export class UrlRegistry implements IComponentRegistry {
         // First get the info from the package about what we're loading
         const fluidPackage = await fetchAndValidatePackageInfo(packageUrl);
         const entrypointName = fluidPackage.fluid.browser.umd.library;
-        const scripts = fluidPackage.fluid.browser.umd.files;
+        const scriptRelativeUrls = fluidPackage.fluid.browser.umd.files;
+        const scriptUrls = scriptRelativeUrls.map((scriptRelativeUrl) => `${packageUrl}/${scriptRelativeUrl}`);
 
         while (this.loadingEntrypoints.has(entrypointName)) {
             await this.loadingEntrypoints.get(entrypointName);
@@ -124,18 +125,13 @@ export class UrlRegistry implements IComponentRegistry {
         // Preserve the entry point for our own external component loader package
         const preservedEntryPoint = window[entrypointName];
         window[entrypointName] = undefined;
-        try {
-            const scriptLoadPromises =
-                scripts.map(
-                    async (bundle) => loadScript(`${packageUrl}/${bundle}`));
 
-            const errors: any[] = [];
-            while (scriptLoadPromises.length > 0) {
-                try {
-                    await scriptLoadPromises.shift();
-                } catch (e) {
-                    errors.push(e);
-                }
+        try {
+            const scriptLoadPromises = scriptUrls.map(loadScript);
+
+            const errors: Error[] = [];
+            for (const scriptLoadPromise of scriptLoadPromises) {
+                await scriptLoadPromise.catch(errors.push);
             }
             if (errors.length > 0) {
                 throw new Error(errors.join("\n"));
