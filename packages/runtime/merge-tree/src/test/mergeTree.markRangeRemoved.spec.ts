@@ -12,7 +12,7 @@ describe("MergeTree.markRangeRemoved", () => {
     let client: TestClient;
     beforeEach(() => {
         client = new TestClient();
-        client.startCollaboration("local");
+        client.startOrUpdateCollaboration("local");
         for (const char of "hello world") {
             client.applyMsg(
                 client.makeOpMessage(
@@ -118,7 +118,7 @@ describe("MergeTree.markRangeRemoved", () => {
 
         // First we run through the ops from the perspective of a passive observer (i.e., all operations are remote).
         const expected = new TestClient();
-        expected.startCollaboration("3");
+        expected.startOrUpdateCollaboration("3");
 
         {
             let seq = 0;
@@ -138,7 +138,7 @@ describe("MergeTree.markRangeRemoved", () => {
 
         // Next, we run through the same sequence from the perspective of client 1:
         const actual = new TestClient();
-        actual.startCollaboration("1");
+        actual.startOrUpdateCollaboration("1");
 
         {
             let seq = 0;

@@ -85,7 +85,7 @@ describe("MergeTree.Client", () => {
 
             const clients: TestClient[] = [new TestClient({ blockUpdateMarkers: true })];
             clients.forEach(
-                (c, i) => c.startCollaboration(clientNames[i]));
+                (c, i) => c.startOrUpdateCollaboration(clientNames[i]));
 
             let seq = 0;
             while (clients.length < opts.clients.max) {

@@ -100,7 +100,7 @@ export class SnapshotLoader {
         // TODO currently only assumes two levels of branching
         const branching = branchId === this.runtime.documentId ? 0 : 1;
 
-        this.client.startCollaboration(
+        this.client.startOrUpdateCollaboration(
             this.runtime.clientId,
             // tslint:disable-next-line:no-suspicious-comment
             // TODO: Make 'minSeq' non-optional once the new snapshot format becomes the default?

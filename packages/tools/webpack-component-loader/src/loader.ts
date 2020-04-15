@@ -13,6 +13,7 @@ import {
     IResolvedFluidCodeDetails,
     isFluidPackage,
 } from "@microsoft/fluid-container-definitions";
+import { Container } from "@microsoft/fluid-container-loader";
 import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
@@ -20,12 +21,14 @@ import { SessionStorageDbFactory } from "@microsoft/fluid-local-test-utils";
 import { IUser } from "@microsoft/fluid-protocol-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { getRandomName } from "@microsoft/fluid-server-services-client";
+import { Deferred } from "@microsoft/fluid-common-utils";
 import * as jwt from "jsonwebtoken";
 import { v4 as uuid } from "uuid";
 import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
 import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 import { InsecureUrlResolver } from "@microsoft/fluid-test-runtime-utils";
-import { extractPackageIdentifierDetails} from "@microsoft/fluid-web-code-loader";
+import { extractPackageIdentifierDetails } from "@microsoft/fluid-web-code-loader";
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { OdspUrlResolver } from "./odspUrlResolver";
 
 export interface IDevServerUser extends IUser {
@@ -35,6 +38,7 @@ export interface IDevServerUser extends IUser {
 export interface IBaseRouteOptions {
     port: number;
     npm?: string;
+    openMode?: "detached" | "attached";
 }
 
 export interface ILocalRouteOptions extends IBaseRouteOptions {
@@ -68,6 +72,7 @@ export interface IOdspRouteOptions extends IBaseRouteOptions {
     odspAccessToken?: string;
     pushAccessToken?: string;
     forceReauth?: boolean;
+    driveId?: string;
 }
 
 export type RouteOptions =
@@ -102,7 +107,10 @@ function wrapIfComponentPackage(packageJson: IFluidPackage, fluidModule: IFluidM
     return fluidModule;
 }
 
-function getUrlResolver(options: RouteOptions): IUrlResolver {
+function getUrlResolver(
+    options: RouteOptions,
+    connection: ILocalDeltaConnectionServer,
+): IUrlResolver {
     switch (options.mode) {
         case "docker":
             return new InsecureUrlResolver(
@@ -138,10 +146,11 @@ function getUrlResolver(options: RouteOptions): IUrlResolver {
         case "spo-df":
             return new OdspUrlResolver(
                 options.server,
-                { accessToken: options.odspAccessToken });
+                { accessToken: options.odspAccessToken },
+                options.driveId);
 
         default: // Local
-            return new TestResolver();
+            return new TestResolver(connection);
     }
 }
 
@@ -159,7 +168,7 @@ function makeSideBySideDiv(divId?: string) {
     return div;
 }
 
-class WebpackCodeResolver implements IFluidCodeResolver{
+class WebpackCodeResolver implements IFluidCodeResolver {
     constructor(private readonly options: IBaseRouteOptions){}
     async resolveCodeDetails(details: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails> {
         const baseUrl = details.config.cdn ?? `http://localhost:${this.options.port}`;
@@ -188,16 +197,9 @@ class WebpackCodeResolver implements IFluidCodeResolver{
 
 }
 
-export async function start(
-    documentId: string,
-    packageJson: IFluidPackage,
-    fluidModule: IFluidModule,
-    options: RouteOptions,
-    div: HTMLDivElement,
-): Promise<void> {
+function getDocumentServiceFactory(documentId: string, options: RouteOptions) {
     let documentServiceFactory: IDocumentServiceFactory;
     let deltaConn: ILocalDeltaConnectionServer;
-
     switch (options.mode) {
         case "local": {
             deltaConn = LocalDeltaConnectionServer.create(new SessionStorageDbFactory(documentId));
@@ -212,6 +214,10 @@ export async function start(
                 async (siteUrl, refresh) => { return options.odspAccessToken; },
                 async (refresh) => { return options.pushAccessToken; },
                 { send: (event) => { return; } },
+                undefined,
+                undefined,
+                undefined,
+                options.openMode === "detached" ? true : false,
             );
             break;
         }
@@ -225,8 +231,27 @@ export async function start(
             );
         }
     }
+    return {documentServiceFactory, connection: deltaConn};
+}
 
-    const urlResolver = getUrlResolver(options);
+export async function start(
+    documentId: string,
+    packageJson: IFluidPackage,
+    fluidModule: IFluidModule,
+    options: RouteOptions,
+    div: HTMLDivElement,
+    attachButton: HTMLButtonElement,
+    textArea: HTMLTextAreaElement,
+    attached: boolean,
+): Promise<void> {
+    if (attached) {
+        attachButton.style.display = "none";
+        textArea.style.display = "none";
+    }
+
+    const {documentServiceFactory, connection} = getDocumentServiceFactory(documentId, options);
+
+    const urlResolver = getUrlResolver(options, connection);
 
     // Construct a request
     const url = window.location.href;
@@ -244,61 +269,95 @@ export async function start(
         host1Conf,
         [packageSeed],
     );
-    const container1Promise = baseHost1.initializeContainer(
-        url,
-        codeDetails,
-    );
-
-    // Side-by-side mode
-    if (options.mode === "local" && !options.single) {
-        // New documentServiceFactory for right div, same everything else
-        const docServFac2: IDocumentServiceFactory = new TestDocumentServiceFactory(deltaConn);
-        const hostConf2 =
-            { codeResolver: new WebpackCodeResolver(options), documentServiceFactory: docServFac2, urlResolver };
-
-        // This will create a new Loader/Container/Component from the BaseHost above. This is
-        // intentional because we want to emulate two clients collaborating with each other.
-        const baseHost2 = new BaseHost(
-            hostConf2,
-            [packageSeed],
-        );
-        const container2Promise = baseHost2.initializeContainer(
+    let container1: Container;
+    if (!attached) {
+        if (!codeDetails) {
+            throw new Error("Code details must be defined for detached mode!!");
+        }
+        const loader = await baseHost1.getLoader();
+        container1 = await loader.createDetachedContainer(codeDetails);
+    } else {
+        container1 = await baseHost1.initializeContainer(
             url,
             codeDetails,
         );
+    }
 
+    const urlParts = new URL(url).pathname.split("/");
+    const componentUrl = `/${urlParts[2] === undefined ? "" : urlParts[2]}`;
+    attachButton.disabled = false;
+    const urlDeferred = new Deferred<string>();
+    // Side-by-side mode
+    if (options.mode === "local" && !options.single) {
         const leftDiv = makeSideBySideDiv("sbs-left");
         const rightDiv = makeSideBySideDiv("sbs-right");
         div.append(leftDiv, rightDiv);
-
-        await Promise.all([
-            container1Promise.then(async (container) => {
-                await getComponentAndRender(baseHost1, url, leftDiv);
-                // Handle the code upgrade scenario (which fires contextChanged)
-                container.on("contextChanged", () => {
-                    getComponentAndRender(baseHost1, url, leftDiv).catch(() => { });
-                });
-            }),
-            container2Promise.then(async (container) => {
-                await getComponentAndRender(baseHost2, url, rightDiv);
-                // Handle the code upgrade scenario (which fires contextChanged)
-                container.on("contextChanged", () => {
-                    getComponentAndRender(baseHost2, url, rightDiv).catch(() => { });
-                });
-            }),
-        ]);
-    } else {
-        const container = await container1Promise;
-        await getComponentAndRender(baseHost1, url, div);
+        await getComponentAndRender(container1, componentUrl, leftDiv);
         // Handle the code upgrade scenario (which fires contextChanged)
-        container.on("contextChanged", () => {
-            getComponentAndRender(baseHost1, url, div).catch(() => { });
+        container1.on("contextChanged", () => {
+            getComponentAndRender(container1, componentUrl, leftDiv).catch(() => { });
         });
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        urlDeferred.promise.then(async (containerUrl) => {
+            // New documentServiceFactory for right div, same everything else
+            const docServFac2: IDocumentServiceFactory = new TestDocumentServiceFactory(connection);
+            const hostConf2 =
+            { codeResolver: new WebpackCodeResolver(options), documentServiceFactory: docServFac2, urlResolver };
+
+            // This will create a new Loader/Container/Component from the BaseHost above. This is
+            // intentional because we want to emulate two clients collaborating with each other.
+            const baseHost2 = new BaseHost(
+                hostConf2,
+                [packageSeed],
+            );
+            const container2 = await baseHost2.initializeContainer(
+                containerUrl,
+                codeDetails,
+            );
+
+            await getComponentAndRender(container2, componentUrl, rightDiv);
+            // Handle the code upgrade scenario (which fires contextChanged)
+            container2.on("contextChanged", () => {
+                getComponentAndRender(container2, componentUrl, rightDiv).catch(() => { });
+            });
+        });
+    } else {
+        await getComponentAndRender(container1, componentUrl, div);
+        // Handle the code upgrade scenario (which fires contextChanged)
+        container1.on("contextChanged", () => {
+            getComponentAndRender(container1, componentUrl, div).catch(() => { });
+        });
+    }
+    if (!attached) {
+        attachButton.onclick = async () => {
+            await container1.attach({url: window.location.href})
+                .then(() => {
+                    const text = window.location.href.replace("create", container1.id);
+                    textArea.innerText = text;
+                    urlDeferred.resolve(text);
+                    attachButton.style.display = "none";
+                },
+                (error) => {
+                    throw new Error(error);
+                });
+        };
+    } else {
+        urlDeferred.resolve(window.location.href);
     }
 }
 
-async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
-    const component = await baseHost.getComponent(url);
+async function getComponentAndRender(container: Container, url: string, div: HTMLDivElement) {
+    const response = await container.request({ url });
+
+    if (response.status !== 200 ||
+        !(
+            response.mimeType === "fluid/component" ||
+            response.mimeType === "prague/component"
+        )) {
+        return false;
+    }
+
+    const component = response.value as IComponent;
     if (component === undefined) {
         return;
     }

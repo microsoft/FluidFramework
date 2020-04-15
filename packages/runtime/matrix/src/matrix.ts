@@ -153,10 +153,8 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
         assert.equal(this.rows.getCollabWindow().collaborating, this.cols.getCollabWindow().collaborating);
 
         // Update merge tree collaboration information with new client ID and then resend pending ops
-        if (this.rows.getCollabWindow().collaborating) {
-            this.rows.updateCollaboration(this.runtime.clientId as string);
-            this.cols.updateCollaboration(this.runtime.clientId as string);
-        }
+        this.rows.startOrUpdateCollaboration(this.runtime.clientId as string);
+        this.cols.startOrUpdateCollaboration(this.runtime.clientId as string);
 
         // TODO: Resend pending ops on reconnect
         assert(this.rows.resetPendingSegmentsToOp() === undefined);
@@ -220,8 +218,8 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
     }
 
     protected registerCore() {
-        this.rows.startCollaboration(this.runtime.clientId, 0);
-        this.cols.startCollaboration(this.runtime.clientId, 0);
+        this.rows.startOrUpdateCollaboration(this.runtime.clientId, 0);
+        this.cols.startOrUpdateCollaboration(this.runtime.clientId, 0);
     }
 
     private insert(

@@ -33,7 +33,7 @@ describe("non-collab", () => {
     describe("insert", () => {
         before(() => {
             client = new TestClient();
-            client.startCollaboration(userId);
+            client.startOrUpdateCollaboration(userId);
         });
 
         const initialText = "done";
@@ -82,7 +82,7 @@ describe("non-collab", () => {
         before(() => {
             client = new TestClient();
             client.insertTextLocal(0, "All is well!");
-            client.startCollaboration(userId);
+            client.startOrUpdateCollaboration(userId);
         });
 
         it("from the middle", () => {
@@ -124,7 +124,7 @@ describe("non-collab", () => {
         before(() => {
             client = new TestClient();
             client.insertTextLocal(0, "All is well!");
-            client.startCollaboration(userId);
+            client.startOrUpdateCollaboration(userId);
         });
 
         it("add property over separate range", () => {
@@ -221,7 +221,7 @@ describe("collab", () => {
         beforeEach(() => {
             client = new TestClient();
             client.insertTextLocal(0, "The fox jumps over the dog");
-            client.startCollaboration(localUserId);
+            client.startOrUpdateCollaboration(localUserId);
         });
 
         it("separate regions, local before remote", () => {
@@ -678,7 +678,7 @@ describe("collab", () => {
         beforeEach(() => {
             client = new TestClient();
             client.insertTextLocal(0, "The quick brown fox jumps over the lazy dog");
-            client.startCollaboration(localUserId);
+            client.startOrUpdateCollaboration(localUserId);
         });
 
         it("separate regions, local before remote", () => {
@@ -1286,7 +1286,7 @@ describe("collab", () => {
         beforeEach(() => {
             client = new TestClient();
             client.insertTextLocal(0, "Habits change into character");
-            client.startCollaboration(localUserId);
+            client.startOrUpdateCollaboration(localUserId);
         });
 
         it("same range, same property, local before remote", () => {
@@ -1953,7 +1953,7 @@ describe("collab", () => {
         beforeEach(() => {
             client = new TestClient();
             client.insertTextLocal(0, "The brown fox jumps over the lazy dog");
-            client.startCollaboration(localUserId);
+            client.startOrUpdateCollaboration(localUserId);
         });
 
         it("insertPos before deleteRange, insertLocal deleteRemote, local before remote", () => {
@@ -3007,7 +3007,7 @@ describe("SequenceDeltaEvent", () => {
 
     beforeEach(() => {
         client = new TestClient();
-        client.startCollaboration(localUserLongId);
+        client.startOrUpdateCollaboration(localUserLongId);
     });
 
     describe(".ranges", () => {

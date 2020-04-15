@@ -128,8 +128,13 @@ class SessionStorageCollection<T> implements ICollection<T> {
     }
 
     public async insertOne(value: any): Promise<any> {
-        if (this.findOneInternal(value)) {
-            throw new Error("existing object");
+        const presentVal = this.findOneInternal(value);
+        // Only raise error when the object is present and the value is not equal.
+        if (presentVal) {
+            if (JSON.stringify(presentVal) === JSON.stringify(value)) {
+                return;
+            }
+            throw new Error("Existing Object!!");
         }
 
         return this.insertInternal(value);

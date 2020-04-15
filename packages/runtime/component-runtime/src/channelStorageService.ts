@@ -33,6 +33,10 @@ export class ChannelStorageService implements IObjectStorageService {
         }
     }
 
+    public contains(path: string){
+        return this.flattenedTree[path] !== undefined;
+    }
+
     public async read(path: string): Promise<string> {
         const id = this.getIdForPath(path);
 
