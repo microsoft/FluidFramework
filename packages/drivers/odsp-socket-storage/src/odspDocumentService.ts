@@ -176,6 +176,7 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
 
     private readonly joinSessionKey: string;
 
+    private readonly isOdc: boolean;
 
     /**
      * @param appId - app id used for telemetry for network requests
@@ -209,7 +210,7 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
             logger,
             {
                 docId: this.odspResolvedUrl.hashedDocumentId,
-                odc: isOdcOrigin(new URL(this.odspResolvedUrl.endpoints.snapshotStorageUrl).origin),
+                odc: this.isOdc,
             });
 
         this.getStorageToken = async (refresh: boolean, name?: string) => {
@@ -311,7 +312,7 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
                 await Promise.all([
                     this.joinSession(),
                     // For ODC, we just use the token from joinsession
-                    isOdcOrigin(new URL(this.snapshotStorageUrl).origin) ? Promise.resolve("") : this.getWebsocketToken(refresh),
+                    this.isOdc ? Promise.resolve("") : this.getWebsocketToken(refresh),
                     this.socketIOClientP
                 ]);
 
