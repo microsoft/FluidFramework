@@ -388,10 +388,10 @@ export interface IHostRuntime extends
     on(event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void): this;
     on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
     on(
-        event: "dirtyDocument" | "disconnected" | "dispose" | "savedDocument",
+        event: "dirtyDocument" | "disconnected" | "dispose" | "joining" | "savedDocument",
         listener: () => void): this;
     on(
-        event: "leader" | "noleader",
+        event: "connected" | "leader" | "noleader",
         listener: (clientId?: string) => void): this;
     on(event: "localHelp", listener: (message: IHelpMessage) => void): this;
     on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
