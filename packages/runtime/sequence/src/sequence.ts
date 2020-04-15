@@ -47,7 +47,6 @@ export interface ISharedSegmentSequenceEvents
         listener: (event: SequenceMaintenanceEvent, target: IEventThisPlaceHolder) => void);
 }
 
-
 export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     extends SharedObject<ISharedSegmentSequenceEvents>
     implements ISharedIntervalCollection<SequenceInterval> {

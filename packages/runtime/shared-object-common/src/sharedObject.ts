@@ -107,7 +107,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         this.on("error", (error: any) => {
             runtime.emit("error", error);
         });
-
     }
 
     /**

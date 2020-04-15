@@ -6,7 +6,6 @@
 import { IDisposable, IErrorEvent, IEventProvider } from "@microsoft/fluid-common-definitions";
 import { ISequencedClient } from "./clients";
 
-
 /**
  * Proposal to set the given key/value pair.
  *

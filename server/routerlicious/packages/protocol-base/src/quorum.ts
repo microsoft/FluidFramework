@@ -14,7 +14,6 @@ import {
     ISequencedClient,
     ISequencedDocumentMessage,
     ISequencedProposal,
-
 } from "@microsoft/fluid-protocol-definitions";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-internal-modules

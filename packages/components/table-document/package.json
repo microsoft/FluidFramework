@@ -42,13 +42,13 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@microsoft/fluid-common-definitions": "^0.14.0",
     "@microsoft/fluid-aqueduct": "^0.16.0",
+    "@microsoft/fluid-common-definitions": "^0.14.0",
     "@microsoft/fluid-component-core-interfaces": "^0.16.0",
     "@microsoft/fluid-merge-tree": "^0.16.0",
+    "@microsoft/fluid-protocol-definitions": "^0.1004.1-0",
     "@microsoft/fluid-runtime-definitions": "^0.16.0",
     "@microsoft/fluid-sequence": "^0.16.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1004.1-0",
     "@microsoft/fluid-shared-object-base": "^0.16.0",
     "@tiny-calc/micro": "0.0.18374",
     "debug": "^4.1.1"
