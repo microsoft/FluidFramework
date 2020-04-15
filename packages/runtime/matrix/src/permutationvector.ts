@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { ChildLogger, fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
+import { ChildLogger } from "@microsoft/fluid-common-utils";
 import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
 import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
 import {
@@ -22,6 +22,7 @@ import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { FileMode, TreeEntry, ITree } from "@microsoft/fluid-protocol-definitions";
 import { ObjectStoragePartition } from "@microsoft/fluid-runtime-utils";
 import { HandleTable, Handle } from "./handletable";
+import { serializeBlob, deserializeBlob } from "./serialization";
 
 const enum SnapshotPath {
     segments = "segments",
@@ -156,7 +157,11 @@ export class PermutationVector extends Client {
 
     public adjustPosition(pos: number, fromSeq: number, clientId: number) {
         const { segment, offset } = this.mergeTree.getContainingSegment(pos, fromSeq, clientId);
-        if (segment === undefined) {
+
+        // Note that until the MergeTree GCs, the segment is still reachable via `getContainingSegment()` with
+        // a `refSeq` in the past.  Prevent remote ops from accidentally allocating or using recycled handles
+        // by checking for the presence of 'removedSeq'.
+        if (segment === undefined || segment.removedSeq !== undefined) {
             return undefined;
         }
 
@@ -166,9 +171,6 @@ export class PermutationVector extends Client {
 
     // Constructs an ITreeEntry for the cell data.
     public snapshot(runtime: IComponentRuntime, handle: IComponentHandle): ITree {
-        const serializer = runtime.IComponentSerializer;
-        const handleTableChunk = this.handleTable.snapshot();
-
         return {
             entries: [
                 {
@@ -177,30 +179,16 @@ export class PermutationVector extends Client {
                     type: TreeEntry[TreeEntry.Tree],
                     value: super.snapshot(runtime, handle, /* tardisMsgs: */ []),
                 },
-                {
-                    mode: FileMode.File,
-                    path: SnapshotPath.handleTable,
-                    type: TreeEntry[TreeEntry.Blob],
-                    value: {
-                        contents: serializer !== undefined
-                            ? serializer.stringify(handleTableChunk, runtime.IComponentHandleContext, handle)
-                            : JSON.stringify(handleTableChunk),
-                        encoding: "utf-8",
-                    },
-                },
+                serializeBlob(runtime, handle, SnapshotPath.handleTable, this.handleTable.snapshot()),
             ],
             id: null,   // eslint-disable-line no-null/no-null
         };
     }
 
     public async load(runtime: IComponentRuntime, storage: IObjectStorageService, branchId?: string) {
-        const handleTableChunk = await storage.read(SnapshotPath.handleTable);
-        const utf8 = fromBase64ToUtf8(handleTableChunk);
-
-        const serializer = runtime.IComponentSerializer;
-        const handleTableData = serializer !== undefined
-            ? serializer.parse(utf8, runtime.IComponentHandleContext)
-            : JSON.parse(utf8);
+        const [handleTableData] = await Promise.all([
+            await deserializeBlob(runtime, storage, SnapshotPath.handleTable),
+        ]);
 
         this.handleTable = HandleTable.load<never>(handleTableData);
 
