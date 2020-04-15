@@ -137,8 +137,8 @@ describe("Errors Types", () => {
             assert.fail("Error should be an accessDeniedError");
         }
         else {
+            assert.equal(networkError.errorType, ErrorType.accessDeniedError, "canRetry should be preserved");
             assert.equal(networkError.canRetry, false, "canRetry should be preserved");
-            assert.equal(networkError.statusCode, 403, "status code should be preserved");
         }
     });
 
@@ -152,8 +152,8 @@ describe("Errors Types", () => {
             assert.fail("Error should be a fileNotFoundError");
         }
         else {
+            assert.equal(networkError.errorType, ErrorType.fileNotFoundError, "canRetry should be preserved");
             assert.equal(networkError.canRetry, false, "canRetry should be preserved");
-            assert.equal(networkError.statusCode, 404, "status code should be preserved");
         }
     });
 
@@ -167,7 +167,7 @@ describe("Errors Types", () => {
             assert.fail("Error should be a fatalError");
         }
         else {
-            assert.equal(networkError.critical, true, "Error should be critical");
+            assert.equal(networkError.canRetry, false, "Error should be critical");
         }
     });
 
@@ -190,13 +190,13 @@ describe("Errors Types", () => {
         const writeError = createWriteError("Test Error");
         assertCustomPropertySupport(writeError);
         assert.equal(writeError.errorType, ErrorType.writeError, "Error should be a writeError");
-        assert.equal(writeError.critical, true, "Error should be critical");
+        assert.equal(writeError.canRetry, false, "Error should be critical");
     });
 
     it("Check double conversion of network error", async () => {
         const networkError = createNetworkError("Test Error", true /*canRetry*/);
-        const error1 = createIError(networkError, true);
-        const error2 = createIError(error1, false);
+        const error1 = createIError(networkError);
+        const error2 = createIError(error1);
         assert.equal(error1, error2, "Both errors should be same!!");
     });
 
@@ -204,8 +204,8 @@ describe("Errors Types", () => {
         const err = {
             message: "Test Error",
         };
-        const error1 = createIError(err, false);
-        const error2 = createIError(error1, true);
+        const error1 = createIError(err);
+        const error2 = createIError(error1);
         assert.equal(error1, error2, "Both errors should be same!!");
     });
 
@@ -216,10 +216,10 @@ describe("Errors Types", () => {
         const err2 = {
             message: "Test Error",
         };
-        const error1 = createIError(err1, false);
-        const error2 = createIError(Object.freeze(err2), false);
-        assert.equal(error1.critical, false, "Error should contain critical property.");
-        assert.equal(error2.critical, undefined, "Error should not contain critical property.");
+        const error1 = createIError(err1);
+        const error2 = createIError(Object.freeze(err2));
+        assert.equal(error1.canRetry, true, "Error should contain critical property.");
+        assert.equal(error2.canRetry, undefined, "Error should not contain critical property.");
     });
 
 });

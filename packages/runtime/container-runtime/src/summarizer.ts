@@ -523,7 +523,7 @@ export class Summarizer implements ISummarizer {
                 }
                 const error: ISummarizingError = {
                     errorType: ErrorType.summarizingError,
-                    description: `Summarizer: ${this.stopReason ?? "runEnded"}`,
+                    message: `Summarizer: ${this.stopReason ?? "runEnded"}`,
                 };
                 this.runtime.closeFn(error);
             }

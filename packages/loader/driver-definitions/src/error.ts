@@ -20,56 +20,48 @@ export type IError = IGeneralError | IThrottlingError |
 IGenericNetworkError | IAccessDeniedError | IFileNotFoundError |
 IServiceError | ISummarizingError | IWriteError | IFatalError;
 
-export interface IGeneralError {
+export interface IErrorBase {
+    readonly errorType: ErrorType;
+    readonly message: string;
+    readonly canRetry?: boolean; // to be replaced with 'critical'
+    readonly online?: string;
+}
+
+export interface IGeneralError extends IErrorBase {
     readonly errorType: ErrorType.generalError;
     error: any;
-    critical?: boolean;
 }
 
-export interface IThrottlingError {
+export interface IThrottlingError extends IErrorBase {
     readonly errorType: ErrorType.throttlingError;
-    readonly message: string;
     readonly retryAfterSeconds: number;
-    critical?: boolean;
 }
 
-export interface IBaseConnectionError {
-    readonly message: string;
-    readonly canRetry?: boolean;
-    readonly statusCode?: number;
-    readonly online: string;
-    critical?: boolean;
-}
-
-export interface IGenericNetworkError extends IBaseConnectionError {
+export interface IGenericNetworkError extends IErrorBase {
     readonly errorType: ErrorType.genericNetworkError;
+    readonly statusCode?: number;
 }
 
-export interface IAccessDeniedError extends IBaseConnectionError {
+export interface IAccessDeniedError extends IErrorBase {
     readonly errorType: ErrorType.accessDeniedError;
 }
 
-export interface IFileNotFoundError extends IBaseConnectionError {
+export interface IFileNotFoundError extends IErrorBase {
     readonly errorType: ErrorType.fileNotFoundError;
 }
 
-export interface IServiceError {
+export interface IServiceError extends IErrorBase {
     readonly errorType: ErrorType.serviceError;
-    critical?: boolean;
 }
 
-export interface ISummarizingError {
+export interface ISummarizingError extends IErrorBase {
     readonly errorType: ErrorType.summarizingError;
-    readonly description: string;
-    critical?: boolean;
 }
 
-export interface IWriteError {
+export interface IWriteError extends IErrorBase {
     readonly errorType: ErrorType.writeError;
-    readonly critical: boolean;
 }
 
-export interface IFatalError {
+export interface IFatalError extends IErrorBase {
     readonly errorType: ErrorType.fatalError;
-    readonly critical: boolean;
 }

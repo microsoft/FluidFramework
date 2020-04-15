@@ -109,7 +109,7 @@ class ThrottlingError extends ErrorWithProps implements IThrottlingError {
  */
 class WriteError extends ErrorWithProps implements IWriteError {
     readonly errorType: ErrorType.writeError = ErrorType.writeError;
-    public readonly critical = true;
+    public readonly canRetry = false;
 
     constructor(errorMessage: string) {
         super(errorMessage);
@@ -123,7 +123,7 @@ export const createWriteError = (errorMessage: string) => (new WriteError(errorM
  */
 class FatalError extends ErrorWithProps implements IFatalError {
     readonly errorType: ErrorType.fatalError = ErrorType.fatalError;
-    public readonly critical = true;
+    public readonly canRetry = false;
 
     constructor(errorMessage: string) {
         super(errorMessage);

@@ -142,7 +142,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
                     componentRuntime.attach();
                 })
                 .catch((error: any) => {
-                    context.error(createIError(error));
+                    context.closeFn(createIError(error));
                 });
         }
 

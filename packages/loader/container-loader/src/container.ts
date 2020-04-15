@@ -144,7 +144,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 // Depending where error happens, we can be attempting to connect to web socket
                 // and continuously retrying (consider offline mode)
                 // Host has no container to close, so it's prudent to do it here
-                const error = createIError(err, true);
+                const error = createIError(err);
                 container.close(error);
                 rej(error);
                 alreadyRaisedError = true;
@@ -164,7 +164,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 })
                 .catch((error) => {
                     perfEvent.cancel(undefined, error);
-                    const err = createIError(error, true);
+                    const err = createIError(error);
                     if (!alreadyRaisedError) {
                         container.logContainerError(err);
                     }
@@ -405,7 +405,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
         this._closed = true;
 
-        this._deltaManager.close(error, false /*raiseContainerError*/);
+        this._deltaManager.close(error);
 
         if (this.protocolHandler) {
             this.protocolHandler.close();
@@ -481,9 +481,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.propagateConnectionState();
             this.resume();
         } catch (error) {
-            const err = createIError(error, true);
-            this.raiseContainerError(err);
-            this.close();
+            const err = createIError(error);
+            this.close(err);
             throw error;
         }
     }
@@ -591,7 +590,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     public async reloadContext(): Promise<void> {
         return this.reloadContextCore().catch((error) => {
-            this.raiseContainerError(createIError(error, true));
+            this.close(createIError(error));
             throw error;
         });
     }
