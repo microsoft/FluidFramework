@@ -40,6 +40,7 @@ import {
     IExperimentalDocumentService,
     IExperimentalUrlResolver,
     IResolvedUrl,
+    CreateNewHeader,
 } from "@microsoft/fluid-driver-definitions";
 import {
     createIError,
@@ -441,7 +442,12 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             throw new Error("Protocol Handler is undefined");
         }
         const protocolSummary = this.protocolHandler.captureSummary();
-
+        if (!request.headers?.[CreateNewHeader.createNew]) {
+            request.headers = {
+                ...request.headers,
+                [CreateNewHeader.createNew]: {},
+            };
+        }
         const createNewResolvedUrl = await this.urlResolver.resolve(request);
         ensureFluidResolvedUrl(createNewResolvedUrl);
 

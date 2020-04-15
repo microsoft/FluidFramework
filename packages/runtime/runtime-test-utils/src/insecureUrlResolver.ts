@@ -11,7 +11,7 @@ import {
     IResolvedUrl,
     IUrlResolver,
     IExperimentalUrlResolver,
-    OpenMode,
+    CreateNewHeader,
 } from "@microsoft/fluid-driver-definitions";
 import {
     ITokenClaims,
@@ -49,7 +49,7 @@ export class InsecureUrlResolver implements IUrlResolver, IExperimentalUrlResolv
     ) { }
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
-        if (request.headers && request.headers.openMode === OpenMode.CreateNew) {
+        if (request.headers?.[CreateNewHeader.createNew]) {
             const [, queryString] = request.url.split("?");
 
             const searchParams = new URLSearchParams(queryString);
@@ -144,7 +144,7 @@ export class InsecureUrlResolver implements IUrlResolver, IExperimentalUrlResolv
         const createNewRequest: IRequest = {
             url: `${this.hostUrl}?fileName=${fileName}`,
             headers: {
-                openMode: OpenMode.CreateNew,
+                [CreateNewHeader.createNew]: true,
             },
         };
         return createNewRequest;

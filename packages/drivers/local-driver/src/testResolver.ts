@@ -9,7 +9,7 @@ import {
     IResolvedUrl,
     IUrlResolver,
     IExperimentalUrlResolver,
-    OpenMode,
+    CreateNewHeader,
 } from "@microsoft/fluid-driver-definitions";
 import { ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { generateToken } from "@microsoft/fluid-server-services-client";
@@ -70,7 +70,7 @@ export class TestResolver implements IUrlResolver, IExperimentalUrlResolver {
         const createNewRequest: IRequest = {
             url: `http://localhost:3000/${this.tenantId}/${this.id}`,
             headers: {
-                openMode: OpenMode.CreateNew,
+                [CreateNewHeader.createNew]: true,
             },
         };
         return createNewRequest;

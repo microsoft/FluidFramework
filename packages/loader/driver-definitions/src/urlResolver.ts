@@ -23,11 +23,6 @@ export interface IFluidResolvedUrl extends IResolvedUrlBase {
     endpoints: { [name: string]: string };
 }
 
-export enum OpenMode {
-    CreateNew,
-    OpenExisting,
-}
-
 export interface IUrlResolver {
 
     // Like DNS should be able to cache resolution requests. Then possibly just have a token provider go and do stuff?
@@ -43,4 +38,17 @@ export interface IExperimentalUrlResolver extends IUrlResolver {
         resolvedUrl: IResolvedUrl,
         request: IRequest,
     ): Promise<IResponse>;
+}
+
+export enum CreateNewHeader {
+    createNew = "createNew",
+}
+
+export interface ICreateNewHeader {
+    [CreateNewHeader.createNew]: any;
+}
+
+declare module "@microsoft/fluid-component-core-interfaces" {
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IRequestHeader extends Partial<ICreateNewHeader> { }
 }

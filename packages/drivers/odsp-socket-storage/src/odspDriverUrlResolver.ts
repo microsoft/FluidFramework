@@ -9,7 +9,7 @@ import {
     IUrlResolver,
     IExperimentalUrlResolver,
     IResolvedUrl,
-    OpenMode,
+    CreateNewHeader,
 } from "@microsoft/fluid-driver-definitions";
 import { IOdspResolvedUrl, ICreateNewOptions } from "./contracts";
 import { getHashedDocumentId } from "./odspUtils";
@@ -64,11 +64,11 @@ export class OdspDriverUrlResolver implements IUrlResolver, IExperimentalUrlReso
                     itemId: "",
                     fileName: "",
                 };
-            } else if (request.headers.openMode === OpenMode.CreateNew) {
+            } else if (request.headers[CreateNewHeader.createNew]) {
                 const [siteURL, queryString] = request.url.split("?");
 
                 const searchParams = new URLSearchParams(queryString);
-                const fileName = request.headers.fileName;
+                const fileName = request.headers[CreateNewHeader.createNew].fileName;
                 const driveID = searchParams.get("driveId");
                 const filePath = searchParams.get("path");
                 if (!(fileName && siteURL && driveID && filePath)) {
@@ -139,8 +139,9 @@ export class OdspDriverUrlResolver implements IUrlResolver, IExperimentalUrlReso
         const createNewRequest: IRequest = {
             url: `${siteUrl}?driveId=${encodeURIComponent(driveId)}&path=${encodeURIComponent(filePath)}`,
             headers: {
-                openMode: OpenMode.CreateNew,
-                fileName,
+                [CreateNewHeader.createNew]: {
+                    fileName,
+                },
             },
         };
         return createNewRequest;
