@@ -302,13 +302,18 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
     /**
      * Connects to a delta stream endpoint for emitting ops.
      *
-     * @returns returns the document delta stream service for sharepoint driver.
+     * @returns returns the document delta stream service for onedrive/sharepoint driver.
      */
     public async connectToDeltaStream(client: IClient, mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
         // Attempt to connect twice, in case we used expired token.
         return getWithRetryForTokenRefresh<IDocumentDeltaConnection>(async (refresh: boolean) => {
             const [websocketEndpoint, webSocketToken, io] =
-                await Promise.all([this.joinSession(), this.getWebsocketToken(refresh), this.socketIOClientP]);
+                await Promise.all([
+                    this.joinSession(),
+                    // For ODC, we just use the token from joinsession
+                    isOdcOrigin(new URL(this.snapshotStorageUrl).origin) ? Promise.resolve("") : this.getWebsocketToken(refresh),
+                    this.socketIOClientP
+                ]);
 
             // This check exists because of a typescript bug.
             // Issue: https://github.com/microsoft/TypeScript/issues/33752
