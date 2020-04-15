@@ -131,7 +131,7 @@ class SessionStorageCollection<T> implements ICollection<T> {
         const presentVal = this.findOneInternal(value);
         // Only raise error when the object is present and the value is not equal.
         if (presentVal) {
-            if (presentVal._id === value._id) {
+            if (JSON.stringify(presentVal) === JSON.stringify(value)) {
                 return;
             }
             throw new Error("Existing Object!!");
