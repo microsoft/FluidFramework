@@ -28,6 +28,7 @@ import {
     ConnectionState,
     IClientDetails,
     IDocumentMessage,
+    IHelpMessage,
     IQuorum,
     ISequencedDocumentMessage,
     ISnapshotTree,
@@ -36,6 +37,7 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 
 import { IProvideComponentRegistry } from "./componentRegistry";
+import { IInboundSignalMessage } from "./protocol";
 import { IChannel } from ".";
 
 /**
@@ -382,6 +384,18 @@ export interface IHostRuntime extends
     readonly submitSignalFn: (contents: any) => void;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly scope: IComponent;
+
+    on(event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void): this;
+    on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
+    on(
+        event: "dirtyDocument" | "disconnected" | "dispose" | "savedDocument",
+        listener: () => void): this;
+    on(
+        event: "leader" | "noleader",
+        listener: (clientId?: string) => void): this;
+    on(event: "localHelp", listener: (message: IHelpMessage) => void): this;
+    on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
+    on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): this;
 
     /**
      * Returns the runtime of the component.
