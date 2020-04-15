@@ -18,7 +18,8 @@ import {
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { ComponentSymbolProvider } from "@microsoft/fluid-synthesize";
 
-import { AqueductComponentCtor, PrimedComponent } from "../components";
+import { PrimedComponent } from "../components";
+import { AqueductComponentCtor } from "../types"
 import { SharedComponentFactory } from "./sharedComponentFactory";
 
 export class PrimedComponentFactory<O extends IComponent = {}, R extends IComponent = {}>
