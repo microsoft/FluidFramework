@@ -308,13 +308,9 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
     public async connectToDeltaStream(client: IClient, mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
         // Attempt to connect twice, in case we used expired token.
         return getWithRetryForTokenRefresh<IDocumentDeltaConnection>(async (refresh: boolean) => {
+            // For ODC, we just use the token from joinsession
             const [websocketEndpoint, webSocketToken, io] =
-                await Promise.all([
-                    this.joinSession(),
-                    // For ODC, we just use the token from joinsession
-                    this.isOdc ? Promise.resolve("") : this.getWebsocketToken(refresh),
-                    this.socketIOClientP,
-                ]);
+                await Promise.all([this.joinSession(), this.isOdc ? Promise.resolve("") : this.getWebsocketToken(refresh), this.socketIOClientP]);
 
             // This check exists because of a typescript bug.
             // Issue: https://github.com/microsoft/TypeScript/issues/33752
