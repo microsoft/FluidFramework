@@ -5,7 +5,6 @@
 
 import * as assert from "assert";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
-import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import { Loader } from "@microsoft/fluid-container-loader";
 import { ConnectionState } from "@microsoft/fluid-protocol-definitions";
@@ -15,6 +14,8 @@ import {
     ITestFluidComponent,
     TestFluidComponentFactory,
 } from "@microsoft/fluid-test-utils";
+import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
+import { v4 as uuid } from "uuid";
 
 describe("Detached Container", () => {
     const documentId = "detachedContainerTest";
@@ -28,6 +29,14 @@ describe("Detached Container", () => {
     let factory: TestFluidComponentFactory;
     let testDeltaConnectionServer: ILocalDeltaConnectionServer;
     let loader: Loader;
+    const createAndAttachComponent = (async (
+        componentContext: IComponentContext,
+        componentId: string,
+        type: string,
+    ) => {
+        const doc = await componentContext.createComponent(componentId, type);
+        doc.attach();
+    });
 
     beforeEach(async () => {
         testDeltaConnectionServer = LocalDeltaConnectionServer.create();
@@ -67,9 +76,8 @@ describe("Detached Container", () => {
         const component = response.value as ITestFluidComponent;
 
         // Create a sub component of type TestFluidComponent and verify that it is attached.
-        const subCompId = "SubComponent1";
-        const runtime = component.runtime as ComponentRuntime;
-        await runtime.createAndAttachComponent(subCompId, "default");
+        const subCompId = uuid();
+        await createAndAttachComponent(component.context, subCompId, "default");
         const subResponse = await container.request({url: `/${subCompId}`});
         if (subResponse.mimeType !== "fluid/component" && subResponse.status !== 200) {
             assert.fail("New components should be created in detached container");
@@ -90,15 +98,14 @@ describe("Detached Container", () => {
         const component = response.value as ITestFluidComponent;
 
         // Create a sub component of type TestFluidComponent.
-        const subCompId = "SubComponent1";
-        const runtime = component.runtime as ComponentRuntime;
-        await runtime.createAndAttachComponent(subCompId, "default");
+        const newComponentId = uuid();
+        await createAndAttachComponent(component.context, newComponentId, "default");
 
         // Now attach the container
         await container.attach(testRequest);
 
         // Get the sub component and verify that it is attached.
-        const testResponse = await container.request({url: `/${subCompId}`});
+        const testResponse = await container.request({url: `/${newComponentId}`});
         if (testResponse.mimeType !== "fluid/component" && testResponse.status !== 200) {
             assert.fail("New components should be created in detached container");
         }
@@ -118,9 +125,8 @@ describe("Detached Container", () => {
         const component = response.value as ITestFluidComponent;
 
         // Create a sub component of type TestFluidComponent.
-        const subCompId = "SubComponent1";
-        const runtime = component.runtime as ComponentRuntime;
-        await runtime.createAndAttachComponent(subCompId, "default");
+        const subCompId = uuid();
+        await createAndAttachComponent(component.context, subCompId, "default");
 
         // Now attach the container and get the sub component.
         await container.attach(testRequest);

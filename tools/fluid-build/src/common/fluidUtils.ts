@@ -4,7 +4,7 @@
  */
 
 import { commonOptions } from "./commonOptions";
-import { existsSync, readFileAsync, realpathAsync, readJsonAsync } from "./utils";
+import { existsSync, realpathAsync, readJsonAsync, lookUpDir } from "./utils";
 import * as path from "path";
 import { logVerbose } from "./logging";
 
@@ -43,23 +43,16 @@ async function isFluidRoot(dir: string) {
 }
 
 async function inferRoot() {
-    let curr = process.cwd();
-    while (true) {
+    return lookUpDir(process.cwd(), async (curr) => {
         logVerbose(`InferRoot: probing ${curr}`);
         try {
             if (await isFluidRoot(curr)) {
-                return curr;
+                return true;
             }
         } catch {
         }
-
-        const up = path.resolve(curr, "..");
-        if (up === curr) {
-            break;
-        }
-        curr = up;
-    }
-    return undefined;
+        return false;
+    });
 }
 
 export async function getResolvedFluidRoot() {

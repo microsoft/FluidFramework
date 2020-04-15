@@ -84,7 +84,7 @@ async function main() {
             }
         }
 
-        // Install
+        // Install or check install
         if (options.install) {
             console.log("Installing packages");
             if (!await repo.install(options.nohoist)) {
@@ -114,6 +114,13 @@ async function main() {
             // build the graph
             const buildGraph = repo.createBuildGraph(options, options.buildScriptNames);
             timer.time("Build graph creation completed");
+
+            // Check install
+            if (!await buildGraph.checkInstall()) {
+                console.error("ERROR: Dependency not installed. Use --install to fix.");
+                process.exit(-10);
+            }
+            timer.time("Check install completed");
 
             if (options.clean) {
                 if (!await buildGraph.clean()) {

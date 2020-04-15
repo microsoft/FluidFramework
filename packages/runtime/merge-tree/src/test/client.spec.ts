@@ -23,7 +23,7 @@ describe("TestClient", () => {
             client.getClientId(),
             UniversalSequenceNumber,
             undefined);
-        client.startCollaboration(localUserLongId);
+        client.startOrUpdateCollaboration(localUserLongId);
     });
 
     describe(".findTile", () => {

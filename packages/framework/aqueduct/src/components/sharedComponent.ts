@@ -16,8 +16,7 @@ import {
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { ComponentHandle } from "@microsoft/fluid-component-runtime";
 import { IDirectory } from "@microsoft/fluid-map";
-// eslint-disable-next-line import/no-internal-modules
-import * as uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
 import { serviceRoutePathRoot } from "../containerServices";
 
 /**
@@ -208,6 +207,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
      * Called the first time the component is initialized.
      *
      * @param props - Optional props to be passed in on create
+     * @deprecated 0.16 Issue #1635 Initial props should be provided through a factory override
      */
     protected async componentInitializingFirstTime(props?: any): Promise<void> { }
 
