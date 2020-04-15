@@ -60,7 +60,7 @@ export class TestResolver implements IUrlResolver, IExperimentalUrlResolver {
         }
         const response: IResponse = {
             mimeType: "text/plain",
-            value: `https://localhost:3000/${this.tenantId}/${this.id}/${request.url}`,
+            value: `https://localhost:3000/${this.tenantId}/${this.id}/${url}`,
             status: 200,
         };
         return response;

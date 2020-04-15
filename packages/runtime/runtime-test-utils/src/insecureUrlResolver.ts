@@ -133,7 +133,7 @@ export class InsecureUrlResolver implements IUrlResolver, IExperimentalUrlResolv
         }
         const response: IResponse = {
             mimeType: "text/plain",
-            value: `${new URL(window.location.href).origin}/${encodeURIComponent(
+            value: `${this.hostUrl}/${encodeURIComponent(
                 this.tenantId)}/${encodeURIComponent(documentId)}/${url}`,
             status: 200,
         };
@@ -142,7 +142,7 @@ export class InsecureUrlResolver implements IUrlResolver, IExperimentalUrlResolv
 
     public createCreateNewRequest(fileName: string): IRequest {
         const createNewRequest: IRequest = {
-            url: `/?fileName=${fileName}`,
+            url: `${this.hostUrl}?fileName=${fileName}`,
             headers: {
                 openMode: OpenMode.CreateNew,
             },

@@ -22,7 +22,7 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import { ensureFluidResolvedUrl } from "@microsoft/fluid-driver-utils";
 import { IOdspResolvedUrl, ISocketStorageDiscovery } from "./contracts";
-import { createNewFluidFile } from "./createFile";
+import { createNewFluidFile, INewFileInfo } from "./createFile";
 import { debug } from "./debug";
 import { IFetchWrapper } from "./fetchWrapper";
 import { IOdspCache } from "./odspCache";
@@ -125,17 +125,27 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
         factory: IDocumentServiceFactory,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(createNewResolvedUrl);
-        const newFileParams = (createNewResolvedUrl as IOdspResolvedUrl).newFileParams;
-        if (!newFileParams) {
-            throw new Error("New file params should be provided!!");
+        let odspResolvedUrl = createNewResolvedUrl as IOdspResolvedUrl;
+        const [, queryString] = odspResolvedUrl.url.split("?");
+
+        const searchParams = new URLSearchParams(queryString);
+        const filePath = searchParams.get("path");
+        if (!filePath) {
+            throw new Error("File path should be provided!!");
         }
+        const newFileParams: INewFileInfo = {
+            driveId: odspResolvedUrl.driveId,
+            siteUrl: odspResolvedUrl.siteUrl,
+            filePath,
+            fileName: odspResolvedUrl.fileName,
+        };
         const event = PerformanceEvent.start(logger,
             {
                 eventName: "CreateNew",
                 isWithSummaryUpload: true,
             });
         try {
-            const odspResolvedUrl = await createNewFluidFile(
+            odspResolvedUrl = await createNewFluidFile(
                 getStorageToken,
                 Promise.resolve(newFileParams),
                 cache,

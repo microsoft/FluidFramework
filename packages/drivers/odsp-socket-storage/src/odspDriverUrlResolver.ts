@@ -14,7 +14,6 @@ import {
 import { IOdspResolvedUrl, ICreateNewOptions } from "./contracts";
 import { getHashedDocumentId } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";
-import { INewFileInfo } from "./createFile";
 
 function getSnapshotUrl(siteUrl: string, driveId: string, itemId: string) {
     const siteOrigin = new URL(siteUrl).origin;
@@ -63,6 +62,7 @@ export class OdspDriverUrlResolver implements IUrlResolver, IExperimentalUrlReso
                     siteUrl: "",
                     driveId: "",
                     itemId: "",
+                    fileName: "",
                 };
             } else if (request.headers.openMode === OpenMode.CreateNew) {
                 const [siteURL, queryString] = request.url.split("?");
@@ -74,25 +74,18 @@ export class OdspDriverUrlResolver implements IUrlResolver, IExperimentalUrlReso
                 if (!(fileName && siteURL && driveID && filePath)) {
                     throw new Error("Proper new file params should be there!!");
                 }
-                const newFileParams: INewFileInfo = {
-                    fileName,
-                    siteUrl: siteURL,
-                    driveId: driveID,
-                    filePath,
-                };
-                const hashedDocumentID = getHashedDocumentId(driveID, fileName);
                 return {
                     endpoints: {
                         snapshotStorageUrl: "",
                     },
                     tokens: {},
                     type: "fluid",
-                    url: `fluid-odsp://placeholder/placeholder/${hashedDocumentID}?version=null`,
+                    url: `fluid-odsp://${siteURL}?${queryString}&version=null`,
                     siteUrl: siteURL,
-                    newFileParams,
-                    hashedDocumentId: hashedDocumentID,
+                    hashedDocumentId: "",
                     driveId: driveID,
                     itemId: "",
+                    fileName,
                 };
             }
         }
@@ -121,6 +114,7 @@ export class OdspDriverUrlResolver implements IUrlResolver, IExperimentalUrlReso
             siteUrl,
             driveId,
             itemId,
+            fileName: "",
         };
     }
 
