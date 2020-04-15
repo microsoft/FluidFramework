@@ -437,7 +437,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         assert(!this.deltaManager.inbound.length);
         // Get the document state post attach - possibly can just call attach but we need to change the semantics
         // around what the attach means as far as async code goes.
-        const appSummary: ISummaryTree = await this.context.createSummary();
+        const appSummary: ISummaryTree = this.context.createSummary();
         if (!this.protocolHandler) {
             throw new Error("Protocol Handler is undefined");
         }

@@ -228,7 +228,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext,
         return this.container.isLocal();
     }
 
-    public async createSummary(): Promise<ISummaryTree> {
+    public createSummary(): ISummaryTree {
         const expRuntime: IExperimentalRuntime = this.runtime as IExperimentalRuntime;
         assert(expRuntime?.isExperimentalRuntime);
         return expRuntime.createSummary();
