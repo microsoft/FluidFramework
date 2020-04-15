@@ -346,7 +346,7 @@ export interface IExperimentalComponentContext extends IComponentContext {
     readonly isExperimentalComponentContext: true;
 
     /**
-     * Indicates whether the container is attached to storage.
+     * It is false if the container is not attached to storage and the component is attached to container.
      */
     isLocal(): boolean;
 }
@@ -494,7 +494,7 @@ export interface IExperimentalHostRuntime extends IHostRuntime {
     isExperimentalHostRuntime: true;
 
     /**
-     * Indicates whether the container is attached to storage.
+     * It is false if the container is not attached to storage and the component is attached to container.
      */
     isLocal(): boolean;
 }
