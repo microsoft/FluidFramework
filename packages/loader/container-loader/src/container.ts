@@ -487,7 +487,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.blobManager = await this.loadBlobManager(this.storageService, undefined);
             this.attached = true;
 
-            const startConnectionP = this.connectToDeltaStream();
+            const startConnectionP = this.connectToDeltaStream("write");
             startConnectionP.catch((error) => {
                 debug(`Error in connecting to delta stream from unpaused case ${error}`);
             });
