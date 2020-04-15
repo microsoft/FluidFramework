@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidModule, IFluidPackage, isFluidPackage } from "@microsoft/fluid-container-definitions";
+import { IFluidModule, isFluidPackage } from "@microsoft/fluid-container-definitions";
 import { Deferred } from "@microsoft/fluid-common-utils";
 import {
     ComponentRegistryEntry,
@@ -85,58 +85,62 @@ export class UrlRegistry implements IComponentRegistry {
         const response = await fetch(`${name}/package.json`);
         if (!response.ok) {
             throw new Error(`UrlRegistry: ${name}: fetch was no ok. status code: ${response.status}`);
-        } else {
-            const responseText = await response.text();
-            const packageJson = JSON.parse(responseText);
-            if (!isFluidPackage(packageJson)) {
-                throw new Error(`UrlRegistry: ${name}: Package json not deserializable as IFluidPackage`);
-            }
+        }
 
-            const fluidPackage: IFluidPackage = packageJson;
+        const packageJson = await response.json();
+        if (!isFluidPackage(packageJson)) {
+            throw new Error(`UrlRegistry: ${name}: Package json not deserializable as IFluidPackage`);
+        }
 
-            const entrypointName = fluidPackage.fluid.browser.umd.library;
-            const scripts = fluidPackage.fluid.browser.umd.files;
+        const fluidPackage = packageJson;
 
-            if (entrypointName !== undefined && scripts !== undefined) {
-                while (this.loadingEntrypoints.has(entrypointName)) {
-                    await this.loadingEntrypoints.get(entrypointName);
-                }
-                const loadingEntrypoint = new Deferred();
-                this.loadingEntrypoints.set(entrypointName, loadingEntrypoint.promise);
-                const preservedEntryPoint = window[entrypointName];
-                window[entrypointName] = undefined;
+        const entrypointName = fluidPackage.fluid.browser.umd.library;
+        const scripts = fluidPackage.fluid.browser.umd.files;
+
+        if (entrypointName === undefined || scripts === undefined) {
+            throw new Error(`UrlRegistry: Missing entrypointName or scripts: \
+                entrypointName: ${entrypointName}, scripts: ${scripts}`);
+        }
+
+        while (this.loadingEntrypoints.has(entrypointName)) {
+            await this.loadingEntrypoints.get(entrypointName);
+        }
+        const loadingEntrypoint = new Deferred();
+        this.loadingEntrypoints.set(entrypointName, loadingEntrypoint.promise);
+        // Preserve the entry point for our own external component loader package
+        const preservedEntryPoint = window[entrypointName];
+        window[entrypointName] = undefined;
+        try {
+            const scriptLoadPromises =
+                scripts.map(
+                    async (bundle) => loadScript(`${name}/${bundle}`));
+
+            const errors: any[] = [];
+            while (scriptLoadPromises.length > 0) {
                 try {
-                    const scriptLoadPromises =
-                        scripts.map(
-                            async (bundle) => loadScript(`${name}/${bundle}`));
-
-                    const errors: any[] = [];
-                    while (scriptLoadPromises.length > 0) {
-                        try {
-                            await scriptLoadPromises.shift();
-                        } catch (e) {
-                            errors.push(e);
-                        }
-                    }
-                    if (errors.length > 0) {
-                        throw new Error(errors.join("\n"));
-                    }
-
-                    // Stash the entry point
-                    const entrypoint = window[entrypointName];
-                    if (entrypoint === undefined) {
-                        throw new Error(
-                            `UrlRegistry: ${name}: Entrypoint: ${entrypointName}: Entry point is undefined`);
-                    }
-                    return entrypoint;
-
-                } finally {
-                    // Release the entry point
-                    window[entrypointName] = preservedEntryPoint;
-                    loadingEntrypoint.resolve();
-                    this.loadingEntrypoints.delete(entrypointName);
+                    await scriptLoadPromises.shift();
+                } catch (e) {
+                    errors.push(e);
                 }
             }
+            if (errors.length > 0) {
+                throw new Error(errors.join("\n"));
+            }
+
+            // Stash the entry point
+            const entrypoint = window[entrypointName];
+            if (entrypoint === undefined) {
+                throw new Error(
+                    `UrlRegistry: ${name}: Entrypoint: ${entrypointName}: Entry point is undefined`);
+            }
+            console.log(entrypoint);
+            return entrypoint;
+
+        } finally {
+            // Release the entry point
+            window[entrypointName] = preservedEntryPoint;
+            loadingEntrypoint.resolve();
+            this.loadingEntrypoints.delete(entrypointName);
         }
     }
 }
