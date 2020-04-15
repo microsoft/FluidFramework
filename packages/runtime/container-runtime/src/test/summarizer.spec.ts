@@ -126,9 +126,7 @@ describe("Runtime", () => {
                 }
 
                 async function flushPromises() {
-                    const p = new Promise((resolve) => setTimeout(() => { resolve(); }, 0));
-                    clock.tick(0);
-                    return p;
+                    return new Promise((resolve) => process.nextTick(resolve));
                 }
 
                 async function tickAndFlushPromises(ms: number) {
