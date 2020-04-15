@@ -5,10 +5,9 @@
 
 import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import { ISnapshotTree } from "@microsoft/fluid-protocol-definitions";
-import { IObjectStorageService, IExperimentalObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+import { IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
 
-export class ChannelStorageService implements IObjectStorageService, IExperimentalObjectStorageService {
-    public readonly isExperimentalObjectStorageService = true;
+export class ChannelStorageService implements IObjectStorageService {
     private static flattenTree(base: string, tree: ISnapshotTree, results: { [path: string]: string }) {
         // eslint-disable-next-line guard-for-in, no-restricted-syntax
         for (const path in tree.trees) {
@@ -25,17 +24,13 @@ export class ChannelStorageService implements IObjectStorageService, IExperiment
 
     constructor(
         tree: ISnapshotTree | undefined,
-        public readonly _storageGetter: () => IDocumentStorageService,
+        public readonly storageGetter: () => IDocumentStorageService,
         private readonly extraBlobs?: Map<string, string>,
     ) {
         // Create a map from paths to blobs
         if (tree) {
             ChannelStorageService.flattenTree("", tree, this.flattenedTree);
         }
-    }
-
-    public get storage(): IDocumentStorageService {
-        return this._storageGetter();
     }
 
     public contains(path: string){
@@ -49,7 +44,7 @@ export class ChannelStorageService implements IObjectStorageService, IExperiment
         return this.extraBlobs && this.extraBlobs.has(id)
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             ? Promise.resolve(this.extraBlobs.get(id)!)
-            : this.storage.read(id);
+            : this.storageGetter().read(id);
     }
 
     private getIdForPath(path: string): string {

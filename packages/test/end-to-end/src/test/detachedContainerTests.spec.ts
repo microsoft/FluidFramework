@@ -47,7 +47,7 @@ describe("Detached Container", () => {
 
     it("Create detached container", async () => {
         const container = await loader.createDetachedContainer(pkg);
-        assert.equal(container.isContainerAttached(), false, "Container should be detached");
+        assert.equal(container.isLocal(), true, "Container should be detached");
         assert.equal(container.closed, false, "Container should be open");
         assert.equal(container.deltaManager.inbound.length, 0, "Inbound queue should be empty");
         assert.equal(container.getQuorum().getMembers().size, 0, "Quorum should not contain any memebers");
@@ -61,7 +61,7 @@ describe("Detached Container", () => {
     it("Attach detached container", async () => {
         const container = await loader.createDetachedContainer(pkg);
         await container.attach(testRequest);
-        assert.equal(container.isContainerAttached(), true, "Container should be attached");
+        assert.equal(container.isLocal(), false, "Container should be attached");
         assert.equal(container.closed, false, "Container should be open");
         assert.equal(container.deltaManager.inbound.length, 0, "Inbound queue should be empty");
         assert.equal(container.id, "documentId", "Doc id is not matching!!");
@@ -88,7 +88,7 @@ describe("Detached Container", () => {
         assert.equal(testChannel.isLocal(), true, "Channel should be local!!");
         const expComponentContext = testComponent.context as IExperimentalComponentContext;
         assert(expComponentContext?.isExperimentalComponentContext);
-        assert.equal(expComponentContext.isContainerAttached(), false, "Container should not be attached!!");
+        assert.equal(expComponentContext.isLocal(), true, "Container should not be attached!!");
     });
 
     it("Components in attached container", async () => {
@@ -112,7 +112,7 @@ describe("Detached Container", () => {
         assert.equal(testChannel.isLocal(), false, "Channel should not be local!!");
         const expComponentContext = testComponent.context as IExperimentalComponentContext;
         assert(expComponentContext?.isExperimentalComponentContext);
-        assert.equal(expComponentContext.isContainerAttached(), true, "Container should be attached!!");
+        assert.equal(expComponentContext.isLocal(), false, "Container should be attached!!");
     });
 
     it("Load attached container and check for components", async () => {

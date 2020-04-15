@@ -424,8 +424,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this.removeAllListeners();
     }
 
-    public isContainerAttached(): boolean {
-        return this.attached;
+    public isLocal(): boolean {
+        return !this.attached;
     }
 
     public async attach(request: IRequest): Promise<void> {

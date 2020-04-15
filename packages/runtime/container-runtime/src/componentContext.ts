@@ -69,10 +69,10 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 {
     public readonly isExperimentalComponentContext = true;
 
-    public isContainerAttached(): boolean {
+    public isLocal(): boolean {
         const expHostRuntime = this._hostRuntime as IExperimentalHostRuntime;
         assert(expHostRuntime?.isExperimentalHostRuntime);
-        return expHostRuntime.isContainerAttached();
+        return expHostRuntime.isLocal() || !this.isAttached;
     }
 
     public get documentId(): string {

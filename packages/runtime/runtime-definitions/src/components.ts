@@ -201,6 +201,15 @@ export interface IComponentRuntime extends
     error(err: any): void;
 }
 
+export interface IExperimentalComponentRuntime extends IComponentRuntime {
+    readonly isExperimentalComponentRuntime: true;
+
+    /**
+     * Indicates whether the container is attached to storage.
+     */
+    isLocal(): boolean;
+}
+
 export interface ISummaryTracker {
     /**
      * The reference sequence number of the most recent acked summary.
@@ -339,7 +348,7 @@ export interface IExperimentalComponentContext extends IComponentContext {
     /**
      * Indicates whether the container is attached to storage.
      */
-    isContainerAttached(): boolean;
+    isLocal(): boolean;
 }
 
 /**
@@ -487,5 +496,5 @@ export interface IExperimentalHostRuntime extends IHostRuntime {
     /**
      * Indicates whether the container is attached to storage.
      */
-    isContainerAttached(): boolean;
+    isLocal(): boolean;
 }

@@ -16,7 +16,7 @@ import {
     IComponentRuntime,
     IObjectStorageService,
     ISharedObjectServices,
-    IExperimentalObjectStorageService,
+    IExperimentalComponentRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 import * as Deque from "double-ended-queue";
 import { debug } from "./debug";
@@ -176,14 +176,9 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
      * {@inheritDoc ISharedObject.isLocal}
      */
     public isLocal(): boolean {
-        if (!this.services) {
-            return true;
-        }
-        const expObjectStorage = this.services.objectStorage as IExperimentalObjectStorageService;
-        if (expObjectStorage?.isExperimentalObjectStorageService) {
-            return expObjectStorage.storage ? false : true;
-        }
-        return false;
+        const expComponentRuntime = this.runtime as IExperimentalComponentRuntime;
+        return expComponentRuntime?.isExperimentalComponentRuntime ?
+            expComponentRuntime.isLocal() || !this.services : !this.services;
     }
 
     /**

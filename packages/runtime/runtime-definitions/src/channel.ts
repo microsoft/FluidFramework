@@ -5,7 +5,6 @@
 
 import { IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
 import { ConnectionState, ISequencedDocumentMessage, ITree } from "@microsoft/fluid-protocol-definitions";
-import { IDocumentStorageService } from "@microsoft/fluid-driver-definitions";
 import { IChannelAttributes } from "./storage";
 
 declare module "@microsoft/fluid-container-definitions" {
@@ -111,12 +110,6 @@ export interface IObjectStorageService {
      * Reads the object contained at the given path. Returns a base64 string representation for the object.
      */
     read(path: string): Promise<string>;
-}
-
-export interface IExperimentalObjectStorageService extends IObjectStorageService {
-    readonly isExperimentalObjectStorageService: true;
-
-    storage: IDocumentStorageService;
 }
 
 /**
