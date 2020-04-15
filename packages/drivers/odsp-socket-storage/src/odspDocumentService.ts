@@ -313,7 +313,7 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
                     this.joinSession(),
                     // For ODC, we just use the token from joinsession
                     this.isOdc ? Promise.resolve("") : this.getWebsocketToken(refresh),
-                    this.socketIOClientP
+                    this.socketIOClientP,
                 ]);
 
             // This check exists because of a typescript bug.
