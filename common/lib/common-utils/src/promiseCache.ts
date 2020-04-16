@@ -87,11 +87,6 @@ export class PromiseCache<TKey, TResult> {
     private readonly removeOnError: (error: any) => boolean;
 
     /**
-     * We use this symbol to distinguish the case between a Promise resolving to undefined from a missing key.
-     */
-    public static readonly KeyNotFound: unique symbol = Symbol("Key not found in PromiseCache");
-
-    /**
      * Create the PromiseCache with the options provided
      * @param param0 - PromiseCacheOptions with the following default values:
      *   expiry = { policy: "indefinite" },
@@ -113,16 +108,14 @@ export class PromiseCache<TKey, TResult> {
     }
 
     /**
-     * Get the Promise for the given key, or PromiseCache.KeyNotFound if it's not found
+     * Get the Promise for the given key, or undefined if it's not found.
+     * Extend expiry if applicable.
      */
-    public get(key: TKey): Promise<TResult> | typeof PromiseCache.KeyNotFound {
-        const p = this.cache.get(key);
-        if (p === undefined) {
-            // Return this symbol to distinguish between a Promise resolving to undefined and a missing key
-            return PromiseCache.KeyNotFound;
+    public get(key: TKey): Promise<TResult> | undefined {
+        if (this.has(key)) {
+            this.gc.update(key);
         }
-        this.gc.update(key);
-        return p;
+        return this.cache.get(key);
     }
 
     /**
@@ -146,7 +139,7 @@ export class PromiseCache<TKey, TResult> {
         // NOTE: Do not await the Promise returned by asyncFn!
         // Let the caller do so once we return or after a subsequent call to get
         let promise = this.get(key);
-        if (promise === PromiseCache.KeyNotFound) {
+        if (promise === undefined) {
             // Wrap in an async lambda in case asyncFn disabled @typescript-eslint/promise-function-async
             const safeAsyncFn = async () => asyncFn();
 
