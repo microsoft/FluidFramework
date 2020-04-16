@@ -153,6 +153,8 @@ const TourOfHeroesInstantiationFactory = new PrimedComponentFactory(
     TourOfHeroesType,
     TourOfHeroes,
     [],
+    {},
+    {},
 );
 class TourOfHeroesContainerInstantiationFactory implements IRuntimeFactory, IComponentRegistry, IComponentFactory {
     public get IComponentFactory() { return this; }

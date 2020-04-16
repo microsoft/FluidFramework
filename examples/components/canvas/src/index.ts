@@ -20,6 +20,8 @@ export const CanvasInstantiationFactory = new PrimedComponentFactory(
     [
         Ink.getFactory(),
     ],
+    {},
+    {},
 );
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(

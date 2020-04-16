@@ -22,6 +22,8 @@ const componentFactory = new PrimedComponentFactory(
         sequence.SharedObjectSequence.getFactory(),
         sequence.SharedNumberSequence.getFactory(),
     ],
+    {},
+    {},
 );
 
 const runtimeFactory = new ContainerRuntimeFactoryWithDefaultComponent(

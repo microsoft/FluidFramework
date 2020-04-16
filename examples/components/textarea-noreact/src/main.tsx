@@ -410,5 +410,7 @@ export const TextareaNoReactInstantiationFactory =
         [
             SharedString.getFactory(),
         ],
+        {},
+        {},
     );
 /******************************************************************************/

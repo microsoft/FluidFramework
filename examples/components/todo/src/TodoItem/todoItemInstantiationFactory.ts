@@ -20,6 +20,8 @@ export const TodoItemInstantiationFactory: IComponentFactory = new PrimedCompone
         SharedString.getFactory(),
         SharedCell.getFactory(),
     ],
+    {},
+    {},
     new Map([
         [TextBoxName, Promise.resolve(TextBoxInstantiationFactory)],
         [TextListName, Promise.resolve(TextListInstantiationFactory)],

@@ -72,4 +72,6 @@ export const TextDisplayInstantiationFactory = new PrimedComponentFactory(
     chaincodeName,
     TextDisplay,
     [],
+    {},
+    {},
 );

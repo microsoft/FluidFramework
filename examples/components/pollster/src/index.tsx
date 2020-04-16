@@ -52,6 +52,8 @@ export const PollInstantiationFactory = new PrimedComponentFactory(
     chaincodeName,
     Pollster,
     [SharedMap.getFactory()],
+    {},
+    {},
 );
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(

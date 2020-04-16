@@ -23,7 +23,12 @@ export const FriendlyNumberName = "Number";
 export class Number extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
-    private static readonly factory = new PrimedComponentFactory(NumberName, Number, []);
+    private static readonly factory = new PrimedComponentFactory(
+        NumberName,
+        Number,
+        [],
+        {},
+        {});
 
     public static getFactory() {
         return Number.factory;

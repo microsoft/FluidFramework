@@ -280,4 +280,6 @@ export const TyperaceInstantiationFactory = new PrimedComponentFactory(
     [
         SharedMap.getFactory(),
     ],
+    {},
+    {},
 );

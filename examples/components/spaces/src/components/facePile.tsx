@@ -21,7 +21,12 @@ export const FriendlyFacePileName = "Face Pile";
 export class FacePile extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
-    private static readonly factory = new PrimedComponentFactory(FacePileName, FacePile, []);
+    private static readonly factory = new PrimedComponentFactory(
+        FacePileName,
+        FacePile,
+        [],
+        {},
+        {});
 
     public static getFactory() {
         return FacePile.factory;

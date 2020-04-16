@@ -34,6 +34,8 @@ export class TableDocument extends PrimedComponent implements ITable {
             SparseMatrix.getFactory(),
             SharedNumberSequence.getFactory(),
         ],
+        {},
+        {},
         undefined,
         true,
     );

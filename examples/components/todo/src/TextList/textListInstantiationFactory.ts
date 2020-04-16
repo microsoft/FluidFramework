@@ -15,4 +15,6 @@ export const TextListInstantiationFactory: IComponentFactory = new PrimedCompone
     [
         SharedString.getFactory(),
     ],
+    {},
+    {},
 );

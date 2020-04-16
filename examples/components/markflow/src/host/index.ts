@@ -55,6 +55,12 @@ export class WebFlow extends PrimedComponent implements IComponentHTMLVisual {
     }
 }
 
-export const webFlowFactory = new PrimedComponentFactory(webflowType, WebFlow, [], new Map([
-    [FlowDocumentType, import(/* webpackChunkName: "flowdoc", webpackPreload: true */ "../document").then((m) => m.flowDocumentFactory)],
-]));
+export const webFlowFactory = new PrimedComponentFactory(
+    webflowType,
+    WebFlow,
+    [],
+    {},
+    {},
+    new Map([
+        [FlowDocumentType, import(/* webpackChunkName: "flowdoc", webpackPreload: true */ "../document").then((m) => m.flowDocumentFactory)],
+    ]));

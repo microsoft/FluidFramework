@@ -52,4 +52,6 @@ export const ButtonInstantiationFactory = new PrimedComponentFactory(
     chaincodeName,
     Button,
     [],
+    {},
+    {},
 );

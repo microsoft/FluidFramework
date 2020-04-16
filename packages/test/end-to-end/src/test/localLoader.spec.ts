@@ -31,6 +31,8 @@ export class TestComponent extends PrimedComponent {
         TestComponent.type,
         TestComponent,
         [],
+        {},
+        {},
     );
 
     private counter!: Counter;
@@ -65,6 +67,8 @@ const testComponentFactory = new PrimedComponentFactory(
     TestComponent.type,
     TestComponent,
     [ SharedString.getFactory() ],
+    {},
+    {},
 );
 
 describe("LocalLoader", () => {

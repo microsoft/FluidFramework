@@ -29,6 +29,8 @@ export class TableSlice extends PrimedComponent implements ITable {
         TableSliceType,
         TableSlice,
         [],
+        {},
+        {},
     );
 
     public get name() { return this.root.get(ConfigKey.name); }

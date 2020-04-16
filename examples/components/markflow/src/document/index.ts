@@ -516,4 +516,6 @@ export const flowDocumentFactory = new PrimedComponentFactory(
     FlowDocumentType,
     FlowDocument,
     [new SharedStringFactory()],
+    {},
+    {},
 );

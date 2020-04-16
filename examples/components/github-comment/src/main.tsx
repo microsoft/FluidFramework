@@ -124,4 +124,6 @@ export const GithubCommentInstantiationFactory =
         [
             SharedString.getFactory(),
         ],
+        {},
+        {},
     );
