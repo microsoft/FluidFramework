@@ -10,62 +10,7 @@ import {
     IFluidModule,
     IFluidCodeResolver,
 } from "@microsoft/fluid-container-definitions";
-/**
- * Helper class to manage loading of script elements. Only loads a given script once.
- */
-class ScriptManager {
-    private readonly loadCache = new Map<string, Promise<any>>();
-
-    // Check whether the script is loaded inside a worker.
-    public get isBrowser(): boolean {
-        if (typeof window === "undefined") {
-            return false;
-        }
-        return window.document !== undefined;
-    }
-
-    public async loadScript(scriptUrl: string, library: string): Promise<any> {
-        let scriptP = this.loadCache.get(scriptUrl);
-        if (scriptP === undefined) {
-            scriptP = new Promise<any>((resolve, reject) => {
-                if (this.isBrowser) {
-                    const script = document.createElement("script");
-                    script.src = scriptUrl;
-
-                    // Dynamically added scripts are async by default. By setting async to false, we are enabling the
-                    // scripts to be downloaded in parallel, but executed in order. This ensures that a script is
-                    // executed after all of its dependencies have been loaded and executed.
-                    script.async = false;
-
-                    script.onload = () => resolve(window[library]);
-                    script.onerror = () =>
-                        reject(new Error(`Failed to download the script at url: ${scriptUrl}`));
-
-                    document.head.appendChild(script);
-                } else {
-                    import(/* webpackMode: "eager", webpackIgnore: true */ scriptUrl).then((value) => {
-                        resolve(value);
-                    }, () => {
-                        reject(new Error(`Failed to download the script at url: ${scriptUrl}`));
-                    });
-                }
-
-            });
-
-            this.loadCache.set(scriptUrl, scriptP);
-        }
-
-        return scriptP;
-    }
-
-    public async loadScripts(
-        umdDetails: { files: string[]; library: string },
-    ): Promise<{file: string, entryPoint: any}[]> {
-        return Promise.all(
-            umdDetails.files.map(
-                async (file)=>({file, entryPoint: await this.loadScript(file, umdDetails.library)})));
-    }
-}
+import { ScriptManager } from "./scriptManager";
 
 export class WebCodeLoader implements ICodeLoader {
     private readonly loadedModules = new Map<string, IFluidModule>();
@@ -107,18 +52,17 @@ export class WebCodeLoader implements ICodeLoader {
             throw new Error("Attempted to load invalid code package url");
         }
 
-        const loadedScripts = await this.scriptManager.loadScripts(
+        const loadedScripts = await this.scriptManager.loadLibrary(
             resolved.resolvedPackage.fluid.browser.umd,
         );
         let fluidModule: IFluidModule | undefined;
         for(const script of loadedScripts){
-            if(script !== undefined){
-                if(script.entryPoint.fluidExport !== undefined){
-                    if (fluidModule !== undefined){
-                        throw new Error("Multiple fluid modules loaded");
-                    }
-                    fluidModule = script.entryPoint;
+            const maybeFluidModule = script.entryPoint as IFluidModule;
+            if(maybeFluidModule.fluidExport !== undefined){
+                if (fluidModule !== undefined){
+                    throw new Error("Multiple fluid modules loaded");
                 }
+                fluidModule = maybeFluidModule;
             }
         }
 
