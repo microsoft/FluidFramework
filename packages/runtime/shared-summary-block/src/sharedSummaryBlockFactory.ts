@@ -13,24 +13,24 @@ import {
     ISharedObjectFactory,
 } from "@microsoft/fluid-shared-object-base";
 import { pkgVersion } from "./packageVersion";
-import { SummarizableObject } from "./summarizableObject";
+import { SharedSummaryBlock } from "./sharedSummaryBlock";
 
 
 /**
- * The factory that defines the summarizable object.
+ * The factory that defines the shared summary block.
  * @sealed
  */
-export class SummarizableObjectFactory implements ISharedObjectFactory {
+export class SharedSummaryBlockFactory implements ISharedObjectFactory {
     /**
      * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory."type"}
      */
-    public static readonly Type = "https://graph.microsoft.com/types/summarizable-object";
+    public static readonly Type = "https://graph.microsoft.com/types/shared-summary-block";
 
     /**
      * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory.attributes}
      */
     public static readonly Attributes: IChannelAttributes = {
-        type: SummarizableObjectFactory.Type,
+        type: SharedSummaryBlockFactory.Type,
         snapshotFormatVersion: "0.1",
         packageVersion: pkgVersion,
     };
@@ -39,14 +39,14 @@ export class SummarizableObjectFactory implements ISharedObjectFactory {
      * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory."type"}
      */
     public get type() {
-        return SummarizableObjectFactory.Type;
+        return SharedSummaryBlockFactory.Type;
     }
 
     /**
      * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory.attributes}
      */
     public get attributes() {
-        return SummarizableObjectFactory.Attributes;
+        return SharedSummaryBlockFactory.Attributes;
     }
 
     /**
@@ -59,19 +59,19 @@ export class SummarizableObjectFactory implements ISharedObjectFactory {
         branchId: string,
         attributes: IChannelAttributes): Promise<ISharedObject> {
 
-        const summarizableObject = new SummarizableObject(id, runtime, attributes);
-        await summarizableObject.load(branchId, services);
+        const sharedSummaryBlock = new SharedSummaryBlock(id, runtime, attributes);
+        await sharedSummaryBlock.load(branchId, services);
 
-        return summarizableObject;
+        return sharedSummaryBlock;
     }
 
     /**
      * {@inheritDoc @microsoft/fluid-shared-object-base#ISharedObjectFactory.create}
      */
     public create(runtime: IComponentRuntime, id: string): ISharedObject {
-        const summarizableObject = new SummarizableObject(id, runtime, SummarizableObjectFactory.Attributes);
-        summarizableObject.initializeLocal();
+        const sharedSummaryBlock = new SharedSummaryBlock(id, runtime, SharedSummaryBlockFactory.Attributes);
+        sharedSummaryBlock.initializeLocal();
 
-        return summarizableObject;
+        return sharedSummaryBlock;
     }
 }

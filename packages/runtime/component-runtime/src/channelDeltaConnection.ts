@@ -48,8 +48,8 @@ export class ChannelDeltaConnection implements IDeltaConnection {
     }
 
     /**
-     * Indicates that the channel is dirty and needs to be part of the summary. It is called by a summarizable
-     * object that needs to be part of the summary but does not generate ops.
+     * Indicates that the channel is dirty and needs to be part of the summary. It is called by a SharedSummaryBlock
+     * that needs to be part of the summary but does not generate ops.
      */
     public dirty(): void {
         this.dirtyFn();
