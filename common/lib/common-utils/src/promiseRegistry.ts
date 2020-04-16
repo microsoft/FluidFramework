@@ -84,7 +84,7 @@ export class PromiseCache<TKey, TResult> {
     private readonly cache = new Map<TKey, Promise<TResult>>();
     private readonly gc: GarbageCollector<TKey>;
 
-    private readonly removeOnError: (e: any) => boolean;
+    private readonly removeOnError: (error: any) => boolean;
 
     /**
      * Create the PromiseCache with the options provided
@@ -101,10 +101,17 @@ export class PromiseCache<TKey, TResult> {
     }
 
     /**
+     * Check if there's anything cached at the given key
+     */
+    public contains(key: TKey) {
+        return this.cache.has(key);
+    }
+
+    /**
      * Get the Promise for the given key, or undefined if it's not found.
      * Extend expiry if applicable.
      */
-    public async get(key: TKey) {
+    public get(key: TKey) {
         if (this.cache.has(key)) {
             this.gc.update(key);
         }
@@ -131,7 +138,7 @@ export class PromiseCache<TKey, TResult> {
         asyncFn: () => Promise<TResult>,
     ): Promise<TResult> {
         // NOTE: Do not await the Promise returned by asyncFn!
-        // Let the caller do so once we return
+        // Let the caller do so once we return or after a subsequent call to get
         let promise = this.cache.get(key);
         if (promise === undefined) {
             // Wrap in an async lambda in case asyncFn disabled @typescript-eslint/promise-function-async
@@ -159,7 +166,7 @@ export class PromiseCache<TKey, TResult> {
 
     /**
      * Try to add the result of the given asyncFn, without overwriting an existing cache entry at that key.
-     * Returns true if the add succeeded, or false if the cache already contained an entry at that key.
+     * Returns false if the cache already contained an entry at that key, and true otherwise.
      * @param key - key name where to store the async work
      * @param asyncFn - the async work to do and store, if not already in progress under the given key
      */
@@ -169,9 +176,10 @@ export class PromiseCache<TKey, TResult> {
     ): boolean {
         const alreadyPresent = this.cache.has(key);
 
-        // This Promise has been stored in the cache and will be fetched and awaited later
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.addOrGet(key, asyncFn);
+        // We are blindly adding the Promise to the cache here, which introduces a Promise in this scope.
+        // Whoever gets this out of the cache to use it will await/catch, so swallow Promise rejections here.
+        this.addOrGet(key, asyncFn)
+            .catch(() => {});
 
         return !alreadyPresent;
     }
@@ -191,7 +199,7 @@ export class PromiseCache<TKey, TResult> {
 
     /**
      * Try to add the given value, without overwriting an existing cache entry at that key.
-     * Returns true if the add succeeded, or false if the cache already contained an entry at that key.
+     * Returns false if the cache already contained an entry at that key, and true otherwise.
      * @param key - key name where to store the value
      * @param value - value to store
      */
