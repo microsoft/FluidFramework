@@ -53,10 +53,9 @@
     "@microsoft/fluid-container-definitions": "^0.16.0",
     "@microsoft/fluid-container-loader": "^0.16.0",
     "@microsoft/fluid-driver-definitions": "^0.16.0",
-    "@microsoft/fluid-protocol-base": "^0.1004.0-0",
-    "@microsoft/fluid-protocol-definitions": "^0.1004.0-0",
-    "@microsoft/fluid-web-code-loader": "^0.16.0",
-    "isomorphic-fetch": "^2.2.1"
+    "@microsoft/fluid-protocol-base": "^0.1004.1-0",
+    "@microsoft/fluid-protocol-definitions": "^0.1004.1-0",
+    "@microsoft/fluid-web-code-loader": "^0.16.0"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",

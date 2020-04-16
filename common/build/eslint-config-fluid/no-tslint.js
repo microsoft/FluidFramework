@@ -224,9 +224,11 @@ module.exports = {
             "error",
             "smart"
         ],
+        "func-call-spacing": "error",
         "guard-for-in": "error",
         "id-match": "error",
         "linebreak-style": "off",
+        "keyword-spacing": "error",
         "max-classes-per-file": "off",
         "max-len": [
             "error",
@@ -256,7 +258,14 @@ module.exports = {
         "no-irregular-whitespace": "error",
         "no-magic-numbers": "off",
         "no-multi-str": "off",
-        "no-multiple-empty-lines": "error",
+        "no-multiple-empty-lines": [
+            "error",
+            {
+                "max": 1,
+                "maxBOF": 0,
+                "maxEOF": 0,
+            }
+        ],
         "no-nested-ternary": "off", // Superseded by unicorn/no-nested-ternary
         "no-new-func": "error",
         "no-new-wrappers": "error",
@@ -289,12 +298,21 @@ module.exports = {
         "no-unused-vars": "off",
         "no-var": "error",
         "no-void": "off",
+        "no-whitespace-before-property": "error",
+        "object-curly-spacing": [
+            "error",
+            "always"
+        ],
         "object-shorthand": "error",
         "one-var": [
             "error",
             "never"
         ],
         "optimize-regex/optimize-regex": "error",
+        "padded-blocks": [
+            "error",
+            "never"
+        ],
         "padding-line-between-statements": [
             "off",
             "error",
@@ -312,6 +330,8 @@ module.exports = {
             "consistent-as-needed"
         ],
         "radix": "error",
+        "semi-spacing": "error",
+        "space-before-blocks": "error",
         "space-before-function-paren": [
             "error",
             {
@@ -319,6 +339,12 @@ module.exports = {
                 "asyncArrow": "always",
                 "named": "never"
             }
+        ],
+        "space-infix-ops": "error",
+        "spaced-comment": [
+            "error",
+            "always",
+            { "markers": ["!"] }
         ],
         "use-isnan": "error",
         "valid-typeof": "off",
