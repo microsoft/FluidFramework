@@ -42,7 +42,7 @@ const fetchAndValidatePackageInfo = async (packageUrl: string) => {
     }
 
     if (fluidPackage.fluid.browser.umd.library === undefined) {
-        throw new Error(`UrlRegistry: Missing entrypoint name`);
+        throw new Error(`UrlRegistry: Missing module name`);
     }
 
     if (fluidPackage.fluid.browser.umd.files === undefined) {
@@ -67,7 +67,7 @@ export class UrlRegistry implements IComponentRegistry {
         if (window[fluidExportMapKey] === undefined) {
             window[fluidExportMapKey] = new Map<string, Promise<unknown>>();
         }
-        this.fluidExportsMap = window[fluidExportMapKey] as Map<string, Promise<ComponentRegistryEntry>>;
+        this.fluidExportsMap = window[fluidExportMapKey];
 
         const loadingEntrypointsKey = `${UrlRegistry.WindowKeyPrefix}LoadingEntrypoints`;
         if (window[loadingEntrypointsKey] === undefined) {
@@ -81,10 +81,10 @@ export class UrlRegistry implements IComponentRegistry {
     public async get(name: string): Promise<ComponentRegistryEntry | undefined> {
         if (!this.fluidExportsMap.has(name)
             && (name.startsWith("http://") || name.startsWith("https://"))) {
+            const fluidExportP: Promise<ComponentRegistryEntry> = this.loadFluidModule(name)
+                .then((entrypoint) => entrypoint.fluidExport);
 
-            this.fluidExportsMap.set(
-                name,
-                this.loadFluidModule(name).then((entrypoint) => entrypoint.fluidExport));
+            this.fluidExportsMap.set(name, fluidExportP);
         }
 
         return this.fluidExportsMap.get(name);
@@ -97,18 +97,19 @@ export class UrlRegistry implements IComponentRegistry {
     private async loadFluidModule(packageUrl: string): Promise<IFluidModule> {
         // First get the info from the package about what we're loading
         const fluidPackage = await fetchAndValidatePackageInfo(packageUrl);
-        const entrypointName = fluidPackage.fluid.browser.umd.library;
+        const moduleName = fluidPackage.fluid.browser.umd.library;
         const scriptRelativeUrls = fluidPackage.fluid.browser.umd.files;
         const scriptUrls = scriptRelativeUrls.map((scriptRelativeUrl) => `${packageUrl}/${scriptRelativeUrl}`);
 
-        while (this.loadingFluidModules.has(entrypointName)) {
-            await this.loadingFluidModules.get(entrypointName);
+        while (this.loadingFluidModules.has(moduleName)) {
+            await this.loadingFluidModules.get(moduleName);
         }
-        const loadingEntrypoint = new Deferred<void>();
-        this.loadingFluidModules.set(entrypointName, loadingEntrypoint.promise);
-        // Preserve the entry point for our own external component loader package
-        const preservedEntryPoint = window[entrypointName];
-        window[entrypointName] = undefined;
+        const loadingModuleDeferred = new Deferred<void>();
+        this.loadingFluidModules.set(moduleName, loadingModuleDeferred.promise);
+        // Preserve the entrypoint for our own module (the WaterParkModuleInstantiationFactory) -- it's likely the
+        // scripts we're about to load will stomp on it otherwise.
+        const preservedModule = window[moduleName];
+        window[moduleName] = undefined;
 
         try {
             const scriptLoadPromises = scriptUrls.map(loadScript);
@@ -122,17 +123,17 @@ export class UrlRegistry implements IComponentRegistry {
             }
 
             // Stash the entry point
-            const entrypoint = window[entrypointName];
+            const entrypoint = window[moduleName];
             if (entrypoint === undefined) {
                 throw new Error(
-                    `UrlRegistry: ${packageUrl}: Entrypoint: ${entrypointName}: Entry point is undefined`);
+                    `UrlRegistry: ${packageUrl}: Entrypoint: ${moduleName}: Entry point is undefined`);
             }
             return entrypoint;
         } finally {
             // Release the entry point
-            window[entrypointName] = preservedEntryPoint;
-            loadingEntrypoint.resolve();
-            this.loadingFluidModules.delete(entrypointName);
+            window[moduleName] = preservedModule;
+            loadingModuleDeferred.resolve();
+            this.loadingFluidModules.delete(moduleName);
         }
     }
 }
