@@ -20,8 +20,8 @@ import {
     ISharedObjectFactory,
     SharedObject,
 } from "@microsoft/fluid-shared-object-base";
-import { ISummarizableObject } from "./interfaces";
-import { SummarizableObjectFactory } from "./summarizableObjectFactory";
+import { SharedSummaryBlockFactory } from "./sharedSummaryBlockFactory";
+import { ISharedSummaryBlock } from "./interfaces";
 
 const snapshotFileName = "header";
 
@@ -29,33 +29,33 @@ const snapshotFileName = "header";
  * Defines the in-memory object structure to be used for the conversion to/from serialized.
  * Directly used in JSON.stringify, direct result from JSON.parse.
  */
-interface ISummarizableObjectDataSerializable {
+interface ISharedSummaryBlockDataSerializable {
     [key: string]: Jsonable;
 }
 
 /**
- * Implementation of a summarizable object. It does not generate any ops. It is only part of the summary.
+ * Implementation of a shared summary block. It does not generate any ops. It is only part of the summary.
  * Data should be set in this object in response to a remote op.
  */
-export class SummarizableObject extends SharedObject implements ISummarizableObject {
+export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBlock {
     /**
-     * Create a new summarizable object
+     * Create a new shared summary block
      *
-     * @param runtime - component runtime the new summarizable object belongs to.
-     * @param id - optional name of the summarizable object.
-     * @returns newly create summarizable object (but not attached yet).
+     * @param runtime - component runtime the new shared summary block belongs to.
+     * @param id - optional name of the shared summary block.
+     * @returns newly created shared summary block (but not attached yet).
      */
     public static create(runtime: IComponentRuntime, id?: string) {
-        return runtime.createChannel(id, SummarizableObjectFactory.Type) as SummarizableObject;
+        return runtime.createChannel(id, SharedSummaryBlockFactory.Type) as SharedSummaryBlock;
     }
 
     /**
-     * Get a factory for SummarizableObject to register with the component.
+     * Get a factory for SharedSummaryBlock to register with the component.
      *
-     * @returns a factory that creates and loads SummarizableObject.
+     * @returns a factory that creates and loads SharedSummaryBlock.
      */
     public static getFactory(): ISharedObjectFactory {
-        return new SummarizableObjectFactory();
+        return new SharedSummaryBlockFactory();
     }
 
     /**
@@ -64,10 +64,10 @@ export class SummarizableObject extends SharedObject implements ISummarizableObj
     private readonly data = new Map<string, Jsonable>();
 
     /**
-     * Constructs a new SummarizableObject. If the object is non-local, an id and service interfaces will
+     * Constructs a new SharedSummaryBlock. If the object is non-local, an id and service interfaces will
      * be provided.
      *
-     * @param id - optional name of the summarizable object.
+     * @param id - optional name of the shared summary block.
      * @param runtime - component runtime thee object belongs to.
      * @param attributes - The attributes for the object.
      */
@@ -76,14 +76,14 @@ export class SummarizableObject extends SharedObject implements ISummarizableObj
     }
 
     /**
-     * {@inheritDoc ISummarizableObject.get}
+     * {@inheritDoc ISharedSummaryBlock.get}
      */
     public get(key: string): Jsonable {
         return this.data.get(key);
     }
 
     /**
-     * {@inheritDoc ISummarizableObject.set}
+     * {@inheritDoc ISharedSummaryBlock.set}
      */
     public set(key: string, value: Jsonable): void {
         this.data.set(key, value);
@@ -96,7 +96,7 @@ export class SummarizableObject extends SharedObject implements ISummarizableObj
      * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.snapshot}
      */
     public snapshot(): ITree {
-        const contentsBlob: ISummarizableObjectDataSerializable = {};
+        const contentsBlob: ISharedSummaryBlockDataSerializable = {};
         this.data.forEach((value, key) => {
             contentsBlob[key] = value;
         });
@@ -129,7 +129,7 @@ export class SummarizableObject extends SharedObject implements ISummarizableObj
         storage: IObjectStorageService): Promise<void> {
 
         const rawContent = await storage.read(snapshotFileName);
-        const contents = JSON.parse(fromBase64ToUtf8(rawContent)) as ISummarizableObjectDataSerializable;
+        const contents = JSON.parse(fromBase64ToUtf8(rawContent)) as ISharedSummaryBlockDataSerializable;
 
         for (const [key, value] of Object.entries(contents)) {
             this.data.set(key, value);
@@ -155,6 +155,6 @@ export class SummarizableObject extends SharedObject implements ISummarizableObj
      * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.processCore}
      */
     protected processCore(message: ISequencedDocumentMessage, local: boolean) {
-        throw new Error("Summarizable object should not generate any ops.");
+        throw new Error("shared summary block should not generate any ops.");
     }
 }

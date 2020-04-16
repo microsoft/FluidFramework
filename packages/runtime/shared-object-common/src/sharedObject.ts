@@ -264,8 +264,8 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     /**
-     * Marks this object as dirty so that it is part of the next summary. It is called by a summarizable
-     * object that want to be part of summary but does not generate ops.
+     * Marks this object as dirty so that it is part of the next summary. It is called by a SharedSummaryBlock
+     * that want to be part of summary but does not generate ops.
      */
     protected dirty(): void {
         if (this.isLocal()) {
