@@ -65,7 +65,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 
         const logger = DebugLogger.create("fluid-server:LocalDeltaConnectionServer");
 
-        const testOrderer = new MemoryOrdererManager(
+        const ordererManager = new MemoryOrdererManager(
             testStorage,
             databaseManager,
             testTenantManager,
@@ -77,7 +77,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 
         configureWebSocketServices(
             webSocketServer,
-            testOrderer,
+            ordererManager,
             testTenantManager,
             testStorage,
             testDbFactory.testDatabase.collection("ops"),
@@ -88,7 +88,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
         return new LocalDeltaConnectionServer(
             webSocketServer,
             databaseManager,
-            testOrderer,
+            ordererManager,
             testDbFactory,
             testStorage);
     }
@@ -96,7 +96,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
     private constructor(
         public webSocketServer: IWebSocketServer,
         public databaseManager: IDatabaseManager,
-        private readonly testOrdererManager: MemoryOrdererManager,
+        private readonly ordererManager: MemoryOrdererManager,
         public testDbFactory: ITestDbFactory,
         public documentStorage: IDocumentStorage) { }
 
@@ -104,6 +104,6 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
      * Returns true if there are any received ops that are not yet ordered.
      */
     public async hasPendingWork(): Promise<boolean> {
-        return this.testOrdererManager.hasPendingWork();
+        return this.ordererManager.hasPendingWork();
     }
 }
