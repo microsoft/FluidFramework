@@ -49,21 +49,27 @@ export async function loadFrame(iframeId: string, logId: string){
     });
 
     const proxyContainer = await host.load(createRequest(), iframe);
-
-
     const text = document.getElementById(logId) as HTMLDivElement;
     const quorum = proxyContainer.getQuorum();
 
-    const log = (emitter: EventEmitter, name: string, ...events: string[]) =>{
+    quorum.getMembers().forEach((client)=>text.innerHTML+=`Quorum: client: ${JSON.stringify(client)}<br/>`);
+    quorum.on("error", (message) => {
+        text.innerHTML+=`Quorum error: ${JSON.stringify(message)}<br/>`;
+    });
+    quorum.on("addMember", (message) => {
+        text.innerHTML+=`Quorum addMember: ${JSON.stringify(message)}<br/>`;
+    });
+    quorum.on("removeMember", (message) => {
+        text.innerHTML+=`Quorum removeMember: ${JSON.stringify(message)}<br/>`;
+    });
+
+    const logConatiner = (emitter: EventEmitter, name: string, ...events: string[]) =>{
         events.forEach((event)=>
             emitter.on(event, (...args)=>{
                 text.innerHTML+=`${name}: ${event}: ${JSON.stringify(args)}<br/>`;
             }));
     };
-
-    quorum.getMembers().forEach((client)=>text.innerHTML+=`Quorum: client: ${JSON.stringify(client)}<br/>`);
-    log(quorum, "Quorum", "error", "addMember", "removeMember");
-    log(proxyContainer, "Container", "error", "connected","disconnected");
+    logConatiner(proxyContainer, "Container", "error", "connected","disconnected");
 }
 
 async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
