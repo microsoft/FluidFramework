@@ -56,8 +56,6 @@ export class BaseContainerRuntimeFactory implements
             dc.register(entry.type, entry.provider);
         }
 
-        dc.register(IComponentRegistry, {} as unknown as IComponentRegistry);
-
         const runtime = await ContainerRuntime.load(
             context,
             this.registryEntries,
@@ -67,6 +65,9 @@ export class BaseContainerRuntimeFactory implements
             ],
             undefined,
             dc);
+
+        // we register the runtime so developers of providers can use it in the factory pattern.
+        dc.register(IHostRuntime, runtime);
 
         // On first boot create the base component
         if (!runtime.existing) {

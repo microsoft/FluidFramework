@@ -354,6 +354,17 @@ export enum FlushMode {
     Manual,
 }
 
+declare module "@microsoft/fluid-component-core-interfaces" {
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    export interface IComponent extends Readonly<Partial<IProvideHostRuntime>> { }
+}
+
+export const IHostRuntime: keyof IProvideHostRuntime = "IHostRuntime";
+
+export interface IProvideHostRuntime {
+    IHostRuntime: IHostRuntime;
+}
+
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  */
@@ -361,7 +372,8 @@ export interface IHostRuntime extends
     EventEmitter,
     IProvideComponentSerializer,
     IProvideComponentHandleContext,
-    IProvideComponentRegistry {
+    IProvideComponentRegistry,
+    IProvideHostRuntime {
     readonly id: string;
     readonly existing: boolean;
     readonly options: any;
