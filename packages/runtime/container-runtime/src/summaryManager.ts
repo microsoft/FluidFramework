@@ -58,6 +58,13 @@ enum SummaryManagerState {
 const defaultMaxRestarts = 5;
 const defaultInitialDelayMs = 5000;
 
+type ShouldSummarizeState = {
+    shouldSummarize: true;
+} | {
+    shouldSummarize: false;
+    stopReason: string;
+};
+
 export class SummaryManager extends EventEmitter implements IDisposable {
     private readonly logger: ITelemetryLogger;
     private readonly quorumHeap = new QuorumHeap();
@@ -79,7 +86,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     }
 
     private get shouldSummarize() {
-        return this.connected && !this.disposed && this.clientId === this.summarizer;
+        return this.getShouldSummarizeState().shouldSummarize === true;
     }
 
     constructor(
@@ -147,15 +154,15 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         this.refreshSummarizer();
     }
 
-    private getStopReason(): string | undefined {
+    private getShouldSummarizeState(): ShouldSummarizeState {
         if (!this.connected) {
-            return "parentNotConnected";
+            return { shouldSummarize: false, stopReason: "parentNotConnected" };
         } else if (this.clientId !== this.summarizer) {
-            return "parentShouldNotSummarize";
+            return { shouldSummarize: false, stopReason: "parentShouldNotSummarize" };
         } else if (this.disposed) {
-            return "disposed";
+            return { shouldSummarize: false, stopReason: "disposed" };
         } else {
-            return undefined;
+            return { shouldSummarize: true };
         }
     }
 
@@ -170,9 +177,10 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         // Transition states depending on shouldSummarize, which is a calculated
         // property that is only true if this client is connected and has the
         // computed summarizer client id
+        const shouldSummarizeState = this.getShouldSummarizeState();
         switch (this.state) {
             case SummaryManagerState.Off: {
-                if (this.shouldSummarize) {
+                if (shouldSummarizeState.shouldSummarize === true) {
                     this.start();
                 }
                 return;
@@ -183,7 +191,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
                 return;
             }
             case SummaryManagerState.Running: {
-                if (!this.shouldSummarize) {
+                if (shouldSummarizeState.shouldSummarize === false) {
                     // Only need to check defined in case we are between
                     // finally and then states; stopping should trigger
                     // a change in states when the running summarizer closes
@@ -191,7 +199,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
                     if (this.runningSummarizer) {
                         // eslint-disable-next-line max-len
                         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
-                        this.runningSummarizer.stop!(this.getStopReason());
+                        this.runningSummarizer.stop!(shouldSummarizeState.stopReason);
                     }
                 }
                 return;
@@ -231,13 +239,14 @@ export class SummaryManager extends EventEmitter implements IDisposable {
                 } else {
                     this.state = SummaryManagerState.Off;
                 }
-            } else if (this.shouldSummarize) {
-                this.setNextSummarizer(summarizer.setSummarizer());
-                this.run(summarizer);
-            } else {
+            }
+            this.setNextSummarizer(summarizer.setSummarizer());
+            this.run(summarizer);
+            const shouldSummarizeState = this.getShouldSummarizeState();
+            if (shouldSummarizeState.shouldSummarize === false) {
                 // eslint-disable-next-line max-len
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
-                summarizer.stop!(this.getStopReason());
+                summarizer.stop!(shouldSummarizeState.stopReason);
                 this.state = SummaryManagerState.Off;
             }
         }, (error) => {
