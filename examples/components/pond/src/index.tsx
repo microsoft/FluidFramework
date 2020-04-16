@@ -35,8 +35,8 @@ export const PondName = pkg.name as string;
  *  - Component creation and storage using Handles
  */
 export class Pond extends PrimedComponent implements IComponentHTMLView {
-    private clickerView: HTMLViewAdapter | undefined;
-    private clickerWithInitialStateView: HTMLViewAdapter | undefined;
+    // private clickerView: HTMLViewAdapter | undefined;
+    // private clickerWithInitialStateView: HTMLViewAdapter | undefined;
     private clickerUsingProvidersView: HTMLViewAdapter | undefined;
 
     public get IComponentHTMLView() { return this; }
@@ -58,12 +58,12 @@ export class Pond extends PrimedComponent implements IComponentHTMLView {
     }
 
     protected async componentHasInitialized() {
-        const clicker = await this.root.get<IComponentHandle>(Clicker.ComponentName).get();
-        this.clickerView = new HTMLViewAdapter(clicker);
+        // const clicker = await this.root.get<IComponentHandle>(Clicker.ComponentName).get();
+        // this.clickerView = new HTMLViewAdapter(clicker);
 
-        const clickerWithInitialState
-            = await this.root.get<IComponentHandle>(ClickerWithInitialValue.ComponentName).get();
-        this.clickerWithInitialStateView = new HTMLViewAdapter(clickerWithInitialState);
+        // const clickerWithInitialState
+        //     = await this.root.get<IComponentHandle>(ClickerWithInitialValue.ComponentName).get();
+        // this.clickerWithInitialStateView = new HTMLViewAdapter(clickerWithInitialState);
 
         const clickerUsingProviders
             = await this.root.get<IComponentHandle>(ClickerUsingProviders.ComponentName).get();
@@ -73,11 +73,12 @@ export class Pond extends PrimedComponent implements IComponentHTMLView {
     // start IComponentHTMLView
 
     public render(div: HTMLElement) {
-        if (!this.clickerView ||
-            !this.clickerWithInitialStateView ||
+        if (
             !this.clickerUsingProvidersView) {
             throw new Error(`Pond not initialized correctly`);
         }
+        // !this.clickerView ||
+        // !this.clickerWithInitialStateView ||
 
         // Pond wrapper component setup
         // Set the border to green to denote components boundaries.
@@ -111,8 +112,8 @@ export class Pond extends PrimedComponent implements IComponentHTMLView {
         div.appendChild(clicker3Div);
         div.appendChild(clicker4Div);
 
-        this.clickerView.render(clicker2Div);
-        this.clickerWithInitialStateView.render(clicker3Div);
+        // this.clickerView.render(clicker2Div);
+        // this.clickerWithInitialStateView.render(clicker3Div);
         this.clickerUsingProvidersView.render(clicker4Div);
 
         return div;

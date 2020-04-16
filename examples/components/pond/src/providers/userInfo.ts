@@ -10,7 +10,9 @@ import { IHostRuntime } from "@microsoft/fluid-runtime-definitions";
 import { IComponentUserInformation } from "../interfaces";
 
 export class UserInfo implements IComponentUserInformation{
-    public constructor(private readonly quorum: IQuorum) {
+    private readonly quorum: IQuorum;
+    public constructor(hostRuntime: IHostRuntime) {
+        this.quorum = hostRuntime.getQuorum();
     }
 
     public get IComponentUserInformation() { return this; }
@@ -68,7 +70,7 @@ export const userInfoFactory = async (dc: DependencyContainer) => {
     },{});
     const hostRuntime = await s.IHostRuntime;
     if (hostRuntime) {
-        return new UserInfo(hostRuntime.getQuorum());
+        return new UserInfo(hostRuntime);
     }
 
     return undefined;
