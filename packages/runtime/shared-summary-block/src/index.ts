@@ -4,5 +4,5 @@
  */
 
 export * from "./interfaces";
-export * from "./summarizableObject";
-export * from "./summarizableObjectFactory";
+export * from "./sharedSummaryBlock";
+export * from "./sharedSummaryBlockFactory";

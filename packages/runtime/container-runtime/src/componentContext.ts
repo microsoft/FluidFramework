@@ -393,7 +393,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     }
 
     /**
-     * This is called from a summarizable object that does not generate ops but only wants to be part of the summary.
+     * This is called from a SharedSummaryBlock that does not generate ops but only wants to be part of the summary.
      * It indicates that there is data in the object that needs to be summarized.
      * We will update the latestSequenceNumber of the summary tracker of this component and of the object's channel.
      *
