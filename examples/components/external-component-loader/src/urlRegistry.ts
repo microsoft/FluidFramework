@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidModule, isFluidPackage } from "@microsoft/fluid-container-definitions";
+import { isFluidPackage } from "@microsoft/fluid-container-definitions";
 import { Deferred } from "@microsoft/fluid-common-utils";
 import {
     ComponentRegistryEntry,
@@ -58,43 +58,40 @@ const fetchAndValidatePackageInfo = async (packageUrl: string) => {
 export class UrlRegistry implements IComponentRegistry {
     private static readonly WindowKeyPrefix = "FluidExternalComponent";
 
-    private readonly fluidExportsMap: Map<string, Promise<ComponentRegistryEntry>>;
-    private readonly loadingFluidModules: Map<string, Promise<unknown>>;
+    private readonly registryEntryMap: Map<string, Promise<ComponentRegistryEntry>>;
+    private readonly loadingFluidModules: Map<string, Promise<void>>;
 
     constructor() {
         // Stash on the window so multiple instance can coordinate
-        const fluidExportMapKey = `${UrlRegistry.WindowKeyPrefix}FluidExports`;
-        if (window[fluidExportMapKey] === undefined) {
-            window[fluidExportMapKey] = new Map<string, Promise<unknown>>();
+        const registryEntryMapKey = `${UrlRegistry.WindowKeyPrefix}RegistryEntries`;
+        if (window[registryEntryMapKey] === undefined) {
+            window[registryEntryMapKey] = new Map<string, Promise<ComponentRegistryEntry>>();
         }
-        this.fluidExportsMap = window[fluidExportMapKey];
+        this.registryEntryMap = window[registryEntryMapKey];
 
-        const loadingEntrypointsKey = `${UrlRegistry.WindowKeyPrefix}LoadingEntrypoints`;
-        if (window[loadingEntrypointsKey] === undefined) {
-            window[loadingEntrypointsKey] = new Map<string, Promise<unknown>>();
+        const loadingFluidModulesKey = `${UrlRegistry.WindowKeyPrefix}LoadingEntrypoints`;
+        if (window[loadingFluidModulesKey] === undefined) {
+            window[loadingFluidModulesKey] = new Map<string, Promise<void>>();
         }
-        this.loadingFluidModules = window[loadingEntrypointsKey] as Map<string, Promise<unknown>>;
+        this.loadingFluidModules = window[loadingFluidModulesKey];
     }
 
     public get IComponentRegistry() { return this; }
 
     public async get(name: string): Promise<ComponentRegistryEntry | undefined> {
-        if (!this.fluidExportsMap.has(name)
+        if (!this.registryEntryMap.has(name)
             && (name.startsWith("http://") || name.startsWith("https://"))) {
-            const fluidExportP: Promise<ComponentRegistryEntry> = this.loadFluidModule(name)
-                .then((entrypoint) => entrypoint.fluidExport);
-
-            this.fluidExportsMap.set(name, fluidExportP);
+            this.registryEntryMap.set(name, this.loadRegistryEntry(name));
         }
 
-        return this.fluidExportsMap.get(name);
+        return this.registryEntryMap.get(name);
     }
 
     /**
      * Load and retrieve an entrypoint to a Fluid package from a URL
      * @param packageUrl - The URL to the package we're loading
      */
-    private async loadFluidModule(packageUrl: string): Promise<IFluidModule> {
+    private async loadRegistryEntry(packageUrl: string): Promise<ComponentRegistryEntry> {
         // First get the info from the package about what we're loading
         const fluidPackage = await fetchAndValidatePackageInfo(packageUrl);
         const moduleName = fluidPackage.fluid.browser.umd.library;
@@ -128,7 +125,7 @@ export class UrlRegistry implements IComponentRegistry {
                 throw new Error(
                     `UrlRegistry: ${packageUrl}: Entrypoint: ${moduleName}: Entry point is undefined`);
             }
-            return entrypoint;
+            return entrypoint.fluidExport;
         } finally {
             // Release the entry point
             window[moduleName] = preservedModule;
