@@ -1,7 +1,7 @@
 {
-  "name": "@microsoft/fluid-summarizable-object",
+  "name": "@microsoft/fluid-shared-summary-block",
   "version": "0.16.0",
-  "description": "Summarizable Object that does not generate ops",
+  "description": "A DDS that does not generate ops but is part of summary",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft",

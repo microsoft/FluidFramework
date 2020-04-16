@@ -8,9 +8,10 @@ import {
     RouterliciousDocumentServiceFactory,
 } from "@microsoft/fluid-routerlicious-driver";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
-import { BaseHost, SemVerCdnCodeResolver } from "@microsoft/fluid-base-host";
+import { BaseHost } from "@microsoft/fluid-base-host";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { InsecureUrlResolver } from "@microsoft/fluid-test-runtime-utils";
+import { SemVerCdnCodeResolver } from "@microsoft/fluid-web-code-loader";
 import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 import { IFrameOuterHost } from "./inframehost";
 
