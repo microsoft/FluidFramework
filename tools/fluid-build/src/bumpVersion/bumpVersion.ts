@@ -32,11 +32,13 @@ function versionCheck() {
     }
 }
 
-let paramVersionBump: string | undefined;
-let bumpDep: boolean = false;
-let bumpDepClient: boolean = false;
-let bumpDepServer: boolean = false;
-const bumpDepPackage = new Set<string>();
+let paramBumpVersionKind: string | undefined;
+let paramCommit = false;
+let paramBumpDep = false;
+let paramBumpDepClient = false;
+let paramBumpDepServer = false;
+const paramBumpDepPackages = new Set<string>();
+
 function parseOptions(argv: string[]) {
     let error = false;
     for (let i = 2; i < process.argv.length; i++) {
@@ -64,23 +66,32 @@ function parseOptions(argv: string[]) {
                 process.exit(-1);
             }
             if (dep.toLowerCase() === "client") {
-                bumpDepClient = true;
+                paramBumpDepClient = true;
             } else if (dep.toLowerCase() === "server") {
-                bumpDepServer = true;
+                paramBumpDepServer = true;
             } else {
-                bumpDepPackage.add(dep);
+                paramBumpDepPackages.add(dep);
             }
-            bumpDep = true;
+            paramBumpDep = true;
             continue;
         }
 
         if (arg === "--minor") {
-            paramVersionBump = "minor";
+            paramBumpVersionKind = "minor";
             continue;
         }
 
         if (arg === "--patch") {
-            paramVersionBump = "patch";
+            paramBumpVersionKind = "patch";
+            continue;
+        }
+
+        if (arg === "--bump") {
+            continue;
+        }
+
+        if (arg === "--commit") {
+            paramCommit = true;
             continue;
         }
 
@@ -124,18 +135,31 @@ function collectVersions(repo: FluidRepoBase, generatorPackage: Package, templat
     return versions;
 }
 
-async function bumpPackageDependencies(pkg: Package, packageMap: Map<string, Package>) {
+async function bumpPackageDependencies(pkg: Package, packageMap: Map<string, Package>, release: boolean = false) {
+    let changed = false;
+    const suffix = release ? "" : "-0";
     for (const { name, dev } of pkg.combinedDependencies) {
         const depPackage = packageMap.get(name);
         if (depPackage && !MonoRepo.isSame(depPackage.monoRepo, pkg.monoRepo)) {
+            const depVersion = `^${depPackage.version}${suffix}`;
             if (dev) {
-                pkg.packageJson.devDependencies[name] = `^${depPackage.version}-0`;
+                if (pkg.packageJson.devDependencies[name] !== depVersion) {
+                    changed = true;
+                    pkg.packageJson.devDependencies[name] = depVersion;
+                }
             } else {
-                pkg.packageJson.dependencies[name] = `^${depPackage.version}-0`;
+                if (pkg.packageJson.dependencies[name] !== depVersion) {
+                    changed = true;
+                    pkg.packageJson.dependencies[name] = depVersion;
+                }
             }
         }
     }
-    return pkg.savePackageJson();
+
+    if (changed) {
+        await pkg.savePackageJson();
+    }
+    return changed;
 }
 
 async function bumpGeneratorFluid(packageMap: Map<string, Package>, generatorPackage: Package, templatePackage: Package, versionBump: string) {
@@ -146,30 +170,47 @@ async function bumpGeneratorFluid(packageMap: Map<string, Package>, generatorPac
     await execWithErrorAsync(`npm version ${versionBump}`, { cwd: generatorPackage.directory }, generatorPackage.directory, false);
 }
 
-async function getVersionBumpKind(resolvedRoot: string) {
-    if (paramVersionBump !== undefined) {
-        return paramVersionBump;
-    }
-    
-    // Determine the kind of bump
-    const result = await execWithErrorAsync("git rev-parse --abbrev-ref HEAD", { cwd: resolvedRoot }, resolvedRoot, false);
+async function gitExec(command: string, resolvedRoot: string, error: string) {
+    const result = await execWithErrorAsync(`git ${command}`, { cwd: resolvedRoot }, resolvedRoot, false);
     if (result.error) {
+        console.error(`ERROR: Unable to ${error}`)
         process.exit(1);
     }
+    return result.stdout;
+}
 
-    const branchName = result.stdout.split("\n")[0];
+async function getCurrentBranchName(resolvedRoot: string) {
+    const revParseOut = await gitExec("rev-parse --abbrev-ref HEAD", resolvedRoot, "get current branch");
+
+    const branchName = revParseOut.split("\n")[0];
     if (branchName !== "master" && !branchName.startsWith("release/")) {
         console.error(`ERROR: Unrecognized branch '${branchName}'`);
         process.exit(2)
     }
 
+    return branchName;
+}
+
+async function getVersionBumpKind(resolvedRoot: string) {
+    if (paramBumpVersionKind !== undefined) {
+        return paramBumpVersionKind;
+    }
+
+    // Determine the kind of bump
+    const branchName = await getCurrentBranchName(resolvedRoot);
     return branchName === "master" ? "minor" : "patch";
 }
 
+/**
+ * Bump package version of the client monorepo, 
+ * If it has dependencies to the current version of the other monorepo packages, bump package version of those too
+ * 
+ * If --commit or --release is specified, the bumpped version changes will be committed and a release branch will be created
+ */
 async function bumpVersion(repo: FluidRepoBase) {
     const versionBump = await getVersionBumpKind(repo.resolvedRoot);
     console.log(`Bumping ${versionBump} version`);
-    
+
     const packageNeedBump = new Set<Package>();
     let serverNeedBump = false;
     const packageMap = repo.createPackageMap();
@@ -268,10 +309,48 @@ async function bumpVersion(repo: FluidRepoBase) {
             console.log(`${name.padStart(40)}: ${newVersions[name].padStart(10)} (unchanged)`);
         }
     }
+
+    if (paramCommit) {
+        console.log("Committing changes");
+        const releaseVersion = oldVersions[MonoRepoKind[MonoRepoKind.Client]];
+        if (versionBump !== "patch") {
+            const releaseBranchVersion = `${semver.major(releaseVersion)}.${semver.minor(releaseVersion)}`;
+            const releaseBranch = `release/${releaseBranchVersion}.x`;
+            console.log(`Creating release branch ${releaseBranch}`);
+            await gitExec(`checkout -b ${releaseBranch}`, repo.resolvedRoot, `create branch ${releaseBranch}`);
+            await gitExec("checkout -", repo.resolvedRoot, "checkout previous branch");
+        }
+
+        const pendingReleaseBranch = `release/${releaseVersion}`
+        console.log(`Creating pending branch ${pendingReleaseBranch}`);
+        await gitExec(`checkout -b ${pendingReleaseBranch}`, repo.resolvedRoot, `create branch ${pendingReleaseBranch}`);
+        await gitExec("checkout -", repo.resolvedRoot, "checkout previous branch");
+
+        const newVersion = newVersions[MonoRepoKind[MonoRepoKind.Client]];
+        console.log(`Commit bump version ${newVersion}`);
+        await gitExec(`commit -a -m "Bump version to ${newVersion}`, repo.resolvedRoot, "create bumped version commit");
+
+        await gitExec(`checkout -b ${pendingReleaseBranch}`, repo.resolvedRoot, `switch to branch ${pendingReleaseBranch}`);
+
+        // we switch branch. reload
+        repo.reload();
+        generatorPackage.reload();
+        templatePackage.reload();
+
+        const packageNeedBumpName = new Set<string>();
+        for (const pkg of packageNeedBump) {
+            packageNeedBumpName.add(pkg.name);
+        }
+        await bumpDependencies(repo, true, serverNeedBump, packageNeedBumpName, true);
+
+        await gitExec(`commit -a -m "Bump version to ${newVersion}`, repo.resolvedRoot, "create bumped version commit");
+    }
 }
 
-async function bumpDependencies(repo: FluidRepoBase) {
-
+/**
+ * Bump cross package/monorepo dependencies
+ */
+async function bumpDependencies(repo: FluidRepoBase, bumpDepClient: boolean, bumpDepServer: boolean, bumpDepPackages: Set<string>, release: boolean = false) {
     const bumpPackages = repo.packages.packages.filter(pkg => {
         if (bumpDepClient && pkg.monoRepo === repo.clientMonoRepo) {
             return true;
@@ -279,7 +358,7 @@ async function bumpDependencies(repo: FluidRepoBase) {
         if (bumpDepServer && pkg.monoRepo === repo.serverMonoRepo) {
             return true;
         }
-        if (bumpDepPackage.has(pkg.name)) {
+        if (bumpDepPackages.has(pkg.name)) {
             return true;
         }
         return false;
@@ -292,11 +371,13 @@ async function bumpDependencies(repo: FluidRepoBase) {
 
     const bumpPackageMap = new Map<string, Package>(bumpPackages.map(pkg => [pkg.name, pkg]));
 
+    let changed = false;
     for (const pkg of repo.packages.packages) {
-        await bumpPackageDependencies(pkg, bumpPackageMap);
+        if (await bumpPackageDependencies(pkg, bumpPackageMap, release)) {
+            changed = true;
+        }
     }
 }
-
 
 async function main() {
     const timer = new Timer(commonOptions.timer);
@@ -309,12 +390,11 @@ async function main() {
     const repo = new FluidRepoBase(resolvedRoot);
     timer.time("Package scan completed");
 
-    if (bumpDep) {
-        return bumpDependencies(repo);
+    if (paramBumpDep) {
+        return bumpDependencies(repo, paramBumpDepClient, paramBumpDepServer, paramBumpDepPackages);
     }
     return bumpVersion(repo);
 }
-
 
 main().catch(e => {
     console.error("ERROR: unexpected error", JSON.stringify(e, undefined, 2))
