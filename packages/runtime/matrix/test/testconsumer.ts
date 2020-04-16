@@ -9,16 +9,16 @@ import { IMatrixConsumer, IMatrixReader } from "@tiny-calc/nano";
 /**
  * IMatrixConsumer implementation that applies change notifications to it's own
  * dense matrix.
- * 
+ *
  * Comparing the state of the TestConsumer with the original IMatrixProducer is a
  * convenient way to vet that the producer is emitting the correct change notifications.
  */
-export class TestConsumer<T> implements IMatrixConsumer<T>, IMatrixReader<T> {
+export class TestConsumer<T = any> implements IMatrixConsumer<T>, IMatrixReader<T> {
     private _numCols = 0;
     private _numRows = 0;
     private readonly cells: T[] = [];
 
-    public get numRows() { this.vet(); return this._numRows; } 
+    public get numRows() { this.vet(); return this._numRows; }
     public get numCols() { this.vet(); return this._numCols; }
 
     // #region IMatrixConsumer
@@ -32,7 +32,7 @@ export class TestConsumer<T> implements IMatrixConsumer<T>, IMatrixReader<T> {
             this.insertRows(row, numInserted);
         }
     }
-    
+
     colsChanged(col: number, numRemoved: number, numInserted: number): void {
         if (numRemoved > 0) {
             this.removeCols(col, numRemoved);
@@ -42,7 +42,7 @@ export class TestConsumer<T> implements IMatrixConsumer<T>, IMatrixReader<T> {
             this.insertCols(col, numInserted);
         }
     }
-    
+
     cellsChanged(row: number, col: number, numRows: number, numCols: number, values: readonly T[]): void {
         let c = this.getRowIndex(row) + col;
         let end = c + numCols;
@@ -110,12 +110,12 @@ export class TestConsumer<T> implements IMatrixConsumer<T>, IMatrixReader<T> {
         for (let r = 0; r < this.numRows; r++) {
             const row: T[] = [];
             m.push(row);
-    
+
             for (let c = 0; c < this.numCols; c++) {
                 row.push(this.read(r, c));
             }
         }
-    
+
         return m;
     }
 

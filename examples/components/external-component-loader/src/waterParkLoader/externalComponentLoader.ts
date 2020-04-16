@@ -139,11 +139,6 @@ export class ExternalComponentLoader extends PrimedComponent
             return;
         }
 
-        let url = value;
-        if (url.startsWith("@")) {
-            url = `https://pragueauspkn-3873244262.azureedge.net/${url}`;
-        }
-
         try {
             if (this.viewComponentP === undefined) {
                 throw new Error("View component promise not set!!");
@@ -159,28 +154,28 @@ export class ExternalComponentLoader extends PrimedComponent
                 throw new Error("Couldn't get url component registry");
             }
 
-            const pkgReg = await urlReg.IComponentRegistry.get(url) as IComponent;
+            const pkgReg = await urlReg.IComponentRegistry.get(value) as IComponent;
             let componentRuntime: IComponentRuntime;
             const id = uuid();
-            if (pkgReg.IComponentDefaultFactoryName !== undefined) {
+            if (pkgReg?.IComponentDefaultFactoryName !== undefined) {
                 componentRuntime = await this.context.hostRuntime.createComponent(
                     id,
                     [
                         ...this.context.packagePath,
                         "url",
-                        url,
+                        value,
                         pkgReg.IComponentDefaultFactoryName.getDefaultFactoryName(),
                     ]);
-            } else if (pkgReg.IComponentFactory !== undefined) {
+            } else if (pkgReg?.IComponentFactory !== undefined) {
                 componentRuntime = await this.context.hostRuntime.createComponent(
                     id,
                     [
                         ...this.context.packagePath,
                         "url",
-                        url,
+                        value,
                     ]);
             } else {
-                throw new Error(`${url} is not a factory, and does not provide default component name`);
+                throw new Error(`${value} is not a factory, and does not provide default component name`);
             }
 
             const response: IResponse = await componentRuntime.request({ url: "/" });

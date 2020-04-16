@@ -6,8 +6,8 @@
 import {
     IFluidCodeDetails, IFluidCodeResolver, IPackage, IResolvedFluidCodeDetails, isFluidPackage,
 } from "@microsoft/fluid-container-definitions";
-import {extractPackageIdentifierDetails} from "@microsoft/fluid-web-code-loader";
 import * as fetch from "isomorphic-fetch";
+import { extractPackageIdentifierDetails } from "./utils";
 
 
 class FluidPackage {
@@ -70,7 +70,7 @@ export class SemVerCdnCodeResolver implements IFluidCodeResolver{
         const parsed = extractPackageIdentifierDetails(details.package);
 
         const cdn = details.config[`@${parsed.scope}:cdn`] ?? details.config.cdn;
-        const scopePath = parsed.scope ? `@${encodeURI(parsed.scope)}/` : "";
+        const scopePath = parsed.scope !== undefined && parsed.scope.length > 0 ? `@${encodeURI(parsed.scope)}/` : "";
         const packageUrl = parsed.version !== undefined
             ? `${cdn}/${scopePath}${encodeURI(`${parsed.name}@${parsed.version}`)}`
             : `${cdn}/${scopePath}${encodeURI(`${parsed.name}`)}`;

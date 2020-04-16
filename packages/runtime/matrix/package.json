@@ -68,6 +68,7 @@
     "@types/mocha": "^5.2.5",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",
+    "best-random": "^1.0.0",
     "concurrently": "^4.1.0",
     "copyfiles": "^2.1.0",
     "eslint": "~6.8.0",
@@ -78,6 +79,7 @@
     "eslint-plugin-prefer-arrow": "~1.1.7",
     "eslint-plugin-react": "~7.18.0",
     "eslint-plugin-unicorn": "~15.0.1",
+    "hotloop": "~1.0.0",
     "make-promises-safe": "^5.1.0",
     "mocha": "^5.2.0",
     "mocha-junit-reporter": "^1.18.0",
@@ -85,6 +87,7 @@
     "rimraf": "^2.6.2",
     "source-map-support": "^0.5.16",
     "ts-node": "^7.0.1",
-    "typescript": "~3.7.4"
+    "typescript": "~3.7.4",
+    "uuid": "^3.3.2"
   }
 }
