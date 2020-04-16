@@ -4,16 +4,9 @@
  */
 
 import {
-    LocalNodeFactory,
-    LocalOrderer,
-    LocalOrderManager,
-} from "@microsoft/fluid-server-memory-orderer";
-import {
     DefaultMetricClient,
     IDatabaseManager,
     IDocumentStorage,
-    IOrderer,
-    IOrdererManager,
     IWebSocketServer,
     MongoDatabaseManager,
     MongoManager,
@@ -22,14 +15,15 @@ import {
     ITestDbFactory,
     TestDbFactory,
     TestDocumentStorage,
-    TestTaskMessageSender,
     TestTenantManager,
     TestWebSocketServer,
     TestClientManager,
     DebugLogger,
+    TestHistorian,
+    TestTaskMessageSender,
 } from "@microsoft/fluid-server-test-utils";
 import { configureWebSocketServices} from "@microsoft/fluid-server-lambdas";
-import { LocalReservationManager } from "./localReservationManager";
+import { MemoryOrdererManager } from "./memoryOrdererManager";
 
 /**
  * Items needed for handling deltas.
@@ -39,47 +33,6 @@ export interface ILocalDeltaConnectionServer {
     databaseManager: IDatabaseManager;
     testDbFactory: ITestDbFactory;
     hasPendingWork(): Promise<boolean>;
-}
-
-/**
- * Implementation of order manager.
- */
-class TestOrderManager implements IOrdererManager {
-    private readonly orderersP: Promise<IOrderer>[] = [];
-
-    /**
-     * @param orderer - instance of in-memory orderer for the manager to provide
-     */
-    constructor(private readonly orderer: LocalOrderManager) {
-    }
-
-    /**
-     * Returns the op orderer for the given tenant ID and document ID
-     * using the local in-memory orderer manager instance.
-     * @param tenantId - ID of tenant
-     * @param documentId - ID of document
-     */
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public getOrderer(tenantId: string, documentId: string): Promise<IOrderer> {
-        const p = this.orderer.get(tenantId, documentId);
-        this.orderersP.push(p);
-        return p;
-    }
-
-    /**
-     * Returns true if there are any received ops that are not yet ordered.
-     */
-    public async hasPendingWork(): Promise<boolean> {
-        return Promise.all(this.orderersP).then((orderers) => {
-            for (const orderer of orderers) {
-                // We know that it ia LocalOrderer, break the abstraction
-                if ((orderer as LocalOrderer).hasPendingWork()) {
-                    return true;
-                }
-            }
-            return false;
-        });
-    }
 }
 
 /**
@@ -93,7 +46,6 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
         const nodesCollectionName = "nodes";
         const documentsCollectionName = "documents";
         const deltasCollectionName = "deltas";
-        const reservationsCollectionName = "reservations";
         const scribeDeltasCollectionName = "scribeDeltas";
 
         const webSocketServer = new TestWebSocketServer();
@@ -113,30 +65,19 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 
         const logger = DebugLogger.create("fluid-server:LocalDeltaConnectionServer");
 
-        const nodeFactory = new LocalNodeFactory(
-            "os",
-            "http://localhost:4000", // Unused placeholder url
+        const ordererManager = new MemoryOrdererManager(
             testStorage,
             databaseManager,
-            60000,
-            () => webSocketServer,
-            new TestTaskMessageSender(),
             testTenantManager,
+            new TestTaskMessageSender(),
             {},
             16 * 1024,
+            async () => new TestHistorian(testDbFactory.testDatabase),
             logger);
-
-        const reservationManager = new LocalReservationManager(
-            nodeFactory,
-            mongoManager,
-            reservationsCollectionName);
-
-        const localOrderManager = new LocalOrderManager(nodeFactory, reservationManager);
-        const testOrderer = new TestOrderManager(localOrderManager);
 
         configureWebSocketServices(
             webSocketServer,
-            testOrderer,
+            ordererManager,
             testTenantManager,
             testStorage,
             testDbFactory.testDatabase.collection("ops"),
@@ -147,7 +88,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
         return new LocalDeltaConnectionServer(
             webSocketServer,
             databaseManager,
-            testOrderer,
+            ordererManager,
             testDbFactory,
             testStorage);
     }
@@ -155,7 +96,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
     private constructor(
         public webSocketServer: IWebSocketServer,
         public databaseManager: IDatabaseManager,
-        private readonly testOrdererManager: TestOrderManager,
+        private readonly ordererManager: MemoryOrdererManager,
         public testDbFactory: ITestDbFactory,
         public documentStorage: IDocumentStorage) { }
 
@@ -163,6 +104,6 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
      * Returns true if there are any received ops that are not yet ordered.
      */
     public async hasPendingWork(): Promise<boolean> {
-        return this.testOrdererManager.hasPendingWork();
+        return this.ordererManager.hasPendingWork();
     }
 }
