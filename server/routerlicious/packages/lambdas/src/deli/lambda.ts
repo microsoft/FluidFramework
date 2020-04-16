@@ -18,6 +18,7 @@ import {
     ISequencedDocumentSystemMessage,
     ITrace,
     MessageType,
+    NackErrorType,
 } from "@microsoft/fluid-protocol-definitions";
 import { canSummarize } from "@microsoft/fluid-server-services-client";
 import {
@@ -261,7 +262,11 @@ export class DeliLambda implements IPartitionLambda {
         if (messageOrder === IncomingMessageOrder.Duplicate) {
             return;
         } else if (messageOrder === IncomingMessageOrder.Gap) {
-            return this.createNackMessage(message);
+            return this.createNackMessage(
+                message,
+                400,
+                NackErrorType.BadRequestError,
+                `Gap detected in incoming op`);
         }
 
         // Cases only applies to non-integration messages
@@ -290,7 +295,11 @@ export class DeliLambda implements IPartitionLambda {
                 // Nack inexistent client.
                 const client = this.clientSeqManager.get(message.clientId);
                 if (!client || client.nack) {
-                    return this.createNackMessage(message);
+                    return this.createNackMessage(
+                        message,
+                        400,
+                        NackErrorType.BadRequestError,
+                        `Nonexistent client`);
                 }
                 // Verify that the message is within the current window.
                 // -1 check just for directly sent ops (e.g., using REST API).
@@ -305,12 +314,20 @@ export class DeliLambda implements IPartitionLambda {
                         true,
                         [],
                         true);
-                    return this.createNackMessage(message);
+                    return this.createNackMessage(
+                        message,
+                        400,
+                        NackErrorType.BadRequestError,
+                        `Refseq ${message.operation.referenceSequenceNumber} < ${this.minimumSequenceNumber}`);
                 }
                 // Nack if an unauthorized client tries to summarize.
                 if (message.operation.type === MessageType.Summarize) {
                     if (!canSummarize(client.scopes)) {
-                        return this.createNackMessage(message);
+                        return this.createNackMessage(
+                            message,
+                            403,
+                            NackErrorType.InvalidScopeError,
+                            `Client ${message.clientId} does not have summary permission`);
                     }
                 }
             }
@@ -636,13 +653,22 @@ export class DeliLambda implements IPartitionLambda {
     }
 
     /**
-     * Creates a nack message for out of window/disconnected clients.
+     * Creates a nack message for clients.
      */
-    private createNackMessage(message: IRawOperationMessage): ITicketedMessageOutput {
+    private createNackMessage(
+        message: IRawOperationMessage,
+        code: number,
+        type: NackErrorType,
+        reason: string): ITicketedMessageOutput {
         const nackMessage: INackMessage = {
             clientId: message.clientId,
             documentId: this.documentId,
             operation: {
+                content: {
+                    code,
+                    type,
+                    message: reason,
+                },
                 operation: message.operation,
                 sequenceNumber: this.minimumSequenceNumber,
             },

@@ -17,6 +17,7 @@ import {
     ISignalMessage,
     ITokenClaims,
     MessageType,
+    NackErrorType,
 } from "@microsoft/fluid-protocol-definitions";
 import { canSummarize, canWrite } from "@microsoft/fluid-server-services-client";
 
@@ -292,7 +293,14 @@ export function configureWebSocketServices(
             (clientId: string, messageBatches: (IDocumentMessage | IDocumentMessage[])[], response) => {
                 // Verify the user has an orderer connection.
                 if (!connectionsMap.has(clientId)) {
-                    socket.emit("nack", "", [createNackMessage()]);
+                    socket.emit(
+                        "nack",
+                        "",
+                        [createNackMessage(
+                            403,
+                            NackErrorType.InvalidScopeError,
+                            "Invalid clientId or Scope",
+                        )]);
                 } else {
                     const connection = connectionsMap.get(clientId);
 
@@ -330,7 +338,14 @@ export function configureWebSocketServices(
         socket.on("submitContent", (clientId: string, message: IDocumentMessage, response) => {
             // Verify the user has an orderer connection.
             if (!connectionsMap.has(clientId)) {
-                socket.emit("nack", "", [createNackMessage()]);
+                socket.emit(
+                    "nack",
+                    "",
+                    [createNackMessage(
+                        403,
+                        NackErrorType.InvalidScopeError,
+                        "Invalid clientId or Scope",
+                    )]);
             } else {
                 const broadCastMessage: IContentMessage = {
                     clientId,
