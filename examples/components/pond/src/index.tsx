@@ -15,7 +15,7 @@ import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 import {
     Clicker,
-    ClickerUsingProviders,
+    ExampleUsingProviders,
     ClickerWithInitialValue,
     IClickerInitialState,
 } from "./internal-components";
@@ -35,8 +35,8 @@ export const PondName = pkg.name as string;
  *  - Component creation and storage using Handles
  */
 export class Pond extends PrimedComponent implements IComponentHTMLView {
-    // private clickerView: HTMLViewAdapter | undefined;
-    // private clickerWithInitialStateView: HTMLViewAdapter | undefined;
+    private clickerView: HTMLViewAdapter | undefined;
+    private clickerWithInitialStateView: HTMLViewAdapter | undefined;
     private clickerUsingProvidersView: HTMLViewAdapter | undefined;
 
     public get IComponentHTMLView() { return this; }
@@ -53,32 +53,31 @@ export class Pond extends PrimedComponent implements IComponentHTMLView {
             await ClickerWithInitialValue.getFactory().createComponent(this.context, initialState);
         this.root.set(ClickerWithInitialValue.ComponentName, clickerWithInitialValueComponent.handle);
 
-        const clickerComponentUsingProvider = await ClickerUsingProviders.getFactory().createComponent(this.context);
-        this.root.set(ClickerUsingProviders.ComponentName, clickerComponentUsingProvider.handle);
+        const clickerComponentUsingProvider = await ExampleUsingProviders.getFactory().createComponent(this.context);
+        this.root.set(ExampleUsingProviders.ComponentName, clickerComponentUsingProvider.handle);
     }
 
     protected async componentHasInitialized() {
-        // const clicker = await this.root.get<IComponentHandle>(Clicker.ComponentName).get();
-        // this.clickerView = new HTMLViewAdapter(clicker);
+        const clicker = await this.root.get<IComponentHandle>(Clicker.ComponentName).get();
+        this.clickerView = new HTMLViewAdapter(clicker);
 
-        // const clickerWithInitialState
-        //     = await this.root.get<IComponentHandle>(ClickerWithInitialValue.ComponentName).get();
-        // this.clickerWithInitialStateView = new HTMLViewAdapter(clickerWithInitialState);
+        const clickerWithInitialState
+            = await this.root.get<IComponentHandle>(ClickerWithInitialValue.ComponentName).get();
+        this.clickerWithInitialStateView = new HTMLViewAdapter(clickerWithInitialState);
 
         const clickerUsingProviders
-            = await this.root.get<IComponentHandle>(ClickerUsingProviders.ComponentName).get();
+            = await this.root.get<IComponentHandle>(ExampleUsingProviders.ComponentName).get();
         this.clickerUsingProvidersView = new HTMLViewAdapter(clickerUsingProviders);
     }
 
     // start IComponentHTMLView
 
     public render(div: HTMLElement) {
-        if (
+        if (!this.clickerView ||
+            !this.clickerWithInitialStateView ||
             !this.clickerUsingProvidersView) {
             throw new Error(`Pond not initialized correctly`);
         }
-        // !this.clickerView ||
-        // !this.clickerWithInitialStateView ||
 
         // Pond wrapper component setup
         // Set the border to green to denote components boundaries.
@@ -112,8 +111,8 @@ export class Pond extends PrimedComponent implements IComponentHTMLView {
         div.appendChild(clicker3Div);
         div.appendChild(clicker4Div);
 
-        // this.clickerView.render(clicker2Div);
-        // this.clickerWithInitialStateView.render(clicker3Div);
+        this.clickerView.render(clicker2Div);
+        this.clickerWithInitialStateView.render(clicker3Div);
         this.clickerUsingProvidersView.render(clicker4Div);
 
         return div;
@@ -134,7 +133,7 @@ export class Pond extends PrimedComponent implements IComponentHTMLView {
         new Map([
             [Clicker.ComponentName, Promise.resolve(Clicker.getFactory())],
             [ClickerWithInitialValue.ComponentName, Promise.resolve(ClickerWithInitialValue.getFactory())],
-            [ClickerUsingProviders.ComponentName, Promise.resolve(ClickerUsingProviders.getFactory())],
+            [ExampleUsingProviders.ComponentName, Promise.resolve(ExampleUsingProviders.getFactory())],
         ]),
     );
 }

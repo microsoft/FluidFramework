@@ -5,4 +5,4 @@
 
 export * from "./clicker";
 export * from "./clickerWithInitialValue";
-export * from "./clickerUsingProviders";
+export * from "./exampleUsingProviders";
