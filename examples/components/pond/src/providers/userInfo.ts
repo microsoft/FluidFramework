@@ -3,16 +3,33 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
+
 import { IQuorum } from "@microsoft/fluid-protocol-definitions";
 import { DependencyContainer } from "@microsoft/fluid-synthesize";
 import { IHostRuntime } from "@microsoft/fluid-runtime-definitions";
 
 import { IComponentUserInformation } from "../interfaces";
 
-export class UserInfo implements IComponentUserInformation{
+export class UserInfo extends EventEmitter implements IComponentUserInformation{
     private readonly quorum: IQuorum;
+
+    public on(event: "membersChanged", listener: () => void): this;
+    public on(event: string | symbol, listener: (...args: any[]) => void): this {
+        return super.on(event, listener);
+    }
+
     public constructor(hostRuntime: IHostRuntime) {
+        super();
         this.quorum = hostRuntime.getQuorum();
+
+        this.quorum.on("addMember", () => {
+            this.emit("membersChanged");
+        });
+
+        this.quorum.on("removeMember", () => {
+            this.emit("membersChanged");
+        });
     }
 
     public get IComponentUserInformation() { return this; }

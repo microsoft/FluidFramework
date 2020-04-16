@@ -21,5 +21,5 @@ export interface IProvideComponentUserInformation {
 export interface IComponentUserInformation extends IProvideComponentUserInformation {
     readonly userCount: number;
     readonly getUsers: () => string[];
-    // Event emitter for new users
+    on(event: "membersChanged", listener: () => void): this;
 }

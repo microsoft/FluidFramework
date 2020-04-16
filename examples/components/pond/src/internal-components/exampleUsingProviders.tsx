@@ -35,26 +35,11 @@ export class ExampleUsingProviders
     // start IComponentHTMLView
 
     public render(div: HTMLElement) {
-        let element: JSX.Element;
+        let element: JSX.Element = <span></span>;
         if (this.userInformation){
-            const users: JSX.Element[] = [];
-            this.userInformation.getUsers().forEach((user)=> {
-                users.push(<div>{user}</div>);
-            });
-            element = (
-                <>
-                    <h3>Provider Information</h3>
-                    <div><b>Count:</b></div>
-                    <div>{this.userInformation.userCount}</div>
-                    <b>Users:</b>
-                    {users}
-                </>);
+            element = <ExampleUsingProvidersView userInfo={this.userInformation}/>;
         } else {
-            element = (
-                <>
-                    <h3>Provider Information</h3>
-                    <b>NO IComponentUserInformation Provider</b>
-                </>);
+            console.log("No IComponentUserInformation Provided");
         }
 
         ReactDOM.render(
@@ -75,4 +60,47 @@ export class ExampleUsingProviders
         {IComponentUserInformation},
         {},
     );
+}
+
+interface ExampleUsingProvidersViewProps {
+    readonly userInfo: IComponentUserInformation;
+}
+
+interface ExampleUsingProvidersViewState {
+    readonly count: number;
+    readonly users: string[];
+}
+
+class ExampleUsingProvidersView
+    extends React.Component<ExampleUsingProvidersViewProps, ExampleUsingProvidersViewState>
+{
+    constructor(props: ExampleUsingProvidersViewProps) {
+        super(props);
+
+        this.state = {
+            count: this.props.userInfo.userCount,
+            users: this.props.userInfo.getUsers(),
+        };
+
+        this.props.userInfo.on("membersChanged", () => this.setState(
+            {
+                count: this.props.userInfo.userCount,
+                users: this.props.userInfo.getUsers(),
+            },
+        ));
+    }
+
+    public render() {
+        const users: JSX.Element[] = [];
+        this.state.users.forEach((user)=> {
+            users.push(<div>{user}</div>);
+        });
+        return (<>
+            <h3>Provider Information</h3>
+            <div><b>Count:</b></div>
+            <div>{this.state.count}</div>
+            <b>Users:</b>
+            {users}
+        </>);
+    }
 }
