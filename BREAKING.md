@@ -134,7 +134,18 @@ Components should ensure that only strongly typed initial state objects are prov
 Aqueduct now supports the Providers pattern. Providers are a replacement and extension for the existing Container Services pattern. Providers allow Components developers to have strongly typed objects passed into them from the Container and allows Container developers to inject IComponent keyed objects
 into the Container.
 
-This is a non-breaking change. See Aqueduct README for further details.
+Because of this change developers that consume `SharedComponentFactory` or `PrimedComponentFactory` now have to modify their signature to include the symbols for providers they are including. For integration there will be no symbols so it will be an empty object.
+
+```typescript
+export const MyClickerFactory = new PrimedComponentFactory(
+    Clicker.ComponentName
+    Clicker,
+    [], // Distributed Data Structures
+    {}, // Provider Symbols
+);
+```
+
+See Aqueduct README for further details.
 
 ## 0.15 Breaking Changes
 
