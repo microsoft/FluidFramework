@@ -69,7 +69,7 @@ export class UrlRegistry implements IComponentRegistry {
         }
         this.registryEntryMap = window[registryEntryMapKey];
 
-        const loadingFluidModulesKey = `${UrlRegistry.WindowKeyPrefix}LoadingEntrypoints`;
+        const loadingFluidModulesKey = `${UrlRegistry.WindowKeyPrefix}LoadingModules`;
         if (window[loadingFluidModulesKey] === undefined) {
             window[loadingFluidModulesKey] = new Map<string, Promise<void>>();
         }
@@ -98,15 +98,20 @@ export class UrlRegistry implements IComponentRegistry {
         const scriptRelativeUrls = fluidPackage.fluid.browser.umd.files;
         const scriptUrls = scriptRelativeUrls.map((scriptRelativeUrl) => `${packageUrl}/${scriptRelativeUrl}`);
 
+        // Many of the modules may have the same module name and will try to shove it on the window object.
+        // loadingFluidModules is effectively a lock on the module name so that we only load one at a time
+        // with the same name.
         while (this.loadingFluidModules.has(moduleName)) {
             await this.loadingFluidModules.get(moduleName);
         }
-        const loadingModuleDeferred = new Deferred<void>();
-        this.loadingFluidModules.set(moduleName, loadingModuleDeferred.promise);
+
         // Preserve the entrypoint for our own module (the WaterParkModuleInstantiationFactory) -- it's likely the
         // scripts we're about to load will stomp on it otherwise.
         const preservedModule = window[moduleName];
         window[moduleName] = undefined;
+
+        const loadingModuleDeferred = new Deferred<void>();
+        this.loadingFluidModules.set(moduleName, loadingModuleDeferred.promise);
 
         try {
             const scriptLoadPromises = scriptUrls.map(loadScript);
@@ -119,7 +124,7 @@ export class UrlRegistry implements IComponentRegistry {
                 throw new Error(errors.join("\n"));
             }
 
-            // Stash the entry point
+            // After the script loads, the module will be available on the window.
             const entrypoint = window[moduleName];
             if (entrypoint === undefined) {
                 throw new Error(
@@ -127,7 +132,7 @@ export class UrlRegistry implements IComponentRegistry {
             }
             return entrypoint.fluidExport;
         } finally {
-            // Release the entry point
+            // Release the module name
             window[moduleName] = preservedModule;
             loadingModuleDeferred.resolve();
             this.loadingFluidModules.delete(moduleName);
