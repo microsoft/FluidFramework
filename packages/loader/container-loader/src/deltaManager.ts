@@ -1158,13 +1158,13 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // operation. This allows the server to know our true reference sequence number and be able to
         // correctly update the minimum sequence number (MSN).
         if (this.updateSequenceNumberTimer === undefined) {
-            // Clear an update in 100 ms
+            // Clear an update in 2 s
             this.updateSequenceNumberTimer = setTimeout(() => {
                 this.updateSequenceNumberTimer = undefined;
                 if (this.active) {
                     this.submit(MessageType.NoOp, null);
                 }
-            }, 100);
+            }, 2000);
         }
     }
 
