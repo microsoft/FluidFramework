@@ -3,8 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import {
+    IComponentLastEditedTracker,
+    IProvideComponentLastEditedTracker,
+    LastEditedTrackerComponentName,
+    LastEditedTrackerComponent,
+} from "@microsoft/fluid-last-edited-experimental";
 import { IComponentHTMLView, IProvideComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 export const AnchorName = "anchor";
@@ -14,9 +20,9 @@ export const AnchorName = "anchor";
  */
 export class Anchor extends PrimedComponent implements IProvideComponentHTMLView, IProvideComponentLastEditedTracker {
     private readonly defaultComponentId = "default-component-id";
-    private readonly lastEditedViewerComponentId = "last-edited-viewer-component-id";
+    private readonly lastEditedTrackerComponentId = "last-edited-tracker-component-id";
     private defaultComponentInternal: IComponentHTMLView | undefined;
-    private lastEditedViewerComponentInternal: IComponentLastEditedTracker | undefined;
+    private lastEditedTrackerComponentInternal: IComponentLastEditedTracker | undefined;
 
     private get defaultComponent() {
         if (!this.defaultComponentInternal) {
@@ -26,15 +32,24 @@ export class Anchor extends PrimedComponent implements IProvideComponentHTMLView
         return this.defaultComponentInternal;
     }
 
-    private get lastEditedViewerComponent() {
-        if (!this.lastEditedViewerComponentInternal) {
+    private get lastEditedTrackerComponent() {
+        if (!this.lastEditedTrackerComponentInternal) {
             throw new Error("Last Edited tracker was not initialized properly");
         }
 
-        return this.lastEditedViewerComponentInternal;
+        return this.lastEditedTrackerComponentInternal;
     }
 
-    private static readonly factory = new PrimedComponentFactory(AnchorName, Anchor, [], {});
+    private static readonly factory = new PrimedComponentFactory(
+        AnchorName,
+        Anchor,
+        [],
+        [
+            [ VltavaName, Promise.resolve(Vltava.getFactory()) ],
+            [ LastEditedTrackerComponentName, Promise.resolve(LastEditedTrackerComponent.getFactory()) ],
+        ],
+        {},
+    );
 
     public static getFactory() {
         return Anchor.factory;
@@ -42,14 +57,19 @@ export class Anchor extends PrimedComponent implements IProvideComponentHTMLView
 
     public get IComponentHTMLView() { return this.defaultComponent; }
 
-    public get IComponentLastEditedTracker() { return this.lastEditedViewerComponent; }
+    public get IComponentLastEditedTracker() { return this.lastEditedTrackerComponent; }
 
     protected async componentInitializingFirstTime(props: any) {
-        const defaultComponent = await this.createAndAttachComponent("vltava");
+        const defaultComponent = await this.createAndAttachComponent(VltavaName);
         this.root.set(this.defaultComponentId, defaultComponent.handle);
 
+<<<<<<< HEAD
         const lastEditedViewerComponent = await this.createAndAttachComponent("lastEditedViewer");
         this.root.set(this.lastEditedViewerComponentId, lastEditedViewerComponent.handle);
+=======
+        const lastEditedTrackerComponent = await this.createAndAttachComponent(LastEditedTrackerComponentName);
+        this.root.set(this.lastEditedTrackerComponentId, lastEditedTrackerComponent.handle);
+>>>>>>> Updated to extend BaseContainerRuntimeFactory.
     }
 
     protected async componentHasInitialized() {
@@ -57,8 +77,8 @@ export class Anchor extends PrimedComponent implements IProvideComponentHTMLView
             (await this.root.get<IComponentHandle>(this.defaultComponentId).get())
                 .IComponentHTMLView;
 
-        this.lastEditedViewerComponentInternal =
-            (await this.root.get<IComponentHandle>(this.lastEditedViewerComponentId).get())
-                .IComponentLastEditedTracker;
+        const compHandle = this.root.get<IComponentHandle>(this.lastEditedTrackerComponentId);
+        const comp = await compHandle.get();
+        this.lastEditedTrackerComponentInternal = comp.IComponentLastEditedTracker;
     }
 }
