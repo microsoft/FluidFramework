@@ -37,11 +37,17 @@ export class ClickerUsingProviders
 
     public render(div: HTMLElement) {
         if (this.userInformation){
+            const users: JSX.Element[] = [];
+            this.userInformation.getUsers().forEach((user)=> {
+                users.push(<div>{user}</div>);
+            });
             ReactDOM.render(
                 <>
                     <h3>Provider Information</h3>
-                    <div>Users:{this.userInformation.getUsers()}</div>
-                    <div>Count:{this.userInformation.userCount}</div>
+                    <div><b>Count:</b></div>
+                    <div>{this.userInformation.userCount}</div>
+                    <b>Users:</b>
+                    {users}
                 </>,
                 div);
         } else {

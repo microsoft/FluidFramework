@@ -14,7 +14,10 @@ export class UserInfo implements IComponentUserInformation{
     }
 
     public get IComponentUserInformation() { return this; }
-    public readonly userCount: number = 101;
+    public get userCount(): number {
+        return this.getHumanUsers().length;
+    }
+
     public getUsers(): string[] {
         return this.getUserNames();
     }
@@ -57,7 +60,12 @@ export class UserInfo implements IComponentUserInformation{
 }
 
 export const userInfoFactory = async (dc: DependencyContainer) => {
-    const s = dc.synthesize<IHostRuntime>({IHostRuntime},{});
+    const s = dc.synthesize<IHostRuntime>({
+        IHostRuntime,
+        IComponentHandleContext:"IComponentHandleContext",
+        IComponentSerializer:"IComponentSerializer",
+        IComponentRegistry:"IComponentRegistry",
+    },{});
     const hostRuntime = await s.IHostRuntime;
     if (hostRuntime) {
         return new UserInfo(hostRuntime.getQuorum());

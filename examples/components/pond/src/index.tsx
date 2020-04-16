@@ -20,7 +20,7 @@ import {
     IClickerInitialState,
 } from "./internal-components";
 import { IComponentUserInformation } from "./interfaces";
-import { UserInfo } from "./providers";
+import { userInfoFactory } from "./providers";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
@@ -148,6 +148,6 @@ export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
     [
         {
             type: IComponentUserInformation,
-            provider: new UserInfo(),
+            provider: async (dc) => userInfoFactory(dc),
         },
     ]);

@@ -170,7 +170,12 @@ export class TestHost {
                 [
                     ...componentRegistry,
                     [TestRootComponent.type, Promise.resolve(
-                        new PrimedComponentFactory(TestRootComponent.type, TestRootComponent, sharedObjectFactories),
+                        new PrimedComponentFactory(
+                            TestRootComponent.type,
+                            TestRootComponent,
+                            sharedObjectFactories,
+                            {},
+                            {}),
                     )],
                 ],
                 this.containerServiceRegistry),
