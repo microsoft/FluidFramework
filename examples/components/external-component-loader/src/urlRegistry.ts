@@ -13,7 +13,7 @@ import {
     IComponentRegistry,
 } from "@microsoft/fluid-runtime-definitions";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import {WebCodeLoader, SemVerCdnCodeResolver} from "@microsoft/fluid-web-code-loader";
+import { WebCodeLoader, SemVerCdnCodeResolver } from "@microsoft/fluid-web-code-loader";
 
 /**
  * A component registry that can load component via their url
@@ -59,8 +59,8 @@ export class UrlRegistry implements IComponentRegistry {
                 cdn:"https://pragueauspkn-3873244262.azureedge.net",
             },
         };
-        const fluidModuel = await this.webloader.load(codeDetails);
-        return fluidModuel.fluidExport;
+        const fluidModule = await this.webloader.load(codeDetails);
+        return fluidModule.fluidExport;
     }
 
     private async loadPackage(url: string): Promise<IFluidPackage> {
@@ -68,8 +68,7 @@ export class UrlRegistry implements IComponentRegistry {
         if (!response.ok) {
             throw new Error(`UrlRegistry: ${url}: fetch was no ok. status code: ${response.status}`);
         } else {
-            const responseText = await response.text();
-            const packageJson = JSON.parse(responseText);
+            const packageJson = await response.json();
             if (!isFluidPackage(packageJson)) {
                 throw new Error(`UrlRegistry: ${url}: Package json not deserializable as IFluidPackage`);
             }
