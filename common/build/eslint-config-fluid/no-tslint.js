@@ -224,6 +224,7 @@ module.exports = {
             "error",
             "smart"
         ],
+        "func-call-spacing": "error",
         "guard-for-in": "error",
         "id-match": "error",
         "linebreak-style": "off",
@@ -330,6 +331,7 @@ module.exports = {
         ],
         "radix": "error",
         "semi-spacing": "error",
+        "space-before-blocks": "error",
         "space-before-function-paren": [
             "error",
             {
@@ -338,6 +340,7 @@ module.exports = {
                 "named": "never"
             }
         ],
+        "space-infix-ops": "error",
         "spaced-comment": [
             "error",
             "always",
