@@ -104,7 +104,6 @@ const factory = new PrimedComponentFactory(
     TableView,
     [],
     {},
-    {},
     [
         [TableDocumentType, import("@fluid-example/table-document").then((m) => m.TableDocument.getFactory())],
     ]);

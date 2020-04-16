@@ -25,7 +25,6 @@ export class FacePile extends PrimedComponent implements IComponentHTMLView {
         FacePileName,
         FacePile,
         [],
-        {},
         {});
 
     public static getFactory() {

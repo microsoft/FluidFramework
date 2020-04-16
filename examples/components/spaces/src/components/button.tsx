@@ -45,7 +45,6 @@ export class Button extends PrimedComponent implements IComponentHTMLView {
         ButtonName,
         Button,
         [],
-        {},
         {});
 
     public static getFactory() {

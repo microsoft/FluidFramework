@@ -60,7 +60,6 @@ export const DraftInstantiationFactory = new PrimedComponentFactory(
     DraftJsExample,
     [SharedMap.getFactory(), SharedString.getFactory()],
     {},
-    {},
 );
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(

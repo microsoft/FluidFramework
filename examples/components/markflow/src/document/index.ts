@@ -511,5 +511,4 @@ export const flowDocumentFactory = new PrimedComponentFactory(
     FlowDocument,
     [SharedString.getFactory()],
     {},
-    {},
 );

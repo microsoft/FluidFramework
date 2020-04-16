@@ -55,7 +55,6 @@ export const webFlowFactory = new PrimedComponentFactory(
     WebFlow,
     [],
     {},
-    {},
     new Map([
         [FlowDocumentType, import(/* webpackChunkName: "flowdoc", webpackPreload: true */ "../document").then((m) => m.flowDocumentFactory)],
     ]));

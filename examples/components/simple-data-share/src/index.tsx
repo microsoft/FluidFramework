@@ -98,7 +98,6 @@ export const SimpleDataSharingInstantiationFactory = new PrimedComponentFactory(
     SimpleDataSharing,
     [],
     {},
-    {},
 );
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(

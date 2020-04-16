@@ -112,7 +112,6 @@ export const ClickerInstantiationFactory = new PrimedComponentFactory(
     Clicker,
     [],
     {},
-    {},
 );
 
 export const fluidExport = ClickerInstantiationFactory;

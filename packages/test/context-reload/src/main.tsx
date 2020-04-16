@@ -96,4 +96,4 @@ export class VersionTest extends PrimedComponent implements IComponentHTMLView {
   }
 }
 
-export const VersiontestInstantiationFactory = new PrimedComponentFactory(versionTest1Name, VersionTest, [], {}, {});
+export const VersiontestInstantiationFactory = new PrimedComponentFactory(versionTest1Name, VersionTest, [], {});

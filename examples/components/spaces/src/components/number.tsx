@@ -27,7 +27,6 @@ export class Number extends PrimedComponent implements IComponentHTMLView {
         NumberName,
         Number,
         [],
-        {},
         {});
 
     public static getFactory() {

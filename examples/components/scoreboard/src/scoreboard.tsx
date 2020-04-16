@@ -73,7 +73,6 @@ const ScoreboardComponentInstantiationFactory = new PrimedComponentFactory(
     Scoreboard,
     [],
     {},
-    {},
 );
 
 /**

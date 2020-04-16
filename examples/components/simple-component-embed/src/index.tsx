@@ -54,7 +54,6 @@ export const SimpleComponentEmbedInstantiationFactory = new PrimedComponentFacto
     SimpleComponentEmbed,
     [],
     {},
-    {},
 );
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(

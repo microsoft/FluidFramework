@@ -47,5 +47,4 @@ export const IncrementorInstantiationFactory = new PrimedComponentFactory(
     Incrementor,
     [],
     {},
-    {},
 );

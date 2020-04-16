@@ -43,7 +43,6 @@ export class ComponentToolbar extends PrimedComponent
         ComponentToolbarName,
         ComponentToolbar,
         [],
-        {},
         {});
 
     private supportedComponentList: IContainerComponentDetails[] | undefined;

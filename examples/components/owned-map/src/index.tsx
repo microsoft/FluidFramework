@@ -28,7 +28,6 @@ export class OwnedMap extends PrimedComponent implements IComponentHTMLView {
             OwnedSharedMap.getFactory(),
         ],
         {},
-        {},
     );
 
     public ownedMap: OwnedSharedMap;

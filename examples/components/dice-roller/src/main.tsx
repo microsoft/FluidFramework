@@ -75,5 +75,4 @@ export const DiceRollerInstantiationFactory = new PrimedComponentFactory(
     DiceRoller,
     [],
     {},
-    {},
 );

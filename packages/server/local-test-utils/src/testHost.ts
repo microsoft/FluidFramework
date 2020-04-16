@@ -174,7 +174,6 @@ export class TestHost {
                             TestRootComponent.type,
                             TestRootComponent,
                             sharedObjectFactories,
-                            {},
                             {}),
                     )],
                 ],

@@ -23,7 +23,6 @@ const componentFactory = new PrimedComponentFactory(
         sequence.SharedNumberSequence.getFactory(),
     ],
     {},
-    {},
 );
 
 const runtimeFactory = new ContainerRuntimeFactoryWithDefaultComponent(

@@ -30,7 +30,6 @@ export class TextBox extends PrimedComponent implements IComponentHTMLView, ICom
         TextBoxName,
         TextBox,
         [SharedString.getFactory()],
-        {},
         {});
 
     public static getFactory() {

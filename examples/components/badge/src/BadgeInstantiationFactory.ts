@@ -20,5 +20,4 @@ export const BadgeInstantiationFactory = new PrimedComponentFactory(
         SharedObjectSequence.getFactory(),
     ],
     {},
-    {},
 );

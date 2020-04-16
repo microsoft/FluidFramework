@@ -103,7 +103,6 @@ export const ImageGalleryInstantiationFactory = new PrimedComponentFactory(
     ImageGalleryComponent,
     [],
     {},
-    {},
 );
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(

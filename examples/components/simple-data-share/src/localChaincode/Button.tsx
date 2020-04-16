@@ -53,5 +53,4 @@ export const ButtonInstantiationFactory = new PrimedComponentFactory(
     Button,
     [],
     {},
-    {},
 );

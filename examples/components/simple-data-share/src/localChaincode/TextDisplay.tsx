@@ -73,5 +73,4 @@ export const TextDisplayInstantiationFactory = new PrimedComponentFactory(
     TextDisplay,
     [],
     {},
-    {},
 );

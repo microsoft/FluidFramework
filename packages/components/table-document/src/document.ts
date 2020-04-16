@@ -31,7 +31,6 @@ export class TableDocument extends PrimedComponent implements ITable {
             SharedNumberSequence.getFactory(),
         ],
         {},
-        {},
         undefined,
         true,
     );

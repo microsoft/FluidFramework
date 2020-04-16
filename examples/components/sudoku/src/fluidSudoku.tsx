@@ -37,7 +37,6 @@ export class FluidSudoku extends PrimedComponent
         FluidSudokuName,
         FluidSudoku,
         [SharedMap.getFactory()],
-        {},
         {}
     );
 
