@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { EventEmitter } from "events";
 import {
     DefaultErrorTracking,
     RouterliciousDocumentServiceFactory,
@@ -54,12 +53,13 @@ export async function loadFrame(iframeId: string, logId: string){
     const text = document.getElementById(logId) as HTMLDivElement;
     const quorum = proxyContainer.getQuorum();
 
-    const log = (emitter: Pick<EventEmitter, "on">, name: string, ...events: string[]) =>{
-        events.forEach((event)=>
-            emitter.on(event, (...args)=>{
-                text.innerHTML+=`${name}: ${event}: ${JSON.stringify(args)}<br/>`;
-            }));
-    };
+    const log =
+        (emitter: {on(event: string, listener: (...args: any[]) => void)}, name: string, ...events: string[]) =>{
+            events.forEach((event)=>
+                emitter.on(event, (...args)=>{
+                    text.innerHTML+=`${name}: ${event}: ${JSON.stringify(args)}<br/>`;
+                }));
+        };
 
     quorum.getMembers().forEach((client)=>text.innerHTML+=`Quorum: client: ${JSON.stringify(client)}<br/>`);
     log(quorum, "Quorum", "error", "addMember", "removeMember");
