@@ -46,7 +46,7 @@ class GarbageCollector<TKey> {
             this.gcTimeouts.set(
                 key,
                 setTimeout(
-                    () => this.cleanup(key),
+                    () => { this.cleanup(key); this.cancel(key); },
                     this.expiry.durationMs,
                 ),
             );
@@ -139,7 +139,7 @@ export class PromiseCache<TKey, TResult> {
     ): Promise<TResult> {
         // NOTE: Do not await the Promise returned by asyncFn!
         // Let the caller do so once we return or after a subsequent call to get
-        let promise = this.cache.get(key);
+        let promise = this.get(key);
         if (promise === undefined) {
             // Wrap in an async lambda in case asyncFn disabled @typescript-eslint/promise-function-async
             const safeAsyncFn = async () => asyncFn();
@@ -157,9 +157,6 @@ export class PromiseCache<TKey, TResult> {
 
             this.gc.schedule(key);
         }
-        else {
-            this.gc.update(key);
-        }
 
         return promise;
     }
@@ -174,7 +171,7 @@ export class PromiseCache<TKey, TResult> {
         key: TKey,
         asyncFn: () => Promise<TResult>,
     ): boolean {
-        const alreadyPresent = this.cache.has(key);
+        const alreadyPresent = this.contains(key);
 
         // We are blindly adding the Promise to the cache here, which introduces a Promise in this scope.
         // Whoever gets this out of the cache to use it will await/catch, so swallow Promise rejections here.

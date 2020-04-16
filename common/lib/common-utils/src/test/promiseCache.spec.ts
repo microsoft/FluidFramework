@@ -4,6 +4,7 @@
  */
 
 import * as assert from "assert";
+import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { PromiseCache /*, PromiseCacheExpiry, PromiseCacheOptions*/ } from "../promiseRegistry";
 
 describe("PromiseCache", () => {
@@ -241,57 +242,72 @@ describe("PromiseCache", () => {
     });
 
     describe.only("Garbage Collection and Expiry", () => {
-        const delay = async (ms: number) => new Promise((res) => setTimeout(res, ms));
+        let clock: SinonFakeTimers;
         let pc: PromiseCache<number, string> | undefined;
 
-        it("absolute expiry", async () => {
+        // Useful for debugging the tests
+        const enableLogging: boolean = true;
+        function logClock(m) {
+            if (enableLogging) {
+                console.log(`${m} ${clock.now}`);
+            }
+        }
+
+        before(() => {
+            clock = useFakeTimers();
+        });
+
+        after(() => {
+            clock.restore();
+        });
+
+        it.only("absolute expiry", async () => {
             pc = new PromiseCache<number, string>({
-                expiry: { policy: "absolute", durationMs: 10 },
+                expiry: { policy: "absolute", durationMs: 15 },
             });
 
             pc.addValue(1, "one");
 
-            await delay (5);
+            clock.tick (10);
             assert.equal(pc.contains(1), true);
 
-            await delay (20);
+            await pc.addValueOrGet(1, "one");
+
+            clock.tick (10);
             assert.equal(pc.contains(1), false);
         });
 
         it.only("sliding expiry", async () => {
-            const expirationDurationMs = 20;
+            const expiration = 15;
             pc = new PromiseCache<number, string>({
-                expiry: { policy: "sliding", durationMs: expirationDurationMs },
+                expiry: { policy: "sliding", durationMs: expiration },
             });
 
+            const startTime = clock.now;
+            logClock("start");
+
+            // Each of these operations should reset the sliding expiry
+            pc.add(1, async () => "one");
+            clock.tick (10);
             pc.addValue(1, "one");
+            clock.tick (10);
+            await pc.addOrGet(1, async () => "one");
+            clock.tick (10);
+            await pc.addValueOrGet(1, "one");
+            clock.tick (10);
+            await pc.get(1);
+            clock.tick (10);
 
-            const startTime = new Date().getTime();
-            await pc.get(1);
-            await delay (10);
-            await pc.get(1);
-            await delay (10);
-            await pc.get(1);
-            await delay (10);
-            await pc.get(1);
-            const midTime = new Date().getTime();
+            const endTime = clock.now;
+            logClock("endtime");
 
-            assert.equal(midTime - startTime > expirationDurationMs, true);
+            // More than the initial expiry elapsed but the entry wasn't evicted
+            assert.equal(endTime - startTime > expiration, true);
             assert.equal(pc.contains(1), true);
 
-            pc.addValue(1, "one");
-            await delay (100);
-            pc.addValue(1, "one");
-            await delay (100);
-            pc.addValue(1, "one");
-            await delay (100);
-            pc.addValue(1, "one");
-            const endTime = new Date().getTime();
+            clock.tick(expiration);
+            logClock("later");
 
-            assert.equal(endTime - midTime > expirationDurationMs, true);
-            assert.equal(pc.contains(1), true);
-
-            await delay(100);
             assert.equal(pc.contains(1), false);
         });
     });
