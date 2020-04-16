@@ -56,15 +56,6 @@ export class UserInfo extends EventEmitter implements IComponentUserInformation{
         });
     }
 
-    // private getUserEmails(): string[] {
-    //     const users = this.getHumanUsers();
-    //     const emails: string[] = [];
-    //     for (const user of users) {
-    //         emails.push((user[1].client.user as any).email ?? "");
-    //     }
-    //     return emails;
-    // }
-
     // Return `First Last` names in the string.
     private getUserNames(): string[] {
         const users = this.getHumanUsers();
@@ -74,15 +65,6 @@ export class UserInfo extends EventEmitter implements IComponentUserInformation{
         }
         return names;
     }
-
-    // private getUniqueClientId(): string[] {
-    //     const users = this.getHumanUsers();
-    //     const ids: string[] = [];
-    //     for (const user of users) {
-    //         ids.push(user[0]);
-    //     }
-    //     return ids;
-    // }
 }
 
 export const userInfoFactory = async (dc: DependencyContainer) => {
