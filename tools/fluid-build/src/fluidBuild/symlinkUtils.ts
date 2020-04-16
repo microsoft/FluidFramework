@@ -142,7 +142,9 @@ export async function symlinkPackage(repo: FluidRepo, pkg: Package, buildPackage
         // TODO: check of extranous symlinks
         if (depBuildPackage) {
             const sameMonoRepo = MonoRepo.isSame(pkg.monoRepo, depBuildPackage.monoRepo);
-            if (!semver.satisfies(depBuildPackage.version, version)) {
+            const satisfied = semver.satisfies(depBuildPackage.version, version);
+            logVerbose(`${pkg.nameColored}: Dependent ${depBuildPackage.nameColored} version ${depBuildPackage.version} ${satisfied? "satisfied": "not satisfied"} by range ${version}`);
+            if (!satisfied) {
                 if (sameMonoRepo) {
                     console.warn(`${pkg.nameColored}: Mismatch version ${depBuildPackage.version} for dependency ${depBuildPackage.nameColored} in the same mono repo`)
                 }

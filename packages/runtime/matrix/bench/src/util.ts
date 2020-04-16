@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { MockRuntime } from '@microsoft/fluid-test-runtime-utils';
-import { SharedMatrix, SharedMatrixFactory } from './imports';
-import { strict as assert } from 'assert';
-import { insertFragmented } from '../../test/utils';
-const process = require('process');
+import { MockRuntime } from "@microsoft/fluid-test-runtime-utils";
+import { SharedMatrix, SharedMatrixFactory } from "./imports";
+import { strict as assert } from "assert";
+import { insertFragmented } from "../../test/utils";
+const process = require("process");
 
 let count = 1;
 let cached: any;
@@ -22,8 +22,8 @@ export function consume(value: any) {
   }
 }
 
-// Prevent v8's optimizer from identifying 'cached' as an unused value.
-process.on('exit', () => {
+// Prevent v8"s optimizer from identifying "cached" as an unused value.
+process.on("exit", () => {
   if (count >>> 0 === 0) {
     console.log(`Ignore this: ${cached}`);
   }

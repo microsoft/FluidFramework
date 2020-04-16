@@ -15,8 +15,6 @@ import {
 } from "@microsoft/fluid-runtime-definitions";
 import { IRequest } from "@microsoft/fluid-component-core-interfaces";
 
-const defaultComponentId = "" as const;
-
 export class RuntimeFactory implements IRuntimeFactory {
     private readonly registry: NamedComponentRegistryEntries;
 
@@ -70,9 +68,9 @@ export class RuntimeFactory implements IRuntimeFactory {
         runtime.setFlushMode(FlushMode.Manual);
 
         // On first boot create the base component
-        if (!runtime.existing) {
+        if (!runtime.existing && this.defaultComponent.type) {
             await runtime
-                .createComponent(defaultComponentId, this.defaultComponent.type)
+                ._createComponentWithProps(this.defaultComponent.type)
                 .then((componentRuntime) => { componentRuntime.attach(); })
                 .catch((error) => { context.error(error); });
         }

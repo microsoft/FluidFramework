@@ -94,7 +94,7 @@ export async function loadFluidContainer(
     return containerP;
 }
 
-export function parseUrlToResolvedPackage(url: string): IFluidCodeDetails {
+export function parseUrlToResolvedPackage(url: string): IFluidCodeDetails | undefined {
     const urlRequest = new URL(url);
     const searchParams = urlRequest.searchParams;
     const chaincode = searchParams.get("chaincode");
@@ -104,7 +104,11 @@ export function parseUrlToResolvedPackage(url: string): IFluidCodeDetails {
     const entryPoint = searchParams.get("entrypoint");
     let codeDetails: IFluidCodeDetails;
 
-    if (chaincode.startsWith("http")) {
+    // This allows us to open up documents without specifying the chaincode,
+    // This is useful if the document has already been created with a chaincode and in the SPO scenario
+    if (!chaincode) {
+        return undefined;
+    } else if (chaincode.startsWith("http")) {
         codeDetails = {
             config: {
                 [`@gateway:cdn`]: chaincode,

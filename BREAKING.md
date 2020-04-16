@@ -8,6 +8,8 @@
 - [PrimedComponent and SharedComponent interface changes](#PrimedComponent-and-Shared-Component-interface-changes)
 - [SimpleModuleInstantiationFactory renamed and SimpleContainerRuntimeFactory deprecated](#SimpleModuleInstantiationFactory-renamed-and-SimpleContainerRuntimeFactory-deprecated)
 - [Change to the ErrorType enum on IError](#Change-to-the-ErrorType-enum-on-IError)
+- [Changes to createComponent in IComponentContext, IHostRuntime, and ComponentRuntime](#Change-to-createComponent-in-IComponentContext-IHostRuntime-and-ComponentRuntime)
+- [ContainerRuntime and LocalComponentContext createProps removal](#ContainerRuntime-and-LocalComponentContext-createProps-removal)
 
 ### View interfaces moved to separate package
 
@@ -69,7 +71,7 @@ There have been a few changes to the exposed interfaces on Primed & SharedCompon
 2. getComponent is now marked as deprecated and renamed to getComponent_UNSAFE. Instead, users should return their component in the following manner:
 directoryWhereHandleIsStored.get<IComponentHandle<TypeOfHandle>>(idOfHandleInDirectory).get();
 
-Alternatively, a new helper function is provided for compatibility called getComponentFromDirectory that takes the string key and the directory where either the component handle or the id used for the old getComponent call is stored. It will appropriately fetch the component using the handle/id stored in the directory and then update the stored value with a handle now so that there are fewer and fewer IDs stored. 
+Alternatively, a new helper function is provided for compatibility called getComponentFromDirectory that takes the string key and the directory where either the component handle or the id used for the old getComponent call is stored. It will appropriately fetch the component using the handle/id stored in the directory and then update the stored value with a handle now so that there are fewer and fewer IDs stored.
 Users can also pass in an optional function to get the value from their directory in case they have some specially defined types. Look at dataModel.ts in the examples/components/spaces for an implentation of such.
 
 ### `SimpleModuleInstantiationFactory` renamed and `SimpleContainerRuntimeFactory` deprecated
@@ -84,6 +86,47 @@ Users can also pass in an optional function to get the value from their director
 
 Corresponding interfaces have been introduced as well: `IGenericNetworkError`, `IAccessDeniedError`, and `IFileNotFoundError`;
 they are functionally identical to the former `IConnectionError`, just differentiated for ease of use.
+
+### Changes to createComponent in IComponentContext, IHostRuntime, and ContainerRuntime
+
+The createComponent call in IHostRuntime is now deprecated, affecting ContainerRuntime and any other classes that implement that interface.
+The createComponent call in IComponentContext is now deprecated. Instead, users should either use the createAndAttachComponent call available in SharedComponent to add them from within a component or _createComponentWithProps in IHostRuntime to add component from the runtime.
+
+### ContainerRuntime and LocalComponentContext createProps removal
+
+Creation props will no longer be specified through the `LocalComponentContext` after 0.16, such as through `ContainerRuntime`'s `createComponentContext` method.  To specify creation props, consumers should do the following:
+1. Create an interface for the initial state that defines what may be provided to the component.
+```typescript
+export interface IClickerInitialState {
+    initialValue: number;
+}
+```
+2. Override the constructor for the component to provide an optional initial state option.
+```typescript
+public constructor(
+    runtime: IComponentRuntime,
+    context: IComponentContext,
+    private initialState?: IClickerInitialState,
+) {
+    super(runtime, context);
+}
+```
+3. Implement `componentInitializingFirstTime()` in the component to optionally consume the initial state.
+4. Extend `PrimedComponentFactory` and override `createComponent(...)` to take an initial state object.  Wrap a call to the component constructor with the initial state in a function, and pass it to `super.createComponentWithConstructorFn(...)`.
+```typescript
+export class ClickerWithInitialValueFactory extends PrimedComponentFactory {
+    public async createComponent(
+        context: IComponentContext,
+        initialState?: IClickerInitialState,
+    ): Promise<IComponent & IComponentLoadable> {
+        const ctorFn = (r: IComponentRuntime, c: IComponentContext) => {
+            return new ClickerWithInitialValue(r, c, initialState);
+        };
+        return super.createComponentWithConstructorFn(context, ctorFn);
+    }
+}
+```
+Components should ensure that only strongly typed initial state objects are provided.  `SharedComponentFactory` and `PrimedComponentFactory` do not provide a way to supply a generic initial state, and component consumers must have access to the specific component factory in order to create with initial state.
 
 ## 0.15 Breaking Changes
 

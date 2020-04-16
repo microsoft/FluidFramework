@@ -113,3 +113,20 @@ export function readJsonSync(filename: string) {
     const content = fs.readFileSync(filename, "utf-8");
     return JSON.parse(content);
 }
+
+export async function lookUpDir(dir: string, callback: (currentDir: string) => boolean | Promise<boolean>) {
+    let curr = dir;
+    while (true) {
+        if (await callback(curr)) {
+            return curr;
+        }
+
+        const up = path.resolve(curr, "..");
+        if (up === curr) {
+            break;
+        }
+        curr = up;
+    }
+
+    return undefined;
+}

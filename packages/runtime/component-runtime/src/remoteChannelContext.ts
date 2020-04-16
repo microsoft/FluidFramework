@@ -111,9 +111,12 @@ export class RemoteChannelContext implements IChannelContext {
     private async loadChannel(): Promise<IChannel> {
         assert(!this.isLoaded);
 
-        let attributes = await readAndParse<IChannelAttributes | undefined>(
-            this.services.objectStorage,
-            ".attributes");
+        let attributes: IChannelAttributes | undefined;
+        if(this.services.objectStorage.contains(".attributes")){
+            attributes = await readAndParse<IChannelAttributes | undefined>(
+                this.services.objectStorage,
+                ".attributes");
+        }
 
         let factory: ISharedObjectFactory | undefined;
         // this is a back-compat case where

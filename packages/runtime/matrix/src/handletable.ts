@@ -21,7 +21,7 @@ export class HandleTable<T> {
     // Note: the first slot of the 'handles' array is reserved to store the pointer to the first
     //       free handle.  We initialize this slot with a pointer to slot '1', which will cause
     //       us to delay allocate the following slot in the array on the first allocation.
-    private readonly handles: (Handle | T)[] = [1];
+    public constructor(private readonly handles: (Handle | T)[] = [1]) { }
 
     public clear() {
         // Restore the HandleTable's initial state by deleting all items in the handles array
@@ -36,6 +36,7 @@ export class HandleTable<T> {
     public allocate(): Handle {
         const free = this.next;
         this.next = (this.handles[free] as Handle) ?? (free + 1);
+        this.handles[free] = 0;
         return free;
     }
 
@@ -76,4 +77,12 @@ export class HandleTable<T> {
     // of the handle array.
     private get next() { return this.handles[0] as Handle; }
     private set next(handle: Handle) { this.handles[0] = handle; }
+
+    public snapshot() {
+        return this.handles;
+    }
+
+    public static load<T>(data: (Handle | T)[]) {
+        return new HandleTable<T>(data);
+    }
 }
