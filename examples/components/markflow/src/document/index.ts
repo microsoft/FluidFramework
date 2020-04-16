@@ -40,7 +40,6 @@ import { Tag } from "../util/tag";
 import { debug } from "./debug";
 import { SegmentSpan } from "./segmentspan";
 
-
 export { SegmentSpan };
 
 export const enum DocSegmentKind {

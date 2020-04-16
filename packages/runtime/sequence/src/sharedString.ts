@@ -10,7 +10,6 @@ import { IComponentRuntime, IChannelAttributes } from "@microsoft/fluid-runtime-
 import { SharedSegmentSequence } from "./sequence";
 import { SharedStringFactory } from "./sequenceFactory";
 
-
 declare module "@microsoft/fluid-component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface IComponent extends Readonly<Partial<IProvideSharedString>> { }
