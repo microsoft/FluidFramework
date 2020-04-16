@@ -5,9 +5,16 @@
 
 import { EventEmitter } from "events";
 
+import {
+    IComponentHandleContext,
+    IComponentSerializer,
+} from "@microsoft/fluid-component-core-interfaces";
 import { IQuorum } from "@microsoft/fluid-protocol-definitions";
 import { DependencyContainer } from "@microsoft/fluid-synthesize";
-import { IHostRuntime } from "@microsoft/fluid-runtime-definitions";
+import {
+    IComponentRegistry,
+    IHostRuntime,
+} from "@microsoft/fluid-runtime-definitions";
 
 import { IComponentUserInformation } from "../interfaces";
 
@@ -81,9 +88,9 @@ export class UserInfo extends EventEmitter implements IComponentUserInformation{
 export const userInfoFactory = async (dc: DependencyContainer) => {
     const s = dc.synthesize<IHostRuntime>({
         IHostRuntime,
-        IComponentHandleContext:"IComponentHandleContext",
-        IComponentSerializer:"IComponentSerializer",
-        IComponentRegistry:"IComponentRegistry",
+        IComponentHandleContext,
+        IComponentSerializer,
+        IComponentRegistry,
     },{});
     const hostRuntime = await s.IHostRuntime;
     if (hostRuntime) {
