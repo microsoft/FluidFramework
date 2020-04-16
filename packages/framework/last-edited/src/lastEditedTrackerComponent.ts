@@ -5,7 +5,7 @@
 
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { SummarizableObject } from "@microsoft/fluid-summarizable-object";
+import { SharedSummaryBlock } from "@microsoft/fluid-shared-summary-block";
 import {
     IComponentLastEditedTracker,
     IProvideComponentLastEditedTracker,
@@ -23,14 +23,14 @@ export class LastEditedTrackerComponent extends PrimedComponent implements IProv
     private static readonly factory = new PrimedComponentFactory(
         LastEditedTrackerComponentName,
         LastEditedTrackerComponent,
-        [ SummarizableObject.getFactory() ],
+        [ SharedSummaryBlock.getFactory() ],
     );
 
     public static getFactory() {
         return LastEditedTrackerComponent.factory;
     }
 
-    private readonly summarizableObjectId = "summarizable-object-id";
+    private readonly sharedSummaryBlockId = "shared-summary-block-id";
     private _lastEditedTracker: IComponentLastEditedTracker | undefined;
 
     private get lastEditedTracker() {
@@ -44,13 +44,13 @@ export class LastEditedTrackerComponent extends PrimedComponent implements IProv
     public get IComponentLastEditedTracker() { return this.lastEditedTracker; }
 
     protected async componentInitializingFirstTime(props: any) {
-        const summarizableObject = SummarizableObject.create(this.runtime);
-        this.root.set(this.summarizableObjectId, summarizableObject.handle);
+        const sharedSummaryBlock = SharedSummaryBlock.create(this.runtime);
+        this.root.set(this.sharedSummaryBlockId, sharedSummaryBlock.handle);
     }
 
     protected async componentHasInitialized() {
-        const summarizableObject =
-            await this.root.get<IComponentHandle<SummarizableObject>>(this.summarizableObjectId).get();
-        this._lastEditedTracker = new LastEditedTracker(summarizableObject);
+        const sharedSummaryBlock =
+            await this.root.get<IComponentHandle<SharedSummaryBlock>>(this.sharedSummaryBlockId).get();
+        this._lastEditedTracker = new LastEditedTracker(sharedSummaryBlock);
     }
 }

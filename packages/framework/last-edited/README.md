@@ -2,13 +2,13 @@
 
 LastEditedTracker tracks the last edit to a document, such as the client who last edited the document and the time it happened.
 
-It is created by passing a `SummarizableObject`:
+It is created by passing a `SharedSummaryBlock`:
 ```
 constructor(
-    private readonly summarizableObject: SummarizableObject,
+    private readonly sharedSummaryBlock: SharedSummaryBlock,
 );
 ```
-It uses the SummarizableObject to store the last edit details.
+It uses the SharedSummaryBlock to store the last edit details.
 
 ## API
 
@@ -21,7 +21,7 @@ public updateLastEditDetails(message: ISequencedDocumentMessage);
 
 The update should always be called in response to a remote op because:
 1. It updates its state from the remote op.
-2. It uses a SummarizableObject as storage which must be set in response to a remote op.
+2. It uses a SharedSummaryBlock as storage which must be set in response to a remote op.
 
 The details returned in getLastEditDetails contain the `clientId` and the `timestamp` of the last edit.
 
@@ -34,7 +34,7 @@ public on(event: "lastEditedChanged", listener: (lastEditDetails: ILastEditDetai
 
 # Last Edited Tracker Component
 
-LastEditedTrackerComponent is a runtime component built on top of the LastEditedTracker. It creates and manages the SummarizableObject so that the developer doesn't have to know about it or manage it.
+LastEditedTrackerComponent is a runtime component built on top of the LastEditedTracker. It creates and manages the SharedSummaryBlock so that the developer doesn't have to know about it or manage it.
 
 It implements IProvideComponentLastEditedTracker and returns an IComponentLastEditedTracker which is an instance of LastEditedTracker above.
 

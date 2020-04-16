@@ -6,12 +6,12 @@
 import { EventEmitter } from "events";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { Jsonable } from "@microsoft/fluid-runtime-definitions";
-import { SummarizableObject } from "@microsoft/fluid-summarizable-object";
+import { SharedSummaryBlock } from "@microsoft/fluid-shared-summary-block";
 import { IComponentLastEditedTracker, ILastEditDetails } from "./interfaces";
 
 /**
  * Tracks the last edit details such as the last edited client's id and the last edited timestamp. The details
- * should be updated (via updateLastEditDetails) in response to a remote op since it uses summarizable object
+ * should be updated (via updateLastEditDetails) in response to a remote op since it uses shared summary block
  * as storage.
  * It emits a "lastEditedChanged" event when the detail is updated.
  */
@@ -20,10 +20,10 @@ export class LastEditedTracker extends EventEmitter implements IComponentLastEdi
 
     /**
      * Creates a LastEditedTracker object.
-     * @param summarizableObject - The summarizable object where the details will be stored.
+     * @param sharedSummaryBlock - The shared summary block where the details will be stored.
      */
     constructor(
-        private readonly summarizableObject: SummarizableObject) {
+        private readonly sharedSummaryBlock: SharedSummaryBlock) {
         super();
     }
 
@@ -40,19 +40,19 @@ export class LastEditedTracker extends EventEmitter implements IComponentLastEdi
      * {@inheritDoc ILastEditedTracker.getLastEditDetails}
      */
     public getLastEditDetails(): ILastEditDetails | undefined {
-        return this.summarizableObject.get<ILastEditDetails>(this.lastEditedDetailsKey);
+        return this.sharedSummaryBlock.get<ILastEditDetails>(this.lastEditedDetailsKey);
     }
 
     /**
      * {@inheritDoc ILastEditedTracker.updateLastEditDetails}
      */
     public updateLastEditDetails(message: ISequencedDocumentMessage) {
-        // Set the clientId and timestamp from the message in the summarizable object.
+        // Set the clientId and timestamp from the message in the shared summary block.
         const lastEditDetails: ILastEditDetails = {
             clientId: message.clientId,
             timestamp: message.timestamp,
         };
-        this.summarizableObject.set(this.lastEditedDetailsKey, lastEditDetails as unknown as Jsonable);
+        this.sharedSummaryBlock.set(this.lastEditedDetailsKey, lastEditDetails as unknown as Jsonable);
         this.emit("lastEditedChanged", lastEditDetails);
     }
 }

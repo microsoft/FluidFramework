@@ -24,7 +24,7 @@ export interface IComponentLastEditedTracker extends IProvideComponentLastEdited
 
     /**
      * Updates the last edit details based on the information in the message. This should be called only in response
-     * to a remote op because it uses summarizable object as storage.
+     * to a remote op because it uses a shared summary block as storage.
      */
     updateLastEditDetails(message: ISequencedDocumentMessage): void;
 }
