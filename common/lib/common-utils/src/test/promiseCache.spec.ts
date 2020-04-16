@@ -28,7 +28,7 @@ describe("PromiseCache", () => {
         it("addOrGet", async () => {
             pc = new PromiseCache<number, string>();
 
-            const contains_WhenAbsent = pc.contains(1);
+            const contains_WhenAbsent = pc.has(1);
             assert.equal(contains_WhenAbsent, false);
 
             const get_WhenAbsent = pc.get(1);
@@ -43,7 +43,7 @@ describe("PromiseCache", () => {
             );
             assert.equal(addOrGet_WhenAbsent, "one");
 
-            const contains_WhenPresent = pc.contains(1);
+            const contains_WhenPresent = pc.has(1);
             assert.equal(contains_WhenPresent, true);
 
             const get_WhenPresent = await pc.get(1);
@@ -51,7 +51,7 @@ describe("PromiseCache", () => {
 
             const addOrGet_WhenPresent = await pc.addOrGet(
                 1,
-                async () => "NOT one",
+                async () => { throw new Error(); },
             );
             assert.equal(addOrGet_WhenPresent, "one");
 
@@ -61,7 +61,7 @@ describe("PromiseCache", () => {
             const get_AfterRemove = pc.get(1);
             assert.equal(get_AfterRemove, PromiseCache.KeyNotFound);
 
-            const contains_AfterRemove = pc.contains(1);
+            const contains_AfterRemove = pc.has(1);
             assert.equal(contains_AfterRemove, false);
         });
 
@@ -86,7 +86,7 @@ describe("PromiseCache", () => {
 
             const add_WhenPresent = pc.add(
                 1,
-                async () => "NOT one",
+                async () => { throw new Error(); },
             );
             assert.equal(add_WhenPresent, false);
 
@@ -147,7 +147,7 @@ describe("PromiseCache", () => {
 
             const addOrGet1 = pc.addOrGet(1, asyncFn);
             await assert.rejects(addOrGet1);
-            const contains1 = pc.contains(1);
+            const contains1 = pc.has(1);
             assert.equal(contains1, true);
         });
 
@@ -173,7 +173,7 @@ describe("PromiseCache", () => {
 
             const p3 = pc.addOrGet(3, asyncFn);
             await assert.rejects(p3);
-            const contains3 = pc.contains(3);
+            const contains3 = pc.has(3);
             assert.equal(contains3, true);
         });
 
@@ -198,11 +198,11 @@ describe("PromiseCache", () => {
             const asyncFn = () => thrower(true /*removeOnError*/);
 
             const p5 = pc.addOrGet(5, asyncFn);
-            const contains5a = pc.contains(5);
+            const contains5a = pc.has(5);
             assert.equal(contains5a, true, "Shouldn't be removed yet; hasn't run yet");
 
             await assert.rejects(p5);
-            const contains5b = pc.contains(5);
+            const contains5b = pc.has(5);
             assert.equal(contains5b, false, "Should be removed after rejecting");
         });
 
@@ -219,7 +219,7 @@ describe("PromiseCache", () => {
             if (get6 === PromiseCache.KeyNotFound) { assert.fail("Shouldn't be removed yet; hasn't run yet"); }
 
             await assert.rejects(get6);
-            const contains6 = pc.contains(6);
+            const contains6 = pc.has(6);
             assert.equal(contains6, false, "Should be removed after rejecting");
         });
 
@@ -230,11 +230,11 @@ describe("PromiseCache", () => {
             const asyncFn = async () => thrower(true /*removeOnError*/);
 
             const p7 = pc.addOrGet(7, asyncFn);
-            const contains7a = pc.contains(7);
+            const contains7a = pc.has(7);
             assert.equal(contains7a, true, "Shouldn't be removed yet; hasn't run yet");
 
             await assert.rejects(p7);
-            const contains7b = pc.contains(7);
+            const contains7b = pc.has(7);
             assert.equal(contains7b, false, "Should be removed after rejecting");
         });
 
@@ -250,7 +250,7 @@ describe("PromiseCache", () => {
             if (get8 === PromiseCache.KeyNotFound) { assert.fail("Shouldn't be removed yet; hasn't run yet"); }
 
             await assert.rejects(get8);
-            const contains8 = pc.contains(8);
+            const contains8 = pc.has(8);
             assert.equal(contains8, false, "Should be removed after rejecting");
         });
     });
@@ -260,7 +260,7 @@ describe("PromiseCache", () => {
         let pc: PromiseCache<number, string> | undefined;
 
         // Useful for debugging the tests
-        const enableLogging: boolean = true;
+        const enableLogging: boolean = false; // Set to true to see timing logs
         function logClock(m) {
             if (enableLogging) {
                 console.log(`${m} ${clock.now}`);
@@ -283,12 +283,12 @@ describe("PromiseCache", () => {
             pc.addValue(1, "one");
 
             clock.tick (10);
-            assert.equal(pc.contains(1), true);
+            assert.equal(pc.has(1), true);
 
             await pc.addValueOrGet(1, "one");
 
             clock.tick (10);
-            assert.equal(pc.contains(1), false);
+            assert.equal(pc.has(1), false);
         });
 
         it("sliding expiry", async () => {
@@ -317,44 +317,12 @@ describe("PromiseCache", () => {
 
             // More than the initial expiry elapsed but the entry wasn't evicted
             assert.equal(endTime - startTime > expiration, true);
-            assert.equal(pc.contains(1), true);
+            assert.equal(pc.has(1), true);
 
             clock.tick(expiration);
             logClock("later");
 
-            assert.equal(pc.contains(1), false);
+            assert.equal(pc.has(1), false);
         });
-    });
-
-    describe("Async Wrapper Timing", () => {
-        const asyncPromiseFn = async () => 1;
-        // eslint-disable-next-line @typescript-eslint/promise-function-async
-        const syncPromiseFn = () => Promise.resolve(2);
-        const N = 1;
-
-        it("asyncPromiseFn", async () => {
-            for (let i = 0; i < N; i++) {
-                await asyncPromiseFn();
-            }
-        });
-
-        it("syncPromiseFn", async () => {
-            for (let i = 0; i < N; i++) {
-                await syncPromiseFn();
-            }
-        });
-
-        it("asyncPromiseFn Wrapped", async () => {
-            for (let i = 0; i < N; i++) {
-                await (async () => asyncPromiseFn())();
-            }
-        });
-
-        it("syncPromiseFn Wrapped", async () => {
-            for (let i = 0; i < N; i++) {
-                await (async () => syncPromiseFn())();
-            }
-        });
-
     });
 });

@@ -108,7 +108,7 @@ export class PromiseCache<TKey, TResult> {
     /**
      * Check if there's anything cached at the given key
      */
-    public contains(key: TKey) {
+    public has(key: TKey) {
         return this.cache.has(key);
     }
 
@@ -177,10 +177,10 @@ export class PromiseCache<TKey, TResult> {
         key: TKey,
         asyncFn: () => Promise<TResult>,
     ): boolean {
-        const alreadyPresent = this.contains(key);
+        const alreadyPresent = this.has(key);
 
         // We are blindly adding the Promise to the cache here, which introduces a Promise in this scope.
-        // Whoever gets this out of the cache to use it will await/catch, so swallow Promise rejections here.
+        // Swallow Promise rejections here, since whoever gets this out of the cache to use it will await/catch.
         this.addOrGet(key, asyncFn)
             .catch(() => {});
 
