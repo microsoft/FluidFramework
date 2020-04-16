@@ -100,6 +100,14 @@ export class SnapshotLoader {
         // TODO currently only assumes two levels of branching
         const branching = branchId === this.runtime.documentId ? 0 : 1;
 
+        // specify a default client id, "snapshot" here as we
+        // should enter collaboration/op sending mode if we load
+        // a snapshot in any case (summary or attach message)
+        // once we get a client id this will be called with that
+        // clientId in the connected event
+        // TODO: this won't support rehydrating a detached container
+        // we need to think more holistically about the dds state machine
+        // now that we differentiate attached vs local
         this.client.startOrUpdateCollaboration(
             this.runtime.clientId ?? "snapshot",
             // tslint:disable-next-line:no-suspicious-comment
