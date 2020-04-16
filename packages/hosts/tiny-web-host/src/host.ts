@@ -103,7 +103,8 @@ export function parseUrlToResolvedPackage(url: string): IFluidCodeDetails | unde
     const entryPoint = searchParams.get("entrypoint");
     let codeDetails: IFluidCodeDetails;
 
-    // This allows us to open up documents that have already been opened without specifying the chaincode
+    // This allows us to open up documents without specifying the chaincode,
+    // This is useful if the document has already been created with a chaincode and in the SPO scenario
     if (!chaincode) {
         return undefined;
     } else if (chaincode.startsWith("http")) {
