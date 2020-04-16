@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { benchmark, getTestArgs } from '../harness';
-import { fill, IArray2D } from '../imports';
+import { benchmark, getTestArgs } from "hotloop";
+import { fill, IArray2D } from "../imports";
 
 const { row, col, numRows, numCols, fill: shouldFill } = getTestArgs();
 
@@ -16,8 +16,8 @@ export function pointwise<T>(name: string | undefined, arr: IArray2D<T>) {
     benchmark(
         `SUM ${name !== undefined ? name : arr.constructor.name} (${
             shouldFill
-                ? 'full'
-                : 'empty'
+                ? "full"
+                : "empty"
         }) Pointwise Read ${numRows}x${numCols} @${row},${col}`,
         () => {
             let sum = 0;

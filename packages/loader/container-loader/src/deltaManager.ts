@@ -711,12 +711,15 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // Drop pending messages - this will ensure catchUp() does not go into infinite loop
         this.pending = [];
 
-        this.emit("closed", error);
-
         // Notify everyone we are in read-only state.
         // Useful for components in case we hit some critical error,
         // to switch to a mode where user edits are not accepted
         this.setReadonlyPermissions(true);
+
+        // This needs to be the last thing we do (before removing listeners), as it causes
+        // Container to dispose context and break ability of components / runtime to "hear"
+        // from delta manager, including notification (above) about readonly state.
+        this.emit("closed", error);
 
         this.removeAllListeners();
     }

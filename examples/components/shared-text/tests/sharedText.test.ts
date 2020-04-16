@@ -33,14 +33,17 @@ describe("sharedText", () => {
         const titleRight = await getTitles(1);
         expect(titleLeft).toEqual(titleRight);
     });
-
     test("the text typed by one user updates the text for the other user", async () => {
         const getText = async (index: number) => {
             return page.evaluate((i: number) => {
                 const titleElements = document.getElementsByClassName("flow-view");
                 const title = titleElements[i] as HTMLDivElement;
                 if (title) {
-                    return title.innerText;
+                    let text = "";
+                    // all content is stored in spans, and presence is stored in divs
+                    // we only want content here
+                    title.querySelectorAll("span").forEach((span)=>text+=span.innerText);
+                    return text;
                 }
 
                 return "";
@@ -52,20 +55,21 @@ describe("sharedText", () => {
         // one for each user. This will pick the first class it finds and type in that.
         await page.type('[class=flow-view]', word, { delay: 10 });
 
-        // The text returned has extra spaces and some characters showing the other user's cursor.
-        // Remove the extra spaces and get the characters for the word we typed.
+        // wait for all changes to propagate
+        await new Promise((resolve)=>setTimeout(resolve, 10));
+
+        // The text returned has extra spaces so remove the extra spaces
         let textLeft = await getText(0);
         expect(textLeft).not.toEqual("");
         textLeft = textLeft.replace(/\s/g, '');
-        textLeft = textLeft.substring(0, word.length);
 
         let textRight = await getText(1);
         expect(textRight).not.toEqual("");
         textRight = textRight.replace(/\s/g, '');
-        textRight = textRight.substring(0, word.length);
 
         // Verify that the text updated for both the users.
         expect(textLeft).toEqual(word);
         expect(textRight).toEqual(word);
     });
+
 });

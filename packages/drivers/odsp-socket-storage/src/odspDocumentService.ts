@@ -64,6 +64,7 @@ export class OdspDocumentService implements IDocumentService {
         socketIOClientP: Promise<SocketIOClientStatic>,
         cache: IOdspCache,
         isFirstTimeDocumentOpened = true,
+        createNewFlag: boolean,
     ): Promise<IDocumentService> {
         let odspResolvedUrl: IOdspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
         const templogger: ITelemetryLogger = DebugLogger.mixinDebugLogger(
@@ -109,6 +110,7 @@ export class OdspDocumentService implements IDocumentService {
             socketIOClientP,
             cache,
             isFirstTimeDocumentOpened,
+            createNewFlag,
         );
     }
 
@@ -156,6 +158,7 @@ export class OdspDocumentService implements IDocumentService {
         private readonly socketIOClientP: Promise<SocketIOClientStatic>,
         private readonly cache: IOdspCache,
         private readonly isFirstTimeDocumentOpened = true,
+        private readonly createNewFlag: boolean,
     ) {
 
         this.joinSessionKey = `${this.hashedDocumentId}/joinsession`;
@@ -221,6 +224,7 @@ export class OdspDocumentService implements IDocumentService {
             true,
             this.cache,
             this.isFirstTimeDocumentOpened,
+            this.createNewFlag,
         );
 
         return new OdspDocumentStorageService(this.storageManager);

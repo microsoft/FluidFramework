@@ -4,4 +4,3 @@
  */
 
 export * from "./localDeltaConnectionServer";
-export * from "./localReservationManager";

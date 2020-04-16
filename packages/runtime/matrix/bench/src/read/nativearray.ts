@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { pointwise } from './test';
+import { pointwise } from "./test";
 
 export class Array256x256<T> {
     private readonly cells: T[] = new Array(256 * 256).fill(0);

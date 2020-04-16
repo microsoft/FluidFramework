@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { pointwise } from './test';
+import { pointwise } from "./test";
 
 const enum Consts {
     logW = 4,
