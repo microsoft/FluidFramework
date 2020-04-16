@@ -39,9 +39,22 @@ export abstract class SharedComponent<O extends IComponent = object>
     private readonly innerHandle: IComponentHandle<this>;
     private _disposed = false;
 
+    /**
+     * This is your ComponentRuntime object
+     */
     protected readonly runtime: IComponentRuntime;
+
+    /**
+     * This context is used to talk up to the ContainerRuntime
+     */
     protected readonly context: IComponentContext;
-    // We currently aren't exposing Required Providers
+
+    /**
+     * Providers are IComponent keyed objects that provide back a promise to the corresponding IComponent or undefined.
+     * Providers injected/provided by the Container and/or HostingApplication
+     *
+     * To define providers set IComponent interfaces in the generic O type for your Component
+     */
     protected readonly providers: AsyncComponentProvider<ComponentKey<O>,ComponentKey<object>>;
 
     public get disposed() { return this._disposed; }

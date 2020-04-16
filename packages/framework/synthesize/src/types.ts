@@ -42,11 +42,26 @@ export type AsyncOptionalComponentProvider<T extends keyof IComponent> = {
 export type AsyncComponentProvider<O extends keyof IComponent, R extends keyof IComponent>
     = AsyncOptionalComponentProvider<O> & AsyncRequiredComponentProvider<R>;
 
+type NonNullableComponent<T extends keyof IComponent> = NonNullable<IComponent[T]>;
+
 /**
  * Multiple ways to provide a component.
  */
 export type ComponentProvider<T extends keyof IComponent> =
-    IComponent[T]
-    | Promise<IComponent[T]>
-    | ((dependencyContainer: DependencyContainer) => IComponent[T])
-    | ((dependencyContainer: DependencyContainer) => Promise<IComponent[T]>);
+    NonNullableComponent<T>
+    | Promise<NonNullableComponent<T>>
+    | ((dependencyContainer: DependencyContainer) => NonNullableComponent<T>)
+    | ((dependencyContainer: DependencyContainer) => Promise<NonNullableComponent<T>>);
+
+/**
+ * ProviderEntry is a mapping of the type to the Provider
+ */
+export interface ProviderEntry<T extends keyof IComponent> {
+    type: T;
+    provider: ComponentProvider<T>
+}
+
+/**
+ * A mapping of ProviderEntries
+ */
+export type DependencyContainerRegistry = Iterable<ProviderEntry<any>>;

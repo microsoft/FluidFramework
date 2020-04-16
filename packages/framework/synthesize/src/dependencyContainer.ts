@@ -15,13 +15,6 @@ import {
     IComponentDependencySynthesizer,
 } from "./IComponentDependencySynthesizer";
 
-export interface ProviderEntry<T extends keyof IComponent> {
-    type: T;
-    provider: NonNullable<IComponent[T]>
-}
-
-export type DependencyContainerRegistry = Iterable<ProviderEntry<any>>;
-
 /**
  * DependencyContainer is similar to a IoC Container. It takes providers and will
  * synthesize an object based on them when requested.
