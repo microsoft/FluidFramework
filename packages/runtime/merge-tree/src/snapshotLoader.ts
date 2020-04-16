@@ -101,7 +101,7 @@ export class SnapshotLoader {
         const branching = branchId === this.runtime.documentId ? 0 : 1;
 
         this.client.startOrUpdateCollaboration(
-            this.runtime.clientId,
+            this.runtime.clientId ?? "snapshot",
             // tslint:disable-next-line:no-suspicious-comment
             // TODO: Make 'minSeq' non-optional once the new snapshot format becomes the default?
             //       (See https://github.com/microsoft/FluidFramework/issues/84)
