@@ -114,12 +114,11 @@ export class UrlRegistry implements IComponentRegistry {
         this.loadingFluidModules.set(moduleName, loadingModuleDeferred.promise);
 
         try {
-            const scriptLoadPromises = scriptUrls.map(loadScript);
-
+            // Wait for all of our scripts to load.  Accumulate errors and report them afterwards.
             const errors: Error[] = [];
-            for (const scriptLoadPromise of scriptLoadPromises) {
-                await scriptLoadPromise.catch((error) => { errors.push(error); });
-            }
+            await Promise.all(scriptUrls.map(async (scriptUrl) => {
+                return loadScript(scriptUrl).catch((error) => { errors.push(error); });
+            }));
             if (errors.length > 0) {
                 throw new Error(errors.join("\n"));
             }
@@ -127,12 +126,11 @@ export class UrlRegistry implements IComponentRegistry {
             // After the script loads, the module will be available on the window.
             const entrypoint = window[moduleName];
             if (entrypoint === undefined) {
-                throw new Error(
-                    `UrlRegistry: ${packageUrl}: Entrypoint: ${moduleName}: Entry point is undefined`);
+                throw new Error(`UrlRegistry: ${packageUrl}: Entrypoint: ${moduleName}: Entry point is undefined`);
             }
             return entrypoint.fluidExport;
         } finally {
-            // Release the module name
+            // Restore the module and release the module name
             window[moduleName] = preservedModule;
             loadingModuleDeferred.resolve();
             this.loadingFluidModules.delete(moduleName);
