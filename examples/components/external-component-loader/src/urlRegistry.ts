@@ -4,7 +4,6 @@
  */
 
 import { isFluidPackage } from "@microsoft/fluid-container-definitions";
-import { Deferred } from "@microsoft/fluid-common-utils";
 import {
     ComponentRegistryEntry,
     IComponentRegistry,
@@ -58,8 +57,16 @@ const fetchAndValidatePackageInfo = async (packageUrl: string) => {
 export class UrlRegistry implements IComponentRegistry {
     private static readonly WindowKeyPrefix = "FluidExternalComponent";
 
+    /**
+     * A map of URLs to the registry entries they provide.  This functions as our component registry.
+     */
     private readonly registryEntryMap: Map<string, Promise<ComponentRegistryEntry>>;
-    private readonly loadingFluidModules: Map<string, Promise<void>>;
+
+    /**
+     * A map of module entrypoints to a pending promise as they load.
+     * The map entry is deleted after the load completes.
+     */
+    private readonly loadingFluidModules: Map<string, Promise<ComponentRegistryEntry>>;
 
     constructor() {
         // Stash on the window so multiple instance can coordinate
@@ -94,26 +101,23 @@ export class UrlRegistry implements IComponentRegistry {
     private async loadRegistryEntry(packageUrl: string): Promise<ComponentRegistryEntry> {
         // First get the info from the package about what we're loading
         const fluidPackage = await fetchAndValidatePackageInfo(packageUrl);
-        const moduleName = fluidPackage.fluid.browser.umd.library;
+        const entrypoint = fluidPackage.fluid.browser.umd.library;
         const scriptRelativeUrls = fluidPackage.fluid.browser.umd.files;
         const scriptUrls = scriptRelativeUrls.map((scriptRelativeUrl) => `${packageUrl}/${scriptRelativeUrl}`);
 
-        // Many of the modules may have the same module name and will try to shove it on the window object.
-        // loadingFluidModules is effectively a lock on the module name so that we only load one at a time
-        // with the same name.
-        while (this.loadingFluidModules.has(moduleName)) {
-            await this.loadingFluidModules.get(moduleName);
+        // Many of the modules may have the same entrypoint (e.g. "main") and will try to put it on the window object.
+        // loadingFluidModules is effectively a lock on the entrypoint name so multiple modules don't collide.
+        // We wait on that lock here.
+        while (this.loadingFluidModules.has(entrypoint)) {
+            await this.loadingFluidModules.get(entrypoint);
         }
 
-        // Preserve the entrypoint for our own module (the WaterParkModuleInstantiationFactory) -- it's likely the
-        // scripts we're about to load will stomp on it otherwise.
-        const preservedModule = window[moduleName];
-        window[moduleName] = undefined;
+        // Preserve our own module (the WaterParkModuleInstantiationFactory) -- it's likely the scripts we're about to
+        // load will stomp on it otherwise.
+        const preservedModule = window[entrypoint];
+        window[entrypoint] = undefined;
 
-        const loadingModuleDeferred = new Deferred<void>();
-        this.loadingFluidModules.set(moduleName, loadingModuleDeferred.promise);
-
-        try {
+        const loadModule = async () => {
             // Wait for all of our scripts to load.  Accumulate errors and report them afterwards.
             const errors: Error[] = [];
             await Promise.all(scriptUrls.map(async (scriptUrl) => {
@@ -123,17 +127,21 @@ export class UrlRegistry implements IComponentRegistry {
                 throw new Error(errors.join("\n"));
             }
 
-            // After the script loads, the module will be available on the window.
-            const entrypoint = window[moduleName];
-            if (entrypoint === undefined) {
-                throw new Error(`UrlRegistry: ${packageUrl}: Entrypoint: ${moduleName}: Entry point is undefined`);
+            // After the script loads, the module will be available on the window at the entrypoint.
+            const module = window[entrypoint];
+            if (module === undefined) {
+                throw new Error(`UrlRegistry: ${packageUrl}: Entrypoint: ${entrypoint}: Entry point is undefined`);
             }
-            return entrypoint.fluidExport;
-        } finally {
+            return module.fluidExport as ComponentRegistryEntry;
+        };
+
+        const registryEntryP = loadModule().finally(() => {
             // Restore the module and release the module name
-            window[moduleName] = preservedModule;
-            loadingModuleDeferred.resolve();
-            this.loadingFluidModules.delete(moduleName);
-        }
+            window[entrypoint] = preservedModule;
+            this.loadingFluidModules.delete(entrypoint);
+        });
+
+        this.loadingFluidModules.set(entrypoint, registryEntryP);
+        return registryEntryP;
     }
 }
