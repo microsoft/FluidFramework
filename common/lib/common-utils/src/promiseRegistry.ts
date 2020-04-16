@@ -87,6 +87,11 @@ export class PromiseCache<TKey, TResult> {
     private readonly removeOnError: (error: any) => boolean;
 
     /**
+     * We use this symbol to distinguish the case between a Promise resolving to undefined from a missing key.
+     */
+    public static readonly KeyNotFound: unique symbol = Symbol("Key not found in PromiseCache");
+
+    /**
      * Create the PromiseCache with the options provided
      * @param param0 - PromiseCacheOptions with the following default values:
      *   expiry = { policy: "indefinite" },
@@ -108,19 +113,20 @@ export class PromiseCache<TKey, TResult> {
     }
 
     /**
-     * Get the Promise for the given key, or undefined if it's not found.
-     * Extend expiry if applicable.
+     * Get the Promise for the given key, or PromiseCache.KeyNotFound if it's not found
      */
-    public get(key: TKey) {
-        if (this.cache.has(key)) {
-            this.gc.update(key);
+    public get(key: TKey): Promise<TResult> | typeof PromiseCache.KeyNotFound {
+        const p = this.cache.get(key);
+        if (p === undefined) {
+            // Return this symbol to distinguish between a Promise resolving to undefined and a missing key
+            return PromiseCache.KeyNotFound;
         }
-        return this.cache.get(key);
+        this.gc.update(key);
+        return p;
     }
 
     /**
-     * Remove the Promise for the given key,
-     * returning true if it was found and removed
+     * Remove the Promise for the given key, returning true if it was found and removed
      */
     public remove(key: TKey) {
         this.gc.cancel(key);
@@ -140,7 +146,7 @@ export class PromiseCache<TKey, TResult> {
         // NOTE: Do not await the Promise returned by asyncFn!
         // Let the caller do so once we return or after a subsequent call to get
         let promise = this.get(key);
-        if (promise === undefined) {
+        if (promise === PromiseCache.KeyNotFound) {
             // Wrap in an async lambda in case asyncFn disabled @typescript-eslint/promise-function-async
             const safeAsyncFn = async () => asyncFn();
 

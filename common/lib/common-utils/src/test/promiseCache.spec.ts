@@ -5,11 +5,25 @@
 
 import * as assert from "assert";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { PromiseCache /*, PromiseCacheExpiry, PromiseCacheOptions*/ } from "../promiseRegistry";
+import { PromiseCache } from "../promiseRegistry";
 
 describe("PromiseCache", () => {
     describe("Basic Cache Mechanism", () => {
         let pc: PromiseCache<number, string> | undefined;
+
+        it("PromiseCache.KeyNotFound", async () => {
+            interface SomeType { data: string }
+            const pc1 = new PromiseCache<number, SomeType>();
+
+            const get_WhenAbsent = pc1.get(2);
+            assert.equal(get_WhenAbsent, PromiseCache.KeyNotFound);
+            assert.equal(await get_WhenAbsent, PromiseCache.KeyNotFound);
+
+            pc1.addValue(1, { data: "one" });
+            const get_WhenPresent = await pc1.get(1);
+            if (get_WhenPresent === PromiseCache.KeyNotFound) { assert.fail(); }
+            assert.equal(get_WhenPresent.data, "one");
+        });
 
         it("addOrGet", async () => {
             pc = new PromiseCache<number, string>();
@@ -18,7 +32,7 @@ describe("PromiseCache", () => {
             assert.equal(contains_WhenAbsent, false);
 
             const get_WhenAbsent = pc.get(1);
-            assert.equal(get_WhenAbsent, undefined);
+            assert.equal(get_WhenAbsent, PromiseCache.KeyNotFound);
 
             const remove_WhenAbsent = pc.remove(1);
             assert.equal(remove_WhenAbsent, false);
@@ -45,7 +59,7 @@ describe("PromiseCache", () => {
             assert.equal(remove_WhenPresent, true);
 
             const get_AfterRemove = pc.get(1);
-            assert.equal(get_AfterRemove, undefined);
+            assert.equal(get_AfterRemove, PromiseCache.KeyNotFound);
 
             const contains_AfterRemove = pc.contains(1);
             assert.equal(contains_AfterRemove, false);
@@ -147,7 +161,7 @@ describe("PromiseCache", () => {
             const add2 = pc.add(2, asyncFn);
             assert.equal(add2, true);
             const get2 = pc.get(2);
-            if (get2 === undefined) { assert.fail(); }
+            if (get2 === PromiseCache.KeyNotFound) { assert.fail(); }
             await assert.rejects(get2);
         });
 
@@ -172,7 +186,7 @@ describe("PromiseCache", () => {
             const add4 = pc.add(4, asyncFn);
             assert.equal(add4, true);
             const get4 = pc.get(4);
-            if (get4 === undefined) { assert.fail(); }
+            if (get4 === PromiseCache.KeyNotFound) { assert.fail(); }
             await assert.rejects(get4);
         });
 
@@ -202,7 +216,7 @@ describe("PromiseCache", () => {
             const add6 = pc.add(6, asyncFn);
             assert.equal(add6, true);
             const get6 = pc.get(6);
-            if (get6 === undefined) { assert.fail("Shouldn't be removed yet; hasn't run yet"); }
+            if (get6 === PromiseCache.KeyNotFound) { assert.fail("Shouldn't be removed yet; hasn't run yet"); }
 
             await assert.rejects(get6);
             const contains6 = pc.contains(6);
@@ -233,7 +247,7 @@ describe("PromiseCache", () => {
             const add8 = pc.add(8, asyncFn);
             assert.equal(add8, true);
             const get8 = pc.get(8);
-            if (get8 === undefined) { assert.fail("Shouldn't be removed yet; hasn't run yet"); }
+            if (get8 === PromiseCache.KeyNotFound) { assert.fail("Shouldn't be removed yet; hasn't run yet"); }
 
             await assert.rejects(get8);
             const contains8 = pc.contains(8);
@@ -241,7 +255,7 @@ describe("PromiseCache", () => {
         });
     });
 
-    describe.only("Garbage Collection and Expiry", () => {
+    describe("Garbage Collection and Expiry", () => {
         let clock: SinonFakeTimers;
         let pc: PromiseCache<number, string> | undefined;
 
@@ -261,7 +275,7 @@ describe("PromiseCache", () => {
             clock.restore();
         });
 
-        it.only("absolute expiry", async () => {
+        it("absolute expiry", async () => {
             pc = new PromiseCache<number, string>({
                 expiry: { policy: "absolute", durationMs: 15 },
             });
@@ -277,7 +291,7 @@ describe("PromiseCache", () => {
             assert.equal(pc.contains(1), false);
         });
 
-        it.only("sliding expiry", async () => {
+        it("sliding expiry", async () => {
             const expiration = 15;
             pc = new PromiseCache<number, string>({
                 expiry: { policy: "sliding", durationMs: expiration },
