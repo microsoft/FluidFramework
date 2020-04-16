@@ -54,7 +54,7 @@ export async function loadFrame(iframeId: string, logId: string){
     const text = document.getElementById(logId) as HTMLDivElement;
     const quorum = proxyContainer.getQuorum();
 
-    const log = (emitter: EventEmitter, name: string, ...events: string[]) =>{
+    const log = (emitter: Pick<EventEmitter, "on">, name: string, ...events: string[]) =>{
         events.forEach((event)=>
             emitter.on(event, (...args)=>{
                 text.innerHTML+=`${name}: ${event}: ${JSON.stringify(args)}<br/>`;
