@@ -57,9 +57,7 @@ export class ExampleUsingProviders
         ExampleUsingProviders.ComponentName,
         ExampleUsingProviders,
         [SharedMap.getFactory()],
-        {IComponentUserInformation},
-        {},
-    );
+        {IComponentUserInformation});
 }
 
 interface ExampleUsingProvidersViewProps {

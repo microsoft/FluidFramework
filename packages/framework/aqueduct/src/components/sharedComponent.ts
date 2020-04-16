@@ -31,7 +31,7 @@ export interface ISharedComponentProps<O extends IComponent = object, R extends 
  * This is a bare-bones base class that does basic setup and enables for factory on an initialize call.
  * You probably don't want to inherit from this component directly unless you are creating another base component class
  */
-export abstract class SharedComponent<O extends IComponent = object, R extends IComponent = object>
+export abstract class SharedComponent<O extends IComponent = object>
     extends EventEmitter
     implements IComponentLoadable, IComponentRouter, IProvideComponentHandle
 {
@@ -41,7 +41,8 @@ export abstract class SharedComponent<O extends IComponent = object, R extends I
 
     protected readonly runtime: IComponentRuntime;
     protected readonly context: IComponentContext;
-    protected readonly providers: AsyncComponentProvider<ComponentKey<O>,ComponentKey<R>>;
+    // We currently aren't exposing Required Providers
+    protected readonly providers: AsyncComponentProvider<ComponentKey<O>,ComponentKey<object>>;
 
     public get disposed() { return this._disposed; }
 
@@ -55,7 +56,7 @@ export abstract class SharedComponent<O extends IComponent = object, R extends I
      */
     public get handle(): IComponentHandle<this> { return this.innerHandle; }
 
-    public constructor(props: ISharedComponentProps<O,R>) {
+    public constructor(props: ISharedComponentProps<O>) {
         super();
         this.runtime = props.runtime;
         this.context = props.context;

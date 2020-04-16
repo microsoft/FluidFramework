@@ -24,8 +24,8 @@ import { SharedComponent } from "./sharedComponent";
  * will automatically be registered.
  */
 
-export abstract class PrimedComponent<O extends IComponent = object, R extends IComponent = object>
-    extends SharedComponent<O,R>
+export abstract class PrimedComponent<O extends IComponent = object>
+    extends SharedComponent<O>
 {
     private internalRoot: ISharedDirectory | undefined;
     private internalTaskManager: ITaskManager | undefined;

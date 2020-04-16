@@ -120,7 +120,6 @@ export class Pond extends PrimedComponent implements IComponentHTMLView {
         Pond,
         [SharedDirectory.getFactory()],
         {},
-        {},
         new Map([
             [Clicker.ComponentName, Promise.resolve(Clicker.getFactory())],
             [ClickerWithInitialValue.ComponentName, Promise.resolve(ClickerWithInitialValue.getFactory())],

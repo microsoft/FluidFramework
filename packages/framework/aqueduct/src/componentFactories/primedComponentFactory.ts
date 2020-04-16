@@ -22,15 +22,14 @@ import { PrimedComponent } from "../components";
 import { ComponentCtor } from "../types";
 import { SharedComponentFactory } from "./sharedComponentFactory";
 
-export class PrimedComponentFactory<O extends IComponent = object, R extends IComponent = object>
-    extends SharedComponentFactory<O,R>
+export class PrimedComponentFactory<O extends IComponent = object>
+    extends SharedComponentFactory<O>
 {
     constructor(
         type: string,
-        ctor: ComponentCtor<O,R, PrimedComponent<O,R>>,
+        ctor: ComponentCtor<O, PrimedComponent<O>>,
         sharedObjects: readonly ISharedObjectFactory[] = [],
         optionalProviders: ComponentSymbolProvider<O>,
-        requiredProviders: ComponentSymbolProvider<R>,
         registryEntries?: NamedComponentRegistryEntries,
         onDemandInstantiation = true,
     ) {
@@ -52,7 +51,6 @@ export class PrimedComponentFactory<O extends IComponent = object, R extends ICo
             ctor,
             mergedObjects,
             optionalProviders,
-            requiredProviders,
             registryEntries,
             onDemandInstantiation,
         );

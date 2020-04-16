@@ -26,7 +26,7 @@ import {
 } from "../components";
 import { ComponentCtor } from "../types";
 
-export class SharedComponentFactory<O extends IComponent, R extends IComponent>
+export class SharedComponentFactory<O extends IComponent>
 implements IComponentFactory, Partial<IProvideComponentRegistry>
 {
     private readonly sharedObjectRegistry: ISharedObjectRegistry;
@@ -34,10 +34,9 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>
 
     constructor(
         public readonly type: string,
-        private readonly ctor: ComponentCtor<O,R, SharedComponent<O,R>>,
+        private readonly ctor: ComponentCtor<O, SharedComponent<O>>,
         sharedObjects: readonly ISharedObjectFactory[],
         private readonly optionalProviders: ComponentSymbolProvider<O>,
-        private readonly requiredProviders: ComponentSymbolProvider<R>,
         registryEntries?: NamedComponentRegistryEntries,
         private readonly onDemandInstantiation = true,
     ) {
@@ -110,7 +109,7 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>
             dependencyContainer.register(IHostRuntime, context.hostRuntime);
         }
 
-        const providers = dependencyContainer.synthesize<O, R>(this.optionalProviders,this.requiredProviders);
+        const providers = dependencyContainer.synthesize<O>(this.optionalProviders,{});
         // Create a new instance of our component
         const instance = ctorFn ? ctorFn({runtime, context, providers}) : new this.ctor({runtime, context, providers});
         await instance.initialize();

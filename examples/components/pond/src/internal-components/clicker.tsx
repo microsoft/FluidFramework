@@ -70,9 +70,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
         Clicker.ComponentName,
         Clicker,
         [SharedMap.getFactory()],
-        {},
-        {},
-    );
+        {});
 }
 
 // ----- REACT STUFF -----

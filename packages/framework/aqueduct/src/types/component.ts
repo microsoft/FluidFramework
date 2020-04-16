@@ -13,5 +13,5 @@ import {
 /**
  * Define a default constructor for an Aqueduct Component
  */
-export type ComponentCtor<O extends IComponent,R extends IComponent,T extends SharedComponent<O,R>> =
+export type ComponentCtor<O extends IComponent,T extends SharedComponent<O>> =
     new (props: ISharedComponentProps) => T;

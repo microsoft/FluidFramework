@@ -65,9 +65,7 @@ export class ClickerWithInitialValue extends PrimedComponent implements ICompone
         ClickerWithInitialValue.ComponentName,
         ClickerWithInitialValue,
         [],
-        {},
-        {},
-    );
+        {});
 }
 
 
