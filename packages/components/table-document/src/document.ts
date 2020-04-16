@@ -7,10 +7,6 @@ import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aquedu
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { ICombiningOp, IntervalType, LocalReference, PropertySet } from "@microsoft/fluid-merge-tree";
 import {
-    IComponentContext,
-    IComponentRuntime,
-} from "@microsoft/fluid-runtime-definitions";
-import {
     positionToRowCol,
     rowColToPosition,
     SharedNumberSequence,
@@ -50,10 +46,6 @@ export class TableDocument extends PrimedComponent implements ITable {
     private maybeCols?: SharedNumberSequence;
     private maybeMatrix?: SparseMatrix;
     private maybeWorkbook?: ISheetlet;
-
-    constructor(runtime: IComponentRuntime, context: IComponentContext) {
-        super(runtime, context);
-    }
 
     public evaluateCell(row: number, col: number): TableDocumentItem {
         try {
