@@ -5,7 +5,6 @@
 
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { IComponentHTMLView, IComponentHTMLVisual } from "@microsoft/fluid-view-interfaces";
 import { FlowDocument } from "../document";
 import { FlowDocumentType, webflowType } from "../runtime";
@@ -13,10 +12,6 @@ import { WebflowView } from "./host";
 import { importDoc } from "./import";
 
 export class WebFlow extends PrimedComponent implements IComponentHTMLVisual {
-    public constructor(runtime: IComponentRuntime, context: IComponentContext) {
-        super(runtime, context);
-    }
-
     public get IComponentHTMLVisual() { return this; }
 
     // #region IComponentHTMLVisual

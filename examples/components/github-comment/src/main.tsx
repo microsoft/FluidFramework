@@ -9,10 +9,6 @@ import {
 } from "@microsoft/fluid-aqueduct";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import {
-    IComponentContext,
-    IComponentRuntime,
-} from "@microsoft/fluid-runtime-definitions";
-import {
     SharedString,
 } from "@microsoft/fluid-sequence";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
@@ -95,20 +91,6 @@ export class GithubComment extends TextareaNoReact implements IComponentHTMLView
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.forceDOMUpdate(this.textareaState.text);
     }
-
-    /**
-   * Final (static!) load function that allows the runtime to make async calls
-   * while creating the object.
-   *
-   * Primarily boilerplate code.
-   */
-    public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<GithubComment> {
-        const fluidComponent = new GithubComment(runtime, context);
-        await fluidComponent.initialize();
-
-        return fluidComponent;
-    }
-
 } // End GithubComment class
 
 /**

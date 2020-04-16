@@ -23,12 +23,10 @@ import {
     reservedTileLabelsKey,
     TextSegment,
 } from "@microsoft/fluid-merge-tree";
-import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import {
     SequenceDeltaEvent,
     SequenceMaintenanceEvent,
     SharedString,
-    SharedStringFactory,
     SharedStringSegment,
 } from "@microsoft/fluid-sequence";
 import { IComponentHTMLOptions } from "@microsoft/fluid-view-interfaces";
@@ -150,10 +148,6 @@ export class FlowDocument extends PrimedComponent {
     });
 
     private maybeSharedString?: SharedString;
-
-    constructor(runtime: IComponentRuntime, context: IComponentContext) {
-        super(runtime, context);
-    }
 
     public async getComponentFromMarker(marker: Marker) {
         const url = marker.properties.url as string;
@@ -515,7 +509,7 @@ export class FlowDocument extends PrimedComponent {
 export const flowDocumentFactory = new PrimedComponentFactory(
     FlowDocumentType,
     FlowDocument,
-    [new SharedStringFactory()],
+    [SharedString.getFactory()],
     {},
     {},
 );

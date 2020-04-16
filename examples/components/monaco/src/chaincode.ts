@@ -14,7 +14,6 @@ import {
     IMergeTreeRemoveMsg,
     MergeTreeDeltaType,
 } from "@microsoft/fluid-merge-tree";
-import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 // eslint-disable-next-line import/no-unresolved

@@ -46,13 +46,13 @@ interface ITextareaState {
 export class TextareaNoReact extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
-    private readonly textareaState: ITextareaState = {
+    protected textareaState: ITextareaState = {
         selectionEnd: 0,
         selectionStart: 0,
         text: "",
     };
-    private readonly textareaRootKey: string = "textareaString";
-    private textareaID: string = "<unset dom ID>";
+    protected textareaRootKey: string = "textareaString";
+    protected textareaID: string = "<unset dom ID>";
 
     /******************************************************************************/
     // One-time component setup:
