@@ -95,12 +95,13 @@ class ExampleUsingProvidersView
         this.state.users.forEach((user)=> {
             users.push(<div>{user}</div>);
         });
-        return (<>
-            <h3>Provider Information</h3>
-            <div><b>Count:</b></div>
-            <div>{this.state.count}</div>
-            <b>Users:</b>
-            {users}
-        </>);
+        return (
+            <div style={{border:"1px dotted green"}}>
+                <h3>Provider Information</h3>
+                <div><b>Count:</b></div>
+                <div>{this.state.count}</div>
+                <b>Users:</b>
+                {users}
+            </div>);
     }
 }

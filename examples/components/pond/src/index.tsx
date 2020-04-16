@@ -94,15 +94,6 @@ export class Pond extends PrimedComponent implements IComponentHTMLView {
         div.appendChild(title);
         div.appendChild(index);
 
-        // Setup a Snapshot button to force snapshot
-        const snapshotButton = document.createElement("button");
-        snapshotButton.textContent = "Force Snapshot";
-        snapshotButton.onclick = () => {
-            this.runtime.save("forced snapshot");
-        };
-
-        div.appendChild(snapshotButton);
-
         // Sub-Component setup
         const clicker2Div = document.createElement("div");
         const clicker3Div = document.createElement("div");
