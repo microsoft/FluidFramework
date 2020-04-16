@@ -25,7 +25,7 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
     public get IComponentDependencySynthesizer() { return this; }
 
     /**
-     * {@inheritDoc (IComponentSynthesizer:interface).registeredTypes}
+     * {@inheritDoc (IComponentDependencySynthesizer:interface).registeredTypes}
      */
     public get registeredTypes(): Iterable<(keyof IComponent)> {
         return this.providers.keys();
@@ -34,7 +34,7 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
     public constructor(public parent: IComponentDependencySynthesizer | undefined = undefined) { }
 
     /**
-     * {@inheritDoc (IComponentSynthesizer:interface).register}
+     * {@inheritDoc (IComponentDependencySynthesizer:interface).register}
      */
     public register<T extends keyof IComponent>(type: T, provider: ComponentProvider<T>): void {
         if (this.has(type)){
@@ -45,7 +45,7 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
     }
 
     /**
-     * {@inheritDoc (IComponentSynthesizer:interface).unregister}
+     * {@inheritDoc (IComponentDependencySynthesizer:interface).unregister}
      */
     public unregister<T extends keyof IComponent>(type: T): void {
         if (this.providers.has(type)){
@@ -54,7 +54,7 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
     }
 
     /**
-     * {@inheritDoc (IComponentSynthesizer:interface).synthesize}
+     * {@inheritDoc (IComponentDependencySynthesizer:interface).synthesize}
      */
     public synthesize<
         O extends IComponent,
@@ -76,7 +76,7 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
     }
 
     /**
-     * {@inheritDoc (IComponentSynthesizer:interface).has}
+     * {@inheritDoc (IComponentDependencySynthesizer:interface).has}
      */
     public has(...types: (keyof IComponent)[]): boolean {
         return types.every((type) => {
@@ -85,7 +85,7 @@ export class DependencyContainer implements IComponentDependencySynthesizer {
     }
 
     /**
-     * {@inheritDoc (IComponentSynthesizer:interface).getProvider}
+     * {@inheritDoc (IComponentDependencySynthesizer:interface).getProvider}
      */
     public getProvider<T extends keyof IComponent>(type: T): ComponentProvider<T> | undefined {
         // If we have the provider return it

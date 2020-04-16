@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { ISharedComponentProps, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { IComponent, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentContext } from "@microsoft/fluid-runtime-definitions";

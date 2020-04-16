@@ -42,7 +42,10 @@ export type AsyncOptionalComponentProvider<T extends keyof IComponent> = {
 export type AsyncComponentProvider<O extends keyof IComponent, R extends keyof IComponent>
     = AsyncOptionalComponentProvider<O> & AsyncRequiredComponentProvider<R>;
 
-type NonNullableComponent<T extends keyof IComponent> = NonNullable<IComponent[T]>;
+/**
+ * Provided a keyof IComponent will ensure the type is an instance of that type
+ */
+export type NonNullableComponent<T extends keyof IComponent> = NonNullable<IComponent[T]>;
 
 /**
  * Multiple ways to provide a component.
