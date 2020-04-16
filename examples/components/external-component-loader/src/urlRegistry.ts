@@ -58,61 +58,54 @@ const fetchAndValidatePackageInfo = async (packageUrl: string) => {
 export class UrlRegistry implements IComponentRegistry {
     private static readonly WindowKeyPrefix = "FluidExternalComponent";
 
-    private readonly urlRegistryMap = new Map<string, Promise<ComponentRegistryEntry>>();
-    private readonly loadingPackages: Map<string, Promise<any>>;
-    private readonly loadingEntrypoints: Map<string, Promise<unknown>>;
+    private readonly fluidExportsMap: Map<string, Promise<ComponentRegistryEntry>>;
+    private readonly loadingFluidModules: Map<string, Promise<unknown>>;
 
     constructor() {
         // Stash on the window so multiple instance can coordinate
-        const loadingPackagesKey = `${UrlRegistry.WindowKeyPrefix}LoadingPackages`;
-        if (window[loadingPackagesKey] === undefined) {
-            window[loadingPackagesKey] = new Map<string, Promise<unknown>>();
+        const fluidExportMapKey = `${UrlRegistry.WindowKeyPrefix}FluidExports`;
+        if (window[fluidExportMapKey] === undefined) {
+            window[fluidExportMapKey] = new Map<string, Promise<unknown>>();
         }
-        this.loadingPackages = window[loadingPackagesKey] as Map<string, Promise<unknown>>;
+        this.fluidExportsMap = window[fluidExportMapKey] as Map<string, Promise<ComponentRegistryEntry>>;
 
         const loadingEntrypointsKey = `${UrlRegistry.WindowKeyPrefix}LoadingEntrypoints`;
         if (window[loadingEntrypointsKey] === undefined) {
             window[loadingEntrypointsKey] = new Map<string, Promise<unknown>>();
         }
-        this.loadingEntrypoints = window[loadingEntrypointsKey] as Map<string, Promise<unknown>>;
+        this.loadingFluidModules = window[loadingEntrypointsKey] as Map<string, Promise<unknown>>;
     }
 
     public get IComponentRegistry() { return this; }
 
     public async get(name: string): Promise<ComponentRegistryEntry | undefined> {
-        if (!this.urlRegistryMap.has(name)
+        if (!this.fluidExportsMap.has(name)
             && (name.startsWith("http://") || name.startsWith("https://"))) {
 
-            let entryPointPromise = this.loadingPackages.get(name);
-            if (entryPointPromise === undefined) {
-                entryPointPromise = this.loadEntrypoint(name);
-                this.loadingPackages.set(name, entryPointPromise);
-            }
-
-            this.urlRegistryMap.set(
+            this.fluidExportsMap.set(
                 name,
-                entryPointPromise.then(async (entrypoint: IFluidModule) => entrypoint.fluidExport));
+                this.loadFluidModule(name).then((entrypoint) => entrypoint.fluidExport));
         }
 
-        return this.urlRegistryMap.get(name);
+        return this.fluidExportsMap.get(name);
     }
 
     /**
      * Load and retrieve an entrypoint to a Fluid package from a URL
      * @param packageUrl - The URL to the package we're loading
      */
-    private async loadEntrypoint(packageUrl: string): Promise<any> {
+    private async loadFluidModule(packageUrl: string): Promise<IFluidModule> {
         // First get the info from the package about what we're loading
         const fluidPackage = await fetchAndValidatePackageInfo(packageUrl);
         const entrypointName = fluidPackage.fluid.browser.umd.library;
         const scriptRelativeUrls = fluidPackage.fluid.browser.umd.files;
         const scriptUrls = scriptRelativeUrls.map((scriptRelativeUrl) => `${packageUrl}/${scriptRelativeUrl}`);
 
-        while (this.loadingEntrypoints.has(entrypointName)) {
-            await this.loadingEntrypoints.get(entrypointName);
+        while (this.loadingFluidModules.has(entrypointName)) {
+            await this.loadingFluidModules.get(entrypointName);
         }
-        const loadingEntrypoint = new Deferred();
-        this.loadingEntrypoints.set(entrypointName, loadingEntrypoint.promise);
+        const loadingEntrypoint = new Deferred<void>();
+        this.loadingFluidModules.set(entrypointName, loadingEntrypoint.promise);
         // Preserve the entry point for our own external component loader package
         const preservedEntryPoint = window[entrypointName];
         window[entrypointName] = undefined;
@@ -135,12 +128,11 @@ export class UrlRegistry implements IComponentRegistry {
                     `UrlRegistry: ${packageUrl}: Entrypoint: ${entrypointName}: Entry point is undefined`);
             }
             return entrypoint;
-
         } finally {
             // Release the entry point
             window[entrypointName] = preservedEntryPoint;
             loadingEntrypoint.resolve();
-            this.loadingEntrypoints.delete(entrypointName);
+            this.loadingFluidModules.delete(entrypointName);
         }
     }
 }
