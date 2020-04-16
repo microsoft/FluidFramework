@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
@@ -227,11 +228,9 @@ export class ContainerContext extends EventEmitter implements IContainerContext,
         return this.container.isAttached();
     }
 
-    public async createSummary(): Promise<ISummaryTree> {
+    public createSummary(): ISummaryTree {
         const expRuntime: IExperimentalRuntime = this.runtime as IExperimentalRuntime;
-        if (!expRuntime?.isExperimentalRuntime) {
-            throw new Error("Runtime has no experimental features");
-        }
+        assert(expRuntime?.isExperimentalRuntime);
         return expRuntime.createSummary();
     }
 

@@ -2,12 +2,14 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
+
+import { ITelemetryBaseLogger, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
     IDocumentService,
     IDocumentServiceFactory,
     IResolvedUrl,
 } from "@microsoft/fluid-driver-definitions";
+import { ISummaryTree } from "@microsoft/fluid-protocol-definitions";
 import { IOdspResolvedUrl } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import { ICache, IOdspCache, OdspCache } from "./odspCache";
@@ -25,6 +27,21 @@ export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentService
 
     private readonly documentsOpened = new Set<string>();
     private readonly cache: IOdspCache;
+
+    public async createContainer(
+        createNewSummary: ISummaryTree,
+        createNewResolvedUrl: IResolvedUrl,
+        logger: ITelemetryLogger,
+    ): Promise<IDocumentService> {
+        return OdspDocumentService.createContainer(
+            createNewSummary,
+            createNewResolvedUrl,
+            logger ?? this.logger,
+            this.cache,
+            this.getStorageToken,
+            this,
+        );
+    }
 
     /**
    * @param appId - app id used for telemetry for network requests.

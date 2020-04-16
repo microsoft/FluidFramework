@@ -3,25 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import * as assert from "assert";
+import { parse } from "url";
+import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
     IExperimentalUrlResolver,
+    CreateNewHeader,
 } from "@microsoft/fluid-driver-definitions";
 import {
     ITokenClaims,
     IUser,
-    ISummaryTree,
 } from "@microsoft/fluid-protocol-definitions";
 import Axios from "axios";
 import * as jwt from "jsonwebtoken";
-import { getRandomName } from "@microsoft/fluid-server-services-client";
-import {
-    getDocAttributesFromProtocolSummary,
-    getQuorumValuesFromProtocolSummary,
-} from "@microsoft/fluid-driver-utils";
 
 /**
  * As the name implies this is not secure and should not be used in production. It simply makes the example easier
@@ -38,9 +35,8 @@ import {
  * works or a router inside of a single page app framework.
  */
 export class InsecureUrlResolver implements IUrlResolver, IExperimentalUrlResolver {
-    private readonly cache = new Map<string, Promise<IResolvedUrl>>();
-
     public readonly isExperimentalUrlResolver = true;
+    private readonly cache = new Map<string, Promise<IResolvedUrl>>();
 
     constructor(
         private readonly hostUrl: string,
@@ -53,13 +49,31 @@ export class InsecureUrlResolver implements IUrlResolver, IExperimentalUrlResolv
     ) { }
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
+        if (request.headers?.[CreateNewHeader.createNew]) {
+            const [, queryString] = request.url.split("?");
+
+            const searchParams = new URLSearchParams(queryString);
+            const fileName = searchParams.get("fileName");
+            if (!fileName) {
+                throw new Error("FileName should be there!!");
+            }
+            return this.resolveHelper(fileName);
+        }
         const parsedUrl = new URL(request.url);
 
         // If hosts match then we use the local tenant information. Otherwise we make a REST call out to the hosting
         // service using our bearer token.
         if (parsedUrl.host === window.location.host) {
-            const documentId = parsedUrl.pathname.substr(1).split("/")[0];
-
+            const path = parsedUrl.pathname.substr(1).split("/");
+            let documentId: string;
+            if(path.length > 1) {
+                documentId = path[1];
+            } else {
+                documentId = path[0];
+            }
+            if (documentId === "") {
+                documentId = path[0];
+            }
             return this.resolveHelper(documentId);
         } else {
             const maybeResolvedUrl = this.cache.get(request.url);
@@ -106,28 +120,34 @@ export class InsecureUrlResolver implements IUrlResolver, IExperimentalUrlResolv
         return response;
     }
 
-    public async createContainer(
-        createNewSummary: ISummaryTree,
-        request: IRequest,
-    ): Promise<IResolvedUrl> {
-        const id = getRandomName("-", false);
-        const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
-        const appSummary = createNewSummary.tree[".app"] as ISummaryTree;
-        if (!(protocolSummary && appSummary)) {
-            throw new Error("Protocol and App Summary required in the full summary");
-        }
-        const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
-        const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
-        await Axios.post(
-            `${this.ordererUrl}/documents/${this.tenantId}`,
-            {
-                id,
-                summary: appSummary,
-                sequenceNumber: documentAttributes.sequenceNumber,
-                values: quorumValues,
-            });
+    public async requestUrl(resolvedUrl: IResolvedUrl, request: IRequest): Promise<IResponse> {
+        const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
 
-        return this.resolveHelper(id);
+        const parsedUrl = parse(fluidResolvedUrl.url);
+        const [, , documentId] = parsedUrl.pathname?.split("/");
+        assert(documentId);
+
+        let url = request.url;
+        if (url.startsWith("/")) {
+            url = url.substr(1);
+        }
+        const response: IResponse = {
+            mimeType: "text/plain",
+            value: `${this.hostUrl}/${encodeURIComponent(
+                this.tenantId)}/${encodeURIComponent(documentId)}/${url}`,
+            status: 200,
+        };
+        return response;
+    }
+
+    public createCreateNewRequest(fileName: string): IRequest {
+        const createNewRequest: IRequest = {
+            url: `${this.hostUrl}?fileName=${fileName}`,
+            headers: {
+                [CreateNewHeader.createNew]: true,
+            },
+        };
+        return createNewRequest;
     }
 
     private auth(tenantId: string, documentId: string) {
