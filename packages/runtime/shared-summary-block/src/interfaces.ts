@@ -16,9 +16,9 @@ export interface ISharedSummaryBlock extends ISharedObject {
     /**
      * Retrieves the given key from the map.
      * @param key - Key to retrieve from.
-     * @returns The stored value of type Jsonable, or undefined if the key is not set.
+     * @returns The stored value, or undefined if the key is not set.
      */
-    get(key: string): Jsonable;
+    get<T = Jsonable>(key: string): T;
 
     /**
      * Sets the value stored at key to the provided value.
