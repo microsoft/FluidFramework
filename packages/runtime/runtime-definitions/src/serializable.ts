@@ -4,7 +4,7 @@
  */
 
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { Jsonable, JsonablePrimitive } from ".";
+import { AsJsonable, Jsonable, JsonablePrimitive } from "./jsonable";
 
 /**
  * A union of the types that Fluid can intrinsically serialize, which is any type is that is
@@ -14,4 +14,6 @@ import { Jsonable, JsonablePrimitive } from ".";
  *
  * (See Jsonable for caveats regarding serialization of `undefined` and non-finate numbers.)
  */
-export type Serializable = Jsonable<JsonablePrimitive | IComponentHandle>;
+export type Serializable = Jsonable< JsonablePrimitive | IComponentHandle>;
+
+export type AsSerializable<T> = AsJsonable<T,  JsonablePrimitive | IComponentHandle>;
