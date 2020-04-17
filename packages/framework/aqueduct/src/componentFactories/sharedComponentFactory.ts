@@ -5,7 +5,6 @@
 
 import { IComponent, IComponentLoadable, IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime, ISharedObjectRegistry } from "@microsoft/fluid-component-runtime";
-import { IEvent } from "@microsoft/fluid-common-definitions";
 import { ComponentRegistry } from "@microsoft/fluid-container-runtime";
 import {
     IComponentContext,
@@ -25,7 +24,6 @@ import {
     ISharedComponentProps,
     SharedComponent,
 } from "../components";
-import { ComponentCtor } from "../types";
 
 export class SharedComponentFactory<P extends IComponent>
 implements IComponentFactory, Partial<IProvideComponentRegistry>
@@ -35,7 +33,7 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>
 
     constructor(
         public readonly type: string,
-        private readonly ctor: ComponentCtor<P, IEvent, SharedComponent<P>>,
+        private readonly ctor: new (props: ISharedComponentProps<P>) => SharedComponent,
         sharedObjects: readonly ISharedObjectFactory[],
         private readonly optionalProviders: ComponentSymbolProvider<P>,
         registryEntries?: NamedComponentRegistryEntries,

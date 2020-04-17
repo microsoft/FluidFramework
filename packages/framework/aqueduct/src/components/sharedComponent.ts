@@ -21,11 +21,10 @@ import { EventForwarder } from "@microsoft/fluid-common-utils";
 import { IEvent } from "@microsoft/fluid-common-definitions";
 import { serviceRoutePathRoot } from "../containerServices";
 
-export interface ISharedComponentProps<O extends IComponent = object> {
+export interface ISharedComponentProps<P extends IComponent = object> {
     readonly runtime: IComponentRuntime,
     readonly context: IComponentContext,
-    // Probably shouldn't be providers?
-    readonly providers: AsyncComponentProvider<ComponentKey<O>,ComponentKey<object>>,
+    readonly providers: AsyncComponentProvider<ComponentKey<P>,ComponentKey<object>>,
 }
 
 /**

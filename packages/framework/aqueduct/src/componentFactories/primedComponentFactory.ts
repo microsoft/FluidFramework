@@ -6,7 +6,6 @@
 import {
     IComponent,
 } from "@microsoft/fluid-component-core-interfaces";
-import { IEvent } from "@microsoft/fluid-common-definitions";
 import {
     DirectoryFactory,
     MapFactory,
@@ -19,8 +18,7 @@ import {
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { ComponentSymbolProvider } from "@microsoft/fluid-synthesize";
 
-import { PrimedComponent } from "../components";
-import { ComponentCtor } from "../types";
+import { PrimedComponent, ISharedComponentProps } from "../components";
 import { SharedComponentFactory } from "./sharedComponentFactory";
 
 export class PrimedComponentFactory<P extends IComponent = object>
@@ -28,7 +26,7 @@ export class PrimedComponentFactory<P extends IComponent = object>
 {
     constructor(
         type: string,
-        ctor: ComponentCtor<P, IEvent, PrimedComponent<P>>,
+        ctor: new (props: ISharedComponentProps<P>) => PrimedComponent,
         sharedObjects: readonly ISharedObjectFactory[] = [],
         optionalProviders: ComponentSymbolProvider<P>,
         registryEntries?: NamedComponentRegistryEntries,
