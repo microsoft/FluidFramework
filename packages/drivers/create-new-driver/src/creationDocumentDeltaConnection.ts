@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import { IDocumentDeltaConnection } from "@microsoft/fluid-driver-definitions";
+import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@microsoft/fluid-driver-definitions";
 import {
     ConnectionMode,
     IClient,
@@ -18,6 +17,7 @@ import {
     ITokenClaims,
     IConnect,
 } from "@microsoft/fluid-protocol-definitions";
+import { TypedEventEmitter } from "@microsoft/fluid-common-utils";
 import { CreationServerMessagesHandler } from "./creationDriverServer";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
@@ -26,7 +26,9 @@ const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
  * Represents a connection to a stream of delta updates. This also provides functionality to stamp
  * ops and then emit them.
  */
-export class CreationDocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
+export class CreationDocumentDeltaConnection
+    extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
+    implements IDocumentDeltaConnection {
 
     private _details: IConnected | undefined;
 
@@ -166,7 +168,7 @@ export class CreationDocumentDeltaConnection extends EventEmitter implements IDo
      * @param message - message to submit
      */
     public async submitAsync(messages: IDocumentMessage[]): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
+        return new Promise<void>((resolve) => {
             this.serverMessagesHandler.submitMessage(messages, this.clientId);
             resolve();
         });

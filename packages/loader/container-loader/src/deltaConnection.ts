@@ -3,22 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
-import { EventEmitter } from "events";
 import {
     IConnectionDetails,
 } from "@microsoft/fluid-container-definitions";
 import {
     IDocumentDeltaConnection,
     IDocumentService,
+    IDocumentDeltaConnectionEvents,
 } from "@microsoft/fluid-driver-definitions";
 import {
     IClient,
     IDocumentMessage,
     INack,
 } from "@microsoft/fluid-protocol-definitions";
+import { EventForwarder } from "@microsoft/fluid-common-utils";
 
-export class DeltaConnection extends EventEmitter {
+export class DeltaConnection extends EventForwarder<IDocumentDeltaConnectionEvents> {
     public static async connect(
         service: IDocumentService,
         client: IClient) {
@@ -40,9 +40,6 @@ export class DeltaConnection extends EventEmitter {
 
     private readonly _details: IConnectionDetails;
     private _nacked = false;
-
-    private readonly forwardEvents = ["op", "op-content", "signal", "error", "pong"];
-    private readonly nonForwardEvents = ["nack", "disconnect"];
 
     private _connection?: IDocumentDeltaConnection;
 
@@ -82,6 +79,12 @@ export class DeltaConnection extends EventEmitter {
             this.emit("disconnect", reason);
             this.close();
         });
+
+        // A number of events that are pass-through.
+        // Note that we delay subscribing to op / op-content / signal on purpose, as
+        // that is used as a signal in DocumentDeltaConnection to know if anyone has subscribed
+        // to these events, and thus stop accumulating ops / signals in early handlers.
+        this.forwardEvent(connection, "op", "op-content", "signal", "error", "pong");
     }
 
     /**
@@ -106,36 +109,5 @@ export class DeltaConnection extends EventEmitter {
 
     public submitSignal(message: any): void {
         return this.connection.submitSignal(message);
-    }
-
-    /**
-     * Subscribe to events emitted by the document
-     *
-     * @param event - event emitted by the document to listen to
-     * @param listener - listener for the event
-     */
-    public on(event: string, listener: (...args: any[]) => void): this {
-        // Register for the event on connection
-
-        // A number of events that are pass-through.
-        // Note that we delay subscribing to op / op-content / signal on purpose, as
-        // that is used as a signal in DocumentDeltaConnection to know if anyone has subscribed
-        // to these events, and thus stop accumulating ops / signals in early handlers.
-        if (this.forwardEvents.includes(event)) {
-            assert(this.connection.listeners(event).length === 0, "re-registration of events is not implemented");
-            this.connection.on(
-                event,
-                (...args: any[]) => {
-                    this.emit(event, ...args);
-                });
-        } else {
-            // These are events that we already subscribed to and already emit on object.
-            assert(this.nonForwardEvents.includes(event));
-        }
-
-        // And then add the listener to our event emitter
-        super.on(event, listener);
-
-        return this;
     }
 }
