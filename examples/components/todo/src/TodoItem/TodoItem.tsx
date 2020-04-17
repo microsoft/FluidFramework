@@ -101,7 +101,6 @@ export class TodoItem extends PrimedComponent
             }
         });
 
-
         this.root.on("valueChanged", (changed: IValueChanged, local: boolean) => {
             if (!local) {
                 if (changed.key === checkedKey) {
