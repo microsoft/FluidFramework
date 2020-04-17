@@ -79,10 +79,9 @@ interface IChatViewState {
 }
 
 class ChatView extends React.Component<IChatViewProps, IChatViewState> {
-
     constructor(props: IChatViewProps){
         super(props);
-        const {root} = this.props;
+        const { root } = this.props;
         this.state = { messages: root.get<IMessage[]>(MessagesKey), inputMessage: "" };
 
         root.on("valueChanged", (changed: IDirectoryValueChanged, local: boolean) => {
@@ -95,7 +94,7 @@ class ChatView extends React.Component<IChatViewProps, IChatViewState> {
         });
     }
 
-    render(){
+    render() {
         const { inputMessage, messages } = this.state;
         const messagesToRender: any[] = [];
 
