@@ -108,7 +108,6 @@ export class GithubComment extends TextareaNoReact implements IComponentHTMLView
 
         return fluidComponent;
     }
-
 } // End GithubComment class
 
 /**

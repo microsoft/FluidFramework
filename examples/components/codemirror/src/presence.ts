@@ -145,7 +145,6 @@ export class CodeMirrorPresenceManager extends EventEmitter {
         });
 
         this.presenceManager.on("newPresence", (presenceInfo: IPresenceInfo) => {
-
             const previousUserInfo = this.presenceMap.get(presenceInfo.userId);
 
             if (previousUserInfo) {
@@ -194,7 +193,6 @@ export class CodeMirrorPresenceManager extends EventEmitter {
             cursorDot.style.position = "absolute";
             cursorDot.style.marginTop = "-2px";
             cursor.appendChild(cursorDot);
-
 
             const newUserInfo: ICodeMirrorPresenceInfo = {
                 cursor,

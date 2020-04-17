@@ -7,7 +7,6 @@
  * public loading scopes do NOT match the lines exactly!) into chunks.
  */
 
-
 /******************************************************************************/
 // Import the Fluid Framework "goo":
 /******************************************************************************/
@@ -69,7 +68,6 @@ export class TextareaNoReact extends PrimedComponent implements IComponentHTMLVi
         this.textareaRootKey = "textareaString";
     }
 
-
     /******************************************************************************/
     // One-time component setup:
     /******************************************************************************/
@@ -87,7 +85,6 @@ export class TextareaNoReact extends PrimedComponent implements IComponentHTMLVi
             SharedString.create(this.runtime).handle);
     }
     /******************************************************************************/
-
 
     /******************************************************************************/
     // Core app logic (in this case: fancy marker positioning and text updating):
@@ -285,7 +282,6 @@ export class TextareaNoReact extends PrimedComponent implements IComponentHTMLVi
     }
     /******************************************************************************/
 
-
     /******************************************************************************/
     // HTML setup and rendering:
     /******************************************************************************/
@@ -359,7 +355,6 @@ export class TextareaNoReact extends PrimedComponent implements IComponentHTMLVi
     }
     /******************************************************************************/
 
-
     /******************************************************************************/
     // Component loading and export:
     /******************************************************************************/
@@ -379,7 +374,6 @@ export class TextareaNoReact extends PrimedComponent implements IComponentHTMLVi
 
         return fluidComponent;
     }
-
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public componentHasInitialized(): Promise<void> {

@@ -28,4 +28,3 @@ export interface IProvideComponentCallable {
 export interface IComponentCallable<T> extends IProvideComponentCallable {
     setComponentCallbacks(callbacks: T): void;
 }
-

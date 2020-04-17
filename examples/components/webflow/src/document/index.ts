@@ -478,7 +478,6 @@ export class FlowDocument extends SharedComponent<ISharedDirectory, IFlowDocumen
         return s.join("");
     }
 
-
     private getOppositeMarker(marker: Marker, oldPrefixLength: number, newPrefix: string) {
         return this.sharedString.getMarkerFromId(`${newPrefix}${marker.getId().slice(oldPrefixLength)}`);
     }
