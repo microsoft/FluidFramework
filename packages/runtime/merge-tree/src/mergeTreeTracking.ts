@@ -7,7 +7,6 @@ import { ISegment } from "./mergeTree";
 import { SortedSegmentSet } from "./sortedSegmentSet";
 
 export class TrackingGroup {
-
     private readonly segmentSet: SortedSegmentSet;
 
     constructor() {

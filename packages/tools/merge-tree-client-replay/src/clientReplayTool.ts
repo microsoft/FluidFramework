@@ -120,7 +120,6 @@ export class ClientReplayTool {
         const mergeTreeMessages = new Array<IFullPathSequencedDocumentMessage>();
         const chunkMap = new Map<string, string[]>();
         for (const message of this.deltaStorageService.getFromWebSocket(0, this.args.to)) {
-
             if (message.type === MessageType.ChunkedOp) {
                 const chunk = JSON.parse(message.contents as string) as IChunkedOp;
                 if (!chunkMap.has(message.clientId)) {

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import {
     IComponent,
     IComponentHandle,
@@ -16,16 +15,19 @@ import {
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { ComponentHandle } from "@microsoft/fluid-component-runtime";
 import { IDirectory } from "@microsoft/fluid-map";
-// eslint-disable-next-line import/no-internal-modules
-import * as uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
+import { EventForwarder } from "@microsoft/fluid-common-utils";
+import { IEvent } from "@microsoft/fluid-common-definitions";
 import { serviceRoutePathRoot } from "../containerServices";
 
 /**
  * This is a bare-bones base class that does basic setup and enables for factory on an initialize call.
  * You probably don't want to inherit from this component directly unless you are creating another base component class
  */
-// eslint-disable-next-line max-len
-export abstract class SharedComponent extends EventEmitter implements IComponentLoadable, IComponentRouter, IProvideComponentHandle {
+export abstract class SharedComponent<TEvents extends IEvent= IEvent>
+    extends EventForwarder<TEvents>
+    implements IComponentLoadable, IComponentRouter, IProvideComponentHandle
+{
     private initializeP: Promise<void> | undefined;
     private readonly innerHandle: IComponentHandle<this>;
     private _disposed = false;
@@ -208,6 +210,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
      * Called the first time the component is initialized.
      *
      * @param props - Optional props to be passed in on create
+     * @deprecated 0.16 Issue #1635 Initial props should be provided through a factory override
      */
     protected async componentInitializingFirstTime(props?: any): Promise<void> { }
 
@@ -224,5 +227,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     /**
      * Called when the host container closes and disposes itself
      */
-    protected dispose(): void { }
+    public dispose(): void {
+        super.dispose();
+    }
 }

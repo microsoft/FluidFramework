@@ -209,7 +209,6 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
         sequenceNumber: number,
         local: boolean,
         clientSequenceNumber: number) {
-
         assert(!this.proposals.has(sequenceNumber), `!this.proposals.has(${sequenceNumber})`);
         assert(
             !local || this.localProposals.has(clientSequenceNumber),

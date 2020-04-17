@@ -38,7 +38,7 @@ export class ZookeeperClient implements IZookeeperClient {
     }
 
     private connect() {
-        this.client = zookeeper.createClient(this.url, { retries: RetryAttemps});
+        this.client = zookeeper.createClient(this.url, { retries: RetryAttemps });
         this.client.connect();
         this.client.once("connected", () => {
             this.client.once("disconnected", () => {

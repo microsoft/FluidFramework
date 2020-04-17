@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { Deferred, TelemetryNullLogger} from "@microsoft/fluid-common-utils";
+import { Deferred, TelemetryNullLogger } from "@microsoft/fluid-common-utils";
 import {
     ISequencedDocumentMessage,
     ISummaryAck,
@@ -38,11 +38,7 @@ describe("Runtime", () => {
                 let shouldDeferGenerateSummary: boolean = false;
                 let deferGenerateSummary: Deferred<void>;
 
-                async function flushPromises() {
-                    const p = new Promise((resolve) => setTimeout(() => { resolve(); }, 0));
-                    clock.tick(0);
-                    return p;
-                }
+                const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
 
                 async function emitNextOp(increment: number = 1) {
                     lastRefSeq += increment;

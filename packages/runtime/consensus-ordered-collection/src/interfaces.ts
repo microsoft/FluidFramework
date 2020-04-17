@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import {
     IComponentRuntime,
     ISharedObjectServices,
     IChannelAttributes,
 } from "@microsoft/fluid-runtime-definitions";
-import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
+import { ISharedObject, ISharedObjectFactory, ISharedObjectEvents } from "@microsoft/fluid-shared-object-base";
 
 export enum ConsensusResult {
     Release,
@@ -40,6 +39,38 @@ export interface IConsensusOrderedCollectionFactory extends ISharedObjectFactory
 }
 
 /**
+ * Events notifying about addition, acquisition, release and completion of items
+ */
+export interface IConsensusOrderedCollectionEvents<T> extends ISharedObjectEvents{
+
+    /**
+     * Event fires when new item is added to the queue or
+     * an item previously acquired is returned back to a queue (including client loosing connection)
+     * @param newlyAdded - indicates if it's newly added item of previously acquired item
+     */
+    (event: "add", listener: (value: T, newlyAdded: boolean) => void): this;
+    /**
+     * Event fires when a client acquired an item
+     * Fires both for locally acquired items, as well as items acquired by remote clients
+     */
+    (event: "acquire", listener: (value: T, clientId?: string) => void): this;
+
+    /**
+     * "Complete event fires when a client completes an item.
+     */
+    (event: "complete", listener: (value: T) => void): this;
+
+    /**
+     * Event fires when locally acquired item is being released back to the queue.
+     * Please note that release process is asynchronous, so it takes a while for it to happen
+     * ("add" event will be fired as result of it)
+     * @param intentional - indicates whether release was intentional (result of returning
+     * ConsensusResult.Release from callback) or it happened as result of lost connection.
+     */
+    (event: "localRelease", listener: (value: T, intentional: boolean) => void): this;
+}
+
+/**
  * Consensus Ordered Collection interface
  *
  * An consensus ordered collection is a distributed data structure, which
@@ -59,36 +90,7 @@ export interface IConsensusOrderedCollectionFactory extends ISharedObjectFactory
  * They will not be references to the original input object.  Thus changed to
  * the input object will not reflect the object in the collection.
  */
-export interface IConsensusOrderedCollection<T = any> extends ISharedObject, EventEmitter {
-    /**
-     * Events notifying about addition, acquisition, release and completion of items
-     */
-
-    /**
-     * Event fires when new item is added to the queue or
-     * an item previously acquired is returned back to a queue (including client loosing connection)
-     * @param newlyAdded - indicates if it's newly added item of previously acquired item
-     */
-    on(event: "add", listener: (value: T, newlyAdded: boolean) => void): this;
-    /**
-     * Event fires when a client acquired an item
-     * Fires both for locally acquired items, as well as items acquired by remote clients
-     */
-    on(event: "acquire", listener: (value: T, clientId?: string) => void): this;
-
-    /**
-     * "Complete event fires when a client completes an item.
-     */
-    on(event: "complete", listener: (value: T) => void): this;
-
-    /**
-     * Event fires when locally acquired item is being released back to the queue.
-     * Please note that release process is asynchronous, so it takes a while for it to happen
-     * ("add" event will be fired as result of it)
-     * @param intentional - indicates whether release was intentional (result of returning
-     * ConsensusResult.Release from callback) or it happened as result of lost connection.
-     */
-    on(event: "localRelease", listener: (value: T, intentional: boolean) => void): this;
+export interface IConsensusOrderedCollection<T = any> extends ISharedObject<IConsensusOrderedCollectionEvents<T>> {
 
     /**
      * Adds a value to the collection

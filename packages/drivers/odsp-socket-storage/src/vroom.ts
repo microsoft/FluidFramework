@@ -43,8 +43,8 @@ export async function fetchJoinSession(
             throwOdspNetworkError("Failed to acquire Vroom token", 400, true);
         }
 
-        const extraProps = refresh ? {secondAttempt: 1} : {};
-        const joinSessionEvent = PerformanceEvent.start(logger, { eventName: "JoinSession", ...extraProps});
+        const extraProps = refresh ? { secondAttempt: 1 } : {};
+        const joinSessionEvent = PerformanceEvent.start(logger, { eventName: "JoinSession", ...extraProps });
         try {
             // TODO Extract the auth header-vs-query logic out
             const siteOrigin = getOrigin(siteUrl);

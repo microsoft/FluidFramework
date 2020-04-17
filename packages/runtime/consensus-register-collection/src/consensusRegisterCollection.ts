@@ -20,7 +20,7 @@ import {
 import { ISharedObject, SharedObject, ValueType } from "@microsoft/fluid-shared-object-base";
 import { ConsensusRegisterCollectionFactory } from "./consensusRegisterCollectionFactory";
 import { debug } from "./debug";
-import { IConsensusRegisterCollection, ReadPolicy } from "./interfaces";
+import { IConsensusRegisterCollection, ReadPolicy, IConsensusRegisterCollectionEvents } from "./interfaces";
 
 interface ILocalData {
     // Atomic version.
@@ -86,7 +86,8 @@ const snapshotFileName = "header";
 /**
  * Implementation of a consensus register collection
  */
-export class ConsensusRegisterCollection<T> extends SharedObject implements IConsensusRegisterCollection<T> {
+export class ConsensusRegisterCollection<T>
+    extends SharedObject<IConsensusRegisterCollectionEvents> implements IConsensusRegisterCollection<T> {
     /**
      * Create a new consensus register collection
      *
@@ -119,16 +120,6 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
         runtime: IComponentRuntime,
         attributes: IChannelAttributes) {
         super(id, runtime, attributes);
-    }
-
-    public on(
-        event: "atomicChanged" | "versionChanged",
-        listener: (key: string, value: any, local: boolean) => void): this;
-    public on(event: string | symbol, listener: (...args: any[]) => void): this;
-
-    public on(event: string, listener: (...args: any[]) => void): this
-    {
-        return super.on(event, listener);
     }
 
     /**
@@ -232,7 +223,6 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
     protected async loadCore(
         branchId: string,
         storage: IObjectStorageService): Promise<void> {
-
         const header = await storage.read(snapshotFileName);
         const data: { [key: string]: ILocalData } = header !== undefined ? JSON.parse(fromBase64ToUtf8(header)) : {};
 
@@ -272,7 +262,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
                 case "write": {
                     // add back-compat for pre-0.14 versions
                     // when the refSeq property didn't exist
-                    if(op.refSeq === undefined){
+                    if (op.refSeq === undefined) {
                         op.refSeq = message.referenceSequenceNumber;
                     }
                     // Message can be delivered with delay - resubmitted on reconnect.

@@ -18,7 +18,6 @@ import { createTestDocumentService } from "./testDocumentService";
  * Implementation of document service factory for testing.
  */
 export class TestDocumentServiceFactory implements IDocumentServiceFactory {
-
     public readonly protocolName = "fluid-test:";
     /**
      * @param localDeltaConnectionServer - delta connection server for ops
@@ -34,7 +33,7 @@ export class TestDocumentServiceFactory implements IDocumentServiceFactory {
         ensureFluidResolvedUrl(resolvedUrl);
 
         const parsedUrl = parse(resolvedUrl.url);
-        const [, tenantId, documentId] = parsedUrl.path? parsedUrl.path.split("/") : [];
+        const [, tenantId, documentId] = parsedUrl.path ? parsedUrl.path.split("/") : [];
         if (!documentId || !tenantId) {
             throw new Error(`Couldn't parse resolved url. [documentId:${documentId}][tenantId:${tenantId}]`);
         }

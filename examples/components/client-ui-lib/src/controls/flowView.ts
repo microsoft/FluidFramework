@@ -665,7 +665,6 @@ function showPositionInLine(
     text: string,
     cursorPos: number,
     presenceInfo?: ILocalPresenceInfo) {
-
     if (lineContext.deferredAttach) {
         addToRerenderList(lineContext);
     } else {
@@ -1284,7 +1283,6 @@ function renderTable(
     layoutInfo: ILayoutContext,
     targetTranslation: string,
     defer = false) {
-
     const flowView = layoutInfo.flowView;
     const sharedString = flowView.sharedString;
     const tablePos = sharedString.getPosition(table);
@@ -1499,7 +1497,6 @@ function gatherOverlayLayer(
     start: number,
     end: number,
     context: IOverlayMarker[]) {
-
     if (MergeTree.Marker.is(segment)) {
         if ((segment.refType === MergeTree.ReferenceType.Simple) &&
             (segment.hasSimpleType("inkOverlay"))) {
@@ -1568,7 +1565,7 @@ export interface IExcludedRectangle extends ui.Rectangle {
 }
 
 function makeExcludedRectangle(x: number, y: number, w: number, h: number, id?: string) {
-    const r = <IExcludedRectangle>new ui.Rectangle(x, y, w, h);
+    const r = <IExcludedRectangle> new ui.Rectangle(x, y, w, h);
     r.id = id;
     r.left = true;
     r.curY = 0;
@@ -1677,7 +1674,7 @@ export class Viewport {
                         exclu.floatL = true;
                     }
                 }
-                let excluDiv = <IRefDiv>this.viewHasInclusion(irdoc.referenceDocId);
+                let excluDiv = <IRefDiv> this.viewHasInclusion(irdoc.referenceDocId);
 
                 // Move the inclusion
                 if (excluDiv) {
@@ -2129,7 +2126,6 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
         indentPct: number,
         indentSymbol: Paragraph.ISymbol,
         contentPct: number) {
-
         const pgBreaks = <IFlowBreakInfo[]>endPGMarker.cache.breaks;
         let lineDiv: ILineDiv;
         let lineDivHeight = docContext.defaultLineDivHeight;
@@ -3116,7 +3112,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         public sharedString: Sequence.SharedString,
         public status: Status,
         public options?: Record<string, any>) {
-
         super(element);
 
         // Enable element to receive focus (see Example 1):
@@ -3488,7 +3483,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 }
                 elm = elm.previousElementSibling as ILineDiv;
             }
-
         } else {
             let elm = viewportDiv.firstElementChild as ILineDiv;
             while (elm) {
@@ -3578,7 +3572,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                         position = targetLineDiv.lineEnd;
                     }
                 }
-
             } else if (elm.tagName === "SPAN") {
                 const span = this.getSegSpan(elm as ISegSpan);
                 if (span) {
@@ -4530,10 +4523,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
     public insertComponentNew(prefix: string, chaincode: string, inline = false) {
         const id = `${prefix}-${Date.now()}`;
-
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.collabDocument.runtime.createAndAttachComponent(id, chaincode);
-
+        this.collabDocument.context.createComponent(id, chaincode).then((doc) => doc.attach());
         const props = {
             crefTest: {
                 layout: { inline },
@@ -5218,7 +5209,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         refseq: number,
         oldpos: number,
         posAdjust = 0) {
-
         const remotePosInfo: IRemotePresenceInfo = {
             origMark: -1,
             origPos: oldpos + posAdjust,

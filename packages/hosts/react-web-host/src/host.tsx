@@ -41,7 +41,6 @@ export class FluidLoader extends React.Component<ILoaderProps, any> {
     }
 
     public async componentDidMount() {
-
         if (this.props.iframe) {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             loadIFramedFluidContainer(

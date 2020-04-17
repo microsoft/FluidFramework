@@ -5,7 +5,6 @@
 
 // eslint-disable-next-line import/no-unassigned-import
 import { } from "@microsoft/fluid-component-core-interfaces";
-import { EventEmitter } from "events";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { IComponentRuntime, IChannelAttributes } from "@microsoft/fluid-runtime-definitions";
 import { SharedSegmentSequence } from "./sequence";
@@ -25,7 +24,7 @@ export interface IProvideSharedString {
 /**
  * Component interface describing access methods on a SharedString
  */
-export interface ISharedString extends EventEmitter, IProvideSharedString {
+export interface ISharedString extends SharedSegmentSequence<SharedStringSegment>, IProvideSharedString {
     insertText(pos: number, text: string, props?: MergeTree.PropertySet);
 
     insertMarker(pos: number, refType: MergeTree.ReferenceType, props?: MergeTree.PropertySet);
@@ -78,7 +77,6 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
         relativePos1: MergeTree.IRelativePosition,
         refType: MergeTree.ReferenceType,
         props?: MergeTree.PropertySet) {
-
         const segment = new MergeTree.Marker(refType);
         if (props) {
             segment.addProperties(props);
@@ -102,7 +100,6 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
         pos: number,
         refType: MergeTree.ReferenceType,
         props?: MergeTree.PropertySet) {
-
         const segment = new MergeTree.Marker(refType);
         if (props) {
             segment.addProperties(props);
@@ -181,7 +178,6 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
         marker: MergeTree.Marker,
         props: MergeTree.PropertySet,
         callback: (m: MergeTree.Marker) => void) {
-
         const annotateOp = this.client.annotateMarkerNotifyConsensus(marker, props, callback);
         if (annotateOp) {
             this.submitSequenceMessage(annotateOp);

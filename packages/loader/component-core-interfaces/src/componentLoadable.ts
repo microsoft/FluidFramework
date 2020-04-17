@@ -29,7 +29,7 @@ export interface IProvideComponentRunnable {
 }
 export interface IComponentRunnable {
     run(...args: any[]): Promise<void>;
-    stop?(reason?: string): void;
+    stop(reason?: string): void;
 }
 
 export const IComponentConfiguration: keyof IProvideComponentConfiguration = "IComponentConfiguration";

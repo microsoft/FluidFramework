@@ -196,7 +196,6 @@ export class GitManager implements IGitManager {
         inputTree: api.ITree,
         parents: string[],
         message: string): Promise<resources.ICommit> {
-
         const tree = await this.createTree(inputTree);
 
         // Construct a commit for the tree

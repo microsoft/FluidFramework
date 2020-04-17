@@ -14,12 +14,14 @@ import { ISummarizer, Summarizer } from "./summarizer";
 interface ITrackedClient {
     clientId: string;
     sequenceNumber: number;
+    isSummarizer: boolean;
 }
 
 class ClientComparer implements IComparer<ITrackedClient> {
     public readonly min: ITrackedClient = {
         clientId: "",
         sequenceNumber: -1,
+        isSummarizer: false,
     };
 
     public compare(a: ITrackedClient, b: ITrackedClient): number {
@@ -30,10 +32,15 @@ class ClientComparer implements IComparer<ITrackedClient> {
 class QuorumHeap {
     private readonly heap = new Heap<ITrackedClient>((new ClientComparer()));
     private readonly heapMembers = new Map<string, IHeapNode<ITrackedClient>>();
+    private summarizerCount = 0;
 
     public addClient(clientId: string, client: ISequencedClient) {
-        const heapNode = this.heap.add({ clientId, sequenceNumber: client.sequenceNumber });
+        const isSummarizer = client.client.details.type === "summarizer";
+        const heapNode = this.heap.add({ clientId, sequenceNumber: client.sequenceNumber, isSummarizer });
         this.heapMembers.set(clientId, heapNode);
+        if (isSummarizer) {
+            this.summarizerCount++;
+        }
     }
 
     public removeClient(clientId: string) {
@@ -41,11 +48,18 @@ class QuorumHeap {
         if (member) {
             this.heap.remove(member);
             this.heapMembers.delete(clientId);
+            if (member.value.isSummarizer) {
+                this.summarizerCount--;
+            }
         }
     }
 
     public getFirstClientId(): string | undefined {
         return this.heap.count() > 0 ? this.heap.peek().value.clientId : undefined;
+    }
+
+    public getSummarizerCount(): number {
+        return this.summarizerCount;
     }
 }
 
@@ -56,6 +70,7 @@ enum SummaryManagerState {
 }
 
 const defaultInitialDelayMs = 5000;
+const opsToBypassInitialDelay = 4000;
 
 const defaultThrottleMaxDelayMs = 30 * 1000;
 const defaultThrottleDelayWindowMs = 60 * 1000;
@@ -110,6 +125,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         defaultThrottleDelayWindowMs,
         defaultThrottleDelayFunction,
     );
+    private opsUntilFirstConnect = -1;
 
     public get summarizer() {
         return this.summarizerClientId;
@@ -148,6 +164,9 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         }
 
         context.quorum.on("addMember", (clientId: string, details: ISequencedClient) => {
+            if (this.opsUntilFirstConnect === -1 && clientId === this.clientId) {
+                this.opsUntilFirstConnect = details.sequenceNumber - this.context.deltaManager.initialSequenceNumber;
+            }
             this.quorumHeap.addClient(clientId, details);
             this.refreshSummarizer();
         });
@@ -229,7 +248,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
 
                     if (this.runningSummarizer) {
                         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        this.runningSummarizer.stop!(this.getStopReason());
+                        this.runningSummarizer.stop(this.getStopReason());
                     }
                 }
                 return;
@@ -241,6 +260,12 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     }
 
     private start() {
+        if (this.quorumHeap.getSummarizerCount() > 0) {
+            // Need to wait for any other existing summarizer clients to close,
+            // because they can live longer than their parent container.
+            return;
+        }
+
         this.state = SummaryManagerState.Starting;
 
         // If we should never summarize, lock in starting state
@@ -268,7 +293,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
                 this.run(summarizer);
             } else {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                summarizer.stop!(this.getStopReason());
+                summarizer.stop(this.getStopReason());
                 this.state = SummaryManagerState.Off;
             }
         }, (error) => {
@@ -307,7 +332,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
 
     private async createSummarizer(delayMs: number): Promise<ISummarizer | undefined> {
         await Promise.all([
-            this.initialDelayP,
+            this.opsUntilFirstConnect >= opsToBypassInitialDelay ? Promise.resolve() : this.initialDelayP,
             delayMs > 0 ? new Promise((resolve) => setTimeout(resolve, delayMs)) : Promise.resolve(),
         ]);
 

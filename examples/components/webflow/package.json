@@ -62,6 +62,7 @@
   },
   "dependencies": {
     "@fluid-example/flow-util-lib": "^0.16.0",
+    "@microsoft/fluid-common-definitions": "^0.14.0",
     "@microsoft/fluid-component-base": "^0.16.0",
     "@microsoft/fluid-component-core-interfaces": "^0.16.0",
     "@microsoft/fluid-component-runtime": "^0.16.0",
@@ -73,7 +74,7 @@
     "debug": "^4.1.1"
   },
   "devDependencies": {
-    "@microsoft/eslint-config-fluid": "^0.15.0",
+    "@microsoft/eslint-config-fluid": "^0.16.0-0",
     "@microsoft/fluid-build-common": "^0.14.0",
     "@microsoft/fluid-local-test-utils": "^0.16.0",
     "@microsoft/fluid-webpack-component-loader": "^0.16.0",

@@ -54,18 +54,15 @@ export class TestRootComponent extends PrimedComponent implements IComponentRunn
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public run = () => Promise.resolve();
 
+    public stop() {
+        return;
+    }
+
     // Make this function public so TestHost can use them
     public async createAndAttachComponent<T extends IComponentLoadable>(
-        type: string, props?: any, id?: string,
+        type: string, props?: any,
     ): Promise<T> {
-        if (id) {
-            const componentRuntime = await this.context.createComponent(id, type, props);
-            const component = await this.asComponent<T>(componentRuntime.request({ url: "/" }));
-            componentRuntime.attach();
-            return component;
-        } else {
-            return super.createAndAttachComponent<T>(type, props);
-        }
+        return super.createAndAttachComponent<T>(type, props);
     }
 
     // Make this function public so TestHost can use them
@@ -226,10 +223,9 @@ export class TestHost {
     public async createAndAttachComponent<T extends IComponentLoadable>(
         type: string,
         props?: any,
-        id?: any,
     ): Promise<T> {
         const root = await this.root;
-        return root.createAndAttachComponent<T>(type, props, id);
+        return root.createAndAttachComponent<T>(type, props);
     }
 
     /* Wait and get the component with the id.

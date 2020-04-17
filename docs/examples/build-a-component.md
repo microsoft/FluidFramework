@@ -8,7 +8,7 @@ so if you wanted to use Vue, Angular, or [insert your favorite framework here] y
 and extend the `render(...)` function to render using your framework. Looking at how the Dice Roller renders in
 VanillaJS vs. React should help guide you with your View framework.
 
-<vue-markdown v-if="$themeConfig.fluidVarGroup === 'internal'">
+<vue-markdown v-if="$themeConfig.DOCS_AUDIENCE === 'internal'">
 
 - [Dice roller - React](https://github.com/microsoft/fluid-tutorial-dice-roller-react)
 - [Dice roller VanillaJS](https://github.com/microsoft/fluid-tutorial-dice-roller)

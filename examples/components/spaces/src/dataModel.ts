@@ -74,7 +74,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
 
     public createCollectionItem<T>(rawOptions: T): IComponent {
         const options = rawOptions as ISpacesCollectionOptions;
-        if (!options.handle || !options.type || !options.id){
+        if (!options.handle || !options.type || !options.id) {
             throw new Error("Tried to create a collection item in Spaces with invalid options");
         }
         // eslint-disable-next-line @typescript-eslint/no-floating-promises

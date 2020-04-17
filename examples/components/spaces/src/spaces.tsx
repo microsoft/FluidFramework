@@ -97,7 +97,6 @@ export class Spaces extends PrimedComponent
         }
     }
 
-
     private addToolbarListeners() {
         if (this.componentToolbar && this.componentToolbar.IComponentCallable) {
             this.componentToolbar.IComponentCallable.setComponentCallbacks({

@@ -16,7 +16,6 @@ describe("Routerlicious", () => {
         function generate(
             name: string,
             factory: IConsensusRegisterCollectionFactory) {
-
             let testCollection: IConsensusRegisterCollection;
             let runtime: MockRuntime;
 

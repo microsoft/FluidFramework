@@ -58,7 +58,6 @@ async function getHandle(runtimeP: Promise<IComponentRuntime>): Promise<ICompone
 export class SharedTextRunner
     extends EventEmitter
     implements IComponentHTMLView, IComponentLoadable, IProvideSharedString {
-
     public static async load(runtime: ComponentRuntime, context: IComponentContext): Promise<SharedTextRunner> {
         const runner = new SharedTextRunner(runtime, context);
         await runner.initialize();
@@ -141,10 +140,10 @@ export class SharedTextRunner
 
             const hostRuntime = this.context.hostRuntime;
             const [progressBars, math, videoPlayers, images] = await Promise.all([
-                getHandle(hostRuntime.createComponent("@fluid-example/progress-bars")),
-                getHandle(hostRuntime.createComponent("@fluid-example/math")),
-                getHandle(hostRuntime.createComponent("@fluid-example/video-players")),
-                getHandle(hostRuntime.createComponent("@fluid-example/image-collection")),
+                getHandle(hostRuntime._createComponentWithProps("@fluid-example/progress-bars")),
+                getHandle(hostRuntime._createComponentWithProps("@fluid-example/math")),
+                getHandle(hostRuntime._createComponentWithProps("@fluid-example/video-players")),
+                getHandle(hostRuntime._createComponentWithProps("@fluid-example/image-collection")),
             ]);
 
             this.rootView.set("progressBars", progressBars);

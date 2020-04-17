@@ -17,6 +17,8 @@ import {
     writeFileAsync,
     ExecAsyncResult,
     readJsonSync,
+    existsSync,
+    lookUpDir,
 } from "./utils"
 import { MonoRepo } from "./monoRepo";
 import { options } from "../fluidBuild/options";
@@ -171,6 +173,24 @@ export class Package {
         await unlinkAsync(npmRC);
 
         return result;
+    }
+
+    public async checkInstall() {
+        if (!existsSync(path.join(this.directory, "node_modules"))) {
+            console.error(`${this.nameColored}: node_modules not installed`);
+            return false;
+        }
+        let succeeded = true;
+        for (const dep of this.combinedDependencies) {
+            if (!await lookUpDir(this.directory, (currentDir) => {
+                // TODO: check semver as well
+                return existsSync(path.join(currentDir, "node_modules", dep.name));
+            })) {
+                succeeded = false;
+                console.error(`${this.nameColored}: dependency ${dep.name} not found`);
+            }
+        }
+        return succeeded;
     }
 };
 
