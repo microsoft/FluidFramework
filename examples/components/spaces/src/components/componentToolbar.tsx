@@ -26,6 +26,14 @@ import {
 import { Templates } from "../interfaces";
 
 const componentToolbarStyle: React.CSSProperties = { position: "absolute", top: 10, left: 10, zIndex: 1000 };
+const dropDownButtonStyle: React.CSSProperties = { width: "20vh" };
+const menuButtonStyle: React.CSSProperties = {width: "20vh", height: "5vh"};
+const editableButtonStyle: React.CSSProperties = {
+    width: "20vh", height: "5vh", position: "absolute", left: 0, top: 0, margin: "1vh",
+};
+const collapsibleButtonStyle: React.CSSProperties = {
+    width: "20vh", height: "5vh", position: "absolute", left: "20vh", top: 0, margin: "1vh", zIndex: -1,
+};
 
 export const ComponentToolbarName = "componentToolbar";
 
@@ -146,7 +154,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
         const componentsButton = (
             <Button
                 iconProps={{ iconName: isComponentListOpen ? "ChevronUpEnd6" : "ChevronDownEnd6" }}
-                style={{width: "20vh", height: "5vh"}}
+                style={menuButtonStyle}
                 onClick={() => this.setState({isComponentListOpen: !isComponentListOpen })}
             >
                 {"Add Components"}
@@ -157,7 +165,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
             this.supportedComponentList.forEach(((supportedComponent: IContainerComponentDetails) => {
                 componentButtonList.push(
                     <Button
-                        style={{width: "20vh"}}
+                        style={dropDownButtonStyle}
                         key={`componentToolbarButton-${supportedComponent.type}`}
                         iconProps={{ iconName: supportedComponent.fabricIconName }}
                         onClick={async () => {
@@ -175,7 +183,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
         const templatesButton = (
             <Button
                 iconProps={{ iconName: isTemplateListOpen ? "ChevronUpEnd6" : "ChevronDownEnd6" }}
-                style={{width: "20vh", height: "5vh"}}
+                style={menuButtonStyle}
                 onClick={() => this.setState({isTemplateListOpen: !isTemplateListOpen })}
             >
                 {"Add Templates"}
@@ -188,7 +196,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
                 if (template) {
                     templateButtonList.push(
                         <Button
-                            style={{width: "20vh"}}
+                            style={dropDownButtonStyle}
                             key={`componentToolbarButton-${template}`}
                             onClick={async () => {
                                 this.emitAddTemplateEvent(Templates[template]);
@@ -207,7 +215,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
             <div style={componentToolbarStyle}>
                 <Button
                     id="edit"
-                    style={{width: "20vh", height: "5vh", position: "absolute", left: 0, top: 0, margin: "1vh"}}
+                    style={editableButtonStyle}
                     iconProps={{ iconName: "BullseyeTargetEdit"}}
                     onClick={() => this.emitToggleEditable()}
                 >
@@ -215,7 +223,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
                 </Button>
                 {this.state.isEditable ?
                     <div>
-                        <div style={{width: "20vh", height: "5vh", position: "absolute", left: "20vh", top: 0, margin: "1vh", zIndex: -1} as React.CSSProperties}>
+                        <div style={collapsibleButtonStyle}>
                             <Collapsible
                                 open={isTemplateListOpen}
                                 trigger={templatesButton}
@@ -223,7 +231,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
                                 {templateButtonList}
                             </Collapsible>
                         </div>
-                        <div style={{width: "20vh", height: "5vh", position: "absolute", left: "40vh", top: 0, margin: "1vh", zIndex: -1} as React.CSSProperties}>
+                        <div style={collapsibleButtonStyle}>
                             <Collapsible
                                 open={isComponentListOpen}
                                 trigger={componentsButton}
