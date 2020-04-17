@@ -367,7 +367,7 @@ export class HeroService {
         return null;
     }
 
-    //////// Save methods //////////
+    // Save methods
 
     /** POST: add a new hero to the server */
     addHero(hero: Hero): Observable<Hero> {
@@ -399,7 +399,6 @@ export class HeroService {
      */
     private handleError<T>(operation = "operation", result?: T) {
         return (error: any): Observable<T> => {
-
             // TODO: send the error to remote logging infrastructure
             console.error(error); // Log to console instead
 

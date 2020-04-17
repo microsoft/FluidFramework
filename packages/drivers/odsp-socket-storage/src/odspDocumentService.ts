@@ -90,7 +90,7 @@ export class OdspDocumentService implements IDocumentService {
                     itemId: odspResolvedUrl.itemId,
                 };
                 event.end(props);
-            } catch(error) {
+            } catch (error) {
                 event.cancel(undefined, error);
                 throw error;
             }
@@ -124,7 +124,6 @@ export class OdspDocumentService implements IDocumentService {
     private readonly localStorageAvailable: boolean;
 
     private readonly joinSessionKey: string;
-
 
     /**
      * @param appId - app id used for telemetry for network requests
@@ -160,7 +159,6 @@ export class OdspDocumentService implements IDocumentService {
         private readonly isFirstTimeDocumentOpened = true,
         private readonly createNewFlag: boolean,
     ) {
-
         this.joinSessionKey = `${this.hashedDocumentId}/joinsession`;
 
         this.logger = DebugLogger.mixinDebugLogger(
@@ -502,5 +500,4 @@ export class OdspDocumentService implements IDocumentService {
             throw connectionError;
         });
     }
-
 }

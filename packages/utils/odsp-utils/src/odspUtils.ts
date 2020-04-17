@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-
 const odspTenants = new Map<string, string>([
     ["spo", "microsoft-my.sharepoint.com"],
     ["spo-df", "microsoft-my.sharepoint-df.com"],

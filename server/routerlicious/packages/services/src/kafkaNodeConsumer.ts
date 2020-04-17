@@ -141,7 +141,7 @@ export class KafkaNodeConsumer implements IConsumer {
             let partitionsWithEpoch: IPartitionWithEpoch[];
             try {
                 partitionsWithEpoch = await this.fetchPartitionEpochs(partitions);
-            } catch(err) {
+            } catch (err) {
                 this.events.emit("error", err);
             }
 

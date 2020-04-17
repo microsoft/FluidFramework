@@ -27,7 +27,6 @@ export const TodoName = `${pkg.name as string}-todo`;
 export class Todo extends PrimedComponent implements
     IComponentHTMLView,
     IComponentReactViewable {
-
     // DDS ids stored as variables to minimize simple string mistakes
     private readonly todoItemsKey = "todo-items";
     private readonly todoTitleKey = "todo-title";
@@ -101,7 +100,6 @@ export class Todo extends PrimedComponent implements
     // start public API surface for the Todo model, used by the view
 
     public async addTodoItemComponent(props?: any) {
-
         // Create a new todo item
         const component = await this.createAndAttachComponent(TodoItemName, props);
 

@@ -197,7 +197,6 @@ class CodemirrorView implements IComponentHTMLView {
 export class CodeMirrorComponent
     extends EventEmitter
     implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual {
-
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new CodeMirrorComponent(runtime, context);
         await collection.initialize();

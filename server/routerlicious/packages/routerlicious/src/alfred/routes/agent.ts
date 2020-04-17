@@ -16,7 +16,6 @@ import * as winston from "winston";
 import { getParam } from "../utils";
 
 export function create(config: Provider): Router {
-
     const minioConfig = config.get("minio");
     const storageBucket = minioConfig.bucket;
     const minioClient = new minio.Client({

@@ -50,7 +50,6 @@ export class ReservationManager extends EventEmitter implements IReservationMana
         key: string,
         existing: IReservation,
         collection: ICollection<IReservation>): Promise<any> {
-
         const newReservation: IReservation = { _id: key, node: node.id };
 
         if (existing) {

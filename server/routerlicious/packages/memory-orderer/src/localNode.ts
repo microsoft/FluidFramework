@@ -77,7 +77,6 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         permission: any,
         maxMessageSize: number,
         logger: ILogger) {
-
         // Look up any existing information for the node or create a new one
         const node = await LocalNode.create(
             id,
@@ -103,7 +102,6 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         address: string,
         databaseManager: IDatabaseManager,
         timeoutLength: number): Promise<INode> {
-
         debug("Creating node", id);
 
         const nodeCollection = await databaseManager.getNodeCollection();
@@ -121,7 +119,6 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         existing: INode,
         databaseManager: IDatabaseManager,
         timeoutLength: number): Promise<INode> {
-
         const nodeCollection = await databaseManager.getNodeCollection();
         const newExpiration = Date.now() + timeoutLength;
 

@@ -14,7 +14,6 @@ import { CreationServerMessagesHandler } from "./creationDriverServer";
  * The DocumentService connects to in memory endpoints for storage/socket for faux document service.
  */
 export class CreationDocumentService implements api.IDocumentService {
-
     private readonly creationServer: CreationServerMessagesHandler;
     constructor(
         private readonly documentId: string,

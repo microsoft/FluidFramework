@@ -28,7 +28,6 @@ export function create(
     storage: IDocumentStorage,
     producer: IProducer,
     appTenants: IAlfredTenant[]) {
-
     return {
         agent: agent.create(config),
         api: api.create(config, tenantManager, storage, mongoManager, producer, appTenants),

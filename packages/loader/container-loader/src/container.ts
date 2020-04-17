@@ -14,6 +14,7 @@ import {
     ICodeLoader,
     IConnectionDetails,
     IContainer,
+    IContainerEvents,
     IDeltaManager,
     IFluidCodeDetails,
     IGenericBlob,
@@ -101,7 +102,8 @@ const merge = require("lodash/merge");
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
-export class Container extends EventEmitterWithErrorHandling implements IContainer, IExperimentalContainer {
+export class Container
+    extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer, IExperimentalContainer {
     public static version = "^0.1.0";
 
     public readonly isExperimentalContainer = true;
@@ -386,26 +388,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this.protocolHandler!.quorum;
     }
 
-    public on(event: "readonly", listener: (readonly: boolean) => void): void;
-    public on(event: "connected" | "contextChanged", listener: (clientId: string) => void): this;
-    public on(event: "disconnected" | "joining", listener: () => void): this;
-    public on(event: "closed", listener: (error?: IError) => void): this;
-    public on(event: "error", listener: (error: IError) => void): this;
-    public on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
-    public on(event: "pong" | "processTime", listener: (latency: number) => void): this;
-    public on(event: MessageType.BlobUploaded, listener: (contents: any) => void): this;
-
-    public on(event: string | symbol, listener: (...args: any[]) => void): this {
-        return super.on(event, listener);
-    }
-
     public close(error?: IError) {
         if (this._closed) {
             return;
         }
         this._closed = true;
 
-        this._deltaManager.close(error, false /*raiseContainerError*/);
+        this._deltaManager.close(error, false /* raiseContainerError */);
 
         if (this.protocolHandler) {
             this.protocolHandler.close();
@@ -518,11 +507,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             }
 
             await this.snapshotCore(tagMessage, fullTree);
-
         } catch (ex) {
             this.logger.logException({ eventName: "SnapshotExceptionError" }, ex);
             throw ex;
-
         } finally {
             if (this.deltaManager !== undefined) {
                 this.deltaManager.inbound.systemResume();
@@ -557,7 +544,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 // So there shouldn't be a need to record error here.
                 // But we have number of cases where reconnects do not happen, and no errors are recorded, so
                 // adding this log point for easier diagnostics
-                this.logger.sendTelemetryEvent({eventName: "setAutoReconnectError"}, error);
+                this.logger.sendTelemetryEvent({ eventName: "setAutoReconnectError" }, error);
             });
         }
     }
@@ -1037,7 +1024,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             throw new Error(PackageNotFactoryError);
         }
         return factory;
-
     }
 
     private get client(): IClient {

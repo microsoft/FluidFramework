@@ -28,8 +28,8 @@ const allOpertaions: TestOperation[] = [
 ];
 
 export const debugOptions: IConflictFarmConfig = {
-    minLength: {min: 2, max: 2},
-    clients: {min: 3, max: 3},
+    minLength: { min: 2, max: 2 },
+    clients: { min: 3, max: 3 },
     opsPerRoundRange: { min: 1, max: 100 },
     rounds: 1000,
     operations: allOpertaions,
@@ -38,25 +38,24 @@ export const debugOptions: IConflictFarmConfig = {
 };
 
 export const defaultOptions: IConflictFarmConfig = {
-    minLength: {min: 1, max: 512},
-    clients: {min: 1, max: 8},
-    opsPerRoundRange: {min: 1, max: 128},
+    minLength: { min: 1, max: 512 },
+    clients: { min: 1, max: 8 },
+    opsPerRoundRange: { min: 1, max: 128 },
     rounds: 8,
     operations: allOpertaions,
     growthFunc: (input: number) => input * 2,
 };
 
 export const longOptions: IConflictFarmConfig = {
-    minLength: {min: 1, max: 512},
-    clients: {min: 1, max: 32},
-    opsPerRoundRange: {min: 1, max: 512},
+    minLength: { min: 1, max: 512 },
+    clients: { min: 1, max: 32 },
+    opsPerRoundRange: { min: 1, max: 512 },
     rounds: 32,
     operations: allOpertaions,
     growthFunc: (input: number) => input * 2,
 };
 
 describe("MergeTree.Client", () => {
-
     // tslint:disable: mocha-no-side-effect-code
     const opts =
         defaultOptions;

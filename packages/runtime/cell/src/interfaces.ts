@@ -3,12 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedObject } from "@microsoft/fluid-shared-object-base";
+import { ISharedObject, ISharedObjectEvents } from "@microsoft/fluid-shared-object-base";
+
+export interface ISharedCellEvents extends ISharedObjectEvents{
+    (event: "valueChanged", listener: (value: any) => void);
+    (event: "delete", listener: () => void);
+}
 
 /**
  * Shared cell interface
  */
-export interface ISharedCell extends ISharedObject {
+export interface ISharedCell extends ISharedObject<ISharedCellEvents> {
     /**
      * Retrieves the cell value.
      *

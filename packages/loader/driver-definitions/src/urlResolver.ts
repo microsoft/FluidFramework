@@ -32,7 +32,6 @@ export interface IUrlResolver {
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
 }
 
-
 export interface IExperimentalUrlResolver extends IUrlResolver {
     readonly isExperimentalUrlResolver: true;
     // Creates a new document on the host with the provided options. Returns the resolved URL.

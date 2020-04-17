@@ -9,7 +9,6 @@ import { IProducer } from "./queue";
  * Combines multiple producers to one.
  */
 export class CombinedProducer implements IProducer {
-
     constructor(private readonly producers: IProducer[]) {
     }
 

@@ -43,7 +43,7 @@ export class CollaborativeCheckbox extends React.Component<IProps, IState> {
     }
 
     public render() {
-        return(
+        return (
             <input
                 type="checkbox"
                 aria-checked={this.state.checked}

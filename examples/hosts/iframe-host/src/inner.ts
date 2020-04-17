@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 import { InnerDocumentServiceFactory } from "@microsoft/fluid-iframe-driver";
-import { BaseHost, SemVerCdnCodeResolver } from "@microsoft/fluid-base-host";
+import { BaseHost } from "@microsoft/fluid-base-host";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
+import { SemVerCdnCodeResolver } from "@microsoft/fluid-web-code-loader";
 import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 
 async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLDivElement) {
@@ -17,7 +18,7 @@ async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLD
     view.render(div, { display: "block" });
 }
 
-export async function runInner(divId: string){
+export async function runInner(divId: string) {
     const div = document.getElementById(divId) as HTMLDivElement;
 
     const pkg: IFluidCodeDetails = {

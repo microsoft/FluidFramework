@@ -20,7 +20,6 @@ export class TestFluidComponent implements ITestFluidComponent {
         runtime: IComponentRuntime,
         context: IComponentContext,
         factoryEntries: Map<string, ISharedObjectFactory>) {
-
         const component = new TestFluidComponent(runtime, context, factoryEntries);
         await component.initialize();
 

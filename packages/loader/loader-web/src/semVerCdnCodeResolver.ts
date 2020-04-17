@@ -6,14 +6,13 @@
 import {
     IFluidCodeDetails, IFluidCodeResolver, IPackage, IResolvedFluidCodeDetails, isFluidPackage,
 } from "@microsoft/fluid-container-definitions";
-import {extractPackageIdentifierDetails} from "@microsoft/fluid-web-code-loader";
 import * as fetch from "isomorphic-fetch";
-
+import { extractPackageIdentifierDetails } from "./utils";
 
 class FluidPackage {
     private resolveP: Promise<IResolvedFluidCodeDetails> | undefined;
 
-    constructor(private readonly codeDetails: IFluidCodeDetails, private readonly packageUrl: string){}
+    constructor(private readonly codeDetails: IFluidCodeDetails, private readonly packageUrl: string) {}
 
     public async resolve(): Promise<IResolvedFluidCodeDetails> {
         if (this.resolveP === undefined) {
@@ -36,8 +35,8 @@ class FluidPackage {
             throw new Error(`Package ${packageJson.name} not a fluid module.`);
         }
         const files = packageJson.fluid.browser.umd.files;
-        for(let i=0;i<packageJson.fluid.browser.umd.files.length;i++){
-            if(!files[i].startsWith("http")){
+        for (let i = 0; i < packageJson.fluid.browser.umd.files.length; i++) {
+            if (!files[i].startsWith("http")) {
                 files[i] = `${this.packageUrl}/${files[i]}`;
             }
         }
@@ -62,7 +61,7 @@ class FluidPackage {
  * a per scope cdn, `config["@package_scope:cdn"]`. A scope specific cdn base will take precedence over
  * the global cdn.
  */
-export class SemVerCdnCodeResolver implements IFluidCodeResolver{
+export class SemVerCdnCodeResolver implements IFluidCodeResolver {
     // Cache goes CDN -> package -> entrypoint
     private readonly fluidPackageCache = new Map<string, FluidPackage>();
 
@@ -70,7 +69,7 @@ export class SemVerCdnCodeResolver implements IFluidCodeResolver{
         const parsed = extractPackageIdentifierDetails(details.package);
 
         const cdn = details.config[`@${parsed.scope}:cdn`] ?? details.config.cdn;
-        const scopePath = parsed.scope ? `@${encodeURI(parsed.scope)}/` : "";
+        const scopePath = parsed.scope !== undefined && parsed.scope.length > 0 ? `@${encodeURI(parsed.scope)}/` : "";
         const packageUrl = parsed.version !== undefined
             ? `${cdn}/${scopePath}${encodeURI(`${parsed.name}@${parsed.version}`)}`
             : `${cdn}/${scopePath}${encodeURI(`${parsed.name}`)}`;

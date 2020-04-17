@@ -29,6 +29,8 @@ import {
     IContentMessage,
     IDocumentMessage,
     IDocumentSystemMessage,
+    INack,
+    INackContent,
     ISequencedDocumentMessage,
     IServiceConfiguration,
     ISignalMessage,
@@ -36,7 +38,7 @@ import {
     MessageType,
     ScopeType,
 } from "@microsoft/fluid-protocol-definitions";
-import { createIError, createWriteError, createNetworkError } from "@microsoft/fluid-driver-utils";
+import { createIError, createWriteError, createNetworkError, createFatalError } from "@microsoft/fluid-driver-utils";
 import { ContentCache } from "./contentCache";
 import { debug } from "./debug";
 import { DeltaConnection } from "./deltaConnection";
@@ -643,9 +645,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     });
                     const closeError = createNetworkError(
                         "Failed to retrieve ops from storage: giving up after too many retries",
-                        false /*canRetry*/,
-                        undefined /*statusCode*/,
-                        undefined /*retryAfterSeconds*/,
+                        false /* canRetry */,
+                        undefined /* statusCode */,
+                        undefined /* retryAfterSeconds */,
                         "Online",
                     ) as IGenericNetworkError;
                     closeError.critical = true;
@@ -810,13 +812,22 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         });
 
         // Always connect in write mode after getting nacked.
-        connection.on("nack", (target: number) => {
-            const nackReason = target === -1 ? "Nack: Start writing" : "Nack";
+        connection.on("nack", (message: INack) => {
+            // check message.content for back-compat with old service.
+            const nackMessage = message.content ? message.content.message : "";
+            const nackReason = `Nacked: ${nackMessage}`;
+
+            // TODO: we should remove this check when service updates?
             if (this.readonlyPermissions) {
                 this.close(createWriteError("WriteOnReadOnlyDocument"));
             }
+            // check message.content for back-compat with old service.
+            if (message.content && !this.shouldReconnectOnNack(message.content)) {
+                this.close(createFatalError(nackReason));
+            }
             if (!this.autoReconnect) {
-                this.logger.sendErrorEvent({ eventName: "NackWithNoReconnect", target, mode: this.connectionMode });
+                const nackError = `reason: ${nackReason}`;
+                this.logger.sendErrorEvent({ eventName: "NackWithNoReconnect", nackError, mode: this.connectionMode });
             }
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.reconnectOnError(nackReason, connection, "write");
@@ -918,7 +929,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             // Do not raise container error if we are closing just because we lost connection.
             // Those errors (like IdleDisconnect) would show up in telemetry dashboards and
             // are very misleading, as first initial reaction - some logic is broken.
-            this.close(createIError(error), criticalError /*raiseContainerError*/);
+            this.close(createIError(error), criticalError /* raiseContainerError */);
         }
 
         // If closed then we can't reconnect
@@ -1106,7 +1117,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     private catchUpCore(messages: ISequencedDocumentMessage[], telemetryEventSuffix?: string): void {
-
         // Apply current operations
         this.enqueueMessages(messages, telemetryEventSuffix);
 
@@ -1165,5 +1175,18 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             clearTimeout(this.updateSequenceNumberTimer);
         }
         this.updateSequenceNumberTimer = undefined;
+    }
+
+    /**
+     * Determines whether the received nack is retryable or not.
+     */
+    private shouldReconnectOnNack(nackContent: INackContent): boolean {
+        if (nackContent.code === 403) {
+            return false;
+        }
+        if (nackContent.code === 429 && nackContent.type === "LimitExceededError") {
+            return false;
+        }
+        return true;
     }
 }

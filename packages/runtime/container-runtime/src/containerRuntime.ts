@@ -380,7 +380,6 @@ class ContainerRuntimeComponentRegistry extends ComponentRegistry {
  * It will define the component level mappings.
  */
 export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRuntime, IExperimentalRuntime {
-
     public readonly isExperimentalRuntime = true;
     /**
      * Load the components from a snapshot and returns the runtime.
@@ -712,7 +711,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     public get IComponentTokenProvider() {
-
         if (this.options && this.options.intelligence) {
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             return {

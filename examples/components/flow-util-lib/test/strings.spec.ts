@@ -19,7 +19,7 @@ function test(left: string, right: string) {
     const leftAsString = typeof left === "string" ? `'${left}'` : `${left}`;
     const rightAsString = typeof right === "string" ? `'${right}'` : `${right}`;
 
-    it (`${leftAsString} ~= ${rightAsString} -> ${expected}`, () => {
+    it(`${leftAsString} ~= ${rightAsString} -> ${expected}`, () => {
         assert.strictEqual(areStringsEquivalent(left, right), expected);
     });
 }

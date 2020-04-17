@@ -33,7 +33,7 @@ export class ChannelStorageService implements IObjectStorageService {
         }
     }
 
-    public contains(path: string){
+    public contains(path: string) {
         return this.flattenedTree[path] !== undefined;
     }
 
