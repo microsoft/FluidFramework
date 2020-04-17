@@ -202,6 +202,7 @@ export class TestDocumentDeltaConnection
                 (...args: any[]) => {
                     this.emitter.emit(event, ...args);
                 });
+            this.emitter.on(event, listener);
         });
     }
 
