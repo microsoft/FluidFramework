@@ -12,7 +12,7 @@ import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { ConnectionState } from "@microsoft/fluid-protocol-definitions";
 import { IDocumentServiceFactory } from "@microsoft/fluid-driver-definitions";
-import { IExperimentalComponentContext } from "@microsoft/fluid-runtime-definitions";
+import { IExperimentalComponentContext, IExperimentalHostRuntime } from "@microsoft/fluid-runtime-definitions";
 
 describe("Detached Container", () => {
     let testDeltaConnectionServer: ILocalDeltaConnectionServer;
@@ -88,7 +88,11 @@ describe("Detached Container", () => {
         assert.equal(testChannel.isLocal(), true, "Channel should be local!!");
         const expComponentContext = testComponent.context as IExperimentalComponentContext;
         assert(expComponentContext?.isExperimentalComponentContext);
-        assert.equal(expComponentContext.isLocal(), true, "Container should not be attached!!");
+        assert.equal(expComponentContext.isLocal(), true, "Component should be local!!");
+
+        const expHostRuntime = testComponent.context.hostRuntime as IExperimentalHostRuntime;
+        assert(expHostRuntime?.isExperimentalHostRuntime);
+        assert.equal(expHostRuntime.isLocal(), true, "Container should be local!!");
     });
 
     it("Components in attached container", async () => {
@@ -111,7 +115,10 @@ describe("Detached Container", () => {
         assert.equal(testChannel.isLocal(), false, "Channel should not be local!!");
         const expComponentContext = testComponent.context as IExperimentalComponentContext;
         assert(expComponentContext?.isExperimentalComponentContext);
-        assert.equal(expComponentContext.isLocal(), false, "Container should be attached!!");
+        assert.equal(expComponentContext.isLocal(), false, "Component should not be local!!");
+        const expHostRuntime = testComponent.context.hostRuntime as IExperimentalHostRuntime;
+        assert(expHostRuntime?.isExperimentalHostRuntime);
+        assert.equal(expHostRuntime.isLocal(), false, "Container should be attached!!");
     });
 
     it("Load attached container and check for components", async () => {
