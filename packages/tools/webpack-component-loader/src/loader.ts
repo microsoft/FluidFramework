@@ -169,32 +169,31 @@ function makeSideBySideDiv(divId?: string) {
 }
 
 class WebpackCodeResolver implements IFluidCodeResolver {
-    constructor(private readonly options: IBaseRouteOptions){}
+    constructor(private readonly options: IBaseRouteOptions) {}
     async resolveCodeDetails(details: IFluidCodeDetails): Promise<IResolvedFluidCodeDetails> {
         const baseUrl = details.config.cdn ?? `http://localhost:${this.options.port}`;
         let pkg = details.package;
-        if(typeof pkg === "string"){
+        if (typeof pkg === "string") {
             const resp = await fetch(`${baseUrl}/package.json`);
             pkg = await resp.json() as IFluidPackage;
         }
-        if(!isFluidPackage(pkg)){
+        if (!isFluidPackage(pkg)) {
             throw new Error("Not a fluid package");
         }
         const files = pkg.fluid.browser.umd.files;
-        for(let i=0;i<pkg.fluid.browser.umd.files.length;i++){
-            if(!files[i].startsWith("http")){
+        for (let i = 0; i < pkg.fluid.browser.umd.files.length; i++) {
+            if (!files[i].startsWith("http")) {
                 files[i] = `${baseUrl}/${files[i]}`;
             }
         }
         const parse = extractPackageIdentifierDetails(details.package);
-        return{
+        return {
             config:details.config,
             package: details.package,
             resolvedPackage: pkg,
             resolvedPackageCacheId: parse.fullId,
         };
     }
-
 }
 
 function getDocumentServiceFactory(documentId: string, options: RouteOptions) {
@@ -231,7 +230,7 @@ function getDocumentServiceFactory(documentId: string, options: RouteOptions) {
             );
         }
     }
-    return {documentServiceFactory, connection: deltaConn};
+    return { documentServiceFactory, connection: deltaConn };
 }
 
 export async function start(
@@ -249,14 +248,14 @@ export async function start(
         textArea.style.display = "none";
     }
 
-    const {documentServiceFactory, connection} = getDocumentServiceFactory(documentId, options);
+    const { documentServiceFactory, connection } = getDocumentServiceFactory(documentId, options);
 
     const urlResolver = getUrlResolver(options, connection);
 
     // Construct a request
     const url = window.location.href;
 
-    const codeDetails: IFluidCodeDetails ={
+    const codeDetails: IFluidCodeDetails = {
         package:packageJson,
         config:{},
     };
@@ -330,7 +329,7 @@ export async function start(
     }
     if (!attached) {
         attachButton.onclick = async () => {
-            await container1.attach({url: window.location.href})
+            await container1.attach({ url: window.location.href })
                 .then(() => {
                     const text = window.location.href.replace("create", container1.id);
                     textArea.innerText = text;

@@ -367,7 +367,7 @@ export class HeroService {
         return null;
     }
 
-    //////// Save methods //////////
+    // Save methods
 
     /** POST: add a new hero to the server */
     addHero(hero: Hero): Observable<Hero> {
