@@ -11,7 +11,6 @@ import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 
 describe("SharedString", () => {
-
     const documentId = "fakeId";
     let deltaConnectionFactory: MockDeltaConnectionFactory;
     let sharedString: SharedString;
@@ -27,7 +26,6 @@ describe("SharedString", () => {
     });
 
     describe(".snapshot", () => {
-
         it("Create and compare snapshot", async () => {
             const insertText = "text";
             const segmentCount = 1000;
@@ -68,7 +66,6 @@ describe("SharedString", () => {
         });
 
         async function CreateStringAndCompare(tree: ITree): Promise<void> {
-
             const runtime = new MockRuntime();
             const services: ISharedObjectServices = {
                 deltaConnection: deltaConnectionFactory.createDeltaConnection(runtime),
@@ -77,7 +74,7 @@ describe("SharedString", () => {
 
             const sharedString2 = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
             // eslint-disable-next-line no-null/no-null
-            await sharedString2.load(null/*branchId*/, services);
+            await sharedString2.load(null/* branchId */, services);
             await sharedString2.loaded;
 
             assert(sharedString.getText() === sharedString2.getText());

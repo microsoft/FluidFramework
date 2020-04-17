@@ -75,7 +75,6 @@ class ResumeAnalyticsIntelligentService implements IIntelligentService {
                 });
         });
     }*/
-
 }
 
 export class ResumeAnalyticsFactory implements IIntelligentServiceFactory {

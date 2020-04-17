@@ -36,7 +36,7 @@ const getTinyliciousDocumentServiceFactory =
         true,
         undefined);
 
-export async function loadFrame(iframeId: string, logId: string){
+export async function loadFrame(iframeId: string, logId: string) {
     const iframe = document.getElementById(iframeId) as HTMLIFrameElement;
 
     const urlResolver = getTinyliciousResolver();
@@ -50,7 +50,6 @@ export async function loadFrame(iframeId: string, logId: string){
 
     const proxyContainer = await host.load(createRequest(), iframe);
 
-
     const text = document.getElementById(logId) as HTMLDivElement;
     const quorum = proxyContainer.getQuorum();
 
@@ -62,7 +61,7 @@ export async function loadFrame(iframeId: string, logId: string){
                 }));
         };
 
-    quorum.getMembers().forEach((client)=>text.innerHTML+=`Quorum: client: ${JSON.stringify(client)}<br/>`);
+    quorum.getMembers().forEach((client)=>text.innerHTML += `Quorum: client: ${JSON.stringify(client)}<br/>`);
     log(quorum, "Quorum", "error", "addMember", "removeMember");
     log(proxyContainer, "Container", "error", "connected","disconnected");
 }
@@ -77,7 +76,7 @@ async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLD
     view.render(div, { display: "block" });
 }
 
-export async function loadDiv(divId: string){
+export async function loadDiv(divId: string) {
     const div = document.getElementById(divId) as HTMLDivElement;
 
     const urlResolver = getTinyliciousResolver();
@@ -108,12 +107,9 @@ export async function loadDiv(divId: string){
     });
 }
 
-export async function runOuter(iframeId: string, divId: string, logId: string){
-
+export async function runOuter(iframeId: string, divId: string, logId: string) {
     await Promise.all([
         loadFrame(iframeId, logId),
         loadDiv(divId).catch(),
     ]);
-
 }
-

@@ -13,7 +13,6 @@ interface ITokenConfig {
 }
 
 export class Translator implements IComponentRouter, IComponentRunnable {
-
     constructor(
         private readonly sharedString: Sequence.SharedString,
         private readonly insightsMap: ISharedMap,

@@ -9,7 +9,6 @@ import { ISharedMap } from "@microsoft/fluid-map";
 import { IntelRunner, ITokenConfig } from "./intelRunner";
 
 export class TextAnalyzer implements IComponentRouter, IComponentRunnable {
-
     constructor(
         private readonly document: FlowDocument,
         private readonly insightsMap: ISharedMap,

@@ -11,7 +11,6 @@ import { TestClient } from ".";
 
 describe("snapshot", () => {
     it("header only", async () => {
-
         const client1 = new TestClient();
         client1.startOrUpdateCollaboration("0");
         for (let i = 0; i < SnapshotLegacy.sizeOfFirstChunk; i++) {
@@ -40,7 +39,6 @@ describe("snapshot", () => {
         .timeout(5000);
 
     it("header and body", async () => {
-
         const clients = [new TestClient(), new TestClient(), new TestClient()];
         clients[0].startOrUpdateCollaboration("0");
         for (let i = 0; i < SnapshotLegacy.sizeOfFirstChunk + 10; i++) {
