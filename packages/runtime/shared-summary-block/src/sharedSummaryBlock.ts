@@ -15,6 +15,7 @@ import {
     IComponentRuntime,
     IObjectStorageService,
     Jsonable,
+    AsJsonable,
 } from "@microsoft/fluid-runtime-definitions";
 import {
     ISharedObjectFactory,
@@ -87,9 +88,8 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
     /**
      * {@inheritDoc ISharedSummaryBlock.set}
      */
-    public set(key: string, value: Jsonable): void {
+    public set<T extends any = Jsonable>(key: string, value: AsJsonable<T>): void {
         this.data.set(key, value);
-
         // Set this object as dirty so that it is part of the next summary.
         this.dirty();
     }

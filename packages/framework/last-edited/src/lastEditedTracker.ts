@@ -5,7 +5,6 @@
 
 import { EventEmitter } from "events";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
-import { Jsonable } from "@microsoft/fluid-runtime-definitions";
 import { SharedSummaryBlock } from "@microsoft/fluid-shared-summary-block";
 import { IComponentLastEditedTracker, ILastEditDetails } from "./interfaces";
 
@@ -52,7 +51,7 @@ export class LastEditedTracker extends EventEmitter implements IComponentLastEdi
             clientId: message.clientId,
             timestamp: message.timestamp,
         };
-        this.sharedSummaryBlock.set(this.lastEditedDetailsKey, lastEditDetails as unknown as Jsonable);
+        this.sharedSummaryBlock.set<ILastEditDetails>(this.lastEditedDetailsKey, lastEditDetails);
         this.emit("lastEditedChanged", lastEditDetails);
     }
 }
