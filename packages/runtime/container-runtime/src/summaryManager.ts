@@ -263,10 +263,6 @@ export class SummaryManager extends EventEmitter implements IDisposable {
                 } else {
                     this.state = SummaryManagerState.Off;
                 }
-            } else if (this.quorumHeap.getSummarizerCount() > 0) {
-                // Do not call run at all if another summarizer already exists
-                summarizer.stop("otherSummarizer");
-                this.state = SummaryManagerState.Off;
             } else {
                 this.setNextSummarizer(summarizer.setSummarizer());
                 this.run(summarizer);
