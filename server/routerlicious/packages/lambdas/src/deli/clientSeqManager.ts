@@ -4,7 +4,6 @@
  */
 
 import { Heap, IComparer, IHeapNode } from "@microsoft/fluid-common-utils";
-import * as _ from "lodash";
 import { IClientSequenceNumber } from "./checkpointContext";
 
 const SequenceNumberComparer: IComparer<IClientSequenceNumber> = {
@@ -52,15 +51,7 @@ export class ClientSequenceNumberManager {
         const clients: IClientSequenceNumber[] = [];
         for (const [, value] of this.clientNodeMap) {
             const source = value.value;
-            const copy: IClientSequenceNumber = {
-                canEvict: source.canEvict,
-                clientId: source.clientId,
-                clientSequenceNumber: source.clientSequenceNumber,
-                lastUpdate: source.lastUpdate,
-                nack: source.nack,
-                referenceSequenceNumber: source.referenceSequenceNumber,
-                scopes: source.scopes,
-            };
+            const copy = Object.assign({}, source);
             clients.push(copy);
         }
         return clients;
