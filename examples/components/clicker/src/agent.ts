@@ -20,6 +20,10 @@ export class ClickerAgent implements IComponentRouter, IComponentRunnable {
         });
     }
 
+    public stop() {
+        return;
+    }
+
     public async request(request: IRequest): Promise<IResponse> {
         return {
             mimeType: "fluid/component",

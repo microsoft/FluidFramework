@@ -37,6 +37,13 @@ export class IntelligentServicesManager {
         this.services.push(service);
     }
 
+    public stop() {
+        if (this.rateLimiter) {
+            this.rateLimiter.stop();
+        }
+        this.document.removeAllListeners();
+    }
+
     public process() {
         this.document.on("sequenceDelta", () => {
             if (!this.intelInvoked) {

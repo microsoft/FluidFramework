@@ -13,6 +13,8 @@ export class TextAnalyzer implements IComponentRouter, IComponentRunnable {
     public get IComponentRouter() { return this; }
     public get IComponentRunnable() { return this; }
 
+    private intelRunner: IntelRunner | undefined;
+
     constructor(
         private readonly sharedString: Sequence.SharedString,
         private readonly insightsMap: ISharedMap,
@@ -22,8 +24,14 @@ export class TextAnalyzer implements IComponentRouter, IComponentRunnable {
         if (this.config === undefined || this.config.key === undefined || this.config.key.length === 0) {
             throw new Error("No intel key provided.");
         }
-        const intelRunner = new IntelRunner(this.sharedString, this.insightsMap, this.config);
-        return intelRunner.start();
+        this.intelRunner = new IntelRunner(this.sharedString, this.insightsMap, this.config);
+        return this.intelRunner.start();
+    }
+
+    public stop() {
+        if (this.intelRunner) {
+            this.intelRunner.stop();
+        }
     }
 
     public async request(request: IRequest): Promise<IResponse> {
