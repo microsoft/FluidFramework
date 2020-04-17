@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 import { ITelemetryLogger, IDisposable } from "@microsoft/fluid-common-definitions";
-import { IComponent, IComponentRunnable, IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { IContainerContext, LoaderHeader } from "@microsoft/fluid-container-definitions";
 import { ChildLogger, Heap, IComparer, IHeapNode, PerformanceEvent, PromiseTimer } from "@microsoft/fluid-common-utils";
 import { ISequencedClient } from "@microsoft/fluid-protocol-definitions";
