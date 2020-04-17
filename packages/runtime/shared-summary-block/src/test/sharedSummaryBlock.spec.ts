@@ -54,7 +54,7 @@ describe("SharedSummaryBlock", () => {
                     value3:[false, false, true],
                 },
             };
-            sharedSummaryBlock.set<ITestInterface>(key3, value3);
+            sharedSummaryBlock.set(key3, value3);
             assert.deepEqual(sharedSummaryBlock.get(key3), value3, "The retrieved value must match the set value");
         });
     });

@@ -46,7 +46,7 @@ export type Jsonable<T = JsonablePrimitive> = T | JsonableArray<T> | JsonableObj
  * What this type does:
  * If T is Jsonable<J>, return T
  * Else, For each property K of T
- *      If property K of T is function, return never
+ *      If property K of T is function or optional function, return never
  *      Else recursivly AsJsonable with the type of property K of T
  */
 export type AsJsonable<T extends any, J = JsonablePrimitive> =

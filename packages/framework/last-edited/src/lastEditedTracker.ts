@@ -51,7 +51,7 @@ export class LastEditedTracker extends EventEmitter implements IComponentLastEdi
             clientId: message.clientId,
             timestamp: message.timestamp,
         };
-        this.sharedSummaryBlock.set<ILastEditDetails>(this.lastEditedDetailsKey, lastEditDetails);
+        this.sharedSummaryBlock.set(this.lastEditedDetailsKey, lastEditDetails);
         this.emit("lastEditedChanged", lastEditDetails);
     }
 }
