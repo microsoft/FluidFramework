@@ -44,7 +44,7 @@ describe("SharedSummaryBlock", () => {
             assert.deepEqual(sharedSummaryBlock.get(key2), value2, "The retrieved value must match the set value");
 
             const key3 = "testKey3";
-            const value3: ITestInterface ={
+            const value3: ITestInterface = {
                 value1: "outer string",
                 value2: 2,
                 value3: [true, false],
@@ -56,7 +56,6 @@ describe("SharedSummaryBlock", () => {
             };
             sharedSummaryBlock.set<ITestInterface>(key3, value3);
             assert.deepEqual(sharedSummaryBlock.get(key3), value3, "The retrieved value must match the set value");
-
         });
     });
 

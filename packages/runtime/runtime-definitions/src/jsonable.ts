@@ -29,13 +29,19 @@ export type JsonableArray<T> = Jsonable<T>[];
 export type Jsonable<T = JsonablePrimitive> = T | JsonableArray<T> | JsonableObject<T>;
 
 /**
- * Take a type, usually and interface and tries to map it to a compatible jsonable type.
- * It will produce an type that all all properites as never if the type can't be converted
- * to a jsonable, this should result in a compile time error.
+ * Take a type, usually an interface and tries to map it to a compatible jsonable type.
+ * It will produce a type with all properites that aren't jsonable as never
+ * this should result in a compile time error.
+ *
  * The usage looks like `foo<T extends any = Jsonable>(input: AsJsonable<T>)`
+ *
  * if T isn't jsonable then all values of input will be invalid,
  * as all the properties will need to be never
  * which isn't possible.
+ *
+ * This won't be fool proof, but if someone modifies a type used in an
+ * AsJsonable to add a property that isn't Jsonable, they should get a compile time
+ * break, which is pretty good.
  */
 export type AsJsonable<T extends any, J = JsonablePrimitive> =
     T extends Jsonable ? T : {[K in keyof T]: T[K] extends AsJsonable<T[K]> ? Jsonable<J> : never };
