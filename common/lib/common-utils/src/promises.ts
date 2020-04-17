@@ -81,7 +81,6 @@ export function assertNotRejected<T>(promise: Promise<T>): Promise<T> {
  * All calls are then proxied to the promise returned by the execute method.
  */
 export class LazyPromise<T> implements Promise<T> {
-
     public get [Symbol.toStringTag](): string {
         return this.getPromise()[Symbol.toStringTag];
     }

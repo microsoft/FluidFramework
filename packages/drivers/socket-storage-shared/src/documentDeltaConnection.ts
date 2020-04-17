@@ -72,7 +72,6 @@ export class DocumentDeltaConnection
         client: IClient,
         url: string,
         timeoutMs: number = 20000): Promise<IDocumentDeltaConnection> {
-
         const socket = io(
             url,
             {

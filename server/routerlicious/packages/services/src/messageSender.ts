@@ -9,7 +9,6 @@ import * as amqp from "amqplib";
 import * as winston from "winston";
 
 class RabbitmqTaskSender implements ITaskMessageSender {
-
     private readonly events = new EventEmitter();
     private readonly rabbitmqConnectionString: string;
     private readonly taskQueues: string[];

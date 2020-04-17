@@ -51,7 +51,7 @@ export class TestHistorian implements IHistorian {
     }
 
     public async getBlob(sha: string): Promise<git.IBlob> {
-        const blob = await this.blobs.findOne({_id: sha});
+        const blob = await this.blobs.findOne({ _id: sha });
         return {
             content: Buffer.from(blob.value.content, blob.value.encoding).toString("base64"),
             encoding: blob.value.encoding,
@@ -130,7 +130,7 @@ export class TestHistorian implements IHistorian {
     }
 
     public async getRef(ref: string): Promise<git.IRef> {
-        const val = await this.refs.findOne({ _id: ref});
+        const val = await this.refs.findOne({ _id: ref });
         if (val) {
             return {
                 ref: val.value.ref,
@@ -143,7 +143,7 @@ export class TestHistorian implements IHistorian {
     }
 
     public async createRef(params: git.ICreateRefParams): Promise<git.IRef> {
-        await this.refs.insertOne({_id: params.ref, value: params});
+        await this.refs.insertOne({ _id: params.ref, value: params });
         return this.getRef(params.ref);
     }
 

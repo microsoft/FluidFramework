@@ -126,4 +126,3 @@ export class DeltaConnection
         return this.connection.submitSignal(message);
     }
 }
-

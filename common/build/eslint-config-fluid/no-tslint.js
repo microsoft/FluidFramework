@@ -344,7 +344,12 @@ module.exports = {
         "spaced-comment": [
             "error",
             "always",
-            { "markers": ["!"] }
+            {
+                "block": {
+                    "markers": ["!"],
+                    "balanced": true
+                }
+            }
         ],
         "use-isnan": "error",
         "valid-typeof": "off",

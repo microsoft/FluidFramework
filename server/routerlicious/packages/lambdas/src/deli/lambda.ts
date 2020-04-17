@@ -119,7 +119,6 @@ export class DeliLambda implements IPartitionLambda {
         private readonly clientTimeout: number,
         private readonly activityTimeout: number,
         private readonly noOpConsolidationTimeout: number) {
-
         // Instantiate existing clients
         if (lastCheckpoint.clients) {
             for (const client of lastCheckpoint.clients) {
@@ -180,7 +179,6 @@ export class DeliLambda implements IPartitionLambda {
         const boxcar = extractBoxcar(rawMessage);
 
         for (const message of boxcar.contents) {
-
             // Ticket current message.
             const ticketedMessage = this.ticket(message, this.createTrace("start"));
 

@@ -210,5 +210,4 @@ export async function fluidFetchMessages(documentService?: IDocumentService, sav
         let item;
         for await (item of generator) { }
     }
-
 }

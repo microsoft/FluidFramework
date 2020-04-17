@@ -54,6 +54,10 @@ export class TestRootComponent extends PrimedComponent implements IComponentRunn
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public run = () => Promise.resolve();
 
+    public stop() {
+        return;
+    }
+
     // Make this function public so TestHost can use them
     public async createAndAttachComponent<T extends IComponentLoadable>(
         type: string, props?: any,

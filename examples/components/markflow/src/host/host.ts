@@ -22,18 +22,17 @@ const template = new Template(
                 { tag: "div", props: { className: styles.title }, children: [
                     { tag: "h1", ref: "titleText" },
                     { tag: "hr" },
-                ]},
+                ] },
                 { tag: "div", props: { className: styles.outline }, children: [
                     { tag: "p", ref: "slot", props: { className: styles.slot } },
-                ]},
-            ]},
-        ]},
-        { tag: "div", ref: "search", props: { className: styles.searchMenu }},
-        { tag: "div", ref: "status", props: { className: styles.status }},
-    ]});
+                ] },
+            ] },
+        ] },
+        { tag: "div", ref: "search", props: { className: styles.searchMenu } },
+        { tag: "div", ref: "status", props: { className: styles.status } },
+    ] });
 
 export class WebflowView implements IComponentHTMLView {
-
     public get IComponentHTMLView() { return this; }
 
     private searchMenu?: SearchMenuView;

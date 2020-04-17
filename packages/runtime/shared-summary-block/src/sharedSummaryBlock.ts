@@ -129,7 +129,6 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
     protected async loadCore(
         branchId: string,
         storage: IObjectStorageService): Promise<void> {
-
         const rawContent = await storage.read(snapshotFileName);
         const contents = JSON.parse(fromBase64ToUtf8(rawContent)) as ISharedSummaryBlockDataSerializable;
 

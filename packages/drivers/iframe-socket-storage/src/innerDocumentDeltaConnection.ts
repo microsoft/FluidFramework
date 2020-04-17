@@ -40,7 +40,6 @@ export class InnerDocumentDeltaConnection
     public static async create(
         connection: IConnected,
         outerProxy: Comlink.Remote<IOuterDocumentDeltaConnectionProxy>): Promise<IDocumentDeltaConnection> {
-
         const tempEmitter = new EventEmitter();
 
         const forwardEvent = (event: string, args: any[]) =>{

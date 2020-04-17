@@ -130,7 +130,7 @@ describe("PromiseCache", () => {
                 removeOnError: removeOnErrorByMessage,
             });
             // eslint-disable-next-line @typescript-eslint/promise-function-async
-            const asyncFn = () => thrower(false /*removeOnError*/);
+            const asyncFn = () => thrower(false /* removeOnError */);
 
             const addOrGet1 = pc.addOrGet(1, asyncFn);
             await assert.rejects(addOrGet1);
@@ -143,7 +143,7 @@ describe("PromiseCache", () => {
                 removeOnError: removeOnErrorByMessage,
             });
             // eslint-disable-next-line @typescript-eslint/promise-function-async
-            const asyncFn = () => thrower(false /*removeOnError*/);
+            const asyncFn = () => thrower(false /* removeOnError */);
 
             const add2 = pc.add(2, asyncFn);
             assert.equal(add2, true);
@@ -156,7 +156,7 @@ describe("PromiseCache", () => {
             pc = new PromiseCache<number, string>({
                 removeOnError: removeOnErrorByMessage,
             });
-            const asyncFn = async () => thrower(false /*removeOnError*/);
+            const asyncFn = async () => thrower(false /* removeOnError */);
 
             const p3 = pc.addOrGet(3, asyncFn);
             await assert.rejects(p3);
@@ -168,7 +168,7 @@ describe("PromiseCache", () => {
             pc = new PromiseCache<number, string>({
                 removeOnError: removeOnErrorByMessage,
             });
-            const asyncFn = async () => thrower(false /*removeOnError*/);
+            const asyncFn = async () => thrower(false /* removeOnError */);
 
             const add4 = pc.add(4, asyncFn);
             assert.equal(add4, true);
@@ -182,7 +182,7 @@ describe("PromiseCache", () => {
                 removeOnError: removeOnErrorByMessage,
             });
             // eslint-disable-next-line @typescript-eslint/promise-function-async
-            const asyncFn = () => thrower(true /*removeOnError*/);
+            const asyncFn = () => thrower(true /* removeOnError */);
 
             const p5 = pc.addOrGet(5, asyncFn);
             const contains5a = pc.has(5);
@@ -198,7 +198,7 @@ describe("PromiseCache", () => {
                 removeOnError: removeOnErrorByMessage,
             });
             // eslint-disable-next-line @typescript-eslint/promise-function-async
-            const asyncFn = () => thrower(true /*removeOnError*/);
+            const asyncFn = () => thrower(true /* removeOnError */);
 
             const add6 = pc.add(6, asyncFn);
             assert.equal(add6, true);
@@ -214,7 +214,7 @@ describe("PromiseCache", () => {
             pc = new PromiseCache<number, string>({
                 removeOnError: removeOnErrorByMessage,
             });
-            const asyncFn = async () => thrower(true /*removeOnError*/);
+            const asyncFn = async () => thrower(true /* removeOnError */);
 
             const p7 = pc.addOrGet(7, asyncFn);
             const contains7a = pc.has(7);
@@ -229,7 +229,7 @@ describe("PromiseCache", () => {
             pc = new PromiseCache<number, string>({
                 removeOnError: removeOnErrorByMessage,
             });
-            const asyncFn = async () => thrower(true /*removeOnError*/);
+            const asyncFn = async () => thrower(true /* removeOnError */);
 
             const add8 = pc.add(8, asyncFn);
             assert.equal(add8, true);
@@ -269,12 +269,12 @@ describe("PromiseCache", () => {
 
             pc.addValue(1, "one");
 
-            clock.tick (10);
+            clock.tick(10);
             assert.equal(pc.has(1), true);
 
             await pc.addValueOrGet(1, "one");
 
-            clock.tick (10);
+            clock.tick(10);
             assert.equal(pc.has(1), false);
         });
 
@@ -289,15 +289,15 @@ describe("PromiseCache", () => {
 
             // Each of these operations should reset the sliding expiry
             pc.add(1, async () => "one");
-            clock.tick (10);
+            clock.tick(10);
             pc.addValue(1, "one");
-            clock.tick (10);
+            clock.tick(10);
             await pc.addOrGet(1, async () => "one");
-            clock.tick (10);
+            clock.tick(10);
             await pc.addValueOrGet(1, "one");
-            clock.tick (10);
+            clock.tick(10);
             await pc.get(1);
-            clock.tick (10);
+            clock.tick(10);
 
             const endTime = clock.now;
             logClock("endtime");

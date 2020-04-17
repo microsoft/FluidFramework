@@ -40,5 +40,3 @@ export class AppModule {
         router.navigate([path ? path : "/dashboard"], { skipLocationChange: !!path });
     }
 }
-
-

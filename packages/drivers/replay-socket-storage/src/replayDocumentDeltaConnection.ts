@@ -196,7 +196,6 @@ export class ReplayDocumentDeltaConnection
     public static create(
         documentStorageService: IDocumentDeltaStorageService,
         controller: ReplayController): IDocumentDeltaConnection {
-
         const connection: IConnected = {
             claims: ReplayDocumentDeltaConnection.claims,
             clientId: "",

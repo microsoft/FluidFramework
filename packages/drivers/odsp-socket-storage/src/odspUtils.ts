@@ -36,7 +36,7 @@ export function throwOdspNetworkError(
         message,
         canRetry,
         statusCode,
-        undefined /*retryAfterSeconds*/,
+        undefined /* retryAfterSeconds */,
         online);
     (networkError as any).sprequestguid = sprequestguid;
     throw networkError;

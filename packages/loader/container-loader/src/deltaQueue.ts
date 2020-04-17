@@ -145,7 +145,7 @@ export class DeltaQueue<T> extends TypedEventEmitter<IDeltaQueueEvents<T>> imple
         while (!(this.q.length === 0 || this.paused || this.error)) {
             // Get the next message in the queue
             const next = this.q.shift();
-            if(next !== undefined){
+            if (next !== undefined) {
                 // Process the message.
                 try {
                     this.worker(next);

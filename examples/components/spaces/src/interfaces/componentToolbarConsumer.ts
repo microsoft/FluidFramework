@@ -22,4 +22,3 @@ export interface IProvideComponentToolbarConsumer {
 export interface IComponentToolbarConsumer extends IProvideComponentToolbarConsumer {
     setComponentToolbar(id: string, type: string, handle: IComponentHandle): Promise<void>;
 }
-

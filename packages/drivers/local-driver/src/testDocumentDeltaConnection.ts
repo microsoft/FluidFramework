@@ -206,7 +206,6 @@ export class TestDocumentDeltaConnection
         });
     }
 
-
     /**
      * Submits a new delta operation to the server
      */

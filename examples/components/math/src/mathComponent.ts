@@ -415,7 +415,6 @@ export class MathView implements IComponentHTMLView, IComponentCursor, IComponen
 
         Caret.caretLeave(this.containerElement, cursorDirectionToDirection[direction], cursorElement.getBoundingClientRect());
     }
-
 }
 
 export class MathInstance extends EventEmitter implements IComponentLoadable, IComponentRouter,
@@ -668,7 +667,6 @@ export class MathCollection extends SharedComponent<ISharedDirectory> implements
                     const startPos = this.getStartPos(instance);
                     instance.remoteEdit(pos - startPos, len, event.deltaOperation === MergeTree.MergeTreeDeltaType.INSERT);
                 }
-
             }
         });
     }

@@ -40,7 +40,6 @@ export class TodoItem extends PrimedComponent
     implements
     IComponentHTMLView,
     IComponentReactViewable {
-
     private text: SharedString;
     private innerIdCell: ISharedCell;
     private baseUrl: string = "";

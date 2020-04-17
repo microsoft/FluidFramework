@@ -33,7 +33,6 @@ export interface SnapshotHeader {
 }
 
 export class Snapshot {
-
     public static readonly header = "header";
     public static readonly body = "body";
 
@@ -63,7 +62,6 @@ export class Snapshot {
         allLengths: number[],
         approxSequenceLength: number,
         startIndex = 0): ops.MergeTreeChunk {
-
         const segs: SegmentSpec[] = [];
         let sequenceLength = 0;
         let segCount = 0;

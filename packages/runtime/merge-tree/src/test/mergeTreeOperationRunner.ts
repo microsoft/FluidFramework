@@ -60,7 +60,6 @@ export function runMergeTreeOperationRunner(
     clients: readonly TestClient[],
     minLength: number,
     config: IMergeTreeOperationRunnerConfig) {
-
     let seq = startingSeq;
 
     // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -89,7 +88,6 @@ export function runMergeTreeOperationRunner(
                     op = client.insertTextLocal(
                         random.integer(0, len)(mt),
                         text);
-
                 } else {
                     let opIndex = random.integer(0, config.operations.length - 1)(mt);
                     const start = random.integer(0, len - 1)(mt);

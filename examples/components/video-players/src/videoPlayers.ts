@@ -75,7 +75,6 @@ interface IYouTubePlayer {
 
 export class VideoPlayer implements
     IComponentLoadable, IComponentHTMLView, IComponentRouter, IComponentLayout {
-
     private player: IYouTubePlayer;
     private playerDiv: HTMLDivElement;
 

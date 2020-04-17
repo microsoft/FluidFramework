@@ -72,7 +72,6 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
         url: string,
         timeoutMs: number = 20000,
         telemetryLogger: ITelemetryLogger = new TelemetryNullLogger()): Promise<IDocumentDeltaConnection> {
-
         const socketReferenceKey = `${url},${tenantId},${webSocketId}`;
 
         const socketReference = OdspDocumentDeltaConnection.getOrCreateSocketIoReference(
@@ -150,7 +149,6 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
             socketReference.clearTimer();
 
             debug(`Using existing socketio reference for ${key} (${socketReference.references})`);
-
         } else {
             const socket = io(
                 url,
@@ -176,7 +174,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection impleme
                 // The server always closes the socket after sending this message
                 // fully remove the socket reference now
                 // This raises "disconnect" event with proper error object.
-                OdspDocumentDeltaConnection.removeSocketIoReference(key, true /*socketProtocolError*/, error);
+                OdspDocumentDeltaConnection.removeSocketIoReference(key, true /* socketProtocolError */, error);
             });
 
             socketReference = new SocketReference(socket);

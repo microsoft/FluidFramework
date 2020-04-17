@@ -94,8 +94,8 @@ describe("ComponentSerializer", () => {
 
         check(handle, serHandle);
         check([handle], [serHandle]);
-        check({handle}, {handle: serHandle});
-        check([{handle}, {handle}], [{handle: serHandle}, {handle: serHandle}]);
+        check({ handle }, { handle: serHandle });
+        check([{ handle }, { handle }], [{ handle: serHandle }, { handle: serHandle }]);
 
         it(`sizable json tree`, () => {
             const input: any = makeJson(
