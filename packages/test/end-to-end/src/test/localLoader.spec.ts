@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { PrimedComponent, PrimedComponentFactory, ISharedComponentProps } from "@microsoft/fluid-aqueduct";
 import { IFluidCodeDetails, ILoader } from "@microsoft/fluid-container-definitions";
 import { Container } from "@microsoft/fluid-container-loader";
 import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";
@@ -36,12 +36,16 @@ export class TestComponent extends PrimedComponent {
 
     private counter!: Counter;
 
+    public constructor(props: ISharedComponentProps) {
+        super(props);
+        this.runtime = props.runtime;
+    }
+
     /**
      * Expose the runtime for testing purposes.
      */
-    public get runtime() { return this.runtime; }
 
-    public set runtime(value: IComponentRuntime) { this.runtime = value; }
+    public runtime: IComponentRuntime;
 
     /**
      * Gets the current counter value.
