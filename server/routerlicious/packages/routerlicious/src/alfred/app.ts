@@ -40,7 +40,6 @@ export function create(
     appTenants: IAlfredTenant[],
     mongoManager: MongoManager,
     producer: IProducer) {
-
     // Maximum REST request size
     const requestSize = config.get("alfred:restJsonSize");
 

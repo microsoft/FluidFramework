@@ -11,7 +11,6 @@ export interface IMetricClient {
 
 // Default client for loca run.
 export class DefaultMetricClient implements IMetricClient {
-
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public writeLatencyMetric(series: string, traces: ITrace[]): Promise<void> {
         return Promise.resolve();
