@@ -78,8 +78,10 @@ export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBl
     /**
      * {@inheritDoc ISharedSummaryBlock.get}
      */
-    public get(key: string): Jsonable {
-        return this.data.get(key);
+    public get<T = Jsonable>(key: string): T {
+        // The cast to unknown is needed because of a limitation in TypeScript where an interface cannot be cast to
+        // Jsonable: https://github.com/Microsoft/TypeScript/issues/15300
+        return this.data.get(key) as unknown as T;
     }
 
     /**

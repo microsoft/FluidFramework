@@ -301,6 +301,8 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 
         // eslint-disable-next-line dot-notation
         window["easyView"] = editorView;
+
+        return editorView;
     }
 
     private getCurrentState() {
