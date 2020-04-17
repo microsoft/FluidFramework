@@ -199,7 +199,7 @@ export class InkLayer extends Layer {
     constructor(size: ui.ISize, private readonly model: ink.IInk) {
         super(size);
 
-        this.model.on("clear", (op) => {
+        this.model.on("clear", () => {
             throw new Error("Clear not supported in OverlayCanvas");
         });
 

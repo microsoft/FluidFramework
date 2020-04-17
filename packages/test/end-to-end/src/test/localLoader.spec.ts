@@ -36,16 +36,16 @@ export class TestComponent extends PrimedComponent {
 
     private counter!: Counter;
 
-    public constructor(props: ISharedComponentProps) {
-        super(props);
-        this.runtime = props.runtime;
-    }
-
     /**
      * Expose the runtime for testing purposes.
      */
 
     public runtime: IComponentRuntime;
+
+    public constructor(props: ISharedComponentProps) {
+        super(props);
+        this.runtime = props.runtime;
+    }
 
     /**
      * Gets the current counter value.

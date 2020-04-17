@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import {
     IComponent,
     IComponentHandle,
@@ -18,6 +17,8 @@ import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-d
 import { ComponentHandle } from "@microsoft/fluid-component-runtime";
 import { IDirectory } from "@microsoft/fluid-map";
 import { v4 as uuid } from "uuid";
+import { EventForwarder } from "@microsoft/fluid-common-utils";
+import { IEvent } from "@microsoft/fluid-common-definitions";
 import { serviceRoutePathRoot } from "../containerServices";
 
 export interface ISharedComponentProps<O extends IComponent = object, R extends IComponent = object> {
@@ -31,8 +32,8 @@ export interface ISharedComponentProps<O extends IComponent = object, R extends 
  * This is a bare-bones base class that does basic setup and enables for factory on an initialize call.
  * You probably don't want to inherit from this component directly unless you are creating another base component class
  */
-export abstract class SharedComponent<O extends IComponent = object>
-    extends EventEmitter
+export abstract class SharedComponent<TEvents extends IEvent= IEvent, O extends IComponent = object>
+    extends EventForwarder<TEvents>
     implements IComponentLoadable, IComponentRouter, IProvideComponentHandle
 {
     private initializeP: Promise<void> | undefined;
@@ -254,5 +255,7 @@ export abstract class SharedComponent<O extends IComponent = object>
     /**
      * Called when the host container closes and disposes itself
      */
-    protected dispose(): void { }
+    public dispose(): void {
+        super.dispose();
+    }
 }

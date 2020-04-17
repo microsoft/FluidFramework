@@ -13,6 +13,7 @@ import { SharedString } from "@microsoft/fluid-sequence";
 import { IComponentHTMLView, IComponentReactViewable } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+import { IValueChanged } from "@microsoft/fluid-map";
 import { TextBoxName } from "../TextBox";
 import { TextListName } from "../TextList";
 import { TodoItemSupportedComponents } from "./supportedComponent";
@@ -100,9 +101,9 @@ export class TodoItem extends PrimedComponent
             }
         });
 
-        this.root.on("valueChanged", (op, local) => {
+        this.root.on("valueChanged", (changed: IValueChanged, local: boolean) => {
             if (!local) {
-                if (op.key === checkedKey) {
+                if (changed.key === checkedKey) {
                     this.emit("checkedStateChanged");
                 }
             }

@@ -17,7 +17,7 @@ export class SharedMapUndoRedoHandler {
         map.on("valueChanged", this.mapDeltaHandler);
     }
     public detachMap(map: ISharedMap) {
-        map.removeListener("valueChanged", this.mapDeltaHandler);
+        map.off("valueChanged", this.mapDeltaHandler);
     }
 
     private readonly mapDeltaHandler = (changed: IValueChanged, local: boolean, op, target: ISharedMap) => {

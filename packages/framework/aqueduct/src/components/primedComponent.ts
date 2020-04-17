@@ -12,6 +12,7 @@ import {
 import { ISharedDirectory, MapFactory, SharedDirectory } from "@microsoft/fluid-map";
 import { ITaskManager } from "@microsoft/fluid-runtime-definitions";
 import { v4 as uuid } from "uuid";
+import { IEvent } from "@microsoft/fluid-common-definitions";
 import { BlobHandle } from "./blobHandle";
 import { SharedComponent } from "./sharedComponent";
 
@@ -23,9 +24,8 @@ import { SharedComponent } from "./sharedComponent";
  * and registering channels with the runtime any new DDS that is set on the root
  * will automatically be registered.
  */
-
-export abstract class PrimedComponent<O extends IComponent = object>
-    extends SharedComponent<O>
+export abstract class PrimedComponent<TEvents extends IEvent = IEvent, O extends IComponent = object>
+    extends SharedComponent<TEvents, O>
 {
     private internalRoot: ISharedDirectory | undefined;
     private internalTaskManager: ITaskManager | undefined;
