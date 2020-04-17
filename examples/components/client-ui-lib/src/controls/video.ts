@@ -63,7 +63,6 @@ export class Video extends ui.Component {
     }
 
     private async handleVideoMap() {
-
         this.videoMap.get("time").then((time) => {
             if (!isNaN(time)) {
                 this.video.currentTime = time;

@@ -9,6 +9,7 @@ import { ISharedCell, SharedCell } from "@microsoft/fluid-cell";
 import {
     IComponentHandle, IComponentLoadable,
 } from "@microsoft/fluid-component-core-interfaces";
+import { IValueChanged } from "@microsoft/fluid-map";
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { IComponentHTMLView, IComponentReactViewable } from "@microsoft/fluid-view-interfaces";
@@ -46,7 +47,6 @@ export class TodoItem extends PrimedComponent
     implements
     IComponentHTMLView,
     IComponentReactViewable {
-
     private text: SharedString;
     private innerIdCell: ISharedCell;
     private baseUrl: string = "";
@@ -109,9 +109,9 @@ export class TodoItem extends PrimedComponent
             }
         });
 
-        this.root.on("valueChanged", (op, local) => {
+        this.root.on("valueChanged", (changed: IValueChanged, local: boolean) => {
             if (!local) {
-                if (op.key === checkedKey) {
+                if (changed.key === checkedKey) {
                     this.emit("checkedStateChanged");
                 }
             }

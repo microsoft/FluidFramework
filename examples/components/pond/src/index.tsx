@@ -32,7 +32,6 @@ export const PondName = pkg.name as string;
  *  - Component creation and storage using Handles
  */
 export class Pond extends PrimedComponent implements IComponentHTMLView {
-
     private readonly clickerKey = "clicker";
     private readonly clickerWithInitialValueKey = "clicker-with-initial-value";
 

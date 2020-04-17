@@ -110,7 +110,6 @@ export async function processContent(mode: Mode, concurrently = true) {
         });
 
         promises.push(work);
-
     }
 
     return Promise.all(promises);

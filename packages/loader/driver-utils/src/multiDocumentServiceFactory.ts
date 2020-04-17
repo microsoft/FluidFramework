@@ -11,20 +11,19 @@ import {
 } from "@microsoft/fluid-driver-definitions";
 import { ensureFluidResolvedUrl } from "./fluidResolvedUrl";
 
-export class MultiDocumentServiceFactory implements IDocumentServiceFactory{
-
-    public static create(documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[]){
-        if(Array.isArray(documentServiceFactory)){
-            const factories: IDocumentServiceFactory[]=[];
+export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
+    public static create(documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[]) {
+        if (Array.isArray(documentServiceFactory)) {
+            const factories: IDocumentServiceFactory[] = [];
             documentServiceFactory.forEach((factory)=>{
                 const maybeMulti = factory as MultiDocumentServiceFactory;
-                if(maybeMulti.protocolToDocumentFactoryMap !== undefined){
+                if (maybeMulti.protocolToDocumentFactoryMap !== undefined) {
                     factories.push(... maybeMulti.protocolToDocumentFactoryMap.values());
-                }else{
+                } else {
                     factories.push(factory);
                 }
             });
-            if(factories.length === 1){
+            if (factories.length === 1) {
                 return factories[0];
             }
             return new MultiDocumentServiceFactory(factories);

@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "@microsoft/fluid-base-host": "^0.16.0",
-    "@microsoft/fluid-common-utils": "^0.14.0",
+    "@microsoft/fluid-common-utils": "^0.15.0",
     "@microsoft/fluid-component-core-interfaces": "^0.16.0",
     "@microsoft/fluid-container-definitions": "^0.16.0",
     "@microsoft/fluid-container-loader": "^0.16.0",
@@ -38,7 +38,7 @@
     "@microsoft/fluid-odsp-driver": "^0.16.0",
     "@microsoft/fluid-odsp-urlresolver": "^0.16.0",
     "@microsoft/fluid-odsp-utils": "^0.16.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1004.0-0",
+    "@microsoft/fluid-protocol-definitions": "^0.1004.1-0",
     "@microsoft/fluid-routerlicious-driver": "^0.16.0",
     "@microsoft/fluid-routerlicious-host": "^0.16.0",
     "@microsoft/fluid-routerlicious-urlresolver": "^0.16.0",
@@ -49,7 +49,7 @@
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",
-    "@microsoft/eslint-config-fluid": "^0.15.0",
+    "@microsoft/eslint-config-fluid": "^0.16.0-0",
     "@microsoft/fluid-build-common": "^0.14.0",
     "@types/node": "^10.14.6",
     "@types/uuid": "^3.4.4",

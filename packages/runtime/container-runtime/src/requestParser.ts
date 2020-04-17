@@ -8,7 +8,6 @@ import { IRequest } from "@microsoft/fluid-component-core-interfaces";
  * The Request Parser takes an IRequest provides parsing and sub request creation
  */
 export class RequestParser implements IRequest {
-
     /**
      * Splits the path of the url and decodes each path part
      * @param url - the url to get path parts of

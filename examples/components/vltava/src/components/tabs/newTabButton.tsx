@@ -56,7 +56,7 @@ export const NewTabButton: React.FunctionComponent<IButtonExampleProps> =
                 },
             );
         });
-        const menuProps: IContextualMenuProps = {items};
+        const menuProps: IContextualMenuProps = { items };
         return (
             <IconButton
                 split

@@ -180,7 +180,6 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
             ];
             /* eslint-enable max-len */
 
-
             const baseSearchCommands = new TST<SearchMenu.ISearchMenuCommand<HostView>>();
             for (const command of commands) {
                 baseSearchCommands.put(command.key, command);

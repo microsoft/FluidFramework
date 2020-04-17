@@ -3,28 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidModule, IFluidPackage, isFluidPackage } from "@microsoft/fluid-container-definitions";
-import { Deferred } from "@microsoft/fluid-common-utils";
+import {
+    IFluidPackage,
+    isFluidPackage,
+    IFluidCodeDetails,
+} from "@microsoft/fluid-container-definitions";
 import {
     ComponentRegistryEntry,
     IComponentRegistry,
 } from "@microsoft/fluid-runtime-definitions";
-
-const loadScript = async (scriptUrl: string) =>
-    new Promise<void>((resolve, reject) => {
-        const script = document.createElement("script");
-        script.src = scriptUrl;
-
-        // Dynamically added scripts are async by default. By setting async to false, we are enabling the scripts
-        // to be downloaded in parallel, but executed in order. This ensures that a script is executed after all of
-        // its dependencies have been loaded and executed.
-        script.async = false;
-
-        script.onload = () => resolve();
-        script.onerror = () => reject(new Error(`Failed to download the script at url: ${scriptUrl}`));
-
-        document.head.appendChild(script);
-    });
+import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { WebCodeLoader, SemVerCdnCodeResolver } from "@microsoft/fluid-web-code-loader";
 
 /**
  * A component registry that can load component via their url
@@ -32,111 +21,65 @@ const loadScript = async (scriptUrl: string) =>
 export class UrlRegistry implements IComponentRegistry {
     private static readonly WindowKeyPrefix = "FluidExternalComponent";
 
-    private readonly urlRegistryMap = new Map<string, Promise<ComponentRegistryEntry>>();
-    private readonly loadingPackages: Map<string, Promise<any>>;
-    private readonly loadingEntrypoints: Map<string, Promise<unknown>>;
+    private readonly urlRegistryMap = new Map<string, Promise<ComponentRegistryEntry | undefined>>();
+    private readonly loadingPackages: Map<string, Promise<IFluidPackage>>;
+    private readonly webloader = new WebCodeLoader(new SemVerCdnCodeResolver());
 
     constructor() {
-
         // Stash on the window so multiple instance can coordinate
         const loadingPackagesKey = `${UrlRegistry.WindowKeyPrefix}LoadingPackages`;
         if (window[loadingPackagesKey] === undefined) {
-            window[loadingPackagesKey] = new Map<string, Promise<unknown>>();
+            window[loadingPackagesKey] = new Map<string, Promise<IFluidPackage>>();
         }
-        this.loadingPackages = window[loadingPackagesKey] as Map<string, Promise<unknown>>;
-
-        const loadingEntrypointsKey = `${UrlRegistry.WindowKeyPrefix}LoadingEntrypoints`;
-        if (window[loadingEntrypointsKey] === undefined) {
-            window[loadingEntrypointsKey] = new Map<string, Promise<unknown>>();
-        }
-        this.loadingEntrypoints = window[loadingEntrypointsKey] as Map<string, Promise<unknown>>;
+        this.loadingPackages = window[loadingPackagesKey] as Map<string, Promise<IFluidPackage>>;
     }
 
     public get IComponentRegistry() { return this; }
 
     public async get(name: string): Promise<ComponentRegistryEntry | undefined> {
-        if (!this.urlRegistryMap.has(name)
-            && (name.startsWith("http://") || name.startsWith("https://"))) {
-
-            // eslint-disable-next-line @typescript-eslint/no-misused-promises, no-async-promise-executor
-            const entryPointPromise = new Promise<any>(async (resolve, reject) => {
-                if (!this.loadingPackages.has(name)) {
-                    this.loadingPackages.set(name, this.loadEntrypoint(name));
-                }
-
-                const entrypoint = await this.loadingPackages.get(name);
-
-                if (entrypoint === undefined) {
-                    reject(`UrlRegistry: ${name}: Entrypoint is undefined`);
-                } else {
-                    resolve(entrypoint);
-                }
-            });
-
-            this.urlRegistryMap.set(
-                name,
-                entryPointPromise.then(async (entrypoint: IFluidModule) => entrypoint.fluidExport));
+        if (!this.urlRegistryMap.has(name)) {
+            this.urlRegistryMap.set(name, this.loadEntrypoint(name));
         }
 
         return this.urlRegistryMap.get(name);
     }
 
-    private async loadEntrypoint(name: string): Promise<any> {
-        const response = await fetch(`${name}/package.json`);
-        if (!response.ok) {
-            throw new Error(`UrlRegistry: ${name}: fetch was no ok. status code: ${response.status}`);
-        } else {
-            const responseText = await response.text();
-            const packageJson = JSON.parse(responseText);
-            if (!isFluidPackage(packageJson)) {
-                throw new Error(`UrlRegistry: ${name}: Package json not deserializable as IFluidPackage`);
-            }
-
-            const fluidPackage: IFluidPackage = packageJson;
-
-            const entrypointName = fluidPackage.fluid.browser.umd.library;
-            const scripts = fluidPackage.fluid.browser.umd.files;
-
-            if (entrypointName !== undefined && scripts !== undefined) {
-                while (this.loadingEntrypoints.has(entrypointName)) {
-                    await this.loadingEntrypoints.get(entrypointName);
-                }
-                const loadingEntrypoint = new Deferred();
-                this.loadingEntrypoints.set(entrypointName, loadingEntrypoint.promise);
-                const preservedEntryPoint = window[entrypointName];
-                window[entrypointName] = undefined;
-                try {
-                    const scriptLoadPromises =
-                        scripts.map(
-                            async (bundle) => loadScript(`${name}/${bundle}`));
-
-                    const errors: any[] = [];
-                    while (scriptLoadPromises.length > 0) {
-                        try {
-                            await scriptLoadPromises.shift();
-                        } catch (e) {
-                            errors.push(e);
-                        }
-                    }
-                    if (errors.length > 0) {
-                        throw new Error(errors.join("\n"));
-                    }
-
-                    // Stash the entry point
-                    const entrypoint = window[entrypointName];
-                    if (entrypoint === undefined) {
-                        throw new Error(
-                            `UrlRegistry: ${name}: Entrypoint: ${entrypointName}: Entry point is undefined`);
-                    }
-                    return entrypoint;
-
-                } finally {
-                    // Release the entry point
-                    window[entrypointName] = preservedEntryPoint;
-                    loadingEntrypoint.resolve();
-                    this.loadingEntrypoints.delete(entrypointName);
-                }
+    private async loadEntrypoint(name: string): Promise<IComponent| undefined> {
+        if (this.isUrl(name)) {
+            if (!this.loadingPackages.has(name)) {
+                this.loadingPackages.set(name, this.loadPackage(name));
             }
         }
+        const fluidPackage = await this.loadingPackages.get(name) ?? name;
+        const codeDetails: IFluidCodeDetails = {
+            package: fluidPackage,
+            config:{
+                cdn:"https://pragueauspkn-3873244262.azureedge.net",
+            },
+        };
+        const fluidModule = await this.webloader.load(codeDetails);
+        return fluidModule.fluidExport;
+    }
+
+    private async loadPackage(url: string): Promise<IFluidPackage> {
+        const response = await fetch(`${url}/package.json`);
+        if (!response.ok) {
+            throw new Error(`UrlRegistry: ${url}: fetch was no ok. status code: ${response.status}`);
+        } else {
+            const packageJson = await response.json();
+            if (!isFluidPackage(packageJson)) {
+                throw new Error(`UrlRegistry: ${url}: Package json not deserializable as IFluidPackage`);
+            }
+            // we need to resolve the package here, as
+            // we don't know forsure where this http endpoint is
+            packageJson.fluid.browser.umd.files =
+                packageJson.fluid.browser.umd.files.map(
+                    (file) => this.isUrl(file) ? file : `${url}/${file}`);
+            return packageJson;
+        }
+    }
+
+    private isUrl(name: string) {
+        return name.startsWith("http://") || name.startsWith("https://");
     }
 }

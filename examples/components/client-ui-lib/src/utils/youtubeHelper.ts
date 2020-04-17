@@ -56,7 +56,6 @@ export class YouTubeWrapper {
     private readonly player: any;
 
     constructor(private videoId: string, divId: string, onPlayerLoad: (event) => void, onStateChange: (event) => void) {
-
         this.player = new window.YT.Player(divId, {
             events: {
                 onReady: (event) => {

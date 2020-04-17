@@ -281,9 +281,9 @@ export function TestPack(verbose = true) {
             if (annotateProps) {
                 clients[i].annotateRangeLocal(0, clients[i].getLength(), annotateProps, undefined);
             }
-            clients[i].startCollaboration(`Fred${i}`);
+            clients[i].startOrUpdateCollaboration(`Fred${i}`);
         }
-        server.startCollaboration("theServer");
+        server.startOrUpdateCollaboration("theServer");
         server.addClients(clients);
         if (measureBookmarks) {
             references = makeReferences(server, referenceCount);
@@ -313,12 +313,12 @@ export function TestPack(verbose = true) {
             } else {
                 snapClient.insertTextLocal(0, initString);
             }
-            snapClient.startCollaboration("snapshot");
+            snapClient.startOrUpdateCollaboration("snapshot");
             server.addListeners([snapClient]);
         }
 
         function checkTextMatch() {
-            //Console.log(`checking text match @${server.getCurrentSeq()}`);
+            // Console.log(`checking text match @${server.getCurrentSeq()}`);
             let clockStart = clock();
             const serverText = server.getText();
             getTextTime += elapsedMicroseconds(clockStart);
@@ -336,8 +336,8 @@ export function TestPack(verbose = true) {
                 const cliText = client.getText();
                 if (cliText !== serverText) {
                     console.log(`mismatch @${server.getCurrentSeq()} client @${client.getCurrentSeq()} id: ${client.getClientId()}`);
-                    //Console.log(serverText);
-                    //console.log(cliText);
+                    // Console.log(serverText);
+                    // console.log(cliText);
                     const diffParts = JsDiff.diffChars(serverText, cliText);
                     for (const diffPart of diffParts) {
                         let annotes = "";
@@ -474,7 +474,6 @@ export function TestPack(verbose = true) {
             }
         }
 
-
         let errorCount = 0;
 
         // Function asyncRoundStep(asyncInfo: AsyncRoundInfo, roundCount: number) {
@@ -595,12 +594,10 @@ export function TestPack(verbose = true) {
                                 ordSuccess++;
                                 // Console.log(`happy ordinals ${MergeTree.ordinalToArray(segoff1.segment.ordinal)} < ${MergeTree.ordinalToArray(segoff2.segment.ordinal)}`);
                             }
-
                         } else {
                             // Console.log(`no seg for [${b},${e}) with len ${len}`);
                         }
                     }
-
                 }
                 if (measureRanges) {
                     const mt = random.engines.mt19937();
@@ -743,8 +740,8 @@ export function TestPack(verbose = true) {
                 if (verbose) {
                     console.log(`total time ${(totalTime / 1000000.0).toFixed(1)} check time ${(checkTime / 1000000.0).toFixed(1)}`);
                 }
-                //Console.log(server.getText());
-                //console.log(server.mergeTree.toString());
+                // Console.log(server.getText());
+                // console.log(server.mergeTree.toString());
             }
             return errorCount;
         }
@@ -851,8 +848,8 @@ export function TestPack(verbose = true) {
         function tail() {
             reportTiming(server);
             reportTiming(clients[2]);
-            //Console.log(server.getText());
-            //console.log(server.mergeTree.toString());
+            // Console.log(server.getText());
+            // console.log(server.mergeTree.toString());
         }
         return errorCount;
     }
@@ -862,7 +859,6 @@ export function TestPack(verbose = true) {
         const clientCountB = 2;
         const fileSegCount = 0;
         const initString = "don't ask for whom the bell tolls; it tolls for thee";
-
 
         const serverA = new TestServer();
         serverA.measureOps = true;
@@ -887,7 +883,7 @@ export function TestPack(verbose = true) {
             } else {
                 clientsA[i].insertTextLocal(0, initString);
             }
-            clientsA[i].startCollaboration(`FredA${i}`);
+            clientsA[i].startOrUpdateCollaboration(`FredA${i}`);
         }
 
         for (let i = 0; i < clientCountB; i++) {
@@ -898,7 +894,7 @@ export function TestPack(verbose = true) {
             } else {
                 clientsB[i].insertTextLocal(0, initString);
             }
-            clientsB[i].startCollaboration(`FredB${i}`, /* minSeq: */ 0, /* currentSeq: */ 0, /* branchId: */ 1);
+            clientsB[i].startOrUpdateCollaboration(`FredB${i}`, /* minSeq: */ 0, /* currentSeq: */ 0, /* branchId: */ 1);
         }
         for (let i = 0; i < clientCountB; i++) {
             const clientB = clientsB[i];
@@ -910,10 +906,10 @@ export function TestPack(verbose = true) {
                 }
             }
         }
-        serverA.startCollaboration("theServerA");
+        serverA.startOrUpdateCollaboration("theServerA");
         serverA.addClients(clientsA);
         serverA.addListeners([serverB]);
-        serverB.startCollaboration("theServerB", /* minSeq: */ 0, /* currentSeq: */ 0, /* branchId: */ 1);
+        serverB.startOrUpdateCollaboration("theServerB", /* minSeq: */ 0, /* currentSeq: */ 0, /* branchId: */ 1);
         serverB.addClients(clientsB);
         serverB.addUpstreamClients(clientsA);
 
@@ -934,7 +930,7 @@ export function TestPack(verbose = true) {
         }
 
         function checkTextMatch(clients: TestClient[], server: TestServer) {
-            //Console.log(`checking text match @${server.getCurrentSeq()}`);
+            // Console.log(`checking text match @${server.getCurrentSeq()}`);
             const clockStart = clock();
             const serverText = server.getText();
             getTextTime += elapsedMicroseconds(clockStart);
@@ -944,8 +940,8 @@ export function TestPack(verbose = true) {
                 const cliText = client.getText();
                 if (cliText !== serverText) {
                     console.log(`mismatch @${server.getCurrentSeq()} client @${client.getCurrentSeq()} id: ${client.getClientId()}`);
-                    //Console.log(serverText);
-                    //console.log(cliText);
+                    // Console.log(serverText);
+                    // console.log(cliText);
                     if (showDiff) {
                         const diffParts = JsDiff.diffChars(serverText, cliText);
                         for (const diffPart of diffParts) {
@@ -1118,8 +1114,8 @@ export function TestPack(verbose = true) {
                 if (verbose) {
                     console.log(`total time ${(totalTime / 1000000.0).toFixed(1)} check time ${(checkTime / 1000000.0).toFixed(1)}`);
                 }
-                //Console.log(server.getText());
-                //console.log(server.mergeTree.toString());
+                // Console.log(server.getText());
+                // console.log(server.mergeTree.toString());
             }
             return errorCount;
         }
@@ -1181,18 +1177,17 @@ export function TestPack(verbose = true) {
             reportTiming(serverA);
             reportTiming(clientsA[1]);
             reportTiming(clientsB[1]);
-            //Console.log(server.getText());
-            //console.log(server.mergeTree.toString());
+            // Console.log(server.getText());
+            // console.log(server.mergeTree.toString());
         }
         return errorCount;
-
     }
     const clientNames = ["Ed", "Ted", "Ned", "Harv", "Marv", "Glenda", "Susan"];
 
     function firstTest() {
         let cli = new TestClient();
         cli.insertTextLocal(0, "on the mat.");
-        cli.startCollaboration("Fred1");
+        cli.startOrUpdateCollaboration("Fred1");
         for (const cname of clientNames) {
             cli.addLongClientId(cname);
         }
@@ -1244,7 +1239,7 @@ export function TestPack(verbose = true) {
 
         cli = new TestClient();
         cli.insertTextLocal(0, " old sock!");
-        cli.startCollaboration("Fred2");
+        cli.startOrUpdateCollaboration("Fred2");
         for (const cname of clientNames) {
             cli.addLongClientId(cname);
         }
@@ -1289,7 +1284,7 @@ export function TestPack(verbose = true) {
         }
         cli = new TestClient();
         cli.insertTextLocal(0, "abcdefgh");
-        cli.startCollaboration("Fred3");
+        cli.startOrUpdateCollaboration("Fred3");
         for (const cname of clientNames) {
             cli.addLongClientId(cname);
         }
@@ -1573,7 +1568,6 @@ export function mergeTreeCheckedTest() {
                 errorCount++;
                 break;
             }
-
         }
         if ((i > 0) && (0 === (i % 1000))) {
             const perIter = (accumTime / (i + 1)).toFixed(3);
@@ -1628,7 +1622,6 @@ export function mergeTreeCheckedTest() {
                 errorCount++;
                 break;
             }
-
         }
         if ((i > 0) && (0 === (i % 1000))) {
             const perIter = (accumTime / (i + 1)).toFixed(3);
@@ -1858,7 +1851,7 @@ export class DocumentTree {
 
     private generateClient() {
         const client = new TestClient({ blockUpdateMarkers: true });
-        client.startCollaboration("Fred");
+        client.startOrUpdateCollaboration("Fred");
         for (const child of this.children) {
             this.addToMergeTree(client, child);
         }
@@ -1894,7 +1887,6 @@ export class DocumentTree {
                 const row = DocumentTree.generateRow(rowProbability);
                 items.push(row);
             }
-
         }
         return items;
     }

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedObject } from "@microsoft/fluid-shared-object-base";
+import { ISharedObject, ISharedObjectEvents } from "@microsoft/fluid-shared-object-base";
 
 /**
  * Data about a single point in an ink stroke
@@ -55,10 +55,15 @@ export interface IColor {
     a: number;
 }
 
+export interface IInkEvents extends ISharedObjectEvents{
+    (event: "stylus", listener: (operation: IStylusOperation) => void);
+    (event: "clear", listener: () => void);
+}
+
 /**
  * Shared data structure for representing ink.
  */
-export interface IInk extends ISharedObject {
+export interface IInk extends ISharedObject<IInkEvents> {
     /**
      * Create a stroke with the given pen information.
      * @param pen - The pen information for this stroke

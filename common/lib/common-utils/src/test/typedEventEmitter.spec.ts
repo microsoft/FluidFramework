@@ -18,7 +18,7 @@ describe("TypedEventEmitter", () => {
         tee.on("error",() => on++);
         assert.equal(tee.listenerCount("error"), 2);
 
-        for(let i=0;i<5;i++){
+        for (let i = 0; i < 5; i++) {
             tee.emit("error","message");
         }
 

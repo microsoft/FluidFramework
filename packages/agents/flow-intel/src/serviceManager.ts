@@ -37,10 +37,16 @@ export class IntelligentServicesManager {
         this.services.push(service);
     }
 
+    public stop() {
+        if (this.rateLimiter) {
+            this.rateLimiter.stop();
+        }
+        this.document.removeAllListeners();
+    }
+
     public process() {
         this.document.on("sequenceDelta", () => {
             if (!this.intelInvoked) {
-
                 // And then run plugin insights rate limited
                 this.rateLimiter = new RateLimiter(
                     async () => {
@@ -90,6 +96,5 @@ export class IntelligentServicesManager {
                 }
             }
         }
-
     }
 }

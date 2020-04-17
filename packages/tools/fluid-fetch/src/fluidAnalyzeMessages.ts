@@ -476,7 +476,6 @@ function processOp(
     if (message.type === MessageType.Attach) {
         const attachMessage = message.contents as IAttachMessage;
         processComponentAttachOp(attachMessage, dataType);
-
     } else if (message.type === MessageType.Operation) {
         let envelop = message.contents as IEnvelope;
         // TODO: Legacy?

@@ -10,7 +10,6 @@ import { TextSegment } from "../textSegment";
 import { TestClient } from "./testClient";
 
 describe("TestClient", () => {
-
     const localUserLongId = "localUser";
     let client: TestClient;
 
@@ -23,7 +22,7 @@ describe("TestClient", () => {
             client.getClientId(),
             UniversalSequenceNumber,
             undefined);
-        client.startCollaboration(localUserLongId);
+        client.startOrUpdateCollaboration(localUserLongId);
     });
 
     describe(".findTile", () => {
@@ -236,7 +235,7 @@ describe("TestClient", () => {
     describe(".annotateMarker", () => {
         it("annotate valid marker", () => {
             const insertOp = client.insertMarkerLocal(0, MergeTree.ReferenceType.Tile, {
-                [MergeTree.reservedMarkerIdKey]: "123"});
+                [MergeTree.reservedMarkerIdKey]: "123" });
             assert(insertOp);
             const markerInfo = client.getContainingSegment(0);
             const marker = markerInfo.segment as MergeTree.Marker;

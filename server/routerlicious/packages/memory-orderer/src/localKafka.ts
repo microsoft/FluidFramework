@@ -15,7 +15,6 @@ import { LocalKafkaSubscription } from "./localKafkaSubscription";
  * Queue is cleaned up once all subscriptions processed past the min.
  */
 export class LocalKafka implements IProducer {
-
     private readonly subscriptions: LocalKafkaSubscription[] = [];
 
     private readonly qeueue = new Deque<IQueuedMessage>();
@@ -92,5 +91,4 @@ export class LocalKafka implements IProducer {
     public once(event: "connected" | "produced" | "error", listener: (...args: any[]) => void): this {
         return this;
     }
-
 }

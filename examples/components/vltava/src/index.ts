@@ -41,7 +41,7 @@ export class InternalRegistry implements IComponentRegistry, IComponentRegistryD
         const index = this.containerComponentArray.findIndex(
             (containerComponent) => name === containerComponent.type,
         );
-        if (index >= 0){
+        if (index >= 0) {
             return this.containerComponentArray[index].factory;
         }
 

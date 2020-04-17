@@ -104,7 +104,6 @@ export async function typeFile(
     writers: number,
     scribeCallback: ScribeMetricsCallback,
 ): Promise<IScribeMetrics> {
-
     const metricsArray: IScribeMetrics[] = [];
     let q: any;
 
@@ -242,7 +241,6 @@ export async function typeChunk(
     intervalTime: number,
     scribeCallback: ScribeMetricsCallback,
     queueCallback: QueueCallback): Promise<IScribeMetrics> {
-
     return new Promise<IScribeMetrics>((resolve, reject) => {
         let readPosition = 0;
         let totalOps = 0;
@@ -270,7 +268,6 @@ export async function typeChunk(
                 message.clientSequenceNumber &&
                 message.clientSequenceNumber > 100 &&
                 local) {
-
                 ackCounter.increment(1);
                 // Wait for at least one cycle
                 if (ackCounter.elapsed() > samplingRate) {

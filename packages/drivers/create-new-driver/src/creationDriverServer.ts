@@ -30,7 +30,6 @@ interface IAugmentedDocumentMessage {
  * Server implementation used by Creation driver.
  */
 export class CreationServerMessagesHandler {
-
     public static getInstance(documentId: string): CreationServerMessagesHandler {
         if (CreationServerMessagesHandler.urlMap.has(documentId)) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -73,7 +72,6 @@ export class CreationServerMessagesHandler {
                 }
             }, Number.MAX_VALUE);
     }
-
 
     private createClientId() {
         return `newFileCreationClient${this.totalClients}`;

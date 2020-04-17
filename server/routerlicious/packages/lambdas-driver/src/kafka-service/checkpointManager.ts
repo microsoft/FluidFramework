@@ -68,7 +68,6 @@ export class CheckpointManager {
                     const nextCheckpointP = this.checkpoint(this.lastCheckpoint);
                     this.pendingCheckpoint.resolve(nextCheckpointP);
                     this.pendingCheckpoint = undefined;
-
                 } else if (this.pendingCheckpoint) {
                     this.pendingCheckpoint.resolve();
                     this.pendingCheckpoint = undefined;

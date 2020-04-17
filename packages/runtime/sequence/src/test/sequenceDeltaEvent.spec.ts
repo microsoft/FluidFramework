@@ -33,7 +33,7 @@ describe("non-collab", () => {
     describe("insert", () => {
         before(() => {
             client = new TestClient();
-            client.startCollaboration(userId);
+            client.startOrUpdateCollaboration(userId);
         });
 
         const initialText = "done";
@@ -82,7 +82,7 @@ describe("non-collab", () => {
         before(() => {
             client = new TestClient();
             client.insertTextLocal(0, "All is well!");
-            client.startCollaboration(userId);
+            client.startOrUpdateCollaboration(userId);
         });
 
         it("from the middle", () => {
@@ -124,11 +124,10 @@ describe("non-collab", () => {
         before(() => {
             client = new TestClient();
             client.insertTextLocal(0, "All is well!");
-            client.startCollaboration(userId);
+            client.startOrUpdateCollaboration(userId);
         });
 
         it("add property over separate range", () => {
-
             annotateText(0, 3, { foo1: "bar1" },
                 [{ offset: 0, numChar: 3, props: { foo1: "bar1" }, propDeltas: { foo1: null } }]);
 
@@ -140,7 +139,6 @@ describe("non-collab", () => {
         });
 
         it("add property over overlapping runs", () => {
-
             annotateText(2, 10, { foo: "bar" },
                 [
                     { offset: 2, numChar: 1, props: { foo: "bar", foo1: "bar1" }, propDeltas: { foo: null } },
@@ -150,7 +148,6 @@ describe("non-collab", () => {
         });
 
         it("nullify all properties", () => {
-
             annotateText(2, 10, { foo: undefined },
                 [
                     { offset: 2, numChar: 1, props: { foo: undefined, foo1: "bar1" }, propDeltas: { foo: "bar" } },
@@ -221,7 +218,7 @@ describe("collab", () => {
         beforeEach(() => {
             client = new TestClient();
             client.insertTextLocal(0, "The fox jumps over the dog");
-            client.startCollaboration(localUserId);
+            client.startOrUpdateCollaboration(localUserId);
         });
 
         it("separate regions, local before remote", () => {
@@ -678,7 +675,7 @@ describe("collab", () => {
         beforeEach(() => {
             client = new TestClient();
             client.insertTextLocal(0, "The quick brown fox jumps over the lazy dog");
-            client.startCollaboration(localUserId);
+            client.startOrUpdateCollaboration(localUserId);
         });
 
         it("separate regions, local before remote", () => {
@@ -1286,7 +1283,7 @@ describe("collab", () => {
         beforeEach(() => {
             client = new TestClient();
             client.insertTextLocal(0, "Habits change into character");
-            client.startCollaboration(localUserId);
+            client.startOrUpdateCollaboration(localUserId);
         });
 
         it("same range, same property, local before remote", () => {
@@ -1612,7 +1609,6 @@ describe("collab", () => {
         });
 
         it("overlapping ranges, same properties, different values", () => {
-
             // initialize as following:
             // - second word has property foo1=bar1
             // - third word has property foo2=bar2
@@ -1913,7 +1909,6 @@ describe("collab", () => {
             end: number,
             expected: IExpectedSegmentInfo[],
         ): void {
-
             assert(event.isLocal === isLocal);
             assert(event.isEmpty === isEmpty);
             if (isEmpty) {
@@ -1953,7 +1948,7 @@ describe("collab", () => {
         beforeEach(() => {
             client = new TestClient();
             client.insertTextLocal(0, "The brown fox jumps over the lazy dog");
-            client.startCollaboration(localUserId);
+            client.startOrUpdateCollaboration(localUserId);
         });
 
         it("insertPos before deleteRange, insertLocal deleteRemote, local before remote", () => {
@@ -3001,13 +2996,12 @@ describe("collab", () => {
 });
 
 describe("SequenceDeltaEvent", () => {
-
     const localUserLongId = "localUser";
     let client: TestClient;
 
     beforeEach(() => {
         client = new TestClient();
-        client.startCollaboration(localUserLongId);
+        client.startOrUpdateCollaboration(localUserLongId);
     });
 
     describe(".ranges", () => {

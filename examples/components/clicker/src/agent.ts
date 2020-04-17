@@ -8,7 +8,6 @@ import { Counter } from "@microsoft/fluid-map";
 
 // Sample agent to run.
 export class ClickerAgent implements IComponentRouter, IComponentRunnable {
-
     constructor(private readonly counter: Counter) { }
 
     public get IComponentRouter() { return this; }
@@ -18,6 +17,10 @@ export class ClickerAgent implements IComponentRouter, IComponentRunnable {
         this.counter.on("incremented", (incrementValue: number, currentValue: number) => {
             console.log(`Incremented by ${incrementValue}. New value ${currentValue}`);
         });
+    }
+
+    public stop() {
+        return;
     }
 
     public async request(request: IRequest): Promise<IResponse> {

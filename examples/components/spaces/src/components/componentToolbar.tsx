@@ -58,7 +58,7 @@ export class ComponentToolbar extends PrimedComponent
         }
     }
 
-    public changeEditState(isEditable: boolean){
+    public changeEditState(isEditable: boolean) {
         this.root.set("isEditable", isEditable);
     }
 
@@ -84,7 +84,6 @@ export class ComponentToolbar extends PrimedComponent
             div,
         );
     }
-
 }
 
 interface IComponentToolbarViewProps {
@@ -98,10 +97,9 @@ interface IComponentToolbarViewState {
 }
 
 class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, IComponentToolbarViewState> {
-
     private readonly supportedComponentList: IContainerComponentDetails[];
 
-    constructor(props: IComponentToolbarViewProps){
+    constructor(props: IComponentToolbarViewProps) {
         super(props);
         this.supportedComponentList = props.supportedComponentList;
         this.state = {
@@ -109,7 +107,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
         };
         props.root.on("valueChanged", (change, local) => {
             if (change.key === "isEditable") {
-                this.setState({isEditable: props.root.get("isEditable")});
+                this.setState({ isEditable: props.root.get("isEditable") });
             }
         });
     }
@@ -128,7 +126,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
         }
     }
 
-    render(){
+    render() {
         const editableButtons: JSX.Element[] = [];
         this.supportedComponentList.forEach(((supportedComponent: IContainerComponentDetails) => {
             editableButtons.push(
@@ -147,7 +145,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
             <div style={componentToolbarStyle}>
                 <Button
                     id="edit"
-                    iconProps={{ iconName: "BullseyeTargetEdit"}}
+                    iconProps={{ iconName: "BullseyeTargetEdit" }}
                     onClick={() => this.emitToggleEditable()}
                 >
                     {`Edit: ${this.state.isEditable}`}

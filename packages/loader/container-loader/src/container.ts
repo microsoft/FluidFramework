@@ -14,6 +14,7 @@ import {
     ICodeLoader,
     IConnectionDetails,
     IContainer,
+    IContainerEvents,
     IDeltaManager,
     IFluidCodeDetails,
     IGenericBlob,
@@ -101,7 +102,8 @@ const merge = require("lodash/merge");
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
-export class Container extends EventEmitterWithErrorHandling implements IContainer, IExperimentalContainer {
+export class Container
+    extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer, IExperimentalContainer {
     public static version = "^0.1.0";
 
     public readonly isExperimentalContainer = true;
@@ -121,6 +123,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         urlResolver: IUrlResolver,
         logger?: ITelemetryBaseLogger,
     ): Promise<Container> {
+        const [, docId] = id.split("/");
         const container = new Container(
             options,
             scope,
@@ -128,14 +131,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             loader,
             serviceFactory,
             urlResolver,
+            request,
+            decodeURI(docId),
             logger);
 
-        const [, docId] = id.split("/");
-        container._id = decodeURI(docId);
         container._scopes = container.getScopes(resolvedUrl);
         container._canReconnect = !(request.headers?.[LoaderHeader.reconnect] === false);
         container.service = await serviceFactory.createDocumentService(resolvedUrl);
-        container.originalRequest = request;
 
         return new Promise<Container>((res, rej) => {
             let alreadyRaisedError = false;
@@ -190,6 +192,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             loader,
             serviceFactory,
             urlResolver,
+            undefined,
+            undefined,
             logger);
         await container.createDetached(source);
 
@@ -213,8 +217,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private _scopes: string[] | undefined;
     private readonly _deltaManager: DeltaManager;
     private _existing: boolean | undefined;
-    private _id: string | undefined;
-    private originalRequest: IRequest | undefined;
     private service: IDocumentService | undefined;
     private _parentBranch: string | null = null;
     private _connectionState = ConnectionState.Disconnected;
@@ -332,7 +334,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         private readonly loader: Loader,
         private readonly serviceFactory: IDocumentServiceFactory,
         private readonly urlResolver: IUrlResolver,
-        logger?: ITelemetryBaseLogger,
+        private originalRequest: IRequest | undefined,
+        private _id: string | undefined,
+        logger: ITelemetryBaseLogger | undefined,
     ) {
         super();
         this._audience = new Audience();
@@ -341,13 +345,17 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const type = this.client.details.type;
         const interactive = this.client.details.capabilities.interactive;
         const clientType = `${interactive ? "interactive" : "noninteractive"}${type ? `/${type}` : ""}`;
+        // Need to use the property getter for docId because for detached flow we don't have the docId initially.
+        // We assign the id later so property getter is used.
         this.subLogger = DebugLogger.mixinDebugLogger(
             "fluid:telemetry",
             logger,
             {
-                docId: this.id,
                 clientType, // Differentiating summarizer container from main container
                 loaderVersion: pkgVersion,
+            },
+            {
+                docId: () => this.id,
             });
 
         // Prefix all events in this file with container-loader
@@ -380,26 +388,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this.protocolHandler!.quorum;
     }
 
-    public on(event: "readonly", listener: (readonly: boolean) => void): void;
-    public on(event: "connected" | "contextChanged", listener: (clientId: string) => void): this;
-    public on(event: "disconnected" | "joining", listener: () => void): this;
-    public on(event: "closed", listener: (error?: IError) => void): this;
-    public on(event: "error", listener: (error: IError) => void): this;
-    public on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
-    public on(event: "pong" | "processTime", listener: (latency: number) => void): this;
-    public on(event: MessageType.BlobUploaded, listener: (contents: any) => void): this;
-
-    public on(event: string | symbol, listener: (...args: any[]) => void): this {
-        return super.on(event, listener);
-    }
-
     public close(error?: IError) {
         if (this._closed) {
             return;
         }
         this._closed = true;
 
-        this._deltaManager.close(error, false /*raiseContainerError*/);
+        this._deltaManager.close(error, false /* raiseContainerError */);
 
         if (this.protocolHandler) {
             this.protocolHandler.close();
@@ -512,11 +507,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             }
 
             await this.snapshotCore(tagMessage, fullTree);
-
         } catch (ex) {
             this.logger.logException({ eventName: "SnapshotExceptionError" }, ex);
             throw ex;
-
         } finally {
             if (this.deltaManager !== undefined) {
                 this.deltaManager.inbound.systemResume();
@@ -551,7 +544,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 // So there shouldn't be a need to record error here.
                 // But we have number of cases where reconnects do not happen, and no errors are recorded, so
                 // adding this log point for easier diagnostics
-                this.logger.sendTelemetryEvent({eventName: "setAutoReconnectError"}, error);
+                this.logger.sendTelemetryEvent({ eventName: "setAutoReconnectError" }, error);
             });
         }
     }
@@ -1031,7 +1024,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             throw new Error(PackageNotFactoryError);
         }
         return factory;
-
     }
 
     private get client(): IClient {

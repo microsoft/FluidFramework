@@ -93,8 +93,11 @@ export interface INack {
     // The operation that was just nacked
     operation: IDocumentMessage;
 
-    // The sequence number the client needs to catch up to
+    // The sequence number the client needs to catch up to before retrying
     sequenceNumber: number;
+
+    // Detail info about the nack.
+    content: INackContent;
 }
 
 /**
@@ -291,4 +294,47 @@ export interface IQueueMessage {
     documentId: string;
 
     token: string;
+}
+
+/**
+ * Interface for nack content.
+ */
+export interface INackContent {
+    /**
+     * An error code number that represents the error. It will be a valid HTTP error code.
+     * 403 errors are non retryable and client should acquire a new identity before reconnection.
+     * 400 errors are always immediately retriable
+     * 429 errors are retriable or non retriable (depends on type field).
+     */
+    code: number;
+
+    /**
+     * Type of the Nack.
+     */
+    type: NackErrorType;
+
+    /**
+     * A message about the nack for debugging/logging/telemetry purposes
+     */
+    message: string;
+
+    /**
+     * Optional Retry-After time in seconds
+     * If specified, the client should wait this many seconds before retrying
+     */
+    retryAfter?: number;
+}
+
+/**
+ * Type of the Nack.
+ * InvalidScopeError: Client's token is not valid for the intended op.
+ * ThrottlingError: Retryable after retryAfter number.
+ * BadRequestError: Clients op is invalid and should retry immediately with a valid op.
+ * LimitExceededError: Service is having issues. Client should not retry.
+ */
+export enum NackErrorType {
+    ThrottlingError = "ThrottlingError",
+    InvalidScopeError = "InvalidScopeError",
+    BadRequestError = "BadRequestError",
+    LimitExceededError = "LimitExceededError",
 }

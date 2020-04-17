@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { pointwise } from './test';
+import { pointwise } from "./test";
 
 export class Map256x256<T> {
     private readonly cells = new Map<number, T>();

@@ -180,7 +180,6 @@ export class KafkaNodeProducer implements IProducer {
                 this.events.emit("connected");
 
                 this.sendPendingMessages();
-
             } catch (error) {
                 this.handleError(error);
             }
@@ -206,5 +205,4 @@ export class KafkaNodeProducer implements IProducer {
         this.events.emit("error", error);
         this.connect();
     }
-
 }

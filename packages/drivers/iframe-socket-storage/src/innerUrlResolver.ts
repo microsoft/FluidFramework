@@ -10,7 +10,6 @@ import { IResolvedUrl, IUrlResolver } from "@microsoft/fluid-driver-definitions"
  * A UrlResolver that returns a fixed url
  */
 export class InnerUrlResolver implements IUrlResolver {
-
     constructor(private readonly resolved: IResolvedUrl) {
     }
 
