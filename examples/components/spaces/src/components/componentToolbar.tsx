@@ -31,8 +31,11 @@ const menuButtonStyle: React.CSSProperties = {width: "20vh", height: "5vh"};
 const editableButtonStyle: React.CSSProperties = {
     width: "20vh", height: "5vh", position: "absolute", left: 0, top: 0, margin: "1vh",
 };
-const collapsibleButtonStyle: React.CSSProperties = {
+const templateButtonStyle: React.CSSProperties = {
     width: "20vh", height: "5vh", position: "absolute", left: "20vh", top: 0, margin: "1vh", zIndex: -1,
+};
+const componentButtonStyle: React.CSSProperties = {
+    width: "20vh", height: "5vh", position: "absolute", left: "40vh", top: 0, margin: "1vh", zIndex: -1,
 };
 
 export const ComponentToolbarName = "componentToolbar";
@@ -223,7 +226,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
                 </Button>
                 {this.state.isEditable ?
                     <div>
-                        <div style={collapsibleButtonStyle}>
+                        <div style={templateButtonStyle}>
                             <Collapsible
                                 open={isTemplateListOpen}
                                 trigger={templatesButton}
@@ -231,7 +234,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
                                 {templateButtonList}
                             </Collapsible>
                         </div>
-                        <div style={collapsibleButtonStyle}>
+                        <div style={componentButtonStyle}>
                             <Collapsible
                                 open={isComponentListOpen}
                                 trigger={componentsButton}

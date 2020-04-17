@@ -13,6 +13,7 @@ import {
 import {
     IComponent,
     IComponentHandle,
+    IComponentLoadable,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IProvideComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { SharedObjectSequence } from "@microsoft/fluid-sequence";
@@ -21,7 +22,7 @@ import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import { ISpacesDataModel, SpacesDataModel } from "./dataModel";
 import { SpacesGridView } from "./view";
 import { ComponentToolbar, ComponentToolbarName } from "./components";
-import { IComponentToolbarConsumer, Templates } from "./interfaces";
+import { IComponentToolbarConsumer, Templates, IComponentRegistryDetails } from "./interfaces";
 import { SpacesComponentName, InternalRegistry } from "./index";
 
 /**
@@ -33,6 +34,7 @@ export class Spaces extends PrimedComponent
     private componentToolbar: IComponent | undefined;
     private static readonly defaultComponentToolbarId = "spaces-component-toolbar";
     private componentToolbarId: string = Spaces.defaultComponentToolbarId;
+    private registryDetails: IComponentRegistryDetails | undefined;
 
     // TODO #1188 - Component registry should automatically add ComponentToolbar
     // to the registry since it's required for the spaces component
@@ -59,6 +61,22 @@ export class Spaces extends PrimedComponent
     public get IComponentHTMLView() { return this; }
     public get IComponentCollection() { return this.dataModel; }
     public get IComponentToolbarConsumer() { return this; }
+
+    public async setComponentToolbar(id: string, type: string, handle: IComponentHandle) {
+        this.componentToolbarId = id;
+        const componentToolbar = await this.dataModel.setComponentToolbar(id, type, handle);
+        this.componentToolbar = componentToolbar;
+        this.addToolbarListeners();
+    }
+
+    /**
+     * Will return a new Spaces View
+     */
+    public render(div: HTMLElement) {
+        ReactDOM.render(
+            <SpacesGridView dataModel={this.dataModel}/>,
+            div);
+    }
 
     protected async componentInitializingFirstTime(props?: any) {
         this.root.createSubDirectory("component-list");
@@ -100,8 +118,20 @@ export class Spaces extends PrimedComponent
         if (this.root.get("component-toolbar-id") === Spaces.defaultComponentToolbarId) {
             (this.componentToolbar as ComponentToolbar).changeEditState(isEditable);
         }
+        const registry = await this.context.hostRuntime.IComponentRegistry.get("");
+        if (registry) {
+            this.registryDetails = (registry as IComponent).IComponentRegistryDetails;
+        }
     }
 
+    protected async createAndAttachComponentWithId<T extends IComponent & IComponentLoadable>(
+        id: string, pkg: string, props?: any,
+    ): Promise<T> {
+        const componentRuntime = await this.context.createComponent(id, pkg, props);
+        const component = await this.asComponent<T>(componentRuntime.request({ url: "/" }));
+        componentRuntime.attach();
+        return component;
+    }
 
     private addToolbarListeners() {
         if (this.componentToolbar && this.componentToolbar.IComponentCallable) {
@@ -110,7 +140,7 @@ export class Spaces extends PrimedComponent
                     /* eslint-disable-next-line @typescript-eslint/no-floating-promises */
                     this.dataModel.addComponent(type, w, h);
                 },
-                addTemplate: this.addTemplateFromRegistry,
+                addTemplate: this.addTemplateFromRegistry.bind(this),
                 saveLayout: () => this.dataModel.saveLayout(),
                 toggleEditable: (isEditable?: boolean) =>  this.dataModel.emit("editableUpdated", isEditable),
             });
@@ -122,49 +152,31 @@ export class Spaces extends PrimedComponent
             new SpacesDataModel(
                 this.root,
                 this.createAndAttachComponent.bind(this),
+                this.createAndAttachComponentWithId.bind(this),
                 this.getComponentFromDirectory.bind(this),
+                this.registryDetails,
                 this.componentToolbarId,
             );
     }
 
     private async addTemplateFromRegistry(template: Templates) {
-        const registry = await this.context.hostRuntime.IComponentRegistry.get("");
-        if (registry) {
-            const registryDetails = (registry as IComponent).IComponentRegistryDetails;
-            if (registryDetails) {
-                const componentRegistryEntries = (registryDetails as InternalRegistry)
-                    .getFromTemplate(template);
+        if (this.registryDetails) {
+            const componentRegistryEntries = (this.registryDetails as InternalRegistry)
+                .getFromTemplate(template);
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
+            componentRegistryEntries.forEach(async (componentRegistryEntry) => {
+                const templateLayouts: Layout[] = componentRegistryEntry.templates[template];
                 // eslint-disable-next-line @typescript-eslint/no-misused-promises
-                componentRegistryEntries.forEach(async (componentRegistryEntry) => {
-                    const templateLayouts: Layout[] = componentRegistryEntry.templates[template];
-                    // eslint-disable-next-line @typescript-eslint/no-misused-promises
-                    templateLayouts.forEach(async (templateLayout: Layout) => {
-                        await this.dataModel.addComponent(
-                            componentRegistryEntry.type,
-                            templateLayout.w,
-                            templateLayout.h,
-                            templateLayout.x,
-                            templateLayout.y,
-                        );
-                    });
+                templateLayouts.forEach(async (templateLayout: Layout) => {
+                    await this.dataModel.addComponent(
+                        componentRegistryEntry.type,
+                        templateLayout.w,
+                        templateLayout.h,
+                        templateLayout.x,
+                        templateLayout.y,
+                    );
                 });
-            }
+            });
         }
-    }
-
-    public async setComponentToolbar(id: string, type: string, handle: IComponentHandle) {
-        this.componentToolbarId = id;
-        const componentToolbar = await this.dataModel.setComponentToolbar(id, type, handle);
-        this.componentToolbar = componentToolbar;
-        this.addToolbarListeners();
-    }
-
-    /**
-     * Will return a new Spaces View
-     */
-    public render(div: HTMLElement) {
-        ReactDOM.render(
-            <SpacesGridView dataModel={this.dataModel}/>,
-            div);
     }
 }

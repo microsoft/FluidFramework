@@ -25,10 +25,7 @@ export interface IComponentRegistryDetails extends IProvideComponentRegistryDeta
 
 export enum Templates {
     CollaborativeCoding = "Collaborative Coding",
-    MediaRoom = "Media Room",
-    TwitchParty = "Twitch Party",
     Classroom = "Classroom",
-    CovidStarterKit = "Covid Starter Kit",
 }
 
 export interface IContainerComponentDetails {
