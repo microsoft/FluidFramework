@@ -123,9 +123,7 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
         });
     }
 
-
     private createProxy(frame: HTMLIFrameElement) {
-
         // Host guarantees that frame and contentWindow are both loaded
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const iframeContentWindow = frame.contentWindow!;
@@ -141,7 +139,6 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
         iframeContentWindow.window.postMessage("EndpointExposed", "*");
         Comlink.expose(proxy, Comlink.windowEndpoint(iframeContentWindow));
     }
-
 
     private getStorage(storage: IDocumentStorageService): IDocumentStorageService {
         return {
@@ -189,7 +186,6 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
     }
 
     private getOuterDocumentDeltaConnection(deltaStream: IDocumentDeltaConnection) {
-
         const pendingOps: { type: string, args: any[] }[] = [];
 
         for (const event of socketIOEvents) {
@@ -251,13 +247,11 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
     }
 }
 
-
 /**
  * Creates a proxy outerdocumentservice from either a resolvedURL or a request
  * Remotes the real connection to an iframe
  */
 export class IFrameDocumentServiceProxyFactory {
-
     public static async create(
         documentServiceFactory: IDocumentServiceFactory,
         frame: HTMLIFrameElement,
@@ -288,7 +282,6 @@ export class IFrameDocumentServiceProxyFactory {
     }
 
     public async createDocumentServiceFromRequest(request: IRequest): Promise<IDocumentServiceFactoryProxy> {
-
         const resolvedUrl = await this.urlResolver.resolve(request);
         ensureFluidResolvedUrl(resolvedUrl);
 

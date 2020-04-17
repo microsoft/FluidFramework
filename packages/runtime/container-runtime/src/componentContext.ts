@@ -225,7 +225,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             packagePath,
             realizationFn,
         );
-        const response = await componentRuntime.request({url: "/"});
+        const response = await componentRuntime.request({ url: "/" });
         if (response.status !== 200 || response.mimeType !== "fluid/component") {
             throw new Error("Failed to create component");
         }
@@ -447,7 +447,6 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         } else {
             this.emit("notleader", this.clientId);
         }
-
     }
 
     public bindRuntime(componentRuntime: IComponentRuntime) {

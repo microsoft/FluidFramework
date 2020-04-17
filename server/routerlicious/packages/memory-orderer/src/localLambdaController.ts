@@ -12,7 +12,6 @@ import { LocalKafka } from "./localKafka";
  * Controls lambda startups and subscriptions for localOrderer
  */
 export class LocalLambdaController extends EventEmitter implements IKafkaSubscriber {
-
     public lambda: IPartitionLambda | undefined;
 
     private closed = false;
@@ -41,7 +40,6 @@ export class LocalLambdaController extends EventEmitter implements IKafkaSubscri
                 // Close was probably called while starting
                 this.close();
             }
-
         } catch (ex) {
             // In the event a lambda fails to start, retry it
             this.context.error(ex, true);

@@ -18,6 +18,7 @@
     "eslint": "eslint --ext=ts,tsx --format stylish src",
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "lint": "npm run eslint",
+    "lint:fix": "npm run eslint:fix",
     "prepack": "npm run webpack",
     "start": "webpack-dev-server --config webpack.config.js --package package.json",
     "start:docker": "webpack-dev-server --config webpack.config.js --package package.json --env.mode docker",
@@ -59,7 +60,7 @@
     "uuid": "^3.3.2"
   },
   "devDependencies": {
-    "@microsoft/eslint-config-fluid": "^0.15.0",
+    "@microsoft/eslint-config-fluid": "^0.16.0-0",
     "@microsoft/fluid-build-common": "^0.14.0",
     "@microsoft/fluid-webpack-component-loader": "^0.16.0",
     "@types/node": "^10.14.6",

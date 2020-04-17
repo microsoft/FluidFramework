@@ -9,7 +9,6 @@ import * as amqp from "amqplib";
 import * as winston from "winston";
 
 class RabbitmqReceiver implements ITaskMessageReceiver {
-
     private readonly events = new EventEmitter();
     private readonly rabbitmqConnectionString: string;
     private connection: amqp.Connection;

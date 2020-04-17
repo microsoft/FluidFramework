@@ -17,7 +17,7 @@ class Cursor {
     private static readonly previous = { suffix: "p", property: "previousElementSibling",  fn: (element: Element) => element.previousElementSibling };
     /* eslint-enable max-len */
 
-    public readonly pathFns = new Map<string, (element: Element) => Element>();
+    public readonly pathFns = new Map<string,(element: Element) => Element>();
     // eslint-disable-next-line no-null/no-null
     private element: Element | null = null;
     private path: string = "";
@@ -109,7 +109,7 @@ export class Template {
     }
 
     private readonly content: Element;
-    private readonly refs = new Map<string, (root: Element) => Element>();
+    private readonly refs = new Map<string,(root: Element) => Element>();
 
     constructor(content: ITemplateNode) {
         const refToPath = new Map<string, number[]>();

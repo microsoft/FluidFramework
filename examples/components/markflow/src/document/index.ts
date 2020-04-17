@@ -475,7 +475,7 @@ export class FlowDocument extends PrimedComponent<IFlowDocumentEvents> {
     protected async componentHasInitialized() {
         const handle = await this.root.wait<IComponentHandle<SharedString>>("text");
         this.maybeSharedString = await handle.get();
-        if(this.maybeSharedString !== undefined){
+        if (this.maybeSharedString !== undefined) {
             this.forwardEvent(this.maybeSharedString, "sequenceDelta", "maintenance");
         }
     }

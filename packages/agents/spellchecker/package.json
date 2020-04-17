@@ -28,7 +28,7 @@
     "request": "^2.88.0"
   },
   "devDependencies": {
-    "@microsoft/eslint-config-fluid": "^0.15.0",
+    "@microsoft/eslint-config-fluid": "^0.16.0-0",
     "@microsoft/fluid-build-common": "^0.14.0",
     "@types/node": "^10.14.6",
     "@types/request": "^2.47.1",

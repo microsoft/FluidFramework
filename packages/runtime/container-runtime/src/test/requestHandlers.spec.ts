@@ -37,7 +37,7 @@ describe("RequestParser", () => {
         });
 
         it("Component request with wait", async () => {
-            const requestParser = new RequestParser({ url: "/componentId", headers: {wait: true} });
+            const requestParser = new RequestParser({ url: "/componentId", headers: { wait: true } });
             const runtime: IHostRuntime = {
                 getComponentRuntime: async (id, wait): Promise<IComponentRuntime> => {
                     assert.equal(id, "componentId");
@@ -55,7 +55,7 @@ describe("RequestParser", () => {
         });
 
         it("Component request with sub route", async () => {
-            const requestParser = new RequestParser({ url: "/componentId/route", headers: {wait: true} });
+            const requestParser = new RequestParser({ url: "/componentId/route", headers: { wait: true } });
             const runtime: IHostRuntime = {
                 getComponentRuntime: async (id, wait): Promise<IComponentRuntime> => {
                     assert.equal(id, "componentId");

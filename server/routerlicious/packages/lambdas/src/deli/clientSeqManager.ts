@@ -74,7 +74,6 @@ export class ClientSequenceNumberManager {
         canEvict: boolean,
         scopes: string[] = [],
         nack: boolean = false) {
-
         // Add the client ID to our map if this is the first time we've seen it
         if (!this.clientNodeMap.has(clientId)) {
             const newNode = this.clientSeqNumbers.add({
@@ -102,7 +101,6 @@ export class ClientSequenceNumberManager {
         clientSequenceNumber: number,
         referenceSequenceNumber: number,
         nack: boolean) {
-
         // Lookup the node and then update its value based on the message
         const heapNode = this.clientNodeMap.get(clientId);
         heapNode.value.referenceSequenceNumber = referenceSequenceNumber;

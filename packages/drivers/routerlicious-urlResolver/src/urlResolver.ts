@@ -24,7 +24,6 @@ const r11sServers = [
 ];
 
 export class RouterliciousUrlResolver implements IUrlResolver, IExperimentalUrlResolver {
-
     public readonly isExperimentalUrlResolver = true;
 
     constructor(
@@ -87,7 +86,6 @@ export class RouterliciousUrlResolver implements IUrlResolver, IExperimentalUrlR
             `${this.config ? parse(this.config.provider.get("worker:serverUrl")).host : serverSuffix}/` +
             `${encodeURIComponent(tenantId)}/` +
             `${encodeURIComponent(documentId)}`;
-
 
         // In case of any additional parameters add them back to the url
         if (reqUrl.search) {

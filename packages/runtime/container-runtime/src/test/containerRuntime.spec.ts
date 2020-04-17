@@ -346,7 +346,7 @@ describe("Runtime", () => {
                         clientId: clientId2,
                         sequenceNumber: 0,
                         type: MessageType.Operation,
-                        metadata: { foo: 1},
+                        metadata: { foo: 1 },
                     };
 
                     scheduleManager.beginOperation(client2Message as ISequencedDocumentMessage);

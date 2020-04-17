@@ -17,7 +17,6 @@ interface WinnerTextState {
 }
 
 export class WinnerText extends React.Component<WinnerTextProps, WinnerTextState> {
-
     constructor(props: WinnerTextProps) {
         super(props);
         this.state = WinnerText.determineWinner(props.directory);

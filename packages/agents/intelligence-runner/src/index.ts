@@ -9,7 +9,6 @@ import * as Sequence from "@microsoft/fluid-sequence";
 import { IntelRunner, ITokenConfig } from "./intelRunner";
 
 export class TextAnalyzer implements IComponentRouter, IComponentRunnable {
-
     public get IComponentRouter() { return this; }
     public get IComponentRunnable() { return this; }
 

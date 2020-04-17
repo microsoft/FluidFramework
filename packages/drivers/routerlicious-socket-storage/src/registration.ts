@@ -28,7 +28,6 @@ export function createDocumentService(
     historianApi = true,
     credentials?,
     seedData?: IGitCache): IDocumentService {
-
     const service = new DocumentService(
         ordererUrl,
         deltaStorageUrl,

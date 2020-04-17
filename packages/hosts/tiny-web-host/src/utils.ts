@@ -32,7 +32,6 @@ async function fetchSecret(tenant: string, getToken: () => Promise<string>): Pro
         default: {
             if (!getToken) {
                 throw new Error("Tenant Not Recognized. No getToken function provided.");
-
             }
             return getToken();
         }

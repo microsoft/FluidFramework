@@ -12,7 +12,6 @@ import "react-grid-layout/css/styles.css";
 const ReactGridLayout = WidthProvider(RGL);
 import { ISpacesDataModel } from "./dataModel";
 
-
 interface IEmbeddedComponentWrapperProps {
     id: string;
     getComponent: (componentId: string) => Promise<IComponent | undefined>;
@@ -41,7 +40,7 @@ const gridContainerStyle: React.CSSProperties = { paddingTop: "7rem", minHeight:
  * This wrapper handles the async-ness of loading a component.
  * This ideally shouldn't be here but is here for now to unblock me not knowing how to use ReactViewAdapter.
  */
-class EmbeddedComponentWrapper extends React.Component<IEmbeddedComponentWrapperProps, IEmbeddedComponentWrapperState>{
+class EmbeddedComponentWrapper extends React.Component<IEmbeddedComponentWrapperProps, IEmbeddedComponentWrapperState> {
     constructor(props) {
         super(props);
         this.state = {
@@ -99,7 +98,7 @@ export class SpacesGridView extends React.Component<ISpaceGridViewProps, ISpaceG
             }
         });
         this.props.dataModel.on("editableUpdated", (isEditable?: boolean) => {
-            this.setState({isEditable: isEditable || !this.state.isEditable});
+            this.setState({ isEditable: isEditable || !this.state.isEditable });
         });
     }
 

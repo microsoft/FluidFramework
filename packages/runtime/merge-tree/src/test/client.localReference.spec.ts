@@ -9,7 +9,6 @@ import { ReferenceType } from "../ops";
 import { TestClient } from "./";
 
 describe("MergeTree.Client", () => {
-
     it("Remove segment of non-sliding local reference", () => {
         const client1 = new TestClient();
         const client2 = new TestClient();
@@ -137,7 +136,6 @@ describe("MergeTree.Client", () => {
 
         assert.equal(c1LocalRef.toPosition(), client2.getLength() - 1);
     });
-
 
     it("Remove all segments with sliding local reference", () => {
         const client1 = new TestClient();

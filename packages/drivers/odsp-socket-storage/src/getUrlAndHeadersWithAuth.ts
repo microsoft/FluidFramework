@@ -32,7 +32,6 @@ export function getUrlAndHeadersWithAuth(url: string, token: string | null): { u
     if (tokenIsQueryParam) {
         // The token itself is a query param
         tokenQueryParam += token.substring(1);
-
     } else {
         tokenQueryParam += `access_token=${encodeURIComponent(token)}`;
     }
