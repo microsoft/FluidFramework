@@ -223,7 +223,6 @@ export class ConsensusRegisterCollection<T>
     protected async loadCore(
         branchId: string,
         storage: IObjectStorageService): Promise<void> {
-
         const header = await storage.read(snapshotFileName);
         const data: { [key: string]: ILocalData } = header !== undefined ? JSON.parse(fromBase64ToUtf8(header)) : {};
 
@@ -263,7 +262,7 @@ export class ConsensusRegisterCollection<T>
                 case "write": {
                     // add back-compat for pre-0.14 versions
                     // when the refSeq property didn't exist
-                    if(op.refSeq === undefined){
+                    if (op.refSeq === undefined) {
                         op.refSeq = message.referenceSequenceNumber;
                     }
                     // Message can be delivered with delay - resubmitted on reconnect.

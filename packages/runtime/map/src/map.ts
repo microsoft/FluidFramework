@@ -80,7 +80,6 @@ export class MapFactory implements ISharedObjectFactory {
         services: ISharedObjectServices,
         branchId: string,
         attributes: IChannelAttributes): Promise<ISharedMap> {
-
         const map = new SharedMap(id, runtime, attributes);
         await map.load(branchId, services);
 
@@ -309,7 +308,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
                     type: value.type,
                     value: value.value === undefined ? undefined : JSON.parse(value.value),
                 };
-
             }
         }
 
@@ -332,7 +330,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     protected async loadCore(
         branchId: string,
         storage: IObjectStorageService) {
-
         const header = await storage.read(snapshotFileName);
 
         const data = fromBase64ToUtf8(header);
