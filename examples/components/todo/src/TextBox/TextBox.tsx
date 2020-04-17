@@ -5,6 +5,7 @@
 import { PrimedComponent } from "@microsoft/fluid-aqueduct";
 import { CollaborativeTextArea } from "@microsoft/fluid-aqueduct-react";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { IComponentHTMLView, IComponentReactViewable } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
@@ -24,21 +25,27 @@ export class TextBox extends PrimedComponent implements IComponentHTMLView, ICom
 
     private text: SharedString | undefined;
 
+    public constructor(
+        runtime: IComponentRuntime,
+        context: IComponentContext,
+        private initialState?: string,
+    ) {
+        super(runtime, context);
+    }
+
     /**
      * Do creation work
      */
-    protected async componentInitializingFirstTime(props?: any) {
-        let newItemText = "Important Things";
-
-        // If the creating component passed props with a startingText value then set it.
-        if (props && props.startingText) {
-            newItemText = props.startingText;
-        }
+    protected async componentInitializingFirstTime() {
+        // if initial state is provided then use it.
+        const newItemText = this.initialState ?? "Important Things";
 
         // Create a SharedString that will be use for the text entry
         const text = SharedString.create(this.runtime);
         text.insertText(0, newItemText);
         this.root.set("text", text.handle);
+
+        this.initialState = undefined;
     }
 
     protected async componentHasInitialized() {

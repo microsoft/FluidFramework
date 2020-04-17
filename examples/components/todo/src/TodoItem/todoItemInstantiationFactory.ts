@@ -3,26 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { ClickerInstantiationFactory, ClickerName } from "@fluid-example/clicker";
+import { ClickerInstantiationFactory } from "@fluid-example/clicker";
 import { PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { SharedCell } from "@microsoft/fluid-cell";
-import { IComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
-import { TextBoxInstantiationFactory, TextBoxName } from "../TextBox";
-import { TextListInstantiationFactory, TextListName } from "../TextList";
-import { TodoItemName } from "./TodoItem";
+import { TextBoxInstantiationFactory } from "../TextBox";
+import { TextListInstantiationFactory } from "../TextList";
+import { ITodoItemInitialState, TodoItemName } from "./TodoItem";
 import { TodoItem } from "./index";
 
-export const TodoItemInstantiationFactory: IComponentFactory = new PrimedComponentFactory(
-    TodoItemName,
-    TodoItem,
-    [
-        SharedString.getFactory(),
-        SharedCell.getFactory(),
-    ],
-    new Map([
-        [TextBoxName, Promise.resolve(TextBoxInstantiationFactory)],
-        [TextListName, Promise.resolve(TextListInstantiationFactory)],
-        [ClickerName, Promise.resolve(ClickerInstantiationFactory)],
-    ]),
-);
+export const TodoItemInstantiationFactory =
+    new PrimedComponentFactory<TodoItem, ITodoItemInitialState>(
+        TodoItemName,
+        TodoItem,
+        [
+            SharedString.getFactory(),
+            SharedCell.getFactory(),
+        ],
+        new Map([
+            TextBoxInstantiationFactory.registryEntry,
+            TextListInstantiationFactory.registryEntry,
+            ClickerInstantiationFactory.registryEntry,
+        ]),
+    );

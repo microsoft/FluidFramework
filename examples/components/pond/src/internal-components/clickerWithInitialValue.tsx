@@ -4,7 +4,6 @@
  */
 
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { IComponent, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
 import { Counter, CounterValueType, ISharedDirectory } from "@microsoft/fluid-map";
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
@@ -32,6 +31,14 @@ export class ClickerWithInitialValue extends PrimedComponent implements ICompone
     ) {
         super(runtime, context);
     }
+
+    public static getFactory() { return ClickerWithInitialValue.factory; }
+
+    private static readonly factory = new PrimedComponentFactory<ClickerWithInitialValue, IClickerInitialState>(
+        ClickerWithInitialValueName,
+        ClickerWithInitialValue,
+        [],
+    );
 
     /**
      * Do setup work here
@@ -65,28 +72,6 @@ export class ClickerWithInitialValue extends PrimedComponent implements ICompone
 
     // ----- COMPONENT SETUP STUFF -----
 }
-
-export class ClickerWithInitialValueFactory extends PrimedComponentFactory {
-    // Override the createComponent method to allow an initial value
-    public async createComponent(
-        context: IComponentContext,
-        initialState?: IClickerInitialState,
-    ): Promise<IComponent & IComponentLoadable> {
-        const ctorFn = (r: IComponentRuntime, c: IComponentContext) => {
-            return new ClickerWithInitialValue(r, c, initialState);
-        };
-        return this.createComponentWithConstructorFn(context, ctorFn);
-    }
-
-    public static getFactory() { return ClickerWithInitialValueFactory.factory; }
-
-    private static readonly factory = new ClickerWithInitialValueFactory(
-        ClickerWithInitialValueName,
-        ClickerWithInitialValue,
-        [],
-    );
-}
-
 
 // ----- REACT STUFF -----
 

@@ -4,12 +4,11 @@
  */
 
 import { PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
-import { IComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { TextListName } from "./TextList";
 import { TextList } from "./index";
 
-export const TextListInstantiationFactory: IComponentFactory = new PrimedComponentFactory(
+export const TextListInstantiationFactory = new PrimedComponentFactory(
     TextListName,
     TextList,
     [

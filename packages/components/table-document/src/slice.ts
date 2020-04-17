@@ -25,7 +25,7 @@ export interface ITableSliceConfig {
 export class TableSlice extends PrimedComponent implements ITable {
     public static getFactory() { return TableSlice.factory; }
 
-    private static readonly factory = new PrimedComponentFactory(
+    private static readonly factory = new PrimedComponentFactory<TableSlice, ITableSliceConfig>(
         TableSliceType,
         TableSlice,
         [],
@@ -42,7 +42,11 @@ export class TableSlice extends PrimedComponent implements ITable {
     private maybeDoc?: TableDocument;
     private maybeValues?: CellRange;
 
-    constructor(runtime: IComponentRuntime, context: IComponentContext) {
+    constructor(
+        runtime: IComponentRuntime,
+        context: IComponentContext,
+        private initialState?: ITableSliceConfig,
+    ) {
         super(runtime, context);
     }
 
@@ -113,17 +117,24 @@ export class TableSlice extends PrimedComponent implements ITable {
         this.doc.removeCols(startCol, numCols);
     }
 
-    protected async componentInitializingFirstTime(props?: any) {
-        if (!props) {
-            return Promise.reject();
+    protected async componentInitializingFirstTime() {
+        if (!this.initialState) {
+            throw new Error("TableSlice must be created with initial state");
         }
-        const maybeConfig = props;
-        this.root.set(ConfigKey.docId, maybeConfig.docId);
-        this.root.set(ConfigKey.name, maybeConfig.name);
-        this.maybeDoc = await this.getComponent_UNSAFE(maybeConfig.docId);
-        this.root.set(maybeConfig.docId, this.maybeDoc.handle);
+
+        this.root.set(ConfigKey.docId, this.initialState.docId);
+        this.root.set(ConfigKey.name, this.initialState.name);
+        this.maybeDoc = await this.getComponent_UNSAFE(this.initialState.docId);
+        this.root.set(this.initialState.docId, this.maybeDoc.handle);
         await this.ensureDoc();
-        this.createValuesRange(maybeConfig.minCol, maybeConfig.minRow, maybeConfig.maxCol, maybeConfig.maxRow);
+        this.createValuesRange(
+            this.initialState.minCol,
+            this.initialState.minRow,
+            this.initialState.maxCol,
+            this.initialState.maxRow,
+        );
+
+        this.initialState = undefined;
     }
 
     protected async componentInitializingFromExisting() {

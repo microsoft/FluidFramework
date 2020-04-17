@@ -59,7 +59,7 @@ export class Spaces extends PrimedComponent
     public get IComponentCollection() { return this.dataModel; }
     public get IComponentToolbarConsumer() { return this; }
 
-    protected async componentInitializingFirstTime(props?: any) {
+    protected async componentInitializingFirstTime() {
         this.root.createSubDirectory("component-list");
         this.initializeDataModel();
         const componentToolbar =

@@ -34,7 +34,9 @@ export class TableDocument extends PrimedComponent implements ITable {
             SparseMatrix.getFactory(),
             SharedNumberSequence.getFactory(),
         ],
-        undefined,
+        [
+            [TableSliceType, Promise.resolve(TableSlice.getFactory())],
+        ],
         true,
     );
 
@@ -91,8 +93,10 @@ export class TableDocument extends PrimedComponent implements ITable {
         minCol: number,
         maxRow: number,
         maxCol: number): Promise<ITable> {
-        const component = await super.createAndAttachComponent<TableSlice>(TableSliceType,
-            { docId: this.runtime.id, name, minRow, minCol, maxRow, maxCol });
+        const component = await TableSlice.getFactory().createComponent(
+            this.context,
+            { docId: this.runtime.id, name, minRow, minCol, maxRow, maxCol },
+        );
         this.root.set(sliceId, component.handle);
         return component;
     }
