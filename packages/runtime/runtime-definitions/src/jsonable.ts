@@ -42,6 +42,14 @@ export type Jsonable<T = JsonablePrimitive> = T | JsonableArray<T> | JsonableObj
  * This won't be fool proof, but if someone modifies a type used in an
  * AsJsonable to add a property that isn't Jsonable, they should get a compile time
  * break, which is pretty good.
+ *
+ * What this type does:
+ * If T is Jsonable<J>, return T
+ * Else, For each property K of T
+ *      If property K of T is function, return never
+ *      Else recursivly AsJsonable with the type of property K of T
  */
 export type AsJsonable<T extends any, J = JsonablePrimitive> =
-    T extends Jsonable ? T : {[K in keyof T]: T[K] extends AsJsonable<T[K]> ? Jsonable<J> : never };
+    T extends Jsonable<J> ?
+        T : { [K in keyof T]: T[K] extends Function | (Function | undefined) ?
+            never : AsJsonable<T[K], J> };
