@@ -131,7 +131,6 @@ export interface IFlowDocumentEvents extends IEvent {
 }
 
 export class FlowDocument extends SharedComponent<ISharedDirectory, IFlowDocumentEvents> {
-
     private static readonly factory = new SharedComponentFactory<FlowDocument>(
         documentType,
         FlowDocument,
@@ -167,7 +166,7 @@ export class FlowDocument extends SharedComponent<ISharedDirectory, IFlowDocumen
 
         this.maybeSharedString = SharedString.create(this.runtime, "text");
         this.root.set("text", this.maybeSharedString.handle);
-        if(this.maybeSharedString !== undefined){
+        if (this.maybeSharedString !== undefined) {
             this.forwardEvent(this.maybeSharedString, "sequenceDelta", "maintenance");
         }
     }
@@ -179,7 +178,7 @@ export class FlowDocument extends SharedComponent<ISharedDirectory, IFlowDocumen
 
         const handle = await this.root.wait<IComponentHandle<SharedString>>("text");
         this.maybeSharedString = await handle.get();
-        if(this.maybeSharedString !== undefined){
+        if (this.maybeSharedString !== undefined) {
             this.forwardEvent(this.maybeSharedString, "sequenceDelta", "maintenance");
         }
     }

@@ -38,7 +38,6 @@ const cloneDeep = require("lodash/cloneDeep");
 const snapshotFileName = "header";
 const contentPath = "content";
 
-
 export interface ISharedSegmentSequenceEvents
     extends ISharedObjectEvents {
 

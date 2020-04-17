@@ -57,7 +57,7 @@ export async function loadFrame(iframeId: string, logId: string) {
         (emitter: {on(event: string, listener: (...args: any[]) => void)}, name: string, ...events: string[]) => {
             events.forEach((event)=>
                 emitter.on(event, (...args)=>{
-                    text.innerHTML+=`${name}: ${event}: ${JSON.stringify(args)}<br/>`;
+                    text.innerHTML += `${name}: ${event}: ${JSON.stringify(args)}<br/>`;
                 }));
         };
 
