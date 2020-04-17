@@ -26,7 +26,6 @@ export class Stack<T> {
     pop(): T | undefined {
         return this.items.pop();
     }
-
 }
 
 export function ListRemoveEntry<U>(entry: List<U>): List<U> {
@@ -98,7 +97,7 @@ export class List<T> {
     }
 
     some(fn: (data: T, l: List<T>) => boolean, rev?: boolean): T {
-        for (let entry = <List<T>>this; !(entry.isHead); entry = rev ? entry.prev : entry.next) {
+        for (let entry = <List<T>> this; !(entry.isHead); entry = rev ? entry.prev : entry.next) {
             if (fn(entry.data, entry)) {
                 return (entry.data);
             }
@@ -189,7 +188,6 @@ export class List<T> {
         this.prev = entry;
         return (entry);
     }
-
 }
 
 export interface Comparer<T> {
@@ -1005,7 +1003,6 @@ export class IntegerRangeTree implements IRBAugmentation<Base.IIntegerRange, Aug
     }
 }
 
-
 export interface IInterval {
     clone(): IInterval;
     compare(b: IInterval): number;
@@ -1329,5 +1326,4 @@ export class TST<T> {
         this.patternCollect(this.root, { text: "" }, 0, pattern, q);
         return q;
     }
-
 }

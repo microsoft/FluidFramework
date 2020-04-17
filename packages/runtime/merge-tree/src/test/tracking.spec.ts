@@ -12,7 +12,7 @@ describe("MergeTree.tracking", () => {
 
     beforeEach(() => {
         testClient = new TestClient();
-        testClient.startCollaboration("me");
+        testClient.startOrUpdateCollaboration("me");
     });
 
     it("Inserted segment should have empty tracking groups",

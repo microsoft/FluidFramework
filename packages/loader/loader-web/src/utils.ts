@@ -14,7 +14,6 @@ export interface IPackageIdentifierDetails {
 }
 
 export function extractPackageIdentifierDetails(codeDetailsPackage: string | IFluidPackage): IPackageIdentifierDetails {
-
     const packageString = typeof codeDetailsPackage === "string"
         ? codeDetailsPackage // Just return it if it's a string e.g. "@fluid-example/clicker@0.1.1"
         : codeDetailsPackage.version === undefined // If it doesn't exist, let's make it from the package details

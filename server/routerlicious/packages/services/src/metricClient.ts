@@ -5,7 +5,7 @@
 
 import { ITrace } from "@microsoft/fluid-protocol-definitions";
 import * as telegraf from "telegrafjs";
-import {DefaultMetricClient, IMetricClient} from  "@microsoft/fluid-server-services-core";
+import { DefaultMetricClient, IMetricClient } from  "@microsoft/fluid-server-services-core";
 
 class TelegrafClient implements IMetricClient {
     private readonly telegrafClient: any;
@@ -52,7 +52,6 @@ class TelegrafClient implements IMetricClient {
         ));
     }
 }
-
 
 export function createMetricClient(config: any): IMetricClient {
     // eslint-disable-next-line max-len

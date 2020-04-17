@@ -328,4 +328,3 @@ async function writeSummaryBlob(
     }
     return hash;
 }
-

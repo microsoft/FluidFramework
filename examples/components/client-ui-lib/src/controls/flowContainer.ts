@@ -43,7 +43,6 @@ export class FlowContainer extends ui.Component {
         private readonly overlayInkMap: ISharedMap,
         private readonly image: Image,
         private readonly options?: Record<string, any>) {
-
         super(element);
 
         // TODO the below code is becoming controller like and probably doesn't belong in a constructor. Likely

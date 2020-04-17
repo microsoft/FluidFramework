@@ -199,6 +199,10 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         }
     }
 
+    /**
+     * @deprecated
+     * Remove once issue #1756 is closed
+     */
     public async createComponent(pkgOrId: string | undefined, pkg?: string, props?: any): Promise<IComponentRuntime> {
         // pkgOrId can't be undefined if pkg is undefined
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -221,7 +225,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             packagePath,
             realizationFn,
         );
-        const response = await componentRuntime.request({url: "/"});
+        const response = await componentRuntime.request({ url: "/" });
         if (response.status !== 200 || response.mimeType !== "fluid/component") {
             throw new Error("Failed to create component");
         }
@@ -389,7 +393,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     }
 
     /**
-     * This is called from a summarizable object that does not generate ops but only wants to be part of the summary.
+     * This is called from a SharedSummaryBlock that does not generate ops but only wants to be part of the summary.
      * It indicates that there is data in the object that needs to be summarized.
      * We will update the latestSequenceNumber of the summary tracker of this component and of the object's channel.
      *
@@ -443,7 +447,6 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         } else {
             this.emit("notleader", this.clientId);
         }
-
     }
 
     public bindRuntime(componentRuntime: IComponentRuntime) {
@@ -625,6 +628,9 @@ export class LocalComponentContext extends ComponentContext {
         scope: IComponent,
         summaryTracker: SummaryTracker,
         attachCb: (componentRuntime: IComponentRuntime) => void,
+        /**
+         * @deprecated 0.16 Issue #1635 Use the IComponentFactory creation methods instead to specify initial state
+         */
         public readonly createProps?: any,
     ) {
         super(runtime, id, false, storage, scope, summaryTracker, false, attachCb, pkg);

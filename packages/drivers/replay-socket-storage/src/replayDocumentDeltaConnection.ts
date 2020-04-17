@@ -20,6 +20,7 @@ import {
     ISignalMessage,
     ITokenClaims,
     IVersion,
+    ScopeType,
 } from "@microsoft/fluid-protocol-definitions";
 import { debug } from "./debug";
 import { ReplayController } from "./replayController";
@@ -192,7 +193,6 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
     public static create(
         documentStorageService: IDocumentDeltaStorageService,
         controller: ReplayController): IDocumentDeltaConnection {
-
         const connection: IConnected = {
             claims: ReplayDocumentDeltaConnection.claims,
             clientId: "",
@@ -230,7 +230,7 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
 
     private static readonly claims: ITokenClaims = {
         documentId: ReplayDocumentId,
-        scopes: [],
+        scopes: [ScopeType.DocRead, ScopeType.DocWrite],
         tenantId: "",
         user: {
             id: "",

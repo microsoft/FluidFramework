@@ -48,7 +48,6 @@ export interface IBadgeViewState {
 }
 
 export class BadgeView extends React.Component<IBadgeViewProps, IBadgeViewState> {
-
     private readonly defaultColor: string = "#fff";
     private readonly animation: string = "all 0.15s ease-in";
     private readonly cardPadding: string = "16px 24px";

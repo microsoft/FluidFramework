@@ -28,6 +28,7 @@ import {
     ISharedDirectory,
     IValueOpEmitter,
     IValueTypeOperationValue,
+    ISharedDirectoryEvents,
 } from "./interfaces";
 import {
     ILocalValue,
@@ -331,7 +332,6 @@ export class DirectoryFactory {
         services: ISharedObjectServices,
         branchId: string,
         attributes: IChannelAttributes): Promise<ISharedDirectory> {
-
         const directory = new SharedDirectory(id, runtime, attributes);
         await directory.load(branchId, services);
 
@@ -363,7 +363,7 @@ export class DirectoryFactory {
  *
  * @sealed
  */
-export class SharedDirectory extends SharedObject implements ISharedDirectory {
+export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implements ISharedDirectory {
     /**
      * Create a new shared directory
      *
@@ -589,23 +589,6 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
     }
 
     /**
-     * Registers a listener on the specified events
-     */
-    public on(
-        event: "pre-op" | "op",
-        listener: (op: ISequencedDocumentMessage, local: boolean, target: this) => void): this;
-    public on(event: "valueChanged", listener: (
-        changed: IDirectoryValueChanged,
-        local: boolean,
-        op: ISequencedDocumentMessage,
-        target: this) => void): this;
-    public on(event: string | symbol, listener: (...args: any[]) => void): this;
-
-    public on(event: string | symbol, listener: (...args: any[]) => void): this {
-        return super.on(event, listener);
-    }
-
-    /**
      * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.snapshot}
      */
     public snapshot(): ITree {
@@ -677,7 +660,6 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
     protected async loadCore(
         branchId: string,
         storage: IObjectStorageService) {
-
         const header = await storage.read(snapshotFileName);
         const data = JSON.parse(fromBase64ToUtf8(header));
         const newFormat = data as IDirectoryNewStorageFormat;

@@ -10,7 +10,6 @@ import { ICombiningOp, IMergeTreeAnnotateMsg } from "./ops";
 import * as Properties from "./properties";
 
 export class SegmentPropertiesManager {
-
     private pendingKeyUpdateCount: Properties.MapLike<number>;
     private pendingRewriteCount: number;
 
@@ -38,7 +37,6 @@ export class SegmentPropertiesManager {
         op?: ICombiningOp,
         seq?: number,
         collabWindow?: CollaborationWindow): Properties.PropertySet {
-
         if (!this.segment.properties) {
             this.pendingRewriteCount = 0;
             this.segment.properties = Properties.createMap<any>();
@@ -104,7 +102,6 @@ export class SegmentPropertiesManager {
             if (newValue === null) {
                 // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
                 delete this.segment.properties[key];
-
             } else {
                 this.segment.properties[key] = newValue;
             }

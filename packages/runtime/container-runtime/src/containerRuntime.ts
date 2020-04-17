@@ -380,7 +380,6 @@ class ContainerRuntimeComponentRegistry extends ComponentRegistry {
  * It will define the component level mappings.
  */
 export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRuntime, IExperimentalRuntime {
-
     public readonly isExperimentalRuntime = true;
     /**
      * Load the components from a snapshot and returns the runtime.
@@ -706,10 +705,12 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 this.logger.sendErrorEvent({ eventName: "ComponentContextDisposeError", componentId }, error);
             });
         }
+
+        this.emit("dispose");
+        this.removeAllListeners();
     }
 
     public get IComponentTokenProvider() {
-
         if (this.options && this.options.intelligence) {
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             return {
@@ -945,13 +946,18 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         }
     }
 
-    public async createComponent(idOrPkg: string, maybePkg?: string | string[]) {
+    /**
+     * @deprecated
+     * Remove once issue #1756 is closed
+     */
+    public async createComponent(idOrPkg: string, maybePkg: string | string[]) {
         const id = maybePkg === undefined ? uuid() : idOrPkg;
         const pkg = maybePkg === undefined ? idOrPkg : maybePkg;
         return this._createComponentWithProps(pkg, undefined, id);
     }
 
-    public async _createComponentWithProps(pkg: string | string[], props: any, id: string): Promise<IComponentRuntime> {
+    public async _createComponentWithProps(pkg: string | string[], props?: any, id?: string):
+    Promise<IComponentRuntime> {
         return this.createComponentContext(Array.isArray(pkg) ? pkg : [pkg], props, id).realize();
     }
 
@@ -1074,16 +1080,20 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         let summaryStats = SummaryTreeConverter.mergeStats();
 
         // Iterate over each component and ask it to snapshot
-        await Promise.all(Array.from(this.contexts).map(async ([key, value]) => {
-            const snapshot = await value.snapshot(fullTree);
-            const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
-                snapshot,
-                `/${encodeURIComponent(key)}`,
-                fullTree,
-            );
-            summaryTree.tree[key] = treeWithStats.summaryTree;
-            summaryStats = SummaryTreeConverter.mergeStats(summaryStats, treeWithStats.summaryStats);
-        }));
+        await Promise.all(Array.from(this.contexts)
+            .filter(([key, value]) =>
+                value.isAttached,
+            )
+            .map(async ([key, value]) => {
+                const snapshot = await value.snapshot(fullTree);
+                const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
+                    snapshot,
+                    `/${encodeURIComponent(key)}`,
+                    fullTree,
+                );
+                summaryTree.tree[key] = treeWithStats.summaryTree;
+                summaryStats = SummaryTreeConverter.mergeStats(summaryStats, treeWithStats.summaryStats);
+            }));
 
         if (this.chunkMap.size > 0) {
             summaryTree.tree[".chunks"] = {

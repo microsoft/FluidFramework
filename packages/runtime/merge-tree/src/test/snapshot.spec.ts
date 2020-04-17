@@ -32,7 +32,7 @@ class TestString {
     private minSeq = 0;
 
     constructor(id: string) {
-        this.client.startCollaboration(id);
+        this.client.startOrUpdateCollaboration(id);
     }
 
     public insert(pos: number, text: string, increaseMsn: boolean) {

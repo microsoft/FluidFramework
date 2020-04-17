@@ -6,6 +6,7 @@
 import { strict as assert } from 'assert';
 import { SharedMatrix } from '../src';
 import { IArray2D } from "../src/sparsearray2d";
+import { Serializable } from '@microsoft/fluid-runtime-definitions';
 
 /**
  * Fills the designated region of the matrix with values computed by the `value` callback.
@@ -44,6 +45,33 @@ export function check<T extends IArray2D<U>, U>(
         }
     }
     return matrix;
+}
+
+/**
+ * Extracts the contents of the given `SharedMatrix` as a jagged 2D array.  This is convenient for
+ * comparing matrices via `assert.deepEqual()`.
+ */
+export function extract<T extends Serializable>(actual: SharedMatrix<T>): ReadonlyArray<ReadonlyArray<T>> {
+    const m: T[][] = [];
+    for (let r = 0; r < actual.numRows; r++) {
+        const row: T[] = [];
+        m.push(row);
+
+        for (let c = 0; c < actual.numCols; c++) {
+            row.push(actual.read(r, c) as T);
+        }
+    }
+
+    return m;
+}
+
+/**
+ * Asserts that given `SharedMatrix` has the specified dimensions.  This is useful for distinguishing
+ * between variants of empty matrices (zero rows vs. zero cols vs. zero rows and zero cols).
+ */
+export function expectSize<T extends Serializable>(matrix: SharedMatrix<T>, numRows: number, numCols: number) {
+    assert.equal(matrix.numRows, numRows, "'matrix' must have expected number of rows.");
+    assert.equal(matrix.numCols, numCols, "'matrix' must have expected number of columns.");
 }
 
 /**

@@ -58,7 +58,6 @@ export const getChaincodeRepo = (): string => chaincodeRepo;
  * A document is a collection of shared types.
  */
 export class Document extends EventEmitter {
-
     public get clientId(): string {
         return this.runtime.clientId;
     }

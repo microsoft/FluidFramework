@@ -39,7 +39,6 @@ export interface ITabsDataModel extends EventEmitter {
 }
 
 export class TabsDataModel extends EventEmitter implements ITabsDataModel {
-
     private tabs: IDirectory;
 
     constructor(

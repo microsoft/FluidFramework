@@ -18,7 +18,6 @@ export async function ensureTopics(
     topics: string[],
     partitions: number = defaultPartitionCount,
     replicationFactor: number = defaultReplicationFactor): Promise<void> {
-
     const topicExistsError = await new Promise<kafka.TopicsNotExistError | any | undefined>((resolve) =>
         client.topicExists(topics, (error) => error ? resolve(error) : resolve(undefined)));
     if (!topicExistsError) {
@@ -43,11 +42,9 @@ export async function ensureTopics(
                 partitions,
                 replicationFactor,
             };
-
         }), (createTopicError, result) => {
             if (createTopicError) {
                 reject(createTopicError);
-
             } else {
                 const topicError = result.find((value) => value.error);
                 if (topicError) {

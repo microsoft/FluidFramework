@@ -34,7 +34,6 @@ function createTreeMarkerOps(
     endMarkerPos: number,
     nodeType: string,
 ): IMergeTreeInsertMsg[] {
-
     const endMarkerProps = createMap<any>();
     endMarkerProps[reservedRangeLabelsKey] = [treeRangeLabel];
     endMarkerProps[nodeTypeKey] = nodeType;
@@ -59,18 +58,11 @@ function createTreeMarkerOps(
 
 class ProseMirrorView implements IComponentHTMLView {
     private content: HTMLDivElement;
-    private readonly editorView: EditorView;
+    private editorView: EditorView;
     private textArea: HTMLDivElement;
-    private readonly collabManager: FluidCollabManager;
-
     public get IComponentHTMLView() { return this; }
 
-    public constructor(
-        private readonly text: SharedString,
-        private readonly runtime: IComponentRuntime,
-    ) {
-        this.collabManager = new FluidCollabManager(this.text, this.runtime.loader);
-    }
+    public constructor(private readonly collabManager: FluidCollabManager) {}
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
         // Create base textarea
@@ -91,7 +83,7 @@ class ProseMirrorView implements IComponentHTMLView {
         }
 
         if (!this.editorView) {
-            this.collabManager.setupEditor(this.textArea);
+            this.editorView = this.collabManager.setupEditor(this.textArea);
         }
     }
 
@@ -118,6 +110,7 @@ export class ProseMirror extends EventEmitter
     public text: SharedString;
     private root: ISharedMap;
     private collabManager: FluidCollabManager;
+    private view: ProseMirrorView;
 
     constructor(
         private readonly runtime: IComponentRuntime,
@@ -160,7 +153,10 @@ export class ProseMirror extends EventEmitter
     }
 
     public addView(): IComponentHTMLView {
-        return new ProseMirrorView(this.text, this.runtime);
+        if (!this.view) {
+            this.view = new ProseMirrorView(this.collabManager);
+        }
+        return this.view;
     }
 }
 

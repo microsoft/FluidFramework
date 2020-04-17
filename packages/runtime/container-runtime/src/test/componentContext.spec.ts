@@ -26,7 +26,6 @@ describe("Component Context Tests", () => {
     });
 
     describe("LocalComponentContext Initialization", () => {
-
         let localComponentContext: LocalComponentContext;
         let storage: IDocumentStorageService;
         let scope: IComponent;
@@ -134,7 +133,6 @@ describe("Component Context Tests", () => {
     });
 
     describe("RemoteComponentContext Initialization", () => {
-
         let remotedComponentContext: RemotedComponentContext;
         let componentAttributes: IComponentAttributes;
         const storage: Partial<IDocumentStorageService> = {};
@@ -216,6 +214,5 @@ describe("Component Context Tests", () => {
                 "Remote Component package does not match.");
             assert.equal(contents.snapshotFormatVersion, "0.1", "Remote Component snapshot version does not match.");
         });
-
     });
 });

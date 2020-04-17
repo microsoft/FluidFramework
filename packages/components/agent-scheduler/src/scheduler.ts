@@ -33,7 +33,6 @@ import { v4 as uuid } from "uuid";
 const UnattachedClientId = `${uuid()}_unattached`;
 
 class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent, IComponentRouter {
-
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         let root: ISharedMap;
         let scheduler: ConsensusRegisterCollection<string | null>;
@@ -78,7 +77,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     // List of all tasks client is capable of running (essentially expressed desire to run)
     // Client will proactively attempt to pick them up these tasks if they are not assigned to other clients.
     // This is a strict superset of tasks running in the client.
-    private readonly locallyRunnableTasks = new Map<string, () => Promise<void>>();
+    private readonly locallyRunnableTasks = new Map<string,() => Promise<void>>();
 
     // Set of registered tasks client is currently running.
     // It's subset of this.locallyRunnableTasks
@@ -88,7 +87,6 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         private readonly runtime: IComponentRuntime,
         private readonly context: IComponentContext,
         private readonly scheduler: ConsensusRegisterCollection<string | null>) {
-
         super();
     }
 
@@ -374,12 +372,11 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     }
 
     private sendErrorEvent(eventName: string, error: any, key?: string) {
-        this.runtime.logger.sendErrorEvent({eventName, key}, error);
+        this.runtime.logger.sendErrorEvent({ eventName, key }, error);
     }
 }
 
 export class TaskManager implements ITaskManager {
-
     public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<TaskManager> {
         const agentScheduler = await AgentScheduler.load(runtime, context);
         return new TaskManager(agentScheduler, runtime, context);

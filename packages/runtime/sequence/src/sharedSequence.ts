@@ -97,7 +97,6 @@ export class SubSequence<T> extends BaseSegment {
             return leafSegment;
         }
     }
-
 }
 
 export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
@@ -116,7 +115,6 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
      * @param props - Optional. Properties to set on the inserted items.
      */
     public insert(pos: number, items: T[], props?: PropertySet) {
-
         const segment = new SubSequence<T>(items);
         if (props) {
             segment.addProperties(props);

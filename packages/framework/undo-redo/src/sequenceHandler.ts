@@ -21,7 +21,6 @@ import { IRevertable, UndoRedoStackManager } from "./undoRedoStackManager";
  * undo redo stack manager
  */
 export class SharedSegmentSequenceUndoRedoHandler {
-
     // eslint-disable-next-line max-len
     private readonly sequences = new Map<SharedSegmentSequence<ISegment>, SharedSegmentSequenceRevertable | undefined>();
 
@@ -60,7 +59,6 @@ interface ITrackedSharedSegmentSequenceRevertable {
  * Tracks a change on a shared segment sequence and allows reverting it
  */
 export class SharedSegmentSequenceRevertable implements IRevertable {
-
     private readonly tracking: ITrackedSharedSegmentSequenceRevertable[];
 
     constructor(

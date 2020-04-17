@@ -13,30 +13,25 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "MarkFlow Tests",
-            "cwd": "${workspaceFolder}/packages/components/markflow",
+            "name": "Matrix Tests",
+            "cwd": "${workspaceFolder}/packages/runtime/matrix",
             "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
             "args": [
                 "-r",
                 "ts-node/register",
-                // Note: 'ignore-styles' must be after 'ts-node', otherwise 'ignore-styles' will intercept
-                //       'index.ts' files if there is an 'index.css' in the same directory.
                 "-r",
-                "ignore-styles",
+                "source-map-support/register",
                 "--no-timeouts",
-                // "test/**/*.spec.ts",
-                // "test/**/markdown.spec.ts",
-                "test/**/markdown.parser.spec.ts",
+                // "test/**/matrix.spec.ts",
+                "test/**/matrix.stress.spec.ts",
+                // "-f",
+                // "stress failure",
                 "--exit"
             ],
-            "env": {
-                // "DEBUG": "flow:*",
-                "TS_NODE_PROJECT": "tsconfig.json",
-            },
+            "env": { "TS_NODE_PROJECT": "tsconfig.json", },
+            // "skipFiles": ["<node_internals>/**"],
             "console": "integratedTerminal",
-            "skipFiles": [
-                "<node_internals>/**/*.js"
-            ]
+            "smartStep": true,
         },
         {
             "type": "node",

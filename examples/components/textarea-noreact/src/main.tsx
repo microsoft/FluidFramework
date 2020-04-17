@@ -7,10 +7,8 @@
  * public loading scopes do NOT match the lines exactly!) into chunks.
  */
 
-
-/******************************************************************************/
 // Import the Fluid Framework "goo":
-/******************************************************************************/
+
 import {
     PrimedComponent,
     PrimedComponentFactory,
@@ -25,7 +23,6 @@ import {
     SharedString,
 } from "@microsoft/fluid-sequence";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
-/******************************************************************************/
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../package.json");
@@ -69,15 +66,13 @@ export class TextareaNoReact extends PrimedComponent implements IComponentHTMLVi
         this.textareaRootKey = "textareaString";
     }
 
-
-    /******************************************************************************/
     // One-time component setup:
-    /******************************************************************************/
+
     /**
-   * Initialization method that creates one SharedString collab. object and
-   * registers it on this component's root map (which itself is inherited from
-   * the PrimedComponent base class). This method is called only once.
-   */
+     * Initialization method that creates one SharedString collab. object and
+     * registers it on this component's root map (which itself is inherited from
+     * the PrimedComponent base class). This method is called only once.
+     */
     protected async componentInitializingFirstTime() {
         // Calling super.componentInitializingFirstTime() creates a root SharedMap.
         await super.componentInitializingFirstTime();
@@ -86,16 +81,12 @@ export class TextareaNoReact extends PrimedComponent implements IComponentHTMLVi
         this.root.set(this.textareaRootKey,
             SharedString.create(this.runtime).handle);
     }
-    /******************************************************************************/
 
-
-    /******************************************************************************/
     // Core app logic (in this case: fancy marker positioning and text updating):
-    /******************************************************************************/
 
     /**
-   * Helper method to force a DOM refresh of the <textarea>.
-   */
+     * Helper method to force a DOM refresh of the <textarea>.
+     */
     protected forceDOMUpdate(newText: string,
                              newSelectionStart?: number,
                              newSelectionEnd?: number) {
@@ -112,11 +103,11 @@ export class TextareaNoReact extends PrimedComponent implements IComponentHTMLVi
     }
 
     /**
-   * Update the current caret selection.
-   * We need to do this before we do any handleXChange action or we will have
-   * lost our cursor position and not be able to accurately update the shared
-   * string.
-   */
+     * Update the current caret selection.
+     * We need to do this before we do any handleXChange action or we will have
+     * lost our cursor position and not be able to accurately update the shared
+     * string.
+     */
     protected updateSelection() {
         // No access to React style refs, so a manual call is made to the DOM to
         // retrieve the current <textarea> (and more importantly the caret positions
@@ -139,17 +130,17 @@ export class TextareaNoReact extends PrimedComponent implements IComponentHTMLVi
     }
 
     /**
-   * Handle any incoming SequenceDeltaEvent(s) (fired off whenever an insertion,
-   * replacement, or removal is made to the primary SharedString of this
-   * component).
-   *
-   * Note that incoming events include events made by the local user, but that
-   * `event` has a flag to mark if the change is local. Much of the logic deals
-   * with how to update the user's selection markers if the incoming changes
-   * affect selected (highlighted) text.
-   *
-   * @param event Incoming delta on a SharedString
-   */
+     * Handle any incoming SequenceDeltaEvent(s) (fired off whenever an insertion,
+     * replacement, or removal is made to the primary SharedString of this
+     * component).
+     *
+     * Note that incoming events include events made by the local user, but that
+     * `event` has a flag to mark if the change is local. Much of the logic deals
+     * with how to update the user's selection markers if the incoming changes
+     * affect selected (highlighted) text.
+     *
+     * @param event Incoming delta on a SharedString
+     */
     protected async handleIncomingChange(event: SequenceDeltaEvent) {
         console.log("textarea-noreact: incoming change to shared string!");
 
@@ -235,16 +226,16 @@ export class TextareaNoReact extends PrimedComponent implements IComponentHTMLVi
     }
 
     /**
-   * Send a change to the SharedString when an event is detected on the
-   * <textarea>.
-   *
-   * No further changes are made to the <textarea> itself, but the current
-   * positions of the user's selection markers/carets are used to determine
-   * whether a insertion, replacement, or removal call is necessary for the
-   * SharedString.
-   *
-   * @param ev An outgoing Event on the titular <textarea>
-   */
+     * Send a change to the SharedString when an event is detected on the
+     * <textarea>.
+     *
+     * No further changes are made to the <textarea> itself, but the current
+     * positions of the user's selection markers/carets are used to determine
+     * whether a insertion, replacement, or removal call is necessary for the
+     * SharedString.
+     *
+     * @param ev An outgoing Event on the titular <textarea>
+     */
     protected async handleOutgoingChange(ev: Event) {
         console.log("textarea-noreact: outgoing change to shared string!");
 
@@ -283,20 +274,16 @@ export class TextareaNoReact extends PrimedComponent implements IComponentHTMLVi
                 newPosition + charactersModifiedCount);
         }
     }
-    /******************************************************************************/
 
-
-    /******************************************************************************/
     // HTML setup and rendering:
-    /******************************************************************************/
 
     /**
-   * Render the component page and setup necessary hooks.
-   *
-   * This method is called any time the page is opened/refreshed - the goal is
-   * to add any handlers, etc. that might be necessary for the component to
-   * function properly after such an event.
-   */
+     * Render the component page and setup necessary hooks.
+     *
+     * This method is called any time the page is opened/refreshed - the goal is
+     * to add any handlers, etc. that might be necessary for the component to
+     * function properly after such an event.
+     */
     public async render(div: HTMLElement) {
         console.log("textarea-noreact: render call");
 
@@ -335,9 +322,9 @@ export class TextareaNoReact extends PrimedComponent implements IComponentHTMLVi
     }
 
     /**
-   * Set up the HTML elements inside the provided host HTML element (usually a
-   * div).
-   */
+     * Set up the HTML elements inside the provided host HTML element (usually a
+     * div).
+     */
     protected createComponentDom(host: HTMLElement) {
         const textareaElement: HTMLTextAreaElement =
             document.createElement("textarea");
@@ -357,19 +344,15 @@ export class TextareaNoReact extends PrimedComponent implements IComponentHTMLVi
 
         host.appendChild(textareaElement);
     }
-    /******************************************************************************/
 
-
-    /******************************************************************************/
     // Component loading and export:
-    /******************************************************************************/
 
     /**
-   * Final (static!) load function that allows the runtime to make async calls
-   * while creating the object.
-   *
-   * Primarily boilerplate code.
-   */
+     * Final (static!) load function that allows the runtime to make async calls
+     * while creating the object.
+     *
+     * Primarily boilerplate code.
+     */
     public static async load(
         runtime: IComponentRuntime,
         context: IComponentContext): Promise<TextareaNoReact> {
@@ -379,7 +362,6 @@ export class TextareaNoReact extends PrimedComponent implements IComponentHTMLVi
 
         return fluidComponent;
     }
-
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public componentHasInitialized(): Promise<void> {
@@ -411,4 +393,3 @@ export const TextareaNoReactInstantiationFactory =
             SharedString.getFactory(),
         ],
     );
-/******************************************************************************/

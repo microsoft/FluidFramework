@@ -98,9 +98,9 @@ export const Poll = React.memo((props: PollProps) => {
         pollStore.optionsMap.on("valueChanged", onOptionsMapValueChangedListener);
 
         return () => {
-            pollStore.rootMap.removeListener("valueChanged", onRootMapValueChangedListener);
-            pollStore.votersMap.removeListener("valueChanged", onVotersMapValueChangedListener);
-            pollStore.optionsMap.removeListener("valueChanged", onOptionsMapValueChangedListener);
+            pollStore.rootMap.off("valueChanged", onRootMapValueChangedListener);
+            pollStore.votersMap.off("valueChanged", onVotersMapValueChangedListener);
+            pollStore.optionsMap.off("valueChanged", onOptionsMapValueChangedListener);
         };
     }, []);
 

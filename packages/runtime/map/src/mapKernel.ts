@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { makeHandlesSerializable, parseHandles, ValueType } from "@microsoft/fluid-shared-object-base";
+import { TypedEventEmitter } from "@microsoft/fluid-common-utils";
 import {
     ISerializableValue,
     ISerializedValue,
@@ -15,6 +15,7 @@ import {
     IValueOpEmitter,
     IValueType,
     IValueTypeOperationValue,
+    ISharedMapEvents,
 } from "./interfaces";
 import {
     ILocalValue,
@@ -179,7 +180,7 @@ export class MapKernel {
         private readonly handle: IComponentHandle,
         private readonly submitMessage: (op: any) => number,
         valueTypes: Readonly<IValueType<any>[]>,
-        public readonly eventEmitter = new EventEmitter(),
+        public readonly eventEmitter = new TypedEventEmitter<ISharedMapEvents>(),
     ) {
         this.localValueMaker = new LocalValueMaker(runtime);
         this.messageHandlers = this.getMessageHandlers();

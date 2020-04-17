@@ -1,3 +1,0 @@
-## Summarizable Object
-
-A summarizable object is part of the summary but it does not generate any ops. The data on this object must only be set in response to a remote op. Basically, if we replay same ops, the set of calls on this object to set data should be the same. This is critical because it does not generate ops of its own, but relies on the above principle to maintain eventual consistency and to summarize.
