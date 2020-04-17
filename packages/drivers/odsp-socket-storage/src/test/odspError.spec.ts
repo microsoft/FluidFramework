@@ -10,7 +10,6 @@ import { IOdspSocketError } from "../contracts";
 import { throwOdspNetworkError, errorObjectFromSocketError } from "../odspUtils";
 
 describe("Odsp Error", () => {
-
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const testResponse = { // Implements only part of Response.headers
         statusText: "testStatusText",
@@ -43,8 +42,8 @@ describe("Odsp Error", () => {
         const networkError: IError = createOdspNetworkError(
             "TestMessage",
             400,
-            true /*canRetry*/,
-            true /*includeResponse*/,
+            true /* canRetry */,
+            true /* includeResponse */,
             OnlineStatus[OnlineStatus.Offline],
         );
         if (networkError.errorType !== ErrorType.genericNetworkError) {
@@ -63,13 +62,13 @@ describe("Odsp Error", () => {
     });
 
     it("throwOdspNetworkError sprequestguid exist", async () => {
-        const error1: any = createOdspNetworkError("Error", 400, true /*canRetry*/, true /*includeResponse*/);
+        const error1: any = createOdspNetworkError("Error", 400, true /* canRetry*/, true /* includeResponse */);
         const errorBag = { ...error1.getCustomProperties() };
         assert.equal("xxx-xxx", errorBag.sprequestguid, "sprequestguid should be 'xxx-xxx'");
     });
 
     it("throwOdspNetworkError sprequestguid undefined", async () => {
-        const error1: any = createOdspNetworkError("Error", 400, true /*canRetry*/, false /*includeResponse*/);
+        const error1: any = createOdspNetworkError("Error", 400, true /* canRetry*/, false /* includeResponse */);
         const errorBag = { ...error1.getCustomProperties() };
         assert.equal(undefined, errorBag.sprequestguid, "sprequestguid should not be defined");
     });

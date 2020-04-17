@@ -34,7 +34,6 @@ async function initializeODSPCore(
     server: string,
     clientConfig: IClientConfig,
 ) {
-
     const { driveId, itemId } = odspResolvedUrl;
 
     connectionInfo = {
@@ -115,7 +114,6 @@ async function initializeR11s(server: string, pathname: string, r11sResolvedUrl:
 }
 
 async function resolveUrl(url: string): Promise<IResolvedUrl | undefined> {
-
     const resolversList: IUrlResolver[] = [
         new OdspUrlResolver(),
         new FluidAppOdspUrlResolver(),

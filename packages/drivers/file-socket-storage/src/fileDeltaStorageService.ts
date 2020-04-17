@@ -12,7 +12,6 @@ import * as api from "@microsoft/fluid-protocol-definitions";
  * Provides access to the underlying delta storage on the local file storage for file driver.
  */
 export class FileDeltaStorageService implements IDocumentDeltaStorageService {
-
     private readonly messages: api.ISequencedDocumentMessage[];
     private lastOps: api.ISequencedDocumentMessage[] = [];
 
