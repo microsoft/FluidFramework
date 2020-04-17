@@ -826,7 +826,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 this.close(createFatalError(nackReason));
             }
             if (!this.autoReconnect) {
-                this.logger.sendErrorEvent({ eventName: "NackWithNoReconnect", nackReason, mode: this.connectionMode });
+                const nackError = `reason: ${nackReason}`;
+                this.logger.sendErrorEvent({ eventName: "NackWithNoReconnect", nackError, mode: this.connectionMode });
             }
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.reconnectOnError(nackReason, connection, "write");
