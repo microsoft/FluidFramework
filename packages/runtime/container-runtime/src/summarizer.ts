@@ -44,6 +44,7 @@ export interface ISummarizer extends IComponentRouter, IComponentRunnable, IComp
      * Returns a promise that will be resolved with the next Summarizer after context reload
      */
     setSummarizer(): Promise<Summarizer>;
+    stop(reason?: string): void;
 }
 
 /**
@@ -96,8 +97,17 @@ export class Summarizer implements ISummarizer {
             // Cleanup after running
             if (this.runtime.connected) {
                 if (this.runningSummarizer) {
-                    // let running summarizer finish
-                    await this.runningSummarizer.waitStop();
+                    // Let running summarizer finish if no other summarizer client in quorum
+                    let hasOtherSummarizerClient = false;
+                    for (const [clientId, member] of this.runtime.getQuorum().getMembers()) {
+                        if (clientId !== this.runtime.clientId && member.client.details?.type === "summarizer") {
+                            hasOtherSummarizerClient = true;
+                            break;
+                        }
+                    }
+                    if (hasOtherSummarizerClient === false) {
+                        await this.runningSummarizer.waitStop();
+                    }
                 }
                 this.runtime.closeFn(`Summarizer: ${this.stopReason ?? "runEnded"}`);
             }
@@ -468,8 +478,8 @@ export class RunningSummarizer implements IDisposable {
 
     private async trySummarizeCore(reason: string): Promise<void> {
         const result = await this.summarize(reason, false);
-        if (result === false) {
-            // On nack, try again in safe mode
+        if (result !== true) {
+            // On nack or error, try again in safe mode
             await this.summarize(reason, true);
         }
     }
