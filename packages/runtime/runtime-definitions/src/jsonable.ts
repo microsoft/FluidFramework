@@ -32,7 +32,7 @@ export type Jsonable<T = JsonablePrimitive> = T | JsonableArray<T> | JsonableObj
  * Take a type, usually and interface and tries to map it to a compatible jsonable type.
  * It will produce an type that all all properites as never if the type can't be converted
  * to a jsonable, this should result in a compile time error.
- * The usage looks like `foo<T extends any>(input: AsJsonable<T>)`
+ * The usage looks like `foo<T extends any = Jsonable>(input: AsJsonable<T>)`
  * if T isn't jsonable then all values of input will be invalid,
  * as all the properties will need to be never
  * which isn't possible.
