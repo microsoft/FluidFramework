@@ -62,13 +62,13 @@ describe("Odsp Error", () => {
     });
 
     it("throwOdspNetworkError sprequestguid exist", async () => {
-        const error1: any = createOdspNetworkError("Error", 400, true /* canRetry*/, true /* includeResponse */);
+        const error1: any = createOdspNetworkError("Error", 400, true /* canRetry */, true /* includeResponse */);
         const errorBag = { ...error1.getCustomProperties() };
         assert.equal("xxx-xxx", errorBag.sprequestguid, "sprequestguid should be 'xxx-xxx'");
     });
 
     it("throwOdspNetworkError sprequestguid undefined", async () => {
-        const error1: any = createOdspNetworkError("Error", 400, true /* canRetry*/, false /* includeResponse */);
+        const error1: any = createOdspNetworkError("Error", 400, true /* canRetry */, false /* includeResponse */);
         const errorBag = { ...error1.getCustomProperties() };
         assert.equal(undefined, errorBag.sprequestguid, "sprequestguid should not be defined");
     });
