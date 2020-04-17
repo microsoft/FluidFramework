@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IQuorum, ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { Jsonable } from "@microsoft/fluid-runtime-definitions";
 import { SharedSummaryBlock } from "@microsoft/fluid-shared-summary-block";
 import { IComponentLastEditedTracker, ILastEditDetails } from "./interfaces";
@@ -19,12 +18,8 @@ export class LastEditedTracker implements IComponentLastEditedTracker {
     /**
      * Creates a LastEditedTracker object.
      * @param sharedSummaryBlock - The shared summary block where the details will be stored.
-     * @param quorum - The quorum to get the user details from.
      */
-    constructor(
-        private readonly sharedSummaryBlock: SharedSummaryBlock,
-        private readonly quorum: IQuorum,
-    ) {}
+    constructor(private readonly sharedSummaryBlock: SharedSummaryBlock) {}
 
     public get IComponentLastEditedTracker() {
         return this;
@@ -40,15 +35,7 @@ export class LastEditedTracker implements IComponentLastEditedTracker {
     /**
      * {@inheritDoc ILastEditedTracker.updateLastEditDetails}
      */
-    public updateLastEditDetails(message: ISequencedDocumentMessage) {
-        const sequencedClient = this.quorum.getMember(message.clientId);
-        const user = sequencedClient?.client.user;
-        if (user !== undefined) {
-            const lastEditDetails: ILastEditDetails = {
-                user,
-                timestamp: message.timestamp,
-            };
-            this.sharedSummaryBlock.set(this.lastEditedDetailsKey, lastEditDetails as unknown as Jsonable);
-        }
+    public updateLastEditDetails(lastEditDetails: ILastEditDetails) {
+        this.sharedSummaryBlock.set(this.lastEditedDetailsKey, lastEditDetails as unknown as Jsonable);
     }
 }
