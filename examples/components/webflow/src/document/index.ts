@@ -25,13 +25,14 @@ import {
 } from "@microsoft/fluid-merge-tree";
 import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import {
-    SequenceDeltaEvent,
-    SequenceMaintenanceEvent,
     SharedString,
     SharedStringSegment,
+    SequenceMaintenanceEvent,
+    SequenceDeltaEvent,
 } from "@microsoft/fluid-sequence";
 import { ISharedDirectory, SharedDirectory } from "@microsoft/fluid-map";
 import { IComponentHTMLOptions } from "@microsoft/fluid-view-interfaces";
+import { IEvent } from "@microsoft/fluid-common-definitions";
 import { clamp, emptyArray } from "../util";
 import { IHTMLAttributes } from "../util/attr";
 import { documentType } from "../package";
@@ -124,7 +125,13 @@ const accumAsLeafAction = (
 //       See: https://github.com/microsoft/Prague/issues/2408
 const endOfTextSegment = undefined as unknown as SharedStringSegment;
 
-export class FlowDocument extends SharedComponent<ISharedDirectory> {
+export interface IFlowDocumentEvents extends IEvent {
+    (event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: SharedString) => void);
+    (event: "maintenance", listener: (event: SequenceMaintenanceEvent, target: SharedString) => void);
+}
+
+export class FlowDocument extends SharedComponent<ISharedDirectory, IFlowDocumentEvents> {
+
     private static readonly factory = new SharedComponentFactory<FlowDocument>(
         documentType,
         FlowDocument,
@@ -160,6 +167,9 @@ export class FlowDocument extends SharedComponent<ISharedDirectory> {
 
         this.maybeSharedString = SharedString.create(this.runtime, "text");
         this.root.set("text", this.maybeSharedString.handle);
+        if(this.maybeSharedString !== undefined){
+            this.forwardEvent(this.maybeSharedString, "sequenceDelta", "maintenance");
+        }
     }
 
     public async load() {
@@ -169,6 +179,9 @@ export class FlowDocument extends SharedComponent<ISharedDirectory> {
 
         const handle = await this.root.wait<IComponentHandle<SharedString>>("text");
         this.maybeSharedString = await handle.get();
+        if(this.maybeSharedString !== undefined){
+            this.forwardEvent(this.maybeSharedString, "sequenceDelta", "maintenance");
+        }
     }
 
     public async getComponentFromMarker(marker: Marker) {
@@ -435,20 +448,6 @@ export class FlowDocument extends SharedComponent<ISharedDirectory> {
 
     public getText(start?: number, end?: number): string {
         return this.sharedString.getText(start, end);
-    }
-
-    public on(event: "maintenance", listener: (event: SequenceMaintenanceEvent, target: SharedString, ...args: any[]) => void): this;
-    public on(event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: SharedString, ...args: any[]) => void): this;
-    public on(event: "maintenance" | "sequenceDelta", listener: (event: any, target: SharedString, ...args: any[]) => void): this {
-        this.maybeSharedString.on(event, listener);
-        return this;
-    }
-
-    public off(event: "maintenance", listener: (event: SequenceMaintenanceEvent, target: SharedString, ...args: any[]) => void): this;
-    public off(event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: SharedString, ...args: any[]) => void): this;
-    public off(event: "maintenance" | "sequenceDelta", listener: (event: any, target: SharedString, ...args: any[]) => void): this {
-        this.maybeSharedString.removeListener(event, listener);
-        return this;
     }
 
     public toString() {

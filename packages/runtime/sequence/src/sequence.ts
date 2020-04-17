@@ -16,7 +16,13 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import { IChannelAttributes, IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
 import { ObjectStoragePartition } from "@microsoft/fluid-runtime-utils";
-import { makeHandlesSerializable, parseHandles, SharedObject } from "@microsoft/fluid-shared-object-base";
+import {
+    makeHandlesSerializable,
+    parseHandles,
+    SharedObject,
+    ISharedObjectEvents,
+} from "@microsoft/fluid-shared-object-base";
+import { IEventThisPlaceHolder } from "@microsoft/fluid-common-definitions";
 import { debug } from "./debug";
 import {
     IntervalCollection,
@@ -32,8 +38,17 @@ const cloneDeep = require("lodash/cloneDeep");
 const snapshotFileName = "header";
 const contentPath = "content";
 
+
+export interface ISharedSegmentSequenceEvents
+    extends ISharedObjectEvents {
+
+    (event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: IEventThisPlaceHolder) => void);
+    (event: "maintenance",
+        listener: (event: SequenceMaintenanceEvent, target: IEventThisPlaceHolder) => void);
+}
+
 export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
-    extends SharedObject
+    extends SharedObject<ISharedSegmentSequenceEvents>
     implements ISharedIntervalCollection<SequenceInterval> {
 
     get loaded(): Promise<void> {
@@ -149,18 +164,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
             this.handle,
             (op) => this.submitLocalMessage(op),
             [new SequenceIntervalCollectionValueType()]);
-    }
-
-    /**
-     * Registers a listener on the specified events
-     */
-    public on(event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: this) => void): this;
-    public on(
-        event: "pre-op" | "op",
-        listener: (op: ISequencedDocumentMessage, local: boolean, target: this) => void): this;
-    public on(event: string | symbol, listener: (...args: any[]) => void): this;
-    public on(event: string | symbol, listener: (...args: any[]) => void): this {
-        return super.on(event, listener);
     }
 
     /**
