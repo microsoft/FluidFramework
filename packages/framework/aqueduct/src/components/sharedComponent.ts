@@ -21,19 +21,23 @@ import { EventForwarder } from "@microsoft/fluid-common-utils";
 import { IEvent } from "@microsoft/fluid-common-definitions";
 import { serviceRoutePathRoot } from "../containerServices";
 
-export interface ISharedComponentProps<O extends IComponent = object, R extends IComponent = object> {
+export interface ISharedComponentProps<O extends IComponent = object> {
     readonly runtime: IComponentRuntime,
     readonly context: IComponentContext,
     // Probably shouldn't be providers?
-    readonly providers: AsyncComponentProvider<ComponentKey<O>,ComponentKey<R>>,
+    readonly providers: AsyncComponentProvider<ComponentKey<O>,ComponentKey<object>>,
 }
 
 /**
  * This is a bare-bones base class that does basic setup and enables for factory on an initialize call.
  * You probably don't want to inherit from this component directly unless you are creating another base component class
+ *
+ * Generics:
+ * P - represents a type that will define optional providers that will be injected
+ * E - represents events that will be available in the EventForwarder
  */
-export abstract class SharedComponent<TEvents extends IEvent= IEvent, O extends IComponent = object>
-    extends EventForwarder<TEvents>
+export abstract class SharedComponent<P extends IComponent = object, E extends IEvent= IEvent>
+    extends EventForwarder<E>
     implements IComponentLoadable, IComponentRouter, IProvideComponentHandle
 {
     private initializeP: Promise<void> | undefined;
@@ -56,7 +60,7 @@ export abstract class SharedComponent<TEvents extends IEvent= IEvent, O extends 
      *
      * To define providers set IComponent interfaces in the generic O type for your Component
      */
-    protected readonly providers: AsyncComponentProvider<ComponentKey<O>,ComponentKey<object>>;
+    protected readonly providers: AsyncComponentProvider<ComponentKey<P>,ComponentKey<object>>;
 
     public get disposed() { return this._disposed; }
 
@@ -70,7 +74,7 @@ export abstract class SharedComponent<TEvents extends IEvent= IEvent, O extends 
      */
     public get handle(): IComponentHandle<this> { return this.innerHandle; }
 
-    public constructor(props: ISharedComponentProps<O>) {
+    public constructor(props: ISharedComponentProps<P>) {
         super();
         this.runtime = props.runtime;
         this.context = props.context;

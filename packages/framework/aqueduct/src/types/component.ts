@@ -4,6 +4,7 @@
  */
 
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
+import { IEvent } from "@microsoft/fluid-common-definitions";
 
 import {
     ISharedComponentProps,
@@ -13,5 +14,5 @@ import {
 /**
  * Define a default constructor for an Aqueduct Component
  */
-export type ComponentCtor<O extends IComponent,T extends SharedComponent<O>> =
-    new (props: ISharedComponentProps) => T;
+export type ComponentCtor<O extends IComponent, E extends IEvent, T extends SharedComponent<O, E>> =
+    new (props: ISharedComponentProps<O>) => T;

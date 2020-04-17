@@ -23,9 +23,13 @@ import { SharedComponent } from "./sharedComponent";
  * Having a single root directory allows for easier development. Instead of creating
  * and registering channels with the runtime any new DDS that is set on the root
  * will automatically be registered.
+ *
+ * Generics:
+ * P - represents a type that will define optional providers that will be injected
+ * E - represents events that will be available in the EventForwarder
  */
-export abstract class PrimedComponent<TEvents extends IEvent = IEvent, O extends IComponent = object>
-    extends SharedComponent<TEvents, O>
+export abstract class PrimedComponent<P extends IComponent = object, E extends IEvent = IEvent>
+    extends SharedComponent<P, E>
 {
     private internalRoot: ISharedDirectory | undefined;
     private internalTaskManager: ITaskManager | undefined;

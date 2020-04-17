@@ -31,7 +31,7 @@ export interface ITableDocumentEvents extends IEvent{
         listener: (delta: SequenceDeltaEvent, target: SharedNumberSequence | SparseMatrix) => void);
 }
 
-export class TableDocument extends PrimedComponent<ITableDocumentEvents> implements ITable {
+export class TableDocument extends PrimedComponent<{},ITableDocumentEvents> implements ITable {
     public static getFactory() { return TableDocument.factory; }
 
     private static readonly factory = new PrimedComponentFactory(

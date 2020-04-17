@@ -5,6 +5,7 @@
 
 import { IComponent, IComponentLoadable, IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime, ISharedObjectRegistry } from "@microsoft/fluid-component-runtime";
+import { IEvent } from "@microsoft/fluid-common-definitions";
 import { ComponentRegistry } from "@microsoft/fluid-container-runtime";
 import {
     IComponentContext,
@@ -26,7 +27,7 @@ import {
 } from "../components";
 import { ComponentCtor } from "../types";
 
-export class SharedComponentFactory<O extends IComponent>
+export class SharedComponentFactory<P extends IComponent>
 implements IComponentFactory, Partial<IProvideComponentRegistry>
 {
     private readonly sharedObjectRegistry: ISharedObjectRegistry;
@@ -34,9 +35,9 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>
 
     constructor(
         public readonly type: string,
-        private readonly ctor: ComponentCtor<O, SharedComponent<O>>,
+        private readonly ctor: ComponentCtor<P, IEvent, SharedComponent<P>>,
         sharedObjects: readonly ISharedObjectFactory[],
-        private readonly optionalProviders: ComponentSymbolProvider<O>,
+        private readonly optionalProviders: ComponentSymbolProvider<P>,
         registryEntries?: NamedComponentRegistryEntries,
         private readonly onDemandInstantiation = true,
     ) {
@@ -109,7 +110,7 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>
             dependencyContainer.register(IHostRuntime, context.hostRuntime);
         }
 
-        const providers = dependencyContainer.synthesize<O>(this.optionalProviders,{});
+        const providers = dependencyContainer.synthesize<P>(this.optionalProviders,{});
         // Create a new instance of our component
         const instance = ctorFn ? ctorFn({runtime, context, providers}) : new this.ctor({runtime, context, providers});
         await instance.initialize();
