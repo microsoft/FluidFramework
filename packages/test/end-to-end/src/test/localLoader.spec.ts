@@ -9,7 +9,7 @@ import { IFluidCodeDetails, ILoader } from "@microsoft/fluid-container-definitio
 import { Container } from "@microsoft/fluid-container-loader";
 import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";
 import { Counter, CounterValueType } from "@microsoft/fluid-map";
-import { IComponentFactory } from "@microsoft/fluid-runtime-definitions";
+import { IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import {
@@ -40,6 +40,8 @@ export class TestComponent extends PrimedComponent {
      * Expose the runtime for testing purposes.
      */
     public get runtime() { return this.runtime; }
+
+    public set runtime(value: IComponentRuntime) { this.runtime = value; }
 
     /**
      * Gets the current counter value.
