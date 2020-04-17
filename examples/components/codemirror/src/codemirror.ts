@@ -12,7 +12,7 @@ import {
     IComponentHandle,
     IComponent,
 } from "@microsoft/fluid-component-core-interfaces";
-import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { ComponentHandle, ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import {
     MergeTreeDeltaType,
@@ -208,9 +208,12 @@ export class CodeMirrorComponent
     public get IComponentRouter() { return this; }
     public get IComponentHTMLVisual() { return this; }
 
+    public get handle(): IComponentHandle<this> { return this.innerHandle; }
+
     public url: string;
     private text: SharedString | undefined;
     private root: ISharedMap | undefined;
+    private readonly innerHandle: IComponentHandle<this>;
 
     constructor(
         private readonly runtime: IComponentRuntime,
@@ -218,6 +221,7 @@ export class CodeMirrorComponent
     ) {
         super();
         this.url = context.id;
+        this.innerHandle = new ComponentHandle(this, this.url, runtime.IComponentHandleContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {

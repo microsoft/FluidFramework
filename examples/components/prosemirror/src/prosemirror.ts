@@ -11,7 +11,7 @@ import {
     IResponse,
     IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
-import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { ComponentHandle, ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import {
     IMergeTreeInsertMsg,
@@ -101,6 +101,8 @@ export class ProseMirror extends EventEmitter
         return collection;
     }
 
+    public get handle(): IComponentHandle<this> { return this.innerHandle; }
+
     public get IComponentLoadable() { return this; }
     public get IComponentRouter() { return this; }
     public get IComponentHTMLVisual() { return this; }
@@ -111,6 +113,7 @@ export class ProseMirror extends EventEmitter
     private root: ISharedMap;
     private collabManager: FluidCollabManager;
     private view: ProseMirrorView;
+    private readonly innerHandle: IComponentHandle<this>;
 
     constructor(
         private readonly runtime: IComponentRuntime,
@@ -119,6 +122,7 @@ export class ProseMirror extends EventEmitter
         super();
 
         this.url = context.id;
+        this.innerHandle = new ComponentHandle(this, this.url, runtime.IComponentHandleContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
