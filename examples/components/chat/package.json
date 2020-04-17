@@ -3,6 +3,7 @@
   "version": "0.16.0",
   "description": "Allow users to chat in a group",
   "repository": "microsoft/FluidFramework",
+  "license": "MIT",
   "author": "Microsoft",
   "main": "dist/index.js",
   "module": "lib/index.js",
