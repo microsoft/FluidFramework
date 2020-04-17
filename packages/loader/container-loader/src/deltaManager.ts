@@ -29,6 +29,8 @@ import {
     IContentMessage,
     IDocumentMessage,
     IDocumentSystemMessage,
+    INack,
+    INackContent,
     ISequencedDocumentMessage,
     IServiceConfiguration,
     ISignalMessage,
@@ -810,7 +812,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         });
 
         // Always connect in write mode after getting nacked.
-        connection.on("nack", (message: any) => {
+        connection.on("nack", (message: INack) => {
             // check message.content for back-compat with old service.
             const nackMessage = message.content ? message.content.message : "";
             const nackReason = `Nacked: ${nackMessage}`;
@@ -1178,7 +1180,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     /**
      * Determines whether the received nack is retryable or not.
      */
-    private shouldReconnectOnNack(nackContent: any): boolean {
+    private shouldReconnectOnNack(nackContent: INackContent): boolean {
         if (nackContent.code === 403) {
             return false;
         }
