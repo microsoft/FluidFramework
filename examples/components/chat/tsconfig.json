@@ -6,13 +6,8 @@
     ],
     "compilerOptions": {
         "target": "es6",
-        "noImplicitAny": false,
-        "noUnusedLocals": true,
         "module": "esnext",
-        "moduleResolution": "node",
         "outDir": "dist",
-        "sourceMap": true,
-        "inlineSources": true,
         "jsx": "react"
     },
     "include": [

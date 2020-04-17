@@ -32,10 +32,10 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
+    "@fluid-example/chat": "^0.16.0",
     "@fluid-example/clicker": "^0.16.0",
     "@fluid-example/codemirror": "^0.16.0",
     "@fluid-example/prosemirror": "^0.16.0",
-    "@fluid-example/chat": "^0.16.0",
     "@fluid-example/shared-text": "^0.16.0",
     "@microsoft/fluid-aqueduct": "^0.16.0",
     "@microsoft/fluid-aqueduct-react": "^0.16.0",
@@ -52,8 +52,8 @@
     "@microsoft/fluid-view-interfaces": "^0.16.0",
     "office-ui-fabric-react": "^7.28.1",
     "react": "^16.10.2",
-    "react-countdown360": "^1.3.0",
     "react-collapsible": "^2.7.0",
+    "react-countdown360": "^1.3.0",
     "react-dom": "^16.10.2",
     "react-grid-layout": "^0.18.3",
     "uuid": "^3.3.2"

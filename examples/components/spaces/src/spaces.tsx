@@ -62,6 +62,7 @@ export class Spaces extends PrimedComponent
 
     protected async componentInitializingFirstTime(props?: any) {
         this.root.createSubDirectory("component-list");
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.initializeDataModel();
         const componentToolbar =
             await this.dataModel.addComponent<ComponentToolbar>(
@@ -87,6 +88,7 @@ export class Spaces extends PrimedComponent
 
     protected async componentInitializingFromExisting() {
         this.componentToolbarId = this.root.get("component-toolbar-id");
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.initializeDataModel();
         this.componentToolbar = await this.dataModel.getComponent<ComponentToolbar>(this.componentToolbarId);
     }

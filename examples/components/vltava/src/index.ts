@@ -69,6 +69,7 @@ const generateFactory = () => {
             capabilities: ["IComponentHTMLView", "IComponentLoadable"],
             friendlyName: "Clicker",
             fabricIconName: "NumberField",
+            templates: {},
         },
         {
             type: "tabs",
@@ -76,6 +77,7 @@ const generateFactory = () => {
             capabilities: ["IComponentHTMLView", "IComponentLoadable"],
             friendlyName: "Tabs",
             fabricIconName: "BrowserTab",
+            templates: {},
         },
         {
             type: "spaces",
@@ -83,6 +85,7 @@ const generateFactory = () => {
             capabilities: ["IComponentHTMLView", "IComponentLoadable"],
             friendlyName: "Spaces",
             fabricIconName: "SnapToGrid",
+            templates: {},
         },
         {
             type: "codemirror",
@@ -90,6 +93,7 @@ const generateFactory = () => {
             capabilities: ["IComponentHTMLView"],
             friendlyName: "Codemirror",
             fabricIconName: "Code",
+            templates: {},
         },
         {
             type: "prosemirror",
@@ -97,6 +101,7 @@ const generateFactory = () => {
             capabilities: ["IComponentHTMLView"],
             friendlyName: "Prosemirror",
             fabricIconName: "Edit",
+            templates: {},
         },
     ];
 

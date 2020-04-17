@@ -10,12 +10,12 @@ import {
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
-import { Chat as ChatUI, Provider, themes } from '@fluentui/react-northstar';
+import { Chat as ChatUI, Provider, themes } from "@fluentui/react-northstar";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { ISharedDirectory, IDirectoryValueChanged } from "@microsoft/fluid-map";
-import { ChatRenderer } from "./components/ChatRenderer";
+import { ChatRenderer } from "./components";
 
-export const ChatName = "simple-chat";
+export const ChatName = "chat";
 
 export const MessagesKey = "messages";
 
@@ -33,7 +33,7 @@ export class Chat extends PrimedComponent
     implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
-    private static readonly factory = new PrimedComponentFactory(Chat, []);
+    private static readonly factory = new PrimedComponentFactory(ChatName, Chat, []);
 
     public static getFactory() {
         return Chat.factory;
@@ -84,7 +84,7 @@ class ChatView extends React.Component<IChatViewProps, IChatViewState> {
         super(props);
         const {root} = this.props;
         this.state = { messages: root.get<IMessage[]>(MessagesKey), inputMessage: "" };
-        
+
         root.on("valueChanged", (changed: IDirectoryValueChanged, local: boolean) => {
             const rootMessages = root.get<IMessage[]>(MessagesKey);
             if (rootMessages !== this.state.messages) {

@@ -5,7 +5,7 @@
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import Collapsible from 'react-collapsible';
+import Collapsible from "react-collapsible";
 import {
     PrimedComponent,
     PrimedComponentFactory,
@@ -17,13 +17,13 @@ import {
 } from "office-ui-fabric-react";
 import { ISharedDirectory } from "@microsoft/fluid-map";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
+import { Templates } from "../interfaces";
 import {
     IContainerComponentDetails,
     IComponentCallable,
     IComponentCallbacks,
     InternalRegistry,
 } from "..";
-import { Templates } from "../interfaces";
 
 const componentToolbarStyle: React.CSSProperties = { position: "absolute", top: 10, left: 10, zIndex: 1000 };
 const dropDownButtonStyle: React.CSSProperties = { width: "20vh" };
