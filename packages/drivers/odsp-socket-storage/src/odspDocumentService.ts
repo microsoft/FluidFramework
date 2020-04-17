@@ -3,15 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@microsoft/fluid-common-definitions";
+import { ITelemetryBaseLogger, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { DebugLogger, PerformanceEvent, TelemetryLogger, TelemetryNullLogger } from "@microsoft/fluid-common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
     IDocumentService,
-    IDocumentStorageService,
     IResolvedUrl,
-    OpenMode,
+    IDocumentStorageService,
 } from "@microsoft/fluid-driver-definitions";
 import {
     IClient,
@@ -41,7 +40,6 @@ const lastAfdConnectionTimeMsKey = "LastAfdConnectionTimeMs";
  * clients
  */
 export class OdspDocumentService implements IDocumentService {
-
     /**
      * @param appId - app id used for telemetry for network requests.
      * @param getStorageToken - function that can provide the storage token for a given site. This is
@@ -66,13 +64,36 @@ export class OdspDocumentService implements IDocumentService {
         socketIOClientP: Promise<SocketIOClientStatic>,
         cache: IOdspCache,
         isFirstTimeDocumentOpened = true,
+        createNewFlag: boolean,
     ): Promise<IDocumentService> {
         let odspResolvedUrl: IOdspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
-        if (odspResolvedUrl.openMode === OpenMode.CreateNew && odspResolvedUrl.newFileInfoPromise) {
-            odspResolvedUrl = await createNewFluidFile(
-                getStorageToken,
-                odspResolvedUrl.newFileInfoPromise,
-                cache);
+        const templogger: ITelemetryLogger = DebugLogger.mixinDebugLogger(
+            "fluid:telemetry:OdspDriver",
+            logger,
+            { docId: odspResolvedUrl.hashedDocumentId });
+        if (odspResolvedUrl.createNewOptions) {
+            const createNewOptions = odspResolvedUrl.createNewOptions;
+            const createNewSummary = createNewOptions.createNewSummary;
+            const event = PerformanceEvent.start(templogger,
+                {
+                    eventName: "CreateNew",
+                    isWithSummaryUpload: createNewSummary ? true : false,
+                });
+            try {
+                odspResolvedUrl = await createNewFluidFile(
+                    getStorageToken,
+                    odspResolvedUrl.createNewOptions.newFileInfoPromise,
+                    cache,
+                    createNewSummary);
+                const props = {
+                    hashedDocumentId: odspResolvedUrl.hashedDocumentId,
+                    itemId: odspResolvedUrl.itemId,
+                };
+                event.end(props);
+            } catch(error) {
+                event.cancel(undefined, error);
+                throw error;
+            }
         }
         return new OdspDocumentService(
             appId,
@@ -89,6 +110,7 @@ export class OdspDocumentService implements IDocumentService {
             socketIOClientP,
             cache,
             isFirstTimeDocumentOpened,
+            createNewFlag,
         );
     }
 
@@ -136,6 +158,7 @@ export class OdspDocumentService implements IDocumentService {
         private readonly socketIOClientP: Promise<SocketIOClientStatic>,
         private readonly cache: IOdspCache,
         private readonly isFirstTimeDocumentOpened = true,
+        private readonly createNewFlag: boolean,
     ) {
 
         this.joinSessionKey = `${this.hashedDocumentId}/joinsession`;
@@ -201,6 +224,7 @@ export class OdspDocumentService implements IDocumentService {
             true,
             this.cache,
             this.isFirstTimeDocumentOpened,
+            this.createNewFlag,
         );
 
         return new OdspDocumentStorageService(this.storageManager);
@@ -380,8 +404,7 @@ export class OdspDocumentService implements IDocumentService {
                 });
 
                 return connection;
-                // eslint-disable-next-line @typescript-eslint/promise-function-async
-            }).catch((connectionError) => {
+            }).catch(async (connectionError) => {
                 const endAfd = performanceNow();
                 localStorage.removeItem(lastAfdConnectionTimeMsKey);
                 // Retry on non-AFD URL
@@ -434,8 +457,7 @@ export class OdspDocumentService implements IDocumentService {
         ).then((connection) => {
             logger.sendTelemetryEvent({ eventName: "UsedNonAfdUrl" });
             return connection;
-            // eslint-disable-next-line @typescript-eslint/promise-function-async
-        }).catch((connectionError) => {
+        }).catch(async (connectionError) => {
             const endNonAfd = performanceNow();
             if (hasUrl2 && this.canRetryOnError(connectionError)) {
                 // eslint-disable-next-line max-len

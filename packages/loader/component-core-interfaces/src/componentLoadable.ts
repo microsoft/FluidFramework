@@ -5,6 +5,8 @@
 
 import { IComponentHandle } from "./handles";
 
+export const IComponentLoadable: keyof IProvideComponentLoadable = "IComponentLoadable";
+
 export interface IProvideComponentLoadable {
     readonly IComponentLoadable: IComponentLoadable;
 }
@@ -13,12 +15,14 @@ export interface IProvideComponentLoadable {
  */
 export interface IComponentLoadable extends IProvideComponentLoadable {
     // Absolute URL to the component within the document
-    url: string;
+    readonly url: string;
 
     // Handle to the loadable component. Will eventually replace the url property. But currently marked optional while
     // handles are integrated into the system.
     handle?: IComponentHandle;
 }
+
+export const IComponentRunnable: keyof IProvideComponentRunnable = "IComponentRunnable";
 
 export interface IProvideComponentRunnable {
     readonly IComponentRunnable: IComponentRunnable;
@@ -27,6 +31,8 @@ export interface IComponentRunnable {
     run(...args: any[]): Promise<void>;
     stop?(reason?: string): void;
 }
+
+export const IComponentConfiguration: keyof IProvideComponentConfiguration = "IComponentConfiguration";
 
 export interface IProvideComponentConfiguration {
     readonly IComponentConfiguration: IComponentConfiguration;

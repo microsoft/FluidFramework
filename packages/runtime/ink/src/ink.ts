@@ -13,8 +13,7 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 import { IComponentRuntime, IObjectStorageService, IChannelAttributes } from "@microsoft/fluid-runtime-definitions";
 import { SharedObject } from "@microsoft/fluid-shared-object-base";
-// eslint-disable-next-line import/no-internal-modules
-import * as uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
 import { InkFactory } from "./inkFactory";
 import {
     IClearOperation,
@@ -25,6 +24,7 @@ import {
     IInkStroke,
     IPen,
     IStylusOperation,
+    IInkEvents,
 } from "./interfaces";
 import { InkData, ISerializableInk } from "./snapshot";
 
@@ -37,7 +37,7 @@ const snapshotFileName = "header";
  * Inking data structure.
  * @sealed
  */
-export class Ink extends SharedObject implements IInk {
+export class Ink extends SharedObject<IInkEvents> implements IInk {
     /**
      * Create a new Ink.
      * @param runtime - Component runtime the new Ink belongs to
@@ -155,7 +155,7 @@ export class Ink extends SharedObject implements IInk {
     ): Promise<void> {
 
         const header = await storage.read(snapshotFileName);
-        if (header) {
+        if (header !== undefined) {
             this.inkData = new InkData(
                 JSON.parse(fromBase64ToUtf8(header)) as ISerializableInk,
             );

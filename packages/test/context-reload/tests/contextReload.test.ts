@@ -52,6 +52,8 @@ describe("context reload", () => {
         page.evaluate(() => localStorage.debug = "fluid:telemetry:Summarizer");
         // await page.reload({ waitUntil: "load" });
         await page.goto(globals.PATH, { waitUntil: "load" });
+        page.evaluate(() => localStorage.debug = undefined);
+
         await page.waitFor(() => window["fluidStarted"]);
 
         const summMessage = new Deferred<void>();

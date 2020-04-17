@@ -28,6 +28,7 @@ import {
     ISharedDirectory,
     IValueOpEmitter,
     IValueTypeOperationValue,
+    ISharedDirectoryEvents,
 } from "./interfaces";
 import {
     ILocalValue,
@@ -363,7 +364,7 @@ export class DirectoryFactory {
  *
  * @sealed
  */
-export class SharedDirectory extends SharedObject implements ISharedDirectory {
+export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implements ISharedDirectory {
     /**
      * Create a new shared directory
      *
@@ -586,23 +587,6 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
             }
         }
         return currentSubDir;
-    }
-
-    /**
-     * Registers a listener on the specified events
-     */
-    public on(
-        event: "pre-op" | "op",
-        listener: (op: ISequencedDocumentMessage, local: boolean, target: this) => void): this;
-    public on(event: "valueChanged", listener: (
-        changed: IDirectoryValueChanged,
-        local: boolean,
-        op: ISequencedDocumentMessage,
-        target: this) => void): this;
-    public on(event: string | symbol, listener: (...args: any[]) => void): this;
-
-    public on(event: string | symbol, listener: (...args: any[]) => void): this {
-        return super.on(event, listener);
     }
 
     /**

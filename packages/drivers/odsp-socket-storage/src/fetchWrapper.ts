@@ -14,13 +14,11 @@ export interface IFetchWrapper {
  * Get responses with retry for requests.
  */
 export class FetchWrapper implements IFetchWrapper {
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public get<T>(url: string, _: string, headers: HeadersInit): Promise<IOdspResponse<T>> {
+    public async get<T>(url: string, _: string, headers: HeadersInit): Promise<IOdspResponse<T>> {
         return fetchHelper(url, { headers });
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public post<T>(url: string, postBody: string, headers: HeadersInit): Promise<IOdspResponse<T>> {
+    public async post<T>(url: string, postBody: string, headers: HeadersInit): Promise<IOdspResponse<T>> {
         return fetchHelper(
             url,
             {

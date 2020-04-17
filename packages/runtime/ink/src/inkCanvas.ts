@@ -115,7 +115,6 @@ export class InkCanvas {
     constructor(private readonly canvas: HTMLCanvasElement, private readonly model: IInk) {
         this.model.on("clear", this.redraw.bind(this));
         this.model.on("stylus", this.handleStylus.bind(this));
-
         this.canvas.style.touchAction = "none";
 
         this.canvas.addEventListener("pointerdown", this.handlePointerDown.bind(this));
@@ -123,7 +122,8 @@ export class InkCanvas {
         this.canvas.addEventListener("pointerup", this.handlePointerUp.bind(this));
 
         const context = this.canvas.getContext("2d");
-        if (!context) {
+        // eslint-disable-next-line no-null/no-null
+        if (context === null) {
             throw new Error("InkCanvas requires a canvas with 2d rendering context");
         }
         this.context = context;

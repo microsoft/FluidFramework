@@ -13,7 +13,7 @@ describe("snapshot", () => {
     it("header only", async () => {
 
         const client1 = new TestClient();
-        client1.startCollaboration("0");
+        client1.startOrUpdateCollaboration("0");
         for (let i = 0; i < SnapshotLegacy.sizeOfFirstChunk; i++) {
             const op = client1.insertTextLocal(client1.getLength(), `${i % 10}`, { segment: i });
             const msg = client1.makeOpMessage(op, i + 1);
@@ -42,7 +42,7 @@ describe("snapshot", () => {
     it("header and body", async () => {
 
         const clients = [new TestClient(), new TestClient(), new TestClient()];
-        clients[0].startCollaboration("0");
+        clients[0].startOrUpdateCollaboration("0");
         for (let i = 0; i < SnapshotLegacy.sizeOfFirstChunk + 10; i++) {
             const op = clients[0].insertTextLocal(clients[0].getLength(), `${i % 10}`, { segment: i });
             const msg = clients[0].makeOpMessage(op, i + 1);

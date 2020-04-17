@@ -20,6 +20,7 @@ import {
     ISignalMessage,
     ITokenClaims,
     IVersion,
+    ScopeType,
 } from "@microsoft/fluid-protocol-definitions";
 import { debug } from "./debug";
 import { ReplayController } from "./replayController";
@@ -54,9 +55,8 @@ export class ReplayControllerStatic extends ReplayController {
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public initStorage(storage: IDocumentStorageService) {
-        return Promise.resolve(true);
+    public async initStorage(storage: IDocumentStorageService) {
+        return true;
     }
 
     public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
@@ -116,8 +116,7 @@ export class ReplayControllerStatic extends ReplayController {
         return 0;
     }
 
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public replay(
+    public async replay(
         emitter: (op: ISequencedDocumentMessage[]) => void,
         fetchedOps: ISequencedDocumentMessage[]): Promise<void> {
         let current = this.skipToIndex(fetchedOps);
@@ -232,7 +231,7 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
 
     private static readonly claims: ITokenClaims = {
         documentId: ReplayDocumentId,
-        scopes: [],
+        scopes: [ScopeType.DocRead, ScopeType.DocWrite],
         tenantId: "",
         user: {
             id: "",
@@ -312,9 +311,11 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
      */
     private async fetchAndEmitOps(
         documentStorageService: IDocumentDeltaStorageService,
-        controller: ReplayController): Promise<void> {
+        controller: ReplayController,
+    ): Promise<void> {
+        const delay = async (ms?: number) => new Promise((res) => setTimeout(res, ms));
         let done;
-        let replayP = Promise.resolve();
+        let replayPromiseChain = Promise.resolve();
 
         let currentOp = await controller.getStartingOpSequence();
 
@@ -329,17 +330,17 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
                 if (controller.isDoneFetch(currentOp, undefined)) {
                     break;
                 }
-                await new Promise((accept: () => void) => setTimeout(accept, 2000));
+                await delay(2000);
                 continue;
             }
 
-            // eslint-disable-next-line @typescript-eslint/promise-function-async, max-len
-            replayP = replayP.then(() => controller.replay((ops) => this.emit("op", ReplayDocumentId, ops), fetchedOps));
+            replayPromiseChain = replayPromiseChain.then(
+                async () => controller.replay((ops) => this.emit("op", ReplayDocumentId, ops), fetchedOps));
 
             currentOp += fetchedOps.length;
             done = controller.isDoneFetch(currentOp, fetchedOps[fetchedOps.length - 1].timestamp);
         } while (!done);
 
-        return replayP;
+        return replayPromiseChain;
     }
 }

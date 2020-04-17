@@ -12,12 +12,15 @@ declare module "@microsoft/fluid-component-core-interfaces" {
     export interface IComponent extends Readonly<Partial<IProvideComponentRegistryDetails>> { }
 }
 
+export const IComponentRegistryDetails: keyof IProvideComponentRegistryDetails = "IComponentRegistryDetails";
+
 export interface IProvideComponentRegistryDetails {
     readonly IComponentRegistryDetails: IComponentRegistryDetails;
 }
 
 export interface IComponentRegistryDetails extends IProvideComponentRegistryDetails {
-    getFromCapabilities(type: keyof IComponent): IContainerComponentDetails[];
+    getFromCapability(type: keyof IComponent): IContainerComponentDetails[];
+    hasCapability(type: string, capability: keyof IComponent): boolean;
 }
 
 export enum Templates {

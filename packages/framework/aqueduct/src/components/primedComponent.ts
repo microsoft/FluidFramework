@@ -6,8 +6,8 @@
 import { IComponentHandle, IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import { ISharedDirectory, MapFactory, SharedDirectory } from "@microsoft/fluid-map";
 import { ITaskManager } from "@microsoft/fluid-runtime-definitions";
-// eslint-disable-next-line import/no-internal-modules
-import * as uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
+import { IEvent } from "@microsoft/fluid-common-definitions";
 import { BlobHandle } from "./blobHandle";
 import { SharedComponent } from "./sharedComponent";
 
@@ -19,7 +19,7 @@ import { SharedComponent } from "./sharedComponent";
  * and registering channels with the runtime any new DDS that is set on the root
  * will automatically be registered.
  */
-export abstract class PrimedComponent extends SharedComponent {
+export abstract class PrimedComponent<TEvents extends IEvent = IEvent> extends SharedComponent<TEvents> {
     private internalRoot: ISharedDirectory | undefined;
     private internalTaskManager: ITaskManager | undefined;
     private readonly rootDirectoryId = "root";
@@ -84,7 +84,12 @@ export abstract class PrimedComponent extends SharedComponent {
      */
     protected async initializeInternal(props?: any): Promise<void> {
         // Initialize task manager.
-        this.internalTaskManager = await this.getComponent<ITaskManager>("_scheduler");
+        const request = {
+            headers: [[true]],
+            url: `/_scheduler`,
+        };
+
+        this.internalTaskManager = await this.asComponent<ITaskManager>(this.context.hostRuntime.request(request));
 
         if (!this.runtime.existing) {
             // Create a root directory and register it before calling componentInitializingFirstTime

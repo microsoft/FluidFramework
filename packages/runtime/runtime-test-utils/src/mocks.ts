@@ -47,8 +47,7 @@ import {
 } from "@microsoft/fluid-runtime-definitions";
 import { ComponentSerializer } from "@microsoft/fluid-runtime-utils";
 import { IHistorian } from "@microsoft/fluid-server-services-client";
-// eslint-disable-next-line import/no-internal-modules
-import * as uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas";
 
 export class MockDeltaManagerWithConnectionFactory extends MockDeltaManager {
@@ -192,6 +191,8 @@ class MockDeltaConnection implements IDeltaConnection {
         this.handlers.push(handler);
         handler.setConnectionState(this.state);
     }
+
+    public dirty(): void {}
 
     public isLocal(msg: ISequencedDocumentMessage) {
         return msg.clientId === this.runtime.clientId || msg.clientId === this.pendingClientId;
@@ -610,6 +611,8 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
         assert(false);
         return 0;
     }
+
+    public dirty(): void {}
 }
 
 /**

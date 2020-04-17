@@ -41,6 +41,7 @@ export class RemoteChannelContext implements IChannelContext {
         private readonly componentContext: IComponentContext,
         storageService: IDocumentStorageService,
         submitFn: (type: MessageType, content: any) => number,
+        dirtyFn: (address: string) => void,
         private readonly id: string,
         baseSnapshot: ISnapshotTree,
         private readonly registry: ISharedObjectRegistry,
@@ -53,6 +54,7 @@ export class RemoteChannelContext implements IChannelContext {
             this.id,
             this.componentContext.connectionState,
             submitFn,
+            () => dirtyFn(this.id),
             storageService,
             baseSnapshot,
             extraBlobs);
@@ -60,7 +62,7 @@ export class RemoteChannelContext implements IChannelContext {
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public getChannel(): Promise<IChannel> {
-        if (!this.channelP) {
+        if (this.channelP === undefined) {
             this.channelP = this.loadChannel();
         }
 
@@ -109,9 +111,12 @@ export class RemoteChannelContext implements IChannelContext {
     private async loadChannel(): Promise<IChannel> {
         assert(!this.isLoaded);
 
-        let attributes = await readAndParse<IChannelAttributes | undefined>(
-            this.services.objectStorage,
-            ".attributes");
+        let attributes: IChannelAttributes | undefined;
+        if(this.services.objectStorage.contains(".attributes")){
+            attributes = await readAndParse<IChannelAttributes | undefined>(
+                this.services.objectStorage,
+                ".attributes");
+        }
 
         let factory: ISharedObjectFactory | undefined;
         // this is a back-compat case where

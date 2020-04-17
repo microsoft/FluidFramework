@@ -25,7 +25,7 @@ describe("resetPendingSegmentsToOp", () => {
 
     beforeEach(() => {
         client = new TestClient();
-        client.startCollaboration("local user");
+        client.startOrUpdateCollaboration("local user");
         assert(client.mergeTree.pendingSegments.empty());
         opList = [];
 

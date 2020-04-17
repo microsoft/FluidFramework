@@ -8,6 +8,7 @@ import { ITelemetryLogger, IDisposable } from "@microsoft/fluid-common-definitio
 import {
     IComponent,
     IComponentHandleContext,
+    IComponentLoadable,
     IComponentRouter,
     IComponentSerializer,
     IProvideComponentHandleContext,
@@ -27,6 +28,7 @@ import {
     ConnectionState,
     IClientDetails,
     IDocumentMessage,
+    IHelpMessage,
     IQuorum,
     ISequencedDocumentMessage,
     ISnapshotTree,
@@ -35,6 +37,7 @@ import {
 } from "@microsoft/fluid-protocol-definitions";
 
 import { IProvideComponentRegistry } from "./componentRegistry";
+import { IInboundSignalMessage } from "./protocol";
 import { IChannel } from ".";
 
 /**
@@ -221,6 +224,12 @@ export interface ISummaryTracker {
      * @param latestSequenceNumber - inital value for latest sequence number of change
      */
     createOrGetChild(key: string, latestSequenceNumber: number): ISummaryTracker;
+    /**
+     * Retrives a child ISummaryTracker node based off the key.
+     * @param key - key of the child ISummaryTracker node.
+     * @returns - The child ISummaryTracker node.
+     */
+    getChild(key: string): ISummaryTracker | undefined;
 }
 
 /**
@@ -284,6 +293,7 @@ export interface IComponentContext extends EventEmitter {
     submitSignal(type: string, content: any): void;
 
     /**
+     * @deprecated 0.16 Issue #1537, issue #1756 Components should be created using IComponentFactory methods instead
      * Creates a new component by using subregistries.
      * @param pkgOrId - Package name if a second parameter is not provided. Otherwise an explicit ID.
      *                  ID is being deprecated, so prefer passing undefined instead (the runtime will
@@ -291,7 +301,20 @@ export interface IComponentContext extends EventEmitter {
      * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
      * @param props - Properties to be passed to the instantiateComponent through the context.
      */
-    createComponent(pkgOrId: string | undefined, pkg?: string, props?: any): Promise<IComponentRuntime>;
+    createComponent(pkgOrId: string | undefined, pkg?: string | string[], props?: any):
+    Promise<IComponentRuntime>;
+
+    /**
+     * Create a new component using subregistries with fallback.
+     * @param pkg - Package name of the component
+     * @param realizationFn - Optional function to call to realize the component over the context default
+     * @returns A promise for a component that will have been initialized. Caller is responsible
+     * for attaching the component to the provided runtime's container such as by storing its handle
+     */
+    createComponentWithRealizationFn(
+        pkg: string,
+        realizationFn?: (context: IComponentContext) => void,
+    ): Promise<IComponent & IComponentLoadable>;
 
     /**
      * Make request to the component.
@@ -309,6 +332,12 @@ export interface IComponentContext extends EventEmitter {
      * @param componentRuntime - runtime to attach
      */
     attach(componentRuntime: IComponentRuntime): void;
+
+    /**
+     * Indicates that a channel is dirty and needs to be part of the summary.
+     * @param address - The address of the channe that is dirty.
+     */
+    setChannelDirty(address: string): void;
 }
 
 /**
@@ -356,6 +385,18 @@ export interface IHostRuntime extends
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly scope: IComponent;
 
+    on(event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void): this;
+    on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
+    on(
+        event: "dirtyDocument" | "disconnected" | "dispose" | "joining" | "savedDocument",
+        listener: () => void): this;
+    on(
+        event: "connected" | "leader" | "noleader",
+        listener: (clientId?: string) => void): this;
+    on(event: "localHelp", listener: (message: IHelpMessage) => void): this;
+    on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
+    on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): this;
+
     /**
      * Returns the runtime of the component.
      * @param id - Id supplied during creating the component.
@@ -364,24 +405,39 @@ export interface IHostRuntime extends
     getComponentRuntime(id: string, wait?: boolean): Promise<IComponentRuntime>;
 
     /**
+     * @deprecated
      * Creates a new component.
      * @param pkgOrId - Package name if a second parameter is not provided. Otherwise an explicit ID.
      * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
+     * Remove once issue #1756 is closed
      */
     createComponent(pkgOrId: string, pkg?: string | string[]): Promise<IComponentRuntime>;
 
     /**
+     * @deprecated 0.16 Issue #1537
+     *  Properties should be passed to the component factory method rather than to the runtime
      * Creates a new component with props
      * @param pkg - Package name of the component
      * @param props - properties to be passed to the instantiateComponent thru the context
-     * @param id - id of the component.
-     *
+     * @param id - Only supplied if the component is explicitly passing its ID, only used for default components
      * @remarks
      * Only used by aqueduct PrimedComponent to pass param to the instantiateComponent function thru the context.
      * Further change to the component create flow to split the local create vs remote instantiate make this deprecated.
      * @internal
      */
-    _createComponentWithProps(pkg: string | string[], props: any, id: string): Promise<IComponentRuntime>;
+    _createComponentWithProps(pkg: string | string[], props?: any, id?: string): Promise<IComponentRuntime>;
+
+    /**
+     * Creates a new component using an optional realization function.  This API does not allow specifying
+     * the component's id and insteads generates a uuid.  Consumers must save another reference to the
+     * component, such as the handle.
+     * @param pkg - Package name of the component
+     * @param realizationFn - Optional function to call to realize the component over the context default
+     */
+    createComponentWithRealizationFn(
+        pkg: string[],
+        realizationFn?: (context: IComponentContext) => void,
+    ): Promise<IComponentRuntime>;
 
     /**
      * Creates a new IComponentContext instance.  The caller completes construction of the the component by
@@ -389,6 +445,8 @@ export interface IHostRuntime extends
      *
      * @param pkg - Package path for the component to be created
      * @param props - Properties to be passed to the instantiateComponent thru the context
+     *  @deprecated 0.16 Issue #1537 Properties should be passed directly to the component's initialization
+     *  or to the factory method rather than be stored in/passed from the context
      */
     createComponentContext(pkg: string[], props?: any): IComponentContext;
 

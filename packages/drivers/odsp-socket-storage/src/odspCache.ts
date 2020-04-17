@@ -69,8 +69,7 @@ export class CacheBase {
     }
 
     private async gc(key: string, expiryTime: number) {
-        // eslint-disable-next-line @typescript-eslint/promise-function-async
-        const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
+        const delay = async (ms?: number) => new Promise((res) => setTimeout(res, ms));
         await delay(expiryTime);
         if (this.cache.has(key)) {
             this.cache.delete(key);

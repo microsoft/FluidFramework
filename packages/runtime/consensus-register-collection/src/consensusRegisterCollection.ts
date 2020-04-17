@@ -20,7 +20,7 @@ import {
 import { ISharedObject, SharedObject, ValueType } from "@microsoft/fluid-shared-object-base";
 import { ConsensusRegisterCollectionFactory } from "./consensusRegisterCollectionFactory";
 import { debug } from "./debug";
-import { IConsensusRegisterCollection, ReadPolicy } from "./interfaces";
+import { IConsensusRegisterCollection, ReadPolicy, IConsensusRegisterCollectionEvents } from "./interfaces";
 
 interface ILocalData {
     // Atomic version.
@@ -86,7 +86,8 @@ const snapshotFileName = "header";
 /**
  * Implementation of a consensus register collection
  */
-export class ConsensusRegisterCollection<T> extends SharedObject implements IConsensusRegisterCollection<T> {
+export class ConsensusRegisterCollection<T>
+    extends SharedObject<IConsensusRegisterCollectionEvents> implements IConsensusRegisterCollection<T> {
     /**
      * Create a new consensus register collection
      *
@@ -119,16 +120,6 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
         runtime: IComponentRuntime,
         attributes: IChannelAttributes) {
         super(id, runtime, attributes);
-    }
-
-    public on(
-        event: "atomicChanged" | "versionChanged",
-        listener: (key: string, value: any, local: boolean) => void): this;
-    public on(event: string | symbol, listener: (...args: any[]) => void): this;
-
-    public on(event: string, listener: (...args: any[]) => void): this
-    {
-        return super.on(event, listener);
     }
 
     /**
@@ -171,7 +162,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
      */
     public read(key: string, policy?: ReadPolicy): T | undefined {
         // Default policy is atomic.
-        const readPolicy = (policy === undefined) ? ReadPolicy.Atomic : policy;
+        const readPolicy = policy ?? ReadPolicy.Atomic;
 
         if (readPolicy === ReadPolicy.Atomic) {
             return this.readAtomic(key);
@@ -179,7 +170,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
 
         const versions = this.readVersions(key);
 
-        if (versions) {
+        if (versions !== undefined) {
             // We don't support deletion. So there should be at least one value.
             assert(versions.length > 0, "Value should be undefined or non empty");
 
@@ -189,9 +180,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
 
     public readVersions(key: string): T[] | undefined {
         const data = this.data.get(key);
-        if (data) {
-            return data.versions.map((element: ILocalRegister) => element.value.value);
-        }
+        return data?.versions.map((element: ILocalRegister) => element.value.value);
     }
 
     public keys(): string[] {
@@ -236,7 +225,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
         storage: IObjectStorageService): Promise<void> {
 
         const header = await storage.read(snapshotFileName);
-        const data: { [key: string]: ILocalData } = header ? JSON.parse(fromBase64ToUtf8(header)) : {};
+        const data: { [key: string]: ILocalData } = header !== undefined ? JSON.parse(fromBase64ToUtf8(header)) : {};
 
         for (const key of Object.keys(data)) {
             const serializedValues = data[key];
@@ -271,7 +260,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
         if (message.type === MessageType.Operation) {
             const op: IRegisterOperation = message.contents;
             switch (op.type) {
-                case "write":
+                case "write": {
                     // add back-compat for pre-0.14 versions
                     // when the refSeq property didn't exist
                     if(op.refSeq === undefined){
@@ -292,6 +281,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
                         this.processLocalMessage(message, winner);
                     }
                     break;
+                }
 
                 default:
                     throw new Error("Unknown operation");
@@ -301,9 +291,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
 
     private readAtomic(key: string): T | undefined {
         const data = this.data.get(key);
-        if (data) {
-            return data.atomic.value.value;
-        }
+        return data?.atomic.value.value;
     }
 
     private processInboundWrite(
@@ -406,15 +394,13 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
             case ValueType[ValueType.Plain]:
                 return item;
             case ValueType[ValueType.Shared]:
-                const channel = await this.runtime.getChannel(item.value.value as string);
-                const fullValue: ILocalRegister = {
+                return {
                     sequenceNumber: item.sequenceNumber,
                     value: {
                         type: item.value.type,
-                        value: channel,
+                        value: await this.runtime.getChannel(item.value.value as string),
                     },
                 };
-                return fullValue;
             default:
                 assert(false, "Invalid value type");
                 return Promise.reject("Invalid value type");

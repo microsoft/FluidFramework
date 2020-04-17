@@ -5,7 +5,6 @@
 
 // eslint-disable-next-line import/no-unassigned-import
 import { } from "@microsoft/fluid-component-core-interfaces";
-import { EventEmitter } from "events";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { IComponentRuntime, IChannelAttributes } from "@microsoft/fluid-runtime-definitions";
 import { SharedSegmentSequence } from "./sequence";
@@ -16,6 +15,8 @@ declare module "@microsoft/fluid-component-core-interfaces" {
     export interface IComponent extends Readonly<Partial<IProvideSharedString>> { }
 }
 
+export const ISharedString: keyof IProvideSharedString = "ISharedString";
+
 export interface IProvideSharedString {
     readonly ISharedString: ISharedString;
 }
@@ -23,7 +24,7 @@ export interface IProvideSharedString {
 /**
  * Component interface describing access methods on a SharedString
  */
-export interface ISharedString extends EventEmitter, IProvideSharedString {
+export interface ISharedString extends SharedSegmentSequence<SharedStringSegment>, IProvideSharedString {
     insertText(pos: number, text: string, props?: MergeTree.PropertySet);
 
     insertMarker(pos: number, refType: MergeTree.ReferenceType, props?: MergeTree.PropertySet);

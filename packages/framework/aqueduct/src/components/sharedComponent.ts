@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import {
     IComponent,
     IComponentHandle,
@@ -15,14 +14,20 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { ComponentHandle } from "@microsoft/fluid-component-runtime";
+import { IDirectory } from "@microsoft/fluid-map";
+import { v4 as uuid } from "uuid";
+import { EventForwarder } from "@microsoft/fluid-common-utils";
+import { IEvent } from "@microsoft/fluid-common-definitions";
 import { serviceRoutePathRoot } from "../containerServices";
 
 /**
  * This is a bare-bones base class that does basic setup and enables for factory on an initialize call.
  * You probably don't want to inherit from this component directly unless you are creating another base component class
  */
-// eslint-disable-next-line max-len
-export abstract class SharedComponent extends EventEmitter implements IComponentLoadable, IComponentRouter, IProvideComponentHandle {
+export abstract class SharedComponent<TEvents extends IEvent= IEvent>
+    extends EventForwarder<TEvents>
+    implements IComponentLoadable, IComponentRouter, IProvideComponentHandle
+{
     private initializeP: Promise<void> | undefined;
     private readonly innerHandle: IComponentHandle<this>;
     private _disposed = false;
@@ -131,26 +136,56 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     }
 
     /**
-     * Calls create, initialize, and attach on a new component.
+     * Calls create, initialize, and attach on a new component with random generated ID
      *
-     * @param id - unique component id for the new component
      * @param pkg - package name for the new component
      * @param props - optional props to be passed in
      */
     protected async createAndAttachComponent<T extends IComponent & IComponentLoadable>(
-        id: string | undefined, pkg: string, props?: any,
+        pkg: string, props?: any,
     ): Promise<T> {
-        const componentRuntime = await this.context.createComponent(id, pkg, props);
+        const componentRuntime = await this.context.createComponent(uuid(), pkg, props);
         const component = await this.asComponent<T>(componentRuntime.request({ url: "/" }));
         componentRuntime.attach();
         return component;
     }
 
     /**
+     * Retreive component using the handle get or the older getComponent_UNSAFE call to fetch by ID
+     *
+     * @param key - key that object (handle/id) is stored with in the directory
+     * @param directory - directory containing the object
+     * @param getObjectFromDirectory - optional callback for fetching object from the directory, allows users to
+     * define custom types/getters for object retrieval
+     */
+    public async getComponentFromDirectory<T extends IComponent & IComponentLoadable>(
+        key: string,
+        directory: IDirectory,
+        getObjectFromDirectory?: (id: string, directory: IDirectory) => string | IComponentHandle | undefined):
+        Promise<T | undefined> {
+        const handleOrId = getObjectFromDirectory ? getObjectFromDirectory(key, directory) : directory.get(key);
+        if (typeof handleOrId === "string") {
+            // For backwards compatibility with older stored IDs
+            // We update the storage with the handle so that this code path is less and less trafficked
+            const component = await this.getComponent_UNSAFE<T>(handleOrId);
+            if (component.IComponentLoadable && component.handle) {
+                directory.set(key, component.handle);
+            }
+            return component;
+        } else {
+            const handle = handleOrId?.IComponentHandle;
+            return await (handle ? handle.get() : this.getComponent_UNSAFE(key)) as T;
+        }
+    }
+
+    /**
+     * @deprecated
      * Gets the component of a given id. Will follow the pattern of the container for waiting.
      * @param id - component id
+     * This is maintained for testing, to allow us to fetch the _scheduler for testHost since it is set at initializing
+     * Removal is tracked by issue #1628
      */
-    protected async getComponent<T extends IComponent>(id: string, wait: boolean = true): Promise<T> {
+    protected async getComponent_UNSAFE<T extends IComponent>(id: string, wait: boolean = true): Promise<T> {
         const request = {
             headers: [[wait]],
             url: `/${id}`,
@@ -175,6 +210,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
      * Called the first time the component is initialized.
      *
      * @param props - Optional props to be passed in on create
+     * @deprecated 0.16 Issue #1635 Initial props should be provided through a factory override
      */
     protected async componentInitializingFirstTime(props?: any): Promise<void> { }
 
@@ -191,5 +227,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     /**
      * Called when the host container closes and disposes itself
      */
-    protected dispose(): void { }
+    public dispose(): void {
+        super.dispose();
+    }
 }

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SimpleModuleInstantiationFactory } from "@microsoft/fluid-aqueduct";
+import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aqueduct";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import {
     IProvideComponentFactory,
@@ -12,9 +12,8 @@ import {
 } from "@microsoft/fluid-runtime-definitions";
 import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
 import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
-import { MediaPlayer } from "@fluid-example/media-player/src/index";
-import { LocationSharing } from "@fluid-example/location-sharing/src/index";
-import { SimpleChat } from "@fluid-example/simple-chat/src/main";
+import { Chat } from "@fluid-example/chat/src/main";
+import { ClickerInstantiationFactory } from "@fluid-example/clicker";
 import {
     ComponentToolbar,
     ComponentToolbarName,
@@ -54,8 +53,16 @@ export class InternalRegistry implements IComponentRegistry {
         return undefined;
     }
 
-    public getFromCapabilities(type: keyof IComponent): IContainerComponentDetails[] {
-        return this.containerComponentArray.filter((componentDetails) => componentDetails.capabilities.includes(type));
+    public getFromCapability(capability: keyof IComponent): IContainerComponentDetails[] {
+        return this.containerComponentArray.filter((componentDetails) =>
+            componentDetails.capabilities.includes(capability));
+    }
+
+    public hasCapability(type: string, capability: keyof IComponent) {
+        const index = this.containerComponentArray.findIndex(
+            (containerComponent) => type === containerComponent.type,
+        );
+        return index >= 0 && this.containerComponentArray[index].capabilities.includes(capability);
     }
 
     public getFromTemplate(template: Templates): IContainerComponentDetails[] {
@@ -67,47 +74,28 @@ export class InternalRegistry implements IComponentRegistry {
 const generateFactory = () => {
     const containerComponentsDefinition: IContainerComponentDetails[] = [
         {
-            type: "media-player",
-            factory: Promise.resolve(MediaPlayer.getFactory()),
-            friendlyName: "Media Player",
-            fabricIconName: "Media",
-            capabilities: ["IComponentHTMLView"],
-            templates: {
-                [Templates.CollaborativeCoding]: [{ x: 0, y: 0, w: 26, h: 12 }],
-                [Templates.TwitchParty]: [{ x: 0, y: 0, w: 36, h: 7 }, { x: 0, y: 7, w: 12, h: 7 }, { x: 12, y: 7, w: 12, h: 7 }, { x: 24, y: 7, w: 12, h: 7 }],
-                [Templates.MediaRoom]: [{ x: 0, y: 0, w: 36, h: 12 }],
-                [Templates.CovidStarterKit]: [{ x: 0, y: 0, w: 36, h: 12 }],
-                [Templates.Classroom]: [{ x: 0, y: 0, w: 26, h: 12 }],
-            },
-        },
-        {
-            type: "simple-chat",
-            factory: Promise.resolve(SimpleChat.getFactory()),
-            capabilities: ["IComponentHTMLView"],
+            type: "chat",
+            factory: Promise.resolve(Chat.getFactory()),
+            capabilities: ["IComponentHTMLView", "IComponentLoadable"],
             friendlyName: "Chat",
             fabricIconName: "ChatInviteFriend",
             templates: {
                 [Templates.CollaborativeCoding]: [{ x: 26, y: 0, w: 10, h: 12 }],
-                [Templates.TwitchParty]: [{ x: 0, y: 14, w: 40, h: 7 }],
-                [Templates.MediaRoom]: [{ x: 0, y: 12, w: 36, h: 4 }],
-                [Templates.CovidStarterKit]: [{ x: 26, y: 12, w: 10, h: 8 }],
                 [Templates.Classroom]: [{ x: 26, y: 0, w: 10, h: 12 }],
             },
         },
         {
-            type: "location",
-            factory: Promise.resolve(LocationSharing.getFactory()),
-            capabilities: ["IComponentHTMLView"],
-            friendlyName: "Location Sharing",
-            fabricIconName: "Location",
-            templates: {
-                [Templates.CovidStarterKit]: [{ x: 0, y: 12, w: 26, h: 8 }],
-            },
+            type: "clicker",
+            factory: Promise.resolve(ClickerInstantiationFactory),
+            friendlyName: "Clicker",
+            fabricIconName: "Touch",
+            capabilities: ["IComponentHTMLView", "IComponentLoadable"],
+            templates: {},
         },
         {
             type: "codemirror",
             factory: Promise.resolve(cmfe),
-            capabilities: ["IComponentHTMLView"],
+            capabilities: ["IComponentHTMLView", "IComponentLoadable"],
             friendlyName: "Code",
             fabricIconName: "Code",
             templates: {
@@ -119,7 +107,7 @@ const generateFactory = () => {
             factory: Promise.resolve(TextBox.getFactory()),
             friendlyName: FriendlyTextBoxName,
             fabricIconName: "Edit",
-            capabilities: ["IComponentHTMLView"],
+            capabilities: ["IComponentHTMLView", "IComponentLoadable"],
             templates: {
                 [Templates.CollaborativeCoding]: [{ x: 26, y: 12, w: 10, h: 6 }],
                 [Templates.Classroom]: [{ x: 26, y: 12, w: 10, h: 6 }],
@@ -128,7 +116,7 @@ const generateFactory = () => {
         {
             type: "prosemirror",
             factory: Promise.resolve(pmfe),
-            capabilities: ["IComponentHTMLView"],
+            capabilities: ["IComponentHTMLView", "IComponentLoadable"],
             friendlyName: "Rich Text",
             fabricIconName: "FabricTextHighlight",
             templates: {
@@ -152,7 +140,7 @@ const generateFactory = () => {
 
     // TODO: You should be able to specify the default registry instead of just a list of components
     // and the default registry is already determined Issue:#1138
-    return new SimpleModuleInstantiationFactory(
+    return new ContainerRuntimeFactoryWithDefaultComponent(
         SpacesComponentName,
         [
             ...containerComponents,

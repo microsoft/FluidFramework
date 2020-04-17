@@ -8,7 +8,6 @@ import * as assert from "assert";
 import { Container } from "@microsoft/fluid-container-loader";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import { MockQuorum } from "@microsoft/fluid-test-runtime-utils";
-// eslint-disable-next-line import/no-extraneous-dependencies
 import { IQuorum } from "@microsoft/fluid-protocol-definitions";
 import { initializeContainerCode } from "../initializeContainerCode";
 

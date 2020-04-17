@@ -112,7 +112,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
             .substr(1)
             .substr(0, !request.url.includes("/", 1) ? request.url.length : request.url.indexOf("/"));
 
-        const componentId = trimmed ? trimmed : "root";
+        const componentId = trimmed !== "" ? trimmed : rootMapId;
 
         const component = await runtime.getComponentRuntime(componentId, true);
         return component.request({ url: trimmed.substr(1 + trimmed.length) });
@@ -137,7 +137,7 @@ export class ChaincodeFactory implements IRuntimeFactory {
 
         // On first boot create the base component
         if (!runtime.existing) {
-            runtime.createComponent("root", "@fluid-internal/client-api")
+            runtime.createComponent(rootMapId, "@fluid-internal/client-api")
                 .then((componentRuntime) => {
                     componentRuntime.attach();
                 })
@@ -155,12 +155,12 @@ export class CodeLoader implements ICodeLoader {
 
     constructor(
         runtimeOptions: IContainerRuntimeOptions,
-        registries?: NamedComponentRegistryEntries,
+        registries: NamedComponentRegistryEntries = [],
     ) {
         this.fluidModule = {
             fluidExport: new ChaincodeFactory(
                 runtimeOptions,
-                registries ? registries : []),
+                registries),
         };
     }
 

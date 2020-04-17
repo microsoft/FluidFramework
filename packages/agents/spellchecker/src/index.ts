@@ -9,6 +9,8 @@ import * as Sequence from "@microsoft/fluid-sequence";
 import { loadDictionary } from "./dictionaryLoader";
 import { Spellchecker } from "./spellchecker";
 
+export const ISpellChecker: keyof IProvideSpellChecker = "ISpellChecker";
+
 export interface IProvideSpellChecker {
     readonly ISpellChecker: ISpellChecker;
 }

@@ -10,7 +10,7 @@ import { IOdspCache } from "./odspCache";
 import { fetchHelper, getWithRetryForTokenRefresh, throwOdspNetworkError } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";
 
-const getOrigin = (url: string) => new URL(url).origin;
+export const getOrigin = (url: string) => new URL(url).origin;
 
 /**
  * Makes join session call on SPO
@@ -89,7 +89,7 @@ export async function fetchJoinSession(
  * @param getVroomToken - A function that gets the Vroom token
  * @param getPushToken - A function that gets the push token
  */
-// Function has to be syncronous (i.e. no awaits) in order to be correct!
+// Function has to be synchronous (i.e. no awaits) in order to be correct!
 // eslint-disable-next-line @typescript-eslint/promise-function-async
 export function getSocketStorageDiscovery(
     appId: string,

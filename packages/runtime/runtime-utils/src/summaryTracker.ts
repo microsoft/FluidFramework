@@ -87,7 +87,7 @@ export class SummaryTracker implements ISummaryTracker {
 
     public createOrGetChild(key: string, latestSequenceNumber: number): SummaryTracker {
         const existingChild = this.children.get(key);
-        if (existingChild) {
+        if (existingChild !== undefined) {
             return existingChild;
         }
 
@@ -100,6 +100,10 @@ export class SummaryTracker implements ISummaryTracker {
 
         this.children.set(key, newChild);
         return newChild;
+    }
+
+    public getChild(key: string): ISummaryTracker | undefined {
+        return this.children.get(key);
     }
 
     public constructor(

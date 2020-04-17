@@ -4,7 +4,7 @@
  */
 
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { IComponentHTMLOptions, IComponentHTMLView, IComponentReactViewable } from "@microsoft/fluid-view-interfaces";
+import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
@@ -52,7 +52,7 @@ export class HTMLViewAdapter implements IComponentHTMLView {
 
         const reactViewable = this.component.IComponentReactViewable;
         if (reactViewable !== undefined) {
-            ReactDOM.render(<ReactViewableEmbeddedComponent component={reactViewable} />, elm);
+            ReactDOM.render(reactViewable.createJSXElement(), elm);
             return;
         }
 
@@ -114,12 +114,3 @@ export class HTMLViewAdapter implements IComponentHTMLView {
         }
     }
 }
-
-interface IReactProps {
-    component: IComponentReactViewable;
-}
-
-/**
- * Embeds a Fluid Component that supports IComponentReactViewable
- */
-const ReactViewableEmbeddedComponent = (props: IReactProps) => props.component.createJSXElement();

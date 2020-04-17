@@ -17,6 +17,7 @@ import {
     ISignalMessage,
     ITokenClaims,
     MessageType,
+    NackErrorType,
 } from "@microsoft/fluid-protocol-definitions";
 import { canSummarize, canWrite } from "@microsoft/fluid-server-services-client";
 
@@ -115,7 +116,8 @@ export function configureWebSocketServices(
     contentCollection: core.ICollection<any>,
     clientManager: core.IClientManager,
     metricLogger: core.IMetricClient,
-    logger: core.ILogger) {
+    logger: core.ILogger,
+    maxNumberOfClientsPerDocument: number = 1000000) {
 
 
     webSocketServer.on("connection", (socket: core.IWebSocket) => {
@@ -195,13 +197,22 @@ export function configureWebSocketServices(
 
             const detailsP = storage.getOrCreateDocument(claims.tenantId, claims.documentId);
             const clientsP = clientManager.getClients(claims.tenantId, claims.documentId);
-            const addP = clientManager.addClient(
+
+            const [details, clients] = await Promise.all([detailsP, clientsP]);
+
+            if (clients.length > maxNumberOfClientsPerDocument) {
+                return Promise.reject({
+                    code: 400,
+                    message: "Too many clients are already connected to this document.",
+                    retryAfter: 5*60,
+                });
+            }
+
+            await clientManager.addClient(
                 claims.tenantId,
                 claims.documentId,
                 clientId,
                 messageClient as IClient);
-
-            const [details, , clients] = await Promise.all([detailsP, addP, clientsP]);
 
             let connectedMessage: IConnected;
             if (isWriter(messageClient.scopes, details.existing, message.mode)) {
@@ -282,7 +293,14 @@ export function configureWebSocketServices(
             (clientId: string, messageBatches: (IDocumentMessage | IDocumentMessage[])[], response) => {
                 // Verify the user has an orderer connection.
                 if (!connectionsMap.has(clientId)) {
-                    socket.emit("nack", "", [createNackMessage()]);
+                    socket.emit(
+                        "nack",
+                        "",
+                        [createNackMessage(
+                            403,
+                            NackErrorType.InvalidScopeError,
+                            "Invalid clientId or Scope",
+                        )]);
                 } else {
                     const connection = connectionsMap.get(clientId);
 
@@ -320,7 +338,14 @@ export function configureWebSocketServices(
         socket.on("submitContent", (clientId: string, message: IDocumentMessage, response) => {
             // Verify the user has an orderer connection.
             if (!connectionsMap.has(clientId)) {
-                socket.emit("nack", "", [createNackMessage()]);
+                socket.emit(
+                    "nack",
+                    "",
+                    [createNackMessage(
+                        403,
+                        NackErrorType.InvalidScopeError,
+                        "Invalid clientId or Scope",
+                    )]);
             } else {
                 const broadCastMessage: IContentMessage = {
                     clientId,

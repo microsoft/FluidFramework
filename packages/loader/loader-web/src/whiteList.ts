@@ -20,7 +20,7 @@ export class WhiteList implements ICodeWhiteList {
     ) { }
 
     public async testSource(source: IResolvedFluidCodeDetails): Promise<boolean> {
-        if (!this.testHandler) {
+        if (this.testHandler === undefined) {
             return true;
         }
         return this.testHandler(source);

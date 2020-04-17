@@ -6,4 +6,4 @@
 import { ISerializedHandle } from "@microsoft/fluid-component-core-interfaces";
 
 export const isSerializedHandle = (value: any): value is ISerializedHandle =>
-    value && value.type === "__fluid_handle__";
+    value?.type === "__fluid_handle__";

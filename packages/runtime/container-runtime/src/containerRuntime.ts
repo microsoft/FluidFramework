@@ -62,6 +62,7 @@ import {
 import {
     FlushMode,
     IAttachMessage,
+    IComponentContext,
     IComponentRegistry,
     IComponentRuntime,
     IEnvelope,
@@ -71,8 +72,7 @@ import {
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
 import { ComponentSerializer, SummaryTracker } from "@microsoft/fluid-runtime-utils";
-// eslint-disable-next-line import/no-internal-modules
-import * as uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
 import { ComponentContext, LocalComponentContext, RemotedComponentContext } from "./componentContext";
 import { ComponentHandleContext } from "./componentHandleContext";
 import { ComponentRegistry } from "./componentRegistry";
@@ -162,6 +162,17 @@ export interface IContainerRuntimeOptions {
 
 interface IRuntimeMessageMetadata {
     batch?: boolean;
+}
+
+function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
+    switch (message.type) {
+        case MessageType.ChunkedOp:
+        case MessageType.Attach:
+        case MessageType.Operation:
+            return true;
+        default:
+            return false;
+    }
 }
 
 export class ScheduleManager {
@@ -345,17 +356,6 @@ export class ScheduleManager {
     }
 }
 
-function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
-    switch (message.type) {
-        case MessageType.ChunkedOp:
-        case MessageType.Attach:
-        case MessageType.Operation:
-            return true;
-        default:
-            return false;
-    }
-}
-
 export const schedulerId = "_scheduler";
 const schedulerRuntimeRequestHandler: RuntimeRequestHandler =
     async (request: RequestParser, runtime: IHostRuntime) => {
@@ -364,6 +364,16 @@ const schedulerRuntimeRequestHandler: RuntimeRequestHandler =
         }
         return undefined;
     };
+
+// Wraps the provided list of packages and augments with some system level services.
+class ContainerRuntimeComponentRegistry extends ComponentRegistry {
+    constructor(namedEntries: NamedComponentRegistryEntries) {
+        super([
+            ...namedEntries,
+            [schedulerId, Promise.resolve(new AgentSchedulerFactory())],
+        ]);
+    }
+}
 
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
@@ -696,6 +706,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 this.logger.sendErrorEvent({ eventName: "ComponentContextDisposeError", componentId }, error);
             });
         }
+
+        this.emit("dispose");
+        this.removeAllListeners();
     }
 
     public get IComponentTokenProvider() {
@@ -935,13 +948,18 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         }
     }
 
-    public async createComponent(idOrPkg: string, maybePkg?: string | string[]) {
+    /**
+     * @deprecated
+     * Remove once issue #1756 is closed
+     */
+    public async createComponent(idOrPkg: string, maybePkg: string | string[]) {
         const id = maybePkg === undefined ? uuid() : idOrPkg;
         const pkg = maybePkg === undefined ? idOrPkg : maybePkg;
         return this._createComponentWithProps(pkg, undefined, id);
     }
 
-    public async _createComponentWithProps(pkg: string | string[], props: any, id: string): Promise<IComponentRuntime> {
+    public async _createComponentWithProps(pkg: string | string[], props?: any, id?: string):
+    Promise<IComponentRuntime> {
         return this.createComponentContext(Array.isArray(pkg) ? pkg : [pkg], props, id).realize();
     }
 
@@ -963,6 +981,35 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         this.contexts.set(id, context);
 
         return context;
+    }
+
+    public async createComponentWithRealizationFn(
+        pkg: string[],
+        realizationFn?: (context: IComponentContext) => void,
+    ): Promise<IComponentRuntime> {
+        this.verifyNotClosed();
+
+        // tslint:disable-next-line: no-unsafe-any
+        const id: string = uuid();
+        const context = new LocalComponentContext(
+            id,
+            pkg,
+            this,
+            this.storage,
+            this.context.scope,
+            this.summaryTracker.createOrGetChild(id, this.deltaManager.referenceSequenceNumber),
+            (cr: IComponentRuntime) => this.attachComponent(cr),
+            undefined /* #1635: Remove LocalComponentContext createProps */);
+
+        const deferred = new Deferred<ComponentContext>();
+        this.contextsDeferred.set(id, deferred);
+        this.contexts.set(id, context);
+
+        if (realizationFn) {
+            return context.realizeWithFn(realizationFn);
+        } else {
+            return context.realize();
+        }
     }
 
     public getQuorum(): IQuorum {
@@ -1035,16 +1082,20 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         let summaryStats = SummaryTreeConverter.mergeStats();
 
         // Iterate over each component and ask it to snapshot
-        await Promise.all(Array.from(this.contexts).map(async ([key, value]) => {
-            const snapshot = await value.snapshot(fullTree);
-            const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
-                snapshot,
-                `/${encodeURIComponent(key)}`,
-                fullTree,
-            );
-            summaryTree.tree[key] = treeWithStats.summaryTree;
-            summaryStats = SummaryTreeConverter.mergeStats(summaryStats, treeWithStats.summaryStats);
-        }));
+        await Promise.all(Array.from(this.contexts)
+            .filter(([key, value]) =>
+                value.isAttached,
+            )
+            .map(async ([key, value]) => {
+                const snapshot = await value.snapshot(fullTree);
+                const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
+                    snapshot,
+                    `/${encodeURIComponent(key)}`,
+                    fullTree,
+                );
+                summaryTree.tree[key] = treeWithStats.summaryTree;
+                summaryStats = SummaryTreeConverter.mergeStats(summaryStats, treeWithStats.summaryStats);
+            }));
 
         if (this.chunkMap.size > 0) {
             summaryTree.tree[".chunks"] = {
@@ -1069,7 +1120,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         // Old prepare part
         switch (message.type) {
-            case MessageType.Attach:
+            case MessageType.Attach: {
                 // The local object has already been attached
                 if (local) {
                     break;
@@ -1092,8 +1143,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     this.containerScope,
                     this.summaryTracker.createOrGetChild(attachMessage.id, message.sequenceNumber),
                     [attachMessage.type]);
-
                 break;
+            }
 
             default:
         }
@@ -1111,10 +1162,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
         // Post-process part
         switch (message.type) {
-            case MessageType.Attach:
+            case MessageType.Attach: {
                 const attachMessage = message.contents as IAttachMessage;
 
-                // If a non-local operation then go and create the object - otherwise mark it as officially attached.
+                // If a non-local operation then go and create the object, otherwise mark it as officially attached.
                 if (local) {
                     assert(this.pendingAttach.has(attachMessage.id));
                     this.pendingAttach.delete(attachMessage.id);
@@ -1132,6 +1183,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     Promise.resolve().then(() => remotedComponentContext.realize());
                 }
                 break;
+            }
+
             default: // Do nothing
         }
     }
@@ -1557,17 +1610,4 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         }
         return { result, success };
     }
-}
-
-// Wraps the provided list of packages and augments with some system level services.
-class ContainerRuntimeComponentRegistry extends ComponentRegistry {
-
-    constructor(namedEntries: NamedComponentRegistryEntries) {
-
-        super([
-            ...namedEntries,
-            [schedulerId, Promise.resolve(new AgentSchedulerFactory())],
-        ]);
-    }
-
 }

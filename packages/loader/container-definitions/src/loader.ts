@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
     IClientDetails,
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
+    MessageType,
 } from "@microsoft/fluid-protocol-definitions";
-import { IUrlResolver } from "@microsoft/fluid-driver-definitions";
+import { IError } from "@microsoft/fluid-driver-definitions";
+import { IEvent, IEventProvider } from "@microsoft/fluid-common-definitions";
 import { IFluidCodeDetails, IFluidModule, IFluidPackage } from "./chaincode";
 import { IDeltaManager } from "./deltas";
 
@@ -26,7 +27,7 @@ export interface ICodeLoader {
 }
 
 /**
- * The interface returned from a IFluidCodeResolver which represents IFluidCodeDetails
+* The interface returned from a IFluidCodeResolver which represents IFluidCodeDetails
  * that have been resolved and are ready to load
  */
 export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
@@ -66,7 +67,18 @@ export interface ICodeWhiteList {
     testSource(source: IResolvedFluidCodeDetails): Promise<boolean>;
 }
 
-export interface IContainer extends EventEmitter {
+export interface IContainerEvents extends IEvent {
+    (event: "readonly", listener: (readonly: boolean) => void): void;
+    (event: "connected" | "contextChanged", listener: (clientId: string) => void);
+    (event: "disconnected" | "joining", listener: () => void);
+    (event: "closed", listener: (error?: IError) => void);
+    (event: "error", listener: (error: IError) => void);
+    (event: "op", listener: (message: ISequencedDocumentMessage) => void);
+    (event: "pong" | "processTime", listener: (latency: number) => void);
+    (event: MessageType.BlobUploaded, listener: (contents: any) => void);
+}
+
+export interface IContainer extends IEventProvider<IContainerEvents> {
 
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 
@@ -88,7 +100,7 @@ export interface IExperimentalContainer extends IContainer {
      * TODO - in the case of failure options should give a retry policy. Or some continuation function
      * that allows attachment to a secondary document.
      */
-    attach(resolver: IUrlResolver, request: IRequest): Promise<void>;
+    attach(request: IRequest): Promise<void>;
 }
 
 export interface ILoader {

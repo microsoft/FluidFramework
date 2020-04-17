@@ -32,13 +32,10 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluid-example/badge": "^0.16.0",
     "@fluid-example/clicker": "^0.16.0",
     "@fluid-example/codemirror": "^0.16.0",
-    "@fluid-example/location-sharing": "^0.16.0",
-    "@fluid-example/media-player": "^0.16.0",
     "@fluid-example/prosemirror": "^0.16.0",
-    "@fluid-example/simple-chat": "^0.16.0",
+    "@fluid-example/chat": "^0.16.0",
     "@fluid-example/shared-text": "^0.16.0",
     "@microsoft/fluid-aqueduct": "^0.16.0",
     "@microsoft/fluid-aqueduct-react": "^0.16.0",
@@ -47,7 +44,7 @@
     "@microsoft/fluid-container-definitions": "^0.16.0",
     "@microsoft/fluid-framework-interfaces": "^0.16.0",
     "@microsoft/fluid-map": "^0.16.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1004.0-0",
+    "@microsoft/fluid-protocol-definitions": "^0.1004.1-0",
     "@microsoft/fluid-runtime-definitions": "^0.16.0",
     "@microsoft/fluid-sequence": "^0.16.0",
     "@microsoft/fluid-shared-object-base": "^0.16.0",

@@ -14,7 +14,7 @@ environment](../guide/README.md#set-up-your-development-environment).
 
 ### Clone the tutorial repository
 
-<vue-markdown v-if="$themeConfig.fluidVarGroup === 'internal'">
+<vue-markdown v-if="$themeConfig.DOCS_AUDIENCE === 'internal'">
 
 First, clone the tutorial repository here: <https://github.com/microsoft/fluid-tutorial-sudoku>.
 
@@ -48,18 +48,15 @@ The project has the following folder layout:
 
 ```
 └───src
-    |   Component.sppkg.manifest.json
-    |   main.ts
-    └───fluid-components
-        |   fluidSudoku.tsx
-        │   index.ts
-        ├───helpers
+    |   fluidSudoku.tsx
+    │   index.ts
+    ├───helpers
         │       coordinate.ts
         │       puzzles.ts
         |       styles.css
         │       sudokuCell.ts
         └───react
-                sudokuView.tsx
+            sudokuView.tsx
 ```
 
 The _src/fluid-components_ folder contains the source files for the Sudoku Fluid component.
@@ -468,10 +465,10 @@ Or check out [other examples](./README.md).
 
 <!-- Links -->
 
-[icomponenthtmlview]: ../api/fluid-component-core-interfaces.icomponenthtmlview.md
-[icomponentreactviewable]: ../api/fluid-aqueduct-react.icomponentreactviewable.md
-[iprovidecomponenthtmlview]: ../api/fluid-component-core-interfaces.iprovidecomponenthtmlview.md
-[primedcomponent]: ../api/fluid-aqueduct.primedcomponent.md
-[shareddirectory]: ../api/fluid-map.shareddirectory.md
-[sharedmap]: ../api/fluid-map.sharedmap.md
+[IComponentHTMLView]: ../api/fluid-component-core-interfaces.icomponenthtmlview.md
+[IComponentReactViewable]: ../api/fluid-aqueduct-react.icomponentreactviewable.md
+[IProvideComponentHTMLView]: ../api/fluid-component-core-interfaces.iprovidecomponenthtmlview.md
+[PrimedComponent]: ../api/fluid-aqueduct.primedcomponent.md
+[SharedDirectory]: ../api/fluid-map.shareddirectory.md
+[SharedMap]: ../api/fluid-map.sharedmap.md
 [undo-redo]: ../api/fluid-undo-redo.md
