@@ -81,7 +81,7 @@ describe("Detached Container", () => {
             assert.fail("New components should be created in detached container");
         }
         const testComponent = testResponse.value as API.Document;
-        assert.equal(testComponent.context.storageGetter(), undefined, "No storage should be there!!");
+        assert.equal(testComponent.context.storage, undefined, "No storage should be there!!");
         assert.equal(testComponent.runtime.isAttached, true, "Component should be attached!!");
         const testChannel = await testComponent.runtime.getChannel("root");
         assert.equal(testChannel.isRegistered(), true, "Channel should be registered!!");
@@ -105,7 +105,6 @@ describe("Detached Container", () => {
             assert.fail("New components should be created in detached container");
         }
         const testComponent = testResponse.value as API.Document;
-        assert(testComponent.context.storageGetter(), "Storage should exist now!!");
         assert.equal(testComponent.runtime.isAttached, true, "Component should be attached!!");
         const testChannel = await testComponent.runtime.getChannel("root");
         assert.equal(testChannel.isRegistered(), true, "Channel should be registered!!");

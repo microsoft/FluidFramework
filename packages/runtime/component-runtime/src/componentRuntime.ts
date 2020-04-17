@@ -185,7 +185,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                 const channelContext = new RemoteChannelContext(
                     this,
                     componentContext,
-                    componentContext.storageGetter,
+                    componentContext.storage,
                     (type, content) => this.submit(type, content),
                     (address: string) => this.setChannelDirty(address),
                     path,
@@ -291,7 +291,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
             type,
             this,
             this.componentContext,
-            this.componentContext.storageGetter,
+            this.componentContext.storage,
             (t, content) => this.submit(t, content),
             (address: string) => this.setChannelDirty(address));
         this.contexts.set(id, context);

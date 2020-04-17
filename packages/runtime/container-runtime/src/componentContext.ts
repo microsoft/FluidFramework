@@ -512,7 +512,7 @@ export class RemotedComponentContext extends ComponentContext {
         id: string,
         private readonly initSnapshotValue: ISnapshotTree | string,
         runtime: IHostRuntime,
-        storageGetter: () => IDocumentStorageService,
+        storage: IDocumentStorageService,
         scope: IComponent,
         summaryTracker: SummaryTracker,
         pkg?: string[],
@@ -521,7 +521,7 @@ export class RemotedComponentContext extends ComponentContext {
             runtime,
             id,
             true,
-            storageGetter,
+            storage,
             scope,
             summaryTracker,
             true,
@@ -543,8 +543,8 @@ export class RemotedComponentContext extends ComponentContext {
             let tree: ISnapshotTree;
 
             if (typeof this.initSnapshotValue === "string") {
-                const commit = (await this.storageGetter().getVersions(this.initSnapshotValue, 1))[0];
-                tree = await this.storageGetter().getSnapshotTree(commit);
+                const commit = (await this.storage.getVersions(this.initSnapshotValue, 1))[0];
+                tree = await this.storage.getSnapshotTree(commit);
             } else {
                 tree = this.initSnapshotValue;
             }
@@ -553,7 +553,7 @@ export class RemotedComponentContext extends ComponentContext {
                 // Need to rip through snapshot and use that to populate extraBlobs
                 const { pkg, snapshotFormatVersion } =
                     await readAndParse<IComponentAttributes>(
-                        this.storageGetter(),
+                        this.storage,
                         tree.blobs[".component"]);
 
                 let pkgFromSnapshot: string[];
@@ -586,13 +586,13 @@ export class LocalComponentContext extends ComponentContext {
         id: string,
         pkg: string[],
         runtime: IHostRuntime,
-        storageGetter: () => IDocumentStorageService,
+        storage: IDocumentStorageService,
         scope: IComponent,
         summaryTracker: SummaryTracker,
         attachCb: (componentRuntime: IComponentRuntime) => void,
         public readonly createProps?: any,
     ) {
-        super(runtime, id, false, storageGetter, scope, summaryTracker, false, attachCb, pkg);
+        super(runtime, id, false, storage, scope, summaryTracker, false, attachCb, pkg);
     }
 
     public generateAttachMessage(): IAttachMessage {

@@ -611,7 +611,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                 key,
                 value,
                 this,
-                () => this.storage,
+                this.storage,
                 this.containerScope,
                 this.summaryTracker.createOrGetChild(key, this.summaryTracker.referenceSequenceNumber));
             const deferred = new Deferred<ComponentContext>();
@@ -957,7 +957,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             id,
             pkg,
             this,
-            () => this.storage,
+            this.storage,
             this.containerScope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.referenceSequenceNumber),
             (cr: IComponentRuntime) => this.attachComponent(cr),
@@ -1096,7 +1096,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
                     attachMessage.id,
                     snapshotTree,
                     this,
-                    () => new BlobCacheStorageService(this.storage, flatBlobs),
+                    new BlobCacheStorageService(this.storage, flatBlobs),
                     this.containerScope,
                     this.summaryTracker.createOrGetChild(attachMessage.id, message.sequenceNumber),
                     [attachMessage.type]);

@@ -33,7 +33,7 @@ describe("Component Creation Tests", () => {
          *        Component B     Component C
          */
 
-        let storageGetter: () => IDocumentStorageService;
+        let storage: IDocumentStorageService;
         let scope: IComponent;
         const attachCb = (mR: IComponentRuntime) => { };
         let containerRuntime: ContainerRuntime;
@@ -97,7 +97,7 @@ describe("Component Creation Tests", () => {
                 "default-Id",
                 [defaultName],
                 containerRuntime,
-                storageGetter,
+                storage,
                 scope,
                 summaryTracker,
                 attachCb);
@@ -118,7 +118,7 @@ describe("Component Creation Tests", () => {
                 "A-Id",
                 [componentAName],
                 containerRuntime,
-                storageGetter,
+                storage,
                 scope,
                 summaryTracker,
                 attachCb);
@@ -139,7 +139,7 @@ describe("Component Creation Tests", () => {
                 "A-Id",
                 [defaultName, componentAName],
                 containerRuntime,
-                storageGetter,
+                storage,
                 scope,
                 summaryTracker,
                 attachCb);
@@ -160,7 +160,7 @@ describe("Component Creation Tests", () => {
                 "B-Id",
                 [defaultName, componentBName],
                 containerRuntime,
-                storageGetter,
+                storage,
                 scope,
                 summaryTracker,
                 attachCb);
@@ -181,7 +181,7 @@ describe("Component Creation Tests", () => {
                 "B-Id",
                 [defaultName, componentAName, componentBName],
                 containerRuntime,
-                storageGetter,
+                storage,
                 scope,
                 summaryTracker,
                 attachCb);
@@ -199,7 +199,7 @@ describe("Component Creation Tests", () => {
                 "C-Id",
                 [defaultName, componentAName, componentCName],
                 containerRuntime,
-                storageGetter,
+                storage,
                 scope,
                 summaryTracker,
                 attachCb);
@@ -220,7 +220,7 @@ describe("Component Creation Tests", () => {
                 "fake-Id",
                 [defaultName, componentAName, "fake"],
                 containerRuntime,
-                storageGetter,
+                storage,
                 scope,
                 summaryTracker,
                 attachCb);
@@ -241,7 +241,7 @@ describe("Component Creation Tests", () => {
                 "fake-Id",
                 [defaultName, componentAName, componentBName, "fake"],
                 containerRuntime,
-                storageGetter,
+                storage,
                 scope,
                 summaryTracker,
                 attachCb);
@@ -262,7 +262,7 @@ describe("Component Creation Tests", () => {
                 "C-Id",
                 [defaultName, componentAName, componentBName, componentCName],
                 containerRuntime,
-                storageGetter,
+                storage,
                 scope,
                 summaryTracker,
                 attachCb);

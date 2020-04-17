@@ -24,7 +24,7 @@ export class ChannelStorageService implements IObjectStorageService {
 
     constructor(
         tree: ISnapshotTree | undefined,
-        private  readonly storage: IDocumentStorageService,
+        private readonly storage: IDocumentStorageService,
         private readonly extraBlobs?: Map<string, string>,
     ) {
         // Create a map from paths to blobs
