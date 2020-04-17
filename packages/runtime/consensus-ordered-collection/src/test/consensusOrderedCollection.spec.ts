@@ -10,10 +10,9 @@ import { ConsensusQueueFactory } from "../consensusOrderedCollectionFactory";
 import { ConsensusResult, IConsensusOrderedCollection } from "../interfaces";
 import { acquireAndComplete, waitAcquireAndComplete } from "../testUtils";
 
-describe("Routerlicious", () => {
+describe("ConsensusOrderedCollection", () => {
     const factory = new ConsensusQueueFactory();
 
-    // tslint:disable:mocha-no-side-effect-code
     function generate(
         input: any[],
         output: any[],

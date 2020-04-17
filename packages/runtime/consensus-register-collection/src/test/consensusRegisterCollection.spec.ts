@@ -10,7 +10,7 @@ import { IDeltaConnection } from "@microsoft/fluid-runtime-definitions";
 import { ConsensusRegisterCollectionFactory } from "../consensusRegisterCollectionFactory";
 import { IConsensusRegisterCollection, IConsensusRegisterCollectionFactory } from "../interfaces";
 
-describe("Routerlicious", () => {
+describe("ConsensusRegisterCollection", () => {
     describe("Api", () => {
         // tslint:disable:mocha-no-side-effect-code
         function generate(
