@@ -8,91 +8,127 @@ import { ConnectionState } from "@microsoft/fluid-protocol-definitions";
 import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
 import { IDeltaConnection } from "@microsoft/fluid-runtime-definitions";
 import { ConsensusRegisterCollectionFactory } from "../consensusRegisterCollectionFactory";
-import { IConsensusRegisterCollection, IConsensusRegisterCollectionFactory } from "../interfaces";
+import { IConsensusRegisterCollection } from "../interfaces";
 
 describe("ConsensusRegisterCollection", () => {
+    let runtime: MockRuntime;
+    let deltaConnFactory: MockDeltaConnectionFactory;
+    let deltaConnection: IDeltaConnection;
+
     describe("Api", () => {
         // tslint:disable:mocha-no-side-effect-code
         function generate(
             name: string,
-            factory: IConsensusRegisterCollectionFactory) {
+            creator: () => IConsensusRegisterCollection,
+            processMessages: () => void,
+        ) {
+            let crc: IConsensusRegisterCollection;
 
-            let testCollection: IConsensusRegisterCollection;
-            let runtime: MockRuntime;
+            async function read(k) {
+                const resP = crc.read(k);
+                processMessages();
+                setImmediate(() => processMessages());
+                return resP;
+            }
+
+            async function write(k, v) {
+                const waitP = crc.write(k, v);
+                processMessages();
+                return waitP;
+            }
 
             describe(name, () => {
                 beforeEach(async () => {
-                    runtime = new MockRuntime();
-                    testCollection = factory.create(runtime, "consensus-register-collection");
+                    crc = creator();
                 });
 
                 it("Can create a collection", () => {
-                    assert.ok(testCollection);
+                    assert.ok(crc);
+                });
+
+                it("Can add and remove data", async () => {
+                    assert.strictEqual(await read("key1"), undefined);
+                    await write("key1", "val1");
+                    assert.strictEqual(await read("key1"), "val1");
+                });
+
+                it("Can add and remove a handle", async () => {
+                    assert.strictEqual(await read("key1"), undefined);
+                    const handle = crc.handle;
+                    if (handle === undefined) { assert.fail("Need an actual handle to test this case"); }
+                    await write("key1", handle);
+                    const acquiredValue = await read("key1");
+                    assert.strictEqual(acquiredValue.path, handle.path);
                 });
             });
         }
-        generate("ConsensusRegisterCollection", new ConsensusRegisterCollectionFactory());
-    });
 
-    describe("reconnect", () => {
-        let testCollection: IConsensusRegisterCollection;
-        let runtime: MockRuntime;
-        let deltaConnFactory: MockDeltaConnectionFactory;
-        let deltaConnection: IDeltaConnection;
-
-        beforeEach(async () => {
-            const factory = new ConsensusRegisterCollectionFactory();
-            runtime = new MockRuntime();
-            deltaConnFactory = new MockDeltaConnectionFactory();
-            deltaConnection = deltaConnFactory.createDeltaConnection(runtime);
-            runtime.services = {
-                deltaConnection,
-                objectStorage: new MockStorage(),
-            };
-            testCollection = factory.create(runtime, "consensus-register-collection");
-        });
-
-        it("message not sent before attach", async () => {
-            const writeP =  testCollection.write("test", "test");
-            const res = await writeP;
-            assert(res);
-        });
-
-        it("message not sent before connect", async () => {
-            testCollection.connect(runtime.services);
-
-            deltaConnection.state = ConnectionState.Disconnected;
-            const writeP =  testCollection.write("test", "test");
-            deltaConnection.state = ConnectionState.Connected;
-            deltaConnFactory.processAllMessages();
-            const res = await writeP;
-            assert(res);
-        });
-
-        it("message sent before reconnect", async () => {
-            testCollection.connect(runtime.services);
-
-            const writeP = testCollection.write("test", "test");
-            deltaConnection.state = ConnectionState.Disconnected;
-            deltaConnection.state = ConnectionState.Connecting;
-            deltaConnFactory.processAllMessages();
-            deltaConnection.state = ConnectionState.Connected;
-            deltaConnFactory.processAllMessages();
-            const res = await writeP;
-            assert(res);
-        });
-
-        it("message not sent before reconnect", async () => {
-            testCollection.connect(runtime.services);
-
-            const writeP =  testCollection.write("test", "test");
-            deltaConnection.state = ConnectionState.Disconnected;
-            deltaConnection.state = ConnectionState.Connecting;
-            deltaConnFactory.clearMessages();
-            deltaConnection.state = ConnectionState.Connected;
-            deltaConnFactory.processAllMessages();
-            const res = await writeP;
-            assert(res);
+        describe("Attached, connected", () => {
+            generate(
+                "ConsensusRegisterCollection",
+                () => {
+                    const crcFactory = new ConsensusRegisterCollectionFactory();
+                    runtime = new MockRuntime();
+                    deltaConnFactory = new MockDeltaConnectionFactory();
+                    deltaConnection = deltaConnFactory.createDeltaConnection(runtime);
+                    runtime.services = {
+                        deltaConnection,
+                        objectStorage: new MockStorage(),
+                    };
+                    const crc = crcFactory.create(runtime, "consensus-register-collection");
+                    crc.connect(runtime.services);
+                    deltaConnection.state = ConnectionState.Connected;
+                    return crc;
+                },
+                () => {
+                    deltaConnFactory.processAllMessages();
+                },
+            );
         });
     });
+
+    // describe("reconnect", () => {
+    //     it("message not sent before attach", async () => {
+    //         const writeP =  crc.write("test", "test");
+    //         const res = await writeP;
+    //         assert(res);
+    //     });
+
+    //     it("message not sent before connect", async () => {
+    //         crc.connect(runtime.services);
+
+    //         deltaConnection.state = ConnectionState.Disconnected;
+    //         const writeP =  crc.write("test", "test");
+    //         deltaConnection.state = ConnectionState.Connected;
+    //         deltaConnFactory.processAllMessages();
+    //         const res = await writeP;
+    //         assert(res);
+    //     });
+
+    //     it("message sent before reconnect", async () => {
+    //         crc.connect(runtime.services);
+
+    //         const writeP = crc.write("test", "test");
+    //         deltaConnection.state = ConnectionState.Disconnected;
+    //         deltaConnection.state = ConnectionState.Connecting;
+    //         deltaConnFactory.processAllMessages();
+    //         deltaConnection.state = ConnectionState.Connected;
+    //         deltaConnFactory.processAllMessages();
+    //         const res = await writeP;
+    //         assert(res);
+    //     });
+
+    //     it("message not sent before reconnect", async () => {
+    //         crc.connect(runtime.services);
+
+    //         const writeP =  crc.write("test", "test");
+    //         deltaConnection.state = ConnectionState.Disconnected;
+    //         deltaConnection.state = ConnectionState.Connecting;
+    //         deltaConnFactory.clearMessages();
+    //         deltaConnection.state = ConnectionState.Connected;
+    //         deltaConnFactory.processAllMessages();
+    //         const res = await writeP;
+    //         assert(res);
+    //     });
+    // });
 });

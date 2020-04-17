@@ -58,6 +58,16 @@ describe("ConsensusOrderedCollection", () => {
                 assert.strictEqual(await removeItem(), undefined);
             });
 
+            it("Can add and remove a handle", async () => {
+                assert.strictEqual(await removeItem(), undefined);
+                const handle = testCollection.handle;
+                if (handle === undefined) { assert.fail("Need an actual handle to test this case"); }
+                await addItem(handle);
+                const acquiredValue = await removeItem();
+                assert.strictEqual(acquiredValue.path, handle.path);
+                assert.strictEqual(await removeItem(), undefined);
+            });
+
             it("Can add and release data", async () => {
                 await addItem("testValue");
                 const promise = testCollection.acquire(async (value) => {
