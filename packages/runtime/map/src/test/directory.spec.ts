@@ -346,7 +346,7 @@ describe("Routerlicious", () => {
                 const dummyDirectory = testDirectory;
                 let called1: boolean = false;
                 let called2: boolean = false;
-                dummyDirectory.on("op", (agr1, arg2) => called1 = true);
+                dummyDirectory.on("op", (agr1, arg2, arg3) => called1 = true);
                 dummyDirectory.on("valueChanged", (agr1, arg2, arg3, arg4) => called2 = true);
                 dummyDirectory.set("dwyane", "johnson");
                 assert.equal(called1, false, "op");

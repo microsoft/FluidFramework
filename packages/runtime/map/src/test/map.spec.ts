@@ -47,7 +47,7 @@ describe("Routerlicious", () => {
                 const dummyMap = testMap;
                 let called1: boolean = false;
                 let called2: boolean = false;
-                dummyMap.on("op", (agr1, arg2) => called1 = true);
+                dummyMap.on("op", (agr1, arg2, arg3) => called1 = true);
                 dummyMap.on("valueChanged", (agr1, arg2, arg3, arg4) => called2 = true);
                 dummyMap.set("marco", "polo");
                 assert.equal(called1, false, "op");

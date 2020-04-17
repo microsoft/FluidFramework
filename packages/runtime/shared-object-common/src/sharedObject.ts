@@ -383,9 +383,9 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
             this.processPendingOp(message);
         }
 
-        this.emit("pre-op", message, local);
+        this.emit("pre-op", message, local, this);
         this.processCore(message, local);
-        this.emit("op", message, local);
+        this.emit("op", message, local, this);
     }
 
     /**
