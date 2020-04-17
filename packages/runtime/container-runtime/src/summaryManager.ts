@@ -265,15 +265,16 @@ export class SummaryManager extends EventEmitter implements IDisposable {
                 } else {
                     this.state = SummaryManagerState.Off;
                 }
-            }
-            this.setNextSummarizer(summarizer.setSummarizer());
-            this.run(summarizer);
-            const shouldSummarizeState = this.getShouldSummarizeState();
-            if (shouldSummarizeState.shouldSummarize === false) {
-                // eslint-disable-next-line max-len
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
-                summarizer.stop!(shouldSummarizeState.stopReason);
-                this.state = SummaryManagerState.Off;
+            } else {
+                this.setNextSummarizer(summarizer.setSummarizer());
+                this.run(summarizer);
+                const shouldSummarizeState = this.getShouldSummarizeState();
+                if (shouldSummarizeState.shouldSummarize === false) {
+                    // eslint-disable-next-line max-len
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
+                    summarizer.stop!(shouldSummarizeState.stopReason);
+                    this.state = SummaryManagerState.Off;
+                }
             }
         }, (error) => {
             this.logger.sendErrorEvent({ eventName: "CreateSummarizerError", attempt }, error);
