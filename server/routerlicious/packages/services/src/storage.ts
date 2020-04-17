@@ -44,7 +44,6 @@ import { gitHashFile } from "@microsoft/fluid-common-utils";
 const StartingSequenceNumber = 0;
 
 export class DocumentStorage implements IDocumentStorage, IExperimentalDocumentStorage {
-
     public readonly isExperimentalDocumentStorage = true;
     constructor(
         private readonly databaseManager: IDatabaseManager,
@@ -345,7 +344,6 @@ export class DocumentStorage implements IDocumentStorage, IExperimentalDocumentS
         minSequenceNumber: number,
         name: string,
         producer: IProducer): Promise<void> {
-
         const contents: IForkOperation = {
             documentId: name,
             minSequenceNumber,

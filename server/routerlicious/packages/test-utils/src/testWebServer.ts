@@ -19,7 +19,7 @@ export class TestWebSocket implements core.IWebSocket {
     }
 
     public async join(id: string): Promise<void> {
-        if(!this.server.rooms.has(id)){
+        if (!this.server.rooms.has(id)) {
             this.server.rooms.set(id, new Set<TestWebSocket>());
         }
         this.server.rooms.get(id).add(this);
@@ -37,9 +37,9 @@ export class TestWebSocket implements core.IWebSocket {
 
     public broadcastToRoom(roomId: string, event: string, ...args: any[]) {
         const sockets = this.server.rooms.get(roomId);
-        if(sockets){
-            for(const socket of sockets){
-                if(socket !== this){
+        if (sockets) {
+            for (const socket of sockets) {
+                if (socket !== this) {
                     socket.events.emit(event, ...args);
                 }
             }
@@ -48,10 +48,9 @@ export class TestWebSocket implements core.IWebSocket {
 
     public emitToRoom(roomId: string, event: string, ...args: any[]) {
         const sockets = this.server.rooms.get(roomId);
-        if(sockets){
-            for(const socket of sockets){
+        if (sockets) {
+            for (const socket of sockets) {
                 socket.events.emit(event, ...args);
-
             }
         }
     }
@@ -61,12 +60,11 @@ export class TestWebSocket implements core.IWebSocket {
     }
 
     public disconnect(close?: boolean) {
-        for(const room of this.rooms){
+        for (const room of this.rooms) {
             this.server.rooms.get(room).delete(this);
         }
     }
 }
-
 
 export class TestWebSocketServer implements core.IWebSocketServer {
     public rooms = new Map<string, Set<TestWebSocket>>();
@@ -84,7 +82,7 @@ export class TestWebSocketServer implements core.IWebSocketServer {
 
     public createConnection(): TestWebSocket {
         const socket = new TestWebSocket(moniker.choose(), this);
-        const mockRequest = {url: "TestWebSocket"};
+        const mockRequest = { url: "TestWebSocket" };
         this.events.emit("connection", socket, mockRequest);
         return socket;
     }

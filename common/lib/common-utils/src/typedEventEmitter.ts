@@ -1,11 +1,9 @@
-
 /*!
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
 import { EventEmitter } from "events";
 import { IEvent, TransformedEvent, IEventTransformer, IEventProvider } from "@microsoft/fluid-common-definitions";
-
 
 // the event emitter polyfill and the node event emitter have different event types:
 // string | symbol vs. string | number
@@ -28,8 +26,7 @@ export type TypedEventTransform<TThis, TEvent extends IEvent> =
  * Event Emitter helper class the supports emitting typed events
  */
 export class TypedEventEmitter<TEvent extends IEvent> extends EventEmitter implements IEventProvider<TEvent> {
-
-    constructor(){
+    constructor() {
         super();
         this.addListener = super.addListener.bind(this) as TypedEventTransform<this, TEvent>;
         this.on = super.on.bind(this) as  TypedEventTransform<this, TEvent>;
