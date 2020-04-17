@@ -18,7 +18,6 @@ import {
     IProvideComponentFactory,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
-import { MediaPlayer } from "../../media-player/src/main";
 
 import {
     Anchor,
@@ -98,13 +97,6 @@ const generateFactory = () => {
             capabilities: ["IComponentHTMLView"],
             friendlyName: "Prosemirror",
             fabricIconName: "Edit",
-        },
-        {
-            type: "media-player",
-            factory: Promise.resolve(MediaPlayer.getFactory()),
-            capabilities: ["IComponentHTMLVisual"],
-            friendlyName: "Media Player",
-            fabricIconName: "Media",
         },
     ];
 

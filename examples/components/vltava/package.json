@@ -35,7 +35,6 @@
     "@fluid-example/codemirror": "^0.16.0",
     "@fluid-example/prosemirror": "^0.16.0",
     "@fluid-example/spaces": "^0.16.0",
-    "@fluid-example/media-player": "^0.16.0",
     "@microsoft/fluid-aqueduct": "^0.16.0",
     "@microsoft/fluid-component-core-interfaces": "^0.16.0",
     "@microsoft/fluid-component-runtime": "^0.16.0",
