@@ -21,12 +21,20 @@ export class Translator implements IComponentRouter, IComponentRunnable {
     public get IComponentRouter() { return this; }
     public get IComponentRunnable() { return this; }
 
+    private translator: SharedStringTranslator | undefined;
+
     public async run() {
         if (this.config === undefined || this.config.key === undefined || this.config.key.length === 0) {
             return Promise.reject("No translation key provided.");
         }
-        const translator = new SharedStringTranslator(this.insightsMap, this.sharedString, this.config.key);
-        return translator.start();
+        this.translator = new SharedStringTranslator(this.insightsMap, this.sharedString, this.config.key);
+        return this.translator.start();
+    }
+
+    public stop() {
+        if (this.translator) {
+            this.translator.stop();
+        }
     }
 
     public async request(request: IRequest): Promise<IResponse> {
