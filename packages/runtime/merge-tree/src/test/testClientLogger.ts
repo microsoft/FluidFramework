@@ -19,7 +19,6 @@ export class TestClientLogger {
     constructor(
         private readonly clients: readonly TestClient[],
         private readonly title?: string) {
-
         this.roundLogLines.push([
             "seq",
             "op",

@@ -7,7 +7,6 @@ import { IErrorTrackingService } from "@microsoft/fluid-protocol-definitions";
 import * as Sentry from "@sentry/node";
 
 export class NodeErrorTrackingService implements IErrorTrackingService {
-
     constructor(endpoint: string, service: string) {
         Sentry.init({ dsn: endpoint });
         Sentry.configureScope((scope) => {

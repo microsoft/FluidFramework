@@ -5,5 +5,5 @@
 
 export function randomSequence(length: number) {
     // eslint-disable-next-line no-bitwise
-    return Array.from({length}, () => (Math.random() * length * 2) | 0);
+    return Array.from({ length }, () => (Math.random() * length * 2) | 0);
 }

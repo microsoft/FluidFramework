@@ -88,7 +88,6 @@ export class AlfredResources implements utils.IResources {
         public documentsCollectionName: string,
         public metricClientConfig: any,
         public contentCollection: core.ICollection<any>) {
-
         this.webServerFactory = new services.SocketIoWebServerFactory(this.redisConfig);
     }
 

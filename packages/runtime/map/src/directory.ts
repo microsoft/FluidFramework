@@ -332,7 +332,6 @@ export class DirectoryFactory {
         services: ISharedObjectServices,
         branchId: string,
         attributes: IChannelAttributes): Promise<ISharedDirectory> {
-
         const directory = new SharedDirectory(id, runtime, attributes);
         await directory.load(branchId, services);
 
@@ -661,7 +660,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     protected async loadCore(
         branchId: string,
         storage: IObjectStorageService) {
-
         const header = await storage.read(snapshotFileName);
         const data = JSON.parse(fromBase64ToUtf8(header));
         const newFormat = data as IDirectoryNewStorageFormat;

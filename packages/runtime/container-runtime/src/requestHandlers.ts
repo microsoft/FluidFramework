@@ -16,7 +16,6 @@ export type RuntimeRequestHandler = (request: RequestParser, runtime: IHostRunti
 
 export const componentRuntimeRequestHandler: RuntimeRequestHandler =
     async (request: RequestParser, runtime: IHostRuntime) => {
-
         if (request.pathParts.length > 0) {
             let wait: boolean | undefined;
             if (request.headers && (typeof request.headers.wait) === "boolean") {

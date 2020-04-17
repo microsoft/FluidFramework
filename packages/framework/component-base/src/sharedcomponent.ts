@@ -17,7 +17,6 @@ import { ISharedObject } from "@microsoft/fluid-shared-object-base";
 import { EventForwarder } from "@microsoft/fluid-common-utils";
 import { IEvent } from "@microsoft/fluid-common-definitions";
 
-
 export abstract class SharedComponent<
     TRoot extends ISharedObject = ISharedObject,
     TEvents extends IEvent = IEvent,

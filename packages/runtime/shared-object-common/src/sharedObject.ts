@@ -90,7 +90,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         public id: string,
         protected runtime: IComponentRuntime,
         public readonly attributes: IChannelAttributes) {
-
         super();
 
         this.handle = new SharedObjectComponentHandle(
@@ -126,7 +125,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     public async load(
         branchId: string,
         services: ISharedObjectServices): Promise<void> {
-
         this.services = services;
 
         await this.loadCore(

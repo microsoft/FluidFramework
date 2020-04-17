@@ -26,7 +26,6 @@ export interface ITabsViewState {
     tabIndex: number;
 }
 
-
 export class TabsView extends React.Component<ITabsViewProps, ITabsViewState> {
     constructor(props: ITabsViewProps) {
         super(props);
@@ -72,7 +71,7 @@ export class TabsView extends React.Component<ITabsViewProps, ITabsViewState> {
 
         return (
             <Tabs
-                style={{ display: "flex", flexDirection: "column"}}
+                style={{ display: "flex", flexDirection: "column" }}
                 selectedIndex={this.state.tabIndex}
                 onSelect={(tabIndex) => this.setState({ tabIndex })}>
                 <TabList>
@@ -81,7 +80,7 @@ export class TabsView extends React.Component<ITabsViewProps, ITabsViewState> {
                         <NewTabButton createTab={this.createNewTab} components={this.props.dataModel.getNewTabTypes()}/>
                     </li>
                 </TabList>
-                <div style={{position: "relative"}}>
+                <div style={{ position: "relative" }}>
                     {tabPanel}
                 </div>
             </Tabs>
@@ -92,4 +91,3 @@ export class TabsView extends React.Component<ITabsViewProps, ITabsViewState> {
         await this.props.dataModel.createTab(type);
     }
 }
-

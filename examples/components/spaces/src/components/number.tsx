@@ -29,7 +29,7 @@ export class Number extends PrimedComponent implements IComponentHTMLView {
         return Number.factory;
     }
 
-    protected async componentInitializingFirstTime(){
+    protected async componentInitializingFirstTime() {
         this.root.createValueType("clicker-count", CounterValueType.Name, 0);
     }
 
@@ -61,8 +61,8 @@ interface INumberViewState {
     value: number;
 }
 
-class NumberView extends React.Component<INumberViewProps, INumberViewState>{
-    constructor(props: INumberViewProps){
+class NumberView extends React.Component<INumberViewProps, INumberViewState> {
+    constructor(props: INumberViewProps) {
         super(props);
 
         this.state = {
@@ -72,14 +72,14 @@ class NumberView extends React.Component<INumberViewProps, INumberViewState>{
 
     componentDidMount() {
         this.props.counter.on("incremented", (_, currentValue: number) =>{
-            this.setState({value:currentValue});
+            this.setState({ value:currentValue });
         });
     }
 
-    render(){
+    render() {
         return (
-            <div style={{textAlign:"center", width: "100%", height:"100%", border:"1px solid black"}}>
-                <h1 style={{display:"inline-block"}}>{this.state.value}</h1>
+            <div style={{ textAlign:"center", width: "100%", height:"100%", border:"1px solid black" }}>
+                <h1 style={{ display:"inline-block" }}>{this.state.value}</h1>
             </div>
         );
     }

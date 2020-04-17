@@ -101,7 +101,6 @@ export async function type(
     callback: author.ScribeMetricsCallback,
     distributed = false,
 ): Promise<author.IScribeMetrics> {
-
     if (distributed) {
         console.log("distributed");
     }

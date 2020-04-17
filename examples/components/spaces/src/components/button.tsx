@@ -16,7 +16,7 @@ import { Manager } from "../container-services";
 const buttonStyle: React.CSSProperties = {
     WebkitUserSelect: "none", // Chrome-Safari
     MozUserSelect: "none", // Firefox
-    msUserSelect: "none", //IE10+
+    msUserSelect: "none", // IE10+
     textAlign:"center",
     width: "100%",
     height:"100%",
@@ -27,7 +27,7 @@ const buttonStyle: React.CSSProperties = {
 const textStyle: React.CSSProperties = {
     WebkitUserSelect: "none", // Chrome-Safari
     MozUserSelect: "none", // Firefox
-    msUserSelect: "none", //IE10+
+    msUserSelect: "none", // IE10+
     display:"inline-block",
     cursor: "pointer",
 };

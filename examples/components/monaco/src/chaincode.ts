@@ -61,7 +61,6 @@ const defaultCompilerOptions = {
  */
 export class MonacoRunner extends PrimedComponent implements
     IComponentHTMLView, IComponentLayout {
-
     /**
      * Get a new MonacoRunner with the given runtime.
      * @param runtime The runtime for the MonacoRunner

@@ -10,7 +10,6 @@ export async function blobUploadHandler(
     dragZone: HTMLDivElement,
     document: api.Document,
     blobDisplayCB: (file: IGenericBlob) => void) {
-
     dragZone.ondrop = (event) => {
         event.dataTransfer.dropEffect = "copy";
         event.preventDefault();

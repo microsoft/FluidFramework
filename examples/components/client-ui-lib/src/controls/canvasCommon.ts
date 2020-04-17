@@ -20,7 +20,6 @@ export function getShapes(
     endPoint: IInkPoint,
     pen: IPen,
     circleInclusive: SegmentCircleInclusive): IShape[] {
-
     const dirVector = new Vector(
         endPoint.x - startPoint.x,
         endPoint.y - startPoint.y);

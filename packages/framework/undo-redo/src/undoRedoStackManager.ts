@@ -49,7 +49,6 @@ class Stack<T> {
  * Helper class for creating the Undo and Redo stacks
  */
 class UndoRedoStack extends Stack<Stack<IRevertable> | undefined> {
-
     public push(item: Stack<IRevertable> | undefined) {
         if (item !== undefined) {
             // eslint-disable-next-line @typescript-eslint/unbound-method

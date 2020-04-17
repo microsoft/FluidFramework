@@ -33,7 +33,6 @@ export class OwnedMapFactory implements ISharedObjectFactory {
         services: ISharedObjectServices,
         branchId: string,
         attributes: IChannelAttributes): Promise<ISharedMap> {
-
         const map = new OwnedSharedMap(id, runtime, attributes);
         await map.load(branchId, services);
 

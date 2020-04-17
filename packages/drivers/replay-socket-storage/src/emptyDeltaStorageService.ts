@@ -7,7 +7,6 @@ import { IDocumentDeltaStorageService } from "@microsoft/fluid-driver-definition
 import * as api from "@microsoft/fluid-protocol-definitions";
 
 export class EmptyDeltaStorageService implements IDocumentDeltaStorageService {
-
     /**
      * Returns ops from the list of ops generated till now.
      * @param from - Ops are returned from + 1.

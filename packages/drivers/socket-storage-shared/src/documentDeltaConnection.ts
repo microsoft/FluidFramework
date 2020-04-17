@@ -71,7 +71,6 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         client: IClient,
         url: string,
         timeoutMs: number = 20000): Promise<IDocumentDeltaConnection> {
-
         const socket = io(
             url,
             {

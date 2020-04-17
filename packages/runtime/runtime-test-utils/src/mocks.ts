@@ -199,8 +199,7 @@ class MockDeltaConnection implements IDeltaConnection {
     }
 }
 
-export class MockQuorum implements IQuorum, EventEmitter{
-
+export class MockQuorum implements IQuorum, EventEmitter {
     private readonly map = new Map<string, any>();
     private readonly members: Map<string, ISequencedClient>;
     private readonly eventEmitter = new EventEmitter();
@@ -241,7 +240,6 @@ export class MockQuorum implements IQuorum, EventEmitter{
         }
     }
 
-
     getMembers(): Map<string, ISequencedClient> {
         return this.members;
     }
@@ -253,7 +251,6 @@ export class MockQuorum implements IQuorum, EventEmitter{
     dispose(): void {
         throw new Error("Method not implemented.");
     }
-
 
     addListener(event: string | symbol, listener: (...args: any[]) => void): this {
         throw new Error("Method not implemented.");
@@ -323,7 +320,6 @@ export class MockQuorum implements IQuorum, EventEmitter{
  */
 export class MockRuntime extends EventEmitter
     implements IComponentRuntime, IComponentHandleContext {
-
     public get IComponentHandleContext(): IComponentHandleContext { return this; }
     public get IComponentRouter() { return this; }
 
@@ -497,7 +493,6 @@ export class MockHistorian implements IHistorian {
                 if (blob.path === head) {
                     return this.read_r(tail, this.blobMap.get(blob.sha) as git.ITree);
                 }
-
             }
             assert(false, `historian.read() blob not found (recursive): ${head}`);
         }

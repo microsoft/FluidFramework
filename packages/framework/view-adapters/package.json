@@ -31,7 +31,7 @@
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",
-    "@microsoft/eslint-config-fluid": "^0.15.0",
+    "@microsoft/eslint-config-fluid": "^0.16.0-0",
     "@microsoft/fluid-build-common": "^0.14.0",
     "@types/react": "^16.9.15",
     "@typescript-eslint/eslint-plugin": "~2.17.0",

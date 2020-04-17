@@ -38,7 +38,6 @@ function createRelativeMarkerOp(
     relativePos1: MergeTree.IRelativePosition,
     id: string, refType: MergeTree.ReferenceType, rangeLabels: string[],
     tileLabels?: string[], props?: MergeTree.PropertySet) {
-
     if (!props) {
         props = <MergeTree.MapLike<any>>{
         };
@@ -65,7 +64,6 @@ export function createMarkerOp(
     pos1: number, id: string,
     refType: MergeTree.ReferenceType, rangeLabels: string[], tileLabels?: string[],
     props?: MergeTree.PropertySet) {
-
     if (!props) {
         props = <MergeTree.MapLike<any>>{
         };
@@ -95,7 +93,6 @@ function createCellBegin(
     cellEndId: string,
     cellId: string,
     extraProperties?: MergeTree.PropertySet) {
-
     const cellEndRelPos = <MergeTree.IRelativePosition>{
         before: true,
         id: cellEndId,
@@ -536,7 +533,6 @@ export class Column {
     }
 }
 
-
 export class Row {
     public table: Table;
     public pos: number;
@@ -718,7 +714,6 @@ export function parseColumns(sharedString: SharedString, pos: number, table: Tab
     return nextPos;
 }
 
-
 export function succinctPrintTable(tableMarker: ITableMarker, tableMarkerPos: number, sharedString: SharedString) {
     const id = tableMarker.getId();
     const endId = endPrefix + id;
@@ -811,7 +806,6 @@ export function insertHoleFixer(
 
 export function parseTable(
     tableMarker: ITableMarker, tableMarkerPos: number, sharedString: SharedString, fontInfo?: Paragraph.IFontInfo) {
-
     const id = tableMarker.getId();
     const endId = endPrefix + id;
     const endTableMarker = <MergeTree.Marker>sharedString.getMarkerFromId(endId);
@@ -863,4 +857,3 @@ export function parseTable(
 export const rowIsMoribund = (rowMarker: IRowMarker) => rowMarker.properties && rowMarker.properties.moribund;
 
 export const cellIsMoribund = (cellMarker: ICellMarker) => cellMarker.properties && cellMarker.properties.moribund;
-

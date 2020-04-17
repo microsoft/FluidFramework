@@ -164,7 +164,6 @@ export class TextField extends Field {
     }
 }
 
-
 // ::- A field class for dropdown fields based on a plain `<select>`
 // tag. Expects an option `options`, which should be an array of
 // `{value: string, label: string}` objects, or a function taking a

@@ -186,7 +186,6 @@ export class SequenceInterval implements ISerializableInterval {
             console.log(`be ${MergeTree.ordinalToArray(b.end.segment.ordinal)}@${b.end.offset}`);
             console.log(this.checkMergeTree.nodeToString(b.start.segment.parent, ""));
         }
-
     }
 }
 
@@ -272,7 +271,6 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         private readonly client: MergeTree.Client,
         private readonly label: string,
         private readonly helpers: IIntervalHelpers<TInterval>) {
-
         this.endIntervalTree =
             // eslint-disable-next-line @typescript-eslint/unbound-method
             new MergeTree.RedBlackTree<TInterval, TInterval>(helpers.compareEnds);
@@ -347,7 +345,6 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         end: number,
         intervalType: MergeTree.IntervalType,
         props?: MergeTree.PropertySet) {
-
         const interval = this.createInterval(start, end, intervalType);
         if (interval) {
             interval.addProperties(props);
@@ -631,7 +628,6 @@ export class IntervalCollectionView<TInterval extends ISerializableInterval> ext
     }
 
     public deleteInterval(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage) {
-
         const interval = this.localCollection.removeInterval(serializedInterval.start, serializedInterval.end);
 
         if (interval) {
@@ -743,7 +739,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval> {
         serializedInterval: ISerializedInterval,
         local: boolean,
         op: ISequencedDocumentMessage) {
-
         if (!this.view) {
             throw new Error("attachSequence must be called");
         }

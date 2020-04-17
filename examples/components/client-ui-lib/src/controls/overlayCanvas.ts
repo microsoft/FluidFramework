@@ -164,7 +164,6 @@ export class DrawingContext {
 
         this.updatePosition();
     }
-
 }
 
 /**
@@ -456,7 +455,7 @@ export class OverlayCanvas extends ui.Component {
         };
     }
 
-    /*// Returns a stroke in training format.
+    /* // Returns a stroke in training format.
     private printStroke(): string {
         let stroke = "points: [";
         for (let point of this.pointsToRecognize) {
@@ -465,5 +464,5 @@ export class OverlayCanvas extends ui.Component {
         stroke = stroke.slice(0, -2);
         stroke += "]";
         return stroke;
-    }*/
+    } */
 }

@@ -111,7 +111,6 @@ export class DebugReplayController extends ReplayController implements IDebugger
     }
 
     public onSnapshotFileSelection(file: File) {
-
         if (!/^snapshot.*\.json/.exec(file.name)) {
             alert(`Incorrect file name: ${file.name}`);
             return;
@@ -167,7 +166,6 @@ export class DebugReplayController extends ReplayController implements IDebugger
         prevRequest: Promise<void>,
         index: number,
         version: IVersion): Promise<void> {
-
         if (this.isSelectionMade()) {
             return;
         }
@@ -182,7 +180,6 @@ export class DebugReplayController extends ReplayController implements IDebugger
             this.ui.updateVersionText(this.versionCount);
             this.ui.updateVersion(index, version, seqV);
         }
-
     }
 
     public async initStorage(documentStorageService: IDocumentStorageService): Promise<boolean> {

@@ -11,7 +11,6 @@ import { CreationDriverUrlResolver } from "../creationDriverUrlResolver";
 import { CreationServerMessagesHandler } from "..";
 
 describe("Creation Driver", () => {
-
     let service: IDocumentService;
     let client: IClient;
     let documentDeltaConnection1: IDocumentDeltaConnection;
@@ -21,14 +20,14 @@ describe("Creation Driver", () => {
     beforeEach(async () => {
         const resolver: CreationDriverUrlResolver = new CreationDriverUrlResolver();
         const factory = new CreationDocumentServiceFactory();
-        resolved = (await resolver.resolve({url: `http://fluid.com?uniqueId=${docId}`})) as IFluidResolvedUrl;
+        resolved = (await resolver.resolve({ url: `http://fluid.com?uniqueId=${docId}` })) as IFluidResolvedUrl;
         service = await factory.createDocumentService(resolved);
         client = {
             mode: "write",
-            details: {capabilities: {interactive: false}},
+            details: { capabilities: { interactive: false } },
             permission: ["write"],
             scopes: [ScopeType.DocWrite],
-            user: {id: "user1"},
+            user: { id: "user1" },
         };
     });
 

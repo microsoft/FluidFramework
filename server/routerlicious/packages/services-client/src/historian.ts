@@ -34,7 +34,6 @@ export class Historian implements IHistorian {
         private readonly historianApi: boolean,
         private readonly disableCache: boolean,
         credentials?: ICredentials) {
-
         const queryString: { token?; disableCache?} = {};
         let cacheBust = false;
         if (this.disableCache && this.historianApi) {

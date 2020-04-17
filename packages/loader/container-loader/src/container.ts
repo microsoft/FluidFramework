@@ -394,7 +394,7 @@ export class Container
         }
         this._closed = true;
 
-        this._deltaManager.close(error, false /*raiseContainerError*/);
+        this._deltaManager.close(error, false /* raiseContainerError */);
 
         if (this.protocolHandler) {
             this.protocolHandler.close();
@@ -507,11 +507,9 @@ export class Container
             }
 
             await this.snapshotCore(tagMessage, fullTree);
-
         } catch (ex) {
             this.logger.logException({ eventName: "SnapshotExceptionError" }, ex);
             throw ex;
-
         } finally {
             if (this.deltaManager !== undefined) {
                 this.deltaManager.inbound.systemResume();
@@ -546,7 +544,7 @@ export class Container
                 // So there shouldn't be a need to record error here.
                 // But we have number of cases where reconnects do not happen, and no errors are recorded, so
                 // adding this log point for easier diagnostics
-                this.logger.sendTelemetryEvent({eventName: "setAutoReconnectError"}, error);
+                this.logger.sendTelemetryEvent({ eventName: "setAutoReconnectError" }, error);
             });
         }
     }
@@ -1026,7 +1024,6 @@ export class Container
             throw new Error(PackageNotFactoryError);
         }
         return factory;
-
     }
 
     private get client(): IClient {

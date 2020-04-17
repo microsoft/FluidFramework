@@ -24,7 +24,7 @@ export class EventForwarder<TEvent extends IEvent = IEvent>
     public get disposed() { return this.isDisposed; }
     private isDisposed: boolean = false;
 
-    private readonly forwardingEvents = new Map<string, Map<EventEmitter | IEventProvider<TEvent>, () => void>>();
+    private readonly forwardingEvents = new Map<string, Map<EventEmitter | IEventProvider<TEvent>,() => void>>();
 
     constructor(source?: EventEmitter | IEventProvider<TEvent>) {
         super();
@@ -42,7 +42,7 @@ export class EventForwarder<TEvent extends IEvent = IEvent>
     public dispose() {
         this.isDisposed = true;
         for (const listenerRemovers of this.forwardingEvents.values()) {
-            for(const listenerRemover of listenerRemovers.values()){
+            for (const listenerRemover of listenerRemovers.values()) {
                 try {
                     listenerRemover();
                 } catch {
@@ -55,14 +55,14 @@ export class EventForwarder<TEvent extends IEvent = IEvent>
     }
 
     protected forwardEvent(source: EventEmitter | IEventProvider<TEvent>, ...events: string[]): void {
-        for(const event of events){
+        for (const event of events) {
             if (source !== undefined && event !== undefined && !EventForwarder.isEmitterEvent(event)) {
                 let sources = this.forwardingEvents.get(event);
-                if(sources === undefined){
+                if (sources === undefined) {
                     sources = new Map();
                     this.forwardingEvents.set(event, sources);
                 }
-                if(!sources.has(source)){
+                if (!sources.has(source)) {
                     const listener = (...args: any[]) => this.emit(event, ...args);
                     sources.set(source, () => source.off(event, listener));
                     source.on(event, listener);
@@ -72,17 +72,17 @@ export class EventForwarder<TEvent extends IEvent = IEvent>
     }
 
     protected unforwardEvent(source: EventEmitter | IEventProvider<TEvent>, ...events: string[]): void {
-        for(const event of events){
+        for (const event of events) {
             if (event !== undefined && !EventForwarder.isEmitterEvent(event)) {
                 const sources = this.forwardingEvents.get(event);
-                if(sources?.has(source)){
+                if (sources?.has(source)) {
                     if (this.listenerCount(event) === 0) {
                         const listenerRemover = sources.get(source);
                         if (listenerRemover  !== undefined) {
                             listenerRemover();
                         }
                         sources.delete(source);
-                        if(sources.size === 0){
+                        if (sources.size === 0) {
                             this.forwardingEvents.delete(event);
                         }
                     }

@@ -12,14 +12,14 @@ const firstNote = MidiNumbers.fromNote("c3");
 const lastNote = MidiNumbers.fromNote("f5");
 
 const presenceColors = [
-    "#8B0400" /*maroon*/,
-    "#BF5D24" /*orange*/,
-    "#E6AF1F" /*gold*/,
-    "#95A84F" /*olive green*/,
-    "#4AA02C" /*Leevi"s favorite color!!*/,
-    "#599E8E" /*seafoam green*/,
-    "#C791CB" /*light blue*/,
-    "#E73B65" /*pink*/,
+    "#8B0400" /* maroon */,
+    "#BF5D24" /* orange */,
+    "#E6AF1F" /* gold */,
+    "#95A84F" /* olive green */,
+    "#4AA02C" /* Leevi"s favorite color!! */,
+    "#599E8E" /* seafoam green */,
+    "#C791CB" /* light blue */,
+    "#E73B65" /* pink */,
 ];
 
 // Exports

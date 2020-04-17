@@ -25,7 +25,6 @@ export const WaterParkLoaderName = `${pkg.name}-loader`;
  */
 export class ExternalComponentLoader extends PrimedComponent
     implements IComponentHTMLView, IComponentCallable<IComponentCallbacks> {
-
     private static readonly defaultComponents = [
         "@fluid-example/todo",
         "@fluid-example/math",

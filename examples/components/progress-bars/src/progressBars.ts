@@ -122,7 +122,6 @@ export class ProgressBar extends EventEmitter implements
 export class ProgressCollection
     extends EventEmitter
     implements IComponentLoadable, IComponentRouter, IComponentCollection {
-
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new ProgressCollection(runtime, context);
         await collection.initialize();
