@@ -13,6 +13,9 @@ export type JsonableObject<T> = {
 
 export type JsonableArray<T> = Jsonable<T>[];
 
+export type JsonablePrimitiveArrayOrObject<T = JsonablePrimitive> = T | JsonableArray<T> | JsonableObject<T>;
+
+
 /**
  * Used to constrain a value to types that are serializable as JSON.  The `T` type parameter may be used to
  * customize the type of the leaves to support situations where a `replacer` is used to handle special values.
@@ -26,4 +29,8 @@ export type JsonableArray<T> = Jsonable<T>[];
  *  - Non-finite numbers (`NaN`, `+/-Infinity`) are also coerced to `null`.
  *  - (`null` always serializes as `null`.)
  */
-export type Jsonable<T = JsonablePrimitive> = T | JsonableArray<T> | JsonableObject<T>;
+export type Jsonable<T> = {
+    [P in keyof T]: T[P] extends JsonablePrimitiveArrayOrObject
+        ? T[P]
+        : Pick<T, P>;
+};
