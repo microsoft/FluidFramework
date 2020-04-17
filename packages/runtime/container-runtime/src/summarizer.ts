@@ -44,6 +44,7 @@ export interface ISummarizer extends IComponentRouter, IComponentRunnable, IComp
      * Returns a promise that will be resolved with the next Summarizer after context reload
      */
     setSummarizer(): Promise<Summarizer>;
+    stop(reason?: string): void;
 }
 
 /**

@@ -90,7 +90,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     private clientId?: string;
     private connected = false;
     private state = SummaryManagerState.Off;
-    private runningSummarizer?: IComponentRunnable;
+    private runningSummarizer?: ISummarizer;
     private _disposed = false;
     private opsUntilFirstConnect: number | undefined;
 
@@ -217,9 +217,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
                     // a change in states when the running summarizer closes
 
                     if (this.runningSummarizer) {
-                        // eslint-disable-next-line max-len
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
-                        this.runningSummarizer.stop!(shouldSummarizeState.stopReason);
+                        this.runningSummarizer.stop(shouldSummarizeState.stopReason);
                     }
                 }
                 return;
@@ -265,14 +263,16 @@ export class SummaryManager extends EventEmitter implements IDisposable {
                 } else {
                     this.state = SummaryManagerState.Off;
                 }
+            } else if (this.quorumHeap.getSummarizerCount() > 0) {
+                // Do not call run at all if another summarizer already exists
+                summarizer.stop("otherSummarizer");
+                this.state = SummaryManagerState.Off;
             } else {
                 this.setNextSummarizer(summarizer.setSummarizer());
                 this.run(summarizer);
                 const shouldSummarizeState = this.getShouldSummarizeState();
                 if (shouldSummarizeState.shouldSummarize === false) {
-                    // eslint-disable-next-line max-len
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
-                    summarizer.stop!(shouldSummarizeState.stopReason);
+                    summarizer.stop(shouldSummarizeState.stopReason);
                     this.state = SummaryManagerState.Off;
                 }
             }
@@ -286,7 +286,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         });
     }
 
-    private run(summarizer: IComponentRunnable) {
+    private run(summarizer: ISummarizer) {
         this.state = SummaryManagerState.Running;
 
         const runningSummarizerEvent = PerformanceEvent.start(this.logger, { eventName: "RunningSummarizer" });
