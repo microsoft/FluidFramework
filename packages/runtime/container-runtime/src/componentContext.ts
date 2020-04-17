@@ -167,7 +167,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         private readonly _hostRuntime: IHostRuntime,
         public readonly id: string,
         public readonly existing: boolean,
-        public readonly storageGetter: () => IDocumentStorageService,
+        public readonly storage: IDocumentStorageService,
         public readonly scope: IComponent,
         public readonly summaryTracker: SummaryTracker,
         private _isAttached: boolean,

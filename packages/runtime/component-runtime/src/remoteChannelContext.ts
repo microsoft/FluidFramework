@@ -39,7 +39,7 @@ export class RemoteChannelContext implements IChannelContext {
     constructor(
         private readonly runtime: IComponentRuntime,
         private readonly componentContext: IComponentContext,
-        storageServiceGetter: () => IDocumentStorageService,
+        storageService: IDocumentStorageService,
         submitFn: (type: MessageType, content: any) => number,
         dirtyFn: (address: string) => void,
         private readonly id: string,
@@ -55,7 +55,7 @@ export class RemoteChannelContext implements IChannelContext {
             this.componentContext.connectionState,
             submitFn,
             () => dirtyFn(this.id),
-            storageServiceGetter,
+            storageService,
             baseSnapshot,
             extraBlobs);
     }

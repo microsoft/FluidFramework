@@ -265,7 +265,7 @@ export interface IComponentContext extends EventEmitter {
     readonly leader: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly blobManager: IBlobManager;
-    readonly storageGetter: () => IDocumentStorageService;
+    readonly storage: IDocumentStorageService;
     readonly connectionState: ConnectionState;
     readonly branch: string;
     readonly baseSnapshot: ISnapshotTree | undefined;

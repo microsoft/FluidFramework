@@ -24,7 +24,7 @@ export class ChannelStorageService implements IObjectStorageService {
 
     constructor(
         tree: ISnapshotTree | undefined,
-        public readonly storageGetter: () => IDocumentStorageService,
+        private  readonly storage: IDocumentStorageService,
         private readonly extraBlobs?: Map<string, string>,
     ) {
         // Create a map from paths to blobs
@@ -44,7 +44,7 @@ export class ChannelStorageService implements IObjectStorageService {
         return this.extraBlobs && this.extraBlobs.has(id)
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             ? Promise.resolve(this.extraBlobs.get(id)!)
-            : this.storageGetter().read(id);
+            : this.storage.read(id);
     }
 
     private getIdForPath(path: string): string {

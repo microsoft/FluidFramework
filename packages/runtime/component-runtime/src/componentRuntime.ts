@@ -473,7 +473,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                     const remoteChannelContext = new RemoteChannelContext(
                         this,
                         this.componentContext,
-                        this.componentContext.storageGetter,
+                        this.componentContext.storage,
                         (type, content) => this.submit(type, content),
                         (address: string) => this.setChannelDirty(address),
                         attachMessage.id,

@@ -33,7 +33,7 @@ export function createServiceEndpoints(
     connectionState: ConnectionState,
     submitFn: (type: MessageType, content: any) => number,
     dirtyFn: () => void,
-    storageServiceGetter: () => IDocumentStorageService,
+    storageService: IDocumentStorageService,
     tree?: ISnapshotTree,
     extraBlobs?: Map<string, string>,
 ) {
@@ -45,7 +45,7 @@ export function createServiceEndpoints(
             return submitFn(MessageType.Operation, envelope);
         },
         dirtyFn);
-    const objectStorage = new ChannelStorageService(tree, storageServiceGetter, extraBlobs);
+    const objectStorage = new ChannelStorageService(tree, storageService, extraBlobs);
 
     return {
         deltaConnection,
