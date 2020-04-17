@@ -23,14 +23,14 @@ export class WebCodeLoader implements ICodeLoader {
     public async seedModule(
         source: IFluidCodeDetails,
         maybeFluidModule?: IFluidModule,
-    ): Promise<void>{
+    ): Promise<void> {
         const resolved = await this.codeResolver.resolveCodeDetails(source);
-        if(resolved.resolvedPackageCacheId !== undefined
-            && this.loadedModules.has(resolved.resolvedPackageCacheId)){
+        if (resolved.resolvedPackageCacheId !== undefined
+            && this.loadedModules.has(resolved.resolvedPackageCacheId)) {
             return;
         }
         const fluidModule = maybeFluidModule ?? await this.load(source);
-        if(resolved.resolvedPackageCacheId !== undefined){
+        if (resolved.resolvedPackageCacheId !== undefined) {
             this.loadedModules.set(resolved.resolvedPackageCacheId, fluidModule);
         }
     }
@@ -42,9 +42,9 @@ export class WebCodeLoader implements ICodeLoader {
         source: IFluidCodeDetails,
     ): Promise<IFluidModule> {
         const resolved = await this.codeResolver.resolveCodeDetails(source);
-        if(resolved.resolvedPackageCacheId !== undefined){
+        if (resolved.resolvedPackageCacheId !== undefined) {
             const maybePkg = this.loadedModules.get(resolved.resolvedPackageCacheId);
-            if(maybePkg !== undefined){
+            if (maybePkg !== undefined) {
                 return maybePkg;
             }
         }
@@ -56,20 +56,20 @@ export class WebCodeLoader implements ICodeLoader {
             resolved.resolvedPackage.fluid.browser.umd,
         );
         let fluidModule: IFluidModule | undefined;
-        for(const script of loadedScripts){
+        for (const script of loadedScripts) {
             const maybeFluidModule = script.entryPoint as IFluidModule;
-            if(maybeFluidModule.fluidExport !== undefined){
-                if (fluidModule !== undefined){
+            if (maybeFluidModule.fluidExport !== undefined) {
+                if (fluidModule !== undefined) {
                     throw new Error("Multiple fluid modules loaded");
                 }
                 fluidModule = maybeFluidModule;
             }
         }
 
-        if(fluidModule?.fluidExport === undefined){
+        if (fluidModule?.fluidExport === undefined) {
             throw new Error("Entry point of loaded code package not a fluid module");
         }
-        if(resolved.resolvedPackageCacheId !== undefined){
+        if (resolved.resolvedPackageCacheId !== undefined) {
             this.loadedModules.set(resolved.resolvedPackageCacheId, fluidModule);
         }
         return fluidModule;

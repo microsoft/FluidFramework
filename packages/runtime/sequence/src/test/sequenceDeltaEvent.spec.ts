@@ -128,7 +128,6 @@ describe("non-collab", () => {
         });
 
         it("add property over separate range", () => {
-
             annotateText(0, 3, { foo1: "bar1" },
                 [{ offset: 0, numChar: 3, props: { foo1: "bar1" }, propDeltas: { foo1: null } }]);
 
@@ -140,7 +139,6 @@ describe("non-collab", () => {
         });
 
         it("add property over overlapping runs", () => {
-
             annotateText(2, 10, { foo: "bar" },
                 [
                     { offset: 2, numChar: 1, props: { foo: "bar", foo1: "bar1" }, propDeltas: { foo: null } },
@@ -150,7 +148,6 @@ describe("non-collab", () => {
         });
 
         it("nullify all properties", () => {
-
             annotateText(2, 10, { foo: undefined },
                 [
                     { offset: 2, numChar: 1, props: { foo: undefined, foo1: "bar1" }, propDeltas: { foo: "bar" } },
@@ -1612,7 +1609,6 @@ describe("collab", () => {
         });
 
         it("overlapping ranges, same properties, different values", () => {
-
             // initialize as following:
             // - second word has property foo1=bar1
             // - third word has property foo2=bar2
@@ -1913,7 +1909,6 @@ describe("collab", () => {
             end: number,
             expected: IExpectedSegmentInfo[],
         ): void {
-
             assert(event.isLocal === isLocal);
             assert(event.isEmpty === isEmpty);
             if (isEmpty) {
@@ -3001,7 +2996,6 @@ describe("collab", () => {
 });
 
 describe("SequenceDeltaEvent", () => {
-
     const localUserLongId = "localUser";
     let client: TestClient;
 

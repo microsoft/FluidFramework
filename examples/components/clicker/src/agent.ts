@@ -8,7 +8,6 @@ import { Counter } from "@microsoft/fluid-map";
 
 // Sample agent to run.
 export class ClickerAgent implements IComponentRouter, IComponentRunnable {
-
     constructor(private readonly counter: Counter) { }
 
     public get IComponentRouter() { return this; }

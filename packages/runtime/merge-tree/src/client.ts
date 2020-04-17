@@ -99,7 +99,6 @@ export class Client {
         marker: Marker,
         props: Properties.PropertySet,
         consensusCallback: (m: Marker) => void): ops.IMergeTreeAnnotateMsg {
-
         const combiningOp: ops.ICombiningOp = {
             name: "consensus",
         };
@@ -129,7 +128,6 @@ export class Client {
         marker: Marker,
         props: Properties.PropertySet,
         combiningOp: ops.ICombiningOp): ops.IMergeTreeAnnotateMsg {
-
         const annotateOp =
             OpBuilder.createAnnotateMarkerOp(marker, props, combiningOp);
 
@@ -152,7 +150,6 @@ export class Client {
         end: number,
         props: Properties.PropertySet,
         combiningOp: ops.ICombiningOp): ops.IMergeTreeAnnotateMsg {
-
         const annotateOp = OpBuilder.createAnnotateRangeOp(
             start,
             end,
@@ -174,7 +171,6 @@ export class Client {
      * @param register - Optional. The name of the register to store the removed range in
      */
     public removeRangeLocal(start: number, end: number, register?: string) {
-
         const removeOp = OpBuilder.createRemoveRangeOp(start, end, register);
 
         if (this.applyRemoveRangeOp({ op: removeOp })) {
@@ -203,7 +199,6 @@ export class Client {
      * @param segment - The segment to insert
      */
     public insertAtReferencePositionLocal(refPos: ReferencePosition, segment: ISegment): ops.IMergeTreeInsertMsg {
-
         const pos = this.mergeTree.referencePositionToLocalPosition(
             refPos,
             this.getCurrentSeq(),
@@ -265,7 +260,6 @@ export class Client {
     public walkSegments<TClientData>(
         handler: ISegmentAction<TClientData>,
         start?: number, end?: number, accum?: TClientData, splitRange: boolean = false) {
-
         this.mergeTree.mapRange(
             {
                 leaf: handler,
@@ -474,7 +468,6 @@ export class Client {
     private getValidOpRange(
         op: ops.IMergeTreeAnnotateMsg | ops.IMergeTreeInsertMsg | ops.IMergeTreeRemoveMsg,
         clientArgs: IMergeTreeClientSequenceArgs): IIntegerRange {
-
         let start: number = op.pos1;
         if (start === undefined && op.relativePos1) {
             start = this.mergeTree.posFromRelativePos(
@@ -541,7 +534,6 @@ export class Client {
      * @param opArgs - The op arge to get the client sequence args for
      */
     private getClientSequenceArgs(opArgs: IMergeTreeDeltaOpArgs): IMergeTreeClientSequenceArgs {
-
         // If there this no sequenced message, then the op is local
         // and unacked, so use this clients sequenced args
         //
@@ -750,13 +742,10 @@ export class Client {
             // if inserted, we only need to send insert, as that will contain props
             // if pending properties send annotate
             if (segment.removedSeq === UnassignedSequenceNumber) {
-
                 op = OpBuilder.createRemoveRangeOp(
                     segmentPosition,
                     segmentPosition + segment.cachedLength);
-
             } else if (segment.seq === UnassignedSequenceNumber) {
-
                 op = OpBuilder.createInsertSegmentOp(
                     segmentPosition,
                     segment);
@@ -764,9 +753,7 @@ export class Client {
                 if (segment.propertyManager) {
                     segment.propertyManager.clearPendingProperties();
                 }
-
             } else if (segment.propertyManager && segment.propertyManager.hasPendingProperties()) {
-
                 const annotateInfo = segment.propertyManager.resetPendingPropertiesToOpDetails();
                 op = OpBuilder.createAnnotateRangeOp(
                     segmentPosition,
@@ -858,7 +845,6 @@ export class Client {
         remoteClientPosition: number,
         remoteClientRefSeq: number,
         remoteClientId: string): number {
-
         const shortRemoteClientId = this.getOrAddShortClientId(remoteClientId);
         return this.mergeTree.resolveRemoteClientPosition(
             remoteClientPosition,
@@ -1042,19 +1028,19 @@ export class Client {
         return this.mergeTree.getLength(segmentWindow.currentSeq, segmentWindow.clientId);
     }
 
-    startOrUpdateCollaboration(longClientId: string | undefined, minSeq = 0, currentSeq = 0, branchId = 0){
+    startOrUpdateCollaboration(longClientId: string | undefined, minSeq = 0, currentSeq = 0, branchId = 0) {
         // we should always have a client id if we are collaborating
         // if the client id is undefined we are likley bound to a detached
         // container, so we should keep going in local mode. once
         // the container attaches this will be called again on connect with the
         // client id
-        if(longClientId !== undefined){
-            if(this.longClientId === undefined){
+        if (longClientId !== undefined) {
+            if (this.longClientId === undefined) {
                 this.longClientId = longClientId;
                 this.addLongClientId(this.longClientId, branchId);
                 this.mergeTree.startCollaboration(
                     this.getShortClientId(this.longClientId), minSeq, currentSeq, branchId);
-            } else{
+            } else {
                 const oldClientId = this.longClientId;
                 const oldData = this.clientNameToIds.get(oldClientId).data;
                 this.longClientId = longClientId;
@@ -1063,7 +1049,6 @@ export class Client {
             }
         }
     }
-
 
     findTile(startPos: number | undefined, tileLabel: string, preceding = true) {
         const clientId = this.getClientId();

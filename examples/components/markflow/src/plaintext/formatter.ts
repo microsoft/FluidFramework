@@ -40,7 +40,6 @@ export class PlainTextFormatter<TState extends IFormatterState> extends RootForm
     public onChange() { }
 
     public onKeyDown(layout: Layout, state: Readonly<TState>, caret: Caret, e: KeyboardEvent) {
-
         switch (e.code) {
             // Note: Chrome 69 delivers backspace on 'keydown' only (i.e., 'keypress' is not fired.)
             case KeyCode.backspace: {

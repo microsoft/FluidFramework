@@ -40,7 +40,6 @@ export class IntelligentServicesManager {
     public process() {
         this.document.on("sequenceDelta", () => {
             if (!this.intelInvoked) {
-
                 // And then run plugin insights rate limited
                 this.rateLimiter = new RateLimiter(
                     async () => {
@@ -90,6 +89,5 @@ export class IntelligentServicesManager {
                 }
             }
         }
-
     }
 }

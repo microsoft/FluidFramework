@@ -31,7 +31,6 @@ export class SharedMapUndoRedoHandler {
  * Tracks a change on a shared map allows reverting it
  */
 export class SharedMapRevertable implements IRevertable {
-
     constructor(
         private readonly changed: IValueChanged,
         private readonly map: ISharedMap,

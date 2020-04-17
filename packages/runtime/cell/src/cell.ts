@@ -177,7 +177,6 @@ export class SharedCell extends SharedObject<ISharedCellEvents> implements IShar
     protected async loadCore(
         branchId: string,
         storage: IObjectStorageService): Promise<void> {
-
         const rawContent = await storage.read(snapshotFileName);
 
         const content = rawContent !== undefined

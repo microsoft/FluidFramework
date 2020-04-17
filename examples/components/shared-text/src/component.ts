@@ -58,7 +58,6 @@ async function getHandle(runtimeP: Promise<IComponentRuntime>): Promise<ICompone
 export class SharedTextRunner
     extends EventEmitter
     implements IComponentHTMLView, IComponentLoadable, IProvideSharedString {
-
     public static async load(runtime: ComponentRuntime, context: IComponentContext): Promise<SharedTextRunner> {
         const runner = new SharedTextRunner(runtime, context);
         await runner.initialize();

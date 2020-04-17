@@ -26,11 +26,10 @@ export async function configurableUrlResolver(
     return undefined;
 }
 
-export class MultiUrlResolver implements IUrlResolver{
-
-    public static create(urlResolver: IUrlResolver | IUrlResolver[]){
-        if(Array.isArray(urlResolver)){
-            if(urlResolver.length === 1){
+export class MultiUrlResolver implements IUrlResolver {
+    public static create(urlResolver: IUrlResolver | IUrlResolver[]) {
+        if (Array.isArray(urlResolver)) {
+            if (urlResolver.length === 1) {
                 return urlResolver[0];
             }
             return new MultiUrlResolver(urlResolver);
@@ -38,7 +37,7 @@ export class MultiUrlResolver implements IUrlResolver{
         return urlResolver;
     }
 
-    private constructor(private readonly urlResolvers: IUrlResolver[]){}
+    private constructor(private readonly urlResolvers: IUrlResolver[]) {}
 
     async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
         return configurableUrlResolver(this.urlResolvers, request);

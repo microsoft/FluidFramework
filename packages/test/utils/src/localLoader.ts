@@ -30,7 +30,6 @@ export function createLocalLoader(
     ]>,
     deltaConnectionServer: ILocalDeltaConnectionServer,
 ): ILoader {
-
     const urlResolver = new TestResolver(deltaConnectionServer);
     const documentServiceFactory = new TestDocumentServiceFactory(deltaConnectionServer);
     const codeLoader: ICodeLoader = new LocalCodeLoader(packageEntries);
@@ -55,7 +54,6 @@ export async function initializeLocalContainer(
     loader: ILoader,
     codeDetails: IFluidCodeDetails,
 ): Promise<Container> {
-
     const container = await loader.resolve({ url: documentId }) as unknown as Container;
 
     await initializeContainerCode(container, codeDetails);

@@ -25,7 +25,6 @@ declare module "@microsoft/fluid-component-core-interfaces" {
 }
 
 export class SpellChecker implements IComponentRouter, ISpellChecker {
-
     public get IComponentRouter() { return this; }
     public get ISpellChecker() { return this; }
 
@@ -50,5 +49,4 @@ export class SpellChecker implements IComponentRouter, ISpellChecker {
         const spellchecker = new Spellchecker(sharedString, dict);
         spellchecker.checkSharedString();
     }
-
 }

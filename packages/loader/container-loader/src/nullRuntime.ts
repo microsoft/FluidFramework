@@ -84,7 +84,6 @@ export class NullRuntime extends EventEmitter implements IRuntime {
 }
 
 export class NullChaincode implements IRuntimeFactory {
-
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         return new NullRuntime();
     }

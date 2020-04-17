@@ -15,7 +15,6 @@ import { Snapshot } from "./snapshot";
 import { SnapshotLegacy } from "./snapshotlegacy";
 
 export class SnapshotLoader {
-
     constructor(
         private readonly runtime: IComponentRuntime,
         private readonly client: Client,
@@ -24,7 +23,6 @@ export class SnapshotLoader {
     public async initialize(
         branchId: string,
         services: IObjectStorageService): Promise<ISequencedDocumentMessage[]> {
-
         const headerP = services.read(Snapshot.header);
         // If loading from a snapshot load tardis messages
         // kick off loading in parallel to loading "body" chunk.
@@ -88,7 +86,6 @@ export class SnapshotLoader {
     private loadHeader(
         header: string,
         branchId: string): MergeTreeChunk {
-
         const chunk = Snapshot.processChunk(
             header,
             this.runtime.IComponentSerializer,

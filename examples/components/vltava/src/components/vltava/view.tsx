@@ -18,7 +18,6 @@ interface IVltavaViewState {
     view: JSX.Element;
 }
 
-
 export class VltavaView extends React.Component<IVltavaViewProps,IVltavaViewState> {
     constructor(props: IVltavaViewProps) {
         super(props);
@@ -29,7 +28,7 @@ export class VltavaView extends React.Component<IVltavaViewProps,IVltavaViewStat
         };
 
         props.dataModel.on("membersChanged", (users) => {
-            this.setState({users});
+            this.setState({ users });
         });
     }
 
@@ -38,7 +37,6 @@ export class VltavaView extends React.Component<IVltavaViewProps,IVltavaViewStat
         this.setState({
             view: <ReactViewAdapter component={component} />,
         });
-
     }
 
     render() {
@@ -50,7 +48,7 @@ export class VltavaView extends React.Component<IVltavaViewProps,IVltavaViewStat
                         height: "50px",
                         textAlign: "center",
                         borderBottom:"1px solid lightgray",
-                        boxSizing:"border-box"}}
+                        boxSizing:"border-box" }}
                 >
                     <div>
                         <h2>

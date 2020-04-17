@@ -56,7 +56,6 @@ export class SharedIntervalCollectionFactory implements ISharedObjectFactory {
         services: ISharedObjectServices,
         branchId: string,
         attributes: IChannelAttributes): Promise<SharedIntervalCollection> {
-
         const map = new SharedIntervalCollection(id, runtime, attributes);
         await map.load(branchId, services);
 
@@ -81,7 +80,6 @@ export interface ISharedIntervalCollection<TInterval extends ISerializableInterv
 
 export class SharedIntervalCollection<TInterval extends ISerializableInterval = Interval>
     extends SharedObject implements ISharedIntervalCollection<TInterval> {
-
     /**
      * Create a SharedIntervalCollection
      *
@@ -170,7 +168,6 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         for (const message of pending) {
             this.intervalMapKernel.trySubmitMessage(message);
         }
-
     }
 
     protected onDisconnect() {
@@ -180,7 +177,6 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
     protected async loadCore(
         branchId: string,
         storage: IObjectStorageService) {
-
         const header = await storage.read(snapshotFileName);
 
         const data: string = header ? fromBase64ToUtf8(header) : undefined;

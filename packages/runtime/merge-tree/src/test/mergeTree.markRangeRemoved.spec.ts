@@ -39,7 +39,6 @@ describe("MergeTree.markRangeRemoved", () => {
     });
 
     it("remote remove followed by local insert", () => {
-
         client.applyMsg(
             client.makeOpMessage(
                 createRemoveRangeOp(0, client.getLength()),
@@ -68,7 +67,6 @@ describe("MergeTree.markRangeRemoved", () => {
     });
 
     it("remote remove followed by remote insert", () => {
-
         const removeMsg =
             client.makeOpMessage(
                 createRemoveRangeOp(0, client.getLength()),
@@ -113,7 +111,6 @@ describe("MergeTree.markRangeRemoved", () => {
     // Repro of issue #1213:
     // https://github.com/microsoft/FluidFramework/issues/1214
     it.skip("local and remote clients race to insert at position of removed segment", () => {
-
         // Note: This test constructs it's own TestClients to avoid being initialized with "hello world".
 
         // First we run through the ops from the perspective of a passive observer (i.e., all operations are remote).

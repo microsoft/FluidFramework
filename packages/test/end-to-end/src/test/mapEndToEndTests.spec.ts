@@ -216,7 +216,6 @@ describe("Map", () => {
         await containerDeltaEventManager.process();
 
         expectAllAfterValues("testKey2", "value2.2");
-
     });
 
     it("Simultaneous set/delete should reach eventual consistency with the same value", async () => {

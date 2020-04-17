@@ -51,7 +51,6 @@ function canUseCache(request: IRequest): boolean {
 }
 
 export class RelativeLoader extends EventEmitter implements ILoader {
-
     // Because the loader is passed to the container during construction we need to resolve the target container
     // after construction.
     private readonly containerDeferred = new Deferred<Container>();
@@ -110,15 +109,15 @@ export class RelativeLoader extends EventEmitter implements ILoader {
     }
 }
 
-function createCachedResolver(resolver: IUrlResolver){
+function createCachedResolver(resolver: IUrlResolver) {
     const cacheResolver = Object.create(resolver) as IUrlResolver;
     const resolveCache = new Map<string, Promise<IResolvedUrl | undefined>>();
     // eslint-disable-next-line @typescript-eslint/unbound-method
     cacheResolver.resolve = async (request: IRequest): Promise<IResolvedUrl | undefined> => {
-        if(!canUseCache(request)){
+        if (!canUseCache(request)) {
             return resolver.resolve(request);
         }
-        if(!resolveCache.has(request.url)){
+        if (!resolveCache.has(request.url)) {
             resolveCache.set(request.url, resolver.resolve(request));
         }
 
@@ -131,7 +130,6 @@ function createCachedResolver(resolver: IUrlResolver){
  * Manages Fluid resource loading
  */
 export class Loader extends EventEmitter implements ILoader, IExperimentalLoader {
-
     private readonly containers = new Map<string, Promise<Container>>();
     private readonly resolver: IUrlResolver;
     private readonly documentServiceFactory: IDocumentServiceFactory;
@@ -193,7 +191,6 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
     }
 
     public async requestWorker(baseUrl: string, request: IRequest): Promise<IResponse> {
-
         // Currently the loader only supports web worker environment. Eventually we will
         // detect environment and bring appropiate loader (e.g., worker_thread for node).
         const supportedEnvironment = "webworker";
@@ -225,7 +222,6 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
     private async resolveCore(
         request: IRequest,
     ): Promise<{ container: Container; parsed: IParsedUrl }> {
-
         const resolvedAsFluid = await this.resolver.resolve(request);
         ensureFluidResolvedUrl(resolvedAsFluid);
 
@@ -281,7 +277,6 @@ export class Loader extends EventEmitter implements ILoader, IExperimentalLoader
         }
 
         return { container, parsed };
-
     }
 
     private canUseCache(request: IRequest): boolean {

@@ -77,7 +77,6 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
         relativePos1: MergeTree.IRelativePosition,
         refType: MergeTree.ReferenceType,
         props?: MergeTree.PropertySet) {
-
         const segment = new MergeTree.Marker(refType);
         if (props) {
             segment.addProperties(props);
@@ -101,7 +100,6 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
         pos: number,
         refType: MergeTree.ReferenceType,
         props?: MergeTree.PropertySet) {
-
         const segment = new MergeTree.Marker(refType);
         if (props) {
             segment.addProperties(props);
@@ -180,7 +178,6 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
         marker: MergeTree.Marker,
         props: MergeTree.PropertySet,
         callback: (m: MergeTree.Marker) => void) {
-
         const annotateOp = this.client.annotateMarkerNotifyConsensus(marker, props, callback);
         if (annotateOp) {
             this.submitSequenceMessage(annotateOp);

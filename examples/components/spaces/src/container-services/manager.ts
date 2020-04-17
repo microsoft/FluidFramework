@@ -15,7 +15,7 @@ export class Manager extends BaseContainerService {
     registerProducer(type: string, listener: EventEmitter) {
         listener.on(type, () => {
             const map = this.registry.get(type);
-            if(map) {
+            if (map) {
                 // call all the callbacks
                 map.forEach((value) => value());
             }
@@ -24,7 +24,7 @@ export class Manager extends BaseContainerService {
 
     registerListener(type: string, callback: () => void) {
         const map = this.registry.get(type);
-        if(map) {
+        if (map) {
             // append to the map
             map.push(callback);
         }

@@ -39,7 +39,6 @@ const cellInputTemplate = new Template({ tag: "input", props: { className: style
 const numberExp = /^[+-]?\d*\.?\d+(?:[Ee][+-]?\d+)?$/;
 
 export class GridView {
-
     private get numRows() { return this.doc.numRows; }
     private get numCols() { return this.doc.numCols; }
     public readonly root = tableTemplate.clone();
@@ -409,9 +408,9 @@ export class GridView {
         const colStartLetter = this.numberToColumnLetter(colStart);
         const colEndLetter = this.numberToColumnLetter(colEnd);
 
-        const averageFormula = `=AVERAGE(${colStartLetter}${rowStart+1}:${colEndLetter}${rowEnd+1})`;
-        const countFormula = `=COUNT(${colStartLetter}${rowStart+1}:${colEndLetter}${rowEnd+1})`;
-        const sumFormula = `=SUM(${colStartLetter}${rowStart+1}:${colEndLetter}${rowEnd+1})`;
+        const averageFormula = `=AVERAGE(${colStartLetter}${rowStart + 1}:${colEndLetter}${rowEnd + 1})`;
+        const countFormula = `=COUNT(${colStartLetter}${rowStart + 1}:${colEndLetter}${rowEnd + 1})`;
+        const sumFormula = `=SUM(${colStartLetter}${rowStart + 1}:${colEndLetter}${rowEnd + 1})`;
 
         const avg = this.doc.evaluateFormula(averageFormula);
         const count = this.doc.evaluateFormula(countFormula);

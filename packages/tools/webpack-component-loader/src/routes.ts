@@ -75,7 +75,6 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
                 };
             });
             try {
-
                 const originalUrl = `${getThisOrigin(options)}${req.url}`;
                 if (odspAuthStage >= 2) {
                     if (!options.odspAccessToken || !options.pushAccessToken) {
@@ -184,7 +183,6 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
 };
 
 const fluid = (req: express.Request, res: express.Response, baseDir: string, options: RouteOptions) => {
-
     const documentId = req.params.id;
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const packageJson = require(path.join(baseDir, "./package.json")) as IFluidPackage;

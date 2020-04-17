@@ -18,7 +18,7 @@ async function getComponentAndRender(baseHost: BaseHost, url: string, div: HTMLD
     view.render(div, { display: "block" });
 }
 
-export async function runInner(divId: string){
+export async function runInner(divId: string) {
     const div = document.getElementById(divId) as HTMLDivElement;
 
     const pkg: IFluidCodeDetails = {
