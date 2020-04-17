@@ -24,11 +24,23 @@ export class VltavaView extends React.Component<IVltavaViewProps,IVltavaViewStat
     constructor(props: IVltavaViewProps) {
         super(props);
 
+        let lastEditedUser = props.dataModel.getLastEditedUser();
+        if (lastEditedUser === undefined) {
+            lastEditedUser = {
+                name: "",
+                colorCode: 0,
+            };
+        }
+
+        let lastEditedTime = props.dataModel.getLastEditedTime();
+        if (lastEditedTime === undefined) {
+            lastEditedTime = "";
+        }
         this.state = {
             users: props.dataModel.getUsers(),
             view: <div/>,
-            lastEditedUser: { name: "", colorCode: 0 },
-            lastEditedTime: "",
+            lastEditedUser,
+            lastEditedTime,
         };
     }
 
@@ -39,10 +51,20 @@ export class VltavaView extends React.Component<IVltavaViewProps,IVltavaViewStat
             const lastEditedTime = date.toUTCString();
 
             this.setState({
-                lastEditedUser,
-                lastEditedTime,
+                users: props.dataModel.getUsers(),
             });
-        }
+        });
+
+        props.dataModel.on("lastEditedChanged", () => {
+            const user = props.dataModel.getLastEditedUser();
+            const time = props.dataModel.getLastEditedTime();
+            if (user && time) {
+                this.setState({
+                    lastEditedUser: user,
+                    lastEditedTime: time,
+                });
+            }
+        });
     }
 
     async componentDidMount() {

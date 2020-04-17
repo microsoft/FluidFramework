@@ -6,6 +6,7 @@
 import { EventEmitter } from "events";
 
 import { IComponent, IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
+import { IComponentLastEditedTracker, ILastEditDetails } from "@microsoft/fluid-last-edited-experimental";
 import {
     IComponentContext,
     IComponentRuntime,
@@ -20,15 +21,17 @@ export interface IVltavaUserDetails {
 
 export interface IVltavaDataModel extends EventEmitter {
     getDefaultComponent(): Promise<IComponent>;
-    getRootComponent(): Promise<IComponent>;
     getTitle(): string;
     getUsers(): IVltavaUserDetails[];
-    getUser(id: string): IVltavaUserDetails | undefined;
+    getLastEditedUser(): IVltavaUserDetails | undefined;
+    getLastEditedTime(): string | undefined;
 }
 
 export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
     private readonly quorum: IQuorum;
     private readonly users: Map<string, IVltavaUserDetails> = new Map();
+    private lastEditedUser: IVltavaUserDetails | undefined;
+    private lastEditedTime: string | undefined;
     private refColorCode = 0;
 
     public on(event: "membersChanged", listener: () => void): this;
@@ -38,6 +41,7 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
 
     constructor(
         private readonly root: ISharedDirectory,
+        private readonly lastEditedTracker: IComponentLastEditedTracker,
         private readonly context: IComponentContext,
         runtime: IComponentRuntime,
     ) {
@@ -56,21 +60,20 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
             this.removeUser(clientId);
             this.emit("membersChanged");
         });
+
+        const details = this.lastEditedTracker.getLastEditDetails();
+        if (details) {
+            this.setLastEditedState(details);
+        }
+
+        this.lastEditedTracker.on("lastEditedChanged", (lastEditDetails: ILastEditDetails) => {
+            this.setLastEditedState(lastEditDetails);
+            this.emit("lastEditedChanged");
+        });
     }
 
     public async getDefaultComponent(): Promise<IComponent> {
         return this.root.get<IComponentHandle>("tabs-component-id").get();
-    }
-
-    /**
-     * Gets the root (Anchor) component from the ContainerRuntime.
-     */
-    public async getRootComponent(): Promise<IComponent> {
-        const response = await this.context.hostRuntime.request({ url: "/" });
-        if (response.status !== 200 && response.mimeType !== "fluid/component") {
-            throw new Error("Unable to get root component");
-        }
-        return response.value as IComponent;
     }
 
     public getTitle(): string {
@@ -85,8 +88,12 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
         return users;
     }
 
-    public getUser(clientId: string): IVltavaUserDetails | undefined {
-        return this.users.get(clientId);
+    public getLastEditedUser(): IVltavaUserDetails | undefined {
+        return this.lastEditedUser;
+    }
+
+    public getLastEditedTime(): string | undefined {
+        return this.lastEditedTime;
     }
 
     private addUser(clientId: string, member: ISequencedClient) {
@@ -101,5 +108,11 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
 
     private removeUser(clientId: string) {
         this.users.delete(clientId);
+    }
+
+    private setLastEditedState(lastEditDetails: ILastEditDetails) {
+        this.lastEditedUser = this.users.get(lastEditDetails.clientId);
+        const date = new Date(lastEditDetails.timestamp);
+        this.lastEditedTime = date.toUTCString();
     }
 }

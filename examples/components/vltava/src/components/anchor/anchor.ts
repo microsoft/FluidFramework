@@ -3,14 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import {
-    IComponentLastEditedTracker,
-    IProvideComponentLastEditedTracker,
-    LastEditedTrackerComponentName,
-    LastEditedTrackerComponent,
-} from "@microsoft/fluid-last-edited-experimental";
+import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { IComponentHTMLView, IProvideComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 export const AnchorName = "anchor";
@@ -18,11 +12,9 @@ export const AnchorName = "anchor";
 /**
  * Anchor is an default component is responsible for managing creation and the default component
  */
-export class Anchor extends PrimedComponent implements IProvideComponentHTMLView, IProvideComponentLastEditedTracker {
+export class Anchor extends PrimedComponent implements IProvideComponentHTMLView {
     private readonly defaultComponentId = "default-component-id";
-    private readonly lastEditedTrackerComponentId = "last-edited-tracker-component-id";
     private defaultComponentInternal: IComponentHTMLView | undefined;
-    private lastEditedTrackerComponentInternal: IComponentLastEditedTracker | undefined;
 
     private get defaultComponent() {
         if (!this.defaultComponentInternal) {
@@ -57,28 +49,17 @@ export class Anchor extends PrimedComponent implements IProvideComponentHTMLView
 
     public get IComponentHTMLView() { return this.defaultComponent; }
 
-    public get IComponentLastEditedTracker() { return this.lastEditedTrackerComponent; }
-
     protected async componentInitializingFirstTime(props: any) {
-        const defaultComponent = await this.createAndAttachComponent(VltavaName);
+        const defaultComponent = await this.createAndAttachComponent("vltava");
         this.root.set(this.defaultComponentId, defaultComponent.handle);
 
-<<<<<<< HEAD
-        const lastEditedViewerComponent = await this.createAndAttachComponent("lastEditedViewer");
-        this.root.set(this.lastEditedViewerComponentId, lastEditedViewerComponent.handle);
-=======
         const lastEditedTrackerComponent = await this.createAndAttachComponent(LastEditedTrackerComponentName);
         this.root.set(this.lastEditedTrackerComponentId, lastEditedTrackerComponent.handle);
->>>>>>> Updated to extend BaseContainerRuntimeFactory.
     }
 
     protected async componentHasInitialized() {
         this.defaultComponentInternal =
             (await this.root.get<IComponentHandle>(this.defaultComponentId).get())
                 .IComponentHTMLView;
-
-        const compHandle = this.root.get<IComponentHandle>(this.lastEditedTrackerComponentId);
-        const comp = await compHandle.get();
-        this.lastEditedTrackerComponentInternal = comp.IComponentLastEditedTracker;
     }
 }

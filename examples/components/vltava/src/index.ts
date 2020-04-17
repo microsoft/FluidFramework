@@ -11,14 +11,13 @@ import {
     IContainerComponentDetails,
     IComponentRegistryDetails,
 } from "@fluid-example/spaces";
-import { BaseContainerRuntimeFactory } from "@microsoft/fluid-aqueduct";
+import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aqueduct";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import {
-    componentRuntimeRequestHandler,
-    RequestParser,
-    RuntimeRequestHandler,
-} from "@microsoft/fluid-container-runtime";
-import { setupLastEditedTrackerForContainer } from "@microsoft/fluid-last-edited-experimental";
+    LastEditedTrackerComponentName,
+    LastEditedTrackerComponent,
+    setupLastEditedTrackerForContainer,
+} from "@microsoft/fluid-last-edited-experimental";
 import {
     IComponentRegistry,
     IHostRuntime,
@@ -33,6 +32,9 @@ import {
     Vltava,
     VltavaName,
 } from "./components";
+
+// Any component that wants the last edited tracker can request it from the container using this id.
+export const LastEditedTrackerId = "last-edited-tracker";
 
 export class InternalRegistry implements IComponentRegistry, IComponentRegistryDetails {
     public get IComponentRegistry() { return this; }
@@ -68,50 +70,50 @@ export class InternalRegistry implements IComponentRegistry, IComponentRegistryD
     }
 }
 
-const defaultComponentId = "default";
-
-// Request handler to handle the request for the default component with an empty URL.
-const defaultComponentRuntimeRequestHandler: RuntimeRequestHandler =
-    async (request: RequestParser, runtime: IHostRuntime) => {
-        if (request.pathParts.length === 0) {
-            return componentRuntimeRequestHandler(
-                new RequestParser({
-                    url: defaultComponentId,
-                    headers: request.headers,
-                }),
-                runtime);
-        }
-        return undefined;
-    };
-
-export class VltavaRuntimeFactory extends BaseContainerRuntimeFactory {
-    public static readonly defaultComponentId = defaultComponentId;
-
+export class VltavaRuntimeFactory extends ContainerRuntimeFactoryWithDefaultComponent {
+    private readonly lastEditedTrackerId = LastEditedTrackerId;
     constructor(
-        private readonly defaultComponentName: string,
+        defaultComponentName: string,
         registryEntries: NamedComponentRegistryEntries,
     ) {
-        super(registryEntries, [], [ defaultComponentRuntimeRequestHandler ]);
+        super(defaultComponentName, registryEntries);
     }
 
     /**
      * {@inheritDoc BaseContainerRuntimeFactory.containerInitializingFirstTime}
      */
     protected async containerInitializingFirstTime(runtime: IHostRuntime) {
-        // Create the default (Anchor) component.
+        // Create the last edited tracker component. This component provides container level tracking of last edit and
+        // has to be loaded before any other component.
         const componentRuntime = await runtime.createComponent(
-            VltavaRuntimeFactory.defaultComponentId,
-            this.defaultComponentName,
+            this.lastEditedTrackerId,
+            LastEditedTrackerComponentName,
         );
         componentRuntime.attach();
+
+        // Right now this setup has to be done asynchronously because in the case where we load the Container from
+        // remote ops, the `Attach` message for the last edited tracker component has not arrived yet.
+        // We should be able to wait here after the create-new workflow is in place.
+        setupLastEditedTrackerForContainer(`${this.lastEditedTrackerId}`, runtime)
+            .catch((error) => {
+                runtime.error(error);
+            });
+
+        // Call the super class which will create the default (Anchor) component.
+        await super.containerInitializingFirstTime(runtime);
     }
 
     /**
-     * {@inheritDoc BaseContainerRuntimeFactory.containerHasInitialized}
+     * {@inheritDoc BaseContainerRuntimeFactory.containerInitializingFromExisting}
      */
-    protected async containerHasInitialized(runtime: IHostRuntime) {
-        // Set up the last edited tracker now that the container has initialized.
-        setupLastEditedTrackerForContainer(VltavaRuntimeFactory.defaultComponentId, runtime)
+    protected async containerInitializingFromExisting(runtime: IHostRuntime) {
+        // Load the last edited tracker component (done by the setup method below). This component provides container
+        // level tracking of last edit and has to be loaded before any other component.
+
+        // Right now this setup has to be done asynchronously because in the case where we load the Container from
+        // remote ops, the `Attach` message for the last edited tracker component has not arrived yet.
+        // We should be able to wait here after the create-new workflow is in place.
+        setupLastEditedTrackerForContainer(`${this.lastEditedTrackerId}`, runtime)
             .catch((error) => {
                 runtime.error(error);
             });
@@ -167,9 +169,14 @@ const generateFactory = () => {
         containerComponents.push([value.type, value.factory]);
     });
 
+    // The last edited tracker component provides container level tracking of last edits. This is the first
+    // component that is loaded.
+    containerComponents.push(
+        [ LastEditedTrackerComponentName, Promise.resolve(LastEditedTrackerComponent.getFactory()) ]);
+
     // We don't want to include the default wrapper component in our list of available components
-    containerComponents.push([ AnchorName, Promise.resolve(Anchor.getFactory())]);
-    containerComponents.push([ VltavaName, Promise.resolve(Vltava.getFactory())]);
+    containerComponents.push([ AnchorName, Promise.resolve(Anchor.getFactory()) ]);
+    containerComponents.push([ VltavaName, Promise.resolve(Vltava.getFactory()) ]);
 
     const containerRegistries: NamedComponentRegistryEntries = [
         ["", Promise.resolve(new InternalRegistry(containerComponentsDefinition))],

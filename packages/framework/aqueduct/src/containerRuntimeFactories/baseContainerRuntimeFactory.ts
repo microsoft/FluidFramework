@@ -69,12 +69,12 @@ export class BaseContainerRuntimeFactory implements
         dc.register(IContainerRuntime, runtime);
 
         if (!runtime.existing) {
-            // If it's the first time through
+            // If it's the first time through.
             await this.containerInitializingFirstTime(runtime);
+        } else {
+            // Else we are loading from existing.
+            await this.containerInitializingFromExisting(runtime);
         }
-
-        // This always gets called at the end of initialize on first time or from existing.
-        await this.containerHasInitialized(runtime);
 
         return runtime;
     }
@@ -87,9 +87,9 @@ export class BaseContainerRuntimeFactory implements
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) { }
 
     /**
-     * Subclasses may override containerHasInitialized to perform any steps after the container has initialized.
-     * This likely includes loading any components that are expected to be there at the outset.
+     * Subclasses may override containerInitializingFromExisting to perform any setup steps at the time the container
+     * is loaded from existing. This likely includes loading any components that are expected to be there at the outset.
      * @param runtime - The container runtime for the container being initialized
      */
-    protected async containerHasInitialized(runtime: IHostRuntime) { }
+    protected async containerInitializingFromExisting(runtime: IHostRuntime) { }
 }
