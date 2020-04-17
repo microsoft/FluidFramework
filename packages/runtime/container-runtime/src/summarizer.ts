@@ -506,7 +506,7 @@ export class Summarizer implements ISummarizer {
             this.summaryCollection = new SummaryCollection(this.runtime.deltaManager.initialSequenceNumber);
         }
         this.runtime.deltaManager.inbound.on("op",
-            (op) => this.summaryCollection.handleOp(op as ISequencedDocumentMessage));
+            (op) => this.summaryCollection.handleOp(op));
 
         this.runtime.previousState.nextSummarizerD?.resolve(this);
     }
@@ -641,10 +641,10 @@ export class Summarizer implements ISummarizer {
             this.runningSummarizer = undefined;
         }
         if (this.systemOpListener) {
-            this.runtime.deltaManager.inbound.removeListener("op", this.systemOpListener);
+            this.runtime.deltaManager.inbound.off("op", this.systemOpListener);
         }
         if (this.opListener) {
-            this.runtime.removeListener("batchEnd", this.opListener);
+            this.runtime.off("batchEnd", this.opListener);
         }
     }
 

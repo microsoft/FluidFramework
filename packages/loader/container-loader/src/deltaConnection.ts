@@ -17,11 +17,28 @@ import {
     INack,
 } from "@microsoft/fluid-protocol-definitions";
 import { EventForwarder } from "@microsoft/fluid-common-utils";
+import { IEventProvider } from "@microsoft/fluid-common-definitions";
 
-export class DeltaConnection extends EventForwarder<IDocumentDeltaConnectionEvents> {
+export interface IDeltaConnection extends IEventProvider<IDocumentDeltaConnectionEvents>{
+    readonly details: IConnectionDetails;
+    readonly nacked: boolean;
+    readonly connected: boolean;
+
+    /**
+     * Closes the delta connection. This disconnects the socket and clears any listeners
+     */
+    close(): void;
+    submit(messages: IDocumentMessage[]): void;
+    submitAsync(messages: IDocumentMessage[]): Promise<void>;
+    submitSignal(message: any): void;
+}
+
+export class DeltaConnection
+    extends EventForwarder<IDocumentDeltaConnectionEvents>
+    implements IDeltaConnection {
     public static async connect(
         service: IDocumentService,
-        client: IClient) {
+        client: IClient): Promise<IDeltaConnection> {
         const connection = await service.connectToDeltaStream(client);
         return new DeltaConnection(connection);
     }
@@ -72,7 +89,7 @@ export class DeltaConnection extends EventForwarder<IDocumentDeltaConnectionEven
         connection.on("nack", (documentId: string, message: INack[]) => {
             // Mark nacked and also pause any outbound communication
             this._nacked = true;
-            this.emit("nack", message[0]);
+            this.emit("nack", documentId, message);
         });
 
         connection.on("disconnect", (reason) => {
@@ -87,16 +104,14 @@ export class DeltaConnection extends EventForwarder<IDocumentDeltaConnectionEven
         this.forwardEvent(connection, "op", "op-content", "signal", "error", "pong");
     }
 
-    /**
-     * Closes the delta connection. This disconnects the socket and clears any listeners
-     */
     public close() {
         if (this._connection) {
             const connection = this._connection;
             this._connection = undefined;
             connection.disconnect();
         }
-        this.removeAllListeners();
+        // this will clear all event listeners
+        this.dispose();
     }
 
     public submit(messages: IDocumentMessage[]): void {
@@ -111,3 +126,4 @@ export class DeltaConnection extends EventForwarder<IDocumentDeltaConnectionEven
         return this.connection.submitSignal(message);
     }
 }
+

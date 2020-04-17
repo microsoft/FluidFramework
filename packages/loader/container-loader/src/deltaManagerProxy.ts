@@ -7,8 +7,10 @@ import {
     IConnectionDetails,
     IDeltaHandlerStrategy,
     IDeltaManager,
+    IDeltaManagerEvents,
     IDeltaQueue,
     IDeltaSender,
+    IDeltaQueueEvents,
 } from "@microsoft/fluid-container-definitions";
 import { EventForwarder } from "@microsoft/fluid-common-utils";
 import {
@@ -24,7 +26,7 @@ import {
 /**
  * Proxy to the real IDeltaQueue - used to restrict access
  */
-export class DeltaQueueProxy<T> extends EventForwarder implements IDeltaQueue<T> {
+export class DeltaQueueProxy<T> extends EventForwarder<IDeltaQueueEvents<T>> implements IDeltaQueue<T> {
     public get paused(): boolean {
         return this.queue.paused;
     }
@@ -83,7 +85,7 @@ export class DeltaQueueProxy<T> extends EventForwarder implements IDeltaQueue<T>
  * Proxy to the real IDeltaManager - used to restrict access
  */
 export class DeltaManagerProxy
-    extends EventForwarder
+    extends EventForwarder<IDeltaManagerEvents>
     implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
 
     public readonly inbound: IDeltaQueue<ISequencedDocumentMessage>;

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent, IEventProvider } from "@microsoft/fluid-common-definitions";
+import { IEventProvider, IErrorEvent } from "@microsoft/fluid-common-definitions";
 import {
     ConnectionMode,
     IClient,
@@ -115,9 +115,13 @@ export interface IDocumentStorageService {
     downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
 }
 
-export interface IDocumentDeltaConnectionEvents extends IEvent {
+export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
     (event: "nack", listener: (documentId: string, message: INack[]) => void);
     (event: "disconnect", listener: (reason: any) => void);
+    (event: "op", listener: (documentId: string, messages: ISequencedDocumentMessage[]) => void);
+    (event: "op-content", listener: (message: IContentMessage) => void);
+    (event: "signal", listener: (message: ISignalMessage) => void);
+    (event: "pong", listener: (latency: number) => void);
 }
 
 export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaConnectionEvents> {
