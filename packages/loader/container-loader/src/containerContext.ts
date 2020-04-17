@@ -224,8 +224,8 @@ export class ContainerContext extends EventEmitter implements IContainerContext,
         return this.runtime!.stop();
     }
 
-    public isAttached(): boolean {
-        return this.container.isAttached();
+    public isLocal(): boolean {
+        return this.container.isLocal();
     }
 
     public createSummary(): ISummaryTree {

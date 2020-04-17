@@ -227,7 +227,7 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
 export interface IExperimentalContainerContext extends IContainerContext {
     isExperimentalContainerContext: true;
 
-    isAttached(): boolean;
+    isLocal(): boolean;
 
     getLoadedFromVersion(): IVersion | undefined;
 
