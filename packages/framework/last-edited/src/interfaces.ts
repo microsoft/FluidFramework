@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import { ISequencedDocumentMessage, IUser } from "@microsoft/fluid-protocol-definitions";
 
 declare module "@microsoft/fluid-component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -30,6 +30,6 @@ export interface IComponentLastEditedTracker extends IProvideComponentLastEdited
 }
 
 export interface ILastEditDetails {
-    clientId: string;
+    user: IUser;
     timestamp: number;
 }

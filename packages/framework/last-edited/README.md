@@ -2,13 +2,14 @@
 
 LastEditedTracker tracks the last edit to a document, such as the client who last edited the document and the time it happened.
 
-It is created by passing a `SharedSummaryBlock`:
+It is created by passing a `SharedSummaryBlock` and an `IQuorum`:
 ```
 constructor(
     private readonly sharedSummaryBlock: SharedSummaryBlock,
+    private readonly quorum: IQuorum,
 );
 ```
-It uses the SharedSummaryBlock to store the last edit details.
+It uses the SharedSummaryBlock to store the last edit details. The quorum is used to get the user details.
 
 ## API
 
@@ -23,14 +24,7 @@ The update should always be called in response to a remote op because:
 1. It updates its state from the remote op.
 2. It uses a SharedSummaryBlock as storage which must be set in response to a remote op.
 
-The details returned in getLastEditDetails contain the `clientId` and the `timestamp` of the last edit.
-
-## Events
-
-It emits an `"lastEditedChanged"` event with ILastEditDetails whenever the details are updated:
-```
-public on(event: "lastEditedChanged", listener: (lastEditDetails: ILastEditDetails) => void): this;
-```
+The details returned in getLastEditDetails contain the `IUser` object and the `timestamp` of the last edit.
 
 # Last Edited Tracker Component
 
@@ -95,13 +89,9 @@ public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
 
 This will make sure that the root component loads before any other component and it tracks every op in the Container.
 
-The IComponentLastEditedTracker can be retrieved from the root component. Registering for "lastEditedChanged" event on the IComponentLastEditedTracker will give the last edited details everytime it changes. For example:
+The IComponentLastEditedTracker can be retrieved from the root component:
 ```
 const response = await containerRuntime.request({ url: "/" });
 const rootComponent = response.value;
 const lastEditedTracker = rootComponent.IComponentLastEditedTracker;
-
-lastEditedTracker.on("lastEditedChanged", (lastEditDetails: ILastEditDetails) => {
-    // Do something cool.
-});
 ```
