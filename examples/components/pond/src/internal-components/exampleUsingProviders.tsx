@@ -36,7 +36,7 @@ export class ExampleUsingProviders
 
     public render(div: HTMLElement) {
         let element: JSX.Element = <span></span>;
-        if (this.userInformation){
+        if (this.userInformation) {
             element = <ExampleUsingProvidersView userInfo={this.userInformation}/>;
         } else {
             console.log("No IComponentUserInformation Provided");
@@ -57,7 +57,7 @@ export class ExampleUsingProviders
         ExampleUsingProviders.ComponentName,
         ExampleUsingProviders,
         [SharedMap.getFactory()],
-        {IComponentUserInformation});
+        { IComponentUserInformation });
 }
 
 interface ExampleUsingProvidersViewProps {
@@ -94,7 +94,7 @@ class ExampleUsingProvidersView
             users.push(<div>{user}</div>);
         });
         return (
-            <div style={{border:"1px dotted green"}}>
+            <div style={{ border:"1px dotted green" }}>
                 <h3>Provider Information</h3>
                 <div><b>Count:</b></div>
                 <div>{this.state.count}</div>

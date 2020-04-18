@@ -18,7 +18,7 @@ import {
 
 import { IComponentUserInformation } from "../interfaces";
 
-export class UserInfo extends EventEmitter implements IComponentUserInformation{
+export class UserInfo extends EventEmitter implements IComponentUserInformation {
     private readonly quorum: IQuorum;
 
     public on(event: "membersChanged", listener: () => void): this;

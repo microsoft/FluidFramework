@@ -51,7 +51,6 @@ export class TextareaNoReact extends PrimedComponent implements IComponentHTMLVi
     protected textareaRootKey: string = "textareaString";
     protected textareaID: string = "<unset dom ID>";
 
-    /******************************************************************************/
     // One-time component setup:
 
     /**
@@ -354,4 +353,3 @@ export const TextareaNoReactInstantiationFactory =
             SharedString.getFactory(),
         ],
         {});
-/******************************************************************************/

@@ -104,13 +104,16 @@ implements IComponentFactory, Partial<IProvideComponentRegistry>
 
         // If the Container did not register the IHostRuntime we can do it here to make sure services that need
         // it will have it.
-        if(!dependencyContainer.has(IHostRuntime)) {
+        if (!dependencyContainer.has(IHostRuntime)) {
             dependencyContainer.register(IHostRuntime, context.hostRuntime);
         }
 
         const providers = dependencyContainer.synthesize<P>(this.optionalProviders,{});
         // Create a new instance of our component
-        const instance = ctorFn ? ctorFn({runtime, context, providers}) : new this.ctor({runtime, context, providers});
+        const instance =
+            ctorFn ?
+                ctorFn({ runtime, context, providers }) :
+                new this.ctor({ runtime, context, providers });
         await instance.initialize();
         return instance;
     }

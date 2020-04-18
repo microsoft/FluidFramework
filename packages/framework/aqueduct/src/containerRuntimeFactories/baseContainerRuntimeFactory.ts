@@ -49,7 +49,6 @@ export class BaseContainerRuntimeFactory implements
     public async instantiateRuntime(
         context: IContainerContext,
     ): Promise<IRuntime> {
-
         const parentDependencyContainer = context.scope.IComponentDependencySynthesizer;
         const dc = new DependencyContainer(parentDependencyContainer);
         for (const entry of Array.from(this.providerEntries)) {
