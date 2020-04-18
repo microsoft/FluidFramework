@@ -85,7 +85,6 @@ export class DeltaQueueProxy<T> extends EventForwarder implements IDeltaQueue<T>
 export class DeltaManagerProxy
     extends EventForwarder
     implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
-
     public readonly inbound: IDeltaQueue<ISequencedDocumentMessage>;
     public readonly outbound: IDeltaQueue<IDocumentMessage[]>;
     public readonly inboundSignal: IDeltaQueue<ISignalMessage>;

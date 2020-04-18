@@ -34,7 +34,6 @@ function createTreeMarkerOps(
     endMarkerPos: number,
     nodeType: string,
 ): IMergeTreeInsertMsg[] {
-
     const endMarkerProps = createMap<any>();
     endMarkerProps[reservedRangeLabelsKey] = [treeRangeLabel];
     endMarkerProps[nodeTypeKey] = nodeType;

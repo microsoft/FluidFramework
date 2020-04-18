@@ -28,7 +28,6 @@ describe("client.applyMsg", () => {
             const pos1 = Math.floor(len / 2);
             const imod6 = i % 6;
             switch (imod6) {
-
                 case 0:
                 case 5: {
                     const pos2 = Math.max(Math.floor((len - pos1) / 4) - imod6 + pos1, pos1 + 1);
@@ -43,7 +42,7 @@ describe("client.applyMsg", () => {
                 case 4: {
                     const str = `${i}`.repeat(imod6 + 5);
                     const msg = client.makeOpMessage(client.insertTextLocal(pos1, str), i + 1);
-                    changes.set(i, {msg, segmentGroup: client.mergeTree.pendingSegments.last()});
+                    changes.set(i, { msg, segmentGroup: client.mergeTree.pendingSegments.last() });
                     break;
                 }
 
@@ -58,7 +57,7 @@ describe("client.applyMsg", () => {
                         },
                         undefined);
                     const msg = client.makeOpMessage(op, i + 1);
-                    changes.set(i, { msg, segmentGroup: client.mergeTree.pendingSegments.last()});
+                    changes.set(i, { msg, segmentGroup: client.mergeTree.pendingSegments.last() });
                     break;
                 }
                 default:
@@ -71,7 +70,6 @@ describe("client.applyMsg", () => {
             const segments = changes.get(i).segmentGroup.segments;
             for (const seg of segments) {
                 switch (i % 6) {
-
                     case 0:
                     case 5:
                         assert.equal(seg.removedSeq, msg.sequenceNumber, "removed segment has unexpected id");
@@ -96,7 +94,6 @@ describe("client.applyMsg", () => {
     });
 
     it("insertTextLocal", () => {
-
         const op = client.insertTextLocal(0, "abc");
 
         const segmentInfo = client.getContainingSegment(0);
@@ -172,12 +169,10 @@ describe("client.applyMsg", () => {
     });
 
     it("multiple interleaved annotateSegmentLocal", () => {
-
         let annotateEnd: number = client.getText().length;
         const messages: ISequencedDocumentMessage[] = [];
         let sequenceNumber = 0;
         while (annotateEnd > 0) {
-
             const props = {
                 end: annotateEnd,
                 foo: "bar",

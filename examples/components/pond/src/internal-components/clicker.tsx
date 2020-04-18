@@ -112,7 +112,7 @@ class CounterReactView extends React.Component<CounterProps, CounterState> {
 
     render() {
         return (
-            <div style={{border: "1px dotted blue"}}>
+            <div style={{ border: "1px dotted blue" }}>
                 <h3>Clicker</h3>
                 <h5>Clicker on the root directory increments 1</h5>
                 <div>

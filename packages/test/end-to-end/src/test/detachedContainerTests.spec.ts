@@ -78,7 +78,7 @@ describe("Detached Container", () => {
         // Create a sub component of type TestFluidComponent and verify that it is attached.
         const subCompId = uuid();
         await createAndAttachComponent(component.context, subCompId, "default");
-        const subResponse = await container.request({url: `/${subCompId}`});
+        const subResponse = await container.request({ url: `/${subCompId}` });
         if (subResponse.mimeType !== "fluid/component" && subResponse.status !== 200) {
             assert.fail("New components should be created in detached container");
         }
@@ -105,7 +105,7 @@ describe("Detached Container", () => {
         await container.attach(testRequest);
 
         // Get the sub component and verify that it is attached.
-        const testResponse = await container.request({url: `/${newComponentId}`});
+        const testResponse = await container.request({ url: `/${newComponentId}` });
         if (testResponse.mimeType !== "fluid/component" && testResponse.status !== 200) {
             assert.fail("New components should be created in detached container");
         }

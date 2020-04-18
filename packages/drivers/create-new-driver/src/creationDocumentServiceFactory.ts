@@ -16,7 +16,6 @@ import { CreationDocumentService } from "./creationDocumentService";
  * lie to runtime that there is an actual connection to server.
  */
 export class CreationDocumentServiceFactory implements IDocumentServiceFactory {
-
     public readonly protocolName = "fluid-creation:";
     constructor() {
     }

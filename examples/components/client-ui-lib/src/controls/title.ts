@@ -6,7 +6,6 @@
 import * as ui from "../ui";
 
 export class Title extends ui.Component {
-
     public viewportRect: ui.Rectangle;
     public viewportDiv: HTMLDivElement;
 

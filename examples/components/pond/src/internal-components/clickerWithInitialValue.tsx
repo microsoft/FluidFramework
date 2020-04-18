@@ -68,7 +68,6 @@ export class ClickerWithInitialValue extends PrimedComponent implements ICompone
         {});
 }
 
-
 // ----- REACT STUFF -----
 
 interface CounterProps {
@@ -101,7 +100,7 @@ class CounterReactView extends React.Component<CounterProps, CounterState> {
 
     render() {
         return (
-            <div style={{border: "1px dotted red"}}>
+            <div style={{ border: "1px dotted red" }}>
                 <h3>Clicker With Initial Value</h3>
                 <h5>Created with initial value of 100. Increments 5.</h5>
                 <div>

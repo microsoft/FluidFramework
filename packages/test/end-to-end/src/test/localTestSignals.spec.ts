@@ -81,7 +81,6 @@ describe("TestSignals", () => {
             await containerDeltaEventManager.process();
             assert.equal(user1SignalReceivedCount, 2, "client 1 did not received signal");
             assert.equal(user2SignalReceivedCount, 2, "client 2 did not received signal");
-
         });
 
         it("Validate host runtime signals", async () => {

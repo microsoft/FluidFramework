@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { Deferred, TelemetryNullLogger} from "@microsoft/fluid-common-utils";
+import { Deferred, TelemetryNullLogger } from "@microsoft/fluid-common-utils";
 import {
     ISequencedDocumentMessage,
     ISummaryAck,

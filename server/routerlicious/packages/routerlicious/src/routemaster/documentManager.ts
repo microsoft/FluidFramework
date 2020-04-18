@@ -12,7 +12,6 @@ export class DocumentManager {
         documentId: string,
         collection: core.ICollection<core.IDocument>,
         deltas: core.ICollection<core.ISequencedOperationMessage>): Promise<DocumentManager> {
-
         const document = await collection.findOne({ documentId, tenantId });
         return new DocumentManager(document, collection, deltas);
     }
@@ -23,7 +22,6 @@ export class DocumentManager {
         private readonly document: core.IDocument,
         private readonly collection: core.ICollection<core.IDocument>,
         private readonly deltas: core.ICollection<core.ISequencedOperationMessage>) {
-
         const forks = document.forks || [];
         const filtered = forks
             .filter((value) => value.sequenceNumber !== undefined)

@@ -32,7 +32,6 @@ import {
     generateClientId,
 } from "../utils";
 
-
 export const DefaultServiceConfiguration: IServiceConfiguration = {
     blockSize: 64436,
     maxMessageSize: 16 * 1024,
@@ -118,8 +117,6 @@ export function configureWebSocketServices(
     metricLogger: core.IMetricClient,
     logger: core.ILogger,
     maxNumberOfClientsPerDocument: number = 1000000) {
-
-
     webSocketServer.on("connection", (socket: core.IWebSocket) => {
         // Map from client IDs on this connection to the object ID and user info.
         const connectionsMap = new Map<string, core.IOrdererConnection>();
@@ -204,7 +201,7 @@ export function configureWebSocketServices(
                 return Promise.reject({
                     code: 400,
                     message: "Too many clients are already connected to this document.",
-                    retryAfter: 5*60,
+                    retryAfter: 5 * 60,
                 });
             }
 

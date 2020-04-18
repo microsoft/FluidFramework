@@ -13,7 +13,6 @@ import { IKafkaSubscriber } from "./interfaces";
  *  todo: use context checkpoints
  */
 export class LocalKafkaSubscription extends EventEmitter {
-
     public queueOffset: number = 0;
 
     private closed = false;
@@ -50,7 +49,6 @@ export class LocalKafkaSubscription extends EventEmitter {
             this.queueOffset++;
 
             this.emit("processed", this.queueOffset);
-
         } catch (ex) {
             // Lambda failed to process the message
             this.subscriber.context.error(ex, false);
@@ -61,7 +59,6 @@ export class LocalKafkaSubscription extends EventEmitter {
             }, 500);
 
             return;
-
         } finally {
             this.processing = false;
         }

@@ -58,7 +58,7 @@ export class CollaborativeInput extends React.Component<IProps, IState> {
     }
 
     public render() {
-        return(
+        return (
             // There are a lot of different ways content can be inserted into a input box
             // and not all of them trigger a onBeforeInput event. To ensure we are grabbing
             // the correct selection before we modify the shared string we need to make sure
@@ -115,6 +115,6 @@ export class CollaborativeInput extends React.Component<IProps, IState> {
         const selectionEnd = this.inputElementRef.current.selectionEnd ? this.inputElementRef.current.selectionEnd : 0;
         // eslint-disable-next-line max-len
         const selectionStart = this.inputElementRef.current.selectionStart ? this.inputElementRef.current.selectionStart : 0;
-        this.setState({selectionEnd, selectionStart});
+        this.setState({ selectionEnd, selectionStart });
     }
 }

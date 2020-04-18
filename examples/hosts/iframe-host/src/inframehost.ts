@@ -20,7 +20,7 @@ import { IRequest, IResponse, IComponent } from "@microsoft/fluid-component-core
 import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
 import { ISequencedDocumentMessage, ITree, ConnectionState } from "@microsoft/fluid-protocol-definitions";
 
-class ProxyRuntime implements IRuntime{
+class ProxyRuntime implements IRuntime {
     private _disposed = false;
     public get disposed() { return this._disposed; }
 
@@ -45,20 +45,18 @@ class ProxyRuntime implements IRuntime{
     }
 }
 
-class ProxyChaincode implements IRuntimeFactory{
-
+class ProxyChaincode implements IRuntimeFactory {
     async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         return new ProxyRuntime();
     }
 
-    get IRuntimeFactory(){
+    get IRuntimeFactory() {
         return this;
     }
 }
 
-class ProxyCodeLoader implements ICodeLoader{
-
-    async load(){
+class ProxyCodeLoader implements ICodeLoader {
+    async load() {
         return Promise.resolve({ fluidExport: new ProxyChaincode() });
     }
 }
@@ -79,7 +77,7 @@ export interface IFrameOuterHostConfig{
 
 export class IFrameOuterHost {
     private readonly loader: Loader;
-    constructor(private readonly hostConfig: IFrameOuterHostConfig){
+    constructor(private readonly hostConfig: IFrameOuterHostConfig) {
         // todo
         // disable summaries
         // set as non-user client
@@ -93,8 +91,7 @@ export class IFrameOuterHost {
         );
     }
 
-    public async load(request: IRequest, iframe: HTMLIFrameElement): Promise<Container>{
-
+    public async load(request: IRequest, iframe: HTMLIFrameElement): Promise<Container> {
         const proxy = await IFrameDocumentServiceProxyFactory.create(
             MultiDocumentServiceFactory.create(this.hostConfig.documentServiceFactory),
             iframe,
@@ -108,7 +105,7 @@ export class IFrameOuterHost {
         await new Promise((resolve)=>setTimeout(() => resolve(), 200));
 
         const container = await this.loader.resolve(request);
-        if(!container.getQuorum().has("code")){
+        if (!container.getQuorum().has("code")) {
             // we'll never propose the code, so wait for them to do it
             await new Promise((resolve) => container.once("contextChanged", () => resolve()));
         }

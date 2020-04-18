@@ -35,7 +35,6 @@ export class CellFactory implements ISharedObjectFactory {
         services: ISharedObjectServices,
         branchId: string,
         attributes: IChannelAttributes): Promise<ISharedCell> {
-
         const cell = new SharedCell(id, runtime, attributes);
         await cell.load(branchId, services);
         return cell;

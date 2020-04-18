@@ -95,7 +95,7 @@ describe("Errors Types", () => {
     }
 
     it("GenericNetworkError Test_1", async () => {
-        const networkError = createNetworkError("Test Message", false /*canRetry*/);
+        const networkError = createNetworkError("Test Message", false /* canRetry */);
         assert.equal(networkError.errorType, ErrorType.genericNetworkError,
             "Error should be a genericNetworkError");
         assertCustomPropertySupport(networkError);
@@ -104,10 +104,10 @@ describe("Errors Types", () => {
     it("GenericNetworkError Test_2", async () => {
         const networkError = createNetworkError(
             "Test Message",
-            true /*canRetry*/,
-            400 /*statusCode*/,
-            undefined /*retryAfterSeconds*/,
-            "foo" /*online*/);
+            true /* canRetry */,
+            400 /* statusCode */,
+            undefined /* retryAfterSeconds */,
+            "foo" /* online */);
         if (networkError.errorType !== ErrorType.genericNetworkError) {
             assert.fail("Error should be a genericNetworkError");
         }
@@ -121,8 +121,8 @@ describe("Errors Types", () => {
     it("AccessDeniedError Test 401", async () => {
         const networkError = createNetworkError(
             "Test Message",
-            false /*canRetry*/,
-            401 /*statusCode*/);
+            false /* canRetry */,
+            401 /* statusCode */);
         assert.equal(networkError.errorType, ErrorType.accessDeniedError,
             "Error should be an accessDeniedError");
         assertCustomPropertySupport(networkError);
@@ -131,8 +131,8 @@ describe("Errors Types", () => {
     it("AccessDeniedError Test 403", async () => {
         const networkError = createNetworkError(
             "Test Message",
-            false /*canRetry*/,
-            403 /*statusCode*/);
+            false /* canRetry */,
+            403 /* statusCode */);
         if (networkError.errorType !== ErrorType.accessDeniedError) {
             assert.fail("Error should be an accessDeniedError");
         }
@@ -145,8 +145,8 @@ describe("Errors Types", () => {
     it("FileNotFoundError Test", async () => {
         const networkError = createNetworkError(
             "Test Message",
-            false /*canRetry*/,
-            404 /*statusCode*/);
+            false /* canRetry */,
+            404 /* statusCode */);
         assertCustomPropertySupport(networkError);
         if (networkError.errorType !== ErrorType.fileNotFoundError) {
             assert.fail("Error should be a fileNotFoundError");
@@ -160,8 +160,8 @@ describe("Errors Types", () => {
     it("FatalError Test", async () => {
         const networkError = createNetworkError(
             "Test Message",
-            false /*canRetry*/,
-            500 /*statusCode*/);
+            false /* canRetry */,
+            500 /* statusCode */);
         assertCustomPropertySupport(networkError);
         if (networkError.errorType !== ErrorType.fatalError) {
             assert.fail("Error should be a fatalError");
@@ -174,9 +174,9 @@ describe("Errors Types", () => {
     it("ThrottlingError Test", async () => {
         const networkError = createNetworkError(
             "Test Message",
-            false /*canRetry*/,
-            400 /*statusCode*/,
-            100 /*retryAfterSeconds*/);
+            false /* canRetry */,
+            400 /* statusCode */,
+            100 /* retryAfterSeconds */);
         assertCustomPropertySupport(networkError);
         if (networkError.errorType !== ErrorType.throttlingError) {
             assert.fail("Error should be a throttlingError");
@@ -194,7 +194,7 @@ describe("Errors Types", () => {
     });
 
     it("Check double conversion of network error", async () => {
-        const networkError = createNetworkError("Test Error", true /*canRetry*/);
+        const networkError = createNetworkError("Test Error", true /* canRetry */);
         const error1 = createIError(networkError, true);
         const error2 = createIError(error1, false);
         assert.equal(error1, error2, "Both errors should be same!!");
@@ -221,5 +221,4 @@ describe("Errors Types", () => {
         assert.equal(error1.critical, false, "Error should contain critical property.");
         assert.equal(error2.critical, undefined, "Error should not contain critical property.");
     });
-
 });

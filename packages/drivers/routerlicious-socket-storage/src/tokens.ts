@@ -19,7 +19,6 @@ export class TokenService implements ITokenService {
  * Checks the validation of a token.
  */
 export class TokenProvider implements ITokenProvider {
-
     constructor(public token: string) {
     }
 

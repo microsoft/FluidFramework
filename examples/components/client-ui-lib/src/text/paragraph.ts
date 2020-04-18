@@ -95,7 +95,6 @@ function makeGlue(
     textSegment: MergeTree.TextSegment,
     stretch: number,
     shrink: number) {
-
     return <IPGGlue>{ type: ParagraphItemType.Glue, width, text, segment: textSegment, stretch, shrink };
 }
 
@@ -245,7 +244,6 @@ export class ParagraphLexer<TContext> {
     }
 }
 
-
 export function clearContentCaches(pgMarker: IParagraphMarker) {
     pgMarker.cache = undefined;
     pgMarker.itemCache = undefined;
@@ -386,7 +384,6 @@ const maxListDistance = 400;
 
 export function getListCacheInfo(
     sharedString: SharedString, tile: IParagraphMarker, tilePos: number, precedingTileCache?: ITilePos[]) {
-
     if (isListTile(tile)) {
         if (tile.listCache === undefined) {
             if (tile.properties.series) {

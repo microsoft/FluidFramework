@@ -18,16 +18,14 @@ import { InnerUrlResolver } from "./innerUrlResolver";
  * Connects to the outerDocumentService factory across the iframe boundary
  */
 export class InnerDocumentServiceFactory implements IDocumentServiceFactory {
-
-    public static async create(): Promise<InnerDocumentServiceFactory>{
-
+    public static async create(): Promise<InnerDocumentServiceFactory> {
         let outerProxy: Comlink.Remote<IDocumentServiceFactoryProxy>;
         const create = async () => {
             // If the parent endpoint does not exist, returns empty proxy silently (no connection/failure case)
-            if(outerProxy === undefined){
+            if (outerProxy === undefined) {
                 outerProxy = Comlink.wrap<IDocumentServiceFactoryProxy>(Comlink.windowEndpoint(window.parent));
             }
-            if(outerProxy){
+            if (outerProxy) {
                 await outerProxy.connected();
                 return outerProxy;
             }
@@ -36,7 +34,7 @@ export class InnerDocumentServiceFactory implements IDocumentServiceFactory {
         const evtListener = (resolve) => {
             create()
                 .then((value)=>{
-                    if(value){
+                    if (value) {
                         resolve(value);
                     }
                 })
@@ -67,7 +65,6 @@ export class InnerDocumentServiceFactory implements IDocumentServiceFactory {
     }
 
     public async createDocumentService(): Promise<IDocumentService> {
-
         const outerDocumentServiceProxy = await this.outerProxy.createDocumentService();
 
         return InnerDocumentService.create(this.outerProxy.clients[outerDocumentServiceProxy]);

@@ -45,7 +45,6 @@ export class SharedStringFactory implements ISharedObjectFactory {
         services: ISharedObjectServices,
         branchId: string,
         attributes: IChannelAttributes): Promise<ISharedObject> {
-
         const sharedString = new SharedString(runtime, id, attributes);
         await sharedString.load(branchId, services);
         return sharedString;
@@ -92,7 +91,6 @@ export class SharedObjectSequenceFactory implements ISharedObjectFactory {
         services: ISharedObjectServices,
         branchId: string,
         attributes: IChannelAttributes): Promise<ISharedObject> {
-
         const sharedSeq = new SharedObjectSequence<object>(runtime, id, attributes);
         await sharedSeq.load(branchId, services);
         return sharedSeq;
@@ -139,7 +137,6 @@ export class SharedNumberSequenceFactory implements ISharedObjectFactory {
         services: ISharedObjectServices,
         branchId: string,
         attributes: IChannelAttributes): Promise<ISharedObject> {
-
         const sharedSeq = new SharedNumberSequence(runtime, id, attributes);
         await sharedSeq.load(branchId, services);
         return sharedSeq;

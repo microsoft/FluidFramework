@@ -18,14 +18,14 @@ export class ScriptManager {
         return window.document !== undefined;
     }
 
-    private static async protectEntrypoint<T>(library: string, callback: () => Promise<T>){
-        if (!this.isBrowser){
+    private static async protectEntrypoint<T>(library: string, callback: () => Promise<T>) {
+        if (!this.isBrowser) {
             return callback();
         }
         // if we are in a browser we need to ensure multiple
         // scripts aren't loaded with the same entry point
         // otherwise they could overwrite each other
-        while (this.loadingEntrypoints.has(library)){
+        while (this.loadingEntrypoints.has(library)) {
             await this.loadingEntrypoints.get(library);
         }
         const returnP = callback().finally(() => this.loadingEntrypoints.delete(library));
@@ -33,9 +33,9 @@ export class ScriptManager {
         return returnP;
     }
 
-    private static async internalLoadScript(scriptUrl: string, library: string): Promise<unknown>{
+    private static async internalLoadScript(scriptUrl: string, library: string): Promise<unknown> {
         if (!this.loadCache.has(scriptUrl)) {
-            while (this.loadingEntrypoints.has(library)){
+            while (this.loadingEntrypoints.has(library)) {
                 await this.loadingEntrypoints.get(library);
             }
             const scriptP = new Promise<unknown>((resolve, reject) => {

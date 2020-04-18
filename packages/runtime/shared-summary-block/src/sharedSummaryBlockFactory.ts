@@ -15,7 +15,6 @@ import {
 import { pkgVersion } from "./packageVersion";
 import { SharedSummaryBlock } from "./sharedSummaryBlock";
 
-
 /**
  * The factory that defines the shared summary block.
  * @sealed
@@ -58,7 +57,6 @@ export class SharedSummaryBlockFactory implements ISharedObjectFactory {
         services: ISharedObjectServices,
         branchId: string,
         attributes: IChannelAttributes): Promise<ISharedObject> {
-
         const sharedSummaryBlock = new SharedSummaryBlock(id, runtime, attributes);
         await sharedSummaryBlock.load(branchId, services);
 

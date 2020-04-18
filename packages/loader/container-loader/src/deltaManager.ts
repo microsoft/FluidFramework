@@ -645,9 +645,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     });
                     const closeError = createNetworkError(
                         "Failed to retrieve ops from storage: giving up after too many retries",
-                        false /*canRetry*/,
-                        undefined /*statusCode*/,
-                        undefined /*retryAfterSeconds*/,
+                        false /* canRetry */,
+                        undefined /* statusCode */,
+                        undefined /* retryAfterSeconds */,
                         "Online",
                     ) as IGenericNetworkError;
                     closeError.critical = true;
@@ -929,7 +929,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             // Do not raise container error if we are closing just because we lost connection.
             // Those errors (like IdleDisconnect) would show up in telemetry dashboards and
             // are very misleading, as first initial reaction - some logic is broken.
-            this.close(createIError(error), criticalError /*raiseContainerError*/);
+            this.close(createIError(error), criticalError /* raiseContainerError */);
         }
 
         // If closed then we can't reconnect
@@ -1117,7 +1117,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     private catchUpCore(messages: ISequencedDocumentMessage[], telemetryEventSuffix?: string): void {
-
         // Apply current operations
         this.enqueueMessages(messages, telemetryEventSuffix);
 

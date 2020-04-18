@@ -161,9 +161,9 @@ export function fileTest1() {
             if ((animal.length > 0) && (!removedAnimals.includes(animal))) {
                 const prop = beast.get(animal);
                 const linProp = linearBeast.get(animal);
-                //log(`Trying key ${animal}`);
+                // log(`Trying key ${animal}`);
                 if (prop) {
-                    //printStringNumProperty(prop);
+                    // printStringNumProperty(prop);
                     if ((linProp === undefined) || (prop.key != linProp.key) || (prop.data != linProp.data)) {
                         log(`Linear BST does not match RB BST at key ${animal}`);
                     }
@@ -260,7 +260,7 @@ export function mergeTreeTest1() {
     fuzzySeg = makeCollabTextSegment("fuzzy, fuzzy ");
     checkInsertMergeTree(mergeTree, 4, fuzzySeg);
     checkMarkRemoveMergeTree(mergeTree, 4, 13);
-    //checkRemoveSegTree(segTree, 4, 13);
+    // checkRemoveSegTree(segTree, 4, 13);
     checkInsertMergeTree(mergeTree, 4, makeCollabTextSegment("fi"));
     mergeTree.map({ leaf: printTextSegment }, UniversalSequenceNumber, LocalClientId);
     const segoff = mergeTree.getContainingSegment(4, UniversalSequenceNumber, LocalClientId);
@@ -419,7 +419,6 @@ export function mergeTreeCheckedTest() {
                 errorCount++;
                 break;
             }
-
         }
         if ((i > 0) && (0 == (i % 1000))) {
             const perIter = (accumTime / (i + 1)).toFixed(3);
@@ -474,7 +473,6 @@ export function mergeTreeCheckedTest() {
                 errorCount++;
                 break;
             }
-
         }
         if ((i > 0) && (0 == (i % 1000))) {
             const perIter = (accumTime / (i + 1)).toFixed(3);
@@ -486,7 +484,6 @@ export function mergeTreeCheckedTest() {
     }
     return errorCount;
 }
-
 
 type SharedStringJSONSegment = MergeTree.IJSONTextSegment & MergeTree.IJSONMarkerSegment;
 
@@ -604,7 +601,7 @@ export function TestPack(verbose = true) {
         server.addClients(clients);
 
         function checkTextMatch() {
-            //log(`checking text match @${server.getCurrentSeq()}`);
+            // log(`checking text match @${server.getCurrentSeq()}`);
             let clockStart = clock();
             const serverText = server.getText();
             getTextTime += elapsedMicroseconds(clockStart);
@@ -622,8 +619,8 @@ export function TestPack(verbose = true) {
                 const cliText = client.getText();
                 if (cliText != serverText) {
                     log(`mismatch @${server.getCurrentSeq()} client @${client.getCurrentSeq()} id: ${client.getClientId()}`);
-                    //log(serverText);
-                    //log(cliText);
+                    // log(serverText);
+                    // log(cliText);
                     const diffParts = JsDiff.diffChars(serverText, cliText);
                     for (const diffPart of diffParts) {
                         let annotes = "";
@@ -681,7 +678,6 @@ export function TestPack(verbose = true) {
                 const insertMarkerOp = client.insertMarkerLocal(pos, MergeTree.ReferenceType.Tile,
                     { [MergeTree.reservedTileLabelsKey]: "test" });
                 server.enqueueMsg(client.makeOpMessage(insertMarkerOp, UnassignedSequenceNumber));
-
             }
             const insertTextOp = client.insertTextLocal(pos, text);
             server.enqueueMsg(client.makeOpMessage(insertTextOp, UnassignedSequenceNumber));
@@ -848,8 +844,8 @@ export function TestPack(verbose = true) {
                 if (verbose) {
                     log(`total time ${(totalTime / 1000000.0).toFixed(1)} check time ${(checkTime / 1000000.0).toFixed(1)}`);
                 }
-                //log(server.getText());
-                //log(server.mergeTree.toString());
+                // log(server.getText());
+                // log(server.mergeTree.toString());
             }
             return errorCount;
         }
@@ -922,8 +918,8 @@ export function TestPack(verbose = true) {
         function tail() {
             reportTiming(server);
             reportTiming(clients[2]);
-            //log(server.getText());
-            //log(server.mergeTree.toString());
+            // log(server.getText());
+            // log(server.mergeTree.toString());
         }
         return errorCount;
     }
@@ -1088,8 +1084,8 @@ export function TestPack(verbose = true) {
         }
         log(`sequence number: ${cliA.getCurrentSeq()} min: ${cliA.getCollabWindow().minSeq}`);
         //                log(cliA.mergeTree.toString());
-        //log(cliB.mergeTree.toString());
-        //log(cliA.getText());
+        // log(cliB.mergeTree.toString());
+        // log(cliA.getText());
         const aveWindow = ((minSegCount + maxSegCount) / 2).toFixed(1);
         const aveTime = (cliA.accumTime / cliA.accumOps).toFixed(3);
         const aveWindowTime = (cliA.accumWindowTime / cliA.accumOps).toFixed(3);
@@ -1097,7 +1093,7 @@ export function TestPack(verbose = true) {
             log(`accum time ${cliA.accumTime} us ops: ${cliA.accumOps} ave window ${aveWindow} ave time ${aveTime}`);
             log(`accum window time ${cliA.accumWindowTime} us ave window time ${aveWindowTime}; max ${cliA.maxWindowTime}`);
         }
-        //log(cliB.getText());
+        // log(cliB.getText());
         return errorCount;
     }
 
@@ -1149,7 +1145,7 @@ export function TestPack(verbose = true) {
                 }
             }
         }
-        const segs = <SharedStringJSONSegment[]>new MergeTree.SnapshotLegacy(cli.mergeTree, DebugLogger.create("fluid:snapshot")).extractSync();
+        const segs = <SharedStringJSONSegment[]> new MergeTree.SnapshotLegacy(cli.mergeTree, DebugLogger.create("fluid:snapshot")).extractSync();
         if (verbose) {
             for (const seg of segs) {
                 log(`${specToSegment(seg)}`);
@@ -1304,7 +1300,6 @@ function shuffle<T>(a: T[]) {
 
     // While there remain elements to shuffle...
     while (0 !== currentIndex) {
-
         // Pick a remaining element...
         randomIndex = Math.floor(Math.random() * currentIndex);
         currentIndex--;
@@ -1644,7 +1639,6 @@ export class DocumentTree {
                 const row = DocumentTree.generateRow(rowProbability);
                 items.push(row);
             }
-
         }
         return items;
     }
@@ -1759,4 +1753,3 @@ describe("Routerlicious", () => {
         }).timeout(testTimeout);
     });
 });
-

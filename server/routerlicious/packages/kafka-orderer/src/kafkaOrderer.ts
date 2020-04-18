@@ -178,7 +178,6 @@ export class KafkaOrderer implements core.IOrderer {
         clientId: string,
         client: IClient,
         details: core.IDocumentDetails): Promise<core.IOrdererConnection> {
-
         this.existing = details.existing;
         const connection = KafkaOrdererConnection.create(
             this.existing,

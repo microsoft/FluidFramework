@@ -91,7 +91,7 @@ export class OdspDriverUrlResolver implements IUrlResolver, IExperimentalUrlReso
         createNewSummary: ISummaryTree,
         request: IRequest,
     ): Promise<IOdspResolvedUrl> {
-        if(!request.headers) {
+        if (!request.headers) {
             throw new Error("Request should contian headers!!");
         }
         assert(request.headers.newFileInfoPromise);

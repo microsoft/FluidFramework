@@ -49,7 +49,7 @@ describe("SharedString Snapshot Version", () => {
             };
             const sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
             // eslint-disable-next-line no-null/no-null
-            await sharedString.load(null/*branchId*/, services);
+            await sharedString.load(null/* branchId */, services);
             await sharedString.loaded;
 
             // test rebuilt sharedString

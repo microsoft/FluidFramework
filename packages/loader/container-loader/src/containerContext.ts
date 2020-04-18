@@ -45,7 +45,6 @@ import { Container } from "./container";
 import { NullRuntime } from "./nullRuntime";
 
 export class ContainerContext extends EventEmitter implements IContainerContext, IExperimentalContainerContext {
-
     public readonly isExperimentalContainerContext = true;
     public static async createOrLoad(
         container: Container,

@@ -60,7 +60,6 @@ const defaultCompilerOptions = {
  */
 export class MonacoRunner extends PrimedComponent implements
     IComponentHTMLView, IComponentLayout {
-
     public get IComponentHTMLView() { return this; }
     public get IComponentLoadable() { return this; }
     public get IComponentLayout() { return this; }

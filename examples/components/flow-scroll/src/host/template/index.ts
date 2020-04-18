@@ -12,7 +12,7 @@ export async function importDoc(doc: FlowDocument, file: string) {
 
     try {
         while (true) {
-            const {done, value} = await reader.read();
+            const { done, value } = await reader.read();
             if (done) {
                 break;
             }

@@ -23,7 +23,6 @@ import { debug } from "./debug";
 import { TableSlice } from "./slice";
 import { ITable, TableDocumentItem } from "./table";
 
-
 export interface ITableDocumentEvents extends IEvent{
     (event: "op",
         listener: (op: ISequencedDocumentMessage, local: boolean, target: SharedNumberSequence | SparseMatrix) => void);

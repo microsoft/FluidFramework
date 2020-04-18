@@ -193,7 +193,7 @@ describe("Routerlicious", () => {
 
                 assert.throws(() => dc.synthesize<{}, IComponentLoadable>(
                     {},
-                    {IComponentLoadable},
+                    { IComponentLoadable },
                 ), Error);
             });
 

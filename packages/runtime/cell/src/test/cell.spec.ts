@@ -26,7 +26,6 @@ describe("Routerlicious", () => {
                 testCell.set("testValue");
                 assert.equal(testCell.get(), "testValue");
             });
-
         });
     });
 });

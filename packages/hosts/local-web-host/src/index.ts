@@ -23,12 +23,10 @@ import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
 export async function createLocalContainerFactory(
     entryPoint: Partial<IProvideRuntimeFactory & IProvideComponentFactory & IFluidModule>,
 ): Promise<() => Promise<Container>> {
-
     const urlResolver = new TestResolver();
 
     const deltaConn = LocalDeltaConnectionServer.create();
     const documentServiceFactory = new TestDocumentServiceFactory(deltaConn);
-
 
     const factory: Partial<IProvideRuntimeFactory & IProvideComponentFactory> =
         entryPoint.fluidExport ? entryPoint.fluidExport : entryPoint;
@@ -42,7 +40,7 @@ export async function createLocalContainerFactory(
             );
 
     const codeLoader: ICodeLoader = {
-        load: async <T>() => ({fluidExport: runtimeFactory} as unknown as T),
+        load: async <T>() => ({ fluidExport: runtimeFactory } as unknown as T),
     };
 
     const loader =  new Loader(
@@ -57,7 +55,6 @@ export async function createLocalContainerFactory(
     const url = `fluid://localhost/${documentId}`;
 
     return async () => {
-
         const container = await loader.resolve({ url });
 
         await initializeContainerCode(container, {} as any as IFluidCodeDetails);

@@ -79,7 +79,7 @@ export class TableView extends PrimedComponent implements IComponentHTMLView {
 
             const addColsBtn = template.get(this.templateRoot, "addCols");
             addColsBtn.addEventListener("click", () => {
-                doc.insertCols(doc.numCols, 10 /*16384*/);
+                doc.insertCols(doc.numCols, 10 /* 16384 */);
             });
 
             const gotoInput = template.get(this.templateRoot, "goto") as HTMLInputElement;
