@@ -136,3 +136,12 @@ const nmt: NestedMapProp = {
     n: mt,
 };
 expectError(foo(nmt));
+
+const sym = Symbol.for("test");
+interface ISymbol{
+    [sym]:string,
+}
+const isym: ISymbol ={
+    [sym]:"foo",
+}
+expectError(foo(isym));
