@@ -3,24 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import * as assert from "assert";
+import { parse } from "url";
+import { IRequest, IResponse } from "@microsoft/fluid-component-core-interfaces";
 import {
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
     IExperimentalUrlResolver,
+    CreateNewHeader,
 } from "@microsoft/fluid-driver-definitions";
-import {
-    ScopeType,
-    ISummaryTree,
-} from "@microsoft/fluid-protocol-definitions";
+import { ScopeType } from "@microsoft/fluid-protocol-definitions";
 import { generateToken } from "@microsoft/fluid-server-services-client";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
-import { IExperimentalDocumentStorage } from "@microsoft/fluid-server-services-core";
-import {
-    getDocAttributesFromProtocolSummary,
-    getQuorumValuesFromProtocolSummary,
-} from "@microsoft/fluid-driver-utils";
 
 /**
  * Resolves URLs by providing fake URLs which succeed with the other
@@ -31,9 +25,7 @@ export class TestResolver implements IUrlResolver, IExperimentalUrlResolver {
     private readonly tenantId = "tenantId";
     private readonly tokenKey = "tokenKey";
 
-    constructor(
-        private readonly testDeltaConnectionServer?: ILocalDeltaConnectionServer,
-    ) {}
+    constructor() {}
 
     /**
      * Resolves URL requests by providing fake URLs with an actually generated
@@ -44,40 +36,6 @@ export class TestResolver implements IUrlResolver, IExperimentalUrlResolver {
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
         const parsedUrl = new URL(request.url);
         const documentId = parsedUrl.pathname.substr(1).split("/")[0];
-        return this.resolveHelper(documentId);
-    }
-
-    public async createContainer(
-        createNewSummary: ISummaryTree,
-        request: IRequest,
-    ): Promise<IResolvedUrl> {
-        if (!this.testDeltaConnectionServer) {
-            throw new Error("Provide the localDeltaConnectionServer!!");
-        }
-        // eslint-disable-next-line max-len
-        const expDocumentStorage = ((this.testDeltaConnectionServer as LocalDeltaConnectionServer).documentStorage as IExperimentalDocumentStorage);
-        if (!(expDocumentStorage && expDocumentStorage.isExperimentalDocumentStorage)) {
-            throw new Error("Storage has no experimental features!!");
-        }
-
-        const parsedUrl = new URL(request.url);
-        const documentId = parsedUrl.pathname.substr(1).split("/")[0];
-
-        const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
-        const appSummary = createNewSummary.tree[".app"] as ISummaryTree;
-        if (!(protocolSummary && appSummary)) {
-            throw new Error("Protocol and App Summary required in the full summary");
-        }
-        const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
-        const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
-        const sequenceNumber = documentAttributes.sequenceNumber;
-        await expDocumentStorage.createDocument(
-            this.tenantId,
-            documentId,
-            appSummary,
-            sequenceNumber,
-            quorumValues,
-        );
         return this.resolveHelper(documentId);
     }
 
@@ -95,5 +53,36 @@ export class TestResolver implements IUrlResolver, IExperimentalUrlResolver {
         };
 
         return resolved;
+    }
+
+    public async requestUrl(resolvedUrl: IResolvedUrl, request: IRequest): Promise<IResponse> {
+        let url = request.url;
+        if (url.startsWith("/")) {
+            url = url.substr(1);
+        }
+        const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
+
+        const parsedUrl = parse(fluidResolvedUrl.url);
+        if (parsedUrl.pathname === undefined) {
+            throw new Error("Url should contain tenant and docId!!");
+        }
+        const [, , documentId] = parsedUrl.pathname.split("/");
+        assert(documentId);
+        const response: IResponse = {
+            mimeType: "text/plain",
+            value: `https://localhost:3000/${this.tenantId}/${documentId}/${url}`,
+            status: 200,
+        };
+        return response;
+    }
+
+    public createCreateNewRequest(id: string): IRequest {
+        const createNewRequest: IRequest = {
+            url: `http://localhost:3000/${this.tenantId}/${id}`,
+            headers: {
+                [CreateNewHeader.createNew]: true,
+            },
+        };
+        return createNewRequest;
     }
 }

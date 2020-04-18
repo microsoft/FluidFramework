@@ -14,13 +14,14 @@ import {
     ITestFluidComponent,
     TestFluidComponentFactory,
 } from "@microsoft/fluid-test-utils";
+import { TestResolver } from "@microsoft/fluid-local-driver";
 import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 import { v4 as uuid } from "uuid";
 
 describe("Detached Container", () => {
     const documentId = "detachedContainerTest";
-    const id = `fluid-test://localhost/${documentId}`;
-    const testRequest: IRequest = { url: id };
+    let testResolver: TestResolver;
+    let testRequest: IRequest;
     const pkg: IFluidCodeDetails = {
         package: "detachedContainerTestPackage",
         config: {},
@@ -40,6 +41,8 @@ describe("Detached Container", () => {
 
     beforeEach(async () => {
         testDeltaConnectionServer = LocalDeltaConnectionServer.create();
+        testResolver = new TestResolver();
+        testRequest = testResolver.createCreateNewRequest(documentId);
         factory = new TestFluidComponentFactory([]);
         loader = createLocalLoader([[ pkg, factory ]], testDeltaConnectionServer) as Loader;
     });
@@ -135,7 +138,8 @@ describe("Detached Container", () => {
 
         // Now load the container from another loader.
         const loader2 = createLocalLoader([[ pkg, factory ]], testDeltaConnectionServer) as Loader;
-        const container2 = await loader2.resolve(testRequest);
+        const container2 = await loader2.resolve({ url:
+            (await testResolver.requestUrl(container.resolvedUrl, { url : "" })).value });
 
         // Get the sub component and assert that it is attached.
         const response2 = await container2.request({ url: `/${subCompId}` });

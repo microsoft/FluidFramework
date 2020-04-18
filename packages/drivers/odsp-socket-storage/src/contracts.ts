@@ -36,6 +36,8 @@ export interface IOdspResolvedUrl extends IResolvedUrlBase {
 
     // Tokens are not obtained by the ODSP driver using the resolve flow, the app must provide them.
     tokens: {};
+
+    fileName: string,
 }
 
 /**
