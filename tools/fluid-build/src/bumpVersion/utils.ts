@@ -21,44 +21,19 @@ export async function exec(cmd: string, dir: string, error?: string) {
     return result.stdout;
 }
 
-export class GitUtil {
-    private static _resolvedRoot: string | undefined;
-    private static _originalBranchName: string | undefined;
-    public static readonly newBranches: string[] = [];
-    public static readonly newTags: string[] = [];
+export class GitRepo {
+    public readonly newBranches: string[] = [];
+    public readonly newTags: string[] = [];
 
-    public static async initialize(root: string) {
-        this._resolvedRoot = root;
-        this._originalBranchName = await this.getCurrentBranchName();
-    }
-
-    private static get resolvedRoot() {
-        if (!this._resolvedRoot) { fatal("Internal error, resolved root not initialized"); }
-        return this._resolvedRoot;
-    }
-
-    public static get originalBranchName() {
-        if (!this._originalBranchName) { fatal("Internal error, original branch name not initialized") }
-        return this._originalBranchName;
-    }
-
-
-    /**
-     * Execute git command
-     * 
-     * @param command the git command
-     * @param error description of command line to print when error happens
-     */
-    public static async exec(command: string, error?: string) {
-        return exec(`git ${command}`, this.resolvedRoot, error);
+    constructor(public readonly resolvedRoot: string) {
     }
 
     /**
-     * Execute git tag command
+     * Add a tag to the current commit
      * 
      * @param tag the tag to add
      */
-    public static async tag(tag: string) {
+    public async tag(tag: string) {
         await this.exec(`tag ${tag}`, `adding tag ${tag}`);
         this.newTags.push(tag);
     }
@@ -66,27 +41,61 @@ export class GitUtil {
     /**
      * Get the current git branch name
      */
-    public static async getCurrentBranchName() {
+    public async getCurrentBranchName() {
         const revParseOut = await this.exec("rev-parse --abbrev-ref HEAD", "get current branch");
         return revParseOut.split("\n")[0];
     }
 
-
-    public static async createBranch(branchName: string) {
-        await GitUtil.exec(`checkout -b ${branchName}`, `create branch ${branchName}`);
+    /**
+     * Create a new branch
+     * 
+     * @param branchName name of the new branch
+     */
+    public async createBranch(branchName: string) {
+        await this.exec(`checkout -b ${branchName}`, `create branch ${branchName}`);
         this.newBranches.push(branchName);
     }
 
-    public static async cleanUp() {
-        if (this.originalBranchName) {
-            await this.exec(`checkout ${this.originalBranchName}`);
+    /**
+     * Switch branch
+     * 
+     * @param branchName name of the new branch
+     */
+    public async switchBranch(branchName: string) {
+        await this.exec(`checkout ${branchName}`, `switch branch ${branchName}`);
+    }
 
-            for (const branch of this.newBranches) {
-                await this.exec(`branch -D ${branch}`);
-            }
-            for (const tag of this.newTags) {
-                await this.exec(`tag -d ${tag}`);
-            }
+    /**
+     * Commit changes
+     * 
+     * @param message the commit message
+     */
+    public async commit(message: string, error: string) {
+        await this.exec(`commit -a -m "${message}`, error);
+    }
+
+    /**
+     * Clean up new branch and new tags that was created 
+     */
+    public async cleanUp(branchName: string) {
+        await this.exec(`checkout ${branchName}`);
+
+        for (const branch of this.newBranches) {
+            await this.exec(`branch -D ${branch}`);
+        }
+        for (const tag of this.newTags) {
+            await this.exec(`tag -d ${tag}`);
         }
     }
+
+    /**
+     * Execute git command
+     * 
+     * @param command the git command
+     * @param error description of command line to print when error happens
+     */
+    private async exec(command: string, error?: string) {
+        return exec(`git ${command}`, this.resolvedRoot, error);
+    }
+
 }
