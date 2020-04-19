@@ -311,7 +311,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
 
     private async createSummarizer(delayMs: number): Promise<ISummarizer | undefined> {
         const shouldDelay = delayMs > 0;
-        const shouldInitialDelay = this.opsUntilFirstConnect >= opsToBypassInitialDelay;
+        const shouldInitialDelay = this.opsUntilFirstConnect < opsToBypassInitialDelay;
         if (shouldDelay || shouldInitialDelay) {
             await Promise.all([
                 shouldInitialDelay ? this.initialDelayP : Promise.resolve(),
