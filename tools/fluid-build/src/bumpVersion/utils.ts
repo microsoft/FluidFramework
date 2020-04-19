@@ -13,8 +13,8 @@ export function fatal(error: string): never {
  * @param dir dir the directory to execute on
  * @param error description of command line to print when error happens
  */
-export async function exec(cmd: string, dir: string, error?: string) {
-    const result = await execWithErrorAsync(cmd, { cwd: dir }, "ERROR", false);
+export async function exec(cmd: string, dir: string, error?: string, pipeStdIn?: string) {
+    const result = await execWithErrorAsync(cmd, { cwd: dir }, "ERROR", false, pipeStdIn);
     if (error && result.error) {
         fatal(`ERROR: Unable to ${error}`);
     }
@@ -22,9 +22,6 @@ export async function exec(cmd: string, dir: string, error?: string) {
 }
 
 export class GitRepo {
-    public readonly newBranches: string[] = [];
-    public readonly newTags: string[] = [];
-
     constructor(public readonly resolvedRoot: string) {
     }
 
@@ -33,9 +30,18 @@ export class GitRepo {
      * 
      * @param tag the tag to add
      */
-    public async tag(tag: string) {
+    public async addTag(tag: string) {
         await this.exec(`tag ${tag}`, `adding tag ${tag}`);
-        this.newTags.push(tag);
+    }
+
+    /**
+     * Delete a tag 
+     * NOTE: this doesn't fail on error
+     * 
+     * @param tag the tag to add
+     */
+    public async deleteTag(tag: string) {
+        await this.exec(`tag ${tag}`);
     }
 
     /**
@@ -53,7 +59,16 @@ export class GitRepo {
      */
     public async createBranch(branchName: string) {
         await this.exec(`checkout -b ${branchName}`, `create branch ${branchName}`);
-        this.newBranches.push(branchName);
+    }
+
+    /**
+     * Delete a branch
+     * NOTE: this doesn't fail on error
+     * 
+     * @param branchName name of the new branch
+     */
+    public async deleteBranch(branchName: string) {
+        await this.exec(`branch -D ${branchName}`);
     }
 
     /**
@@ -71,21 +86,7 @@ export class GitRepo {
      * @param message the commit message
      */
     public async commit(message: string, error: string) {
-        await this.exec(`commit -a -m "${message}`, error);
-    }
-
-    /**
-     * Clean up new branch and new tags that was created 
-     */
-    public async cleanUp(branchName: string) {
-        await this.exec(`checkout ${branchName}`);
-
-        for (const branch of this.newBranches) {
-            await this.exec(`branch -D ${branch}`);
-        }
-        for (const tag of this.newTags) {
-            await this.exec(`tag -d ${tag}`);
-        }
+        await this.exec(`commit -a -F -`, error, message);
     }
 
     /**
@@ -94,8 +95,8 @@ export class GitRepo {
      * @param command the git command
      * @param error description of command line to print when error happens
      */
-    private async exec(command: string, error?: string) {
-        return exec(`git ${command}`, this.resolvedRoot, error);
+    private async exec(command: string, error?: string, pipeStdIn?: string) {
+        return exec(`git ${command}`, this.resolvedRoot, error, pipeStdIn);
     }
 
 }

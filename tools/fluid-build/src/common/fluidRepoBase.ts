@@ -17,9 +17,9 @@ export class FluidRepoBase {
         this.serverMonoRepo = new MonoRepo(MonoRepoKind.Server, path.join(this.resolvedRoot, "server/routerlicious"));
         this.packages = new Packages(
             [
-                ...Packages.loadDir(path.join(this.resolvedRoot, "common")), 
-                ...this.clientMonoRepo.packages, 
+                ...Packages.loadDir(path.join(this.resolvedRoot, "common")),
                 ...this.serverMonoRepo.packages,
+                ...this.clientMonoRepo.packages,
             ]
         );
     }
