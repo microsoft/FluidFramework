@@ -304,7 +304,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
             this.runningSummarizer.stop(reason);
         } else {
             // Should not be possible to hit this case
-            this.logger.sendErrorEvent({ eventName: "StopCalledWithoutRunningSummarizer" });
+            this.logger.sendErrorEvent({ eventName: "StopCalledWithoutRunningSummarizer", reason });
             this.state = SummaryManagerState.Off;
         }
     }
