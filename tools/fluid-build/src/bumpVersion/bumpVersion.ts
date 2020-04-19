@@ -38,6 +38,71 @@ let paramBumpDep = false;
 let paramBumpDepClient = false;
 let paramBumpDepServer = false;
 const paramBumpDepPackages = new Set<string>();
+let resolvedRoot: string | undefined;
+const newBranches: string[] = [];
+
+async function cleanUpNewBranches() {
+    for (const branch of newBranches) {
+        await gitExec(`branch -D ${branch}`);
+    }
+}
+
+function fatal(error: string): never {
+    const e =  new Error(error);
+    (e as any).fatal = true;
+    throw e;
+}
+
+function getResolvedRoot() {
+    if (!resolvedRoot) { fatal("Internal error, repo not loaded"); }
+    return resolvedRoot;
+}
+
+/**
+ * Execute a command. If there is an error, print error message and exit process
+ * 
+ * @param cmd Command line to execute
+ * @param dir dir the directory to execute on
+ * @param error description of command line to print when error happens
+ */
+async function exec(cmd: string, dir: string, error?: string) {
+    const result = await execWithErrorAsync(cmd, { cwd: dir }, dir, false);
+    if (error && result.error) {
+        fatal(`ERROR: Unable to ${error}`);
+    }
+    return result.stdout;
+}
+
+/**
+ * Execute git command
+ * 
+ * @param command the git command
+ * @param error description of command line to print when error happens
+ */
+async function gitExec(command: string, error?: string) {
+    return exec(`git ${command}`, getResolvedRoot(), error);
+}
+
+/**
+ * Execute git tag command
+ * 
+ * @param repo fluid repo 
+ * @param tags array of tags to add to after it is done.
+ * @param tag the tag to add
+ */
+async function gitTag(tags: string[], tag: string) {
+    await gitExec(`tag ${tag}`, `adding tag ${tag}`);
+    tags.push(tag);
+}
+
+/**
+ * Get the current git branch name
+ */
+async function getCurrentBranchName() {
+    const revParseOut = await gitExec("rev-parse --abbrev-ref HEAD", "get current branch");
+    return revParseOut.split("\n")[0];
+}
+
 
 function parseOptions(argv: string[]) {
     let error = false;
@@ -62,8 +127,7 @@ function parseOptions(argv: string[]) {
         if (arg === "-d" || arg === "--dep") {
             const dep = process.argv[++i];
             if (dep === undefined) {
-                console.error("ERROR: Missing arguments for --dep");
-                process.exit(-1);
+                fatal("ERROR: Missing arguments for --dep");
             }
             if (dep.toLowerCase() === "client") {
                 paramBumpDepClient = true;
@@ -163,70 +227,18 @@ async function bumpPackageDependencies(pkg: Package, packageMap: Map<string, Pac
     }
     return changed;
 }
-
 /**
- * Execute a command. If there is an error, print error message and exit process
- * 
- * @param cmd Command line to execute
- * @param dir dir the directory to execute on
- * @param error description of command line to print when error happens
+ * Determine either we want to bump minor on master or patch version on release/* based on branch name 
  */
-async function exec(cmd: string, dir: string, error: string) {
-    const result = await execWithErrorAsync(cmd, { cwd: dir }, dir, false);
-    if (result.error) {
-        console.error(`ERROR: Unable to ${error}`)
-        process.exit(1);
-    }
-    return result.stdout;
-}
-
-/**
- * Execute git command
- * 
- * @param command the git command
- * @param resolvedRoot the directory to run in
- * @param error description of command line to print when error happens
- */
-async function gitExec(command: string, resolvedRoot: string, error: string) {
-    return exec(`git ${command}`, resolvedRoot, error);
-}
-
-/**
- * Execute git tag command
- * 
- * @param repo fluid repo 
- * @param tags array of tags to add to after it is done.
- * @param tag the tag to add
- */
-async function gitTag(resolvedRoot: string, tags: string[], tag: string) {
-    await gitExec(`tag ${tag}`, resolvedRoot, `adding tag ${tag}`);
-    tags.push(tag);
-}
-
-/**
- * Get the current git branch name
- * @param resolvedRoot the repo root directory
- */
-async function getCurrentBranchName(resolvedRoot: string) {
-    const revParseOut = await gitExec("rev-parse --abbrev-ref HEAD", resolvedRoot, "get current branch");
-    return revParseOut.split("\n")[0];
-}
-
-/**
- * Determine either we want to bump minor on master or patch version on release/* based on branch name
- * 
- * @param resolvedRoot the repo root directory
- */
-async function getVersionBumpKind(resolvedRoot: string) {
+async function getVersionBumpKind() {
     if (paramBumpVersionKind !== undefined) {
         return paramBumpVersionKind;
     }
 
     // Determine the kind of bump
-    const branchName = await getCurrentBranchName(resolvedRoot);
+    const branchName = await getCurrentBranchName();
     if (branchName !== "master" && !branchName.startsWith("release/")) {
-        console.error(`ERROR: Unrecognized branch '${branchName}'`);
-        process.exit(2)
+        fatal(`ERROR: Unrecognized branch '${branchName}'`);
     }
     return branchName === "master" ? "minor" : "patch";
 }
@@ -292,10 +304,11 @@ async function collectionBumpInfo(repo: FluidRepoBase, packageMap: Map<string, P
     return { serverNeedBump, packageNeedBump, oldVersions };
 }
 
-async function createVersionBranch(repo: FluidRepoBase, version: string) {
+async function createVersionBranch(version: string) {
     const versionBranch = `local/${version}`
     console.log(`Creating branch ${versionBranch}`);
-    await gitExec(`checkout -b ${versionBranch}`, repo.resolvedRoot, `create branch ${versionBranch}`);
+    await gitExec(`checkout -b ${versionBranch}`, `create branch ${versionBranch}`);
+    newBranches.push(versionBranch);
     return versionBranch;
 }
 
@@ -341,12 +354,12 @@ async function bumpCurrentBranch(repo: FluidRepoBase, packageMap: Map<string, Pa
     await bumpRepo(repo, versionBump, serverNeedBump, packageNeedBump);
     await bumpGeneratorFluid(packageMap, generatorPackage, templatePackage, versionBump);
 
-    const currentBranchName = await getCurrentBranchName(repo.resolvedRoot);
+    const currentBranchName = await getCurrentBranchName();
     const newVersions = collectVersions(repo, generatorPackage, templatePackage);
     const newVersion = newVersions[MonoRepoKind[MonoRepoKind.Client]];
 
     console.log(`Committing bump version to ${newVersion} changes in ${currentBranchName}`);
-    await gitExec(`commit -a -m "Bump development version for clients to ${newVersion}"`, repo.resolvedRoot, "create bumped version commit");
+    await gitExec(`commit -a -m "Bump development version for clients to ${newVersion}"`, "create bumped version commit");
     console.log(`\nRepo Versions in branch ${currentBranchName}:`);
     for (const name in newVersions) {
         if (!oldVersions || oldVersions[name] !== newVersions[name]) {
@@ -364,8 +377,8 @@ async function bumpCurrentBranch(repo: FluidRepoBase, packageMap: Map<string, Pa
  * If --commit or --release is specified, the bumpped version changes will be committed and a release branch will be created
  */
 async function bumpVersion(repo: FluidRepoBase) {
-    const currentBranch =  await getCurrentBranchName(repo.resolvedRoot);
-    const versionBump = await getVersionBumpKind(repo.resolvedRoot);
+    const currentBranch = await getCurrentBranchName();
+    const versionBump = await getVersionBumpKind();
     console.log(`Bumping ${versionBump} version`);
 
     const packageMap = repo.createPackageMap();
@@ -374,19 +387,19 @@ async function bumpVersion(repo: FluidRepoBase) {
     const templatePackage = new Package(path.join(generatorDir, "app", "templates", "package.json"));
 
     const { serverNeedBump, packageNeedBump, oldVersions } = await collectionBumpInfo(repo, packageMap, generatorPackage, templatePackage);
-    
+
     const releaseVersion = oldVersions[MonoRepoKind[MonoRepoKind.Client]];
     let releaseBranch: string;
     if (versionBump !== "patch") {
         // This is master, we need to creating the release branch and bump the version
         const releaseBranchVersion = `${semver.major(releaseVersion)}.${semver.minor(releaseVersion)}`;
-        releaseBranch = await createVersionBranch(repo, `${releaseBranchVersion}.x`);
+        releaseBranch = await createVersionBranch(`${releaseBranchVersion}.x`);
     } else {
         releaseBranch = currentBranch;
     }
 
     // Create the release and tag
-    const pendingReleaseBranch = await createVersionBranch(repo, releaseVersion);
+    const pendingReleaseBranch = await createVersionBranch(releaseVersion);
 
     // Fix the pre-release dependency.
     console.log("Fix pre-release dependencies");
@@ -395,31 +408,31 @@ async function bumpVersion(repo: FluidRepoBase) {
         packageNeedBumpName.add(pkg.name);
     }
     if (await bumpDependencies(repo, true, serverNeedBump, packageNeedBumpName, true)) {
-        await gitExec(`commit -a -m "Remove pre-release dependencies for client release ${releaseVersion}"`, repo.resolvedRoot, "pre-release version commit");
+        await gitExec(`commit -a -m "Remove pre-release dependencies for client release ${releaseVersion}"`, "pre-release version commit");
     }
 
     const tags: string[] = [];
     console.log("Tagging release");
     for (const pkg of packageNeedBump) {
         const name = pkg.name.split("/").pop()!;
-        gitTag(repo.resolvedRoot, tags, `${name}_v${pkg.version}`);
+        gitTag(tags, `${name}_v${pkg.version}`);
     }
 
     if (serverNeedBump) {
         const serverVersion = oldVersions[MonoRepoKind[MonoRepoKind.Server]];
-        gitTag(repo.resolvedRoot, tags, `fluid-server_v${serverVersion}`);
+        gitTag(tags, `fluid-server_v${serverVersion}`);
     }
 
-    gitTag(repo.resolvedRoot, tags, `fluid-client_v${releaseVersion}`);
-    gitTag(repo.resolvedRoot, tags, `fluid-generator_v${releaseVersion}`);
+    gitTag(tags, `fluid-client_v${releaseVersion}`);
+    gitTag(tags, `fluid-generator_v${releaseVersion}`);
 
     let unreleased_branch: string | undefined;
     if (versionBump !== "patch") {
-        unreleased_branch = await createVersionBranch(repo, currentBranch);
+        unreleased_branch = await createVersionBranch(currentBranch);
         await bumpCurrentBranch(repo, packageMap, generatorPackage, templatePackage, versionBump, serverNeedBump, packageNeedBump, oldVersions);
 
         // switch package to pendingReleaseBranch
-        await gitExec(`checkout ${pendingReleaseBranch}`, repo.resolvedRoot, `switch to branch ${pendingReleaseBranch}`);
+        await gitExec(`checkout ${pendingReleaseBranch}`, `switch to branch ${pendingReleaseBranch}`);
         repo.reload();
         generatorPackage.reload();
         templatePackage.reload();
@@ -466,8 +479,7 @@ async function bumpDependencies(repo: FluidRepoBase, bumpDepClient: boolean, bum
     });
 
     if (bumpPackages.length === 0) {
-        console.error("ERROR: Unable to find dependencies to bump");
-        process.exit(-2);
+        fatal("ERROR: Unable to find dependencies to bump");
     }
 
     let changed = false;
@@ -488,7 +500,7 @@ async function main() {
 
     versionCheck();
 
-    const resolvedRoot = await getResolvedFluidRoot();
+    resolvedRoot = await getResolvedFluidRoot();
 
     // Load the package
     const repo = new FluidRepoBase(resolvedRoot);
@@ -501,8 +513,13 @@ async function main() {
 }
 
 main().catch(e => {
-    console.error("ERROR: unexpected error", JSON.stringify(e, undefined, 2))
-    if (e.stack) {
-        console.error(`Stack:\n${e.stack}`);
+    if (e.fatal) {
+        console.error(e.message);
+        cleanUpNewBranches().then(() => process.exit(-2));
+    } else {
+        console.error("ERROR: unexpected error", JSON.stringify(e, undefined, 2))
+        if (e.stack) {
+            console.error(`Stack:\n${e.stack}`);
+        }
     }
 });
