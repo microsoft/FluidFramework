@@ -206,7 +206,7 @@ const fluid = (req: express.Request, res: express.Response, baseDir: string, opt
     </div>
 
     <script src="/node_modules/@microsoft/fluid-webpack-component-loader/dist/fluid-loader.bundle.js"></script>
-    ${packageJson.fluid.browser.umd.files.map((file)=>`<script src="${file}"></script>\n`)}
+    ${packageJson.fluid.browser.umd.files.map((file)=>`<script src="/${file}"></script>\n`)}
     <script>
         var pkgJson = ${JSON.stringify(packageJson)};
         var options = ${JSON.stringify(options)};
