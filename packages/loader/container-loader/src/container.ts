@@ -58,7 +58,6 @@ import {
     raiseConnectedEvent,
 } from "@microsoft/fluid-protocol-base";
 import {
-    ConnectionMode,
     ConnectionState,
     FileMode,
     IClient,
@@ -88,7 +87,7 @@ import { Audience } from "./audience";
 import { BlobManager } from "./blobManager";
 import { ContainerContext } from "./containerContext";
 import { debug } from "./debug";
-import { DeltaManager } from "./deltaManager";
+import { IConnectionArgs, DeltaManager } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { Loader, RelativeLoader } from "./loader";
 import { NullChaincode } from "./nullRuntime";
@@ -487,11 +486,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this.blobManager = await this.loadBlobManager(this.storageService, undefined);
             this.attached = true;
 
-            const startConnectionP = this.connectToDeltaStream();
-            startConnectionP.catch((error) => {
-                debug(`Error in connecting to delta stream from unpaused case ${error}`);
-            });
-
             // We know this is create new flow.
             this._existing = false;
             this._parentBranch = this._id;
@@ -500,7 +494,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             const connected = this.connectionState === ConnectionState.Connected;
             assert(!connected || this._deltaManager.connectionMode === "read");
             this.propagateConnectionState();
-            this.resume();
+            this.resumeInternal({ fetchOpsFromStorage: false, reason: "createDetached" });
         } catch (error) {
             const err = createIError(error, true);
             this.raiseCriticalError(err);
@@ -573,7 +567,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             }
 
             // Ensure connection to web socket
-            this.connectToDeltaStream().catch((error) => {
+            this.connectToDeltaStream({ reason: "autoReconnect" }).catch((error) => {
                 // All errors are reported through events ("error" / "disconnected") and telemetry in DeltaManager
                 // So there shouldn't be a need to record error here.
                 // But we have number of cases where reconnects do not happen, and no errors are recorded, so
@@ -584,6 +578,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
 
     public resume() {
+        this.resumeInternal();
+    }
+
+    protected resumeInternal(args: IConnectionArgs = {}) {
         assert(this.loaded);
 
         if (this.closed) {
@@ -751,16 +749,15 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
     }
 
-    private async connectToDeltaStream(modeArg: ConnectionMode = "read") {
+    private async connectToDeltaStream(args: IConnectionArgs = {}) {
         this.recordConnectStartTime();
 
-        let mode = modeArg;
         // All agents need "write" access, including summarizer.
         if (!this.canReconnect || !this.client.details.capabilities.interactive) {
-            mode = "write";
+            args.mode = "write";
         }
 
-        return this._deltaManager.connect(mode);
+        return this._deltaManager.connect(args);
     }
 
     /**
@@ -786,12 +783,12 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // connections to same file) in two ways:
         // A) creation flow breaks (as one of the clients "sees" file as existing, and hits #2 above)
         // B) Once file is created, transition from view-only connection to write does not work - some bugs to be fixed.
-        const defaultConnectionMode = "write";
+        const connectionArgs: IConnectionArgs = { mode: "write" };
 
         // Start websocket connection as soon as possible. Note that there is no op handler attached yet, but the
         // DeltaManager is resilient to this and will wait to start processing ops until after it is attached.
         if (!pause) {
-            startConnectionP = this.connectToDeltaStream(defaultConnectionMode);
+            startConnectionP = this.connectToDeltaStream(connectionArgs);
             startConnectionP.catch((error) => {});
         }
 
@@ -807,7 +804,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const attributes = await this.getDocumentAttributes(this.storageService, maybeSnapshotTree);
 
         // Attach op handlers to start processing ops
-        this.attachDeltaManagerOpHandler(attributes, !specifiedVersion);
+        this.attachDeltaManagerOpHandler(attributes);
 
         // ...load in the existing quorum
         // Initialize the protocol handler
@@ -824,7 +821,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             loadDetailsP = Promise.resolve();
         } else {
             if (!startConnectionP) {
-                startConnectionP = this.connectToDeltaStream(defaultConnectionMode);
+                startConnectionP = this.connectToDeltaStream(connectionArgs);
             }
             // Intentionally don't .catch on this promise - we'll let any error throw below in the await.
             loadDetailsP = startConnectionP.then((details) => {
@@ -878,7 +875,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const proposals: [number, ISequencedProposal, string[]][] = [];
         const values: [string, ICommittedProposal][] = [["code", commitedCodeProposal]];
 
-        this.attachDeltaManagerOpHandler(attributes, false);
+        this.attachDeltaManagerOpHandler(attributes);
 
         // Need to just seed the source data in the code quorum. Quorum itself is empty
         this.protocolHandler = this.initializeProtocolState(
@@ -1140,7 +1137,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return deltaManager;
     }
 
-    private attachDeltaManagerOpHandler(attributes: IDocumentAttributes, catchUp: boolean): void {
+    private attachDeltaManagerOpHandler(attributes: IDocumentAttributes): void {
         this._deltaManager.on("closed", () => {
             this.close();
         });
@@ -1157,8 +1154,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 processSignal: (message) => {
                     this.processSignal(message);
                 },
-            },
-            catchUp);
+            });
     }
 
     private logConnectionStateChangeTelemetry(value: ConnectionState, oldState: ConnectionState, reason: string) {
