@@ -341,7 +341,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // Or request OPs from snapshot / or point zero (if we have no ops at all)
         if (this.pending.length > 0) {
             this.catchUp([], "DocumentOpen");
-        } else if (this.connection && this.connectionP) {
+        } else if (this.connection !== undefined || this.connectionP !== undefined) {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.fetchMissingDeltas("DocumentOpen", this.lastQueuedSequenceNumber);
         }
