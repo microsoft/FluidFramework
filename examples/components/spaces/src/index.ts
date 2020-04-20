@@ -6,6 +6,8 @@
 import { ContainerRuntimeFactoryWithDefaultComponent } from "@microsoft/fluid-aqueduct";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
+import { fluidExport as cmfe } from "@fluid-example/codemirror/dist/codemirror";
+import { fluidExport as pmfe } from "@fluid-example/prosemirror/dist/prosemirror";
 import {
     IProvideComponentFactory,
     NamedComponentRegistryEntries,
@@ -107,6 +109,20 @@ const generateFactory = () => {
             factory: Promise.resolve(TextBox.getFactory()),
             friendlyName: FriendlyTextBoxName,
             fabricIconName: "TextField",
+            capabilities: ["IComponentHTMLView"],
+        },
+        {
+            type: "codemirror",
+            factory: Promise.resolve(cmfe),
+            friendlyName: "Code Mirror",
+            fabricIconName: "Code",
+            capabilities: ["IComponentHTMLView"],
+        },
+        {
+            type: "prosemirror",
+            factory: Promise.resolve(pmfe),
+            friendlyName: "Prose Mirror",
+            fabricIconName: "Edit",
             capabilities: ["IComponentHTMLView"],
         },
     ];
