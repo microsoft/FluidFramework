@@ -87,10 +87,9 @@ export class PromiseCache<TKey, TResult> {
     private readonly removeOnError: (error: any) => boolean;
 
     /**
-     * Create the PromiseCache with the options provided
-     * @param options - PromiseCacheOptions with the following defaults:
-     *   expiry: indefinite policy
-     *   removeOnError: true for all errors
+     * Create the PromiseCache with the given options, with the following defaults:
+     *
+     * expiry: indefinite, removeOnError: true for all errors
      */
     constructor({
         expiry = { policy: "indefinite" },
