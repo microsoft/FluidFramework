@@ -35,6 +35,21 @@ export class WebCodeLoader implements ICodeLoader {
         }
     }
 
+    public async precacheModule(source: IFluidCodeDetails, tryPreload: boolean = false): Promise<void> {
+        const resolved = await this.codeResolver.resolveCodeDetails(source);
+        resolved.resolvedPackage.fluid.browser.umd.files.forEach((url)=>{
+            const cacheLink = document.createElement("link");
+            cacheLink.href = url;
+            cacheLink.as = "script";
+            if (tryPreload && cacheLink.relList?.contains("preload") === true) {
+                cacheLink.rel = "preload";
+            } else {
+                cacheLink.rel = "prefetch";
+            }
+            document.head.appendChild(cacheLink);
+        });
+    }
+
     /**
      * @param source - Details of where to find chaincode
      */
