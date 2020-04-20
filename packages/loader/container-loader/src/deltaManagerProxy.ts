@@ -4,15 +4,12 @@
  */
 
 import {
-    IConnectionDetails,
-    IDeltaHandlerStrategy,
     IDeltaManager,
     IDeltaQueue,
     IDeltaSender,
 } from "@microsoft/fluid-container-definitions";
 import { EventForwarder } from "@microsoft/fluid-common-utils";
 import {
-    ConnectionMode,
     IClientDetails,
     IDocumentMessage,
     ISequencedDocumentMessage,
@@ -147,19 +144,6 @@ export class DeltaManagerProxy
 
     public close(): void {
         return this.deltaManager.close();
-    }
-
-    public async connect(requestedMode: ConnectionMode): Promise<IConnectionDetails> {
-        return this.deltaManager.connect(requestedMode);
-    }
-
-    public attachOpHandler(
-        minSequenceNumber: number,
-        sequenceNumber: number,
-        handler: IDeltaHandlerStrategy,
-        resume: boolean,
-    ) {
-        return this.deltaManager.attachOpHandler(minSequenceNumber, sequenceNumber, handler, resume);
     }
 
     public submitSignal(content: any): void {

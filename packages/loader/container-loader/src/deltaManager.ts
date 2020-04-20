@@ -70,6 +70,12 @@ enum retryFor {
     DELTASTORAGE,
 }
 
+export interface IConnectionArgs {
+    mode?: ConnectionMode;
+    fetchOpsFromStorage?: boolean;
+    reason?: string;
+}
+
 /**
  * Manages the flow of both inbound and outbound messages. This class ensures that shared objects receive delta
  * messages in order regardless of possible network conditions or timings causing out of order delivery.
@@ -314,7 +320,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         minSequenceNumber: number,
         sequenceNumber: number,
         handler: IDeltaHandlerStrategy,
-        catchUp: boolean,
     ) {
         debug("Attached op handler", sequenceNumber);
 
@@ -331,17 +336,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this._inbound.systemResume();
         this._inboundSignal.systemResume();
 
-        // We are ready to process inbound messages
-        if (catchUp) {
-            // If we have pending ops from web socket, then we can use that to start download
-            // based on missing ops - catchUp() will do just that.
-            // Otherwise proactively ask storage for ops
-            if (this.pending.length > 0) {
-                this.catchUp([], "DocumentOpen");
-            } else {
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                this.fetchMissingDeltas("DocumentOpen", sequenceNumber);
-            }
+        // We could have connected to delta stream before getting here
+        // If so, it's time to process any accumulated ops
+        if (this.pending.length > 0) {
+            this.catchUp([], "DocumentOpen");
         }
     }
 
@@ -353,17 +351,36 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.inQuorum = false;
     }
 
-    public async connect(requestedMode: ConnectionMode = this.defaultReconnectionMode): Promise<IConnectionDetails> {
-        const docService = this.serviceProvider();
-        if (!docService) {
-            throw new Error("Container is not attached");
-        }
+    public async connect(args: IConnectionArgs = {}): Promise<IConnectionDetails> {
         if (this.connection) {
             return this.connection.details;
         }
 
         if (this.connectionP) {
             return this.connectionP;
+        }
+
+        const fetchOpsFromStorage = args.fetchOpsFromStorage ?? true;
+        const requestedMode = args.mode ?? this.defaultReconnectionMode;
+
+        // Note: There is race condition here.
+        // We want to issue request to storage as soon as possible, to
+        // reduce latency of becoming current, thus this code here.
+        // But there is no ordering between fetching OPs and connection to delta stream
+        // As result, we might be behind by the time we connect to delta stream
+        // In case of r/w connection, that's not an issue, because we will hear our
+        // own "join" message and realize any gap client has in ops.
+        // But for view-only connection, we have no such signal, and with no traffic
+        // on the wire, we might be always behind.
+        // See comment at the end of setupNewSuccessfulConnection()
+        if (fetchOpsFromStorage) {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            this.fetchMissingDeltas(args.reason ?? "DocumentOpen", this.lastQueuedSequenceNumber);
+        }
+
+        const docService = this.serviceProvider();
+        if (!docService) {
+            throw new Error("Container is not attached");
         }
 
         // The promise returned from connectCore will settle with a resolved DeltaConnection or reject with error
@@ -856,6 +873,22 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             connection.details.initialContents,
             connection.details.initialSignals,
             this.connectFirstConnection);
+
+        /*
+        This change will add substantial amount of traffic to storage. Not enabling it for now,
+        as the race conditions and impact on the user is rather minimal
+        Need to reevaluate in the future
+
+        // if we have some op on the wire (or will have a "join" op for ourselves for r/w connection), then client
+        // can detect it has a gap and fetch missing ops. However if we are connecting as view-only, then there
+        // is no good signal to realize if client is behind. Thus we have to hit storage to see if any ops are there.
+        if (connection.details.mode !== "write" &&
+            (connection.details.initialMessages === undefined || connection.details.initialMessages.length === 0)) {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            this.fetchMissingDeltas("Reconnect", this.lastQueuedSequenceNumber);
+        }
+        */
+
         this.connectFirstConnection = false;
     }
 
@@ -925,7 +958,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 await waitForConnectedState(delay);
             }
 
-            this.connect(requestedMode).catch((err) => {
+            this.connect({ mode: requestedMode, fetchOpsFromStorage: false }).catch((err) => {
                 // Errors are raised as "error" event and close container.
                 // Have a catch-all case in case we missed something
                 if (!this.closed) {
