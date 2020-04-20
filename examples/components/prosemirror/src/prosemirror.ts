@@ -92,6 +92,11 @@ class ProseMirrorView implements IComponentHTMLView {
     }
 }
 
+/**
+ * ProseMirror builds a fluid collaborative text editor on top of the open source text editor ProseMirror.
+ * It has its own implementation of IComponentLoadable and does not extend SharedComponent / PrimedComponent. This is
+ * done intentionally to serve as an example of exposing the URL and handle via IComponentLoadable.
+ */
 export class ProseMirror extends EventEmitter
     implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual, IProvideRichTextEditor {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {

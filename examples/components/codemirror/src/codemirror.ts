@@ -194,6 +194,11 @@ class CodemirrorView implements IComponentHTMLView {
     }
 }
 
+/**
+ * CodeMirrorComponent builds a fluid collaborative code editor on top of the open source code editor CodeMirror.
+ * It has its own implementation of IComponentLoadable and does not extend SharedComponent / PrimedComponent. This is
+ * done intentionally to serve as an example of exposing the URL and handle via IComponentLoadable.
+ */
 export class CodeMirrorComponent
     extends EventEmitter
     implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual {
