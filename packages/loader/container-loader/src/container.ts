@@ -497,9 +497,7 @@ export class Container
             this.propagateConnectionState();
             this.resume();
         } catch (error) {
-            const err = createIError(error, true);
-            this.raiseContainerError(err);
-            this.close();
+            this.close(createIError(error, true));
             throw error;
         }
     }

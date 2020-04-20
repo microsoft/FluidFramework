@@ -35,7 +35,12 @@ export class TestResolver implements IUrlResolver, IExperimentalUrlResolver {
      */
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
         const parsedUrl = new URL(request.url);
-        const documentId = parsedUrl.pathname.substr(1).split("/")[0];
+        let documentId;
+        if (request.headers?.[CreateNewHeader.createNew]) {
+            documentId = parsedUrl.pathname.substr(1).split("/")[1];
+            return this.resolveHelper(documentId);
+        }
+        documentId = parsedUrl.pathname.substr(1).split("/")[0];
         return this.resolveHelper(documentId);
     }
 
