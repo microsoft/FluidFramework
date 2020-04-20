@@ -136,7 +136,7 @@ export class OdspDocumentService implements IDocumentService, IExperimentalDocum
             driveId: odspResolvedUrl.driveId,
             siteUrl: odspResolvedUrl.siteUrl,
             filePath,
-            fileName: odspResolvedUrl.fileName,
+            filename: odspResolvedUrl.fileName,
         };
         const event = PerformanceEvent.start(logger,
             {
