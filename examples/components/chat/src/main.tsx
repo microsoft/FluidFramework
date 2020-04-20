@@ -79,7 +79,7 @@ interface IChatViewState {
 }
 
 class ChatView extends React.Component<IChatViewProps, IChatViewState> {
-    constructor(props: IChatViewProps){
+    constructor(props: IChatViewProps) {
         super(props);
         const { root } = this.props;
         this.state = { messages: root.get<IMessage[]>(MessagesKey), inputMessage: "" };
