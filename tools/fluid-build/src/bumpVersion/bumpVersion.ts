@@ -407,16 +407,19 @@ class BumpVersion {
         // Tag release
         console.log("  Tagging release");
         for (const pkg of packageNeedBump) {
-            const name = pkg.name.split("/").pop()!;
+            let name = pkg.name.split("/").pop()!;
+            if (name.startsWith("fluid-")) {
+                name = name.substring("fluid-".length);
+            }
             await this.addTag(`${name}_v${pkg.version}`);
         }
 
         if (serverNeedBump) {
             const serverVersion = oldVersions[MonoRepoKind[MonoRepoKind.Server]];
-            await this.addTag(`fluid-server_v${serverVersion}`);
+            await this.addTag(`server_v${serverVersion}`);
         }
 
-        await this.addTag(`fluid-client_v${releaseVersion}`);
+        await this.addTag(`client_v${releaseVersion}`);
 
         // ------------------------------------------------------------------------------------------------------------------
         // Create the minor version bump for development in a temporary merge/<original branch> on top of the release commit
@@ -450,6 +453,7 @@ class BumpVersion {
         // Print instruction
         // ------------------------------------------------------------------------------------------------------------------
         // TODO: automate this
+        console.log("=====================================================================================================");
         console.log(allRepoState);
         console.log("\nPush these tags in dependencies order and wait for the package to be generated between these tags");
         for (const tag of this.newTags) {
@@ -543,9 +547,10 @@ async function main() {
     try {
         if (paramBumpDep) {
             console.log("Bumping dependencies");
-            return bv.bumpDependencies("Bump dependencies version", paramBumpDepClient, paramBumpDepServer, paramBumpDepPackages);
+            await bv.bumpDependencies("Bump dependencies version", paramBumpDepClient, paramBumpDepServer, paramBumpDepPackages);
+        } else {
+            await bv.bumpVersion();
         }
-        return bv.bumpVersion();
     } catch (e) {
         if (!e.fatal) { throw e; }
         console.error(e.message);
