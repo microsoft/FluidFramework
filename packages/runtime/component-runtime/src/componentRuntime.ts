@@ -285,7 +285,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     public createChannel(id: string = uuid(), type: string): IChannel {
         this.verifyNotClosed();
 
-        assert(this.contexts.has(id), "createChannel() with existing ID");
+        assert(!this.contexts.has(id), "createChannel() with existing ID");
 
         const context = new LocalChannelContext(
             id,
@@ -466,7 +466,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                     assert(this.pendingAttach.has(attachMessage.id), "Unexpected attach (local) channel OP");
                     this.pendingAttach.delete(attachMessage.id);
                 } else {
-                    assert(this.contexts.has(attachMessage.id), "Unexpected attach channel OP");
+                    assert(!this.contexts.has(attachMessage.id), "Unexpected attach channel OP");
 
                     // Create storage service that wraps the attach data
                     const origin = message.origin ? message.origin.id : this.documentId;
