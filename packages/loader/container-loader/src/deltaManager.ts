@@ -338,8 +338,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         // We could have connected to delta stream before getting here
         // If so, it's time to process any accumulated ops
+        // Or request OPs from snapshot / or point zero (if we have no ops at all)
         if (this.pending.length > 0) {
             this.catchUp([], "DocumentOpen");
+        } else if (this.connection && this.connectionP) {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            this.fetchMissingDeltas("DocumentOpen", this.lastQueuedSequenceNumber);
         }
     }
 
@@ -373,7 +377,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // But for view-only connection, we have no such signal, and with no traffic
         // on the wire, we might be always behind.
         // See comment at the end of setupNewSuccessfulConnection()
-        if (fetchOpsFromStorage) {
+        if (fetchOpsFromStorage && this.handler) {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.fetchMissingDeltas(args.reason ?? "DocumentOpen", this.lastQueuedSequenceNumber);
         }
@@ -882,7 +886,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // if we have some op on the wire (or will have a "join" op for ourselves for r/w connection), then client
         // can detect it has a gap and fetch missing ops. However if we are connecting as view-only, then there
         // is no good signal to realize if client is behind. Thus we have to hit storage to see if any ops are there.
-        if (connection.details.mode !== "write" &&
+        if (this.handler && connection.details.mode !== "write" &&
             (connection.details.initialMessages === undefined || connection.details.initialMessages.length === 0)) {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.fetchMissingDeltas("Reconnect", this.lastQueuedSequenceNumber);
