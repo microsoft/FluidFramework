@@ -4,9 +4,9 @@
  */
 
 import {
+    ContainerRuntimeFactoryWithDefaultComponent,
     PrimedComponent,
     PrimedComponentFactory,
-    SimpleContainerRuntimeFactory,
     ContainerServiceRegistryEntries,
 } from "@microsoft/fluid-aqueduct";
 import {
@@ -166,11 +166,7 @@ export class TestHost {
     ) {
         this.deltaConnectionServer = deltaConnectionServer || LocalDeltaConnectionServer.create();
 
-        const runtimeFactory = {
-            IRuntimeFactory: undefined,
-            // eslint-disable-next-line @typescript-eslint/promise-function-async
-            instantiateRuntime: (context) => SimpleContainerRuntimeFactory.instantiateRuntime(
-                context,
+        const runtimeFactory = new ContainerRuntimeFactoryWithDefaultComponent(
                 TestRootComponent.type,
                 [
                     ...componentRegistry,
@@ -182,9 +178,8 @@ export class TestHost {
                             {}),
                     )],
                 ],
-                this.containerServiceRegistry),
-        };
-        runtimeFactory.IRuntimeFactory = runtimeFactory;
+                this.containerServiceRegistry,
+        );
 
         const store = new TestDataStore(
             new TestCodeLoader([
