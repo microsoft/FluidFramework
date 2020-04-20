@@ -112,7 +112,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         private readonly enableWorker: boolean,
         parentLogger: ITelemetryLogger,
         private readonly setNextSummarizer: (summarizer: Promise<Summarizer>) => void,
-        private readonly nextSummarizerP?: Promise<Summarizer>,
+        private nextSummarizerP?: Promise<Summarizer>,
         immediateSummary: boolean = false,
         private readonly maxRestarts: number = defaultMaxRestarts,
         initialDelayMs: number = defaultInitialDelayMs,
@@ -181,6 +181,10 @@ export class SummaryManager extends EventEmitter implements IDisposable {
             return { shouldSummarize: false, stopReason: "parentShouldNotSummarize" };
         } else if (this.disposed) {
             return { shouldSummarize: false, stopReason: "disposed" };
+        } else if (this.nextSummarizerP !== undefined) {
+            // This client has just come from a context reload, which means its
+            // summarizer client did as well.  We need to call start to rebind them.
+            return { shouldSummarize: true, shouldStart: true };
         } else if (this.quorumHeap.getSummarizerCount() > 0) {
             // Need to wait for any other existing summarizer clients to close,
             // because they can live longer than their parent container.
@@ -277,6 +281,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
             runningSummarizerEvent.cancel({}, error);
         }).finally(() => {
             this.runningSummarizer = undefined;
+            this.nextSummarizerP = undefined;
             this.tryRestart();
         });
 
