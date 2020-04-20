@@ -11,6 +11,7 @@ export * from "./eventForwarder";
 export * from "./hashFile";
 export * from "./heap";
 export * from "./logger";
+export * from "./promiseCache";
 export * from "./promises";
 export * from "./rangeTracker";
 export * from "./rateLimiter";
