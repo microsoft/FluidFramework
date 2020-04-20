@@ -14,22 +14,15 @@ import {
     isFluidPackage,
 } from "@microsoft/fluid-container-definitions";
 import { Container } from "@microsoft/fluid-container-loader";
-import { IDocumentServiceFactory, IUrlResolver } from "@microsoft/fluid-driver-definitions";
-import { TestDocumentServiceFactory, TestResolver } from "@microsoft/fluid-local-driver";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
-import { SessionStorageDbFactory } from "@microsoft/fluid-local-test-utils";
+import { IDocumentServiceFactory } from "@microsoft/fluid-driver-definitions";
 import { IUser } from "@microsoft/fluid-protocol-definitions";
-import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@microsoft/fluid-routerlicious-driver";
 import { getRandomName } from "@microsoft/fluid-server-services-client";
 import { Deferred } from "@microsoft/fluid-common-utils";
-import * as jwt from "jsonwebtoken";
-import { v4 as uuid } from "uuid";
-import { OdspDocumentServiceFactory } from "@microsoft/fluid-odsp-driver";
 import { HTMLViewAdapter } from "@microsoft/fluid-view-adapters";
-import { InsecureUrlResolver } from "@microsoft/fluid-test-runtime-utils";
 import { extractPackageIdentifierDetails } from "@microsoft/fluid-web-code-loader";
 import { IComponent } from "@microsoft/fluid-component-core-interfaces";
-import { OdspUrlResolver } from "./odspUrlResolver";
+import { MultiUrlResolver } from "./multiResolver";
+import { getDocumentServiceFactory } from "./multiDocumentServiceFactory";
 
 export interface IDevServerUser extends IUser {
     name: string;
@@ -82,11 +75,6 @@ export type RouteOptions =
     | ITinyliciousRouteOptions
     | IOdspRouteOptions;
 
-const getUser = (): IDevServerUser => ({
-    id: uuid(),
-    name: getRandomName(),
-});
-
 function wrapIfComponentPackage(packageJson: IFluidPackage, fluidModule: IFluidModule): IFluidModule {
     if (fluidModule.fluidExport.IRuntimeFactory === undefined) {
         const componentFactory = fluidModule.fluidExport.IComponentFactory;
@@ -105,53 +93,6 @@ function wrapIfComponentPackage(packageJson: IFluidPackage, fluidModule: IFluidM
         };
     }
     return fluidModule;
-}
-
-function getUrlResolver(
-    options: RouteOptions,
-    connection: ILocalDeltaConnectionServer,
-): IUrlResolver {
-    switch (options.mode) {
-        case "docker":
-            return new InsecureUrlResolver(
-                "http://localhost:3000",
-                "http://localhost:3003",
-                "http://localhost:3001",
-                options.tenantId,
-                options.tenantSecret,
-                getUser(),
-                options.bearerSecret);
-
-        case "r11s":
-            return new InsecureUrlResolver(
-                options.fluidHost,
-                options.fluidHost.replace("www", "alfred"),
-                options.fluidHost.replace("www", "historian"),
-                options.tenantId,
-                options.tenantSecret,
-                getUser(),
-                options.bearerSecret);
-
-        case "tinylicious":
-            return new InsecureUrlResolver(
-                "http://localhost:3000",
-                "http://localhost:3000",
-                "http://localhost:3000",
-                "tinylicious",
-                "12345",
-                getUser(),
-                options.bearerSecret);
-
-        case "spo":
-        case "spo-df":
-            return new OdspUrlResolver(
-                options.server,
-                { accessToken: options.odspAccessToken },
-                options.driveId);
-
-        default: // Local
-            return new TestResolver(connection);
-    }
 }
 
 // Invoked by `start()` when the 'double' option is enabled to create the side-by-side panes.
@@ -196,43 +137,6 @@ class WebpackCodeResolver implements IFluidCodeResolver {
     }
 }
 
-function getDocumentServiceFactory(documentId: string, options: RouteOptions) {
-    let documentServiceFactory: IDocumentServiceFactory;
-    let deltaConn: ILocalDeltaConnectionServer;
-    switch (options.mode) {
-        case "local": {
-            deltaConn = LocalDeltaConnectionServer.create(new SessionStorageDbFactory(documentId));
-            documentServiceFactory = new TestDocumentServiceFactory(deltaConn);
-            break;
-        }
-        case "spo":
-        case "spo-df": {
-            // TODO: web socket token
-            documentServiceFactory = new OdspDocumentServiceFactory(
-                "webpack-component-loader",
-                async (siteUrl, refresh) => { return options.odspAccessToken; },
-                async (refresh) => { return options.pushAccessToken; },
-                { send: (event) => { return; } },
-                undefined,
-                undefined,
-                undefined,
-                options.openMode === "detached" ? true : false,
-            );
-            break;
-        }
-        default: {
-            documentServiceFactory = new RouterliciousDocumentServiceFactory(
-                false,
-                new DefaultErrorTracking(),
-                false,
-                true,
-                undefined,
-            );
-        }
-    }
-    return { documentServiceFactory, connection: deltaConn };
-}
-
 export async function start(
     documentId: string,
     packageJson: IFluidPackage,
@@ -243,17 +147,22 @@ export async function start(
     textArea: HTMLTextAreaElement,
     attached: boolean,
 ): Promise<void> {
+    let finalDocId = documentId;
     if (attached) {
         attachButton.style.display = "none";
         textArea.style.display = "none";
+    } else {
+        finalDocId = getRandomName("-");
+    }
+    if (options.mode === "local") {
+        textArea.style.display = "none";
     }
 
-    const { documentServiceFactory, connection } = getDocumentServiceFactory(documentId, options);
-
-    const urlResolver = getUrlResolver(options, connection);
+    const documentServiceFactory = getDocumentServiceFactory(finalDocId, options);
 
     // Construct a request
     const url = window.location.href;
+    const urlResolver = new MultiUrlResolver(window.location.origin, finalDocId, options);
 
     const codeDetails: IFluidCodeDetails = {
         package:packageJson,
@@ -299,7 +208,7 @@ export async function start(
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         urlDeferred.promise.then(async (containerUrl) => {
             // New documentServiceFactory for right div, same everything else
-            const docServFac2: IDocumentServiceFactory = new TestDocumentServiceFactory(connection);
+            const docServFac2: IDocumentServiceFactory = getDocumentServiceFactory(finalDocId, options);
             const hostConf2 =
             { codeResolver: new WebpackCodeResolver(options), documentServiceFactory: docServFac2, urlResolver };
 
@@ -329,9 +238,9 @@ export async function start(
     }
     if (!attached) {
         attachButton.onclick = async () => {
-            await container1.attach({ url: window.location.href })
+            await container1.attach(urlResolver.createRequestForCreateNew(finalDocId))
                 .then(() => {
-                    const text = window.location.href.replace("create", container1.id);
+                    const text = window.location.href.replace("create", finalDocId);
                     textArea.innerText = text;
                     urlDeferred.resolve(text);
                     attachButton.style.display = "none";
@@ -364,10 +273,4 @@ async function getComponentAndRender(container: Container, url: string, div: HTM
     // Render the component with an HTMLViewAdapter to abstract the UI framework used by the component
     const view = new HTMLViewAdapter(component);
     view.render(div, { display: "block" });
-}
-
-export function getUserToken(bearerSecret: string) {
-    const user = getUser();
-
-    return jwt.sign({ user }, bearerSecret);
 }

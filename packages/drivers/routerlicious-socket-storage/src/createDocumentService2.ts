@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentService } from "@microsoft/fluid-driver-definitions";
+import { IDocumentService, IResolvedUrl } from "@microsoft/fluid-driver-definitions";
 import { IErrorTrackingService } from "@microsoft/fluid-protocol-definitions";
 import { ICredentials } from "@microsoft/fluid-server-services-client";
 import { DocumentService2 } from "./documentService2";
@@ -17,6 +17,7 @@ import { TokenProvider } from "./tokens";
  *  the associated document service.
  */
 export const createDocumentService2 = (
+    resolvedUrl: IResolvedUrl,
     ordererUrl: string,
     deltaStorageUrl: string,
     gitUrl: string,
@@ -27,6 +28,7 @@ export const createDocumentService2 = (
     disableCache = false,
     historianApi = true,
     credentials?: ICredentials): IDocumentService => new DocumentService2(
+    resolvedUrl,
     ordererUrl,
     deltaStorageUrl,
     gitUrl,

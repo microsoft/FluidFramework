@@ -35,9 +35,13 @@ import {
     IDocumentStorageService,
     IError,
     IFluidResolvedUrl,
-    IExperimentalUrlResolver,
     IUrlResolver,
     IDocumentServiceFactory,
+    IExperimentalDocumentServiceFactory,
+    IExperimentalDocumentService,
+    IExperimentalUrlResolver,
+    IResolvedUrl,
+    CreateNewHeader,
 } from "@microsoft/fluid-driver-definitions";
 import {
     createIError,
@@ -135,6 +139,7 @@ export class Container
             decodeURI(docId),
             logger);
 
+        container._resolvedUrl = resolvedUrl;
         container._scopes = container.getScopes(resolvedUrl);
         container._canReconnect = !(request.headers?.[LoaderHeader.reconnect] === false);
         container.service = await serviceFactory.createDocumentService(resolvedUrl);
@@ -233,10 +238,15 @@ export class Container
     private readonly connectionTransitionTimes: number[] = [];
     private messageCountAfterDisconnection: number = 0;
     private _loadedFromVersion: IVersion | undefined;
+    private _resolvedUrl: IResolvedUrl | undefined;
 
     private lastVisible: number | undefined;
 
     private _closed = false;
+
+    public get resolvedUrl(): IResolvedUrl | undefined {
+        return this._resolvedUrl;
+    }
 
     public get loadedFromVersion(): IVersion | undefined {
         return this._loadedFromVersion;
@@ -427,19 +437,36 @@ export class Container
             throw new Error("Protocol Handler is undefined");
         }
         const protocolSummary = this.protocolHandler.captureSummary();
-        this.originalRequest = request;
-        // Actually go and create the resolved document
-        const expUrlResolver = this.urlResolver as IExperimentalUrlResolver;
-        if (!expUrlResolver?.isExperimentalUrlResolver) {
-            throw new Error("Not an Experimental UrlResolver");
+        if (!request.headers?.[CreateNewHeader.createNew]) {
+            request.headers = {
+                ...request.headers,
+                [CreateNewHeader.createNew]: {},
+            };
         }
-        const resolvedUrl = await expUrlResolver.createContainer(
-            combineAppAndProtocolSummary(appSummary, protocolSummary),
-            request);
-        try {
-            ensureFluidResolvedUrl(resolvedUrl);
-            this.service = await this.serviceFactory.createDocumentService(resolvedUrl);
+        const createNewResolvedUrl = await this.urlResolver.resolve(request);
+        ensureFluidResolvedUrl(createNewResolvedUrl);
 
+        try {
+            // Actually go and create the resolved document
+            const expDocFactory = this.serviceFactory as IExperimentalDocumentServiceFactory;
+            assert(expDocFactory?.isExperimentalDocumentServiceFactory);
+            this.service = await expDocFactory.createContainer(
+                combineAppAndProtocolSummary(appSummary, protocolSummary),
+                createNewResolvedUrl,
+                ChildLogger.create(this.subLogger, "fluid:telemetry:CreateNewContainer"),
+            );
+            const expDocService = this.service as IExperimentalDocumentService;
+            assert(expDocService?.isExperimentalDocumentService);
+            const resolvedUrl = expDocService.resolvedUrl;
+            ensureFluidResolvedUrl(resolvedUrl);
+            this._resolvedUrl = resolvedUrl;
+            const expUrlResolver = this.urlResolver as IExperimentalUrlResolver;
+            assert(expUrlResolver?.isExperimentalUrlResolver);
+            const response = await expUrlResolver.requestUrl(resolvedUrl, { url: "" });
+            if (response.status !== 200) {
+                throw new Error(`Not able to get requested Url: value: ${response.value} status: ${response.status}`);
+            }
+            this.originalRequest = { url: response.value };
             this._canReconnect = !(request.headers?.[LoaderHeader.reconnect] === false);
             const parsedUrl = parseUrl(resolvedUrl.url);
             if (!parsedUrl) {
@@ -470,9 +497,7 @@ export class Container
             this.propagateConnectionState();
             this.resume();
         } catch (error) {
-            const err = createIError(error, true);
-            this.raiseContainerError(err);
-            this.close();
+            this.close(createIError(error, true));
             throw error;
         }
     }
