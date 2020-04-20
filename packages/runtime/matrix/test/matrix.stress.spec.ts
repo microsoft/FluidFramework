@@ -94,8 +94,8 @@ describe("Matrix", () => {
                     }
 
                     if (numCols > 0 && numRows > 0) {
-                        const v = new Array(numCols * numRows).fill(0).map((_, index) => index);
-                        setCells(/* matrixIndex: */ 0, /* row: */ 0, /* col: */ 0, numCols, v);
+                        setCells(/* matrixIndex: */ 0, /* row: */ 0, /* col: */ 0, numCols,
+                            new Array(numCols * numRows).fill(0).map((_, index) => index));
                     }
                 }
 
@@ -158,8 +158,8 @@ describe("Matrix", () => {
                             // 90% probability of filling the newly inserted row with values.
                             if (float64() < 0.9) {
                                 if (numCols > 0) {
-                                    const v = values(matrix.numCols * numInserted);
-                                    setCells(matrixIndex, row, /* col: */ 0, matrix.numCols, v);
+                                    setCells(matrixIndex, row, /* col: */ 0, matrix.numCols,
+                                        values(matrix.numCols * numInserted));
                                 }
                             }
                             break;
@@ -177,8 +177,8 @@ describe("Matrix", () => {
                             // 90% probability of filling the newly inserted col with values.
                             if (float64() < 0.9) {
                                 if (numRows > 0) {
-                                    const v = values(matrix.numRows * numInserted);
-                                    setCells(matrixIndex, /* row: */ 0, col, numInserted, v);
+                                    setCells(matrixIndex, /* row: */ 0, col, numInserted,
+                                        values(matrix.numRows * numInserted));
                                 }
                             }
                             break;
@@ -189,8 +189,7 @@ describe("Matrix", () => {
                             if (numRows > 0 && numCols > 0) {
                                 const stride = int32(numCols - col - 1) + 1;
                                 const length = (int32(numRows - row - 1) + 1) * stride;
-                                const v = values(length);
-                                setCells(matrixIndex, row, col, stride, v);
+                                setCells(matrixIndex, row, col, stride, values(length));
                             }
                             break;
                         }
