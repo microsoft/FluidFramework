@@ -129,6 +129,8 @@ export class ConsensusRegisterCollection<T>
      * @returns Promise<true> if write was non-concurrent
      */
     public async write(key: string, value: T): Promise<boolean> {
+        const valueSer = this.serializeValue(value);
+
         let operationValue: IRegisterValue;
 
         if (SharedObject.is(value)) {
@@ -405,5 +407,18 @@ export class ConsensusRegisterCollection<T>
                 assert(false, "Invalid value type");
                 return Promise.reject("Invalid value type");
         }
+    }
+
+    private serializeValue(value) {
+        return this.runtime.IComponentSerializer.stringify(
+            value,
+            this.runtime.IComponentHandleContext,
+            this.handle);
+    }
+
+    private deserializeValue(content: string) {
+        return this.runtime.IComponentSerializer.parse(
+            content,
+            this.runtime.IComponentHandleContext);
     }
 }
