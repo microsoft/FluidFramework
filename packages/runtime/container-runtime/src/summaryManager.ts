@@ -208,7 +208,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
 
                     if (this.runningSummarizer) {
                         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        this.runningSummarizer.stop!(this.getStopReason());
+                        this.runningSummarizer.stop(this.getStopReason());
                     }
                 }
                 return;
@@ -259,7 +259,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
                 this.run(summarizer);
             } else {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                summarizer.stop!(this.getStopReason());
+                summarizer.stop(this.getStopReason());
                 this.state = SummaryManagerState.Off;
             }
         }, (error) => {

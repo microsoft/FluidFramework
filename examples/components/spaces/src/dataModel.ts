@@ -11,7 +11,6 @@ import {
 import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { Layout } from "react-grid-layout";
 import uuid from "uuid/v4";
-import { IComponentRegistryDetails } from "./interfaces";
 
 export interface ISpacesDataModel extends EventEmitter {
     componentList: Map<string, Layout>;
@@ -56,14 +55,11 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         private readonly createAndAttachComponent: <T extends IComponent & IComponentLoadable>(
             pkg: string,
             props?: any) => Promise<T>,
-        private readonly createAndAttachComponentWithId:
-        <T extends IComponent & IComponentLoadable>(id: string, pkg: string, props?: any) => Promise<T>,
         private readonly getComponentFromDirectory: <T extends IComponent & IComponentLoadable>(
             id: string,
             directory: IDirectory,
             getObjectFromDirectory: (id: string, directory: IDirectory) => string | IComponentHandle | undefined) =>
         Promise<T | undefined>,
-        private readonly registryDetails: IComponentRegistryDetails | undefined,
         public componentToolbarId: string,
     ) {
         super();
@@ -254,13 +250,8 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
             type,
             layout,
         };
-        let component: T;
-        if (this.registryDetails && this.registryDetails.hasCapability(type, "IComponentLoadable")) {
-            component = await this.createAndAttachComponent<T>(type);
-            defaultModel.handleOrId = component.handle;
-        } else {
-            component = await this.createAndAttachComponentWithId<T>(id, type);
-        }
+        const component = await this.createAndAttachComponent<T>(type);
+        defaultModel.handleOrId = component.handle;
         this.componentSubDirectory.set(id, defaultModel);
         return component;
     }

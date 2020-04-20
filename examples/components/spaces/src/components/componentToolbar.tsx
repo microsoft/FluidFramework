@@ -27,7 +27,7 @@ import {
 
 const componentToolbarStyle: React.CSSProperties = { position: "absolute", top: 10, left: 10, zIndex: 1000 };
 const dropDownButtonStyle: React.CSSProperties = { width: "20vh" };
-const menuButtonStyle: React.CSSProperties = {width: "20vh", height: "5vh"};
+const menuButtonStyle: React.CSSProperties = { width: "20vh", height: "5vh" };
 const editableButtonStyle: React.CSSProperties = {
     width: "20vh", height: "5vh", position: "absolute", left: 0, top: 0, margin: "1vh",
 };
@@ -149,14 +149,14 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
         }
     }
 
-    render(){
+    render() {
         const { isComponentListOpen, isTemplateListOpen, isEditable } = this.state;
 
         const componentsButton = (
             <Button
                 iconProps={{ iconName: isComponentListOpen ? "ChevronUpEnd6" : "ChevronDownEnd6" }}
                 style={menuButtonStyle}
-                onClick={() => this.setState({isComponentListOpen: !isComponentListOpen })}
+                onClick={() => this.setState({ isComponentListOpen: !isComponentListOpen })}
             >
                 {"Add Components"}
             </Button>
@@ -171,7 +171,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
                         iconProps={{ iconName: supportedComponent.fabricIconName }}
                         onClick={async () => {
                             this.emitAddComponentEvent(supportedComponent.type, 20, 5);
-                            this.setState({isComponentListOpen: false});
+                            this.setState({ isComponentListOpen: false });
                         }}
                     >
                         {supportedComponent.friendlyName}
@@ -185,7 +185,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
             <Button
                 iconProps={{ iconName: isTemplateListOpen ? "ChevronUpEnd6" : "ChevronDownEnd6" }}
                 style={menuButtonStyle}
-                onClick={() => this.setState({isTemplateListOpen: !isTemplateListOpen })}
+                onClick={() => this.setState({ isTemplateListOpen: !isTemplateListOpen })}
             >
                 {"Add Templates"}
             </Button>
@@ -193,7 +193,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
         const templateButtonList: JSX.Element[] = [];
         if (isTemplateListOpen) {
             // eslint-disable-next-line no-restricted-syntax
-            for (const template in Templates){
+            for (const template in Templates) {
                 if (template) {
                     templateButtonList.push(
                         <Button
@@ -201,7 +201,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
                             key={`componentToolbarButton-${template}`}
                             onClick={async () => {
                                 this.emitAddTemplateEvent(Templates[template]);
-                                this.setState({isTemplateListOpen: false});
+                                this.setState({ isTemplateListOpen: false });
                             }}
                         >
                             {Templates[template]}
@@ -217,7 +217,7 @@ class ComponentToolbarView extends React.Component<IComponentToolbarViewProps, I
                 <Button
                     id="edit"
                     style={editableButtonStyle}
-                    iconProps={{ iconName: "BullseyeTargetEdit"}}
+                    iconProps={{ iconName: "BullseyeTargetEdit" }}
                     onClick={() => this.emitToggleEditable()}
                 >
                     {`Edit: ${isEditable}`}

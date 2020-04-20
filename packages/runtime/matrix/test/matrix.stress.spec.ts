@@ -54,7 +54,7 @@ describe("Matrix", () => {
          *
          * 'seed' is the 32-bit integer used to seed the PRNG.
          */
-        async function stress(numClients: number, numIterations: number, syncProbability: number, seed: number) {
+        async function stress(numClients: number, numOps: number, syncProbability: number, seed: number) {
             try {
                 trace = [];
 
@@ -114,7 +114,7 @@ describe("Matrix", () => {
                 //
                 // Following each operation, there is a `syncProbability` chance that clients will exchange
                 // ops and vet convergence.
-                for (let i = 0; i < numIterations; i++) {
+                for (let i = 0; i < numOps; i++) {
                     // Choose a client to perform the operation.
                     const matrixIndex = int32(matrices.length);
                     const matrix = matrices[matrixIndex];
@@ -222,13 +222,18 @@ describe("Matrix", () => {
             }
         }
 
-        function test(numClients: number, numIterations: number, syncProbability: number, seed: number = (Math.random() * 0x100000000) >>> 0) {
-            it(`Stress (numClients=${numClients} numIterations=${numIterations} syncProbability=${syncProbability} seed=0x${seed.toString(16).padStart(8, "0")})`, async () => {
-                await stress(numClients, numIterations, syncProbability, seed);
-            });
-        }
+        for (const { numClients, numOps, syncProbability, seed } of [
+            { numClients: 2, numOps: 200, syncProbability: 0.3, seed: 0x84d43a0a },
+            { numClients: 3, numOps: 200, syncProbability: 0.1, seed: 0x655c763b },
+            { numClients: 5, numOps: 200, syncProbability: 0.0, seed: 0x2f98736d },
+        ]) {
+            it(`Stress (numClients=${numClients} numOps=${numOps} syncProbability=${syncProbability} seed=0x${seed.toString(16).padStart(8, "0")})`,
+                async function () {
+                    this.timeout(10000);
 
-        test(/* numClients: */ 3, /* numIterations: */ 500, /* syncProbability: */ 0.1, 0xa42c4fe5);
+                    await stress(numClients, numOps, syncProbability, seed);
+                });
+        }
 
         it.skip("stress-loop", async function() {
             console.log("\n*** Begin Stress-Loop ***");
@@ -236,7 +241,7 @@ describe("Matrix", () => {
 
             const start = Date.now();
             while (true) {
-                await stress(/* numClients: */ 5, /* numIterations: */ 2000, /* syncProbability: */ 0.05, (Math.random() * 0x100000000) >>> 0);
+                await stress(/* numClients: */ 5, /* numOps: */ 2000, /* syncProbability: */ 0.05, (Math.random() * 0x100000000) >>> 0);
                 console.log(matrices[0].toString());
                 console.log(`Total Elapsed: ${((Date.now() - start) / 1000).toFixed(2)}s\n`)
             }

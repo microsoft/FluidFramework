@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
+import { IUser } from "@microsoft/fluid-protocol-definitions";
 
 declare module "@microsoft/fluid-component-core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -23,13 +23,12 @@ export interface IComponentLastEditedTracker extends IProvideComponentLastEdited
     getLastEditDetails(): ILastEditDetails | undefined;
 
     /**
-     * Updates the last edit details based on the information in the message. This should be called only in response
-     * to a remote op because it uses a shared summary block as storage.
+     * Updates the details of last edit to the container.
      */
-    updateLastEditDetails(message: ISequencedDocumentMessage): void;
+    updateLastEditDetails(lastEditDetails: ILastEditDetails): void;
 }
 
 export interface ILastEditDetails {
-    clientId: string;
+    user: IUser;
     timestamp: number;
 }

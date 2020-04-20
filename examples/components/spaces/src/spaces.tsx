@@ -13,7 +13,6 @@ import {
 import {
     IComponent,
     IComponentHandle,
-    IComponentLoadable,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IProvideComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { SharedObjectSequence } from "@microsoft/fluid-sequence";
@@ -124,15 +123,6 @@ export class Spaces extends PrimedComponent
         }
     }
 
-    protected async createAndAttachComponentWithId<T extends IComponent & IComponentLoadable>(
-        id: string, pkg: string, props?: any,
-    ): Promise<T> {
-        const componentRuntime = await this.context.createComponent(id, pkg, props);
-        const component = await this.asComponent<T>(componentRuntime.request({ url: "/" }));
-        componentRuntime.attach();
-        return component;
-    }
-
     private addToolbarListeners() {
         if (this.componentToolbar && this.componentToolbar.IComponentCallable) {
             this.componentToolbar.IComponentCallable.setComponentCallbacks({
@@ -152,9 +142,7 @@ export class Spaces extends PrimedComponent
             new SpacesDataModel(
                 this.root,
                 this.createAndAttachComponent.bind(this),
-                this.createAndAttachComponentWithId.bind(this),
                 this.getComponentFromDirectory.bind(this),
-                this.registryDetails,
                 this.componentToolbarId,
             );
     }

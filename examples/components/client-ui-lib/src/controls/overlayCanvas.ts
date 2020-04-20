@@ -464,5 +464,5 @@ export class OverlayCanvas extends ui.Component {
         stroke = stroke.slice(0, -2);
         stroke += "]";
         return stroke;
-    }*/
+    } */
 }

@@ -53,4 +53,11 @@ export class IntelligentServicesManager {
             }
         });
     }
+
+    public stop() {
+        if (this.rateLimiter) {
+            this.rateLimiter.stop();
+        }
+        this.sharedString.removeAllListeners();
+    }
 }
