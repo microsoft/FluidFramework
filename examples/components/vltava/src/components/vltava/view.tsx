@@ -7,7 +7,30 @@ import { ReactViewAdapter } from "@microsoft/fluid-view-adapters";
 import * as React from "react";
 
 import { IVltavaUserDetails, IVltavaDataModel } from "./dataModel";
-import { LastEditedFacepile, VltavaFacepile } from "./facePile";
+import { VltavaFacepile } from "./facePile";
+import { LastEditedDisplay } from "./lastEditedDisplay";
+
+const viewStyle: React.CSSProperties = {
+    width: "100%",
+    height: "50px",
+    textAlign: "center",
+    borderBottom:"1px solid lightgray",
+    boxSizing:"border-box",
+};
+
+const lastEditedStyle: React.CSSProperties = {
+    position: "absolute",
+    top: 25,
+    right: 20,
+    width: 0,
+    height: 0,
+    borderLeft: "7px solid transparent",
+    borderRight: "7px solid transparent",
+    borderTop: "7px solid #3B3B3B",
+    marginTop: "5px",
+    marginLeft: "5px",
+    cursor: "pointer",
+};
 
 interface IVltavaViewProps {
     dataModel: IVltavaDataModel;
@@ -16,54 +39,21 @@ interface IVltavaViewProps {
 interface IVltavaViewState {
     users: IVltavaUserDetails[];
     view: JSX.Element;
-    lastEditedUser: IVltavaUserDetails;
-    lastEditedTime: string;
+    lastEditedUser?: IVltavaUserDetails;
+    lastEditedTime?: string;
 }
 
 export class VltavaView extends React.Component<IVltavaViewProps,IVltavaViewState> {
     constructor(props: IVltavaViewProps) {
         super(props);
 
-        let lastEditedUser = props.dataModel.getLastEditedUser();
-        if (lastEditedUser === undefined) {
-            lastEditedUser = {
-                name: "",
-                colorCode: 0,
-            };
-        }
-
-        let lastEditedTime = props.dataModel.getLastEditedTime();
-        if (lastEditedTime === undefined) {
-            lastEditedTime = "";
-        }
         this.state = {
             users: props.dataModel.getUsers(),
             view: <div/>,
-            lastEditedUser,
-            lastEditedTime,
         };
-    }
 
-    private setLastEditedState(lastEditDetails: ILastEditDetails) {
-        const lastEditedUser = this.props.dataModel.getUser(lastEditDetails.clientId);
-        if (lastEditedUser) {
-            const date = new Date(lastEditDetails.timestamp);
-            const lastEditedTime = date.toUTCString();
-
-            this.setState({
-                users: props.dataModel.getUsers(),
-            });
-        });
-
-        props.dataModel.on("lastEditedChanged", () => {
-            const user = props.dataModel.getLastEditedUser();
-            const time = props.dataModel.getLastEditedTime();
-            if (user && time) {
-                this.setState({
-                    lastEditedUser: user,
-                    lastEditedTime: time,
-                });
-            }
+        props.dataModel.on("membersChanged", (users) => {
+            this.setState({ users });
         });
     }
 
@@ -74,24 +64,44 @@ export class VltavaView extends React.Component<IVltavaViewProps,IVltavaViewStat
         });
     }
 
+    private setLastEditedState() {
+        const lastEditedUser = this.props.dataModel.getLastEditedUser();
+        const lastEditedTime = this.props.dataModel.getLastEditedTime();
+        if (lastEditedUser && lastEditedTime) {
+            this.setState({
+                lastEditedUser,
+                lastEditedTime,
+            });
+        }
+    }
+
+    private resetLastEditedState() {
+        this.setState({
+            lastEditedUser: undefined,
+            lastEditedTime: undefined,
+        });
+    }
+
     render() {
         return (
             <div>
-                <div
-                    style={{
-                        width: "100%",
-                        height: "50px",
-                        textAlign: "center",
-                        borderBottom:"1px solid lightgray",
-                        boxSizing:"border-box" }}
-                >
+                <div style = {viewStyle}>
                     <div>
                         <h2>
                             {this.props.dataModel.getTitle()}
                         </h2>
                     </div>
                     <VltavaFacepile users={this.state.users}/>
-                    <LastEditedFacepile user={this.state.lastEditedUser} time={this.state.lastEditedTime}/>
+                </div>
+                <div
+                    onMouseOver = {() => {
+                        this.setLastEditedState();
+                    }}
+                    onMouseOut = {() => {
+                        this.resetLastEditedState();
+                    }}>
+                    <span style = {lastEditedStyle}></span>
+                    <LastEditedDisplay user={this.state.lastEditedUser} time={this.state.lastEditedTime}/>
                 </div>
                 {this.state.view}
             </div>

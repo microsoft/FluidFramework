@@ -6,7 +6,7 @@
 import { EventEmitter } from "events";
 
 import { IComponent, IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { IComponentLastEditedTracker, ILastEditDetails } from "@microsoft/fluid-last-edited-experimental";
+import { IComponentLastEditedTracker } from "@microsoft/fluid-last-edited-experimental";
 import {
     IComponentContext,
     IComponentRuntime,
@@ -29,12 +29,9 @@ export interface IVltavaDataModel extends EventEmitter {
 
 export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
     private readonly quorum: IQuorum;
-    private readonly users: Map<string, IVltavaUserDetails> = new Map();
-    private lastEditedUser: IVltavaUserDetails | undefined;
-    private lastEditedTime: string | undefined;
-    private refColorCode = 0;
+    private users: IVltavaUserDetails[] = [];
 
-    public on(event: "membersChanged", listener: () => void): this;
+    public on(event: "membersChanged", listener: (users: Map<string, ISequencedClient>) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
     }
@@ -48,27 +45,13 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
         super();
 
         this.quorum = runtime.getQuorum();
-        this.quorum.getMembers().forEach((member: ISequencedClient, clientId: string) => {
-            this.addUser(clientId, member);
+        this.quorum.on("addMember", () => {
+            const users = this.getUsers();
+            this.emit("membersChanged", users);
         });
-
-        this.quorum.on("addMember", (clientId: string, member: ISequencedClient) => {
-            this.addUser(clientId, member);
-            this.emit("membersChanged");
-        });
-        this.quorum.on("removeMember", (clientId) => {
-            this.removeUser(clientId);
-            this.emit("membersChanged");
-        });
-
-        const details = this.lastEditedTracker.getLastEditDetails();
-        if (details) {
-            this.setLastEditedState(details);
-        }
-
-        this.lastEditedTracker.on("lastEditedChanged", (lastEditDetails: ILastEditDetails) => {
-            this.setLastEditedState(lastEditDetails);
-            this.emit("lastEditedChanged");
+        this.quorum.on("removeMember", () => {
+            const users = this.getUsers();
+            this.emit("membersChanged", users);
         });
     }
 
@@ -81,38 +64,45 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
     }
 
     public getUsers(): IVltavaUserDetails[] {
-        const users: IVltavaUserDetails[] = [];
-        this.users.forEach((user: IVltavaUserDetails) => {
-            users.push(user);
+        this.users = [];
+        let refColorCode = 0;
+        const members = this.quorum.getMembers();
+        members.forEach((value) => {
+            if (value.client.details?.capabilities?.interactive) {
+                const user: IVltavaUserDetails = {
+                    name: (value.client.user as any).name,
+                    colorCode: refColorCode++,
+                };
+                this.users.push(user);
+            }
         });
-        return users;
+        return this.users;
     }
 
     public getLastEditedUser(): IVltavaUserDetails | undefined {
-        return this.lastEditedUser;
+        const lastEditedDetails = this.lastEditedTracker.getLastEditDetails();
+        if (lastEditedDetails) {
+            const userName = (lastEditedDetails.user as any).name;
+            let colorCode = 0;
+            this.users.forEach((userDetails: IVltavaUserDetails) => {
+                if (userDetails.name === userName) {
+                    colorCode = userDetails.colorCode;
+                }
+            });
+            return {
+                name: userName,
+                colorCode,
+            };
+        }
+        return undefined;
     }
 
     public getLastEditedTime(): string | undefined {
-        return this.lastEditedTime;
-    }
-
-    private addUser(clientId: string, member: ISequencedClient) {
-        if (member && member.client.details?.capabilities?.interactive) {
-            const userDetails: IVltavaUserDetails = {
-                name: (member.client.user as any).name,
-                colorCode: this.refColorCode++,
-            };
-            this.users.set(clientId, userDetails);
+        const lastEditedDetails = this.lastEditedTracker.getLastEditDetails();
+        if (lastEditedDetails) {
+            const date = new Date(lastEditedDetails.timestamp);
+            return date.toUTCString();
         }
-    }
-
-    private removeUser(clientId: string) {
-        this.users.delete(clientId);
-    }
-
-    private setLastEditedState(lastEditDetails: ILastEditDetails) {
-        this.lastEditedUser = this.users.get(lastEditDetails.clientId);
-        const date = new Date(lastEditDetails.timestamp);
-        this.lastEditedTime = date.toUTCString();
+        return undefined;
     }
 }
