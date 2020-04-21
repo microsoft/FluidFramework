@@ -250,6 +250,7 @@ export class ConsensusRegisterCollection<T>
 
     protected onConnect(pending: any[]) {
         // resubmit non-acked messages
+        assert(pending.length === this.promiseResolveQueue.length);
         for (const record of this.promiseResolveQueue) {
             record.clientSequenceNumber = this.submitLocalMessage(record.message);
         }
@@ -351,11 +352,8 @@ export class ConsensusRegisterCollection<T>
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const pending = this.promiseResolveQueue.shift()!;
         assert(pending);
-        /* eslint-disable @typescript-eslint/indent */
-        assert(message.clientSequenceNumber === -1
-            || message.clientSequenceNumber === pending.clientSequenceNumber,
-            `${message.clientSequenceNumber} !== ${pending.clientSequenceNumber}`);
-        /* eslint-enable @typescript-eslint/indent */
+        assert(message.clientSequenceNumber === pending.clientSequenceNumber,
+            "ConsensusRegistryCollection: unexpected ack");
         pending.resolve(winner);
     }
 

@@ -17,12 +17,12 @@ export type PromiseCacheExpiry = {
 };
 
 /**
- * @member expiry - Common expiration policy for all items added to this cache
- * @member removeOnError - If the stored Promise is rejected with a particular error,
- * should the given key be removed?
+ * Options for configuring the PromiseCache
  */
 export interface PromiseCacheOptions {
+    /** Common expiration policy for all items added to this cache */
     expiry?: PromiseCacheExpiry,
+    /** If the stored Promise is rejected with a particular error, should the given key be removed? */
     removeOnError?: (e: any) => boolean,
 }
 
@@ -87,10 +87,9 @@ export class PromiseCache<TKey, TResult> {
     private readonly removeOnError: (error: any) => boolean;
 
     /**
-     * Create the PromiseCache with the options provided
-     * @param param0 - PromiseCacheOptions with the following default values:
-     *   expiry = { policy: "indefinite" },
-     *   removeOnError = () => true,
+     * Create the PromiseCache with the given options, with the following defaults:
+     *
+     * expiry: indefinite, removeOnError: true for all errors
      */
     constructor({
         expiry = { policy: "indefinite" },

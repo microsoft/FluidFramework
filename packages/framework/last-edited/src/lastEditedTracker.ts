@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { Jsonable } from "@microsoft/fluid-runtime-definitions";
 import { SharedSummaryBlock } from "@microsoft/fluid-shared-summary-block";
 import { IComponentLastEditedTracker, ILastEditDetails } from "./interfaces";
 
@@ -36,6 +35,6 @@ export class LastEditedTracker implements IComponentLastEditedTracker {
      * {@inheritDoc ILastEditedTracker.updateLastEditDetails}
      */
     public updateLastEditDetails(lastEditDetails: ILastEditDetails) {
-        this.sharedSummaryBlock.set(this.lastEditedDetailsKey, lastEditDetails as unknown as Jsonable);
+        this.sharedSummaryBlock.set(this.lastEditedDetailsKey, lastEditDetails);
     }
 }

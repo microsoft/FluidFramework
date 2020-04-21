@@ -195,6 +195,15 @@ export interface IComponentRuntime extends
     error(err: any): void;
 }
 
+export interface IExperimentalComponentRuntime extends IComponentRuntime {
+    readonly isExperimentalComponentRuntime: true;
+
+    /**
+     * Indicates whether the container is attached to storage.
+     */
+    isLocal(): boolean;
+}
+
 export interface ISummaryTracker {
     /**
      * The reference sequence number of the most recent acked summary.
@@ -338,6 +347,15 @@ export interface IComponentContext extends EventEmitter {
      * @param address - The address of the channe that is dirty.
      */
     setChannelDirty(address: string): void;
+}
+
+export interface IExperimentalComponentContext extends IComponentContext {
+    readonly isExperimentalComponentContext: true;
+
+    /**
+     * It is false if the container is not attached to storage and the component is attached to container.
+     */
+    isLocal(): boolean;
 }
 
 /**
@@ -504,4 +522,14 @@ export interface IHostRuntime extends
      * @param content - Content of the signal.
      */
     submitSignal(type: string, content: any): void;
+}
+
+export interface IExperimentalHostRuntime extends IHostRuntime {
+
+    isExperimentalHostRuntime: true;
+
+    /**
+     * It is false if the container is not attached to storage and the component is attached to container.
+     */
+    isLocal(): boolean;
 }

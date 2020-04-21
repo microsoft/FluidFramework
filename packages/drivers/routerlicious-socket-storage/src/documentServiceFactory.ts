@@ -3,15 +3,23 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { parse } from "url";
 import {
     IDocumentService,
     IDocumentServiceFactory,
     IResolvedUrl,
+    IExperimentalDocumentServiceFactory,
 } from "@microsoft/fluid-driver-definitions";
-import { IErrorTrackingService } from "@microsoft/fluid-protocol-definitions";
+import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
+import { IErrorTrackingService, ISummaryTree } from "@microsoft/fluid-protocol-definitions";
 import { ICredentials, IGitCache } from "@microsoft/fluid-server-services-client";
-import { ensureFluidResolvedUrl } from "@microsoft/fluid-driver-utils";
+import {
+    ensureFluidResolvedUrl,
+    getDocAttributesFromProtocolSummary,
+    getQuorumValuesFromProtocolSummary,
+} from "@microsoft/fluid-driver-utils";
+import Axios from "axios";
 import { DocumentService } from "./documentService";
 import { DocumentService2 } from "./documentService2";
 import { DefaultErrorTracking } from "./errorTracking";
@@ -21,7 +29,10 @@ import { TokenProvider } from "./tokens";
  * Factory for creating the routerlicious document service. Use this if you want to
  * use the routerlicious implementation.
  */
-export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
+export class RouterliciousDocumentServiceFactory implements
+    IDocumentServiceFactory, IExperimentalDocumentServiceFactory
+{
+    public readonly isExperimentalDocumentServiceFactory = true;
     public readonly protocolName = "fluid:";
     constructor(
         private readonly useDocumentService2: boolean = false,
@@ -31,6 +42,36 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         private readonly gitCache: IGitCache | null = null,
         private readonly credentials?: ICredentials,
     ) {
+    }
+
+    public async createContainer(
+        createNewSummary: ISummaryTree,
+        resolvedUrl: IResolvedUrl,
+        logger: ITelemetryLogger,
+    ): Promise<IDocumentService> {
+        ensureFluidResolvedUrl(resolvedUrl);
+        assert(resolvedUrl.endpoints.ordererUrl);
+        const parsedUrl = parse(resolvedUrl.url);
+        if (!parsedUrl.pathname) {
+            throw new Error("Parsed url should contain tenant and doc Id!!");
+        }
+        const [, tenantId, id] = parsedUrl.pathname.split("/");
+        const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
+        const appSummary = createNewSummary.tree[".app"] as ISummaryTree;
+        if (!(protocolSummary && appSummary)) {
+            throw new Error("Protocol and App Summary required in the full summary");
+        }
+        const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
+        const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
+        await Axios.post(
+            `${resolvedUrl.endpoints.ordererUrl}/documents/${tenantId}`,
+            {
+                id,
+                summary: appSummary,
+                sequenceNumber: documentAttributes.sequenceNumber,
+                values: quorumValues,
+            });
+        return this.createDocumentService(resolvedUrl);
     }
 
     /**
@@ -68,6 +109,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 
         if (this.useDocumentService2) {
             return new DocumentService2(
+                fluidResolvedUrl,
                 ordererUrl,
                 deltaStorageUrl,
                 storageUrl,
@@ -80,6 +122,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 documentId);
         } else {
             return new DocumentService(
+                fluidResolvedUrl,
                 ordererUrl,
                 deltaStorageUrl,
                 storageUrl,
