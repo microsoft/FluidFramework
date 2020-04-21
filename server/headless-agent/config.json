@@ -36,7 +36,7 @@
         "packageUrl": "http://auspkn:3000",
         "blobStorageUrl": "http://historian:3000",
         "repository": "FluidFramework",
-        "permission": ["chain-snapshot", "chain-spell", "chain-intel", "chain-translation", "chain-cache", "chain-search"],
+        "permission": ["chain-snapshot", "chain-spell", "chain-intel", "chain-translation", "chain-cache"],
         "key": "VBQyoGpEYrTn3XQPtXW3K8fFDd"
     },
     "tmz": {
@@ -44,9 +44,7 @@
         "agentExchange": "agentExchange"
     },
     "headless-agent": {
-        "queue": "headlessQueue",
-        "searchEndpoint": "DefaultEndpointsProtocol=https;AccountName=searchhtml;AccountKey=+Yf1Ab6JmGu/VfSVyBs6pyD+fYE4KlVkpVOPwsdLFpSAXy2Ex6r1caeaMobVg5bFgAwlU59XfA9+SLckSIK0xA==;EndpointSuffix=core.windows.net",
-        "searchContainer": "localsearch"
+        "queue": "headlessQueue"
     },
     "rabbitmq": {
         "connectionString": "amqp://rabbitmq"
