@@ -6,7 +6,6 @@
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { ICombiningOp, PropertySet } from "@microsoft/fluid-merge-tree";
-import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { CellRange } from "./cellrange";
 import { ConfigKey } from "./configKey";
 import { TableDocument } from "./document";
@@ -29,6 +28,7 @@ export class TableSlice extends PrimedComponent implements ITable {
         TableSliceType,
         TableSlice,
         [],
+        {},
     );
 
     public get name() { return this.root.get(ConfigKey.name); }
@@ -41,10 +41,6 @@ export class TableSlice extends PrimedComponent implements ITable {
 
     private maybeDoc?: TableDocument;
     private maybeValues?: CellRange;
-
-    constructor(runtime: IComponentRuntime, context: IComponentContext) {
-        super(runtime, context);
-    }
 
     public evaluateCell(row: number, col: number): TableDocumentItem {
         this.validateInSlice(row, col);

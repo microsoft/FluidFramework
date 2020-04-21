@@ -47,7 +47,7 @@ If you are using Windows, install vsts-npm-auth globally using the following com
 
 `npm install -g vsts-npm-auth --registry https://registry.npmjs.com --always-auth false`
 
-This tool is used to simplify the use of [authenticated NPM feeds](./package-feed.md).
+This tool is used to simplify the use of [authenticated npm feeds](./package-feed.md).
 
 #### Install a code editor
 

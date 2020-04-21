@@ -41,6 +41,7 @@ export class Spaces extends PrimedComponent
         [
             SharedObjectSequence.getFactory(),
         ],
+        {},
         [[ ComponentToolbarName, Promise.resolve(ComponentToolbar.getFactory()) ]],
     );
 

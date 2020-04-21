@@ -10,6 +10,7 @@
 - [Change to the ErrorType enum on IError](#Change-to-the-ErrorType-enum-on-IError)
 - [Changes to createComponent in IComponentContext, IHostRuntime, and ComponentRuntime](#Change-to-createComponent-in-IComponentContext-IHostRuntime-and-ComponentRuntime)
 - [ContainerRuntime and LocalComponentContext createProps removal](#ContainerRuntime-and-LocalComponentContext-createProps-removal)
+- [Providers in Aqueduct](#Providers-in-Aqueduct)
 
 ### View interfaces moved to separate package
 
@@ -127,6 +128,24 @@ export class ClickerWithInitialValueFactory extends PrimedComponentFactory {
 }
 ```
 Components should ensure that only strongly typed initial state objects are provided.  `SharedComponentFactory` and `PrimedComponentFactory` do not provide a way to supply a generic initial state, and component consumers must have access to the specific component factory in order to create with initial state.
+
+### Providers in Aqueduct
+
+Aqueduct now supports the Providers pattern. Providers are a replacement and extension for the existing Container Services pattern. Providers allow Components developers to have strongly typed objects passed into them from the Container and allows Container developers to inject IComponent keyed objects
+into the Container.
+
+Because of this change developers that consume `SharedComponentFactory` or `PrimedComponentFactory` now have to modify their signature to include the symbols for providers they are including. For integration there will be no symbols so it will be an empty object.
+
+```typescript
+export const MyClickerFactory = new PrimedComponentFactory(
+    Clicker.ComponentName
+    Clicker,
+    [], // Distributed Data Structures
+    {}, // Provider Symbols
+);
+```
+
+See Aqueduct README for further details.
 
 ## 0.15 Breaking Changes
 

@@ -7,10 +7,6 @@ import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aquedu
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { ICombiningOp, IntervalType, LocalReference, PropertySet } from "@microsoft/fluid-merge-tree";
 import {
-    IComponentContext,
-    IComponentRuntime,
-} from "@microsoft/fluid-runtime-definitions";
-import {
     positionToRowCol,
     rowColToPosition,
     SharedNumberSequence,
@@ -34,7 +30,7 @@ export interface ITableDocumentEvents extends IEvent{
         listener: (delta: SequenceDeltaEvent, target: SharedNumberSequence | SparseMatrix) => void);
 }
 
-export class TableDocument extends PrimedComponent<ITableDocumentEvents> implements ITable {
+export class TableDocument extends PrimedComponent<{},ITableDocumentEvents> implements ITable {
     public static getFactory() { return TableDocument.factory; }
 
     private static readonly factory = new PrimedComponentFactory(
@@ -44,6 +40,7 @@ export class TableDocument extends PrimedComponent<ITableDocumentEvents> impleme
             SparseMatrix.getFactory(),
             SharedNumberSequence.getFactory(),
         ],
+        {},
         undefined,
         true,
     );
@@ -58,10 +55,6 @@ export class TableDocument extends PrimedComponent<ITableDocumentEvents> impleme
     private maybeCols?: SharedNumberSequence;
     private maybeMatrix?: SparseMatrix;
     private maybeWorkbook?: ISheetlet;
-
-    constructor(runtime: IComponentRuntime, context: IComponentContext) {
-        super(runtime, context);
-    }
 
     public evaluateCell(row: number, col: number): TableDocumentItem {
         try {

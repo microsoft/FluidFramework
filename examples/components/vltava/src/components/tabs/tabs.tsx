@@ -18,7 +18,7 @@ export const TabsName = "tabs";
 export class TabsComponent extends PrimedComponent implements IComponentHTMLView {
     private dataModelInternal: ITabsDataModel | undefined;
 
-    private static readonly factory = new PrimedComponentFactory(TabsName, TabsComponent, []);
+    private static readonly factory = new PrimedComponentFactory(TabsName, TabsComponent, [], {});
 
     public static getFactory() {
         return TabsComponent.factory;

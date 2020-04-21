@@ -2,7 +2,7 @@
 uid: package-feed
 ---
 
-# Fluid private NPM feed
+# Fluid private npm feed
 
 <vue-markdown v-if="$themeConfig.DOCS_AUDIENCE === 'internal'">
 
@@ -26,7 +26,7 @@ On Windows, all of the [Fluid tutorials](../examples/README.md) include npm task
 have [installed vsts-npm-auth globally](./README.md#install-vsts-npm-auth-windows-only), then run the following command
 from the tutorial folder: `npm run auth`
 
-Once the command succeeds, you can proceed to `npm install` dependencies from the private NPM feed.
+Once the command succeeds, you can proceed to `npm install` dependencies from the private npm feed.
 
 If the `npm run auth` command fails, you can follow the instructions for macOS and Linux.
 

@@ -178,7 +178,7 @@ Optional types will return a Promise to it's corresponding IComponent object or 
 ```typescript
 const dc = new DependencyContainer();
 
-const s = dc.synthesize({IComponentFoo}, {});
+const s = dc.synthesize<IComponentFoo>({IComponentFoo}, {});
 const foo = await s.IComponentFoo;
 console.log(foo?.foo);
 ```
@@ -195,7 +195,7 @@ You can see below that we don't need to add the `?` to check our requested type.
 ```typescript
 const dc = new DependencyContainer();
 
-const scope = dc.synthesize({}, {IComponentFoo});
+const scope = dc.synthesize<{}, IComponentFoo>({}, {IComponentFoo});
 const foo = await s.IComponentFoo;
 console.log(foo.foo);
 ```
@@ -207,7 +207,7 @@ You can declare multiple types for both Optional and Required using the `&` or c
 ```typescript
 const dc = new DependencyContainer();
 
-const scope = dc.synthesize({IComponentFoo, IComponentBar}, {});
+const scope = dc.synthesize<IComponentFoo & IComponentBar>({IComponentFoo, IComponentBar}, {});
 const fooP = s.IComponentFoo;
 const barP = s.IComponentBar;
 const [foo, bar] = Promise.all([foo, bar]);
@@ -218,7 +218,7 @@ console.log(bar?.bar);
 ```typescript
 const dc = new DependencyContainer();
 
-const scope = dc.synthesize({}, {IComponentFoo, IComponentBar});
+const scope = dc.synthesize<{}, IComponentFoo & IComponentBar>({}, {IComponentFoo, IComponentBar});
 const fooP = s.IComponentFoo;
 const barP = s.IComponentBar;
 const [foo, bar] = Promise.all([foo, bar]);
@@ -229,7 +229,7 @@ console.log(bar.bar);
 ```typescript
 const dc = new DependencyContainer();
 
-const scope = dc.synthesize({IComponentFoo}, {IComponentBar});
+const scope = dc.synthesize<IComponentFoo, IComponentBar>({IComponentFoo}, {IComponentBar});
 const fooP = s.IComponentFoo;
 const barP = s.IComponentBar;
 const [foo, bar] = Promise.all([foo, bar]);

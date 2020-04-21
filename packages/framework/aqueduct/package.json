@@ -63,6 +63,7 @@
     "@microsoft/fluid-map": "^0.16.0",
     "@microsoft/fluid-runtime-definitions": "^0.16.0",
     "@microsoft/fluid-shared-object-base": "^0.16.0",
+    "@microsoft/fluid-synthesize": "^0.16.0",
     "uuid": "^3.3.2"
   },
   "devDependencies": {

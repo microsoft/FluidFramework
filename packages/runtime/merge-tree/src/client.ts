@@ -1023,14 +1023,11 @@ export class Client {
         return this.getCollabWindow().clientId;
     }
 
-    getLength() {
-        const segmentWindow = this.getCollabWindow();
-        return this.mergeTree.getLength(segmentWindow.currentSeq, segmentWindow.clientId);
-    }
+    getLength() { return this.mergeTree.length; }
 
     startOrUpdateCollaboration(longClientId: string | undefined, minSeq = 0, currentSeq = 0, branchId = 0) {
         // we should always have a client id if we are collaborating
-        // if the client id is undefined we are likley bound to a detached
+        // if the client id is undefined we are likely bound to a detached
         // container, so we should keep going in local mode. once
         // the container attaches this will be called again on connect with the
         // client id

@@ -15,7 +15,7 @@ of code.
 
 ## Build steps
 
-The first (and hardest) step to get up and running is to authenticate against the Fluid private NPM feed. To do so
+The first (and hardest) step to get up and running is to authenticate against the Fluid private npm feed. To do so
 navigate to https://offnet.visualstudio.com/officenet/_packaging?feed=prague&_a=feed, click the "Connect to feed" link,
 choose "npm" and then follow the instructions.
 
@@ -190,7 +190,7 @@ export interface ICodeLoader {
 }
 ```
 
-load takes in a source string. Today this is a NPM package. But similar to npm package references is expected to
+load takes in a source string. Today this is an npm package. But similar to npm package references is expected to
 grow into git repos, tarballs, CDN links, etc... 
 
 The IChaincodeFactory is a simple interface that defines the entry point function the loader expects the code

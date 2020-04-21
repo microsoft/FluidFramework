@@ -7,7 +7,6 @@ import { Template } from "@fluid-example/flow-util-lib";
 import { TableDocument, TableDocumentType } from "@fluid-example/table-document";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import { GridView } from "./grid";
 import * as styles from "./index.css";
@@ -49,10 +48,6 @@ export class TableView extends PrimedComponent implements IComponentHTMLView {
 
     private _selectionSummary = template.get(this.templateRoot, "selectionSummary");
     public set selectionSummary(val: string) { this._selectionSummary.textContent = val; }
-
-    constructor(runtime: IComponentRuntime, context: IComponentContext) {
-        super(runtime, context);
-    }
 
     // #region IComponentHTMLView
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
@@ -104,19 +99,11 @@ export class TableView extends PrimedComponent implements IComponentHTMLView {
     }
 }
 
-export class TableViewFactory extends PrimedComponentFactory {
-    public static readonly type = tableViewType;
-    public readonly type = TableViewFactory.type;
-
-    constructor() {
-        super(
-            tableViewType,
-            TableView,
-            [],
-            [
-                [TableDocumentType, import("@fluid-example/table-document").then((m) => m.TableDocument.getFactory())],
-            ]);
-    }
-}
-
-const factory = new TableViewFactory();
+const factory = new PrimedComponentFactory(
+    tableViewType,
+    TableView,
+    [],
+    {},
+    [
+        [TableDocumentType, import("@fluid-example/table-document").then((m) => m.TableDocument.getFactory())],
+    ]);

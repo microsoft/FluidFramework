@@ -383,6 +383,8 @@ class ContainerRuntimeComponentRegistry extends ComponentRegistry {
 export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRuntime,
     IExperimentalRuntime, IExperimentalHostRuntime
 {
+    public get IHostRuntime() { return this; }
+
     public readonly isExperimentalRuntime = true;
     public readonly isExperimentalHostRuntime = true;
     /**
