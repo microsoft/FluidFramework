@@ -1624,6 +1624,11 @@ export class MergeTree {
         return this.blockLength(this.root, refSeq, clientId);
     }
 
+    /**
+     * Returns the current length of the MergeTree for the local client.
+     */
+    public get length() { return this.root.cachedLength; }
+
     getPosition(node: MergeNode, refSeq: number, clientId: number) {
         let totalOffset = 0;
         let parent = node.parent;
