@@ -366,7 +366,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
         const pending = this.promiseResolveQueue.shift()!;
         assert(pending);
         assert(message.clientSequenceNumber === pending.clientSequenceNumber,
-            `${message.clientSequenceNumber} !== ${pending.clientSequenceNumber}`);
+            "ConsensusRegistryCollection: unexpected ack");
         pending.resolve(winner);
     }
 
