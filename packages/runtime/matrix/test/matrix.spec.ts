@@ -155,6 +155,23 @@ describe("Matrix", () => {
             ]);
         });
 
+        // Vet that we can set and read back the cell in a 1x1 matrix.
+        it("out-of-bounds read must throw", async () => {
+            // Reading cell (0,0) of an empty matrix must throw.
+            assert.throws(() => { matrix.read(0, 0); });
+
+            matrix.insertRows(0, 1);
+            matrix.insertCols(0, 2);
+
+            // Reading negative indices must throw.
+            assert.throws(() => { matrix.read(-1, 0); });
+            assert.throws(() => { matrix.read(0, -1); });
+
+            // Reading past end of matrix must throw.
+            assert.throws(() => { matrix.read(1, 0);  });
+            assert.throws(() => { matrix.read(0, 2); });
+        });
+
         // Vet that we can insert a column in a 1x2 matrix.
         it("column insertion", async () => {
             matrix.insertRows(0, 1);
