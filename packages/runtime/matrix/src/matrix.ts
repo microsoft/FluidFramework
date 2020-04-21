@@ -95,6 +95,7 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
         //       array access to detect bad coordinates. (~20% faster on node v12 x64)
         if (!(rowHandle >= Handle.valid)) {
             assert(rowHandle === Handle.unallocated, "'row' out of range.");
+            assert(0 <= col && col < this.numCols, "'col' out of range.");
             return undefined;
         }
 
