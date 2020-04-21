@@ -39,7 +39,7 @@
     "@microsoft/fluid-runtime-definitions": "^0.16.0"
   },
   "devDependencies": {
-    "@microsoft/eslint-config-fluid": "^0.15.0",
+    "@microsoft/eslint-config-fluid": "^0.16.0-0",
     "@microsoft/fluid-webpack-component-loader": "^0.16.0",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",

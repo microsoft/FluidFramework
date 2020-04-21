@@ -11,7 +11,7 @@ import {
     ISequencedDocumentMessage,
     MessageType,
 } from "@microsoft/fluid-protocol-definitions";
-import { IError } from "@microsoft/fluid-driver-definitions";
+import { IError, IResolvedUrl } from "@microsoft/fluid-driver-definitions";
 import { IEvent, IEventProvider } from "@microsoft/fluid-common-definitions";
 import { IFluidCodeDetails, IFluidModule, IFluidPackage } from "./chaincode";
 import { IDeltaManager } from "./deltas";
@@ -90,9 +90,14 @@ export interface IExperimentalContainer extends IContainer {
     isExperimentalContainer: true;
 
     /**
+     * Represents the resolved url to the container.
+     */
+    resolvedUrl: IResolvedUrl | undefined;
+
+    /**
      * Flag indicating if the given container has been attached to a host service.
      */
-    isAttached(): boolean;
+    isLocal(): boolean;
 
     /**
      * Attaches the container to the provided host.

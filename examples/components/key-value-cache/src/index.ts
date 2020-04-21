@@ -49,7 +49,6 @@ declare module "@microsoft/fluid-component-core-interfaces" {
 }
 
 class KeyValue implements IKeyValue, IComponent, IComponentRouter {
-
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const kevValue = new KeyValue(runtime, context);
         await kevValue.initialize();
@@ -137,7 +136,6 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFact
         const pathForComponent = trailingSlash !== -1 ? requestUrl.substr(trailingSlash) : requestUrl;
         const component = await runtime.getComponentRuntime(componentId, true);
         return component.request({ url: pathForComponent });
-
     }
 
     public instantiateComponent(context: IComponentContext): void {

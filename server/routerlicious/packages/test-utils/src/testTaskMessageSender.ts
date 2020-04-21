@@ -23,5 +23,4 @@ export class TestTaskMessageSender implements ITaskMessageSender {
     public close(): Promise<void> {
         return Promise.resolve();
     }
-
 }

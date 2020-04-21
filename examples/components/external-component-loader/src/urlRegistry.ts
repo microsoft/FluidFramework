@@ -26,7 +26,6 @@ export class UrlRegistry implements IComponentRegistry {
     private readonly webloader = new WebCodeLoader(new SemVerCdnCodeResolver());
 
     constructor() {
-
         // Stash on the window so multiple instance can coordinate
         const loadingPackagesKey = `${UrlRegistry.WindowKeyPrefix}LoadingPackages`;
         if (window[loadingPackagesKey] === undefined) {
@@ -38,7 +37,6 @@ export class UrlRegistry implements IComponentRegistry {
     public get IComponentRegistry() { return this; }
 
     public async get(name: string): Promise<ComponentRegistryEntry | undefined> {
-
         if (!this.urlRegistryMap.has(name)) {
             this.urlRegistryMap.set(name, this.loadEntrypoint(name));
         }
@@ -46,9 +44,9 @@ export class UrlRegistry implements IComponentRegistry {
         return this.urlRegistryMap.get(name);
     }
 
-    private async loadEntrypoint(name: string): Promise<IComponent| undefined>{
-        if(this.isUrl(name)){
-            if(!this.loadingPackages.has(name)){
+    private async loadEntrypoint(name: string): Promise<IComponent| undefined> {
+        if (this.isUrl(name)) {
+            if (!this.loadingPackages.has(name)) {
                 this.loadingPackages.set(name, this.loadPackage(name));
             }
         }
@@ -78,12 +76,10 @@ export class UrlRegistry implements IComponentRegistry {
                 packageJson.fluid.browser.umd.files.map(
                     (file) => this.isUrl(file) ? file : `${url}/${file}`);
             return packageJson;
-
         }
     }
 
-    private isUrl(name: string){
+    private isUrl(name: string) {
         return name.startsWith("http://") || name.startsWith("https://");
     }
 }
-

@@ -28,7 +28,6 @@ const protocolVersion = "^0.1.0";
  * Represents a connection to a stream of delta updates for routerlicious driver.
  */
 export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
-
     /**
      * Represents a connection to a stream of delta updates for routerlicious driver.
      *
@@ -45,7 +44,6 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
         token: string,
         client: IClient,
         urlStr: string): Promise<IDocumentDeltaConnection> {
-
         return new Promise<IDocumentDeltaConnection>((resolve, reject) => {
             const connection = new WSDeltaConnection(tenantId, id, token, client, urlStr);
 

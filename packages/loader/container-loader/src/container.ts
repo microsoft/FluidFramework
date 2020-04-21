@@ -35,9 +35,13 @@ import {
     IDocumentStorageService,
     IError,
     IFluidResolvedUrl,
-    IExperimentalUrlResolver,
     IUrlResolver,
     IDocumentServiceFactory,
+    IExperimentalDocumentServiceFactory,
+    IExperimentalDocumentService,
+    IExperimentalUrlResolver,
+    IResolvedUrl,
+    CreateNewHeader,
 } from "@microsoft/fluid-driver-definitions";
 import {
     createIError,
@@ -55,7 +59,6 @@ import {
     raiseConnectedEvent,
 } from "@microsoft/fluid-protocol-base";
 import {
-    ConnectionMode,
     ConnectionState,
     FileMode,
     IClient,
@@ -85,7 +88,7 @@ import { Audience } from "./audience";
 import { BlobManager } from "./blobManager";
 import { ContainerContext } from "./containerContext";
 import { debug } from "./debug";
-import { DeltaManager } from "./deltaManager";
+import { IConnectionArgs, DeltaManager } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { Loader, RelativeLoader } from "./loader";
 import { NullChaincode } from "./nullRuntime";
@@ -135,6 +138,7 @@ export class Container
             decodeURI(docId),
             logger);
 
+        container._resolvedUrl = resolvedUrl;
         container._scopes = container.getScopes(resolvedUrl);
         container._canReconnect = !(request.headers?.[LoaderHeader.reconnect] === false);
         container.service = await serviceFactory.createDocumentService(resolvedUrl);
@@ -233,10 +237,15 @@ export class Container
     private readonly connectionTransitionTimes: number[] = [];
     private messageCountAfterDisconnection: number = 0;
     private _loadedFromVersion: IVersion | undefined;
+    private _resolvedUrl: IResolvedUrl | undefined;
 
     private lastVisible: number | undefined;
 
     private _closed = false;
+
+    public get resolvedUrl(): IResolvedUrl | undefined {
+        return this._resolvedUrl;
+    }
 
     public get loadedFromVersion(): IVersion | undefined {
         return this._loadedFromVersion;
@@ -394,7 +403,7 @@ export class Container
         }
         this._closed = true;
 
-        this._deltaManager.close(error, false /*raiseContainerError*/);
+        this._deltaManager.close(error, false /* raiseContainerError */);
 
         if (this.protocolHandler) {
             this.protocolHandler.close();
@@ -409,8 +418,8 @@ export class Container
         this.removeAllListeners();
     }
 
-    public isAttached(): boolean {
-        return this.attached;
+    public isLocal(): boolean {
+        return !this.attached;
     }
 
     public async attach(request: IRequest): Promise<void> {
@@ -422,24 +431,41 @@ export class Container
         assert(!this.deltaManager.inbound.length);
         // Get the document state post attach - possibly can just call attach but we need to change the semantics
         // around what the attach means as far as async code goes.
-        const appSummary: ISummaryTree = await this.context.createSummary();
+        const appSummary: ISummaryTree = this.context.createSummary();
         if (!this.protocolHandler) {
             throw new Error("Protocol Handler is undefined");
         }
         const protocolSummary = this.protocolHandler.captureSummary();
-        this.originalRequest = request;
-        // Actually go and create the resolved document
-        const expUrlResolver = this.urlResolver as IExperimentalUrlResolver;
-        if (!expUrlResolver?.isExperimentalUrlResolver) {
-            throw new Error("Not an Experimental UrlResolver");
+        if (!request.headers?.[CreateNewHeader.createNew]) {
+            request.headers = {
+                ...request.headers,
+                [CreateNewHeader.createNew]: {},
+            };
         }
-        const resolvedUrl = await expUrlResolver.createContainer(
-            combineAppAndProtocolSummary(appSummary, protocolSummary),
-            request);
-        try {
-            ensureFluidResolvedUrl(resolvedUrl);
-            this.service = await this.serviceFactory.createDocumentService(resolvedUrl);
+        const createNewResolvedUrl = await this.urlResolver.resolve(request);
+        ensureFluidResolvedUrl(createNewResolvedUrl);
 
+        try {
+            // Actually go and create the resolved document
+            const expDocFactory = this.serviceFactory as IExperimentalDocumentServiceFactory;
+            assert(expDocFactory?.isExperimentalDocumentServiceFactory);
+            this.service = await expDocFactory.createContainer(
+                combineAppAndProtocolSummary(appSummary, protocolSummary),
+                createNewResolvedUrl,
+                ChildLogger.create(this.subLogger, "fluid:telemetry:CreateNewContainer"),
+            );
+            const expDocService = this.service as IExperimentalDocumentService;
+            assert(expDocService?.isExperimentalDocumentService);
+            const resolvedUrl = expDocService.resolvedUrl;
+            ensureFluidResolvedUrl(resolvedUrl);
+            this._resolvedUrl = resolvedUrl;
+            const expUrlResolver = this.urlResolver as IExperimentalUrlResolver;
+            assert(expUrlResolver?.isExperimentalUrlResolver);
+            const response = await expUrlResolver.requestUrl(resolvedUrl, { url: "" });
+            if (response.status !== 200) {
+                throw new Error(`Not able to get requested Url: value: ${response.value} status: ${response.status}`);
+            }
+            this.originalRequest = { url: response.value };
             this._canReconnect = !(request.headers?.[LoaderHeader.reconnect] === false);
             const parsedUrl = parseUrl(resolvedUrl.url);
             if (!parsedUrl) {
@@ -455,11 +481,6 @@ export class Container
             this.blobManager = await this.loadBlobManager(this.storageService, undefined);
             this.attached = true;
 
-            const startConnectionP = this.connectToDeltaStream();
-            startConnectionP.catch((error) => {
-                debug(`Error in connecting to delta stream from unpaused case ${error}`);
-            });
-
             // We know this is create new flow.
             this._existing = false;
             this._parentBranch = this._id;
@@ -468,11 +489,9 @@ export class Container
             const connected = this.connectionState === ConnectionState.Connected;
             assert(!connected || this._deltaManager.connectionMode === "read");
             this.propagateConnectionState();
-            this.resume();
+            this.resumeInternal({ fetchOpsFromStorage: false, reason: "createDetached" });
         } catch (error) {
-            const err = createIError(error, true);
-            this.raiseContainerError(err);
-            this.close();
+            this.close(createIError(error, true));
             throw error;
         }
     }
@@ -507,11 +526,9 @@ export class Container
             }
 
             await this.snapshotCore(tagMessage, fullTree);
-
         } catch (ex) {
             this.logger.logException({ eventName: "SnapshotExceptionError" }, ex);
             throw ex;
-
         } finally {
             if (this.deltaManager !== undefined) {
                 this.deltaManager.inbound.systemResume();
@@ -541,17 +558,21 @@ export class Container
             }
 
             // Ensure connection to web socket
-            this.connectToDeltaStream().catch((error) => {
+            this.connectToDeltaStream({ reason: "autoReconnect" }).catch((error) => {
                 // All errors are reported through events ("error" / "disconnected") and telemetry in DeltaManager
                 // So there shouldn't be a need to record error here.
                 // But we have number of cases where reconnects do not happen, and no errors are recorded, so
                 // adding this log point for easier diagnostics
-                this.logger.sendTelemetryEvent({eventName: "setAutoReconnectError"}, error);
+                this.logger.sendTelemetryEvent({ eventName: "setAutoReconnectError" }, error);
             });
         }
     }
 
     public resume() {
+        this.resumeInternal();
+    }
+
+    protected resumeInternal(args: IConnectionArgs = {}) {
         assert(this.loaded);
 
         if (this.closed) {
@@ -723,16 +744,15 @@ export class Container
         }
     }
 
-    private async connectToDeltaStream(modeArg: ConnectionMode = "read") {
+    private async connectToDeltaStream(args: IConnectionArgs = {}) {
         this.recordConnectStartTime();
 
-        let mode = modeArg;
         // All agents need "write" access, including summarizer.
         if (!this.canReconnect || !this.client.details.capabilities.interactive) {
-            mode = "write";
+            args.mode = "write";
         }
 
-        return this._deltaManager.connect(mode);
+        return this._deltaManager.connect(args);
     }
 
     /**
@@ -756,12 +776,12 @@ export class Container
         // connections to same file) in two ways:
         // A) creation flow breaks (as one of the clients "sees" file as existing, and hits #2 above)
         // B) Once file is created, transition from view-only connection to write does not work - some bugs to be fixed.
-        const defaultConnectionMode = "write";
+        const connectionArgs: IConnectionArgs = { mode: "write" };
 
         // Start websocket connection as soon as possible. Note that there is no op handler attached yet, but the
         // DeltaManager is resilient to this and will wait to start processing ops until after it is attached.
         if (!pause) {
-            startConnectionP = this.connectToDeltaStream(defaultConnectionMode);
+            startConnectionP = this.connectToDeltaStream(connectionArgs);
             startConnectionP.catch((error) => {});
         }
 
@@ -777,7 +797,7 @@ export class Container
         const attributes = await this.getDocumentAttributes(this.storageService, maybeSnapshotTree);
 
         // Attach op handlers to start processing ops
-        this.attachDeltaManagerOpHandler(attributes, !specifiedVersion);
+        this.attachDeltaManagerOpHandler(attributes);
 
         // ...load in the existing quorum
         // Initialize the protocol handler
@@ -794,7 +814,7 @@ export class Container
             loadDetailsP = Promise.resolve();
         } else {
             if (!startConnectionP) {
-                startConnectionP = this.connectToDeltaStream(defaultConnectionMode);
+                startConnectionP = this.connectToDeltaStream(connectionArgs);
             }
             // Intentionally don't .catch on this promise - we'll let any error throw below in the await.
             loadDetailsP = startConnectionP.then((details) => {
@@ -848,7 +868,7 @@ export class Container
         const proposals: [number, ISequencedProposal, string[]][] = [];
         const values: [string, ICommittedProposal][] = [["code", commitedCodeProposal]];
 
-        this.attachDeltaManagerOpHandler(attributes, false);
+        this.attachDeltaManagerOpHandler(attributes);
 
         // Need to just seed the source data in the code quorum. Quorum itself is empty
         this.protocolHandler = this.initializeProtocolState(
@@ -1026,7 +1046,6 @@ export class Container
             throw new Error(PackageNotFactoryError);
         }
         return factory;
-
     }
 
     private get client(): IClient {
@@ -1109,7 +1128,7 @@ export class Container
         return deltaManager;
     }
 
-    private attachDeltaManagerOpHandler(attributes: IDocumentAttributes, catchUp: boolean): void {
+    private attachDeltaManagerOpHandler(attributes: IDocumentAttributes): void {
         this._deltaManager.on("closed", () => {
             this.close();
         });
@@ -1126,8 +1145,7 @@ export class Container
                 processSignal: (message) => {
                     this.processSignal(message);
                 },
-            },
-            catchUp);
+            });
     }
 
     private logConnectionStateChangeTelemetry(value: ConnectionState, oldState: ConnectionState, reason: string) {

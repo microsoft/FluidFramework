@@ -225,7 +225,6 @@ export class ConsensusRegisterCollection<T>
     protected async loadCore(
         branchId: string,
         storage: IObjectStorageService): Promise<void> {
-
         const header = await storage.read(snapshotFileName);
         const data: { [key: string]: ILocalData } = header !== undefined ? JSON.parse(fromBase64ToUtf8(header)) : {};
 
@@ -253,6 +252,7 @@ export class ConsensusRegisterCollection<T>
 
     protected onConnect(pending: any[]) {
         // resubmit non-acked messages
+        assert(pending.length === this.promiseResolveQueue.length);
         for (const record of this.promiseResolveQueue) {
             record.clientSequenceNumber = this.submitLocalMessage(record.message);
         }
@@ -265,7 +265,7 @@ export class ConsensusRegisterCollection<T>
                 case "write": {
                     // add back-compat for pre-0.14 versions
                     // when the refSeq property didn't exist
-                    if(op.refSeq === undefined){
+                    if (op.refSeq === undefined) {
                         op.refSeq = message.referenceSequenceNumber;
                     }
                     // Message can be delivered with delay - resubmitted on reconnect.
@@ -354,11 +354,8 @@ export class ConsensusRegisterCollection<T>
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const pending = this.promiseResolveQueue.shift()!;
         assert(pending);
-        /* eslint-disable @typescript-eslint/indent */
-        assert(message.clientSequenceNumber === -1
-            || message.clientSequenceNumber === pending.clientSequenceNumber,
-            `${message.clientSequenceNumber} !== ${pending.clientSequenceNumber}`);
-        /* eslint-enable @typescript-eslint/indent */
+        assert(message.clientSequenceNumber === pending.clientSequenceNumber,
+            "ConsensusRegistryCollection: unexpected ack");
         pending.resolve(winner);
     }
 

@@ -12,7 +12,6 @@ import { CreationServerMessagesHandler } from ".";
  * Provides access to the false delta storage.
  */
 export class CreationDeltaStorageService implements IDocumentDeltaStorageService {
-
     constructor(private readonly serverMessagesHandler: CreationServerMessagesHandler) {
     }
 

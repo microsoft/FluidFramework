@@ -32,7 +32,6 @@ interface ISharedObjectConstructor<T> {
 function generate(
     name: string, ctor: ISharedObjectConstructor<IConsensusOrderedCollection>,
     input: any[], output: any[]) {
-
     describe(name, () => {
         const id = "fluid-test://localhost/consensusOrderedCollectionTest";
         const mapId = "mapKey";

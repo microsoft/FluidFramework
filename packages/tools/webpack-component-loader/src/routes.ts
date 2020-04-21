@@ -75,7 +75,6 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
                 };
             });
             try {
-
                 const originalUrl = `${getThisOrigin(options)}${req.url}`;
                 if (odspAuthStage >= 2) {
                     if (!options.odspAccessToken || !options.pushAccessToken) {
@@ -184,7 +183,6 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
 };
 
 const fluid = (req: express.Request, res: express.Response, baseDir: string, options: RouteOptions) => {
-
     const documentId = req.params.id;
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const packageJson = require(path.join(baseDir, "./package.json")) as IFluidPackage;
@@ -208,7 +206,7 @@ const fluid = (req: express.Request, res: express.Response, baseDir: string, opt
     </div>
 
     <script src="/node_modules/@microsoft/fluid-webpack-component-loader/dist/fluid-loader.bundle.js"></script>
-    ${packageJson.fluid.browser.umd.files.map((file)=>`<script src="${file}"></script>\n`)}
+    ${packageJson.fluid.browser.umd.files.map((file)=>`<script src="/${file}"></script>\n`)}
     <script>
         var pkgJson = ${JSON.stringify(packageJson)};
         var options = ${JSON.stringify(options)};

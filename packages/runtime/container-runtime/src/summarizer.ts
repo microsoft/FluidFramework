@@ -46,6 +46,7 @@ export interface ISummarizer extends IComponentRouter, IComponentRunnable, IComp
      * Returns a promise that will be resolved with the next Summarizer after context reload
      */
     setSummarizer(): Promise<Summarizer>;
+    stop(reason?: string): void;
 }
 
 /**
@@ -310,8 +311,8 @@ export class RunningSummarizer implements IDisposable {
 
         (async () => {
             const result = await this.summarize(reason, false, broadcastDeferred);
-            if (result === false) {
-                // On nack, try again in safe mode
+            if (result !== true) {
+                // On nack or error, try again in safe mode
                 await this.summarize(reason, true, broadcastDeferred);
             }
         })().finally(() => {
@@ -518,8 +519,17 @@ export class Summarizer implements ISummarizer {
             // Cleanup after running
             if (this.runtime.connected) {
                 if (this.runningSummarizer) {
-                    // let running summarizer finish
-                    await this.runningSummarizer.waitStop();
+                    // Let running summarizer finish if no other summarizer client in quorum
+                    let hasOtherSummarizerClient = false;
+                    for (const [clientId, member] of this.runtime.getQuorum().getMembers()) {
+                        if (clientId !== this.runtime.clientId && member.client.details?.type === "summarizer") {
+                            hasOtherSummarizerClient = true;
+                            break;
+                        }
+                    }
+                    if (hasOtherSummarizerClient === false) {
+                        await this.runningSummarizer.waitStop();
+                    }
                 }
                 const error: ISummarizingError = {
                     errorType: ErrorType.summarizingError,
@@ -579,7 +589,7 @@ export class Summarizer implements ISummarizer {
                 expectedSummarizer: this.runtime.summarizerClientId,
                 onBehalfOf,
             });
-            return;
+            throw Error("ParentIsNotSummarizer");
         }
 
         // Initialize values and first ack (time is not exact)

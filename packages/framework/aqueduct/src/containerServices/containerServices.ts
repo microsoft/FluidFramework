@@ -16,10 +16,9 @@ export type ContainerServiceRegistryEntries = Iterable<[string, (runtime: IHostR
  * This class is a simple starter class for building a Container Service. It simply provides routing
  */
 export abstract class BaseContainerService implements IComponentRouter {
-
     public get IComponentRouter() { return this; }
 
-    constructor(protected readonly runtime: IHostRuntime){
+    constructor(protected readonly runtime: IHostRuntime) {
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -35,7 +34,6 @@ export abstract class BaseContainerService implements IComponentRouter {
  * ContainerService Factory that will only create one instance of the service for the Container.
  */
 class SingletonContainerServiceFactory {
-
     private service: Promise<IComponent> | undefined;
 
     public constructor(
@@ -107,11 +105,10 @@ export const generateContainerServicesRequestHandler =
             }
 
             // Otherwise we will just return the service
-            return{
+            return {
                 status: 200,
                 mimeType: "fluid/component",
                 value: service,
             };
         };
     };
-

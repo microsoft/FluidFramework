@@ -153,7 +153,6 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
         branchId: string,
         storage: IObjectStorageService,
     ): Promise<void> {
-
         const header = await storage.read(snapshotFileName);
         if (header !== undefined) {
             this.inkData = new InkData(

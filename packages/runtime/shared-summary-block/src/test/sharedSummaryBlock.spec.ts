@@ -9,6 +9,13 @@ import { MockRuntime, MockSharedObjectServices } from "@microsoft/fluid-test-run
 import { ISharedSummaryBlock } from "../interfaces";
 import { SharedSummaryBlockFactory } from "../sharedSummaryBlockFactory";
 
+interface ITestInterface{
+    value1: string;
+    value2: number;
+    value3: boolean[];
+    value4?: ITestInterface;
+}
+
 describe("SharedSummaryBlock", () => {
     let runtime: MockRuntime;
     let factory: SharedSummaryBlockFactory;
@@ -35,6 +42,20 @@ describe("SharedSummaryBlock", () => {
             const value2 = { value: "testValue2" };
             sharedSummaryBlock.set(key2, value2);
             assert.deepEqual(sharedSummaryBlock.get(key2), value2, "The retrieved value must match the set value");
+
+            const key3 = "testKey3";
+            const value3: ITestInterface = {
+                value1: "outer string",
+                value2: 2,
+                value3: [true, false],
+                value4: {
+                    value1: "inner string",
+                    value2: 500,
+                    value3:[false, false, true],
+                },
+            };
+            sharedSummaryBlock.set(key3, value3);
+            assert.deepEqual(sharedSummaryBlock.get(key3), value3, "The retrieved value must match the set value");
         });
     });
 

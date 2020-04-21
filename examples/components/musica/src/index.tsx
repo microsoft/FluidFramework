@@ -30,7 +30,6 @@ export class Musica extends PrimedComponent implements IComponentHTMLView {
 
     protected async componentHasInitialized() {
         this.player = new Player(audioContext);
-
     }
 
     private player: Player | undefined;

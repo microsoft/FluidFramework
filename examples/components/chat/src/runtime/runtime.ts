@@ -119,5 +119,4 @@ export class Runtime extends EventEmitter {
             throw new Error("Runtime is closed");
         }
     }
-
 }

@@ -36,4 +36,10 @@ export class IntelRunner {
         this.intelligenceManager.registerService(resumeAnalytics.factory.create(resumeAnalyticsConfig));
         this.intelligenceManager.process();
     }
+
+    public stop() {
+        if (this.intelligenceManager) {
+            this.intelligenceManager.stop();
+        }
+    }
 }

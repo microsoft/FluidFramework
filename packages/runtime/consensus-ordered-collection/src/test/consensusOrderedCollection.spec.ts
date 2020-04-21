@@ -18,7 +18,6 @@ describe("ConsensusOrderedCollection", () => {
         output: any[],
         creator: () => IConsensusOrderedCollection,
         processMessages: () => void) {
-
         let testCollection: IConsensusOrderedCollection;
 
         async function removeItem() {

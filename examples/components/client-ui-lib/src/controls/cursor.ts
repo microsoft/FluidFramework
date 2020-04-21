@@ -123,5 +123,4 @@ export class Cursor {
     protected blinkCursor() {
         this.editSpan.classList.add("blinking");
     }
-
 }

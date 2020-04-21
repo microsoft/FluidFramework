@@ -75,7 +75,6 @@ export class CacheBase {
             this.cache.delete(key);
         }
     }
-
 }
 
 export class LocalCache extends CacheBase implements ICache {
@@ -89,7 +88,6 @@ export class SessionCache extends CacheBase implements ISessionCache {
         return this.cache.get(key);
     }
 }
-
 
 export class OdspCache implements IOdspCache {
     public readonly localStorage: ICache;

@@ -14,7 +14,6 @@ import {
 } from "@microsoft/fluid-odsp-driver";
 
 export class OdspUrlResolver implements IUrlResolver {
-
     public async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
         if (isOdspUrl(request.url)) {
             const reqUrl = new URL(request.url);

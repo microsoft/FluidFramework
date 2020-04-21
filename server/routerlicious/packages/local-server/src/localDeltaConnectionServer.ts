@@ -22,7 +22,7 @@ import {
     TestHistorian,
     TestTaskMessageSender,
 } from "@microsoft/fluid-server-test-utils";
-import { configureWebSocketServices} from "@microsoft/fluid-server-lambdas";
+import { configureWebSocketServices } from "@microsoft/fluid-server-lambdas";
 import { MemoryOrdererManager } from "./memoryOrdererManager";
 
 /**
