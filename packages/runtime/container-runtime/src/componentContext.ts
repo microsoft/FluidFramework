@@ -320,7 +320,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         if (this.loaded) {
             return this.componentRuntime.process(message, local);
         } else {
-            assert(!local);
+            assert(!local, "local component is not loaded");
             this.pending.push(message);
         }
     }
