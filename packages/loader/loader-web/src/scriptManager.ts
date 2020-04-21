@@ -66,6 +66,27 @@ export class ScriptManager {
         return this.loadCache.get(scriptUrl);
     }
 
+    public async preCacheFiles(files: string[], tryPreload: boolean = false): Promise<void> {
+        await Promise.all(
+            // eslint-disable-next-line @typescript-eslint/promise-function-async
+            files.map((url)=>{
+                const cacheLink = document.createElement("link");
+                cacheLink.href = url;
+                cacheLink.as = "script";
+                if (tryPreload && cacheLink.relList?.contains("preload") === true) {
+                    cacheLink.rel = "preload";
+                } else {
+                    cacheLink.rel = "prefetch";
+                }
+                const loadP = new Promise<void>((resolve, reject)=>{
+                    cacheLink.onload = () => resolve();
+                    cacheLink.onerror = (... args: any[]) => reject({ ...args });
+                });
+                document.head.appendChild(cacheLink);
+                return loadP;
+            }));
+    }
+
     public async loadScript(scriptUrl: string, entryPoint: string): Promise<unknown> {
         return ScriptManager.protectEntrypoint(
             entryPoint,

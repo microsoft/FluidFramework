@@ -35,19 +35,12 @@ export class WebCodeLoader implements ICodeLoader {
         }
     }
 
-    public async precacheModule(source: IFluidCodeDetails, tryPreload: boolean = false): Promise<void> {
+    public async preCache(source: IFluidCodeDetails) {
         const resolved = await this.codeResolver.resolveCodeDetails(source);
-        resolved.resolvedPackage.fluid.browser.umd.files.forEach((url)=>{
-            const cacheLink = document.createElement("link");
-            cacheLink.href = url;
-            cacheLink.as = "script";
-            if (tryPreload && cacheLink.relList?.contains("preload") === true) {
-                cacheLink.rel = "preload";
-            } else {
-                cacheLink.rel = "prefetch";
-            }
-            document.head.appendChild(cacheLink);
-        });
+        if (resolved?.resolvedPackage?.fluid?.browser?.umd?.files !== undefined) {
+            return this.scriptManager.preCacheFiles(
+                resolved.resolvedPackage.fluid.browser.umd.files);
+        }
     }
 
     /**
