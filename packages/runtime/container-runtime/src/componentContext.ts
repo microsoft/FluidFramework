@@ -333,7 +333,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             return this.componentRuntime!.process(message, local);
         } else {
-            assert(!local);
+            assert(!local, "local component is not loaded");
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.pending!.push(message);
         }
