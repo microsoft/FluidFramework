@@ -64,7 +64,7 @@ export class ContainerRuntimeFactoryWithDefaultComponent extends BaseContainerRu
             this.defaultComponentName,
         );
         // We need to request the component before attaching to ensure it
-        // runts through its entire instantiation flow.
+        // runs through its entire instantiation flow.
         await componentRuntime.request({ url:"/" });
         componentRuntime.attach();
     }
