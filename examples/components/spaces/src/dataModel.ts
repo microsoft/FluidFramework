@@ -10,7 +10,6 @@ import {
 } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { Layout } from "react-grid-layout";
-import uuid from "uuid/v4";
 
 export interface ISpacesDataModel extends EventEmitter {
     componentList: Map<string, Layout>;
@@ -245,14 +244,14 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
     private async addComponentInternal<T extends IComponent & IComponentLoadable>(
         type: string,
         layout: Layout,
-        id = uuid()): Promise<T> {
+        id?: string): Promise<T> {
         const defaultModel: ISpacesModel = {
             type,
             layout,
         };
         const component = await this.createAndAttachComponent<T>(type);
         defaultModel.handleOrId = component.handle;
-        this.componentSubDirectory.set(id, defaultModel);
+        this.componentSubDirectory.set(id || component.url, defaultModel);
         return component;
     }
 }

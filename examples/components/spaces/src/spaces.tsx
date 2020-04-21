@@ -90,8 +90,7 @@ export class Spaces extends PrimedComponent
                 0,
                 Spaces.defaultComponentToolbarId,
             );
-        this.componentToolbar = componentToolbar;
-        await this.dataModel.setComponentToolbar(
+        await this.setComponentToolbar(
             Spaces.defaultComponentToolbarId,
             ComponentToolbarName,
             componentToolbar.handle);
