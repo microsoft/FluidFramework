@@ -1004,7 +1004,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             pkg,
             this,
             this.storage,
-            this.context.scope,
+            this.containerScope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.referenceSequenceNumber),
             (cr: IComponentRuntime) => this.attachComponent(cr),
             undefined /* #1635: Remove LocalComponentContext createProps */);
