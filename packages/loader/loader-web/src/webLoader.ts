@@ -35,11 +35,11 @@ export class WebCodeLoader implements ICodeLoader {
         }
     }
 
-    public async preCache(source: IFluidCodeDetails) {
+    public async preCache(source: IFluidCodeDetails, tryPreload: boolean) {
         const resolved = await this.codeResolver.resolveCodeDetails(source);
         if (resolved?.resolvedPackage?.fluid?.browser?.umd?.files !== undefined) {
             return this.scriptManager.preCacheFiles(
-                resolved.resolvedPackage.fluid.browser.umd.files);
+                resolved.resolvedPackage.fluid.browser.umd.files, tryPreload);
         }
     }
 

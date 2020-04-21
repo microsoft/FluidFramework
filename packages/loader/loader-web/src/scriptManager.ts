@@ -66,7 +66,7 @@ export class ScriptManager {
         return this.loadCache.get(scriptUrl);
     }
 
-    public async preCacheFiles(files: string[], tryPreload: boolean = false): Promise<void> {
+    public async preCacheFiles(files: string[], tryPreload: boolean): Promise<void> {
         await Promise.all(
             // eslint-disable-next-line @typescript-eslint/promise-function-async
             files.map((url)=>{
