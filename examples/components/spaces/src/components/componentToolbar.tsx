@@ -22,6 +22,7 @@ import {
     IContainerComponentDetails,
     IComponentCallable,
     IComponentCallbacks,
+    IComponentToolbar,
     InternalRegistry,
 } from "..";
 
@@ -46,9 +47,10 @@ initializeIcons();
  * A component to allow you to add and manipulate components
  */
 export class ComponentToolbar extends PrimedComponent
-    implements IComponentHTMLView, IComponentCallable<IComponentCallbacks> {
+    implements IComponentHTMLView, IComponentCallable<IComponentCallbacks>, IComponentToolbar {
     public get IComponentHTMLView() { return this; }
     public get IComponentCallable() { return this; }
+    public get IComponentToolbar() { return this; }
 
     private callbacks: IComponentCallbacks = {};
 

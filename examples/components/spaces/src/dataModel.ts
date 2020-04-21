@@ -11,6 +11,7 @@ import {
 import { IComponentCollection } from "@microsoft/fluid-framework-interfaces";
 import { Layout } from "react-grid-layout";
 
+export const ComponentToolbarUrlKey = "component-toolbar-url";
 export interface ISpacesDataModel extends EventEmitter {
     componentList: Map<string, Layout>;
     setComponentToolbar(id: string, type: string, handle: IComponentHandle): Promise<IComponent>;
@@ -22,7 +23,6 @@ export interface ISpacesDataModel extends EventEmitter {
         h?: number,
         x?: number,
         y?: number,
-        id?: string
     ): Promise<T>;
     addFormattedComponents(componentsToAdd: ISpacesModel[]): Promise<void>;
     getComponent<T extends IComponent & IComponentLoadable>(id: string): Promise<T | undefined>;
@@ -31,7 +31,7 @@ export interface ISpacesDataModel extends EventEmitter {
     getLayout(id: string): Layout;
     saveLayout(): void;
     setTemplate(): Promise<void>;
-    componentToolbarId: string;
+    componentToolbarUrl: string;
     IComponentCollection: IComponentCollection;
     createCollectionItem<ISpacesCollectionOptions>(options: ISpacesCollectionOptions): IComponent;
     removeCollectionItem(item: IComponent): void;
@@ -59,7 +59,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
             directory: IDirectory,
             getObjectFromDirectory: (id: string, directory: IDirectory) => string | IComponentHandle | undefined) =>
         Promise<T | undefined>,
-        public componentToolbarId: string,
+        public componentToolbarUrl: string,
     ) {
         super();
 
@@ -127,11 +127,11 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
     }
 
     public async setComponentToolbar(
-        id: string,
+        url: string,
         type: string,
         handle: IComponentHandle): Promise<IComponent> {
-        return this.removeComponent(this.componentToolbarId).then(async () => {
-            this.componentToolbarId = id;
+        return this.removeComponent(this.componentToolbarUrl).then(async () => {
+            this.componentToolbarUrl = url;
             const component = await handle.get();
             const defaultModel: ISpacesModel = {
                 type,
@@ -139,17 +139,17 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
                 handleOrId: handle,
             };
             if (component) {
-                this.root.set("component-toolbar-id", id);
-                this.componentSubDirectory.set(id, defaultModel);
+                this.root.set(ComponentToolbarUrlKey, url);
+                this.componentSubDirectory.set(url, defaultModel);
                 return component;
             } else {
-                throw new Error(`Runtime does not contain component with id: ${id}`);
+                throw new Error(`Runtime does not contain component with url: ${url}`);
             }
         });
     }
 
     public async getComponentToolbar(): Promise<IComponent> {
-        const component = await this.getComponent(this.componentToolbarId);
+        const component = await this.getComponent(this.componentToolbarUrl);
         return component as IComponent;
     }
 
@@ -183,10 +183,9 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         h: number = 2,
         x: number = 0,
         y: number = 0,
-        id?: string,
     ): Promise<T> {
         const defaultLayout = { x, y, w, h };
-        return this.addComponentInternal<T>(type, defaultLayout, id);
+        return this.addComponentInternal<T>(type, defaultLayout);
     }
 
     public async removeComponent(id: string) {
@@ -243,15 +242,14 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
 
     private async addComponentInternal<T extends IComponent & IComponentLoadable>(
         type: string,
-        layout: Layout,
-        id?: string): Promise<T> {
+        layout: Layout): Promise<T> {
         const defaultModel: ISpacesModel = {
             type,
             layout,
         };
         const component = await this.createAndAttachComponent<T>(type);
         defaultModel.handleOrId = component.handle;
-        this.componentSubDirectory.set(id || component.url, defaultModel);
+        this.componentSubDirectory.set(component.url, defaultModel);
         return component;
     }
 }
