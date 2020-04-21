@@ -33,7 +33,7 @@ export class Chat extends PrimedComponent
     implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
-    private static readonly factory = new PrimedComponentFactory(ChatName, Chat, [], {});
+    private static readonly factory = new PrimedComponentFactory(ChatName, Chat, {}, []);
 
     public static getFactory() {
         return Chat.factory;
