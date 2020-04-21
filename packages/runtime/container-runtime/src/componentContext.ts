@@ -37,6 +37,8 @@ import {
     IEnvelope,
     IHostRuntime,
     IInboundSignalMessage,
+    IExperimentalHostRuntime,
+    IExperimentalComponentContext,
 } from "@microsoft/fluid-runtime-definitions";
 import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
 import { v4 as uuid } from "uuid";
@@ -62,7 +64,17 @@ interface ISnapshotDetails {
 /**
  * Represents the context for the component. This context is passed to the component runtime.
  */
-export abstract class ComponentContext extends EventEmitter implements IComponentContext, IDisposable {
+export abstract class ComponentContext extends EventEmitter implements IComponentContext, IDisposable,
+    IExperimentalComponentContext
+{
+    public readonly isExperimentalComponentContext = true;
+
+    public isLocal(): boolean {
+        const expHostRuntime = this._hostRuntime as IExperimentalHostRuntime;
+        assert(expHostRuntime?.isExperimentalHostRuntime);
+        return expHostRuntime.isLocal() || !this.isAttached;
+    }
+
     public get documentId(): string {
         return this._hostRuntime.id;
     }

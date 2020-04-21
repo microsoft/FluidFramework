@@ -419,8 +419,8 @@ export class Container
         this.removeAllListeners();
     }
 
-    public isAttached(): boolean {
-        return this.attached;
+    public isLocal(): boolean {
+        return !this.attached;
     }
 
     public async attach(request: IRequest): Promise<void> {

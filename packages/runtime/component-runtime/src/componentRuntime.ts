@@ -45,6 +45,8 @@ import {
     IComponentRuntime,
     IEnvelope,
     IInboundSignalMessage,
+    IExperimentalComponentRuntime,
+    IExperimentalComponentContext,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { v4 as uuid } from "uuid";
@@ -61,7 +63,10 @@ export interface ISharedObjectRegistry {
 /**
  * Base component class
  */
-export class ComponentRuntime extends EventEmitter implements IComponentRuntime, IComponentHandleContext {
+export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
+    IExperimentalComponentRuntime, IComponentHandleContext
+{
+    public readonly isExperimentalComponentRuntime = true;
     /**
      * Loads the component runtime
      * @param context - The component context
@@ -122,7 +127,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     }
 
     public get isAttached(): boolean {
-        return !this.isLocal;
+        return this._isAttached;
     }
 
     public get path(): string {
@@ -146,7 +151,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     private closed = false;
     private readonly pendingAttach = new Map<string, IAttachMessage>();
     private requestHandler: ((request: IRequest) => Promise<IResponse>) | undefined;
-    private isLocal: boolean;
+    private _isAttached: boolean;
     private readonly deferredAttached = new Deferred<void>();
     private readonly attachChannelQueue = new Map<string, LocalChannelContext>();
     private boundhandles: Set<IComponentHandle> | undefined;
@@ -198,7 +203,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         }
 
         this.attachListener();
-        this.isLocal = !existing;
+        this._isAttached = existing;
 
         // If it's existing we know it has been attached.
         if (existing) {
@@ -301,7 +306,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
      */
     public registerChannel(channel: IChannel): void {
         // If our Component is not local attach the channel.
-        if (!this.isLocal) {
+        if (this._isAttached) {
             this.attachChannel(channel);
             return;
         } else {
@@ -315,6 +320,12 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         }
     }
 
+    public isLocal(): boolean {
+        const expComponentContext = this.componentContext as IExperimentalComponentContext;
+        assert(expComponentContext?.isExperimentalComponentContext);
+        return expComponentContext.isLocal();
+    }
+
     /**
      * Attaches this runtime to the container
      * This includes the following:
@@ -322,7 +333,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
      * 2. Attaching registered channels
      */
     public attach() {
-        if (!this.isLocal) {
+        if (this._isAttached) {
             return;
         }
 
@@ -343,7 +354,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
             channel.attach();
         });
 
-        this.isLocal = false;
+        this._isAttached = true;
         this.deferredAttached.resolve();
         this.attachChannelQueue.clear();
     }
