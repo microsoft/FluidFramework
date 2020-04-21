@@ -17,7 +17,7 @@ JavaScript directly.
 * [Dice roller tutorial - Vanilla JavaScript](https://github.com/microsoft/fluid-tutorial-dice-roller)
 * [Dice roller tutorial - React](https://github.com/microsoft/fluid-tutorial-dice-roller-react)
 
-Once you've cloned the repo, you'll need to set up access to the [private Fluid NPM feed](../guide/package-feed.md). On
+Once you've cloned the repo, you'll need to set up access to the [private Fluid npm feed](../guide/package-feed.md). On
 Windows, you can run the `npm run auth` command to automate this process.
 
 Now that you have access to the private feed, run `npm install` in the root of the repository to install dependencies.

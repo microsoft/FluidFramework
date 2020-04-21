@@ -84,7 +84,7 @@ version {{ $themeConfig.RELEASE_VERSION }}. You should consider upgrading as soo
 
 ::: danger TypeScript 3.6+ required
 
-Consumers of the Fluid Framework NPM packages **must use a TypeScript version >= 3.6.**
+Consumers of the Fluid Framework npm packages **must use a TypeScript version >= 3.6.**
 
 [Read more](./contributing/breaking-changes.md#fluid-packages-require-consumers-on-typescript-3-6)
 

@@ -40,7 +40,7 @@ export interface IPerson {
 }
 
 /**
- * Typescript interface definition for fields within a NPM module's package.json.
+ * Typescript interface definition for fields within a npm module's package.json.
  */
 export interface IPackage {
     // General access for extended fields

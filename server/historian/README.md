@@ -9,7 +9,7 @@ that maintains the versioned snapshots.
 
 For consistency we recommend building and developing within a container
 
-To begin you'll need to connect to the Fluid private NPM repository. Instructions can be found [here](../../docs/get-started/package-feed.md)
+To begin you'll need to connect to the Fluid private npm repository. Instructions can be found [here](../../docs/get-started/package-feed.md)
 
 You can build the production container by running.
 
