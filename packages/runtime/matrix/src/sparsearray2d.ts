@@ -11,20 +11,20 @@ export interface IArray2D<T> extends IMatrixReader<T | undefined | null> {
     setCell(row: number, col: number, value: T | undefined): void;
 }
 
-// Build a 512b lookup table that maps a uint8 to the corresponding uint16 where 0s
+// Build a lookup table that maps a uint8 to the corresponding uint16 where 0s
 // are interleaved between the original bits. (e.g., 1111... -> 01010101...).
 //
-// (Lookup table faster than inlining the bit-twiddling on Node v10 x64)
-const x8ToInterlacedX16 = new Uint16Array(
+// (Lookup table ~17% faster than inlining the bit-twiddling on Node v12 x64)
+// (Array<T> ~2% faster than typed array on Node v12 x64)
+const x8ToInterlacedX16 =
     /* eslint-disable no-param-reassign */
     new Array(256).fill(0).map((value, i) => {
         i = (i | (i << 4)) & 0x0f0f; // .... 7654 .... 3210
         i = (i | (i << 2)) & 0x3333; // ..76 ..54 ..32 ..10
         i = (i | (i << 1)) & 0x5555; // .7.6 .5.4 .3.2 .1.0
         return i;
-    }),
+    });
     /* eslint-enable no-param-reassign */
-);
 
 // Selects individual bytes from a given 32b integer.  The left shift are used to
 // clear upper bits (faster than using masks on Node 10 x64).
@@ -66,10 +66,9 @@ export class SparseArray2D<T> implements IArray2D<T> {
 
     read(row: number, col: number): T | undefined | null {
         const keyHi = r0c0ToMorton2x16(row >>> 16, col >>> 16);
-        const keyLo = r0c0ToMorton2x16((row << 16) >>> 16, (col << 16) >>> 16);
-
         const level0 = this.root[keyHi];
         if (level0 !== undefined) {
+            const keyLo = r0c0ToMorton2x16(row, col);
             const level1 = level0[byte0(keyLo)];
             if (level1 !== undefined) {
                 const level2 = level1[byte1(keyLo)];
@@ -87,7 +86,7 @@ export class SparseArray2D<T> implements IArray2D<T> {
 
     setCell(row: number, col: number, value: T | undefined) {
         const keyHi = r0c0ToMorton2x16(row >>> 16, col >>> 16);
-        const keyLo = r0c0ToMorton2x16((row << 16) >>> 16, (col << 16) >>> 16);
+        const keyLo = r0c0ToMorton2x16(row, col);
 
         const level0 = this.getLevel(this.root, keyHi);
         const level1 = this.getLevel(level0, byte0(keyLo));
