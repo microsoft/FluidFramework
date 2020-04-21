@@ -170,7 +170,7 @@ export interface IExperimentalRuntime extends IRuntime {
 
     isExperimentalRuntime: true;
 
-    createSummary(): Promise<ISummaryTree>;
+    createSummary(): ISummaryTree;
 }
 
 export interface IMessageScheduler {
@@ -233,7 +233,7 @@ export interface IExperimentalContainerContext extends IContainerContext {
 
     getLoadedFromVersion(): IVersion | undefined;
 
-    createSummary(): Promise<ISummaryTree>;
+    createSummary(): ISummaryTree;
 }
 
 export const IComponentTokenProvider: keyof IProvideComponentTokenProvider = "IComponentTokenProvider";

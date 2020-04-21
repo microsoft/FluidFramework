@@ -1229,12 +1229,33 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return context;
     }
 
-    public async createSummary(): Promise<ISummaryTree> {
-        // TODO - https://github.com/microsoft/FluidFramework/issues/1430
-        // TODO - https://github.com/microsoft/FluidFramework/issues/1431
-        const treeWithStats = await this.summarize(true);
+    public createSummary(): ISummaryTree {
+        const summaryTree: ISummaryTree = {
+            tree: {},
+            type: SummaryType.Tree,
+        };
 
-        return treeWithStats.summaryTree;
+        // Iterate over each component and ask it to snapshot
+        Array.from(this.contexts)
+            .filter(([key, value]) =>
+                value.isAttached,
+            )
+            .map(async ([key, value]) => {
+                const snapshot = value.generateAttachMessage().snapshot;
+                const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
+                    snapshot,
+                    `/${encodeURIComponent(key)}`,
+                    true,
+                );
+                summaryTree.tree[key] = treeWithStats.summaryTree;
+            });
+        if (this.chunkMap.size > 0) {
+            summaryTree.tree[".chunks"] = {
+                content: JSON.stringify([...this.chunkMap]),
+                type: SummaryType.Blob,
+            };
+        }
+        return summaryTree;
     }
 
     private async generateSummary(
