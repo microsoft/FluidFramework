@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Jsonable } from "@microsoft/fluid-runtime-definitions";
+import { AsJsonable, Jsonable } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObject } from "@microsoft/fluid-shared-object-base";
 
 /**
@@ -25,5 +25,5 @@ export interface ISharedSummaryBlock extends ISharedObject {
      * @param key - Key to set at.
      * @param value - Jsonable type value to set.
      */
-    set(key: string, value: Jsonable): void;
+    set<T>(key: string, value: AsJsonable<T>): void ;
 }

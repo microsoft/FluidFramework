@@ -19,6 +19,7 @@
     "eslint:fix": "eslint --ext=ts,tsx --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
+    "test:types": "tsd",
     "tsc": "tsc"
   },
   "dependencies": {
@@ -46,6 +47,24 @@
     "eslint-plugin-react": "~7.18.0",
     "eslint-plugin-unicorn": "~15.0.1",
     "rimraf": "^2.6.2",
+    "tsd": "^0.11.0",
     "typescript": "~3.7.4"
+  },
+  "tsd": {
+    "directory": "test-d",
+    "compilerOptions": {
+      "rootDir": "test-d",
+      "include": [
+        "test-d/*"
+      ],
+      "lib": [
+        "es2015"
+      ],
+      "types": [],
+      "exclude": [
+        "dist",
+        "node_modules"
+      ]
+    }
   }
 }
