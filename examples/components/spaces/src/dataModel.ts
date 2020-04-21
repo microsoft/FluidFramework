@@ -38,7 +38,7 @@ export interface ISpacesDataModel extends EventEmitter {
 }
 
 interface ISpacesCollectionOptions {
-    id?: string;
+    url?: string;
     handle?: IComponentHandle;
     type?: string;
 }
@@ -77,11 +77,11 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
 
     public createCollectionItem<T>(rawOptions: T): IComponent {
         const options = rawOptions as ISpacesCollectionOptions;
-        if (!options.handle || !options.type || !options.id) {
+        if (!options.handle || !options.type || !options.url) {
             throw new Error("Tried to create a collection item in Spaces with invalid options");
         }
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.setComponent(options.id, options.handle, options.type);
+        this.setComponent(options.url, options.handle, options.type);
         // This is okay as we are not using the value returned from this function call anywhere
         // Instead, setComponent adds it to the sequence to be synchronously loaded
         const emptyComponent: IComponent = {};
@@ -153,7 +153,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
         return component as IComponent;
     }
 
-    public async setComponent(id: string, handle: IComponentHandle, type: string): Promise<IComponent> {
+    public async setComponent(url: string, handle: IComponentHandle, type: string): Promise<IComponent> {
         const defaultModel: ISpacesModel = {
             type,
             layout: { x: 0, y: 0, w: 6, h: 2 },
@@ -163,13 +163,13 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
             .then((returnedComponent) => {
                 if (returnedComponent) {
                     if (returnedComponent.IComponentLoadable) {
-                        this.componentSubDirectory.set(id, defaultModel);
+                        this.componentSubDirectory.set(returnedComponent.url, defaultModel);
                         return returnedComponent;
                     } else {
                         throw new Error("Component is not an instance of IComponentLoadable!!");
                     }
                 } else {
-                    throw new Error(`Runtime does not contain component with id: ${id}`);
+                    throw new Error(`Runtime does not contain component with id: ${url}`);
                 }
             })
             .catch((error) => {
