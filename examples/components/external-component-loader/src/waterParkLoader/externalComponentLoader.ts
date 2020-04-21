@@ -179,6 +179,9 @@ export class ExternalComponentLoader extends PrimedComponent
 
             const response: IResponse = await componentRuntime.request({ url: "/" });
             let component: IComponent = response.value as IComponent;
+            if (component.IComponentLoadable === undefined) {
+                throw new Error(`${value} needs to implement the IComponentLoadable interface to be loaded here`);
+            }
             componentRuntime.attach();
             if (component.IComponentCollection !== undefined) {
                 component = component.IComponentCollection.createCollectionItem();
