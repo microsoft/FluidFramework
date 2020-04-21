@@ -92,7 +92,8 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
         const rowHandle = this.rows.handles[row];
 
         // Perf: Leverage the JavaScript behavior of returning `undefined` for out of bounds
-        //       array access to detect bad coordinates. (~20% faster on node v12 x64)
+        //       array access to detect bad coordinates. (~4% faster vs. an unconditional
+        //       assert with range check on node v12 x64)
         if (!(rowHandle >= Handle.valid)) {
             assert(rowHandle === Handle.unallocated, "'row' out of range.");
             assert(0 <= col && col < this.numCols, "'col' out of range.");
@@ -102,7 +103,8 @@ export class SharedMatrix<T extends Serializable = Serializable> extends SharedO
         const colHandle = this.cols.handles[col];
 
         // Perf: Leverage the JavaScript behavior of returning `undefined` for out of bounds
-        //       array access to detect bad coordinates. (~20% faster on node v12 x64)
+        //       array access to detect bad coordinates. (~4% faster vs. an unconditional
+        //       assert with range check on node v12 x64)
         if (!(colHandle >= Handle.valid)) {
             assert(colHandle === Handle.unallocated, "'col' out of range.");
             return undefined;
