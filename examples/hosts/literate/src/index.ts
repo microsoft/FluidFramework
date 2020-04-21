@@ -52,7 +52,7 @@ export async function start(url: string, code: string): Promise<void> {
     // within an npm repository. Future work plans to extend this to allow for tarballs, git repos, and files stored
     // directly within the document (or another Fluid document).
     //
-    // When in a node environment any npm package will be installed directly. But when int he browser the loader
+    // When in a node environment any npm package will be installed directly. But when in the browser the loader
     // looks at the package's package.json for a special 'fluid' entry which defines the code designed to be run in
     // the browser as well as the name of the entry point module. It then script includes these files on the page and
     // once loaded makes use of the module entry point name to get access to the module.
