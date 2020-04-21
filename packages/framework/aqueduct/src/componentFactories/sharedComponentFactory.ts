@@ -10,22 +10,32 @@ import {
     IComponentContext,
     IComponentFactory,
     IComponentRegistry,
-    IComponentRuntime,
     IProvideComponentRegistry,
     NamedComponentRegistryEntries,
+    IHostRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
-// eslint-disable-next-line import/no-internal-modules
-import { SharedComponent } from "../components/sharedComponent";
+import {
+    ComponentSymbolProvider,
+    DependencyContainer,
+} from "@microsoft/fluid-synthesize";
 
-export class SharedComponentFactory implements IComponentFactory, Partial<IProvideComponentRegistry> {
+import {
+    ISharedComponentProps,
+    SharedComponent,
+} from "../components";
+
+export class SharedComponentFactory<P extends IComponent>
+implements IComponentFactory, Partial<IProvideComponentRegistry>
+{
     private readonly sharedObjectRegistry: ISharedObjectRegistry;
     private readonly registry: IComponentRegistry | undefined;
 
     constructor(
         public readonly type: string,
-        private readonly ctor: new (runtime: IComponentRuntime, context: IComponentContext) => SharedComponent,
+        private readonly ctor: new (props: ISharedComponentProps<P>) => SharedComponent,
         sharedObjects: readonly ISharedObjectFactory[],
+        private readonly optionalProviders: ComponentSymbolProvider<P>,
         registryEntries?: NamedComponentRegistryEntries,
         private readonly onDemandInstantiation = true,
     ) {
@@ -52,7 +62,7 @@ export class SharedComponentFactory implements IComponentFactory, Partial<IProvi
 
     private instantiateComponentWithConstructorFn(
         context: IComponentContext,
-        ctorFn?: ((r: IComponentRuntime, c: IComponentContext) => SharedComponent)): void {
+        ctorFn?: (props: ISharedComponentProps) => SharedComponent) {
         // Create a new runtime for our component
         // The runtime is what Fluid uses to create DDS' and route to your component
         const runtime = ComponentRuntime.load(
@@ -88,10 +98,22 @@ export class SharedComponentFactory implements IComponentFactory, Partial<IProvi
     private async instantiateInstance(
         runtime: ComponentRuntime,
         context: IComponentContext,
-        ctorFn?: ((r: IComponentRuntime, c: IComponentContext) => SharedComponent),
+        ctorFn?: (props: ISharedComponentProps) => SharedComponent,
     ) {
+        const dependencyContainer = new DependencyContainer(context.scope.IComponentDependencySynthesizer);
+
+        // If the Container did not register the IHostRuntime we can do it here to make sure services that need
+        // it will have it.
+        if (!dependencyContainer.has(IHostRuntime)) {
+            dependencyContainer.register(IHostRuntime, context.hostRuntime);
+        }
+
+        const providers = dependencyContainer.synthesize<P>(this.optionalProviders,{});
         // Create a new instance of our component
-        const instance = ctorFn ? ctorFn(runtime, context) : new this.ctor(runtime, context);
+        const instance =
+            ctorFn ?
+                ctorFn({ runtime, context, providers }) :
+                new this.ctor({ runtime, context, providers });
         await instance.initialize();
         return instance;
     }
@@ -102,7 +124,7 @@ export class SharedComponentFactory implements IComponentFactory, Partial<IProvi
 
     protected async createComponentWithConstructorFn(
         context: IComponentContext,
-        ctorFn?: (r: IComponentRuntime, c: IComponentContext) => SharedComponent,
+        ctorFn?: (props: ISharedComponentProps) => SharedComponent,
     ): Promise<IComponent & IComponentLoadable> {
         if (this.type === "") {
             throw new Error("undefined type member");

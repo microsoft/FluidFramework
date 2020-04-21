@@ -14,7 +14,6 @@ import {
     IMergeTreeRemoveMsg,
     MergeTreeDeltaType,
 } from "@microsoft/fluid-merge-tree";
-import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { IComponentHTMLOptions, IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 // eslint-disable-next-line import/no-unresolved
@@ -61,18 +60,6 @@ const defaultCompilerOptions = {
  */
 export class MonacoRunner extends PrimedComponent implements
     IComponentHTMLView, IComponentLayout {
-    /**
-     * Get a new MonacoRunner with the given runtime.
-     * @param runtime The runtime for the MonacoRunner
-     * @param context Not used
-     */
-    public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<MonacoRunner> {
-        const runner = new MonacoRunner(runtime, context);
-        await runner.initialize();
-
-        return runner;
-    }
-
     public get IComponentHTMLView() { return this; }
     public get IComponentLoadable() { return this; }
     public get IComponentLayout() { return this; }

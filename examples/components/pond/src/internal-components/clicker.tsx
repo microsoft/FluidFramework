@@ -12,7 +12,6 @@ import * as ReactDOM from "react-dom";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../../package.json");
-export const ClickerName = `${pkg.name as string}-clicker`;
 
 /**
  * Basic Clicker example using new interfaces and stock component classes.
@@ -22,6 +21,8 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
 
     private storedMap: ISharedMap | undefined;
     private counter: Counter | undefined;
+
+    public static readonly ComponentName = `${pkg.name as string}-clicker`;
 
     /**
      * Do setup work here
@@ -66,10 +67,10 @@ export class Clicker extends PrimedComponent implements IComponentHTMLView {
     public static getFactory() { return Clicker.factory; }
 
     private static readonly factory = new PrimedComponentFactory(
-        ClickerName,
+        Clicker.ComponentName,
         Clicker,
         [SharedMap.getFactory()],
-    );
+        {});
 }
 
 // ----- REACT STUFF -----

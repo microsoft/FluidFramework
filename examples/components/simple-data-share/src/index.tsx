@@ -97,6 +97,7 @@ export const SimpleDataSharingInstantiationFactory = new PrimedComponentFactory(
     chaincodeName,
     SimpleDataSharing,
     [],
+    {},
 );
 
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultComponent(
