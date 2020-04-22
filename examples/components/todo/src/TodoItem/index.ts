@@ -4,4 +4,3 @@
  */
 
 export * from "./TodoItem";
-export * from "./todoItemInstantiationFactory";

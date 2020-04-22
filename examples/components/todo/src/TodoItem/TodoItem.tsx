@@ -4,7 +4,7 @@
  */
 
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
-import { ISharedComponentProps, PrimedComponent } from "@microsoft/fluid-aqueduct";
+import { ISharedComponentProps, PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { ISharedCell, SharedCell } from "@microsoft/fluid-cell";
 import {
     IComponentHandle, IComponentLoadable,
@@ -16,7 +16,6 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { TextBoxInstantiationFactory } from "../TextBox";
 import { TextListInstantiationFactory } from "../TextList";
-import { TodoItemInstantiationFactory } from "./todoItemInstantiationFactory";
 import { TodoItemSupportedComponents } from "./supportedComponent";
 import { TodoItemView } from "./TodoItemView";
 
@@ -26,7 +25,7 @@ export const TodoItemName = `${pkg.name as string}-item`;
 
 export interface ITodoItemInitialState {
     startingText: string;
-    baseUrl: string;
+    baseUrl?: string;
 }
 
 const checkedKey = "checked";
@@ -116,6 +115,23 @@ export class TodoItem extends PrimedComponent
         });
     }
 
+    public static getFactory() { return TodoItem.factory; }
+
+    private static readonly factory = new PrimedComponentFactory<{}, ITodoItemInitialState>(
+        TodoItemName,
+        TodoItem,
+        [
+            SharedString.getFactory(),
+            SharedCell.getFactory(),
+        ],
+        {},
+        new Map([
+            TextBoxInstantiationFactory.registryEntry,
+            TextListInstantiationFactory.registryEntry,
+            ClickerInstantiationFactory.registryEntry,
+        ]),
+    );
+
     // start IComponentHTMLView
 
     public render(div: HTMLElement) {
@@ -185,7 +201,7 @@ export class TodoItem extends PrimedComponent
         let component: IComponentLoadable;
         switch (type) {
             case "todo":
-                component = await TodoItemInstantiationFactory.createComponent(
+                component = await TodoItem.getFactory().createComponent(
                     this.context,
                     { startingText: type, baseUrl },
                 );
