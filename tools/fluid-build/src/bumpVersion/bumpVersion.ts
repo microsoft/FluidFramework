@@ -14,6 +14,7 @@ import * as semver from "semver";
 import { Package } from "../common/npmPackage";
 import { logVerbose } from "../common/logging";
 import { GitRepo, fatal, exec } from "./utils";
+import { resolveCname } from "dns";
 
 function printUsage() {
     console.log(
@@ -359,17 +360,34 @@ class BumpVersion {
     }
 
     private async addTag(tag: string) {
-        console.log(`      ${tag}`);
+        console.log(`    Tagging release ${tag}`);
         await this.gitRepo.addTag(tag);
         this.newTags.push(tag);
     }
 
+    private async pushTag(tag: string) {
+        while (!await this.prompt(`>>> Push tag ${tag} to remote?`)) {
+            if (await this.prompt('>>> Abort?')) {
+                fatal("Operation stopped");
+            }
+        }
+        return this.gitRepo.pushTag(tag);
+    }
+
+    /**
+     * Check if a package is published
+     * @param pkg package to check if it is published
+     */
     private async checkPublished(pkg: Package) {
         const ret = await exec(`npm view ${pkg.name}@${pkg.version} version`, this.repo.resolvedRoot);
         const publishedVersion = ret.split("\n")[0];
         return publishedVersion === pkg.version;
     }
 
+    /**
+     * Wait until a package has be published
+     * @param pkg package to wait until it is published
+     */
     private async ensurePublished(pkg: Package) {
         process.stdout.write(`    Waiting for package to publish ${pkg.name}@${pkg.version}...`);
         const start = Date.now();
@@ -383,29 +401,48 @@ class BumpVersion {
         }
     }
 
+    /**
+     * Prompt the user for a yes/no answer.
+     * 
+     * @param message the message for the prompt
+     */
     private async prompt(message: string) {
         return new Promise((resolve, reject) => {
             process.stdout.write(`${message} [y/n] `);
-            const listener = (chunk: Buffer) => {
-                if (chunk[0] === "y".charCodeAt(0)) {
-                    resolve(true);
-                    process.stdin.off('data', listener);
+            if (process.stdin.setRawMode) {
+                process.stdin.setEncoding("utf8");
+                process.stdin.setRawMode(true);
+            }
+            const listener = (chunk: string) => {
+                let value: boolean | undefined;
+                if (chunk[0] === "y") {
+                    value = true;
+                    console.log("y");
                 }
-                if (chunk[0] === "n".charCodeAt(0)) {
-                    resolve(false);
+                if (chunk[0] === "n") {
+                    value = false;
+                    console.log("n");
+                }
+                if (value !== undefined) {
+                    resolve(value);
                     process.stdin.off('data', listener);
+                    process.stdin.pause();
                 }
             };
             process.stdin.on('data', listener);
         });
     }
 
+    /**
+     * Release a set of packages if needed
+     * 
+     * @param packageNeedBump all the package that needs to be release in this session
+     * @param packages the package that to be released now if needed
+     */
     private async releasePackage(packageNeedBump: Set<Package>, packages: string[]) {
         console.log(`  Releasing ${packages.join(" ")}`);
 
-        // Fix the pre-release dependency.
-        console.log("    Fix pre-release dependencies");
-
+        // Filter out the packages that need to be released
         const packageToBump = new Set<Package>();
         const packageNeedBumpName = new Set<string>();
         for (const pkg of packageNeedBump) {
@@ -415,14 +452,10 @@ class BumpVersion {
             }
         }
 
-        const fixPrereleaseCommitMessage = `Remove pre-release dependencies for ${packages.join(" ")}`;
-        const fixedPrereleaseDep = await this.bumpDependencies(fixPrereleaseCommitMessage, false, false, packageNeedBumpName, true);
-
         // Tagging release
-        console.log("    Tagging release");
         for (const pkg of packageToBump) {
             if (await this.checkPublished(pkg)) {
-                if (await this.prompt(`      Package ${pkg.name}@${pkg.version} already published. Skip publish and bump version after?`)) {
+                if (await this.prompt(`>>> Package ${pkg.name}@${pkg.version} already published. Skip publish and bump version after?`)) {
                     continue;
                 }
                 fatal("Operation stopped.")
@@ -431,33 +464,46 @@ class BumpVersion {
             if (name.startsWith("fluid-")) {
                 name = name.substring("fluid-".length);
             }
-            await this.addTag(`${name}_v${pkg.version}`);
-            // TODO: Push tag
+            const tagName = `${name}_v${pkg.version}`;
+            await this.addTag(tagName);
+            if (!paramLocal) {
+                await this.pushTag(tagName);
+            }
         }
 
-        if (paramLocal) {
-            return;
+        if (!paramLocal) {
+            // Wait for packages
+            for (const pkg of packageToBump) {
+                await this.ensurePublished(pkg);
+            }
         }
 
-        // Wait for packages
-        for (const pkg of packageToBump) {
-            await this.ensurePublished(pkg);
-        }
-
-        // Fix package lock
-        if (fixedPrereleaseDep) {
-            // TODO: Fix package lock
-        }
+        // Fix the pre-release dependency and update package lock
+        console.log("    Fix pre-release dependencies");
+        const fixPrereleaseCommitMessage = `Remove pre-release dependencies for ${packages.join(" ")}`;
+        return this.bumpDependencies(fixPrereleaseCommitMessage, false, false, packageNeedBumpName, !paramLocal, true);
     }
 
     private async releaseMonoRepo(oldVersions: VersionBag, monoRepo: MonoRepo) {
         const kind = MonoRepoKind[monoRepo.kind];
-
         console.log(`  Releasing ${kind.toLowerCase()}`);
 
-        // Fix the pre-release dependency.
-        console.log("    Fix pre-release dependencies");
+        // Tagging release
+        const oldVersion = oldVersions[kind];
+        const tagName = `${kind.toLowerCase()}_v${oldVersion}`;
+        await this.addTag(tagName);
 
+        if (!paramLocal) {
+            await this.pushTag(tagName);
+
+            // Wait for packages
+            for (const pkg of monoRepo.packages) {
+                await this.ensurePublished(pkg);
+            }
+        }
+
+        // Fix the pre-release dependency and update package lock
+        console.log("    Fix pre-release dependencies");
         const fixPrereleaseCommitMessage = `Remove pre-release dependencies for ${kind.toLowerCase()}`;
         let bumpDepClient = false;
         let bumpDepServer = false;
@@ -467,33 +513,19 @@ class BumpVersion {
         } else {
             bumpDepServer = true;
         }
-        const fixedPrereleaseDep = await this.bumpDependencies(fixPrereleaseCommitMessage, bumpDepClient, bumpDepServer, new Set(), true);
+        return this.bumpDependencies(fixPrereleaseCommitMessage, bumpDepClient, bumpDepServer, new Set(), !paramLocal, true);
+    }
 
-        console.log("    Tagging release");
-        const oldVersion = oldVersions[kind];
-        const tagName = `${kind.toLowerCase()}_v${oldVersion}`;
+    public async releaseGeneratorFluid() {
+        const tagName = `generator-fluid_v${this.generatorPackage.version}`;
         await this.addTag(tagName);
-
-        if (paramLocal) {
-            return;
-        }
-
-        // TODO: push tag
-        if (bumpDepClient) {
-            return;
-        }
-
-        for (const pkg of monoRepo.packages) {
-            await this.ensurePublished(pkg);
-        }
-
-        if (fixedPrereleaseDep) {
-            // TODO: Fix package lock
+        if (!paramLocal) {
+            await this.pushTag(tagName);
         }
     }
 
     /**
-     * Bump package version of the client monorepo, 
+     * Bump package version of the client monorepo
      * If it has dependencies to the current version of the other monorepo packages, bump package version of those too
      * 
      * If --commit or --release is specified, the bumpped version changes will be committed and a release branch will be created
@@ -503,6 +535,9 @@ class BumpVersion {
         console.log(`Bumping ${versionBump} version`);
 
         const { serverNeedBump, packageNeedBump, oldVersions } = await this.collectionBumpInfo();
+
+        // Make sure everything is installed
+        await this.repo.install();
 
         // -----------------------------------------------------------------------------------------------------
         // Create the release development branch if it is it not a patch upgrade
@@ -537,6 +572,7 @@ class BumpVersion {
         }
 
         await this.releaseMonoRepo(oldVersions, this.repo.clientMonoRepo);
+        await this.releaseGeneratorFluid();
 
         // ------------------------------------------------------------------------------------------------------------------
         // Create the minor version bump for development in a temporary merge/<original branch> on top of the release commit
@@ -579,9 +615,10 @@ class BumpVersion {
      * @param bumpDepClient update dependencies to client packages to current in repo version
      * @param bumpDepServer update dependencies to server packages to current in repo version
      * @param bumpDepPackages update dependencies to these set of packages to current in repo version
+     * @param updateLock whether to update the lock file (by npm i) or not
      * @param release make dependencies target release version instead of pre-release versions (e.g. ^0.16.0 vs ^0.16.0-0)
      */
-    public async bumpDependencies(commitMessage: string, bumpDepClient: boolean, bumpDepServer: boolean, bumpDepPackages: Set<string>, release: boolean = false) {
+    public async bumpDependencies(commitMessage: string, bumpDepClient: boolean, bumpDepServer: boolean, bumpDepPackages: Set<string>, updateLock: boolean, release: boolean = false) {
         const bumpPackages = this.repo.packages.packages.filter(pkg => {
             if (bumpDepClient && pkg.monoRepo === this.repo.clientMonoRepo) {
                 return true;
@@ -599,20 +636,25 @@ class BumpVersion {
             fatal("ERROR: Unable to find dependencies to bump");
         }
 
-        let changed = false;
+        const changedPackages: Package[] = [];
         const bumpPackageMap = new Map<string, Package>(bumpPackages.map(pkg => [pkg.name, pkg]));
         const changedVersion: VersionBag = {};
         for (const pkg of this.repo.packages.packages) {
             if (await BumpVersion.bumpPackageDependencies(pkg, bumpPackageMap, changedVersion, release)) {
-                changed = true;
+                changedPackages.push(pkg);
             }
         }
 
         if (await BumpVersion.bumpPackageDependencies(this.templatePackage, bumpPackageMap, changedVersion, release)) {
-            changed = true;
+            changedPackages.push(this.templatePackage);
         }
 
-        if (changed) {
+        if (changedPackages.length !== 0) {
+            if (updateLock) {
+                // Fix package lock
+                await FluidRepoBase.ensureInstalled(changedPackages);
+            }
+
             let changedVersionString: string[] = [];
             for (const name in changedVersion) {
                 changedVersionString.push(`${name.padStart(40)} -> ${changedVersion[name]}`);
@@ -623,7 +665,6 @@ class BumpVersion {
         } else {
             console.log("    No dependencies need to be updated");
         }
-        return changed;
     }
 
     public async cleanUp() {
@@ -650,7 +691,7 @@ async function main() {
     try {
         if (paramBumpDep) {
             console.log("Bumping dependencies");
-            await bv.bumpDependencies("Bump dependencies version", paramBumpDepClient, paramBumpDepServer, paramBumpDepPackages);
+            await bv.bumpDependencies("Bump dependencies version", paramBumpDepClient, paramBumpDepServer, paramBumpDepPackages, !paramLocal);
         } else {
             await bv.bumpVersion();
         }

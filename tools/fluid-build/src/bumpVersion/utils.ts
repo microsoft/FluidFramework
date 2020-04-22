@@ -27,7 +27,10 @@ export async function exec(cmd: string, dir: string, error?: string, pipeStdIn?:
 }
 
 export class GitRepo {
+    private readonly remote: string;
     constructor(public readonly resolvedRoot: string) {
+        // TODO: detect this
+        this.remote = "origin";
     }
 
     /**
@@ -47,6 +50,14 @@ export class GitRepo {
      */
     public async deleteTag(tag: string) {
         await this.exec(`tag -d ${tag}`);
+    }
+
+    /**
+     * Push a tag
+     * 
+     */
+    public async pushTag(tag: string) {
+        await this.exec(`push ${this.remote} ${tag}`);
     }
 
     /**

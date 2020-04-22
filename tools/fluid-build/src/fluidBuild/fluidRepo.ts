@@ -26,14 +26,6 @@ export interface IPackageMatchedOptions {
 };
 
 export class FluidRepo extends FluidRepoBase {
-
-    private readonly packageInstallDirectories = [
-        path.join(this.resolvedRoot, "common/build/build-common"),
-        path.join(this.resolvedRoot, "common/build/eslint-config-fluid"),
-        path.join(this.resolvedRoot, "common/lib/common-definitions"),
-        path.join(this.resolvedRoot, "common/lib/common-utils"),
-    ];
-
     constructor(resolvedRoot: string) {
         super(resolvedRoot);
     }
@@ -42,24 +34,10 @@ export class FluidRepo extends FluidRepoBase {
         return Packages.clean(this.packages.packages, false);
     }
 
-    public async install(nohoist: boolean) {
-        if (nohoist) {
-            return this.packages.noHoistInstall(this.resolvedRoot);
-        }
-        const installScript = "npm i";
-        const installPromises: Promise<ExecAsyncResult>[] = [];
-        for (const dir of [...this.packageInstallDirectories, this.clientMonoRepo.repoPath, this.serverMonoRepo.repoPath]) {
-            installPromises.push(execWithErrorAsync(installScript, { cwd: dir }, dir));
-        }
-        const rets = await Promise.all(installPromises);
-
-        return !rets.some(ret => ret.error);
-    }
-
     public async uninstall() {
         const cleanPackageNodeModules = this.packages.cleanNodeModules();
         const removePromise = Promise.all(
-            [ this.clientMonoRepo.uninstall(), this.serverMonoRepo.uninstall() ]
+            [this.clientMonoRepo.uninstall(), this.serverMonoRepo.uninstall()]
         );
 
         const r = await Promise.all([cleanPackageNodeModules, removePromise]);
@@ -84,7 +62,7 @@ export class FluidRepo extends FluidRepoBase {
             return this.matchWithFilter(pkg => true);
         }
 
-        const matchMonoRepo = options.server? MonoRepoKind.Server : MonoRepoKind.Client;
+        const matchMonoRepo = options.server ? MonoRepoKind.Server : MonoRepoKind.Client;
         return this.matchWithFilter(pkg => pkg.monoRepo?.kind === matchMonoRepo);
     }
 
