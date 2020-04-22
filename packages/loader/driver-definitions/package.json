@@ -25,12 +25,13 @@
     "tsc:watch": "tsc --watch"
   },
   "dependencies": {
+    "@microsoft/fluid-common-definitions": "^0.16.0-0",
     "@microsoft/fluid-component-core-interfaces": "^0.16.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1004.0-0"
+    "@microsoft/fluid-protocol-definitions": "^0.1004.1-0"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",
-    "@microsoft/eslint-config-fluid": "^0.15.0",
+    "@microsoft/eslint-config-fluid": "^0.16.0-0",
     "@microsoft/fluid-build-common": "^0.14.0",
     "@types/node": "^10.14.6",
     "@typescript-eslint/eslint-plugin": "~2.17.0",

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import {
     IComponentHandle,
     IComponentLoadable,
@@ -15,10 +14,13 @@ import {
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { ComponentHandle } from "@microsoft/fluid-component-runtime";
 import { ISharedObject } from "@microsoft/fluid-shared-object-base";
+import { EventForwarder } from "@microsoft/fluid-common-utils";
+import { IEvent } from "@microsoft/fluid-common-definitions";
 
 export abstract class SharedComponent<
-    TRoot extends ISharedObject = ISharedObject
-> extends EventEmitter implements IComponentLoadable, IProvideComponentHandle, IComponentRouter {
+    TRoot extends ISharedObject = ISharedObject,
+    TEvents extends IEvent = IEvent,
+> extends EventForwarder<TEvents> implements IComponentLoadable, IProvideComponentHandle, IComponentRouter {
     private _handle?: IComponentHandle<this>;
 
     public get IComponentRouter() { return this; }
@@ -38,7 +40,6 @@ export abstract class SharedComponent<
         root: ISharedObject,
     ) {
         super();
-
         this.root = root as TRoot;
     }
 

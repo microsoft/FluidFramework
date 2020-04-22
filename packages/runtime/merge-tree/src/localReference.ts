@@ -123,10 +123,9 @@ interface IRefsAtOffest {
 }
 
 export class LocalReferenceCollection {
-
-    public static append(seg1: ISegment, seg2: ISegment){
-        if(seg2.localRefs && !seg2.localRefs.empty){
-            if(!seg1.localRefs){
+    public static append(seg1: ISegment, seg2: ISegment) {
+        if (seg2.localRefs && !seg2.localRefs.empty) {
+            if (!seg1.localRefs) {
                 seg1.localRefs = new LocalReferenceCollection(seg1);
             }
             seg1.localRefs.append(seg2.localRefs);
@@ -147,7 +146,6 @@ export class LocalReferenceCollection {
     }
 
     public [Symbol.iterator]() {
-
         const subiterators: IterableIterator<LocalReference>[] = [];
         for (const refs of this.refsByOffset) {
             if (refs) {
@@ -165,7 +163,6 @@ export class LocalReferenceCollection {
 
         const iterator = {
             next(): IteratorResult<LocalReference> {
-
                 while (subiterators.length > 0) {
                     const next = subiterators[0].next();
                     if (next.done === true) {
@@ -176,7 +173,6 @@ export class LocalReferenceCollection {
                 }
 
                 return { value: undefined, done: true };
-
             },
             [Symbol.iterator]() {
                 return this;
@@ -189,16 +185,16 @@ export class LocalReferenceCollection {
         this.refCount = 0;
         this.hierRefCount = 0;
         const detachSegments = (refs: LocalReference[]) =>{
-            if(refs){
+            if (refs) {
                 refs.forEach((r)=>{
-                    if(r.segment === this.segment){
+                    if (r.segment === this.segment) {
                         r.segment = undefined;
                     }
                 });
             }
         };
         for (let i = 0; i < this.refsByOffset.length; i++) {
-            if(this.refsByOffset[i]) {
+            if (this.refsByOffset[i]) {
                 detachSegments(this.refsByOffset[i].before);
                 detachSegments(this.refsByOffset[i].at);
                 detachSegments(this.refsByOffset[i].before);
@@ -227,7 +223,6 @@ export class LocalReferenceCollection {
     }
 
     public removeLocalRef(lref: LocalReference) {
-
         const tryRemoveRef = (refs: LocalReference[]) => {
             if (refs) {
                 const index = refs.indexOf(lref);
@@ -284,7 +279,6 @@ export class LocalReferenceCollection {
     }
 
     public split(offset: number, splitSeg: ISegment) {
-
         if (!this.empty) {
             splitSeg.localRefs =
             new LocalReferenceCollection(
@@ -305,7 +299,6 @@ export class LocalReferenceCollection {
     }
 
     public addBeforeTombstones(...refs: Iterable<LocalReference>[]) {
-
         const beforeRefs = [];
 
         for (const iterable of refs) {
@@ -336,7 +329,6 @@ export class LocalReferenceCollection {
     }
 
     public addAfterTombstones(...refs: Iterable<LocalReference>[]) {
-
         const afterRefs = [];
 
         for (const iterable of refs) {

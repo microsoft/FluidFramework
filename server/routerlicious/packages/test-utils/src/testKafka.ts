@@ -123,7 +123,6 @@ export class TestProducer implements core.IProducer {
  * Test Kafka implementation. Allows for the creation of a joined producer/consumer pair.
  */
 export class TestKafka {
-
     public static createdQueuedMessage(offset: number, metadata?: any): core.IQueuedMessage {
         return {
             topic: "topic",
@@ -173,5 +172,4 @@ export class TestKafka {
     public getMessage(index: number): core.ISequencedOperationMessage {
         return this.messages[index].value as core.ISequencedOperationMessage;
     }
-
 }

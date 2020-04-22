@@ -8,7 +8,6 @@ import { IOdspResolvedUrl } from "@microsoft/fluid-odsp-driver";
 import { FluidAppOdspUrlResolver } from "../urlResolver";
 
 describe("Fluid App Url Resolver", () => {
-
     it("Should resolve the fluid app urls correctly", async () => {
         const urlResolver = new FluidAppOdspUrlResolver();
         // eslint-disable-next-line max-len

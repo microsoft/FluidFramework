@@ -4,5 +4,3 @@
  */
 
 export * from "./interfaces";
-export * from "./summarizableObject";
-export * from "./summarizableObjectFactory";

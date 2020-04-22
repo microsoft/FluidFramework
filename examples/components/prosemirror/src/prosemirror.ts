@@ -11,7 +11,7 @@ import {
     IResponse,
     IComponentHandle,
 } from "@microsoft/fluid-component-core-interfaces";
-import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { ComponentHandle, ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import {
     IMergeTreeInsertMsg,
@@ -34,7 +34,6 @@ function createTreeMarkerOps(
     endMarkerPos: number,
     nodeType: string,
 ): IMergeTreeInsertMsg[] {
-
     const endMarkerProps = createMap<any>();
     endMarkerProps[reservedRangeLabelsKey] = [treeRangeLabel];
     endMarkerProps[nodeTypeKey] = nodeType;
@@ -59,18 +58,11 @@ function createTreeMarkerOps(
 
 class ProseMirrorView implements IComponentHTMLView {
     private content: HTMLDivElement;
-    private readonly editorView: EditorView;
+    private editorView: EditorView;
     private textArea: HTMLDivElement;
-    private readonly collabManager: FluidCollabManager;
-
     public get IComponentHTMLView() { return this; }
 
-    public constructor(
-        private readonly text: SharedString,
-        private readonly runtime: IComponentRuntime,
-    ) {
-        this.collabManager = new FluidCollabManager(this.text, this.runtime.loader);
-    }
+    public constructor(private readonly collabManager: FluidCollabManager) {}
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
         // Create base textarea
@@ -91,7 +83,7 @@ class ProseMirrorView implements IComponentHTMLView {
         }
 
         if (!this.editorView) {
-            this.collabManager.setupEditor(this.textArea);
+            this.editorView = this.collabManager.setupEditor(this.textArea);
         }
     }
 
@@ -100,6 +92,11 @@ class ProseMirrorView implements IComponentHTMLView {
     }
 }
 
+/**
+ * ProseMirror builds a fluid collaborative text editor on top of the open source text editor ProseMirror.
+ * It has its own implementation of IComponentLoadable and does not extend SharedComponent / PrimedComponent. This is
+ * done intentionally to serve as an example of exposing the URL and handle via IComponentLoadable.
+ */
 export class ProseMirror extends EventEmitter
     implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual, IProvideRichTextEditor {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
@@ -108,6 +105,8 @@ export class ProseMirror extends EventEmitter
 
         return collection;
     }
+
+    public get handle(): IComponentHandle<this> { return this.innerHandle; }
 
     public get IComponentLoadable() { return this; }
     public get IComponentRouter() { return this; }
@@ -118,6 +117,8 @@ export class ProseMirror extends EventEmitter
     public text: SharedString;
     private root: ISharedMap;
     private collabManager: FluidCollabManager;
+    private view: ProseMirrorView;
+    private readonly innerHandle: IComponentHandle<this>;
 
     constructor(
         private readonly runtime: IComponentRuntime,
@@ -126,6 +127,7 @@ export class ProseMirror extends EventEmitter
         super();
 
         this.url = context.id;
+        this.innerHandle = new ComponentHandle(this, this.url, runtime.IComponentHandleContext);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -160,7 +162,10 @@ export class ProseMirror extends EventEmitter
     }
 
     public addView(): IComponentHTMLView {
-        return new ProseMirrorView(this.text, this.runtime);
+        if (!this.view) {
+            this.view = new ProseMirrorView(this.collabManager);
+        }
+        return this.view;
     }
 }
 

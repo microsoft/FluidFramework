@@ -26,7 +26,7 @@ const segmentTypes = [
 ];
 
 describe("Segment Marshalling", () => {
-    for (const {name, ctor, fromJSON} of segmentTypes) {
+    for (const { name, ctor, fromJSON } of segmentTypes) {
         describe(name, () => {
             describe("to/from spec", () => {
                 // Ensure that a segment w/no 'props' correctly round-trips

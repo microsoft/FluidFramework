@@ -10,7 +10,6 @@ const enum StyleIndex {
 }
 
 export class BorderRect {
-
     public get min() { return [Math.min(this.start[0], this.end[0]), Math.min(this.start[1], this.end[1])]; }
     public get max() { return [Math.max(this.start[0], this.end[0]), Math.max(this.start[1], this.end[1])]; }
 

@@ -371,7 +371,6 @@ export class ScribeLambda extends SequencedLambda {
                 );
                 return;
             }
-
         } else if (existingRef) {
             await this.sendSummaryNack(
                 summarySequenceNumber,
@@ -457,7 +456,6 @@ export class ScribeLambda extends SequencedLambda {
         sequenceNumber: number,
         serviceContent: string,
         checkpoint: IScribe): Promise<void> {
-
         const existingRef = await this.storage.getRef(encodeURIComponent(this.documentId));
 
         // Client assumes at least one app generated summary. To keep compatibility for now, service summary requires

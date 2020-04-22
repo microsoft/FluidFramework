@@ -64,7 +64,7 @@ First, clone the Badge repository here:
 Since the Git repository is authenticated, it is easiest to visit the link above and click the "Clone" button in the
 top-right corner of the UI. Follow the resulting instructions to clone the repo.
 
-Once you've cloned the repo, you'll need to set up access to the [private Fluid NPM feed](../guide/package-feed.md). On
+Once you've cloned the repo, you'll need to set up access to the [private Fluid npm feed](../guide/package-feed.md). On
 Windows, you can run the `npm run auth` command to automate this process.
 
 Now that you have access to the private feed, run `npm install` in the root of the repository to install dependencies.

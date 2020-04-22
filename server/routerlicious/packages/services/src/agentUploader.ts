@@ -70,7 +70,6 @@ export async function getOrCreateMinioBucket(minioClient, bucket: string) {
 }
 
 class MinioUploader implements IAgentUploader {
-
     private readonly events = new EventEmitter();
     private readonly minioClient: minio.Client;
     private readonly minioBucket: string;

@@ -10,7 +10,6 @@ import * as utils from "@microsoft/fluid-server-services-utils";
 import * as winston from "winston";
 import { ICloseEvent, PuppetMaster } from "./puppeteer";
 import { ICache } from "./redisCache";
-import { ISearchStorage } from "./searchStorage";
 
 export class HeadlessRunner implements utils.IRunner {
     private running = new Deferred<void>();
@@ -20,7 +19,6 @@ export class HeadlessRunner implements utils.IRunner {
     constructor(
         private workerConfig: any,
         private messageReceiver: core.ITaskMessageReceiver,
-        private searchStorage: ISearchStorage,
         private cache: ICache) {
         this.permission = new Set(workerConfig.permission as string[]);
     }
@@ -73,7 +71,6 @@ export class HeadlessRunner implements utils.IRunner {
             this.workerConfig.internalGatewayUrl,
             task,
             this.workerConfig.key,
-            this.searchStorage,
             this.cache)
             .then((puppet) => {
 

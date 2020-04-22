@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-
 import { IComponent, IComponentLoadable } from "@microsoft/fluid-component-core-interfaces";
 import { IComponentContext } from "./components";
 

@@ -20,6 +20,7 @@ import {
     ConsensusResult,
     IConsensusOrderedCollection,
     IOrderedCollection,
+    IConsensusOrderedCollectionEvents,
 } from "./interfaces";
 
 const snapshotFileNameData = "header";
@@ -101,7 +102,8 @@ const belongsToUnattached = undefined;
  * Implements the shared object's communication, handles the sending/processing
  * operations, provides the asynchronous API and manage the promise resolution.
  */
-export class ConsensusOrderedCollection<T = any> extends SharedObject implements IConsensusOrderedCollection<T> {
+export class ConsensusOrderedCollection<T = any>
+    extends SharedObject<IConsensusOrderedCollectionEvents<T>> implements IConsensusOrderedCollection<T> {
     private readonly promiseResolveQueue: IPendingRecord<T>[] = [];
 
     private jobTracking: jobTrackingType<T> = new Map();
@@ -174,7 +176,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
                 break;
             case ConsensusResult.Release:
                 this.release(result.acquireId);
-                this.emit("localRelease", result.value, true /*intentional*/);
+                this.emit("localRelease", result.value, true /* intentional */);
                 break;
             default:
                 assert(false);
@@ -231,7 +233,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
             value: {
                 contents: this.serializeValue(Array.from(this.jobTracking.entries())),
                 encoding: "utf-8",
-            }});
+            } });
         return tree;
     }
 
@@ -277,7 +279,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
                 acquireId,
             };
             this.submit(work).catch((error) => {
-                this.runtime.logger.sendErrorEvent({eventName: "ConsensusQueue_release"}, error);
+                this.runtime.logger.sendErrorEvent({ eventName: "ConsensusQueue_release" }, error);
             });
         }
     }
@@ -288,7 +290,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
         if (rec !== undefined) {
             this.jobTracking.delete(acquireId);
             this.data.add(rec.value);
-            this.emit("add", rec.value, false /*newlyAdded*/);
+            this.emit("add", rec.value, false /* newlyAdded */);
         }
     }
 
@@ -302,7 +304,6 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
     protected async loadCore(
         branchId: string,
         storage: IObjectStorageService): Promise<void> {
-
         assert(this.jobTracking.size === 0);
         const rawContentTracking = await storage.read(snapshotFileNameTracking);
         if (rawContentTracking !== undefined) {
@@ -323,9 +324,9 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
     }
 
     protected onDisconnect() {
-        for (const [, {value, clientId}] of this.jobTracking) {
+        for (const [, { value, clientId }] of this.jobTracking) {
             if (clientId === this.runtime.clientId) {
-                this.emit("localRelease", value, false /*intentional*/);
+                this.emit("localRelease", value, false /* intentional */);
             }
         }
     }
@@ -381,7 +382,6 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
 
     private async submit(
         message: IConsensusOrderedCollectionOperation): Promise<IConsensusOrderedCollectionValue<T> | undefined> {
-
         assert(!this.isLocal());
 
         const clientSequenceNumber = this.submitLocalMessage(message);
@@ -393,7 +393,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
 
     private addCore(value: T) {
         this.data.add(value);
-        this.emit("add", value, true /*newlyAdded*/);
+        this.emit("add", value, true /* newlyAdded */);
     }
 
     private acquireCore(acquireId: string, clientId?: string): IConsensusOrderedCollectionValue<T> | undefined {
@@ -406,7 +406,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
             acquireId,
             value,
         };
-        this.jobTracking.set(value2.acquireId, {value, clientId});
+        this.jobTracking.set(value2.acquireId, { value, clientId });
 
         this.emit("acquire", value, clientId);
         return value2;
@@ -428,7 +428,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
 
     private removeClient(clientIdToRemove?: string) {
         const added: T[] = [];
-        for (const [acquireId, {value, clientId}] of this.jobTracking) {
+        for (const [acquireId, { value, clientId }] of this.jobTracking) {
             if (clientId === clientIdToRemove) {
                 this.jobTracking.delete(acquireId);
                 this.data.add(value);
@@ -438,7 +438,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
 
         // Raise all events only after all state changes are completed,
         // to guarantee same ordering of operations if collection is manipulated from events.
-        added.map((value) => this.emit("add", value, false /*newlyAdded*/));
+        added.map((value) => this.emit("add", value, false /* newlyAdded */));
     }
 
     private serializeValue(value) {

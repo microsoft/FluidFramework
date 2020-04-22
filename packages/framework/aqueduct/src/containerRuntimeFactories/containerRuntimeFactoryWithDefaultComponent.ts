@@ -13,9 +13,7 @@ import {
     IHostRuntime,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
-import {
-    ContainerServiceRegistryEntries,
-} from "../containerServices";
+import { DependencyContainerRegistry } from "@microsoft/fluid-synthesize";
 import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory";
 
 const defaultComponentId = "default";
@@ -46,10 +44,10 @@ export class ContainerRuntimeFactoryWithDefaultComponent extends BaseContainerRu
     constructor(
         private readonly defaultComponentName: string,
         registryEntries: NamedComponentRegistryEntries,
-        serviceRegistry: ContainerServiceRegistryEntries = [],
+        providerEntries: DependencyContainerRegistry = [],
         requestHandlers: RuntimeRequestHandler[] = [],
     ) {
-        super(registryEntries, serviceRegistry, [defaultComponentRuntimeRequestHandler, ...requestHandlers]);
+        super(registryEntries, providerEntries, [defaultComponentRuntimeRequestHandler, ...requestHandlers]);
     }
 
     public get IComponentDefaultFactoryName() { return this; }
@@ -63,6 +61,9 @@ export class ContainerRuntimeFactoryWithDefaultComponent extends BaseContainerRu
             ContainerRuntimeFactoryWithDefaultComponent.defaultComponentId,
             this.defaultComponentName,
         );
+        // We need to request the component before attaching to ensure it
+        // runs through its entire instantiation flow.
+        await componentRuntime.request({ url:"/" });
         componentRuntime.attach();
     }
 }

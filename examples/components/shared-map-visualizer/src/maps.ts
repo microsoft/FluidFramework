@@ -157,7 +157,6 @@ async function displayMap(
 export class ProgressCollection
     extends EventEmitter
     implements IComponentLoadable, IComponentRouter, IComponentHTMLView {
-
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new ProgressCollection(runtime, context);
         await collection.initialize();

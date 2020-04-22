@@ -16,10 +16,7 @@ import {
     IProvideComponentRegistry,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
-import {
-    generateContainerServicesRequestHandler,
-    ContainerServiceRegistryEntries,
-} from "../containerServices";
+import { DependencyContainer, DependencyContainerRegistry } from "@microsoft/fluid-synthesize";
 
 /**
  * BaseContainerRuntimeFactory produces container runtimes with a given component and service registry, as well as
@@ -40,7 +37,7 @@ export class BaseContainerRuntimeFactory implements
      */
     constructor(
         private readonly registryEntries: NamedComponentRegistryEntries,
-        private readonly serviceRegistry: ContainerServiceRegistryEntries = [],
+        private readonly providerEntries: DependencyContainerRegistry = [],
         private readonly requestHandlers: RuntimeRequestHandler[] = [],
     ) {
         this.registry = new ComponentRegistry(registryEntries);
@@ -52,15 +49,24 @@ export class BaseContainerRuntimeFactory implements
     public async instantiateRuntime(
         context: IContainerContext,
     ): Promise<IRuntime> {
+        const parentDependencyContainer = context.scope.IComponentDependencySynthesizer;
+        const dc = new DependencyContainer(parentDependencyContainer);
+        for (const entry of Array.from(this.providerEntries)) {
+            dc.register(entry.type, entry.provider);
+        }
+
         const runtime = await ContainerRuntime.load(
             context,
             this.registryEntries,
             [
-                generateContainerServicesRequestHandler(this.serviceRegistry),
                 ...this.requestHandlers,
                 componentRuntimeRequestHandler,
             ],
-            { generateSummaries: false });
+            undefined,
+            dc);
+
+        // we register the runtime so developers of providers can use it in the factory pattern.
+        dc.register(IHostRuntime, runtime);
 
         // On first boot create the base component
         if (!runtime.existing) {

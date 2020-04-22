@@ -13,16 +13,18 @@ import {
     IComponentRuntime,
     IObjectStorageService,
     ISharedObjectServices,
+    IExperimentalComponentRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 import * as Deque from "double-ended-queue";
 import { debug } from "./debug";
 import { SharedObjectComponentHandle } from "./handle";
-import { ISharedObject } from "./types";
+import { ISharedObject, ISharedObjectEvents } from "./types";
 
 /**
  *  Base class from which all shared objects derive
  */
-export abstract class SharedObject extends EventEmitterWithErrorHandling implements ISharedObject {
+export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents>
+    extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
     /**
      * @param obj - The thing to check if it is a SharedObject
      * @returns Returns true if the thing is a SharedObject
@@ -89,7 +91,6 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
         public id: string,
         protected runtime: IComponentRuntime,
         public readonly attributes: IChannelAttributes) {
-
         super();
 
         this.handle = new SharedObjectComponentHandle(
@@ -125,7 +126,6 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     public async load(
         branchId: string,
         services: ISharedObjectServices): Promise<void> {
-
         this.services = services;
 
         await this.loadCore(
@@ -172,7 +172,9 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
      * {@inheritDoc ISharedObject.isLocal}
      */
     public isLocal(): boolean {
-        return this.services === undefined;
+        const expComponentRuntime = this.runtime as IExperimentalComponentRuntime;
+        return expComponentRuntime?.isExperimentalComponentRuntime ?
+            expComponentRuntime.isLocal() || this.services === undefined : this.services === undefined;
     }
 
     /**
@@ -180,21 +182,6 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
      */
     public isRegistered(): boolean {
         return (!this.isLocal() || this.registered);
-    }
-
-    /**
-     * Registers a listener on the specified events
-     * @param event - The event to listen for
-     * @param listener - The listener to register
-     */
-    public on(
-        event: "pre-op" | "op",
-        listener: (op: ISequencedDocumentMessage, local: boolean, target: this) => void): this;
-    public on(event: "error", listener: (error: any) => void): this;
-    public on(event: string | symbol, listener: (...args: any[]) => void): this;
-
-    public on(event: string | symbol, listener: (...args: any[]) => void): this {
-        return super.on(event, listener);
     }
 
     /**
@@ -278,8 +265,8 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     }
 
     /**
-     * Marks this object as dirty so that it is part of the next summary. It is called by a summarizable
-     * object that want to be part of summary but does not generate ops.
+     * Marks this object as dirty so that it is part of the next summary. It is called by a SharedSummaryBlock
+     * that want to be part of summary but does not generate ops.
      */
     protected dirty(): void {
         if (this.isLocal()) {
@@ -397,9 +384,9 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
             this.processPendingOp(message);
         }
 
-        this.emit("pre-op", message, local);
+        this.emit("pre-op", message, local, this);
         this.processCore(message, local);
-        this.emit("op", message, local);
+        this.emit("op", message, local, this);
     }
 
     /**

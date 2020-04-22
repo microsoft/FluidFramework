@@ -96,7 +96,6 @@ export function selectionListBoxCreate(
     itemHeight: number,
     offsetY: number,
     varHeight?: number): ISelectionListBox {
-
     const listContainer = document.createElement("div");
     let items: ISearchMenuCommand[];
     let itemCapacity: number;

@@ -10,7 +10,7 @@ Build a chaincode with [Yo Fluid](../../tools/generator-fluid/README.md). We str
 
 ## How do I deploy a chaincode?
 
-To deploy and make your chaincode "Live" you'll have to deploy it to verdaccio, our private NPM repository.
+To deploy and make your chaincode "Live" you'll have to deploy it to verdaccio, our private npm repository.
 
 Go to https://packages.wu2.prague.office-int.com
 

@@ -20,7 +20,7 @@ export function renderChat(runtime: Runtime, hostElement: HTMLElement) {
 }
 
 function renderCore(runtime: Runtime, opHistory: ISequencedDocumentMessage[], hostElement: HTMLElement) {
-    const user = runtime.clientId? runtime.getQuorum().getMember(runtime.clientId) : undefined;
+    const user = runtime.clientId ? runtime.getQuorum().getMember(runtime.clientId) : undefined;
     const userName = (user?.client.user as any).name;
     ReactDOM.render(
         <Provider theme={themes.teams}>

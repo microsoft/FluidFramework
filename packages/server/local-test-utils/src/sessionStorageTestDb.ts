@@ -18,7 +18,6 @@ export class SessionStorageDbFactory implements ITestDbFactory {
     public async connect(): Promise<IDb> {
         return Promise.resolve(this.testDatabase);
     }
-
 }
 
 /**

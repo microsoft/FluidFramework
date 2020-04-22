@@ -37,6 +37,8 @@ import {
     IEnvelope,
     IHostRuntime,
     IInboundSignalMessage,
+    IExperimentalHostRuntime,
+    IExperimentalComponentContext,
 } from "@microsoft/fluid-runtime-definitions";
 import { SummaryTracker } from "@microsoft/fluid-runtime-utils";
 import { v4 as uuid } from "uuid";
@@ -62,7 +64,17 @@ interface ISnapshotDetails {
 /**
  * Represents the context for the component. This context is passed to the component runtime.
  */
-export abstract class ComponentContext extends EventEmitter implements IComponentContext, IDisposable {
+export abstract class ComponentContext extends EventEmitter implements IComponentContext, IDisposable,
+    IExperimentalComponentContext
+{
+    public readonly isExperimentalComponentContext = true;
+
+    public isLocal(): boolean {
+        const expHostRuntime = this._hostRuntime as IExperimentalHostRuntime;
+        assert(expHostRuntime?.isExperimentalHostRuntime);
+        return expHostRuntime.isLocal() || !this.isAttached;
+    }
+
     public get documentId(): string {
         return this._hostRuntime.id;
     }
@@ -225,7 +237,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             packagePath,
             realizationFn,
         );
-        const response = await componentRuntime.request({url: "/"});
+        const response = await componentRuntime.request({ url: "/" });
         if (response.status !== 200 || response.mimeType !== "fluid/component") {
             throw new Error("Failed to create component");
         }
@@ -321,7 +333,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             return this.componentRuntime!.process(message, local);
         } else {
-            assert(!local);
+            assert(!local, "local component is not loaded");
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.pending!.push(message);
         }
@@ -393,7 +405,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     }
 
     /**
-     * This is called from a summarizable object that does not generate ops but only wants to be part of the summary.
+     * This is called from a SharedSummaryBlock that does not generate ops but only wants to be part of the summary.
      * It indicates that there is data in the object that needs to be summarized.
      * We will update the latestSequenceNumber of the summary tracker of this component and of the object's channel.
      *
@@ -447,7 +459,6 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         } else {
             this.emit("notleader", this.clientId);
         }
-
     }
 
     public bindRuntime(componentRuntime: IComponentRuntime) {
