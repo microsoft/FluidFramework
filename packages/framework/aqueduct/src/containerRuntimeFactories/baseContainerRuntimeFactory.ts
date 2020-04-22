@@ -12,7 +12,7 @@ import {
 } from "@microsoft/fluid-container-runtime";
 import {
     IComponentRegistry,
-    IHostRuntime,
+    IContainerRuntime,
     IProvideComponentRegistry,
     NamedComponentRegistryEntries,
 } from "@microsoft/fluid-runtime-definitions";
@@ -66,7 +66,7 @@ export class BaseContainerRuntimeFactory implements
             dc);
 
         // we register the runtime so developers of providers can use it in the factory pattern.
-        dc.register(IHostRuntime, runtime);
+        dc.register(IContainerRuntime, runtime);
 
         // On first boot create the base component
         if (!runtime.existing) {
@@ -81,5 +81,5 @@ export class BaseContainerRuntimeFactory implements
      * is created.  This likely includes creating any initial components that are expected to be there at the outset.
      * @param runtime - The container runtime for the container being initialized
      */
-    protected async containerInitializingFirstTime(runtime: IHostRuntime) { }
+    protected async containerInitializingFirstTime(runtime: IContainerRuntime) { }
 }

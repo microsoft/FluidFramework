@@ -8,9 +8,10 @@
 - [PrimedComponent and SharedComponent interface changes](#PrimedComponent-and-Shared-Component-interface-changes)
 - [SimpleModuleInstantiationFactory renamed and SimpleContainerRuntimeFactory deprecated](#SimpleModuleInstantiationFactory-renamed-and-SimpleContainerRuntimeFactory-deprecated)
 - [Change to the ErrorType enum on IError](#Change-to-the-ErrorType-enum-on-IError)
-- [Changes to createComponent in IComponentContext, IHostRuntime, and ComponentRuntime](#Change-to-createComponent-in-IComponentContext-IHostRuntime-and-ComponentRuntime)
+- [Changes to createComponent in IComponentContext, IContainerRuntime, and ComponentRuntime](#Change-to-createComponent-in-IComponentContext-IContainerRuntime-and-ComponentRuntime)
 - [ContainerRuntime and LocalComponentContext createProps removal](#ContainerRuntime-and-LocalComponentContext-createProps-removal)
 - [Providers in Aqueduct](#Providers-in-Aqueduct)
+- [IHostRuntime is now IContainerRuntime](#IHostRuntime-is-now-IContainerRuntime)
 
 ### View interfaces moved to separate package
 
@@ -88,10 +89,10 @@ Users can also pass in an optional function to get the value from their director
 Corresponding interfaces have been introduced as well: `IGenericNetworkError`, `IAccessDeniedError`, and `IFileNotFoundError`;
 they are functionally identical to the former `IConnectionError`, just differentiated for ease of use.
 
-### Changes to createComponent in IComponentContext, IHostRuntime, and ContainerRuntime
+### Changes to createComponent in IComponentContext, IContainerRuntime, and ContainerRuntime
 
-The createComponent call in IHostRuntime is now deprecated, affecting ContainerRuntime and any other classes that implement that interface.
-The createComponent call in IComponentContext is now deprecated. Instead, users should either use the createAndAttachComponent call available in SharedComponent to add them from within a component or _createComponentWithProps in IHostRuntime to add component from the runtime.
+The createComponent call in IContainerRuntime is now deprecated, affecting ContainerRuntime and any other classes that implement that interface.
+The createComponent call in IComponentContext is now deprecated. Instead, users should either use the createAndAttachComponent call available in SharedComponent to add them from within a component or _createComponentWithProps in IContainerRuntime to add component from the runtime.
 
 ### ContainerRuntime and LocalComponentContext createProps removal
 
@@ -146,6 +147,9 @@ export const MyClickerFactory = new PrimedComponentFactory(
 ```
 
 See Aqueduct README for further details.
+
+### IHostRuntime is now IContainerRuntime
+The IHostRuntime legacy name has now been updated to be IContainerRuntime, to match the class that implements it, ContainerRuntime
 
 ## 0.15 Breaking Changes
 
@@ -274,7 +278,7 @@ However, ID is being deprecated so prefer passing undefined in its place (the ru
 This API will now attempt to create the specified package off the current sub-registry and if that fails, it will
 attempt to create it off the global registry.
 
-For creating a component with a specific package path, use `createComponent` or `_createComponentWithProps` in `IHostRuntime`.
+For creating a component with a specific package path, use `createComponent` or `_createComponentWithProps` in `IContainerRuntime`.
 
 ### `IComponentHandle` - Type parameter moved
 

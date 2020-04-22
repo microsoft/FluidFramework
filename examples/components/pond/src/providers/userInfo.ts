@@ -13,7 +13,7 @@ import { IQuorum } from "@microsoft/fluid-protocol-definitions";
 import { DependencyContainer } from "@microsoft/fluid-synthesize";
 import {
     IComponentRegistry,
-    IHostRuntime,
+    IContainerRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 
 import { IComponentUserInformation } from "../interfaces";
@@ -26,7 +26,7 @@ export class UserInfo extends EventEmitter implements IComponentUserInformation 
         return super.on(event, listener);
     }
 
-    public constructor(hostRuntime: IHostRuntime) {
+    public constructor(hostRuntime: IContainerRuntime) {
         super();
         this.quorum = hostRuntime.getQuorum();
 
@@ -68,13 +68,13 @@ export class UserInfo extends EventEmitter implements IComponentUserInformation 
 }
 
 export const userInfoFactory = async (dc: DependencyContainer) => {
-    const s = dc.synthesize<IHostRuntime>({
-        IHostRuntime,
+    const s = dc.synthesize<IContainerRuntime>({
+        IContainerRuntime,
         IComponentHandleContext,
         IComponentSerializer,
         IComponentRegistry,
     },{});
-    const hostRuntime = await s.IHostRuntime;
+    const hostRuntime = await s.IContainerRuntime;
     if (hostRuntime) {
         return new UserInfo(hostRuntime);
     }

@@ -264,7 +264,7 @@ export interface IComponentContext extends EventEmitter {
     readonly branch: string;
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly loader: ILoader;
-    readonly hostRuntime: IHostRuntime;
+    readonly hostRuntime: IContainerRuntime;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly createProps?: any;
 
@@ -379,16 +379,16 @@ declare module "@microsoft/fluid-component-core-interfaces" {
     export interface IComponent extends Readonly<Partial<IProvideHostRuntime>> { }
 }
 
-export const IHostRuntime: keyof IProvideHostRuntime = "IHostRuntime";
+export const IContainerRuntime: keyof IProvideHostRuntime = "IContainerRuntime";
 
 export interface IProvideHostRuntime {
-    IHostRuntime: IHostRuntime;
+    IContainerRuntime: IContainerRuntime;
 }
 
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  */
-export interface IHostRuntime extends
+export interface IContainerRuntime extends
     EventEmitter,
     IProvideComponentSerializer,
     IProvideComponentHandleContext,
@@ -536,7 +536,7 @@ export interface IHostRuntime extends
     submitSignal(type: string, content: any): void;
 }
 
-export interface IExperimentalHostRuntime extends IHostRuntime {
+export interface IExperimentalHostRuntime extends IContainerRuntime {
 
     isExperimentalHostRuntime: true;
 

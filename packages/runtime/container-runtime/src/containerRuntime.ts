@@ -66,7 +66,7 @@ import {
     IComponentRegistry,
     IComponentRuntime,
     IEnvelope,
-    IHostRuntime,
+    IContainerRuntime,
     IInboundSignalMessage,
     ISignalEnvelop,
     NamedComponentRegistryEntries,
@@ -359,7 +359,7 @@ export class ScheduleManager {
 
 export const schedulerId = "_scheduler";
 const schedulerRuntimeRequestHandler: RuntimeRequestHandler =
-    async (request: RequestParser, runtime: IHostRuntime) => {
+    async (request: RequestParser, runtime: IContainerRuntime) => {
         if (request.pathParts.length > 0 && request.pathParts[0] === schedulerId) {
             return componentRuntimeRequestHandler(request, runtime);
         }
@@ -380,10 +380,10 @@ class ContainerRuntimeComponentRegistry extends ComponentRegistry {
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the component level mappings.
  */
-export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRuntime,
+export class ContainerRuntime extends EventEmitter implements IContainerRuntime, IRuntime,
     IExperimentalRuntime, IExperimentalHostRuntime
 {
-    public get IHostRuntime() { return this; }
+    public get IContainerRuntime() { return this; }
 
     public readonly isExperimentalRuntime = true;
     public readonly isExperimentalHostRuntime = true;

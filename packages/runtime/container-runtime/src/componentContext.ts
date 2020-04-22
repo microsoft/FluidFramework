@@ -35,7 +35,7 @@ import {
     IComponentRegistry,
     IComponentRuntime,
     IEnvelope,
-    IHostRuntime,
+    IContainerRuntime,
     IInboundSignalMessage,
     IExperimentalHostRuntime,
     IExperimentalComponentContext,
@@ -138,7 +138,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         return this._hostRuntime.loader;
     }
 
-    public get hostRuntime(): IHostRuntime {
+    public get hostRuntime(): IContainerRuntime {
         return this._hostRuntime;
     }
 
@@ -161,7 +161,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     private _baseSnapshot: ISnapshotTree | undefined;
 
     constructor(
-        private readonly _hostRuntime: IHostRuntime,
+        private readonly _hostRuntime: IContainerRuntime,
         public readonly id: string,
         public readonly existing: boolean,
         public readonly storage: IDocumentStorageService,
@@ -466,7 +466,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             throw new Error("runtime already bound");
         }
 
-        // If this ComponentContext was created via `IHostRuntime.createComponentContext`, the
+        // If this ComponentContext was created via `IContainerRuntime.createComponentContext`, the
         // `componentRuntimeDeferred` promise hasn't yet been initialized.  Do so now.
         if (!this.componentRuntimeDeferred) {
             this.componentRuntimeDeferred = new Deferred();
@@ -558,7 +558,7 @@ export class RemotedComponentContext extends ComponentContext {
     constructor(
         id: string,
         private readonly initSnapshotValue: ISnapshotTree | string | null,
-        runtime: IHostRuntime,
+        runtime: IContainerRuntime,
         storage: IDocumentStorageService,
         scope: IComponent,
         summaryTracker: SummaryTracker,
@@ -635,7 +635,7 @@ export class LocalComponentContext extends ComponentContext {
     constructor(
         id: string,
         pkg: string[],
-        runtime: IHostRuntime,
+        runtime: IContainerRuntime,
         storage: IDocumentStorageService,
         scope: IComponent,
         summaryTracker: SummaryTracker,
