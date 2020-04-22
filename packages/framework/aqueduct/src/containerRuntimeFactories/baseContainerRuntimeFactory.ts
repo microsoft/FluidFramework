@@ -59,7 +59,8 @@ export class BaseContainerRuntimeFactory implements
                 generateContainerServicesRequestHandler(this.serviceRegistry),
                 ...this.requestHandlers,
                 componentRuntimeRequestHandler,
-            ]);
+            ],
+            { generateSummaries: false });
 
         // On first boot create the base component
         if (!runtime.existing) {

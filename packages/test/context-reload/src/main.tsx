@@ -31,7 +31,7 @@ export class VersionTest extends PrimedComponent implements IComponentHTMLView {
   }
 
   protected async componentHasInitialized() {
-    this.upgradeManager = new UpgradeManager(this.runtime.getQuorum());
+    this.upgradeManager = new UpgradeManager(this.runtime as any);
 
     this.runtime.on("signal", (message) => {
       if (message.type === upgradeKey) {
