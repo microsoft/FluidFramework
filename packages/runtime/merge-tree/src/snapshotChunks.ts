@@ -7,7 +7,7 @@ import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { IJSONSegment, SnapshotLegacy } from ".";
 
 export interface VersionedMergeTreeChunk {
-    version: undefined | "0to1" | "1";
+    version: undefined | "1";
 }
 
 export type JsonSegmentSpecs = IJSONSegment | IJSONSegmentWithMergeInfo;
@@ -22,6 +22,8 @@ export interface MergeTreeChunkLegacy extends VersionedMergeTreeChunk {
     chunkSequenceNumber: number;
     chunkMinSequenceNumber?: number;
     segmentTexts: JsonSegmentSpecs[];
+    headerMetadata?: MergeTreeHeaderMetadata;
+
 }
 
 export interface MergeTreeHeaderChunkMetadata{
@@ -35,12 +37,6 @@ export interface MergeTreeHeaderMetadata {
     sequenceNumber: number,
     minSequenceNumber: number,
     hasTardis: boolean,
-}
-
-// tslint:disable-next-line:interface-name
-export interface MergeTreeChunkV0 extends VersionedMergeTreeChunk, Omit<MergeTreeChunkLegacy, "version"> {
-    version: "0to1",
-    headerMetadata: MergeTreeHeaderMetadata | undefined;
 }
 
 export interface MergeTreeChunkV1 extends VersionedMergeTreeChunk{
@@ -80,14 +76,14 @@ export function serializeAsMinSupportedVersion(
     serializer?: IComponentSerializer,
     context?: IComponentHandleContext,
     bind?: IComponentHandle) {
-    let targetChuck: MergeTreeChunkV0;
+    let targetChuck: MergeTreeChunkLegacy;
 
-    if (chunk.version !== "0to1") {
+    if (chunk.version !== undefined) {
         logger.send({
             eventName:"MergeTreeChunk:serializeAsMinSupportedVersion",
             category: "generic",
             fromChunkVersion: chunk.version,
-            toChunkVersion: "0to1",
+            toChunkVersion: undefined,
         });
     }
 
@@ -96,18 +92,14 @@ export function serializeAsMinSupportedVersion(
             const chunkLegacy = chunk as MergeTreeChunkLegacy;
             targetChuck = {
                 ... chunkLegacy,
-                headerMetadata: buildHeaderMetadata(path, chunkLegacy),
+                headerMetadata: buildHeaderMetadataForLegecyChunk(path, chunkLegacy),
             };
-            break;
-
-        case "0to1":
-            targetChuck = chunk as MergeTreeChunkV0;
             break;
 
         case "1":
             const chunkV1 = chunk as MergeTreeChunkV1;
             targetChuck = {
-                version: "0to1",
+                version: undefined,
                 chunkStartSegmentIndex: chunkV1.startIndex,
                 chunkLengthChars: chunkV1.length,
                 chunkSegmentCount: chunkV1.segmentCount,
@@ -156,24 +148,11 @@ export function toLatestVersion(
                 version: "1",
                 length: chunkLegacy.chunkLengthChars,
                 segmentCount: chunkLegacy.chunkSegmentCount,
-                headerMetadata: buildHeaderMetadata(path, chunkLegacy),
+                headerMetadata: buildHeaderMetadataForLegecyChunk(path, chunkLegacy),
                 segments: chunkLegacy.segmentTexts,
                 startIndex: chunkLegacy.chunkStartSegmentIndex,
             };
         }
-
-        case "0to1": {
-            const chunkV0 = chunk as MergeTreeChunkV0;
-            return {
-                version: "1",
-                length: chunkV0.chunkLengthChars,
-                segmentCount: chunkV0.chunkSegmentCount,
-                headerMetadata: chunkV0.headerMetadata,
-                segments: chunkV0.segmentTexts,
-                startIndex: chunkV0.chunkStartSegmentIndex,
-            };
-        }
-
         case "1":
             return chunk as MergeTreeChunkV1;
 
@@ -182,12 +161,11 @@ export function toLatestVersion(
     }
 }
 
-function buildHeaderMetadata(
-    path: string, chunk: MergeTreeChunkLegacy | MergeTreeChunkV0): MergeTreeHeaderMetadata | undefined {
+function buildHeaderMetadataForLegecyChunk(
+    path: string, chunk: MergeTreeChunkLegacy): MergeTreeHeaderMetadata | undefined {
     if (path === SnapshotLegacy.header) {
-        const maybe0to1 = chunk as MergeTreeChunkV0;
-        if (maybe0to1?.version !== undefined && maybe0to1.headerMetadata !== undefined) {
-            return maybe0to1.headerMetadata;
+        if (chunk.headerMetadata !== undefined) {
+            return chunk.headerMetadata;
         }
         const chunkIds: MergeTreeHeaderChunkMetadata[] = [ { id: SnapshotLegacy.header } ];
         if (chunk.chunkLengthChars < chunk.totalLengthChars) {
