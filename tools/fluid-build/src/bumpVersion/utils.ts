@@ -46,7 +46,7 @@ export class GitRepo {
      * @param tag the tag to add
      */
     public async deleteTag(tag: string) {
-        await this.exec(`tag ${tag}`);
+        await this.exec(`tag -d ${tag}`);
     }
 
     /**
