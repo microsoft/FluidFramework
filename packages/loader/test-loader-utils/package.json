@@ -23,10 +23,10 @@
   },
   "dependencies": {
     "@microsoft/fluid-driver-definitions": "^0.16.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1004.1-0"
+    "@microsoft/fluid-protocol-definitions": "^0.1004.1"
   },
   "devDependencies": {
-    "@microsoft/eslint-config-fluid": "^0.16.0-0",
+    "@microsoft/eslint-config-fluid": "^0.16.0",
     "@microsoft/fluid-build-common": "^0.14.0",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",

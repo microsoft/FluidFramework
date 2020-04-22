@@ -28,7 +28,7 @@
     "@microsoft/fluid-common-utils": "^0.15.0",
     "@microsoft/fluid-driver-definitions": "^0.16.0",
     "@microsoft/fluid-driver-utils": "^0.16.0",
-    "@microsoft/fluid-protocol-definitions": "^0.1004.1-0",
+    "@microsoft/fluid-protocol-definitions": "^0.1004.1",
     "@types/debug": "^0.0.31",
     "@types/node": "^10.14.6",
     "@types/socket.io-client": "^1.4.32",
@@ -36,7 +36,7 @@
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",
-    "@microsoft/eslint-config-fluid": "^0.16.0-0",
+    "@microsoft/eslint-config-fluid": "^0.16.0",
     "@microsoft/fluid-build-common": "^0.14.0",
     "@typescript-eslint/eslint-plugin": "~2.17.0",
     "@typescript-eslint/parser": "~2.17.0",
