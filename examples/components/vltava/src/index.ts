@@ -33,9 +33,6 @@ import {
     VltavaName,
 } from "./components";
 
-// Any component that wants the last edited tracker can request it from the container using this id.
-export const LastEditedTrackerId = "last-edited-tracker";
-
 export class InternalRegistry implements IComponentRegistry, IComponentRegistryDetails {
     public get IComponentRegistry() { return this; }
     public get IComponentRegistryDetails() { return this; }
@@ -71,7 +68,6 @@ export class InternalRegistry implements IComponentRegistry, IComponentRegistryD
 }
 
 export class VltavaRuntimeFactory extends ContainerRuntimeFactoryWithDefaultComponent {
-    private readonly lastEditedTrackerId = LastEditedTrackerId;
     constructor(
         defaultComponentName: string,
         registryEntries: NamedComponentRegistryEntries,
@@ -80,40 +76,16 @@ export class VltavaRuntimeFactory extends ContainerRuntimeFactoryWithDefaultComp
     }
 
     /**
-     * {@inheritDoc BaseContainerRuntimeFactory.containerInitializingFirstTime}
+     * {@inheritDoc BaseContainerRuntimeFactory.containerHasInitialized}
      */
-    protected async containerInitializingFirstTime(runtime: IHostRuntime) {
-        // Create the last edited tracker component. This component provides container level tracking of last edit and
-        // has to be loaded before any other component.
-        const componentRuntime = await runtime.createComponent(
-            this.lastEditedTrackerId,
-            LastEditedTrackerComponentName,
-        );
-        componentRuntime.attach();
-
-        // Right now this setup has to be done asynchronously because in the case where we load the Container from
-        // remote ops, the `Attach` message for the last edited tracker component has not arrived yet.
-        // We should be able to wait here after the create-new workflow is in place.
-        setupLastEditedTrackerForContainer(`${this.lastEditedTrackerId}`, runtime)
-            .catch((error) => {
-                runtime.error(error);
-            });
-
-        // Call the super class which will create the default (Anchor) component.
-        await super.containerInitializingFirstTime(runtime);
-    }
-
-    /**
-     * {@inheritDoc BaseContainerRuntimeFactory.containerInitializingFromExisting}
-     */
-    protected async containerInitializingFromExisting(runtime: IHostRuntime) {
+    protected async containerHasInitialized(runtime: IHostRuntime) {
         // Load the last edited tracker component (done by the setup method below). This component provides container
         // level tracking of last edit and has to be loaded before any other component.
 
         // Right now this setup has to be done asynchronously because in the case where we load the Container from
         // remote ops, the `Attach` message for the last edited tracker component has not arrived yet.
         // We should be able to wait here after the create-new workflow is in place.
-        setupLastEditedTrackerForContainer(`${this.lastEditedTrackerId}`, runtime)
+        setupLastEditedTrackerForContainer(ContainerRuntimeFactoryWithDefaultComponent.defaultComponentId, runtime)
             .catch((error) => {
                 runtime.error(error);
             });

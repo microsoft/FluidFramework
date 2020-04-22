@@ -10,68 +10,45 @@ import {
     IFacepilePersona,
 } from "office-ui-fabric-react/lib/Facepile";
 import { PersonaInitialsColor } from "office-ui-fabric-react";
-import { IVltavaUserDetails } from "./dataModel";
+import { IVltavaLastEditedState } from "./dataModel";
 
-const grayBoxStyle: React.CSSProperties = {
-    position: "absolute",
-    top: 55,
-    right: 5,
+const lastEditedBoxStyle: React.CSSProperties = {
+    position: "relative",
+    top: 20,
+    left: -240,
+    height: 135,
     width: 250,
-    height: 35,
-    background:"#3D3D3D",
-    overflow: "hidden",
-    boxSizing: "border-box",
-};
-
-const whiteBoxStyle: React.CSSProperties = {
-    position: "absolute",
-    top: 85,
-    right: 5,
-    width: 250,
-    height: 100,
-    background:"white",
-    overflow: "hidden",
-    boxSizing: "border-box",
-    border: "1px solid lightgray",
+    background: "white",
+    border: "1px solid darkgray",
 };
 
 const lastEditByStyle: React.CSSProperties = {
-    position: "relative",
-    top: 5,
     color: "white",
     fontFamily: "Calibri",
     fontSize: 16,
     textAlign: "center",
-};
-
-const facePileStyle: React.CSSProperties = {
-    position: "absolute",
-    top: 15,
-    left: 20,
+    padding: "5px",
 };
 
 const lastEditedTimeStyle: React.CSSProperties = {
-    position: "relative",
-    top: 65,
     color: "#505050",
     fontFamily: "Calibri",
-    fontSize: 15,
+    fontSize: 14,
     textAlign: "center",
 };
 
 interface ILastEditedDisplayProps {
-    user?: IVltavaUserDetails;
-    time?: string;
+    lastEditedState?: IVltavaLastEditedState;
 }
 
 export const LastEditedDisplay = (props: ILastEditedDisplayProps) => {
-    if (props.user === undefined || props.time === undefined) {
+    if (props.lastEditedState === undefined) {
         return (
-            <div></div>
+            <div/>
         );
     }
 
-    const personaName = props.user.name;
+    const personaName = props.lastEditedState.user.name;
     // Split the names on spaces and underscores
     const nameParts = personaName.split(" ")
         .reduce((acc: string[], val) => { acc.push(...val.split("_")); return acc; }, []);
@@ -79,7 +56,7 @@ export const LastEditedDisplay = (props: ILastEditedDisplayProps) => {
     // This is just a way to iterate through all colors in PersonaInitialColor in order
     const initialsColor =
         PersonaInitialsColor[
-            PersonaInitialsColor[props.user.colorCode % Object.keys(PersonaInitialsColor).length]
+            PersonaInitialsColor[props.lastEditedState.user.colorCode % Object.keys(PersonaInitialsColor).length]
         ];
     const persona: IFacepilePersona = {
         imageInitials,
@@ -95,18 +72,18 @@ export const LastEditedDisplay = (props: ILastEditedDisplayProps) => {
     };
 
     return (
-        <div>
-            <div style = {grayBoxStyle}>
+        <div style = {lastEditedBoxStyle}>
+            <div style = {{ background: "#3D3D3D" }}>
                 <div style = {lastEditByStyle}>
                     Last Edit By
                 </div>
             </div>
-            <div style = {whiteBoxStyle}>
-                <div style = {facePileStyle}>
+            <div>
+                <div style = {{ padding: "20px 30px" }}>
                     <Facepile {...facepileProps} />
                 </div>
                 <div style = {lastEditedTimeStyle}>
-                    {props.time}
+                    {props.lastEditedState.time}
                 </div>
             </div>
         </div>

@@ -9,8 +9,6 @@ import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-import { LastEditedTrackerId } from "../../index";
-
 import { IVltavaDataModel, VltavaDataModel } from "./dataModel";
 import { VltavaView } from "./view";
 
@@ -44,17 +42,9 @@ export class Vltava extends PrimedComponent implements IComponentHTMLView {
     }
 
     protected async componentHasInitialized() {
-        // Get the last edited tracker from the container with id LastEditedTrackerId.
-        const response = await this.context.hostRuntime.request({ url: LastEditedTrackerId });
-        if (response.status !== 200 || response.mimeType !== "fluid/component") {
-            throw new Error("Can't find last edited component");
-        }
-        const lastEditedTracker = response.value.IComponentLastEditedTracker;
-
         this.dataModelInternal =
             new VltavaDataModel(
                 this.root,
-                lastEditedTracker,
                 this.context,
                 this.runtime);
     }

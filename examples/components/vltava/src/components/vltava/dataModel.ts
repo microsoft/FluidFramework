@@ -19,17 +19,22 @@ export interface IVltavaUserDetails {
     colorCode: number,
 }
 
+export interface IVltavaLastEditedState {
+    user: IVltavaUserDetails,
+    time: string,
+}
+
 export interface IVltavaDataModel extends EventEmitter {
     getDefaultComponent(): Promise<IComponent>;
     getTitle(): string;
     getUsers(): IVltavaUserDetails[];
-    getLastEditedUser(): IVltavaUserDetails | undefined;
-    getLastEditedTime(): string | undefined;
+    getLastEditedState(): Promise<IVltavaLastEditedState | undefined>;
 }
 
 export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
     private readonly quorum: IQuorum;
     private users: IVltavaUserDetails[] = [];
+    private lastEditedTracker: IComponentLastEditedTracker | undefined;
 
     public on(event: "membersChanged", listener: (users: Map<string, ISequencedClient>) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
@@ -38,7 +43,6 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
 
     constructor(
         private readonly root: ISharedDirectory,
-        private readonly lastEditedTracker: IComponentLastEditedTracker,
         private readonly context: IComponentContext,
         runtime: IComponentRuntime,
     ) {
@@ -79,30 +83,42 @@ export class VltavaDataModel extends EventEmitter implements IVltavaDataModel {
         return this.users;
     }
 
-    public getLastEditedUser(): IVltavaUserDetails | undefined {
-        const lastEditedDetails = this.lastEditedTracker.getLastEditDetails();
-        if (lastEditedDetails) {
-            const userName = (lastEditedDetails.user as any).name;
-            let colorCode = 0;
-            this.users.forEach((userDetails: IVltavaUserDetails) => {
-                if (userDetails.name === userName) {
-                    colorCode = userDetails.colorCode;
-                }
-            });
-            return {
+    public async getLastEditedState(): Promise<IVltavaLastEditedState | undefined> {
+        // Set up the tracker the first time last edited state is requested.
+        if (this.lastEditedTracker === undefined) {
+            await this.setupLastEditedTracker();
+        }
+
+        const lastEditedDetails = this.lastEditedTracker?.getLastEditDetails();
+        if (lastEditedDetails === undefined) {
+            return;
+        }
+
+        const userName = (lastEditedDetails.user as any).name;
+        let colorCode = 0;
+        this.users.forEach((userDetails: IVltavaUserDetails) => {
+            if (userDetails.name === userName) {
+                colorCode = userDetails.colorCode;
+            }
+        });
+
+        const date = new Date(lastEditedDetails.timestamp);
+        const lastEditedState: IVltavaLastEditedState = {
+            user: {
                 name: userName,
                 colorCode,
-            };
-        }
-        return undefined;
+            },
+            time: date.toUTCString(),
+        };
+
+        return lastEditedState;
     }
 
-    public getLastEditedTime(): string | undefined {
-        const lastEditedDetails = this.lastEditedTracker.getLastEditDetails();
-        if (lastEditedDetails) {
-            const date = new Date(lastEditedDetails.timestamp);
-            return date.toUTCString();
+    private async setupLastEditedTracker() {
+        const response = await this.context.hostRuntime.request({ url: "default" });
+        if (response.status !== 200 || response.mimeType !== "fluid/component") {
+            throw new Error("Can't find last edited component");
         }
-        return undefined;
+        this.lastEditedTracker = response.value.IComponentLastEditedTracker;
     }
 }

@@ -5,6 +5,11 @@
 
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import {
+    IComponentLastEditedTracker,
+    IProvideComponentLastEditedTracker,
+    LastEditedTrackerComponentName,
+} from "@microsoft/fluid-last-edited-experimental";
 import { IComponentHTMLView, IProvideComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 
 export const AnchorName = "anchor";
@@ -12,9 +17,11 @@ export const AnchorName = "anchor";
 /**
  * Anchor is an default component is responsible for managing creation and the default component
  */
-export class Anchor extends PrimedComponent implements IProvideComponentHTMLView {
+export class Anchor extends PrimedComponent implements IProvideComponentHTMLView, IProvideComponentLastEditedTracker {
     private readonly defaultComponentId = "default-component-id";
     private defaultComponentInternal: IComponentHTMLView | undefined;
+    private readonly lastEditedComponentId = "last-edited-component-id";
+    private lastEditedComponentInternal: IComponentLastEditedTracker | undefined;
 
     private get defaultComponent() {
         if (!this.defaultComponentInternal) {
@@ -24,24 +31,15 @@ export class Anchor extends PrimedComponent implements IProvideComponentHTMLView
         return this.defaultComponentInternal;
     }
 
-    private get lastEditedTrackerComponent() {
-        if (!this.lastEditedTrackerComponentInternal) {
-            throw new Error("Last Edited tracker was not initialized properly");
+    private get lastEditedComponent() {
+        if (!this.lastEditedComponentInternal) {
+            throw new Error("LastEditedTrackerComponent was not initialized properly");
         }
 
-        return this.lastEditedTrackerComponentInternal;
+        return this.lastEditedComponentInternal;
     }
 
-    private static readonly factory = new PrimedComponentFactory(
-        AnchorName,
-        Anchor,
-        [],
-        [
-            [ VltavaName, Promise.resolve(Vltava.getFactory()) ],
-            [ LastEditedTrackerComponentName, Promise.resolve(LastEditedTrackerComponent.getFactory()) ],
-        ],
-        {},
-    );
+    private static readonly factory = new PrimedComponentFactory(AnchorName, Anchor, []);
 
     public static getFactory() {
         return Anchor.factory;
@@ -49,17 +47,23 @@ export class Anchor extends PrimedComponent implements IProvideComponentHTMLView
 
     public get IComponentHTMLView() { return this.defaultComponent; }
 
+    public get IComponentLastEditedTracker() { return this.lastEditedComponent; }
+
     protected async componentInitializingFirstTime(props: any) {
         const defaultComponent = await this.createAndAttachComponent("vltava");
         this.root.set(this.defaultComponentId, defaultComponent.handle);
 
-        const lastEditedTrackerComponent = await this.createAndAttachComponent(LastEditedTrackerComponentName);
-        this.root.set(this.lastEditedTrackerComponentId, lastEditedTrackerComponent.handle);
+        const lastEditedComponent = await this.createAndAttachComponent(LastEditedTrackerComponentName);
+        this.root.set(this.lastEditedComponentId, lastEditedComponent.handle);
     }
 
     protected async componentHasInitialized() {
         this.defaultComponentInternal =
             (await this.root.get<IComponentHandle>(this.defaultComponentId).get())
                 .IComponentHTMLView;
+
+        this.lastEditedComponentInternal =
+                (await this.root.get<IComponentHandle>(this.lastEditedComponentId).get())
+                    .IComponentLastEditedTracker;
     }
 }
