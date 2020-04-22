@@ -92,6 +92,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     private readonly initialDelayTimer?: PromiseTimer;
     private summarizerClientId?: string;
     private clientId?: string;
+    private latestClientId?: string;
     private connected = false;
     private state = SummaryManagerState.Off;
     private runningSummarizer?: ISummarizer;
@@ -123,7 +124,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
 
         this.connected = context.connected;
         if (this.connected) {
-            this.clientId = context.clientId;
+            this.setClientId(context.clientId);
         }
 
         const members = context.quorum.getMembers();
@@ -159,6 +160,16 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         this.updateConnected(false);
     }
 
+    private setClientId(clientId: string | undefined): void {
+        this.clientId = clientId;
+        if (clientId !== undefined) {
+            this.latestClientId = this.clientId;
+            if (this.runningSummarizer !== undefined) {
+                this.runningSummarizer.updateOnBehalfOf(this.latestClientId);
+            }
+        }
+    }
+
     public on(event: "summarizer", listener: (clientId: string) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
@@ -170,7 +181,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         }
 
         this.connected = connected;
-        this.clientId = connected ? clientId : undefined;
+        this.setClientId(clientId);
         this.refreshSummarizer();
     }
 
@@ -275,7 +286,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         const runningSummarizerEvent = PerformanceEvent.start(this.logger, { eventName: "RunningSummarizer" });
         this.runningSummarizer = summarizer;
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.runningSummarizer.run(this.clientId).then(() => {
+        this.runningSummarizer.run(this.latestClientId).then(() => {
             runningSummarizerEvent.end();
         }, (error) => {
             runningSummarizerEvent.cancel({}, error);
