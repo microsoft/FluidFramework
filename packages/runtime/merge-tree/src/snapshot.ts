@@ -93,7 +93,8 @@ export class Snapshot {
 
         const chunks: MergeTreeChunkV1[] = [];
         this.header.totalSegmentCount = 0;
-        while (this.header.totalSegmentCount < this.segments.length) {
+        this.header.totalLength = 0;
+        do {
             const chunk = this.getSeqLengthSegs(
                 this.segments,
                 this.segmentLengths,
@@ -101,9 +102,11 @@ export class Snapshot {
             chunks.push(chunk);
             this.header.totalSegmentCount += chunk.segmentCount;
             this.header.totalLength += chunk.length;
-        }
+        } while (this.header.totalSegmentCount < this.segments.length);
+
         const headerChunk = chunks.shift();
         headerChunk.headerMetadata = this.header;
+        headerChunk.headerMetadata.orderedChunkMetadata = [{ id: headerChunkName }];
         const entries: ITreeEntry[] = chunks.map<ITreeEntry>((chunk, index)=>{
             const id = index.toString();
             this.header.orderedChunkMetadata.push({ id });

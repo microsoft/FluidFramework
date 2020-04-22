@@ -107,9 +107,12 @@ export function serializeAsMinSupportedVersion(
                 ... chunkLegacy,
                 headerMetadata: buildHeaderMetadata(path, chunkLegacy),
             };
+            break;
+
         case "0to1":
             targetChuck = chunk as MergeTreeChunkV0;
             break;
+
         case "1":
             const chunkV1 = chunk as MergeTreeChunkV1;
             targetChuck = {
@@ -117,12 +120,14 @@ export function serializeAsMinSupportedVersion(
                 chunkLengthChars: chunkV1.length,
                 chunkSegmentCount: chunkV1.segmentCount,
                 segmentTexts: chunkV1.segments,
-                totalLengthChars: chunkV1.headerMetadata.totalLength,
-                totalSegmentCount: chunkV1.headerMetadata.totalSegmentCount,
-                chunkSequenceNumber: chunkV1.headerMetadata.sequenceNumber,
-                chunkMinSequenceNumber: chunkV1.headerMetadata.minSequenceNumber,
+                totalLengthChars: chunkV1.headerMetadata?.totalLength,
+                totalSegmentCount: chunkV1.headerMetadata?.totalSegmentCount,
+                chunkSequenceNumber: chunkV1.headerMetadata?.sequenceNumber,
+                chunkMinSequenceNumber: chunkV1.headerMetadata?.minSequenceNumber,
                 headerMetadata: path === headerChunkName ? chunkV1.headerMetadata : undefined,
             };
+            break;
+
         default:
             throw new Error(`Unsupported chunk path: ${path} version: ${chunk.version}`);
     }

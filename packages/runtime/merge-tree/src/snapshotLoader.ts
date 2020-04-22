@@ -60,6 +60,8 @@ export class SnapshotLoader {
             // TODO: The 'Snapshot.tardis' tree entry is purely for backwards compatibility.
             //       (See https://github.com/microsoft/FluidFramework/issues/84)
             return this.loadTardis(rawMessagesP, branch);
+        } else {
+            rawMessagesP.catch(()=>{});
         }
     }
 
