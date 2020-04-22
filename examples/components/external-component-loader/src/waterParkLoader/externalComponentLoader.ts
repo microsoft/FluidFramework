@@ -14,7 +14,7 @@ import { IPackage } from "@microsoft/fluid-container-definitions";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as uuid from "uuid";
-import { IComponentCallable, IComponentCallbacks } from "@fluid-example/spaces";
+import { IComponentCallable, IComponentCallbacks, IComponentOptions } from "@fluid-example/spaces";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pkg = require("../../package.json") as IPackage;
@@ -186,7 +186,7 @@ export class ExternalComponentLoader extends PrimedComponent
             if (component.IComponentCollection !== undefined) {
                 component = component.IComponentCollection.createCollectionItem();
             }
-            viewComponent.IComponentCollection.createCollectionItem({
+            viewComponent.IComponentCollection.createCollectionItem<IComponentOptions>({
                 handle: component.IComponentHandle,
                 type: value,
                 url: component.IComponentLoadable?.url,

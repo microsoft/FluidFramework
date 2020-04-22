@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { Templates } from "./componentRegistryDetails";
 
 declare module "@microsoft/fluid-component-core-interfaces" {
@@ -30,4 +31,10 @@ export interface IProvideComponentCallable {
  */
 export interface IComponentCallable<T> extends IProvideComponentCallable {
     setComponentCallbacks(callbacks: T): void;
+}
+
+export interface IComponentOptions {
+    url?: string;
+    handle?: IComponentHandle;
+    type?: string;
 }

@@ -37,7 +37,7 @@ export interface ISpacesDataModel extends EventEmitter {
     removeCollectionItem(item: IComponent): void;
 }
 
-interface ISpacesCollectionOptions {
+export interface IComponentOptions {
     url?: string;
     handle?: IComponentHandle;
     type?: string;
@@ -76,7 +76,7 @@ export class SpacesDataModel extends EventEmitter implements ISpacesDataModel, I
     public get IComponentCollection() { return this; }
 
     public createCollectionItem<T>(rawOptions: T): IComponent {
-        const options = rawOptions as ISpacesCollectionOptions;
+        const options = rawOptions as IComponentOptions;
         if (!options.handle || !options.type || !options.url) {
             throw new Error("Tried to create a collection item in Spaces with invalid options");
         }
