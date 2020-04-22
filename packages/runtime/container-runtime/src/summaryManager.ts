@@ -353,6 +353,14 @@ export class SummaryManager extends EventEmitter implements IDisposable {
     }
 
     private async createSummarizer(delayMs: number): Promise<ISummarizer> {
+        // We have been elected the summarizer. Some day we may be able to summarize with a live document but for
+        // now we play it safe and launch a second copy.
+        this.logger.sendTelemetryEvent({
+            eventName: "CreatingSummarizer",
+            delayMs,
+            opsUntilFirstConnect: this.opsUntilFirstConnect,
+        });
+
         const shouldDelay = delayMs > 0;
         const shouldInitialDelay = this.opsUntilFirstConnect < opsToBypassInitialDelay;
         if (shouldDelay || shouldInitialDelay) {
@@ -365,10 +373,6 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         if (this.nextSummarizerP) {
             return this.nextSummarizerP;
         }
-
-        // We have been elected the summarizer. Some day we may be able to summarize with a live document but for
-        // now we play it safe and launch a second copy.
-        this.logger.sendTelemetryEvent({ eventName: "CreatingSummarizer" });
 
         const loader = this.context.loader;
 
