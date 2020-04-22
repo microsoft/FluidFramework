@@ -12,7 +12,6 @@ import { Client } from "./client";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants";
 import { ISegment, MergeTree } from "./mergeTree";
 import { IJSONSegment } from "./ops";
-import { Snapshot } from "./snapshot";
 import {
     IJSONSegmentWithMergeInfo,
     hasMergeInfo,
@@ -20,6 +19,7 @@ import {
     headerChunkName,
     MergeTreeChunkV1,
 } from "./snapshotChunks";
+import { SnapshotV1 } from "./snapshotV1";
 
 export class SnapshotLoader {
     private readonly logger: ITelemetryLogger;
@@ -102,7 +102,7 @@ export class SnapshotLoader {
     private loadHeader(
         header: string,
         branchId: string): MergeTreeChunkV1 {
-        const chunk = Snapshot.processChunk(
+        const chunk = SnapshotV1.processChunk(
             headerChunkName,
             header,
             this.logger,
@@ -155,7 +155,7 @@ export class SnapshotLoader {
         const segs: ISegment[] = [];
         let lengthSofar = chunk1.length;
         for (let chunkIndex = 1; chunkIndex < chunk1.headerMetadata.orderedChunkMetadata.length; chunkIndex++) {
-            const chunk = await Snapshot.loadChunk(
+            const chunk = await SnapshotV1.loadChunk(
                 services,
                 chunk1.headerMetadata.orderedChunkMetadata[chunkIndex].id,
                 this.logger,

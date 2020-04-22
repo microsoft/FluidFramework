@@ -32,7 +32,7 @@ import {
     headerChunkName,
 } from "./snapshotChunks";
 
-export class Snapshot {
+export class SnapshotV1 {
     // Split snapshot into two entries - headers (small) and body (overflow) for faster loading initial content
     // Please note that this number has no direct relationship to anything other than size of raw text (characters).
     // As we produce json for the blob (and then encode into base64 and send over the wire compressed), this number
@@ -99,7 +99,7 @@ export class Snapshot {
             const chunk = this.getSeqLengthSegs(
                 this.segments,
                 this.segmentLengths,
-                Snapshot.sizeOfChunks, this.header.totalSegmentCount);
+                SnapshotV1.sizeOfChunks, this.header.totalSegmentCount);
             chunks.push(chunk);
             this.header.totalSegmentCount += chunk.segmentCount;
             this.header.totalLength += chunk.length;
@@ -260,7 +260,7 @@ export class Snapshot {
         context?: IComponentHandleContext,
     ): Promise<MergeTreeChunkV1> {
         const chunkAsString: string = await storage.read(path);
-        return Snapshot.processChunk(path, chunkAsString, logger, serializer, context);
+        return SnapshotV1.processChunk(path, chunkAsString, logger, serializer, context);
     }
 
     public static processChunk(

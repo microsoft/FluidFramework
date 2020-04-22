@@ -9,10 +9,13 @@ import * as mocks from "@microsoft/fluid-test-runtime-utils";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 
-export function* generateStrings() {
+export function* generateStrings(options: any = {}) {
     const documentId = "fakeId";
     const runtime: mocks.MockRuntime = new mocks.MockRuntime();
     const insertText = "text";
+    for (const key of Object.keys(options)) {
+        runtime.options[key] = options[key];
+    }
 
     let sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
     sharedString.initializeLocal();
