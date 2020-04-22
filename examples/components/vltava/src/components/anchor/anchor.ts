@@ -21,7 +21,7 @@ export class Anchor extends PrimedComponent implements IProvideComponentHTMLView
     private readonly defaultComponentId = "default-component-id";
     private defaultComponentInternal: IComponentHTMLView | undefined;
     private readonly lastEditedComponentId = "last-edited-component-id";
-    private lastEditedComponentInternal: IComponentLastEditedTracker | undefined;
+    private lastEditedComponent: IComponentLastEditedTracker | undefined;
 
     private get defaultComponent() {
         if (!this.defaultComponentInternal) {
@@ -29,14 +29,6 @@ export class Anchor extends PrimedComponent implements IProvideComponentHTMLView
         }
 
         return this.defaultComponentInternal;
-    }
-
-    private get lastEditedComponent() {
-        if (!this.lastEditedComponentInternal) {
-            throw new Error("LastEditedTrackerComponent was not initialized properly");
-        }
-
-        return this.lastEditedComponentInternal;
     }
 
     private static readonly factory = new PrimedComponentFactory(AnchorName, Anchor, [], {});
@@ -47,7 +39,13 @@ export class Anchor extends PrimedComponent implements IProvideComponentHTMLView
 
     public get IComponentHTMLView() { return this.defaultComponent; }
 
-    public get IComponentLastEditedTracker() { return this.lastEditedComponent; }
+    public get IComponentLastEditedTracker() {
+        if (!this.lastEditedComponent) {
+            throw new Error("LastEditedTrackerComponent was not initialized properly");
+        }
+
+        return this.lastEditedComponent;
+    }
 
     protected async componentInitializingFirstTime(props: any) {
         const defaultComponent = await this.createAndAttachComponent("vltava");
@@ -62,7 +60,7 @@ export class Anchor extends PrimedComponent implements IProvideComponentHTMLView
             (await this.root.get<IComponentHandle>(this.defaultComponentId).get())
                 .IComponentHTMLView;
 
-        this.lastEditedComponentInternal =
+        this.lastEditedComponent =
                 (await this.root.get<IComponentHandle>(this.lastEditedComponentId).get())
                     .IComponentLastEditedTracker;
     }
