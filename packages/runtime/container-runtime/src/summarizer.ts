@@ -19,10 +19,10 @@ import {
     MessageType,
     IDocumentMessage,
 } from "@microsoft/fluid-protocol-definitions";
-import { ErrorType, ISummarizingError, ISummaryContext } from "@microsoft/fluid-driver-definitions";
+import { ErrorType, ISummarizingError, ISummaryContext, IError } from "@microsoft/fluid-driver-definitions";
 import { IDeltaManager } from "@microsoft/fluid-container-definitions";
 import { GenerateSummaryData, IPreviousState } from "./containerRuntime";
-import { RunWhileConnectedCoordinator, IStartedResult, IConnectableRuntime } from "./runWhileConnectedCoordinator";
+import { RunWhileConnectedCoordinator, IConnectableRuntime } from "./runWhileConnectedCoordinator";
 import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
 
 // Send some telemetry if generate summary takes too long
@@ -54,9 +54,9 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
     readonly logger: ITelemetryLogger;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly previousState: IPreviousState;
-    readonly summarizerClientId: string;
+    readonly summarizerClientId: string | undefined;
     nextSummarizerD?: Deferred<Summarizer>;
-    closeFn(reason?: string): void;
+    closeFn(error?: IError): void;
     on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
     on(event: "disconnected", listener: () => void): this;
     removeListener(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
