@@ -4,30 +4,41 @@
  */
 
 import * as assert from "assert";
-import { fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
+import { fromBase64ToUtf8, ChildLogger } from "@microsoft/fluid-common-utils";
 import { ISequencedDocumentMessage } from "@microsoft/fluid-protocol-definitions";
 import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+import { ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import { Client } from "./client";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants";
 import { ISegment, MergeTree } from "./mergeTree";
 import { IJSONSegment } from "./ops";
 import { Snapshot } from "./snapshot";
-import { SnapshotLegacy } from "./snapshotlegacy";
-import { IJSONSegmentWithMergeInfo, hasMergeInfo, MergeTreeChunkV0 } from "./snapshotChunks";
+import {
+    IJSONSegmentWithMergeInfo,
+    hasMergeInfo,
+    tardisChunkName,
+    headerChunkName,
+    MergeTreeChunkV1,
+} from "./snapshotChunks";
 
 export class SnapshotLoader {
+    private readonly logger: ITelemetryLogger;
+
     constructor(
         private readonly runtime: IComponentRuntime,
         private readonly client: Client,
-        private readonly mergeTree: MergeTree) { }
+        private readonly mergeTree: MergeTree,
+        logger: ITelemetryLogger) {
+        this.logger = ChildLogger.create(logger, "SnapshotLoader");
+    }
 
     public async initialize(
         branchId: string,
         services: IObjectStorageService): Promise<ISequencedDocumentMessage[]> {
-        const headerP = services.read(Snapshot.header);
+        const headerP = services.read(headerChunkName);
         // If loading from a snapshot load tardis messages
         // kick off loading in parallel to loading "body" chunk.
-        const rawMessages = services.read(SnapshotLegacy.tardis);
+        const rawMessagesP = services.read(tardisChunkName);
 
         const header = await headerP;
         assert(header);
@@ -37,17 +48,19 @@ export class SnapshotLoader {
         const branch = this.runtime.options && this.runtime.options.enableBranching
             ? branchId : this.runtime.documentId;
 
-        const chunk1 = this.loadHeader(header, branch);
+        const headerChunk = this.loadHeader(header, branch);
 
         // tslint:disable-next-line: no-suspicious-comment
         // TODO we shouldn't need to wait on the body being complete to finish initialization.
         // To fully support this we need to be able to process inbound ops for pending segments.
-        await this.loadBody(chunk1, services);
+        await this.loadBody(headerChunk, services);
 
-        // tslint:disable-next-line:no-suspicious-comment
-        // TODO: The 'Snapshot.tardis' tree entry is purely for backwards compatibility.
-        //       (See https://github.com/microsoft/FluidFramework/issues/84)
-        return this.loadTardis(rawMessages, branch);
+        if (headerChunk.headerMetadata.hasTardis) {
+            // tslint:disable-next-line:no-suspicious-comment
+            // TODO: The 'Snapshot.tardis' tree entry is purely for backwards compatibility.
+            //       (See https://github.com/microsoft/FluidFramework/issues/84)
+            return this.loadTardis(rawMessagesP, branch);
+        }
     }
 
     private readonly specToSegment = (spec: IJSONSegment | IJSONSegmentWithMergeInfo) => {
@@ -86,18 +99,23 @@ export class SnapshotLoader {
 
     private loadHeader(
         header: string,
-        branchId: string): MergeTreeChunkV0 {
+        branchId: string): MergeTreeChunkV1 {
         const chunk = Snapshot.processChunk(
+            headerChunkName,
             header,
+            this.logger,
             this.runtime.IComponentSerializer,
             this.runtime.IComponentHandleContext);
-        const segs = chunk.segmentTexts.map(this.specToSegment);
+        const segs = chunk.segments.map(this.specToSegment);
         this.mergeTree.reloadFromSegments(segs);
 
         // tslint:disable-next-line: no-suspicious-comment
         // TODO currently only assumes two levels of branching
         const branching = branchId === this.runtime.documentId ? 0 : 1;
 
+        if (chunk.headerMetadata === undefined) {
+            throw new Error("header metadata not available");
+        }
         // specify a default client id, "snapshot" here as we
         // should enter collaboration/op sending mode if we load
         // a snapshot in any case (summary or attach message)
@@ -111,44 +129,47 @@ export class SnapshotLoader {
             // tslint:disable-next-line:no-suspicious-comment
             // TODO: Make 'minSeq' non-optional once the new snapshot format becomes the default?
             //       (See https://github.com/microsoft/FluidFramework/issues/84)
-            /* minSeq: */ chunk.chunkMinSequenceNumber !== undefined
-                ? chunk.chunkMinSequenceNumber
-                : chunk.chunkSequenceNumber,
-            /* currentSeq: */ chunk.chunkSequenceNumber,
+            /* minSeq: */ chunk.headerMetadata.minSequenceNumber !== undefined
+                ? chunk.headerMetadata.minSequenceNumber
+                : chunk.headerMetadata.sequenceNumber ,
+            /* currentSeq: */ chunk.headerMetadata.sequenceNumber,
             branching);
 
         return chunk;
     }
 
-    private async loadBody(chunk1: MergeTreeChunkV0, services: IObjectStorageService): Promise<void> {
+    private async loadBody(chunk1: MergeTreeChunkV1, services: IObjectStorageService): Promise<void> {
         this.runtime.logger.shipAssert(
-            chunk1.chunkLengthChars <= chunk1.totalLengthChars,
-            { eventName: "Mismatch in totalLengthChars" });
+            chunk1.length <= chunk1.headerMetadata.totalLength,
+            { eventName: "Mismatch in totalLength" });
 
         this.runtime.logger.shipAssert(
-            chunk1.chunkSegmentCount <= chunk1.totalSegmentCount,
+            chunk1.segmentCount <= chunk1.headerMetadata.totalSegmentCount,
             { eventName: "Mismatch in totalSegmentCount" });
 
-        if (chunk1.chunkSegmentCount === chunk1.totalSegmentCount) {
+        if (chunk1.segmentCount === chunk1.headerMetadata.totalSegmentCount) {
             return;
         }
-
-        const chunk2 = await Snapshot.loadChunk(
-            services,
-            Snapshot.body,
-            this.runtime.IComponentSerializer,
-            this.runtime.IComponentHandleContext);
+        const segs: ISegment[] = [];
+        let lengthSofar = chunk1.length;
+        for (let chunkIndex = 1; chunkIndex < chunk1.headerMetadata.orderedChunkMetadata.length; chunkIndex++) {
+            const chunk = await Snapshot.loadChunk(
+                services,
+                chunk1.headerMetadata.orderedChunkMetadata[chunkIndex].id,
+                this.logger,
+                this.runtime.IComponentSerializer,
+                this.runtime.IComponentHandleContext);
+            lengthSofar += chunk.length;
+            // Deserialize each chunk segment and append it to the end of the MergeTree.
+            segs.push(...chunk.segments.map(this.specToSegment));
+        }
+        this.runtime.logger.shipAssert(
+            lengthSofar === chunk1.headerMetadata.totalLength,
+            { eventName: "Mismatch in totalLength" });
 
         this.runtime.logger.shipAssert(
-            chunk1.chunkLengthChars + chunk2.chunkLengthChars === chunk1.totalLengthChars,
-            { eventName: "Mismatch in totalLengthChars" });
-
-        this.runtime.logger.shipAssert(
-            chunk1.chunkSegmentCount + chunk2.chunkSegmentCount === chunk1.totalSegmentCount,
+            chunk1.segmentCount + segs.length === chunk1.headerMetadata.totalSegmentCount,
             { eventName: "Mismatch in totalSegmentCount" });
-
-        // Deserialize each chunk segment and append it to the end of the MergeTree.
-        const segs = chunk2.segmentTexts.map(this.specToSegment);
 
         // Helper to insert segments at the end of the MergeTree.
         const mergeTree = this.mergeTree;

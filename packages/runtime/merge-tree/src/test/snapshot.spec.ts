@@ -185,7 +185,7 @@ describe("snapshot", () => {
     });
 
     it("includes ACKed segments below MSN in body", async () => {
-        for (let i = 0; i < Snapshot.sizeOfFirstChunk + 10; i++) {
+        for (let i = 0; i < Snapshot.sizeOfChunks + 10; i++) {
             str.append(`${i % 10}`, /* increaseMsn: */ true);
         }
 
@@ -193,7 +193,7 @@ describe("snapshot", () => {
     });
 
     it("includes ACKed segments above MSN in body", async () => {
-        for (let i = 0; i < Snapshot.sizeOfFirstChunk + 10; i++) {
+        for (let i = 0; i < Snapshot.sizeOfChunks + 10; i++) {
             str.append(`${i % 10}`, /* increaseMsn: */ false);
         }
 

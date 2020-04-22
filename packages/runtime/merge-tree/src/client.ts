@@ -912,7 +912,7 @@ export class Client {
     }
 
     public async load(runtime: IComponentRuntime, storage: IObjectStorageService, branchId?: string) {
-        const loader = new SnapshotLoader(runtime, this, this.mergeTree);
+        const loader = new SnapshotLoader(runtime, this, this.mergeTree, this.logger);
 
         // TODO: Remove return value once new snapshot format is adopted as default.
         //       (See https://github.com/microsoft/FluidFramework/issues/84)

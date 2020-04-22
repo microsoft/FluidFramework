@@ -16,8 +16,14 @@ import { NonCollabClient, UnassignedSequenceNumber } from "./constants";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
 import * as Properties from "./properties";
-import { SnapshotHeader } from "./snapshot";
-import { MergeTreeChunkV0 } from "./snapshotChunks";
+import {
+    MergeTreeChunkV0,
+    MergeTreeChunkLegacy,
+    serializeAsMinSupportedVersion,
+    headerChunkName,
+    bodyChunkName,
+    tardisChunkName,
+} from "./snapshotChunks";
 
 // first three are index entry
 export interface SnapChunk {
@@ -30,11 +36,18 @@ export interface SnapChunk {
     buffer?: Buffer;
 }
 
-export class SnapshotLegacy {
-    public static readonly header = "header";
-    public static readonly body = "body";
-    public static readonly tardis = "tardis";
+export interface SnapshotHeader {
+    chunkCount?: number;
+    segmentsTotalLength: number;
+    indexOffset?: number;
+    segmentsOffset?: number;
+    seq: number;
+    // TODO: Make 'minSeq' non-optional once the new snapshot format becomes the default?
+    //       (See https://github.com/microsoft/FluidFramework/issues/84)
+    minSeq?: number;
+}
 
+export class SnapshotLegacy {
     // Split snapshot into two entries - headers (small) and body (overflow) for faster loading initial content
     // Please note that this number has no direct relationship to anything other than size of raw text (characters).
     // As we produce json for the blob (and then encode into base64 and send over the wire compressed), this number
@@ -61,7 +74,7 @@ export class SnapshotLegacy {
         allSegments: ops.IJSONSegment[],
         allLengths: number[],
         approxSequenceLength: number,
-        startIndex = 0): MergeTreeChunkV0 {
+        startIndex = 0): MergeTreeChunkLegacy {
         const segs: ops.IJSONSegment[] = [];
         let sequenceLength = 0;
         let segCount = 0;
@@ -72,8 +85,7 @@ export class SnapshotLegacy {
             segCount++;
         }
         return {
-            version: "0",
-            chunkStartSegmentIndex: startIndex,
+            version: undefined,
             chunkSegmentCount: segCount,
             chunkLengthChars: sequenceLength,
             totalLengthChars: this.header.segmentsTotalLength,
@@ -100,10 +112,16 @@ export class SnapshotLegacy {
             entries: [
                 {
                     mode: FileMode.File,
-                    path: SnapshotLegacy.header,
+                    path: headerChunkName,
                     type: TreeEntry[TreeEntry.Blob],
                     value: {
-                        contents: serializer ? serializer.stringify(chunk1, context, bind) : JSON.stringify(chunk1),
+                        contents: serializeAsMinSupportedVersion(
+                            headerChunkName,
+                            chunk1,
+                            this.logger,
+                            serializer,
+                            context,
+                            bind),
                         encoding: "utf-8",
                     },
                 },
@@ -118,10 +136,16 @@ export class SnapshotLegacy {
             segments += chunk2.chunkSegmentCount;
             tree.entries.push({
                 mode: FileMode.File,
-                path: SnapshotLegacy.body,
+                path: bodyChunkName,
                 type: TreeEntry[TreeEntry.Blob],
                 value: {
-                    contents: serializer ? serializer.stringify(chunk2, context, bind) : JSON.stringify(chunk2),
+                    contents: serializeAsMinSupportedVersion(
+                        bodyChunkName,
+                        chunk2,
+                        this.logger,
+                        serializer,
+                        context,
+                        bind),
                     encoding: "utf-8",
                 },
             });
@@ -137,7 +161,7 @@ export class SnapshotLegacy {
 
         tree.entries.push({
             mode: FileMode.File,
-            path: SnapshotLegacy.tardis,
+            path: tardisChunkName,
             type: TreeEntry[TreeEntry.Blob],
             value: {
                 contents: serializer ? serializer.stringify(tardisMsgs, context, bind) : JSON.stringify(tardisMsgs),
