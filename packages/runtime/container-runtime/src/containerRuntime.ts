@@ -496,7 +496,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     public isLocal(): boolean {
         const expContainerContext = this.context as IExperimentalContainerContext;
         assert(expContainerContext?.isExperimentalContainerContext);
-        return expContainerContext.isLocal();
+        return expContainerContext.isLocal ? expContainerContext.isLocal() : (expContainerContext as any).isAttached();
     }
 
     public nextSummarizerP?: Promise<Summarizer>;
