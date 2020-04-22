@@ -2,10 +2,9 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { PrimedComponent } from "@microsoft/fluid-aqueduct";
+import { ISharedComponentProps, PrimedComponent } from "@microsoft/fluid-aqueduct";
 import { CollaborativeTextArea } from "@microsoft/fluid-aqueduct-react";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { IComponentHTMLView, IComponentReactViewable } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
@@ -26,11 +25,10 @@ export class TextBox extends PrimedComponent implements IComponentHTMLView, ICom
     private text: SharedString | undefined;
 
     public constructor(
-        runtime: IComponentRuntime,
-        context: IComponentContext,
+        props: ISharedComponentProps<{}>,
         private initialState?: string,
     ) {
-        super(runtime, context);
+        super(props);
     }
 
     /**

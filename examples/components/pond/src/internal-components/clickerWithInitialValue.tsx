@@ -9,8 +9,6 @@ import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-import { ClickerWithInitialValueFactory } from "./clickerWithInitialValueFactory";
-
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../../package.json");
 
@@ -32,14 +30,6 @@ export class ClickerWithInitialValue extends PrimedComponent implements ICompone
     ) {
         super(props);
     }
-
-    public static getFactory() { return ClickerWithInitialValue.factory; }
-
-    private static readonly factory = new PrimedComponentFactory<IClickerInitialState>(
-        ClickerWithInitialValueName,
-        ClickerWithInitialValue,
-        [],
-    );
 
     /**
      * Do setup work here
@@ -69,7 +59,7 @@ export class ClickerWithInitialValue extends PrimedComponent implements ICompone
 
     public static getFactory() { return ClickerWithInitialValue.factory; }
 
-    private static readonly factory = new ClickerWithInitialValueFactory(
+    private static readonly factory = new PrimedComponentFactory<{}, IClickerInitialState>(
         ClickerWithInitialValue.ComponentName,
         ClickerWithInitialValue,
         [],

@@ -4,13 +4,12 @@
  */
 
 import { ClickerInstantiationFactory } from "@fluid-example/clicker";
-import { PrimedComponent } from "@microsoft/fluid-aqueduct";
+import { ISharedComponentProps, PrimedComponent } from "@microsoft/fluid-aqueduct";
 import { ISharedCell, SharedCell } from "@microsoft/fluid-cell";
 import {
     IComponentHandle, IComponentLoadable,
 } from "@microsoft/fluid-component-core-interfaces";
 import { IValueChanged } from "@microsoft/fluid-map";
-import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { IComponentHTMLView, IComponentReactViewable } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
@@ -55,11 +54,10 @@ export class TodoItem extends PrimedComponent
     public get IComponentReactViewable() { return this; }
 
     public constructor(
-        runtime: IComponentRuntime,
-        context: IComponentContext,
+        props: ISharedComponentProps<{}>,
         private initialState?: ITodoItemInitialState,
     ) {
-        super(runtime, context);
+        super(props);
     }
 
     /**

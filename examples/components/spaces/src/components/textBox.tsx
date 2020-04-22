@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import {
+    ISharedComponentProps,
     PrimedComponent,
     PrimedComponentFactory,
 } from "@microsoft/fluid-aqueduct";
@@ -10,7 +11,6 @@ import {
     CollaborativeTextArea,
 } from "@microsoft/fluid-aqueduct-react";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
-import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedString } from "@microsoft/fluid-sequence";
 import { IComponentHTMLView, IComponentReactViewable } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
@@ -27,7 +27,7 @@ export class TextBox extends PrimedComponent implements IComponentHTMLView, ICom
     public get IComponentHTMLView() { return this; }
     public get IComponentReactViewable() { return this; }
 
-    private static readonly factory =  new PrimedComponentFactory<string>(
+    private static readonly factory =  new PrimedComponentFactory<{}, string>(
         TextBoxName,
         TextBox,
         [SharedString.getFactory()],
@@ -40,11 +40,10 @@ export class TextBox extends PrimedComponent implements IComponentHTMLView, ICom
     private text: SharedString | undefined;
 
     public constructor(
-        runtime: IComponentRuntime,
-        context: IComponentContext,
+        props: ISharedComponentProps<{}>,
         private initialState?: string,
     ) {
-        super(runtime, context);
+        super(props);
     }
 
     /**

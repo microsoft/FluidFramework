@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { ISharedComponentProps, PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { IComponentHandle } from "@microsoft/fluid-component-core-interfaces";
 import { ICombiningOp, PropertySet } from "@microsoft/fluid-merge-tree";
-import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { CellRange } from "./cellrange";
 import { ConfigKey } from "./configKey";
 import { TableDocument } from "./document";
@@ -25,7 +24,7 @@ export interface ITableSliceConfig {
 export class TableSlice extends PrimedComponent implements ITable {
     public static getFactory() { return TableSlice.factory; }
 
-    private static readonly factory = new PrimedComponentFactory<ITableSliceConfig>(
+    private static readonly factory = new PrimedComponentFactory<{}, ITableSliceConfig>(
         TableSliceType,
         TableSlice,
         [],
@@ -44,11 +43,10 @@ export class TableSlice extends PrimedComponent implements ITable {
     private maybeValues?: CellRange;
 
     constructor(
-        runtime: IComponentRuntime,
-        context: IComponentContext,
+        props: ISharedComponentProps<{}>,
         private initialState?: ITableSliceConfig,
     ) {
-        super(runtime, context);
+        super(props);
     }
 
     public evaluateCell(row: number, col: number): TableDocumentItem {
