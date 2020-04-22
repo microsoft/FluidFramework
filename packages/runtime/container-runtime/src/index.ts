@@ -9,5 +9,6 @@ export * from "./summaryTreeConverter";
 export * from "./requestHandlers";
 export * from "./requestParser";
 export * from "./componentRegistry";
+export * from "./runWhileConnectedCoordinator";
 export * from "./summarizer";
 export * from "./summaryCollection";

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import { IDisposable, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
 import {
     IComponentLoadable,
@@ -18,10 +17,12 @@ import {
     ISequencedDocumentSystemMessage,
     ISummaryConfiguration,
     MessageType,
+    IDocumentMessage,
 } from "@microsoft/fluid-protocol-definitions";
-import { ErrorType, ISummarizingError, ISummaryContext } from "@microsoft/fluid-driver-definitions";
-import { ContainerRuntime, GenerateSummaryData } from "./containerRuntime";
-import { RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
+import { ErrorType, ISummarizingError, ISummaryContext, IError } from "@microsoft/fluid-driver-definitions";
+import { IDeltaManager } from "@microsoft/fluid-container-definitions";
+import { GenerateSummaryData, IPreviousState } from "./containerRuntime";
+import { RunWhileConnectedCoordinator, IConnectableRuntime } from "./runWhileConnectedCoordinator";
 import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
 
 // Send some telemetry if generate summary takes too long
@@ -47,6 +48,18 @@ export interface ISummarizer extends IComponentRouter, IComponentRunnable, IComp
      */
     setSummarizer(): Promise<Summarizer>;
     stop(reason?: string): void;
+}
+
+export interface ISummarizerRuntime extends IConnectableRuntime {
+    readonly logger: ITelemetryLogger;
+    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    readonly previousState: IPreviousState;
+    readonly summarizerClientId: string | undefined;
+    nextSummarizerD?: Deferred<Summarizer>;
+    closeFn(error?: IError): void;
+    on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
+    on(event: "disconnected", listener: () => void): this;
+    removeListener(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
 }
 
 /**
@@ -487,10 +500,11 @@ export class Summarizer implements ISummarizer {
     private immediateSummary: boolean = false;
     public readonly summaryCollection: SummaryCollection;
     private stopReason?: string;
+    private readonly stopDeferred = new Deferred<void>();
 
     constructor(
         public readonly url: string,
-        private readonly runtime: ContainerRuntime,
+        private readonly runtime: ISummarizerRuntime,
         private readonly configurationGetter: () => ISummaryConfiguration,
         // eslint-disable-next-line max-len
         private readonly generateSummaryCore: (full: boolean, safe: boolean) => Promise<GenerateSummaryData | undefined>,
@@ -519,17 +533,7 @@ export class Summarizer implements ISummarizer {
             // Cleanup after running
             if (this.runtime.connected) {
                 if (this.runningSummarizer) {
-                    // Let running summarizer finish if no other summarizer client in quorum
-                    let hasOtherSummarizerClient = false;
-                    for (const [clientId, member] of this.runtime.getQuorum().getMembers()) {
-                        if (clientId !== this.runtime.clientId && member.client.details?.type === "summarizer") {
-                            hasOtherSummarizerClient = true;
-                            break;
-                        }
-                    }
-                    if (hasOtherSummarizerClient === false) {
-                        await this.runningSummarizer.waitStop();
-                    }
+                    await this.runningSummarizer.waitStop();
                 }
                 const error: ISummarizingError = {
                     errorType: ErrorType.summarizingError,
@@ -551,13 +555,13 @@ export class Summarizer implements ISummarizer {
             // already stopping
             return;
         }
-        this.stopReason = reason;
+        this.stopReason = reason ?? "Unspecified";
         this.logger.sendTelemetryEvent({
             eventName: "StoppingSummarizer",
             onBehalfOf: this.onBehalfOfClientId,
             reason,
         });
-        this.runCoordinator.stop();
+        this.stopDeferred.resolve();
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -575,21 +579,29 @@ export class Summarizer implements ISummarizer {
         if (startResult.started === false) {
             this.logger.sendTelemetryEvent({
                 eventName: "NotStarted",
-                error: startResult.message,
+                reason: startResult.message,
                 onBehalfOf,
             });
             return;
         }
 
-        if (this.runtime.summarizerClientId !== this.onBehalfOfClientId) {
-            // This calculated summarizer differs from parent
-            // parent SummaryManager should prevent this from happening
-            this.logger.sendErrorEvent({
-                eventName: "ParentIsNotSummarizer",
-                expectedSummarizer: this.runtime.summarizerClientId,
+        if (this.runtime.summarizerClientId !== this.onBehalfOfClientId
+            && this.runtime.summarizerClientId !== this.runtime.clientId) {
+            // Verify that this client's computed summarizer matches the client this was spawned
+            // on behalf of.  If not, fallback on the following logic before stopping:
+            // If we are not oldest client in quorum, another client will take over as summarizer.
+            // We want to make sure we at least try to summarize in case server is rejecting ops,
+            // so if we are the oldest client, we will still go through and try to summarize at least once.
+            // We also don't want to end up with two summarizer clients running at the same time,
+            // so we bypass running altogether if this client isn't the oldest.
+            this.logger.sendTelemetryEvent({
+                eventName: "NotStarted",
+                reason: "DifferentComputedSummarizer",
+                computedSummarizer: this.runtime.summarizerClientId,
                 onBehalfOf,
+                clientId: this.runtime.clientId,
             });
-            throw Error("ParentIsNotSummarizer");
+            return;
         }
 
         // Initialize values and first ack (time is not exact)
@@ -604,16 +616,11 @@ export class Summarizer implements ISummarizer {
             summaryTime: Date.now(),
         };
 
-        // this.runCoordinator.waitStart in the beginning guaranteed that we are connected and has a clientId
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const clientId = this.runtime.clientId!;
-        assert(clientId);
-
         const runningSummarizer = await RunningSummarizer.start(
-            clientId,
+            startResult.clientId,
             onBehalfOf,
             this.logger,
-            this.summaryCollection.createWatcher(clientId),
+            this.summaryCollection.createWatcher(startResult.clientId),
             this.configurationGetter(),
             async (full: boolean, safe: boolean) => this.generateSummary(full, safe),
             this.runtime.deltaManager.referenceSequenceNumber,
@@ -637,7 +644,10 @@ export class Summarizer implements ISummarizer {
         this.opListener = (error: any, op: ISequencedDocumentMessage) => runningSummarizer.handleOp(error, op);
         this.runtime.on("batchEnd", this.opListener);
 
-        await this.runCoordinator.waitStopped();
+        await Promise.race([
+            this.runCoordinator.waitStopped(),
+            this.stopDeferred.promise,
+        ]);
     }
 
     /**
