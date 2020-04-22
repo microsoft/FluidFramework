@@ -18,9 +18,6 @@ import * as Properties from "./properties";
 import {
     MergeTreeChunkLegacy,
     serializeAsMinSupportedVersion,
-    headerChunkName,
-    bodyChunkName,
-    tardisChunkName,
 } from "./snapshotChunks";
 
 // first three are index entry
@@ -46,6 +43,10 @@ export interface SnapshotHeader {
 }
 
 export class SnapshotLegacy {
+    public static readonly header = "header";
+    public static readonly body = "body";
+    public static readonly tardis = "tardis";
+
     // Split snapshot into two entries - headers (small) and body (overflow) for faster loading initial content
     // Please note that this number has no direct relationship to anything other than size of raw text (characters).
     // As we produce json for the blob (and then encode into base64 and send over the wire compressed), this number
@@ -72,19 +73,19 @@ export class SnapshotLegacy {
         allSegments: ops.IJSONSegment[],
         allLengths: number[],
         approxSequenceLength: number,
-        chunkStartSegmentIndex = 0): MergeTreeChunkLegacy {
+        startIndex  = 0): MergeTreeChunkLegacy {
         const segs: ops.IJSONSegment[] = [];
         let sequenceLength = 0;
         let segCount = 0;
-        while ((sequenceLength < approxSequenceLength) && ((chunkStartSegmentIndex + segCount) < allSegments.length)) {
-            const pseg = allSegments[chunkStartSegmentIndex + segCount];
+        while ((sequenceLength < approxSequenceLength) && ((startIndex  + segCount) < allSegments.length)) {
+            const pseg = allSegments[startIndex  + segCount];
             segs.push(pseg);
-            sequenceLength += allLengths[chunkStartSegmentIndex + segCount];
+            sequenceLength += allLengths[startIndex  + segCount];
             segCount++;
         }
         return {
             version: undefined,
-            chunkStartSegmentIndex,
+            chunkStartSegmentIndex: startIndex,
             chunkSegmentCount: segCount,
             chunkLengthChars: sequenceLength,
             totalLengthChars: this.header.segmentsTotalLength,
@@ -111,11 +112,11 @@ export class SnapshotLegacy {
             entries: [
                 {
                     mode: FileMode.File,
-                    path: headerChunkName,
+                    path: SnapshotLegacy.header,
                     type: TreeEntry[TreeEntry.Blob],
                     value: {
                         contents: serializeAsMinSupportedVersion(
-                            headerChunkName,
+                            SnapshotLegacy.header,
                             chunk1,
                             this.logger,
                             serializer,
@@ -135,11 +136,11 @@ export class SnapshotLegacy {
             segments += chunk2.chunkSegmentCount;
             tree.entries.push({
                 mode: FileMode.File,
-                path: bodyChunkName,
+                path: SnapshotLegacy.body,
                 type: TreeEntry[TreeEntry.Blob],
                 value: {
                     contents: serializeAsMinSupportedVersion(
-                        bodyChunkName,
+                        SnapshotLegacy.body,
                         chunk2,
                         this.logger,
                         serializer,
@@ -160,7 +161,7 @@ export class SnapshotLegacy {
 
         tree.entries.push({
             mode: FileMode.File,
-            path: tardisChunkName,
+            path: SnapshotLegacy.tardis,
             type: TreeEntry[TreeEntry.Blob],
             value: {
                 contents: serializer ? serializer.stringify(tardisMsgs, context, bind) : JSON.stringify(tardisMsgs),

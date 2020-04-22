@@ -28,9 +28,9 @@ import {
     MergeTreeHeaderMetadata,
     MergeTreeChunkV1,
     toLatestVersion,
-    serializeAsMinSupportedVersion,
-    headerChunkName,
+    serializeAsMaxSupportedVersion,
 } from "./snapshotChunks";
+import { SnapshotLegacy } from ".";
 
 export class SnapshotV1 {
     // Split snapshot into two entries - headers (small) and body (overflow) for faster loading initial content
@@ -107,7 +107,7 @@ export class SnapshotV1 {
 
         const headerChunk = chunks.shift();
         headerChunk.headerMetadata = this.header;
-        headerChunk.headerMetadata.orderedChunkMetadata = [{ id: headerChunkName }];
+        headerChunk.headerMetadata.orderedChunkMetadata = [{ id: SnapshotLegacy.header }];
         const entries: ITreeEntry[] = chunks.map<ITreeEntry>((chunk, index)=>{
             const id = index.toString();
             this.header.orderedChunkMetadata.push({ id });
@@ -116,7 +116,7 @@ export class SnapshotV1 {
                 path: id,
                 type: TreeEntry[TreeEntry.Blob],
                 value: {
-                    contents: serializeAsMinSupportedVersion(
+                    contents: serializeAsMaxSupportedVersion(
                         id,
                         chunk,
                         this.logger,
@@ -132,11 +132,11 @@ export class SnapshotV1 {
             entries:[
                 {
                     mode: FileMode.File,
-                    path: headerChunkName,
+                    path: SnapshotLegacy.header,
                     type: TreeEntry[TreeEntry.Blob],
                     value: {
-                        contents: serializeAsMinSupportedVersion(
-                            headerChunkName,
+                        contents: serializeAsMaxSupportedVersion(
+                            SnapshotLegacy.header,
                             headerChunk,
                             this.logger,
                             serializer,
