@@ -230,8 +230,7 @@ class BumpVersion {
                 const depBuildPackage = this.fullPackageMap.get(dep);
                 if (depBuildPackage) {
                     let depVersion = depBuildPackage.version;
-                    // TODO: switch to semver.satisfies(`${depVersion}-0`, version) instead when we get out of legacy version scheme <= 0.15 for some packages
-                    if (`^${depVersion}-0` === version || `^${depVersion}` === version) {
+                    if (semver.satisfies(`${depVersion}-0`, version)) {
                         if (depBuildPackage.monoRepo === undefined) {
                             if (!packageNeedBump.has(depBuildPackage)) {
                                 packageNeedBump.add(depBuildPackage);
@@ -360,21 +359,45 @@ class BumpVersion {
     }
 
     private async addTag(tag: string) {
-        console.log(`    ${tag}`);
+        console.log(`      ${tag}`);
         await this.gitRepo.addTag(tag);
         this.newTags.push(tag);
     }
 
+    private async checkPublished(pkg: Package) {
+        const ret = await exec(`npm view ${pkg.name}@${pkg.version} version`, this.repo.resolvedRoot);
+        const publishedVersion = ret.split("\n")[0];
+        return publishedVersion === pkg.version;
+    }
+
     private async ensurePublished(pkg: Package) {
+        process.stdout.write(`    Waiting for package to publish ${pkg.name}@${pkg.version}...`);
+        const start = Date.now();
         while (true) {
-            const ret = await exec(`npm view ${pkg.name} version`, this.repo.resolvedRoot);
-            const publishedVersion = ret.split("\n")[0];
-            console.log(publishedVersion);
-            if (publishedVersion === pkg.version) {
+            if (await this.checkPublished(pkg)) {
+                console.log();
                 return;
             }
             await new Promise(resolve => setTimeout(resolve, 5000));
+            process.stdout.write(`\r    Waiting for package to publish ${pkg.name}@${pkg.version}...${((Date.now() - start) / 1000).toFixed(0)}s`);
         }
+    }
+
+    private async prompt(message: string) {
+        return new Promise((resolve, reject) => {
+            process.stdout.write(`${message} [y/n] `);
+            const listener = (chunk: Buffer) => {
+                if (chunk[0] === "y".charCodeAt(0)) {
+                    resolve(true);
+                    process.stdin.off('data', listener);
+                }
+                if (chunk[0] === "n".charCodeAt(0)) {
+                    resolve(false);
+                    process.stdin.off('data', listener);
+                }
+            };
+            process.stdin.on('data', listener);
+        });
     }
 
     private async releasePackage(packageNeedBump: Set<Package>, packages: string[]) {
@@ -398,6 +421,12 @@ class BumpVersion {
         // Tagging release
         console.log("    Tagging release");
         for (const pkg of packageToBump) {
+            if (await this.checkPublished(pkg)) {
+                if (await this.prompt(`      Package ${pkg.name}@${pkg.version} already published. Skip publish and bump version after?`)) {
+                    continue;
+                }
+                fatal("Operation stopped.")
+            }
             let name = pkg.name.split("/").pop()!;
             if (name.startsWith("fluid-")) {
                 name = name.substring("fluid-".length);
@@ -412,7 +441,6 @@ class BumpVersion {
 
         // Wait for packages
         for (const pkg of packageToBump) {
-            console.log(`    Waiting for package to publish ${pkg.name}`);
             await this.ensurePublished(pkg);
         }
 
@@ -455,11 +483,10 @@ class BumpVersion {
             return;
         }
 
-        console.log("    Waiting for server package to publish");
         for (const pkg of monoRepo.packages) {
             await this.ensurePublished(pkg);
         }
-        
+
         if (fixedPrereleaseDep) {
             // TODO: Fix package lock
         }
@@ -539,7 +566,6 @@ class BumpVersion {
         const patchRepoState = await this.bumpCurrentBranch("patch", serverNeedBump, packageNeedBump, oldVersions);
         allRepoState += `\n${patchRepoState}`;
 
-
         console.log("======================================================================================================");
         console.log(allRepoState);
     }
@@ -601,7 +627,7 @@ class BumpVersion {
     }
 
     public async cleanUp() {
-        this.gitRepo.switchBranch(this.originalBranchName);
+        await this.gitRepo.switchBranch(this.originalBranchName);
         for (const branch of this.newBranches) {
             await this.gitRepo.deleteBranch(branch);
         }
@@ -631,7 +657,8 @@ async function main() {
     } catch (e) {
         if (!e.fatal) { throw e; }
         console.error(e.message);
-        bv.cleanUp().then(() => process.exit(-2));
+        await bv.cleanUp();
+        process.exit(-2);
     }
 }
 
