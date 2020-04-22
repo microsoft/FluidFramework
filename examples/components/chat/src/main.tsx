@@ -47,22 +47,14 @@ export class Chat extends PrimedComponent
         this.root.get("messages");
     }
 
-    public render(elm: HTMLElement) {
-        if (this.runtime.connected) {
-            this.renderView(this.runtime, this.root, elm);
-        } else {
-            this.runtime.once("connected", () => this.renderView(this.runtime, this.root, elm));
-        }
-    }
-
-    private renderView(runtime: IComponentRuntime, root: ISharedDirectory, hostElement: HTMLElement) {
-        const user = runtime.clientId ? runtime.getQuorum().getMember(runtime.clientId) : undefined;
+    public render(e: HTMLElement) {
+        const user = this.runtime.clientId ? this.runtime.getQuorum().getMember(this.runtime.clientId) : undefined;
         const userName = (user?.client.user as any).name;
         ReactDOM.render(
             <Provider theme={themes.teams}>
-                <ChatView runtime={runtime} root={root} clientId={userName} />
+                <ChatView runtime={this.runtime} root={this.root} clientId={userName} />
             </Provider>,
-            hostElement,
+            e,
         );
     }
 }

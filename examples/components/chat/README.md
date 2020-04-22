@@ -1,6 +1,8 @@
 # Welcome to your first Fluid Component
 
-Welcome to your first component component.
+This is a sample chat component powered by Fluid.
+The aim here is to provide examples of how to obtain user information from the quorum, rendering them in a React component with the Fluent Stardust UI Framework, and utilizing theme providers.
+Please note that this is not an example for a production-ready chat client due to concerns such as all users having edit access to the message history. Instead, it is primarily here as a learning tool for integrating the Fluid root and quorum concepts, React, and Stardust UI.
 
 ## Getting Started
 To start coding, open this directory in your IDE and check out ./src/index.tsx
