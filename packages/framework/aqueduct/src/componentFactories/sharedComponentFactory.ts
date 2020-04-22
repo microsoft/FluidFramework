@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { IComponent, IComponentLoadable, IRequest } from "@microsoft/fluid-component-core-interfaces";
 import { ComponentRuntime, ISharedObjectRegistry } from "@microsoft/fluid-component-runtime";
 import { ComponentRegistry } from "@microsoft/fluid-container-runtime";
 import {
@@ -19,9 +19,11 @@ import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 // eslint-disable-next-line import/no-internal-modules
 import { SharedComponent } from "../components/sharedComponent";
 
-export class SharedComponentFactory<
-    C extends SharedComponent = SharedComponent,
-    S = undefined> implements IComponentFactory, Partial<IProvideComponentRegistry>
+/**
+ * S - the initial state type that the produced component may take during creation
+ */
+export class SharedComponentFactory<S = undefined>
+implements IComponentFactory, Partial<IProvideComponentRegistry>
 {
     private readonly sharedObjectRegistry: ISharedObjectRegistry;
     private readonly registry: IComponentRegistry | undefined;
@@ -32,7 +34,7 @@ export class SharedComponentFactory<
             runtime: IComponentRuntime,
             context: IComponentContext,
             initialState?: S
-        ) => C,
+        ) => SharedComponent,
         sharedObjects: readonly ISharedObjectFactory[],
         registryEntries?: NamedComponentRegistryEntries,
         private readonly onDemandInstantiation = true,
@@ -43,7 +45,7 @@ export class SharedComponentFactory<
         this.sharedObjectRegistry = new Map(sharedObjects.map((ext) => [ext.type, ext]));
     }
 
-    public get IComponentFactory(): IComponentFactory { return this; }
+    public get IComponentFactory() { return this; }
 
     public get IComponentRegistry() {
         return this.registry;
@@ -111,7 +113,7 @@ export class SharedComponentFactory<
     public async createComponent(
         context: IComponentContext,
         initialState?: S,
-    ): Promise<C> {
+    ): Promise<IComponent & IComponentLoadable> {
         if (this.type === "") {
             throw new Error("undefined type member");
         }
@@ -119,6 +121,6 @@ export class SharedComponentFactory<
         return context.createComponentWithRealizationFn(
             this.type,
             (newContext) => { this.instantiateComponentWithInitialState(newContext, initialState); },
-        ) as Promise<C>;
+        );
     }
 }

@@ -13,9 +13,10 @@ import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { SharedComponent } from "../components";
 import { SharedComponentFactory } from "./sharedComponentFactory";
 
-export class PrimedComponentFactory<
-    C extends SharedComponent = SharedComponent,
-    S = undefined> extends SharedComponentFactory<C, S>
+/**
+ * S - the initial state type that the produced component may take during creation
+ */
+export class PrimedComponentFactory<S = undefined> extends SharedComponentFactory<S>
 {
     constructor(
         type: string,
@@ -23,7 +24,7 @@ export class PrimedComponentFactory<
             runtime: IComponentRuntime,
             context: IComponentContext,
             initialState?: S,
-        ) => C,
+        ) => SharedComponent,
         sharedObjects: readonly ISharedObjectFactory[] = [],
         registryEntries?: NamedComponentRegistryEntries,
         onDemandInstantiation = true,

@@ -13,7 +13,7 @@ import { ITodoItemInitialState, TodoItemName } from "./TodoItem";
 import { TodoItem } from "./index";
 
 export const TodoItemInstantiationFactory =
-    new PrimedComponentFactory<TodoItem, ITodoItemInitialState>(
+    new PrimedComponentFactory<ITodoItemInitialState>(
         TodoItemName,
         TodoItem,
         [

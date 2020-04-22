@@ -106,7 +106,7 @@ export class TableDocument extends PrimedComponent<ITableDocumentEvents> impleme
         const component = await TableSlice.getFactory().createComponent(
             this.context,
             { docId: this.runtime.id, name, minRow, minCol, maxRow, maxCol },
-        );
+        ) as TableSlice;
         this.root.set(sliceId, component.handle);
         return component;
     }
