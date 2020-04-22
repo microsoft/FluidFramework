@@ -73,6 +73,7 @@ export class Snapshot {
             segmentCount,
             length,
             segments,
+            startIndex,
             headerMetadata: undefined,
         };
     }

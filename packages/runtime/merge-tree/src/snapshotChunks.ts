@@ -14,18 +14,19 @@ export const headerChunkName = "header";
 export const bodyChunkName = "body";
 export const tardisChunkName = "tardis";
 
+export type JsonSegmentSpecs = IJSONSegment | IJSONSegmentWithMergeInfo;
+
 export interface MergeTreeChunkLegacy extends VersionedMergeTreeChunk {
     version: undefined;
+    chunkStartSegmentIndex: number,
     chunkSegmentCount: number;
     chunkLengthChars: number;
     totalLengthChars: number;
     totalSegmentCount: number;
     chunkSequenceNumber: number;
     chunkMinSequenceNumber?: number;
-    segmentTexts: IJSONSegment[];
+    segmentTexts: JsonSegmentSpecs[];
 }
-
-export type JsonSegmentSpecs = IJSONSegment | IJSONSegmentWithMergeInfo;
 
 export interface MergeTreeHeaderChunkMetadata{
     id: string,
@@ -41,20 +42,14 @@ export interface MergeTreeHeaderMetadata {
 }
 
 // tslint:disable-next-line:interface-name
-export interface MergeTreeChunkV0 extends VersionedMergeTreeChunk {
+export interface MergeTreeChunkV0 extends VersionedMergeTreeChunk, Omit<MergeTreeChunkLegacy, "version"> {
     version: "0to1",
-    chunkSegmentCount: number;
-    chunkLengthChars: number;
-    totalLengthChars: number;
-    totalSegmentCount: number;
-    chunkSequenceNumber: number;
-    chunkMinSequenceNumber?: number;
-    segmentTexts: (JsonSegmentSpecs)[];
     headerMetadata: MergeTreeHeaderMetadata | undefined;
 }
 
 export interface MergeTreeChunkV1 extends VersionedMergeTreeChunk{
     version: "1",
+    startIndex: number;
     segmentCount: number;
     length: number;
     segments: JsonSegmentSpecs[];
@@ -117,6 +112,7 @@ export function serializeAsMinSupportedVersion(
             const chunkV1 = chunk as MergeTreeChunkV1;
             targetChuck = {
                 version: "0to1",
+                chunkStartSegmentIndex: chunkV1.startIndex,
                 chunkLengthChars: chunkV1.length,
                 chunkSegmentCount: chunkV1.segmentCount,
                 segmentTexts: chunkV1.segments,
@@ -155,6 +151,7 @@ export function toLatestVersion(
                 segmentCount: chunkLegacy.chunkSegmentCount,
                 headerMetadata: buildHeaderMetadata(path, chunkLegacy),
                 segments: chunkLegacy.segmentTexts,
+                startIndex: chunkLegacy.chunkStartSegmentIndex,
             };
         }
 
@@ -166,6 +163,7 @@ export function toLatestVersion(
                 segmentCount: chunkV0.chunkSegmentCount,
                 headerMetadata: chunkV0.headerMetadata,
                 segments: chunkV0.segmentTexts,
+                startIndex: chunkV0.chunkStartSegmentIndex,
             };
         }
 

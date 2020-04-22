@@ -9,15 +9,13 @@ import {
     IComponentHandleContext,
     IComponentSerializer,
 } from "@microsoft/fluid-component-core-interfaces";
-import { ChildLogger, fromBase64ToUtf8 } from "@microsoft/fluid-common-utils";
+import { ChildLogger } from "@microsoft/fluid-common-utils";
 import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from "@microsoft/fluid-protocol-definitions";
-import { IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
 import { NonCollabClient, UnassignedSequenceNumber } from "./constants";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
 import * as Properties from "./properties";
 import {
-    MergeTreeChunkV0,
     MergeTreeChunkLegacy,
     serializeAsMinSupportedVersion,
     headerChunkName,
@@ -86,6 +84,7 @@ export class SnapshotLegacy {
         }
         return {
             version: undefined,
+            chunkStartSegmentIndex,
             chunkSegmentCount: segCount,
             chunkLengthChars: sequenceLength,
             totalLengthChars: this.header.segmentsTotalLength,
@@ -235,24 +234,5 @@ export class SnapshotLegacy {
         }
 
         return this.segments;
-    }
-
-    public static async loadChunk(
-        storage: IObjectStorageService,
-        path: string,
-        serializer?: IComponentSerializer,
-        context?: IComponentHandleContext,
-    ): Promise<MergeTreeChunkV0> {
-        const chunkAsString: string = await storage.read(path);
-        return SnapshotLegacy.processChunk(chunkAsString, serializer, context);
-    }
-
-    public static processChunk(
-        chunk: string,
-        serializer?: IComponentSerializer,
-        context?: IComponentHandleContext,
-    ): MergeTreeChunkV0 {
-        const utf8 = fromBase64ToUtf8(chunk);
-        return serializer ? serializer.parse(utf8, context) : JSON.parse(utf8);
     }
 }
