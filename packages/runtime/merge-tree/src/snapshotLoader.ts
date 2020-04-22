@@ -15,11 +15,10 @@ import { IJSONSegment } from "./ops";
 import {
     IJSONSegmentWithMergeInfo,
     hasMergeInfo,
-    tardisChunkName,
-    headerChunkName,
     MergeTreeChunkV1,
 } from "./snapshotChunks";
 import { SnapshotV1 } from "./snapshotV1";
+import { SnapshotLegacy } from "./snapshotlegacy";
 
 export class SnapshotLoader {
     private readonly logger: ITelemetryLogger;
@@ -35,10 +34,10 @@ export class SnapshotLoader {
     public async initialize(
         branchId: string,
         services: IObjectStorageService): Promise<ISequencedDocumentMessage[]> {
-        const headerP = services.read(headerChunkName);
+        const headerP = services.read(SnapshotLegacy.header);
         // If loading from a snapshot load tardis messages
         // kick off loading in parallel to loading "body" chunk.
-        const rawMessagesP = services.read(tardisChunkName);
+        const rawMessagesP = services.read(SnapshotLegacy.tardis);
 
         const header = await headerP;
         assert(header);
@@ -62,6 +61,7 @@ export class SnapshotLoader {
             return this.loadTardis(rawMessagesP, branch);
         } else {
             rawMessagesP.catch(()=>{});
+            return [];
         }
     }
 
@@ -103,7 +103,7 @@ export class SnapshotLoader {
         header: string,
         branchId: string): MergeTreeChunkV1 {
         const chunk = SnapshotV1.processChunk(
-            headerChunkName,
+            SnapshotLegacy.header,
             header,
             this.logger,
             this.runtime.IComponentSerializer,

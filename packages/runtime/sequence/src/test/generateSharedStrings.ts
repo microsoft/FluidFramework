@@ -9,67 +9,69 @@ import * as mocks from "@microsoft/fluid-test-runtime-utils";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 
-export function* generateStrings(options: any = {}) {
-    const documentId = "fakeId";
-    const runtime: mocks.MockRuntime = new mocks.MockRuntime();
-    const insertText = "text";
-    for (const key of Object.keys(options)) {
-        runtime.options[key] = options[key];
+export function* generateStrings() {
+    for (const options of [{}, { newMergeTreeSnapshotFormat: true }]) {
+        const documentId = "fakeId";
+        const runtime: mocks.MockRuntime = new mocks.MockRuntime();
+        const insertText = "text";
+        for (const key of Object.keys(options)) {
+            runtime.options[key] = options[key];
+        }
+
+        let sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
+        sharedString.initializeLocal();
+        // Small enough so snapshot won't have body
+        for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) / 2; ++i) {
+            sharedString.insertText(0, `${insertText}${i}`);
+        }
+
+        yield sharedString;
+
+        sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
+        sharedString.initializeLocal();
+        // Big enough that snapshot will have body
+        for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) * 2; ++i) {
+            sharedString.insertText(0, `${insertText}${i}`);
+        }
+
+        yield sharedString;
+
+        sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
+        sharedString.initializeLocal();
+        // Very big sharedString
+        for (let i = 0; i < Snapshot.sizeOfFirstChunk; ++i) {
+            sharedString.insertText(0, `${insertText}-${i}`);
+        }
+
+        yield sharedString;
+
+        sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
+        sharedString.initializeLocal();
+        // SharedString with markers
+        for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) * 2; ++i) {
+            sharedString.insertText(0, `${insertText}${i}`);
+        }
+        for (let i = 0; i < sharedString.getLength(); i += 70) {
+            sharedString.insertMarker(i, 1, {
+                ItemType: "Paragraph",
+                Properties: { Bold: false },
+                markerId: `marker${i}`,
+                referenceTileLabels: ["Eop"],
+            });
+        }
+
+        yield sharedString;
+
+        sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
+        sharedString.initializeLocal();
+        // SharedString with annotations
+        for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) * 2; ++i) {
+            sharedString.insertText(0, `${insertText}${i}`);
+        }
+        for (let i = 0; i < sharedString.getLength(); i += 70) {
+            sharedString.annotateRange(i, i + 10, { bold: true });
+        }
+
+        yield sharedString;
     }
-
-    let sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
-    sharedString.initializeLocal();
-    // Small enough so snapshot won't have body
-    for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) / 2; ++i) {
-        sharedString.insertText(0, `${insertText}${i}`);
-    }
-
-    yield sharedString;
-
-    sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
-    sharedString.initializeLocal();
-    // Big enough that snapshot will have body
-    for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) * 2; ++i) {
-        sharedString.insertText(0, `${insertText}${i}`);
-    }
-
-    yield sharedString;
-
-    sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
-    sharedString.initializeLocal();
-    // Very big sharedString
-    for (let i = 0; i < Snapshot.sizeOfFirstChunk; ++i) {
-        sharedString.insertText(0, `${insertText}-${i}`);
-    }
-
-    yield sharedString;
-
-    sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
-    sharedString.initializeLocal();
-    // SharedString with markers
-    for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) * 2; ++i) {
-        sharedString.insertText(0, `${insertText}${i}`);
-    }
-    for (let i = 0; i < sharedString.getLength(); i += 70) {
-        sharedString.insertMarker(i, 1, {
-            ItemType: "Paragraph",
-            Properties: { Bold: false },
-            markerId: `marker${i}`,
-            referenceTileLabels: ["Eop"],
-        });
-    }
-
-    yield sharedString;
-
-    sharedString = new SharedString(runtime, documentId, SharedStringFactory.Attributes);
-    sharedString.initializeLocal();
-    // SharedString with annotations
-    for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) * 2; ++i) {
-        sharedString.insertText(0, `${insertText}${i}`);
-    }
-    for (let i = 0; i < sharedString.getLength(); i += 70) {
-        sharedString.annotateRange(i, i + 10, { bold: true });
-    }
-
-    yield sharedString;
 }

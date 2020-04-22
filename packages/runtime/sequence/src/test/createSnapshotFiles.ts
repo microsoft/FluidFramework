@@ -9,5 +9,5 @@ import { generateStrings } from "./generateSharedStrings";
 const filename: string = "src/test/sequenceTestSnapshot";
 let i = 1;
 for (const s of generateStrings()) {
-    fs.writeFileSync(`${filename}Legacy${i++}.json`, JSON.stringify(s.snapshot(), undefined, 1));
+    fs.writeFileSync(`${filename}${i++}.json`, JSON.stringify(s.snapshot(), undefined, 1));
 }
