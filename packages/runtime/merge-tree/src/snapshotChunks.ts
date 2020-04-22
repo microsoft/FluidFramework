@@ -89,26 +89,24 @@ export function serializeAsMinSupportedVersion(
 
     switch (chunk.version) {
         case undefined:
-            const chunkLegacy = chunk as MergeTreeChunkLegacy;
-            targetChuck = {
-                ... chunkLegacy,
-                headerMetadata: buildHeaderMetadataForLegecyChunk(path, chunkLegacy),
-            };
+            targetChuck = chunk as MergeTreeChunkLegacy;
+            targetChuck.headerMetadata = buildHeaderMetadataForLegecyChunk(path, targetChuck);
             break;
 
         case "1":
             const chunkV1 = chunk as MergeTreeChunkV1;
+            const headerMetadata = path === SnapshotLegacy.header ? chunkV1.headerMetadata : undefined;
             targetChuck = {
                 version: undefined,
                 chunkStartSegmentIndex: chunkV1.startIndex,
                 chunkLengthChars: chunkV1.length,
                 chunkSegmentCount: chunkV1.segmentCount,
                 segmentTexts: chunkV1.segments,
-                totalLengthChars: chunkV1.headerMetadata?.totalLength,
-                totalSegmentCount: chunkV1.headerMetadata?.totalSegmentCount,
-                chunkSequenceNumber: chunkV1.headerMetadata?.sequenceNumber,
-                chunkMinSequenceNumber: chunkV1.headerMetadata?.minSequenceNumber,
-                headerMetadata: path === SnapshotLegacy.header ? chunkV1.headerMetadata : undefined,
+                totalLengthChars: headerMetadata?.totalLength,
+                totalSegmentCount: headerMetadata?.totalSegmentCount,
+                chunkSequenceNumber: headerMetadata?.sequenceNumber,
+                chunkMinSequenceNumber: headerMetadata?.minSequenceNumber,
+                headerMetadata,
             };
             break;
 
