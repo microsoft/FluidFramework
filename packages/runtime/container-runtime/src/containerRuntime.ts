@@ -70,6 +70,7 @@ import {
     IInboundSignalMessage,
     ISignalEnvelop,
     NamedComponentRegistryEntries,
+    IExperimentalHostRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 import { ComponentSerializer, SummaryTracker } from "@microsoft/fluid-runtime-utils";
 import { v4 as uuid } from "uuid";
@@ -379,8 +380,13 @@ class ContainerRuntimeComponentRegistry extends ComponentRegistry {
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the component level mappings.
  */
-export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRuntime, IExperimentalRuntime {
+export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRuntime,
+    IExperimentalRuntime, IExperimentalHostRuntime
+{
+    public get IHostRuntime() { return this; }
+
     public readonly isExperimentalRuntime = true;
+    public readonly isExperimentalHostRuntime = true;
     /**
      * Load the components from a snapshot and returns the runtime.
      * @param context - Context of the container.
@@ -500,6 +506,12 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
 
     public get IComponentRegistry(): IComponentRegistry {
         return this.registry;
+    }
+
+    public isLocal(): boolean {
+        const expContainerContext = this.context as IExperimentalContainerContext;
+        assert(expContainerContext?.isExperimentalContainerContext);
+        return expContainerContext.isLocal();
     }
 
     public nextSummarizerP?: Promise<Summarizer>;
@@ -994,7 +1006,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             pkg,
             this,
             this.storage,
-            this.context.scope,
+            this.containerScope,
             this.summaryTracker.createOrGetChild(id, this.deltaManager.referenceSequenceNumber),
             (cr: IComponentRuntime) => this.attachComponent(cr),
             undefined /* #1635: Remove LocalComponentContext createProps */);
@@ -1193,7 +1205,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         const context = this.getContext(componentRuntime.id);
         // If storage is not available then we are not yet fully attached and so will defer to the initial snapshot
         const expContainerContext = this.context as IExperimentalContainerContext;
-        if (expContainerContext?.isExperimentalContainerContext ? expContainerContext.isAttached() : true) {
+        if (expContainerContext?.isExperimentalContainerContext ? !expContainerContext.isLocal() : true) {
             const message = context.generateAttachMessage();
 
             this.pendingAttach.set(componentRuntime.id, message);
@@ -1229,12 +1241,33 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         return context;
     }
 
-    public async createSummary(): Promise<ISummaryTree> {
-        // TODO - https://github.com/microsoft/FluidFramework/issues/1430
-        // TODO - https://github.com/microsoft/FluidFramework/issues/1431
-        const treeWithStats = await this.summarize(true);
+    public createSummary(): ISummaryTree {
+        const summaryTree: ISummaryTree = {
+            tree: {},
+            type: SummaryType.Tree,
+        };
 
-        return treeWithStats.summaryTree;
+        // Iterate over each component and ask it to snapshot
+        Array.from(this.contexts)
+            .filter(([key, value]) =>
+                value.isAttached,
+            )
+            .map(async ([key, value]) => {
+                const snapshot = value.generateAttachMessage().snapshot;
+                const treeWithStats = this.summaryTreeConverter.convertToSummaryTree(
+                    snapshot,
+                    `/${encodeURIComponent(key)}`,
+                    true,
+                );
+                summaryTree.tree[key] = treeWithStats.summaryTree;
+            });
+        if (this.chunkMap.size > 0) {
+            summaryTree.tree[".chunks"] = {
+                content: JSON.stringify([...this.chunkMap]),
+                type: SummaryType.Blob,
+            };
+        }
+        return summaryTree;
     }
 
     private async generateSummary(

@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { ISharedComponentProps, PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { Counter, CounterValueType, ISharedDirectory } from "@microsoft/fluid-map";
-import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { IComponentHTMLView } from "@microsoft/fluid-view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
+import { ClickerWithInitialValueFactory } from "./clickerWithInitialValueFactory";
+
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const pkg = require("../../package.json");
-export const ClickerWithInitialValueName = `${pkg.name as string}-clickerWithInitialValue`;
 
 export interface IClickerInitialState {
     initialValue: number;
@@ -24,12 +24,13 @@ export interface IClickerInitialState {
 export class ClickerWithInitialValue extends PrimedComponent implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
+    public static readonly ComponentName = `${pkg.name as string}-clicker-with-initial-value`;
+
     public constructor(
-        runtime: IComponentRuntime,
-        context: IComponentContext,
+        props: ISharedComponentProps,
         private initialState?: IClickerInitialState,
     ) {
-        super(runtime, context);
+        super(props);
     }
 
     public static getFactory() { return ClickerWithInitialValue.factory; }
@@ -66,11 +67,13 @@ export class ClickerWithInitialValue extends PrimedComponent implements ICompone
         );
     }
 
-    // end IComponentHTMLView
+    public static getFactory() { return ClickerWithInitialValue.factory; }
 
-    // ----- COMPONENT SETUP STUFF -----
-
-    // ----- COMPONENT SETUP STUFF -----
+    private static readonly factory = new ClickerWithInitialValueFactory(
+        ClickerWithInitialValue.ComponentName,
+        ClickerWithInitialValue,
+        [],
+        {});
 }
 
 // ----- REACT STUFF -----

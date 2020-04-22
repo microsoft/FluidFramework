@@ -39,7 +39,11 @@ export class ComponentToolbar extends PrimedComponent
 
     private callbacks: IComponentCallbacks = {};
 
-    private static readonly factory = new PrimedComponentFactory(ComponentToolbarName, ComponentToolbar, []);
+    private static readonly factory = new PrimedComponentFactory(
+        ComponentToolbarName,
+        ComponentToolbar,
+        [],
+        {});
 
     private supportedComponentList: IContainerComponentDetails[] | undefined;
 

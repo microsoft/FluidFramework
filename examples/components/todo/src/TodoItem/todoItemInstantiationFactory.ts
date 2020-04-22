@@ -20,6 +20,7 @@ export const TodoItemInstantiationFactory =
             SharedString.getFactory(),
             SharedCell.getFactory(),
         ],
+        {},
         new Map([
             TextBoxInstantiationFactory.registryEntry,
             TextListInstantiationFactory.registryEntry,

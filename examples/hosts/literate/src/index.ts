@@ -47,12 +47,12 @@ export async function start(url: string, code: string): Promise<void> {
     // The RouterliciousDocumentServiceFactory creates the driver that allows connections to the Routerlicious service.
     const documentServicesFactory = new RouterliciousDocumentServiceFactory();
 
-    // The code loader provides the ability to load NPM packages that have been quorumed on and that represent
+    // The code loader provides the ability to load npm packages that have been quorumed on and that represent
     // the code for the document. The base WebCodeLoader supports both code on a CDN as well as those defined
-    // within an NPM repository. Future work plans to extend this to allow for tarballs, git repos, and files stored
+    // within an npm repository. Future work plans to extend this to allow for tarballs, git repos, and files stored
     // directly within the document (or another Fluid document).
     //
-    // When in a node environment any NPM package will be installed directly. But when int he browser the loader
+    // When in a node environment any npm package will be installed directly. But when in the browser the loader
     // looks at the package's package.json for a special 'fluid' entry which defines the code designed to be run in
     // the browser as well as the name of the entry point module. It then script includes these files on the page and
     // once loaded makes use of the module entry point name to get access to the module.

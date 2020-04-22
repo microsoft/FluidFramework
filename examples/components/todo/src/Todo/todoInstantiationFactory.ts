@@ -21,6 +21,7 @@ export const TodoInstantiationFactory: IComponentFactory = new PrimedComponentFa
         SharedString.getFactory(),
         SharedCell.getFactory(),
     ],
+    {},
     new Map([
         [TodoItemName, Promise.resolve(TodoItemInstantiationFactory)],
     ]),

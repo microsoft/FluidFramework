@@ -122,12 +122,16 @@ export function configureWebSocketServices(
         const connectionsMap = new Map<string, core.IOrdererConnection>();
         // Map from client IDs to room.
         const roomMap = new Map<string, IRoom>();
+        // Map from client Ids to scope.
+        const scopeMap = new Map<string, string[]>();
 
         // Back-compat map for storing clientIds with latest protocol versions.
         const versionMap = new Set<string>();
 
+        const hasWriteAccess = (scopes: string[]) => canWrite(scopes) || canSummarize(scopes);
+
         function isWriter(scopes: string[], existing: boolean, mode: ConnectionMode): boolean {
-            if (canWrite(scopes) || canSummarize(scopes)) {
+            if (hasWriteAccess(scopes)) {
                 // New document needs a writer to boot.
                 if (!existing) {
                     return true;
@@ -179,6 +183,9 @@ export function configureWebSocketServices(
             const messageClient: Partial<IClient> = message.client ? message.client : {};
             messageClient.user = claims.user;
             messageClient.scopes = claims.scopes;
+
+            // Cache the scopes.
+            scopeMap.set(clientId, messageClient.scopes);
 
             // Join the room to receive signals.
             roomMap.set(clientId, room);
@@ -290,14 +297,10 @@ export function configureWebSocketServices(
             (clientId: string, messageBatches: (IDocumentMessage | IDocumentMessage[])[], response) => {
                 // Verify the user has an orderer connection.
                 if (!connectionsMap.has(clientId)) {
-                    socket.emit(
-                        "nack",
-                        "",
-                        [createNackMessage(
-                            403,
-                            NackErrorType.InvalidScopeError,
-                            "Invalid clientId or Scope",
-                        )]);
+                    const nackMessage = hasWriteAccess(scopeMap.get(clientId)) ?
+                        createNackMessage(400, NackErrorType.BadRequestError, "Readonly client") :
+                        createNackMessage(403, NackErrorType.InvalidScopeError, "Invalid clientId or Scope");
+                    socket.emit("nack", "", [nackMessage]);
                 } else {
                     const connection = connectionsMap.get(clientId);
 
@@ -335,14 +338,10 @@ export function configureWebSocketServices(
         socket.on("submitContent", (clientId: string, message: IDocumentMessage, response) => {
             // Verify the user has an orderer connection.
             if (!connectionsMap.has(clientId)) {
-                socket.emit(
-                    "nack",
-                    "",
-                    [createNackMessage(
-                        403,
-                        NackErrorType.InvalidScopeError,
-                        "Invalid clientId or Scope",
-                    )]);
+                const nackMessage = hasWriteAccess(scopeMap.get(clientId)) ?
+                    createNackMessage(400, NackErrorType.BadRequestError, "Readonly client") :
+                    createNackMessage(403, NackErrorType.InvalidScopeError, "Invalid clientId or Scope");
+                socket.emit("nack", "", [nackMessage]);
             } else {
                 const broadCastMessage: IContentMessage = {
                     clientId,

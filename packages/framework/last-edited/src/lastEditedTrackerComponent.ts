@@ -24,6 +24,7 @@ export class LastEditedTrackerComponent extends PrimedComponent implements IProv
         LastEditedTrackerComponentName,
         LastEditedTrackerComponent,
         [ SharedSummaryBlock.getFactory() ],
+        {},
     );
 
     public static getFactory() {

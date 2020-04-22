@@ -17,4 +17,5 @@ export const PrimitivesInstantiationFactory = new PrimedComponentFactory(
     [
         SharedMap.getFactory(),
     ],
+    {},
 );

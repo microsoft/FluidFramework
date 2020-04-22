@@ -155,6 +155,23 @@ describe("Matrix", () => {
             ]);
         });
 
+        // Vet that we can set and read back the cell in a 1x1 matrix.
+        it("out-of-bounds read must throw", async () => {
+            // Reading cell (0,0) of an empty matrix must throw.
+            assert.throws(() => { matrix.read(0, 0); });
+
+            matrix.insertRows(0, 1);
+            matrix.insertCols(0, 2);
+
+            // Reading negative indices must throw.
+            assert.throws(() => { matrix.read(-1, 0); });
+            assert.throws(() => { matrix.read(0, -1); });
+
+            // Reading past end of matrix must throw.
+            assert.throws(() => { matrix.read(1, 0);  });
+            assert.throws(() => { matrix.read(0, 2); });
+        });
+
         // Vet that we can insert a column in a 1x2 matrix.
         it("column insertion", async () => {
             matrix.insertRows(0, 1);
@@ -187,6 +204,24 @@ describe("Matrix", () => {
                 [0],
                 [undefined],
                 [1]
+            ]);
+        });
+
+        // Vets that the matrix correctly handles noncontiguous handles when allocating a range
+        // of more than one handle.
+        it("remove 1 row, insert 2 rows", async () => {
+            matrix.insertRows(0,4);
+            matrix.insertCols(0,1);
+            matrix.setCells(/* row: */ 0, /* col: */ 0, /* numCols: */ 1, [0,1,2,3]);
+            matrix.removeRows(2,1);
+            matrix.insertRows(0,2);
+            matrix.setCells(/* row: */ 0, /* col: */ 0, /* numCols: */ 1, [84,45]);
+            await expect([
+                [84],
+                [45],
+                [0],
+                [1],
+                [3],
             ]);
         });
 
@@ -319,7 +354,29 @@ describe("Matrix", () => {
                 ]);
             });
 
-            it("insert col", async () => {
+            it("insert and set in new row", async () => {
+                matrix1.insertCols(0,2);
+                await expect();
+                matrix1.insertRows(0,1);
+                matrix1.setCells(/* row: */ 0, /* col: */ 1, /* numCols: */ 1, ["x"]);
+                await expect([[undefined, "x"]]);
+            });
+
+            it("insert and set in new col", async () => {
+                matrix1.insertRows(0,2);
+                await expect([
+                    [],
+                    [],
+                ]);
+                matrix1.insertCols(0,1);
+                matrix1.setCells(/* row: */ 1, /* col: */ 0, /* numCols: */ 1, ["x"]);
+                await expect([
+                    [undefined],
+                    ["x"]
+                ]);
+            });
+
+            it("insert col conflict", async () => {
                 matrix1.insertRows(0, 1);
                 await expect([
                     []
@@ -336,7 +393,7 @@ describe("Matrix", () => {
                 ]);
             });
 
-            it("insert row", async () => {
+            it("insert row conflict", async () => {
                 matrix1.insertCols(0, 1);
                 await expect([]);
 
@@ -352,7 +409,7 @@ describe("Matrix", () => {
                 ]);
             });
 
-            it("remove col", async () => {
+            it("overlapping remove col", async () => {
                 matrix1.insertCols(0, 3);
                 matrix1.insertRows(0, 1);
                 matrix1.setCell(0, 0, "A");
@@ -370,7 +427,7 @@ describe("Matrix", () => {
                 ]);
             });
 
-            it("remove row", async () => {
+            it("overlapping remove row", async () => {
                 matrix1.insertCols(0, 1);
                 matrix1.insertRows(0, 3);
                 matrix1.setCell(0, 0, "A");

@@ -29,7 +29,7 @@ top-right corner of the UI. Follow the resulting instructions to clone the repo.
 
 </vue-markdown>
 
-Once you've cloned the repo, you'll need to set up access to the [private Fluid NPM feed](../guide/package-feed.md). On
+Once you've cloned the repo, you'll need to set up access to the [private Fluid npm feed](../guide/package-feed.md). On
 Windows, you can run the `npm run auth` command to automate this process.
 
 Now that you have access to the private feed, run `npm install` in the root of the repository to install dependencies.
@@ -38,7 +38,7 @@ Finally, you can open the folder in Visual Studio Code.
 
 ## Acknowledgements
 
-This example uses the [sudokus](https://github.com/Moeriki/node-sudokus) NPM package by Dieter Luypaert
+This example uses the [sudokus](https://github.com/Moeriki/node-sudokus) npm package by Dieter Luypaert
 (<https://github.com/Moeriki>) and the [@types/sudokus](https://www.npmjs.com/package/@types/sudokus) package by Florian
 Keller (<https://github.com/ffflorian>).
 

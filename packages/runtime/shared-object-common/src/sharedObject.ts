@@ -13,6 +13,7 @@ import {
     IComponentRuntime,
     IObjectStorageService,
     ISharedObjectServices,
+    IExperimentalComponentRuntime,
 } from "@microsoft/fluid-runtime-definitions";
 import * as Deque from "double-ended-queue";
 import { debug } from "./debug";
@@ -171,7 +172,9 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * {@inheritDoc ISharedObject.isLocal}
      */
     public isLocal(): boolean {
-        return this.services === undefined;
+        const expComponentRuntime = this.runtime as IExperimentalComponentRuntime;
+        return expComponentRuntime?.isExperimentalComponentRuntime ?
+            expComponentRuntime.isLocal() || this.services === undefined : this.services === undefined;
     }
 
     /**

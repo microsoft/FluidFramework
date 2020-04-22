@@ -14,4 +14,4 @@ export const TextListInstantiationFactory = new PrimedComponentFactory(
     [
         SharedString.getFactory(),
     ],
-);
+    {});

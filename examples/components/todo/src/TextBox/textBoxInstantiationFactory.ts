@@ -14,4 +14,4 @@ export const TextBoxInstantiationFactory = new PrimedComponentFactory<string>(
     [
         SharedString.getFactory(),
     ],
-);
+    {});
