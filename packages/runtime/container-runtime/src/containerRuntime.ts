@@ -498,7 +498,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         assert(expContainerContext?.isExperimentalContainerContext);
         // back-compat: 0.15 isAttached
         // isAttached is replaced with isLocal.
-        return expContainerContext.isLocal ? expContainerContext.isLocal() : expContainerContext.isAttached();
+        return expContainerContext.isLocal ? expContainerContext.isLocal() : !expContainerContext.isAttached();
     }
 
     public nextSummarizerP?: Promise<Summarizer>;
