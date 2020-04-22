@@ -15,11 +15,9 @@ import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from "@microsof
 import { IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
 import { UnassignedSequenceNumber } from "./constants";
 import * as MergeTree from "./mergeTree";
-import * as ops from "./ops";
 import * as Properties from "./properties";
 import { SnapshotLegacy } from "./snapshotlegacy";
-
-type SegmentSpec = ops.IJSONSegment | ops.IJSONSegmentWithMergeInfo;
+import { IJSONSegmentWithMergeInfo, MergeTreeChunkV0, MergeTreeChunkV0SegmentSpec } from "./snapshotChunks";
 
 export interface SnapshotHeader {
     chunkCount?: number;
@@ -45,7 +43,7 @@ export class Snapshot {
     public static readonly sizeOfFirstChunk: number = 10000;
 
     private header: SnapshotHeader;
-    private segments: SegmentSpec[];
+    private segments: MergeTreeChunkV0SegmentSpec[];
     private segmentLengths: number[];
     private readonly logger: ITelemetryLogger;
 
@@ -58,11 +56,11 @@ export class Snapshot {
     }
 
     getSeqLengthSegs(
-        allSegments: SegmentSpec[],
+        allSegments: MergeTreeChunkV0SegmentSpec[],
         allLengths: number[],
         approxSequenceLength: number,
-        startIndex = 0): ops.MergeTreeChunk {
-        const segs: SegmentSpec[] = [];
+        startIndex = 0): MergeTreeChunkV0 {
+        const segs: MergeTreeChunkV0SegmentSpec[] = [];
         let sequenceLength = 0;
         let segCount = 0;
         while ((sequenceLength < approxSequenceLength) && ((startIndex + segCount) < allSegments.length)) {
@@ -72,6 +70,7 @@ export class Snapshot {
             segCount++;
         }
         return {
+            version: "0",
             chunkStartSegmentIndex: startIndex,
             chunkSegmentCount: segCount,
             chunkLengthChars: sequenceLength,
@@ -175,8 +174,8 @@ export class Snapshot {
         this.segments = [];
         this.segmentLengths = [];
 
-        // Helper to add the given `SegmentSpec` to the snapshot.
-        const pushSegRaw = (json: SegmentSpec, length: number) => {
+        // Helper to add the given `MergeTreeChunkV0SegmentSpec` to the snapshot.
+        const pushSegRaw = (json: MergeTreeChunkV0SegmentSpec, length: number) => {
             this.header.segmentsTotalLength += length;
             this.segments.push(json);
             this.segmentLengths.push(length);
@@ -228,7 +227,7 @@ export class Snapshot {
                 pushSeg(prev);
                 prev = undefined;
 
-                const raw: ops.IJSONSegmentWithMergeInfo = { json: segment.toJSONObject() };
+                const raw: IJSONSegmentWithMergeInfo = { json: segment.toJSONObject() };
                 // If the segment insertion is above the MSN, record the insertion merge info.
                 if (segment.seq > minSeq) {
                     raw.seq = segment.seq;
@@ -265,7 +264,7 @@ export class Snapshot {
         path: string,
         serializer?: IComponentSerializer,
         context?: IComponentHandleContext,
-    ): Promise<ops.MergeTreeChunk> {
+    ): Promise<MergeTreeChunkV0> {
         const chunkAsString: string = await storage.read(path);
         return Snapshot.processChunk(chunkAsString, serializer, context);
     }
@@ -274,7 +273,7 @@ export class Snapshot {
         chunk: string,
         serializer?: IComponentSerializer,
         context?: IComponentHandleContext,
-    ): ops.MergeTreeChunk {
+    ): MergeTreeChunkV0 {
         const utf8 = fromBase64ToUtf8(chunk);
         return serializer ? serializer.parse(utf8, context) : JSON.parse(utf8);
     }

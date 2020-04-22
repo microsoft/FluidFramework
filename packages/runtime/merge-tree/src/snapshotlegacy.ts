@@ -17,6 +17,7 @@ import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
 import * as Properties from "./properties";
 import { SnapshotHeader } from "./snapshot";
+import { MergeTreeChunkV0 } from "./snapshotChunks";
 
 // first three are index entry
 export interface SnapChunk {
@@ -60,7 +61,7 @@ export class SnapshotLegacy {
         allSegments: ops.IJSONSegment[],
         allLengths: number[],
         approxSequenceLength: number,
-        startIndex = 0): ops.MergeTreeChunk {
+        startIndex = 0): MergeTreeChunkV0 {
         const segs: ops.IJSONSegment[] = [];
         let sequenceLength = 0;
         let segCount = 0;
@@ -71,6 +72,7 @@ export class SnapshotLegacy {
             segCount++;
         }
         return {
+            version: "0",
             chunkStartSegmentIndex: startIndex,
             chunkSegmentCount: segCount,
             chunkLengthChars: sequenceLength,
@@ -216,7 +218,7 @@ export class SnapshotLegacy {
         path: string,
         serializer?: IComponentSerializer,
         context?: IComponentHandleContext,
-    ): Promise<ops.MergeTreeChunk> {
+    ): Promise<MergeTreeChunkV0> {
         const chunkAsString: string = await storage.read(path);
         return SnapshotLegacy.processChunk(chunkAsString, serializer, context);
     }
@@ -225,7 +227,7 @@ export class SnapshotLegacy {
         chunk: string,
         serializer?: IComponentSerializer,
         context?: IComponentHandleContext,
-    ): ops.MergeTreeChunk {
+    ): MergeTreeChunkV0 {
         const utf8 = fromBase64ToUtf8(chunk);
         return serializer ? serializer.parse(utf8, context) : JSON.parse(utf8);
     }

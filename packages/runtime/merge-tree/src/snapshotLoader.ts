@@ -10,9 +10,10 @@ import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runti
 import { Client } from "./client";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants";
 import { ISegment, MergeTree } from "./mergeTree";
-import { hasMergeInfo, IJSONSegment, IJSONSegmentWithMergeInfo, MergeTreeChunk } from "./ops";
+import { IJSONSegment } from "./ops";
 import { Snapshot } from "./snapshot";
 import { SnapshotLegacy } from "./snapshotlegacy";
+import { IJSONSegmentWithMergeInfo, hasMergeInfo, MergeTreeChunkV0 } from "./snapshotChunks";
 
 export class SnapshotLoader {
     constructor(
@@ -85,7 +86,7 @@ export class SnapshotLoader {
 
     private loadHeader(
         header: string,
-        branchId: string): MergeTreeChunk {
+        branchId: string): MergeTreeChunkV0 {
         const chunk = Snapshot.processChunk(
             header,
             this.runtime.IComponentSerializer,
@@ -119,7 +120,7 @@ export class SnapshotLoader {
         return chunk;
     }
 
-    private async loadBody(chunk1: MergeTreeChunk, services: IObjectStorageService): Promise<void> {
+    private async loadBody(chunk1: MergeTreeChunkV0, services: IObjectStorageService): Promise<void> {
         this.runtime.logger.shipAssert(
             chunk1.chunkLengthChars <= chunk1.totalLengthChars,
             { eventName: "Mismatch in totalLengthChars" });
