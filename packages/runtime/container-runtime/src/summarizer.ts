@@ -46,6 +46,8 @@ export interface ISummarizer extends IComponentRouter, IComponentRunnable, IComp
      */
     setSummarizer(): Promise<Summarizer>;
     stop(reason?: string): void;
+    run(onBehalfOf: string): Promise<void>;
+    updateOnBehalfOf(onBehalfOf: string): void;
 }
 
 export interface ISummarizerRuntime extends IConnectableRuntime {
@@ -136,6 +138,10 @@ export class Summarizer implements ISummarizer {
             reason,
         });
         this.stopDeferred.resolve();
+    }
+
+    public updateOnBehalfOf(onBehalfOf: string): void {
+        this.onBehalfOfClientId = onBehalfOf;
     }
 
     public async request(request: IRequest): Promise<IResponse> {
