@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@microsoft/fluid-common-definitions";
-import { DebugLogger, Timer, PromiseTimer, Deferred } from "@microsoft/fluid-common-utils";
+import { DebugLogger, Deferred, PromiseTimer, Timer } from "@microsoft/fluid-common-utils";
 import { IFluidCodeDetails } from "@microsoft/fluid-container-definitions";
 import { IPendingProposal } from "@microsoft/fluid-protocol-definitions";
 import { IHostRuntime } from "@microsoft/fluid-runtime-definitions";

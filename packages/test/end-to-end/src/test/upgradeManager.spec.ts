@@ -4,18 +4,17 @@
  */
 
 import * as assert from "assert";
-import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { ISharedComponentProps, PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
 import { UpgradeManager } from "@microsoft/fluid-base-host";
 import { IFluidCodeDetails, ILoader } from "@microsoft/fluid-container-definitions";
 import { Container } from "@microsoft/fluid-container-loader";
 import { DocumentDeltaEventManager } from "@microsoft/fluid-local-driver";
 import {
-    IComponentContext,
     IComponentFactory,
     IComponentRuntime,
     IHostRuntime,
 } from "@microsoft/fluid-runtime-definitions";
-import { LocalDeltaConnectionServer, ILocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
+import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@microsoft/fluid-server-local-server";
 import { createLocalLoader, initializeLocalContainer } from "@microsoft/fluid-test-utils";
 
 class TestComponent extends PrimedComponent {
@@ -23,16 +22,18 @@ class TestComponent extends PrimedComponent {
 
     public static getFactory() { return TestComponent.factory; }
 
+    public runtime: IComponentRuntime;
+
     private static readonly factory = new PrimedComponentFactory(
         TestComponent.type,
         TestComponent,
         [],
+        {},
     );
 
-    constructor(
-        public readonly runtime: IComponentRuntime,
-        context: IComponentContext) {
-        super(runtime, context);
+    constructor(props: ISharedComponentProps) {
+        super(props);
+        this.runtime = props.runtime;
     }
 }
 
