@@ -254,6 +254,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
             // This assert !isLocal above means services can't be undefined.
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             clientSequenceNumber = this.services!.deltaConnection.submit(content);
+            //* todo - How is deltaConnection.submit not async?  And the comment above implies we should return here...
         } else {
             debug(`${this.id} Not fully connected - adding to pending list`, content);
             this.runtime.notifyPendingMessages();

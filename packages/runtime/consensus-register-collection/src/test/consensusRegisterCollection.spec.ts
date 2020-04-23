@@ -24,13 +24,6 @@ describe("ConsensusRegisterCollection", () => {
         ) {
             let crc: IConsensusRegisterCollection;
 
-            async function read(k) {
-                const resP = crc.read(k);
-                processMessages();
-                setImmediate(() => processMessages());
-                return resP;
-            }
-
             async function write(k, v) {
                 const waitP = crc.write(k, v);
                 processMessages();
@@ -47,18 +40,20 @@ describe("ConsensusRegisterCollection", () => {
                 });
 
                 it("Can add and remove data", async () => {
-                    assert.strictEqual(await read("key1"), undefined);
-                    await write("key1", "val1");
-                    assert.strictEqual(await read("key1"), "val1");
+                    assert.strictEqual(crc.read("key1"), undefined);
+                    const writeResult = await write("key1", "val1");
+                    assert.strictEqual(crc.read("key1"), "val1");
+                    assert.strictEqual(writeResult, true, "No concurrency expected");
                 });
 
                 it("Can add and remove a handle", async () => {
-                    assert.strictEqual(await read("key1"), undefined);
+                    assert.strictEqual(crc.read("key1"), undefined);
                     const handle = crc.handle;
                     if (handle === undefined) { assert.fail("Need an actual handle to test this case"); }
-                    await write("key1", handle);
-                    const acquiredValue = await read("key1");
-                    assert.strictEqual(acquiredValue.path, handle.path);
+                    const writeResult = await write("key1", handle);
+                    const readValue = crc.read("key1");
+                    assert.strictEqual(readValue.path, handle.path);
+                    assert.strictEqual(writeResult, true, "No concurrency expected");
                 });
             });
         }

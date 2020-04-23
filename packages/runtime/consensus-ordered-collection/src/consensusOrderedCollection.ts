@@ -13,6 +13,7 @@ import {
     TreeEntry,
 } from "@microsoft/fluid-protocol-definitions";
 import { IChannelAttributes, IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+import { strongAssert, unreachableCase } from "@microsoft/fluid-runtime-utils";
 import { SharedObject } from "@microsoft/fluid-shared-object-base";
 import { v4 as uuid } from "uuid";
 import {
@@ -148,14 +149,13 @@ export class ConsensusOrderedCollection<T = any>
             // clone the value to match the behavior of going thru the wire.
             const addValue = this.deserializeValue(valueSer) as T;
             this.addCore(addValue);
-            return Promise.resolve();
+            return;
         }
 
-        const op: IConsensusOrderedCollectionAddOperation = {
+        await this.submit<IConsensusOrderedCollectionAddOperation>({
             opName: "add",
             value: valueSer,
-        };
-        await this.submit(op);
+        });
     }
 
     /**
@@ -178,8 +178,7 @@ export class ConsensusOrderedCollection<T = any>
                 this.release(result.acquireId);
                 this.emit("localRelease", result.value, true /* intentional */);
                 break;
-            default:
-                assert(false);
+            default: unreachableCase(res);
         }
 
         return true;
@@ -206,8 +205,8 @@ export class ConsensusOrderedCollection<T = any>
     }
 
     public snapshot(): ITree {
-        // If we are transitioning from unattached to attached mode, then we are loosing
-        // all checked out work!
+        // If we are transitioning from unattached to attached mode,
+        // then we are losing all checked out work!
         this.removeClient(belongsToUnattached);
 
         const tree: ITree = {
@@ -233,7 +232,8 @@ export class ConsensusOrderedCollection<T = any>
             value: {
                 contents: this.serializeValue(Array.from(this.jobTracking.entries())),
                 encoding: "utf-8",
-            } });
+            },
+        });
         return tree;
     }
 
@@ -249,11 +249,10 @@ export class ConsensusOrderedCollection<T = any>
 
         // if not active, this item already was released to queue (as observed by other clients)
         if (this.isActive()) {
-            const work: IConsensusOrderedCollectionCompleteOperation = {
+            await this.submit<IConsensusOrderedCollectionCompleteOperation>({
                 opName: "complete",
                 acquireId,
-            };
-            await this.submit(work);
+            });
         }
     }
 
@@ -274,11 +273,10 @@ export class ConsensusOrderedCollection<T = any>
 
         // if not active, this item already was released to queue (as observed by other clients)
         if (this.isActive()) {
-            const work: IConsensusOrderedCollectionReleaseOperation = {
+            this.submit<IConsensusOrderedCollectionReleaseOperation>({
                 opName: "release",
                 acquireId,
-            };
-            this.submit(work).catch((error) => {
+            }).catch((error) => {
                 this.runtime.logger.sendErrorEvent({ eventName: "ConsensusQueue_release" }, error);
             });
         }
@@ -352,8 +350,7 @@ export class ConsensusOrderedCollection<T = any>
                     this.releaseCore(op.acquireId);
                     break;
 
-                default:
-                    throw new Error("Unknown operation");
+                default: unreachableCase(op);
             }
             // If it is local operation, resolve the promise.
             if (local) {
@@ -372,16 +369,16 @@ export class ConsensusOrderedCollection<T = any>
         message: ISequencedDocumentMessage,
         value: IConsensusOrderedCollectionValue<T> | undefined)
     {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const pending = this.promiseResolveQueue.shift()!;
-        assert(pending);
+        const pending = this.promiseResolveQueue.shift();
+        strongAssert(pending);
         assert(message.contents.opName === pending.message.opName);
         assert(message.clientSequenceNumber === pending.clientSequenceNumber);
         pending.resolve(value);
     }
 
-    private async submit(
-        message: IConsensusOrderedCollectionOperation): Promise<IConsensusOrderedCollectionValue<T> | undefined> {
+    private async submit<TMessage extends IConsensusOrderedCollectionOperation>(
+        message: TMessage,
+    ): Promise<IConsensusOrderedCollectionValue<T> | undefined> {
         assert(!this.isLocal());
 
         const clientSequenceNumber = this.submitLocalMessage(message);
@@ -419,11 +416,10 @@ export class ConsensusOrderedCollection<T = any>
             return Promise.resolve(value);
         }
 
-        const op: IConsensusOrderedCollectionOperation = {
+        return this.submit<IConsensusOrderedCollectionAcquireOperation>({
             opName: "acquire",
             acquireId: uuid(),
-        };
-        return this.submit(op);
+        });
     }
 
     private removeClient(clientIdToRemove?: string) {

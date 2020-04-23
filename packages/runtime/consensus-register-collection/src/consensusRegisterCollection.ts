@@ -17,33 +17,26 @@ import {
     IComponentRuntime,
     IObjectStorageService,
 } from "@microsoft/fluid-runtime-definitions";
-import { ISharedObject, SharedObject, ValueType } from "@microsoft/fluid-shared-object-base";
+import { strongAssert, unreachableCase } from "@microsoft/fluid-runtime-utils";
+import { SharedObject } from "@microsoft/fluid-shared-object-base";
 import { ConsensusRegisterCollectionFactory } from "./consensusRegisterCollectionFactory";
 import { debug } from "./debug";
 import { IConsensusRegisterCollection, ReadPolicy, IConsensusRegisterCollectionEvents } from "./interfaces";
 
-interface ILocalData {
-    // Atomic version.
-    atomic: ILocalRegister;
+interface ILocalData<T> {
+    // Atomic version
+    atomic: ILocalRegister<T>;
 
-    // All versions.
-    versions: ILocalRegister[];
+    // All concurrent versions awaiting consensus
+    versions: ILocalRegister<T>[];
 }
 
-interface ILocalRegister {
+interface ILocalRegister<T> {
     // Register value
-    value: IRegisterValue;
+    value: T;
 
-    // The sequence number when last consensus was reached.
+    // The sequence number when last consensus was reached
     sequenceNumber: number;
-}
-
-interface IRegisterValue {
-    // Type of the value
-    type: string;
-
-    // Actual Value
-    value: any;
 }
 
 /**
@@ -52,32 +45,24 @@ interface IRegisterValue {
 interface IRegisterOperation {
     key: string;
     type: "write";
-    value: IRegisterValue;
+    value: string;
 
     // Message can be delivered with delay - resubmitted on reconnect.
     // As such, refSeq needs to reference seq # at the time op was created (here),
     // not when op was actually sent over wire (as client can ingest ops in between)
     // in other words, we can't use ISequencedDocumentMessage.referenceSequenceNumber
-    refSeq: number | undefined;
+    refSeq?: number;
 }
 
-/**
- * A record of the pending operation
- */
+/** A record of the pending operation awaiting ack */
 interface IPendingRecord {
-    /**
-     * The resolve function to call after the local operation is ack'ed
-     */
+    /** The resolve function to call after the local operation is ack'ed */
     resolve: (winner: boolean) => void;
 
-    /**
-     * The client sequence number of the operation. For assert only.
-     */
+    /** The client sequence number of the operation. For assert only */
     clientSequenceNumber: number;
 
-    /**
-     * Pending Message
-     */
+    /** Pending Message */
     message: IRegisterOperation;
 }
 
@@ -108,8 +93,11 @@ export class ConsensusRegisterCollection<T>
         return new ConsensusRegisterCollectionFactory();
     }
 
-    private readonly data = new Map<string, ILocalData>();
-    private readonly promiseResolveQueue: IPendingRecord[] = [];
+    private readonly data = new Map<string, ILocalData<T>>();
+
+    //* Todo: rename promiseResolveQueue in ordered collection too
+    /** Queue of local messages awaiting ack from the server */
+    private readonly pendingLocalMessages: IPendingRecord[] = [];
 
     /**
      * Constructs a new consensus register collection. If the object is non-local an id and service interfaces will
@@ -130,29 +118,23 @@ export class ConsensusRegisterCollection<T>
      */
     public async write(key: string, value: T): Promise<boolean> {
         const valueSer = this.serializeValue(value);
-
-        let operationValue: IRegisterValue;
-
-        if (SharedObject.is(value)) {
-            value.register();
-            operationValue = {
-                type: ValueType[ValueType.Shared],
-                value: value.id,
-            };
-        } else {
-            operationValue = {
-                type: ValueType[ValueType.Plain],
-                value,
-            };
-        }
-
-        const op: IRegisterOperation = {
+        const message: IRegisterOperation = {
             key,
             type: "write",
-            value: operationValue,
+            value: valueSer,
             refSeq: this.runtime.deltaManager.referenceSequenceNumber,
         };
-        return this.submit(op);
+
+        if (this.isLocal()) {
+            this.processInboundWrite(0, 0, message, true);
+            return true;
+        }
+
+        const clientSequenceNumber = this.submitLocalMessage(message);
+        return new Promise((resolve) => {
+            // Note that clientSequenceNumber and message are only used for asserts and isn't strictly necessary.
+            this.pendingLocalMessages.push({ resolve, clientSequenceNumber, message });
+        });
     }
 
     /**
@@ -161,11 +143,10 @@ export class ConsensusRegisterCollection<T>
      * TODO: This read does not guarantee most up to date value. We probably want to have a version
      * that submits a read message and returns when the message is acked. That way we are guaranteed
      * to read the most recent linearizable value for that register.
+     * @param key - The key to read
+     * @param readPolicy - The ReadPolicy to apply. Defaults to Atomic.
      */
-    public read(key: string, policy?: ReadPolicy): T | undefined {
-        // Default policy is atomic.
-        const readPolicy = policy ?? ReadPolicy.Atomic;
-
+    public read(key: string, readPolicy: ReadPolicy = ReadPolicy.Atomic): T | undefined {
         if (readPolicy === ReadPolicy.Atomic) {
             return this.readAtomic(key);
         }
@@ -174,7 +155,7 @@ export class ConsensusRegisterCollection<T>
 
         if (versions !== undefined) {
             // We don't support deletion. So there should be at least one value.
-            assert(versions.length > 0, "Value should be undefined or non empty");
+            assert(versions.length > 0, "Value should be undefined or non-empty");
 
             return versions[versions.length - 1];
         }
@@ -182,7 +163,7 @@ export class ConsensusRegisterCollection<T>
 
     public readVersions(key: string): T[] | undefined {
         const data = this.data.get(key);
-        return data?.versions.map((element: ILocalRegister) => element.value.value);
+        return data?.versions.map((element: ILocalRegister<T>) => element.value);
     }
 
     public keys(): string[] {
@@ -190,11 +171,12 @@ export class ConsensusRegisterCollection<T>
     }
 
     public snapshot(): ITree {
-        const serialized: { [key: string]: ILocalData } = {};
-        this.data.forEach((items, key) => {
-            const serializedAtomic = this.snapshotItem(items.atomic);
-            const serializedVersions: ILocalRegister[] = [];
-            for (const element of items.versions) {
+        // Use ILocalData<string> not <T> to clone the structure, but with serialized values
+        const serialized: { [key: string]: ILocalData<string> } = {};
+        this.data.forEach((data, key) => {
+            const serializedAtomic = this.snapshotItem(data.atomic);
+            const serializedVersions: ILocalRegister<string>[] = [];
+            for (const element of data.versions) {
                 serializedVersions.push(this.snapshotItem(element));
             }
             serialized[key] = {
@@ -226,13 +208,15 @@ export class ConsensusRegisterCollection<T>
         branchId: string,
         storage: IObjectStorageService): Promise<void> {
         const header = await storage.read(snapshotFileName);
-        const data: { [key: string]: ILocalData } = header !== undefined ? JSON.parse(fromBase64ToUtf8(header)) : {};
+        const serialized: { [key: string]: ILocalData<string> } =
+            header !== undefined ? JSON.parse(fromBase64ToUtf8(header)) : {};
+        //* todo: Why is it called header? And why are we converting from Base64 when snapshot didn't encode as Base64?
 
-        for (const key of Object.keys(data)) {
-            const serializedValues = data[key];
-            const loadedVersions: ILocalRegister[] = [];
-            const loadedAtomic = await this.loadItem(serializedValues.atomic);
-            for (const element of serializedValues.versions) {
+        for (const key of Object.keys(serialized)) {
+            const serializedValue = serialized[key];
+            const loadedAtomic = await this.loadItem(serializedValue.atomic);
+            const loadedVersions: ILocalRegister<T>[] = [];
+            for (const element of serializedValue.versions) {
                 loadedVersions.push(await this.loadItem(element));
             }
             this.data.set(key, {
@@ -242,9 +226,7 @@ export class ConsensusRegisterCollection<T>
         }
     }
 
-    protected registerCore() {
-        return;
-    }
+    protected registerCore() {}
 
     protected onDisconnect() {
         debug(`ConsensusRegisterCollection ${this.id} is now disconnected`);
@@ -252,8 +234,8 @@ export class ConsensusRegisterCollection<T>
 
     protected onConnect(pending: any[]) {
         // resubmit non-acked messages
-        assert(pending.length === this.promiseResolveQueue.length);
-        for (const record of this.promiseResolveQueue) {
+        assert(pending.length === this.pendingLocalMessages.length);
+        for (const record of this.pendingLocalMessages) {
             record.clientSequenceNumber = this.submitLocalMessage(record.message);
         }
     }
@@ -269,31 +251,27 @@ export class ConsensusRegisterCollection<T>
                         op.refSeq = message.referenceSequenceNumber;
                     }
                     // Message can be delivered with delay - resubmitted on reconnect.
-                    // As such, refSeq needs to reference seq # at the time op was created (here),
-                    // not when op was actually sent over wire (as client can ingest ops in between)
-                    // in other words, we can't use ISequencedDocumentMessage.referenceSequenceNumber
+                    // we use refSeq not message.referenceSequenceNumber, to reference seq # at the time op was created
+                    // not later when op was actually sent over wire (as client can ingest ops in between).
                     assert(op.refSeq <= message.referenceSequenceNumber);
                     const winner = this.processInboundWrite(
                         op.refSeq,
                         message.sequenceNumber,
                         op,
                         local);
-                    // If it is local operation, resolve the promise.
                     if (local) {
-                        this.processLocalMessage(message, winner);
+                        this.onLocalMessageAck(message, winner);
                     }
                     break;
                 }
-
-                default:
-                    throw new Error("Unknown operation");
+                default: unreachableCase(op.type);
             }
         }
     }
 
     private readAtomic(key: string): T | undefined {
         const data = this.data.get(key);
-        return data?.atomic.value.value;
+        return data?.atomic.value;
     }
 
     private processInboundWrite(
@@ -303,33 +281,37 @@ export class ConsensusRegisterCollection<T>
         local: boolean): boolean
     {
         let data = this.data.get(op.key);
+        const deserializedValue = this.deserializeValue(op.value);
         // Atomic update if it's a new register or the write attempt was not concurrent (ref seq >= sequence number)
-        let winner = false;
-        if (data === undefined || refSeq >= data.atomic.sequenceNumber) {
-            winner = true;
-            const atomicUpdate: ILocalRegister = {
+        const winner = data === undefined || refSeq >= data.atomic.sequenceNumber;
+        if (winner) {
+            const atomicUpdate: ILocalRegister<T> = {
                 sequenceNumber,
-                value: op.value,
+                value: deserializedValue,
             };
             if (data === undefined) {
                 data = {
                     atomic: atomicUpdate,
-                    versions: [],
+                    versions: [], // we'll update versions next, leave it empty for now
                 };
                 this.data.set(op.key, data);
             } else {
                 data.atomic = atomicUpdate;
             }
         }
+        else {
+            strongAssert(data);
+        }
 
         // Keep removing versions where incoming refseq is greater than or equals to current.
+        //* todo: ensure UTs
         while (data.versions.length > 0 && refSeq >= data.versions[0].sequenceNumber) {
             data.versions.shift();
         }
 
-        const versionUpdate: ILocalRegister = {
+        const versionUpdate: ILocalRegister<T> = {
             sequenceNumber,
-            value: op.value,
+            value: deserializedValue,
         };
 
         assert(
@@ -343,79 +325,46 @@ export class ConsensusRegisterCollection<T>
 
         // Raise events at the end, to avoid reentrancy issues
         if (winner) {
-            this.emit("atomicChanged", op.key, op.value.value, local);
+            this.emit("atomicChanged", op.key, op.value, local);
         }
-        this.emit("versionChanged", op.key, op.value.value, local);
+        this.emit("versionChanged", op.key, op.value, local);
 
         return winner;
     }
 
-    private processLocalMessage(message: ISequencedDocumentMessage, winner: boolean) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const pending = this.promiseResolveQueue.shift()!;
-        assert(pending);
+    private onLocalMessageAck(message: ISequencedDocumentMessage, winner: boolean) {
+        const pending = this.pendingLocalMessages.shift();
+        strongAssert(pending);
         assert(message.clientSequenceNumber === pending.clientSequenceNumber,
             "ConsensusRegistryCollection: unexpected ack");
+        //* todo: Add other asserts comparing incoming/pending op itself? If not, remove the op from IPendingRecord
         pending.resolve(winner);
     }
 
-    private async submit(message: IRegisterOperation): Promise<boolean> {
-        if (this.isLocal()) {
-            this.processInboundWrite(0, 0, message, true);
-            return true;
-        }
-
-        const clientSequenceNumber = this.submitLocalMessage(message);
-        return new Promise((resolve) => {
-            // Note that clientSequenceNumber and key is only used for asserts and isn't strictly necessary.
-            this.promiseResolveQueue.push({ resolve, clientSequenceNumber, message });
-        });
-    }
-
-    private snapshotItem(item: ILocalRegister): ILocalRegister {
-        let innerValue: any;
-        if (item.value.type === ValueType[ValueType.Shared]) {
-            innerValue = (item.value.value as ISharedObject).id;
-        } else {
-            innerValue = item.value.value;
-        }
+    private snapshotItem(item: ILocalRegister<T>): ILocalRegister<string> {
         return {
             sequenceNumber: item.sequenceNumber,
-            value: {
-                type: item.value.type,
-                value: innerValue,
-            },
+            value: this.serializeValue(item.value),
         };
     }
 
-    private async loadItem(item: ILocalRegister): Promise<ILocalRegister> {
-        switch (item.value.type) {
-            case ValueType[ValueType.Plain]:
-                return item;
-            case ValueType[ValueType.Shared]:
-                return {
-                    sequenceNumber: item.sequenceNumber,
-                    value: {
-                        type: item.value.type,
-                        value: await this.runtime.getChannel(item.value.value as string),
-                    },
-                };
-            default:
-                assert(false, "Invalid value type");
-                return Promise.reject("Invalid value type");
-        }
+    private async loadItem(item: ILocalRegister<string>): Promise<ILocalRegister<T>> {
+        return {
+            sequenceNumber: item.sequenceNumber,
+            value: this.deserializeValue(item.value),
+        };
     }
 
-    private serializeValue(value) {
+    private serializeValue(value: T): string {
         return this.runtime.IComponentSerializer.stringify(
             value,
             this.runtime.IComponentHandleContext,
             this.handle);
     }
 
-    private deserializeValue(content: string) {
+    private deserializeValue(content: string): T {
         return this.runtime.IComponentSerializer.parse(
             content,
-            this.runtime.IComponentHandleContext);
+            this.runtime.IComponentHandleContext) as T;
     }
 }
