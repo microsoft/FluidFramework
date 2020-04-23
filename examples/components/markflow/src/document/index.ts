@@ -138,7 +138,7 @@ export interface IFlowDocumentEvents extends IEvent {
     (event: "maintenance", listener: (event: SequenceMaintenanceEvent, target: SharedString) => void);
 }
 
-export class FlowDocument extends PrimedComponent<{}, undefined, IFlowDocumentEvents> {
+export class FlowDocument extends PrimedComponent<{}, {}, IFlowDocumentEvents> {
     private get sharedString() { return this.maybeSharedString; }
 
     public get length() {

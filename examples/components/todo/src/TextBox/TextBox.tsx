@@ -18,7 +18,7 @@ export const TextBoxName = `${pkg.name as string}-textbox`;
  * TextBox is a really simple component that uses the CollaborativeTextArea to provide a
  * collaborative textarea.
  */
-export class TextBox extends PrimedComponent implements IComponentHTMLView, IComponentReactViewable {
+export class TextBox extends PrimedComponent<{}, string> implements IComponentHTMLView, IComponentReactViewable {
     public get IComponentHTMLView() { return this; }
     public get IComponentReactViewable() { return this; }
 

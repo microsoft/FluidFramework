@@ -21,10 +21,10 @@ export interface ITableSliceConfig {
     maxCol: number;
 }
 
-export class TableSlice extends PrimedComponent implements ITable {
+export class TableSlice extends PrimedComponent<{}, ITableSliceConfig> implements ITable {
     public static getFactory() { return TableSlice.factory; }
 
-    private static readonly factory = new PrimedComponentFactory<{}, ITableSliceConfig>(
+    private static readonly factory = new PrimedComponentFactory(
         TableSliceType,
         TableSlice,
         [],

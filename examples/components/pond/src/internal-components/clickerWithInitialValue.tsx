@@ -19,7 +19,7 @@ export interface IClickerInitialState {
 /**
  * Basic Clicker example using new interfaces and stock component classes.
  */
-export class ClickerWithInitialValue extends PrimedComponent implements IComponentHTMLView {
+export class ClickerWithInitialValue extends PrimedComponent<{}, IClickerInitialState> implements IComponentHTMLView {
     public get IComponentHTMLView() { return this; }
 
     public static readonly ComponentName = `${pkg.name as string}-clicker-with-initial-value`;
@@ -49,7 +49,7 @@ export class ClickerWithInitialValue extends PrimedComponent implements ICompone
 
     public static getFactory() { return ClickerWithInitialValue.factory; }
 
-    private static readonly factory = new PrimedComponentFactory<{}, IClickerInitialState>(
+    private static readonly factory = new PrimedComponentFactory(
         ClickerWithInitialValue.ComponentName,
         ClickerWithInitialValue,
         [],

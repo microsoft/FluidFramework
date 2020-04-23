@@ -41,7 +41,7 @@ const innerComponentKey = "innerId";
  * - Link to open component in separate tab
  * - Button to remove entry
  */
-export class TodoItem extends PrimedComponent
+export class TodoItem extends PrimedComponent<{}, ITodoItemInitialState>
     implements
     IComponentHTMLView,
     IComponentReactViewable {
@@ -108,7 +108,7 @@ export class TodoItem extends PrimedComponent
 
     public static getFactory() { return TodoItem.factory; }
 
-    private static readonly factory = new PrimedComponentFactory<{}, ITodoItemInitialState>(
+    private static readonly factory = new PrimedComponentFactory(
         TodoItemName,
         TodoItem,
         [

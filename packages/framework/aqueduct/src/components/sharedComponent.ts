@@ -33,6 +33,7 @@ export interface ISharedComponentProps<P extends IComponent = object> {
  *
  * Generics:
  * P - represents a type that will define optional providers that will be injected
+ * S - the initial state type that the produced component may take during creation
  * E - represents events that will be available in the EventForwarder
  */
 export abstract class SharedComponent<P extends IComponent = object, S = undefined, E extends IEvent= IEvent>
@@ -95,7 +96,7 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
     public async initialize(initialState?: S): Promise<void> {
         // We want to ensure if this gets called more than once it only executes the initialize code once.
         if (!this.initializeP) {
-            this.initializeP = this.initializeInternal(this.context.createProps ?? initialState);
+            this.initializeP = this.initializeInternal(this.context.createProps as S ?? initialState);
         }
 
         await this.initializeP;
@@ -153,7 +154,7 @@ export abstract class SharedComponent<P extends IComponent = object, S = undefin
      * Calls componentInitializingFirstTime, componentInitializingFromExisting, and componentHasInitialized. Caller is
      * responsible for ensuring this is only invoked once.
      */
-    protected async initializeInternal(props?: any): Promise<void> {
+    protected async initializeInternal(props?: S): Promise<void> {
         if (!this.runtime.existing) {
             // If it's the first time through
             await this.componentInitializingFirstTime(props);

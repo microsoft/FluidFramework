@@ -8,7 +8,7 @@ import { SharedString } from "@microsoft/fluid-sequence";
 import { TextBoxName } from "./TextBox";
 import { TextBox } from "./index";
 
-export const TextBoxInstantiationFactory = new PrimedComponentFactory<{}, string>(
+export const TextBoxInstantiationFactory = new PrimedComponentFactory(
     TextBoxName,
     TextBox,
     [

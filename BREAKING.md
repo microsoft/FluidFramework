@@ -1,5 +1,38 @@
 # Breaking changes
 
+## 0.17 Breaking Changes
+
+- [Updates to ContainerRuntime and LocalComponentContext createProps removal](#Updates-to-ContainerRuntime-and-LocalComponentContext-createProps-removal)
+
+### Updates to ContainerRuntime and LocalComponentContext createProps removal
+
+Guidance for migrating from ContainerRuntime and LocalComponentContext createProps as described [previously in 0.16 notes](#ContainerRuntime-and-LocalComponentContext-createProps-removal) is updated.  To specify creation props, consumers should do the following:
+
+1. Create an interface for the initial state that defines what may be provided to the component.
+```typescript
+export interface IClickerInitialState {
+    initialValue: number;
+}
+```
+2. Specify the generic type for the initial state object in the component.  The same generic exists in the factory as well, but does not need to be specified there because it is inferred from the provided component constructor at creation.
+```typescript
+export class ClickerWithInitialValue
+    extends PrimedComponent<{}, IClickerInitialState>
+    implements IComponentHTMLView
+{
+    ...
+}
+```
+3. Implement `componentInitializingFirstTime(...)` in the component to optionally consume the initial state.
+```typescript
+protected async componentInitializingFirstTime(
+    initialState?: IClickerInitialState)
+{
+    ...
+}
+```
+As with previous guidance, components should ensure that only strongly typed initial state objects are provided.  `SharedComponentFactory` and `PrimedComponentFactory` do not provide a way to supply a generic initial state, and component consumers must have access to the specific component factory in order to create with initial state.
+
 ## 0.16 Breaking Changes
 
 - [View interfaces moved to separate package](#View-interfaces-moved-to-separate-package)
