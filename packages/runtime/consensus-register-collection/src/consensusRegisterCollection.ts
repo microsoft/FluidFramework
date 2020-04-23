@@ -194,7 +194,8 @@ export class ConsensusRegisterCollection<T>
 
     protected async loadCore(
         branchId: string,
-        storage: IObjectStorageService): Promise<void> {
+        storage: IObjectStorageService,
+    ): Promise<void> {
         const header = await storage.read(snapshotFileName);
         const dataObj = header !== undefined ? this.parse(fromBase64ToUtf8(header)) : {};
         //* todo: Why is it called header? And why are we converting from Base64 when snapshot didn't encode as Base64?
