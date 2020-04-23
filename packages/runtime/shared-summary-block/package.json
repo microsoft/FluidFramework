@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/fluid-shared-summary-block",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "description": "A DDS that does not generate ops but is part of summary",
   "repository": "microsoft/FluidFramework",
   "license": "MIT",
@@ -50,16 +50,16 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@microsoft/fluid-common-utils": "^0.16.0-0",
-    "@microsoft/fluid-protocol-definitions": "^0.1004.1-0",
-    "@microsoft/fluid-runtime-definitions": "^0.16.0",
-    "@microsoft/fluid-shared-object-base": "^0.16.0"
+    "@microsoft/fluid-common-utils": "^0.16.0",
+    "@microsoft/fluid-protocol-definitions": "^0.1004.1",
+    "@microsoft/fluid-runtime-definitions": "^0.17.0",
+    "@microsoft/fluid-shared-object-base": "^0.17.0"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.7.2",
-    "@microsoft/eslint-config-fluid": "^0.16.0-0",
+    "@microsoft/eslint-config-fluid": "^0.16.0",
     "@microsoft/fluid-build-common": "^0.14.0",
-    "@microsoft/fluid-test-runtime-utils": "^0.16.0",
+    "@microsoft/fluid-test-runtime-utils": "^0.17.0",
     "@types/benchmark": "^1.0.31",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.14.6",

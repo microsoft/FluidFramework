@@ -228,6 +228,10 @@ export class ContainerContext extends EventEmitter implements IContainerContext,
         return this.container.isLocal();
     }
 
+    public isAttached(): boolean {
+        return this.container.isAttached();
+    }
+
     public createSummary(): ISummaryTree {
         const expRuntime: IExperimentalRuntime = this.runtime as IExperimentalRuntime;
         assert(expRuntime?.isExperimentalRuntime);
